@@ -90,6 +90,9 @@ func MapColumnsToModel(
 			IsForeignKey:     isForeignKey,
 			ReferencedTable:  referencedTable,
 			ReferencedColumn: referencedColumn,
+			Length:           column.Length,
+			Precision:        column.Precision,
+			Scale:            column.Scale,
 		})
 	}
 	return columns

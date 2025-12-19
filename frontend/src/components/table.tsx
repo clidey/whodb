@@ -74,17 +74,20 @@ import {
     ChevronUpIcon,
     CircleStackIcon,
     ClockIcon,
+    CodeBracketIcon,
     CursorArrowRaysIcon,
     DocumentDuplicateIcon,
     DocumentIcon,
     DocumentTextIcon,
     EllipsisVerticalIcon,
+    GlobeAltIcon,
     HashtagIcon,
     KeyIcon,
     ListBulletIcon,
     MagnifyingGlassIcon,
     PencilSquareIcon,
     ShareIcon,
+    Squares2X2Icon,
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
@@ -108,45 +111,92 @@ const DynamicExport: FC<{
     hasSelectedRows: boolean;
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
+    databaseType?: string;
 }> = (props) => {
     // Use EE Export if available, otherwise fall back to CE Export
     const ExportComponent = EEExport || Export;
     return <ExportComponent {...props} />;
 };
 
-// Type sets based on core/src/plugins/gorm/utils.go
+// Type sets for icon mapping
+// Includes both canonical forms and common aliases for broad matching
 const stringTypes = new Set([
-    "TEXT", "STRING", "VARCHAR", "CHAR"
+    "TEXT", "STRING", "VARCHAR", "CHAR",
+    "CHARACTER VARYING", "CHARACTER",
+    "FIXEDSTRING",
 ]);
 const intTypes = new Set([
-    "INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT", "INT4", "INT8", "INT16", "INT32", "INT64"
+    "INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT",
+    "INT2", "INT4", "INT8",
+    "INT16", "INT32", "INT64", "INT128", "INT256",
+    "SERIAL", "BIGSERIAL", "SMALLSERIAL",
 ]);
 const uintTypes = new Set([
-    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED", "UINT8", "UINT16", "UINT32", "UINT64"
+    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED",
+    "UINT8", "UINT16", "UINT32", "UINT64", "UINT128", "UINT256",
 ]);
 const floatTypes = new Set([
-    "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL"
+    "REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL",
+    "FLOAT4", "FLOAT8",
+    "FLOAT32", "FLOAT64",
+    "DECIMAL32", "DECIMAL64", "DECIMAL128", "DECIMAL256",
+    "MONEY",
 ]);
 const boolTypes = new Set([
-    "BOOLEAN", "BIT", "BOOL"
+    "BOOLEAN", "BIT", "BOOL",
 ]);
 const dateTypes = new Set([
-    "DATE"
+    "DATE",
+    "DATE32",
 ]);
 const dateTimeTypes = new Set([
-    "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE", "DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ"
+    "DATETIME", "TIMESTAMP", "TIME",
+    "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE",
+    "TIME WITH TIME ZONE", "TIME WITHOUT TIME ZONE",
+    "DATETIME2", "SMALLDATETIME",
+    "TIMETZ", "TIMESTAMPTZ",
+    "INTERVAL",
+    "DATETIME64",
+    "YEAR",
 ]);
 const uuidTypes = new Set([
-    "UUID"
+    "UUID",
 ]);
 const binaryTypes = new Set([
-    "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB"
+    "BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE",
+    "TINYBLOB", "MEDIUMBLOB", "LONGBLOB",
 ]);
+const jsonTypes = new Set([
+    "JSON", "JSONB",
+]);
+const networkTypes = new Set([
+    "CIDR", "INET", "MACADDR", "MACADDR8",
+    "IPV4", "IPV6",
+]);
+const geometryTypes = new Set([
+    "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
+    "GEOMETRY", "GEOGRAPHY",
+    "LINESTRING", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION",
+]);
+const xmlTypes = new Set([
+    "XML",
+]);
+
+/**
+ * Strips length/precision suffix from a type string.
+ * e.g., "VARCHAR(255)" -> "VARCHAR", "DECIMAL(10,2)" -> "DECIMAL"
+ */
+function stripTypeSuffix(type: string): string {
+    return type.replace(/\(.*\)$/, '').trim();
+}
 
 
 export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
     return columns.map((col, idx) => {
-        const type = columnTypes?.[idx]?.toUpperCase?.() || "";
+        const rawType = columnTypes?.[idx] || "";
+        // Strip length/precision suffix and uppercase for matching
+        const type = stripTypeSuffix(rawType).toUpperCase();
+
         if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
         if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
         if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
@@ -154,6 +204,10 @@ export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (k
         if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
         if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
         if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
+        if (jsonTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
+        if (networkTypes.has(type)) return <GlobeAltIcon className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
+        if (geometryTypes.has(type)) return <Squares2X2Icon className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
+        if (xmlTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
         if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
         if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
         return <CircleStackIcon className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
@@ -187,6 +241,7 @@ interface TableProps {
     // Foreign key functionality
     isValidForeignKey?: (columnName: string) => boolean;
     onEntitySearch?: (columnName: string, value: string) => void;
+    databaseType?: string;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -215,6 +270,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Foreign key functionality
     isValidForeignKey,
     onEntitySearch,
+    databaseType,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -324,8 +380,8 @@ export const StorageUnitTable: FC<TableProps> = ({
         } else if (typeof rowIndex === "number") {
             indexesToDelete = [rowIndex];
         }
-        if (selectedRowsData && selectedRowsData.length > 0) {
-            indexesToDelete = selectedRowsData.map((_, idx) => idx);
+        if (checked.length > 0) {
+            indexesToDelete = [...checked];
         }
         if (indexesToDelete.length === 0) return;
         toast.info(indexesToDelete.length === 1 ? t('deletingRow') : t('deletingRows'));
@@ -355,7 +411,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.success(t('rowDeleted'));
         }
         onRefresh?.();
-    }, [deleteRow, schema, storageUnit, rows, columns, selectedRowsData, onRefresh, t]);
+    }, [deleteRow, schema, storageUnit, rows, columns, checked, onRefresh, t]);
 
     const paginatedRows = useMemo(() => {
         // For server-side pagination, rows are already paginated
@@ -1171,7 +1227,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                             : <ChevronDownIcon className="w-4 h-4" />
                                                     )}
                                                 </p>
-                                                <p className="text-xs">{columnTypes?.[idx]}</p>
+                                                <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
                                             </Tip>
                                         </TableHead>
                                     ))}
@@ -1369,7 +1425,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 {editRow &&
                                     columns.map((col, idx) => (
                                         <div key={col} className="flex flex-col gap-2">
-                                            <Label>{col}</Label>
+                                            <div className="flex flex-col gap-0.5">
+                                                <Label>{col}</Label>
+                                                {columnTypes?.[idx] && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {t('typeHint', { type: columnTypes[idx] })}
+                                                    </span>
+                                                )}
+                                            </div>
                                             {
                                                 editRowInitialLengths[idx] < 50 ?
                                                     <Input
@@ -1506,6 +1569,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     hasSelectedRows={hasSelectedRows}
                     selectedRowsData={selectedRowsData}
                     checkedRowsCount={checked.length}
+                    databaseType={databaseType}
                 />
             </Suspense>
         </div>

@@ -60,6 +60,7 @@ en:
   editRowTitle: Edit Row
   cancel: Cancel
   update: Update
+  typeHint: "{type}"
 
   # Mock data sheet
   mockDataTitle: Mock Data

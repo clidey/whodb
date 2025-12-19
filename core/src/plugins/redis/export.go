@@ -17,13 +17,247 @@
 package redis
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
 // ExportData exports Redis data to tabular format
 func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	err := fmt.Errorf("data export is not supported for Redis databases")
-	return err
+	client, err := DB(config)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	keyType, err := client.Type(client.Context(), storageUnit).Result()
+	if err != nil {
+		return err
+	}
+
+	switch keyType {
+	case "string":
+		headers := []string{common.FormatCSVHeader("value", "string")}
+		if err := writer(headers); err != nil {
+			return err
+		}
+		val, err := client.Get(client.Context(), storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		return writer([]string{val})
+
+	case "hash":
+		headers := []string{common.FormatCSVHeader("field", "string"), common.FormatCSVHeader("value", "string")}
+		if err := writer(headers); err != nil {
+			return err
+		}
+
+		// If selected rows provided, use them
+		if len(selectedRows) > 0 {
+			for _, row := range selectedRows {
+				writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row["value"])})
+			}
+			return nil
+		}
+
+		values, err := client.HGetAll(client.Context(), storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		fields := make([]string, 0, len(values))
+		for f := range values {
+			fields = append(fields, f)
+		}
+		sort.Strings(fields)
+		for _, f := range fields {
+			if err := writer([]string{f, values[f]}); err != nil {
+				return err
+			}
+		}
+		return nil
+
+	case "list":
+		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader("value", "string")}
+		if err := writer(headers); err != nil {
+			return err
+		}
+
+		if len(selectedRows) > 0 {
+			for _, row := range selectedRows {
+				writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])})
+			}
+			return nil
+		}
+
+		values, err := client.LRange(client.Context(), storageUnit, 0, -1).Result()
+		if err != nil {
+			return err
+		}
+		for i, v := range values {
+			if err := writer([]string{fmt.Sprintf("%d", i), v}); err != nil {
+				return err
+			}
+		}
+		return nil
+
+	case "set":
+		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader("value", "string")}
+		if err := writer(headers); err != nil {
+			return err
+		}
+
+		if len(selectedRows) > 0 {
+			for _, row := range selectedRows {
+				writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])})
+			}
+			return nil
+		}
+
+		values, err := client.SMembers(client.Context(), storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		sort.Strings(values)
+		for i, v := range values {
+			if err := writer([]string{fmt.Sprintf("%d", i), v}); err != nil {
+				return err
+			}
+		}
+		return nil
+
+	case "zset":
+		headers := []string{
+			common.FormatCSVHeader("index", "string"),
+			common.FormatCSVHeader("member", "string"),
+			common.FormatCSVHeader("score", "string"),
+		}
+		if err := writer(headers); err != nil {
+			return err
+		}
+
+		if len(selectedRows) > 0 {
+			for _, row := range selectedRows {
+				writer([]string{
+					fmt.Sprintf("%v", row["index"]),
+					fmt.Sprintf("%v", row["member"]),
+					fmt.Sprintf("%v", row["score"]),
+				})
+			}
+			return nil
+		}
+
+		values, err := client.ZRangeWithScores(client.Context(), storageUnit, 0, -1).Result()
+		if err != nil {
+			return err
+		}
+		for i, m := range values {
+			if err := writer([]string{
+				fmt.Sprintf("%d", i),
+				fmt.Sprintf("%v", m.Member),
+				fmt.Sprintf("%.2f", m.Score),
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return fmt.Errorf("unsupported Redis data type")
+}
+
+// ExportDataNDJSON streams Redis data as NDJSON.
+func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema string, storageUnit string, writer func(string) error, selectedRows []map[string]any) error {
+	client, err := DB(config)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	keyType, err := client.Type(client.Context(), storageUnit).Result()
+	if err != nil {
+		return err
+	}
+
+	emit := func(rows []map[string]any) error {
+		for _, row := range rows {
+			line, err := json.Marshal(row)
+			if err != nil {
+				return err
+			}
+			if err := writer(string(line)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if len(selectedRows) > 0 {
+		return emit(selectedRows)
+	}
+
+	ctx := client.Context()
+
+	switch keyType {
+	case "string":
+		val, err := client.Get(ctx, storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		return emit([]map[string]any{{"value": val}})
+
+	case "hash":
+		values, err := client.HGetAll(ctx, storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, 0, len(values))
+		for field, value := range values {
+			rows = append(rows, map[string]any{"field": field, "value": value})
+		}
+		return emit(rows)
+
+	case "list":
+		values, err := client.LRange(ctx, storageUnit, 0, -1).Result()
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, 0, len(values))
+		for i, v := range values {
+			rows = append(rows, map[string]any{"index": i, "value": v})
+		}
+		return emit(rows)
+
+	case "set":
+		values, err := client.SMembers(ctx, storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		sort.Strings(values)
+		rows := make([]map[string]any, 0, len(values))
+		for i, v := range values {
+			rows = append(rows, map[string]any{"index": i, "value": v})
+		}
+		return emit(rows)
+
+	case "zset":
+		values, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, 0, len(values))
+		for i, m := range values {
+			rows = append(rows, map[string]any{
+				"index":  i,
+				"member": m.Member,
+				"score":  fmt.Sprintf("%.2f", m.Score),
+			})
+		}
+		return emit(rows)
+	}
+
+	return fmt.Errorf("unsupported Redis data type")
 }

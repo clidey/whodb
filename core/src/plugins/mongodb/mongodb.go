@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package mongodb
@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -331,17 +333,35 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
 
-	var sampleDoc bson.M
-	err = collection.FindOne(ctx, bson.M{}).Decode(&sampleDoc)
+	// Sample up to 100 documents to build a merged schema view
+	cursor, err := collection.Find(ctx, bson.M{}, options.Find().SetLimit(100))
 	if err != nil {
-		log.Logger.WithFields(map[string]any{
-			"collection": storageUnit,
-			"error":      err.Error(),
-		}).Warn("MongoDB GetColumns: No documents found, returning empty schema")
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	fieldTypes := make(map[string]string)
+	for cursor.Next(ctx) {
+		var doc bson.M
+		if err := cursor.Decode(&doc); err != nil {
+			continue
+		}
+		for fieldName, fieldValue := range doc {
+			fieldType := inferMongoDBType(fieldValue)
+			fieldTypes[fieldName] = mergeMongoTypes(fieldTypes[fieldName], fieldType)
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(fieldTypes) == 0 {
+		log.Logger.WithField("collection", storageUnit).Warn("MongoDB GetColumns: No documents found, returning empty schema")
 		return []engine.Column{}, nil
 	}
 
-	cursor, err := db.ListCollections(ctx, bson.M{})
+	cursor, err = db.ListCollections(ctx, bson.M{})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
@@ -351,7 +371,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	}
 	defer cursor.Close(ctx)
 
-	collections := []string{}
+	var collections []string
 	for cursor.Next(ctx) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
@@ -361,10 +381,15 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 		collections = append(collections, name)
 	}
 
-	columns := []engine.Column{}
-	for fieldName, fieldValue := range sampleDoc {
-		fieldType := inferMongoDBType(fieldValue)
+	fieldNames := make([]string, 0, len(fieldTypes))
+	for name := range fieldTypes {
+		fieldNames = append(fieldNames, name)
+	}
+	sort.Strings(fieldNames)
 
+	columns := []engine.Column{}
+	for _, fieldName := range fieldNames {
+		fieldType := fieldTypes[fieldName]
 		isPrimary := fieldName == "_id"
 
 		var isForeignKey bool
@@ -435,10 +460,24 @@ func inferMongoDBType(value any) string {
 	}
 }
 
+// mergeMongoTypes combines type hints; if conflicting, returns "mixed".
+func mergeMongoTypes(current, next string) string {
+	if current == "" {
+		return next
+	}
+	if current == next {
+		return current
+	}
+	return "mixed"
+}
+
 func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
 	if where == nil {
 		return bson.M{}, nil
 	}
+
+	// Normalize operator to lower for comparisons
+	getOp := func(op string) string { return strings.ToLower(op) }
 
 	switch where.Type {
 	case model.WhereConditionTypeAtomic:
@@ -446,34 +485,87 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
 		}
 
-		operatorMap := map[string]string{
-			"eq":  "$eq",
-			"ne":  "$ne",
-			"gt":  "$gt",
-			"gte": "$gte",
-			"lt":  "$lt",
-			"lte": "$lte",
-		}
+		operator := getOp(where.Atomic.Operator)
 
-		mongoOperator, exists := operatorMap[where.Atomic.Operator]
-		if !exists {
+		switch operator {
+		case "eq", "ne", "gt", "gte", "lt", "lte":
+			mongoOperator := "$" + operator
+			value := convertMongoValue(where.Atomic.Key, where.Atomic.Value)
+			return bson.M{where.Atomic.Key: bson.M{mongoOperator: value}}, nil
+
+		case "in", "nin":
+			values := parseCommaSeparatedValues(where.Atomic.Key, where.Atomic.Value)
+			mongoOperator := "$" + operator
+			return bson.M{where.Atomic.Key: bson.M{mongoOperator: values}}, nil
+
+		case "regex":
+			return bson.M{where.Atomic.Key: bson.M{"$regex": where.Atomic.Value}}, nil
+
+		case "exists":
+			exists, err := strconv.ParseBool(where.Atomic.Value)
+			if err != nil {
+				return nil, fmt.Errorf("invalid exists value: %s", where.Atomic.Value)
+			}
+			return bson.M{where.Atomic.Key: bson.M{"$exists": exists}}, nil
+
+		case "type":
+			return bson.M{where.Atomic.Key: bson.M{"$type": where.Atomic.Value}}, nil
+
+		case "expr":
+			// Expect a JSON expression; try to decode
+			var expr any
+			if err := json.Unmarshal([]byte(where.Atomic.Value), &expr); err != nil {
+				return nil, fmt.Errorf("invalid expr payload: %w", err)
+			}
+			return bson.M{"$expr": expr}, nil
+
+		case "mod":
+			parts := strings.Split(where.Atomic.Value, ",")
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("mod expects 'divisor,remainder'")
+			}
+			div, err1 := strconv.ParseInt(strings.TrimSpace(parts[0]), 10, 64)
+			rem, err2 := strconv.ParseInt(strings.TrimSpace(parts[1]), 10, 64)
+			if err1 != nil || err2 != nil {
+				return nil, fmt.Errorf("mod operands must be integers")
+			}
+			return bson.M{where.Atomic.Key: bson.M{"$mod": []int64{div, rem}}}, nil
+
+		case "all":
+			values := parseCommaSeparatedValues(where.Atomic.Key, where.Atomic.Value)
+			return bson.M{where.Atomic.Key: bson.M{"$all": values}}, nil
+
+		case "elemmatch":
+			var elem bson.M
+			if err := json.Unmarshal([]byte(where.Atomic.Value), &elem); err != nil {
+				return nil, fmt.Errorf("elemMatch expects JSON object: %w", err)
+			}
+			return bson.M{where.Atomic.Key: bson.M{"$elemMatch": elem}}, nil
+
+		case "size":
+			size, err := strconv.ParseInt(where.Atomic.Value, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("size expects integer: %w", err)
+			}
+			return bson.M{where.Atomic.Key: bson.M{"$size": size}}, nil
+
+		case "bitsallclear", "bitsallset", "bitsanyclear", "bitsanyset":
+			mask, err := strconv.ParseInt(where.Atomic.Value, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("%s expects integer bitmask", operator)
+			}
+			return bson.M{where.Atomic.Key: bson.M{"$" + operator: mask}}, nil
+
+		case "geointersects", "geowithin", "near", "nearsphere":
+			var payload any
+			if err := json.Unmarshal([]byte(where.Atomic.Value), &payload); err != nil {
+				return nil, fmt.Errorf("%s expects JSON payload: %w", operator, err)
+			}
+			return bson.M{where.Atomic.Key: bson.M{"$" + operator: payload}}, nil
+
+		default:
 			return nil, fmt.Errorf("unsupported operator: %s", where.Atomic.Operator)
 		}
-
-		// Handle _id field specially - convert string to ObjectID
-		var value any = where.Atomic.Value
-		if where.Atomic.Key == "_id" {
-			objectID, err := primitive.ObjectIDFromHex(where.Atomic.Value)
-			if err != nil {
-				// If it's not a valid ObjectID, use the string value as-is
-				// This allows querying by non-ObjectID _id values if they exist
-				value = where.Atomic.Value
-			} else {
-				value = objectID
-			}
-		}
-
-		return bson.M{where.Atomic.Key: bson.M{mongoOperator: value}}, nil
 
 	case model.WhereConditionTypeAnd:
 		if where.And == nil || len(where.And.Children) == 0 {
@@ -514,6 +606,31 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 	}
 }
 
+// convertMongoValue handles ObjectID conversion for _id and basic numeric/bool coercion.
+func convertMongoValue(key string, raw string) any {
+	if key == "_id" {
+		id, err := normalizeMongoID(raw)
+		if err == nil {
+			return id
+		}
+		return raw
+	}
+	return coerceMongoValue(key, raw)
+}
+
+func parseCommaSeparatedValues(key string, raw string) []any {
+	if strings.TrimSpace(raw) == "" {
+		return []any{}
+	}
+	parts := strings.Split(raw, ",")
+	values := make([]any, 0, len(parts))
+	for _, p := range parts {
+		v := strings.TrimSpace(p)
+		values = append(values, convertMongoValue(key, v))
+	}
+	return values
+}
+
 func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
@@ -552,6 +669,31 @@ func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation f
 
 func (p *MongoDBPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
 	return make(map[string]*engine.ForeignKeyRelationship), nil
+}
+
+// GetDatabaseMetadata returns MongoDB metadata for frontend configuration.
+// MongoDB is a document database without traditional type definitions.
+func (p *MongoDBPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+	operators := make([]string, 0, len(supportedOperators))
+	for op := range supportedOperators {
+		operators = append(operators, op)
+	}
+	return &engine.DatabaseMetadata{
+		DatabaseType: engine.DatabaseType_MongoDB,
+		TypeDefinitions: []engine.TypeDefinition{
+			{ID: "string", Label: "string", Category: engine.TypeCategoryText},
+			{ID: "int", Label: "int", Category: engine.TypeCategoryNumeric},
+			{ID: "double", Label: "double", Category: engine.TypeCategoryNumeric},
+			{ID: "bool", Label: "bool", Category: engine.TypeCategoryBoolean},
+			{ID: "date", Label: "date", Category: engine.TypeCategoryDatetime},
+			{ID: "objectId", Label: "objectId", Category: engine.TypeCategoryOther},
+			{ID: "array", Label: "array", Category: engine.TypeCategoryOther},
+			{ID: "object", Label: "object", Category: engine.TypeCategoryOther},
+			{ID: "mixed", Label: "mixed", Category: engine.TypeCategoryOther},
+		},
+		Operators: operators,
+		AliasMap:  map[string]string{},
+	}
 }
 
 func NewMongoDBPlugin() *engine.Plugin {

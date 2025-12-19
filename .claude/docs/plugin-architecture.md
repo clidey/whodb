@@ -35,6 +35,7 @@ func (p *MySQLPlugin) GetColumnConstraints(...) { /* MySQL-specific */ }
 SQL-based plugins follow this structure (see `core/src/plugins/postgres/` as reference):
 - `db.go` - Connection creation (implements DB method)
 - `postgres.go` (or `mysql.go`, etc.) - Plugin struct, NewXxxPlugin(), database-specific queries
+- `types.go` - Type definitions, alias map, and GetDatabaseMetadata() implementation
 - `constraints.go` - Column constraint detection (optional override)
 
 GormPlugin base class (`core/src/plugins/gorm/`) provides:
@@ -59,7 +60,55 @@ GetSchemaTableQuery() string          // Query for columns in a table
 FormTableName(schema, table) string   // "schema"."table" vs `schema`.`table`
 GetPlaceholder(index int) string      // $1 for Postgres, ? for MySQL
 DB(config) (*gorm.DB, error)          // Connection with driver-specific config
+GetDatabaseMetadata() *DatabaseMetadata // Operators, types, aliases for frontend
 ```
+
+## Database Metadata (types.go)
+
+Each SQL plugin must provide metadata for frontend UI via `GetDatabaseMetadata()`. This is the **single source of truth** for:
+- Valid operators (=, >=, LIKE, etc.)
+- Type definitions (VARCHAR, INTEGER, etc.) with UI hints (hasLength, hasPrecision)
+- Alias maps (INT → INTEGER, BOOL → BOOLEAN)
+
+The frontend fetches this via GraphQL `DatabaseMetadata` query on login. **No fallbacks** - if backend doesn't provide it, the UI will be broken.
+
+### types.go Structure
+
+```go
+package postgres
+
+import "github.com/clidey/whodb/core/src/engine"
+
+// AliasMap maps type aliases to canonical names (UPPERCASE keys and values)
+var AliasMap = map[string]string{
+    "INT":  "INTEGER",
+    "BOOL": "BOOLEAN",
+}
+
+// TypeDefinitions - canonical types shown in UI type selector
+var TypeDefinitions = []engine.TypeDefinition{
+    {ID: "INTEGER", Label: "integer", Category: engine.TypeCategoryNumeric},
+    {ID: "VARCHAR", Label: "varchar", HasLength: true, DefaultLength: engine.IntPtr(255), Category: engine.TypeCategoryText},
+    // ... more types
+}
+
+func (p *PostgresPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+    operators := make([]string, 0, len(supportedOperators))
+    for op := range supportedOperators {
+        operators = append(operators, op)
+    }
+    return &engine.DatabaseMetadata{
+        DatabaseType:    engine.DatabaseType_Postgres,
+        TypeDefinitions: TypeDefinitions,
+        Operators:       operators,
+        AliasMap:        AliasMap,
+    }
+}
+```
+
+### Type Validation
+
+Column type validation uses `engine.ValidateColumnType()` which checks against TypeDefinitions. Types not in TypeDefinitions will be rejected when adding columns.
 
 ## Quirks to Know
 

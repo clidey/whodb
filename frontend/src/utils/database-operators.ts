@@ -15,51 +15,28 @@
  */
 
 import { DatabaseType } from '@graphql';
-import { databaseTypeDropdownItems, getDatabaseTypeDropdownItemsSync } from '../config/database-types';
+import { reduxStore } from '../store';
 
 /**
- * Get valid operators for a database type
+ * Get valid operators for a database type from the backend-driven Redux store.
+ *
  * @param databaseType The database type (can be CE or EE type)
  * @returns Array of valid operators for the database
  */
 export function getDatabaseOperators(databaseType: DatabaseType | string): string[] {
-    // Try to get operators from the database configuration first
-    const dbTypeItems = getDatabaseTypeDropdownItemsSync();
-    const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-    
-    if (dbConfig?.operators) {
-        return dbConfig.operators;
+    const metadataState = reduxStore.getState().databaseMetadata;
+
+    if (
+        metadataState.databaseType === databaseType &&
+        metadataState.operators.length > 0
+    ) {
+        return metadataState.operators;
     }
-    
-    // Fall back to built-in operators for known database types
-    switch (databaseType) {
-        case DatabaseType.ElasticSearch:
-            return [
-                "match", "match_phrase", "match_phrase_prefix", "multi_match", "bool", 
-                "term", "terms", "range", "exists", "prefix", "wildcard", "regexp", 
-                "fuzzy", "ids", "constant_score", "function_score", "dis_max", "nested", 
-                "has_child", "has_parent"
-            ];
-        case DatabaseType.MongoDb:
-            return ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "and", "or", 
-                    "not", "nor", "exists", "type", "regex", "expr", "mod", "all", 
-                    "elemMatch", "size", "bitsAllClear", "bitsAllSet", "bitsAnyClear", 
-                    "bitsAnySet", "geoIntersects", "geoWithin", "near", "nearSphere"];
-        case DatabaseType.ClickHouse:
-            return [
-                "=", ">=", ">", "<=", "<", "!=", "<>", "==",
-                "LIKE", "NOT LIKE", "ILIKE",  // ILIKE is handled specially for ClickHouse
-                "IN", "NOT IN", "GLOBAL IN", "GLOBAL NOT IN",
-                "BETWEEN", "NOT BETWEEN",
-                "IS NULL", "IS NOT NULL",
-                "AND", "OR", "NOT"
-            ];
-        default:
-            // Default SQL operators
-            return [
-                "=", ">=", ">", "<=", "<", "<>", "!=", "!>", "!<", "BETWEEN", "NOT BETWEEN", 
-                "LIKE", "NOT LIKE", "IN", "NOT IN", "IS NULL", "IS NOT NULL", "AND", "OR", 
-                "NOT"
-            ];
-    }
+
+    // If we reach here, metadata hasn't been fetched yet.
+    console.warn(
+        `[database-operators] No operators found for ${databaseType}. ` +
+            `Ensure DatabaseMetadata query has completed.`
+    );
+    return [];
 }

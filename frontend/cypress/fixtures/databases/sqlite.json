@@ -54,11 +54,11 @@
   "tables": {
     "users": {
       "columns": {
-        "id": "INTEGER",
-        "username": "TEXT",
-        "email": "TEXT",
-        "password": "TEXT",
-        "created_at": "DATETIME"
+        "id": "integer",
+        "username": "text",
+        "email": "text",
+        "password": "text",
+        "created_at": "datetime"
       },
       "expectedColumns": [
         "",

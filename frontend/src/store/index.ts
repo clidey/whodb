@@ -24,6 +24,7 @@ import { houdiniReducers } from './chat';
 import { aiModelsReducers } from './ai-models';
 import { scratchpadReducers, IScratchpadState } from './scratchpad';
 import { tourReducers } from './tour';
+import { databaseMetadataReducers } from './database-metadata';
 import { runMigrations } from './migrations';
 
 // Run migrations before initializing the store
@@ -120,6 +121,7 @@ const persistedReducer = combineReducers({
     transforms: [scratchpadTransform]
   }, scratchpadReducers),
   tour: persistReducer({ key: "tour", storage }, tourReducers),
+  databaseMetadata: persistReducer({ key: "databaseMetadata", storage }, databaseMetadataReducers),
 });
 
 export const reduxStore = configureStore({

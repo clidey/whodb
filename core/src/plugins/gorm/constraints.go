@@ -32,7 +32,7 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 			fullTableName = storageUnit
 		}
 
-		migrator := NewMigratorHelper(db, p)
+		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 		migratorConstraints, err := migrator.GetConstraints(fullTableName)
 		if err != nil {
 			// Fall back to empty constraints if Migrator fails

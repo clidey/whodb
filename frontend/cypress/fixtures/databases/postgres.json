@@ -56,10 +56,10 @@
     "users": {
       "columns": {
         "id": "integer",
-        "username": "character varying",
-        "email": "character varying",
-        "password": "character varying",
-        "created_at": "timestamp without time zone"
+        "username": "character varying(50)",
+        "email": "character varying(100)",
+        "password": "character varying(100)",
+        "created_at": "timestamp"
       },
       "expectedColumns": [
         "",
@@ -102,7 +102,7 @@
         }
       },
       "metadata": {
-        "type": "BASE TABLE",
+        "type": "base table",
         "hasSize": true,
         "hasCount": false
       }
@@ -113,8 +113,8 @@
         "bigint_col": "bigint",
         "integer_col": "integer",
         "smallint_col": "smallint",
-        "numeric_col": "numeric",
-        "description": "text"
+        "numeric_col": "numeric(10,2)",
+        "description": "character varying(100)"
       },
       "testData": {
         "newRow": {
@@ -132,19 +132,19 @@
         "col_smallint": "smallint",
         "col_integer": "integer",
         "col_bigint": "bigint",
-        "col_decimal": "numeric",
-        "col_numeric": "numeric",
+        "col_decimal": "numeric(10,2)",
+        "col_numeric": "numeric(10,2)",
         "col_real": "real",
         "col_double": "double precision",
         "col_money": "money",
-        "col_char": "character",
-        "col_varchar": "character varying",
+        "col_char": "character(10)",
+        "col_varchar": "character varying(255)",
         "col_text": "text",
         "col_bytea": "bytea",
-        "col_timestamp": "timestamp without time zone",
+        "col_timestamp": "timestamp",
         "col_timestamptz": "timestamp with time zone",
         "col_date": "date",
-        "col_time": "time without time zone",
+        "col_time": "time",
         "col_timetz": "time with time zone",
         "col_boolean": "boolean",
         "col_point": "point",

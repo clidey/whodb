@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ */
 
 package mongodb
 
@@ -21,6 +23,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type tableRelation struct {
@@ -92,30 +95,54 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 
 		collection := db.Collection(collectionName)
 
-		var sampleDoc bson.M
-		err := collection.FindOne(ctx, bson.M{}).Decode(&sampleDoc)
+		cursorSample, err := collection.Find(ctx, bson.M{}, options.Find().SetLimit(100))
 		if err != nil {
-			log.Logger.WithFields(map[string]any{
-				"collection": collectionName,
-				"error":      err.Error(),
-			}).Warn("MongoDB Graph: No documents found or error fetching sample")
+			log.Logger.WithError(err).WithField("collection", collectionName).Warn("MongoDB Graph: Unable to sample documents")
+			continue
+		}
+		defer cursorSample.Close(ctx)
+
+		fieldFrequency := make(map[string]int)
+		fieldSamples := make(map[string]any)
+
+		for cursorSample.Next(ctx) {
+			var doc bson.M
+			if err := cursorSample.Decode(&doc); err != nil {
+				continue
+			}
+			for k, v := range doc {
+				fieldFrequency[k]++
+				// store a representative value for id detection
+				if _, exists := fieldSamples[k]; !exists {
+					fieldSamples[k] = v
+				}
+			}
+		}
+
+		if len(fieldFrequency) == 0 {
+			log.Logger.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")
 			continue
 		}
 
-		fields := []string{}
-		for f := range sampleDoc {
-			fields = append(fields, f)
-		}
-		log.Logger.WithFields(map[string]any{
-			"collection": collectionName,
-			"fields":     fields,
-		}).Info("MongoDB Graph: Found fields")
-
 		foreignKeys := make(map[string]string)
 
-		for fieldName := range sampleDoc {
+		for fieldName := range fieldFrequency {
 			if fieldName == "_id" {
 				continue
+			}
+
+			// If fieldName contains ".id" or ends with "Id", treat as potential reference
+			lowerField := strings.ToLower(fieldName)
+			if strings.HasSuffix(lowerField, ".id") || strings.HasSuffix(lowerField, "id") || strings.HasSuffix(lowerField, "_id") {
+				for _, otherCollection := range collections {
+					if otherCollection == collectionName {
+						continue
+					}
+					if strings.Contains(lowerField, strings.ToLower(otherCollection)) {
+						foreignKeys[otherCollection] = fieldName
+						break
+					}
+				}
 			}
 
 			for _, otherCollection := range collections {

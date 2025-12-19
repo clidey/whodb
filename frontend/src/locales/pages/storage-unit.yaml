@@ -7,9 +7,11 @@ en:
   listView: List View
   describe: Describe
   data: Data
+  sampledSchemaBadge: Schema inferred from sample
   createPrefix: Create a
   create: Create
   createTitle: Create a
+  columnsTitle: Columns
   nameLabel: Name
   namePlaceholder: Enter Name...
   fieldNameLabel: Field Name
@@ -17,6 +19,10 @@ en:
   fieldTypeLabel: Field Type
   fieldTypePlaceholder: Select Type
   searchTypePlaceholder: Search Type...
+  fieldLengthLabel: Length
+  fieldLengthPlaceholder: e.g., 255
+  fieldPrecisionLabel: Precision
+  fieldScaleLabel: Scale
   modifiersLabel: Modifiers
   primaryModifier: Primary
   nullableModifier: Nullable

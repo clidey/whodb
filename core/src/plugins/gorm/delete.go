@@ -35,7 +35,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			pkColumns = []string{}
 		}
 
-		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+		columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 		if err != nil {
 			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s during delete operation", schema, storageUnit))
 			return false, err

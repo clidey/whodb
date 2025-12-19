@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package clickhouse
@@ -25,26 +25,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/src/log"
-
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
 var (
-	supportedColumnDataTypes = mapset.NewSet(
-		"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-		"DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-		"CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB",
-		"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-		"ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)",
-	)
-
 	supportedOperators = map[string]string{
 		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "!=": "!=", "<>": "<>", "==": "==",
 		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "ILIKE": "ILIKE",
@@ -82,10 +72,6 @@ func (p *ClickHousePlugin) FormTableName(schema string, storageUnit string) stri
 		return storageUnit
 	}
 	return schema + "." + storageUnit
-}
-
-func (p *ClickHousePlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
-	return supportedColumnDataTypes
 }
 
 func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
@@ -141,18 +127,6 @@ func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []
 	}
 
 	return tableName, attributes
-}
-
-func (p *ClickHousePlugin) GetSchemaTableQuery() string {
-	return `
-		SELECT 
-		    table AS TABLE_NAME,
-			name AS COLUMN_NAME,
-			type AS DATA_TYPE
-		FROM system.columns
-		WHERE database = ?
-		ORDER BY TABLE_NAME, position
-	`
 }
 
 func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
@@ -284,6 +258,53 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 
 	// Fallback to string representation
 	return fmt.Sprintf("%v", value), nil
+}
+
+// NormalizeType converts ClickHouse type aliases to their canonical form.
+func (p *ClickHousePlugin) NormalizeType(typeName string) string {
+	return NormalizeType(typeName)
+}
+
+// GetColumnTypes overrides the base implementation because GORM ClickHouse's
+// migrator.ColumnTypes() doesn't support "database.table" format - it uses
+// m.CurrentDatabase() internally and expects just the table name.
+func (p *ClickHousePlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+	migrator := gorm_plugin.NewMigratorHelper(db, p)
+	// Pass just table name - ClickHouse GORM driver handles database context
+	return migrator.GetColumnTypes(tableName)
+}
+
+// GetColumnsForTable overrides the base implementation for the same reason as GetColumnTypes.
+func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
+		migrator := gorm_plugin.NewMigratorHelper(db, p)
+
+		// Pass just table name - ClickHouse GORM driver handles database context
+		columns, err := migrator.GetOrderedColumns(storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
+			return nil, err
+		}
+
+		// Get primary keys
+		primaryKeys, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		if err != nil {
+			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
+			primaryKeys = []string{}
+		}
+
+		// Enrich columns with primary key information
+		for i := range columns {
+			for _, pk := range primaryKeys {
+				if columns[i].Name == pk {
+					columns[i].IsPrimary = true
+					break
+				}
+			}
+		}
+
+		return columns, nil
+	})
 }
 
 func NewClickHousePlugin() *engine.Plugin {

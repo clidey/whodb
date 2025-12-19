@@ -61,6 +61,11 @@ type tableInfo struct {
 	alias  string
 }
 
+const (
+	minSuggestionHeight = 3
+	maxSuggestionHeight = 12
+)
+
 type EditorView struct {
 	parent              *MainModel
 	textarea            textarea.Model
@@ -72,6 +77,9 @@ type EditorView struct {
 	currentSchema       string
 	cursorPos           int
 	lastText            string
+	lastWidth           int
+	lastHeight          int
+	suggestionHeight    int
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -96,8 +104,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		v.textarea.SetWidth(msg.Width - 8)
-		v.textarea.SetHeight(msg.Height - 20)
+		v.applyWindowSize(msg.Width, msg.Height)
 		return v, nil
 
 	case tea.MouseMsg:
@@ -116,12 +123,9 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
-		// IMPORTANT: Check for Ctrl+Enter FIRST before passing to textarea
+		// IMPORTANT: Check for execute query shortcut FIRST before passing to textarea
+		// Alt+Enter (Option+Enter on macOS) - works reliably across all platforms
 		if msg.Type == tea.KeyEnter && msg.Alt {
-			return v, v.executeQuery()
-		}
-
-		if msg.String() == "ctrl+enter" {
 			return v, v.executeQuery()
 		}
 
@@ -147,6 +151,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			v.selectedSuggestion = 0
 			v.cursorPos = 0
 			v.lastText = ""
+			v.refreshLayout()
 			return v, nil
 		}
 
@@ -188,6 +193,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			if v.showSuggestions {
 				v.showSuggestions = false
 				v.selectedSuggestion = 0
+				v.refreshLayout()
 				return v, nil
 			}
 			v.parent.mode = ViewBrowser
@@ -229,20 +235,19 @@ func (v *EditorView) View() string {
 	b.WriteString("\n\n")
 
 	b.WriteString(v.textarea.View())
+	b.WriteString("\n")
 
 	if v.err != nil {
 		b.WriteString("\n\n")
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 	}
 
-	if v.showSuggestions && len(v.filteredSuggestions) > 0 {
-		b.WriteString("\n\n")
-		b.WriteString(v.renderAutocompletePanel())
-	}
+	b.WriteString("\n")
+	b.WriteString(v.renderSuggestionArea())
 
 	b.WriteString("\n\n")
 	b.WriteString(styles.RenderHelp(
-		"ctrl+enter", "run query",
+		styles.KeyExecute, styles.KeyExecuteDesc,
 		"ctrl+@", "autocomplete",
 		"[e]", "export results",
 		"ctrl+l", "clear",
@@ -374,13 +379,62 @@ func (v *EditorView) triggerAutocomplete() {
 	v.updateAutocomplete(text, v.cursorPos)
 	if len(v.filteredSuggestions) > 0 {
 		v.showSuggestions = true
+		v.refreshLayout()
 	}
+}
+
+func (v *EditorView) applyWindowSize(width, height int) {
+	v.lastWidth = width
+	v.lastHeight = height
+
+	v.textarea.SetWidth(width - 8)
+
+	v.suggestionHeight = v.computeSuggestionHeight(height)
+
+	targetHeight := height - 20 - v.suggestionHeight
+	if targetHeight < 5 {
+		targetHeight = 5
+	}
+	v.textarea.SetHeight(targetHeight)
+}
+
+func (v *EditorView) refreshLayout() {
+	if v.lastWidth > 0 && v.lastHeight > 0 {
+		v.applyWindowSize(v.lastWidth, v.lastHeight)
+	}
+}
+
+func (v *EditorView) computeSuggestionHeight(totalHeight int) int {
+	if !v.showSuggestions || len(v.filteredSuggestions) == 0 {
+		return 0
+	}
+
+	// Leave room for title, spacing, and help footer (~20 lines previously)
+	available := totalHeight - 20 - 8 // reserve at least 8 lines for the textarea
+	if available <= 0 {
+		return 0
+	}
+
+	height := available
+	if height > maxSuggestionHeight {
+		height = maxSuggestionHeight
+	}
+	if height < minSuggestionHeight {
+		height = available
+	}
+
+	return height
 }
 
 // updateAutocomplete updates the autocomplete suggestions based on the current context
 func (v *EditorView) updateAutocomplete(text string, pos int) {
+	previouslyShown := v.showSuggestions
+
 	if pos == 0 {
 		v.showSuggestions = false
+		if previouslyShown {
+			v.refreshLayout()
+		}
 		return
 	}
 
@@ -406,11 +460,17 @@ func (v *EditorView) updateAutocomplete(text string, pos int) {
 			if v.selectedSuggestion >= len(v.filteredSuggestions) {
 				v.selectedSuggestion = 0
 			}
+			if !previouslyShown {
+				v.refreshLayout()
+			}
 			return
 		}
 	}
 
 	v.showSuggestions = false
+	if previouslyShown {
+		v.refreshLayout()
+	}
 }
 
 // loadSuggestionsForContext loads all possible suggestions based on SQL context
@@ -779,7 +839,7 @@ func (v *EditorView) renderAutocompletePanel() string {
 	panel.WriteString(header)
 	panel.WriteString("\n\n")
 
-	maxDisplay := 10
+	maxDisplay := 8
 	if len(v.filteredSuggestions) < maxDisplay {
 		maxDisplay = len(v.filteredSuggestions)
 	}
@@ -813,6 +873,19 @@ func (v *EditorView) renderAutocompletePanel() string {
 	return styles.BoxStyle.Render(panel.String())
 }
 
+func (v *EditorView) renderSuggestionArea() string {
+	content := ""
+	if v.showSuggestions && len(v.filteredSuggestions) > 0 {
+		content = v.renderAutocompletePanel()
+	}
+
+	// Keep layout stable by reserving a fixed-height area for suggestions.
+	return lipgloss.NewStyle().
+		Height(v.suggestionHeight).
+		MaxHeight(v.suggestionHeight).
+		Render(content)
+}
+
 func (v *EditorView) acceptSuggestion() {
 	if v.selectedSuggestion >= 0 && v.selectedSuggestion < len(v.filteredSuggestions) {
 		sug := v.filteredSuggestions[v.selectedSuggestion]
@@ -839,6 +912,7 @@ func (v *EditorView) acceptSuggestion() {
 		v.textarea.SetValue(newText)
 		v.showSuggestions = false
 		v.selectedSuggestion = 0
+		v.refreshLayout()
 	}
 }
 

@@ -17,6 +17,32 @@
 import {ReactElement} from "react";
 import {Icons} from "../components/icons";
 
+/**
+ * Type category for grouping database types in the UI.
+ */
+export type TypeCategory = 'numeric' | 'text' | 'binary' | 'datetime' | 'boolean' | 'json' | 'other';
+
+/**
+ * Defines a canonical database type for use in type selectors.
+ * Types are from each database's official documentation.
+ */
+export interface TypeDefinition {
+    /** Canonical type name (e.g., "VARCHAR", "INTEGER") - stored internally */
+    id: string;
+    /** Display label shown in UI (e.g., "varchar", "integer") - database's preferred case */
+    label: string;
+    /** Shows length input when selected (VARCHAR, CHAR) */
+    hasLength?: boolean;
+    /** Shows precision/scale inputs when selected (DECIMAL, NUMERIC) */
+    hasPrecision?: boolean;
+    /** Default length value for types with hasLength */
+    defaultLength?: number;
+    /** Default precision for types with hasPrecision */
+    defaultPrecision?: number;
+    /** Type category for grouping and icon selection */
+    category: TypeCategory;
+}
+
 // Extended dropdown item type with UI field configuration
 export interface IDatabaseDropdownItem {
     id: string;
@@ -32,8 +58,10 @@ export interface IDatabaseDropdownItem {
     };
     // Valid operators for this database type
     operators?: string[];
-    // Valid data types for creating tables/collections
-    dataTypes?: string[];
+    /** Canonical type definitions for type selectors */
+    typeDefinitions?: TypeDefinition[];
+    /** Maps type aliases to canonical names (e.g., INT4 -> INTEGER) */
+    aliasMap?: Record<string, string>;
     // Whether this database supports field modifiers (primary, nullable)
     supportsModifiers?: boolean;
     // Whether this database supports scratchpad/raw query execution
@@ -58,10 +86,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsModifiers: true,
         supportsScratchpad: true,
         supportsSchema: true,
         supportsDatabaseSwitching: true,
-        usesSchemaForGraph: true,  // Uses database field for graph queries
+        usesSchemaForGraph: true,
     },
     {
         id: "MySQL",
@@ -74,10 +103,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsModifiers: true,
         supportsScratchpad: true,
         supportsSchema: true,
         supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,  // Uses database field for graph queries
+        usesSchemaForGraph: true,
     },
     {
         id: "MariaDB",
@@ -90,10 +120,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsModifiers: true,
         supportsScratchpad: true,
         supportsSchema: true,
         supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,  // Uses database field for graph queries
+        usesSchemaForGraph: true,
     },
     {
         id: "Sqlite3",
@@ -103,10 +134,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         fields: {
             database: true,  // SQLite only needs database field
         },
+        supportsModifiers: true,
         supportsScratchpad: true,
-        supportsSchema: false,  // SQLite doesn't support schemas
+        supportsSchema: false,
         supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,  // Uses schema field for graph queries
+        usesSchemaForGraph: true,
     },
     {
         id: "MongoDB",
@@ -173,10 +205,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
+        supportsModifiers: true,
         supportsScratchpad: true,
         supportsSchema: false,
         supportsDatabaseSwitching: true,
-        usesSchemaForGraph: false,  // Uses database field for graph queries
+        usesSchemaForGraph: false,
     },
 ];
 
@@ -203,8 +236,6 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 icon: Icons.Logos[dbType.iconName as keyof typeof Icons.Logos],
                 extra: dbType.extra,
                 fields: dbType.fields,
-                operators: dbType.operators,
-                dataTypes: dbType.dataTypes,
                 supportsModifiers: dbType.supportsModifiers,
                 supportsScratchpad: dbType.supportsScratchpad,
                 supportsSchema: dbType.supportsSchema,

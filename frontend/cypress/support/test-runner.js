@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {validateAllFixtures, VALID_FEATURES} from './helpers/fixture-validator';
+import {VALID_FEATURES, validateAllFixtures} from './helpers/fixture-validator';
 
 // CE Database configurations - loaded from fixtures
 const ceDatabaseConfigs = {
@@ -116,8 +116,11 @@ export function getDatabaseId(dbConfig) {
  * Login to database using configuration with session caching
  * Uses cy.session() to cache login state and avoid re-authenticating on every test
  * @param {Object} dbConfig - Database configuration
+ * @param {Object} options - Additional options
+ * @param {boolean} options.visitStorageUnit - Whether to navigate to storage-unit after login (default: true)
  */
-export function loginToDatabase(dbConfig) {
+export function loginToDatabase(dbConfig, options = {}) {
+    const {visitStorageUnit = true} = options;
     // Convert null to undefined for login command (it has special handling for undefined)
     const host = dbConfig.connection.host ?? undefined;
     const user = dbConfig.connection.user ?? undefined;
@@ -161,10 +164,11 @@ export function loginToDatabase(dbConfig) {
         cacheAcrossSpecs: true // Share session across spec files for same database
     });
 
-    // After session restore, navigate to storage-unit page
-    cy.visit('/storage-unit');
-    cy.get('[data-testid="storage-unit-card"]', { timeout: 15000 })
-        .should('have.length.at.least', 1);
+    if (visitStorageUnit) {
+        cy.visit('/storage-unit');
+        cy.get('[data-testid="storage-unit-card"]', { timeout: 15000 })
+            .should('have.length.at.least', 1);
+    }
 }
 
 /**
@@ -185,10 +189,11 @@ export function loginToDatabase(dbConfig) {
  * @param {Object} options - Additional options
  * @param {boolean} options.login - Whether to auto-login before each test (default: true)
  * @param {boolean} options.logout - Whether to auto-logout after each test (default: true)
+ * @param {boolean} options.navigateToStorageUnit - Whether to navigate to storage-unit after login (default: true)
  * @param {string[]} options.features - Required features; databases without ALL features are skipped entirely
  */
 export function forEachDatabase(categoryFilter, testFn, options = {}) {
-    const {login = true, logout = true, features = []} = options;
+    const {login = true, logout = true, navigateToStorageUnit = true, features = []} = options;
 
     // Validate requested features to catch typos early
     for (const feature of features) {
@@ -246,7 +251,7 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
                 Cypress.env('currentDatabase', dbConfig);
 
                 if (login) {
-                    loginToDatabase(dbConfig);
+                    loginToDatabase(dbConfig, {visitStorageUnit: navigateToStorageUnit});
                 }
             });
 

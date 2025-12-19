@@ -103,6 +103,9 @@ func NewChatView(parent *MainModel) *ChatView {
 		}
 	}
 
+	// Load consent from config
+	consentGiven := parent.config.GetAIConsent()
+
 	return &ChatView{
 		parent:           parent,
 		providers:        providers,
@@ -120,7 +123,7 @@ func NewChatView(parent *MainModel) *ChatView {
 		selectedMessage:  -1,
 		viewingResult:    false,
 		focusField:       focusFieldMessage,
-		consented:        false,
+		consented:        consentGiven,
 	}
 }
 
@@ -134,6 +137,12 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			switch m.String() {
 			case "a":
 				v.consented = true
+				// Persist consent to config
+				v.parent.config.SetAIConsent(true)
+				if err := v.parent.config.Save(); err != nil {
+					v.err = fmt.Errorf("failed to save consent: %w", err)
+					return v, nil
+				}
 				if len(v.providers) > 0 {
 					return v, v.loadModels()
 				}
@@ -154,6 +163,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 	switch msg := msg.(type) {
 	case chatResponseMsg:
 		v.sending = false
+		maxVisibleMessages := 6 // Must match View()
 		if msg.err != nil {
 			v.err = msg.err
 			v.messages = append(v.messages, chatMessage{
@@ -161,9 +171,8 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				Content: fmt.Sprintf("Error: %s", msg.err.Error()),
 				Type:    "error",
 			})
-			maxMsgHeight := v.height - 18
-			if len(v.messages) > maxMsgHeight {
-				v.scrollOffset = len(v.messages) - maxMsgHeight
+			if len(v.messages) > maxVisibleMessages {
+				v.scrollOffset = len(v.messages) - maxVisibleMessages
 			}
 			return v, nil
 		}
@@ -178,9 +187,9 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		}
 		v.err = nil
 
-		maxMsgHeight := v.height - 18
-		if len(v.messages) > maxMsgHeight {
-			v.scrollOffset = len(v.messages) - maxMsgHeight
+		// Auto-scroll to show latest messages
+		if len(v.messages) > maxVisibleMessages {
+			v.scrollOffset = len(v.messages) - maxVisibleMessages
 		}
 		return v, nil
 
@@ -229,6 +238,15 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+r":
+			// Revoke consent
+			v.consented = false
+			v.parent.config.SetAIConsent(false)
+			if err := v.parent.config.Save(); err != nil {
+				v.err = fmt.Errorf("failed to revoke consent: %w", err)
+			}
+			return v, nil
+
 		case "esc":
 			if v.viewingResult {
 				v.viewingResult = false
@@ -237,12 +255,55 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			v.parent.mode = ViewBrowser
 			return v, nil
 
-		case "ctrl+f":
-			v.focusField = (v.focusField + 1) % 3
-			if v.focusField == focusFieldMessage {
-				v.input.Focus()
-			} else {
-				v.input.Blur()
+		case "ctrl+i", "/":
+			// Focus chat input
+			v.focusField = focusFieldMessage
+			v.input.Focus()
+			return v, nil
+
+		case "up":
+			// Cycle backward through fields: message -> model -> provider
+			if v.focusField > focusFieldProvider {
+				v.focusField--
+				if v.focusField == focusFieldMessage {
+					v.input.Focus()
+				} else {
+					v.input.Blur()
+				}
+			}
+			return v, nil
+
+		case "down":
+			// Cycle forward through fields: provider -> model -> message
+			if v.focusField < focusFieldMessage {
+				v.focusField++
+				if v.focusField == focusFieldMessage {
+					v.input.Focus()
+				} else {
+					v.input.Blur()
+				}
+			}
+			return v, nil
+
+		case "ctrl+p":
+			// Select previous message in conversation
+			if len(v.messages) > 0 {
+				if v.selectedMessage < 0 {
+					v.selectedMessage = len(v.messages) - 1
+				} else if v.selectedMessage > 0 {
+					v.selectedMessage--
+				}
+			}
+			return v, nil
+
+		case "ctrl+n":
+			// Select next message in conversation
+			if len(v.messages) > 0 {
+				if v.selectedMessage < 0 {
+					v.selectedMessage = 0
+				} else if v.selectedMessage < len(v.messages)-1 {
+					v.selectedMessage++
+				}
 			}
 			return v, nil
 
@@ -325,63 +386,36 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "up":
-			if v.focusField == focusFieldMessage && len(v.messages) > 0 {
-				if v.selectedMessage < 0 {
-					v.selectedMessage = len(v.messages) - 1
-				} else if v.selectedMessage > 0 {
-					v.selectedMessage--
-				}
-				return v, nil
-			}
-
-		case "k":
-			if v.focusField == focusFieldMessage {
-				if len(v.messages) > 0 {
-					if v.selectedMessage < 0 {
-						v.selectedMessage = len(v.messages) - 1
-					} else if v.selectedMessage > 0 {
-						v.selectedMessage--
-					}
-				}
-				return v, nil
-			}
-
-		case "down":
-			if v.focusField == focusFieldMessage && len(v.messages) > 0 {
-				if v.selectedMessage < 0 {
-					v.selectedMessage = 0
-				} else if v.selectedMessage < len(v.messages)-1 {
-					v.selectedMessage++
-				}
-				return v, nil
-			}
-
-		case "j":
-			if v.focusField == focusFieldMessage {
-				if len(v.messages) > 0 {
-					if v.selectedMessage < 0 {
-						v.selectedMessage = 0
-					} else if v.selectedMessage < len(v.messages)-1 {
-						v.selectedMessage++
-					}
-				}
-				return v, nil
-			}
-
 		case "v":
-			if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
-				msg := v.messages[v.selectedMessage]
-				if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
-					v.parent.resultsView.SetResults(msg.Result, "")
-					v.parent.mode = ViewResults
-					return v, nil
+			// Only handle when not typing in message input
+			if v.focusField != focusFieldMessage {
+				if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
+					msg := v.messages[v.selectedMessage]
+					if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
+						v.parent.resultsView.SetResults(msg.Result, "")
+						v.parent.resultsView.returnTo = ViewChat
+						v.parent.mode = ViewResults
+						return v, nil
+					}
 				}
+				return v, nil
 			}
-			return v, nil
 
 		case "enter":
-			if v.focusField == focusFieldMessage && !v.sending {
+			if v.focusField == focusFieldProvider {
+				// Confirm provider selection, load models, and move to model field
+				if !v.loadingModels {
+					v.loadingModels = true
+					v.focusField = focusFieldModel
+					return v, v.loadModels()
+				}
+				return v, nil
+			} else if v.focusField == focusFieldModel {
+				// Confirm model selection and move to message field
+				v.focusField = focusFieldMessage
+				v.input.Focus()
+				return v, nil
+			} else if v.focusField == focusFieldMessage && !v.sending {
 				query := strings.TrimSpace(v.input.Value())
 				if query != "" {
 					v.messages = append(v.messages, chatMessage{
@@ -484,11 +518,13 @@ func (v *ChatView) View() string {
 	}
 	b.WriteString("\n\n")
 
-	maxMsgHeight := v.height - 18
 	if len(v.messages) > 0 {
+		// Fixed max messages to display (keeps window size stable)
+		maxVisibleMessages := 6
 		b.WriteString(styles.RenderSubtitle("Conversation"))
 		b.WriteString("\n")
 
+		// Auto-scroll to show latest messages
 		startIdx := v.scrollOffset
 		if startIdx < 0 {
 			startIdx = 0
@@ -497,7 +533,7 @@ func (v *ChatView) View() string {
 			startIdx = len(v.messages) - 1
 		}
 
-		endIdx := startIdx + maxMsgHeight
+		endIdx := startIdx + maxVisibleMessages
 		if endIdx > len(v.messages) {
 			endIdx = len(v.messages)
 		}
@@ -515,7 +551,7 @@ func (v *ChatView) View() string {
 				b.WriteString(prefix)
 				b.WriteString(styles.KeyStyle.Render("You: "))
 
-				content := msg.Content
+				content := v.wrapText(msg.Content, 7) // 2 (prefix) + 5 ("You: ")
 				if isSelected {
 					content = styles.ActiveListItemStyle.Render(content)
 				}
@@ -530,12 +566,12 @@ func (v *ChatView) View() string {
 
 				if msg.Type == "error" {
 					b.WriteString(styles.ErrorStyle.Render("Error: "))
-					b.WriteString(msg.Content)
+					b.WriteString(v.wrapText(msg.Content, 9)) // 2 (prefix) + 7 ("Error: ")
 					b.WriteString("\n\n")
 				} else if strings.HasPrefix(msg.Type, "sql") {
 					b.WriteString(styles.SuccessStyle.Render("Assistant: "))
 					if msg.Content != "" {
-						b.WriteString(msg.Content)
+						b.WriteString(v.wrapText(msg.Content, 14)) // 2 (prefix) + 12 ("Assistant: ")
 						b.WriteString("\n")
 					}
 					if msg.Result != nil {
@@ -549,7 +585,7 @@ func (v *ChatView) View() string {
 					b.WriteString("\n")
 				} else {
 					b.WriteString(styles.SuccessStyle.Render("Assistant: "))
-					b.WriteString(msg.Content)
+					b.WriteString(v.wrapText(msg.Content, 14)) // 2 (prefix) + 12 ("Assistant: ")
 					b.WriteString("\n\n")
 				}
 			}
@@ -558,10 +594,10 @@ func (v *ChatView) View() string {
 		if v.scrollOffset > 0 || endIdx < len(v.messages) {
 			scrollInfo := fmt.Sprintf("Messages %d-%d of %d", startIdx+1, endIdx, len(v.messages))
 			if v.scrollOffset > 0 {
-				scrollInfo += " • ↑ more above"
+				scrollInfo += " • ↑ scroll up"
 			}
 			if endIdx < len(v.messages) {
-				scrollInfo += " • ↓ more below"
+				scrollInfo += " • ↓ scroll down"
 			}
 			b.WriteString("\n")
 			b.WriteString(styles.MutedStyle.Render(scrollInfo))
@@ -580,18 +616,35 @@ func (v *ChatView) View() string {
 	b.WriteString("\n\n")
 
 	b.WriteString(styles.RenderHelp(
-		"↑/↓", "select",
-		"[v]", "view table",
-		"scroll", "trackpad/mouse",
-		"enter", "send",
-		"ctrl+f", "focus field",
+		"↑/↓", "cycle fields",
 		"←/→", "change selection",
-		"ctrl+l", "load models",
-		"tab", "next view",
+		"enter", "confirm/send",
+		"ctrl+p/n", "select message",
+		"[v]", "view table",
+		"ctrl+r", "revoke consent",
 		"esc", "back",
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
+
+// wrapText wraps text to fit within the available width and limits lines
+func (v *ChatView) wrapText(text string, indent int) string {
+	availableWidth := v.width - 8 - indent // 8 = padding (4) + margin (4)
+	if availableWidth < 20 {
+		availableWidth = 20
+	}
+	wrapped := lipgloss.NewStyle().Width(availableWidth).Render(text)
+
+	// Limit to max 4 lines to keep view stable
+	lines := strings.Split(wrapped, "\n")
+	maxLines := 4
+	if len(lines) > maxLines {
+		lines = lines[:maxLines]
+		lines[maxLines-1] = lines[maxLines-1] + "..."
+		wrapped = strings.Join(lines, "\n")
+	}
+	return wrapped
 }
 
 func (v *ChatView) renderTableSummary(result *engine.GetRowsResult) string {

@@ -27,6 +27,7 @@ import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
 import {CommandLineIcon, MagnifyingGlassIcon} from "./heroicons";
 import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
+import {useDatabaseMetadata} from "@/hooks/useDatabaseMetadata";
 
 type IPageProps = {
     wrapperClassName?: string;
@@ -122,6 +123,11 @@ const KeyboardShortcutsHint: FC = () => {
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const { t } = useTranslation('components/page');
     const current = useAppSelector(state => state.auth.current);
+
+    // Fetch database metadata when logged in - this populates Redux store
+    // for utilities like getDatabaseOperators and getDatabaseTypeDefinitions
+    useDatabaseMetadata();
+
     return (
         <Container>
             {/* Skip link for keyboard navigation */}

@@ -9,10 +9,9 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/core/server.go",
+            "program": "${workspaceFolder}/core",
             "env": {
-                "ENVIRONMENT": "dev",
-              "WHODB_LOG_LEVEL": "debug",
+              "WHODB_LOG_LEVEL": "error",
               "WHODB_DISABLE_MOCK_DATA_GENERATION": ""
             }
         },
@@ -21,10 +20,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/core/server_ee.go",
+            "program": "${workspaceFolder}/core",
             "env": {
                 "ENVIRONMENT": "dev",
-                "WHODB_LOG_LEVEL": "debug"
+                "WHODB_LOG_LEVEL": "error"
             },
             "buildFlags": "-tags=ee",
             "args": []

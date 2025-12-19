@@ -33,7 +33,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			return false, errors.New("no fields provided for table creation")
 		}
 
-		migrator := NewMigratorHelper(db, p)
+		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 		var fullTableName string
 		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
 			fullTableName = schema + "." + storageUnit
@@ -46,9 +46,10 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		}
 
 		var columns []engine.Record
+		metadata := p.GetDatabaseMetadata()
 		for _, fieldType := range fields {
-			if !p.GetSupportedColumnDataTypes().Contains(fieldType.Value) {
-				return false, fmt.Errorf("data type: %s not supported by: %s", fieldType.Value, p.Plugin.Type)
+			if err := engine.ValidateColumnType(fieldType.Value, metadata); err != nil {
+				return false, err
 			}
 
 			// Keep original field name without quoting for column definition
@@ -100,7 +101,7 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 	}
 
 	// Fetch column types to ensure proper type conversion
-	columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+	columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		log.Logger.WithError(err).WithField("schema", schema).WithField("storageUnit", storageUnit).
 			Warn("Failed to fetch column types, continuing without type information")

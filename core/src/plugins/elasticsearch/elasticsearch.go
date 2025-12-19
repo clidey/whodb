@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package elasticsearch
@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -322,7 +323,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 	var buf bytes.Buffer
 	query := map[string]interface{}{
-		"size": 1,
+		"size": 100,
 		"query": map[string]interface{}{
 			"match_all": map[string]interface{}{},
 		},
@@ -359,8 +360,21 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		return []engine.Column{}, nil
 	}
 
-	sampleHit := hits[0].(map[string]interface{})
-	sampleDoc := sampleHit["_source"].(map[string]interface{})
+	fieldTypes := make(map[string]string)
+	for _, h := range hits {
+		hitMap, ok := h.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		source, ok := hitMap["_source"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for fieldName, fieldValue := range source {
+			fieldType := inferElasticSearchType(fieldValue)
+			fieldTypes[fieldName] = mergeElasticTypes(fieldTypes[fieldName], fieldType)
+		}
+	}
 
 	indicesRes, err := client.Indices.Stats()
 	if err != nil {
@@ -381,23 +395,32 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	}
 
 	indicesStats := stats["indices"].(map[string]interface{})
-	indices := []string{}
+	var indices []string
 	for indexName := range indicesStats {
 		indices = append(indices, indexName)
 	}
 
-	columns := []engine.Column{}
+	if len(fieldTypes) == 0 {
+		return []engine.Column{}, nil
+	}
 
-	// Add _id as primary key first (it's not in _source)
-	columns = append(columns, engine.Column{
-		Name:         "_id",
-		Type:         "keyword",
-		IsPrimary:    true,
-		IsForeignKey: false,
-	})
+	fieldNames := make([]string, 0, len(fieldTypes))
+	for name := range fieldTypes {
+		fieldNames = append(fieldNames, name)
+	}
+	sort.Strings(fieldNames)
 
-	for fieldName, fieldValue := range sampleDoc {
-		fieldType := inferElasticSearchType(fieldValue)
+	columns := []engine.Column{
+		{
+			Name:         "_id",
+			Type:         "keyword",
+			IsPrimary:    true,
+			IsForeignKey: false,
+		},
+	}
+
+	for _, fieldName := range fieldNames {
+		fieldType := fieldTypes[fieldName]
 
 		var isForeignKey bool
 		var referencedTable *string
@@ -473,6 +496,13 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 		// Full-text search
 		return map[string]any{
 			"match": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
+	case "match_phrase_prefix", "MATCH_PHRASE_PREFIX":
+		return map[string]any{
+			"match_phrase_prefix": map[string]any{
 				atomic.Key: atomic.Value,
 			},
 		}, nil
@@ -589,9 +619,35 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 
 	case "terms", "TERMS":
 		// Multiple exact matches
+		values := parseCSVToSlice(atomic.Value)
 		return map[string]any{
 			"terms": map[string]any{
-				atomic.Key: atomic.Value,
+				atomic.Key: values,
+			},
+		}, nil
+
+	case "ids", "IDS":
+		var ids []any
+		ids = parseCSVToSlice(atomic.Value)
+		return map[string]any{
+			"ids": map[string]any{
+				"values": ids,
+			},
+		}, nil
+
+	case "range", "RANGE":
+		// Expect "min,max" (empty allowed)
+		minBound, maxBound := parseRangeBounds(fmt.Sprintf("%v", atomic.Value))
+		rangeClause := map[string]any{}
+		if minBound != "" {
+			rangeClause["gte"] = minBound
+		}
+		if maxBound != "" {
+			rangeClause["lte"] = maxBound
+		}
+		return map[string]any{
+			"range": map[string]any{
+				atomic.Key: rangeClause,
 			},
 		}, nil
 
@@ -638,6 +694,17 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 			},
 		}, nil
 	}
+}
+
+// mergeElasticTypes combines inferred types; conflicting types become "mixed".
+func mergeElasticTypes(current, next string) string {
+	if current == "" {
+		return next
+	}
+	if current == next {
+		return current
+	}
+	return "mixed"
 }
 
 func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, error) {
@@ -732,6 +799,28 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 	}
 }
 
+func parseCSVToSlice(raw string) []any {
+	if strings.TrimSpace(raw) == "" {
+		return []any{}
+	}
+	parts := strings.Split(raw, ",")
+	values := make([]any, 0, len(parts))
+	for _, p := range parts {
+		values = append(values, strings.TrimSpace(p))
+	}
+	return values
+}
+
+func parseRangeBounds(raw string) (string, string) {
+	parts := strings.Split(raw, ",")
+	if len(parts) == 1 {
+		return strings.TrimSpace(parts[0]), ""
+	}
+	minBound := strings.TrimSpace(parts[0])
+	maxBound := strings.TrimSpace(parts[1])
+	return minBound, maxBound
+}
+
 func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
 	return nil, errors.New("unsupported operation")
 }
@@ -770,6 +859,33 @@ func (p *ElasticSearchPlugin) GetForeignKeyRelationships(config *engine.PluginCo
 
 func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string { //nolint:unused
 	return supportedOperators
+}
+
+// GetDatabaseMetadata returns ElasticSearch metadata for frontend configuration.
+// ElasticSearch is a search engine without traditional type definitions.
+func (p *ElasticSearchPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
+	operators := make([]string, 0, len(supportedOperators))
+	for op := range supportedOperators {
+		operators = append(operators, op)
+	}
+	return &engine.DatabaseMetadata{
+		DatabaseType: engine.DatabaseType_ElasticSearch,
+		TypeDefinitions: []engine.TypeDefinition{
+			{ID: "text", Label: "text", Category: engine.TypeCategoryText},
+			{ID: "keyword", Label: "keyword", Category: engine.TypeCategoryText},
+			{ID: "boolean", Label: "boolean", Category: engine.TypeCategoryBoolean},
+			{ID: "long", Label: "long", Category: engine.TypeCategoryNumeric},
+			{ID: "double", Label: "double", Category: engine.TypeCategoryNumeric},
+			{ID: "date", Label: "date", Category: engine.TypeCategoryDatetime},
+			{ID: "object", Label: "object", Category: engine.TypeCategoryOther},
+			{ID: "array", Label: "array", Category: engine.TypeCategoryOther},
+			{ID: "geo_point", Label: "geo_point", Category: engine.TypeCategoryOther},
+			{ID: "nested", Label: "nested", Category: engine.TypeCategoryOther},
+			{ID: "mixed", Label: "mixed", Category: engine.TypeCategoryOther},
+		},
+		Operators: operators,
+		AliasMap:  map[string]string{},
+	}
 }
 
 func NewElasticSearchPlugin() *engine.Plugin {

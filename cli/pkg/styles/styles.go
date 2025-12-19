@@ -18,11 +18,29 @@ package styles
 
 import (
 	"os"
+	"runtime"
 	"sync/atomic"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
+
+// Platform-aware keyboard shortcut labels
+var (
+	// KeyExecute is the shortcut to execute a query (Alt+Enter / Option+Enter)
+	KeyExecute string
+	// KeyExecuteDesc is the description for the execute shortcut
+	KeyExecuteDesc = "run query"
+)
+
+func init() {
+	// Set platform-appropriate shortcut labels
+	if runtime.GOOS == "darwin" {
+		KeyExecute = "opt+enter"
+	} else {
+		KeyExecute = "alt+enter"
+	}
+}
 
 var colorDisabled atomic.Bool
 

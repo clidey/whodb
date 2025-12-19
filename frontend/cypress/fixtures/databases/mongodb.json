@@ -74,7 +74,7 @@
         ]
       },
       "metadata": {
-        "type": "Collection",
+        "type": "collection",
         "hasStorageSize": true,
         "hasCount": true
       }
@@ -83,10 +83,10 @@
   "graph": {
     "expectedNodes": {
       "users": [],
-      "orders": [],
-      "order_items": [],
+      "orders": ["users"],
+      "order_items": ["orders", "products"],
       "products": [],
-      "payments": [],
+      "payments": ["orders"],
       "order_summary": []
     }
   }

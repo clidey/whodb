@@ -6,5 +6,8 @@ query Columns($schema: String!, $storageUnit: String!) {
         IsForeignKey
         ReferencedTable
         ReferencedColumn
+        Length
+        Precision
+        Scale
     }
 }

@@ -80,7 +80,7 @@
         }
       },
       "metadata": {
-        "type": "Index",
+        "type": "index",
         "hasCount": true
       }
     }

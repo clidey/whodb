@@ -15,6 +15,7 @@
 package log
 
 import (
+	"io"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -113,6 +114,13 @@ func (c *ConditionalLogger) Warn(args ...any) {
 	c.Logger.Warn(args...)
 }
 
+func (c *ConditionalLogger) Warnf(format string, args ...any) {
+	if !isLevelEnabled("warning") {
+		return
+	}
+	c.Logger.Warnf(format, args...)
+}
+
 func (c *ConditionalLogger) Info(args ...any) {
 	if !isLevelEnabled("info") {
 		return
@@ -164,4 +172,12 @@ func LogFields(fields Fields) *ConditionalEntry {
 
 func SetLogLevel(level string) {
 	logLevel = level
+}
+
+// DisableOutput redirects all log output to io.Discard, preventing any logs from appearing in stdout/stderr.
+// This is useful for TUI applications where stdout is used for terminal rendering.
+func DisableOutput() {
+	if Logger != nil {
+		Logger.SetOutput(io.Discard)
+	}
 }

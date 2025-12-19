@@ -28,17 +28,34 @@ import (
 
 func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]*engine.ChatMessage, error) {
-		tableFields, err := p.GetTableSchema(db, schema)
+		// Get table names from table info query
+		rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
 		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get table schema for chat operation in schema: %s", schema))
+			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get tables for chat operation in schema: %s", schema))
 			return nil, err
 		}
+		defer rows.Close()
 
+		helper := NewMigratorHelper(db, p.GormPluginFunctions)
 		tableDetails := strings.Builder{}
-		for tableName, fields := range tableFields {
+
+		for rows.Next() {
+			tableName, _ := p.GetTableNameAndAttributes(rows)
+			if tableName == "" {
+				continue
+			}
+
+			// Use GORM migrator to get column types with length info (preserves column order)
+			fullTableName := p.FormTableName(schema, tableName)
+			orderedColumns, err := helper.GetOrderedColumns(fullTableName)
+			if err != nil {
+				log.Logger.WithError(err).Warnf("Failed to get column types for table %s in chat", fullTableName)
+				continue
+			}
+
 			tableDetails.WriteString(fmt.Sprintf("table: %v\n", tableName))
-			for _, field := range fields {
-				tableDetails.WriteString(fmt.Sprintf("- %v (%v)\n", field.Key, field.Value))
+			for _, col := range orderedColumns {
+				tableDetails.WriteString(fmt.Sprintf("- %v (%v)\n", col.Name, col.Type))
 			}
 		}
 

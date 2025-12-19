@@ -162,11 +162,16 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 
-		case "tab":
-			return m.handleTabSwitch()
-
-		case "?":
+		case "tab", "shift+tab":
+			// Let connection view handle Tab for its own navigation
+			if m.mode == ViewConnection {
+				return m.updateConnectionView(msg)
+			}
+			if msg.String() == "tab" {
+				return m.handleTabSwitch()
+			}
 			return m, nil
+
 		}
 	}
 
@@ -201,30 +206,33 @@ func (m *MainModel) View() string {
 		return renderError(m.err.Error())
 	}
 
+	viewIndicator := m.renderViewIndicator()
+
+	var content string
 	switch m.mode {
 	case ViewConnection:
-		return m.connectionView.View()
+		content = m.connectionView.View()
 	case ViewBrowser:
-		return m.browserView.View()
+		content = m.browserView.View()
 	case ViewEditor:
-		return m.editorView.View()
+		content = m.editorView.View()
 	case ViewResults:
-		return m.resultsView.View()
+		content = m.resultsView.View()
 	case ViewHistory:
-		return m.historyView.View()
+		content = m.historyView.View()
 	case ViewExport:
-		return m.exportView.View()
+		content = m.exportView.View()
 	case ViewWhere:
-		return m.whereView.View()
+		content = m.whereView.View()
 	case ViewColumns:
-		return m.columnsView.View()
+		content = m.columnsView.View()
 	case ViewChat:
-		return m.chatView.View()
+		content = m.chatView.View()
 	case ViewSchema:
-		return m.schemaView.View()
+		content = m.schemaView.View()
 	}
 
-	return ""
+	return viewIndicator + "\n" + content
 }
 
 func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
@@ -232,18 +240,25 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	nextMode := (m.mode + 1) % 10
+	// Define explicit tab order for tabbable views
+	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewHistory, ViewChat}
 
-	if nextMode == ViewConnection {
-		nextMode = ViewBrowser
+	// Find current position in tab order
+	currentIndex := -1
+	for i, mode := range tabOrder {
+		if mode == m.mode {
+			currentIndex = i
+			break
+		}
 	}
 
-	// Skip export, where, columns, chat, and schema views in tab switching
-	if nextMode == ViewExport || nextMode == ViewWhere || nextMode == ViewColumns || nextMode == ViewChat || nextMode == ViewSchema {
-		nextMode = ViewBrowser
+	// Move to next view in tab order (or start at beginning if not in tabbable view)
+	if currentIndex == -1 {
+		m.mode = tabOrder[0]
+	} else {
+		m.mode = tabOrder[(currentIndex+1)%len(tabOrder)]
 	}
 
-	m.mode = nextMode
 	return m, nil
 }
 
@@ -305,6 +320,69 @@ func (m *MainModel) updateSchemaView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.schemaView, cmd = m.schemaView.Update(msg)
 	return m, cmd
+}
+
+func (m *MainModel) renderViewIndicator() string {
+	views := []struct {
+		mode ViewMode
+		name string
+	}{
+		{ViewConnection, "Connection"},
+		{ViewBrowser, "Browser"},
+		{ViewEditor, "Editor"},
+		{ViewResults, "Results"},
+		{ViewHistory, "History"},
+		{ViewChat, "Chat"},
+		{ViewExport, "Export"},
+		{ViewWhere, "Where"},
+		{ViewColumns, "Columns"},
+		{ViewSchema, "Schema"},
+	}
+
+	// Define which views are tab-accessible
+	tabbableViews := map[ViewMode]bool{
+		ViewBrowser: true,
+		ViewEditor:  true,
+		ViewResults: true,
+		ViewHistory: true,
+		ViewChat:    true,
+	}
+
+	var parts []string
+	for _, view := range views {
+		if view.mode == m.mode {
+			// Current view: white background with black text
+			activeStyle := styles.BaseStyle.
+				Foreground(styles.Background).
+				Background(styles.Foreground).
+				Padding(0, 1)
+			parts = append(parts, activeStyle.Render(view.name))
+		} else if tabbableViews[view.mode] {
+			// Tab-accessible views: normal white text
+			inactiveStyle := styles.BaseStyle.
+				Foreground(styles.Foreground).
+				Padding(0, 1)
+			parts = append(parts, inactiveStyle.Render(view.name))
+		} else {
+			// Non-tabbable views: dimmed gray text
+			dimmedStyle := styles.BaseStyle.
+				Foreground(styles.Muted).
+				Padding(0, 1)
+			parts = append(parts, dimmedStyle.Render(view.name))
+		}
+	}
+
+	// Join all parts with a separator
+	separator := " "
+	result := ""
+	for i, part := range parts {
+		if i > 0 {
+			result += separator
+		}
+		result += part
+	}
+
+	return result
 }
 
 func renderError(message string) string {

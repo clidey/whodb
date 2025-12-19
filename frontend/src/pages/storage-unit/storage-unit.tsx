@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 import {
@@ -38,7 +38,7 @@ import {
     toast,
     VirtualizedTableBody
 } from '@clidey/ux';
-import {SearchSelect} from "../../components/ux";
+import {TypeSelector} from "../../components/type-selector";
 import {
     DatabaseType,
     RecordInput,
@@ -53,6 +53,7 @@ import {
     CheckCircleIcon,
     CircleStackIcon,
     CommandLineIcon,
+    InformationCircleIcon,
     MagnifyingGlassIcon,
     PlusCircleIcon,
     Squares2X2Icon,
@@ -74,7 +75,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {trackFrontendEvent} from "../../config/posthog";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
-import {databaseSupportsModifiers, getDatabaseDataTypes} from "../../utils/database-data-types";
+import {databaseSupportsModifiers} from "../../utils/database-data-types";
 import {databaseSupportsScratchpad} from "../../utils/database-features";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {Tip} from '../../components/tip';
@@ -85,6 +86,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
+    const current = useAppSelector(state => state.auth.current);
 
     const handleNavigateToDatabase = useCallback(() => {
         navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
@@ -97,17 +99,6 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
     const handleExpand = useCallback(() => {
         setExpanded(s => !s);
     }, []);
-
-    const foreignKeyMap = useMemo(() => {
-        if (!columns) return new Map<string, boolean>();
-        const map = new Map<string, boolean>();
-        columns.forEach(col => {
-            if (col.IsForeignKey) {
-                map.set(col.Name, true);
-            }
-        });
-        return map;
-    }, [columns]);
 
     const [introAttributes, expandedAttributes] = useMemo(() => {
         return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
@@ -130,7 +121,7 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                 </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value}</p>
+                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value?.toLowerCase()}</p>
                     ))
                 }
             </div>
@@ -148,32 +139,49 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                 <TableCellsIcon className="w-5 h-5" />
                 {unit.Name}
             </SheetTitle>
+            {(current?.Type === DatabaseType.MongoDb || current?.Type === DatabaseType.ElasticSearch) && (
+                <div className="mb-2" data-testid="sampled-schema-warning">
+                    <div className="flex items-center gap-xs text-sm">
+                        <InformationCircleIcon className="w-4 h-4" />
+                        <span>{t('sampledSchemaBadge')}</span>
+                    </div>
+                </div>
+            )}
             <div className="w-full" data-testid="explore-fields">
                 <div className="flex flex-col gap-xs2">
                     <StackList>
+                        {/* Metadata attributes (Type, Total Size, etc.) */}
                         {
-                            introAttributes.map(attribute => {
-                                const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                return (
-                                    <StackListItem key={attribute.Key} item={isForeignKey ?
-                                        <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value}
-                                    </StackListItem>
-                                );
-                            })
+                            introAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={attribute.Key}>
+                                    {attribute.Value?.toLowerCase()}
+                                </StackListItem>
+                            ))
                         }
                         {
-                            expandedAttributes.map(attribute => {
-                                const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                return (
-                                    <StackListItem key={attribute.Key} item={isForeignKey ?
-                                        <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                        {attribute.Value}
-                                    </StackListItem>
-                                );
-                            })
+                            expandedAttributes.map(attribute => (
+                                <StackListItem key={attribute.Key} item={attribute.Key}>
+                                    {attribute.Value?.toLowerCase()}
+                                </StackListItem>
+                            ))
                         }
                     </StackList>
+                    {columns && columns.length > 0 && (
+                        <div className="mt-2">
+                            <h3 className="text-xs font-semibold uppercase text-muted-foreground">{t('columnsTitle')}</h3>
+                            <StackList>
+                                {columns.map(col => {
+                                    const isForeignKey = col.IsForeignKey;
+                                    return (
+                                        <StackListItem key={col.Name} item={isForeignKey ?
+                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                            {col.Type?.toLowerCase()}
+                                        </StackListItem>
+                                    );
+                                })}
+                            </StackList>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex items-end grow">
@@ -319,18 +327,6 @@ export const StorageUnitPage: FC = () => {
         })
     }, [fields.length]);
 
-    const storageUnitTypesDropdownItems = useMemo(() => {
-        if (current?.Type == null || isNoSQL(current.Type)) {
-            return [];
-        }
-        
-        const dataTypes = getDatabaseDataTypes(current.Type);
-        return dataTypes.map(item => ({
-            id: item,
-            label: item,
-        }));
-    }, [current?.Type]);
-    
     useEffect(() => {
         refetch();
     }, [current, refetch]);
@@ -377,13 +373,14 @@ export const StorageUnitPage: FC = () => {
         }
 
         // Get attributes that exist in ALL storage units (intersection of all attributes)
-        const firstUnitAttributeKeys = new Set(data.StorageUnit[0].Attributes.map(attr => attr.Key));
+        // Preserve the order from the first unit (backend returns metadata like Type first)
+        const firstUnitKeys = data.StorageUnit[0].Attributes.map(attr => attr.Key);
 
-        return Array.from(firstUnitAttributeKeys).filter(key =>
+        return firstUnitKeys.filter(key =>
             data.StorageUnit.every(unit =>
                 unit.Attributes.some(attr => attr.Key === key)
             )
-        ).sort();
+        );
     }, [data?.StorageUnit]);
 
     if (loading) {
@@ -444,11 +441,8 @@ export const StorageUnitPage: FC = () => {
                                             <Label>{t('fieldNameLabel')}</Label>
                                             <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder={t('fieldNamePlaceholder')}/>
                                             <Label>{t('fieldTypeLabel')}</Label>
-                                            <SearchSelect
-                                                options={storageUnitTypesDropdownItems.map(item => ({
-                                                    value: item.id,
-                                                    label: item.label,
-                                                }))}
+                                            <TypeSelector
+                                                databaseType={current?.Type}
                                                 value={field.Value}
                                                 onChange={value => handleFieldValueChange("Value", index, value)}
                                                 placeholder={t('fieldTypePlaceholder')}
@@ -552,15 +546,6 @@ export const StorageUnitPage: FC = () => {
                         if (!unit) return null;
 
                         const columns = tableColumns[unit.Name];
-                        const foreignKeyMap = new Map<string, boolean>();
-                        if (columns) {
-                            columns.forEach(col => {
-                                if (col.IsForeignKey) {
-                                    foreignKeyMap.set(col.Name, true);
-                                }
-                            });
-                        }
-
                         const [introAttributes, expandedAttributes] = [unit.Attributes.slice(0,4), unit.Attributes.slice(4)];
 
                         return (
@@ -568,25 +553,34 @@ export const StorageUnitPage: FC = () => {
                                 <div className="flex flex-col gap-4">
                                     <h2 className="text-2xl font-bold">{unit.Name}</h2>
                                     <StackList>
-                                        {introAttributes.map(attribute => {
-                                            const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                            return (
-                                                <StackListItem key={attribute.Key} item={isForeignKey ?
-                                                    <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                    {attribute.Value}
-                                                </StackListItem>
-                                            );
-                                        })}
-                                        {expandedAttributes.map(attribute => {
-                                            const isForeignKey = foreignKeyMap.has(attribute.Key);
-                                            return (
-                                                <StackListItem key={attribute.Key} item={isForeignKey ?
-                                                    <Badge className="text-lg" data-testid="foreign-key-attribute">{attribute.Key}</Badge> : attribute.Key}>
-                                                    {attribute.Value}
-                                                </StackListItem>
-                                            );
-                                        })}
+                                        {/* Metadata attributes */}
+                                        {introAttributes.map(attribute => (
+                                            <StackListItem key={attribute.Key} item={attribute.Key}>
+                                                {attribute.Value?.toLowerCase()}
+                                            </StackListItem>
+                                        ))}
+                                        {expandedAttributes.map(attribute => (
+                                            <StackListItem key={attribute.Key} item={attribute.Key}>
+                                                {attribute.Value?.toLowerCase()}
+                                            </StackListItem>
+                                        ))}
                                     </StackList>
+                                    {columns && columns.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">{t('columnsTitle')}</h3>
+                                            <StackList>
+                                                {columns.map((col: any) => {
+                                                    const isForeignKey = col.IsForeignKey;
+                                                    return (
+                                                        <StackListItem key={col.Name} item={isForeignKey ?
+                                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                                            {col.Type?.toLowerCase()}
+                                                        </StackListItem>
+                                                    );
+                                                })}
+                                            </StackList>
+                                        </div>
+                                    )}
                                     <div className="flex gap-sm mt-4">
                                         <Button
                                             onClick={() => {
@@ -633,15 +627,10 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
         });
     }, [navigate, data]);
 
-    // Always display Attributes (which contains both metadata and field definitions)
-    // Use columns data ONLY for IsForeignKey/IsPrimary flags to render handles
-    const displayItems = data?.Attributes || [];
-    const columnsMap = new Map();
-    if (data?.columns) {
-        data.columns.forEach((col: any) => {
-            columnsMap.set(col.Name, col);
-        });
-    }
+    // Attributes contains metadata (Type, Total Size, etc.)
+    // Columns contains field definitions with FK/PK info for handles
+    const metadataItems = data?.Attributes || [];
+    const columnItems = data?.columns || [];
 
     if (data == null) {
         return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
@@ -656,18 +645,28 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                     <div className="flex flex-col grow">
                         <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
                         <StackList>
+                            {/* Show metadata first (Type, Total Size, etc.) */}
                             {
-                                displayItems.map((item: any, index: number) => {
-                                    const name = item.Name || item.Key;
-                                    const value = item.Type || item.Value;
-
-                                    // Check if this field has FK/PK info from columns data
-                                    const colInfo = columnsMap.get(name);
-                                    const isFKColumn = colInfo?.IsForeignKey || false;
-                                    const isPKColumn = colInfo?.IsPrimary || false;
+                                metadataItems.map((item: any, index: number) => {
+                                    const name = item.Key;
+                                    const value = item.Value?.toLowerCase();
+                                    return (
+                                        <StackListItem key={`meta-${name}-${index}`} rowClassName="items-start" item={name}>
+                                            {value}
+                                        </StackListItem>
+                                    );
+                                })
+                            }
+                            {/* Show columns with FK/PK handles */}
+                            {
+                                columnItems.map((col: any, index: number) => {
+                                    const name = col.Name;
+                                    const value = col.Type?.toLowerCase();
+                                    const isFKColumn = col.IsForeignKey || false;
+                                    const isPKColumn = col.IsPrimary || false;
 
                                     return (
-                                        <div key={`${name}-${index}`} className="relative">
+                                        <div key={`col-${name}-${index}`} className="relative">
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"

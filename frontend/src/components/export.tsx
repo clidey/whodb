@@ -28,11 +28,12 @@ import {
     SheetTitle,
     toast
 } from "@clidey/ux";
-import {FC, useCallback, useMemo, useState} from "react";
+import {FC, useCallback, useEffect, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
-import { ShareIcon } from "./heroicons";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useTranslation } from "@/hooks/use-translation";
+import {ShareIcon} from "./heroicons";
+import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
+import {useTranslation} from "@/hooks/use-translation";
+import {isNoSQL} from "@/utils/functions";
 
 interface IExportProps {
     open: boolean;
@@ -42,6 +43,7 @@ interface IExportProps {
     hasSelectedRows: boolean;
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
+    databaseType?: string;
 }
 
 export const Export: FC<IExportProps> = ({
@@ -52,15 +54,22 @@ export const Export: FC<IExportProps> = ({
                                              hasSelectedRows,
                                              selectedRowsData,
                                              checkedRowsCount,
+                                             databaseType,
                                          }) => {
     const { t } = useTranslation('components/export');
     const [exportDelimiter, setExportDelimiter] = useState(',');
-    const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+    const defaultFormat = useMemo(() => isNoSQL(databaseType ?? '') ? 'ndjson' : 'csv', [databaseType]);
+    const [exportFormat, setExportFormat] = useState<'csv' | 'excel' | 'ndjson'>(defaultFormat);
+
+    useEffect(() => {
+        setExportFormat(defaultFormat);
+    }, [defaultFormat]);
 
     // Export options as lists - CE version only has basic download
     const exportFormatOptions = useMemo(() => [
         {value: 'csv', label: t('formatCsv')},
         {value: 'excel', label: t('formatExcel')},
+        {value: 'ndjson', label: t('formatJson')},
     ] as const, [t]);
 
     const exportDelimiterOptions = useMemo(() => [
@@ -118,7 +127,7 @@ export const Export: FC<IExportProps> = ({
                                 </Label>
                                 <Select
                                     value={exportFormat}
-                                    onValueChange={(value) => setExportFormat(value as 'csv' | 'excel')}
+                                    onValueChange={(value) => setExportFormat(value as 'csv' | 'excel' | 'ndjson')}
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue>
@@ -174,11 +183,17 @@ export const Export: FC<IExportProps> = ({
                                             <li><p className="inline-block">{t('csvEncoding')}</p></li>
                                             <li><p className="inline-block">{t('csvDelimiter')}</p></li>
                                         </>
-                                    ) : (
+                                    ) : exportFormat === 'excel' ? (
                                         <>
                                             <li><p className="inline-block">{t('excelFormat')}</p></li>
                                             <li><p className="inline-block">{t('excelHeaders')}</p></li>
                                             <li><p className="inline-block">{t('excelColumns')}</p></li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li><p className="inline-block">{t('jsonLineDelimited')}</p></li>
+                                            <li><p className="inline-block">{t('jsonEncoding')}</p></li>
+                                            <li><p className="inline-block">{t('jsonDetails')}</p></li>
                                         </>
                                     )}
                                 </ul>

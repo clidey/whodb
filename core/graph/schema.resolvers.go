@@ -865,6 +865,9 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 			IsForeignKey:     isForeignKey,
 			ReferencedTable:  referencedTable,
 			ReferencedColumn: referencedColumn,
+			Length:           column.Length,
+			Precision:        column.Precision,
+			Scale:            column.Scale,
 		})
 	}
 	return &model.RowsResult{
@@ -1111,6 +1114,47 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 // MockDataMaxRowCount is the resolver for the MockDataMaxRowCount field.
 func (r *queryResolver) MockDataMaxRowCount(ctx context.Context) (int, error) {
 	return env.GetMockDataGenerationMaxRowCount(), nil
+}
+
+// DatabaseMetadata is the resolver for the DatabaseMetadata field.
+func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error) {
+	plugin, _ := GetPluginForContext(ctx)
+	metadata := plugin.GetDatabaseMetadata()
+
+	// Return nil if plugin doesn't implement metadata (default GormPlugin behavior)
+	if metadata == nil {
+		return nil, nil
+	}
+
+	// Convert engine.TypeDefinition to model.TypeDefinition
+	typeDefinitions := make([]*model.TypeDefinition, 0, len(metadata.TypeDefinitions))
+	for _, td := range metadata.TypeDefinitions {
+		typeDefinitions = append(typeDefinitions, &model.TypeDefinition{
+			ID:               td.ID,
+			Label:            td.Label,
+			HasLength:        td.HasLength,
+			HasPrecision:     td.HasPrecision,
+			DefaultLength:    td.DefaultLength,
+			DefaultPrecision: td.DefaultPrecision,
+			Category:         model.TypeCategory(td.Category),
+		})
+	}
+
+	// Convert map[string]string to []*model.Record
+	aliasMap := make([]*model.Record, 0, len(metadata.AliasMap))
+	for key, value := range metadata.AliasMap {
+		aliasMap = append(aliasMap, &model.Record{
+			Key:   key,
+			Value: value,
+		})
+	}
+
+	return &model.DatabaseMetadata{
+		DatabaseType:    string(metadata.DatabaseType),
+		TypeDefinitions: typeDefinitions,
+		Operators:       metadata.Operators,
+		AliasMap:        aliasMap,
+	}, nil
 }
 
 // Mutation returns MutationResolver implementation.

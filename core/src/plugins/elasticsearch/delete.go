@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ */
 
 package elasticsearch
 
@@ -19,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -46,7 +49,6 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 		return false, err
 	}
 
-	// Get the _id from the document
 	id, ok := jsonValues["_id"]
 	if !ok {
 		err := errors.New("missing '_id' field in the document")
@@ -54,23 +56,28 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 		return false, err
 	}
 
+	idStr, ok := id.(string)
+	if !ok || strings.TrimSpace(idStr) == "" {
+		return false, fmt.Errorf("invalid '_id' field; expected non-empty string")
+	}
+
 	// Delete the document by ID
 	res, err := client.Delete(
 		storageUnit,
-		id.(string),
+		idStr,
 		client.Delete.WithContext(context.Background()),
 		client.Delete.WithRefresh("true"), // Ensure the deletion is immediately visible
 	)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to execute ElasticSearch delete operation")
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch delete operation")
 		return false, fmt.Errorf("failed to execute delete: %w", err)
 	}
 	defer res.Body.Close()
 
 	// Check if the response indicates an error
 	if res.IsError() {
-		err := fmt.Errorf("error deleting document: %s", res.String())
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("ElasticSearch delete API returned error")
+		err := fmt.Errorf("error deleting document: %s", formatElasticError(res))
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("ElasticSearch delete API returned error")
 		return false, err
 	}
 

@@ -25,22 +25,13 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	mapset "github.com/deckarep/golang-set/v2"
 	"gorm.io/gorm"
 )
 
 var (
-	supportedColumnDataTypes = mapset.NewSet(
-		"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL",
-		"DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
-		"CHAR", "VARCHAR(255)", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB",
-		"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
-		"ENUM", "SET", "JSON", "BOOLEAN", "VARCHAR(100)", "VARCHAR(1000)",
-	)
-
 	supportedOperators = map[string]string{
 		"=": "=", ">=": ">=", ">": ">", "<=": "<=", "<": "<", "<>": "<>",
-		"!=": "!=", "!>": "!>", "!<": "!<", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
+		"!=": "!=", "BETWEEN": "BETWEEN", "NOT BETWEEN": "NOT BETWEEN",
 		"LIKE": "LIKE", "NOT LIKE": "NOT LIKE", "IN": "IN", "NOT IN": "NOT IN",
 		"IS NULL": "IS NULL", "IS NOT NULL": "IS NOT NULL", "AND": "AND", "OR": "OR", "NOT": "NOT",
 	}
@@ -65,19 +56,8 @@ func (p *MySQLPlugin) FormTableName(schema string, storageUnit string) string {
 	return schema + "." + storageUnit
 }
 
-func (p *MySQLPlugin) GetSupportedColumnDataTypes() mapset.Set[string] {
-	return supportedColumnDataTypes
-}
-
 func (p *MySQLPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
-}
-
-func (p *MySQLPlugin) GetSchemaTableQuery() string {
-	return `SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
-			FROM INFORMATION_SCHEMA.COLUMNS
-			WHERE TABLE_SCHEMA = ?
-			ORDER BY TABLE_NAME, ORDINAL_POSITION`
 }
 
 func (p *MySQLPlugin) GetTableInfoQuery() string {
@@ -173,6 +153,11 @@ func (p *MySQLPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sc
 
 		return relationships, nil
 	})
+}
+
+// NormalizeType converts MySQL type aliases to their canonical form.
+func (p *MySQLPlugin) NormalizeType(typeName string) string {
+	return NormalizeType(typeName)
 }
 
 func NewMySQLPlugin() *engine.Plugin {

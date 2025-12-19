@@ -20,36 +20,57 @@ import (
 
 // Shared database data type classifications across the backend.
 // These group engine-visible SQL types into coarse categories.
+//
+// IMPORTANT: These sets contain CANONICAL types only - no aliases.
+// Types are normalized via per-plugin NormalizeType() before classification.
+// Each canonical type listed here is the official form for at least one database.
 var (
 	IntTypes = mapset.NewSet(
 		"INTEGER", "SMALLINT", "BIGINT", "INT", "TINYINT", "MEDIUMINT",
-		"INT4", "INT8", "INT16", "INT32", "INT64",
-		// Serial types (primarily Postgres)
+		"INT8", "INT16", "INT32", "INT64",
 		"SERIAL", "BIGSERIAL", "SMALLSERIAL",
 	)
 
 	UintTypes = mapset.NewSet(
-		"TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED", "BIGINT UNSIGNED",
+		"TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED",
+		"INT UNSIGNED", "BIGINT UNSIGNED",
 		"UINT8", "UINT16", "UINT32", "UINT64",
 	)
 
+	BigIntTypes = mapset.NewSet(
+		"INT128", "INT256",
+		"UINT128", "UINT256",
+	)
+
+	DecimalTypes = mapset.NewSet(
+		"NUMERIC", "DECIMAL", "NUMBER", "MONEY",
+		"DECIMAL32", "DECIMAL64", "DECIMAL128", "DECIMAL256",
+	)
+
 	FloatTypes = mapset.NewSet(
-		"REAL", "NUMERIC", "DOUBLE PRECISION", "FLOAT", "NUMBER", "DOUBLE", "DECIMAL",
-		// Money appears in some engines (e.g., Postgres, MSSQL)
-		"MONEY",
+		"REAL", "DOUBLE PRECISION",
+		"FLOAT", "DOUBLE",
+		"FLOAT32", "FLOAT64",
 	)
 
 	BoolTypes = mapset.NewSet(
-		"BOOLEAN", "BIT", "BOOL",
+		"BOOLEAN",
+		"BOOL",
+		"BIT",
 	)
 
 	DateTypes = mapset.NewSet(
 		"DATE",
+		"DATE32",
 	)
 
 	DateTimeTypes = mapset.NewSet(
-		"DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITHOUT TIME ZONE",
-		"DATETIME2", "SMALLDATETIME", "TIMETZ", "TIMESTAMPTZ", "TIME",
+		"TIMESTAMP", "TIMESTAMP WITH TIME ZONE",
+		"TIME", "TIME WITH TIME ZONE",
+		"DATETIME", "YEAR",
+		"DATETIME2", "SMALLDATETIME",
+		"INTERVAL",
+		"DATETIME64",
 	)
 
 	UuidTypes = mapset.NewSet(
@@ -57,15 +78,39 @@ var (
 	)
 
 	TextTypes = mapset.NewSet(
-		"TEXT", "VARCHAR", "CHAR", "CHARACTER VARYING", "CHARACTER", "STRING",
-		"LONGTEXT", "MEDIUMTEXT", "TINYTEXT",
+		"CHARACTER VARYING", "CHARACTER", "TEXT",
+		"VARCHAR", "CHAR",
+		"TINYTEXT", "MEDIUMTEXT", "LONGTEXT",
+		"STRING", "FIXEDSTRING",
 	)
 
 	JsonTypes = mapset.NewSet(
-		"JSON", "JSONB",
+		"JSON",
+		"JSONB",
 	)
 
 	BinaryTypes = mapset.NewSet(
-		"BLOB", "BYTEA", "VARBINARY", "BINARY", "IMAGE", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB",
+		"BYTEA",
+		"BINARY", "VARBINARY",
+		"TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB",
+		"IMAGE",
+	)
+
+	ArrayTypes = mapset.NewSet(
+		"ARRAY",
+	)
+
+	GeometryTypes = mapset.NewSet(
+		"POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE",
+		"GEOMETRY", "GEOGRAPHY",
+	)
+
+	NetworkTypes = mapset.NewSet(
+		"CIDR", "INET", "MACADDR", "MACADDR8",
+		"IPV4", "IPV6",
+	)
+
+	XMLTypes = mapset.NewSet(
+		"XML",
 	)
 )
