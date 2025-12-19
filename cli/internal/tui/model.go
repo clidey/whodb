@@ -167,17 +167,11 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.mode == ViewConnection {
 				return m.updateConnectionView(msg)
 			}
-			// Let chat view handle Tab for field navigation
-			if m.mode == ViewChat {
-				return m.updateChatView(msg)
-			}
 			if msg.String() == "tab" {
 				return m.handleTabSwitch()
 			}
 			return m, nil
 
-		case "?":
-			return m, nil
 		}
 	}
 

@@ -46,6 +46,7 @@ type ResultsView struct {
 	visibleColumns  []string
 	editingPageSize bool
 	pageSizeInput   textinput.Model
+	returnTo        ViewMode // Which view to return to on esc
 }
 
 // Available page sizes for cycling
@@ -149,27 +150,27 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		switch msg.String() {
 		case "esc":
-			v.parent.mode = ViewBrowser
+			// Use explicit returnTo if set, otherwise infer from context
+			if v.returnTo != 0 {
+				v.parent.mode = v.returnTo
+				v.returnTo = 0 // Reset for next time
+			} else if v.query != "" {
+				v.parent.mode = ViewEditor
+			} else {
+				v.parent.mode = ViewBrowser
+			}
 			return v, nil
 
 		case "n":
 			// Check if we can go to next page
-			if v.totalRows > 0 {
-				// For tables with known count, check if we're at the last page
-				totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
-				if v.currentPage+1 < totalPages {
-					v.currentPage++
-					return v, v.loadPage()
-				}
-			} else if v.results != nil && len(v.results.Rows) == v.pageSize {
-				// For query results without total count, allow next page if current page is full
+			if v.hasNextPage() {
 				v.currentPage++
 				return v, v.loadPage()
 			}
 			return v, nil
 
 		case "p":
-			if v.currentPage > 0 {
+			if v.hasPreviousPage() {
 				v.currentPage--
 				return v, v.loadPage()
 			}
@@ -250,18 +251,15 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		case "down", "j":
 			// Check if at bottom of current page - auto-paginate to next
-			if v.results != nil && len(v.results.Rows) > 0 {
+			if v.results != nil {
+				pageRows := v.currentPageRows()
+				if len(pageRows) == 0 {
+					return v, nil
+				}
 				cursor := v.table.Cursor()
-				if cursor >= len(v.results.Rows)-1 {
+				if cursor >= len(pageRows)-1 {
 					// At bottom, try to go to next page
-					canGoNext := false
-					if v.totalRows > 0 {
-						totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
-						canGoNext = v.currentPage+1 < totalPages
-					} else {
-						canGoNext = len(v.results.Rows) == v.pageSize
-					}
-					if canGoNext {
+					if v.hasNextPage() {
 						v.currentPage++
 						v.table.SetCursor(0)
 						return v, v.loadPage()
@@ -271,7 +269,11 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		case "up", "k":
 			// Check if at top of current page - auto-paginate to previous
-			if v.results != nil && len(v.results.Rows) > 0 {
+			if v.results != nil {
+				pageRows := v.currentPageRows()
+				if len(pageRows) == 0 {
+					return v, nil
+				}
 				cursor := v.table.Cursor()
 				if cursor <= 0 && v.currentPage > 0 {
 					v.currentPage--
@@ -288,6 +290,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 func (v *ResultsView) View() string {
 	var b strings.Builder
+	pageRows := v.currentPageRows()
 
 	if v.query != "" {
 		b.WriteString(styles.RenderTitle("Query Results"))
@@ -315,11 +318,12 @@ func (v *ResultsView) View() string {
 		columnInfo := fmt.Sprintf("Columns %d-%d of %d", v.columnOffset+1, v.columnOffset+visibleCols, totalCols)
 
 		var rowInfo string
-		if v.totalRows > 0 {
-			totalPages := (v.totalRows + v.pageSize - 1) / v.pageSize
-			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d, size: %d)", len(v.results.Rows), v.currentPage+1, totalPages, v.pageSize)
+		totalRows := v.effectiveTotalRows()
+		if totalRows > 0 {
+			totalPages := (totalRows + v.pageSize - 1) / v.pageSize
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d, size: %d)", len(pageRows), v.currentPage+1, totalPages, v.pageSize)
 		} else {
-			rowInfo = fmt.Sprintf("Showing %d rows (Page %d, size: %d)", len(v.results.Rows), v.currentPage+1, v.pageSize)
+			rowInfo = fmt.Sprintf("Showing %d rows (Page %d, size: %d)", len(pageRows), v.currentPage+1, v.pageSize)
 		}
 
 		b.WriteString(styles.MutedStyle.Render(columnInfo + " • " + rowInfo))
@@ -336,6 +340,12 @@ func (v *ResultsView) View() string {
 	b.WriteString("\n\n")
 
 	// Show different help based on whether export/where/columns is available
+	// Also show appropriate back target (editor for query results, browser for table data)
+	backTarget := "browser"
+	if v.query != "" {
+		backTarget = "editor"
+	}
+
 	if v.schema != "" && v.tableName != "" {
 		whereLabel := "where"
 		conditionCount := v.countWhereConditions()
@@ -363,7 +373,7 @@ func (v *ResultsView) View() string {
 			"[e]", "export",
 			"[n/p]", "page",
 			"[s/S]", "page size",
-			"esc", "back",
+			"esc", backTarget,
 		))
 	} else {
 		b.WriteString(styles.RenderHelp(
@@ -375,7 +385,7 @@ func (v *ResultsView) View() string {
 			"[e]", "export",
 			"[n/p]", "page",
 			"[s/S]", "page size",
-			"esc", "back",
+			"esc", backTarget,
 		))
 	}
 
@@ -390,6 +400,9 @@ func (v *ResultsView) SetResults(results *engine.GetRowsResult, query string) {
 	v.schema = ""
 	v.tableName = ""
 	v.totalRows = int(results.TotalCount)
+	if v.totalRows == 0 && v.results != nil {
+		v.totalRows = len(v.results.Rows)
+	}
 	v.updateTable()
 }
 
@@ -447,8 +460,68 @@ func (v *ResultsView) loadWithWhere() {
 	v.updateTable()
 }
 
+func (v *ResultsView) isTableData() bool {
+	return v.schema != "" && v.tableName != ""
+}
+
+func (v *ResultsView) effectiveTotalRows() int {
+	if v.results == nil {
+		return 0
+	}
+	if v.totalRows > 0 {
+		return v.totalRows
+	}
+	return len(v.results.Rows)
+}
+
+func (v *ResultsView) currentPageRows() [][]string {
+	if v.results == nil {
+		return nil
+	}
+
+	// Table browsing already paginates at the database level
+	if v.isTableData() || v.pageSize <= 0 {
+		return v.results.Rows
+	}
+
+	total := len(v.results.Rows)
+	if total == 0 {
+		return nil
+	}
+
+	start := v.currentPage * v.pageSize
+	if start >= total {
+		start = maxInt(total-v.pageSize, 0)
+	}
+	end := start + v.pageSize
+	if end > total {
+		end = total
+	}
+
+	return v.results.Rows[start:end]
+}
+
+func (v *ResultsView) hasNextPage() bool {
+	if v.pageSize <= 0 {
+		return false
+	}
+
+	total := v.effectiveTotalRows()
+	if total > 0 {
+		totalPages := (total + v.pageSize - 1) / v.pageSize
+		return v.currentPage+1 < totalPages
+	}
+
+	return v.results != nil && len(v.results.Rows) == v.pageSize
+}
+
+func (v *ResultsView) hasPreviousPage() bool {
+	return v.currentPage > 0
+}
+
 func (v *ResultsView) updateTable() {
 	if v.results == nil {
+		v.table.SetRows([]table.Row{})
 		return
 	}
 
@@ -498,8 +571,9 @@ func (v *ResultsView) updateTable() {
 	}
 
 	// Extract visible column data from rows
-	rows := make([]table.Row, len(v.results.Rows))
-	for i, row := range v.results.Rows {
+	currentRows := v.currentPageRows()
+	rows := make([]table.Row, len(currentRows))
+	for i, row := range currentRows {
 		visibleRow := make([]string, len(visibleIndices))
 		for j, idx := range visibleIndices {
 			if idx < len(row) {
@@ -525,7 +599,7 @@ func (v *ResultsView) updateTable() {
 func (v *ResultsView) loadPage() tea.Cmd {
 	return func() tea.Msg {
 		// Only reload if we're viewing a table (not query results)
-		if v.tableName != "" && v.schema != "" {
+		if v.isTableData() {
 			results, err := v.parent.dbManager.GetRows(v.schema, v.tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
 			if err != nil {
 				v.parent.err = err
@@ -535,6 +609,8 @@ func (v *ResultsView) loadPage() tea.Cmd {
 			v.results = results
 			v.totalRows = int(results.TotalCount)
 			v.updateTable()
+		} else if v.results != nil {
+			v.updateTable()
 		}
 		return pageLoadedMsg{}
 	}
@@ -543,7 +619,7 @@ func (v *ResultsView) loadPage() tea.Cmd {
 func (v *ResultsView) loadPageAndGoToBottom() tea.Cmd {
 	return func() tea.Msg {
 		// Only reload if we're viewing a table (not query results)
-		if v.tableName != "" && v.schema != "" {
+		if v.isTableData() {
 			results, err := v.parent.dbManager.GetRows(v.schema, v.tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
 			if err != nil {
 				v.parent.err = err
@@ -554,8 +630,13 @@ func (v *ResultsView) loadPageAndGoToBottom() tea.Cmd {
 			v.totalRows = int(results.TotalCount)
 			v.updateTable()
 			// Set cursor to bottom of the new page
-			if len(v.results.Rows) > 0 {
-				v.table.SetCursor(len(v.results.Rows) - 1)
+			if pageRows := v.currentPageRows(); len(pageRows) > 0 {
+				v.table.SetCursor(len(pageRows) - 1)
+			}
+		} else if v.results != nil {
+			v.updateTable()
+			if pageRows := v.currentPageRows(); len(pageRows) > 0 {
+				v.table.SetCursor(len(pageRows) - 1)
 			}
 		}
 		return pageLoadedMsg{}
@@ -570,4 +651,11 @@ func (v *ResultsView) countWhereConditions() int {
 		return len(v.whereCondition.And.Children)
 	}
 	return 0
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
