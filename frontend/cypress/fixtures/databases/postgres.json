@@ -55,7 +55,7 @@
   "tables": {
     "users": {
       "columns": {
-        "id": "integeger",
+        "id": "integer",
         "username": "character varying(50)",
         "email": "character varying(100)",
         "password": "character varying(100)",
@@ -102,7 +102,7 @@
         }
       },
       "metadata": {
-        "type": "BASE TABLE",
+        "type": "base table",
         "hasSize": true,
         "hasCount": false
       }
