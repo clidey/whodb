@@ -205,6 +205,7 @@ jobs:
           fi
 
   # Step 2: Build artifacts in parallel (only what's selected)
+  # Note: Source maps are uploaded to PostHog during Docker build (see _build-docker.yml)
   build-docker:
     name: Build Docker
     needs: [ calculate-version ]

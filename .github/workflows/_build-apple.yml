@@ -49,6 +49,8 @@ jobs:
             sum.golang.org:443
             registry.npmjs.org:443
             objects.githubusercontent.com:443
+            us.i.posthog.com:443
+            app.posthog.com:443
 
       - name: Skip if not enabled
         if: matrix.enabled == false
@@ -97,6 +99,24 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: "0"
         run: pnpm i
+
+      - name: Build frontend
+        if: matrix.enabled != false
+        working-directory: ./frontend
+        run: pnpm run build:${{ inputs.edition }}
+
+      # Upload source maps to PostHog for desktop error tracking
+      # Only runs on DMG build to avoid duplicate uploads (both DMG and MAS use same frontend)
+      - name: Upload source maps to PostHog
+        if: matrix.build-type == 'dmg' && matrix.enabled != false
+        uses: PostHog/upload-source-maps@9588f138ad57fa0471ddcbb0b564a7b584dc8a9a # v0.5.7.0
+        with:
+          directory: frontend/build
+          env-id: ${{ secrets.POSTHOG_ENV_ID }}
+          cli-token: ${{ secrets.POSTHOG_CLI_TOKEN }}
+          version: ${{ inputs.version }}
+          delete-after-upload: true
+        continue-on-error: true
 
       - name: Install Wails CLI
         if: matrix.enabled != false
@@ -211,7 +231,7 @@ jobs:
       - name: Build macOS
         if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
-        run: make ${{ matrix.make-target }} VERSION=${{ inputs.version }}
+        run: make ci-build-prod-mac VERSION=${{ inputs.version }}
 
       - name: Verify entitlements after build
         if: matrix.enabled != false

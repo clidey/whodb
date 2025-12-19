@@ -170,9 +170,21 @@ build-prod-windows-amd64: prepare
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 
-# CI build target for Windows AMD64 (assumes frontend is pre-built in frontend/dist)
+# CI build target for Windows AMD64 (assumes frontend is pre-built in ../frontend/build/)
 ci-build-prod-windows-amd64:
 	@echo "Building WhoDB Windows executable for AMD64 (CI)..."
+	@if [ ! -d "../frontend/build" ]; then \
+		echo "ERROR: Frontend build directory ../frontend/build does not exist"; \
+		echo "Ensure frontend was built with 'pnpm run build' before running this target"; \
+		exit 1; \
+	fi
+	@if [ ! -f "../frontend/build/index.html" ]; then \
+		echo "ERROR: Frontend build appears incomplete (missing index.html)"; \
+		echo "Ensure frontend was built successfully"; \
+		exit 1; \
+	fi
+	@mkdir -p frontend/dist
+	cp -r ../frontend/build/* frontend/dist/
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
 	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/amd64 \
@@ -190,9 +202,21 @@ build-prod-windows-arm64: prepare
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
-# CI build target for Windows ARM64 (assumes frontend is pre-built in frontend/dist)
+# CI build target for Windows ARM64 (assumes frontend is pre-built in ../frontend/build/)
 ci-build-prod-windows-arm64:
 	@echo "Building WhoDB Windows executable for ARM64 (CI)..."
+	@if [ ! -d "../frontend/build" ]; then \
+		echo "ERROR: Frontend build directory ../frontend/build does not exist"; \
+		echo "Ensure frontend was built with 'pnpm run build' before running this target"; \
+		exit 1; \
+	fi
+	@if [ ! -f "../frontend/build/index.html" ]; then \
+		echo "ERROR: Frontend build appears incomplete (missing index.html)"; \
+		echo "Ensure frontend was built successfully"; \
+		exit 1; \
+	fi
+	@mkdir -p frontend/dist
+	cp -r ../frontend/build/* frontend/dist/
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
 	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/arm64 \
@@ -202,6 +226,31 @@ ci-build-prod-windows-arm64:
 
 build-prod-mac: prepare
 	@echo "Building WhoDB macOS app (no pkg flag)..."
+	@mkdir -p build/darwin/universal
+	$(eval PLATFORM_ENV := mac-universal)
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/universal \
+		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
+	@mv build/bin/$(OUTPUT_PREFIX).pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/$(APP_NAME)" build/darwin/universal/
+	@if [ -f "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" ]; then \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" || true; \
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" || true; \
+	fi
+
+# CI build target for macOS Universal (assumes frontend is pre-built in ../frontend/build/)
+ci-build-prod-mac:
+	@echo "Building WhoDB macOS app (CI - frontend pre-built)..."
+	@if [ ! -d "../frontend/build" ]; then \
+		echo "ERROR: Frontend build directory ../frontend/build does not exist"; \
+		echo "Ensure frontend was built with 'pnpm run build' before running this target"; \
+		exit 1; \
+	fi
+	@if [ ! -f "../frontend/build/index.html" ]; then \
+		echo "ERROR: Frontend build appears incomplete (missing index.html)"; \
+		echo "Ensure frontend was built successfully"; \
+		exit 1; \
+	fi
+	@mkdir -p frontend/dist
+	cp -r ../frontend/build/* frontend/dist/
 	@mkdir -p build/darwin/universal
 	$(eval PLATFORM_ENV := mac-universal)
 	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/universal \
@@ -376,8 +425,20 @@ build-prod-linux: prepare
 		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
 
-# CI build target for Linux (assumes frontend is pre-built in frontend/dist)
+# CI build target for Linux (assumes frontend is pre-built in ../frontend/build/)
 ci-build-prod-linux:
+	@if [ ! -d "../frontend/build" ]; then \
+		echo "ERROR: Frontend build directory ../frontend/build does not exist"; \
+		echo "Ensure frontend was built with 'pnpm run build' before running this target"; \
+		exit 1; \
+	fi
+	@if [ ! -f "../frontend/build/index.html" ]; then \
+		echo "ERROR: Frontend build appears incomplete (missing index.html)"; \
+		echo "Ensure frontend was built successfully"; \
+		exit 1; \
+	fi
+	@mkdir -p frontend/dist
+	cp -r ../frontend/build/* frontend/dist/
 	@TARGET_ARCH=$${TARGET_ARCH:-$$(uname -m)}; \
 	case "$$TARGET_ARCH" in \
 		amd64|x86_64) ARCH_DIR="x86_64"; GOARCH_VALUE="amd64"; PLATFORM_ENV="linux-amd64" ;; \

@@ -51,6 +51,8 @@ jobs:
             sum.golang.org:443
             registry.npmjs.org:443
             objects.githubusercontent.com:443
+            us.i.posthog.com:443
+            app.posthog.com:443
 
       - name: Skip if not enabled
         if: matrix.enabled == false
@@ -100,6 +102,24 @@ jobs:
           CYPRESS_INSTALL_BINARY: "0"
         run: pnpm i
 
+      - name: Build frontend
+        if: matrix.enabled != false
+        working-directory: ./frontend
+        run: pnpm run build:${{ inputs.edition }}
+
+      # Upload source maps to PostHog for desktop error tracking
+      # Only runs on amd64 to avoid duplicate uploads
+      - name: Upload source maps to PostHog
+        if: matrix.arch == 'amd64' && matrix.enabled != false
+        uses: PostHog/upload-source-maps@9588f138ad57fa0471ddcbb0b564a7b584dc8a9a # v0.5.7.0
+        with:
+          directory: frontend/build
+          env-id: ${{ secrets.POSTHOG_ENV_ID }}
+          cli-token: ${{ secrets.POSTHOG_CLI_TOKEN }}
+          version: ${{ inputs.version }}
+          delete-after-upload: true
+        continue-on-error: true
+
       - name: Install Wails CLI
         if: matrix.enabled != false
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
@@ -111,30 +131,12 @@ jobs:
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ inputs.version }}
         run: |
           Write-Host "Building Windows executable for MSIX packaging..."
+          Write-Host "Building with VERSION=$env:VERSION"
 
-          # Prepare frontend
-          Write-Host "Preparing frontend..."
-          New-Item -ItemType Directory -Path frontend/dist -Force | Out-Null
-          Set-Location ../frontend
-
-          # Check if frontend is already built from cache
-          if (Test-Path "build/index.html") {
-              Write-Host "Using cached frontend build"
-          } else {
-              Write-Host "Building frontend..."
-              $env:CYPRESS_INSTALL_BINARY = "0"
-              pnpm run build:${{ inputs.edition }}
-          }
-
-          Copy-Item -Path build/* -Destination ../desktop-${{ inputs.edition }}/frontend/dist/ -Recurse
-          Set-Location ../desktop-${{ inputs.edition }}
-
-          Write-Host "Using Makefile to build..."
-          Write-Host "Building with VERSION=${{ inputs.version }}"
-          $env:VERSION = "${{ inputs.version }}"
-          make ${{ matrix.make-target }} VERSION="${{ inputs.version }}"
+          make ${{ matrix.make-target }} VERSION="$env:VERSION"
 
           if ($LASTEXITCODE -ne 0) {
               Write-Error "Make build failed with exit code: $LASTEXITCODE"
