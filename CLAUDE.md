@@ -17,6 +17,7 @@ WhoDB is a database management tool with dual-edition architecture: Community Ed
 7. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.claude/docs/localization.md`
 8. **Verify before completing** - After finishing any task, verify: (1) type checks pass (`pnpm run typecheck` for frontend, `go build` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.claude/docs/verification.md`
 9. **Fallback clarification** - Do not include fallback logic UNLESS you were asked to. If you think the project could benefit from fallback logic, first ask and clarify
+10. **Show proof** - When making a claim about how something outside of our codebase works, for example a 3rd party library or function, always provide official documentation or the actual code to back that up. Check online if you have to.
 
 ## Project Structure
 
