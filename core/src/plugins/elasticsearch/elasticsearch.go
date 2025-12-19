@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -322,7 +323,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 	var buf bytes.Buffer
 	query := map[string]interface{}{
-		"size": 1,
+		"size": 100,
 		"query": map[string]interface{}{
 			"match_all": map[string]interface{}{},
 		},
@@ -359,8 +360,21 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		return []engine.Column{}, nil
 	}
 
-	sampleHit := hits[0].(map[string]interface{})
-	sampleDoc := sampleHit["_source"].(map[string]interface{})
+	fieldTypes := make(map[string]string)
+	for _, h := range hits {
+		hitMap, ok := h.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		source, ok := hitMap["_source"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for fieldName, fieldValue := range source {
+			fieldType := inferElasticSearchType(fieldValue)
+			fieldTypes[fieldName] = mergeElasticTypes(fieldTypes[fieldName], fieldType)
+		}
+	}
 
 	indicesRes, err := client.Indices.Stats()
 	if err != nil {
@@ -381,23 +395,32 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	}
 
 	indicesStats := stats["indices"].(map[string]interface{})
-	indices := []string{}
+	var indices []string
 	for indexName := range indicesStats {
 		indices = append(indices, indexName)
 	}
 
-	columns := []engine.Column{}
+	if len(fieldTypes) == 0 {
+		return []engine.Column{}, nil
+	}
 
-	// Add _id as primary key first (it's not in _source)
-	columns = append(columns, engine.Column{
-		Name:         "_id",
-		Type:         "keyword",
-		IsPrimary:    true,
-		IsForeignKey: false,
-	})
+	fieldNames := make([]string, 0, len(fieldTypes))
+	for name := range fieldTypes {
+		fieldNames = append(fieldNames, name)
+	}
+	sort.Strings(fieldNames)
 
-	for fieldName, fieldValue := range sampleDoc {
-		fieldType := inferElasticSearchType(fieldValue)
+	columns := []engine.Column{
+		{
+			Name:         "_id",
+			Type:         "keyword",
+			IsPrimary:    true,
+			IsForeignKey: false,
+		},
+	}
+
+	for _, fieldName := range fieldNames {
+		fieldType := fieldTypes[fieldName]
 
 		var isForeignKey bool
 		var referencedTable *string
@@ -673,6 +696,17 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 	}
 }
 
+// mergeElasticTypes combines inferred types; conflicting types become "mixed".
+func mergeElasticTypes(current, next string) string {
+	if current == "" {
+		return next
+	}
+	if current == next {
+		return current
+	}
+	return "mixed"
+}
+
 func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, error) {
 	if where == nil {
 		return map[string]any{}, nil
@@ -835,10 +869,22 @@ func (p *ElasticSearchPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		operators = append(operators, op)
 	}
 	return &engine.DatabaseMetadata{
-		DatabaseType:    engine.DatabaseType_ElasticSearch,
-		TypeDefinitions: []engine.TypeDefinition{},
-		Operators:       operators,
-		AliasMap:        map[string]string{},
+		DatabaseType: engine.DatabaseType_ElasticSearch,
+		TypeDefinitions: []engine.TypeDefinition{
+			{ID: "text", Label: "text", Category: engine.TypeCategoryText},
+			{ID: "keyword", Label: "keyword", Category: engine.TypeCategoryText},
+			{ID: "boolean", Label: "boolean", Category: engine.TypeCategoryBoolean},
+			{ID: "long", Label: "long", Category: engine.TypeCategoryNumeric},
+			{ID: "double", Label: "double", Category: engine.TypeCategoryNumeric},
+			{ID: "date", Label: "date", Category: engine.TypeCategoryDatetime},
+			{ID: "object", Label: "object", Category: engine.TypeCategoryOther},
+			{ID: "array", Label: "array", Category: engine.TypeCategoryOther},
+			{ID: "geo_point", Label: "geo_point", Category: engine.TypeCategoryOther},
+			{ID: "nested", Label: "nested", Category: engine.TypeCategoryOther},
+			{ID: "mixed", Label: "mixed", Category: engine.TypeCategoryOther},
+		},
+		Operators: operators,
+		AliasMap:  map[string]string{},
 	}
 }
 

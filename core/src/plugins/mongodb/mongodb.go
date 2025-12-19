@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -332,17 +333,35 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
 
-	var sampleDoc bson.M
-	err = collection.FindOne(ctx, bson.M{}).Decode(&sampleDoc)
+	// Sample up to 100 documents to build a merged schema view
+	cursor, err := collection.Find(ctx, bson.M{}, options.Find().SetLimit(100))
 	if err != nil {
-		log.Logger.WithFields(map[string]any{
-			"collection": storageUnit,
-			"error":      err.Error(),
-		}).Warn("MongoDB GetColumns: No documents found, returning empty schema")
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	fieldTypes := make(map[string]string)
+	for cursor.Next(ctx) {
+		var doc bson.M
+		if err := cursor.Decode(&doc); err != nil {
+			continue
+		}
+		for fieldName, fieldValue := range doc {
+			fieldType := inferMongoDBType(fieldValue)
+			fieldTypes[fieldName] = mergeMongoTypes(fieldTypes[fieldName], fieldType)
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(fieldTypes) == 0 {
+		log.Logger.WithField("collection", storageUnit).Warn("MongoDB GetColumns: No documents found, returning empty schema")
 		return []engine.Column{}, nil
 	}
 
-	cursor, err := db.ListCollections(ctx, bson.M{})
+	cursor, err = db.ListCollections(ctx, bson.M{})
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
@@ -352,7 +371,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	}
 	defer cursor.Close(ctx)
 
-	collections := []string{}
+	var collections []string
 	for cursor.Next(ctx) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
@@ -362,10 +381,15 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 		collections = append(collections, name)
 	}
 
-	columns := []engine.Column{}
-	for fieldName, fieldValue := range sampleDoc {
-		fieldType := inferMongoDBType(fieldValue)
+	fieldNames := make([]string, 0, len(fieldTypes))
+	for name := range fieldTypes {
+		fieldNames = append(fieldNames, name)
+	}
+	sort.Strings(fieldNames)
 
+	columns := []engine.Column{}
+	for _, fieldName := range fieldNames {
+		fieldType := fieldTypes[fieldName]
 		isPrimary := fieldName == "_id"
 
 		var isForeignKey bool
@@ -434,6 +458,17 @@ func inferMongoDBType(value any) string {
 	default:
 		return "mixed"
 	}
+}
+
+// mergeMongoTypes combines type hints; if conflicting, returns "mixed".
+func mergeMongoTypes(current, next string) string {
+	if current == "" {
+		return next
+	}
+	if current == next {
+		return current
+	}
+	return "mixed"
 }
 
 func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error) {
@@ -644,10 +679,20 @@ func (p *MongoDBPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		operators = append(operators, op)
 	}
 	return &engine.DatabaseMetadata{
-		DatabaseType:    engine.DatabaseType_MongoDB,
-		TypeDefinitions: []engine.TypeDefinition{}, // Document DB - no traditional types
-		Operators:       operators,
-		AliasMap:        map[string]string{},
+		DatabaseType: engine.DatabaseType_MongoDB,
+		TypeDefinitions: []engine.TypeDefinition{
+			{ID: "string", Label: "string", Category: engine.TypeCategoryText},
+			{ID: "int", Label: "int", Category: engine.TypeCategoryNumeric},
+			{ID: "double", Label: "double", Category: engine.TypeCategoryNumeric},
+			{ID: "bool", Label: "bool", Category: engine.TypeCategoryBoolean},
+			{ID: "date", Label: "date", Category: engine.TypeCategoryDatetime},
+			{ID: "objectId", Label: "objectId", Category: engine.TypeCategoryOther},
+			{ID: "array", Label: "array", Category: engine.TypeCategoryOther},
+			{ID: "object", Label: "object", Category: engine.TypeCategoryOther},
+			{ID: "mixed", Label: "mixed", Category: engine.TypeCategoryOther},
+		},
+		Operators: operators,
+		AliasMap:  map[string]string{},
 	}
 }
 
