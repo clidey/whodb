@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ */
 
 package elasticsearch
 
@@ -20,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -65,6 +68,11 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 
 	delete(jsonValues, "_id")
 
+	idStr, ok := id.(string)
+	if !ok || strings.TrimSpace(idStr) == "" {
+		return false, fmt.Errorf("invalid '_id' field; expected non-empty string")
+	}
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(map[string]interface{}{
 		"script": map[string]interface{}{
@@ -80,20 +88,20 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 
 	res, err := client.Update(
 		storageUnit,
-		id.(string),
+		idStr,
 		&buf,
 		client.Update.WithContext(context.Background()),
 		client.Update.WithRefresh("true"),
 	)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to execute ElasticSearch update operation")
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch update operation")
 		return false, fmt.Errorf("failed to execute update: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		err := fmt.Errorf("error updating document: %s", res.String())
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("ElasticSearch update API returned error")
+		err := fmt.Errorf("error updating document: %s", formatElasticError(res))
+		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("ElasticSearch update API returned error")
 		return false, err
 	}
 
