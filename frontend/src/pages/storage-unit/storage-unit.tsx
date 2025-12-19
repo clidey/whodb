@@ -645,8 +645,8 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                 displayItems.map((item: any, index: number) => {
                                     const name = item.Name || item.Key;
                                     const rawValue = item.Type || item.Value;
-                                    // Lowercase type names for cleaner UI display
-                                    const value = item.Type ? rawValue?.toLowerCase() : rawValue;
+                                    // Lowercase type/value names for cleaner UI display
+                                    const value = rawValue?.toLowerCase();
 
                                     // Check if this field has FK/PK info from columns data
                                     const colInfo = columnsMap.get(name);
