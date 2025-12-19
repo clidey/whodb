@@ -60,7 +60,7 @@
   "tables": {
     "users": {
       "columns": {
-        "id": "unit32",
+        "id": "uint32",
         "username": "string",
         "email": "string",
         "password": "string",
