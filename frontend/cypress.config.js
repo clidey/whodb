@@ -17,6 +17,38 @@
 import {defineConfig} from "cypress";
 import codeCoverageTask from "@cypress/code-coverage/task.js";
 import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
+import {exec as execCallback} from "node:child_process";
+import {existsSync, readdirSync, readFileSync} from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {promisify} from "node:util";
+
+const exec = promisify(execCallback);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function loadAdditionalDatabaseConfigs() {
+    const eeFixturesDir = path.resolve(__dirname, "../ee/frontend/cypress/fixtures/databases");
+    if (!existsSync(eeFixturesDir)) {
+        return {};
+    }
+
+    const configs = {};
+    for (const file of readdirSync(eeFixturesDir)) {
+        if (!file.endsWith(".json")) {
+            continue;
+        }
+
+        try {
+            const name = path.basename(file, ".json");
+            const raw = readFileSync(path.join(eeFixturesDir, file), "utf8");
+            configs[name] = JSON.parse(raw);
+        } catch (error) {
+            console.warn(`⚠️ Failed to load EE fixture ${file}: ${error.message}`);
+        }
+    }
+
+    return configs;
+}
 
 export default defineConfig({
     numTestsKeptInMemory: 0,
@@ -34,17 +66,25 @@ export default defineConfig({
       experimentalMemoryManagement: true, // Reduce memory pressure during long test runs
     async setupNodeEvents(on, config) {
         codeCoverageTask(on, config);
-        on('file:preprocessor', createBundler());
+        on('file:preprocessor', createBundler({
+          sourcemap: 'inline', // Enable source maps for better debugging
+        }));
 
         config.env = config.env || {};
+        const additionalConfigs = loadAdditionalDatabaseConfigs();
+        if (Object.keys(additionalConfigs).length > 0) {
+          config.env.additionalDatabaseConfigs = additionalConfigs;
+        }
 
       on("task", {
-        async execCommand(command) {
+        async execCommand(cmd) {
           try {
-            const result = await command(command, { shell: true });
-            return { success: true, output: result.toString() };
+            const {stdout = "", stderr = ""} = await exec(cmd, {shell: true});
+            const output = [stdout, stderr].filter(Boolean).join("\n");
+            return {success: true, output};
           } catch (error) {
-            return { success: false, error: error.toString() };
+            const stderr = error?.stderr || error?.stdout || error?.message || String(error);
+            return {success: false, error: stderr};
           }
         },
         // JSON parsing tasks - faster in Node than browser
