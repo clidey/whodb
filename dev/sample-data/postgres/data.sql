@@ -128,7 +128,7 @@ INSERT INTO test_schema.products (name, description, price, stock_quantity) VALU
 ('Laptop', 'High-performance laptop', 1200.00, 10),
 ('Smartphone', 'Latest model smartphone', 800.00, 20),
 ('Headphones', 'Noise-canceling headphones', 150.00, 50),
-('Monitor', '4K UHD Monitor', 400.00, 15),
+('Monitor', '4K UHD Monitor', 400.00, 15);
 -- ('Laptop1', 'High-performance laptop', 1200.00, 10),
 -- ('Smartphone1', 'Latest model smartphone', 800.00, 20),
 -- ('Headphones1', 'Noise-canceling headphones', 150.00, 50),
