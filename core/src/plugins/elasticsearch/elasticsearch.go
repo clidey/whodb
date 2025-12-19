@@ -1,17 +1,17 @@
 /*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * // Copyright 2025 Clidey, Inc.
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //     http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
  */
 
 package elasticsearch
@@ -477,6 +477,13 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 			},
 		}, nil
 
+	case "match_phrase_prefix", "MATCH_PHRASE_PREFIX":
+		return map[string]any{
+			"match_phrase_prefix": map[string]any{
+				atomic.Key: atomic.Value,
+			},
+		}, nil
+
 	case "=", "eq", "EQ", "equals", "EQUALS", "term", "TERM":
 		// Special handling for _id field - use ids query
 		if atomic.Key == "_id" {
@@ -589,9 +596,35 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 
 	case "terms", "TERMS":
 		// Multiple exact matches
+		values := parseCSVToSlice(atomic.Value)
 		return map[string]any{
 			"terms": map[string]any{
-				atomic.Key: atomic.Value,
+				atomic.Key: values,
+			},
+		}, nil
+
+	case "ids", "IDS":
+		var ids []any
+		ids = parseCSVToSlice(atomic.Value)
+		return map[string]any{
+			"ids": map[string]any{
+				"values": ids,
+			},
+		}, nil
+
+	case "range", "RANGE":
+		// Expect "min,max" (empty allowed)
+		minBound, maxBound := parseRangeBounds(fmt.Sprintf("%v", atomic.Value))
+		rangeClause := map[string]any{}
+		if minBound != "" {
+			rangeClause["gte"] = minBound
+		}
+		if maxBound != "" {
+			rangeClause["lte"] = maxBound
+		}
+		return map[string]any{
+			"range": map[string]any{
+				atomic.Key: rangeClause,
 			},
 		}, nil
 
@@ -730,6 +763,28 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 		err := fmt.Errorf("unknown whereconditiontype: %v", where.Type)
 		return nil, err
 	}
+}
+
+func parseCSVToSlice(raw string) []any {
+	if strings.TrimSpace(raw) == "" {
+		return []any{}
+	}
+	parts := strings.Split(raw, ",")
+	values := make([]any, 0, len(parts))
+	for _, p := range parts {
+		values = append(values, strings.TrimSpace(p))
+	}
+	return values
+}
+
+func parseRangeBounds(raw string) (string, string) {
+	parts := strings.Split(raw, ",")
+	if len(parts) == 1 {
+		return strings.TrimSpace(parts[0]), ""
+	}
+	minBound := strings.TrimSpace(parts[0])
+	maxBound := strings.TrimSpace(parts[1])
+	return minBound, maxBound
 }
 
 func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
