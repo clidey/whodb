@@ -35,7 +35,7 @@ JWT_TOKEN=""
 JWT_EXPIRY=0
 
 log() {
-    echo "[$(date '+%H:%M:%S')] $*"
+    echo "[$(date '+%H:%M:%S')] $*" >&2
 }
 
 error() {
