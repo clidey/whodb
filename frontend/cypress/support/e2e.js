@@ -49,10 +49,12 @@ Cypress.on('uncaught:exception', (err) => {
     return true;
 });
 
-// Clear browser state before each test to ensure isolation
-beforeEach(() => {
+// Do heavy cleanup once per spec; Cypress testIsolation already resets per test
+before(() => {
     clearBrowserState();
+});
 
-    // Inject CSS to disable animations on every page visit
+// Inject animation disabling for every page load
+beforeEach(() => {
     cy.on('window:before:load', disableAnimations);
 });
