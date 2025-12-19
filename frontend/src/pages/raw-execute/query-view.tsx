@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import React, { FC, useEffect, useMemo } from "react";
-import { StorageUnitTable } from "../../components/table";
-import { useRawExecuteLazyQuery } from "../../generated/graphql";
-import { CheckCircleIcon } from "../../components/heroicons";
+import React, {FC, useEffect} from "react";
+import {StorageUnitTable} from "../../components/table";
+import {useRawExecuteLazyQuery} from "../../generated/graphql";
+import {CheckCircleIcon} from "../../components/heroicons";
+import {useAppSelector} from "../../store/hooks";
 
 type PromiseFunction = (code: string) => Promise<any>;
 
@@ -50,6 +51,7 @@ function isSQLQueryAction(code?: string): boolean {
 
 export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
     const [rawExecute, { data }] = useRawExecuteLazyQuery();
+    const current = useAppSelector(state => state.auth.current);
 
     // Set the ref to a function that executes the query and returns a promise
     useEffect(() => {
@@ -89,6 +91,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                             rows={data.RawExecute.Rows}
                             disableEdit={true}
                             height={250}
+                            databaseType={current?.Type}
                         />
                     )
                 }

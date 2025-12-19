@@ -17,6 +17,7 @@
 package redis
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -163,6 +164,99 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			}
 		}
 		return nil
+	}
+
+	return fmt.Errorf("unsupported Redis data type")
+}
+
+// ExportDataNDJSON streams Redis data as NDJSON.
+func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema string, storageUnit string, writer func(string) error, selectedRows []map[string]any) error {
+	client, err := DB(config)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	keyType, err := client.Type(client.Context(), storageUnit).Result()
+	if err != nil {
+		return err
+	}
+
+	emit := func(rows []map[string]any) error {
+		for _, row := range rows {
+			line, err := json.Marshal(row)
+			if err != nil {
+				return err
+			}
+			if err := writer(string(line)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if len(selectedRows) > 0 {
+		return emit(selectedRows)
+	}
+
+	ctx := client.Context()
+
+	switch keyType {
+	case "string":
+		val, err := client.Get(ctx, storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		return emit([]map[string]any{{"value": val}})
+
+	case "hash":
+		values, err := client.HGetAll(ctx, storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, 0, len(values))
+		for field, value := range values {
+			rows = append(rows, map[string]any{"field": field, "value": value})
+		}
+		return emit(rows)
+
+	case "list":
+		values, err := client.LRange(ctx, storageUnit, 0, -1).Result()
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, 0, len(values))
+		for i, v := range values {
+			rows = append(rows, map[string]any{"index": i, "value": v})
+		}
+		return emit(rows)
+
+	case "set":
+		values, err := client.SMembers(ctx, storageUnit).Result()
+		if err != nil {
+			return err
+		}
+		sort.Strings(values)
+		rows := make([]map[string]any, 0, len(values))
+		for i, v := range values {
+			rows = append(rows, map[string]any{"index": i, "value": v})
+		}
+		return emit(rows)
+
+	case "zset":
+		values, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, 0, len(values))
+		for i, m := range values {
+			rows = append(rows, map[string]any{
+				"index":  i,
+				"member": m.Member,
+				"score":  fmt.Sprintf("%.2f", m.Score),
+			})
+		}
+		return emit(rows)
 	}
 
 	return fmt.Errorf("unsupported Redis data type")

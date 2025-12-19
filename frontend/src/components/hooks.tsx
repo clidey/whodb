@@ -16,11 +16,11 @@
 
 import {useCallback, useEffect, useRef, useState} from "react";
 import * as desktopService from "../services/desktop";
-import { isDesktopApp } from "../utils/external-links";
-import { addAuthHeader } from "../utils/auth-headers";
+import {isDesktopApp} from "../utils/external-links";
+import {addAuthHeader} from "../utils/auth-headers";
 
 
-export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' = 'csv') => {
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' | 'ndjson' = 'csv') => {
     return useCallback(async () => {
       try {
         // Prepare request body
@@ -48,7 +48,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
           method: 'POST',
           credentials: 'include',
           headers: addAuthHeader({
-            'Accept': format === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv',
+            'Accept': format === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : format === 'ndjson' ? 'application/x-ndjson' : 'text/csv',
             'Content-Type': 'application/json',
           }),
           body: JSON.stringify(requestBody),
@@ -61,7 +61,8 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
         // Get filename from Content-Disposition header
         const contentDisposition = response.headers.get('Content-Disposition');
         // Only include schema in filename if it exists (for SQLite, schema is empty)
-        let filename = schema ? `${schema}_${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}` : `${storageUnit}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+        const extension = format === 'excel' ? 'xlsx' : format === 'ndjson' ? 'ndjson' : 'csv';
+        let filename = schema ? `${schema}_${storageUnit}.${extension}` : `${storageUnit}.${extension}`;
         if (contentDisposition) {
           const filenameMatch = contentDisposition.match(/filename="(.+)"/);
           if (filenameMatch) {

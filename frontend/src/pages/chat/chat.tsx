@@ -47,7 +47,7 @@ import {
     TableCellsIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import {cloneElement, FC, KeyboardEventHandler, useCallback, useMemo, useRef, useState, useEffect} from "react";
+import {cloneElement, FC, KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import logoImage from "../../../public/images/logo.png";
 import {AIProvider, useAI} from "../../components/ai";
 import {CodeEditor} from "../../components/editor";
@@ -192,6 +192,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             columnTypes={data?.Columns.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
                             disableEdit={true}
+                            databaseType={current?.Type}
                         />
                     </div>
                     : <Alert title={t('actionExecuted')} className="w-fit">

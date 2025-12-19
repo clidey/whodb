@@ -116,15 +116,16 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to execute ElasticSearch scroll search for export")
 		return fmt.Errorf("failed to search index: %v", err)
 	}
-	defer res.Body.Close()
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		res.Body.Close()
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to decode ElasticSearch search result during export")
 		return fmt.Errorf("failed to decode search result: %v", err)
 	}
+	res.Body.Close()
 
-	scrollID := searchResult["_scroll_id"].(string)
+	scrollID, _ := searchResult["_scroll_id"].(string)
 	rowCount := 0
 
 	for {
@@ -152,6 +153,10 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			rowCount++
 		}
 
+		if scrollID == "" {
+			break
+		}
+
 		// Get next batch
 		res, err = db.Scroll(
 			db.Scroll.WithScrollID(scrollID),
@@ -161,12 +166,100 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Error during ElasticSearch scroll operation, breaking export loop")
 			break
 		}
-		defer res.Body.Close()
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+			res.Body.Close()
 			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response, breaking export loop")
 			break
+		}
+		res.Body.Close()
+
+		if nextScrollID, ok := searchResult["_scroll_id"].(string); ok && nextScrollID != "" {
+			scrollID = nextScrollID
+		}
+	}
+
+	return nil
+}
+
+// ExportDataNDJSON streams Elasticsearch data as NDJSON.
+func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema string, storageUnit string, writer func(string) error, selectedRows []map[string]any) error {
+	if len(selectedRows) > 0 {
+		for _, row := range selectedRows {
+			line, err := json.Marshal(row)
+			if err != nil {
+				return err
+			}
+			if err := writer(string(line)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	db, err := DB(config)
+	if err != nil {
+		return err
+	}
+
+	res, err := db.Search(
+		db.Search.WithContext(context.Background()),
+		db.Search.WithIndex(storageUnit),
+		db.Search.WithScroll(5*60*1000), // 5 minutes
+		db.Search.WithSize(1000),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to search index: %v", err)
+	}
+
+	var searchResult map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+		res.Body.Close()
+		return fmt.Errorf("failed to decode search result: %v", err)
+	}
+	res.Body.Close()
+
+	scrollID, _ := searchResult["_scroll_id"].(string)
+
+	for {
+		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
+		if len(hits) == 0 {
+			break
+		}
+
+		for _, hit := range hits {
+			doc := hit.(map[string]any)["_source"].(map[string]any)
+			line, err := json.Marshal(doc)
+			if err != nil {
+				return err
+			}
+			if err := writer(string(line)); err != nil {
+				return err
+			}
+		}
+
+		if scrollID == "" {
+			break
+		}
+
+		res, err = db.Scroll(
+			db.Scroll.WithScrollID(scrollID),
+			db.Scroll.WithScroll(5*60*1000),
+		)
+		if err != nil {
+			break
+		}
+
+		searchResult = make(map[string]any)
+		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+			res.Body.Close()
+			break
+		}
+		res.Body.Close()
+
+		if nextScrollID, ok := searchResult["_scroll_id"].(string); ok && nextScrollID != "" {
+			scrollID = nextScrollID
 		}
 	}
 

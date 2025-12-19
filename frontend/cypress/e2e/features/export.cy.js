@@ -155,24 +155,60 @@ describe('Data Export', () => {
 
     // Document Databases
     forEachDatabase('document', (db) => {
-        it('exports collection/index data as CSV', () => {
+        it('exports collection/index data as NDJSON', () => {
             cy.data('users');
             cy.intercept('POST', '/api/export').as('export');
 
             cy.contains('button', 'Export All').click();
             cy.contains('h2', 'Export Data').should('be.visible');
 
-            // Verify CSV format is default
+            // Verify NDJSON format is default for NoSQL
             cy.get('[role="dialog"]').within(() => {
-                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'CSV');
+                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'JSON');
             });
 
             cy.get('[role="dialog"]').within(() => {
                 cy.contains('button', 'Export').click();
             });
 
-            cy.wait('@export').then(({response}) => {
+            cy.wait('@export').then(({request, response}) => {
                 expect(response?.statusCode).to.equal(200);
+                expect(request.body.format).to.equal('ndjson');
+                const headers = response?.headers || {};
+                const cd = headers['content-disposition'] || headers['Content-Disposition'];
+                expect(cd).to.be.a('string');
+                expect(cd).to.match(/\.ndjson/i);
+            });
+
+            cy.get('body').type('{esc}');
+            cy.get('[role="dialog"]').should('not.exist');
+        });
+
+        it('exports collection/index data as CSV when selected', () => {
+            cy.data('users');
+            cy.intercept('POST', '/api/export').as('export');
+
+            cy.contains('button', 'Export All').click();
+            cy.contains('h2', 'Export Data').should('be.visible');
+
+            // Switch format to CSV
+            cy.get('[role="dialog"]').within(() => {
+                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
+            });
+            cy.get('[role="listbox"]').should('be.visible');
+            cy.get('[role="option"]').contains('CSV').click({force: true});
+            cy.get('[role="listbox"]').should('not.exist');
+
+            // Delimiter control should appear for CSV
+            cy.contains('label', 'Delimiter').should('be.visible');
+
+            cy.get('[role="dialog"]').within(() => {
+                cy.contains('button', 'Export').click();
+            });
+
+            cy.wait('@export').then(({request, response}) => {
+                expect(response?.statusCode).to.equal(200);
+                expect(request.body.format).to.equal('csv');
                 const headers = response?.headers || {};
                 const cd = headers['content-disposition'] || headers['Content-Disposition'];
                 expect(cd).to.be.a('string');
@@ -184,4 +220,36 @@ describe('Data Export', () => {
         });
     }, { features: ['export'] });
 
+    // Key/Value Databases (e.g., Redis)
+    forEachDatabase('keyvalue', (db) => {
+        const tableName = db.testTable?.name || 'user:1';
+
+        it('exports key data as NDJSON by default', () => {
+            cy.data(tableName);
+            cy.intercept('POST', '/api/export').as('export');
+
+            cy.contains('button', 'Export All').click();
+            cy.contains('h2', 'Export Data').should('be.visible');
+
+            cy.get('[role="dialog"]').within(() => {
+                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'JSON');
+            });
+
+            cy.get('[role="dialog"]').within(() => {
+                cy.contains('button', 'Export').click();
+            });
+
+            cy.wait('@export').then(({request, response}) => {
+                expect(response?.statusCode).to.equal(200);
+                expect(request.body.format).to.equal('ndjson');
+                const headers = response?.headers || {};
+                const cd = headers['content-disposition'] || headers['Content-Disposition'];
+                expect(cd).to.be.a('string');
+                expect(cd).to.match(/\.ndjson/i);
+            });
+
+            cy.get('body').type('{esc}');
+            cy.get('[role="dialog"]').should('not.exist');
+        });
+    }, { features: ['export'] });
 });

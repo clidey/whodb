@@ -788,6 +788,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         // Foreign key functionality
                         isValidForeignKey={isValidForeignKey}
                         onEntitySearch={handleEntitySearch}
+                        databaseType={current?.Type}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -826,6 +827,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     storageUnit={unitName}
                     onRefresh={handleSubmitRequest}
                     showPagination={false}
+                    databaseType={current?.Type}
                 />
             </DrawerContent>
         </Drawer>

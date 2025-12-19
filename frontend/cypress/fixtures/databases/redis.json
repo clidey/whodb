@@ -22,7 +22,7 @@
   "schema": null,
   "features": {
     "graph": false,
-    "export": false,
+    "export": true,
     "scratchpad": false,
     "mockData": false,
     "chat": true,
@@ -31,7 +31,7 @@
   },
   "featureNotes": {
     "graph": "Graph view not applicable for Redis - key-value store has no schema relationships",
-    "export": "Export not implemented for Redis data types",
+    "export": "Export supported for Redis data types",
     "scratchpad": "Scratchpad requires SQL execution which Redis does not support",
     "mockData": "Mock data generation not applicable for key-value stores",
     "whereConditions": "Where conditions not applicable for key-value lookups",

@@ -165,6 +165,51 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	return cursor.Err()
 }
 
+// ExportDataNDJSON streams MongoDB data as NDJSON.
+func (p *MongoDBPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema string, storageUnit string, writer func(string) error, selectedRows []map[string]any) error {
+	if len(selectedRows) > 0 {
+		for _, row := range selectedRows {
+			line, err := json.Marshal(row)
+			if err != nil {
+				return err
+			}
+			if err := writer(string(line)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	client, err := DB(config)
+	if err != nil {
+		return err
+	}
+	defer client.Disconnect(context.Background())
+
+	collection := client.Database(schema).Collection(storageUnit)
+	cursor, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		return err
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var doc bson.M
+		if err := cursor.Decode(&doc); err != nil {
+			return err
+		}
+		line, err := json.Marshal(doc)
+		if err != nil {
+			return err
+		}
+		if err := writer(string(line)); err != nil {
+			return err
+		}
+	}
+
+	return cursor.Err()
+}
+
 // Helper functions
 
 func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]string, error) {

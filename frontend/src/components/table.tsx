@@ -111,6 +111,7 @@ const DynamicExport: FC<{
     hasSelectedRows: boolean;
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
+    databaseType?: string;
 }> = (props) => {
     // Use EE Export if available, otherwise fall back to CE Export
     const ExportComponent = EEExport || Export;
@@ -240,6 +241,7 @@ interface TableProps {
     // Foreign key functionality
     isValidForeignKey?: (columnName: string) => boolean;
     onEntitySearch?: (columnName: string, value: string) => void;
+    databaseType?: string;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -268,6 +270,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Foreign key functionality
     isValidForeignKey,
     onEntitySearch,
+    databaseType,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -1566,6 +1569,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     hasSelectedRows={hasSelectedRows}
                     selectedRowsData={selectedRowsData}
                     checkedRowsCount={checked.length}
+                    databaseType={databaseType}
                 />
             </Suspense>
         </div>
