@@ -26,8 +26,8 @@ import {forEachDatabase, getTableConfig} from '../../support/test-runner';
 describe('Data Types CRUD Operations', () => {
 
     forEachDatabase('sql', (db) => {
-        const tableName = 'data_types';
-        const tableConfig = getTableConfig(db, tableName);
+        const tableName = db.dataTypesTable;
+        const tableConfig = tableName ? getTableConfig(db, tableName) : null;
         const mutationDelay = db.mutationDelay || 0;
 
         if (!tableConfig) {

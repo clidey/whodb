@@ -3,6 +3,7 @@
   "uiType": "MySQL",
   "category": "sql",
   "id": "mysql8",
+  "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",
     "identifierField": "username",

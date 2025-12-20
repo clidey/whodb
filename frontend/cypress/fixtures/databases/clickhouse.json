@@ -1,6 +1,7 @@
 {
   "type": "ClickHouse",
   "category": "sql",
+  "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",
     "identifierField": "username",

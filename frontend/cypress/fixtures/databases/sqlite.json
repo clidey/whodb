@@ -2,6 +2,7 @@
   "type": "Sqlite3",
   "id": "sqlite",
   "category": "sql",
+  "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",
     "identifierField": "username",

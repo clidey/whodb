@@ -51,6 +51,26 @@ try {
 // Active database configs
 let databaseConfigs = {...ceDatabaseConfigs, ...additionalConfigs};
 
+// Track whether we've loaded configs from Cypress.env (to avoid duplicate loading)
+let envConfigsLoaded = false;
+
+/**
+ * Load additional database configs from Cypress.env (set by cypress.config.js)
+ * This is needed because esbuild doesn't support require.context
+ */
+function loadEnvConfigs() {
+    if (envConfigsLoaded) {
+        return;
+    }
+    if (typeof Cypress !== 'undefined') {
+        const envConfigs = Cypress.env('additionalDatabaseConfigs');
+        if (envConfigs && typeof envConfigs === 'object') {
+            databaseConfigs = {...databaseConfigs, ...envConfigs};
+            envConfigsLoaded = true;
+        }
+    }
+}
+
 /**
  * Register additional database configurations (used by EE to add EE databases)
  * @param {Object} additionalConfigs - Map of database configs to add
@@ -194,6 +214,9 @@ export function loginToDatabase(dbConfig, options = {}) {
  */
 export function forEachDatabase(categoryFilter, testFn, options = {}) {
     const {login = true, logout = true, navigateToStorageUnit = true, features = []} = options;
+
+    // Load any additional configs from Cypress.env (needed for EE databases with esbuild)
+    loadEnvConfigs();
 
     // Validate requested features to catch typos early
     for (const feature of features) {

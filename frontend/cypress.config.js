@@ -34,7 +34,9 @@ export default defineConfig({
       experimentalMemoryManagement: true, // Reduce memory pressure during long test runs
     async setupNodeEvents(on, config) {
         codeCoverageTask(on, config);
-        on('file:preprocessor', createBundler());
+        on('file:preprocessor', createBundler({
+            sourcemap: "inline",
+        }));
 
         config.env = config.env || {};
 
