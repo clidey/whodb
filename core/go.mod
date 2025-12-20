@@ -5,6 +5,7 @@ go 1.25.4
 require (
 	github.com/99designs/gqlgen v0.17.84
 	github.com/ClickHouse/clickhouse-go/v2 v2.41.0
+	github.com/dromara/carbon/v2 v2.6.15
 	github.com/brianvoe/gofakeit/v7 v7.12.0
 	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000
 	github.com/deckarep/golang-set/v2 v2.8.0

@@ -29,6 +29,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/dromara/carbon/v2"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/twpayne/go-geom/encoding/wkt"
@@ -367,46 +368,27 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 }
 
 func (p *GormPlugin) parseDateTime(value string) (time.Time, error) {
-	// List of formats to try
-	formats := []string{
-		time.RFC3339,           // "2006-01-02T15:04:05Z07:00"
-		"2006-01-02T15:04:05Z", // UTC timezone
-		"2006-01-02 15:04:05",  // No timezone
-		"2006-01-02T15:04:05",  // No timezone with T
+	c := carbon.Parse(value)
+	if c.Error != nil {
+		return time.Time{}, fmt.Errorf("could not parse datetime '%s': %v", value, c.Error)
 	}
-
-	var lastErr error
-	for _, format := range formats {
-		t, err := time.Parse(format, value)
-		if err == nil {
-			return t, nil
-		}
-		lastErr = err
+	if c.IsInvalid() {
+		return time.Time{}, fmt.Errorf("could not parse datetime '%s': invalid date", value)
 	}
-
-	return time.Time{}, fmt.Errorf("could not parse datetime '%s': %v", value, lastErr)
+	return c.StdTime(), nil
 }
 
-// parseDate converts a string to a time.Time object for ClickHouse Date
+// parseDate converts a string to a time.Time object, truncated to date only
 func (p *GormPlugin) parseDate(value string) (time.Time, error) {
-	formats := []string{
-		"2006-01-02", // Standard date format
-		time.RFC3339, // Try full datetime format and truncate to date
-		"2006-01-02T15:04:05",
-		"2006-01-02 15:04:05",
+	c := carbon.Parse(value)
+	if c.Error != nil {
+		return time.Time{}, fmt.Errorf("could not parse date '%s': %v", value, c.Error)
 	}
-
-	var lastErr error
-	for _, format := range formats {
-		t, err := time.Parse(format, value)
-		if err == nil {
-			// Truncate to date only (no time component)
-			return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()), nil
-		}
-		lastErr = err
+	if c.IsInvalid() {
+		return time.Time{}, fmt.Errorf("could not parse date '%s': invalid date", value)
 	}
-
-	return time.Time{}, fmt.Errorf("could not parse date '%s': %v", value, lastErr)
+	// Truncate to date only (no time component)
+	return c.StartOfDay().StdTime(), nil
 }
 
 func (p *GormPlugin) convertArrayValue(value string, columnType string) (interface{}, error) {
