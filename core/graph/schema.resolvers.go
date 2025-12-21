@@ -1119,6 +1119,9 @@ func (r *queryResolver) MockDataMaxRowCount(ctx context.Context) (int, error) {
 // DatabaseMetadata is the resolver for the DatabaseMetadata field.
 func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error) {
 	plugin, _ := GetPluginForContext(ctx)
+	if plugin == nil {
+		return nil, nil
+	}
 	metadata := plugin.GetDatabaseMetadata()
 
 	// Return nil if plugin doesn't implement metadata (default GormPlugin behavior)
