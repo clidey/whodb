@@ -44,3 +44,4 @@ whodb-test.cer
 cli/build/
 cli/whodb-cli
 cli/.gocache
+.gocache
