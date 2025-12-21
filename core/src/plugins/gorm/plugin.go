@@ -28,6 +28,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/dromara/carbon/v2"
 	"gorm.io/gorm"
 )
 
@@ -607,6 +608,15 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 					} else {
 						row[i] = "0x" + hex.EncodeToString(*rawBytes)
 					}
+				case "TIME":
+					// TIME columns are returned as full datetime strings with zero date (e.g., "0001-01-01T12:00:00Z")
+					// Extract just the time portion for display
+					val := colPtr.(*sql.NullString)
+					if val.Valid {
+						row[i] = formatTimeOnly(val.String)
+					} else {
+						row[i] = ""
+					}
 				default:
 					val := colPtr.(*sql.NullString)
 					if val.Valid {
@@ -680,6 +690,23 @@ func (p *GormPlugin) IsGeometryType(columnType string) bool {
 // FormatGeometryValue returns empty string by default (use hex formatting)
 func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) string {
 	return ""
+}
+
+// formatTimeOnly extracts just the time portion from a datetime string.
+// Database drivers return TIME columns as full datetime with zero date (e.g., "0001-01-01T12:00:00Z").
+// This function extracts just the time portion for cleaner display.
+func formatTimeOnly(value string) string {
+	c := carbon.Parse(value)
+	if c.Error != nil || c.IsInvalid() {
+		// If carbon can't parse it, return as-is
+		return value
+	}
+
+	// Check if it has sub-second precision
+	if c.Nanosecond() > 0 {
+		return c.ToTimeMilliString()
+	}
+	return c.ToTimeString()
 }
 
 // HandleCustomDataType returns false by default (no custom handling)
