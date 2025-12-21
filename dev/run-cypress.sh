@@ -38,6 +38,13 @@
 
 set -e
 
+# ============================================================================
+# CONFIGURATION - Modify these values as needed
+# ============================================================================
+# Backend log level: "debug", "info", "warning", "error", "none"
+export WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}"
+# ============================================================================
+
 HEADLESS="${1:-true}"
 TARGET_DB="${2:-all}"
 SPEC_FILE="${3:-}"
@@ -64,6 +71,7 @@ declare -A DB_CATEGORIES=(
 echo "🚀 Running Cypress tests sequentially (CE)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
+echo "   Log Level: $WHODB_LOG_LEVEL"
 if [ -n "$SPEC_FILE" ]; then
     echo "   Spec: $SPEC_FILE"
 fi

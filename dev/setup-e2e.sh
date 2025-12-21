@@ -314,7 +314,10 @@ echo "✅ Coverage cleanup complete"
 echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
 # Let Go use all available CPU cores for better parallel test handling
-ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders,DEPARTMENTS' \
+# WHODB_LOG_LEVEL defaults to "error" if not set (reduces noise during tests)
+ENVIRONMENT=dev \
+    WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}" \
+    WHODB_DISABLE_MOCK_DATA_GENERATION='orders,DEPARTMENTS' \
     ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
 TEST_SERVER_PID=$!
 
