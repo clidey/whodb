@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-# Sequential Cypress test runner for Community Edition (CE)
+# Sequential Cypress test runner for WhoDB
 # Runs tests for multiple databases sequentially with a single backend+frontend
 #
 # Usage:
@@ -26,22 +26,27 @@
 #   database - specific database to test, or 'all' (default: all)
 #   spec     - specific spec file to run (default: all features)
 #
+# Environment variables for customization:
+#   WHODB_DATABASES      - space-separated list of databases to test
+#   WHODB_DB_CATEGORIES  - colon-separated db:category pairs (e.g., "postgres:sql mysql:sql")
+#   WHODB_CYPRESS_DIRS   - colon-separated db:dir pairs for non-default cypress dirs
+#   WHODB_VITE_EDITION   - vite build edition (empty for CE)
+#   WHODB_SETUP_MODE     - mode to pass to setup-e2e.sh (default: ce)
+#   WHODB_EDITION_LABEL  - label for output (default: CE)
+#   WHODB_EXTRA_WAIT     - set to 'true' for extra service wait time
+#
 # Examples:
 #   ./run-cypress.sh true postgres data-types    # Headless, postgres only, data-types spec
 #
 # Architecture:
 #   Single shared stack for all database tests:
 #   - backend:8080 ← frontend:3000 ← cypress (sequential per database)
-#
-# Coverage:
-#   Backend writes coverage.out when terminated with SIGTERM.
 
 set -e
 
 # ============================================================================
-# CONFIGURATION - Modify these values as needed
+# CONFIGURATION
 # ============================================================================
-# Backend log level: "debug", "info", "warning", "error", "none"
 export WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}"
 # ============================================================================
 
@@ -52,23 +57,39 @@ SPEC_FILE="${3:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# CE database configurations
-DATABASES=(postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse)
+# Default CE database configurations (can be overridden via env vars)
+DEFAULT_DATABASES="postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse"
+DEFAULT_CATEGORIES="postgres:sql mysql:sql mysql8:sql mariadb:sql sqlite:sql mongodb:document redis:keyvalue elasticsearch:document clickhouse:sql"
 
-# Map database to category for logging
-declare -A DB_CATEGORIES=(
-    [postgres]="sql"
-    [mysql]="sql"
-    [mysql8]="sql"
-    [mariadb]="sql"
-    [sqlite]="sql"
-    [mongodb]="document"
-    [redis]="keyvalue"
-    [elasticsearch]="document"
-    [clickhouse]="sql"
-)
+# Use env vars or defaults
+DATABASES_STR="${WHODB_DATABASES:-$DEFAULT_DATABASES}"
+CATEGORIES_STR="${WHODB_DB_CATEGORIES:-$DEFAULT_CATEGORIES}"
+CYPRESS_DIRS_STR="${WHODB_CYPRESS_DIRS:-}"
+VITE_EDITION="${WHODB_VITE_EDITION:-}"
+SETUP_MODE="${WHODB_SETUP_MODE:-ce}"
+EDITION_LABEL="${WHODB_EDITION_LABEL:-CE}"
+EXTRA_WAIT="${WHODB_EXTRA_WAIT:-false}"
 
-echo "🚀 Running Cypress tests sequentially (CE)"
+# Convert space-separated string to array
+read -ra DATABASES <<< "$DATABASES_STR"
+
+# Build category map from colon-separated pairs
+declare -A DB_CATEGORIES
+for pair in $CATEGORIES_STR; do
+    db="${pair%%:*}"
+    cat="${pair#*:}"
+    DB_CATEGORIES[$db]="$cat"
+done
+
+# Build cypress dir map from colon-separated pairs
+declare -A CYPRESS_DIRS
+for pair in $CYPRESS_DIRS_STR; do
+    db="${pair%%:*}"
+    dir="${pair#*:}"
+    CYPRESS_DIRS[$db]="$dir"
+done
+
+echo "🚀 Running Cypress tests sequentially ($EDITION_LABEL)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
 echo "   Log Level: $WHODB_LOG_LEVEL"
@@ -97,7 +118,7 @@ echo "   Databases: ${DATABASES[*]}"
 
 # Setup environment (databases + build binary + start backend)
 echo "⚙️ Setting up test environment..."
-bash "$SCRIPT_DIR/setup-e2e.sh" "ce" "$TARGET_DB"
+bash "$SCRIPT_DIR/setup-e2e.sh" "$SETUP_MODE" "$TARGET_DB"
 
 cd "$PROJECT_ROOT/frontend"
 
@@ -111,7 +132,11 @@ rm -rf cypress/videos/* 2>/dev/null || true
 
 # Start frontend dev server
 echo "🌐 Starting frontend dev server..."
-NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
+if [ -n "$VITE_EDITION" ]; then
+    VITE_BUILD_EDITION="$VITE_EDITION" NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
+else
+    NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
+fi
 FRONTEND_PID=$!
 
 # Wait for frontend to be ready
@@ -132,6 +157,14 @@ if ! nc -z localhost 3000 2>/dev/null; then
     exit 1
 fi
 
+# Extra wait for services if needed
+if [ "$EXTRA_WAIT" = "true" ]; then
+    echo "⏳ Waiting for services..."
+    MAX_WAIT=90 bash "$SCRIPT_DIR/wait-for-services.sh"
+    echo "⏳ Giving services a moment to stabilize..."
+    sleep 2
+fi
+
 echo "📋 Running ${#DATABASES[@]} database tests sequentially..."
 
 # Track results
@@ -143,6 +176,9 @@ for db in "${DATABASES[@]}"; do
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "🧪 Testing: $db (${DB_CATEGORIES[$db]})"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    # Determine cypress directory (use override if set, otherwise default)
+    CYPRESS_DIR="${CYPRESS_DIRS[$db]:-$PROJECT_ROOT/frontend}"
 
     # Build spec pattern
     if [ -n "$SPEC_FILE" ]; then
@@ -156,22 +192,48 @@ for db in "${DATABASES[@]}"; do
     fi
 
     # Run Cypress test
+    # For custom cypress dirs, don't pass --spec (let cypress.config.js specPattern handle it)
     if [ "$HEADLESS" = "true" ]; then
-        CYPRESS_database="$db" \
-        CYPRESS_category="${DB_CATEGORIES[$db]}" \
-        CYPRESS_retries__runMode=2 \
-        CYPRESS_retries__openMode=0 \
-        NODE_ENV=test pnpx cypress run \
-            --spec "$SPEC_PATTERN" \
-            --browser electron \
-            2>&1 | tee "cypress/logs/$db.log"
-        RESULT=${PIPESTATUS[0]}
+        if [ "$CYPRESS_DIR" = "$PROJECT_ROOT/frontend" ]; then
+            # Default dir - use spec pattern
+            (
+                cd "$CYPRESS_DIR"
+                CYPRESS_database="$db" \
+                CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                CYPRESS_retries__runMode=2 \
+                CYPRESS_retries__openMode=0 \
+                NODE_ENV=test pnpx cypress run \
+                    --spec "$SPEC_PATTERN" \
+                    --browser electron \
+                    2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
+                exit ${PIPESTATUS[0]}
+            )
+            RESULT=$?
+        else
+            # Custom dir - let cypress.config.js specPattern handle specs
+            (
+                cd "$CYPRESS_DIR"
+                CYPRESS_database="$db" \
+                CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                CYPRESS_retries__runMode=2 \
+                CYPRESS_retries__openMode=0 \
+                NODE_ENV=test pnpx cypress run \
+                    --browser electron \
+                    2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
+                exit ${PIPESTATUS[0]}
+            )
+            RESULT=$?
+        fi
     else
-        CYPRESS_database="$db" \
-        CYPRESS_category="${DB_CATEGORIES[$db]}" \
-        NODE_ENV=test pnpx cypress open \
-            --e2e \
-            --browser electron
+        (
+            cd "$CYPRESS_DIR"
+            CYPRESS_database="$db" \
+            CYPRESS_category="${DB_CATEGORIES[$db]}" \
+            NODE_ENV=test pnpx cypress open \
+                --e2e \
+                --browser electron
+            exit $?
+        )
         RESULT=$?
     fi
 
@@ -191,7 +253,7 @@ echo "🧹 Cleaning up..."
 kill $FRONTEND_PID 2>/dev/null || true
 
 # Run standard cleanup (stops backend, docker containers)
-bash "$SCRIPT_DIR/cleanup-e2e.sh" "ce"
+bash "$SCRIPT_DIR/cleanup-e2e.sh" "$SETUP_MODE"
 
 # Report results
 echo ""
