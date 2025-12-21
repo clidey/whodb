@@ -772,6 +772,34 @@ func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sch
 	return make(map[string]*engine.ForeignKeyRelationship), nil
 }
 
+// QueryForeignKeyRelationships executes a foreign key query and returns the relationships map.
+// This is a helper for SQL plugins that query system catalogs for FK information.
+// The query must return exactly 3 columns: column_name, referenced_table, referenced_column.
+func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, query string, params ...interface{}) (map[string]*engine.ForeignKeyRelationship, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
+		rows, err := db.Raw(query, params...).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		relationships := make(map[string]*engine.ForeignKeyRelationship)
+		for rows.Next() {
+			var columnName, referencedTable, referencedColumn string
+			if err := rows.Scan(&columnName, &referencedTable, &referencedColumn); err != nil {
+				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
+				continue
+			}
+			relationships[columnName] = &engine.ForeignKeyRelationship{
+				ColumnName:       columnName,
+				ReferencedTable:  referencedTable,
+				ReferencedColumn: referencedColumn,
+			}
+		}
+		return relationships, nil
+	})
+}
+
 // NormalizeType returns the type unchanged by default.
 // Database plugins should override this to normalize aliases to canonical types.
 func (p *GormPlugin) NormalizeType(typeName string) string {
