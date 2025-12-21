@@ -5,10 +5,11 @@ go 1.25.4
 require (
 	github.com/99designs/gqlgen v0.17.84
 	github.com/ClickHouse/clickhouse-go/v2 v2.41.0
-	github.com/dromara/carbon/v2 v2.6.15
 	github.com/brianvoe/gofakeit/v7 v7.12.0
 	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000
 	github.com/deckarep/golang-set/v2 v2.8.0
+	github.com/dgraph-io/ristretto/v2 v2.3.0
+	github.com/dromara/carbon/v2 v2.6.15
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
@@ -25,7 +26,7 @@ require (
 	github.com/xuri/excelize/v2 v2.10.0
 	github.com/zalando/go-keyring v0.2.6
 	go.mongodb.org/mongo-driver v1.17.6
-	golang.org/x/sync v0.18.0
+	golang.org/x/sync v0.19.0
 	gorm.io/driver/clickhouse v0.7.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/postgres v1.6.0
@@ -42,6 +43,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
@@ -82,12 +84,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 )
 
 replace github.com/clidey/whodb/ee => ../ee-stub
