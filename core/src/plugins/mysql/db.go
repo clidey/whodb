@@ -46,15 +46,23 @@ func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	mysqlConfig.Loc = connectionInput.Loc
 	mysqlConfig.Params = connectionInput.ExtraOptions
 
+	l := log.Logger.WithFields(map[string]any{
+		"hostname": connectionInput.Hostname,
+		"port":     connectionInput.Port,
+		"database": connectionInput.Database,
+		"username": connectionInput.Username,
+	})
+
 	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"hostname": connectionInput.Hostname,
-			"port":     connectionInput.Port,
-			"database": connectionInput.Database,
-			"username": connectionInput.Username,
-		}).Error("Failed to connect to MySQL database")
+		l.WithError(err).Error("Failed to connect to MySQL database")
 		return nil, err
 	}
+
+	// Configure connection pool for better reconnection behavior
+	if err := plugins.ConfigureConnectionPool(db); err != nil {
+		l.WithError(err).Warn("Failed to configure connection pool")
+	}
+
 	return db, nil
 }

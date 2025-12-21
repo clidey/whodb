@@ -95,13 +95,21 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		}
 	}
 
+	l := log.Logger.WithFields(map[string]any{
+		"database": database,
+		"path":     fileNameDatabase,
+	})
+
 	db, err := gorm.Open(sqlite.Open(fileNameDatabase), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"database": database,
-			"path":     fileNameDatabase,
-		}).Error("Failed to connect to SQLite database")
+		l.WithError(err).Error("Failed to connect to SQLite database")
 		return nil, err
 	}
+
+	// Configure connection pool for consistency (SQLite benefits less but doesn't hurt)
+	if err := plugins.ConfigureConnectionPool(db); err != nil {
+		l.WithError(err).Warn("Failed to configure connection pool")
+	}
+
 	return db, nil
 }

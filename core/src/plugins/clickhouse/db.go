@@ -84,23 +84,22 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	conn := clickhouse.OpenDB(options)
 
-	conn.SetMaxOpenConns(5)
-	conn.SetConnMaxLifetime(time.Hour)
+	l := log.Logger.WithFields(map[string]any{
+		"hostname": connectionInput.Hostname,
+		"port":     connectionInput.Port,
+		"database": connectionInput.Database,
+		"username": connectionInput.Username,
+		"protocol": func() string {
+			if connectionInput.HTTPProtocol != "disable" {
+				return "HTTP"
+			}
+			return "Native"
+		}(),
+	})
 
 	err = conn.PingContext(context.Background())
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"hostname": connectionInput.Hostname,
-			"port":     connectionInput.Port,
-			"database": connectionInput.Database,
-			"username": connectionInput.Username,
-			"protocol": func() string {
-				if connectionInput.HTTPProtocol != "disable" {
-					return "HTTP"
-				}
-				return "Native"
-			}(),
-		}).Error("Failed to ping ClickHouse server")
+		l.WithError(err).Error("Failed to ping ClickHouse server")
 		return nil, err
 	}
 
@@ -108,13 +107,14 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		Conn: conn,
 	}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"hostname": connectionInput.Hostname,
-			"port":     connectionInput.Port,
-			"database": connectionInput.Database,
-			"username": connectionInput.Username,
-		}).Error("Failed to open ClickHouse GORM connection")
+		l.WithError(err).Error("Failed to open ClickHouse GORM connection")
 		return nil, err
 	}
+
+	// Configure connection pool for better reconnection behavior
+	if err := plugins.ConfigureConnectionPool(db); err != nil {
+		l.WithError(err).Warn("Failed to configure connection pool")
+	}
+
 	return db, nil
 }

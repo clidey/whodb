@@ -59,16 +59,23 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		maps.Copy(pgxConfig.RuntimeParams, connectionInput.ExtraOptions)
 	}
 
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
+	l := log.Logger.WithFields(map[string]any{
+		"hostname": connectionInput.Hostname,
+		"port":     connectionInput.Port,
+		"database": connectionInput.Database,
+		"username": connectionInput.Username,
+	})
 
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
-			"hostname": connectionInput.Hostname,
-			"port":     connectionInput.Port,
-			"database": connectionInput.Database,
-			"username": connectionInput.Username,
-		}).Error("Failed to connect to PostgreSQL database")
+		l.WithError(err).Error("Failed to connect to PostgreSQL database")
 		return nil, err
 	}
+
+	// Configure connection pool for better reconnection behavior
+	if err := plugins.ConfigureConnectionPool(db); err != nil {
+		l.WithError(err).Warn("Failed to configure connection pool")
+	}
+
 	return db, nil
 }
