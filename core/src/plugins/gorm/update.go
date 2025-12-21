@@ -46,6 +46,19 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 		unchangedValues := make(map[string]interface{})
 
 		for column, strValue := range values {
+			isPK := common.ContainsString(pkColumns, column)
+			isUpdated := common.ContainsString(updatedColumns, column)
+
+			// Only convert columns we actually need:
+			// - PK columns (for WHERE clause)
+			// - Updated columns (for SET clause)
+			// - Unchanged columns only if no PKs exist (fallback WHERE)
+			needsConversion := isPK || isUpdated || len(pkColumns) == 0
+
+			if !needsConversion {
+				continue
+			}
+
 			columnType, exists := columnTypes[column]
 			if !exists {
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
@@ -58,9 +71,9 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			}
 
 			// GORM handles identifier escaping automatically
-			if common.ContainsString(pkColumns, column) {
+			if isPK {
 				conditions[column] = convertedValue
-			} else if common.ContainsString(updatedColumns, column) {
+			} else if isUpdated {
 				convertedValues[column] = convertedValue
 			} else {
 				// Store unchanged values for WHERE clause if no PKs
