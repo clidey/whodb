@@ -75,6 +75,38 @@ func (e *ConditionalEntry) Debugf(format string, args ...any) {
 	e.Entry.Debugf(format, args...)
 }
 
+// Info method that respects log levels
+func (e *ConditionalEntry) Info(args ...any) {
+	if !isLevelEnabled("info") {
+		return
+	}
+	e.Entry.Info(args...)
+}
+
+// Infof method that respects log levels
+func (e *ConditionalEntry) Infof(format string, args ...any) {
+	if !isLevelEnabled("info") {
+		return
+	}
+	e.Entry.Infof(format, args...)
+}
+
+// Warn method that respects log levels
+func (e *ConditionalEntry) Warn(args ...any) {
+	if !isLevelEnabled("warning") {
+		return
+	}
+	e.Entry.Warn(args...)
+}
+
+// Warnf method that respects log levels
+func (e *ConditionalEntry) Warnf(format string, args ...any) {
+	if !isLevelEnabled("warning") {
+		return
+	}
+	e.Entry.Warnf(format, args...)
+}
+
 // WithField method for chaining
 func (e *ConditionalEntry) WithField(key string, value any) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithField(key, value)}
