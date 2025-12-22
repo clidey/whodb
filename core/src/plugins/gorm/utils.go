@@ -60,7 +60,7 @@ func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[strin
 		if value.Extra != nil && value.Extra["IsNull"] == "true" {
 			data[value.Key] = nil
 		} else {
-			val, err := p.GormPluginFunctions.ConvertStringValueDuringMap(value.Value, value.Extra["Type"])
+			val, err := p.GormPluginFunctions.ConvertStringValue(value.Value, value.Extra["Type"])
 			if err != nil {
 				return nil, err
 			}
@@ -282,6 +282,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 		}
 		return parsedValue, nil
 	case dateTypes.Contains(baseType):
+		// todo: need to figure out how to handle date/time functions across db like now(), curdate(), etc
 		date, err := p.parseDate(value)
 		if err != nil {
 			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse date value")
@@ -292,6 +293,13 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 		}
 		return date, nil
 	case dateTimeTypes.Contains(baseType):
+		// TIME-only and YEAR types should not go through full datetime parsing as underlying sql driver should parse it fine
+		if baseType == "TIME" || baseType == "TIME WITH TIME ZONE" || baseType == "YEAR" {
+			if isNullable {
+				return sql.NullString{String: value, Valid: true}, nil
+			}
+			return value, nil
+		}
 		datetime, err := p.parseDateTime(value)
 		if err != nil {
 			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse datetime value")
