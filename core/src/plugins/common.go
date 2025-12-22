@@ -213,7 +213,9 @@ func CloseAllConnections(ctx context.Context) {
 }
 
 // getOrCreateConnection retrieves a cached connection or creates a new one.
-// Returns the cachedConnection wrapper to allow reference counting.
+// Returns the cachedConnection wrapper with refCount already incremented to prevent
+// race conditions where the connection could be closed before the caller uses it.
+// The caller MUST decrement refCount when done (handled by WithConnection's defer).
 func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc) (*cachedConnection, error) {
 	connID := connIdentifier(config)
 	key := getConnectionCacheKey(config)
@@ -224,8 +226,12 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 
 	// Check if we have a cached connection
 	if cached, found := connectionCache[key]; found && cached != nil {
+		// Increment refCount while holding lock to prevent race with cleanup/RemoveConnection
+		refCount := atomic.AddInt32(&cached.refCount, 1)
+		atomic.StoreInt64(&cached.lastUsed, time.Now().Unix())
 		connectionCacheMu.Unlock()
-		l.Debug("Found in cache, pinging to verify")
+
+		l.WithField("ref_count", refCount).Debug("Found in cache, pinging to verify")
 		if sqlDB, err := cached.db.DB(); err == nil {
 			pingStart := time.Now()
 			if err := sqlDB.Ping(); err == nil {
@@ -233,11 +239,15 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 				return cached, nil
 			}
 			l.WithFields(map[string]any{"ping_ms": time.Since(pingStart).Milliseconds(), "error": err.Error()}).Debug("Ping FAILED, removing stale connection")
-			// Ping failed - connection is stale, remove it and create new
+			// Ping failed - connection is stale, decrement refCount and remove it
+			atomic.AddInt32(&cached.refCount, -1)
 			connectionCacheMu.Lock()
 			delete(connectionCache, key)
 			connectionCacheMu.Unlock()
 			closeConnection(cached)
+		} else {
+			// Failed to get underlying DB, decrement refCount
+			atomic.AddInt32(&cached.refCount, -1)
 		}
 	} else {
 		connectionCacheMu.Unlock()
@@ -253,7 +263,10 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 		l.Debug("Double-check: found in cache after lock, pinging")
 		if sqlDB, err := cached.db.DB(); err == nil {
 			if err := sqlDB.Ping(); err == nil {
-				l.Debug("Double-check: connection alive, using cached")
+				// Increment refCount while holding lock
+				refCount := atomic.AddInt32(&cached.refCount, 1)
+				atomic.StoreInt64(&cached.lastUsed, time.Now().Unix())
+				l.WithField("ref_count", refCount).Debug("Double-check: connection alive, using cached")
 				return cached, nil
 			}
 			l.Debug("Double-check: ping failed, removing stale")
@@ -274,10 +287,11 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 	cached := &cachedConnection{
 		db:       db,
 		lastUsed: time.Now().Unix(),
+		refCount: 1, // Start with refCount=1 since caller will use it
 	}
 
 	connectionCache[key] = cached
-	l.Debug("Connection cached")
+	l.Debug("Connection cached with refCount=1")
 
 	// Evict oldest idle connections if we exceed the limit
 	if len(connectionCache) > maxCachedConnections {
@@ -421,8 +435,9 @@ func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, opera
 	}
 
 	activeOperations.Add(1)
-	atomic.StoreInt64(&cached.lastUsed, time.Now().Unix())
-	refCount := atomic.AddInt32(&cached.refCount, 1)
+	// Note: refCount was already incremented in getOrCreateConnection while holding the lock
+	// to prevent race conditions with cleanup. We only need to track activeOperations here.
+	refCount := atomic.LoadInt32(&cached.refCount)
 	l.WithField("ref_count", refCount).Debug("Operation started")
 
 	defer func() {
