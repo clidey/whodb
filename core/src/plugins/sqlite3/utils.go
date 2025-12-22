@@ -57,10 +57,6 @@ func (ds DateTimeString) Value() (driver.Value, error) {
 	return string(ds), nil
 }
 
-func (p *Sqlite3Plugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return value, nil
-}
-
 // ConvertStringValue overrides the base GORM implementation to preserve datetime strings
 func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (interface{}, error) {
 	// For datetime types, preserve the original string value
@@ -83,6 +79,5 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {
 		  AND p.pk > 0
 		ORDER BY m.name, p.pk;`
 }
-
 
 // Identifier quoting handled by GORM Dialector

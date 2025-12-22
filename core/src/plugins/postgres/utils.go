@@ -16,10 +16,6 @@
 
 package postgres
 
-func (p *PostgresPlugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return value, nil
-}
-
 func (p *PostgresPlugin) GetPrimaryKeyColQuery() string {
 	return `
 		SELECT a.attname
@@ -30,4 +26,3 @@ func (p *PostgresPlugin) GetPrimaryKeyColQuery() string {
 		WHERE n.nspname = ? AND c.relname = ? AND i.indisprimary;
 	`
 }
-

@@ -73,7 +73,6 @@ type GormPluginFunctions interface {
 	GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string
 
 	FormTableName(schema string, storageUnit string) string
-	ConvertStringValueDuringMap(value, columnType string) (interface{}, error)
 
 	GetSupportedOperators() map[string]string
 
