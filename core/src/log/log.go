@@ -17,6 +17,7 @@
 package log
 
 import (
+	"errors"
 	"io"
 	"os"
 	"time"
@@ -43,8 +44,13 @@ type ConditionalEntry struct {
 	*logrus.Entry
 }
 
-// Error method that respects log levels
+// Error method that respects log levels.
+// If the entry contains an unsupported operation error (from WithError), logs at Debug instead.
 func (e *ConditionalEntry) Error(args ...any) {
+	if isUnsupportedOperation(e.Entry.Data["error"]) {
+		e.Debug(args...)
+		return
+	}
 	if !isLevelEnabled("error") {
 		return
 	}
@@ -53,6 +59,10 @@ func (e *ConditionalEntry) Error(args ...any) {
 
 // Errorf method that respects log levels
 func (e *ConditionalEntry) Errorf(format string, args ...any) {
+	if isUnsupportedOperation(e.Entry.Data["error"]) {
+		e.Debug(args...)
+		return
+	}
 	if !isLevelEnabled("error") {
 		return
 	}
@@ -120,6 +130,18 @@ func (e *ConditionalEntry) WithFields(fields map[string]any) *ConditionalEntry {
 // WithError method for chaining
 func (e *ConditionalEntry) WithError(err error) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithError(err)}
+}
+
+// isUnsupportedOperation checks if an error indicates an unsupported operation.
+func isUnsupportedOperation(err any) bool {
+	if err == nil {
+		return false
+	}
+	if e, ok := err.(error); ok {
+		// Check for standard library's ErrUnsupported
+		return errors.Is(e, errors.ErrUnsupported)
+	}
+	return false
 }
 
 // isLevelEnabled checks if the given level should be logged based on current log level
@@ -290,7 +312,7 @@ func getLogLevel() string {
 }
 
 func LogFields(fields Fields) *ConditionalEntry {
-	return Logger.WithFields(logrus.Fields(fields))
+	return Logger.WithFields(fields)
 }
 
 func SetLogLevel(level string) {
