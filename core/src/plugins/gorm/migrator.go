@@ -124,13 +124,10 @@ func (m *MigratorHelper) buildFullTypeName(col gorm.ColumnType) string {
 		}
 	}
 
-	// Only show precision/scale for decimal-like types
+	// show precision/scale for decimal-like types
 	if typesWithPrecision[baseName] {
 		if precision, scale, ok := col.DecimalSize(); ok && precision > 0 {
-			if scale > 0 {
-				return fmt.Sprintf("%s(%d,%d)", baseName, precision, scale)
-			}
-			return fmt.Sprintf("%s(%d)", baseName, precision)
+			return fmt.Sprintf("%s(%d,%d)", baseName, precision, scale)
 		}
 	}
 
@@ -165,14 +162,13 @@ func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, e
 		}
 
 		// Only extract precision/scale for decimal-like types
+		// Always include scale (even if 0) because NUMBER(10,0) and NUMBER(10) are semantically different
 		if typesWithPrecision[baseName] {
 			if precision, scale, ok := col.DecimalSize(); ok && precision > 0 {
 				p := int(precision)
 				column.Precision = &p
-				if scale > 0 {
-					s := int(scale)
-					column.Scale = &s
-				}
+				s := int(scale)
+				column.Scale = &s
 			}
 		}
 
