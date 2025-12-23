@@ -21,22 +21,18 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
-/* Desktop Linux-only bundled font: Inter variable fonts
-   Place these files in frontend/public/fonts before building:
-   - Inter-roman.var.woff2
-   - Inter-italic.var.woff2
-   Vite copies public/ to / in the build, so URLs are /fonts/*.woff2 */
+/* Inter variable fonts for app-wide usage */
 @supports (font-variation-settings: normal) {
     @font-face {
-        font-family: "Inter var";
-        src: url("/fonts/Inter-roman.var.woff2") format("woff2");
+        font-family: "Inter";
+        src: url("/fonts/Inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
         font-weight: 100 900;
         font-style: normal;
         font-display: swap;
     }
     @font-face {
-        font-family: "Inter var";
-        src: url("/fonts/Inter-italic.var.woff2") format("woff2");
+        font-family: "Inter";
+        src: url("/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype");
         font-weight: 100 900;
         font-style: italic;
         font-display: swap;
@@ -44,7 +40,10 @@
 }
 
 :root {
-  --brand-foreground: #ca6f1e;
+  --brand-foreground: #11518E;
+  --icon: var(--text-muted);
+  --icon-foreground: #11518E;
+  --primary: #11518E;
   
   /* UI Customization defaults - these will be overridden by theme-customization.ts */
   --font-size-xs: 0.75rem;
@@ -60,20 +59,17 @@
     /* no-op: selector placeholder to allow :root.linux overrides below */
 }
 
-/* Base font uses the theme variable, which we can override per-OS */
+/* Base font uses Inter across the app */
 body {
-    font-family: var(--font-sans);
+    font-family: "Inter", var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Desktop Linux-only font override: prefer Inter variable if bundled */
-:root.linux {
-    --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, sans-serif;
-}
-
 .dark {
-  --brand-foreground: #ca6f1e;
+  --icon: var(--text-muted);
+  --icon-foreground: #8EBFFB;
+  --primary: #8EBFFB;
 }
 
 .dark .react-flow__controls-button {

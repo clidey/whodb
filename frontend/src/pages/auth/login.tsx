@@ -30,7 +30,7 @@ import entries from "lodash/entries";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {v4} from 'uuid';
-import logoImage from "../../../public/images/logo.png";
+import logoImage from "../../../public/images/logo.svg";
 import {
     AdjustmentsHorizontalIcon,
     ChatBubbleLeftRightIcon,
@@ -683,7 +683,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-sm text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-4"/>}
+                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
                             <span>{t('title')}</span>
                         </h1>

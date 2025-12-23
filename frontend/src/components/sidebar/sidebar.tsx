@@ -52,7 +52,7 @@ import classNames from "classnames";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
-import logoImage from "../../../public/images/logo.png";
+import logoImage from "../../../public/images/logo.svg";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {LoginForm} from "../../pages/auth/login";
@@ -317,8 +317,8 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-4" />}
-                            {open && <span className="text-lg text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                            {open && <span className="text-lg font-bold">{extensions.AppName ?? "whodb"}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>

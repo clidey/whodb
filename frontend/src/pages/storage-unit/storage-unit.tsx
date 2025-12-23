@@ -167,14 +167,14 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                         }
                     </StackList>
                     {columns && columns.length > 0 && (
-                        <div className="mt-2">
+                        <div className="mt-8">
                             <h3 className="text-xs font-semibold uppercase text-muted-foreground">{t('columnsTitle')}</h3>
                             <StackList>
                                 {columns.map(col => {
                                     const isForeignKey = col.IsForeignKey;
                                     return (
                                         <StackListItem key={col.Name} item={isForeignKey ?
-                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                            <Badge className="text-lg" data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
                                             {col.Type?.toLowerCase()}
                                         </StackListItem>
                                     );
@@ -684,8 +684,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                                 />
                                             )}
                                             <StackListItem rowClassName="items-start"
-                                                           item={isFKColumn ? <Badge
-                                                               className="text-lg">{name}</Badge> : name}>
+                                                           item={isFKColumn ? <Badge variant="secondary" className="text-lg">{name}</Badge> : name}>
                                                 {value}
                                             </StackListItem>
                                         </div>
@@ -694,7 +693,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                             }
                         </StackList>
                     </div>
-                    <Button onClick={handleNavigateTo} data-testid="data-button">
+                    <Button onClick={handleNavigateTo} data-testid="data-button" variant="secondary">
                         <CircleStackIcon className="w-4 h-4" /> {t('data')}
                     </Button>
                 </div>

@@ -25,7 +25,7 @@ import {Breadcrumb} from "./breadcrumbs";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
-import {CommandLineIcon, MagnifyingGlassIcon} from "./heroicons";
+import {MagnifyingGlassIcon, QuestionMarkCircleIcon} from "./heroicons";
 import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
 import {useDatabaseMetadata} from "@/hooks/useDatabaseMetadata";
 
@@ -109,8 +109,7 @@ const KeyboardShortcutsHint: FC = () => {
                     className="gap-1.5 h-9"
                     aria-label={t('showShortcuts')}
                 >
-                    <CommandLineIcon className="h-4 w-4" />
-                    <span className="text-xs">{t('shortcuts')}</span>
+                    <QuestionMarkCircleIcon className="h-4 w-4" />
                 </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
