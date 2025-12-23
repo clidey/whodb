@@ -1408,6 +1408,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         variant="secondary"
                         onClick={() => setShowExportConfirm(true)}
                         className="flex gap-sm"
+                        data-testid="export-all-button"
                     >
                         <ArrowDownCircleIcon className="w-4 h-4" />
                         {hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}

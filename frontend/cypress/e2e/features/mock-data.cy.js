@@ -29,7 +29,7 @@ describe('Mock Data Generation', () => {
             cy.selectMockData();
 
             // Verify dialog and note appeared
-            cy.get('[data-testid="mock-data-dialog"]').should('be.visible');
+            cy.get('[data-testid="mock-data-sheet"]').should('be.visible');
             cy.contains('Note').should('be.visible');
             cy.get('[data-testid="mock-data-generate-button"]').should('be.visible');
 

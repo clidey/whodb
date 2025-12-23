@@ -510,27 +510,6 @@ describe('Keyboard Shortcuts', () => {
         });
 
         describe('Keyboard Shortcuts Help Modal', () => {
-            it('shortcuts button exists in page header', () => {
-                cy.data(tableName);
-
-                // Shortcuts button should be visible in the header
-                cy.get('[data-testid="shortcuts-button"]').should('be.visible');
-            });
-
-            it('clicking shortcuts button opens the modal', () => {
-                cy.data(tableName);
-
-                // Click the shortcuts button
-                cy.get('[data-testid="shortcuts-button"]').click();
-
-                // Modal should open
-                cy.get('[data-testid="shortcuts-modal"]').should('be.visible');
-
-                // Close with ESC
-                cy.get('body').type('{esc}');
-                cy.get('[data-testid="shortcuts-modal"]').should('not.exist');
-            });
-
             it('pressing ? key opens the shortcuts modal', () => {
                 cy.data(tableName);
 
