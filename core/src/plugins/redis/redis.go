@@ -587,11 +587,11 @@ func evaluateRedisCondition(value, operator, target string) bool {
 }
 
 func (p *RedisPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
-	return nil, errors.New("unsupported operation for Redis")
+	return nil, errors.ErrUnsupported
 }
 
 func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return nil, errors.New("unsupported operation for Redis")
+	return nil, errors.ErrUnsupported
 }
 
 func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {

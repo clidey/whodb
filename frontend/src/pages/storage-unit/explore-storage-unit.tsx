@@ -383,19 +383,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     // Sheet logic for Add Row (like table.tsx)
     const handleOpenAddSheet = useCallback(() => {
-        // Prepare default values for addRowData
+        // Prepare empty values for empty addRowData values
         let initialData: Record<string, any> = {};
         if (rows?.Columns) {
+            // todo: add support for different functions for defaults like now(), gen_random_uuid(), etc
             for (const col of rows.Columns) {
-                if (col.Name.toLowerCase() === "id" && col.Type === "UUID") {
-                    initialData[col.Name] = "gen_random_uuid()";
-                } else if (col.Type === "TIMESTAMPTZ") {
-                    initialData[col.Name] = "now()";
-                } else if (col.Type === "NUMERIC") {
-                    initialData[col.Name] = "0";
-                } else {
-                    initialData[col.Name] = "";
-                }
+                initialData[col.Name] = "";
             }
         }
         setAddRowData(initialData);

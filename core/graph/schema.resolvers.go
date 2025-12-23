@@ -297,8 +297,7 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, st
 			"schema":        schema,
 			"storage_unit":  storageUnit,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "AddStorageUnit", err, map[string]any{
 			"database_type": typeArg,
 			"schema_hash":   analytics.HashIdentifier(schema),
@@ -340,8 +339,7 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 			"storage_unit":    storageUnit,
 			"database_type":   typeArg,
 			"updated_columns": len(updatedColumns),
-			"error":           err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "UpdateStorageUnit", err, map[string]any{
 			"database_type":   typeArg,
 			"schema_hash":     analytics.HashIdentifier(schema),
@@ -402,8 +400,7 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 			"schema":        schema,
 			"storage_unit":  storageUnit,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "AddRow", err, map[string]any{
 			"database_type": typeArg,
 			"schema_hash":   analytics.HashIdentifier(schema),
@@ -445,8 +442,7 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 			"schema":        schema,
 			"storage_unit":  storageUnit,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "DeleteRow", err, map[string]any{
 			"database_type": typeArg,
 			"schema_hash":   analytics.HashIdentifier(schema),
@@ -723,8 +719,7 @@ func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string,
 		log.LogFields(log.Fields{
 			"operation":     "GetDatabases",
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	return databases, nil
@@ -739,8 +734,7 @@ func (r *queryResolver) Schema(ctx context.Context) ([]string, error) {
 		log.LogFields(log.Fields{
 			"operation":     "GetAllSchemas",
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	return schemas, nil
@@ -756,8 +750,7 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 			"operation":     "GetStorageUnits",
 			"schema":        schema,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	var storageUnits []*model.StorageUnit
@@ -796,8 +789,7 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 				"database_type": typeArg,
 				"page_size":     pageSize,
 				"page_offset":   pageOffset,
-				"error":         err.Error(),
-			}).Error("Database operation failed")
+			}).WithError(err).Error("Database operation failed")
 			return err
 		}
 		return nil
@@ -941,8 +933,7 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 			"operation":     "RawExecute",
 			"database_type": typeArg,
 			"query":         query,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	var columns []*model.Column
@@ -970,8 +961,7 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 			"operation":     "GetGraph",
 			"schema":        schema,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	var graphUnitsModel []*model.GraphUnit

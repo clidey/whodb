@@ -207,8 +207,7 @@ for db in "${DATABASES[@]}"; do
                     --browser electron \
                     2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
                 exit ${PIPESTATUS[0]}
-            )
-            RESULT=$?
+            ) && RESULT=0 || RESULT=$?
         else
             # Custom dir - let cypress.config.js specPattern handle specs
             (
@@ -221,8 +220,7 @@ for db in "${DATABASES[@]}"; do
                     --browser electron \
                     2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
                 exit ${PIPESTATUS[0]}
-            )
-            RESULT=$?
+            ) && RESULT=0 || RESULT=$?
         fi
     else
         (
@@ -233,8 +231,7 @@ for db in "${DATABASES[@]}"; do
                 --e2e \
                 --browser electron
             exit $?
-        )
-        RESULT=$?
+        ) && RESULT=0 || RESULT=$?
     fi
 
     if [ $RESULT -eq 0 ]; then
