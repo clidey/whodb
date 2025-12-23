@@ -172,3 +172,26 @@ body {
   white-space: nowrap;
   border-width: 0;
 }
+
+[data-testid="storage-unit-card-list"]:not(.hidden) {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  width: 100%;
+  gap: 1rem;
+}
+
+[data-testid="storage-unit-card-list"] > div[data-slot="sheet-trigger"] {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  flex-grow: 1;
+}
+
+[data-testid="storage-unit-card-list"] [data-slot="card"] {
+  min-width: 200px;
+  max-width: 100%;
+  width: 100%;
+  flex: 1;
+  flex-grow: 1;
+}
