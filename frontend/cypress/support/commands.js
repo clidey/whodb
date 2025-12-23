@@ -211,28 +211,13 @@ Cypress.Commands.add('explore', (tableName) => {
     cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
         .should('have.length.at.least', 1);
 
-    // Find the card containing the exact table name by iterating through cards
-    return cy.get('[data-testid="storage-unit-card"]', {timeout: 10000}).then($cards => {
-        let targetCard = null;
-        $cards.each((_, card) => {
-            const nameEl = Cypress.$(card).find('[data-testid="storage-unit-name"]');
-            if (nameEl.length && nameEl.text().trim() === tableName) {
-                targetCard = card;
-                return false; // break the loop
-            }
-        });
-
-        if (!targetCard) {
-            throw new Error(`Could not find storage unit card with name: ${tableName}`);
-        }
-
-        // Click the explore button within the found card
-        cy.wrap(targetCard)
-            .find('[data-testid="explore-button"]')
-            .scrollIntoView()
-            .should('be.visible')
-            .click({force: true});
-    });
+    // Find the card by data-table-name attribute for reliable selection
+    return cy.get(`[data-testid="storage-unit-card"][data-table-name="${tableName}"]`, {timeout: 10000})
+        .first()
+        .find('[data-testid="explore-button"]')
+        .scrollIntoView()
+        .should('be.visible')
+        .click({force: true});
 });
 
 Cypress.Commands.add('getExploreFields', () => {
@@ -244,14 +229,14 @@ Cypress.Commands.add('getExploreFields', () => {
     cy.get('[data-testid="explore-fields"] h3', { timeout: 10000 }).should('exist');
 
     // Returns a list of [key, value] arrays from the explore fields panel
+    // Uses data-field-key and data-field-value attributes for reliable extraction
     return cy.document().then((doc) => {
         const result = [];
-        const rows = doc.querySelectorAll('[data-testid="explore-fields"] p');
-        rows.forEach(row => {
-            const spans = row.querySelectorAll('span');
-            if (spans.length >= 2) {
-                const key = spans[0].textContent.trim();
-                const value = spans[1].textContent.trim();
+        const fields = doc.querySelectorAll('[data-testid="explore-fields"] [data-field-key]');
+        fields.forEach(field => {
+            const key = field.getAttribute('data-field-key');
+            const value = field.getAttribute('data-field-value');
+            if (key && value) {
                 result.push([key, value]);
             }
         });
@@ -273,29 +258,14 @@ Cypress.Commands.add('data', (tableName) => {
     cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
         .should('have.length.at.least', 1);
 
-    // Find the card containing the exact table name by iterating through cards
-    cy.get('[data-testid="storage-unit-card"]', {timeout: 10000}).then($cards => {
-        let targetCard = null;
-        $cards.each((_, card) => {
-            const nameEl = Cypress.$(card).find('[data-testid="storage-unit-name"]');
-            if (nameEl.length && nameEl.text().trim() === tableName) {
-                targetCard = card;
-                return false; // break the loop
-            }
-        });
-
-        if (!targetCard) {
-            throw new Error(`Could not find storage unit card with name: ${tableName}`);
-        }
-
-        // Click the data button within the found card
-        cy.wrap(targetCard)
-            .find('[data-testid="data-button"]')
-            .first()
-            .scrollIntoView()
-            .should('be.visible')
-            .click({force: true});
-    });
+    // Find the card by data-table-name attribute for reliable selection
+    cy.get(`[data-testid="storage-unit-card"][data-table-name="${tableName}"]`, {timeout: 10000})
+        .first()
+        .find('[data-testid="data-button"]')
+        .first()
+        .scrollIntoView()
+        .should('be.visible')
+        .click({force: true});
 
     // Wait for URL to change to explore page
     cy.url().should('include', '/storage-unit/explore');
@@ -307,8 +277,22 @@ Cypress.Commands.add('data', (tableName) => {
     return cy.get('table:visible tbody tr', {timeout: 15000}).should('have.length.at.least', 1);
 });
 
-Cypress.Commands.add('sortBy', (index) => {
-    return cy.get('th').eq(index + 1).click();
+Cypress.Commands.add('sortBy', (columnNameOrIndex) => {
+    // Support both column name (string) and index (number)
+    if (typeof columnNameOrIndex === 'string') {
+        return cy.get(`[data-column-name="${columnNameOrIndex}"]`).click();
+    }
+    return cy.get('th').eq(columnNameOrIndex + 1).click();
+});
+
+// Get all table columns as array of {name, sortDirection} objects
+Cypress.Commands.add('getTableColumns', () => {
+    return cy.get('[data-column-name]').then($headers => {
+        return $headers.toArray().map(el => ({
+            name: el.getAttribute('data-column-name'),
+            sortDirection: el.getAttribute('data-sort-direction') || null,
+        }));
+    });
 });
 
 Cypress.Commands.add('assertNoDataAvailable', () => {
@@ -499,42 +483,53 @@ Cypress.Commands.add("getWhereConditionMode", () => {
 // Helper to get condition count
 Cypress.Commands.add("getConditionCount", () => {
     return cy.get('body').then($body => {
-        // In sheet mode, parse from button text
-        const whereButton = $body.find('[data-testid="where-button"]');
-        if (whereButton.length > 0) {
-            const text = whereButton.text();
-            const match = text.match(/(\d+)\s+Condition/);
-            if (match) return parseInt(match[1]);
+        // Use data-condition-count attribute for reliable count
+        const whereContainer = $body.find('[data-condition-count]');
+        if (whereContainer.length > 0) {
+            const count = whereContainer.attr('data-condition-count');
+            if (count !== undefined) return parseInt(count);
         }
-
-        // In popover mode, count badges + hidden conditions from "+N more" button
-        let count = 0;
-        const badges = $body.find('[data-testid="where-condition-badge"]');
-        count += badges.length;
-
-        // Check for "+N more" button which indicates hidden conditions
-        const moreButton = $body.find('[data-testid="more-conditions-button"]');
-        if (moreButton.length > 0) {
-            const moreText = moreButton.text();
-            const moreMatch = moreText.match(/\+(\d+)/);
-            if (moreMatch) {
-                count += parseInt(moreMatch[1]);
-            }
-        }
-
-        return count;
+        return 0;
     });
 });
 
-// Helper to verify condition text
-Cypress.Commands.add("verifyCondition", (index, expectedText) => {
-    cy.getWhereConditionMode().then(mode => {
-        if (mode === 'popover') {
-            cy.get('[data-testid="where-condition-badge"]').eq(index).should('contain.text', expectedText);
-        } else {
-            // In sheet mode, would need to open sheet to see conditions
-            cy.log(`Sheet mode: Skipping condition text verification for "${expectedText}"`);
-        }
+// Helper to get all conditions as array of {key, operator, value} objects
+Cypress.Commands.add("getConditions", () => {
+    return cy.get('body').then($body => {
+        const conditions = [];
+        const conditionEls = $body.find('[data-testid="where-condition"]');
+        conditionEls.each((_, el) => {
+            const key = el.getAttribute('data-condition-key');
+            const operator = el.getAttribute('data-condition-operator');
+            const value = el.getAttribute('data-condition-value');
+            if (key && operator && value) {
+                conditions.push({ key, operator, value });
+            }
+        });
+        return conditions;
+    });
+});
+
+// Helper to verify condition by index using data attributes
+Cypress.Commands.add("verifyCondition", (index, expectedKey, expectedOperator, expectedValue) => {
+    // If called with just 2 args (index, expectedText), fall back to text matching
+    if (expectedOperator === undefined && expectedValue === undefined) {
+        const expectedText = expectedKey;
+        cy.getWhereConditionMode().then(mode => {
+            if (mode === 'popover') {
+                cy.get('[data-testid="where-condition-badge"]').eq(index).should('contain.text', expectedText);
+            } else {
+                cy.log(`Sheet mode: Skipping condition text verification for "${expectedText}"`);
+            }
+        });
+        return;
+    }
+
+    // Use data attributes for reliable verification
+    cy.get('[data-testid="where-condition"]').eq(index).then($el => {
+        expect($el.attr('data-condition-key')).to.equal(expectedKey);
+        expect($el.attr('data-condition-operator')).to.equal(expectedOperator);
+        expect($el.attr('data-condition-value')).to.equal(expectedValue);
     });
 });
 
@@ -979,47 +974,14 @@ Cypress.Commands.add("getGraph", () => {
 
         // Check if edges exist, if not, return graph with empty connections
         return cy.get('body').then(($body) => {
-            if ($body.find('.react-flow__edge').length > 0) {
-                return cy.get('.react-flow__edge').then(($edgeEls) => {
+            if ($body.find('.react-flow__edge-path').length > 0) {
+                return cy.get('.react-flow__edge-path').then(($edgeEls) => {
+                    // Use data-edge-source and data-edge-target attributes directly
                     const edges = $edgeEls.toArray().map(el => {
-                        // Edge ID format is either:
-                        // - "source->target" (old format without handles)
-                        // - "source-sourceCol-target-targetCol" (new format with column info)
-                        const edgeId = el.getAttribute("data-testid").slice("rf__edge-".length);
-
-                        let source, target;
-                        if (edgeId.includes("->")) {
-                            // Old format: "source->target"
-                            [source, target] = edgeId.split("->");
-                        } else {
-                            // New format: "source-sourceCol-target-targetCol"
-                            // Extract source and target by finding the node that matches
-                            const parts = edgeId.split("-");
-                            // Try to match against known nodes
-                            for (let i = 1; i < parts.length; i++) {
-                                const possibleSource = parts.slice(0, i).join("-");
-                                if (nodes.includes(possibleSource)) {
-                                    source = possibleSource;
-                                    // Target is the rest after skipping the source column
-                                    const remaining = parts.slice(i + 1);
-                                    for (let j = 1; j <= remaining.length; j++) {
-                                        const possibleTarget = remaining.slice(0, j).join("-");
-                                        if (nodes.includes(possibleTarget)) {
-                                            target = possibleTarget;
-                                            break;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-
-                            // Fallback: if we can't parse it, skip this edge
-                            if (!source || !target) {
-                                return null;
-                            }
-                        }
-
-                        return {source, target};
+                        const source = el.getAttribute("data-edge-source");
+                        const target = el.getAttribute("data-edge-target");
+                        if (!source || !target) return null;
+                        return { source, target };
                     }).filter(edge => edge !== null);
 
                     const graph = {};
@@ -1045,18 +1007,17 @@ Cypress.Commands.add("getGraph", () => {
 });
 
 Cypress.Commands.add("getGraphNode", (nodeId) => {
-    // Returns the key-value data from the "users" node in the graph, as an array of [key, value] pairs
+    // Returns the key-value data from a graph node, as an array of [key, value] pairs
+    // Uses data-field-key and data-field-value attributes for reliable extraction
     return cy.document().then((doc) => {
         const el = doc.querySelector(`[data-testid="rf__node-${nodeId}"]`);
         if (!el) return [];
         const result = [];
-        // Find all <p> elements inside the node (like in getExploreFields)
-        const rows = el.querySelectorAll('p');
-        rows.forEach(row => {
-            const spans = row.querySelectorAll('span');
-            if (spans.length >= 2) {
-                const key = spans[0].textContent.trim();
-                const value = spans[1].textContent.trim();
+        const fields = el.querySelectorAll('[data-field-key]');
+        fields.forEach(field => {
+            const key = field.getAttribute('data-field-key');
+            const value = field.getAttribute('data-field-value');
+            if (key && value) {
                 result.push([key, value]);
             }
         });
@@ -1237,6 +1198,39 @@ Cypress.Commands.add('selectMockData', () => {
         .scrollIntoView()
         .should('exist')
         .click({force: true});
+});
+
+// Export Dialog Commands
+Cypress.Commands.add('selectExportFormat', (format) => {
+    cy.get('[data-testid="export-format-select"]').click();
+    cy.get(`[data-value="${format}"]`).click();
+});
+
+Cypress.Commands.add('selectExportDelimiter', (delimiter) => {
+    cy.get('[data-testid="export-delimiter-select"]').click();
+    cy.get(`[data-value="${delimiter}"]`).click();
+});
+
+Cypress.Commands.add('confirmExport', () => {
+    cy.get('[data-testid="export-confirm-button"]').click();
+});
+
+// Mock Data Dialog Commands
+Cypress.Commands.add('setMockDataRows', (count) => {
+    cy.get('[data-testid="mock-data-rows-input"]').clear().type(count.toString());
+});
+
+Cypress.Commands.add('setMockDataHandling', (handling) => {
+    cy.get('[data-testid="mock-data-handling-select"]').click();
+    cy.get(`[data-value="${handling}"]`).click();
+});
+
+Cypress.Commands.add('generateMockData', () => {
+    cy.get('[data-testid="mock-data-generate-button"]').click();
+});
+
+Cypress.Commands.add('confirmMockDataOverwrite', () => {
+    cy.get('[data-testid="mock-data-overwrite-button"]').click();
 });
 
 // Query History Commands

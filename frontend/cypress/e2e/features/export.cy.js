@@ -29,19 +29,17 @@ describe('Data Export', () => {
                 cy.intercept('POST', '/api/export').as('export');
 
                 // Use Export All button
-                cy.contains('button', 'Export All').click();
+                cy.get('[data-testid="export-all-button"]').click();
                 cy.contains('h2', 'Export Data').should('be.visible');
 
                 // Verify default format is CSV with comma delimiter
                 cy.get('[role="dialog"]').within(() => {
-                    cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'CSV');
-                    cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').first().should('contain.text', 'Comma');
+                    cy.get('[data-testid="export-format-select"]').should('contain.text', 'CSV');
+                    cy.get('[data-testid="export-delimiter-select"]').should('contain.text', 'Comma');
                 });
 
                 // Export
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('button', 'Export').click();
-                });
+                cy.confirmExport();
 
                 cy.wait('@export').then(({response}) => {
                     expect(response?.statusCode).to.equal(200);
@@ -59,23 +57,16 @@ describe('Data Export', () => {
                 cy.data(tableName);
                 cy.intercept('POST', '/api/export').as('export');
 
-                cy.contains('button', 'Export All').click();
+                cy.get('[data-testid="export-all-button"]').click();
                 cy.contains('h2', 'Export Data').should('be.visible');
 
                 // Change format to Excel
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
-                });
-                cy.get('[role="listbox"]').should('be.visible');
-                cy.get('[role="option"]').contains('Excel').click({force: true});
-                cy.get('[role="listbox"]').should('not.exist');
+                cy.selectExportFormat('excel');
 
                 // Verify Excel description shows (locale uses capital F in Format)
                 cy.contains('Excel XLSX Format').should('be.visible');
 
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('button', 'Export').click();
-                });
+                cy.confirmExport();
 
                 cy.wait('@export').then(({response}) => {
                     expect(response?.statusCode).to.equal(200);
@@ -115,30 +106,15 @@ describe('Data Export', () => {
                 cy.contains('You are about to export {1} selected rows.').should('be.visible');
 
                 // Ensure CSV format is selected
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
-                });
-                cy.get('[role="listbox"]').should('be.visible');
-                cy.get('[role="option"]').first().click({force: true});
+                cy.selectExportFormat('csv');
 
                 // Change delimiter to pipe
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('label', 'Delimiter').parent().within(() => {
-                        cy.get('[role="combobox"]').eq(-1).click();
-                    });
-                });
-                cy.get('[role="listbox"]').should('be.visible');
-                cy.get('[role="option"]').eq(2).click({force: true});
-                cy.get('[role="listbox"]').should('not.exist');
+                cy.selectExportDelimiter('|');
 
                 // Verify pipe delimiter selected
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(-1).invoke('text').should('include', '|');
-                });
+                cy.get('[data-testid="export-delimiter-select"]').should('contain.text', '|');
 
-                cy.get('[role="dialog"]').within(() => {
-                    cy.contains('button', 'Export').click();
-                });
+                cy.confirmExport();
 
                 cy.wait('@export').then(({request, response}) => {
                     expect(response?.statusCode).to.equal(200);
@@ -159,17 +135,13 @@ describe('Data Export', () => {
             cy.data('users');
             cy.intercept('POST', '/api/export').as('export');
 
-            cy.contains('button', 'Export All').click();
+            cy.get('[data-testid="export-all-button"]').click();
             cy.contains('h2', 'Export Data').should('be.visible');
 
             // Verify NDJSON format is default for NoSQL
-            cy.get('[role="dialog"]').within(() => {
-                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'JSON');
-            });
+            cy.get('[data-testid="export-format-select"]').should('contain.text', 'JSON');
 
-            cy.get('[role="dialog"]').within(() => {
-                cy.contains('button', 'Export').click();
-            });
+            cy.confirmExport();
 
             cy.wait('@export').then(({request, response}) => {
                 expect(response?.statusCode).to.equal(200);
@@ -188,23 +160,16 @@ describe('Data Export', () => {
             cy.data('users');
             cy.intercept('POST', '/api/export').as('export');
 
-            cy.contains('button', 'Export All').click();
+            cy.get('[data-testid="export-all-button"]').click();
             cy.contains('h2', 'Export Data').should('be.visible');
 
             // Switch format to CSV
-            cy.get('[role="dialog"]').within(() => {
-                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
-            });
-            cy.get('[role="listbox"]').should('be.visible');
-            cy.get('[role="option"]').contains('CSV').click({force: true});
-            cy.get('[role="listbox"]').should('not.exist');
+            cy.selectExportFormat('csv');
 
             // Delimiter control should appear for CSV
             cy.contains('label', 'Delimiter').should('be.visible');
 
-            cy.get('[role="dialog"]').within(() => {
-                cy.contains('button', 'Export').click();
-            });
+            cy.confirmExport();
 
             cy.wait('@export').then(({request, response}) => {
                 expect(response?.statusCode).to.equal(200);
@@ -228,16 +193,12 @@ describe('Data Export', () => {
             cy.data(tableName);
             cy.intercept('POST', '/api/export').as('export');
 
-            cy.contains('button', 'Export All').click();
+            cy.get('[data-testid="export-all-button"]').click();
             cy.contains('h2', 'Export Data').should('be.visible');
 
-            cy.get('[role="dialog"]').within(() => {
-                cy.contains('label', 'Format').parent().find('[role="combobox"]').first().should('contain.text', 'JSON');
-            });
+            cy.get('[data-testid="export-format-select"]').should('contain.text', 'JSON');
 
-            cy.get('[role="dialog"]').within(() => {
-                cy.contains('button', 'Export').click();
-            });
+            cy.confirmExport();
 
             cy.wait('@export').then(({request, response}) => {
                 expect(response?.statusCode).to.equal(200);

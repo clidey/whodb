@@ -106,8 +106,8 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
 
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
         "shadow-2xl exploring-storage-unit": expanded,
-    })} data-testid="storage-unit-card">
-        <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card">
+    })} data-testid="storage-unit-card" data-table-name={unit.Name}>
+        <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card" data-table-name={unit.Name}>
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
                 <Tip className="w-fit">
                     <h1
@@ -153,16 +153,20 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                         {/* Metadata attributes (Type, Total Size, etc.) */}
                         {
                             introAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={attribute.Key}>
-                                    {attribute.Value?.toLowerCase()}
-                                </StackListItem>
+                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                    <StackListItem item={attribute.Key}>
+                                        {attribute.Value?.toLowerCase()}
+                                    </StackListItem>
+                                </div>
                             ))
                         }
                         {
                             expandedAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={attribute.Key}>
-                                    {attribute.Value?.toLowerCase()}
-                                </StackListItem>
+                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                    <StackListItem item={attribute.Key}>
+                                        {attribute.Value?.toLowerCase()}
+                                    </StackListItem>
+                                </div>
                             ))
                         }
                     </StackList>
@@ -173,10 +177,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                                 {columns.map(col => {
                                     const isForeignKey = col.IsForeignKey;
                                     return (
-                                        <StackListItem key={col.Name} item={isForeignKey ?
-                                            <Badge className="text-lg" data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
-                                            {col.Type?.toLowerCase()}
-                                        </StackListItem>
+                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                            <StackListItem item={isForeignKey ?
+                                                <Badge className="text-lg" data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
+                                                {col.Type?.toLowerCase()}
+                                            </StackListItem>
+                                        </div>
                                     );
                                 })}
                             </StackList>
@@ -555,14 +561,18 @@ export const StorageUnitPage: FC = () => {
                                     <StackList>
                                         {/* Metadata attributes */}
                                         {introAttributes.map(attribute => (
-                                            <StackListItem key={attribute.Key} item={attribute.Key}>
-                                                {attribute.Value?.toLowerCase()}
-                                            </StackListItem>
+                                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                                <StackListItem item={attribute.Key}>
+                                                    {attribute.Value?.toLowerCase()}
+                                                </StackListItem>
+                                            </div>
                                         ))}
                                         {expandedAttributes.map(attribute => (
-                                            <StackListItem key={attribute.Key} item={attribute.Key}>
-                                                {attribute.Value?.toLowerCase()}
-                                            </StackListItem>
+                                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                                <StackListItem item={attribute.Key}>
+                                                    {attribute.Value?.toLowerCase()}
+                                                </StackListItem>
+                                            </div>
                                         ))}
                                     </StackList>
                                     {columns && columns.length > 0 && (
@@ -572,10 +582,12 @@ export const StorageUnitPage: FC = () => {
                                                 {columns.map((col: any) => {
                                                     const isForeignKey = col.IsForeignKey;
                                                     return (
-                                                        <StackListItem key={col.Name} item={isForeignKey ?
-                                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
-                                                            {col.Type?.toLowerCase()}
-                                                        </StackListItem>
+                                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                                            <StackListItem item={isForeignKey ?
+                                                                <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                                                {col.Type?.toLowerCase()}
+                                                            </StackListItem>
+                                                        </div>
                                                     );
                                                 })}
                                             </StackList>
@@ -651,9 +663,11 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                     const name = item.Key;
                                     const value = item.Value?.toLowerCase();
                                     return (
-                                        <StackListItem key={`meta-${name}-${index}`} rowClassName="items-start" item={name}>
-                                            {value}
-                                        </StackListItem>
+                                        <div key={`meta-${name}-${index}`} data-field-key={name} data-field-value={value}>
+                                            <StackListItem rowClassName="items-start" item={name}>
+                                                {value}
+                                            </StackListItem>
+                                        </div>
                                     );
                                 })
                             }
@@ -666,7 +680,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                     const isPKColumn = col.IsPrimary || false;
 
                                     return (
-                                        <div key={`col-${name}-${index}`} className="relative">
+                                        <div key={`col-${name}-${index}`} className="relative" data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"

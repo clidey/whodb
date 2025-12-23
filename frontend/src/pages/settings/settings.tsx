@@ -119,14 +119,14 @@ export const SettingsPage: FC = () => {
                         ) : (
                             <div className="flex flex-col gap-4">
                                 <h3 className="text-base">
-                                    {t('telemetryDescription')}
-                                    {t('dataCollectionDetails')}
+                                    {t('telemetryDescription')}&nbsp;
+                                    {t('dataCollectionDetails')}&nbsp;
                                     <ExternalLink
                                     href={"https://clidey.com/privacy-policy"}
                                     className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>.
                                     <br/>
                                     <br/>
-                                    {t('posthogInfo')}
+                                    {t('posthogInfo')}&nbsp;
                                     {t('sensitiveDataInfo')}
                                     <br/>
                                     <br/>
@@ -155,8 +155,8 @@ export const SettingsPage: FC = () => {
                                     <SelectValue placeholder={t('selectView')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="list">{t('list')}</SelectItem>
-                                    <SelectItem value="card">{t('card')}</SelectItem>
+                                    <SelectItem value="list" data-value="list">{t('list')}</SelectItem>
+                                    <SelectItem value="card" data-value="card">{t('card')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -167,9 +167,9 @@ export const SettingsPage: FC = () => {
                                     <SelectValue placeholder={t('selectFontSize')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="small">{t('small')}</SelectItem>
-                                    <SelectItem value="medium">{t('medium')}</SelectItem>
-                                    <SelectItem value="large">{t('large')}</SelectItem>
+                                    <SelectItem value="small" data-value="small">{t('small')}</SelectItem>
+                                    <SelectItem value="medium" data-value="medium">{t('medium')}</SelectItem>
+                                    <SelectItem value="large" data-value="large">{t('large')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -180,10 +180,10 @@ export const SettingsPage: FC = () => {
                                     <SelectValue placeholder={t('selectBorderRadius')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">{t('none')}</SelectItem>
-                                    <SelectItem value="small">{t('small')}</SelectItem>
-                                    <SelectItem value="medium">{t('medium')}</SelectItem>
-                                    <SelectItem value="large">{t('large')}</SelectItem>
+                                    <SelectItem value="none" data-value="none">{t('none')}</SelectItem>
+                                    <SelectItem value="small" data-value="small">{t('small')}</SelectItem>
+                                    <SelectItem value="medium" data-value="medium">{t('medium')}</SelectItem>
+                                    <SelectItem value="large" data-value="large">{t('large')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -194,9 +194,9 @@ export const SettingsPage: FC = () => {
                                     <SelectValue placeholder={t('selectSpacing')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="compact">{t('compact')}</SelectItem>
-                                    <SelectItem value="comfortable">{t('comfortable')}</SelectItem>
-                                    <SelectItem value="spacious">{t('spacious')}</SelectItem>
+                                    <SelectItem value="compact" data-value="compact">{t('compact')}</SelectItem>
+                                    <SelectItem value="comfortable" data-value="comfortable">{t('comfortable')}</SelectItem>
+                                    <SelectItem value="spacious" data-value="spacious">{t('spacious')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -207,8 +207,8 @@ export const SettingsPage: FC = () => {
                                     <SelectValue placeholder={t('selectMode')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="popover">{t('popover')}</SelectItem>
-                                    <SelectItem value="sheet">{t('sheet')}</SelectItem>
+                                    <SelectItem value="popover" data-value="popover">{t('popover')}</SelectItem>
+                                    <SelectItem value="sheet" data-value="sheet">{t('sheet')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -223,14 +223,14 @@ export const SettingsPage: FC = () => {
                                         <SelectValue placeholder={t('selectPageSize')}/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="10">10</SelectItem>
-                                        <SelectItem value="25">25</SelectItem>
-                                        <SelectItem value="50">50</SelectItem>
-                                        <SelectItem value="100">100</SelectItem>
-                                        <SelectItem value="250">250</SelectItem>
-                                        <SelectItem value="500">500</SelectItem>
-                                        <SelectItem value="1000">1000</SelectItem>
-                                        <SelectItem value="custom">{t('custom')}</SelectItem>
+                                        <SelectItem value="10" data-value="10">10</SelectItem>
+                                        <SelectItem value="25" data-value="25">25</SelectItem>
+                                        <SelectItem value="50" data-value="50">50</SelectItem>
+                                        <SelectItem value="100" data-value="100">100</SelectItem>
+                                        <SelectItem value="250" data-value="250">250</SelectItem>
+                                        <SelectItem value="500" data-value="500">500</SelectItem>
+                                        <SelectItem value="1000" data-value="1000">1000</SelectItem>
+                                        <SelectItem value="custom" data-value="custom">{t('custom')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {isCustomPageSize && (
@@ -258,8 +258,8 @@ export const SettingsPage: FC = () => {
                                         <SelectValue placeholder={t('selectLanguage')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="es">Español</SelectItem>
+                                        <SelectItem value="en" data-value="en">English</SelectItem>
+                                        <SelectItem value="es" data-value="es">Español</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

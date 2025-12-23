@@ -45,12 +45,12 @@ describe('Settings', () => {
             it('can change font size to small', () => {
                 // First set to medium to ensure we're changing from a known state
                 cy.get('#font-size').click();
-                cy.get('[role="listbox"]').contains('Medium').click();
+                cy.get('[data-value="medium"]').click();
                 assertPersistedSetting('fontSize', 'medium');
 
                 // Now change to small
                 cy.get('#font-size').click();
-                cy.get('[role="listbox"]').contains('Small').click();
+                cy.get('[data-value="small"]').click();
                 cy.get('#font-size').should('contain', 'Small');
                 assertPersistedSetting('fontSize', 'small');
             });
@@ -58,12 +58,12 @@ describe('Settings', () => {
             it('can change font size to medium', () => {
                 // First set to small to ensure we're changing from a known state
                 cy.get('#font-size').click();
-                cy.get('[role="listbox"]').contains('Small').click();
+                cy.get('[data-value="small"]').click();
                 assertPersistedSetting('fontSize', 'small');
 
                 // Now change to medium
                 cy.get('#font-size').click();
-                cy.get('[role="listbox"]').contains('Medium').click();
+                cy.get('[data-value="medium"]').click();
                 cy.get('#font-size').should('contain', 'Medium');
                 assertPersistedSetting('fontSize', 'medium');
             });
@@ -71,12 +71,12 @@ describe('Settings', () => {
             it('can change font size to large', () => {
                 // First set to medium to ensure we're changing from a known state
                 cy.get('#font-size').click();
-                cy.get('[role="listbox"]').contains('Medium').click();
+                cy.get('[data-value="medium"]').click();
                 assertPersistedSetting('fontSize', 'medium');
 
                 // Now change to large
                 cy.get('#font-size').click();
-                cy.get('[role="listbox"]').contains('Large').click();
+                cy.get('[data-value="large"]').click();
                 cy.get('#font-size').should('contain', 'Large');
                 assertPersistedSetting('fontSize', 'large');
             });
@@ -86,12 +86,12 @@ describe('Settings', () => {
             it('can change border radius to none', () => {
                 // First set to medium to ensure we're changing from a known state
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('Medium').click();
+                cy.get('[data-value="medium"]').click();
                 assertPersistedSetting('borderRadius', 'medium');
 
                 // Now change to none
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('None').click();
+                cy.get('[data-value="none"]').click();
                 cy.get('#border-radius').should('contain', 'None');
                 assertPersistedSetting('borderRadius', 'none');
             });
@@ -99,12 +99,12 @@ describe('Settings', () => {
             it('can change border radius to small', () => {
                 // First set to none to ensure we're changing from a known state
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('None').click();
+                cy.get('[data-value="none"]').click();
                 assertPersistedSetting('borderRadius', 'none');
 
                 // Now change to small
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('Small').click();
+                cy.get('[data-value="small"]').click();
                 cy.get('#border-radius').should('contain', 'Small');
                 assertPersistedSetting('borderRadius', 'small');
             });
@@ -112,12 +112,12 @@ describe('Settings', () => {
             it('can change border radius to medium', () => {
                 // First set to small to ensure we're changing from a known state
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('Small').click();
+                cy.get('[data-value="small"]').click();
                 assertPersistedSetting('borderRadius', 'small');
 
                 // Now change to medium
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('Medium').click();
+                cy.get('[data-value="medium"]').click();
                 cy.get('#border-radius').should('contain', 'Medium');
                 assertPersistedSetting('borderRadius', 'medium');
             });
@@ -125,12 +125,12 @@ describe('Settings', () => {
             it('can change border radius to large', () => {
                 // First set to medium to ensure we're changing from a known state
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('Medium').click();
+                cy.get('[data-value="medium"]').click();
                 assertPersistedSetting('borderRadius', 'medium');
 
                 // Now change to large
                 cy.get('#border-radius').click();
-                cy.get('[role="listbox"]').contains('Large').click();
+                cy.get('[data-value="large"]').click();
                 cy.get('#border-radius').should('contain', 'Large');
                 assertPersistedSetting('borderRadius', 'large');
             });
@@ -140,12 +140,12 @@ describe('Settings', () => {
             it('can change spacing to compact', () => {
                 // First set to comfortable to ensure we're changing from a known state
                 cy.get('#spacing').click();
-                cy.get('[role="listbox"]').contains('Comfortable').click();
+                cy.get('[data-value="comfortable"]').click();
                 assertPersistedSetting('spacing', 'comfortable');
 
                 // Now change to compact
                 cy.get('#spacing').click();
-                cy.get('[role="listbox"]').contains('Compact').click();
+                cy.get('[data-value="compact"]').click();
                 cy.get('#spacing').should('contain', 'Compact');
                 assertPersistedSetting('spacing', 'compact');
             });
@@ -153,12 +153,12 @@ describe('Settings', () => {
             it('can change spacing to comfortable', () => {
                 // First set to compact to ensure we're changing from a known state
                 cy.get('#spacing').click();
-                cy.get('[role="listbox"]').contains('Compact').click();
+                cy.get('[data-value="compact"]').click();
                 assertPersistedSetting('spacing', 'compact');
 
                 // Now change to comfortable
                 cy.get('#spacing').click();
-                cy.get('[role="listbox"]').contains('Comfortable').click();
+                cy.get('[data-value="comfortable"]').click();
                 cy.get('#spacing').should('contain', 'Comfortable');
                 assertPersistedSetting('spacing', 'comfortable');
             });
@@ -166,12 +166,12 @@ describe('Settings', () => {
             it('can change spacing to spacious', () => {
                 // First set to comfortable to ensure we're changing from a known state
                 cy.get('#spacing').click();
-                cy.get('[role="listbox"]').contains('Comfortable').click();
+                cy.get('[data-value="comfortable"]').click();
                 assertPersistedSetting('spacing', 'comfortable');
 
                 // Now change to spacious
                 cy.get('#spacing').click();
-                cy.get('[role="listbox"]').contains('Spacious').click();
+                cy.get('[data-value="spacious"]').click();
                 cy.get('#spacing').should('contain', 'Spacious');
                 assertPersistedSetting('spacing', 'spacious');
             });
@@ -181,12 +181,12 @@ describe('Settings', () => {
             it('can change view to list', () => {
                 // First set to card to ensure we're changing from a known state
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('Card').click();
+                cy.get('[data-value="card"]').click();
                 assertPersistedSetting('storageUnitView', 'card');
 
                 // Now change to list
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('List').click();
+                cy.get('[data-value="list"]').click();
                 cy.get('#storage-unit-view').should('contain', 'List');
                 assertPersistedSetting('storageUnitView', 'list');
             });
@@ -194,12 +194,12 @@ describe('Settings', () => {
             it('can change view to card', () => {
                 // First set to list to ensure we're changing from a known state
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('List').click();
+                cy.get('[data-value="list"]').click();
                 assertPersistedSetting('storageUnitView', 'list');
 
                 // Now change to card
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('Card').click();
+                cy.get('[data-value="card"]').click();
                 cy.get('#storage-unit-view').should('contain', 'Card');
                 assertPersistedSetting('storageUnitView', 'card');
             });
@@ -207,12 +207,12 @@ describe('Settings', () => {
             it('persists card view when navigating to tables', () => {
                 // First set to list to ensure we're changing from a known state
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('List').click();
+                cy.get('[data-value="list"]').click();
                 assertPersistedSetting('storageUnitView', 'list');
 
                 // Now change to card
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('Card').click();
+                cy.get('[data-value="card"]').click();
                 assertPersistedSetting('storageUnitView', 'card');
 
                 // Navigate to storage units page
@@ -226,12 +226,12 @@ describe('Settings', () => {
             it('persists list view when navigating to tables', () => {
                 // First set to card to ensure we're changing from a known state
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('Card').click();
+                cy.get('[data-value="card"]').click();
                 assertPersistedSetting('storageUnitView', 'card');
 
                 // Now change to list
                 cy.get('#storage-unit-view').click();
-                cy.get('[role="listbox"]').contains('List').click();
+                cy.get('[data-value="list"]').click();
                 assertPersistedSetting('storageUnitView', 'list');
 
                 // Navigate to storage units page
@@ -247,12 +247,12 @@ describe('Settings', () => {
             it('can change where condition mode to popover', () => {
                 // First set to sheet to ensure we're changing from a known state
                 cy.get('#where-condition-mode').click();
-                cy.get('[role="listbox"]').contains('Sheet').click();
+                cy.get('[data-value="sheet"]').click();
                 assertPersistedSetting('whereConditionMode', 'sheet');
 
                 // Now change to popover
                 cy.get('#where-condition-mode').click();
-                cy.get('[role="listbox"]').contains('Popover').click();
+                cy.get('[data-value="popover"]').click();
                 cy.get('#where-condition-mode').should('contain', 'Popover');
                 assertPersistedSetting('whereConditionMode', 'popover');
             });
@@ -260,12 +260,12 @@ describe('Settings', () => {
             it('can change where condition mode to sheet', () => {
                 // First set to popover to ensure we're changing from a known state
                 cy.get('#where-condition-mode').click();
-                cy.get('[role="listbox"]').contains('Popover').click();
+                cy.get('[data-value="popover"]').click();
                 assertPersistedSetting('whereConditionMode', 'popover');
 
                 // Now change to sheet
                 cy.get('#where-condition-mode').click();
-                cy.get('[role="listbox"]').contains('Sheet').click();
+                cy.get('[data-value="sheet"]').click();
                 cy.get('#where-condition-mode').should('contain', 'Sheet');
                 assertPersistedSetting('whereConditionMode', 'sheet');
             });
@@ -275,12 +275,12 @@ describe('Settings', () => {
             it('can change default page size', () => {
                 // First set to 100 to ensure we're changing from a known state
                 cy.get('#default-page-size').click();
-                cy.get('[role="listbox"]').contains('100').click();
+                cy.get('[data-value="100"]').click();
                 assertPersistedSetting('defaultPageSize', 100);
 
                 // Now change to 25
                 cy.get('#default-page-size').click();
-                cy.get('[role="listbox"]').contains('25').click();
+                cy.get('[data-value="25"]').click();
                 cy.get('#default-page-size').should('contain', '25');
                 assertPersistedSetting('defaultPageSize', 25);
             });
@@ -288,12 +288,12 @@ describe('Settings', () => {
             it('can set custom page size', () => {
                 // First set to 50 to ensure we're changing from a known state
                 cy.get('#default-page-size').click();
-                cy.get('[role="listbox"]').contains('50').click();
+                cy.get('[data-value="50"]').click();
                 assertPersistedSetting('defaultPageSize', 50);
 
                 // Now change to custom
                 cy.get('#default-page-size').click();
-                cy.get('[role="listbox"]').contains('Custom').click();
+                cy.get('[data-value="custom"]').click();
 
                 // Enter custom value and press Enter to trigger save
                 cy.get('input[type="number"]').clear().type('75{enter}');

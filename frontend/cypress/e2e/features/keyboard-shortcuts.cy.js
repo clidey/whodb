@@ -777,8 +777,8 @@ describe('Keyboard Shortcuts', () => {
                 // Wait for sort to be applied and data to refresh
                 cy.wait(500);
 
-                // Column should now show sort indicator (chevron icon inside p.flex)
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                // Column should now show sort indicator
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('Space key on focused column header triggers sort', () => {
@@ -791,8 +791,8 @@ describe('Keyboard Shortcuts', () => {
                 // Wait for sort to be applied and data to refresh
                 cy.wait(500);
 
-                // Column should now show sort indicator (chevron icon inside p.flex)
-                cy.get('[data-testid="column-header-name"]').find('p.flex svg').should('exist');
+                // Column should now show sort indicator
+                cy.get('[data-testid="column-header-name"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('clicking column header sorts data ascending', () => {
@@ -803,7 +803,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Column should show sort indicator
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify data is sorted ascending - collect all id values and check order
                 cy.get('table tbody tr').then($rows => {
@@ -831,7 +831,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Column should show sort indicator
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify data is sorted descending
                 cy.get('table tbody tr').then($rows => {
@@ -860,8 +860,8 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Both columns should show sort indicators
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
-                cy.get('[data-testid="column-header-name"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-testid="column-header-name"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('clicking column three times cycles through asc, desc, and removes sort', () => {
@@ -879,7 +879,7 @@ describe('Keyboard Shortcuts', () => {
                 // First click: ascending sort
                 cy.get('[data-testid="column-header-id"]').click();
                 cy.wait(500);
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify ascending
                 cy.get('table tbody tr').then($rows => {
@@ -896,7 +896,7 @@ describe('Keyboard Shortcuts', () => {
                 // Second click: descending sort
                 cy.get('[data-testid="column-header-id"]').click();
                 cy.wait(500);
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify descending
                 cy.get('table tbody tr').then($rows => {
@@ -914,8 +914,8 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('[data-testid="column-header-id"]').click();
                 cy.wait(500);
 
-                // Sort indicator (chevron) should be removed
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('not.exist');
+                // Sort indicator should be removed
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('not.exist');
             });
         });
 
@@ -948,7 +948,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Column should now show sort indicator
-                cy.get('[data-testid="column-header-id"]').find('svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('sort commands can be searched in command palette', () => {

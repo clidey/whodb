@@ -1214,6 +1214,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             }}
                                             onFocus={() => { focusedColumnRef.current = col; }}
                                             data-testid={`column-header-${col}`}
+                                            data-column-name={col}
+                                            data-sort-direction={sortedColumns?.get(col) || undefined}
                                         >
                                             <Tip>
                                                 <p className={cn("flex items-center gap-xs", {
@@ -1223,8 +1225,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     {col}
                                                     {onColumnSort && sortedColumns?.has(col) && (
                                                         sortedColumns.get(col) === 'asc'
-                                                            ? <ChevronUpIcon className="w-4 h-4" />
-                                                            : <ChevronDownIcon className="w-4 h-4" />
+                                                            ? <ChevronUpIcon className="w-4 h-4" data-testid="sort-indicator" />
+                                                            : <ChevronDownIcon className="w-4 h-4" data-testid="sort-indicator" />
                                                     )}
                                                 </p>
                                                 <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
@@ -1494,24 +1496,25 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     pattern="[0-9]*"
                                     max={maxRowCount.toString()}
                                     placeholder={t('enterNumberOfRows', { max: maxRowCount })}
+                                    data-testid="mock-data-rows-input"
                                 />
                                 <Label>{t('method')}</Label>
                                 <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger className="w-full" data-testid="mock-data-method-select">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Normal">{t('methodNormal')}</SelectItem>
+                                        <SelectItem value="Normal" data-value="Normal">{t('methodNormal')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Label>{t('dataHandling')}</Label>
                                 <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger className="w-full" data-testid="mock-data-handling-select">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="append">{t('appendToExisting')}</SelectItem>
-                                        <SelectItem value="overwrite">{t('overwriteExisting')}</SelectItem>
+                                        <SelectItem value="append" data-value="append">{t('appendToExisting')}</SelectItem>
+                                        <SelectItem value="overwrite" data-value="overwrite">{t('overwriteExisting')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {generatingMockData && (
@@ -1549,11 +1552,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                             {t('cancel')}
                         </Button>
                         {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData}>
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} data-testid="mock-data-generate-button">
                                 {t('generate')}
                             </Button>
                         ) : (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive" data-testid="mock-data-overwrite-button">
                                 {t('yesOverwrite')}
                             </Button>
                         )}
