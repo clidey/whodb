@@ -793,7 +793,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             </div>
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
-            <DrawerContent className="px-8 min-h-[65vh]">
+            <DrawerContent className="px-8 min-h-[65vh]" data-testid="scratchpad-drawer">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
                 </Button>

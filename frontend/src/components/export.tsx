@@ -109,7 +109,7 @@ export const Export: FC<IExportProps> = ({
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="right" className="max-w-md w-full p-8">
+                <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog">
                     <SheetTitle className="flex items-center gap-2"><ShareIcon className="w-4 h-4" /> {t('title')}</SheetTitle>
                     <VisuallyHidden>
                         <SheetTitle>{t('title')}</SheetTitle>

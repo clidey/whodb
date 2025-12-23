@@ -49,13 +49,13 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('[data-testid="context-menu-edit-row"]').click();
 
                 // Edit dialog should be visible
-                cy.contains('Edit Row').should('be.visible');
+                cy.get('[data-testid="edit-row-dialog"]').should('be.visible');
 
                 // Press ESC to close
                 cy.get('body').type('{esc}');
 
                 // Dialog should be closed
-                cy.contains('Edit Row').should('not.exist');
+                cy.get('[data-testid="edit-row-dialog"]').should('not.exist');
             });
 
             it('closes add row dialog with ESC', () => {
@@ -96,7 +96,7 @@ describe('Keyboard Shortcuts', () => {
 
                     // Open embedded scratchpad
                     cy.get('[data-testid="embedded-scratchpad-button"]').click();
-                    cy.contains('h2', 'Scratchpad').should('be.visible');
+                    cy.get('[data-testid="scratchpad-drawer"]').should('be.visible');
 
                     // Press ESC to close
                     cy.get('body').type('{esc}');
@@ -269,7 +269,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('{enter}');
 
                 // Edit dialog should open
-                cy.contains('Edit Row').should('be.visible');
+                cy.get('[data-testid="edit-row-dialog"]').should('be.visible');
 
                 // Close with ESC
                 cy.get('body').type('{esc}');
@@ -284,7 +284,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('m');
 
                 // Mock Data sheet should open
-                cy.contains('Mock Data').should('be.visible');
+                cy.get('[data-testid="mock-data-sheet"]').should('be.visible');
 
                 // Close it
                 cy.get('body').type('{esc}');
@@ -320,7 +320,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('e', { shift: true });
 
                 // Export dialog should open
-                cy.contains('Export').should('be.visible');
+                cy.get('[data-testid="export-dialog"]').should('be.visible');
 
                 // Close it
                 cy.get('body').type('{esc}');
@@ -336,7 +336,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('e');
 
                 // Edit dialog should open
-                cy.contains('Edit Row').should('be.visible');
+                cy.get('[data-testid="edit-row-dialog"]').should('be.visible');
 
                 // Close it
                 cy.get('body').type('{esc}');
@@ -514,21 +514,21 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Shortcuts button should be visible in the header
-                cy.contains('button', 'Shortcuts').should('be.visible');
+                cy.get('[data-testid="shortcuts-button"]').should('be.visible');
             });
 
             it('clicking shortcuts button opens the modal', () => {
                 cy.data(tableName);
 
                 // Click the shortcuts button
-                cy.contains('button', 'Shortcuts').click();
+                cy.get('[data-testid="shortcuts-button"]').click();
 
-                // Modal should open with title
-                cy.contains('Keyboard Shortcuts').should('be.visible');
+                // Modal should open
+                cy.get('[data-testid="shortcuts-modal"]').should('be.visible');
 
                 // Close with ESC
                 cy.get('body').type('{esc}');
-                cy.contains('Keyboard Shortcuts').should('not.exist');
+                cy.get('[data-testid="shortcuts-modal"]').should('not.exist');
             });
 
             it('pressing ? key opens the shortcuts modal', () => {
@@ -538,11 +538,11 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('?');
 
                 // Modal should open
-                cy.contains('Keyboard Shortcuts').should('be.visible');
+                cy.get('[data-testid="shortcuts-modal"]').should('be.visible');
 
-                // Verify the modal contains shortcut categories (use exist instead of visible for scrollable content)
-                cy.contains('Global').should('exist');
-                cy.contains('Table Navigation').should('exist');
+                // Verify the modal contains shortcut categories
+                cy.get('[data-testid="shortcuts-category-global"]').should('exist');
+                cy.get('[data-testid="shortcuts-category-navigation"]').should('exist');
 
                 // Close with ESC
                 cy.get('body').type('{esc}');
@@ -649,10 +649,10 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('k');
 
                 // Should show navigation commands
-                cy.get('[data-testid="command-nav-chat"]').should('exist');
-                cy.get('[data-testid="command-nav-storage-units"]').should('exist');
-                cy.get('[data-testid="command-nav-graph"]').should('exist');
-                cy.get('[data-testid="command-nav-scratchpad"]').should('exist');
+                cy.get('[data-testid="command-nav-chat"]').should('be.visible');
+                cy.get('[data-testid="command-nav-storage-units"]').should('be.visible');
+                cy.get('[data-testid="command-nav-graph"]').should('be.visible');
+                cy.get('[data-testid="command-nav-scratchpad"]').should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');
@@ -665,10 +665,10 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('k');
 
                 // Should show action commands
-                cy.get('[data-testid="command-action-refresh"]').should('exist');
-                cy.get('[data-testid="command-action-export"]').should('exist');
-                cy.get('[data-testid="command-action-toggle-sidebar"]').should('exist');
-                cy.get('[data-testid="command-action-disconnect"]').should('exist');
+                cy.get('[data-testid="command-action-refresh"]').should('be.visible');
+                cy.get('[data-testid="command-action-export"]').should('be.visible');
+                cy.get('[data-testid="command-action-toggle-sidebar"]').should('be.visible');
+                cy.get('[data-testid="command-action-disconnect"]').should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');
@@ -926,10 +926,9 @@ describe('Keyboard Shortcuts', () => {
                 // Open command palette
                 cy.typeCmdShortcut('k');
 
-                // Should show "Sort By" section with column options
-                cy.contains('Sort By').should('exist');
-                cy.get('[data-testid="command-sort-id"]').should('exist');
-                cy.get('[data-testid="command-sort-name"]').should('exist');
+                // Should show sort commands with column options
+                cy.get('[data-testid="command-sort-id"]').should('be.visible');
+                cy.get('[data-testid="command-sort-name"]').should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');

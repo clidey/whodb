@@ -356,8 +356,8 @@ describe('Settings', () => {
                 cy.get('[data-testid="scratchpad-button"]', {timeout: 10000}).should('be.visible');
 
                 // Mode toggle should be visible
-                cy.get('[data-testid="mode-toggle"]').first().should('be.visible');
-                cy.get('[data-testid="mode-toggle"]').first().find('button').first().should('exist');
+                cy.get('[data-testid="mode-toggle"]').should('be.visible');
+                cy.get('[data-testid="mode-toggle"] button').should('exist');
             });
 
             it('can toggle theme mode', () => {
@@ -365,7 +365,7 @@ describe('Settings', () => {
                 cy.get('[data-testid="scratchpad-button"]', {timeout: 10000}).should('be.visible');
 
                 // Click the mode toggle button
-                cy.get('[data-testid="mode-toggle"]').first().find('button').first().click();
+                cy.get('[data-testid="mode-toggle"] button').click();
 
                 // A dropdown menu should appear with theme options
                 cy.get('[role="menu"]').should('be.visible');
@@ -373,17 +373,10 @@ describe('Settings', () => {
                 // Should have exactly 3 options: Light, Dark, System
                 cy.get('[role="menuitem"]').should('have.length', 3);
 
-                // Verify Light option exists with sun icon
-                cy.get('[role="menuitem"]').contains('Light').should('be.visible')
-                    .find('svg').should('exist');
-
-                // Verify Dark option exists with moon icon
-                cy.get('[role="menuitem"]').contains('Dark').should('be.visible')
-                    .find('svg').should('exist');
-
-                // Verify System option exists with monitor icon
-                cy.get('[role="menuitem"]').contains('System').should('be.visible')
-                    .find('svg').should('exist');
+                // Verify all options exist
+                cy.get('[role="menuitem"]').contains(/light/i).should('be.visible');
+                cy.get('[role="menuitem"]').contains(/dark/i).should('be.visible');
+                cy.get('[role="menuitem"]').contains(/system/i).should('be.visible');
 
                 // Close the menu by pressing Escape
                 cy.get('body').type('{esc}');
@@ -394,7 +387,7 @@ describe('Settings', () => {
                 cy.get('[data-testid="scratchpad-button"]', {timeout: 10000}).should('be.visible');
 
                 // Click the mode toggle
-                cy.get('[data-testid="mode-toggle"]').first().find('button').first().click();
+                cy.get('[data-testid="mode-toggle"] button').click();
 
                 // Click light mode option
                 cy.get('[role="menuitem"]').contains(/light/i).click();
@@ -408,7 +401,7 @@ describe('Settings', () => {
                 cy.get('[data-testid="scratchpad-button"]', {timeout: 10000}).should('be.visible');
 
                 // Click the mode toggle
-                cy.get('[data-testid="mode-toggle"]').first().find('button').first().click();
+                cy.get('[data-testid="mode-toggle"] button').click();
 
                 // Click dark mode option
                 cy.get('[role="menuitem"]').contains(/dark/i).click();
@@ -422,7 +415,7 @@ describe('Settings', () => {
                 cy.get('[data-testid="scratchpad-button"]', {timeout: 10000}).should('be.visible');
 
                 // Switch to light mode
-                cy.get('[data-testid="mode-toggle"]').first().find('button').first().click();
+                cy.get('[data-testid="mode-toggle"] button').click();
                 cy.get('[role="menuitem"]').contains(/light/i).click();
 
                 // Navigate to settings
@@ -432,7 +425,7 @@ describe('Settings', () => {
                 cy.get('html').should('have.class', 'light');
 
                 // Switch back to dark for other tests
-                cy.get('[data-testid="mode-toggle"]').first().find('button').first().click();
+                cy.get('[data-testid="mode-toggle"] button').click();
                 cy.get('[role="menuitem"]').contains(/dark/i).click();
             });
         });

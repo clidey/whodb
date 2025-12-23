@@ -1420,7 +1420,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col">
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog">
                         <SheetTitle>{t('editRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto mt-4">
                             <div className="flex flex-col gap-lg pr-2">
@@ -1482,7 +1482,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setShowMockDataConfirmation(false);
                     }
                 }}>
-                <SheetContent side="right" className="p-8">
+                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet">
                     <div className="flex flex-col gap-lg h-full">
                         <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockDataTitle')}</SheetTitle>
                         {!showMockDataConfirmation ? (
