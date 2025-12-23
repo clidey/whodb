@@ -236,6 +236,13 @@ Cypress.Commands.add('explore', (tableName) => {
 });
 
 Cypress.Commands.add('getExploreFields', () => {
+    // Wait for the explore-fields panel to be visible (Sheet needs to open)
+    cy.get('[data-testid="explore-fields"]', { timeout: 10000 }).should('be.visible');
+
+    // Wait for columns section to appear - it has an h3 header that renders when columns are loaded
+    // The columns are fetched via async API call (fetchColumnsBatch) on page load
+    cy.get('[data-testid="explore-fields"] h3', { timeout: 10000 }).should('exist');
+
     // Returns a list of [key, value] arrays from the explore fields panel
     return cy.document().then((doc) => {
         const result = [];
