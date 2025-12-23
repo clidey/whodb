@@ -323,7 +323,7 @@ All rights reserved.
 
 Website: https://whodb.com
 GitHub: https://github.com/clidey/whodb
-Documentation: https://whodb.com/docs`,
+Documentation: https://docs.whodb.com`,
 		version,
 		goruntime.GOOS,
 		goruntime.GOARCH)
@@ -422,7 +422,7 @@ func (a *App) SetupApplicationMenu() {
 	// Help Menu
 	helpMenu := appMenu.AddSubmenu("Help")
 	helpMenu.AddText("Documentation", nil, func(_ *menu.CallbackData) {
-		a.OpenURL("https://whodb.com/docs")
+		a.OpenURL("https://docs.whodb.com")
 	})
 	helpMenu.AddText("Report Issue", nil, func(_ *menu.CallbackData) {
 		a.OpenURL("https://github.com/clidey/whodb/issues")
