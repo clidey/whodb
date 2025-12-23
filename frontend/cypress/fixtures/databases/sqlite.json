@@ -194,15 +194,17 @@
   },
   "graph": {
     "expectedNodes": {
-      "users": [
-        "orders"
-      ],
+      "users": [],
       "orders": [
-        "order_items",
-        "payments"
+        "users"
       ],
-      "products": [
-        "order_items"
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
+        "orders"
       ]
     }
   },

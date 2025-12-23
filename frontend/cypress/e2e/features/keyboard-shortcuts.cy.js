@@ -904,10 +904,12 @@ describe('Keyboard Shortcuts', () => {
 
                 // Open command palette
                 cy.typeCmdShortcut('k');
+                // Wait for command palette to receive columns from the table
+                cy.wait(300);
 
-                // Should show sort commands with column options
-                cy.get('[data-testid="command-sort-id"]').should('be.visible');
-                cy.get('[data-testid="command-sort-name"]').should('be.visible');
+                // Should show sort commands with column options (scroll into view as they may be below fold)
+                cy.get('[data-testid="command-sort-id"]').scrollIntoView().should('be.visible');
+                cy.get('[data-testid="command-sort-name"]').scrollIntoView().should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');
@@ -918,9 +920,11 @@ describe('Keyboard Shortcuts', () => {
 
                 // Open command palette
                 cy.typeCmdShortcut('k');
+                // Wait for command palette to receive columns from the table
+                cy.wait(300);
 
-                // Click on sort by id
-                cy.get('[data-testid="command-sort-id"]').click();
+                // Click on sort by id (scroll into view first as it may be below fold)
+                cy.get('[data-testid="command-sort-id"]').scrollIntoView().click();
 
                 // Wait for sort to be applied
                 cy.wait(500);
@@ -934,6 +938,8 @@ describe('Keyboard Shortcuts', () => {
 
                 // Open command palette
                 cy.typeCmdShortcut('k');
+                // Wait for command palette to receive columns from the table
+                cy.wait(300);
 
                 // Type to search for sort
                 cy.get('[data-testid="command-palette-input"]').type('sort by name');

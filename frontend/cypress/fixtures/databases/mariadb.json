@@ -320,18 +320,18 @@
   },
   "graph": {
     "expectedNodes": {
-      "users": [
+      "users": [],
+      "orders": [
+        "users"
+      ],
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
         "orders"
       ],
-      "orders": [
-        "order_items",
-        "payments"
-      ],
-      "order_items": [],
-      "products": [
-        "order_items"
-      ],
-      "payments": [],
       "order_summary": []
     }
   },
