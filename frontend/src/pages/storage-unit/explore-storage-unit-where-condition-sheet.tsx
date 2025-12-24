@@ -276,7 +276,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
     };
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col" data-condition-count={totalConditions} data-condition-mode="and">
             <Label className="mb-2">Where condition</Label>
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 <Button onClick={handleOpenSheet} data-testid="where-button" variant="secondary">
