@@ -159,3 +159,38 @@ func TestRESTHandlersEnforceAuthForProtectedRoutes(t *testing.T) {
 		t.Fatalf("expected error when plugin returns unauthorized, got %d", rec.Code)
 	}
 }
+
+func TestRESTExportSuccessAndFailure(t *testing.T) {
+	successMock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	successMock.ExportDataFunc = func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error {
+		return nil
+	}
+	setEngineMock(t, successMock)
+
+	router := chi.NewRouter()
+	SetupHTTPServer(router)
+
+	payload := `{"schema":"public","storageUnit":"users","rows":[{"id":1}]}`
+	req := httptest.NewRequest(http.MethodPost, "/api/export", bytes.NewBufferString(payload))
+	req = req.WithContext(context.WithValue(req.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected export to succeed, got %d", rec.Code)
+	}
+
+	// Failure case
+	failMock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	failMock.ExportDataFunc = func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error {
+		return errors.New("export failed")
+	}
+	setEngineMock(t, failMock)
+
+	req = httptest.NewRequest(http.MethodPost, "/api/export", bytes.NewBufferString(payload))
+	req = req.WithContext(context.WithValue(req.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected export failure to return 500, got %d", rec.Code)
+	}
+}

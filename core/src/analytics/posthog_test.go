@@ -100,6 +100,18 @@ func TestHashIdentifierHandlesEmptyInput(t *testing.T) {
 	}
 }
 
+func TestCaptureDoesNothingWhenDisabled(t *testing.T) {
+	t.Cleanup(resetAnalyticsState)
+	client := &fakePosthogClient{}
+	storeClient(client)
+	enabled.Store(false)
+
+	Capture(context.Background(), "event", map[string]any{"a": 1})
+	if len(client.messages) != 0 {
+		t.Fatalf("expected no messages when analytics disabled")
+	}
+}
+
 func TestBuildPropertiesMergesMetadataAndConfig(t *testing.T) {
 	t.Cleanup(resetAnalyticsState)
 
