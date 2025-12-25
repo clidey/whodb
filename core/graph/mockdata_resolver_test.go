@@ -55,3 +55,115 @@ func TestGenerateMockDataHandlesSchemaAndConstraintErrors(t *testing.T) {
 		t.Fatalf("expected error when GetRows fails and function to be called")
 	}
 }
+
+func TestGenerateMockDataSucceedsForNoSQLPlugin(t *testing.T) {
+	r := &mutationResolver{}
+	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
+		return &engine.GetRowsResult{
+			Columns: []engine.Column{{Name: "name", Type: "text"}},
+			Rows:    [][]string{},
+		}, nil
+	}
+	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
+		return map[string]map[string]any{}, nil
+	}
+
+	callCount := 0
+	mock.AddRowFunc = func(_ *engine.PluginConfig, _, _ string, values []engine.Record) (bool, error) {
+		callCount++
+		if len(values) == 0 || values[0].Key != "name" {
+			t.Fatalf("expected generated value for name column, got %#v", values)
+		}
+		return true, nil
+	}
+
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
+	origEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	src.MainEngine.RegistryPlugin(mock.AsPlugin())
+	t.Cleanup(func() { src.MainEngine = origEngine })
+
+	status, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
+		Schema:            "public",
+		StorageUnit:       "orders",
+		RowCount:          2,
+		Method:            "default",
+		OverwriteExisting: false,
+	})
+	if err != nil {
+		t.Fatalf("expected mock data generation to succeed, got %v", err)
+	}
+	if status == nil || status.AmountGenerated != 2 {
+		t.Fatalf("expected two rows generated, got %#v", status)
+	}
+	if callCount < 2 {
+		t.Fatalf("expected AddRow to be called for each requested row, got %d", callCount)
+	}
+}
+
+func TestGenerateMockDataStopsWhenExceedingMax(t *testing.T) {
+	r := &mutationResolver{}
+	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
+		return &engine.GetRowsResult{
+			Columns: []engine.Column{{Name: "name", Type: "text"}},
+			Rows:    [][]string{},
+		}, nil
+	}
+	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
+		return map[string]map[string]any{}, nil
+	}
+	mock.AddRowFunc = func(_ *engine.PluginConfig, _, _ string, _ []engine.Record) (bool, error) { return true, nil }
+
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
+	origEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	src.MainEngine.RegistryPlugin(mock.AsPlugin())
+	t.Cleanup(func() { src.MainEngine = origEngine })
+
+	_, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
+		Schema:            "public",
+		StorageUnit:       "orders",
+		RowCount:          env.GetMockDataGenerationMaxRowCount() + 1,
+		Method:            "default",
+		OverwriteExisting: false,
+	})
+	if err == nil {
+		t.Fatalf("expected error when requested rows exceed max limit")
+	}
+}
+
+func TestGenerateMockDataErrorsWhenClearTableFails(t *testing.T) {
+	r := &mutationResolver{}
+	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
+	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
+		return &engine.GetRowsResult{
+			Columns: []engine.Column{{Name: "name", Type: "text"}},
+			Rows:    [][]string{},
+		}, nil
+	}
+	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
+		return map[string]map[string]any{}, nil
+	}
+	mock.ClearTableDataFunc = func(*engine.PluginConfig, string, string) (bool, error) {
+		return false, errors.New("clear failed")
+	}
+
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
+	origEngine := src.MainEngine
+	src.MainEngine = &engine.Engine{}
+	src.MainEngine.RegistryPlugin(mock.AsPlugin())
+	t.Cleanup(func() { src.MainEngine = origEngine })
+
+	_, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
+		Schema:            "public",
+		StorageUnit:       "orders",
+		RowCount:          1,
+		Method:            "default",
+		OverwriteExisting: true,
+	})
+	if err == nil {
+		t.Fatalf("expected error when clearing table fails")
+	}
+}
