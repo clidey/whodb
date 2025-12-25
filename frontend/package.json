@@ -118,7 +118,7 @@
     "@types/uuid": "10.0.0",
     "@vitejs/plugin-react": "4.7.0",
     "baseline-browser-mapping": "2.8.32",
-    "cypress": "15.8.0",
+    "cypress": "15.8.1",
     "esbuild": "0.27.1",
     "eslint-plugin-cypress": "5.2.0",
     "nyc": "17.1.0",
