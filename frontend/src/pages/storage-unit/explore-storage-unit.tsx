@@ -146,6 +146,10 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
+    // Track table container height for dynamic sizing
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const [tableHeight, setTableHeight] = useState<number>(500);
+
     // Keep whereConditionRef in sync with whereCondition state
     useEffect(() => {
         whereConditionRef.current = whereCondition;
@@ -586,6 +590,38 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         setEntitySearchResults(null);
     }, []);
 
+    // Measure table container height dynamically
+    useEffect(() => {
+        const updateTableHeight = () => {
+            if (tableContainerRef.current) {
+                const containerHeight = tableContainerRef.current.offsetHeight;
+                // Reserve some space for pagination and export buttons (~100px)
+                const availableHeight = Math.max(containerHeight - 100, 300);
+                setTableHeight(availableHeight);
+            }
+        };
+
+        // Initial measurement
+        updateTableHeight();
+
+        // Create ResizeObserver to update on container resize
+        const resizeObserver = new ResizeObserver(() => {
+            updateTableHeight();
+        });
+
+        if (tableContainerRef.current) {
+            resizeObserver.observe(tableContainerRef.current);
+        }
+
+        // Also listen to window resize for viewport changes
+        window.addEventListener('resize', updateTableHeight);
+
+        return () => {
+            resizeObserver.disconnect();
+            window.removeEventListener('resize', updateTableHeight);
+        };
+    }, []);
+
     if (unit == null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
@@ -756,7 +792,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 </Sheet>
 
             </div>
-            <div className="grow">
+            <div className="grow" ref={tableContainerRef}>
                 {
                     rows != null &&
                     <StorageUnitTable
@@ -773,6 +809,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
                         pageSize={pageSize}
+                        height={tableHeight}
                         // Server-side pagination props
                         totalCount={Number.parseInt(totalCount, 10)}
                         currentPage={currentPage}
