@@ -192,7 +192,6 @@ for db in "${DATABASES[@]}"; do
     fi
 
     # Run Cypress test
-    # For custom cypress dirs, don't pass --spec (let cypress.config.js specPattern handle it)
     if [ "$HEADLESS" = "true" ]; then
         if [ "$CYPRESS_DIR" = "$PROJECT_ROOT/frontend" ]; then
             # Default dir - use spec pattern
@@ -209,18 +208,41 @@ for db in "${DATABASES[@]}"; do
                 exit ${PIPESTATUS[0]}
             ) && RESULT=0 || RESULT=$?
         else
-            # Custom dir - let cypress.config.js specPattern handle specs
-            (
-                cd "$CYPRESS_DIR"
-                CYPRESS_database="$db" \
-                CYPRESS_category="${DB_CATEGORIES[$db]}" \
-                CYPRESS_retries__runMode=2 \
-                CYPRESS_retries__openMode=0 \
-                NODE_ENV=test pnpx cypress run \
-                    --browser electron \
-                    2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
-                exit ${PIPESTATUS[0]}
-            ) && RESULT=0 || RESULT=$?
+            # Custom dir (e.g., EE) - build spec pattern for both CE and EE features
+            if [ -n "$SPEC_FILE" ]; then
+                if [[ "$SPEC_FILE" == *.cy.* ]]; then
+                    # Full filename provided - check both CE and EE locations
+                    EE_SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE,../../frontend/cypress/e2e/features/$SPEC_FILE"
+                else
+                    # Short name provided - add .cy.js extension
+                    EE_SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE.cy.js,../../frontend/cypress/e2e/features/$SPEC_FILE.cy.js"
+                fi
+                (
+                    cd "$CYPRESS_DIR"
+                    CYPRESS_database="$db" \
+                    CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                    CYPRESS_retries__runMode=2 \
+                    CYPRESS_retries__openMode=0 \
+                    NODE_ENV=test pnpx cypress run \
+                        --spec "$EE_SPEC_PATTERN" \
+                        --browser electron \
+                        2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
+                    exit ${PIPESTATUS[0]}
+                ) && RESULT=0 || RESULT=$?
+            else
+                # No spec file - run all specs (let cypress.config.js specPattern handle it)
+                (
+                    cd "$CYPRESS_DIR"
+                    CYPRESS_database="$db" \
+                    CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                    CYPRESS_retries__runMode=2 \
+                    CYPRESS_retries__openMode=0 \
+                    NODE_ENV=test pnpx cypress run \
+                        --browser electron \
+                        2>&1 | tee "$PROJECT_ROOT/frontend/cypress/logs/$db.log"
+                    exit ${PIPESTATUS[0]}
+                ) && RESULT=0 || RESULT=$?
+            fi
         fi
     else
         (
