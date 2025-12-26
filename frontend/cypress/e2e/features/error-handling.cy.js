@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { forEachDatabase, loginToDatabase, getSqlQuery, getErrorPattern } from '../../support/test-runner';
-import { clearBrowserState } from '../../support/helpers/animation';
+import {forEachDatabase, getErrorPattern, getSqlQuery, loginToDatabase} from '../../support/test-runner';
+import {clearBrowserState} from '../../support/helpers/animation';
 
 /**
  * Error Handling Tests
@@ -144,11 +144,6 @@ describe('Error Handling', () => {
     describe('Invalid Query Errors', () => {
         forEachDatabase('sql', (db) => {
             describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
                 it('shows error in scratchpad for invalid SQL syntax', () => {
                     cy.goto('scratchpad');
 
@@ -293,13 +288,7 @@ describe('Error Handling', () => {
 
     describe('Connection Timeout Handling', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
-                it('handles slow query with loading indicator', () => {
+            describe(`${db.type}`, () => {                it('handles slow query with loading indicator', () => {
                     cy.goto('scratchpad');
 
                     const query = getSqlQuery(db, 'selectAllUsers');
@@ -395,13 +384,7 @@ describe('Error Handling', () => {
 
     describe('Error State UI Features', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
-                it('scratchpad error can be cleared by running new query', () => {
+            describe(`${db.type}`, () => {                it('scratchpad error can be cleared by running new query', () => {
                     cy.goto('scratchpad');
 
                     // Run invalid query

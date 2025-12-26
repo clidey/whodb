@@ -75,11 +75,6 @@ describe('Loading States & Spinners', () => {
             const tableName = testTable.name;
 
             describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
                 it('shows loading skeleton/spinner while fetching table data', () => {
                     // Navigate to table view using the proper command
                     cy.data(tableName);
@@ -135,13 +130,7 @@ describe('Loading States & Spinners', () => {
 
     describe('Scratchpad Query Execution Loading State', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
-                it('shows loading indicator during query execution', () => {
+            describe(`${db.type}`, () => {                it('shows loading indicator during query execution', () => {
                     cy.goto('scratchpad');
 
                     // Write query
@@ -262,13 +251,7 @@ describe('Loading States & Spinners', () => {
 
     describe('Schema/Database Selection Loading State', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
-                it('shows loading state when switching schema/database', () => {
+            describe(`${db.type}`, () => {                it('shows loading state when switching schema/database', () => {
                     // Check if schema/database dropdown exists (not all DBs have these)
                     cy.get('body').then($body => {
                         const $dbDropdown = $body.find('[data-testid="sidebar-database"]:visible');
@@ -309,13 +292,7 @@ describe('Loading States & Spinners', () => {
 
     describe('Graph View Loading State', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
-                it('shows loading state while fetching graph data', () => {
+            describe(`${db.type}`, () => {                it('shows loading state while fetching graph data', () => {
                     // Track graph data request
                     cy.intercept('POST', '**/api/query').as('graphDataQuery');
 
@@ -357,13 +334,7 @@ describe('Loading States & Spinners', () => {
             const testTable = db.testTable;
             const tableName = testTable.name;
 
-            describe(`${db.type}`, () => {
-                beforeEach(() => {
-                    clearBrowserState();
-                    loginToDatabase(db);
-                });
-
-                it('shows loading state during row creation', () => {
+            describe(`${db.type}`, () => {                it('shows loading state during row creation', () => {
                     cy.data(tableName);
                     cy.get('table tbody tr', { timeout: 10000 }).should('have.length.at.least', 1);
 
