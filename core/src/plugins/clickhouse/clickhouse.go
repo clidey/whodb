@@ -18,6 +18,7 @@ package clickhouse
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -218,12 +219,10 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 			}
 			return fmt.Sprintf("[%s]", strings.Join(parts, ", ")), nil
 		case map[string]interface{}:
-			// Map type
-			parts := make([]string, 0, len(v))
-			for key, val := range v {
-				parts = append(parts, fmt.Sprintf("%s:%v", key, val))
+			if b, err := json.Marshal(v); err == nil {
+				return string(b), nil
 			}
-			return fmt.Sprintf("{%s}", strings.Join(parts, ", ")), nil
+			return fmt.Sprintf("%v", v), nil
 		case net.IP:
 			// IPv4 or IPv6 address
 			return v.String(), nil
