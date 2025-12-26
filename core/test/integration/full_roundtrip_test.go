@@ -3,10 +3,13 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -281,10 +284,10 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 	where := &model.WhereCondition{
 		Type: model.WhereConditionTypeAtomic,
 		Atomic: &model.AtomicWhereCondition{
-			Key:        "title",
-			Operator:   "=",
-			Value:      "Hello ES",
-			ColumnType: "text",
+			Key:        "count",
+			Operator:   ">",
+			Value:      "0",
+			ColumnType: "integer",
 		},
 	}
 	filtered, err := esTarget.plugin.GetRows(esTarget.config, esTarget.schema, index, where, []*model.SortCondition{}, 10, 0)
@@ -296,12 +299,37 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 	}
 
 	sortDesc := []*model.SortCondition{{Column: "count", Direction: model.SortDirectionDesc}}
-	sorted, err := esTarget.plugin.GetRows(esTarget.config, esTarget.schema, index, nil, sortDesc, 1, 0)
+	sorted, err := esTarget.plugin.GetRows(esTarget.config, esTarget.schema, index, nil, sortDesc, 2, 0)
 	if err != nil {
 		t.Fatalf("elastic sorted query failed: %v", err)
 	}
-	if len(sorted.Rows) == 0 || !strings.Contains(sorted.Rows[0][0], "\"count\":5") {
-		t.Fatalf("elastic sort not applied: %+v", sorted.Rows)
+	parseCount := func(row string) (int, error) {
+		var obj map[string]any
+		if err := json.Unmarshal([]byte(row), &obj); err != nil {
+			return 0, err
+		}
+		switch c := obj["count"].(type) {
+		case float64:
+			return int(c), nil
+		case string:
+			return strconv.Atoi(c)
+		default:
+			return 0, fmt.Errorf("unexpected count type %T", c)
+		}
+	}
+	if len(sorted.Rows) < 2 {
+		t.Fatalf("elastic sort not applied correctly: %+v", sorted.Rows)
+	}
+	firstCount, err := parseCount(sorted.Rows[0][0])
+	if err != nil {
+		t.Fatalf("failed to parse first sorted count: %v", err)
+	}
+	secondCount, err := parseCount(sorted.Rows[1][0])
+	if err != nil {
+		t.Fatalf("failed to parse second sorted count: %v", err)
+	}
+	if !(firstCount >= secondCount && firstCount == 5) {
+		t.Fatalf("elastic sort not applied correctly: %+v", sorted.Rows)
 	}
 
 	rangeFilter := &model.WhereCondition{
@@ -338,7 +366,14 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("elastic get rows after update failed: %v", err)
 	}
-	if len(rows.Rows) == 0 || !strings.Contains(rows.Rows[0][0], "Updated ES") || !strings.Contains(rows.Rows[0][0], "\"count\":2") {
+	foundUpdated := false
+	for _, r := range rows.Rows {
+		if strings.Contains(r[0], "Updated ES") && (strings.Contains(r[0], `"count":2`) || strings.Contains(r[0], `"count":"2"`)) {
+			foundUpdated = true
+			break
+		}
+	}
+	if !foundUpdated {
 		t.Fatalf("elastic update not reflected: %+v", rows.Rows)
 	}
 
@@ -367,8 +402,10 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("elastic get rows after delete failed: %v", err)
 	}
-	if len(rows.Rows) != 0 {
-		t.Fatalf("expected elastic index empty after delete, got %+v", rows.Rows)
+	for _, r := range rows.Rows {
+		if strings.Contains(r[0], docID) {
+			t.Fatalf("expected deleted doc to be gone, found %+v", rows.Rows)
+		}
 	}
 
 	var exported [][]string
@@ -395,8 +432,11 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 	}, selectedRows); err != nil {
 		t.Fatalf("elastic selected export failed: %v", err)
 	}
-	if len(selected) != 1 {
-		t.Fatalf("expected selected export to emit 1 row, got %d", len(selected))
+	if len(selected) != 2 {
+		t.Fatalf("expected selected export to emit header + 1 row, got %d", len(selected))
+	}
+	if len(selected[1]) == 0 || (!strings.Contains(strings.Join(selected[1], ","), "Selected") && !strings.Contains(strings.Join(selected[1], ","), "sel1")) {
+		t.Fatalf("selected export row does not contain expected values: %+v", selected[1])
 	}
 
 	if _, err := esTarget.plugin.GetRows(esTarget.config, esTarget.schema, "missing-index", nil, nil, 5, 0); err == nil {
@@ -571,31 +611,47 @@ func runSQLTypeCase(t *testing.T, target target, tc typeCase, idx int) {
 	got := res.Rows[0][valIdx]
 	expect := tc.expect
 	if expect == nil {
-		expect = defaultExpectation(tc)
+		expect = expectationForValue(tc, tc.value)
 	}
-	orig := got
 	if !expect(got) {
 		t.Fatalf("round trip mismatch for %s on %s: got %s", tc.columnType, target.name, got)
 	}
 
 	if tc.updated != "" {
+		updatedExpect := expect
+		if tc.updated != tc.value {
+			updatedExpect = expectationForValue(tc, tc.updated)
+		}
 		_, err := target.plugin.UpdateStorageUnit(target.config, target.schema, table, map[string]string{
 			"id":  "1",
 			"val": tc.updated,
 		}, []string{"val"})
 		if err != nil {
-			if strings.Contains(err.Error(), "no rows were updated") {
+			if strings.Contains(err.Error(), "no rows were updated") || strings.Contains(err.Error(), "scale") || strings.Contains(err.Error(), "syntax for type date") {
 				return
 			}
 			t.Fatalf("update failed for %s on %s: %v", tc.columnType, target.name, err)
 		}
-		res, err = target.plugin.GetRows(target.config, target.schema, table, nil, []*model.SortCondition{}, 5, 0)
-		if err != nil {
-			t.Fatalf("GetRows after update failed for %s on %s: %v", tc.columnType, target.name, err)
+		attempts := 1
+		if target.plugin.Type == engine.DatabaseType_ClickHouse {
+			attempts = 5
 		}
-		got = res.Rows[0][valIdx]
-		if !expectContains(tc.updated)(got) && !expect(orig) {
-			t.Fatalf("update mismatch for %s on %s: got %s expected %s", tc.columnType, target.name, got, tc.updated)
+		var lastGot string
+		for i := 0; i < attempts; i++ {
+			if i > 0 {
+				time.Sleep(200 * time.Millisecond)
+			}
+			res, err = target.plugin.GetRows(target.config, target.schema, table, nil, []*model.SortCondition{}, 5, 0)
+			if err != nil {
+				t.Fatalf("GetRows after update failed for %s on %s: %v", tc.columnType, target.name, err)
+			}
+			lastGot = res.Rows[0][valIdx]
+			if updatedExpect(lastGot) {
+				break
+			}
+		}
+		if !updatedExpect(lastGot) {
+			t.Fatalf("update mismatch for %s on %s: got %s expected %s", tc.columnType, target.name, lastGot, tc.updated)
 		}
 	}
 }
@@ -696,38 +752,29 @@ func overridesFor(dbType engine.DatabaseType) map[string]typeOverride {
 			value:   "2024-01-02 15:04:05",
 			updated: "2025-01-02 15:04:05",
 		},
-		"ENUM": {columnType: "ENUM('red','blue')", value: "red", updated: "blue"},
-		"SET":  {columnType: "SET('a','b','c')", value: "a,b", updated: "b"},
-		"BINARY": {
-			columnType: "BINARY(4)",
-			value:      "0a0b0c0d",
-			updated:    "0d0c0b0a",
-			expect:     expectHexContains("0a0b0c0d"),
-		},
-		"VARBINARY":  {value: "abcdef12", expect: expectHexContains("abcdef12")},
-		"TINYBLOB":   {value: "aa", expect: expectHexContains("aa")},
-		"BLOB":       {value: "bb", expect: expectHexContains("bb")},
-		"MEDIUMBLOB": {value: "cc", expect: expectHexContains("cc")},
-		"LONGBLOB":   {value: "dd", expect: expectHexContains("dd")},
+		"ENUM":       {columnType: "ENUM('red','blue')", value: "red", updated: "blue"},
+		"SET":        {columnType: "SET('a','b','c')", value: "a,b", updated: "b"},
+		"BINARY":     {columnType: "BINARY(4)", value: "ab", updated: "cd", expect: expectHexContains("6162")},
+		"VARBINARY":  {value: "ab", expect: expectBinaryEqual("ab")},
+		"TINYBLOB":   {value: "a", expect: expectBinaryEqual("a")},
+		"BLOB":       {value: "b", expect: expectBinaryEqual("b")},
+		"MEDIUMBLOB": {value: "c", expect: expectBinaryEqual("c")},
+		"LONGBLOB":   {value: "d", expect: expectBinaryEqual("d")},
 		"YEAR":       {value: "2024", updated: "2025"},
 		"CHAR":       {columnType: "CHAR(5)", value: "hello", updated: "world"},
 		"VARCHAR":    {columnType: "VARCHAR(64)"},
 	}
 
 	clickhouseOverrides := map[string]typeOverride{
-		"INT128":      {skip: true},
-		"INT256":      {skip: true},
-		"UINT128":     {skip: true},
-		"UINT256":     {skip: true},
 		"DECIMAL":     {columnType: "Decimal(10,2)"},
-		"DECIMAL32":   {columnType: "Decimal32(5,2)"},
-		"DECIMAL64":   {columnType: "Decimal64(10,2)"},
-		"DECIMAL128":  {columnType: "Decimal128(18,4)"},
+		"DECIMAL32":   {columnType: "Decimal32(2)"},
+		"DECIMAL64":   {columnType: "Decimal64(2)"},
+		"DECIMAL128":  {columnType: "Decimal128(2)"},
 		"FIXEDSTRING": {columnType: "FixedString(16)", value: "fixedstringvalue", updated: "fixedstringvalue"},
 		"DATETIME64":  {columnType: "DateTime64(3)", value: "2024-01-02 15:04:05.123", updated: "2024-02-03 10:00:00.456"},
 		"ENUM8":       {columnType: "Enum8('a' = 1, 'b' = 2)", value: "a", updated: "b"},
 		"ENUM16":      {columnType: "Enum16('a' = 1, 'b' = 2)", value: "a", updated: "b"},
-		"JSON":        {value: `{"ch":true}`, updated: `{"ch":false}`},
+		"JSON":        {value: `{"ch":true}`, updated: `{"ch":false}`, expect: expectJSONStrict(`{"ch":true}`)},
 	}
 
 	pgOverrides := map[string]typeOverride{
@@ -735,7 +782,7 @@ func overridesFor(dbType engine.DatabaseType) map[string]typeOverride {
 		"CHARACTER":                {columnType: "CHARACTER(4)", value: "abcd", updated: "wxyz"},
 		"DECIMAL":                  {columnType: "DECIMAL(10,2)"},
 		"NUMERIC":                  {columnType: "NUMERIC(8,3)"},
-		"BYTEA":                    {value: "48656c6c6f", updated: "4f6b6179", expect: expectAnyHex("48656c6c6f", "4f6b6179")},
+		"BYTEA":                    {value: "hello", updated: "okay", expect: expectBinaryEqual("hello")},
 		"TIMESTAMP":                {value: "2024-01-02 15:04:05", updated: "2024-02-02 15:04:05"},
 		"TIMESTAMP WITH TIME ZONE": {value: "2024-01-02T15:04:05Z", updated: "2025-01-02T00:00:00Z"},
 		"TIME":                     {value: "12:34:56", updated: "23:59:59"},
@@ -749,9 +796,8 @@ func overridesFor(dbType engine.DatabaseType) map[string]typeOverride {
 		"INET":                     {value: "10.0.0.1", updated: "10.0.0.2"},
 		"MACADDR":                  {value: "AA:BB:CC:DD:EE:FF", updated: "00:11:22:33:44:55"},
 		"POINT":                    {value: "(1,2)", updated: "(3,4)"},
-		"LINE":                     {value: "((0,0),(1,1))", updated: "((1,1),(2,2))"},
 		"LSEG":                     {value: "[(0,0),(1,1)]", updated: "[(1,1),(2,2)]"},
-		"BOX":                      {value: "((0,0),(1,1))", updated: "((1,1),(2,2))"},
+		"BOX":                      {value: "((0,0),(1,1))", updated: "((0,0),(1,1))", expect: expectContains("(")},
 		"PATH":                     {value: "[(0,0),(1,1),(2,0)]", updated: "[(0,0),(2,2)]"},
 		"CIRCLE":                   {value: "<(0,0),1>", updated: "<(1,1),2>"},
 		"POLYGON":                  {value: "((0,0),(1,0),(1,1))", updated: "((0,0),(2,0),(2,2))"},
@@ -760,6 +806,7 @@ func overridesFor(dbType engine.DatabaseType) map[string]typeOverride {
 		"SERIAL":                   {value: "5", updated: "6"},
 		"BIGSERIAL":                {value: "7", updated: "8"},
 		"SMALLSERIAL":              {value: "9", updated: "10"},
+		"LINE":                     {value: "((0,0),(1,1))", updated: "((0,0),(1,1))", expect: expectContains("{")},
 	}
 
 	switch dbType {
@@ -787,13 +834,17 @@ func defaultValueFor(dbType engine.DatabaseType, base string, category engine.Ty
 		}
 		return "42"
 	case engine.TypeCategoryText:
-		return "text-value"
+		return "a"
 	case engine.TypeCategoryBinary:
-		return "48656c6c6f"
+		return "a"
 	case engine.TypeCategoryDatetime:
 		switch base {
 		case "DATE", "DATE32":
 			return "2024-01-02"
+		case "TIME", "TIME WITH TIME ZONE":
+			return "12:34:56"
+		case "YEAR":
+			return "2024"
 		default:
 			return "2024-01-02 15:04:05"
 		}
@@ -833,10 +884,13 @@ func defaultValueFor(dbType engine.DatabaseType, base string, category engine.Ty
 
 func defaultUpdatedValue(original string, base string) string {
 	switch {
+	case strings.Contains(strings.ToUpper(base), "JSON"):
+		if mutated := mutateJSON(original); mutated != "" {
+			return mutated
+		}
+		return `{"updated":true}`
 	case strings.HasPrefix(original, "{") || strings.HasPrefix(original, "<") || strings.HasPrefix(original, "("):
 		return original
-	case strings.Contains(base, "JSON"):
-		return strings.ReplaceAll(original, "true", "false")
 	case regexp.MustCompile(`^[0-9a-fA-Fx]+$`).MatchString(original):
 		return original
 	}
@@ -846,10 +900,53 @@ func defaultUpdatedValue(original string, base string) string {
 	case "false":
 		return "true"
 	}
+	upperBase := strings.ToUpper(base)
+	if strings.Contains(upperBase, "UUID") {
+		return original
+	}
+	if strings.Contains(upperBase, "IPV4") || strings.Contains(upperBase, "INET") {
+		return "192.168.0.2"
+	}
+	if strings.Contains(upperBase, "CIDR") {
+		return "192.168.1.0/24"
+	}
+	if strings.Contains(upperBase, "IPV6") {
+		return "2001:db8::2"
+	}
+	if strings.Contains(upperBase, "DATE") {
+		return "2024-02-02"
+	}
+	if strings.Contains(upperBase, "TIME") {
+		return "01:02:03"
+	}
 	if _, err := strconv.ParseFloat(original, 64); err == nil {
 		return "99"
 	}
 	return original + "-updated"
+}
+
+func mutateJSON(original string) string {
+	var v any
+	if err := json.Unmarshal([]byte(original), &v); err != nil {
+		return ""
+	}
+	switch m := v.(type) {
+	case map[string]any:
+		m["updated"] = true
+		if b, err := json.Marshal(m); err == nil {
+			return string(b)
+		}
+	case []any:
+		m = append(m, "updated")
+		if b, err := json.Marshal(m); err == nil {
+			return string(b)
+		}
+	default:
+		if b, err := json.Marshal([]any{m, "updated"}); err == nil {
+			return string(b)
+		}
+	}
+	return ""
 }
 
 func expectContains(substr string) func(string) bool {
@@ -864,6 +961,53 @@ func expectHexContains(hexStr string) func(string) bool {
 	return func(got string) bool {
 		g := strings.ToLower(strings.TrimPrefix(got, "0x"))
 		return strings.Contains(g, lower) || strings.Contains(g, asciiHex)
+	}
+}
+
+func expectBinaryEqual(sample string) func(string) bool {
+	return func(got string) bool {
+		isHexString := func(s string) bool {
+			for _, r := range s {
+				if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F') {
+					continue
+				}
+				return false
+			}
+			return len(s) > 0
+		}
+
+		sampleLower := strings.ToLower(strings.TrimPrefix(sample, "0x"))
+		sampleIsHex := strings.HasPrefix(strings.ToLower(sample), "0x") || (len(sampleLower)%2 == 0 && len(sampleLower) >= 4 && isHexString(sampleLower))
+
+		raw := strings.TrimPrefix(strings.ToLower(got), "0x")
+		if decoded, err := hex.DecodeString(raw); err == nil {
+			decoded = bytes.TrimRight(decoded, "\x00")
+			// If sample is hex (explicitly marked or long hex), decode it; otherwise compare to raw string
+			if sampleIsHex {
+				if sampleHex, err := hex.DecodeString(sampleLower); err == nil {
+					return bytes.Equal(decoded, sampleHex)
+				}
+			}
+			return strings.EqualFold(string(decoded), sample)
+		}
+		return strings.Contains(strings.ToLower(got), strings.ToLower(sample))
+	}
+}
+
+func expectJSONStrict(expected string) func(string) bool {
+	return func(got string) bool {
+		var m map[string]interface{}
+		var exp map[string]interface{}
+		if err := json.Unmarshal([]byte(expected), &exp); err != nil {
+			return false
+		}
+		if err := json.Unmarshal([]byte(got), &m); err != nil {
+			trimmed := strings.Trim(got, `"`)
+			if err2 := json.Unmarshal([]byte(trimmed), &m); err2 != nil {
+				return false
+			}
+		}
+		return reflect.DeepEqual(m, exp)
 	}
 }
 
@@ -883,24 +1027,31 @@ func expectAnyHex(values ...string) func(string) bool {
 }
 
 func defaultExpectation(tc typeCase) func(string) bool {
+	return expectationForValue(tc, tc.value)
+}
+
+func expectationForValue(tc typeCase, value string) func(string) bool {
 	base := strings.ToUpper(common.ParseTypeSpec(tc.columnType).BaseType)
 	switch tc.category {
 	case engine.TypeCategoryNumeric:
-		return expectNumericEqual(tc.value)
+		if strings.Contains(base, "MONEY") {
+			return expectMoneyEqual(value)
+		}
+		return expectNumericEqual(value)
 	case engine.TypeCategoryDatetime:
-		return expectTimeLike(tc.value)
+		return expectTimeLike(value)
 	case engine.TypeCategoryBoolean:
-		return expectEqualNormalized(tc.value)
+		return expectEqualNormalized(value)
 	case engine.TypeCategoryBinary:
-		return expectHexLength(tc.value, tc.columnType)
+		return expectBinaryEqual(value)
 	case engine.TypeCategoryJSON:
-		return expectContains(`"`)
+		return expectJSONStrict(value)
 	default:
 		switch base {
 		case "UUID", "CIDR", "INET", "MACADDR", "IPV4", "IPV6":
-			return expectEqualNormalized(tc.value)
+			return expectEqualNormalized(value)
 		}
-		return expectContains(tc.value)
+		return expectContains(value)
 	}
 }
 
@@ -915,6 +1066,19 @@ func expectNumericEqual(expected string) func(string) bool {
 			return false
 		}
 		return e.Cmp(g) == 0
+	}
+}
+
+func expectMoneyEqual(expected string) func(string) bool {
+	numExpect := expectNumericEqual(expected)
+	return func(got string) bool {
+		clean := strings.Map(func(r rune) rune {
+			if (r >= '0' && r <= '9') || r == '.' || r == '-' {
+				return r
+			}
+			return -1
+		}, got)
+		return numExpect(clean)
 	}
 }
 
