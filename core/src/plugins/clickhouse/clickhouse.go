@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"strconv"
 	"strings"
@@ -164,6 +165,10 @@ func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
 		strings.HasPrefix(typeName, "Tuple(") ||
 		strings.HasPrefix(typeName, "Map(") ||
 		strings.HasPrefix(typeName, "Nested(") ||
+		strings.HasPrefix(typeName, "Int128") ||
+		strings.HasPrefix(typeName, "Int256") ||
+		strings.HasPrefix(typeName, "UInt128") ||
+		strings.HasPrefix(typeName, "UInt256") ||
 		strings.HasPrefix(typeName, "Decimal") || // Decimal32, Decimal64, Decimal128, Decimal256
 		strings.HasPrefix(typeName, "FixedString") ||
 		strings.HasPrefix(typeName, "Enum") || // Enum8, Enum16
@@ -197,6 +202,11 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 
 		// Handle different ClickHouse types
 		switch v := actualValue.(type) {
+		case *big.Int:
+			if v == nil {
+				return "", nil
+			}
+			return v.String(), nil
 		case []string:
 			// Array of strings
 			return fmt.Sprintf("[%s]", strings.Join(v, ", ")), nil

@@ -20,7 +20,7 @@ describe('Graph Visualization', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {name: 'users'};
+        const testTable = db.testTable;
         const tableName = testTable.name;
 
         it('displays graph with expected topology', () => {

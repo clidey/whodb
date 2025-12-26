@@ -9,19 +9,30 @@
     "identifierColIndex": 1,
     "idField": "id",
     "firstId": "1",
+    "firstName": "john_doe",
     "testValues": {
       "original": "john_doe",
       "modified": "john_doe1",
       "rowIndex": 0
     },
-    "searchTerm": "john"
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
   },
   "connection": {
     "host": null,
     "port": null,
     "user": null,
     "password": null,
-    "database": "e2e_test.db"
+    "database": "e2e_test.db",
+    "advanced": {}
   },
   "schema": null,
   "whereOperators": {
@@ -215,10 +226,17 @@
     "updateUser": "UPDATE users SET username='john_doe1' WHERE id=1",
     "revertUser": "UPDATE users SET username='john_doe' WHERE id=1",
     "countUsers": "SELECT COUNT(*) as user_count FROM users;",
+    "countColumn": "user_count",
     "selectUsersFiltered": "SELECT username, email FROM users WHERE id > 1;",
     "invalidQuery": "SELECT * FROM users1;",
+    "permissionDeniedQuery": "CREATE TABLE users (id INT)",
+    "emptyResultQuery": "SELECT * FROM users WHERE id = -99999",
     "errorPatterns": {
       "tableNotFound": "no such table: users1"
     }
+  },
+  "mockData": {
+    "supportedTable": "users",
+    "unsupportedTable": "orders"
   }
 }

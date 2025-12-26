@@ -33,15 +33,15 @@ describe('Type Casting', () => {
             return;
         }
 
-        const testTable = db.testTable || {};
-        const typeCastingTable = testTable.typeCastingTable || 'test_casting';
+        const testTable = db.testTable;
+        const typeCastingTable = testTable.typeCastingTable;
         const tableConfig = getTableConfig(db, typeCastingTable);
         if (!tableConfig || !tableConfig.testData || !tableConfig.testData.newRow) {
             return;
         }
 
         const mutationDelay = db.mutationDelay || 0;
-        const columns = tableConfig.columns || {};
+        const columns = tableConfig.columns;
         const columnNames = Object.keys(columns);
         const bigintCol = columnNames.find(c => c.toLowerCase() === 'bigint_col') || 'bigint_col';
         const integerCol = columnNames.find(c => c.toLowerCase() === 'integer_col') || 'integer_col';

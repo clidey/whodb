@@ -20,9 +20,9 @@ describe('Table Search', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {name: 'users', searchTerm: 'john'};
+        const testTable = db.testTable;
         const tableName = testTable.name;
-        const searchTerm = testTable.searchTerm || 'john';
+        const searchTerm = testTable.searchTerm;
 
         it('highlights matching cells when searching', () => {
             cy.data(tableName);

@@ -3,23 +3,43 @@
   "category": "keyvalue",
   "testTable": {
     "name": "user:1",
+    "idField": "field",
     "identifierField": "username",
+    "firstName": "username",
+    "identifierColIndex": 1,
     "identifierRowIndex": 4,
     "testValues": {
       "original": "johndoe",
       "modified": "johndoe_updated",
       "rowIndex": 4
     },
-    "searchTerm": "user"
+    "searchTerm": "user",
+    "whereConditions": {
+      "testId1": "user:1",
+      "testId2": "user:2",
+      "testId3": "user:3",
+      "thirdColumn": "value",
+      "thirdValue": "",
+      "expectedValue": ""
+    },
+    "typeCastingTable": "test_casting"
+  },
+  "whereOperators": {
+    "equals": "="
   },
   "connection": {
     "host": "localhost",
     "port": 6379,
     "user": null,
     "password": "password",
-    "database": null
+    "database": null,
+    "advanced": {}
   },
   "schema": null,
+  "mockData": {
+    "supportedTable": "user:1",
+    "unsupportedTable": "orders"
+  },
   "features": {
     "graph": false,
     "export": true,

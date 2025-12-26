@@ -20,7 +20,7 @@ describe('Data Export', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {name: 'users'};
+        const testTable = db.testTable;
         const tableName = testTable.name;
 
         describe('Export All', () => {
@@ -187,7 +187,7 @@ describe('Data Export', () => {
 
     // Key/Value Databases (e.g., Redis)
     forEachDatabase('keyvalue', (db) => {
-        const tableName = db.testTable?.name || 'user:1';
+        const tableName = db.testTable.name;
 
         it('exports key data as NDJSON by default', () => {
             cy.data(tableName);

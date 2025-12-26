@@ -21,10 +21,10 @@ describe('Scratchpad', () => {
     // SQL Databases only
     forEachDatabase('sql', (db) => {
         describe('Query Execution', () => {
-            // Get expected column names from config or use defaults
-            const expectedIdentifierCol = db.testTable?.identifierField || 'username';
-            const expectedCountCol = db.sql?.countColumn || 'user_count';
-            const expectedUpdatedValue = db.sql?.scratchpadUpdatedValue || db.testTable?.testValues?.modified || 'john_doe1';
+            // Get expected column names from config
+            const expectedIdentifierCol = db.testTable.identifierField;
+            const expectedCountCol = db.sql.countColumn;
+            const expectedUpdatedValue = db.testTable.testValues.modified;
 
             it('executes SELECT query and shows results', () => {
                 cy.goto('scratchpad');
@@ -167,7 +167,7 @@ describe('Scratchpad', () => {
         });
 
         describe('Embedded Scratchpad Drawer', () => {
-            const testTable = db.testTable || {name: 'users'};
+            const testTable = db.testTable;
             const tableName = testTable.name;
 
             it('opens from data view and runs query', () => {
@@ -179,7 +179,7 @@ describe('Scratchpad', () => {
 
                 // Verify default query is populated
                 cy.get('[data-testid="code-editor"]').should('exist');
-                const schemaPrefix = db.sql?.schemaPrefix || '';
+                const schemaPrefix = db.sql.schemaPrefix;
                 cy.get('[data-testid="code-editor"]').should('contain', 'SELECT');
                 cy.get('[data-testid="code-editor"]').should('contain', `FROM ${schemaPrefix}${tableName}`);
 

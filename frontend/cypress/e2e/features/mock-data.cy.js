@@ -20,8 +20,8 @@ describe('Mock Data Generation', () => {
 
     // SQL Databases with mock data support
     forEachDatabase('sql', (db) => {
-        const supportedTable = db.mockData?.supportedTable || 'users';
-        const unsupportedTable = db.mockData?.unsupportedTable || 'orders';
+        const supportedTable = db.mockData.supportedTable;
+        const unsupportedTable = db.mockData.unsupportedTable;
 
         it('shows mock data generation UI', () => {
             cy.data(supportedTable);

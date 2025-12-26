@@ -20,8 +20,8 @@ describe('Sorting', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {};
-        const tableName = testTable.name || 'users';
+        const testTable = db.testTable;
+        const tableName = testTable.name;
 
         describe('Column Header Sorting', () => {
             it('sorts ascending on first click', () => {
@@ -143,7 +143,7 @@ describe('Sorting', () => {
 
     // Document Databases (MongoDB, Elasticsearch)
     forEachDatabase('document', (db) => {
-        const testTable = db.testTable || {};
+        const testTable = db.testTable;
         const tableName = testTable.name;
 
         if (!tableName) {
@@ -167,7 +167,7 @@ describe('Sorting', () => {
 
     // Key-Value Databases (Redis)
     forEachDatabase('keyvalue', (db) => {
-        const testTable = db.testTable || {};
+        const testTable = db.testTable;
         const keyName = testTable.name;
 
         if (!keyName) {

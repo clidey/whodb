@@ -22,7 +22,7 @@ describe('Data View', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {name: 'users'};
+        const testTable = db.testTable;
         const tableName = testTable.name;
 
         it('displays table data with correct columns', () => {
