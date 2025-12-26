@@ -80,6 +80,17 @@ func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
 
+func (p *ClickHousePlugin) ConvertStringValue(value, columnType string) (interface{}, error) {
+	normalized := strings.ToUpper(p.NormalizeType(columnType))
+	if strings.Contains(normalized, "JSON") {
+		if !json.Valid([]byte(value)) {
+			return nil, fmt.Errorf("invalid JSON format")
+		}
+		return value, nil
+	}
+	return p.GormPlugin.ConvertStringValue(value, columnType)
+}
+
 func (p *ClickHousePlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
 	// technically a table is considered a schema in clickhouse
 	return nil, errors.ErrUnsupported
@@ -161,32 +172,37 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 
 // ShouldHandleColumnType returns true for ClickHouse special types
 func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
+	upper := strings.ToUpper(typeName)
 	// Handle all ClickHouse array and special types
-	return strings.HasPrefix(typeName, "Array(") ||
-		strings.HasPrefix(typeName, "Tuple(") ||
-		strings.HasPrefix(typeName, "Map(") ||
-		strings.HasPrefix(typeName, "Nested(") ||
-		strings.HasPrefix(typeName, "Int128") ||
-		strings.HasPrefix(typeName, "Int256") ||
-		strings.HasPrefix(typeName, "UInt128") ||
-		strings.HasPrefix(typeName, "UInt256") ||
-		strings.HasPrefix(typeName, "Decimal") || // Decimal32, Decimal64, Decimal128, Decimal256
-		strings.HasPrefix(typeName, "FixedString") ||
-		strings.HasPrefix(typeName, "Enum") || // Enum8, Enum16
-		strings.Contains(typeName, "DateTime64") ||
-		typeName == "IPv4" ||
-		typeName == "IPv6" ||
-		typeName == "UUID" ||
-		typeName == "Date32" ||
-		typeName == "JSON" ||
-		typeName == "Point" ||
-		typeName == "Ring" ||
-		typeName == "Polygon" ||
-		typeName == "MultiPolygon"
+	return strings.HasPrefix(upper, "ARRAY(") ||
+		strings.HasPrefix(upper, "TUPLE(") ||
+		strings.HasPrefix(upper, "MAP(") ||
+		strings.HasPrefix(upper, "NESTED(") ||
+		strings.HasPrefix(upper, "INT128") ||
+		strings.HasPrefix(upper, "INT256") ||
+		strings.HasPrefix(upper, "UINT128") ||
+		strings.HasPrefix(upper, "UINT256") ||
+		strings.HasPrefix(upper, "DECIMAL") || // Decimal32, Decimal64, Decimal128, Decimal256
+		strings.HasPrefix(upper, "FIXEDSTRING") ||
+		strings.HasPrefix(upper, "ENUM") || // Enum8, Enum16
+		strings.Contains(upper, "DATETIME64") ||
+		upper == "IPV4" ||
+		upper == "IPV6" ||
+		upper == "UUID" ||
+		upper == "DATE32" ||
+		upper == "JSON" ||
+		upper == "POINT" ||
+		upper == "RING" ||
+		upper == "POLYGON" ||
+		upper == "MULTIPOLYGON"
 }
 
 // GetColumnScanner returns appropriate scanner for ClickHouse column types
 func (p *ClickHousePlugin) GetColumnScanner(typeName string) interface{} {
+	upper := strings.ToUpper(typeName)
+	if strings.HasPrefix(upper, "INT128") || strings.HasPrefix(upper, "INT256") || strings.HasPrefix(upper, "UINT128") || strings.HasPrefix(upper, "UINT256") {
+		return new(big.Int)
+	}
 	// For special ClickHouse types, use interface{} to handle any type
 	var value interface{}
 	return &value
@@ -200,6 +216,8 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 		if actualValue == nil {
 			return "", nil
 		}
+
+		upperType := strings.ToUpper(typeName)
 
 		// Handle different ClickHouse types
 		switch v := actualValue.(type) {
@@ -237,12 +255,12 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 			return v.String(), nil
 		case time.Time:
 			// DateTime, DateTime64, Date, Date32
-			if strings.Contains(typeName, "Date") && !strings.Contains(typeName, "DateTime") {
+			if strings.Contains(upperType, "DATE") && !strings.Contains(upperType, "DATETIME") {
 				// Date types - show only date part
 				return v.Format("2006-01-02"), nil
 			}
 			// DateTime types - show full timestamp
-			if strings.Contains(typeName, "DateTime64") {
+			if strings.Contains(upperType, "DATETIME64") {
 				// High precision datetime
 				return v.Format("2006-01-02 15:04:05.999999999"), nil
 			}
@@ -252,15 +270,25 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 			return v.String(), nil
 		case []byte:
 			// FixedString or binary data
-			if strings.HasPrefix(typeName, "FixedString") {
+			if strings.HasPrefix(upperType, "FIXEDSTRING") {
 				// Trim null bytes for FixedString
 				trimmed := strings.TrimRight(string(v), "\x00")
 				return trimmed, nil
 			}
 			// Other binary data
 			return fmt.Sprintf("0x%x", v), nil
+		case string:
+			if strings.HasPrefix(upperType, "FIXEDSTRING") {
+				return strings.TrimRight(v, "\x00"), nil
+			}
+			return v, nil
 		default:
-			// For other types, use default formatting
+			if stringer, ok := actualValue.(fmt.Stringer); ok {
+				return stringer.String(), nil
+			}
+			if marshaled, err := json.Marshal(actualValue); err == nil && json.Valid(marshaled) {
+				return string(marshaled), nil
+			}
 			return fmt.Sprintf("%v", actualValue), nil
 		}
 	}

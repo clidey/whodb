@@ -893,8 +893,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             rows.forEach((row, rowIdx) => {
                 row.forEach((cellValue, colIdx) => {
                     if (cellValue !== undefined && cellValue !== null) {
-                        // Trim trailing null characters for comparison (e.g., ClickHouse FixedString)
-                        const searchValue = String(cellValue).replace(/\0+$/, '');
+                        const searchValue = String(cellValue);
                         if (searchValue.toLowerCase().includes(search.toLowerCase())) {
                             matches.push({ rowIdx, colIdx });
                         }
@@ -999,28 +998,24 @@ export const StorageUnitTable: FC<TableProps> = ({
                             <EllipsisVerticalIcon className="w-4 h-4" />
                         </Button>
                     </TableCell>
-                    {paginatedRows[index]?.map((cell, cellIdx) => {
-                        // Trim trailing null characters (e.g., from ClickHouse FixedString)
-                        const displayValue = typeof cell === 'string' ? cell.replace(/\0+$/, '') : cell;
-                        return (
-                            <TableCell
-                                key={cellIdx}
-                                role="gridcell"
-                                className="cursor-pointer"
-                                title={t('cellInteractionHint')}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setFocusedRowIndex(index);
-                                    handleCellClick(index, cellIdx);
-                                }}
-                                onDoubleClick={() => handleCellDoubleClick(index)}
-                                onContextMenu={() => setContextMenuCellIdx(cellIdx)}
-                                data-col-idx={cellIdx}
-                            >
-                                {displayValue}
-                            </TableCell>
-                        );
-                    })}
+                    {paginatedRows[index]?.map((cell, cellIdx) => (
+                        <TableCell
+                            key={cellIdx}
+                            role="gridcell"
+                            className="cursor-pointer"
+                            title={t('cellInteractionHint')}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFocusedRowIndex(index);
+                                handleCellClick(index, cellIdx);
+                            }}
+                            onDoubleClick={() => handleCellDoubleClick(index)}
+                            onContextMenu={() => setContextMenuCellIdx(cellIdx)}
+                            data-col-idx={cellIdx}
+                        >
+                            {cell}
+                        </TableCell>
+                    ))}
                 </TableRow>
             </ContextMenuTrigger>
             <ContextMenuContent
@@ -1033,7 +1028,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
                             if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                const copyValue = typeof cell === 'string' ? cell.replace(/\0+$/, '') : String(cell);
+                                const copyValue = String(cell);
                                 navigator.clipboard.writeText(copyValue);
                                 toast.success(t('copiedCellToClipboard'));
                             }
