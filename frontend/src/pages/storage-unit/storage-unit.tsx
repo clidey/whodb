@@ -225,7 +225,7 @@ export const StorageUnitPage: FC = () => {
 
     // Databases like MySQL, MariaDB, ClickHouse, MongoDB use database name as schema parameter since they treat database=schema
     if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type)) {
-        schema = current?.Database ?? ''
+        schema = current?.Database ?? '';
     }
 
     const { loading, data, refetch } = useGetStorageUnitsQuery({
