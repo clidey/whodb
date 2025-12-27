@@ -40,6 +40,10 @@
     "supportedTable": "user:1",
     "unsupportedTable": "orders"
   },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": false
+  },
   "features": {
     "graph": false,
     "export": true,

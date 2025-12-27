@@ -36,6 +36,10 @@
     "supportedTable": "users",
     "unsupportedTable": "orders"
   },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": false
+  },
   "features": {
     "graph": true,
     "export": true,

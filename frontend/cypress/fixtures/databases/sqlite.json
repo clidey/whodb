@@ -43,6 +43,10 @@
     "greaterOrEqual": ">=",
     "lessOrEqual": "<="
   },
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": false
+  },
   "features": {
     "graph": true,
     "export": true,

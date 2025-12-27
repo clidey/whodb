@@ -37,6 +37,10 @@
     "unsupportedTable": "orders"
   },
   "indexRefreshDelay": 2500,
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": false
+  },
   "features": {
     "graph": false,
     "export": true,

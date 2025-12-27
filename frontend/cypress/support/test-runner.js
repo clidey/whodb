@@ -170,15 +170,18 @@ export function loginToDatabase(dbConfig, options = {}) {
             advanced
         );
 
-        // Select schema if applicable
-        if (dbConfig.schema) {
+        // Select schema if applicable (only for databases with schema dropdown)
+        // Databases like MySQL/MariaDB use database=schema, so they don't have a separate schema selector
+        if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
             cy.selectSchema(dbConfig.schema);
         }
     }, {
         validate() {
             // Quick validation that session is still valid
+            // Use sidebar-profile since it exists for ALL database types
+            // (some databases like SQLite/Elasticsearch have neither database nor schema dropdowns)
             cy.visit('/storage-unit', { failOnStatusCode: false });
-            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 5000 })
+            cy.get('[data-testid="sidebar-profile"]', { timeout: 5000 })
                 .should('exist');
         },
         cacheAcrossSpecs: true // Share session across spec files for same database
