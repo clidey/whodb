@@ -68,3 +68,11 @@ type TablesLoadedMsg struct {
 	Schemas []string
 	Err     error
 }
+
+// AutocompleteDebounceMsg is sent after a debounce delay to trigger autocomplete.
+// The SeqID is compared to the current sequence to determine if the message is stale.
+type AutocompleteDebounceMsg struct {
+	SeqID int
+	Text  string
+	Pos   int
+}

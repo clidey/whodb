@@ -1038,3 +1038,123 @@ func TestEditorView_RetryPrompt_View(t *testing.T) {
 		t.Error("Expected 'no limit' option in view")
 	}
 }
+
+func TestEditorView_AcceptSuggestion_CursorPositionSync(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	// Setup: "SELECT us" with cursor at position 9 (after "us")
+	v.textarea.SetValue("SELECT us")
+	v.cursorPos = 9
+	v.lastText = "SELECT us"
+	v.showSuggestions = true
+	v.filteredSuggestions = []suggestion{
+		{label: "users", apply: "users"},
+	}
+	v.selectedSuggestion = 0
+
+	v.acceptSuggestion()
+
+	// After accepting "users", cursor should be at position 12 (SELECT users)
+	// startPos = 9 - 2 (length of "us") = 7
+	// newCursorPos = 7 + 5 (length of "users") = 12
+	expectedPos := 12
+	if v.cursorPos != expectedPos {
+		t.Errorf("Expected cursorPos %d after accepting suggestion, got %d", expectedPos, v.cursorPos)
+	}
+
+	// lastText should be synced
+	expectedText := "SELECT users"
+	if v.lastText != expectedText {
+		t.Errorf("Expected lastText '%s', got '%s'", expectedText, v.lastText)
+	}
+}
+
+func TestEditorView_AcceptSuggestion_InsertAtCursor(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	// Setup: "SELECT " with cursor at position 7 (after space, no token to replace)
+	v.textarea.SetValue("SELECT ")
+	v.cursorPos = 7
+	v.lastText = "SELECT "
+	v.showSuggestions = true
+	v.filteredSuggestions = []suggestion{
+		{label: "COUNT", apply: "COUNT"},
+	}
+	v.selectedSuggestion = 0
+
+	v.acceptSuggestion()
+
+	// Should insert "COUNT" at position 7
+	expectedText := "SELECT COUNT"
+	if v.textarea.Value() != expectedText {
+		t.Errorf("Expected text '%s', got '%s'", expectedText, v.textarea.Value())
+	}
+
+	// Cursor should be at position 12 (7 + 5)
+	expectedPos := 12
+	if v.cursorPos != expectedPos {
+		t.Errorf("Expected cursorPos %d, got %d", expectedPos, v.cursorPos)
+	}
+}
+
+func TestEditorView_DebounceSequenceID_Increments(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	initialSeqID := v.autocompleteSeqID
+
+	// Simulate typing by calling Update with key messages
+	// Each update should increment the sequence ID
+	v.textarea.SetValue("S")
+	v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}})
+
+	if v.autocompleteSeqID <= initialSeqID {
+		t.Error("Expected sequence ID to increment after keystroke")
+	}
+
+	seqAfterFirst := v.autocompleteSeqID
+
+	v.textarea.SetValue("SE")
+	v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'E'}})
+
+	if v.autocompleteSeqID <= seqAfterFirst {
+		t.Error("Expected sequence ID to increment after second keystroke")
+	}
+}
+
+func TestEditorView_DebounceMsg_StaleIgnored(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	// Set a specific sequence ID
+	v.autocompleteSeqID = 10
+
+	// Process a stale debounce message (seqID doesn't match)
+	staleMsg := AutocompleteDebounceMsg{SeqID: 5, Text: "SELECT", Pos: 6}
+	v.Update(staleMsg)
+
+	// Since the message was stale, autocomplete should not be triggered
+	// The suggestions should remain empty (initial state)
+	if v.showSuggestions {
+		t.Error("Expected stale debounce message to be ignored")
+	}
+}
+
+func TestEditorView_DebounceMsg_CurrentProcessed(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	// Set a specific sequence ID
+	v.autocompleteSeqID = 10
+
+	// Process a current debounce message (seqID matches)
+	// Note: This won't show suggestions unless there's context
+	// but it should process without panic
+	currentMsg := AutocompleteDebounceMsg{SeqID: 10, Text: "SELECT F", Pos: 8}
+	v.Update(currentMsg)
+
+	// Should process without error - the autocomplete logic will run
+	// We just verify it doesn't panic and returns the view
+}
