@@ -49,7 +49,7 @@ import {
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
@@ -122,6 +122,7 @@ export const Sidebar: FC = () => {
     const navigate = useNavigate();
     const [showLoginCard, setShowLoginCard] = useState(false);
     const { toggleSidebar, open } = useSidebar();
+    const isInitialMount = useRef(true);
 
     // Profile select logic
     const profileOptions = useMemo(() => profiles.map(profile => ({
@@ -290,6 +291,10 @@ export const Sidebar: FC = () => {
     // Refetch databases and schemas when the current profile changes
     // This ensures queries use the correct auth context after profile switch
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
         if (!current) return;
         if (databaseSupportsDatabaseSwitching(current.Type)) {
             getDatabases();
