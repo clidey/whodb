@@ -427,7 +427,12 @@ export const Sidebar: FC = () => {
                                 {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
-                                            <Link to={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
+                                            <Link
+                                                to={InternalRoutes.ContactUs.path}
+                                                className={classNames("flex items-center gap-2", {
+                                                    "font-bold": pathname === InternalRoutes.ContactUs.path,
+                                                })}
+                                            >
                                                 <QuestionMarkCircleIcon className="w-4 h-4" />
                                                 {open && <span>{t('contactUs')}</span>}
                                             </Link>
@@ -437,7 +442,12 @@ export const Sidebar: FC = () => {
                                 {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
-                                            <Link to={InternalRoutes.Settings.path} className="flex items-center gap-2">
+                                            <Link
+                                                to={InternalRoutes.Settings.path}
+                                                className={classNames("flex items-center gap-2", {
+                                                    "font-bold": pathname === InternalRoutes.Settings.path,
+                                                })}
+                                            >
                                                 <CogIcon className="w-4 h-4" />
                                                 {open && <span>{t('settings')}</span>}
                                             </Link>
