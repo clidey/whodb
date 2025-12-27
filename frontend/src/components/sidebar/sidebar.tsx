@@ -96,6 +96,7 @@ function getProfileIcon(profile: LocalLoginProfile) {
 export const Sidebar: FC = () => {
     const { t } = useTranslation('components/sidebar');
     const schema = useAppSelector(state => state.database.schema);
+    const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
@@ -104,16 +105,12 @@ export const Sidebar: FC = () => {
         variables: {
             type: current?.Type as DatabaseType,
         },
-        skip: current == null || databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type),
+        skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
             if (current == null) return;
             if (schema === "") {
-                if (([DatabaseType.MySql, DatabaseType.MariaDb].includes(current.Type as DatabaseType)) && data.Schema.includes(current.Database)) {
-                    dispatch(DatabaseActions.setSchema(current.Database));
-                    return;
-                }
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
             }
         },
@@ -278,6 +275,16 @@ export const Sidebar: FC = () => {
 
     const loading = availableDatabasesLoading || availableSchemasLoading;
 
+    // Compute the label for the database dropdown based on the database type and user terminology preference
+    const databaseDropdownLabel = useMemo(() => {
+        // For databases where database=schema (MySQL, MariaDB, ClickHouse, MongoDB, Redis), allow user to choose terminology
+        if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type)) {
+            return databaseSchemaTerminology === 'schema' ? t('schema') : t('database');
+        }
+        // For all other databases, use "Database"
+        return t('database');
+    }, [current?.Type, databaseSchemaTerminology, t]);
+
     useEffect(() => {
         if (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open) {
             toggleSidebar();
@@ -368,14 +375,14 @@ export const Sidebar: FC = () => {
                                     "opacity-0 pointer-events-none": !open,
                                     "hidden": !databaseSupportsDatabaseSwitching(current?.Type),
                                 })}>
-                                    <h2 className="text-sm">{t('database')}</h2>
+                                    <h2 className="text-sm">{databaseDropdownLabel}</h2>
                                     <SearchSelect
-                                        label={t('database')}
+                                        label={databaseDropdownLabel}
                                         options={databaseOptions}
                                         value={current?.Database}
                                         onChange={handleDatabaseChange}
-                                        placeholder={t('selectDatabase')}
-                                        searchPlaceholder={t('searchDatabase')}
+                                        placeholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('selectSchema') : t('selectDatabase')}
+                                        searchPlaceholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('searchSchema') : t('searchDatabase')}
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-database",

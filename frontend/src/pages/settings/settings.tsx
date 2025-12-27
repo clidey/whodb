@@ -47,6 +47,7 @@ export const SettingsPage: FC = () => {
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
     const language = useAppSelector(state => state.settings.language);
+    const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
@@ -98,6 +99,10 @@ export const SettingsPage: FC = () => {
 
     const handleLanguageChange = useCallback((lang: 'en' | 'es') => {
         dispatch(SettingsActions.setLanguage(lang));
+    }, [dispatch]);
+
+    const handleDatabaseSchemaTerminologyChange = useCallback((terminology: 'database' | 'schema') => {
+        dispatch(SettingsActions.setDatabaseSchemaTerminology(terminology));
     }, [dispatch]);
 
     return (
@@ -249,6 +254,18 @@ export const SettingsPage: FC = () => {
                                     />
                                 )}
                             </div>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>{t('databaseSchemaTerminology')}</Label>
+                            <Select value={databaseSchemaTerminology} onValueChange={handleDatabaseSchemaTerminologyChange}>
+                                <SelectTrigger id="database-schema-terminology" className="w-[135px]">
+                                    <SelectValue placeholder={t('selectDatabaseSchemaTerminology')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="database" data-value="database">{t('databaseSchemaTerminologyDatabase')}</SelectItem>
+                                    <SelectItem value="schema" data-value="schema">{t('databaseSchemaTerminologySchema')}</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         {isEEMode && (
                             <div className="flex justify-between">
