@@ -47,13 +47,12 @@ type ResultsView struct {
 	editingPageSize bool
 	pageSizeInput   textinput.Model
 	returnTo        ViewMode // Which view to return to on esc
+	loading         bool
+	goToBottom      bool // Flag to set cursor at bottom after loading
 }
 
 // Available page sizes for cycling
 var pageSizes = []int{10, 25, 50, 100}
-
-// Message to trigger re-render after page load
-type pageLoadedMsg struct{}
 
 func NewResultsView(parent *MainModel) *ResultsView {
 	columns := []table.Column{}
@@ -118,8 +117,25 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 		}
 		return v, nil
 
-	case pageLoadedMsg:
-		// Page loaded, trigger re-render
+	case PageLoadedMsg:
+		v.loading = false
+		if msg.Err != nil {
+			v.parent.err = msg.Err
+			v.whereCondition = nil
+			return v, nil
+		}
+		if msg.Results != nil {
+			v.results = msg.Results
+			v.totalRows = int(msg.Results.TotalCount)
+			v.updateTable()
+			// If goToBottom flag is set, move cursor to bottom
+			if v.goToBottom {
+				if pageRows := v.currentPageRows(); len(pageRows) > 0 {
+					v.table.SetCursor(len(pageRows) - 1)
+				}
+				v.goToBottom = false
+			}
+		}
 		return v, nil
 
 	case tea.KeyMsg:
@@ -599,49 +615,52 @@ func (v *ResultsView) updateTable() {
 }
 
 func (v *ResultsView) loadPage() tea.Cmd {
+	// Only reload if we're viewing a table (not query results)
+	if !v.isTableData() {
+		// For query results, just update the table locally (pagination is client-side)
+		v.updateTable()
+		return nil
+	}
+
+	v.loading = true
+
+	// Capture values for closure
+	schema := v.schema
+	tableName := v.tableName
+	where := v.whereCondition
+	pageSize := v.pageSize
+	offset := v.currentPage * v.pageSize
+
 	return func() tea.Msg {
-		// Only reload if we're viewing a table (not query results)
-		if v.isTableData() {
-			results, err := v.parent.dbManager.GetRows(v.schema, v.tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
-			if err != nil {
-				v.parent.err = err
-				v.whereCondition = nil
-				return pageLoadedMsg{}
-			}
-			v.results = results
-			v.totalRows = int(results.TotalCount)
-			v.updateTable()
-		} else if v.results != nil {
-			v.updateTable()
-		}
-		return pageLoadedMsg{}
+		results, err := v.parent.dbManager.GetRows(schema, tableName, where, pageSize, offset)
+		return PageLoadedMsg{Results: results, Err: err}
 	}
 }
 
 func (v *ResultsView) loadPageAndGoToBottom() tea.Cmd {
-	return func() tea.Msg {
-		// Only reload if we're viewing a table (not query results)
-		if v.isTableData() {
-			results, err := v.parent.dbManager.GetRows(v.schema, v.tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
-			if err != nil {
-				v.parent.err = err
-				v.whereCondition = nil
-				return pageLoadedMsg{}
-			}
-			v.results = results
-			v.totalRows = int(results.TotalCount)
-			v.updateTable()
-			// Set cursor to bottom of the new page
-			if pageRows := v.currentPageRows(); len(pageRows) > 0 {
-				v.table.SetCursor(len(pageRows) - 1)
-			}
-		} else if v.results != nil {
-			v.updateTable()
-			if pageRows := v.currentPageRows(); len(pageRows) > 0 {
-				v.table.SetCursor(len(pageRows) - 1)
-			}
+	// Only reload if we're viewing a table (not query results)
+	if !v.isTableData() {
+		// For query results, just update the table locally and set cursor to bottom
+		v.updateTable()
+		if pageRows := v.currentPageRows(); len(pageRows) > 0 {
+			v.table.SetCursor(len(pageRows) - 1)
 		}
-		return pageLoadedMsg{}
+		return nil
+	}
+
+	v.loading = true
+	v.goToBottom = true // Flag to set cursor at bottom when results arrive
+
+	// Capture values for closure
+	schema := v.schema
+	tableName := v.tableName
+	where := v.whereCondition
+	pageSize := v.pageSize
+	offset := v.currentPage * v.pageSize
+
+	return func() tea.Msg {
+		results, err := v.parent.dbManager.GetRows(schema, tableName, where, pageSize, offset)
+		return PageLoadedMsg{Results: results, Err: err}
 	}
 }
 

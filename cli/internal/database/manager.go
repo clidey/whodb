@@ -17,6 +17,7 @@
 package database
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -179,6 +180,153 @@ func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereConditio
 
 	pluginConfig := engine.NewPluginConfig(credentials)
 	return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+}
+
+// ExecuteQueryWithContext executes a query with context support for cancellation and timeout.
+// If the context is cancelled or times out, the function returns immediately with ctx.Err().
+// Note: The underlying database operation may continue running; only the wait is cancelled.
+func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Use channels to receive result from goroutine
+	type result struct {
+		data *engine.GetRowsResult
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.RawExecute(pluginConfig, query)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetRowsWithContext fetches rows with context support for cancellation and timeout.
+// If the context is cancelled or times out, the function returns immediately with ctx.Err().
+// Note: The underlying database operation may continue running; only the wait is cancelled.
+func (m *Manager) GetRowsWithContext(ctx context.Context, schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Use channels to receive result from goroutine
+	type result struct {
+		data *engine.GetRowsResult
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetSchemasWithContext fetches schemas with context support for cancellation and timeout.
+func (m *Manager) GetSchemasWithContext(ctx context.Context) ([]string, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	type result struct {
+		data []string
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.GetAllSchemas(pluginConfig)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetStorageUnitsWithContext fetches storage units with context support for cancellation and timeout.
+func (m *Manager) GetStorageUnitsWithContext(ctx context.Context, schema string) ([]engine.StorageUnit, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	type result struct {
+		data []engine.StorageUnit
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.GetStorageUnits(pluginConfig, schema)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetConfig returns the manager's configuration
+func (m *Manager) GetConfig() *config.Config {
+	return m.config
 }
 
 func (m *Manager) GetColumns(schema, storageUnit string) ([]engine.Column, error) {
@@ -521,6 +669,27 @@ func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, er
 	return llm.Instance(config).GetSupportedModels()
 }
 
+// GetAIModelsWithContext fetches AI models with context support for timeout/cancellation
+func (m *Manager) GetAIModelsWithContext(ctx context.Context, providerID, modelType, token string) ([]string, error) {
+	type result struct {
+		models []string
+		err    error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		models, err := m.GetAIModels(providerID, modelType, token)
+		resultCh <- result{models: models, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.models, res.err
+	}
+}
+
 type ChatMessage struct {
 	Type   string
 	Result *engine.GetRowsResult
@@ -576,4 +745,25 @@ func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previo
 	}
 
 	return chatMessages, nil
+}
+
+// SendAIChatWithContext sends AI chat with context support for timeout/cancellation
+func (m *Manager) SendAIChatWithContext(ctx context.Context, providerID, modelType, token, schema, model, previousConversation, query string) ([]*ChatMessage, error) {
+	type result struct {
+		messages []*ChatMessage
+		err      error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		messages, err := m.SendAIChat(providerID, modelType, token, schema, model, previousConversation, query)
+		resultCh <- result{messages: messages, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.messages, res.err
+	}
 }

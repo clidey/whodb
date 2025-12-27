@@ -17,6 +17,8 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -55,6 +57,8 @@ type HistoryView struct {
 	parent          *MainModel
 	list            list.Model
 	confirmingClear bool
+	executing       bool
+	queryCancel     context.CancelFunc
 }
 
 func NewHistoryView(parent *MainModel) *HistoryView {
@@ -71,6 +75,25 @@ func NewHistoryView(parent *MainModel) *HistoryView {
 
 func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case HistoryQueryMsg:
+		v.executing = false
+		v.queryCancel = nil
+		if msg.Err != nil {
+			// Check for timeout/cancel
+			if errors.Is(msg.Err, context.DeadlineExceeded) {
+				v.parent.err = fmt.Errorf("query timed out")
+			} else if errors.Is(msg.Err, context.Canceled) {
+				// User cancelled, don't show error
+				return v, nil
+			} else {
+				v.parent.err = msg.Err
+			}
+			return v, nil
+		}
+		v.parent.resultsView.SetResults(msg.Result, msg.Query)
+		v.parent.mode = ViewResults
+		return v, nil
+
 	case tea.WindowSizeMsg:
 		v.list.SetSize(msg.Width-4, msg.Height-15)
 		return v, nil
@@ -95,16 +118,23 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			}
 
 		case "r":
+			if v.executing {
+				return v, nil // Already executing
+			}
 			if item, ok := v.list.SelectedItem().(historyItem); ok {
-				result, err := v.parent.dbManager.ExecuteQuery(item.entry.Query)
-				if err != nil {
-					v.parent.err = err
-					return v, nil
-				}
+				v.executing = true
+				query := item.entry.Query
 
-				v.parent.resultsView.SetResults(result, item.entry.Query)
-				v.parent.mode = ViewResults
-				return v, nil
+				// Get timeout from config
+				timeout := v.parent.config.GetQueryTimeout()
+				ctx, cancel := context.WithTimeout(context.Background(), timeout)
+				v.queryCancel = cancel
+
+				return v, func() tea.Msg {
+					defer cancel()
+					result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+					return HistoryQueryMsg{Result: result, Query: query, Err: err}
+				}
 			}
 
 		case "D":
@@ -131,6 +161,11 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			}
 
 		case "esc":
+			// Cancel executing query first
+			if v.executing && v.queryCancel != nil {
+				v.queryCancel()
+				return v, nil
+			}
 			// Cancel confirmation or go back
 			if v.confirmingClear {
 				v.confirmingClear = false
@@ -151,6 +186,14 @@ func (v *HistoryView) View() string {
 
 	b.WriteString(styles.RenderTitle("Query History"))
 	b.WriteString("\n\n")
+
+	// Show executing state
+	if v.executing {
+		b.WriteString(styles.MutedStyle.Render("Executing query..."))
+		b.WriteString("\n")
+		b.WriteString(styles.MutedStyle.Render("Press ESC to cancel"))
+		b.WriteString("\n\n")
+	}
 
 	// Show confirmation dialog if clearing
 	if v.confirmingClear {

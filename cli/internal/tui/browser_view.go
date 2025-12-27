@@ -17,6 +17,8 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -30,6 +32,7 @@ import (
 type tablesLoadedMsg struct {
 	tables  []engine.StorageUnit
 	schemas []string
+	schema  string // The selected schema
 	err     error
 }
 
@@ -83,6 +86,7 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		}
 		v.tables = msg.tables
 		v.schemas = msg.schemas
+		v.currentSchema = msg.schema
 		v.applyFilter()
 		v.selectedIndex = 0
 
@@ -407,21 +411,41 @@ func (v *BrowserView) renderTablesGrid() string {
 }
 
 func (v *BrowserView) loadTables() tea.Cmd {
+	// Capture values needed for closure
+	currentSchema := v.currentSchema
+	conn := v.parent.dbManager.GetCurrentConnection()
+
+	// Get timeout from config
+	timeout := v.parent.config.GetQueryTimeout()
+
 	return func() tea.Msg {
-		conn := v.parent.dbManager.GetCurrentConnection()
 		if conn == nil {
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: []string{},
+				schema:  "",
 				err:     fmt.Errorf("no connection"),
 			}
 		}
 
-		schemas, err := v.parent.dbManager.GetSchemas()
+		// Create context with timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		schemas, err := v.parent.dbManager.GetSchemasWithContext(ctx)
 		if err != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return tablesLoadedMsg{
+					tables:  []engine.StorageUnit{},
+					schemas: []string{},
+					schema:  currentSchema,
+					err:     fmt.Errorf("timed out fetching schemas"),
+				}
+			}
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: []string{},
+				schema:  currentSchema,
 				err:     fmt.Errorf("failed to get schemas: %w", err),
 			}
 		}
@@ -430,12 +454,13 @@ func (v *BrowserView) loadTables() tea.Cmd {
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: []string{},
+				schema:  "",
 				err:     nil,
 			}
 		}
 
 		// Use currentSchema if already set, otherwise check for preferred schema from connection
-		schema := v.currentSchema
+		schema := currentSchema
 		if schema == "" {
 			// Check if connection has a preferred schema
 			if conn.Schema != "" {
@@ -455,7 +480,6 @@ func (v *BrowserView) loadTables() tea.Cmd {
 			} else {
 				schema = selectBestSchema(schemas)
 			}
-			v.currentSchema = schema
 		}
 
 		// Validate that currentSchema exists in the list
@@ -468,14 +492,22 @@ func (v *BrowserView) loadTables() tea.Cmd {
 		}
 		if !schemaExists && len(schemas) > 0 {
 			schema = selectBestSchema(schemas)
-			v.currentSchema = schema
 		}
 
-		units, err := v.parent.dbManager.GetStorageUnits(schema)
+		units, err := v.parent.dbManager.GetStorageUnitsWithContext(ctx, schema)
 		if err != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return tablesLoadedMsg{
+					tables:  []engine.StorageUnit{},
+					schemas: schemas,
+					schema:  schema,
+					err:     fmt.Errorf("timed out fetching tables"),
+				}
+			}
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: schemas,
+				schema:  schema,
 				err:     fmt.Errorf("failed to get tables: %w", err),
 			}
 		}
@@ -483,6 +515,7 @@ func (v *BrowserView) loadTables() tea.Cmd {
 		return tablesLoadedMsg{
 			tables:  units,
 			schemas: schemas,
+			schema:  schema,
 			err:     nil,
 		}
 	}

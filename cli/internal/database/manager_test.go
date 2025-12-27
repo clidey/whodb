@@ -17,8 +17,10 @@
 package database
 
 import (
+	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
 )
@@ -390,5 +392,184 @@ func TestBuildCredentials(t *testing.T) {
 	}
 	if !hasPort {
 		t.Error("Expected Port in Advanced credentials")
+	}
+}
+
+// Tests for context-aware methods
+
+func TestExecuteQueryWithContext_NotConnected(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	ctx := context.Background()
+	_, err = mgr.ExecuteQueryWithContext(ctx, "SELECT 1")
+	if err == nil {
+		t.Error("Expected error when not connected")
+	}
+}
+
+func TestExecuteQueryWithContext_Cancelled(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	// Create an already cancelled context
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	_, err = mgr.ExecuteQueryWithContext(ctx, "SELECT 1")
+	// Should return error (either cancelled or not connected)
+	if err == nil {
+		t.Error("Expected error with cancelled context")
+	}
+}
+
+func TestGetRowsWithContext_NotConnected(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	ctx := context.Background()
+	_, err = mgr.GetRowsWithContext(ctx, "public", "users", nil, 50, 0)
+	if err == nil {
+		t.Error("Expected error when not connected")
+	}
+}
+
+func TestGetSchemasWithContext_NotConnected(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	ctx := context.Background()
+	_, err = mgr.GetSchemasWithContext(ctx)
+	if err == nil {
+		t.Error("Expected error when not connected")
+	}
+}
+
+func TestGetStorageUnitsWithContext_NotConnected(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	ctx := context.Background()
+	_, err = mgr.GetStorageUnitsWithContext(ctx, "public")
+	if err == nil {
+		t.Error("Expected error when not connected")
+	}
+}
+
+func TestGetAIModelsWithContext_NotConnected(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	ctx := context.Background()
+	_, err = mgr.GetAIModelsWithContext(ctx, "", "ollama", "")
+	if err == nil {
+		t.Error("Expected error when not connected")
+	}
+}
+
+func TestSendAIChatWithContext_NotConnected(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	ctx := context.Background()
+	_, err = mgr.SendAIChatWithContext(ctx, "", "ollama", "", "public", "llama2", "", "test query")
+	if err == nil {
+		t.Error("Expected error when not connected")
+	}
+}
+
+func TestGetConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	cfg := mgr.GetConfig()
+	if cfg == nil {
+		t.Error("GetConfig returned nil")
+	}
+
+	// Verify it returns the same config
+	if cfg != mgr.config {
+		t.Error("GetConfig did not return the manager's config")
+	}
+}
+
+func TestContextTimeout(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	// Create a context that times out immediately
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+	defer cancel()
+
+	// Give it a moment to actually timeout
+	time.Sleep(10 * time.Millisecond)
+
+	_, err = mgr.ExecuteQueryWithContext(ctx, "SELECT 1")
+	// Should return error (either deadline exceeded or not connected)
+	if err == nil {
+		t.Error("Expected error with timed out context")
 	}
 }

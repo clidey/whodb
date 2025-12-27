@@ -17,6 +17,7 @@
 package tui
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -738,15 +739,51 @@ func TestResultsView_PageLoadedMsg(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()
 
-	// Simulate page loaded message
-	msg := pageLoadedMsg{}
+	// Simulate page loaded message with results
+	msg := PageLoadedMsg{
+		Results: &engine.GetRowsResult{
+			Columns: []engine.Column{{Name: "id", Type: "int"}},
+			Rows:    [][]string{{"1"}, {"2"}},
+		},
+		Err: nil,
+	}
 	v, cmd := v.Update(msg)
 
 	if cmd != nil {
-		t.Error("Expected nil command from pageLoadedMsg")
+		t.Error("Expected nil command from PageLoadedMsg")
 	}
 
-	// Should just trigger re-render, no state changes
+	// Verify results were set
+	if v.results == nil {
+		t.Error("Expected results to be set")
+	}
+	if len(v.results.Rows) != 2 {
+		t.Errorf("Expected 2 rows, got %d", len(v.results.Rows))
+	}
+}
+
+func TestResultsView_PageLoadedMsgWithError(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	// Simulate page loaded message with error
+	msg := PageLoadedMsg{
+		Results: nil,
+		Err:     fmt.Errorf("load failed"),
+	}
+	v, cmd := v.Update(msg)
+
+	if cmd != nil {
+		t.Error("Expected nil command from PageLoadedMsg with error")
+	}
+
+	// Verify loading was reset and results are nil
+	if v.loading {
+		t.Error("Expected loading to be false after error")
+	}
+	if v.results != nil {
+		t.Error("Expected results to remain nil on error")
+	}
 }
 
 func TestResultsView_MaxInt(t *testing.T) {

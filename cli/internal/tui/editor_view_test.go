@@ -17,11 +17,14 @@
 package tui
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 func setupEditorViewTest(t *testing.T) (*EditorView, func()) {
@@ -768,5 +771,120 @@ func TestSuggestionType_Constants(t *testing.T) {
 		if typ == "" {
 			t.Error("Found empty suggestion type constant")
 		}
+	}
+}
+
+// Tests for query execution message handling
+
+func TestEditorView_QueryExecutedMsg_Success(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	// Set query state to running
+	v.queryState = OperationRunning
+
+	// Simulate successful query execution message
+	msg := QueryExecutedMsg{
+		Result: &engine.GetRowsResult{
+			Columns: []engine.Column{{Name: "id", Type: "int"}},
+			Rows:    [][]string{{"1"}, {"2"}},
+		},
+		Query: "SELECT * FROM users",
+		Err:   nil,
+	}
+	v, _ = v.Update(msg)
+
+	// Verify query state was reset
+	if v.queryState != OperationIdle {
+		t.Errorf("Expected queryState OperationIdle, got %v", v.queryState)
+	}
+
+	// Verify cancel function was cleared
+	if v.queryCancel != nil {
+		t.Error("Expected queryCancel to be nil after completion")
+	}
+}
+
+func TestEditorView_QueryExecutedMsg_Error(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	v.queryState = OperationRunning
+
+	// Simulate query execution with error
+	msg := QueryExecutedMsg{
+		Result: nil,
+		Query:  "SELECT * FROM nonexistent",
+		Err:    fmt.Errorf("table not found"),
+	}
+	v, _ = v.Update(msg)
+
+	// Verify query state was reset
+	if v.queryState != OperationIdle {
+		t.Errorf("Expected queryState OperationIdle, got %v", v.queryState)
+	}
+
+	// Verify error was captured in view's err field
+	if v.err == nil {
+		t.Error("Expected v.err to be set")
+	}
+}
+
+func TestEditorView_QueryTimeoutMsg(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	v.queryState = OperationRunning
+
+	// Simulate query timeout message
+	msg := QueryTimeoutMsg{
+		Query:   "SELECT * FROM slow_table",
+		Timeout: 30 * time.Second,
+	}
+	v, _ = v.Update(msg)
+
+	// Verify query state was reset
+	if v.queryState != OperationIdle {
+		t.Errorf("Expected queryState OperationIdle after timeout, got %v", v.queryState)
+	}
+
+	// Verify error was set in view's err field
+	if v.err == nil {
+		t.Error("Expected v.err to be set on timeout")
+	}
+}
+
+func TestEditorView_QueryCancelledMsg(t *testing.T) {
+	v, cleanup := setupEditorViewTest(t)
+	defer cleanup()
+
+	v.queryState = OperationRunning
+	v.err = nil // Ensure err is nil before test
+
+	// Simulate query cancelled message
+	msg := QueryCancelledMsg{
+		Query: "SELECT * FROM users",
+	}
+	v, _ = v.Update(msg)
+
+	// Verify query state was reset
+	if v.queryState != OperationIdle {
+		t.Errorf("Expected queryState OperationIdle after cancel, got %v", v.queryState)
+	}
+
+	// Cancellation doesn't set an error - the handler just resets state
+	// and returns, so v.err remains whatever it was before (nil in this case)
+}
+
+func TestEditorView_OperationState_Constants(t *testing.T) {
+	// Verify operation state constants
+	if OperationIdle != 0 {
+		t.Errorf("Expected OperationIdle = 0, got %d", OperationIdle)
+	}
+	if OperationRunning != 1 {
+		t.Errorf("Expected OperationRunning = 1, got %d", OperationRunning)
+	}
+	if OperationCancelling != 2 {
+		t.Errorf("Expected OperationCancelling = 2, got %d", OperationCancelling)
 	}
 }

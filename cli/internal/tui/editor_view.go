@@ -17,6 +17,8 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -80,6 +82,9 @@ type EditorView struct {
 	lastWidth           int
 	lastHeight          int
 	suggestionHeight    int
+	// Query execution state for timeout and cancellation support
+	queryState  OperationState
+	queryCancel context.CancelFunc
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -103,6 +108,42 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case QueryExecutedMsg:
+		v.queryState = OperationIdle
+		v.queryCancel = nil
+		if msg.Err != nil {
+			v.err = msg.Err
+			conn := v.parent.dbManager.GetCurrentConnection()
+			dbName := ""
+			if conn != nil {
+				dbName = conn.Database
+			}
+			v.parent.histMgr.Add(msg.Query, false, dbName)
+			return v, nil
+		}
+		conn := v.parent.dbManager.GetCurrentConnection()
+		dbName := ""
+		if conn != nil {
+			dbName = conn.Database
+		}
+		v.parent.histMgr.Add(msg.Query, true, dbName)
+		v.parent.resultsView.SetResults(msg.Result, msg.Query)
+		v.parent.mode = ViewResults
+		v.err = nil
+		return v, nil
+
+	case QueryTimeoutMsg:
+		v.queryState = OperationIdle
+		v.queryCancel = nil
+		v.err = fmt.Errorf("query timed out after %s", msg.Timeout)
+		return v, nil
+
+	case QueryCancelledMsg:
+		v.queryState = OperationIdle
+		v.queryCancel = nil
+		// Don't show error for user-initiated cancel
+		return v, nil
+
 	case tea.WindowSizeMsg:
 		v.applyWindowSize(msg.Width, msg.Height)
 		return v, nil
@@ -190,6 +231,11 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 
 		switch msg.Type {
 		case tea.KeyEsc:
+			// If a query is running, cancel it
+			if v.queryState == OperationRunning && v.queryCancel != nil {
+				v.queryCancel()
+				return v, nil
+			}
 			if v.showSuggestions {
 				v.showSuggestions = false
 				v.selectedSuggestion = 0
@@ -234,6 +280,14 @@ func (v *EditorView) View() string {
 	b.WriteString(styles.RenderTitle("SQL Editor"))
 	b.WriteString("\n\n")
 
+	// Show loading indicator when query is running
+	if v.queryState == OperationRunning {
+		b.WriteString(styles.MutedStyle.Render("Executing query..."))
+		b.WriteString("\n")
+		b.WriteString(styles.MutedStyle.Render("Press ESC to cancel"))
+		b.WriteString("\n\n")
+	}
+
 	b.WriteString(v.textarea.View())
 	b.WriteString("\n")
 
@@ -260,37 +314,44 @@ func (v *EditorView) View() string {
 }
 
 func (v *EditorView) executeQuery() tea.Cmd {
-	return func() tea.Msg {
-		query := v.textarea.Value()
-		if query == "" {
-			v.err = fmt.Errorf("query is empty")
-			return nil
+	query := v.textarea.Value()
+	if query == "" {
+		// Return error message immediately
+		return func() tea.Msg {
+			return QueryExecutedMsg{Err: fmt.Errorf("query is empty"), Query: ""}
 		}
+	}
 
-		result, err := v.parent.dbManager.ExecuteQuery(query)
-		if err != nil {
-			v.err = err
-			conn := v.parent.dbManager.GetCurrentConnection()
-			dbName := ""
-			if conn != nil {
-				dbName = conn.Database
-			}
-			v.parent.histMgr.Add(query, false, dbName)
-			return nil
-		}
-
-		conn := v.parent.dbManager.GetCurrentConnection()
-		dbName := ""
-		if conn != nil {
-			dbName = conn.Database
-		}
-		v.parent.histMgr.Add(query, true, dbName)
-
-		v.parent.resultsView.SetResults(result, query)
-		v.parent.mode = ViewResults
-		v.err = nil
-
+	// Prevent executing if already running
+	if v.queryState == OperationRunning {
 		return nil
+	}
+
+	// Set loading state
+	v.queryState = OperationRunning
+
+	// Get timeout from config
+	timeout := v.parent.config.GetQueryTimeout()
+
+	// Create context with timeout and cancellation
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.queryCancel = cancel
+
+	return func() tea.Msg {
+		defer cancel()
+
+		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return QueryTimeoutMsg{Query: query, Timeout: timeout}
+			}
+			if errors.Is(err, context.Canceled) {
+				return QueryCancelledMsg{Query: query}
+			}
+			return QueryExecutedMsg{Err: err, Query: query}
+		}
+
+		return QueryExecutedMsg{Result: result, Query: query}
 	}
 }
 
