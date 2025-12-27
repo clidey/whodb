@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textarea"
@@ -41,6 +42,7 @@ type chatMessage struct {
 
 type chatResponseMsg struct {
 	messages []*database.ChatMessage
+	query    string
 	err      error
 }
 
@@ -71,6 +73,9 @@ type ChatView struct {
 	// Cancellation support
 	chatCancel   context.CancelFunc
 	modelsCancel context.CancelFunc
+	// Retry prompt state for timed out requests
+	retryPrompt   bool
+	timedOutQuery string
 }
 
 const (
@@ -175,12 +180,14 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			if errors.Is(msg.err, context.Canceled) {
 				return v, nil
 			}
-			// Check for timeout
+			// Check for timeout - enable retry prompt
 			if errors.Is(msg.err, context.DeadlineExceeded) {
 				v.err = fmt.Errorf("request timed out")
-			} else {
-				v.err = msg.err
+				v.retryPrompt = true
+				v.timedOutQuery = msg.query
+				return v, nil
 			}
+			v.err = msg.err
 			v.messages = append(v.messages, chatMessage{
 				Role:    "system",
 				Content: fmt.Sprintf("Error: %s", v.err.Error()),
@@ -263,6 +270,34 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		return v, nil
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out requests
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 60*time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 2*time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 5*time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 24*time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				v.timedOutQuery = ""
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		switch msg.String() {
 		case "ctrl+r":
 			// Revoke consent
@@ -446,6 +481,25 @@ func (v *ChatView) View() string {
 			"[a]", "accept",
 			"esc", "cancel",
 		))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
+	// Show retry prompt for timed out requests
+	if v.retryPrompt {
+		b.WriteString(styles.ErrorStyle.Render("Request timed out"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
+		b.WriteString("\n")
+		b.WriteString(styles.KeyStyle.Render("[1]"))
+		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
+		b.WriteString(styles.KeyStyle.Render("[2]"))
+		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[3]"))
+		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[4]"))
+		b.WriteString(styles.MutedStyle.Render(" No limit"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp("esc", "cancel"))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -751,15 +805,19 @@ func (v *ChatView) loadModels() tea.Cmd {
 }
 
 func (v *ChatView) sendChat(query string) tea.Cmd {
+	return v.sendChatWithTimeout(query, v.parent.config.GetQueryTimeout())
+}
+
+func (v *ChatView) sendChatWithTimeout(query string, timeout time.Duration) tea.Cmd {
 	// Validate inputs before creating closure
 	if v.selectedProvider >= len(v.providers) {
 		return func() tea.Msg {
-			return chatResponseMsg{messages: nil, err: fmt.Errorf("invalid provider selected")}
+			return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("invalid provider selected")}
 		}
 	}
 	if len(v.models) == 0 || v.selectedModel >= len(v.models) {
 		return func() tea.Msg {
-			return chatResponseMsg{messages: nil, err: fmt.Errorf("please select a model first")}
+			return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("please select a model first")}
 		}
 	}
 
@@ -772,7 +830,6 @@ func (v *ChatView) sendChat(query string) tea.Cmd {
 
 	// Set sending state and create context
 	v.sending = true
-	timeout := v.parent.config.GetQueryTimeout()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	v.chatCancel = cancel
 
@@ -784,7 +841,7 @@ func (v *ChatView) sendChat(query string) tea.Cmd {
 		if currentSchema == "" {
 			schemas, err := v.parent.dbManager.GetSchemas()
 			if err != nil {
-				return chatResponseMsg{messages: nil, err: fmt.Errorf("failed to get schema: %w", err)}
+				return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("failed to get schema: %w", err)}
 			}
 			currentSchema = selectBestSchema(schemas)
 		}
@@ -816,10 +873,10 @@ func (v *ChatView) sendChat(query string) tea.Cmd {
 		)
 
 		if err != nil {
-			return chatResponseMsg{messages: nil, err: err}
+			return chatResponseMsg{messages: nil, query: query, err: err}
 		}
 
-		return chatResponseMsg{messages: result, err: nil}
+		return chatResponseMsg{messages: result, query: query, err: nil}
 	}
 }
 

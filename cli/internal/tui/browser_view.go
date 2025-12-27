@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -53,6 +54,8 @@ type BrowserView struct {
 	filterInput         textinput.Model
 	filtering           bool
 	filteredTables      []engine.StorageUnit
+	// Retry prompt state for timed out requests
+	retryPrompt bool
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -81,6 +84,12 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 	case tablesLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
+			// Check for timeout - enable retry prompt
+			if strings.Contains(msg.err.Error(), "timed out") {
+				v.err = msg.err
+				v.retryPrompt = true
+				return v, nil
+			}
 			v.err = msg.err
 			return v, nil
 		}
@@ -119,6 +128,37 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out requests
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(60 * time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(2 * time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(5 * time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(24 * time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		// If in filtering mode, handle filter input
 		if v.filtering {
 			switch msg.String() {
@@ -317,6 +357,25 @@ func (v *BrowserView) View() string {
 	}
 	b.WriteString("\n")
 
+	// Show retry prompt for timed out requests
+	if v.retryPrompt {
+		b.WriteString(styles.ErrorStyle.Render("Request timed out"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
+		b.WriteString("\n")
+		b.WriteString(styles.KeyStyle.Render("[1]"))
+		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
+		b.WriteString(styles.KeyStyle.Render("[2]"))
+		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[3]"))
+		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[4]"))
+		b.WriteString(styles.MutedStyle.Render(" No limit"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp("esc", "cancel"))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
@@ -411,12 +470,13 @@ func (v *BrowserView) renderTablesGrid() string {
 }
 
 func (v *BrowserView) loadTables() tea.Cmd {
+	return v.loadTablesWithTimeout(v.parent.config.GetQueryTimeout())
+}
+
+func (v *BrowserView) loadTablesWithTimeout(timeout time.Duration) tea.Cmd {
 	// Capture values needed for closure
 	currentSchema := v.currentSchema
 	conn := v.parent.dbManager.GetCurrentConnection()
-
-	// Get timeout from config
-	timeout := v.parent.config.GetQueryTimeout()
 
 	return func() tea.Msg {
 		if conn == nil {

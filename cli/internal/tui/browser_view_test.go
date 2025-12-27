@@ -525,3 +525,159 @@ func TestBrowserView_ApplyFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestBrowserView_RetryPrompt_EscCancels(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	// Set up retry prompt state
+	v.retryPrompt = true
+	v.err = nil
+
+	// Send ESC key
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	v, _ = v.Update(msg)
+
+	// Verify retry prompt was dismissed
+	if v.retryPrompt {
+		t.Error("Expected retryPrompt to be false after ESC")
+	}
+}
+
+func TestBrowserView_RetryPrompt_KeyHandling(t *testing.T) {
+	tests := []struct {
+		name string
+		key  string
+	}{
+		{"option_1", "1"},
+		{"option_2", "2"},
+		{"option_3", "3"},
+		{"option_4", "4"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, cleanup := setupBrowserViewTest(t)
+			defer cleanup()
+
+			// Set up retry prompt state
+			v.retryPrompt = true
+			v.err = nil
+
+			// Send number key
+			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			v, cmd := v.Update(msg)
+
+			// Verify retry prompt was dismissed
+			if v.retryPrompt {
+				t.Error("Expected retryPrompt to be false after selecting retry option")
+			}
+
+			// Verify error was cleared
+			if v.err != nil {
+				t.Error("Expected err to be nil after retry")
+			}
+
+			// Verify loading was set
+			if !v.loading {
+				t.Error("Expected loading to be true after retry")
+			}
+
+			// Verify a command was returned (the table load)
+			if cmd == nil {
+				t.Error("Expected a command to be returned for retry")
+			}
+		})
+	}
+}
+
+func TestBrowserView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	// Set up retry prompt state
+	v.retryPrompt = true
+
+	// Send an unrelated key (like 'a')
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
+	v, _ = v.Update(msg)
+
+	// Verify retry prompt is still active
+	if !v.retryPrompt {
+		t.Error("Expected retryPrompt to still be true after unrecognized key")
+	}
+}
+
+func TestBrowserView_RetryPrompt_View(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	// Set up retry prompt state with a mock connection
+	conn := &config.Connection{
+		Name:     "test",
+		Type:     "SQLite",
+		Host:     t.TempDir() + "/test.db",
+		Database: t.TempDir() + "/test.db",
+	}
+	if err := v.parent.dbManager.Connect(conn); err != nil {
+		t.Skipf("Skipping test - database plugin not available: %v", err)
+	}
+
+	v.retryPrompt = true
+
+	view := v.View()
+
+	// Verify retry prompt is shown
+	if !strings.Contains(view, "timed out") {
+		t.Error("Expected 'timed out' in view")
+	}
+	if !strings.Contains(view, "60 seconds") {
+		t.Error("Expected '60 seconds' option in view")
+	}
+	if !strings.Contains(view, "2 minutes") {
+		t.Error("Expected '2 minutes' option in view")
+	}
+	if !strings.Contains(view, "5 minutes") {
+		t.Error("Expected '5 minutes' option in view")
+	}
+	if !strings.Contains(view, "No limit") {
+		t.Error("Expected 'No limit' option in view")
+	}
+}
+
+func TestBrowserView_TablesLoadedMsg_Timeout_SetsRetryPrompt(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	v.loading = true
+
+	// Simulate a timeout error in tablesLoadedMsg
+	msg := tablesLoadedMsg{
+		tables:  []engine.StorageUnit{},
+		schemas: []string{},
+		schema:  "public",
+		err:     nil,
+	}
+
+	// First test normal success - no retry prompt
+	v, _ = v.Update(msg)
+	if v.retryPrompt {
+		t.Error("Expected retryPrompt to be false on success")
+	}
+
+	// Now test timeout error
+	v.loading = true
+	msg.err = &timeoutError{}
+	v, _ = v.Update(msg)
+
+	if !v.retryPrompt {
+		t.Error("Expected retryPrompt to be true after timeout")
+	}
+}
+
+// timeoutError implements error with "timed out" message for testing
+type timeoutError struct{}
+
+func (e *timeoutError) Error() string {
+	return "timed out fetching tables"
+}

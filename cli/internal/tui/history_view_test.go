@@ -382,3 +382,121 @@ func TestHistoryItem_FilterValue(t *testing.T) {
 		t.Errorf("Expected FilterValue to be query, got: %s", filterVal)
 	}
 }
+
+func TestHistoryView_RetryPrompt_EscCancels(t *testing.T) {
+	v, cleanup := setupHistoryViewTest(t)
+	defer cleanup()
+
+	// Set up retry prompt state
+	v.retryPrompt = true
+	v.timedOutQuery = "SELECT * FROM test"
+	v.parent.err = nil
+
+	// Send ESC key
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	v, _ = v.Update(msg)
+
+	// Verify retry prompt was dismissed
+	if v.retryPrompt {
+		t.Error("Expected retryPrompt to be false after ESC")
+	}
+
+	// Verify timed out query was cleared
+	if v.timedOutQuery != "" {
+		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.timedOutQuery)
+	}
+}
+
+func TestHistoryView_RetryPrompt_KeyHandling(t *testing.T) {
+	tests := []struct {
+		name string
+		key  string
+	}{
+		{"option_1", "1"},
+		{"option_2", "2"},
+		{"option_3", "3"},
+		{"option_4", "4"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, cleanup := setupHistoryViewTest(t)
+			defer cleanup()
+
+			// Set up retry prompt state
+			v.retryPrompt = true
+			v.timedOutQuery = "SELECT * FROM test"
+			v.parent.err = nil
+
+			// Send number key
+			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			v, cmd := v.Update(msg)
+
+			// Verify retry prompt was dismissed
+			if v.retryPrompt {
+				t.Error("Expected retryPrompt to be false after selecting retry option")
+			}
+
+			// Verify error was cleared
+			if v.parent.err != nil {
+				t.Error("Expected parent.err to be nil after retry")
+			}
+
+			// Verify a command was returned (the query execution)
+			if cmd == nil {
+				t.Error("Expected a command to be returned for retry")
+			}
+		})
+	}
+}
+
+func TestHistoryView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
+	v, cleanup := setupHistoryViewTest(t)
+	defer cleanup()
+
+	// Set up retry prompt state
+	v.retryPrompt = true
+	v.timedOutQuery = "SELECT * FROM test"
+
+	// Send an unrelated key (like 'a')
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
+	v, _ = v.Update(msg)
+
+	// Verify retry prompt is still active
+	if !v.retryPrompt {
+		t.Error("Expected retryPrompt to still be true after unrecognized key")
+	}
+
+	// Verify query wasn't cleared
+	if v.timedOutQuery == "" {
+		t.Error("Expected timedOutQuery to still be set")
+	}
+}
+
+func TestHistoryView_RetryPrompt_View(t *testing.T) {
+	v, cleanup := setupHistoryViewTest(t)
+	defer cleanup()
+
+	// Set up retry prompt state
+	v.retryPrompt = true
+	v.timedOutQuery = "SELECT * FROM test"
+
+	view := v.View()
+
+	// Verify retry prompt is shown
+	if !strings.Contains(view, "timed out") {
+		t.Error("Expected 'timed out' in view")
+	}
+	if !strings.Contains(view, "60 seconds") {
+		t.Error("Expected '60 seconds' option in view")
+	}
+	if !strings.Contains(view, "2 minutes") {
+		t.Error("Expected '2 minutes' option in view")
+	}
+	if !strings.Contains(view, "5 minutes") {
+		t.Error("Expected '5 minutes' option in view")
+	}
+	if !strings.Contains(view, "No limit") {
+		t.Error("Expected 'No limit' option in view")
+	}
+}

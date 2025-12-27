@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -85,6 +86,9 @@ type EditorView struct {
 	// Query execution state for timeout and cancellation support
 	queryState  OperationState
 	queryCancel context.CancelFunc
+	// Retry prompt state for timed out queries
+	retryPrompt   bool
+	timedOutQuery string
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -136,6 +140,9 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		v.queryState = OperationIdle
 		v.queryCancel = nil
 		v.err = fmt.Errorf("query timed out after %s", msg.Timeout)
+		// Enable retry prompt
+		v.retryPrompt = true
+		v.timedOutQuery = msg.Query
 		return v, nil
 
 	case QueryCancelledMsg:
@@ -164,6 +171,35 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out queries
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 60*time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 2*time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 5*time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.err = nil
+				// 0 duration means no timeout (use a very long duration)
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 24*time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				v.timedOutQuery = ""
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		// IMPORTANT: Check for execute query shortcut FIRST before passing to textarea
 		// Alt+Enter (Option+Enter on macOS) - works reliably across all platforms
 		if msg.Type == tea.KeyEnter && msg.Alt {
@@ -296,6 +332,21 @@ func (v *EditorView) View() string {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 	}
 
+	// Show retry prompt for timed out queries
+	if v.retryPrompt {
+		b.WriteString("\n\n")
+		b.WriteString(styles.KeyStyle.Render("Retry with longer timeout?"))
+		b.WriteString("\n")
+		b.WriteString(styles.RenderHelp(
+			"[1]", "60s",
+			"[2]", "2min",
+			"[3]", "5min",
+			"[4]", "no limit",
+			"esc", "cancel",
+		))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	b.WriteString("\n")
 	b.WriteString(v.renderSuggestionArea())
 
@@ -334,6 +385,44 @@ func (v *EditorView) executeQuery() tea.Cmd {
 	timeout := v.parent.config.GetQueryTimeout()
 
 	// Create context with timeout and cancellation
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.queryCancel = cancel
+
+	return func() tea.Msg {
+		defer cancel()
+
+		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return QueryTimeoutMsg{Query: query, Timeout: timeout}
+			}
+			if errors.Is(err, context.Canceled) {
+				return QueryCancelledMsg{Query: query}
+			}
+			return QueryExecutedMsg{Err: err, Query: query}
+		}
+
+		return QueryExecutedMsg{Result: result, Query: query}
+	}
+}
+
+// executeQueryWithTimeout runs a query with a custom timeout duration
+func (v *EditorView) executeQueryWithTimeout(query string, timeout time.Duration) tea.Cmd {
+	if query == "" {
+		return func() tea.Msg {
+			return QueryExecutedMsg{Err: fmt.Errorf("query is empty"), Query: ""}
+		}
+	}
+
+	// Prevent executing if already running
+	if v.queryState == OperationRunning {
+		return nil
+	}
+
+	// Set loading state
+	v.queryState = OperationRunning
+
+	// Create context with specified timeout
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	v.queryCancel = cancel
 
