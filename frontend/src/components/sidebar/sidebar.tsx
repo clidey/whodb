@@ -155,8 +155,6 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (databaseSupportsDatabaseSwitching(selectedProfile.Type)) getDatabases();
-                        if (databaseSupportsSchema(selectedProfile.Type)) getSchemas();
                     }
                 },
                 onError(error) {
@@ -181,8 +179,6 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (databaseSupportsDatabaseSwitching(selectedProfile.Type)) getDatabases();
-                        if (databaseSupportsSchema(selectedProfile.Type)) getSchemas();
                     }
                 },
                 onError(error) {
@@ -190,7 +186,7 @@ export const Sidebar: FC = () => {
                 },
             });
         }
-    }, [profiles, login, loginWithProfile, dispatch, navigate, getDatabases, getSchemas]);
+    }, [profiles, login, loginWithProfile, dispatch, navigate, t]);
 
     // Database select logic
     const databaseOptions = useMemo(() => {
@@ -290,6 +286,18 @@ export const Sidebar: FC = () => {
             toggleSidebar();
         }
     }, []);
+
+    // Refetch databases and schemas when the current profile changes
+    // This ensures queries use the correct auth context after profile switch
+    useEffect(() => {
+        if (!current) return;
+        if (databaseSupportsDatabaseSwitching(current.Type)) {
+            getDatabases();
+        }
+        if (databaseSupportsSchema(current.Type)) {
+            getSchemas();
+        }
+    }, [current?.Id]);
 
     // Listen for menu event to open add profile form
     useEffect(() => {
