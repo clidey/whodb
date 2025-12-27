@@ -69,6 +69,10 @@ const (
 	maxSuggestionHeight = 12
 )
 
+// autocompleteDebounceDelay is the delay before triggering autocomplete after a keystroke.
+// This prevents excessive database calls during fast typing.
+const autocompleteDebounceDelay = 100 * time.Millisecond
+
 type EditorView struct {
 	parent              *MainModel
 	textarea            textarea.Model
@@ -89,6 +93,8 @@ type EditorView struct {
 	// Retry prompt state for timed out queries
 	retryPrompt   bool
 	timedOutQuery string
+	// Debounce autocomplete - sequence ID to detect stale debounce messages
+	autocompleteSeqID int
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -149,6 +155,13 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		v.queryState = OperationIdle
 		v.queryCancel = nil
 		// Don't show error for user-initiated cancel
+		return v, nil
+
+	case AutocompleteDebounceMsg:
+		// Only process if sequence ID matches (not stale)
+		if msg.SeqID == v.autocompleteSeqID {
+			v.updateAutocomplete(msg.Text, msg.Pos)
+		}
 		return v, nil
 
 	case tea.WindowSizeMsg:
@@ -301,10 +314,21 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	// Calculate cursor position based on current line and column
 	v.updateCursorPosition()
 
-	// Update autocomplete in real-time as user types
+	// Schedule debounced autocomplete when user types
 	text := v.textarea.Value()
 	if v.textarea.Focused() {
-		v.updateAutocomplete(text, v.cursorPos)
+		// Increment sequence ID to invalidate any pending debounce
+		v.autocompleteSeqID++
+		seqID := v.autocompleteSeqID
+		pos := v.cursorPos
+
+		// Create debounced autocomplete command
+		debounceCmd := tea.Tick(autocompleteDebounceDelay, func(t time.Time) tea.Msg {
+			return AutocompleteDebounceMsg{SeqID: seqID, Text: text, Pos: pos}
+		})
+
+		// Combine textarea command with debounce command
+		return v, tea.Batch(cmd, debounceCmd)
 	}
 
 	return v, cmd
@@ -1048,18 +1072,26 @@ func (v *EditorView) acceptSuggestion() {
 		// Find the token to replace before cursor
 		tokenMatch := regexp.MustCompile(`[A-Za-z0-9_\.` + "`" + `]+$`).FindString(beforeCursor)
 
-		// Calculate replacement position
+		// Calculate replacement position and new cursor position
 		var newText string
+		var newCursorPos int
 		if tokenMatch != "" {
 			// Replace the token
 			startPos := v.cursorPos - len(tokenMatch)
 			newText = text[:startPos] + sug.apply + afterCursor
+			newCursorPos = startPos + len(sug.apply)
 		} else {
 			// Insert at cursor position
 			newText = beforeCursor + sug.apply + afterCursor
+			newCursorPos = v.cursorPos + len(sug.apply)
 		}
 
 		v.textarea.SetValue(newText)
+
+		// Sync cursor tracking state to prevent updateCursorPosition() miscalculations
+		v.cursorPos = newCursorPos
+		v.lastText = newText
+
 		v.showSuggestions = false
 		v.selectedSuggestion = 0
 		v.refreshLayout()
