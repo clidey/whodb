@@ -383,43 +383,44 @@ export const Sidebar: FC = () => {
                                         }}
                                     />
                                 </div>
-                                {/* Database Select */}
-                                <div className={cn("flex flex-col gap-sm w-full", {
-                                    "opacity-0 pointer-events-none": !open,
-                                    "hidden": !databaseSupportsDatabaseSwitching(current?.Type),
-                                })}>
-                                    <h2 className="text-sm">{databaseDropdownLabel}</h2>
-                                    <SearchSelect
-                                        label={databaseDropdownLabel}
-                                        options={databaseOptions}
-                                        value={current?.Database}
-                                        onChange={handleDatabaseChange}
-                                        placeholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('selectSchema') : t('selectDatabase')}
-                                        searchPlaceholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('searchSchema') : t('searchDatabase')}
-                                        side="left" align="start"
-                                        buttonProps={{
-                                            "data-testid": "sidebar-database",
-                                        }}
-                                    />
-                                </div>
-                                <div className={cn("flex flex-col gap-sm w-full", {
-                                    "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
-                                    "hidden": !databaseSupportsSchema(current?.Type),
-                                })}>
-                                    <h2 className="text-sm">{t('schema')}</h2>
-                                    <SearchSelect
-                                        label={t('schema')}
-                                        options={schemaOptions}
-                                        value={schema}
-                                        onChange={handleSchemaChange}
-                                        placeholder={t('selectSchema')}
-                                        searchPlaceholder={t('searchSchema')}
-                                        side="left" align="start"
-                                        buttonProps={{
-                                            "data-testid": "sidebar-schema",
-                                        }}
-                                    />
-                                </div>
+                                {databaseSupportsDatabaseSwitching(current?.Type) && (
+                                    <div className={cn("flex flex-col gap-sm w-full", {
+                                        "opacity-0 pointer-events-none": !open,
+                                    })}>
+                                        <h2 className="text-sm">{databaseDropdownLabel}</h2>
+                                        <SearchSelect
+                                            label={databaseDropdownLabel}
+                                            options={databaseOptions}
+                                            value={current?.Database}
+                                            onChange={handleDatabaseChange}
+                                            placeholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('selectSchema') : t('selectDatabase')}
+                                            searchPlaceholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('searchSchema') : t('searchDatabase')}
+                                            side="left" align="start"
+                                            buttonProps={{
+                                                "data-testid": "sidebar-database",
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                {databaseSupportsSchema(current?.Type) && (
+                                    <div className={cn("flex flex-col gap-sm w-full", {
+                                        "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
+                                    })}>
+                                        <h2 className="text-sm">{t('schema')}</h2>
+                                        <SearchSelect
+                                            label={t('schema')}
+                                            options={schemaOptions}
+                                            value={schema}
+                                            onChange={handleSchemaChange}
+                                            placeholder={t('selectSchema')}
+                                            searchPlaceholder={t('searchSchema')}
+                                            side="left" align="start"
+                                            buttonProps={{
+                                                "data-testid": "sidebar-schema",
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Main navigation */}
