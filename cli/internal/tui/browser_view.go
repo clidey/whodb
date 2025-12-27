@@ -143,12 +143,12 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			case "esc":
 				v.schemaSelecting = false
 				return v, nil
-			case "up", "k":
+			case "left", "up", "h", "k":
 				if v.selectedSchemaIndex > 0 {
 					v.selectedSchemaIndex--
 				}
 				return v, nil
-			case "down", "j":
+			case "right", "down", "l", "j":
 				if v.selectedSchemaIndex < len(v.schemas)-1 {
 					v.selectedSchemaIndex++
 				}
@@ -161,6 +161,10 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 					v.err = nil
 					return v, v.loadTables()
 				}
+				return v, nil
+			default:
+				// Ignore other keys while in schema selection mode
+				// (global shortcuts like ctrl+c are handled at MainModel level)
 				return v, nil
 			}
 		}
@@ -206,21 +210,21 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			v.filterInput.Focus()
 			return v, nil
 
-		case "s":
+		case "ctrl+s":
 			// Enter schema selection mode
 			if len(v.schemas) > 1 {
 				v.schemaSelecting = true
 			}
 			return v, nil
 
-		case "r":
+		case "ctrl+r":
 			v.loading = true
 			v.err = nil
 			v.filterInput.SetValue("")
 			v.filtering = false
 			return v, v.loadTables()
 
-		case "e":
+		case "ctrl+e":
 			v.parent.mode = ViewEditor
 			return v, nil
 
@@ -228,7 +232,7 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			v.parent.mode = ViewHistory
 			return v, nil
 
-		case "a":
+		case "ctrl+a":
 			v.parent.mode = ViewChat
 			return v, v.parent.chatView.Init()
 
@@ -327,8 +331,7 @@ func (v *BrowserView) View() string {
 
 	if v.schemaSelecting {
 		b.WriteString(styles.RenderHelp(
-			"↑/k", "up",
-			"↓/j", "down",
+			"←/→", "navigate",
 			"enter", "select schema",
 			"esc", "cancel",
 		))
@@ -347,13 +350,13 @@ func (v *BrowserView) View() string {
 			"[/]", "filter",
 		}
 		if len(v.schemas) > 1 {
-			helpItems = append(helpItems, "[s]", "schema")
+			helpItems = append(helpItems, "ctrl+s", "schema")
 		}
 		helpItems = append(helpItems,
-			"[e]", "editor",
-			"[a]", "ai chat",
+			"ctrl+e", "editor",
+			"ctrl+a", "ai chat",
 			"ctrl+h", "history",
-			"[r]", "refresh",
+			"ctrl+r", "refresh",
 			"tab", "next view",
 			"esc", "disconnect",
 			"ctrl+c", "quit",

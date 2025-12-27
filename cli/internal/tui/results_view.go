@@ -368,11 +368,12 @@ func (v *ResultsView) View() string {
 			"←/h", "col left",
 			"→/l", "col right",
 			"scroll", "trackpad/mouse",
-			"[w]", whereLabel,
-			"[c]", columnsLabel,
-			"[e]", "export",
-			"[n/p]", "page",
-			"[s/S]", "page size",
+			"w", whereLabel,
+			"c", columnsLabel,
+			"e", "export",
+			"n/p", "page",
+			"s", "page size",
+			"shift+s", "custom size",
 			"esc", backTarget,
 		))
 	} else {
@@ -382,9 +383,10 @@ func (v *ResultsView) View() string {
 			"←/h", "col left",
 			"→/l", "col right",
 			"scroll", "trackpad/mouse",
-			"[e]", "export",
-			"[n/p]", "page",
-			"[s/S]", "page size",
+			"e", "export",
+			"n/p", "page",
+			"s", "page size",
+			"shift+s", "custom size",
 			"esc", backTarget,
 		))
 	}

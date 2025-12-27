@@ -52,8 +52,9 @@ func (i historyItem) FilterValue() string {
 }
 
 type HistoryView struct {
-	parent *MainModel
-	list   list.Model
+	parent          *MainModel
+	list            list.Model
+	confirmingClear bool
 }
 
 func NewHistoryView(parent *MainModel) *HistoryView {
@@ -106,12 +107,35 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "c":
-			v.parent.histMgr.Clear()
-			v.refreshList()
-			return v, nil
+		case "D":
+			// Show confirmation prompt
+			if !v.confirmingClear {
+				v.confirmingClear = true
+				return v, nil
+			}
+
+		case "y", "Y":
+			// Confirm clear if in confirmation mode
+			if v.confirmingClear {
+				v.parent.histMgr.Clear()
+				v.refreshList()
+				v.confirmingClear = false
+				return v, nil
+			}
+
+		case "n", "N":
+			// Cancel clear confirmation
+			if v.confirmingClear {
+				v.confirmingClear = false
+				return v, nil
+			}
 
 		case "esc":
+			// Cancel confirmation or go back
+			if v.confirmingClear {
+				v.confirmingClear = false
+				return v, nil
+			}
 			v.parent.mode = ViewBrowser
 			return v, nil
 		}
@@ -128,6 +152,19 @@ func (v *HistoryView) View() string {
 	b.WriteString(styles.RenderTitle("Query History"))
 	b.WriteString("\n\n")
 
+	// Show confirmation dialog if clearing
+	if v.confirmingClear {
+		b.WriteString(styles.ErrorStyle.Render("⚠ Clear all history?"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("This will delete all query history entries."))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp(
+			"[y]", "confirm",
+			"[n]/esc", "cancel",
+		))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	entries := v.parent.histMgr.GetAll()
 	if len(entries) == 0 {
 		b.WriteString(styles.MutedStyle.Render("No history entries"))
@@ -140,8 +177,8 @@ func (v *HistoryView) View() string {
 		"↑/k", "up",
 		"↓/j", "down",
 		"enter", "edit",
-		"[r]", "re-run",
-		"[c]", "clear",
+		"r", "re-run",
+		"shift+d", "clear all",
 		"tab", "next view",
 		"esc", "back",
 		"ctrl+c", "quit",

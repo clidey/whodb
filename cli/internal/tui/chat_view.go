@@ -324,25 +324,6 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "h":
-			if v.focusField != focusFieldMessage {
-				if v.focusField == focusFieldProvider {
-					if v.selectedProvider > 0 {
-						v.selectedProvider--
-					} else {
-						v.selectedProvider = len(v.providers) - 1
-					}
-					return v, nil
-				} else if v.focusField == focusFieldModel && len(v.models) > 0 {
-					if v.selectedModel > 0 {
-						v.selectedModel--
-					} else {
-						v.selectedModel = len(v.models) - 1
-					}
-					return v, nil
-				}
-			}
-
 		case "right":
 			if v.focusField == focusFieldProvider {
 				if v.selectedProvider < len(v.providers)-1 {
@@ -360,25 +341,6 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "l":
-			if v.focusField != focusFieldMessage {
-				if v.focusField == focusFieldProvider {
-					if v.selectedProvider < len(v.providers)-1 {
-						v.selectedProvider++
-					} else {
-						v.selectedProvider = 0
-					}
-					return v, nil
-				} else if v.focusField == focusFieldModel && len(v.models) > 0 {
-					if v.selectedModel < len(v.models)-1 {
-						v.selectedModel++
-					} else {
-						v.selectedModel = 0
-					}
-					return v, nil
-				}
-			}
-
 		case "ctrl+l":
 			if !v.loadingModels {
 				v.loadingModels = true
@@ -386,22 +348,17 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "v":
-			// Only handle when not typing in message input
-			if v.focusField != focusFieldMessage {
-				if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
-					msg := v.messages[v.selectedMessage]
-					if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
-						v.parent.resultsView.SetResults(msg.Result, "")
-						v.parent.resultsView.returnTo = ViewChat
-						v.parent.mode = ViewResults
-						return v, nil
-					}
-				}
-				return v, nil
-			}
-
 		case "enter":
+			// View table if a message with result is selected
+			if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
+				msg := v.messages[v.selectedMessage]
+				if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
+					v.parent.resultsView.SetResults(msg.Result, "")
+					v.parent.resultsView.returnTo = ViewChat
+					v.parent.mode = ViewResults
+					return v, nil
+				}
+			}
 			if v.focusField == focusFieldProvider {
 				// Confirm provider selection, load models, and move to model field
 				if !v.loadingModels {
@@ -618,9 +575,8 @@ func (v *ChatView) View() string {
 	b.WriteString(styles.RenderHelp(
 		"↑/↓", "cycle fields",
 		"←/→", "change selection",
-		"enter", "confirm/send",
+		"enter", "confirm/send/view",
 		"ctrl+p/n", "select message",
-		"[v]", "view table",
 		"ctrl+r", "revoke consent",
 		"esc", "back",
 	))
