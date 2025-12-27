@@ -15,14 +15,22 @@
  */
 
 import { clearBrowserState } from '../../support/helpers/animation';
+import { getDatabaseConfig, loginToDatabase } from '../../support/test-runner';
+
+// Tour tests only run for PostgreSQL (the sample database type)
+const targetDb = Cypress.env('database');
+const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
 /**
  * Tour & Onboarding Tests
  *
  * Tests the tour functionality that guides first-time users through WhoDB features.
  * The tour automatically starts when logging into the sample database for the first time.
+ *
+ * NOTE: These tests only run for PostgreSQL (the sample database type).
+ * When running tests for other databases, these tests are skipped.
  */
-describe('Tour & Onboarding', () => {
+(shouldRun ? describe : describe.skip)('Tour & Onboarding', () => {
     /**
      * Helper function to log into the sample database
      * The sample database is a built-in profile that triggers the tour on first login
@@ -51,8 +59,8 @@ describe('Tour & Onboarding', () => {
      * Helper function to wait for tour to become active
      */
     const waitForTourToStart = () => {
-        // Wait for tour overlay/spotlight to appear
-        cy.get('body', { timeout: 10000 }).should('have.css', 'overflow', 'hidden');
+        // Wait for tour tooltip to appear (more reliable than checking overflow)
+        cy.get('[data-testid="tour-tooltip"]', { timeout: 15000 }).should('be.visible');
     };
 
     /**
@@ -184,10 +192,8 @@ describe('Tour & Onboarding', () => {
         it('does not show previous button on first step', () => {
             getTourTooltip().should('contain.text', 'Welcome to WhoDB');
 
-            // Previous button should not be visible or should be disabled
-            cy.get('[data-testid="tour-prev-button"]').should('not.exist')
-                .or('be.disabled')
-                .or('not.be.visible');
+            // Previous button should not exist on first step (component doesn't render it)
+            cy.get('[data-testid="tour-prev-button"]').should('not.exist');
         });
 
         it('goes back to previous step when previous button is clicked', () => {
@@ -352,8 +358,10 @@ describe('Tour & Onboarding', () => {
             cy.logout();
             cy.url({ timeout: 10000 }).should('include', '/login');
 
-            // Login again to sample database
-            loginToSampleDatabase();
+            // After onboarding complete, "Get Started" panel is hidden
+            // Login with regular postgres credentials instead
+            const db = getDatabaseConfig('postgres');
+            loginToDatabase(db);
 
             // Wait a bit to see if tour would start
             cy.wait(2000);
@@ -392,7 +400,10 @@ describe('Tour & Onboarding', () => {
                 win.localStorage.setItem('@clidey/whodb/onboarding-completed', 'true');
             });
 
-            loginToSampleDatabase();
+            // After onboarding complete, "Get Started" panel is hidden
+            // Login with regular postgres credentials instead
+            const db = getDatabaseConfig('postgres');
+            loginToDatabase(db);
 
             // Wait to see if tour would start
             cy.wait(2000);
@@ -433,7 +444,7 @@ describe('Tour & Onboarding', () => {
                 },
                 {
                     title: 'View Table Data',
-                    descriptionSnippet: 'Data button'
+                    descriptionSnippet: 'table card'
                 },
                 {
                     title: 'You\'re All Set!',
