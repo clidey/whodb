@@ -14,6 +14,8 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 - **Export Capabilities** - Export to CSV and Excel formats
 - **Query History** - Persistent history with re-execution
 - **Shell Completion** - Bash, Zsh, and Fish autocompletion
+- **Programmatic Mode** - JSON/CSV output for scripting and automation
+- **MCP Server** - Model Context Protocol server for AI assistants (Claude, Cursor, etc.)
 
 ## Installation
 
@@ -175,6 +177,183 @@ Install paths (rc files updated automatically):
 - Bash: `~/.local/share/bash-completion/completions/whodb-cli`
 - Zsh: `~/.zsh/completions/_whodb-cli`
 - Fish: `~/.config/fish/completions/whodb-cli.fish`
+
+## Programmatic Commands
+
+These commands output structured data for scripting, automation, and AI integration.
+
+### schemas
+
+List database schemas.
+
+```bash
+whodb-cli schemas --connection my-postgres --format json
+```
+
+Flags:
+- `--connection, -c`: Connection name (required if multiple connections exist)
+- `--format, -f`: Output format: `json`, `table`, `plain` (default: table)
+
+### tables
+
+List tables in a schema.
+
+```bash
+whodb-cli tables --connection my-postgres --schema public --format json
+```
+
+Flags:
+- `--connection, -c`: Connection name
+- `--schema, -s`: Schema name (default varies by database)
+- `--format, -f`: Output format: `json`, `table`, `plain`
+
+### columns
+
+Describe table columns.
+
+```bash
+whodb-cli columns --connection my-postgres --table users --format json
+```
+
+Flags:
+- `--connection, -c`: Connection name
+- `--table, -t`: Table name (required)
+- `--schema, -s`: Schema name
+- `--format, -f`: Output format: `json`, `table`, `plain`
+
+### connections
+
+Manage saved connections.
+
+```bash
+# List connections
+whodb-cli connections list --format json
+
+# Test a connection
+whodb-cli connections test my-postgres
+
+# Add a connection
+whodb-cli connections add --name prod --type postgres --host db.example.com --port 5432 --user app --database mydb
+
+# Remove a connection
+whodb-cli connections remove prod
+```
+
+### export
+
+Export table data to file.
+
+```bash
+# Export to CSV
+whodb-cli export --connection my-postgres --table users --format csv --output users.csv
+
+# Export to Excel
+whodb-cli export --connection my-postgres --table orders --format excel --output orders.xlsx
+```
+
+Flags:
+- `--connection, -c`: Connection name
+- `--table, -t`: Table name (required)
+- `--schema, -s`: Schema name
+- `--format, -f`: Export format: `csv`, `excel`
+- `--output, -o`: Output file path
+
+### history
+
+Access query history.
+
+```bash
+# List recent queries
+whodb-cli history list --limit 20 --format json
+
+# Search history
+whodb-cli history search "SELECT.*users"
+
+# Clear history
+whodb-cli history clear
+```
+
+Flags:
+- `--limit, -l`: Number of entries to show (default: 10)
+- `--format, -f`: Output format: `json`, `table`, `plain`
+
+## MCP Server
+
+WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants like Claude, Cursor, and others to query your databases.
+
+### Start the MCP Server
+
+```bash
+whodb-cli mcp serve
+```
+
+This starts a stdio-based MCP server that exposes these tools:
+
+| Tool | Description |
+|------|-------------|
+| `whodb_connections` | List available database connections |
+| `whodb_schemas` | List schemas in a database |
+| `whodb_tables` | List tables in a schema |
+| `whodb_columns` | Describe table columns |
+| `whodb_query` | Execute SQL queries |
+
+### Configure Connections
+
+The MCP server uses a hybrid credential system:
+
+**Option 1: Environment Variables** (recommended for production)
+
+```bash
+# Format: WHODB_{NAME}_URI
+export WHODB_PROD_URI="postgres://user:pass@host:5432/dbname"
+export WHODB_STAGING_URI="mysql://user:pass@host:3306/dbname"
+```
+
+**Option 2: Saved Connections**
+
+Use `whodb-cli connect --name mydb ...` to save connections that the MCP server can access.
+
+### Claude Desktop Configuration
+
+Add to `~/.config/claude/claude_desktop_config.json` (Linux) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "whodb": {
+      "command": "/path/to/whodb-cli",
+      "args": ["mcp", "serve"],
+      "env": {
+        "WHODB_PROD_URI": "postgres://user:pass@host:5432/db"
+      }
+    }
+  }
+}
+```
+
+### Claude Code Configuration
+
+Create `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "whodb": {
+      "command": "whodb-cli",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+### Docker MCP Server
+
+```bash
+docker run -i --rm \
+  -e WHODB_PROD_URI="postgres://user:pass@host:5432/db" \
+  --network host \
+  whodb-cli:latest mcp serve
+```
 
 ## Interactive Mode Views
 
@@ -445,27 +624,47 @@ whodb-cli --debug
 
 ```
 cli/
-├── cmd/           # CLI commands (Cobra)
-│   ├── root.go    # Main entry, starts TUI
-│   ├── connect.go # Database connection
-│   ├── query.go   # Direct query execution
-│   └── completion.go # Shell completion
+├── cmd/                # CLI commands (Cobra)
+│   ├── root.go         # Main entry, starts TUI
+│   ├── connect.go      # Database connection
+│   ├── query.go        # Direct query execution
+│   ├── schemas.go      # List schemas
+│   ├── tables.go       # List tables
+│   ├── columns.go      # Describe columns
+│   ├── connections.go  # Connection management
+│   ├── export.go       # Data export
+│   ├── history.go      # Query history
+│   ├── mcp.go          # MCP server command
+│   └── completion.go   # Shell completion
 ├── internal/
-│   ├── tui/       # Terminal UI (Bubble Tea)
-│   │   ├── model.go        # Main model, view routing
+│   ├── tui/            # Terminal UI (Bubble Tea)
+│   │   ├── model.go
 │   │   ├── connection_view.go
 │   │   ├── browser_view.go
 │   │   ├── editor_view.go
 │   │   ├── results_view.go
 │   │   ├── history_view.go
-│   │   ├── chat_view.go    # AI assistant
+│   │   ├── chat_view.go
 │   │   ├── export_view.go
-│   │   └── where_view.go   # Query builder
-│   ├── config/    # Configuration (Viper)
-│   ├── database/  # Database manager
-│   └── history/   # Query history
-└── pkg/
-    └── styles/    # UI styling (Lipgloss)
+│   │   └── where_view.go
+│   ├── config/         # Configuration (Viper)
+│   ├── database/       # Database manager
+│   └── history/        # Query history
+├── pkg/
+│   ├── mcp/            # MCP server implementation
+│   │   ├── server.go   # Server setup
+│   │   ├── tools.go    # Tool handlers
+│   │   └── credentials.go # Connection resolution
+│   └── styles/         # UI styling (Lipgloss)
+├── skills/             # Claude Code skills
+│   ├── whodb/          # Main database skill
+│   ├── query-builder/  # Natural language → SQL
+│   └── schema-designer/ # Schema design assistance
+├── agents/             # Claude Code agents
+│   ├── database-analyst.md
+│   ├── query-optimizer.md
+│   └── report-generator.md
+└── plugin.json         # Plugin manifest
 ```
 
 ## Development
