@@ -127,7 +127,7 @@ describe('Sidebar Navigation', () => {
                         if (otherOption) {
                             cy.wrap(otherOption).click();
                             // Wait for the query from changing to different schema
-                            cy.wait('@schemaQuery', { timeout: 10000 });
+                            cy.wait('@schemaQuery', {timeout: 10000});
                         } else {
                             // Only one schema exists, just click first
                             cy.get('[role="option"]').first().click();
@@ -206,7 +206,7 @@ describe('Sidebar Navigation', () => {
                     cy.get('[href="/scratchpad"]').should('exist');
                 });
             });
-        }, { features: ['scratchpad'] });
+        }, {features: ['scratchpad']});
     });
 
     describe('NoSQL Navigation', () => {
@@ -266,11 +266,11 @@ describe('Sidebar Navigation', () => {
                     cy.wait(300);
 
                     // Navigate to another page
-                    cy.get('[href="/graph"]').click({ force: true });
+                    cy.get('[href="/graph"]').click({force: true});
                     cy.url().should('include', '/graph');
 
                     // Navigate back
-                    cy.get('[href="/storage-unit"]').click({ force: true });
+                    cy.get('[href="/storage-unit"]').click({force: true});
                     cy.url().should('include', '/storage-unit');
 
                     // Sidebar state should be maintained
@@ -288,20 +288,20 @@ describe('Sidebar Navigation', () => {
                     cy.logout();
 
                     // Should redirect to login page
-                    cy.url({ timeout: 10000 }).should('include', '/login');
+                    cy.url({timeout: 10000}).should('include', '/login');
                 });
 
                 it('logout clears session', () => {
                     cy.logout();
 
                     // Wait for redirect
-                    cy.url({ timeout: 10000 }).should('include', '/login');
+                    cy.url({timeout: 10000}).should('include', '/login');
 
                     // Try to visit storage-unit directly
                     cy.visit('/storage-unit');
 
                     // Should redirect back to login (session cleared)
-                    cy.url({ timeout: 10000 }).should('include', '/login');
+                    cy.url({timeout: 10000}).should('include', '/login');
                 });
             });
         });
@@ -343,7 +343,7 @@ describe('Sidebar Navigation', () => {
                             cy.wrap(addButton.first()).click();
 
                             // Should show login form in sheet/dialog
-                            cy.get('[role="dialog"], [data-testid="login-form"]', { timeout: 5000 })
+                            cy.get('[role="dialog"], [data-testid="login-form"]', {timeout: 5000})
                                 .should('be.visible');
 
                             // Close dialog

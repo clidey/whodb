@@ -29,7 +29,8 @@ describe('Type Casting', () => {
     forEachDatabase('sql', (db) => {
         // Skip type casting tests for databases with async mutations (e.g., ClickHouse)
         if (hasFeature(db, 'typeCasting') === false) {
-            it.skip('type casting tests skipped - async mutations not supported', () => {});
+            it.skip('type casting tests skipped - async mutations not supported', () => {
+            });
             return;
         }
 
@@ -60,7 +61,7 @@ describe('Type Casting', () => {
                 cy.addRow(newRow);
 
                 // Wait for row to appear using retry-able assertion
-                cy.waitForRowContaining(descValue, { caseSensitive: true }).then((rowIndex) => {
+                cy.waitForRowContaining(descValue, {caseSensitive: true}).then((rowIndex) => {
                     cy.sortBy(0);
 
                     // Verify the row was added with correct types
@@ -98,7 +99,7 @@ describe('Type Casting', () => {
                 cy.addRow(largeNumberRow);
 
                 // Wait for row to appear using retry-able assertion
-                cy.waitForRowContaining('Large bigint test', { caseSensitive: true }).then((rowIndex) => {
+                cy.waitForRowContaining('Large bigint test', {caseSensitive: true}).then((rowIndex) => {
                     cy.getTableData().then(({rows}) => {
                         const addedRow = rows.find(r => r.includes('Large bigint test'));
                         expect(addedRow).to.exist;

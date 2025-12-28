@@ -209,7 +209,7 @@ export function loginToDatabase(dbConfig, options = {}) {
  *
  * @param {string} categoryFilter - 'sql', 'document', 'keyvalue', or 'all'
  * @param {Function} testFn - Function that receives database config and defines tests
- * @param {Object} options - Additional options
+ * @param {{features: string[]}} options - Additional options
  * @param {boolean} options.login - Whether to auto-login before each test (default: true)
  * @param {boolean} options.logout - Whether to auto-logout after each test (default: true)
  * @param {boolean} options.navigateToStorageUnit - Whether to navigate to storage-unit after login (default: true)

@@ -195,6 +195,6 @@ describe('Scratchpad', () => {
                 cy.get('[data-testid="table-search"]').should('be.visible');
             });
         });
-    }, { features: ['scratchpad'] });
+    }, {features: ['scratchpad']});
 
 });

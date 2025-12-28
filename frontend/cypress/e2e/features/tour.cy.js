@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { clearBrowserState } from '../../support/helpers/animation';
-import { getDatabaseConfig, loginToDatabase } from '../../support/test-runner';
+import {clearBrowserState} from '../../support/helpers/animation';
+import {getDatabaseConfig, loginToDatabase} from '../../support/test-runner';
 
 // Tour tests only run for PostgreSQL (the sample database type)
 const targetDb = Cypress.env('database');
@@ -40,7 +40,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
         // Dismiss telemetry modal if it appears
         cy.get('body').then($body => {
-            const $btn = $body.find('button').filter(function() {
+            const $btn = $body.find('button').filter(function () {
                 return this.textContent.includes('Disable Telemetry');
             });
             if ($btn.length) {
@@ -49,10 +49,10 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
         });
 
         // Click the "Get Started" button for sample database
-        cy.get('[data-testid="get-started-sample-db"]', { timeout: 10000 }).should('be.visible').click();
+        cy.get('[data-testid="get-started-sample-db"]', {timeout: 10000}).should('be.visible').click();
 
         // Wait for navigation to storage-unit page
-        cy.url({ timeout: 15000 }).should('include', '/storage-unit');
+        cy.url({timeout: 15000}).should('include', '/storage-unit');
     };
 
     /**
@@ -60,14 +60,14 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
      */
     const waitForTourToStart = () => {
         // Wait for tour tooltip to appear (more reliable than checking overflow)
-        cy.get('[data-testid="tour-tooltip"]', { timeout: 15000 }).should('be.visible');
+        cy.get('[data-testid="tour-tooltip"]', {timeout: 15000}).should('be.visible');
     };
 
     /**
      * Helper function to get the current tour tooltip
      */
     const getTourTooltip = () => {
-        return cy.get('[data-testid="tour-tooltip"]', { timeout: 5000 });
+        return cy.get('[data-testid="tour-tooltip"]', {timeout: 5000});
     };
 
     describe('Tour Auto-Start', () => {
@@ -356,7 +356,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // After onboarding complete, "Get Started" panel is hidden
             // Login with regular postgres credentials instead
@@ -385,7 +385,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
             cy.reload();
 
             // Wait for page to load
-            cy.url({ timeout: 10000 }).should('include', '/storage-unit');
+            cy.url({timeout: 10000}).should('include', '/storage-unit');
             cy.wait(2000);
 
             // Tour should not restart

@@ -78,7 +78,7 @@ describe('Graph Visualization', () => {
             cy.url().should('include', '/storage-unit/explore');
             cy.contains('Total Count:').should('be.visible');
         });
-    }, { features: ['graph'] });
+    }, {features: ['graph']});
 
     // Document Databases (MongoDB has graph support)
     forEachDatabase('document', (db) => {
@@ -114,6 +114,6 @@ describe('Graph Visualization', () => {
                 }
             });
         });
-    }, { features: ['graph'] });
+    }, {features: ['graph']});
 
 });

@@ -33,7 +33,8 @@ describe('Key Types Operations', () => {
         const keyTypeTests = db.keyTypeTests;
 
         if (!keyTypeTests) {
-            it.skip('keyTypeTests config missing in fixture', () => {});
+            it.skip('keyTypeTests config missing in fixture', () => {
+            });
             return;
         }
 

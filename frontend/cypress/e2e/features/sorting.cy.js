@@ -147,7 +147,8 @@ describe('Sorting', () => {
         const tableName = testTable.name;
 
         if (!tableName) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -171,7 +172,8 @@ describe('Sorting', () => {
         const keyName = testTable.name;
 
         if (!keyName) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 

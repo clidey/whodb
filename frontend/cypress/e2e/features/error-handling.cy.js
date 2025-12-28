@@ -48,7 +48,7 @@ describe('Error Handling', () => {
                     cy.data(testTable.name);
 
                     // Wait for table to load
-                    cy.getTableData({ timeout: 15000 }).then(({ rows }) => {
+                    cy.getTableData({timeout: 15000}).then(({rows}) => {
                         expect(rows.length).to.be.greaterThan(0);
                     });
 
@@ -58,14 +58,14 @@ describe('Error Handling', () => {
                     }).as('networkError');
 
                     // Trigger a new request by clicking Query/Submit button
-                    cy.get('[data-testid="submit-button"]', { timeout: 10000 }).click();
+                    cy.get('[data-testid="submit-button"]', {timeout: 10000}).click();
 
                     // Wait for the failed request
-                    cy.wait('@networkError', { timeout: 10000 });
+                    cy.wait('@networkError', {timeout: 10000});
 
                     // App gracefully handles network errors by keeping existing data visible
                     // (graceful degradation) - verify table is still shown
-                    cy.get('table:visible', { timeout: 5000 }).should('exist');
+                    cy.get('table:visible', {timeout: 5000}).should('exist');
                 });
             });
         });
@@ -94,13 +94,13 @@ describe('Error Handling', () => {
                     cy.intercept('POST', '**/api/query', {
                         statusCode: 500,
                         body: {
-                            errors: [{ message: 'Internal server error' }]
+                            errors: [{message: 'Internal server error'}]
                         }
                     }).as('serverError');
 
                     cy.visit('/storage-unit');
 
-                    cy.wait('@serverError', { timeout: 10000 });
+                    cy.wait('@serverError', {timeout: 10000});
 
                     // Should show error toast or redirect to login
                     cy.url().then((url) => {
@@ -109,7 +109,7 @@ describe('Error Handling', () => {
                             cy.url().should('include', '/login');
                         } else {
                             // Should show error toast
-                            cy.get('[data-sonner-toast]', { timeout: 5000 }).should('exist');
+                            cy.get('[data-sonner-toast]', {timeout: 5000}).should('exist');
                         }
                     });
                 });
@@ -120,20 +120,20 @@ describe('Error Handling', () => {
                     cy.intercept('POST', '**/api/query', {
                         statusCode: 503,
                         body: {
-                            errors: [{ message: 'Service temporarily unavailable' }]
+                            errors: [{message: 'Service temporarily unavailable'}]
                         }
                     }).as('serviceUnavailable');
 
                     cy.visit('/storage-unit');
 
-                    cy.wait('@serviceUnavailable', { timeout: 10000 });
+                    cy.wait('@serviceUnavailable', {timeout: 10000});
 
                     // Should show error toast or redirect to login
                     cy.url().then((url) => {
                         if (url.includes('/login')) {
                             cy.url().should('include', '/login');
                         } else {
-                            cy.get('[data-sonner-toast]', { timeout: 5000 }).should('exist');
+                            cy.get('[data-sonner-toast]', {timeout: 5000}).should('exist');
                         }
                     });
                 });
@@ -199,12 +199,12 @@ describe('Error Handling', () => {
                     cy.runCode(0);
 
                     // Results should show (error is cleared automatically by runCode waiting for output)
-                    cy.getCellQueryOutput(0).then(({ rows }) => {
+                    cy.getCellQueryOutput(0).then(({rows}) => {
                         expect(rows.length).to.be.greaterThan(0);
                     });
                 });
             });
-        }, { features: ['scratchpad'] });
+        }, {features: ['scratchpad']});
     });
 
     describe('GraphQL Errors', () => {
@@ -243,14 +243,14 @@ describe('Error Handling', () => {
 
                     cy.visit('/storage-unit');
 
-                    cy.wait('@graphqlError', { timeout: 10000 });
+                    cy.wait('@graphqlError', {timeout: 10000});
 
                     // Should show error toast or redirect to login
                     cy.url().then((url) => {
                         if (url.includes('/login')) {
                             cy.url().should('include', '/login');
                         } else {
-                            cy.get('[data-sonner-toast]', { timeout: 5000 }).should('exist');
+                            cy.get('[data-sonner-toast]', {timeout: 5000}).should('exist');
                         }
                     });
                 });
@@ -263,22 +263,22 @@ describe('Error Handling', () => {
                         body: {
                             data: null,
                             errors: [
-                                { message: 'Error 1: Connection timeout' },
-                                { message: 'Error 2: Query execution failed' }
+                                {message: 'Error 1: Connection timeout'},
+                                {message: 'Error 2: Query execution failed'}
                             ]
                         }
                     }).as('multipleErrors');
 
                     cy.visit('/storage-unit');
 
-                    cy.wait('@multipleErrors', { timeout: 10000 });
+                    cy.wait('@multipleErrors', {timeout: 10000});
 
                     // Should show error toast or redirect to login
                     cy.url().then((url) => {
                         if (url.includes('/login')) {
                             cy.url().should('include', '/login');
                         } else {
-                            cy.get('[data-sonner-toast]', { timeout: 5000 }).should('exist');
+                            cy.get('[data-sonner-toast]', {timeout: 5000}).should('exist');
                         }
                     });
                 });
@@ -288,7 +288,8 @@ describe('Error Handling', () => {
 
     describe('Connection Timeout Handling', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('handles slow query with loading indicator', () => {
+            describe(`${db.type}`, () => {
+                it('handles slow query with loading indicator', () => {
                     cy.goto('scratchpad');
 
                     const query = getSqlQuery(db, 'selectAllUsers');
@@ -303,7 +304,7 @@ describe('Error Handling', () => {
                                 body: {
                                     data: {
                                         Query: {
-                                            Columns: [{ Name: 'id', Type: 'integer', __typename: 'Column' }],
+                                            Columns: [{Name: 'id', Type: 'integer', __typename: 'Column'}],
                                             Rows: [['1']],
                                             __typename: 'RowsResult'
                                         }
@@ -319,19 +320,19 @@ describe('Error Handling', () => {
                     // Click run button directly instead of using runCode (which waits for completion)
                     cy.get(`[role="tabpanel"][data-state="active"] [data-testid="cell-0"] [data-testid="query-cell-button"]`)
                         .first()
-                        .click({ force: true });
+                        .click({force: true});
 
                     // Wait for the slow query to complete
-                    cy.wait('@slowQuery', { timeout: 10000 });
+                    cy.wait('@slowQuery', {timeout: 10000});
 
                     // After completion, results should appear
                     cy.get(`[role="tabpanel"][data-state="active"] [data-testid="cell-0"]`).within(() => {
-                        cy.get('[data-testid="cell-query-output"], [data-testid="cell-error"]', { timeout: 5000 })
+                        cy.get('[data-testid="cell-query-output"], [data-testid="cell-error"]', {timeout: 5000})
                             .should('exist');
                     });
                 });
             });
-        }, { features: ['scratchpad'] });
+        }, {features: ['scratchpad']});
     });
 
     describe('Authentication Expiry', () => {
@@ -367,7 +368,7 @@ describe('Error Handling', () => {
 
             cy.visit('/storage-unit');
 
-            cy.wait('@authError', { timeout: 10000 });
+            cy.wait('@authError', {timeout: 10000});
 
             // Should either redirect to login or show error toast
             cy.url().then((url) => {
@@ -376,7 +377,7 @@ describe('Error Handling', () => {
                     cy.url().should('include', '/login');
                 } else {
                     // Should show error toast
-                    cy.get('[data-sonner-toast]', { timeout: 5000 }).should('exist');
+                    cy.get('[data-sonner-toast]', {timeout: 5000}).should('exist');
                 }
             });
         });
@@ -384,7 +385,8 @@ describe('Error Handling', () => {
 
     describe('Error State UI Features', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('scratchpad error can be cleared by running new query', () => {
+            describe(`${db.type}`, () => {
+                it('scratchpad error can be cleared by running new query', () => {
                     cy.goto('scratchpad');
 
                     // Run invalid query
@@ -400,7 +402,7 @@ describe('Error Handling', () => {
                     cy.runCode(0);
 
                     // Results should show
-                    cy.getCellQueryOutput(0).then(({ rows }) => {
+                    cy.getCellQueryOutput(0).then(({rows}) => {
                         expect(rows.length).to.be.greaterThan(0);
                     });
                 });
@@ -414,7 +416,7 @@ describe('Error Handling', () => {
                     cy.runCode(0);
 
                     // Should show results (even if empty), not error
-                    cy.getCellQueryOutput(0, { timeout: 10000 }).then(({ rows }) => {
+                    cy.getCellQueryOutput(0, {timeout: 10000}).then(({rows}) => {
                         expect(rows.length).to.equal(0);
                     });
 
@@ -426,7 +428,7 @@ describe('Error Handling', () => {
                     cy.getCellError(0).should('not.be.empty');
                 });
             });
-        }, { features: ['scratchpad'] });
+        }, {features: ['scratchpad']});
     });
 
     describe('Chat Error Handling', () => {
@@ -435,7 +437,7 @@ describe('Error Handling', () => {
                 beforeEach(() => {
                     clearBrowserState();
                     loginToDatabase(db);
-                    cy.setupChatMock({ modelType: 'Ollama', model: 'llama3.1' });
+                    cy.setupChatMock({modelType: 'Ollama', model: 'llama3.1'});
                 });
 
                 it('displays error message when chat AI fails', () => {
@@ -448,7 +450,7 @@ describe('Error Handling', () => {
                                 statusCode: 200,
                                 body: {
                                     data: null,
-                                    errors: [{ message: 'AI model unavailable' }]
+                                    errors: [{message: 'AI model unavailable'}]
                                 }
                             });
                         } else {
@@ -458,13 +460,13 @@ describe('Error Handling', () => {
 
                     cy.sendChatMessage('Hello');
 
-                    cy.wait('@chatError', { timeout: 10000 });
+                    cy.wait('@chatError', {timeout: 10000});
 
                     // Error should be shown (toast or in chat)
-                    cy.get('[data-sonner-toast]', { timeout: 5000 }).should('exist');
+                    cy.get('[data-sonner-toast]', {timeout: 5000}).should('exist');
                 });
             });
-        }, { features: ['chat'] });
+        }, {features: ['chat']});
     });
 
     describe('Graph View Error Handling', () => {
@@ -493,7 +495,7 @@ describe('Error Handling', () => {
                                 statusCode: 200,
                                 body: {
                                     data: null,
-                                    errors: [{ message: 'Failed to generate graph data' }]
+                                    errors: [{message: 'Failed to generate graph data'}]
                                 }
                             });
                         } else {
@@ -504,14 +506,14 @@ describe('Error Handling', () => {
                     // Navigate to graph
                     cy.visit('/graph');
 
-                    cy.wait('@graphError', { timeout: 10000 });
+                    cy.wait('@graphError', {timeout: 10000});
 
                     // Should be on graph page - the app handles errors gracefully
                     // by showing empty state rather than crashing
                     cy.url().should('include', '/graph');
                 });
             });
-        }, { features: ['graph'] });
+        }, {features: ['graph']});
     });
 
     describe('Error Recovery', () => {
@@ -540,7 +542,7 @@ describe('Error Handling', () => {
                         if (callCount <= 2) {
                             req.reply({
                                 statusCode: 500,
-                                body: { errors: [{ message: 'Temporary error' }] }
+                                body: {errors: [{message: 'Temporary error'}]}
                             });
                         } else {
                             req.continue();
@@ -551,7 +553,7 @@ describe('Error Handling', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for initial error
-                    cy.wait('@retryRequest', { timeout: 10000 });
+                    cy.wait('@retryRequest', {timeout: 10000});
 
                     // Give app time to handle error
                     cy.wait(1000);

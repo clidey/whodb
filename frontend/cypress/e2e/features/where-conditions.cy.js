@@ -209,7 +209,7 @@ describe('Where Conditions', () => {
             cy.clearWhereConditions();
             cy.submitTable();
         });
-    }, { features: ['whereConditions'] });
+    }, {features: ['whereConditions']});
 
     // Document Databases
     forEachDatabase('document', (db) => {
@@ -297,6 +297,6 @@ describe('Where Conditions', () => {
                 }
             });
         });
-    }, { features: ['whereConditions'] });
+    }, {features: ['whereConditions']});
 
 });

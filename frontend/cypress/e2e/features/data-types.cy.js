@@ -31,13 +31,15 @@ describe('Data Types CRUD Operations', () => {
         const mutationDelay = db.mutationDelay || 0;
 
         if (!tableConfig) {
-            it.skip('data_types table config missing in fixture', () => {});
+            it.skip('data_types table config missing in fixture', () => {
+            });
             return;
         }
 
         const typeTests = tableConfig.testData?.typeTests;
         if (!typeTests) {
-            it.skip('typeTests config missing in fixture', () => {});
+            it.skip('typeTests config missing in fixture', () => {
+            });
             return;
         }
 

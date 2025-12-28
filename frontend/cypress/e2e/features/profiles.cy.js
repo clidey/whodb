@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { forEachDatabase, loginToDatabase, getDatabaseConfig } from '../../support/test-runner';
-import { clearBrowserState } from '../../support/helpers/animation';
+import {forEachDatabase, getDatabaseConfig, loginToDatabase} from '../../support/test-runner';
+import {clearBrowserState} from '../../support/helpers/animation';
 
 /**
  * Profile Management Tests
@@ -95,14 +95,14 @@ describe('Profile Management', () => {
             const db1 = getDatabaseConfig('postgres');
             const db2 = getDatabaseConfig('mysql');
 
-            loginToDatabase(db1, { visitStorageUnit: true });
+            loginToDatabase(db1, {visitStorageUnit: true});
 
             cy.get('[data-testid="sidebar-profile"]').click();
 
             // Look for "Add Another Profile" text
             cy.contains('Add Another Profile').should('be.visible').click();
 
-            cy.get('[role="dialog"], [data-testid="login-form"]', { timeout: 5000 })
+            cy.get('[role="dialog"], [data-testid="login-form"]', {timeout: 5000})
                 .should('be.visible');
 
             cy.get('[data-testid="database-type-select"]').click();
@@ -110,13 +110,13 @@ describe('Profile Management', () => {
 
             cy.get('[data-testid="hostname"]').clear().type(db2.connection.host);
             cy.get('[data-testid="username"]').clear().type(db2.connection.user);
-            cy.get('[data-testid="password"]').clear().type(db2.connection.password, { log: false });
+            cy.get('[data-testid="password"]').clear().type(db2.connection.password, {log: false});
             cy.get('[data-testid="database"]').clear().type(db2.connection.database);
 
             cy.intercept('POST', '**/api/query').as('addProfileQuery');
             cy.get('[data-testid="login-button"]').click();
 
-            cy.wait('@addProfileQuery', { timeout: 30000 });
+            cy.wait('@addProfileQuery', {timeout: 30000});
 
             cy.wait(1000);
 
@@ -133,7 +133,8 @@ describe('Profile Management', () => {
 
     describe('Profile Switching', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('can switch between profiles when multiple exist', () => {
+            describe(`${db.type}`, () => {
+                it('can switch between profiles when multiple exist', () => {
                     cy.get('[data-testid="sidebar-profile"]').click();
 
                     cy.get('body').then($body => {
@@ -169,7 +170,7 @@ describe('Profile Management', () => {
 
                     cy.contains('Add Another Profile').click();
 
-                    cy.get('[role="dialog"], [data-testid="login-form"]', { timeout: 5000 })
+                    cy.get('[role="dialog"], [data-testid="login-form"]', {timeout: 5000})
                         .should('be.visible');
 
                     cy.get('body').type('{esc}');
@@ -181,7 +182,7 @@ describe('Profile Management', () => {
                     cy.contains('Add Another Profile').click();
 
                     // Wait for login dialog/sheet to appear
-                    cy.get('[role="dialog"], [data-testid="login-form"]', { timeout: 5000 })
+                    cy.get('[role="dialog"], [data-testid="login-form"]', {timeout: 5000})
                         .should('be.visible');
 
                     // Close the dialog by pressing escape
@@ -197,7 +198,8 @@ describe('Profile Management', () => {
 
     describe('Database Type Icons', () => {
         forEachDatabase('all', (db) => {
-            describe(`${db.type}`, () => {                it('displays correct database type icon for profile', () => {
+            describe(`${db.type}`, () => {
+                it('displays correct database type icon for profile', () => {
                     cy.get('[data-testid="sidebar-profile"]').should('exist');
 
                     cy.get('[data-testid="sidebar-profile"]').within(() => {
@@ -220,7 +222,8 @@ describe('Profile Management', () => {
 
     describe('Profile Last Accessed', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('displays profile information', () => {
+            describe(`${db.type}`, () => {
+                it('displays profile information', () => {
                     cy.get('[data-testid="sidebar-profile"]').should('exist');
                     cy.get('[data-testid="sidebar-profile"]').click();
 
@@ -234,33 +237,29 @@ describe('Profile Management', () => {
 
     describe('Logout from Profile', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('can logout from current profile', () => {
+            describe(`${db.type}`, () => {
+                it('can logout from current profile', () => {
                     cy.get('[data-testid="sidebar-profile"]').should('exist');
 
                     cy.logout();
 
-                    cy.url({ timeout: 10000 }).should('include', '/login');
+                    cy.url({timeout: 10000}).should('include', '/login');
                 });
 
                 it('logout clears current session', () => {
                     cy.logout();
 
-                    cy.url({ timeout: 10000 }).should('include', '/login');
+                    cy.url({timeout: 10000}).should('include', '/login');
 
                     cy.visit('/storage-unit');
 
-                    cy.url({ timeout: 10000 }).should('include', '/login');
+                    cy.url({timeout: 10000}).should('include', '/login');
                 });
 
                 it('can logout and login with different profile', () => {
-                    const originalDb = db;
-
                     cy.logout();
-
-                    cy.url({ timeout: 10000 }).should('include', '/login');
-
+                    cy.url({timeout: 10000}).should('include', '/login');
                     const newDb = getDatabaseConfig('postgres');
-
                     cy.login(
                         newDb.type,
                         newDb.connection.host,
@@ -279,12 +278,13 @@ describe('Profile Management', () => {
 
     describe('Profile Persistence', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('maintains profile selection after page reload', () => {
+            describe(`${db.type}`, () => {
+                it('maintains profile selection after page reload', () => {
                     cy.get('[data-testid="sidebar-profile"]').should('exist');
 
                     cy.reload();
 
-                    cy.get('[data-testid="sidebar-profile"]', { timeout: 10000 }).should('exist');
+                    cy.get('[data-testid="sidebar-profile"]', {timeout: 10000}).should('exist');
                     cy.url().should('include', '/storage-unit');
                 });
 
@@ -312,19 +312,19 @@ describe('Profile Management', () => {
                     // Verify profile element exists on graph page
                     cy.get('[href="/graph"]').click();
                     cy.url().should('include', '/graph');
-                    cy.get('[data-testid="sidebar-profile"]', { timeout: 5000 }).should('exist');
+                    cy.get('[data-testid="sidebar-profile"]', {timeout: 5000}).should('exist');
 
                     // Verify profile element exists on scratchpad page
                     cy.get('[href="/scratchpad"]').click();
                     cy.url().should('include', '/scratchpad');
-                    cy.get('[data-testid="sidebar-profile"]', { timeout: 5000 }).should('exist');
+                    cy.get('[data-testid="sidebar-profile"]', {timeout: 5000}).should('exist');
 
                     // Navigate back to storage-unit
                     cy.get('[href="/storage-unit"]').click();
                     cy.url().should('include', '/storage-unit');
-                    cy.get('[data-testid="sidebar-profile"]', { timeout: 5000 }).should('exist');
+                    cy.get('[data-testid="sidebar-profile"]', {timeout: 5000}).should('exist');
                 });
             });
-        }, { features: ['scratchpad'] });
+        }, {features: ['scratchpad']});
     });
 });

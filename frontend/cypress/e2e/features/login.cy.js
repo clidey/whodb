@@ -31,7 +31,7 @@ describe('Login & Authentication', () => {
 
         // Dismiss telemetry modal if it appears
         cy.get('body').then($body => {
-            const $btn = $body.find('button').filter(function() {
+            const $btn = $body.find('button').filter(function () {
                 return this.textContent.includes('Disable Telemetry');
             });
             if ($btn.length) {
@@ -139,7 +139,7 @@ describe('Login & Authentication', () => {
 
             cy.get('[data-testid="hostname"]').type(db.connection.host);
             cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
+            cy.get('[data-testid="password"]').type(db.connection.password, {log: false});
             cy.get('[data-testid="database"]').type(db.connection.database);
 
             // Handle advanced options if needed
@@ -153,11 +153,11 @@ describe('Login & Authentication', () => {
             cy.intercept('POST', '**/api/query').as('loginQuery');
             cy.get('[data-testid="login-button"]').click();
 
-            cy.wait('@loginQuery', { timeout: 30000 });
+            cy.wait('@loginQuery', {timeout: 30000});
 
             // Should redirect to storage-unit page
             cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 15000 })
+            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 15000})
                 .should('exist');
         });
 
@@ -174,7 +174,7 @@ describe('Login & Authentication', () => {
             cy.get('[data-testid="login-button"]').click();
 
             // Should show error toast or remain on login page
-            cy.wait('@loginQuery', { timeout: 30000 });
+            cy.wait('@loginQuery', {timeout: 30000});
 
             // Either toast error or still on login page
             cy.url().should('include', '/login');
@@ -264,7 +264,7 @@ describe('Login & Authentication', () => {
             // Dismiss telemetry again after reload
             cy.wait(500);
             cy.get('body').then($body => {
-                const $btn = $body.find('button').filter(function() {
+                const $btn = $body.find('button').filter(function () {
                     return this.textContent.includes('Disable Telemetry');
                 });
                 if ($btn.length) {
@@ -291,7 +291,7 @@ describe('Login & Authentication', () => {
 
             cy.wait(500);
             cy.get('body').then($body => {
-                const $btn = $body.find('button').filter(function() {
+                const $btn = $body.find('button').filter(function () {
                     return this.textContent.includes('Disable Telemetry');
                 });
                 if ($btn.length) {
@@ -305,7 +305,7 @@ describe('Login & Authentication', () => {
                     cy.intercept('POST', '**/api/query').as('loginQuery');
                     cy.get('[data-testid="get-started-sample-db"]').click();
 
-                    cy.wait('@loginQuery', { timeout: 30000 });
+                    cy.wait('@loginQuery', {timeout: 30000});
 
                     // Should redirect to storage-unit
                     cy.url().should('include', '/storage-unit');
@@ -348,7 +348,7 @@ describe('Login & Authentication', () => {
             // Dismiss telemetry
             cy.wait(500);
             cy.get('body').then($body => {
-                const $btn = $body.find('button').filter(function() {
+                const $btn = $body.find('button').filter(function () {
                     return this.textContent.includes('Disable Telemetry');
                 });
                 if ($btn.length) {
@@ -376,7 +376,7 @@ describe('Login & Authentication', () => {
             // Dismiss telemetry
             cy.wait(500);
             cy.get('body').then($body => {
-                const $btn = $body.find('button').filter(function() {
+                const $btn = $body.find('button').filter(function () {
                     return this.textContent.includes('Disable Telemetry');
                 });
                 if ($btn.length) {

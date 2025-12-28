@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { forEachDatabase, loginToDatabase } from '../../support/test-runner';
+import {forEachDatabase} from '../../support/test-runner';
 
 
 /**
@@ -31,7 +31,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for storage unit cards to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Create card should be visible
@@ -49,7 +49,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for storage unit cards to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Click create button to expand the form
@@ -89,7 +89,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for storage unit cards to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Open create form (opens Sheet/drawer via portal)
@@ -133,7 +133,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for storage unit cards to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Open create form (opens Sheet/drawer via portal)
@@ -179,7 +179,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for storage unit cards to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Open create form
@@ -234,11 +234,11 @@ describe('Schema Management', () => {
                     cy.visit('/scratchpad');
 
                     // Wait for scratchpad page to load
-                    cy.get('[data-testid="raw-execute-page"]', { timeout: 10000 })
+                    cy.get('[data-testid="raw-execute-page"]', {timeout: 10000})
                         .should('be.visible');
 
                     // Wait for the editor cell to be ready
-                    cy.get('[data-testid="cell-0"]', { timeout: 10000 })
+                    cy.get('[data-testid="cell-0"]', {timeout: 10000})
                         .should('exist');
 
                     // Type DROP TABLE query using the cell's textarea/editor
@@ -248,7 +248,7 @@ describe('Schema Management', () => {
                         .first()
                         .click()
                         .clear()
-                        .type(dropQuery, { delay: 0 });
+                        .type(dropQuery, {delay: 0});
 
                     // Execute the query
                     cy.get('[data-testid="query-cell-button"]').click();
@@ -261,7 +261,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for storage unit cards to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Open create form
@@ -347,7 +347,7 @@ describe('Schema Management', () => {
                     cy.get('[data-testid="submit-button"]').click();
 
                     // Wait for success toast
-                    cy.contains(/success/i, { timeout: 10000 }).should('be.visible');
+                    cy.contains(/success/i, {timeout: 10000}).should('be.visible');
 
                     // Wait for form to close
                     cy.wait(1000);
@@ -357,7 +357,7 @@ describe('Schema Management', () => {
                     // First create the table
                     cy.visit('/storage-unit');
 
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     cy.get('[data-testid="create-storage-unit-card"]')
@@ -394,11 +394,11 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for cards to load
-                    cy.get('[data-testid="storage-unit-card"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
                         .should('have.length.at.least', 1);
 
                     // Verify new table appears in the list (use contains for partial match)
-                    cy.contains('[data-testid="storage-unit-card"]', uniqueTableName, { timeout: 10000 })
+                    cy.contains('[data-testid="storage-unit-card"]', uniqueTableName, {timeout: 10000})
                         .should('exist');
                 });
             });
@@ -412,7 +412,7 @@ describe('Schema Management', () => {
                     cy.visit('/storage-unit');
 
                     // Wait for page to load
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Create storage unit card should NOT be visible for Redis
@@ -434,7 +434,7 @@ describe('Schema Management', () => {
                 it('prevents submission without table name', () => {
                     cy.visit('/storage-unit');
 
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Open create form
@@ -468,7 +468,7 @@ describe('Schema Management', () => {
                 it('prevents submission with empty field name', () => {
                     cy.visit('/storage-unit');
 
-                    cy.get('[data-testid="storage-unit-card-list"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card-list"]', {timeout: 15000})
                         .should('be.visible');
 
                     // Open create form

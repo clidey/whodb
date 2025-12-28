@@ -127,7 +127,7 @@ describe('Data Export', () => {
                 cy.get('[role="dialog"]').should('not.exist');
             });
         });
-    }, { features: ['export'] });
+    }, {features: ['export']});
 
     // Document Databases
     forEachDatabase('document', (db) => {
@@ -183,7 +183,7 @@ describe('Data Export', () => {
             cy.get('body').type('{esc}');
             cy.get('[role="dialog"]').should('not.exist');
         });
-    }, { features: ['export'] });
+    }, {features: ['export']});
 
     // Key/Value Databases (e.g., Redis)
     forEachDatabase('keyvalue', (db) => {
@@ -212,5 +212,5 @@ describe('Data Export', () => {
             cy.get('body').type('{esc}');
             cy.get('[role="dialog"]').should('not.exist');
         });
-    }, { features: ['export'] });
+    }, {features: ['export']});
 });

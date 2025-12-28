@@ -83,7 +83,7 @@ describe('Mock Data Generation', () => {
             // Should show error about foreign key constraint
             cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
         });
-    }, { features: ['mockData'] });
+    }, {features: ['mockData']});
 
     // Document Databases - mock data not supported (inverse: runs when feature is NOT present)
     forEachDatabase('document', (db) => {

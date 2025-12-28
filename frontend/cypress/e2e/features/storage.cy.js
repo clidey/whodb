@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { loginToDatabase, getDatabaseConfig } from '../../support/test-runner';
-import { clearBrowserState } from '../../support/helpers/animation';
+import {getDatabaseConfig, loginToDatabase} from '../../support/test-runner';
+import {clearBrowserState} from '../../support/helpers/animation';
 
 const targetDb = Cypress.env('database');
 const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
@@ -59,7 +59,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
             cy.reload();
 
             // Should still be logged in without redirecting to login
-            cy.url({ timeout: 10000 }).should('include', '/storage-unit');
+            cy.url({timeout: 10000}).should('include', '/storage-unit');
             cy.get('[data-testid="sidebar-profile"]').should('exist');
         });
 
@@ -285,7 +285,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // Auth state should be cleared (status = unauthorized, profiles empty)
             cy.window().then((win) => {
@@ -309,7 +309,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // Settings should still exist
             cy.window().then((win) => {
@@ -327,7 +327,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // First login flag should persist
             cy.window().then((win) => {
@@ -339,7 +339,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
         it('clears current profile but preserves persist keys', () => {
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // Redux persist keys should still exist but with cleared data
             cy.window().then((win) => {
@@ -354,13 +354,13 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
         it('prevents access to protected routes after logout', () => {
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // Try to visit a protected route
             cy.visit('/storage-unit');
 
             // Should redirect back to login
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
         });
     });
 
@@ -409,7 +409,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
 
             // Logout
             cy.logout();
-            cy.url({ timeout: 10000 }).should('include', '/login');
+            cy.url({timeout: 10000}).should('include', '/login');
 
             // Flag should still be set
             cy.window().then((win) => {
@@ -606,7 +606,7 @@ const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
                     cells: {
                         'cell-1': {
                             history: [
-                                { date: 'invalid-date', query: 'SELECT 1' }
+                                {date: 'invalid-date', query: 'SELECT 1'}
                             ]
                         }
                     },

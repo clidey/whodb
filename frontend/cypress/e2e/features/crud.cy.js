@@ -31,7 +31,8 @@ describe('CRUD Operations', () => {
     forEachDatabase('sql', (db) => {
         const testTable = db.testTable;
         if (!testTable) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -169,7 +170,8 @@ describe('CRUD Operations', () => {
     forEachDatabase('document', (db) => {
         const testTable = db.testTable;
         if (!testTable) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -320,7 +322,8 @@ describe('CRUD Operations', () => {
     forEachDatabase('keyvalue', (db) => {
         const testTable = db.testTable;
         if (!testTable) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 

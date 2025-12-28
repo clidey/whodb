@@ -32,7 +32,7 @@ describe('Loading States & Spinners', () => {
 
             // Dismiss telemetry modal if present
             cy.get('body').then($body => {
-                const $btn = $body.find('button').filter(function() {
+                const $btn = $body.find('button').filter(function () {
                     return this.textContent.includes('Disable Telemetry');
                 });
                 if ($btn.length) {
@@ -50,7 +50,7 @@ describe('Loading States & Spinners', () => {
 
             cy.get('[data-testid="hostname"]').type(db.connection.host);
             cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
+            cy.get('[data-testid="password"]').type(db.connection.password, {log: false});
             cy.get('[data-testid="database"]').type(db.connection.database);
 
             // Set up intercept to track login request
@@ -61,7 +61,7 @@ describe('Loading States & Spinners', () => {
 
             // Wait for login to complete and verify redirect
             // The loading state is transient - we verify the flow completes successfully
-            cy.wait('@loginQuery', { timeout: 10000 });
+            cy.wait('@loginQuery', {timeout: 10000});
             cy.url().should('include', '/storage-unit');
 
             // Verify we see the logged-in state (storage units or loading indicator)
@@ -80,15 +80,15 @@ describe('Loading States & Spinners', () => {
                     cy.data(tableName);
 
                     // Verify data is displayed after loading
-                    cy.get('[data-testid="table-search"]', { timeout: 5000 }).should('be.visible');
-                    cy.get('table tbody tr', { timeout: 5000 }).should('have.length.at.least', 1);
+                    cy.get('[data-testid="table-search"]', {timeout: 5000}).should('be.visible');
+                    cy.get('table tbody tr', {timeout: 5000}).should('have.length.at.least', 1);
                 });
 
                 it('shows loading state when changing page size', () => {
                     cy.data(tableName);
 
                     // Wait for initial data load
-                    cy.get('table tbody tr', { timeout: 10000 }).should('have.length.at.least', 1);
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length.at.least', 1);
 
                     // Track page change request
                     cy.intercept('POST', '**/api/query').as('pageChangeQuery');
@@ -98,16 +98,16 @@ describe('Loading States & Spinners', () => {
                     cy.submitTable();
 
                     // Wait for update
-                    cy.wait('@pageChangeQuery', { timeout: 5000 });
+                    cy.wait('@pageChangeQuery', {timeout: 5000});
 
                     // Verify table is updated
-                    cy.get('table tbody tr', { timeout: 5000 }).should('exist');
+                    cy.get('table tbody tr', {timeout: 5000}).should('exist');
                 });
 
                 it('shows loading state when switching tables', () => {
                     // Navigate to card view first
                     cy.visit('/storage-unit');
-                    cy.get('[data-testid="storage-unit-card"]', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card"]', {timeout: 15000})
                         .should('have.length.at.least', 1);
 
                     // Track request when clicking to explore a table
@@ -118,11 +118,11 @@ describe('Loading States & Spinners', () => {
                         .find('[data-testid="data-button"]').click();
 
                     // Wait for data to load
-                    cy.wait('@tableDataQuery', { timeout: 10000 });
+                    cy.wait('@tableDataQuery', {timeout: 10000});
 
                     // Verify we're in explore view with data
                     cy.url().should('include', '/storage-unit/explore');
-                    cy.get('table:visible', { timeout: 5000 }).should('exist');
+                    cy.get('table:visible', {timeout: 5000}).should('exist');
                 });
             });
         });
@@ -130,7 +130,8 @@ describe('Loading States & Spinners', () => {
 
     describe('Scratchpad Query Execution Loading State', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('shows loading indicator during query execution', () => {
+            describe(`${db.type}`, () => {
+                it('shows loading indicator during query execution', () => {
                     cy.goto('scratchpad');
 
                     // Write query
@@ -144,10 +145,10 @@ describe('Loading States & Spinners', () => {
                     cy.runCode(0);
 
                     // Wait for query to complete
-                    cy.wait('@queryExecution', { timeout: 10000 });
+                    cy.wait('@queryExecution', {timeout: 10000});
 
                     // Verify results are displayed
-                    cy.getCellQueryOutput(0).then(({ columns, rows }) => {
+                    cy.getCellQueryOutput(0).then(({columns, rows}) => {
                         expect(columns.length).to.be.greaterThan(0);
                         expect(rows.length).to.be.greaterThan(0);
                     });
@@ -176,7 +177,7 @@ describe('Loading States & Spinners', () => {
                     cy.runCode(2);
 
                     // Wait for queries to complete (multiple waits for multiple requests)
-                    cy.wait('@concurrentQueries', { timeout: 10000 });
+                    cy.wait('@concurrentQueries', {timeout: 10000});
 
                     // Verify all results are displayed
                     cy.getCellQueryOutput(0).should('exist');
@@ -184,7 +185,7 @@ describe('Loading States & Spinners', () => {
                     cy.getCellQueryOutput(2).should('exist');
                 });
             });
-        }, { features: ['scratchpad'] });
+        }, {features: ['scratchpad']});
     });
 
     describe('Chat AI Loading State', () => {
@@ -193,7 +194,7 @@ describe('Loading States & Spinners', () => {
                 beforeEach(() => {
                     clearBrowserState();
                     loginToDatabase(db);
-                    cy.setupChatMock({ modelType: 'Ollama', model: 'llama3.1' });
+                    cy.setupChatMock({modelType: 'Ollama', model: 'llama3.1'});
                 });
 
                 it('shows loading indicator during AI response', () => {
@@ -225,11 +226,13 @@ describe('Loading States & Spinners', () => {
                         text: 'I\'ll retrieve all users for you.'
                     }, {
                         type: 'sql:get',
-                        text: `SELECT * FROM ${schemaPrefix}users ORDER BY id`,
+                        text: `SELECT *
+                               FROM ${schemaPrefix}users
+                               ORDER BY id`,
                         result: {
                             Columns: [
-                                { Name: 'id', Type: 'integer', __typename: 'Column' },
-                                { Name: 'username', Type: 'character varying', __typename: 'Column' }
+                                {Name: 'id', Type: 'integer', __typename: 'Column'},
+                                {Name: 'username', Type: 'character varying', __typename: 'Column'}
                             ],
                             Rows: [['1', 'john_doe']],
                             __typename: 'RowsResult'
@@ -243,15 +246,16 @@ describe('Loading States & Spinners', () => {
                     cy.waitForChatResponse();
 
                     // Verify SQL result is displayed
-                    cy.verifyChatSQLResult({ columns: ['id', 'username'], rowCount: 1 });
+                    cy.verifyChatSQLResult({columns: ['id', 'username'], rowCount: 1});
                 });
             });
-        }, { features: ['chat'] });
+        }, {features: ['chat']});
     });
 
     describe('Schema/Database Selection Loading State', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('shows loading state when switching schema/database', () => {
+            describe(`${db.type}`, () => {
+                it('shows loading state when switching schema/database', () => {
                     // Check if schema/database dropdown exists (not all DBs have these)
                     cy.get('body').then($body => {
                         const $dbDropdown = $body.find('[data-testid="sidebar-database"]:visible');
@@ -268,7 +272,7 @@ describe('Loading States & Spinners', () => {
                         cy.wrap($dropdown).click();
 
                         // Wait for dropdown options to appear
-                        cy.get('[role="option"]', { timeout: 5000 }).should('have.length.at.least', 1);
+                        cy.get('[role="option"]', {timeout: 5000}).should('have.length.at.least', 1);
 
                         // Select a different option if available
                         cy.get('[role="option"]').then($options => {
@@ -282,7 +286,7 @@ describe('Loading States & Spinners', () => {
                         });
 
                         // Verify page state - either storage units or empty state
-                        cy.get('[data-testid="storage-unit-card"], button:contains("Create")', { timeout: 15000 })
+                        cy.get('[data-testid="storage-unit-card"], button:contains("Create")', {timeout: 15000})
                             .should('exist');
                     });
                 });
@@ -292,7 +296,8 @@ describe('Loading States & Spinners', () => {
 
     describe('Graph View Loading State', () => {
         forEachDatabase('sql', (db) => {
-            describe(`${db.type}`, () => {                it('shows loading state while fetching graph data', () => {
+            describe(`${db.type}`, () => {
+                it('shows loading state while fetching graph data', () => {
                     // Track graph data request
                     cy.intercept('POST', '**/api/query').as('graphDataQuery');
 
@@ -301,10 +306,10 @@ describe('Loading States & Spinners', () => {
                     cy.url().should('include', '/graph');
 
                     // Wait for graph to load
-                    cy.wait('@graphDataQuery', { timeout: 10000 });
+                    cy.wait('@graphDataQuery', {timeout: 10000});
 
                     // Verify graph is rendered (canvas or SVG should be present)
-                    cy.get('canvas, svg', { timeout: 5000 }).should('exist');
+                    cy.get('canvas, svg', {timeout: 5000}).should('exist');
                 });
             });
         });
@@ -322,7 +327,7 @@ describe('Loading States & Spinners', () => {
                     loginToDatabase(db);
 
                     // Verify page loads - either storage units or empty state (Create a Table)
-                    cy.get('[data-testid="storage-unit-card"], button:contains("Create")', { timeout: 15000 })
+                    cy.get('[data-testid="storage-unit-card"], button:contains("Create")', {timeout: 15000})
                         .should('exist');
                 });
             });
@@ -334,9 +339,10 @@ describe('Loading States & Spinners', () => {
             const testTable = db.testTable;
             const tableName = testTable.name;
 
-            describe(`${db.type}`, () => {                it('shows loading state during row creation', () => {
+            describe(`${db.type}`, () => {
+                it('shows loading state during row creation', () => {
                     cy.data(tableName);
-                    cy.get('table tbody tr', { timeout: 10000 }).should('have.length.at.least', 1);
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length.at.least', 1);
 
                     // Look for Add Row button - may be in different locations depending on UI
                     cy.get('body').then($body => {
@@ -358,7 +364,7 @@ describe('Loading States & Spinners', () => {
 
                         // Verify the add row panel/dialog appears with a submit button
                         // The submit button may say "Submit", "Save", or "Add"
-                        cy.get('button:contains("Submit"), button:contains("Save"), button:contains("Add")', { timeout: 5000 })
+                        cy.get('button:contains("Submit"), button:contains("Save"), button:contains("Add")', {timeout: 5000})
                             .first()
                             .should('exist')
                             .and('be.visible');
@@ -370,7 +376,7 @@ describe('Loading States & Spinners', () => {
 
                 it('shows loading state during row update', () => {
                     cy.data(tableName);
-                    cy.get('table tbody tr', { timeout: 10000 }).should('have.length.at.least', 1);
+                    cy.get('table tbody tr', {timeout: 10000}).should('have.length.at.least', 1);
 
                     // Click first row to select/edit
                     cy.get('table tbody tr').first().click();
