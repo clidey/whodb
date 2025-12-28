@@ -33,6 +33,10 @@ inputs:
     description: 'Build Linux Terminal binaries'
     required: false
     default: 'false'
+  deploy-cli:
+    description: 'Build CLI binaries for MCP server'
+    required: false
+    default: 'false'
   publish-github-release:
     description: 'Publish GitHub release to production (production mode only)'
     required: false
@@ -69,6 +73,9 @@ outputs:
   deploy-linux-terminal:
     description: 'Deploy Linux Terminal flag'
     value: ${{ steps.stores.outputs.deploy-linux-terminal }}
+  deploy-cli:
+    description: 'Deploy CLI flag'
+    value: ${{ steps.stores.outputs.deploy-cli }}
   publish-github-release:
     description: 'Publish GitHub release flag'
     value: ${{ steps.flags.outputs.publish-github-release }}
@@ -182,6 +189,7 @@ runs:
         echo "deploy-apple=${{ inputs.deploy-apple }}" >> $GITHUB_OUTPUT
         echo "deploy-appimage=false" >> $GITHUB_OUTPUT  # DISABLED: AppImage requires system WebKit2GTK
         echo "deploy-linux-terminal=${{ inputs.deploy-linux-terminal }}" >> $GITHUB_OUTPUT
+        echo "deploy-cli=${{ inputs.deploy-cli }}" >> $GITHUB_OUTPUT
 
         if [ "$MODE" = "production" ]; then
           echo "Production mode: deploying selected stores to production channels"

@@ -1,0 +1,113 @@
+name: Build CLI Binaries
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build-cli:
+    name: Build CLI Binaries
+    runs-on: ubuntu-latest
+    environment: permission-required
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            proxy.golang.org:443
+            storage.googleapis.com:443
+            sum.golang.org:443
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: '1.23'
+
+      - name: Install cross-compilation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-mingw-w64-x86-64 \
+            gcc-aarch64-linux-gnu \
+            gcc-arm-linux-gnueabihf
+
+      - name: Build CLI for all platforms
+        working-directory: ./cli
+        env:
+          VERSION: ${{ inputs.version }}
+          CGO_ENABLED: '0'
+        run: |
+          mkdir -p build
+
+          # Version info for ldflags
+          LDFLAGS="-s -w -X main.Version=${VERSION}"
+
+          echo "Building CLI version ${VERSION}..."
+
+          # Linux AMD64
+          echo "Building linux/amd64..."
+          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-linux-amd64 .
+
+          # Linux ARM64
+          echo "Building linux/arm64..."
+          GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-linux-arm64 .
+
+          # Linux ARMv7
+          echo "Building linux/arm..."
+          GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-linux-armv7 .
+
+          # macOS AMD64
+          echo "Building darwin/amd64..."
+          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-darwin-amd64 .
+
+          # macOS ARM64 (Apple Silicon)
+          echo "Building darwin/arm64..."
+          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-darwin-arm64 .
+
+          # Windows AMD64
+          echo "Building windows/amd64..."
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-windows-amd64.exe .
+
+          # Windows ARM64
+          echo "Building windows/arm64..."
+          GOOS=windows GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-windows-arm64.exe .
+
+          echo "All builds completed!"
+
+      - name: Verify CLI binaries
+        run: |
+          echo "Verifying built CLI binaries..."
+          ls -lh cli/build/
+
+          for binary in cli/build/whodb-cli-*; do
+            if [ -f "$binary" ]; then
+              echo "✅ Binary: $(basename $binary)"
+              file "$binary"
+            else
+              echo "❌ Missing binary: $binary"
+              exit 1
+            fi
+          done
+
+      - name: Upload CLI binaries artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cli-binaries
+          path: cli/build/whodb-cli-*
+          retention-days: 1
