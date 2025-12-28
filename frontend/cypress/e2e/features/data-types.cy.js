@@ -99,70 +99,73 @@ describe('Data Types CRUD Operations', () => {
                 });
 
                 it('UPDATE - edits type value', () => {
+                    const originalValue = String(testConfig.originalValue).trim();
+                    const updateDisplayValue = String(expectedUpdateDisplay).trim();
+                    const revertValue = testConfig.inputOriginalValue || testConfig.originalValue;
+
                     cy.data(tableName);
                     cy.sortBy(0);
 
+                    // First pass: check if we need to revert leftover data from failed tests
                     cy.getTableData().then(({rows}) => {
                         if (rows.length === 0) {
                             throw new Error('No rows in data_types table');
                         }
 
                         const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
-                        const originalValue = String(testConfig.originalValue).trim();
-                        const updateDisplayValue = String(expectedUpdateDisplay).trim();
-                        const revertValue = testConfig.inputOriginalValue || testConfig.originalValue;
 
-                        // Find row with either original OR update value (handles leftover state from failed tests)
+                        // Find row with either original OR update value
                         let targetRowIndex = rows.findIndex(r => {
                             const cellValue = String(r[columnIndex + 1] || '').trim();
                             return cellValue === originalValue;
                         });
 
-                        // If not found with original, try finding with update value (data left from previous failed test)
-                        let needsInitialRevert = false;
+                        // If not found with original, try finding with update value (leftover from failed test)
                         if (targetRowIndex === -1) {
                             targetRowIndex = rows.findIndex(r => {
                                 const cellValue = String(r[columnIndex + 1] || '').trim();
                                 return cellValue === updateDisplayValue;
                             });
                             if (targetRowIndex !== -1) {
-                                needsInitialRevert = true;
+                                // Revert - table will auto-refresh
+                                cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
+                                // Wait for auto-refresh to show original value
+                                cy.waitForRowValue(columnIndex + 1, originalValue);
                             }
                         }
 
                         if (targetRowIndex === -1) {
                             throw new Error(`Row with value "${originalValue}" or "${updateDisplayValue}" not found in column ${columnName}. Actual values: ${JSON.stringify(columnValues)}`);
                         }
+                    });
 
-                        // If data was left from previous failed test, revert first
-                        if (needsInitialRevert) {
-                            cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
-                            if (mutationDelay > 0) {
-                                cy.wait(mutationDelay);
-                                cy.data(tableName);
-                                cy.sortBy(0);
-                            }
+                    // Second pass: perform the actual UPDATE test with clean data
+                    cy.getTableData().then(({rows}) => {
+                        const targetRowIndex = rows.findIndex(r => {
+                            const cellValue = String(r[columnIndex + 1] || '').trim();
+                            return cellValue === originalValue;
+                        });
+
+                        if (targetRowIndex === -1) {
+                            const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
+                            throw new Error(`Row with original value "${originalValue}" not found. Actual values: ${JSON.stringify(columnValues)}`);
                         }
 
-                        // Now perform the actual UPDATE test
                         cy.updateRow(targetRowIndex, columnIndex, testConfig.updateValue, false);
 
-                        if (mutationDelay > 0) {
-                            cy.wait(mutationDelay);
-                            cy.data(tableName);
-                            cy.sortBy(0);
-                        }
+                        // Wait for auto-refresh to show updated value (Cypress retries until value appears)
+                        cy.waitForRowValue(columnIndex + 1, updateDisplayValue).then(() => {
+                            // Verify the update succeeded by reading final state
+                            cy.getTableData().then(({rows: updatedRows}) => {
+                                const cellValue = String(updatedRows[targetRowIndex][columnIndex + 1] || '').trim();
+                                expect(cellValue).to.equal(updateDisplayValue);
 
-                        cy.getTableData().then(({rows: updatedRows}) => {
-                            const cellValue = String(updatedRows[targetRowIndex][columnIndex + 1] || '').trim();
-                            expect(cellValue).to.equal(updateDisplayValue);
+                                // Revert to original value
+                                cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
 
-                            // Always revert to original value
-                            cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
-
-                            if (mutationDelay > 0) {
-                                cy.wait(mutationDelay);
-                            }
+                                // Wait for revert to complete
+                                cy.waitForRowValue(columnIndex + 1, originalValue);
+                            });
                         });
                     });
                 });
