@@ -60,10 +60,10 @@ import {
     toast,
     VirtualizedTableBody
 } from "@clidey/ux";
-import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
-import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Export} from "./export";
-import {useTranslation} from '@/hooks/use-translation';
+import { useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
+import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Export } from "./export";
+import { useTranslation } from '@/hooks/use-translation';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -91,8 +91,8 @@ import {
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
-import {Tip} from "./tip";
-import {formatShortcut, isModKeyPressed} from "@/utils/platform";
+import { Tip } from "./tip";
+import { formatShortcut, isModKeyPressed } from "@/utils/platform";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -286,7 +286,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     // Track focused column header for focus restoration after sort/refresh
     const focusedColumnRef = useRef<string | null>(null);
-    
+
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
     const [mockDataRowCount, setMockDataRowCount] = useState("100");
@@ -295,15 +295,15 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
-    
+
     // Use server-side pagination
     const currentPage = serverCurrentPage || 1;
     const totalRows = totalCount || 0;
     const totalPages = Math.ceil(totalRows / pageSize);
 
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
-    const [deleteRow, ] = useDeleteRowMutation();
-    const [containerWidth, setContainerWidth] = useState<number>(0);
+    const [deleteRow,] = useDeleteRowMutation();
+
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
 
     // Accessibility: live region for screen reader announcements
@@ -515,13 +515,13 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     const handleCellClick = useCallback((rowIndex: number, cellIndex: number) => {
         const cellKey = `${rowIndex}-${cellIndex}`;
-        
+
         // Clear any existing timeout for this cell
         const existingTimeout = clickTimeouts.current.get(cellKey);
         if (existingTimeout) {
             clearTimeout(existingTimeout);
         }
-        
+
         // Set a new timeout for the single-click action
         const timeout = setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
@@ -547,7 +547,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 clickTimeouts.current.delete(cellKey);
             }
         }
-        
+
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
@@ -566,7 +566,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         // Only allow numeric input
         const numericValue = value.replace(/[^0-9]/g, '');
         const parsedValue = parseInt(numericValue) || 0;
-        
+
         // Enforce max limit
         if (parsedValue > maxRowCount) {
             setMockDataRowCount(maxRowCount.toString());
@@ -595,7 +595,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.error(t('rowCountExceedsMax', { max: maxRowCount }));
             return;
         }
-        
+
         try {
             const result = await generateMockData({
                 variables: {
@@ -858,11 +858,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
 
 
-    useEffect(() => {
-        if (tableRef.current) {
-            setContainerWidth(tableRef.current.offsetWidth);
-        }
-    }, [tableRef]);
+
 
     // Highlight and scroll to the searched cell using document querySelector, no state needed
 
@@ -995,7 +991,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 clientY: e.clientY,
                             });
                             e.currentTarget.dispatchEvent(event);
-                            }} data-testid="icon-button" aria-label={t('moreActions')}>
+                        }} data-testid="icon-button" aria-label={t('moreActions')}>
                             <EllipsisVerticalIcon className="w-4 h-4" />
                         </Button>
                     </TableCell>
@@ -1159,9 +1155,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             >
                 {liveAnnouncement}
             </div>
-            <div className="flex flex-col h-full space-y-4 w-0" style={{
-                width: `${containerWidth}px`,
-            }} data-testid="table-container">
+            <div className="flex flex-col h-full space-y-4 w-full flex-1 overflow-x-auto" data-testid="table-container">
                 <TableComponent
                     role="grid"
                     aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
@@ -1192,7 +1186,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 clientY: e.clientY,
                                             });
                                             e.currentTarget.dispatchEvent(event);
-                                            }} data-testid="icon-button" aria-label={t('moreActions')}>
+                                        }} data-testid="icon-button" aria-label={t('moreActions')}>
                                             <EllipsisVerticalIcon className="w-4 h-4" aria-hidden="true" />
                                         </Button>
                                     </TableHead>
@@ -1236,9 +1230,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 </TableHeadRow>
                             </ContextMenuTrigger>
                             <ContextMenuContent
-                className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
-            >
+                                className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                                collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
+                            >
                                 <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
                                     <CalculatorIcon className="w-4 h-4" />
                                     {t('mockData')}
@@ -1320,9 +1314,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent
-                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-            >
+                            className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                        >
                             <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} className={cn({
                                 "hidden": disableEdit,
                             })}>
@@ -1479,10 +1473,10 @@ export const StorageUnitTable: FC<TableProps> = ({
             </div>
             <Sheet open={showMockDataSheet} onOpenChange={(open) => {
                 setShowMockDataSheet(open);
-                    if (!open) {
-                        setShowMockDataConfirmation(false);
-                    }
-                }}>
+                if (!open) {
+                    setShowMockDataConfirmation(false);
+                }
+            }}>
                 <SheetContent side="right" className="p-8" data-testid="mock-data-sheet">
                     <div className="flex flex-col gap-lg h-full">
                         <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockDataTitle')}</SheetTitle>
