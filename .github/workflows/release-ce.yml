@@ -580,7 +580,20 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Generate Homebrew cask (disabled - run manually when needed)
+  # Step 7: Deploy to npm (after CLI build and GitHub release)
+  deploy-npm:
+    name: Deploy npm
+    needs: [ calculate-version, build-cli, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-cli == 'true' &&
+      needs.build-cli.result == 'success' &&
+      needs.create-github-release.result == 'success'
+    uses: ./.github/workflows/_deploy-npm.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  # Step 8: Generate Homebrew cask (disabled - run manually when needed)
   generate-homebrew-cask:
     name: Generate Homebrew Cask
     needs: [ calculate-version, create-github-release ]
@@ -593,7 +606,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 8: Final summary
+  # Step 9: Final summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -611,6 +624,7 @@ jobs:
       deploy-snap,
       deploy-microsoft,
       deploy-apple,
+      deploy-npm,
       create-github-release,
       generate-homebrew-cask
     ]
@@ -762,6 +776,15 @@ jobs:
             echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # npm
+          if [ "${{ needs.deploy-npm.result }}" = "success" ]; then
+            echo "| npm (@clidey/whodb-cli) | ✅ Published | All platform packages |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-npm.result }}" = "skipped" ]; then
+            echo "| npm | ⏭️ Skipped | CLI not selected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| npm | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY

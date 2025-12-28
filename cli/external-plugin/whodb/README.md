@@ -14,7 +14,7 @@ The default configuration uses npx to auto-download and run the MCP server:
 {
   "whodb": {
     "command": "npx",
-    "args": ["-y", "@clidey/whodb-mcp"]
+    "args": ["-y", "@clidey/whodb-cli", "mcp", "serve"]
   }
 }
 ```
