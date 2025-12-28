@@ -1,3 +1,0 @@
-# Don't include downloaded binaries in the package
-bin/whodb-mcp
-bin/whodb-mcp.exe
