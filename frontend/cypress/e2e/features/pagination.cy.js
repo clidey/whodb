@@ -20,10 +20,10 @@ describe('Pagination', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {name: 'users', firstName: 'john_doe', identifierColIndex: 1};
+        const testTable = db.testTable;
         const tableName = testTable.name;
-        const firstName = testTable.firstName || 'john_doe';
-        const colIndex = testTable.identifierColIndex || 1;
+        const firstName = testTable.firstName;
+        const colIndex = testTable.identifierColIndex;
 
         it('respects page size setting', () => {
             cy.data(tableName);

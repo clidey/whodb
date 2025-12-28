@@ -105,9 +105,9 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsModifiers: true,
         supportsScratchpad: true,
-        supportsSchema: true,
-        supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,
+        supportsSchema: false,  // MySQL treats database=schema, so no separate schema concept
+        supportsDatabaseSwitching: true,  // MySQL supports switching databases
+        usesSchemaForGraph: false,  // Uses database field for queries (database=schema in MySQL)
     },
     {
         id: "MariaDB",
@@ -122,9 +122,9 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsModifiers: true,
         supportsScratchpad: true,
-        supportsSchema: true,
-        supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,
+        supportsSchema: false,  // MariaDB treats database=schema, so no separate schema concept
+        supportsDatabaseSwitching: true,  // MariaDB supports switching databases
+        usesSchemaForGraph: false,  // Uses database field for queries (database=schema in MariaDB)
     },
     {
         id: "Sqlite3",
@@ -169,8 +169,8 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsScratchpad: false,  // Redis doesn't support SQL scratchpad
         supportsSchema: false,  // Redis doesn't have schemas
-        supportsDatabaseSwitching: false,
-        usesSchemaForGraph: true,  // Uses schema field for graph queries
+        supportsDatabaseSwitching: true,  // Redis has numbered databases 0-15
+        usesSchemaForGraph: false,  // Uses database field for queries
     },
     {
         id: "ElasticSearch",

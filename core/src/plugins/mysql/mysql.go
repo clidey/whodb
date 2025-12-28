@@ -18,7 +18,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -42,7 +41,19 @@ type MySQLPlugin struct {
 }
 
 func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
+		var databases []struct {
+			Database string `gorm:"column:Database"`
+		}
+		if err := db.Raw("SHOW DATABASES").Scan(&databases).Error; err != nil {
+			return nil, err
+		}
+		var databaseNames []string
+		for _, database := range databases {
+			databaseNames = append(databaseNames, database.Database)
+		}
+		return databaseNames, nil
+	})
 }
 
 func (p *MySQLPlugin) GetAllSchemasQuery() string {

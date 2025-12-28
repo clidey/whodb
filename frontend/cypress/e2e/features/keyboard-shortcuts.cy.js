@@ -317,7 +317,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Press Cmd+Shift+E (Mac) or Ctrl+Shift+E (Win/Linux)
-                cy.typeCmdShortcut('e', { shift: true });
+                cy.typeCmdShortcut('e', {shift: true});
 
                 // Export dialog should open
                 cy.get('[data-testid="export-dialog"]').should('be.visible');
@@ -434,7 +434,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination (2 is available in E2E mode)
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Focus a row
                 cy.get('body').type('{downarrow}');
@@ -459,7 +459,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Check we're on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
@@ -477,7 +477,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Go to page 2 first
                 cy.get('[data-testid="table-page-number"]').eq(1).click();
@@ -496,7 +496,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Ensure we're on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
@@ -729,7 +729,7 @@ describe('Keyboard Shortcuts', () => {
 
                 // Query should execute and show results
                 cy.get('[role="tabpanel"][data-state="active"] [data-testid="cell-0"]').within(() => {
-                    cy.get('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]', { timeout: 5000 })
+                    cy.get('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]', {timeout: 5000})
                         .should('exist');
                 });
             });
@@ -751,7 +751,7 @@ describe('Keyboard Shortcuts', () => {
 
                 // Focus and press Enter using trigger (more reliable than type)
                 cy.get('[data-testid="column-header-id"]').focus();
-                cy.get('[data-testid="column-header-id"]').trigger('keydown', { key: 'Enter' });
+                cy.get('[data-testid="column-header-id"]').trigger('keydown', {key: 'Enter'});
 
                 // Wait for sort to be applied and data to refresh
                 cy.wait(500);
@@ -765,7 +765,7 @@ describe('Keyboard Shortcuts', () => {
 
                 // Focus and press Space using trigger
                 cy.get('[data-testid="column-header-name"]').focus();
-                cy.get('[data-testid="column-header-name"]').trigger('keydown', { key: ' ' });
+                cy.get('[data-testid="column-header-name"]').trigger('keydown', {key: ' '});
 
                 // Wait for sort to be applied and data to refresh
                 cy.wait(500);

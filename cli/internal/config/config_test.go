@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -47,6 +48,52 @@ func TestDefaultConfig(t *testing.T) {
 
 	if cfg.Display.PageSize != 50 {
 		t.Errorf("Expected PageSize 50, got %d", cfg.Display.PageSize)
+	}
+
+	// Test QueryConfig defaults
+	if cfg.Query.TimeoutSeconds != 30 {
+		t.Errorf("Expected Query.TimeoutSeconds 30, got %d", cfg.Query.TimeoutSeconds)
+	}
+}
+
+func TestGetQueryTimeout(t *testing.T) {
+	tests := []struct {
+		name           string
+		timeoutSeconds int
+		expected       time.Duration
+	}{
+		{
+			name:           "default timeout",
+			timeoutSeconds: 30,
+			expected:       30 * time.Second,
+		},
+		{
+			name:           "custom timeout",
+			timeoutSeconds: 60,
+			expected:       60 * time.Second,
+		},
+		{
+			name:           "zero falls back to default",
+			timeoutSeconds: 0,
+			expected:       30 * time.Second,
+		},
+		{
+			name:           "negative falls back to default",
+			timeoutSeconds: -1,
+			expected:       30 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := DefaultConfig()
+			cfg.Query.TimeoutSeconds = tt.timeoutSeconds
+
+			result := cfg.GetQueryTimeout()
+			if result != tt.expected {
+				t.Errorf("GetQueryTimeout() = %v, expected %v", result, tt.expected)
+			}
+		})
 	}
 }
 

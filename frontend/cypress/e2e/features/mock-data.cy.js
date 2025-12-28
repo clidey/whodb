@@ -20,8 +20,8 @@ describe('Mock Data Generation', () => {
 
     // SQL Databases with mock data support
     forEachDatabase('sql', (db) => {
-        const supportedTable = db.mockData?.supportedTable || 'users';
-        const unsupportedTable = db.mockData?.unsupportedTable || 'orders';
+        const supportedTable = db.mockData.supportedTable;
+        const unsupportedTable = db.mockData.unsupportedTable;
 
         it('shows mock data generation UI', () => {
             cy.data(supportedTable);
@@ -83,7 +83,7 @@ describe('Mock Data Generation', () => {
             // Should show error about foreign key constraint
             cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
         });
-    }, { features: ['mockData'] });
+    }, {features: ['mockData']});
 
     // Document Databases - mock data not supported (inverse: runs when feature is NOT present)
     forEachDatabase('document', (db) => {

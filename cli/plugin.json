@@ -1,0 +1,18 @@
+{
+  "name": "whodb",
+  "version": "1.0.0",
+  "description": "Database management and analysis tools for WhoDB",
+  "author": "Clidey",
+  "homepage": "https://github.com/clidey/whodb",
+  "repository": "https://github.com/clidey/whodb",
+  "license": "Apache-2.0",
+  "keywords": [
+    "database",
+    "sql",
+    "postgres",
+    "mysql",
+    "mongodb",
+    "redis",
+    "elasticsearch"
+  ]
+}

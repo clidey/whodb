@@ -17,6 +17,8 @@
 package tui
 
 import (
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
@@ -40,13 +42,14 @@ const (
 )
 
 type MainModel struct {
-	mode      ViewMode
-	width     int
-	height    int
-	dbManager *database.Manager
-	histMgr   *history.Manager
-	config    *config.Config
-	err       error
+	mode        ViewMode
+	width       int
+	height      int
+	dbManager   *database.Manager
+	histMgr     *history.Manager
+	config      *config.Config
+	err         error
+	showingHelp bool
 
 	connectionView *ConnectionView
 	browserView    *BrowserView
@@ -151,6 +154,14 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// If showing help, any key dismisses it
+	if m.showingHelp {
+		if _, ok := msg.(tea.KeyMsg); ok {
+			m.showingHelp = false
+			return m, nil
+		}
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -161,6 +172,14 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+
+		case "?":
+			// Show help for views without active text input
+			if m.isHelpSafe() {
+				m.showingHelp = true
+				return m, nil
+			}
+			// Otherwise fall through to let view handle it
 
 		case "tab", "shift+tab":
 			// Let connection view handle Tab for its own navigation
@@ -206,6 +225,11 @@ func (m *MainModel) View() string {
 		return renderError(m.err.Error())
 	}
 
+	// Show help overlay if active
+	if m.showingHelp {
+		return m.renderHelpOverlay()
+	}
+
 	viewIndicator := m.renderViewIndicator()
 
 	var content string
@@ -233,6 +257,130 @@ func (m *MainModel) View() string {
 	}
 
 	return viewIndicator + "\n" + content
+}
+
+// isHelpSafe returns true if it's safe to show help (no active text input)
+func (m *MainModel) isHelpSafe() bool {
+	switch m.mode {
+	case ViewResults, ViewHistory, ViewColumns, ViewSchema:
+		// These views don't have text input
+		return true
+	case ViewBrowser:
+		// Browser is safe when not filtering
+		return !m.browserView.filtering
+	case ViewChat:
+		// Chat is safe when not focused on message input
+		return m.chatView.focusField != focusFieldMessage
+	case ViewWhere:
+		// Where is safe when not adding/editing
+		return !m.whereView.addingNew
+	case ViewExport:
+		// Export is safe when not on filename field
+		return m.exportView.focusIndex != 0
+	case ViewConnection:
+		// Connection is safe in list mode
+		return m.connectionView.mode == "list"
+	case ViewEditor:
+		// Editor always has text input
+		return false
+	}
+	return false
+}
+
+// renderHelpOverlay renders a help overlay for the current view
+func (m *MainModel) renderHelpOverlay() string {
+	var b strings.Builder
+
+	b.WriteString(styles.RenderTitle("Keyboard Shortcuts"))
+	b.WriteString("\n\n")
+
+	switch m.mode {
+	case ViewBrowser:
+		b.WriteString(styles.KeyStyle.Render("Browser View\n\n"))
+		b.WriteString("  ctrl+s     Select schema\n")
+		b.WriteString("  ctrl+r     Refresh tables\n")
+		b.WriteString("  ctrl+e     Open editor\n")
+		b.WriteString("  ctrl+a     Open AI chat\n")
+		b.WriteString("  ctrl+h     Open history\n")
+		b.WriteString("  /          Filter tables\n")
+		b.WriteString("  enter      View table data\n")
+		b.WriteString("  esc        Disconnect\n")
+
+	case ViewResults:
+		b.WriteString(styles.KeyStyle.Render("Results View\n\n"))
+		b.WriteString("  n          Next page\n")
+		b.WriteString("  p          Previous page\n")
+		b.WriteString("  h/l        Scroll columns\n")
+		b.WriteString("  w          WHERE conditions\n")
+		b.WriteString("  c          Column selection\n")
+		b.WriteString("  e          Export data\n")
+		b.WriteString("  s          Cycle page size\n")
+		b.WriteString("  shift+s    Custom page size\n")
+		b.WriteString("  esc        Back\n")
+
+	case ViewHistory:
+		b.WriteString(styles.KeyStyle.Render("History View\n\n"))
+		b.WriteString("  enter      Edit query\n")
+		b.WriteString("  r          Re-run query\n")
+		b.WriteString("  shift+d    Clear all history\n")
+		b.WriteString("  esc        Back\n")
+
+	case ViewChat:
+		b.WriteString(styles.KeyStyle.Render("AI Chat View\n\n"))
+		b.WriteString("  up/down    Cycle fields\n")
+		b.WriteString("  left/right Change selection\n")
+		b.WriteString("  enter      Send/view table\n")
+		b.WriteString("  ctrl+p/n   Select message\n")
+		b.WriteString("  ctrl+i     Focus input\n")
+		b.WriteString("  ctrl+r     Revoke consent\n")
+		b.WriteString("  esc        Back\n")
+
+	case ViewSchema:
+		b.WriteString(styles.KeyStyle.Render("Schema View\n\n"))
+		b.WriteString("  enter      Expand/collapse\n")
+		b.WriteString("  v          View table data\n")
+		b.WriteString("  /          Filter tables\n")
+		b.WriteString("  r          Refresh\n")
+		b.WriteString("  esc        Back\n")
+
+	case ViewColumns:
+		b.WriteString(styles.KeyStyle.Render("Column Selection\n\n"))
+		b.WriteString("  space/x    Toggle column\n")
+		b.WriteString("  a          Select all\n")
+		b.WriteString("  n          Select none\n")
+		b.WriteString("  enter      Apply\n")
+		b.WriteString("  esc        Cancel\n")
+
+	case ViewWhere:
+		b.WriteString(styles.KeyStyle.Render("WHERE Conditions\n\n"))
+		b.WriteString("  ctrl+a     Add condition\n")
+		b.WriteString("  ctrl+e     Edit condition\n")
+		b.WriteString("  ctrl+d     Delete condition\n")
+		b.WriteString("  enter      Apply\n")
+		b.WriteString("  esc        Cancel\n")
+
+	case ViewExport:
+		b.WriteString(styles.KeyStyle.Render("Export View\n\n"))
+		b.WriteString("  tab        Next field\n")
+		b.WriteString("  left/right Change option\n")
+		b.WriteString("  enter      Export\n")
+		b.WriteString("  esc        Cancel\n")
+
+	case ViewConnection:
+		b.WriteString(styles.KeyStyle.Render("Connection View\n\n"))
+		b.WriteString("  n          New connection\n")
+		b.WriteString("  d          Delete connection\n")
+		b.WriteString("  enter      Connect\n")
+		b.WriteString("  esc        Quit\n")
+
+	default:
+		b.WriteString("No help available for this view\n")
+	}
+
+	b.WriteString("\n")
+	b.WriteString(styles.MutedStyle.Render("Press any key to close"))
+
+	return styles.BaseStyle.Padding(1, 2).Render(b.String())
 }
 
 func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {

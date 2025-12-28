@@ -15,14 +15,14 @@
  */
 
 import {forEachDatabase, getTableConfig} from '../../support/test-runner';
-import {verifyDocumentRows} from '../../support/categories/document';
+import {parseDocument, verifyDocumentRows} from '../../support/categories/document';
 import {verifyColumnsForType, verifyMembers, verifyStringValue,} from '../../support/categories/keyvalue';
 
 describe('Data View', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {name: 'users'};
+        const testTable = db.testTable;
         const tableName = testTable.name;
 
         it('displays table data with correct columns', () => {
@@ -71,15 +71,38 @@ describe('Data View', () => {
 
             cy.getTableData().then(({columns, rows}) => {
                 const tableConfig = getTableConfig(db, 'users');
+                const testValues = db.testTable?.testValues;
 
                 // Document DBs have [checkbox, document] columns
                 if (tableConfig && tableConfig.expectedColumns) {
                     expect(columns).to.deep.equal(tableConfig.expectedColumns);
                 }
 
-                // Verify document content
+                // Verify document content (allowing for modified values from CRUD tests)
                 if (tableConfig && tableConfig.testData && tableConfig.testData.initial) {
-                    verifyDocumentRows(rows, tableConfig.testData.initial);
+                    const expectedDocs = tableConfig.testData.initial.map((doc, idx) => {
+                        // For the row that CRUD tests modify, accept either original or modified value
+                        if (testValues && idx === testValues.rowIndex && testValues.original && testValues.modified) {
+                            return {
+                                ...doc,
+                                [db.testTable.identifierField]: [testValues.original, testValues.modified]
+                            };
+                        }
+                        return doc;
+                    });
+
+                    expect(rows.length).to.equal(expectedDocs.length);
+                    expectedDocs.forEach((expected, idx) => {
+                        const doc = parseDocument(rows[idx]);
+                        Object.entries(expected).forEach(([key, value]) => {
+                            if (Array.isArray(value)) {
+                                // Accept any of the allowed values
+                                expect(value, `Document field ${key}`).to.include(doc[key]);
+                            } else {
+                                expect(doc[key], `Document field ${key}`).to.equal(value);
+                            }
+                        });
+                    });
                 }
             });
         });
