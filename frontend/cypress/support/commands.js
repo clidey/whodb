@@ -1720,7 +1720,17 @@ Cypress.Commands.add('toggleChatSQLView', () => {
  * @param {string} expectedSQL - The expected SQL query (can be partial)
  */
 Cypress.Commands.add('verifyChatSQL', (expectedSQL) => {
-    cy.get('[data-testid="code-editor"]').last().should('contain.text', expectedSQL);
+    cy.get('[data-testid="code-editor"]').last().invoke('text').then((actualText) => {
+        // Remove line number prefixes (e.g., "1>", "912>") and normalize whitespace
+        const normalizedActual = actualText
+            .replace(/^\d+>/gm, '')  // Remove line number prefixes
+            .replace(/\s+/g, ' ')     // Normalize whitespace
+            .trim();
+        const normalizedExpected = expectedSQL
+            .replace(/\s+/g, ' ')     // Normalize whitespace
+            .trim();
+        expect(normalizedActual).to.contain(normalizedExpected);
+    });
 });
 
 /**

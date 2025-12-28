@@ -57,12 +57,17 @@
     "queryHistory": "Query history not supported for document databases"
   },
   "whereOperators": {
-    "equals": "=",
+    "equals": "term",
     "notEquals": "!=",
     "greaterThan": ">",
     "lessThan": "<",
     "greaterOrEqual": ">=",
-    "lessOrEqual": "<="
+    "lessOrEqual": "<=",
+    "match": "match",
+    "match_phrase": "match_phrase",
+    "regexp": "regexp",
+    "wildcard": "wildcard",
+    "fuzzy": "fuzzy"
   },
   "expectedIndices": [
     "order_items",

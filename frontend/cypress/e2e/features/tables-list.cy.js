@@ -24,7 +24,9 @@ describe('Storage Unit Listing', () => {
         it('lists expected tables', () => {
             cy.getTables().then(tables => {
                 expect(tables).to.be.an('array');
-                expect(tables).to.deep.equal(db.expectedTables);
+                // Filter out test artifacts (tables like test_table_12345 from mock data tests)
+                const filteredTables = tables.filter(t => !t.match(/^test_table_\d+/));
+                expect(filteredTables).to.deep.equal(db.expectedTables);
             });
         });
     });
