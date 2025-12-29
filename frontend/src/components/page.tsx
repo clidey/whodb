@@ -120,7 +120,6 @@ const KeyboardShortcutsHint: FC = () => {
 };
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
-    const { t } = useTranslation('components/page');
     const current = useAppSelector(state => state.auth.current);
 
     // Fetch database metadata when logged in - this populates Redux store
@@ -129,13 +128,6 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
 
     return (
         <Container>
-            {/* Skip link for keyboard navigation */}
-            <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-                {t('skipToContent')}
-            </a>
             <div className="flex flex-row grow">
                 <SidebarProvider defaultOpen={props.sidebar == null}>
                     <Sidebar />

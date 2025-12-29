@@ -43,7 +43,8 @@
   --brand-foreground: #11518E;
   --muted: oklch(0.97 0 0);
   --primary: #11518E;
-  
+  --icon-foreground: #11518E;
+
   /* UI Customization defaults - these will be overridden by theme-customization.ts */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -52,10 +53,6 @@
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.875rem;
-}
-
-.stroke-icon-foreground {
-  color: #11518E;
 }
 
 .linux :root, :root.linux {
@@ -74,14 +71,11 @@ body {
   --icon: var(--text-muted);
   --primary: #8EBFFB;
   --muted: oklch(0.269 0 0);
+  --icon-foreground: #8EBFFB;
 }
 
 .bg-icon {
   background-color: var(--text-muted);
-}
-
-.dark .stroke-icon-foreground {
-  color: #8EBFFB;
 }
 
 .dark .react-flow__controls-button {
@@ -171,19 +165,6 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Accessibility: Screen reader only utility */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }
 
 [data-testid="storage-unit-card-list"]:not(.hidden) {
