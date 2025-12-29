@@ -1,0 +1,10 @@
+{
+  "name": "whodb",
+  "version": "0.1.0",
+  "description": "WhoDB database management tools. Query databases, explore schemas, analyze data, and get optimization recommendations. Supports PostgreSQL, MySQL, SQLite, MongoDB, Redis, ClickHouse, Elasticsearch, and more.",
+  "author": {
+    "name": "Clidey"
+  },
+  "repository": "https://github.com/clidey/whodb",
+  "homepage": "https://github.com/clidey/whodb"
+}

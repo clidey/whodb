@@ -103,6 +103,8 @@ export const FloatingGraphEdge: FC<EdgeProps> = ({ id, source, target, sourceHan
       d={edgePath}
       markerEnd={markerEnd}
       style={style}
+      data-edge-source={source}
+      data-edge-target={target}
     />
   );
 }

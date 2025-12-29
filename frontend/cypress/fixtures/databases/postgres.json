@@ -1,6 +1,7 @@
 {
   "type": "Postgres",
   "category": "sql",
+  "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",
     "identifierField": "username",
@@ -12,16 +13,31 @@
       "modified": "john_doe1",
       "rowIndex": 0
     },
-    "searchTerm": "john"
+    "searchTerm": "john",
+    "firstName": "john_doe",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
   },
   "connection": {
     "host": "localhost",
     "port": 5432,
     "user": "user",
     "password": "jio53$*(@nfe)",
-    "database": "test_db"
+    "database": "test_db",
+    "advanced": {}
   },
   "schema": "test_schema",
+  "mockData": {
+    "supportedTable": "users",
+    "unsupportedTable": "orders"
+  },
   "whereOperators": {
     "equals": "=",
     "notEquals": "!=",
@@ -29,6 +45,10 @@
     "lessThan": "<",
     "greaterOrEqual": ">=",
     "lessOrEqual": "<="
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": true
   },
   "features": {
     "graph": true,
@@ -343,18 +363,18 @@
   },
   "graph": {
     "expectedNodes": {
-      "users": [
+      "users": [],
+      "orders": [
+        "users"
+      ],
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
         "orders"
       ],
-      "orders": [
-        "order_items",
-        "payments"
-      ],
-      "order_items": [],
-      "products": [
-        "order_items"
-      ],
-      "payments": [],
       "order_summary": []
     }
   },
@@ -365,8 +385,11 @@
     "updateUser": "UPDATE test_schema.users SET username='john_doe1' WHERE id=1",
     "revertUser": "UPDATE test_schema.users SET username='john_doe' WHERE id=1",
     "countUsers": "SELECT COUNT(*) as user_count FROM test_schema.users;",
+    "countColumn": "user_count",
     "selectUsersFiltered": "SELECT username, email FROM test_schema.users WHERE id > 1;",
     "invalidQuery": "SELECT * FROM test_schema.users1;",
+    "permissionDeniedQuery": "CREATE TABLE test_schema.users (id INT)",
+    "emptyResultQuery": "SELECT * FROM test_schema.users WHERE id = -99999",
     "errorPatterns": {
       "tableNotFound": "ERROR: relation \"test_schema.users1\" does not exist (SQLSTATE 42P01)"
     }

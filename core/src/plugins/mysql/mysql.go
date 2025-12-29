@@ -18,7 +18,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -42,7 +41,19 @@ type MySQLPlugin struct {
 }
 
 func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
+		var databases []struct {
+			Database string `gorm:"column:Database"`
+		}
+		if err := db.Raw("SHOW DATABASES").Scan(&databases).Error; err != nil {
+			return nil, err
+		}
+		var databaseNames []string
+		for _, database := range databases {
+			databaseNames = append(databaseNames, database.Database)
+		}
+		return databaseNames, nil
+	})
 }
 
 func (p *MySQLPlugin) GetAllSchemasQuery() string {
@@ -119,40 +130,17 @@ func (p *MySQLPlugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInterf
 }
 
 func (p *MySQLPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
-	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
-		query := `
-			SELECT
-				COLUMN_NAME,
-				REFERENCED_TABLE_NAME,
-				REFERENCED_COLUMN_NAME
-			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-			WHERE TABLE_SCHEMA = ?
-				AND TABLE_NAME = ?
-				AND REFERENCED_TABLE_NAME IS NOT NULL
-		`
-
-		rows, err := db.Raw(query, schema, storageUnit).Rows()
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		relationships := make(map[string]*engine.ForeignKeyRelationship)
-		for rows.Next() {
-			var columnName, referencedTable, referencedColumn string
-			if err := rows.Scan(&columnName, &referencedTable, &referencedColumn); err != nil {
-				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
-				continue
-			}
-			relationships[columnName] = &engine.ForeignKeyRelationship{
-				ColumnName:       columnName,
-				ReferencedTable:  referencedTable,
-				ReferencedColumn: referencedColumn,
-			}
-		}
-
-		return relationships, nil
-	})
+	query := `
+		SELECT
+			COLUMN_NAME,
+			REFERENCED_TABLE_NAME,
+			REFERENCED_COLUMN_NAME
+		FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+		WHERE TABLE_SCHEMA = ?
+			AND TABLE_NAME = ?
+			AND REFERENCED_TABLE_NAME IS NOT NULL
+	`
+	return p.QueryForeignKeyRelationships(config, query, schema, storageUnit)
 }
 
 // NormalizeType converts MySQL type aliases to their canonical form.

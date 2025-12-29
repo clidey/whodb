@@ -13,7 +13,7 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
-	github.com/brianvoe/gofakeit/v7 v7.11.0 // indirect
+	github.com/brianvoe/gofakeit/v7 v7.12.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clidey/whodb/core v0.0.0 // indirect
 	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000 // indirect

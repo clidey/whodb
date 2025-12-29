@@ -1,25 +1,41 @@
 {
   "type": "ClickHouse",
   "category": "sql",
+  "dataTypesTable": "data_types",
+  "mockData": {
+    "supportedTable": "users",
+    "unsupportedTable": "orders"
+  },
   "testTable": {
     "name": "users",
     "identifierField": "username",
     "identifierColIndex": 1,
     "idField": "id",
     "firstId": "1",
+    "firstName": "john_doe",
     "testValues": {
       "original": "john_doe",
       "modified": "john_doe1",
       "rowIndex": 0
     },
-    "searchTerm": "john"
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
   },
   "connection": {
     "host": "localhost",
     "port": 8123,
     "user": "user",
     "password": "password",
-    "database": "test_db"
+    "database": "test_db",
+    "advanced": {}
   },
   "schema": null,
   "whereOperators": {
@@ -29,6 +45,10 @@
     "lessThan": "<",
     "greaterOrEqual": ">=",
     "lessOrEqual": "<="
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": false
   },
   "features": {
     "graph": true,
@@ -261,7 +281,10 @@
     "updateUser": "ALTER TABLE test_db.users UPDATE username='john_doe1' WHERE id=1",
     "revertUser": "ALTER TABLE test_db.users UPDATE username='john_doe' WHERE id=1",
     "countUsers": "SELECT COUNT(*) as user_count FROM test_db.users;",
+    "countColumn": "user_count",
     "invalidQuery": "SELECT * FROM test_db.users1;",
+    "permissionDeniedQuery": "CREATE TABLE test_db.users (id UInt32) ENGINE = MergeTree() ORDER BY id",
+    "emptyResultQuery": "SELECT * FROM test_db.users WHERE id = 0",
     "errorPatterns": {
       "tableNotFound": "Unknown table"
     }

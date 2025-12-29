@@ -387,8 +387,10 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     const visibleFilters = filters.And?.Children?.slice(0, MAX_VISIBLE_CONDITIONS) ?? [];
     const hiddenCount = (filters.And?.Children?.length ?? 0) - MAX_VISIBLE_CONDITIONS;
 
+    const totalConditionCount = filters.And?.Children?.length ?? 0;
+
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col" data-condition-count={totalConditionCount} data-condition-mode="and">
             <Label className="mb-2">{t('whereCondition')}</Label>
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {visibleFilters.map((filter, i) => (
@@ -396,6 +398,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         key={`explore-storage-unit-filter-${i}`}
                         className="group/filter-item flex gap-xs items-center text-xs rounded-2xl cursor-pointer h-[36px]"
                         data-testid="where-condition"
+                        data-condition-key={filter.Atomic?.Key}
+                        data-condition-operator={filter.Atomic?.Operator}
+                        data-condition-value={filter.Atomic?.Value}
                     >
                         <Badge
                             className={twMerge(

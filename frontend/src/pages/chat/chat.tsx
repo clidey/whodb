@@ -48,7 +48,7 @@ import {
 } from "../../components/heroicons";
 import classNames from "classnames";
 import {cloneElement, FC, KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import logoImage from "../../../public/images/logo.png";
+import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
@@ -160,7 +160,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
     }, [current?.Type, type]);
 
     return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview">
-        <div className="opacity-0 group-hover/table-preview:opacity-100 focus-within:opacity-100 transition-all z-[1] flex gap-1 -transalte-y-full h-0">
+        <div className="opacity-0 group-hover/table-preview:opacity-100 focus-within:opacity-100 transition-all flex gap-1 -transalte-y-full absolute top-0 z-[10]">
             <Button onClick={handleCodeToggle} data-testid="icon-button" variant="outline" aria-label={showSQL ? t('showTable') : t('showCode')}>
                 {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
                     className: "w-6 h-6",
@@ -459,10 +459,10 @@ export const ChatPage: FC = () => {
                                                     "self-start": !chat.isUserInput,
                                                 })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8 mt-2" />
+                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                         : <div className="pl-4" />}
-                                                    <p className={classNames("px-4 py-2 rounded-xl whitespace-pre-wrap", {
-                                                        "bg-neutral-600/5 dark:bg-[#2C2F33]": chat.isUserInput,
+                                                    <p className={classNames("py-2 rounded-xl whitespace-pre-wrap", {
+                                                        "bg-neutral-600/5 dark:bg-[#2C2F33] px-4": chat.isUserInput,
                                                         "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
                                                     })} data-input-message={chat.isUserInput ? "user" : "system"}>
                                                         {chat.Text}

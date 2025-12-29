@@ -31,7 +31,8 @@ describe('CRUD Operations', () => {
     forEachDatabase('sql', (db) => {
         const testTable = db.testTable;
         if (!testTable) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -169,7 +170,8 @@ describe('CRUD Operations', () => {
     forEachDatabase('document', (db) => {
         const testTable = db.testTable;
         if (!testTable) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -231,6 +233,25 @@ describe('CRUD Operations', () => {
                 cy.sortBy(0);
 
                 cy.getTableData().then(({rows}) => {
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    const currentValue = doc[testTable.identifierField];
+
+                    // If data was left from previous failed test, revert first
+                    if (currentValue === testValues.modified) {
+                        const revertDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                            [testTable.identifierField]: testValues.original
+                        });
+                        cy.updateRow(testValues.rowIndex, 1, revertDoc, false);
+                        if (refreshDelay > 0) {
+                            cy.wait(refreshDelay);
+                            cy.data(tableName);
+                            cy.sortBy(0);
+                        }
+                    }
+                });
+
+                // Now perform the actual edit test
+                cy.getTableData().then(({rows}) => {
                     const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
                         [testTable.identifierField]: testValues.modified
                     });
@@ -272,15 +293,20 @@ describe('CRUD Operations', () => {
                 cy.sortBy(0);
 
                 cy.getTableData().then(({rows}) => {
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    const currentValue = doc[testTable.identifierField];
+
+                    // Store the current value for later verification (might be original or modified from failed test)
                     const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
                         [testTable.identifierField]: 'temp_value'
                     });
                     cy.updateRow(testValues.rowIndex, 1, updatedDoc, true);
-                });
 
-                cy.getTableData().then(({rows}) => {
-                    const doc = parseDocument(rows[testValues.rowIndex]);
-                    expect(doc[testTable.identifierField]).to.equal(testValues.original);
+                    // Verify the value didn't change (should still be whatever it was before)
+                    cy.getTableData().then(({rows: verifyRows}) => {
+                        const verifyDoc = parseDocument(verifyRows[testValues.rowIndex]);
+                        expect(verifyDoc[testTable.identifierField]).to.equal(currentValue);
+                    });
                 });
             });
         });
@@ -320,7 +346,8 @@ describe('CRUD Operations', () => {
     forEachDatabase('keyvalue', (db) => {
         const testTable = db.testTable;
         if (!testTable) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -331,6 +358,13 @@ describe('CRUD Operations', () => {
         describe('Edit Hash Field', () => {
             it('edits a hash field value and saves', () => {
                 cy.data(keyName);
+
+                // Check if data was left from a previous failed test and revert first
+                cy.getTableData().then(({rows}) => {
+                    if (rows[rowIndex][2] === testValues.modified) {
+                        cy.updateRow(rowIndex, 1, testValues.original, false);
+                    }
+                });
 
                 cy.updateRow(rowIndex, 1, testValues.modified, false);
 
@@ -349,10 +383,15 @@ describe('CRUD Operations', () => {
             it('cancels edit without saving', () => {
                 cy.data(keyName);
 
-                cy.updateRow(rowIndex, 1, 'temp_value', true);
-
+                // Store current value for verification (might be original or modified from failed test)
                 cy.getTableData().then(({rows}) => {
-                    expect(rows[rowIndex][2]).to.equal(testValues.original);
+                    const currentValue = rows[rowIndex][2];
+
+                    cy.updateRow(rowIndex, 1, 'temp_value', true);
+
+                    cy.getTableData().then(({rows: verifyRows}) => {
+                        expect(verifyRows[rowIndex][2]).to.equal(currentValue);
+                    });
                 });
             });
         });

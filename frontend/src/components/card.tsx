@@ -121,7 +121,7 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
             {...props}
             tag={props.collapsedTag}
             className={cn(
-              "min-h-[200px] w-[220px] cursor-pointer",
+              "min-h-[200px] w-[240px] cursor-pointer",
               props.className,
             )}
             loading={props.loading}>

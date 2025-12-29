@@ -1,25 +1,37 @@
 {
   "type": "MySQL",
   "category": "sql",
+  "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",
     "identifierField": "username",
     "identifierColIndex": 1,
     "idField": "id",
     "firstId": "1",
+    "firstName": "john_doe",
     "testValues": {
       "original": "john_doe",
       "modified": "john_doe1",
       "rowIndex": 0
     },
-    "searchTerm": "john"
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
   },
   "connection": {
     "host": "localhost",
     "port": 3306,
     "user": "user",
     "password": "password",
-    "database": "test_db"
+    "database": "test_db",
+    "advanced": {}
   },
   "schema": "test_db",
   "whereOperators": {
@@ -29,6 +41,10 @@
     "lessThan": "<",
     "greaterOrEqual": ">=",
     "lessOrEqual": "<="
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": false
   },
   "features": {
     "graph": true,
@@ -320,18 +336,18 @@
   },
   "graph": {
     "expectedNodes": {
-      "users": [
+      "users": [],
+      "orders": [
+        "users"
+      ],
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
         "orders"
       ],
-      "orders": [
-        "order_items",
-        "payments"
-      ],
-      "order_items": [],
-      "products": [
-        "order_items"
-      ],
-      "payments": [],
       "order_summary": []
     }
   },
@@ -342,10 +358,17 @@
     "updateUser": "UPDATE test_db.users SET username='john_doe1' WHERE id=1",
     "revertUser": "UPDATE test_db.users SET username='john_doe' WHERE id=1",
     "countUsers": "SELECT COUNT(*) as user_count FROM test_db.users;",
+    "countColumn": "user_count",
     "selectUsersFiltered": "SELECT username, email FROM test_db.users WHERE id > 1;",
     "invalidQuery": "SELECT * FROM test_db.users1;",
+    "permissionDeniedQuery": "CREATE TABLE test_db.users (id INT)",
+    "emptyResultQuery": "SELECT * FROM test_db.users WHERE id = -99999",
     "errorPatterns": {
       "tableNotFound": "Error 1146 (42S02): Table 'test_db.users1' doesn't exist"
     }
+  },
+  "mockData": {
+    "supportedTable": "users",
+    "unsupportedTable": "orders"
   }
 }

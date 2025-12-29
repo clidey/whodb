@@ -286,7 +286,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     }, [getAIModels, externalModelType, externalModelToken, dispatch]);
 
     const handleOpenDocs = useCallback(() => {
-        window.open("https://whodb.com/docs/usage-houdini/what-is-houdini", "_blank");
+        window.open("https://docs.whodb.com/ai/introduction", "_blank");
     }, []);
 
     const handleClear = useCallback(() => {

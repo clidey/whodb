@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import {
@@ -76,7 +76,7 @@ import {InternalRoutes} from "../../config/routes";
 import {trackFrontendEvent} from "../../config/posthog";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {databaseSupportsModifiers} from "../../utils/database-data-types";
-import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {Tip} from '../../components/tip';
 import {SettingsActions} from '../../store/settings';
@@ -106,8 +106,8 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
 
     return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
         "shadow-2xl exploring-storage-unit": expanded,
-    })} data-testid="storage-unit-card">
-        <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card">
+    })} data-testid="storage-unit-card" data-table-name={unit.Name}>
+        <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card" data-table-name={unit.Name}>
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
                 <Tip className="w-fit">
                     <h1
@@ -153,30 +153,36 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                         {/* Metadata attributes (Type, Total Size, etc.) */}
                         {
                             introAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={attribute.Key}>
-                                    {attribute.Value?.toLowerCase()}
-                                </StackListItem>
+                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                    <StackListItem item={attribute.Key}>
+                                        {attribute.Value?.toLowerCase()}
+                                    </StackListItem>
+                                </div>
                             ))
                         }
                         {
                             expandedAttributes.map(attribute => (
-                                <StackListItem key={attribute.Key} item={attribute.Key}>
-                                    {attribute.Value?.toLowerCase()}
-                                </StackListItem>
+                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                    <StackListItem item={attribute.Key}>
+                                        {attribute.Value?.toLowerCase()}
+                                    </StackListItem>
+                                </div>
                             ))
                         }
                     </StackList>
                     {columns && columns.length > 0 && (
-                        <div className="mt-2">
+                        <div className="mt-8">
                             <h3 className="text-xs font-semibold uppercase text-muted-foreground">{t('columnsTitle')}</h3>
                             <StackList>
                                 {columns.map(col => {
                                     const isForeignKey = col.IsForeignKey;
                                     return (
-                                        <StackListItem key={col.Name} item={isForeignKey ?
-                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
-                                            {col.Type?.toLowerCase()}
-                                        </StackListItem>
+                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                            <StackListItem item={isForeignKey ?
+                                                <Badge className="text-lg" data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
+                                                {col.Type?.toLowerCase()}
+                                            </StackListItem>
+                                        </div>
                                     );
                                 })}
                             </StackList>
@@ -217,9 +223,9 @@ export const StorageUnitPage: FC = () => {
         });
     }, [current?.Type, trackFrontendEvent, view]);
 
-    // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
-    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
-        schema = current.Database
+    // Databases like MySQL, MariaDB, ClickHouse, MongoDB use database name as schema parameter since they treat database=schema
+    if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type)) {
+        schema = current?.Database ?? '';
     }
 
     const { loading, data, refetch } = useGetStorageUnitsQuery({
@@ -555,14 +561,18 @@ export const StorageUnitPage: FC = () => {
                                     <StackList>
                                         {/* Metadata attributes */}
                                         {introAttributes.map(attribute => (
-                                            <StackListItem key={attribute.Key} item={attribute.Key}>
-                                                {attribute.Value?.toLowerCase()}
-                                            </StackListItem>
+                                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                                <StackListItem item={attribute.Key}>
+                                                    {attribute.Value?.toLowerCase()}
+                                                </StackListItem>
+                                            </div>
                                         ))}
                                         {expandedAttributes.map(attribute => (
-                                            <StackListItem key={attribute.Key} item={attribute.Key}>
-                                                {attribute.Value?.toLowerCase()}
-                                            </StackListItem>
+                                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
+                                                <StackListItem item={attribute.Key}>
+                                                    {attribute.Value?.toLowerCase()}
+                                                </StackListItem>
+                                            </div>
                                         ))}
                                     </StackList>
                                     {columns && columns.length > 0 && (
@@ -572,10 +582,12 @@ export const StorageUnitPage: FC = () => {
                                                 {columns.map((col: any) => {
                                                     const isForeignKey = col.IsForeignKey;
                                                     return (
-                                                        <StackListItem key={col.Name} item={isForeignKey ?
-                                                            <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
-                                                            {col.Type?.toLowerCase()}
-                                                        </StackListItem>
+                                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                                            <StackListItem item={isForeignKey ?
+                                                                <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
+                                                                {col.Type?.toLowerCase()}
+                                                            </StackListItem>
+                                                        </div>
                                                     );
                                                 })}
                                             </StackList>
@@ -651,9 +663,11 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                     const name = item.Key;
                                     const value = item.Value?.toLowerCase();
                                     return (
-                                        <StackListItem key={`meta-${name}-${index}`} rowClassName="items-start" item={name}>
-                                            {value}
-                                        </StackListItem>
+                                        <div key={`meta-${name}-${index}`} data-field-key={name} data-field-value={value}>
+                                            <StackListItem rowClassName="items-start" item={name}>
+                                                {value}
+                                            </StackListItem>
+                                        </div>
                                     );
                                 })
                             }
@@ -666,7 +680,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                     const isPKColumn = col.IsPrimary || false;
 
                                     return (
-                                        <div key={`col-${name}-${index}`} className="relative">
+                                        <div key={`col-${name}-${index}`} className="relative" data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"
@@ -684,8 +698,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                                                 />
                                             )}
                                             <StackListItem rowClassName="items-start"
-                                                           item={isFKColumn ? <Badge
-                                                               className="text-lg">{name}</Badge> : name}>
+                                                           item={isFKColumn ? <Badge variant="secondary" className="text-lg">{name}</Badge> : name}>
                                                 {value}
                                             </StackListItem>
                                         </div>
@@ -694,7 +707,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnit & { columns?: 
                             }
                         </StackList>
                     </div>
-                    <Button onClick={handleNavigateTo} data-testid="data-button">
+                    <Button onClick={handleNavigateTo} data-testid="data-button" variant="secondary">
                         <CircleStackIcon className="w-4 h-4" /> {t('data')}
                     </Button>
                 </div>

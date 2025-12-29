@@ -16,10 +16,6 @@
 
 package mysql
 
-func (p *MySQLPlugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return value, nil
-}
-
 // Identifier quoting handled by GORM Dialector
 
 func (p *MySQLPlugin) GetPrimaryKeyColQuery() string {
@@ -36,4 +32,3 @@ func (p *MySQLPlugin) GetPrimaryKeyColQuery() string {
 		ORDER BY k.ORDINAL_POSITION;
 	`
 }
-

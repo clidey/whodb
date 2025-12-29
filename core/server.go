@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
 	"github.com/pkg/errors"
@@ -102,17 +104,29 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Logger.Info("Shutting down server, 30 second timeout started...")
+	log.Logger.Info("Shutting down server...")
 
-	// Create a deadline to wait for
+	// Create a deadline for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Doesn't block if no connections, but will otherwise wait
-	// until the timeout deadline.
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Logger.Fatalf("Server forced to shutdown: %v, resources might be left hanging", err)
-	}
+	// Shutdown HTTP server and close DB connections in parallel
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Logger.Errorf("HTTP server shutdown error: %v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		plugins.CloseAllConnections(ctx)
+	}()
+
+	wg.Wait()
 
 	close(serverStarted)
 	close(quit)

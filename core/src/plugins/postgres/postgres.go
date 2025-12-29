@@ -133,45 +133,22 @@ func (p *PostgresPlugin) RawExecute(config *engine.PluginConfig, query string) (
 }
 
 func (p *PostgresPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
-	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
-		query := `
-			SELECT
-				kcu.column_name,
-				ccu.table_name AS referenced_table,
-				ccu.column_name AS referenced_column
-			FROM information_schema.table_constraints AS tc
-			JOIN information_schema.key_column_usage AS kcu
-				ON tc.constraint_name = kcu.constraint_name
-				AND tc.table_schema = kcu.table_schema
-			JOIN information_schema.constraint_column_usage AS ccu
-				ON ccu.constraint_name = tc.constraint_name
-			WHERE tc.constraint_type = 'FOREIGN KEY'
-				AND tc.table_schema = ?
-				AND tc.table_name = ?
-		`
-
-		rows, err := db.Raw(query, schema, storageUnit).Rows()
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		relationships := make(map[string]*engine.ForeignKeyRelationship)
-		for rows.Next() {
-			var columnName, referencedTable, referencedColumn string
-			if err := rows.Scan(&columnName, &referencedTable, &referencedColumn); err != nil {
-				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
-				continue
-			}
-			relationships[columnName] = &engine.ForeignKeyRelationship{
-				ColumnName:       columnName,
-				ReferencedTable:  referencedTable,
-				ReferencedColumn: referencedColumn,
-			}
-		}
-
-		return relationships, nil
-	})
+	query := `
+		SELECT
+			kcu.column_name,
+			ccu.table_name AS referenced_table,
+			ccu.column_name AS referenced_column
+		FROM information_schema.table_constraints AS tc
+		JOIN information_schema.key_column_usage AS kcu
+			ON tc.constraint_name = kcu.constraint_name
+			AND tc.table_schema = kcu.table_schema
+		JOIN information_schema.constraint_column_usage AS ccu
+			ON ccu.constraint_name = tc.constraint_name
+		WHERE tc.constraint_type = 'FOREIGN KEY'
+			AND tc.table_schema = ?
+			AND tc.table_name = ?
+	`
+	return p.QueryForeignKeyRelationships(config, query, schema, storageUnit)
 }
 
 // NormalizeType converts PostgreSQL type aliases to their canonical form.

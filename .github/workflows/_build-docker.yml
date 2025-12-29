@@ -56,6 +56,8 @@ jobs:
             release-assets.githubusercontent.com:443
             storage.googleapis.com:443
             sum.golang.org:443
+            us.i.posthog.com:443
+            app.posthog.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -104,6 +106,20 @@ jobs:
         run: |
           pnpm install
           pnpm run build:${{ inputs.edition }}
+
+      # Upload source maps to PostHog for production error tracking
+      # This injects metadata into JS files and uploads .map files
+      # Only runs on amd64 to avoid duplicate uploads (frontend is identical across architectures)
+      - name: Upload source maps to PostHog
+        if: matrix.arch == 'amd64'
+        uses: PostHog/upload-source-maps@9588f138ad57fa0471ddcbb0b564a7b584dc8a9a # v0.5.7.0
+        with:
+          directory: frontend/build
+          env-id: ${{ secrets.POSTHOG_ENV_ID }}
+          cli-token: ${{ secrets.POSTHOG_CLI_TOKEN }}
+          version: ${{ inputs.version }}
+          delete-after-upload: true
+        continue-on-error: true  # Don't fail build if source map upload fails
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1

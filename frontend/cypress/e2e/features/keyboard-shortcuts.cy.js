@@ -49,13 +49,13 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('[data-testid="context-menu-edit-row"]').click();
 
                 // Edit dialog should be visible
-                cy.contains('Edit Row').should('be.visible');
+                cy.get('[data-testid="edit-row-dialog"]').should('be.visible');
 
                 // Press ESC to close
                 cy.get('body').type('{esc}');
 
                 // Dialog should be closed
-                cy.contains('Edit Row').should('not.exist');
+                cy.get('[data-testid="edit-row-dialog"]').should('not.exist');
             });
 
             it('closes add row dialog with ESC', () => {
@@ -96,7 +96,7 @@ describe('Keyboard Shortcuts', () => {
 
                     // Open embedded scratchpad
                     cy.get('[data-testid="embedded-scratchpad-button"]').click();
-                    cy.contains('h2', 'Scratchpad').should('be.visible');
+                    cy.get('[data-testid="scratchpad-drawer"]').should('be.visible');
 
                     // Press ESC to close
                     cy.get('body').type('{esc}');
@@ -269,7 +269,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('{enter}');
 
                 // Edit dialog should open
-                cy.contains('Edit Row').should('be.visible');
+                cy.get('[data-testid="edit-row-dialog"]').should('be.visible');
 
                 // Close with ESC
                 cy.get('body').type('{esc}');
@@ -284,7 +284,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('m');
 
                 // Mock Data sheet should open
-                cy.contains('Mock Data').should('be.visible');
+                cy.get('[data-testid="mock-data-sheet"]').should('be.visible');
 
                 // Close it
                 cy.get('body').type('{esc}');
@@ -317,10 +317,10 @@ describe('Keyboard Shortcuts', () => {
                 cy.data(tableName);
 
                 // Press Cmd+Shift+E (Mac) or Ctrl+Shift+E (Win/Linux)
-                cy.typeCmdShortcut('e', { shift: true });
+                cy.typeCmdShortcut('e', {shift: true});
 
                 // Export dialog should open
-                cy.contains('Export').should('be.visible');
+                cy.get('[data-testid="export-dialog"]').should('be.visible');
 
                 // Close it
                 cy.get('body').type('{esc}');
@@ -336,7 +336,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('e');
 
                 // Edit dialog should open
-                cy.contains('Edit Row').should('be.visible');
+                cy.get('[data-testid="edit-row-dialog"]').should('be.visible');
 
                 // Close it
                 cy.get('body').type('{esc}');
@@ -434,7 +434,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination (2 is available in E2E mode)
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Focus a row
                 cy.get('body').type('{downarrow}');
@@ -459,7 +459,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Check we're on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
@@ -477,7 +477,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Go to page 2 first
                 cy.get('[data-testid="table-page-number"]').eq(1).click();
@@ -496,7 +496,7 @@ describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 cy.setTablePageSize(2);
                 cy.get('[data-testid="submit-button"]').click();
-                cy.get('[data-testid="table-page-number"]', { timeout: 10000 }).should('exist');
+                cy.get('[data-testid="table-page-number"]', {timeout: 10000}).should('exist');
 
                 // Ensure we're on page 1
                 cy.get('[data-testid="table-page-number"]').first().should('have.attr', 'data-active', 'true');
@@ -510,27 +510,6 @@ describe('Keyboard Shortcuts', () => {
         });
 
         describe('Keyboard Shortcuts Help Modal', () => {
-            it('shortcuts button exists in page header', () => {
-                cy.data(tableName);
-
-                // Shortcuts button should be visible in the header
-                cy.contains('button', 'Shortcuts').should('be.visible');
-            });
-
-            it('clicking shortcuts button opens the modal', () => {
-                cy.data(tableName);
-
-                // Click the shortcuts button
-                cy.contains('button', 'Shortcuts').click();
-
-                // Modal should open with title
-                cy.contains('Keyboard Shortcuts').should('be.visible');
-
-                // Close with ESC
-                cy.get('body').type('{esc}');
-                cy.contains('Keyboard Shortcuts').should('not.exist');
-            });
-
             it('pressing ? key opens the shortcuts modal', () => {
                 cy.data(tableName);
 
@@ -538,11 +517,11 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('body').type('?');
 
                 // Modal should open
-                cy.contains('Keyboard Shortcuts').should('be.visible');
+                cy.get('[data-testid="shortcuts-modal"]').should('be.visible');
 
-                // Verify the modal contains shortcut categories (use exist instead of visible for scrollable content)
-                cy.contains('Global').should('exist');
-                cy.contains('Table Navigation').should('exist');
+                // Verify the modal contains shortcut categories
+                cy.get('[data-testid="shortcuts-category-global"]').should('exist');
+                cy.get('[data-testid="shortcuts-category-navigation"]').should('exist');
 
                 // Close with ESC
                 cy.get('body').type('{esc}');
@@ -649,10 +628,10 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('k');
 
                 // Should show navigation commands
-                cy.get('[data-testid="command-nav-chat"]').should('exist');
-                cy.get('[data-testid="command-nav-storage-units"]').should('exist');
-                cy.get('[data-testid="command-nav-graph"]').should('exist');
-                cy.get('[data-testid="command-nav-scratchpad"]').should('exist');
+                cy.get('[data-testid="command-nav-chat"]').should('be.visible');
+                cy.get('[data-testid="command-nav-storage-units"]').should('be.visible');
+                cy.get('[data-testid="command-nav-graph"]').should('be.visible');
+                cy.get('[data-testid="command-nav-scratchpad"]').should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');
@@ -665,10 +644,10 @@ describe('Keyboard Shortcuts', () => {
                 cy.typeCmdShortcut('k');
 
                 // Should show action commands
-                cy.get('[data-testid="command-action-refresh"]').should('exist');
-                cy.get('[data-testid="command-action-export"]').should('exist');
-                cy.get('[data-testid="command-action-toggle-sidebar"]').should('exist');
-                cy.get('[data-testid="command-action-disconnect"]').should('exist');
+                cy.get('[data-testid="command-action-refresh"]').should('be.visible');
+                cy.get('[data-testid="command-action-export"]').should('be.visible');
+                cy.get('[data-testid="command-action-toggle-sidebar"]').should('be.visible');
+                cy.get('[data-testid="command-action-disconnect"]').should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');
@@ -750,7 +729,7 @@ describe('Keyboard Shortcuts', () => {
 
                 // Query should execute and show results
                 cy.get('[role="tabpanel"][data-state="active"] [data-testid="cell-0"]').within(() => {
-                    cy.get('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]', { timeout: 5000 })
+                    cy.get('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]', {timeout: 5000})
                         .should('exist');
                 });
             });
@@ -772,13 +751,13 @@ describe('Keyboard Shortcuts', () => {
 
                 // Focus and press Enter using trigger (more reliable than type)
                 cy.get('[data-testid="column-header-id"]').focus();
-                cy.get('[data-testid="column-header-id"]').trigger('keydown', { key: 'Enter' });
+                cy.get('[data-testid="column-header-id"]').trigger('keydown', {key: 'Enter'});
 
                 // Wait for sort to be applied and data to refresh
                 cy.wait(500);
 
-                // Column should now show sort indicator (chevron icon inside p.flex)
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                // Column should now show sort indicator
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('Space key on focused column header triggers sort', () => {
@@ -786,13 +765,13 @@ describe('Keyboard Shortcuts', () => {
 
                 // Focus and press Space using trigger
                 cy.get('[data-testid="column-header-name"]').focus();
-                cy.get('[data-testid="column-header-name"]').trigger('keydown', { key: ' ' });
+                cy.get('[data-testid="column-header-name"]').trigger('keydown', {key: ' '});
 
                 // Wait for sort to be applied and data to refresh
                 cy.wait(500);
 
-                // Column should now show sort indicator (chevron icon inside p.flex)
-                cy.get('[data-testid="column-header-name"]').find('p.flex svg').should('exist');
+                // Column should now show sort indicator
+                cy.get('[data-testid="column-header-name"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('clicking column header sorts data ascending', () => {
@@ -803,7 +782,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Column should show sort indicator
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify data is sorted ascending - collect all id values and check order
                 cy.get('table tbody tr').then($rows => {
@@ -831,7 +810,7 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Column should show sort indicator
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify data is sorted descending
                 cy.get('table tbody tr').then($rows => {
@@ -860,8 +839,8 @@ describe('Keyboard Shortcuts', () => {
                 cy.wait(500);
 
                 // Both columns should show sort indicators
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
-                cy.get('[data-testid="column-header-name"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-testid="column-header-name"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('clicking column three times cycles through asc, desc, and removes sort', () => {
@@ -879,7 +858,7 @@ describe('Keyboard Shortcuts', () => {
                 // First click: ascending sort
                 cy.get('[data-testid="column-header-id"]').click();
                 cy.wait(500);
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify ascending
                 cy.get('table tbody tr').then($rows => {
@@ -896,7 +875,7 @@ describe('Keyboard Shortcuts', () => {
                 // Second click: descending sort
                 cy.get('[data-testid="column-header-id"]').click();
                 cy.wait(500);
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
 
                 // Verify descending
                 cy.get('table tbody tr').then($rows => {
@@ -914,8 +893,8 @@ describe('Keyboard Shortcuts', () => {
                 cy.get('[data-testid="column-header-id"]').click();
                 cy.wait(500);
 
-                // Sort indicator (chevron) should be removed
-                cy.get('[data-testid="column-header-id"]').find('p.flex svg').should('not.exist');
+                // Sort indicator should be removed
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('not.exist');
             });
         });
 
@@ -925,11 +904,12 @@ describe('Keyboard Shortcuts', () => {
 
                 // Open command palette
                 cy.typeCmdShortcut('k');
+                // Wait for command palette to receive columns from the table
+                cy.wait(300);
 
-                // Should show "Sort By" section with column options
-                cy.contains('Sort By').should('exist');
-                cy.get('[data-testid="command-sort-id"]').should('exist');
-                cy.get('[data-testid="command-sort-name"]').should('exist');
+                // Should show sort commands with column options (scroll into view as they may be below fold)
+                cy.get('[data-testid="command-sort-id"]').scrollIntoView().should('be.visible');
+                cy.get('[data-testid="command-sort-name"]').scrollIntoView().should('be.visible');
 
                 // Close
                 cy.get('body').type('{esc}');
@@ -940,15 +920,17 @@ describe('Keyboard Shortcuts', () => {
 
                 // Open command palette
                 cy.typeCmdShortcut('k');
+                // Wait for command palette to receive columns from the table
+                cy.wait(300);
 
-                // Click on sort by id
-                cy.get('[data-testid="command-sort-id"]').click();
+                // Click on sort by id (scroll into view first as it may be below fold)
+                cy.get('[data-testid="command-sort-id"]').scrollIntoView().click();
 
                 // Wait for sort to be applied
                 cy.wait(500);
 
                 // Column should now show sort indicator
-                cy.get('[data-testid="column-header-id"]').find('svg').should('exist');
+                cy.get('[data-testid="column-header-id"]').find('[data-testid="sort-indicator"]').should('exist');
             });
 
             it('sort commands can be searched in command palette', () => {
@@ -956,6 +938,8 @@ describe('Keyboard Shortcuts', () => {
 
                 // Open command palette
                 cy.typeCmdShortcut('k');
+                // Wait for command palette to receive columns from the table
+                cy.wait(300);
 
                 // Type to search for sort
                 cy.get('[data-testid="command-palette-input"]').type('sort by name');

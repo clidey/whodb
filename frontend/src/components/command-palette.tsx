@@ -227,6 +227,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                         value={action.label}
                                         onSelect={action.onSelect}
                                         data-testid={`command-${action.id}`}
+                                        className="text-muted-foreground"
                                     >
                                         {action.icon}
                                         <span className="ml-2">{action.label}</span>
@@ -244,6 +245,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                                         value={action.label}
                                         onSelect={action.onSelect}
                                         data-testid={`command-${action.id}`}
+                                        className="text-muted-foreground"
                                     >
                                         {action.icon}
                                         <span className="ml-2">{action.label}</span>

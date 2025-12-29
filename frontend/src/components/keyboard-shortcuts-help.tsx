@@ -30,7 +30,7 @@ interface ShortcutCategory {
 }
 
 const Kbd: FC<{ children: string }> = ({ children }) => (
-    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
+    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-muted border text-muted-foreground rounded shadow-sm">
         {children}
     </kbd>
 );
@@ -45,7 +45,7 @@ const ShortcutRow: FC<{ shortcut: ShortcutDef }> = ({ shortcut }) => (
                 <span key={idx} className="flex items-center gap-0.5">
                     <Kbd>{getKeyDisplay(key)}</Kbd>
                     {idx < shortcut.keys.length - 1 && !isMacPlatform && (
-                        <span className="text-neutral-400 text-xs">+</span>
+                        <span className="text-muted-foreground text-xs">+</span>
                     )}
                 </span>
             ))}
@@ -53,8 +53,8 @@ const ShortcutRow: FC<{ shortcut: ShortcutDef }> = ({ shortcut }) => (
     </div>
 );
 
-const ShortcutSection: FC<{ category: ShortcutCategory }> = ({ category }) => (
-    <div className="mb-4">
+const ShortcutSection: FC<{ category: ShortcutCategory; testId?: string }> = ({ category, testId }) => (
+    <div className="mb-4" data-testid={testId}>
         <h3 className="text-sm font-bold text-neutral-700 dark:text-neutral-200 mb-2">
             {category.title}
         </h3>
@@ -140,7 +140,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" data-testid="shortcuts-modal">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         {t('title')}
@@ -148,11 +148,15 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                 </DialogHeader>
                 <div className="mt-4">
                     {shortcutCategories.map((category, idx) => (
-                        <ShortcutSection key={idx} category={category} />
+                        <ShortcutSection
+                            key={idx}
+                            category={category}
+                            testId={`shortcuts-category-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
+                        />
                     ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
+                    <p className="text-xs text-muted-foreground text-center">
                         {t('hint')}
                     </p>
                 </div>

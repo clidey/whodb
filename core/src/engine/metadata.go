@@ -72,7 +72,7 @@ func ValidateColumnType(typeName string, metadata *DatabaseMetadata) error {
 
 	// Check if it's an alias and get the canonical type
 	if canonical, ok := metadata.AliasMap[baseTypeUpper]; ok {
-		baseTypeUpper = canonical
+		baseTypeUpper = strings.ToUpper(canonical)
 	}
 
 	// Find the type definition

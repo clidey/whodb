@@ -297,8 +297,7 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, st
 			"schema":        schema,
 			"storage_unit":  storageUnit,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "AddStorageUnit", err, map[string]any{
 			"database_type": typeArg,
 			"schema_hash":   analytics.HashIdentifier(schema),
@@ -340,8 +339,7 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 			"storage_unit":    storageUnit,
 			"database_type":   typeArg,
 			"updated_columns": len(updatedColumns),
-			"error":           err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "UpdateStorageUnit", err, map[string]any{
 			"database_type":   typeArg,
 			"schema_hash":     analytics.HashIdentifier(schema),
@@ -402,8 +400,7 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 			"schema":        schema,
 			"storage_unit":  storageUnit,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "AddRow", err, map[string]any{
 			"database_type": typeArg,
 			"schema_hash":   analytics.HashIdentifier(schema),
@@ -445,8 +442,7 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 			"schema":        schema,
 			"storage_unit":  storageUnit,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		analytics.CaptureError(ctx, "DeleteRow", err, map[string]any{
 			"database_type": typeArg,
 			"schema_hash":   analytics.HashIdentifier(schema),
@@ -715,16 +711,39 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 }
 
 // Database is the resolver for the Database field.
+// This resolver is used in two scenarios:
+// 1. Login page: to get available databases (e.g., SQLite files) before authentication
+// 2. Sidebar: to get switchable databases when already logged in
+//
+// For the sidebar case, we use session credentials. For login page, we fall back
+// to a minimal config (works for SQLite which scans filesystem, not for MySQL which needs connection).
 func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
+	if plugin == nil {
+		return nil, fmt.Errorf("unsupported database type: %s", typeArg)
+	}
+
+	var config *engine.PluginConfig
+
+	// Try to get credentials from session (for sidebar when logged in)
+	credentials := auth.GetCredentials(ctx)
+	if credentials != nil && credentials.Type == typeArg {
+		config = engine.NewPluginConfig(credentials)
+	} else {
+		// No session or type mismatch - use minimal config. works for sqlite
+		config = &engine.PluginConfig{
+			Credentials: &engine.Credentials{
+				Type: typeArg,
+			},
+		}
+	}
+
 	databases, err := plugin.GetDatabases(config)
 	if err != nil {
 		log.LogFields(log.Fields{
 			"operation":     "GetDatabases",
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	return databases, nil
@@ -739,8 +758,7 @@ func (r *queryResolver) Schema(ctx context.Context) ([]string, error) {
 		log.LogFields(log.Fields{
 			"operation":     "GetAllSchemas",
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	return schemas, nil
@@ -756,8 +774,7 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 			"operation":     "GetStorageUnits",
 			"schema":        schema,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	var storageUnits []*model.StorageUnit
@@ -796,8 +813,7 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 				"database_type": typeArg,
 				"page_size":     pageSize,
 				"page_offset":   pageOffset,
-				"error":         err.Error(),
-			}).Error("Database operation failed")
+			}).WithError(err).Error("Database operation failed")
 			return err
 		}
 		return nil
@@ -941,8 +957,7 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 			"operation":     "RawExecute",
 			"database_type": typeArg,
 			"query":         query,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	var columns []*model.Column
@@ -970,8 +985,7 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 			"operation":     "GetGraph",
 			"schema":        schema,
 			"database_type": typeArg,
-			"error":         err.Error(),
-		}).Error("Database operation failed")
+		}).WithError(err).Error("Database operation failed")
 		return nil, err
 	}
 	var graphUnitsModel []*model.GraphUnit
@@ -1119,6 +1133,9 @@ func (r *queryResolver) MockDataMaxRowCount(ctx context.Context) (int, error) {
 // DatabaseMetadata is the resolver for the DatabaseMetadata field.
 func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error) {
 	plugin, _ := GetPluginForContext(ctx)
+	if plugin == nil {
+		return nil, nil
+	}
 	metadata := plugin.GetDatabaseMetadata()
 
 	// Return nil if plugin doesn't implement metadata (default GormPlugin behavior)

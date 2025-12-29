@@ -15,7 +15,7 @@
  */
 
 const DEFAULT_TITLE = "Clidey WhoDB";
-const DEFAULT_ICON = "/images/logo.png";
+const DEFAULT_ICON = "/images/logo.svg";
 
 export const updateDocumentMeta = (extensions: Record<string, any>) => {
     const title = extensions.MetaTitle || DEFAULT_TITLE;

@@ -43,7 +43,18 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 
 		conditions := make(map[string]interface{})
 		convertedValues := make(map[string]interface{})
+		hasPKs := len(pkColumns) > 0
+
 		for column, strValue := range values {
+			isPK := common.ContainsString(pkColumns, column)
+
+			// Only convert columns we need for the WHERE clause:
+			// - PK columns if PKs exist
+			// - All columns if no PKs (fallback to identify row)
+			if hasPKs && !isPK {
+				continue
+			}
+
 			columnType, exists := columnTypes[column]
 			if !exists {
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
@@ -52,11 +63,11 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
 			if err != nil {
 				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during delete from table %s.%s", strValue, column, schema, storageUnit))
-				convertedValue = strValue // use string value if conversion fails?
+				convertedValue = strValue
 			}
 
 			// GORM handles identifier escaping automatically
-			if common.ContainsString(pkColumns, column) {
+			if isPK {
 				conditions[column] = convertedValue
 			} else {
 				convertedValues[column] = convertedValue

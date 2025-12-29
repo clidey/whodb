@@ -2,25 +2,37 @@
   "type": "Sqlite3",
   "id": "sqlite",
   "category": "sql",
+  "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",
     "identifierField": "username",
     "identifierColIndex": 1,
     "idField": "id",
     "firstId": "1",
+    "firstName": "john_doe",
     "testValues": {
       "original": "john_doe",
       "modified": "john_doe1",
       "rowIndex": 0
     },
-    "searchTerm": "john"
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
   },
   "connection": {
     "host": null,
     "port": null,
     "user": null,
     "password": null,
-    "database": "e2e_test.db"
+    "database": "e2e_test.db",
+    "advanced": {}
   },
   "schema": null,
   "whereOperators": {
@@ -30,6 +42,10 @@
     "lessThan": "<",
     "greaterOrEqual": ">=",
     "lessOrEqual": "<="
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": false
   },
   "features": {
     "graph": true,
@@ -193,15 +209,17 @@
   },
   "graph": {
     "expectedNodes": {
-      "users": [
-        "orders"
-      ],
+      "users": [],
       "orders": [
-        "order_items",
-        "payments"
+        "users"
       ],
-      "products": [
-        "order_items"
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
+        "orders"
       ]
     }
   },
@@ -212,10 +230,17 @@
     "updateUser": "UPDATE users SET username='john_doe1' WHERE id=1",
     "revertUser": "UPDATE users SET username='john_doe' WHERE id=1",
     "countUsers": "SELECT COUNT(*) as user_count FROM users;",
+    "countColumn": "user_count",
     "selectUsersFiltered": "SELECT username, email FROM users WHERE id > 1;",
     "invalidQuery": "SELECT * FROM users1;",
+    "permissionDeniedQuery": "CREATE TABLE users (id INT)",
+    "emptyResultQuery": "SELECT * FROM users WHERE id = -99999",
     "errorPatterns": {
       "tableNotFound": "no such table: users1"
     }
+  },
+  "mockData": {
+    "supportedTable": "users",
+    "unsupportedTable": "orders"
   }
 }

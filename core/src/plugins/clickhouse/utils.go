@@ -16,10 +16,6 @@
 
 package clickhouse
 
-func (p *ClickHousePlugin) ConvertStringValueDuringMap(value, columnType string) (interface{}, error) {
-	return p.ConvertStringValue(value, columnType)
-}
-
 // Identifier quoting handled by GORM Dialector
 
 func (p *ClickHousePlugin) GetPrimaryKeyColQuery() string {

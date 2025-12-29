@@ -678,7 +678,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <Tip>
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input">
-                                <PlusCircleIcon className="w-4 h-4" />
+                                <PlusCircleIcon className="w-4 h-4 text-primary" />
                             </Button>
                                 <p>{t('addCell')}</p>
                         </Tip>
@@ -692,8 +692,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         {
                             onDelete != null &&
                             <Tip>
-                                <Button variant="destructive" onClick={handleDelete} data-testid="delete-cell-button"
-                                        className="border border-input bg-white hover:bg-white/95">
+                                <Button variant="secondary" onClick={handleDelete} data-testid="delete-cell-button"
+                                        className="border border-input">
                                     <XCircleIcon className="w-4 h-4 text-destructive"/>
                                 </Button>
                                 <p>{t('deleteCell')}</p>
@@ -890,7 +890,7 @@ const RawExecuteSubPage: FC<{
     )
 }
 
-const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ page, setValue }) => {
+const EditableInput: FC<{ page: Page; setValue: (value: string) => void; isActive: boolean }> = ({ page, setValue, isActive }) => {
     const { t } = useTranslation('pages/raw-execute');
     const [currentContent, setCurrentContent] = useState(page.name);
     const [isEditing, setIsEditing] = useState(false);
@@ -925,7 +925,9 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void }> = ({ 
             className="w-auto max-w-[40ch] border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
           />
         ) : (
-          <span className="text-sm text-nowrap">
+          <span className={cn("text-sm text-nowrap", {
+            "text-primary": isActive,
+          })}>
             {currentContent || t('doubleClickEdit')}
           </span>
         )}
@@ -1050,7 +1052,9 @@ export const RawExecutePage: FC = () => {
                                                                  onClick={() => handleSelect(page.id)}
                                                                  data-testid={`page-tab-${index}`}>
                                                         <div className="flex items-center gap-2 group">
-                                                            <EditableInput page={page} setValue={(newName) => handleUpdatePageName(page, newName)} />
+                                                            <EditableInput page={page}
+                                                                setValue={(newName) => handleUpdatePageName(page, newName)}
+                                                                isActive={page.id === activePageId} />
                                                             <button
                                                                 type="button"
                                                                 title={t('deletePageButton')}

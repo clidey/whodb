@@ -4,22 +4,43 @@
   "testTable": {
     "name": "users",
     "identifierField": "username",
+    "firstName": "john_doe",
+    "identifierColIndex": 1,
+    "idField": "_id",
     "testValues": {
       "original": "jane_smith",
       "modified": "jane_smith1",
       "rowIndex": 1
     },
-    "searchTerm": "john"
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
   },
   "connection": {
     "host": "localhost",
     "port": 9200,
     "user": "elastic",
     "password": "pgmio430fe$$#@@",
-    "database": null
+    "database": null,
+    "advanced": {}
   },
   "schema": null,
+  "mockData": {
+    "supportedTable": "users",
+    "unsupportedTable": "orders"
+  },
   "indexRefreshDelay": 2500,
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": false
+  },
   "features": {
     "graph": false,
     "export": true,
@@ -37,7 +58,16 @@
   },
   "whereOperators": {
     "equals": "term",
-    "notEquals": "ne"
+    "notEquals": "!=",
+    "greaterThan": ">",
+    "lessThan": "<",
+    "greaterOrEqual": ">=",
+    "lessOrEqual": "<=",
+    "match": "match",
+    "match_phrase": "match_phrase",
+    "regexp": "regexp",
+    "wildcard": "wildcard",
+    "fuzzy": "fuzzy"
   },
   "expectedIndices": [
     "order_items",

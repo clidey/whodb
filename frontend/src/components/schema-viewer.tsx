@@ -56,12 +56,17 @@ export const SchemaViewer: FC = () => {
     // Search state
     const [search, setSearch] = useState("");
 
+    // For databases that use database instead of schema, determine the schema value
+    const usesDatabase = databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type);
+    const schemaValue = usesDatabase ? (current?.Database ?? '') : selectedSchema;
+
     // Query for storage units (tables, views, etc.)
     const {data, loading, refetch} = useGetStorageUnitsQuery({
         variables: {
-            schema: databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
+            schema: schemaValue,
         },
-        skip: !current || !selectedSchema,
+        // Skip if no current connection OR no schema value is available
+        skip: !current || !schemaValue,
     });
 
     // Refetch when profile changes (current?.Id changes means different server/credentials)

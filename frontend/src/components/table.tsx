@@ -893,8 +893,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             rows.forEach((row, rowIdx) => {
                 row.forEach((cellValue, colIdx) => {
                     if (cellValue !== undefined && cellValue !== null) {
-                        // Trim trailing null characters for comparison (e.g., ClickHouse FixedString)
-                        const searchValue = String(cellValue).replace(/\0+$/, '');
+                        const searchValue = String(cellValue);
                         if (searchValue.toLowerCase().includes(search.toLowerCase())) {
                             matches.push({ rowIdx, colIdx });
                         }
@@ -999,28 +998,24 @@ export const StorageUnitTable: FC<TableProps> = ({
                             <EllipsisVerticalIcon className="w-4 h-4" />
                         </Button>
                     </TableCell>
-                    {paginatedRows[index]?.map((cell, cellIdx) => {
-                        // Trim trailing null characters (e.g., from ClickHouse FixedString)
-                        const displayValue = typeof cell === 'string' ? cell.replace(/\0+$/, '') : cell;
-                        return (
-                            <TableCell
-                                key={cellIdx}
-                                role="gridcell"
-                                className="cursor-pointer"
-                                title={t('cellInteractionHint')}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setFocusedRowIndex(index);
-                                    handleCellClick(index, cellIdx);
-                                }}
-                                onDoubleClick={() => handleCellDoubleClick(index)}
-                                onContextMenu={() => setContextMenuCellIdx(cellIdx)}
-                                data-col-idx={cellIdx}
-                            >
-                                {displayValue}
-                            </TableCell>
-                        );
-                    })}
+                    {paginatedRows[index]?.map((cell, cellIdx) => (
+                        <TableCell
+                            key={cellIdx}
+                            role="gridcell"
+                            className="cursor-pointer"
+                            title={t('cellInteractionHint')}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFocusedRowIndex(index);
+                                handleCellClick(index, cellIdx);
+                            }}
+                            onDoubleClick={() => handleCellDoubleClick(index)}
+                            onContextMenu={() => setContextMenuCellIdx(cellIdx)}
+                            data-col-idx={cellIdx}
+                        >
+                            {cell}
+                        </TableCell>
+                    ))}
                 </TableRow>
             </ContextMenuTrigger>
             <ContextMenuContent
@@ -1033,7 +1028,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
                             if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                const copyValue = typeof cell === 'string' ? cell.replace(/\0+$/, '') : String(cell);
+                                const copyValue = String(cell);
                                 navigator.clipboard.writeText(copyValue);
                                 toast.success(t('copiedCellToClipboard'));
                             }
@@ -1214,6 +1209,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             }}
                                             onFocus={() => { focusedColumnRef.current = col; }}
                                             data-testid={`column-header-${col}`}
+                                            data-column-name={col}
+                                            data-sort-direction={sortedColumns?.get(col) || undefined}
                                         >
                                             <Tip>
                                                 <p className={cn("flex items-center gap-xs", {
@@ -1223,8 +1220,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     {col}
                                                     {onColumnSort && sortedColumns?.has(col) && (
                                                         sortedColumns.get(col) === 'asc'
-                                                            ? <ChevronUpIcon className="w-4 h-4" />
-                                                            : <ChevronDownIcon className="w-4 h-4" />
+                                                            ? <ChevronUpIcon className="w-4 h-4" data-testid="sort-indicator" />
+                                                            : <ChevronDownIcon className="w-4 h-4" data-testid="sort-indicator" />
                                                     )}
                                                 </p>
                                                 <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
@@ -1406,6 +1403,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         variant="secondary"
                         onClick={() => setShowExportConfirm(true)}
                         className="flex gap-sm"
+                        data-testid="export-all-button"
                     >
                         <ArrowDownCircleIcon className="w-4 h-4" />
                         {hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}
@@ -1418,7 +1416,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col">
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog">
                         <SheetTitle>{t('editRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto mt-4">
                             <div className="flex flex-col gap-lg pr-2">
@@ -1480,7 +1478,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setShowMockDataConfirmation(false);
                     }
                 }}>
-                <SheetContent side="right" className="p-8">
+                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet">
                     <div className="flex flex-col gap-lg h-full">
                         <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockDataTitle')}</SheetTitle>
                         {!showMockDataConfirmation ? (
@@ -1494,24 +1492,25 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     pattern="[0-9]*"
                                     max={maxRowCount.toString()}
                                     placeholder={t('enterNumberOfRows', { max: maxRowCount })}
+                                    data-testid="mock-data-rows-input"
                                 />
                                 <Label>{t('method')}</Label>
                                 <Select value={mockDataMethod} onValueChange={setMockDataMethod}>
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger className="w-full" data-testid="mock-data-method-select">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Normal">{t('methodNormal')}</SelectItem>
+                                        <SelectItem value="Normal" data-value="Normal">{t('methodNormal')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Label>{t('dataHandling')}</Label>
                                 <Select value={mockDataOverwriteExisting} onValueChange={setMockDataOverwriteExisting}>
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger className="w-full" data-testid="mock-data-handling-select">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="append">{t('appendToExisting')}</SelectItem>
-                                        <SelectItem value="overwrite">{t('overwriteExisting')}</SelectItem>
+                                        <SelectItem value="append" data-value="append">{t('appendToExisting')}</SelectItem>
+                                        <SelectItem value="overwrite" data-value="overwrite">{t('overwriteExisting')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {generatingMockData && (
@@ -1549,11 +1548,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                             {t('cancel')}
                         </Button>
                         {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData}>
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} data-testid="mock-data-generate-button">
                                 {t('generate')}
                             </Button>
                         ) : (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive">
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive" data-testid="mock-data-overwrite-button">
                                 {t('yesOverwrite')}
                             </Button>
                         )}

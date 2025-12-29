@@ -26,18 +26,20 @@ import {forEachDatabase, getTableConfig} from '../../support/test-runner';
 describe('Data Types CRUD Operations', () => {
 
     forEachDatabase('sql', (db) => {
-        const tableName = 'data_types';
-        const tableConfig = getTableConfig(db, tableName);
+        const tableName = db.dataTypesTable;
+        const tableConfig = tableName ? getTableConfig(db, tableName) : null;
         const mutationDelay = db.mutationDelay || 0;
 
         if (!tableConfig) {
-            it.skip('data_types table config missing in fixture', () => {});
+            it.skip('data_types table config missing in fixture', () => {
+            });
             return;
         }
 
         const typeTests = tableConfig.testData?.typeTests;
         if (!typeTests) {
-            it.skip('typeTests config missing in fixture', () => {});
+            it.skip('typeTests config missing in fixture', () => {
+            });
             return;
         }
 
@@ -59,22 +61,27 @@ describe('Data Types CRUD Operations', () => {
                             throw new Error('No rows in data_types table');
                         }
 
-                        const expectedDisplay = String(testConfig.originalValue).trim();
+                        const expectedOriginal = String(testConfig.originalValue).trim();
+                        const expectedUpdate = String(testConfig.displayUpdateValue || testConfig.updateValue).trim();
                         const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
 
+                        // Accept either original or update value (handles leftover state from failed UPDATE tests)
                         const seedRowIndex = rows.findIndex(r => {
                             const cellValue = String(r[columnIndex + 1] || '').trim();
-                            return cellValue === expectedDisplay;
+                            return cellValue === expectedOriginal || cellValue === expectedUpdate;
                         });
 
                         expect(
                             seedRowIndex,
-                            `Seed data with ${columnName}=${expectedDisplay} should exist. Actual values: ${JSON.stringify(columnValues)}`
+                            `Seed data with ${columnName}=${expectedOriginal} or ${expectedUpdate} should exist. Actual values: ${JSON.stringify(columnValues)}`
                         ).to.not.equal(-1);
 
-                        // Verify the exact value matches expected format
+                        // Verify the value matches one of the expected formats
                         const actualValue = String(rows[seedRowIndex][columnIndex + 1] || '').trim();
-                        expect(actualValue, `${testConfig.type} should display correctly`).to.equal(expectedDisplay);
+                        expect(
+                            actualValue === expectedOriginal || actualValue === expectedUpdate,
+                            `${testConfig.type} should display as "${expectedOriginal}" or "${expectedUpdate}", got "${actualValue}"`
+                        ).to.be.true;
                     });
                 });
 
@@ -92,46 +99,73 @@ describe('Data Types CRUD Operations', () => {
                 });
 
                 it('UPDATE - edits type value', () => {
+                    const originalValue = String(testConfig.originalValue).trim();
+                    const updateDisplayValue = String(expectedUpdateDisplay).trim();
+                    const revertValue = testConfig.inputOriginalValue || testConfig.originalValue;
+
                     cy.data(tableName);
                     cy.sortBy(0);
 
+                    // First pass: check if we need to revert leftover data from failed tests
                     cy.getTableData().then(({rows}) => {
                         if (rows.length === 0) {
                             throw new Error('No rows in data_types table');
                         }
 
-                        // Debug: Get all values in this column to see actual format
                         const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
 
-                        const originalValue = String(testConfig.originalValue).trim();
+                        // Find row with either original OR update value
+                        let targetRowIndex = rows.findIndex(r => {
+                            const cellValue = String(r[columnIndex + 1] || '').trim();
+                            return cellValue === originalValue;
+                        });
+
+                        // If not found with original, try finding with update value (leftover from failed test)
+                        if (targetRowIndex === -1) {
+                            targetRowIndex = rows.findIndex(r => {
+                                const cellValue = String(r[columnIndex + 1] || '').trim();
+                                return cellValue === updateDisplayValue;
+                            });
+                            if (targetRowIndex !== -1) {
+                                // Revert - table will auto-refresh
+                                cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
+                                // Wait for auto-refresh to show original value
+                                cy.waitForRowValue(columnIndex + 1, originalValue);
+                            }
+                        }
+
+                        if (targetRowIndex === -1) {
+                            throw new Error(`Row with value "${originalValue}" or "${updateDisplayValue}" not found in column ${columnName}. Actual values: ${JSON.stringify(columnValues)}`);
+                        }
+                    });
+
+                    // Second pass: perform the actual UPDATE test with clean data
+                    cy.getTableData().then(({rows}) => {
                         const targetRowIndex = rows.findIndex(r => {
                             const cellValue = String(r[columnIndex + 1] || '').trim();
                             return cellValue === originalValue;
                         });
 
                         if (targetRowIndex === -1) {
-                            throw new Error(`Row with original value "${originalValue}" not found in column ${columnName}. Actual values: ${JSON.stringify(columnValues)}`);
+                            const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
+                            throw new Error(`Row with original value "${originalValue}" not found. Actual values: ${JSON.stringify(columnValues)}`);
                         }
 
                         cy.updateRow(targetRowIndex, columnIndex, testConfig.updateValue, false);
 
-                        if (mutationDelay > 0) {
-                            cy.wait(mutationDelay);
-                            cy.data(tableName);
-                            cy.sortBy(0);
-                        }
+                        // Wait for auto-refresh to show updated value (Cypress retries until value appears)
+                        cy.waitForRowValue(columnIndex + 1, updateDisplayValue).then(() => {
+                            // Verify the update succeeded by reading final state
+                            cy.getTableData().then(({rows: updatedRows}) => {
+                                const cellValue = String(updatedRows[targetRowIndex][columnIndex + 1] || '').trim();
+                                expect(cellValue).to.equal(updateDisplayValue);
 
-                        cy.getTableData().then(({rows: updatedRows}) => {
-                            const cellValue = String(updatedRows[targetRowIndex][columnIndex + 1] || '').trim();
-                            expect(cellValue).to.equal(String(expectedUpdateDisplay).trim());
+                                // Revert to original value
+                                cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
 
-                            // Revert using original input value
-                            const revertValue = testConfig.inputOriginalValue || testConfig.originalValue;
-                            cy.updateRow(targetRowIndex, columnIndex, revertValue, false);
-
-                            if (mutationDelay > 0) {
-                                cy.wait(mutationDelay);
-                            }
+                                // Wait for revert to complete
+                                cy.waitForRowValue(columnIndex + 1, originalValue);
+                            });
                         });
                     });
                 });

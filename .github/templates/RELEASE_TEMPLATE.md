@@ -27,7 +27,7 @@ See assets below for platform-specific packages (DMG, MSIX, etc.).
 
 ## Documentation
 
-- [Documentation](https://whodb.com/docs)
+- [Documentation](https://docs.whodb.com)
 - [Report Issues](https://github.com/clidey/whodb/issues)
 
 ## Upgrade Notes

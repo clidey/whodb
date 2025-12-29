@@ -20,8 +20,8 @@ describe('Mock Data Generation', () => {
 
     // SQL Databases with mock data support
     forEachDatabase('sql', (db) => {
-        const supportedTable = db.mockData?.supportedTable || 'users';
-        const unsupportedTable = db.mockData?.unsupportedTable || 'orders';
+        const supportedTable = db.mockData.supportedTable;
+        const unsupportedTable = db.mockData.unsupportedTable;
 
         it('shows mock data generation UI', () => {
             cy.data(supportedTable);
@@ -29,9 +29,9 @@ describe('Mock Data Generation', () => {
             cy.selectMockData();
 
             // Verify dialog and note appeared
-            cy.contains('div', 'Mock Data').should('be.visible');
+            cy.get('[data-testid="mock-data-sheet"]').should('be.visible');
             cy.contains('Note').should('be.visible');
-            cy.contains('button', 'Generate').should('be.visible');
+            cy.get('[data-testid="mock-data-generate-button"]').should('be.visible');
 
             // Close dialog
             cy.get('body').type('{esc}');
@@ -43,7 +43,7 @@ describe('Mock Data Generation', () => {
             cy.selectMockData();
 
             // Try to exceed max count (should clamp to 200)
-            cy.contains('label', 'Number of Rows').parent().find('input').as('rowsInput');
+            cy.get('[data-testid="mock-data-rows-input"]').as('rowsInput');
             cy.get('@rowsInput').clear().type('300');
             cy.get('@rowsInput').invoke('val').then((val) => {
                 expect(parseInt(val, 10)).to.be.equal(200);
@@ -58,18 +58,16 @@ describe('Mock Data Generation', () => {
             cy.selectMockData();
 
             // Set row count
-            cy.contains('label', 'Number of Rows').parent().find('input').as('rowsInput');
-            cy.get('@rowsInput').clear().type('10');
+            cy.setMockDataRows(10);
 
             // Switch to Overwrite mode
-            cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(-1).click();
-            cy.contains('[role="option"]', 'Overwrite Existing Data').click();
+            cy.setMockDataHandling('overwrite');
 
             // Click Generate
-            cy.contains('button', 'Generate').click();
+            cy.generateMockData();
 
             // Should show confirmation
-            cy.contains('button', 'Yes, Overwrite').should('be.visible');
+            cy.get('[data-testid="mock-data-overwrite-button"]').should('be.visible');
 
             // Cancel instead of confirming
             cy.get('body').type('{esc}');
@@ -80,12 +78,12 @@ describe('Mock Data Generation', () => {
 
             cy.selectMockData();
 
-            cy.contains('button', 'Generate').click();
+            cy.generateMockData();
 
             // Should show error about foreign key constraint
             cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
         });
-    }, { features: ['mockData'] });
+    }, {features: ['mockData']});
 
     // Document Databases - mock data not supported (inverse: runs when feature is NOT present)
     forEachDatabase('document', (db) => {
@@ -98,7 +96,7 @@ describe('Mock Data Generation', () => {
 
             cy.selectMockData();
 
-            cy.contains('button', 'Generate').click();
+            cy.generateMockData();
 
             cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
         });

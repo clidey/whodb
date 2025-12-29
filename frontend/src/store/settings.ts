@@ -27,6 +27,7 @@ type ISettingsState = {
     whereConditionMode: 'popover' | 'sheet';
     defaultPageSize: number;
     language: 'en' | 'es';
+    databaseSchemaTerminology: 'database' | 'schema';
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -51,6 +52,7 @@ const getInitialState = (): ISettingsState => {
         whereConditionMode: 'popover',
         defaultPageSize: 100,
         language: 'en',
+        databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
     };
 };
 
@@ -84,6 +86,9 @@ export const settingsSlice = createSlice({
         },
         setLanguage: (state, action: PayloadAction<ISettingsState["language"]>) => {
             state.language = action.payload;
+        },
+        setDatabaseSchemaTerminology: (state, action: PayloadAction<ISettingsState["databaseSchemaTerminology"]>) => {
+            state.databaseSchemaTerminology = action.payload;
         },
     },
 });

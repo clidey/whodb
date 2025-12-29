@@ -383,19 +383,12 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
 
     // Sheet logic for Add Row (like table.tsx)
     const handleOpenAddSheet = useCallback(() => {
-        // Prepare default values for addRowData
+        // Prepare empty values for empty addRowData values
         let initialData: Record<string, any> = {};
         if (rows?.Columns) {
+            // todo: add support for different functions for defaults like now(), gen_random_uuid(), etc
             for (const col of rows.Columns) {
-                if (col.Name.toLowerCase() === "id" && col.Type === "UUID") {
-                    initialData[col.Name] = "gen_random_uuid()";
-                } else if (col.Type === "TIMESTAMPTZ") {
-                    initialData[col.Name] = "now()";
-                } else if (col.Type === "NUMERIC") {
-                    initialData[col.Name] = "0";
-                } else {
-                    initialData[col.Name] = "";
-                }
+                initialData[col.Name] = "";
             }
         }
         setAddRowData(initialData);
@@ -800,7 +793,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
             </div>
         </div>
         <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
-            <DrawerContent className="px-8 min-h-[65vh]">
+            <DrawerContent className="px-8 min-h-[65vh]" data-testid="scratchpad-drawer">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
                 </Button>

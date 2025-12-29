@@ -71,6 +71,11 @@ on:
         required: false
         type: boolean
         default: false
+      deploy-cli:
+        description: 'Build CLI binaries for MCP server (all platforms)'
+        required: false
+        type: boolean
+        default: false
       publish-github-release:
         description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
@@ -99,6 +104,7 @@ jobs:
       deploy-apple: ${{ steps.calc.outputs.deploy-apple }}
       # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
+      deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
 
@@ -140,6 +146,7 @@ jobs:
           deploy-apple: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
           deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
           deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
+          deploy-cli: ${{ github.event_name == 'push' && 'false' || (fromJSON(inputs.deploy-cli) && 'true' || 'false') }}  # Manual dispatch only until npm auth is configured
           publish-github-release: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Extract release notes from PR
@@ -205,6 +212,7 @@ jobs:
           fi
 
   # Step 2: Build artifacts in parallel (only what's selected)
+  # Note: Source maps are uploaded to PostHog during Docker build (see _build-docker.yml)
   build-docker:
     name: Build Docker
     needs: [ calculate-version ]
@@ -265,10 +273,19 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
+  build-cli:
+    name: Build CLI
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-cli == 'true'
+    uses: ./.github/workflows/_build-cli.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+    secrets: inherit
+
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, build-cli ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
@@ -276,7 +293,8 @@ jobs:
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
       (needs.build-apple.result == 'success' || needs.build-apple.result == 'skipped' || needs.build-apple.result == 'failure') &&
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
-      (needs.build-linux-terminal.result == 'success' || needs.build-linux-terminal.result == 'skipped' || needs.build-linux-terminal.result == 'failure')
+      (needs.build-linux-terminal.result == 'success' || needs.build-linux-terminal.result == 'skipped' || needs.build-linux-terminal.result == 'failure') &&
+      (needs.build-cli.result == 'success' || needs.build-cli.result == 'skipped' || needs.build-cli.result == 'failure')
     uses: ./.github/workflows/_sign-validate.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -288,7 +306,7 @@ jobs:
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, sign-and-validate ]
+    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, build-cli, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
@@ -297,7 +315,8 @@ jobs:
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
       (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
-      (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success')
+      (needs.calculate-version.outputs.deploy-linux-terminal != 'true' || needs.build-linux-terminal.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-cli != 'true' || needs.build-cli.result == 'success')
     permissions:
       contents: write
     steps:
@@ -344,6 +363,13 @@ jobs:
           pattern: server-binaries-*
           path: artifacts/
 
+      - name: Download CLI binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        continue-on-error: true
+        with:
+          name: cli-binaries
+          path: artifacts/cli-binaries/
+
       - name: Download signatures
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         continue-on-error: true
@@ -360,6 +386,9 @@ jobs:
 
           # Copy Linux server binaries
           find artifacts -type f -name "whodb-*-linux-*" -exec cp {} final-assets/ \; 2>/dev/null || true
+
+          # Copy CLI binaries
+          find artifacts/cli-binaries -type f -name "whodb-cli-*" -exec cp {} final-assets/ \; 2>/dev/null || true
 
           # Copy signatures (extract and copy only files, not directories)
           if [ -f artifacts/signatures/signatures.tar.gz ]; then
@@ -551,7 +580,20 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Generate Homebrew cask (disabled - run manually when needed)
+  # Step 7: Deploy to npm (after CLI build and GitHub release)
+  deploy-npm:
+    name: Deploy npm
+    needs: [ calculate-version, build-cli, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-cli == 'true' &&
+      needs.build-cli.result == 'success' &&
+      needs.create-github-release.result == 'success'
+    uses: ./.github/workflows/_deploy-npm.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  # Step 8: Generate Homebrew cask (disabled - run manually when needed)
   generate-homebrew-cask:
     name: Generate Homebrew Cask
     needs: [ calculate-version, create-github-release ]
@@ -564,7 +606,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 8: Final summary
+  # Step 9: Final summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -576,11 +618,13 @@ jobs:
       build-apple,
       build-snap,
       build-linux-terminal,
+      build-cli,
       sign-and-validate,
       deploy-docker,
       deploy-snap,
       deploy-microsoft,
       deploy-apple,
+      deploy-npm,
       create-github-release,
       generate-homebrew-cask
     ]
@@ -642,6 +686,14 @@ jobs:
             echo "| Linux Terminal | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Linux Terminal | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-cli.result }}" = "success" ]; then
+            echo "| CLI (MCP Server) | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-cli.result }}" = "skipped" ]; then
+            echo "| CLI (MCP Server) | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| CLI (MCP Server) | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -724,6 +776,15 @@ jobs:
             echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # npm
+          if [ "${{ needs.deploy-npm.result }}" = "success" ]; then
+            echo "| npm (@clidey/whodb-cli) | ✅ Published | All platform packages |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-npm.result }}" = "skipped" ]; then
+            echo "| npm | ⏭️ Skipped | CLI not selected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| npm | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY

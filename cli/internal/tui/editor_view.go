@@ -17,9 +17,12 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -66,6 +69,10 @@ const (
 	maxSuggestionHeight = 12
 )
 
+// autocompleteDebounceDelay is the delay before triggering autocomplete after a keystroke.
+// This prevents excessive database calls during fast typing.
+const autocompleteDebounceDelay = 100 * time.Millisecond
+
 type EditorView struct {
 	parent              *MainModel
 	textarea            textarea.Model
@@ -80,6 +87,14 @@ type EditorView struct {
 	lastWidth           int
 	lastHeight          int
 	suggestionHeight    int
+	// Query execution state for timeout and cancellation support
+	queryState  OperationState
+	queryCancel context.CancelFunc
+	// Retry prompt state for timed out queries
+	retryPrompt   bool
+	timedOutQuery string
+	// Debounce autocomplete - sequence ID to detect stale debounce messages
+	autocompleteSeqID int
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -103,6 +118,52 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case QueryExecutedMsg:
+		v.queryState = OperationIdle
+		v.queryCancel = nil
+		if msg.Err != nil {
+			v.err = msg.Err
+			conn := v.parent.dbManager.GetCurrentConnection()
+			dbName := ""
+			if conn != nil {
+				dbName = conn.Database
+			}
+			v.parent.histMgr.Add(msg.Query, false, dbName)
+			return v, nil
+		}
+		conn := v.parent.dbManager.GetCurrentConnection()
+		dbName := ""
+		if conn != nil {
+			dbName = conn.Database
+		}
+		v.parent.histMgr.Add(msg.Query, true, dbName)
+		v.parent.resultsView.SetResults(msg.Result, msg.Query)
+		v.parent.mode = ViewResults
+		v.err = nil
+		return v, nil
+
+	case QueryTimeoutMsg:
+		v.queryState = OperationIdle
+		v.queryCancel = nil
+		v.err = fmt.Errorf("query timed out after %s", msg.Timeout)
+		// Enable retry prompt
+		v.retryPrompt = true
+		v.timedOutQuery = msg.Query
+		return v, nil
+
+	case QueryCancelledMsg:
+		v.queryState = OperationIdle
+		v.queryCancel = nil
+		// Don't show error for user-initiated cancel
+		return v, nil
+
+	case AutocompleteDebounceMsg:
+		// Only process if sequence ID matches (not stale)
+		if msg.SeqID == v.autocompleteSeqID {
+			v.updateAutocomplete(msg.Text, msg.Pos)
+		}
+		return v, nil
+
 	case tea.WindowSizeMsg:
 		v.applyWindowSize(msg.Width, msg.Height)
 		return v, nil
@@ -123,6 +184,35 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out queries
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 60*time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 2*time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 5*time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.err = nil
+				// 0 duration means no timeout (use a very long duration)
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 24*time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				v.timedOutQuery = ""
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		// IMPORTANT: Check for execute query shortcut FIRST before passing to textarea
 		// Alt+Enter (Option+Enter on macOS) - works reliably across all platforms
 		if msg.Type == tea.KeyEnter && msg.Alt {
@@ -190,6 +280,11 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 
 		switch msg.Type {
 		case tea.KeyEsc:
+			// If a query is running, cancel it
+			if v.queryState == OperationRunning && v.queryCancel != nil {
+				v.queryCancel()
+				return v, nil
+			}
 			if v.showSuggestions {
 				v.showSuggestions = false
 				v.selectedSuggestion = 0
@@ -219,10 +314,21 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	// Calculate cursor position based on current line and column
 	v.updateCursorPosition()
 
-	// Update autocomplete in real-time as user types
+	// Schedule debounced autocomplete when user types
 	text := v.textarea.Value()
 	if v.textarea.Focused() {
-		v.updateAutocomplete(text, v.cursorPos)
+		// Increment sequence ID to invalidate any pending debounce
+		v.autocompleteSeqID++
+		seqID := v.autocompleteSeqID
+		pos := v.cursorPos
+
+		// Create debounced autocomplete command
+		debounceCmd := tea.Tick(autocompleteDebounceDelay, func(t time.Time) tea.Msg {
+			return AutocompleteDebounceMsg{SeqID: seqID, Text: text, Pos: pos}
+		})
+
+		// Combine textarea command with debounce command
+		return v, tea.Batch(cmd, debounceCmd)
 	}
 
 	return v, cmd
@@ -234,12 +340,35 @@ func (v *EditorView) View() string {
 	b.WriteString(styles.RenderTitle("SQL Editor"))
 	b.WriteString("\n\n")
 
+	// Show loading indicator when query is running
+	if v.queryState == OperationRunning {
+		b.WriteString(styles.MutedStyle.Render("Executing query..."))
+		b.WriteString("\n")
+		b.WriteString(styles.MutedStyle.Render("Press ESC to cancel"))
+		b.WriteString("\n\n")
+	}
+
 	b.WriteString(v.textarea.View())
 	b.WriteString("\n")
 
 	if v.err != nil {
 		b.WriteString("\n\n")
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
+	}
+
+	// Show retry prompt for timed out queries
+	if v.retryPrompt {
+		b.WriteString("\n\n")
+		b.WriteString(styles.KeyStyle.Render("Retry with longer timeout?"))
+		b.WriteString("\n")
+		b.WriteString(styles.RenderHelp(
+			"[1]", "60s",
+			"[2]", "2min",
+			"[3]", "5min",
+			"[4]", "no limit",
+			"esc", "cancel",
+		))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
 	b.WriteString("\n")
@@ -260,37 +389,82 @@ func (v *EditorView) View() string {
 }
 
 func (v *EditorView) executeQuery() tea.Cmd {
-	return func() tea.Msg {
-		query := v.textarea.Value()
-		if query == "" {
-			v.err = fmt.Errorf("query is empty")
-			return nil
+	query := v.textarea.Value()
+	if query == "" {
+		// Return error message immediately
+		return func() tea.Msg {
+			return QueryExecutedMsg{Err: fmt.Errorf("query is empty"), Query: ""}
 		}
+	}
 
-		result, err := v.parent.dbManager.ExecuteQuery(query)
-		if err != nil {
-			v.err = err
-			conn := v.parent.dbManager.GetCurrentConnection()
-			dbName := ""
-			if conn != nil {
-				dbName = conn.Database
-			}
-			v.parent.histMgr.Add(query, false, dbName)
-			return nil
-		}
-
-		conn := v.parent.dbManager.GetCurrentConnection()
-		dbName := ""
-		if conn != nil {
-			dbName = conn.Database
-		}
-		v.parent.histMgr.Add(query, true, dbName)
-
-		v.parent.resultsView.SetResults(result, query)
-		v.parent.mode = ViewResults
-		v.err = nil
-
+	// Prevent executing if already running
+	if v.queryState == OperationRunning {
 		return nil
+	}
+
+	// Set loading state
+	v.queryState = OperationRunning
+
+	// Get timeout from config
+	timeout := v.parent.config.GetQueryTimeout()
+
+	// Create context with timeout and cancellation
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.queryCancel = cancel
+
+	return func() tea.Msg {
+		defer cancel()
+
+		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return QueryTimeoutMsg{Query: query, Timeout: timeout}
+			}
+			if errors.Is(err, context.Canceled) {
+				return QueryCancelledMsg{Query: query}
+			}
+			return QueryExecutedMsg{Err: err, Query: query}
+		}
+
+		return QueryExecutedMsg{Result: result, Query: query}
+	}
+}
+
+// executeQueryWithTimeout runs a query with a custom timeout duration
+func (v *EditorView) executeQueryWithTimeout(query string, timeout time.Duration) tea.Cmd {
+	if query == "" {
+		return func() tea.Msg {
+			return QueryExecutedMsg{Err: fmt.Errorf("query is empty"), Query: ""}
+		}
+	}
+
+	// Prevent executing if already running
+	if v.queryState == OperationRunning {
+		return nil
+	}
+
+	// Set loading state
+	v.queryState = OperationRunning
+
+	// Create context with specified timeout
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.queryCancel = cancel
+
+	return func() tea.Msg {
+		defer cancel()
+
+		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return QueryTimeoutMsg{Query: query, Timeout: timeout}
+			}
+			if errors.Is(err, context.Canceled) {
+				return QueryCancelledMsg{Query: query}
+			}
+			return QueryExecutedMsg{Err: err, Query: query}
+		}
+
+		return QueryExecutedMsg{Result: result, Query: query}
 	}
 }
 
@@ -898,18 +1072,26 @@ func (v *EditorView) acceptSuggestion() {
 		// Find the token to replace before cursor
 		tokenMatch := regexp.MustCompile(`[A-Za-z0-9_\.` + "`" + `]+$`).FindString(beforeCursor)
 
-		// Calculate replacement position
+		// Calculate replacement position and new cursor position
 		var newText string
+		var newCursorPos int
 		if tokenMatch != "" {
 			// Replace the token
 			startPos := v.cursorPos - len(tokenMatch)
 			newText = text[:startPos] + sug.apply + afterCursor
+			newCursorPos = startPos + len(sug.apply)
 		} else {
 			// Insert at cursor position
 			newText = beforeCursor + sug.apply + afterCursor
+			newCursorPos = v.cursorPos + len(sug.apply)
 		}
 
 		v.textarea.SetValue(newText)
+
+		// Sync cursor tracking state to prevent updateCursorPosition() miscalculations
+		v.cursorPos = newCursorPos
+		v.lastText = newText
+
 		v.showSuggestions = false
 		v.selectedSuggestion = 0
 		v.refreshLayout()

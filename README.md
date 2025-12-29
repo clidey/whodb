@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="./docs/logo/logo.png" width="40px" height="auto" />  WhoDB
+# <img src="./docs/logo/logo.svg" width="30px" height="auto" />  whodb
 
 ### *Lightweight, Fast, and Beautiful Database Management*
 
@@ -32,7 +32,7 @@
 [![macOS](https://img.shields.io/badge/macOS-available-brightgreen)](https://apps.apple.com/app/whodb/id6754566536)
 [![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](http://snapcraft.io/whodb)
 
-[🚀 Quick Start](#quick-start) • [📖 Documentation](https://whodb.com/docs/) • [🎮 Live Demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
+[🚀 Quick Start](#quick-start) • [📖 Documentation](https://docs.whodb.com/) • [🎮 Live Demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
 
 </div>
 
@@ -237,7 +237,7 @@ services:
 3. **Run queries** - Use the Scratchpad to execute SQL queries
 4. **Manage data** - Edit, add, and delete records with ease
 
-📖 **For detailed installation options and configuration**, see our [Documentation](https://whodb.com/docs/)
+📖 **For detailed installation options and configuration**, see our [Documentation](https://docs.whodb.com/)
 
 ---
 
@@ -524,7 +524,7 @@ WhoDB's deployment and CI/CD are powered by [Clidey](https://clidey.com), a no-c
 - **Email:** [support@clidey.com](mailto:support@clidey.com)
 - **GitHub Issues:** [Report a bug](https://github.com/clidey/whodb/issues)
 - **Discussions:** [Join the conversation](https://github.com/clidey/whodb/discussions)
-- **Documentation:** [docs.whodb.com](https://whodb.com/docs/)
+- **Documentation:** [docs.whodb.com](https://docs.whodb.com/)
 
 ---
 
