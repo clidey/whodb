@@ -48,3 +48,4 @@ cli/.gocache
 .claude/skills
 .claude/agents
 .mcp.json
+.serena
