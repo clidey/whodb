@@ -306,9 +306,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
 
-    // Accessibility: live region for screen reader announcements
-    const [liveAnnouncement, setLiveAnnouncement] = useState<string>('');
-
     const handleEdit = (index: number) => {
         setEditIndex(index);
         const rowData = [...rows[index]];
@@ -499,15 +496,6 @@ export const StorageUnitTable: FC<TableProps> = ({
         const isCurrentlySelected = checked.includes(rowIndex);
         const newChecked = isCurrentlySelected ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex];
         setChecked(newChecked);
-        // Announce selection change to screen readers
-        const selectedCount = newChecked.length;
-        if (selectedCount === 0) {
-            setLiveAnnouncement(t('noRowsSelected'));
-        } else if (selectedCount === 1) {
-            setLiveAnnouncement(t('oneRowSelected'));
-        } else {
-            setLiveAnnouncement(t('rowsSelected', { count: selectedCount }));
-        }
     }, [checked, t]);
 
     // Track click timeouts to prevent single-click when double-click occurs
@@ -911,9 +899,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                 // Update last search state
                 lastSearchState.current = { search, matchIdx };
 
-                // Announce search result to screen readers
-                setLiveAnnouncement(t('searchMatchFound', { current: matchIdx + 1, total: matches.length }));
-
                 const { rowIdx, colIdx } = matches[matchIdx];
                 // Compose a unique selector for the cell
                 const selector = `[data-row-idx="${rowIdx}"] [data-col-idx="${colIdx}"]`;
@@ -936,7 +921,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             } else {
                 // No matches, reset state
                 lastSearchState.current = { search, matchIdx: 0 };
-                setLiveAnnouncement(t('noSearchMatches'));
             }
         };
 
@@ -963,9 +947,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                     data-focused={isFocused || undefined}
                     tabIndex={isFocused ? 0 : -1}
                     className={cn(
-                        "group relative cursor-pointer outline-none",
+                        "group relative cursor-pointer",
                         // Focus styling - visible ring around focused row
-                        isFocused && "ring-2 ring-primary ring-inset bg-primary/5",
+                        isFocused && "bg-primary/5",
                         // Selected styling
                         isSelected && "bg-muted"
                     )}
@@ -1145,15 +1129,6 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     return (
         <div ref={tableRef} className="h-full flex">
-            {/* Screen reader live region for announcements */}
-            <div
-                role="status"
-                aria-live="polite"
-                aria-atomic="true"
-                className="sr-only"
-            >
-                {liveAnnouncement}
-            </div>
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }} data-testid="table-container">
@@ -1197,7 +1172,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
                                             className={cn({
                                                 "cursor-pointer select-none": onColumnSort,
-                                                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset": onColumnSort,
                                             })}
                                             tabIndex={onColumnSort ? 0 : undefined}
                                             onClick={() => onColumnSort?.(col)}

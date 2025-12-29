@@ -624,7 +624,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             { databaseType.fields?.password && (
                 <div className="flex flex-col gap-sm w-full">
                     <Label htmlFor="login-password">{t('password')}</Label>
-                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
+                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={true} />
                 </div>
             )}
             { databaseType.fields?.database && (
@@ -682,8 +682,8 @@ export const LoginForm: FC<LoginFormProps> = ({
             })}>
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
-                        <h1 className="flex items-center gap-sm text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8"/>}
+                        <h1 className="flex items-center gap-xs text-xl">
+                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
                             <span>{t('title')}</span>
                         </h1>

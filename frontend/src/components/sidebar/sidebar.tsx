@@ -337,8 +337,8 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
-                            {open && <span className="text-lg font-bold">{extensions.AppName ?? "whodb"}</span>}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />}
+                            {open && <span className="text-3xl font-bold">{extensions.AppName ?? "WhoDB"}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>
