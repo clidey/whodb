@@ -682,8 +682,8 @@ export const LoginForm: FC<LoginFormProps> = ({
             })}>
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
-                        <h1 className="flex items-center gap-sm text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8"/>}
+                        <h1 className="flex items-center gap-xs text-xl">
+                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
                             <span>{t('title')}</span>
                         </h1>
