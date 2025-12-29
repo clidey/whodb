@@ -133,7 +133,9 @@ export const SchemaViewer: FC = () => {
         window.location.reload();
     }, [navigate, state, data]);
 
-    if (treeData.length === 0) {
+    // Only hide sidebar if there's truly no data (no connection, no schema, etc.)
+    // Don't hide when search returns empty results
+    if (!data?.StorageUnit || (treeData.length === 0 && search.trim() === "")) {
         return null;
     }
 
@@ -160,9 +162,13 @@ export const SchemaViewer: FC = () => {
                                 <div className="flex-1 flex items-center justify-center">
                                     <Loading />
                                 </div>
+                            ) : treeData.length === 0 ? (
+                                <div className="flex-1 flex items-center justify-center px-4 text-center text-sm text-muted-foreground mt-4">
+                                    {t('noResults')}
+                                </div>
                             ) : (
                                 <Tree
-                                    className="flex-1 overflow-y-auto"  
+                                    className="flex-1 overflow-y-auto"
                                     data={treeData}
                                     initialSelectedItemId={state?.unit.Name}
                                     onSelectChange={handleSelect}
