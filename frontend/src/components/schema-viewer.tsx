@@ -130,7 +130,6 @@ export const SchemaViewer: FC = () => {
                 unit,
             },
         });
-        window.location.reload();
     }, [navigate, state, data]);
 
     // Only hide sidebar if there's truly no data (no connection, no schema, etc.)

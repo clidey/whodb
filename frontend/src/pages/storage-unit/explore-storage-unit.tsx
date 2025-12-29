@@ -297,6 +297,21 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [unit, rows?.TotalCount, rows?.Rows.length]);
 
     useEffect(() => {
+        // Reset all state when switching to a new table to prevent cached data
+        setCurrentPage(1);
+        setWhereCondition(undefined);
+        whereConditionRef.current = undefined;
+        setSortConditions([]);
+        setSearch("");
+        setRows(undefined);
+        setShowAdd(false);
+        setAddRowData({});
+        setAddRowError(null);
+        setShowEntitySearchSheet(false);
+        setEntitySearchData(null);
+        setEntitySearchResults(null);
+
+        // Fetch fresh data for the new table
         handleSubmitRequest();
         setCode(initialScratchpadQuery);
     // eslint-disable-next-line react-hooks/exhaustive-deps
