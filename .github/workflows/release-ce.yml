@@ -72,7 +72,7 @@ on:
         type: boolean
         default: false
       deploy-cli:
-        description: 'Build CLI binaries for MCP server (all platforms)'
+        description: 'Build CLI binaries (all platforms)'
         required: false
         type: boolean
         default: false
