@@ -20,8 +20,8 @@ describe('Sorting', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {};
-        const tableName = testTable.name || 'users';
+        const testTable = db.testTable;
+        const tableName = testTable.name;
 
         describe('Column Header Sorting', () => {
             it('sorts ascending on first click', () => {
@@ -29,11 +29,12 @@ describe('Sorting', () => {
 
                 // Get initial data
                 cy.getTableData().then(({rows: initialRows}) => {
-                    // Click first sortable column (after checkbox column)
-                    cy.sortBy(0);
+                    // Click first sortable column
+                    cy.sortBy('id');
 
-                    // Verify ascending indicator appears (ChevronUpIcon inside column text)
-                    cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                    // Verify ascending indicator appears
+                    cy.get('[data-column-name="id"] [data-testid="sort-indicator"]').should('exist');
+                    cy.get('[data-column-name="id"]').should('have.attr', 'data-sort-direction', 'asc');
 
                     // Verify data is sorted
                     cy.getTableData().then(({rows: sortedRows}) => {
@@ -58,11 +59,12 @@ describe('Sorting', () => {
                 cy.data(tableName);
 
                 // Click twice to sort descending
-                cy.sortBy(0);
-                cy.sortBy(0);
+                cy.sortBy('id');
+                cy.sortBy('id');
 
-                // Verify descending indicator appears (ChevronDownIcon inside column text)
-                cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                // Verify descending indicator appears
+                cy.get('[data-column-name="id"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="id"]').should('have.attr', 'data-sort-direction', 'desc');
 
                 // Verify data is sorted descending
                 cy.getTableData().then(({rows}) => {
@@ -82,34 +84,38 @@ describe('Sorting', () => {
             it('removes sort on third click', () => {
                 cy.data(tableName);
 
-                // Click once - should show ascending indicator (ChevronUp inside the p tag)
-                cy.sortBy(0);
-                cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                // Click once - should show ascending indicator
+                cy.sortBy('id');
+                cy.get('[data-column-name="id"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="id"]').should('have.attr', 'data-sort-direction', 'asc');
 
-                // Click twice - should show descending indicator (ChevronDown)
-                cy.sortBy(0);
-                cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                // Click twice - should show descending indicator
+                cy.sortBy('id');
+                cy.get('[data-column-name="id"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="id"]').should('have.attr', 'data-sort-direction', 'desc');
 
                 // Click three times - should remove sort indicator
-                cy.sortBy(0);
-                // Sort icons are inside p.flex.items-center - key icons are elsewhere
-                cy.get('th').eq(1).find('p.flex.items-center svg').should('not.exist');
+                cy.sortBy('id');
+                cy.get('[data-column-name="id"] [data-testid="sort-indicator"]').should('not.exist');
+                cy.get('[data-column-name="id"]').should('not.have.attr', 'data-sort-direction');
             });
 
             it('can sort by different columns', () => {
                 cy.data(tableName);
 
-                // Sort by second column (index 1)
-                cy.sortBy(1);
+                // Sort by username column
+                cy.sortBy('username');
 
-                // Verify indicator on second column
-                cy.get('th').eq(2).find('p.flex.items-center svg').should('exist');
+                // Verify indicator on username column
+                cy.get('[data-column-name="username"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="username"]').should('have.attr', 'data-sort-direction', 'asc');
 
-                // Sort by third column (should clear second, add third)
-                cy.sortBy(2);
+                // Sort by email column (should clear username, add email)
+                cy.sortBy('email');
 
                 // Both columns may have sort indicators (multi-column sort)
-                cy.get('th').eq(3).find('p.flex.items-center svg').should('exist');
+                cy.get('[data-column-name="email"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="email"]').should('have.attr', 'data-sort-direction', 'asc');
             });
         });
 
@@ -118,7 +124,7 @@ describe('Sorting', () => {
                 cy.data(tableName);
 
                 // Sort ascending
-                cy.sortBy(0);
+                cy.sortBy('id');
 
                 // Get sorted data
                 cy.getTableData().then(({rows: sortedRows}) => {
@@ -128,7 +134,8 @@ describe('Sorting', () => {
                     cy.searchTable(firstValue.substring(0, 2));
 
                     // Verify sort indicator still present
-                    cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                    cy.get('[data-column-name="id"] [data-testid="sort-indicator"]').should('exist');
+                    cy.get('[data-column-name="id"]').should('have.attr', 'data-sort-direction', 'asc');
                 });
             });
         });
@@ -136,11 +143,12 @@ describe('Sorting', () => {
 
     // Document Databases (MongoDB, Elasticsearch)
     forEachDatabase('document', (db) => {
-        const testTable = db.testTable || {};
+        const testTable = db.testTable;
         const tableName = testTable.name;
 
         if (!tableName) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -148,22 +156,24 @@ describe('Sorting', () => {
             it('can sort document list', () => {
                 cy.data(tableName);
 
-                // Click to sort
-                cy.sortBy(0);
+                // Click to sort by document column
+                cy.sortBy('document');
 
-                // Verify sort indicator appears (inside column text p tag)
-                cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                // Verify sort indicator appears
+                cy.get('[data-column-name="document"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="document"]').should('have.attr', 'data-sort-direction', 'asc');
             });
         });
     });
 
     // Key-Value Databases (Redis)
     forEachDatabase('keyvalue', (db) => {
-        const testTable = db.testTable || {};
+        const testTable = db.testTable;
         const keyName = testTable.name;
 
         if (!keyName) {
-            it.skip('testTable config missing in fixture', () => {});
+            it.skip('testTable config missing in fixture', () => {
+            });
             return;
         }
 
@@ -171,11 +181,12 @@ describe('Sorting', () => {
             it('can sort hash fields', () => {
                 cy.data(keyName);
 
-                // Click to sort
-                cy.sortBy(0);
+                // Click to sort by field column
+                cy.sortBy('field');
 
-                // Verify sort indicator appears (inside column text p tag)
-                cy.get('th').eq(1).find('p.flex.items-center svg').should('exist');
+                // Verify sort indicator appears
+                cy.get('[data-column-name="field"] [data-testid="sort-indicator"]').should('exist');
+                cy.get('[data-column-name="field"]').should('have.attr', 'data-sort-direction', 'asc');
             });
         });
     });

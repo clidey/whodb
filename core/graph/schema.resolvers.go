@@ -711,9 +711,33 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 }
 
 // Database is the resolver for the Database field.
+// This resolver is used in two scenarios:
+// 1. Login page: to get available databases (e.g., SQLite files) before authentication
+// 2. Sidebar: to get switchable databases when already logged in
+//
+// For the sidebar case, we use session credentials. For login page, we fall back
+// to a minimal config (works for SQLite which scans filesystem, not for MySQL which needs connection).
 func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string, error) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
 	plugin := src.MainEngine.Choose(engine.DatabaseType(typeArg))
+	if plugin == nil {
+		return nil, fmt.Errorf("unsupported database type: %s", typeArg)
+	}
+
+	var config *engine.PluginConfig
+
+	// Try to get credentials from session (for sidebar when logged in)
+	credentials := auth.GetCredentials(ctx)
+	if credentials != nil && credentials.Type == typeArg {
+		config = engine.NewPluginConfig(credentials)
+	} else {
+		// No session or type mismatch - use minimal config. works for sqlite
+		config = &engine.PluginConfig{
+			Credentials: &engine.Credentials{
+				Type: typeArg,
+			},
+		}
+	}
+
 	databases, err := plugin.GetDatabases(config)
 	if err != nil {
 		log.LogFields(log.Fields{

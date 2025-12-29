@@ -109,7 +109,7 @@ export const Export: FC<IExportProps> = ({
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="right" className="max-w-md w-full p-8">
+                <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog">
                     <SheetTitle className="flex items-center gap-2"><ShareIcon className="w-4 h-4" /> {t('title')}</SheetTitle>
                     <VisuallyHidden>
                         <SheetTitle>{t('title')}</SheetTitle>
@@ -129,7 +129,7 @@ export const Export: FC<IExportProps> = ({
                                     value={exportFormat}
                                     onValueChange={(value) => setExportFormat(value as 'csv' | 'excel' | 'ndjson')}
                                 >
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger className="w-full" data-testid="export-format-select">
                                         <SelectValue>
                                             {
                                                 exportFormatOptions.find(opt => opt.value === exportFormat)?.label
@@ -153,7 +153,7 @@ export const Export: FC<IExportProps> = ({
                                             value={exportDelimiter}
                                             onValueChange={(value) => setExportDelimiter(value)}
                                         >
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger className="w-full" data-testid="export-delimiter-select">
                                                 <SelectValue>
                                                     {
                                                         exportDelimiterOptions.find(opt => opt.value === exportDelimiter)?.label
@@ -207,7 +207,7 @@ export const Export: FC<IExportProps> = ({
                                 >
                                     {t('cancel')}
                                 </Button>
-                                <Button className="flex-1" onClick={handleExportConfirm}>
+                                <Button className="flex-1" onClick={handleExportConfirm} data-testid="export-confirm-button">
                                     {t('export')}
                                 </Button>
                             </div>

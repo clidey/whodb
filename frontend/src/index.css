@@ -156,7 +156,8 @@ body {
   transform: rotateZ(270deg);
 }
 
-[data-testid="mode-toggle"] {
+[data-testid="mode-toggle"],
+[data-testid="mode-toggle-login"] {
   z-index: 5;
 }
 

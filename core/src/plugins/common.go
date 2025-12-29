@@ -24,7 +24,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -34,12 +33,10 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// cachedConnection holds a cached database connection with reference counting.
-// Reference counting ensures connections aren't closed while operations are in progress.
+// cachedConnection holds a cached GORM database instance.
 type cachedConnection struct {
 	db       *gorm.DB
-	lastUsed int64 // atomic: Unix timestamp of last use
-	refCount int32 // atomic: number of active operations using this connection
+	lastUsed time.Time
 }
 
 // connectionCacheTTL is how long unused connections stay in cache before cleanup.
@@ -49,13 +46,10 @@ const connectionCacheTTL = 5 * time.Minute
 const maxCachedConnections = 50
 
 var (
-	// connectionCache stores cached database connections keyed by config hash.
+	// connectionCache stores cached GORM instances keyed by config hash.
 	connectionCache   = make(map[string]*cachedConnection)
 	connectionCacheMu sync.Mutex
-	// activeOperations tracks in-flight database operations for graceful shutdown.
-	activeOperations sync.WaitGroup
-	// stopCleanup signals the background cleanup goroutine to stop.
-	stopCleanup = make(chan struct{})
+	stopCleanup       = make(chan struct{})
 )
 
 func init() {
@@ -78,34 +72,29 @@ func startConnectionCleanup() {
 	}()
 }
 
-// cleanupStaleConnections removes connections that haven't been used within the TTL
-// and have no active operations.
+// cleanupStaleConnections removes connections that haven't been used within the TTL.
 func cleanupStaleConnections() {
 	log.Logger.Debug("cleaning up stale connections")
-	staleThreshold := time.Now().Unix() - int64(connectionCacheTTL.Seconds())
+	staleThreshold := time.Now().Add(-connectionCacheTTL)
 
 	connectionCacheMu.Lock()
 	defer connectionCacheMu.Unlock()
 
 	for key, cached := range connectionCache {
-		lastUsed := atomic.LoadInt64(&cached.lastUsed)
-		refCount := atomic.LoadInt32(&cached.refCount)
-
-		if lastUsed < staleThreshold && refCount == 0 {
-			// Safe to close - stale and not in use
+		if cached.lastUsed.Before(staleThreshold) {
 			delete(connectionCache, key)
-			closeConnection(cached)
+			closeGormDB(cached.db)
 			log.Logger.Debug("Closed stale database connection")
 		}
 	}
 }
 
-// closeConnection closes the underlying database connection.
-func closeConnection(cached *cachedConnection) {
-	if cached == nil || cached.db == nil {
+// closeGormDB closes the underlying database connection of a GORM instance.
+func closeGormDB(db *gorm.DB) {
+	if db == nil {
 		return
 	}
-	if sqlDB, err := cached.db.DB(); err == nil {
+	if sqlDB, err := db.DB(); err == nil {
 		if err := sqlDB.Close(); err != nil {
 			log.Logger.WithError(err).Error("failed to close db connection")
 		}
@@ -127,6 +116,7 @@ func shortKey(key string) string {
 
 // getConnectionCacheKey generates a unique hash key for a connection config.
 // Uses SHA256 to avoid exposing raw credentials in memory.
+// codeql[go/weak-crypto-algorithm]: SHA256 is intentional for cache key generation, not used for password storage
 func getConnectionCacheKey(config *engine.PluginConfig) string {
 	parts := []string{
 		config.Credentials.Type,
@@ -148,8 +138,6 @@ func getConnectionCacheKey(config *engine.PluginConfig) string {
 }
 
 // RemoveConnection removes a specific connection from cache and closes it (call on logout).
-// If the connection is currently in use (refCount > 0), it stays in cache
-// and the cleanup goroutine will close it once it becomes idle.
 func RemoveConnection(config *engine.PluginConfig) {
 	connID := connIdentifier(config)
 	key := getConnectionCacheKey(config)
@@ -159,53 +147,31 @@ func RemoveConnection(config *engine.PluginConfig) {
 	connectionCacheMu.Lock()
 	cached, found := connectionCache[key]
 	if found {
-		refCount := atomic.LoadInt32(&cached.refCount)
-		if refCount == 0 {
-			delete(connectionCache, key)
-			connectionCacheMu.Unlock()
-			l.Debug("Connection closed (refCount=0)")
-			closeConnection(cached)
-			return
-		}
-		l.WithField("ref_count", refCount).Debug("Connection in use, deferring close")
-	} else {
-		l.Debug("Connection not found in cache")
+		delete(connectionCache, key)
+		connectionCacheMu.Unlock()
+		closeGormDB(cached.db)
+		l.Debug("Connection removed and closed")
+		return
 	}
 	connectionCacheMu.Unlock()
-	// If refCount > 0, leave it - cleanup goroutine will close it when idle
+	l.Debug("Connection not found in cache")
 }
 
 // CloseAllConnections closes all cached connections (call on shutdown).
-// It waits for in-flight operations to complete, respecting the context deadline.
-func CloseAllConnections(ctx context.Context) {
+func CloseAllConnections(_ context.Context) {
 	l := log.Logger.WithField("phase", "shutdown")
 	l.Info("CloseAllConnections called, stopping cleanup goroutine")
+
 	// Stop the background cleanup goroutine
 	close(stopCleanup)
-
-	// Wait for in-flight operations to complete
-	l.Info("Waiting for in-flight operations to complete")
-	done := make(chan struct{})
-	go func() {
-		activeOperations.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		l.Info("All database operations completed gracefully")
-	case <-ctx.Done():
-		l.Warn("Timeout waiting for database operations, force closing connections")
-	}
 
 	// Close all cached connections
 	connectionCacheMu.Lock()
 	connCount := len(connectionCache)
 	l.WithField("conn_count", connCount).Info("Closing cached connections")
 	for key, cached := range connectionCache {
-		refCount := atomic.LoadInt32(&cached.refCount)
-		l.WithFields(map[string]any{"cache_key": shortKey(key), "ref_count": refCount}).Debug("Closing connection")
-		closeConnection(cached)
+		l.WithField("cache_key", shortKey(key)).Debug("Closing connection")
+		closeGormDB(cached.db)
 		delete(connectionCache, key)
 	}
 	connectionCacheMu.Unlock()
@@ -213,68 +179,41 @@ func CloseAllConnections(ctx context.Context) {
 }
 
 // getOrCreateConnection retrieves a cached connection or creates a new one.
-// Returns the cachedConnection wrapper with refCount already incremented to prevent
-// race conditions where the connection could be closed before the caller uses it.
-// The caller MUST decrement refCount when done (handled by WithConnection's defer).
-func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc) (*cachedConnection, error) {
+// Validates cached connections with a ping before returning.
+// Connection creation happens WITHOUT holding the lock to avoid blocking other operations.
+func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc) (*gorm.DB, error) {
 	connID := connIdentifier(config)
 	key := getConnectionCacheKey(config)
 	l := log.Logger.WithFields(map[string]any{"conn_id": connID, "cache_key": shortKey(key)})
-	l.Debug("getOrCreateConnection called")
 
+	// First, check cache (with lock)
 	connectionCacheMu.Lock()
-
-	// Check if we have a cached connection
-	if cached, found := connectionCache[key]; found && cached != nil {
-		// Increment refCount while holding lock to prevent race with cleanup/RemoveConnection
-		refCount := atomic.AddInt32(&cached.refCount, 1)
-		atomic.StoreInt64(&cached.lastUsed, time.Now().Unix())
+	if cached, found := connectionCache[key]; found && cached != nil && cached.db != nil {
+		cached.lastUsed = time.Now()
+		db := cached.db
 		connectionCacheMu.Unlock()
 
-		l.WithField("ref_count", refCount).Debug("Found in cache, pinging to verify")
-		if sqlDB, err := cached.db.DB(); err == nil {
-			pingStart := time.Now()
+		// Validate connection with ping (outside lock to avoid blocking)
+		if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
 			if err := sqlDB.Ping(); err == nil {
-				l.WithField("ping_ms", time.Since(pingStart).Milliseconds()).Debug("Cache HIT - connection alive")
-				return cached, nil
+				l.Debug("Cache HIT - connection alive")
+				return db, nil
 			}
-			l.WithFields(map[string]any{"ping_ms": time.Since(pingStart).Milliseconds(), "error": err.Error()}).Debug("Ping FAILED, removing stale connection")
-			// Ping failed - connection is stale, decrement refCount and remove it
-			atomic.AddInt32(&cached.refCount, -1)
-			connectionCacheMu.Lock()
-			delete(connectionCache, key)
-			connectionCacheMu.Unlock()
-			closeConnection(cached)
-		} else {
-			// Failed to get underlying DB, decrement refCount
-			atomic.AddInt32(&cached.refCount, -1)
+			l.WithError(err).Debug("Ping failed, will create new connection")
 		}
+
+		// Connection is stale - remove from cache
+		connectionCacheMu.Lock()
+		if existingCached, stillExists := connectionCache[key]; stillExists && existingCached.db == db {
+			delete(connectionCache, key)
+		}
+		connectionCacheMu.Unlock()
 	} else {
 		connectionCacheMu.Unlock()
-		l.Debug("Cache MISS")
 	}
 
-	// Need to create new connection - acquire lock for creation
-	connectionCacheMu.Lock()
-	defer connectionCacheMu.Unlock()
-
-	// Double-check after acquiring lock in case another goroutine created conn
-	if cached, found := connectionCache[key]; found && cached != nil {
-		l.Debug("Double-check: found in cache after lock, pinging")
-		if sqlDB, err := cached.db.DB(); err == nil {
-			if err := sqlDB.Ping(); err == nil {
-				// Increment refCount while holding lock
-				refCount := atomic.AddInt32(&cached.refCount, 1)
-				atomic.StoreInt64(&cached.lastUsed, time.Now().Unix())
-				l.WithField("ref_count", refCount).Debug("Double-check: connection alive, using cached")
-				return cached, nil
-			}
-			l.Debug("Double-check: ping failed, removing stale")
-			delete(connectionCache, key)
-			closeConnection(cached)
-		}
-	}
-
+	// Create new connection WITHOUT holding the lock
+	// This is critical - connection creation can take 30+ seconds for slow/failing DBs
 	l.Debug("Creating NEW database connection")
 	createStart := time.Now()
 	db, err := createDB(config)
@@ -284,40 +223,51 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 	}
 	l.WithField("duration_ms", time.Since(createStart).Milliseconds()).Info("Connection created successfully")
 
-	cached := &cachedConnection{
+	// Store in cache (with lock)
+	connectionCacheMu.Lock()
+	defer connectionCacheMu.Unlock()
+
+	// Check if another goroutine created a connection while we were creating ours
+	if cached, found := connectionCache[key]; found && cached != nil && cached.db != nil {
+		// Another goroutine won the race - use their connection, close ours
+		if sqlDB, err := cached.db.DB(); err == nil && sqlDB != nil {
+			if err := sqlDB.Ping(); err == nil {
+				cached.lastUsed = time.Now()
+				l.Debug("Race: using connection created by another goroutine")
+				// Close the connection we just created since we won't use it
+				closeGormDB(db)
+				return cached.db, nil
+			}
+		}
+		// Their connection is stale - remove it, use ours
+		delete(connectionCache, key)
+	}
+
+	connectionCache[key] = &cachedConnection{
 		db:       db,
-		lastUsed: time.Now().Unix(),
-		refCount: 1, // Start with refCount=1 since caller will use it
+		lastUsed: time.Now(),
 	}
 
-	connectionCache[key] = cached
-	l.Debug("Connection cached with refCount=1")
-
-	// Evict oldest idle connections if we exceed the limit
+	// Evict oldest connection if we exceed the limit
 	if len(connectionCache) > maxCachedConnections {
-		evictOldestIdleConnection(key)
+		evictOldestConnection(key)
 	}
 
-	return cached, nil
+	return db, nil
 }
 
-// evictOldestIdleConnection removes the oldest idle connection to stay under maxCachedConnections.
+// evictOldestConnection removes the oldest connection to stay under maxCachedConnections.
 // Must be called while holding connectionCacheMu.
-func evictOldestIdleConnection(excludeKey string) {
+func evictOldestConnection(excludeKey string) {
 	var oldestKey string
-	var oldestTime int64 = time.Now().Unix() + 1 // future time as initial value
+	var oldestTime = time.Now().Add(time.Hour) // future time as initial value
 
 	for key, cached := range connectionCache {
 		if key == excludeKey {
-			continue // don't evict the connection we just added
+			continue
 		}
-		refCount := atomic.LoadInt32(&cached.refCount)
-		if refCount > 0 {
-			continue // don't evict connections in use
-		}
-		lastUsed := atomic.LoadInt64(&cached.lastUsed)
-		if lastUsed < oldestTime {
-			oldestTime = lastUsed
+		if cached.lastUsed.Before(oldestTime) {
+			oldestTime = cached.lastUsed
 			oldestKey = key
 		}
 	}
@@ -325,8 +275,8 @@ func evictOldestIdleConnection(excludeKey string) {
 	if oldestKey != "" {
 		cached := connectionCache[oldestKey]
 		delete(connectionCache, oldestKey)
-		closeConnection(cached)
-		log.Logger.WithField("cache_key", shortKey(oldestKey)).Debug("Evicted oldest idle connection to stay under limit")
+		closeGormDB(cached.db)
+		log.Logger.WithField("cache_key", shortKey(oldestKey)).Debug("Evicted oldest connection to stay under limit")
 	}
 }
 
@@ -419,32 +369,22 @@ func GetGormLogConfig() logger.LogLevel {
 
 // WithConnection manages the database connection lifecycle for an operation.
 // Connections are cached and reused across operations to prevent connection exhaustion.
-// Reference counting ensures connections aren't closed while operations are in progress.
-// Stale connections are automatically cleaned up by a background goroutine.
+// The underlying sql.DB handles connection pooling internally.
 func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, operation DBOperation[T]) (T, error) {
-	connID := connIdentifier(config)
-	opStart := time.Now()
-	l := log.Logger.WithField("conn_id", connID)
-	l.Debug("WithConnection START")
-
-	cached, err := getOrCreateConnection(config, DB)
+	db, err := getOrCreateConnection(config, DB)
 	if err != nil {
-		l.WithField("error", err.Error()).Error("WithConnection FAILED to get connection")
+		log.Logger.WithFields(map[string]any{
+			"conn_id": connIdentifier(config),
+			"error":   err.Error(),
+		}).Error("WithConnection FAILED to get connection")
 		var zero T
 		return zero, err
 	}
 
-	activeOperations.Add(1)
-	// Note: refCount was already incremented in getOrCreateConnection while holding the lock
-	// to prevent race conditions with cleanup. We only need to track activeOperations here.
-	refCount := atomic.LoadInt32(&cached.refCount)
-	l.WithField("ref_count", refCount).Debug("Operation started")
+	if db == nil {
+		var zero T
+		return zero, fmt.Errorf("internal error: nil database connection")
+	}
 
-	defer func() {
-		newRefCount := atomic.AddInt32(&cached.refCount, -1)
-		activeOperations.Done()
-		l.WithFields(map[string]any{"duration_ms": time.Since(opStart).Milliseconds(), "ref_count": newRefCount}).Debug("Operation DONE")
-	}()
-
-	return operation(cached.db)
+	return operation(db)
 }

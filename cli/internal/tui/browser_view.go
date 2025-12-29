@@ -17,8 +17,11 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,6 +33,7 @@ import (
 type tablesLoadedMsg struct {
 	tables  []engine.StorageUnit
 	schemas []string
+	schema  string // The selected schema
 	err     error
 }
 
@@ -50,6 +54,8 @@ type BrowserView struct {
 	filterInput         textinput.Model
 	filtering           bool
 	filteredTables      []engine.StorageUnit
+	// Retry prompt state for timed out requests
+	retryPrompt bool
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -78,11 +84,18 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 	case tablesLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
+			// Check for timeout - enable retry prompt
+			if strings.Contains(msg.err.Error(), "timed out") {
+				v.err = msg.err
+				v.retryPrompt = true
+				return v, nil
+			}
 			v.err = msg.err
 			return v, nil
 		}
 		v.tables = msg.tables
 		v.schemas = msg.schemas
+		v.currentSchema = msg.schema
 		v.applyFilter()
 		v.selectedIndex = 0
 
@@ -115,6 +128,37 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out requests
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(60 * time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(2 * time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(5 * time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.err = nil
+				v.loading = true
+				return v, v.loadTablesWithTimeout(24 * time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		// If in filtering mode, handle filter input
 		if v.filtering {
 			switch msg.String() {
@@ -143,12 +187,12 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			case "esc":
 				v.schemaSelecting = false
 				return v, nil
-			case "up", "k":
+			case "left", "up", "h", "k":
 				if v.selectedSchemaIndex > 0 {
 					v.selectedSchemaIndex--
 				}
 				return v, nil
-			case "down", "j":
+			case "right", "down", "l", "j":
 				if v.selectedSchemaIndex < len(v.schemas)-1 {
 					v.selectedSchemaIndex++
 				}
@@ -161,6 +205,10 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 					v.err = nil
 					return v, v.loadTables()
 				}
+				return v, nil
+			default:
+				// Ignore other keys while in schema selection mode
+				// (global shortcuts like ctrl+c are handled at MainModel level)
 				return v, nil
 			}
 		}
@@ -206,21 +254,21 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			v.filterInput.Focus()
 			return v, nil
 
-		case "s":
+		case "ctrl+s":
 			// Enter schema selection mode
 			if len(v.schemas) > 1 {
 				v.schemaSelecting = true
 			}
 			return v, nil
 
-		case "r":
+		case "ctrl+r":
 			v.loading = true
 			v.err = nil
 			v.filterInput.SetValue("")
 			v.filtering = false
 			return v, v.loadTables()
 
-		case "e":
+		case "ctrl+e":
 			v.parent.mode = ViewEditor
 			return v, nil
 
@@ -228,7 +276,7 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			v.parent.mode = ViewHistory
 			return v, nil
 
-		case "a":
+		case "ctrl+a":
 			v.parent.mode = ViewChat
 			return v, v.parent.chatView.Init()
 
@@ -309,6 +357,25 @@ func (v *BrowserView) View() string {
 	}
 	b.WriteString("\n")
 
+	// Show retry prompt for timed out requests
+	if v.retryPrompt {
+		b.WriteString(styles.ErrorStyle.Render("Request timed out"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
+		b.WriteString("\n")
+		b.WriteString(styles.KeyStyle.Render("[1]"))
+		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
+		b.WriteString(styles.KeyStyle.Render("[2]"))
+		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[3]"))
+		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[4]"))
+		b.WriteString(styles.MutedStyle.Render(" No limit"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp("esc", "cancel"))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
@@ -327,8 +394,7 @@ func (v *BrowserView) View() string {
 
 	if v.schemaSelecting {
 		b.WriteString(styles.RenderHelp(
-			"↑/k", "up",
-			"↓/j", "down",
+			"←/→", "navigate",
 			"enter", "select schema",
 			"esc", "cancel",
 		))
@@ -347,13 +413,13 @@ func (v *BrowserView) View() string {
 			"[/]", "filter",
 		}
 		if len(v.schemas) > 1 {
-			helpItems = append(helpItems, "[s]", "schema")
+			helpItems = append(helpItems, "ctrl+s", "schema")
 		}
 		helpItems = append(helpItems,
-			"[e]", "editor",
-			"[a]", "ai chat",
+			"ctrl+e", "editor",
+			"ctrl+a", "ai chat",
 			"ctrl+h", "history",
-			"[r]", "refresh",
+			"ctrl+r", "refresh",
 			"tab", "next view",
 			"esc", "disconnect",
 			"ctrl+c", "quit",
@@ -404,21 +470,42 @@ func (v *BrowserView) renderTablesGrid() string {
 }
 
 func (v *BrowserView) loadTables() tea.Cmd {
+	return v.loadTablesWithTimeout(v.parent.config.GetQueryTimeout())
+}
+
+func (v *BrowserView) loadTablesWithTimeout(timeout time.Duration) tea.Cmd {
+	// Capture values needed for closure
+	currentSchema := v.currentSchema
+	conn := v.parent.dbManager.GetCurrentConnection()
+
 	return func() tea.Msg {
-		conn := v.parent.dbManager.GetCurrentConnection()
 		if conn == nil {
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: []string{},
+				schema:  "",
 				err:     fmt.Errorf("no connection"),
 			}
 		}
 
-		schemas, err := v.parent.dbManager.GetSchemas()
+		// Create context with timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		schemas, err := v.parent.dbManager.GetSchemasWithContext(ctx)
 		if err != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return tablesLoadedMsg{
+					tables:  []engine.StorageUnit{},
+					schemas: []string{},
+					schema:  currentSchema,
+					err:     fmt.Errorf("timed out fetching schemas"),
+				}
+			}
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: []string{},
+				schema:  currentSchema,
 				err:     fmt.Errorf("failed to get schemas: %w", err),
 			}
 		}
@@ -427,12 +514,13 @@ func (v *BrowserView) loadTables() tea.Cmd {
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: []string{},
+				schema:  "",
 				err:     nil,
 			}
 		}
 
 		// Use currentSchema if already set, otherwise check for preferred schema from connection
-		schema := v.currentSchema
+		schema := currentSchema
 		if schema == "" {
 			// Check if connection has a preferred schema
 			if conn.Schema != "" {
@@ -452,7 +540,6 @@ func (v *BrowserView) loadTables() tea.Cmd {
 			} else {
 				schema = selectBestSchema(schemas)
 			}
-			v.currentSchema = schema
 		}
 
 		// Validate that currentSchema exists in the list
@@ -465,14 +552,22 @@ func (v *BrowserView) loadTables() tea.Cmd {
 		}
 		if !schemaExists && len(schemas) > 0 {
 			schema = selectBestSchema(schemas)
-			v.currentSchema = schema
 		}
 
-		units, err := v.parent.dbManager.GetStorageUnits(schema)
+		units, err := v.parent.dbManager.GetStorageUnitsWithContext(ctx, schema)
 		if err != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return tablesLoadedMsg{
+					tables:  []engine.StorageUnit{},
+					schemas: schemas,
+					schema:  schema,
+					err:     fmt.Errorf("timed out fetching tables"),
+				}
+			}
 			return tablesLoadedMsg{
 				tables:  []engine.StorageUnit{},
 				schemas: schemas,
+				schema:  schema,
 				err:     fmt.Errorf("failed to get tables: %w", err),
 			}
 		}
@@ -480,6 +575,7 @@ func (v *BrowserView) loadTables() tea.Cmd {
 		return tablesLoadedMsg{
 			tables:  units,
 			schemas: schemas,
+			schema:  schema,
 			err:     nil,
 		}
 	}

@@ -17,10 +17,13 @@
 package database
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/core/graph/model"
@@ -33,10 +36,130 @@ import (
 
 type Connection = config.Connection
 
+// DefaultCacheTTL is the default time-to-live for cached metadata
+const DefaultCacheTTL = 5 * time.Minute
+
+// MetadataCache provides thread-safe caching for database metadata
+// to reduce network calls during autocomplete operations.
+type MetadataCache struct {
+	mu sync.RWMutex
+
+	// schemas cache
+	schemas     []string
+	schemasTime time.Time
+
+	// tables cache keyed by schema name
+	tables     map[string][]engine.StorageUnit
+	tablesTime map[string]time.Time
+
+	// columns cache keyed by "schema.table"
+	columns     map[string][]engine.Column
+	columnsTime map[string]time.Time
+
+	ttl time.Duration
+}
+
+// NewMetadataCache creates a new metadata cache with the specified TTL
+func NewMetadataCache(ttl time.Duration) *MetadataCache {
+	return &MetadataCache{
+		tables:      make(map[string][]engine.StorageUnit),
+		tablesTime:  make(map[string]time.Time),
+		columns:     make(map[string][]engine.Column),
+		columnsTime: make(map[string]time.Time),
+		ttl:         ttl,
+	}
+}
+
+// Clear removes all cached data
+func (c *MetadataCache) Clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.schemas = nil
+	c.schemasTime = time.Time{}
+	c.tables = make(map[string][]engine.StorageUnit)
+	c.tablesTime = make(map[string]time.Time)
+	c.columns = make(map[string][]engine.Column)
+	c.columnsTime = make(map[string]time.Time)
+}
+
+// GetSchemas returns cached schemas if valid, or nil if expired/missing
+func (c *MetadataCache) GetSchemas() ([]string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.schemas == nil || time.Since(c.schemasTime) > c.ttl {
+		return nil, false
+	}
+	return c.schemas, true
+}
+
+// SetSchemas caches the schema list
+func (c *MetadataCache) SetSchemas(schemas []string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.schemas = schemas
+	c.schemasTime = time.Now()
+}
+
+// GetTables returns cached tables for a schema if valid, or nil if expired/missing
+func (c *MetadataCache) GetTables(schema string) ([]engine.StorageUnit, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	tables, ok := c.tables[schema]
+	if !ok {
+		return nil, false
+	}
+	cacheTime, ok := c.tablesTime[schema]
+	if !ok || time.Since(cacheTime) > c.ttl {
+		return nil, false
+	}
+	return tables, true
+}
+
+// SetTables caches the tables for a schema
+func (c *MetadataCache) SetTables(schema string, tables []engine.StorageUnit) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.tables[schema] = tables
+	c.tablesTime[schema] = time.Now()
+}
+
+// GetColumns returns cached columns for a table if valid, or nil if expired/missing
+func (c *MetadataCache) GetColumns(schema, table string) ([]engine.Column, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	key := schema + "." + table
+	columns, ok := c.columns[key]
+	if !ok {
+		return nil, false
+	}
+	cacheTime, ok := c.columnsTime[key]
+	if !ok || time.Since(cacheTime) > c.ttl {
+		return nil, false
+	}
+	return columns, true
+}
+
+// SetColumns caches the columns for a table
+func (c *MetadataCache) SetColumns(schema, table string, columns []engine.Column) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	key := schema + "." + table
+	c.columns[key] = columns
+	c.columnsTime[key] = time.Now()
+}
+
 type Manager struct {
 	engine            *engine.Engine
 	currentConnection *Connection
 	config            *config.Config
+	cache             *MetadataCache
 }
 
 func (m *Manager) buildCredentials(conn *Connection) *engine.Credentials {
@@ -69,6 +192,7 @@ func NewManager() (*Manager, error) {
 	return &Manager{
 		engine: eng,
 		config: cfg,
+		cache:  NewMetadataCache(DefaultCacheTTL),
 	}, nil
 }
 
@@ -97,13 +221,27 @@ func (m *Manager) Connect(conn *Connection) error {
 		return fmt.Errorf("cannot connect to database. please check your credentials and ensure the database is accessible")
 	}
 
+	// Clear cache when connecting to a new database
+	m.cache.Clear()
 	m.currentConnection = conn
 	return nil
 }
 
 func (m *Manager) Disconnect() error {
+	m.cache.Clear()
 	m.currentConnection = nil
 	return nil
+}
+
+// InvalidateCache clears all cached metadata, forcing fresh fetches on next access.
+// Useful when the database schema has changed externally.
+func (m *Manager) InvalidateCache() {
+	m.cache.Clear()
+}
+
+// GetCache returns the metadata cache (primarily for testing)
+func (m *Manager) GetCache() *MetadataCache {
+	return m.cache
 }
 
 func (m *Manager) GetCurrentConnection() *Connection {
@@ -115,6 +253,11 @@ func (m *Manager) GetSchemas() ([]string, error) {
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	// Check cache first
+	if cached, ok := m.cache.GetSchemas(); ok {
+		return cached, nil
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 
 	plugin := m.engine.Choose(dbType)
@@ -124,7 +267,14 @@ func (m *Manager) GetSchemas() ([]string, error) {
 
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.GetAllSchemas(pluginConfig)
+	schemas, err := plugin.GetAllSchemas(pluginConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	m.cache.SetSchemas(schemas)
+	return schemas, nil
 }
 
 func (m *Manager) GetStorageUnits(schema string) ([]engine.StorageUnit, error) {
@@ -132,6 +282,11 @@ func (m *Manager) GetStorageUnits(schema string) ([]engine.StorageUnit, error) {
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	// Check cache first
+	if cached, ok := m.cache.GetTables(schema); ok {
+		return cached, nil
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 
 	plugin := m.engine.Choose(dbType)
@@ -142,7 +297,14 @@ func (m *Manager) GetStorageUnits(schema string) ([]engine.StorageUnit, error) {
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.GetStorageUnits(pluginConfig, schema)
+	tables, err := plugin.GetStorageUnits(pluginConfig, schema)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	m.cache.SetTables(schema, tables)
+	return tables, nil
 }
 
 func (m *Manager) ExecuteQuery(query string) (*engine.GetRowsResult, error) {
@@ -181,9 +343,161 @@ func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereConditio
 	return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
 }
 
+// ExecuteQueryWithContext executes a query with context support for cancellation and timeout.
+// If the context is cancelled or times out, the function returns immediately with ctx.Err().
+// Note: The underlying database operation may continue running; only the wait is cancelled.
+func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Use channels to receive result from goroutine
+	type result struct {
+		data *engine.GetRowsResult
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.RawExecute(pluginConfig, query)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetRowsWithContext fetches rows with context support for cancellation and timeout.
+// If the context is cancelled or times out, the function returns immediately with ctx.Err().
+// Note: The underlying database operation may continue running; only the wait is cancelled.
+func (m *Manager) GetRowsWithContext(ctx context.Context, schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Use channels to receive result from goroutine
+	type result struct {
+		data *engine.GetRowsResult
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetSchemasWithContext fetches schemas with context support for cancellation and timeout.
+func (m *Manager) GetSchemasWithContext(ctx context.Context) ([]string, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	type result struct {
+		data []string
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.GetAllSchemas(pluginConfig)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetStorageUnitsWithContext fetches storage units with context support for cancellation and timeout.
+func (m *Manager) GetStorageUnitsWithContext(ctx context.Context, schema string) ([]engine.StorageUnit, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	type result struct {
+		data []engine.StorageUnit
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.GetStorageUnits(pluginConfig, schema)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
+// GetConfig returns the manager's configuration
+func (m *Manager) GetConfig() *config.Config {
+	return m.config
+}
+
 func (m *Manager) GetColumns(schema, storageUnit string) ([]engine.Column, error) {
 	if m.currentConnection == nil {
 		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	// Check cache first
+	if cached, ok := m.cache.GetColumns(schema, storageUnit); ok {
+		return cached, nil
 	}
 
 	dbType := engine.DatabaseType(m.currentConnection.Type)
@@ -196,7 +510,14 @@ func (m *Manager) GetColumns(schema, storageUnit string) ([]engine.Column, error
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.GetColumnsForTable(pluginConfig, schema, storageUnit)
+	columns, err := plugin.GetColumnsForTable(pluginConfig, schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	m.cache.SetColumns(schema, storageUnit, columns)
+	return columns, nil
 }
 
 func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) error {
@@ -521,6 +842,27 @@ func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, er
 	return llm.Instance(config).GetSupportedModels()
 }
 
+// GetAIModelsWithContext fetches AI models with context support for timeout/cancellation
+func (m *Manager) GetAIModelsWithContext(ctx context.Context, providerID, modelType, token string) ([]string, error) {
+	type result struct {
+		models []string
+		err    error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		models, err := m.GetAIModels(providerID, modelType, token)
+		resultCh <- result{models: models, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.models, res.err
+	}
+}
+
 type ChatMessage struct {
 	Type   string
 	Result *engine.GetRowsResult
@@ -576,4 +918,25 @@ func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previo
 	}
 
 	return chatMessages, nil
+}
+
+// SendAIChatWithContext sends AI chat with context support for timeout/cancellation
+func (m *Manager) SendAIChatWithContext(ctx context.Context, providerID, modelType, token, schema, model, previousConversation, query string) ([]*ChatMessage, error) {
+	type result struct {
+		messages []*ChatMessage
+		err      error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		messages, err := m.SendAIChat(providerID, modelType, token, schema, model, previousConversation, query)
+		resultCh <- result{messages: messages, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.messages, res.err
+	}
 }

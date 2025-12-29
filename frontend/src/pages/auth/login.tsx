@@ -673,7 +673,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             "w-full h-full": advancedDirection === "vertical",
             "flex gap-8": showSidePanel && advancedDirection === "horizontal",
         })} data-testid="login-form-container">
-            <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle">
+            <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle-login">
                 <ModeToggle />
             </div>
             <div className={classNames("flex flex-col grow gap-lg", {

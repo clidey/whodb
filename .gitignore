@@ -45,3 +45,7 @@ cli/build/
 cli/whodb-cli
 cli/.gocache
 .gocache
+.claude/skills
+.claude/agents
+.mcp.json
+.serena

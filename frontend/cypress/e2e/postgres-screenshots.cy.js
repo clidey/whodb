@@ -249,9 +249,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.data('users');
       cy.contains('button', 'Export all').click();
       cy.wait(300);
-      cy.get('[role="dialog"]').within(() => {
-        cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
-      });
+      cy.get('[data-testid="export-format-select"]').click();
       cy.wait(300);
       cy.screenshot(`${screenshotDir}/21-data-view-export-format-dropdown`, {
         overwrite: true
@@ -540,11 +538,11 @@ describe('Postgres Screenshot Generation', () => {
     cy.wait(500);
     cy.contains('label', 'Number of Rows').parent().find('input').should('be.visible').clear().type('10');
     cy.wait(300);
-    cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
+    cy.get('[data-testid="mock-data-handling-select"]').should('be.visible').click({force: true});
     cy.wait(500);
     cy.contains('[role="option"]', 'Overwrite existing data').should('be.visible').click({force: true});
     cy.wait(300);
-    cy.contains('button', 'Generate').should('be.visible').click({force: true});
+    cy.get('[data-testid="mock-data-generate-button"]').should('be.visible').click({force: true});
     cy.wait(1000);
     cy.get('[role="alertdialog"],[role="dialog"]', {timeout: 5000}).should('be.visible');
     cy.wait(300);
@@ -750,9 +748,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.data('users');
       cy.contains('button', 'Export all').click();
       cy.wait(300);
-      cy.get('[role="dialog"]').within(() => {
-      cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
-    });
+      cy.get('[data-testid="export-format-select"]').click();
       cy.wait(300);
       cy.screenshotWithHighlight('[role="option"]:contains("CSV")', `${screenshotDir}/65-export-format-csv-option`);
       cy.get('body').type('{esc}');
@@ -762,9 +758,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.data('users');
       cy.contains('button', 'Export all').click();
       cy.wait(300);
-      cy.get('[role="dialog"]').within(() => {
-      cy.contains('label', 'Format').parent().find('[role="combobox"]').first().click();
-    });
+      cy.get('[data-testid="export-format-select"]').click();
       cy.wait(300);
       cy.screenshotWithHighlight('[role="option"]:contains("Excel")', `${screenshotDir}/66-export-format-excel-option`);
       cy.get('body').type('{esc}');
@@ -774,9 +768,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.data('users');
       cy.contains('button', 'Export all').click();
       cy.wait(300);
-      cy.get('[role="dialog"]').within(() => {
-        cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').first().click();
-      });
+      cy.get('[data-testid="export-delimiter-select"]').click();
       cy.wait(300);
       cy.screenshotWithHighlight('[role="option"]:contains("Comma")', `${screenshotDir}/67-export-delimiter-comma`);
       cy.get('body').type('{esc}');
@@ -787,7 +779,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.wait(800);
       cy.contains('button', 'Export all').should('be.visible').click({force: true});
       cy.wait(500);
-      cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
+      cy.get('[data-testid="export-delimiter-select"]').should('be.visible').click({force: true});
       cy.wait(500);
       cy.get('[role="option"][data-value=";"]').should('be.visible').click({force: true});
       cy.wait(300);
@@ -804,9 +796,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.wait(800);
       cy.contains('button', 'Export all').should('be.visible').click({force: true});
       cy.wait(500);
-      cy.get('[role="dialog"]').should('be.visible').within(() => {
-        cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
-      });
+      cy.get('[data-testid="export-delimiter-select"]').should('be.visible').click({force: true});
       cy.wait(500);
       cy.screenshotWithHighlight('[role="option"][data-value="|"]', `${screenshotDir}/69-export-delimiter-pipe`);
       cy.get('body').type('{esc}');
@@ -819,9 +809,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.wait(800);
       cy.contains('button', 'Export all').should('be.visible').click({force: true});
       cy.wait(500);
-      cy.get('[role="dialog"]').should('be.visible').within(() => {
-        cy.contains('label', 'Delimiter').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
-      });
+      cy.get('[data-testid="export-delimiter-select"]').should('be.visible').click({force: true});
       cy.wait(500);
       cy.screenshotWithHighlight('[role="option"][data-value="\t"]', `${screenshotDir}/70-export-delimiter-tab`);
       cy.get('body').type('{esc}');
@@ -844,7 +832,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.wait(800);
       cy.selectMockData();
       cy.wait(500);
-      cy.contains('label', 'Data Handling').parent().find('[role="combobox"]').eq(1).should('be.visible').click({force: true});
+      cy.get('[data-testid="mock-data-handling-select"]').should('be.visible').click({force: true});
       cy.wait(500);
       cy.get('[role="listbox"]').should('be.visible');
       cy.wait(300);

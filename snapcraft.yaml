@@ -465,9 +465,9 @@ parts:
       # Export VERSION for make
       export VERSION
 
-      # Copy frontend build from previous part to expected location
-      mkdir -p desktop-ce/frontend/dist
-      cp -r $SNAPCRAFT_STAGE/frontend-dist/* desktop-ce/frontend/dist/
+      # Copy frontend build to the location the Makefile expects (../frontend/build from desktop-ce/)
+      mkdir -p frontend/build
+      cp -r $SNAPCRAFT_STAGE/frontend-dist/* frontend/build/
 
       # Change to desktop-ce directory
       cd desktop-ce

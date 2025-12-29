@@ -111,7 +111,16 @@ export const MARKER_END: EdgeMarker = {
   orient: 'auto-start-reverse',
 };
 
-export function createEdge(source: string, target: string, type = "default") {
+/**
+ * Creates an edge for the graph visualization.
+ *
+ * @param source - The source node ID
+ * @param target - The target node ID
+ * @param type - The edge type. Defaults to "floatingGraphEdge" which uses our custom FloatingGraphEdge
+ *               component that includes data-edge-source and data-edge-target attributes for testing.
+ * @returns Edge configuration object
+ */
+export function createEdge(source: string, target: string, type = "floatingGraphEdge") {
   return {
       id: `${source}->${target}`,
       type,
