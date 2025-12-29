@@ -116,6 +116,7 @@ func shortKey(key string) string {
 
 // getConnectionCacheKey generates a unique hash key for a connection config.
 // Uses SHA256 to avoid exposing raw credentials in memory.
+// codeql[go/weak-crypto-algorithm]: SHA256 is intentional for cache key generation, not used for password storage
 func getConnectionCacheKey(config *engine.PluginConfig) string {
 	parts := []string{
 		config.Credentials.Type,
