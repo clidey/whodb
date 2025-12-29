@@ -168,6 +168,13 @@ api_request() {
         return 1
     fi
 
+    # HTTP 204 (No Content) is a success response with no body - common for relationship updates
+    if [[ "$http_code" == "204" ]]; then
+        # Return empty JSON object for successful no-content responses
+        echo "{}"
+        return 0
+    fi
+
     # Validate response is JSON
     if ! echo "$response" | jq -e . > /dev/null 2>&1; then
         error "API returned non-JSON response"
