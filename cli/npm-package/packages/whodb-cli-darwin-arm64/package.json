@@ -2,11 +2,15 @@
   "name": "@clidey/whodb-cli-darwin-arm64",
   "version": "0.1.0",
   "description": "WhoDB CLI binary for macOS ARM64 (Apple Silicon)",
-  "os": ["darwin"],
-  "cpu": ["arm64"],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/clidey/whodb.git"
+    "url": "git+https://github.com/clidey/whodb.git"
   },
   "author": "Clidey",
   "license": "Apache-2.0",
