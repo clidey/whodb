@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:24.11.1-alpine3.22 AS build-stage
+FROM node:25.2.1-alpine3.22 AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -37,7 +37,7 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.25.4-alpine3.22 AS backend-stage
+FROM golang:1.25.5-alpine3.22 AS backend-stage
 RUN apk update && apk add --no-cache gcc musl-dev git
 WORKDIR /app
 
@@ -61,7 +61,7 @@ RUN CGO_ENABLED=1 GOOS=linux go build -tags prod \
 	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
 
-FROM alpine:3.22
+FROM alpine:3.23
 RUN apk update && apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=backend-stage /core /core
