@@ -36,6 +36,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
@@ -73,6 +74,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
@@ -121,6 +123,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
@@ -180,6 +183,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
