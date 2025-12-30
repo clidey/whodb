@@ -97,7 +97,7 @@ if (BUILD_EDITION === 'ee') {
     });
 }
 
-export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
+export const ExploreStorageUnit: FC = () => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
     const {
         pageSize,
@@ -115,6 +115,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
     const unit: StorageUnit = useLocation().state?.unit;
+    const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -332,7 +333,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 name,
             },
             InternalRoutes.Dashboard.ExploreStorageUnit,
-            ...(scratchpad ? [InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad] : []),
         ];
     }, [current]);
     
@@ -482,22 +482,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [code, current, rawExecute]);
 
     const handleOpenScratchpad = useCallback(() => {
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad.path, {
-            state: {
-                unit,
-            }
-        });
+        setIsScratchpadOpen(true);
         handleScratchpad();
         setCode(initialScratchpadQuery);
-    }, [schema, unit]);
+    }, [handleScratchpad, initialScratchpadQuery]);
 
     const handleCloseScratchpad = useCallback(() => {
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
-            state: {
-                unit,
-            }
-        });
-    }, [unit]);
+        setIsScratchpadOpen(false);
+    }, []);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, tTable), [columns, columnTypes, tTable]);
 
@@ -805,7 +797,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 }
             </div>
         </div>
-        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad} modal>
+        <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>
             <DrawerContent className="px-8 min-h-[65vh] max-h-[80vh] overflow-hidden flex flex-col" data-testid="scratchpad-drawer">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
