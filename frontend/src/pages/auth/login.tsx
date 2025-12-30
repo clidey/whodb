@@ -256,7 +256,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('loginSuccessfully'));
+                    return toast.success(t('loginSuccessful'));
                 }
                 return toast.error(t('loginFailed'));
             },

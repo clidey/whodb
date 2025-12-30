@@ -16,6 +16,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { FC, useEffect, useState } from 'react';
+import { useAppSelector } from '../../store/hooks';
 
 interface TourSpotlightProps {
     targetElement: HTMLElement | null;
@@ -23,6 +24,7 @@ interface TourSpotlightProps {
 }
 
 export const TourSpotlight: FC<TourSpotlightProps> = ({ targetElement, padding = 8 }) => {
+    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
     const [rect, setRect] = useState<DOMRect | null>(null);
 
     useEffect(() => {
@@ -57,10 +59,12 @@ export const TourSpotlight: FC<TourSpotlightProps> = ({ targetElement, padding =
     return (
         <>
             <motion.svg
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                {...(disableAnimations ? {} : {
+                    initial: { opacity: 0 },
+                    animate: { opacity: 1 },
+                    exit: { opacity: 0 },
+                    transition: { duration: 0.3, ease: "easeInOut" }
+                })}
                 className="fixed inset-0 z-[9998] pointer-events-none"
                 style={{ width: '100vw', height: '100vh' }}
             >
@@ -87,10 +91,12 @@ export const TourSpotlight: FC<TourSpotlightProps> = ({ targetElement, padding =
                 />
             </motion.svg>
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                {...(disableAnimations ? {} : {
+                    initial: { opacity: 0, scale: 0.95 },
+                    animate: { opacity: 1, scale: 1 },
+                    exit: { opacity: 0, scale: 0.95 },
+                    transition: { duration: 0.3, ease: "easeInOut" }
+                })}
                 className="fixed z-[9999] pointer-events-none"
                 style={{
                     left: highlightRect.left,

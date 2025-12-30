@@ -34,7 +34,7 @@ inputs:
     required: false
     default: 'false'
   deploy-cli:
-    description: 'Build CLI binaries for MCP server'
+    description: 'Build CLI binaries'
     required: false
     default: 'false'
   publish-github-release:

@@ -75,7 +75,8 @@ jobs:
           BINARY_MAP["whodb-cli-linux-amd64"]="whodb-cli-linux-x64"
           BINARY_MAP["whodb-cli-linux-armv7"]="whodb-cli-linux-arm"
           BINARY_MAP["whodb-cli-windows-amd64.exe"]="whodb-cli-win32-x64"
-          BINARY_MAP["whodb-cli-windows-arm64.exe"]="whodb-cli-win32-arm64"
+          # Windows ARM64 disabled
+          # BINARY_MAP["whodb-cli-windows-arm64.exe"]="whodb-cli-win32-arm64"
 
           # Process each platform package
           for binary_name in "${!BINARY_MAP[@]}"; do

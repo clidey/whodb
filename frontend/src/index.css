@@ -167,6 +167,16 @@ body {
   }
 }
 
+/* Disable all animations when user preference is set */
+body.disable-animations *,
+body.disable-animations *::before,
+body.disable-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 [data-testid="storage-unit-card-list"]:not(.hidden) {
   width: 100%;
   display: grid;
