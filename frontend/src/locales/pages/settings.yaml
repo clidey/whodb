@@ -42,3 +42,6 @@ en:
   databaseSchemaTerminologyDatabase: Database
   databaseSchemaTerminologySchema: Schema
   selectDatabaseSchemaTerminology: Select Label
+  disableAnimations: Disable Animations
+  disableAnimationsEnabled: Animations are disabled
+  disableAnimationsDisabled: Animations are enabled

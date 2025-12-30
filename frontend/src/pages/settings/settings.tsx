@@ -48,6 +48,7 @@ export const SettingsPage: FC = () => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
     const language = useAppSelector(state => state.settings.language);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
+    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
@@ -103,6 +104,10 @@ export const SettingsPage: FC = () => {
 
     const handleDatabaseSchemaTerminologyChange = useCallback((terminology: 'database' | 'schema') => {
         dispatch(SettingsActions.setDatabaseSchemaTerminology(terminology));
+    }, [dispatch]);
+
+    const handleDisableAnimationsToggle = useCallback((disabled: boolean) => {
+        dispatch(SettingsActions.setDisableAnimations(disabled));
     }, [dispatch]);
 
     return (
@@ -204,6 +209,10 @@ export const SettingsPage: FC = () => {
                                     <SelectItem value="spacious" data-value="spacious">{t('spacious')}</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="flex justify-between">
+                            <Label>{disableAnimations ? t('disableAnimationsEnabled') : t('disableAnimationsDisabled')}</Label>
+                            <Switch checked={disableAnimations} onCheckedChange={handleDisableAnimationsToggle}/>
                         </div>
                         <div className="flex justify-between">
                             <Label>{t('whereConditionMode')}</Label>

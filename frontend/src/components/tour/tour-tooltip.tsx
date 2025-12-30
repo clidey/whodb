@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 import { FC, ReactElement, useEffect, useState } from 'react';
 import { CheckCircleIcon, ChevronRightIcon, XMarkIcon } from '../heroicons';
 import { useTranslation } from '../../hooks/use-translation';
+import { useAppSelector } from '../../store/hooks';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
@@ -52,6 +53,7 @@ export const TourTooltip: FC<TourTooltipProps> = ({
     isLastStep,
 }) => {
     const { t } = useTranslation('components/tour');
+    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
     const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
 
     useEffect(() => {
@@ -153,10 +155,12 @@ export const TourTooltip: FC<TourTooltipProps> = ({
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            {...(disableAnimations ? {} : {
+                initial: { opacity: 0, scale: 0.9, y: 10 },
+                animate: { opacity: 1, scale: 1, y: 0 },
+                exit: { opacity: 0, scale: 0.9, y: 10 },
+                transition: { duration: 0.3, ease: "easeInOut" }
+            })}
             style={tooltipStyle}
             className="z-[10000] w-[400px]"
             data-testid="tour-tooltip"

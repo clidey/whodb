@@ -36,13 +36,18 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
+    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
+    const animationProps = disableAnimations ? {} : {
+        initial: { opacity: 0 },
+        animate: { opacity: 100, transition: { duration: 0.5 } },
+        exit: { opacity: 0 }
+    };
+
     return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
         <AnimatePresence>
             <motion.div className={twMerge("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
                 data-testid="page-scroll-container"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 100, transition: { duration: 0.5 } }}
-                exit={{ opacity: 0 }}>
+                {...animationProps}>
                     {props.children}
             </motion.div>
         </AnimatePresence>
