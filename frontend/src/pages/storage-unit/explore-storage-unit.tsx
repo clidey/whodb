@@ -831,6 +831,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                     columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
                     rows={rawExecuteData?.RawExecute.Rows ?? []}
                     disableEdit={true}
+                    limitContextMenu={true}
                     schema={schema}
                     storageUnit={unitName}
                     onRefresh={handleSubmitRequest}

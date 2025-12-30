@@ -90,6 +90,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                             columnTypes={data.RawExecute.Columns.map((c: any) => c.Type)}
                             rows={data.RawExecute.Rows}
                             disableEdit={true}
+                            limitContextMenu={true}
                             height={250}
                             databaseType={current?.Type}
                         />

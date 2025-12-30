@@ -192,6 +192,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             columnTypes={data?.Columns.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
                             disableEdit={true}
+                            limitContextMenu={true}
                             databaseType={current?.Type}
                         />
                     </div>

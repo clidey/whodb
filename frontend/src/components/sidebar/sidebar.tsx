@@ -267,8 +267,11 @@ export const Sidebar: FC = () => {
 
     // Add profile logic
     const handleAddProfile = useCallback(() => {
-        setShowLoginCard(true);
-    }, [navigate]);
+        // Small delay to allow dropdown to close before opening sheet
+        setTimeout(() => {
+            setShowLoginCard(true);
+        }, 100);
+    }, []);
 
     const loading = availableDatabasesLoading || availableSchemasLoading;
 
