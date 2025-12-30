@@ -489,7 +489,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
         });
         handleScratchpad();
         setCode(initialScratchpadQuery);
-        document.body.classList.add("!pointer-events-auto");
     }, [schema, unit]);
 
     const handleCloseScratchpad = useCallback(() => {
@@ -807,8 +806,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 }
             </div>
         </div>
-        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
-            <DrawerContent className="px-8 min-h-[65vh]" data-testid="scratchpad-drawer">
+        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad} modal>
+            <DrawerContent className="px-8 min-h-[65vh] max-h-[80vh] overflow-hidden flex flex-col" data-testid="scratchpad-drawer">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
                 </Button>
@@ -826,17 +825,19 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <div className="flex flex-col gap-sm h-[150px] mb-4">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <StorageUnitTable
-                    columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
-                    columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
-                    rows={rawExecuteData?.RawExecute.Rows ?? []}
-                    disableEdit={true}
-                    schema={schema}
-                    storageUnit={unitName}
-                    onRefresh={handleSubmitRequest}
-                    showPagination={false}
-                    databaseType={current?.Type}
-                />
+                <div className="flex-1 overflow-y-auto">
+                    <StorageUnitTable
+                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
+                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
+                        rows={rawExecuteData?.RawExecute.Rows ?? []}
+                        disableEdit={true}
+                        schema={schema}
+                        storageUnit={unitName}
+                        onRefresh={handleSubmitRequest}
+                        showPagination={false}
+                        databaseType={current?.Type}
+                    />
+                </div>
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>

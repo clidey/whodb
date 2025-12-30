@@ -15,6 +15,7 @@
  */
 
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {eeSettingsDefaults} from '../config/ee-imports';
 
 const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
 
@@ -28,6 +29,7 @@ type ISettingsState = {
     defaultPageSize: number;
     language: 'en' | 'es';
     databaseSchemaTerminology: 'database' | 'schema';
+    disableAnimations: boolean;
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -53,6 +55,8 @@ const getInitialState = (): ISettingsState => {
         defaultPageSize: 100,
         language: 'en',
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
+        // Use EE default if available, otherwise default to false (animations enabled)
+        disableAnimations: eeSettingsDefaults.disableAnimations ?? false,
     };
 };
 
@@ -89,6 +93,9 @@ export const settingsSlice = createSlice({
         },
         setDatabaseSchemaTerminology: (state, action: PayloadAction<ISettingsState["databaseSchemaTerminology"]>) => {
             state.databaseSchemaTerminology = action.payload;
+        },
+        setDisableAnimations: (state, action: PayloadAction<ISettingsState["disableAnimations"]>) => {
+            state.disableAnimations = action.payload;
         },
     },
 });
