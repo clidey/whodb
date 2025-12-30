@@ -635,8 +635,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     if (e.key === "Enter") {
                                         searchRef.current?.(search);
                                     }
-                                }}
-                                         data-testid="table-search"
+                                }} data-testid="table-search"
                             />
                         </div>
                         <div className="flex flex-col gap-2">

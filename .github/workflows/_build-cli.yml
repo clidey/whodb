@@ -13,8 +13,60 @@ permissions:
   actions: write
 
 jobs:
-  build-cli:
-    name: Build CLI Binaries
+  build-cli-linux:
+    name: Build CLI (Linux ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    environment: permission-required
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+            make_target: ci-build-linux-amd64
+            binary_name: whodb-cli-linux-amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+            make_target: ci-build-linux-arm64
+            binary_name: whodb-cli-linux-arm64
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            storage.googleapis.com:443
+            sum.golang.org:443
+            go.dev:443
+            golang.org:443
+            dl.google.com:443
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version-file: 'cli/go.mod'
+
+      - name: Build CLI
+        working-directory: ./cli
+        run: make ${{ matrix.make_target }} VERSION=${{ inputs.version }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cli-binary-${{ matrix.binary_name }}
+          path: cli/build/${{ matrix.binary_name }}
+          retention-days: 1
+
+  build-cli-linux-armv7:
+    name: Build CLI (Linux armv7)
     runs-on: ubuntu-latest
     environment: permission-required
     steps:
@@ -25,9 +77,19 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
+            go.dev:443
+            golang.org:443
+            dl.google.com:443
+            azure.archive.ubuntu.com:80
+            archive.ubuntu.com:80
+            archive.ubuntu.com:443
+            security.ubuntu.com:80
+            security.ubuntu.com:443
+            packages.microsoft.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -37,77 +99,158 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
-          go-version: '1.23'
+          go-version-file: 'cli/go.mod'
 
-      - name: Install cross-compilation dependencies
+      - name: Install cross-compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            gcc-mingw-w64-x86-64 \
-            gcc-aarch64-linux-gnu \
-            gcc-arm-linux-gnueabihf
+          sudo apt-get install -y gcc-arm-linux-gnueabihf
 
-      - name: Build CLI for all platforms
+      - name: Build CLI
+        working-directory: ./cli
+        run: make ci-build-linux-armv7 VERSION=${{ inputs.version }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cli-binary-whodb-cli-linux-armv7
+          path: cli/build/whodb-cli-linux-armv7
+          retention-days: 1
+
+  build-cli-macos:
+    name: Build CLI (macOS)
+    runs-on: macos-latest
+    environment: permission-required
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            storage.googleapis.com:443
+            sum.golang.org:443
+            go.dev:443
+            golang.org:443
+            dl.google.com:443
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version-file: 'cli/go.mod'
+
+      - name: Build CLI (both architectures)
         working-directory: ./cli
         env:
           VERSION: ${{ inputs.version }}
-          CGO_ENABLED: '0'
         run: |
-          mkdir -p build
+          make ci-build-darwin-arm64 VERSION=$VERSION
+          make ci-build-darwin-amd64 VERSION=$VERSION
 
-          # Version info for ldflags
-          LDFLAGS="-s -w -X main.Version=${VERSION}"
+      - name: Upload ARM64 artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cli-binary-whodb-cli-darwin-arm64
+          path: cli/build/whodb-cli-darwin-arm64
+          retention-days: 1
 
-          echo "Building CLI version ${VERSION}..."
+      - name: Upload AMD64 artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cli-binary-whodb-cli-darwin-amd64
+          path: cli/build/whodb-cli-darwin-amd64
+          retention-days: 1
 
-          # Linux AMD64
-          echo "Building linux/amd64..."
-          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-linux-amd64 .
+  build-cli-windows:
+    name: Build CLI (Windows ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    environment: permission-required
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            arch: amd64
+            make_target: ci-build-windows-amd64
+            binary_name: whodb-cli-windows-amd64.exe
+          # Windows ARM64 disabled
+          # - os: windows-11-arm
+          #   arch: arm64
+          #   make_target: ci-build-windows-arm64
+          #   binary_name: whodb-cli-windows-arm64.exe
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            storage.googleapis.com:443
+            sum.golang.org:443
+            go.dev:443
+            golang.org:443
+            dl.google.com:443
 
-          # Linux ARM64
-          echo "Building linux/arm64..."
-          GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-linux-arm64 .
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
 
-          # Linux ARMv7
-          echo "Building linux/arm..."
-          GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-linux-armv7 .
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version-file: 'cli/go.mod'
 
-          # macOS AMD64
-          echo "Building darwin/amd64..."
-          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-darwin-amd64 .
+      - name: Build CLI
+        working-directory: ./cli
+        shell: pwsh
+        run: make ${{ matrix.make_target }} VERSION=${{ inputs.version }}
 
-          # macOS ARM64 (Apple Silicon)
-          echo "Building darwin/arm64..."
-          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-darwin-arm64 .
+      - name: Upload artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: cli-binary-${{ matrix.binary_name }}
+          path: cli/build/${{ matrix.binary_name }}
+          retention-days: 1
 
-          # Windows AMD64
-          echo "Building windows/amd64..."
-          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-windows-amd64.exe .
+  # Combine all binaries into single artifact for downstream jobs
+  combine-cli-binaries:
+    name: Combine CLI Binaries
+    runs-on: ubuntu-latest
+    needs: [build-cli-linux, build-cli-linux-armv7, build-cli-macos, build-cli-windows]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
 
-          # Windows ARM64
-          echo "Building windows/arm64..."
-          GOOS=windows GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o build/whodb-cli-windows-arm64.exe .
+      - name: Download all CLI binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          pattern: cli-binary-*
+          path: binaries/
+          merge-multiple: true
 
-          echo "All builds completed!"
-
-      - name: Verify CLI binaries
+      - name: List binaries
         run: |
-          echo "Verifying built CLI binaries..."
-          ls -lh cli/build/
+          echo "Combined CLI binaries:"
+          ls -la binaries/
 
-          for binary in cli/build/whodb-cli-*; do
-            if [ -f "$binary" ]; then
-              echo "✅ Binary: $(basename $binary)"
-              file "$binary"
-            else
-              echo "❌ Missing binary: $binary"
-              exit 1
-            fi
-          done
-
-      - name: Upload CLI binaries artifact
+      - name: Upload combined artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: cli-binaries
-          path: cli/build/whodb-cli-*
+          path: binaries/
           retention-days: 1
