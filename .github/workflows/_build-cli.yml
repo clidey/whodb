@@ -180,10 +180,11 @@ jobs:
             arch: amd64
             make_target: ci-build-windows-amd64
             binary_name: whodb-cli-windows-amd64.exe
-          - os: windows-11-arm
-            arch: arm64
-            make_target: ci-build-windows-arm64
-            binary_name: whodb-cli-windows-arm64.exe
+          # Windows ARM64 disabled
+          # - os: windows-11-arm
+          #   arch: arm64
+          #   make_target: ci-build-windows-arm64
+          #   binary_name: whodb-cli-windows-arm64.exe
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
