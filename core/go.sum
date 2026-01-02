@@ -54,6 +54,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.41.5 h1:SciGFVNZ4mHdm7gpD1dgZYnCuVdX
 github.com/aws/aws-sdk-go-v2/service/sts v1.41.5/go.mod h1:iW40X4QBmUxdP+fZNOpfmkdMZqsovezbAeO+Ubiv2pk=
 github.com/aws/smithy-go v1.24.0 h1:LpilSUItNPFr1eY85RYgTIg5eIEPtvFbskaFcmmIUnk=
 github.com/aws/smithy-go v1.24.0/go.mod h1:LEj2LM3rBRQJxPZTB4KuzZkaZYnZPnvgIhb4pu07mx0=
+github.com/boundaryml/baml v0.215.2 h1:4Z+3jWjGEAzaCZOetZk1lfEv3rvrBCEAhGusHIlOfXY=
+github.com/boundaryml/baml v0.215.2/go.mod h1:dzmyDMNDXIVxJX75q9KTjuTUADsYSGUEbGyi76Cwkew=
 github.com/brianvoe/gofakeit/v7 v7.12.0 h1:5gHj4XiZUOBF5dIzFxz5mqlaUjahYk09RtT+51iQkuA=
 github.com/brianvoe/gofakeit/v7 v7.12.0/go.mod h1:OllskdkFOHg1ECRPXRV7OKSLcabgRY0YuzstuBoEFFk=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

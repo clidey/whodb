@@ -15,12 +15,12 @@
 package gorm_plugin
 
 import (
+	ctx "context"
 	"fmt"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
@@ -59,16 +59,11 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, model stri
 			}
 		}
 
-		context := tableDetails.String()
+		tableContext := tableDetails.String()
 
-		completeQuery := fmt.Sprintf(common.RawSQLQueryPrompt, p.Type, schema, context, previousConversation, query)
+		// Use BAML for structured SQL query generation
+		callCtx := ctx.Background()
 
-		response, err := llm.Instance(config).Complete(completeQuery, llm.LLMModel(model), nil)
-		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to complete LLM query using model %s for schema %s", model, schema))
-			return nil, err
-		}
-
-		return common.SQLChat(*response, config, p)
+		return common.SQLChatBAML(callCtx, string(p.Type), schema, tableContext, previousConversation, query, config, p)
 	})
 }
