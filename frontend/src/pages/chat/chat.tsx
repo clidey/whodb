@@ -57,7 +57,7 @@ import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
-import {HoudiniActions} from "../../store/chat";
+import {HoudiniActions, IChatMessage} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
 import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
@@ -196,13 +196,15 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             databaseType={current?.Type}
                         />
                     </div>
-                    : <Alert title={t('actionExecuted')} className="w-fit">
+                    : (type.startsWith("sql:") && (type === "sql:insert" || type === "sql:update" || type === "sql:delete"))
+                    ? <Alert title={t('actionExecuted')} className="w-fit">
                         <CheckCircleIcon className="w-4 h-4" />
                         <AlertTitle>{t('actionExecuted')}</AlertTitle>
                         <AlertDescription>
                             {previewResult}
                         </AlertDescription>
                     </Alert>
+                    : null
             }
         </div>
         
@@ -258,10 +260,6 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
     </div>
 }
 
-type IChatMessage = AiChatMessage & {
-    isUserInput?: boolean;
-};
-
 export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
@@ -282,9 +280,7 @@ export const ChatPage: FC = () => {
         return Array.from({ length: THINKING_PHRASES_COUNT }, (_, i) => t(`thinking${i}`));
     }, [t]);
 
-    const loading = useMemo(() => {
-        return getAIChatLoading;
-    }, [getAIChatLoading]);
+    const [loading, setLoading] = useState(false);
 
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
@@ -312,13 +308,25 @@ export const ChatPage: FC = () => {
         return exampleIndicesRef.current.map(i => chatExamples[i]);
     }, [chatExamples]);
 
-    const handleSubmitQuery = useCallback(() => {
+    const handleSubmitQuery = useCallback(async () => {
         const sanitizedQuery = query.trim();
         if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
 
+        setLoading(true);
         dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, }));
+        setQuery("");
+
+        // Add a placeholder for streaming text
+        const streamingMessageId = Date.now();
+        dispatch(HoudiniActions.addChatMessage({
+            Type: "message",
+            Text: "",
+            isStreaming: true,
+            id: streamingMessageId
+        }));
+
         setTimeout(() => {
             if (scrollContainerRef.current != null) {
                 scrollContainerRef.current.scroll({
@@ -327,48 +335,130 @@ export const ChatPage: FC = () => {
                 });
             }
         }, 250);
-        getAIChat({
-            variables: {
-                providerId: modelType.id,
-                modelType: modelType.modelType,
-                token: modelType.token,
-                query: sanitizedQuery,
-                model: currentModel ?? "",
-                previousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
-                schema,
-            },
-            onCompleted(data) {
-                const systemChats: IChatMessage[] = data.AIChat.map(chat => {
-                    if (chat.Type.startsWith("sql")) {
-                        return {
-                            Type: chat.Type,
-                            Text: chat.Text,
-                            Result: chat.Result as AiChatMessage["Result"],
+
+        try {
+            const response = await fetch('/api/ai-chat/stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                },
+                body: JSON.stringify({
+                    schema,
+                    modelType: modelType.modelType,
+                    token: modelType.token || '',
+                    input: {
+                        Query: sanitizedQuery,
+                        PreviousConversation: chats.map(chat =>
+                            `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`
+                        ).join("\n"),
+                        Model: currentModel ?? "",
+                    },
+                }),
+            });
+
+            if (!response.body) {
+                throw new Error('No response body');
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let streamingText = '';
+            let currentEventType = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        currentEventType = line.slice(7).trim();
+                    } else if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (!data.trim()) continue;
+
+                        try {
+                            const parsed = JSON.parse(data);
+
+                            if (currentEventType === 'chunk') {
+                                // BAML sends full accumulated text in each chunk, not deltas
+                                const text = parsed.text || '';
+
+                                // Debug: log what we're receiving
+                                console.log('Chunk received:', { type: parsed.type, text: text.substring(0, 50) });
+
+                                // Update streaming message with the latest text
+                                // Ignore SQL/error types during streaming (they'll come in 'message' event)
+                                const chunkType = parsed.type || '';
+                                if (chunkType !== 'sql' && chunkType !== 'error') {
+                                    dispatch(HoudiniActions.updateChatMessage({
+                                        id: streamingMessageId,
+                                        Text: text,
+                                    }));
+                                    streamingText = text;
+                                }
+
+                                // Auto-scroll
+                                if (scrollContainerRef.current != null) {
+                                    scrollContainerRef.current.scroll({
+                                        top: scrollContainerRef.current.scrollHeight,
+                                        behavior: "smooth",
+                                    });
+                                }
+                            } else if (currentEventType === 'message') {
+                                // Handle complete messages (SQL responses after streaming)
+                                if (parsed.Type?.startsWith("sql") && parsed.Result) {
+                                    // Add SQL results as a new message
+                                    dispatch(HoudiniActions.addChatMessage({
+                                        Type: parsed.Type,
+                                        Text: parsed.Text,
+                                        Result: parsed.Result,
+                                    }));
+
+                                    setTimeout(() => {
+                                        if (scrollContainerRef.current != null) {
+                                            scrollContainerRef.current.scroll({
+                                                top: scrollContainerRef.current.scrollHeight,
+                                                behavior: "smooth",
+                                            });
+                                        }
+                                    }, 100);
+                                }
+                            } else if (currentEventType === 'done') {
+                                // Stream complete - finalize the streaming message
+                                if (streamingText === '' || streamingText.trim() === '') {
+                                    // No message text was streamed, remove placeholder
+                                    dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+                                } else {
+                                    // Complete the streaming message with final text
+                                    dispatch(HoudiniActions.completeStreamingMessage({
+                                        id: streamingMessageId,
+                                        message: { Type: "message", Text: streamingText },
+                                    }));
+                                }
+                                setLoading(false);
+                            } else if (currentEventType === 'error') {
+                                dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+                                toast.error(t('unableToQuery') + " " + parsed.error);
+                                setLoading(false);
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse SSE data:', e);
                         }
                     }
-                    return {
-                        Type: chat.Type,
-                        Text: chat.Text,
-                    }
-                });
-                for (const systemChat of systemChats) {
-                    dispatch(HoudiniActions.addChatMessage(systemChat));
                 }
-                setTimeout(() => {
-                    if (scrollContainerRef.current != null) {
-                        scrollContainerRef.current.scroll({
-                            top: scrollContainerRef.current.scrollHeight,
-                            behavior: "smooth",
-                        });
-                    }
-                }, 250);
-            },
-            onError(error) {
-                toast.error(t('unableToQuery')+" "+error.message);
-            },
-        });
-        setQuery("");
-    }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch, t]);
+            }
+        } catch (error) {
+            dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+            toast.error(t('unableToQuery') + " " + (error instanceof Error ? error.message : 'Unknown error'));
+            setLoading(false);
+        }
+    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef]);
 
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || !modelAvailable || query.trim().length === 0;
@@ -465,8 +555,10 @@ export const ChatPage: FC = () => {
                                                     <p className={classNames("py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33] px-4": chat.isUserInput,
                                                         "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
+                                                        "animate-fade-in": chat.isStreaming,
                                                     })} data-input-message={chat.isUserInput ? "user" : "system"}>
                                                         {chat.Text}
+                                                        {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
                                                     </p>
                                                 </div>
                                             } else if (chat.Type === "error") {

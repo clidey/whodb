@@ -210,23 +210,35 @@ function setMigrationVersion(version: number): void {
 }
 
 /**
+ * Clear chat state to fix IChatMessage type mismatch
+ */
+function clearChatStateV2(): void {
+  try {
+    // Clear the persisted chat (houdini) state
+    localStorage.removeItem('persist:houdini');
+    console.log('Cleared chat state for IChatMessage type migration');
+  } catch (error) {
+    console.error('Error clearing chat state:', error);
+  }
+}
+
+/**
  * Run all necessary migrations
  */
 export function runMigrations(): void {
   const currentVersion = getMigrationVersion();
-  
+
   // Run migrations in order based on version
   if (currentVersion < 1) {
     migrateAIModelsFromDatabase();
     setMigrationVersion(1);
   }
-  
-  // Future migrations can be added here
-  // if (currentVersion < 2) {
-  //   runMigrationV2();
-  //   setMigrationVersion(2);
-  // }
-  
+
+  if (currentVersion < 2) {
+    clearChatStateV2();
+    setMigrationVersion(2);
+  }
+
   // Always ensure AI models state is valid
   ensureValidAIModelsState();
 }
