@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
@@ -78,11 +79,16 @@ type AIConfig struct {
 	ConsentGiven bool `json:"consent_given" yaml:"consent_given"`
 }
 
+type QueryConfig struct {
+	TimeoutSeconds int `json:"timeout_seconds" yaml:"timeout_seconds"`
+}
+
 type Config struct {
 	Connections         []Connection  `json:"connections" yaml:"connections"`
 	History             HistoryConfig `json:"history" yaml:"history"`
 	Display             DisplayConfig `json:"display" yaml:"display"`
 	AI                  AIConfig      `json:"ai" yaml:"ai"`
+	Query               QueryConfig   `json:"query" yaml:"query"`
 	useKeyring          bool          `json:"-" yaml:"-"` // Not persisted
 	keyringWarningShown bool          `json:"-" yaml:"-"` // Track if warning was shown
 }
@@ -100,6 +106,9 @@ func DefaultConfig() *Config {
 		},
 		AI: AIConfig{
 			ConsentGiven: false,
+		},
+		Query: QueryConfig{
+			TimeoutSeconds: 30, // Default 30 second timeout for queries
 		},
 		// Don't check here - LoadConfig() will set this
 		useKeyring: false,
@@ -237,6 +246,7 @@ func (c *Config) Save() error {
 	viper.Set("history", c.History)
 	viper.Set("display", c.Display)
 	viper.Set("ai", c.AI)
+	viper.Set("query", c.Query)
 
 	if err := viper.WriteConfigAs(configPath); err != nil {
 		return fmt.Errorf("error writing config: %w", err)
@@ -293,4 +303,12 @@ func (c *Config) SetAIConsent(consent bool) {
 // GetAIConsent returns the current AI consent preference
 func (c *Config) GetAIConsent() bool {
 	return c.AI.ConsentGiven
+}
+
+// GetQueryTimeout returns the query timeout as a time.Duration
+func (c *Config) GetQueryTimeout() time.Duration {
+	if c.Query.TimeoutSeconds <= 0 {
+		return 30 * time.Second // Default fallback
+	}
+	return time.Duration(c.Query.TimeoutSeconds) * time.Second
 }

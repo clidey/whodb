@@ -18,8 +18,8 @@ import { Button, Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
 import { toPng } from 'html-to-image';
-import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useMemo, useRef, useState } from "react";
-import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
+import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, PanOnScrollMode, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
 import { Tip } from '../tip';
 import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
@@ -56,10 +56,45 @@ export const Graph: FC<IGraphProps> = (props) => {
     const [isLayingOut, setIsLayingOut] = useState(true);
     const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
     const [downloading, setDownloading] = useState(false);
+    const [isSpacePressed, setIsSpacePressed] = useState(false);
 
     const edgeTypes = useMemo(() => ({
         floatingGraphEdge: FloatingGraphEdge,
     }), []);
+
+    // Figma-like space key handling for pan mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Prevent default space behavior (page scroll) when not in an input
+            if (e.code === 'Space' && e.target === document.body) {
+                e.preventDefault();
+            }
+            if (e.code === 'Space' && !isSpacePressed) {
+                setIsSpacePressed(true);
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.code === 'Space') {
+                setIsSpacePressed(false);
+            }
+        };
+
+        // Also handle blur to reset state when window loses focus
+        const handleBlur = () => {
+            setIsSpacePressed(false);
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('blur', handleBlur);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('blur', handleBlur);
+        };
+    }, [isSpacePressed]);
 
     const onLayout = useCallback((type = "dagre", padding?: number) => {
         const nodes = getNodes();
@@ -111,7 +146,7 @@ export const Graph: FC<IGraphProps> = (props) => {
         if (reactFlowWrapper.current === null) {
             return;
           }
-      
+
           setDownloading(true);
           toPng(reactFlowWrapper.current, {
             pixelRatio: 5,
@@ -129,11 +164,15 @@ export const Graph: FC<IGraphProps> = (props) => {
             });
     }, []);
 
+    // Check if Mac for proper modifier key
+    const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+
     return <ReactFlow
         ref={reactFlowWrapper}
         className={classNames("group rounded-lg transition-all", {
             "laying-out opacity-0": isLayingOut,
             "opacity-100": !isLayingOut,
+            "!cursor-grab": isSpacePressed,
         })}
         {...props}
         nodeTypes={props.nodeTypes}
@@ -141,7 +180,16 @@ export const Graph: FC<IGraphProps> = (props) => {
         nodes={props.nodes}
         edges={props.edges}
         panOnScroll
-        selectionOnDrag
+        panOnScrollMode={PanOnScrollMode.Free}
+        panOnDrag={isSpacePressed}
+        selectionOnDrag={!isSpacePressed}
+        zoomOnScroll={true}
+        zoomActivationKeyCode={isMac ? "Meta" : "Control"}
+        zoomOnPinch={true}
+        zoomOnDoubleClick={true}
+        nodesConnectable={false}
+        nodesDraggable={true}
+        connectOnClick={false}
         onNodesChange={props.onNodesChange}
         onEdgesChange={props.onEdgesChange}
         proOptions={{
@@ -161,17 +209,25 @@ export const Graph: FC<IGraphProps> = (props) => {
             <div className="flex flex-col gap-2">
                 <Tabs value={undefined} onValueChange={() => {}}>
                     <TabsList dir="column" className="px-1">
-                        <TabsTrigger value="download" onClick={handleDownloadImage} asChild>
+                        <TabsTrigger value="download" asChild>
                             <Tip className="w-[30px]">
-                                <Button data-testid="graph-download-button" variant="ghost">
+                                <Button
+                                    data-testid="graph-download-button"
+                                    variant="ghost"
+                                    onClick={handleDownloadImage}
+                                >
                                     <ArrowDownTrayIcon className="w-4 h-4 dark:text-white" />
                                 </Button>
                                 Download
                             </Tip>
                         </TabsTrigger>
-                        <TabsTrigger value="layout" onClick={() => onLayout("dagre")} asChild>
+                        <TabsTrigger value="layout" asChild>
                             <Tip className="w-[30px]">
-                                <Button data-testid="graph-layout-button" variant="ghost">
+                                <Button
+                                    data-testid="graph-layout-button"
+                                    variant="ghost"
+                                    onClick={() => onLayout("dagre")}
+                                >
                                     <RectangleGroupIcon className="w-4 h-4 dark:text-white" />
                                 </Button>
                                 Layout

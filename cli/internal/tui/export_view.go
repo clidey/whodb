@@ -275,43 +275,6 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			// For filename input (focusIndex == 0), let it fall through to be handled by textinput
 
-		case "h":
-			// h/l shortcuts only work when not in text input
-			if v.focusIndex != 0 {
-				if v.focusIndex == 1 {
-					v.selectedFormat--
-					if v.selectedFormat < 0 {
-						v.selectedFormat = len(exportFormats) - 1
-					}
-				} else if v.hasDelimiter() && v.focusIndex == 2 {
-					v.selectedDelim--
-					if v.selectedDelim < 0 {
-						v.selectedDelim = len(exportDelimiters) - 1
-					}
-				} else if v.focusIndex == v.overwriteIndex() {
-					v.overwrite = !v.overwrite
-				}
-				return v, nil
-			}
-
-		case "l":
-			// h/l shortcuts only work when not in text input
-			if v.focusIndex != 0 {
-				if v.focusIndex == 1 {
-					v.selectedFormat++
-					if v.selectedFormat >= len(exportFormats) {
-						v.selectedFormat = 0
-					}
-				} else if v.hasDelimiter() && v.focusIndex == 2 {
-					v.selectedDelim++
-					if v.selectedDelim >= len(exportDelimiters) {
-						v.selectedDelim = 0
-					}
-				} else if v.focusIndex == v.overwriteIndex() {
-					v.overwrite = !v.overwrite
-				}
-				return v, nil
-			}
 		}
 	}
 
@@ -531,8 +494,8 @@ func (v *ExportView) View() string {
 	b.WriteString(styles.RenderHelp(
 		"↑/k", "prev",
 		"↓/j", "next",
-		"←/h", "prev option",
-		"→/l", "next option",
+		"←", "prev option",
+		"→", "next option",
 		"enter", "select",
 		"esc", "cancel",
 	))

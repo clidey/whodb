@@ -92,6 +92,6 @@ describe('Query History', () => {
                 expect(rows.length).to.be.greaterThan(0);
             });
         });
-    }, { features: ['queryHistory', 'scratchpad'] });
+    }, {features: ['queryHistory', 'scratchpad']});
 
 });

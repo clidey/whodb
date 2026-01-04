@@ -17,8 +17,11 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -52,8 +55,14 @@ func (i historyItem) FilterValue() string {
 }
 
 type HistoryView struct {
-	parent *MainModel
-	list   list.Model
+	parent          *MainModel
+	list            list.Model
+	confirmingClear bool
+	executing       bool
+	queryCancel     context.CancelFunc
+	// Retry prompt state for timed out queries
+	retryPrompt   bool
+	timedOutQuery string
 }
 
 func NewHistoryView(parent *MainModel) *HistoryView {
@@ -70,6 +79,28 @@ func NewHistoryView(parent *MainModel) *HistoryView {
 
 func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case HistoryQueryMsg:
+		v.executing = false
+		v.queryCancel = nil
+		if msg.Err != nil {
+			// Check for timeout/cancel
+			if errors.Is(msg.Err, context.DeadlineExceeded) {
+				v.parent.err = fmt.Errorf("query timed out")
+				// Enable retry prompt
+				v.retryPrompt = true
+				v.timedOutQuery = msg.Query
+			} else if errors.Is(msg.Err, context.Canceled) {
+				// User cancelled, don't show error
+				return v, nil
+			} else {
+				v.parent.err = msg.Err
+			}
+			return v, nil
+		}
+		v.parent.resultsView.SetResults(msg.Result, msg.Query)
+		v.parent.mode = ViewResults
+		return v, nil
+
 	case tea.WindowSizeMsg:
 		v.list.SetSize(msg.Width-4, msg.Height-15)
 		return v, nil
@@ -85,6 +116,34 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out queries
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.parent.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 60*time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.parent.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 2*time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.parent.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 5*time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.parent.err = nil
+				return v, v.executeQueryWithTimeout(v.timedOutQuery, 24*time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				v.timedOutQuery = ""
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		switch msg.String() {
 		case "enter":
 			if item, ok := v.list.SelectedItem().(historyItem); ok {
@@ -94,24 +153,59 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			}
 
 		case "r":
+			if v.executing {
+				return v, nil // Already executing
+			}
 			if item, ok := v.list.SelectedItem().(historyItem); ok {
-				result, err := v.parent.dbManager.ExecuteQuery(item.entry.Query)
-				if err != nil {
-					v.parent.err = err
-					return v, nil
-				}
+				v.executing = true
+				query := item.entry.Query
 
-				v.parent.resultsView.SetResults(result, item.entry.Query)
-				v.parent.mode = ViewResults
+				// Get timeout from config
+				timeout := v.parent.config.GetQueryTimeout()
+				ctx, cancel := context.WithTimeout(context.Background(), timeout)
+				v.queryCancel = cancel
+
+				return v, func() tea.Msg {
+					defer cancel()
+					result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+					return HistoryQueryMsg{Result: result, Query: query, Err: err}
+				}
+			}
+
+		case "D":
+			// Show confirmation prompt
+			if !v.confirmingClear {
+				v.confirmingClear = true
 				return v, nil
 			}
 
-		case "c":
-			v.parent.histMgr.Clear()
-			v.refreshList()
-			return v, nil
+		case "y", "Y":
+			// Confirm clear if in confirmation mode
+			if v.confirmingClear {
+				v.parent.histMgr.Clear()
+				v.refreshList()
+				v.confirmingClear = false
+				return v, nil
+			}
+
+		case "n", "N":
+			// Cancel clear confirmation
+			if v.confirmingClear {
+				v.confirmingClear = false
+				return v, nil
+			}
 
 		case "esc":
+			// Cancel executing query first
+			if v.executing && v.queryCancel != nil {
+				v.queryCancel()
+				return v, nil
+			}
+			// Cancel confirmation or go back
+			if v.confirmingClear {
+				v.confirmingClear = false
+				return v, nil
+			}
 			v.parent.mode = ViewBrowser
 			return v, nil
 		}
@@ -128,6 +222,46 @@ func (v *HistoryView) View() string {
 	b.WriteString(styles.RenderTitle("Query History"))
 	b.WriteString("\n\n")
 
+	// Show executing state
+	if v.executing {
+		b.WriteString(styles.MutedStyle.Render("Executing query..."))
+		b.WriteString("\n")
+		b.WriteString(styles.MutedStyle.Render("Press ESC to cancel"))
+		b.WriteString("\n\n")
+	}
+
+	// Show retry prompt for timed out queries
+	if v.retryPrompt {
+		b.WriteString(styles.ErrorStyle.Render("Query timed out"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
+		b.WriteString("\n")
+		b.WriteString(styles.KeyStyle.Render("[1]"))
+		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
+		b.WriteString(styles.KeyStyle.Render("[2]"))
+		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[3]"))
+		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[4]"))
+		b.WriteString(styles.MutedStyle.Render(" No limit"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp("esc", "cancel"))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
+	// Show confirmation dialog if clearing
+	if v.confirmingClear {
+		b.WriteString(styles.ErrorStyle.Render("⚠ Clear all history?"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("This will delete all query history entries."))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp(
+			"[y]", "confirm",
+			"[n]/esc", "cancel",
+		))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	entries := v.parent.histMgr.GetAll()
 	if len(entries) == 0 {
 		b.WriteString(styles.MutedStyle.Render("No history entries"))
@@ -140,8 +274,8 @@ func (v *HistoryView) View() string {
 		"↑/k", "up",
 		"↓/j", "down",
 		"enter", "edit",
-		"[r]", "re-run",
-		"[c]", "clear",
+		"r", "re-run",
+		"shift+d", "clear all",
 		"tab", "next view",
 		"esc", "back",
 		"ctrl+c", "quit",
@@ -161,4 +295,16 @@ func (v *HistoryView) refreshList() {
 
 func (v *HistoryView) Init() {
 	v.refreshList()
+}
+
+func (v *HistoryView) executeQueryWithTimeout(query string, timeout time.Duration) tea.Cmd {
+	v.executing = true
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.queryCancel = cancel
+
+	return func() tea.Msg {
+		defer cancel()
+		result, err := v.parent.dbManager.ExecuteQueryWithContext(ctx, query)
+		return HistoryQueryMsg{Result: result, Query: query, Err: err}
+	}
 }

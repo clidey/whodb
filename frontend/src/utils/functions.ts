@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2025 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 import isNaN from "lodash/isNaN";
 import sampleSize from "lodash/sampleSize";
-import { DatabaseType } from '@graphql';
+import {DatabaseType} from '@graphql';
 
 /**
  * Checks if a string can be parsed as a numeric value.
@@ -138,6 +138,7 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
             return singular ? "Key" : "Keys";
         case DatabaseType.MySql:
         case DatabaseType.Postgres:
+        case DatabaseType.MariaDb:
         case DatabaseType.Sqlite3:
         case DatabaseType.ClickHouse:
             return singular ? "Table" : "Tables";

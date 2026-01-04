@@ -45,6 +45,15 @@ help:
 	@echo "  make docker-run         - Run CLI in Docker (interactive)"
 	@echo "  make docker-compose-up  - Start CLI and test databases"
 	@echo "  make docker-compose-down - Stop all Docker services"
+	@echo ""
+	@echo "CI build targets (use VERSION=x.x.x):"
+	@echo "  make ci-build-linux-amd64   - Build for Linux x86_64"
+	@echo "  make ci-build-linux-arm64   - Build for Linux ARM64"
+	@echo "  make ci-build-linux-armv7   - Build for Linux ARMv7 (requires cross-compiler)"
+	@echo "  make ci-build-darwin-amd64  - Build for macOS Intel"
+	@echo "  make ci-build-darwin-arm64  - Build for macOS Apple Silicon"
+	@echo "  make ci-build-windows-amd64 - Build for Windows x86_64"
+	@echo "  make ci-build-windows-arm64 - Build for Windows ARM64"
 
 build:
 	@echo "Building $(BINARY_NAME) $(VERSION)..."
@@ -94,5 +103,57 @@ docker-compose-down:
 	@echo "Stopping Docker services..."
 	@docker-compose down
 	@echo "Services stopped"
+
+# CI build targets for cross-platform builds
+# Usage: make ci-build-<platform> VERSION=x.x.x
+# Outputs binary to BUILD_DIR with platform suffix
+
+.PHONY: ci-build-linux-amd64 ci-build-linux-arm64 ci-build-linux-armv7
+.PHONY: ci-build-darwin-amd64 ci-build-darwin-arm64
+.PHONY: ci-build-windows-amd64 ci-build-windows-arm64
+
+CI_LDFLAGS=-ldflags "-s -w -X main.Version=$(VERSION)"
+
+ci-build-linux-amd64:
+	@echo "Building CLI for linux/amd64..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-linux-amd64 .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-linux-amd64"
+
+ci-build-linux-arm64:
+	@echo "Building CLI for linux/arm64..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-linux-arm64 .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-linux-arm64"
+
+ci-build-linux-armv7:
+	@echo "Building CLI for linux/armv7..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC=arm-linux-gnueabihf-gcc go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-linux-armv7 .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-linux-armv7"
+
+ci-build-darwin-amd64:
+	@echo "Building CLI for darwin/amd64..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-darwin-amd64 .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-darwin-amd64"
+
+ci-build-darwin-arm64:
+	@echo "Building CLI for darwin/arm64..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-darwin-arm64 .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-darwin-arm64"
+
+ci-build-windows-amd64:
+	@echo "Building CLI for windows/amd64..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-windows-amd64.exe .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-windows-amd64.exe"
+
+ci-build-windows-arm64:
+	@echo "Building CLI for windows/arm64..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=windows GOARCH=arm64 go build $(CI_LDFLAGS) -o $(BUILD_DIR)/whodb-cli-windows-arm64.exe .
+	@echo "Built: $(BUILD_DIR)/whodb-cli-windows-arm64.exe"
 
 .DEFAULT_GOAL := help

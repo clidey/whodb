@@ -38,3 +38,10 @@ en:
   selectMode: Select Mode
   selectPageSize: Select Page Size
   selectLanguage: Select Language
+  databaseSchemaTerminology: Database/Schema Label
+  databaseSchemaTerminologyDatabase: Database
+  databaseSchemaTerminologySchema: Schema
+  selectDatabaseSchemaTerminology: Select Label
+  disableAnimations: Disable Animations
+  disableAnimationsEnabled: Animations are disabled
+  disableAnimationsDisabled: Animations are enabled

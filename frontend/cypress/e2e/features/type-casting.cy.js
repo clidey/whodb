@@ -29,19 +29,20 @@ describe('Type Casting', () => {
     forEachDatabase('sql', (db) => {
         // Skip type casting tests for databases with async mutations (e.g., ClickHouse)
         if (hasFeature(db, 'typeCasting') === false) {
-            it.skip('type casting tests skipped - async mutations not supported', () => {});
+            it.skip('type casting tests skipped - async mutations not supported', () => {
+            });
             return;
         }
 
-        const testTable = db.testTable || {};
-        const typeCastingTable = testTable.typeCastingTable || 'test_casting';
+        const testTable = db.testTable;
+        const typeCastingTable = testTable.typeCastingTable;
         const tableConfig = getTableConfig(db, typeCastingTable);
         if (!tableConfig || !tableConfig.testData || !tableConfig.testData.newRow) {
             return;
         }
 
         const mutationDelay = db.mutationDelay || 0;
-        const columns = tableConfig.columns || {};
+        const columns = tableConfig.columns;
         const columnNames = Object.keys(columns);
         const bigintCol = columnNames.find(c => c.toLowerCase() === 'bigint_col') || 'bigint_col';
         const integerCol = columnNames.find(c => c.toLowerCase() === 'integer_col') || 'integer_col';
@@ -60,7 +61,7 @@ describe('Type Casting', () => {
                 cy.addRow(newRow);
 
                 // Wait for row to appear using retry-able assertion
-                cy.waitForRowContaining(descValue, { caseSensitive: true }).then((rowIndex) => {
+                cy.waitForRowContaining(descValue, {caseSensitive: true}).then((rowIndex) => {
                     cy.sortBy(0);
 
                     // Verify the row was added with correct types
@@ -98,7 +99,7 @@ describe('Type Casting', () => {
                 cy.addRow(largeNumberRow);
 
                 // Wait for row to appear using retry-able assertion
-                cy.waitForRowContaining('Large bigint test', { caseSensitive: true }).then((rowIndex) => {
+                cy.waitForRowContaining('Large bigint test', {caseSensitive: true}).then((rowIndex) => {
                     cy.getTableData().then(({rows}) => {
                         const addedRow = rows.find(r => r.includes('Large bigint test'));
                         expect(addedRow).to.exist;

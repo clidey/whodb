@@ -64,12 +64,15 @@ export function databaseSupportsSchema(databaseType: DatabaseType | string | und
     }
 
     // Fall back to checking known databases that don't support schemas
+    // MySQL and MariaDB treat database=schema, so they don't have a separate schema concept
     const databasesThatDontSupportSchema = [
         DatabaseType.Sqlite3,
         DatabaseType.Redis,
         DatabaseType.ElasticSearch,
         DatabaseType.MongoDb,
         DatabaseType.ClickHouse,
+        DatabaseType.MySql,
+        DatabaseType.MariaDb,
     ];
 
     return !databasesThatDontSupportSchema.includes(databaseType as DatabaseType);
@@ -94,10 +97,15 @@ export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | s
     }
 
     // Fall back to checking known databases that support database switching
+    // MySQL/MariaDB treat database=schema, so switching "databases" is their equivalent
+    // Redis has numbered databases 0-15
     const databasesThatSupportDatabaseSwitching = [
         DatabaseType.MongoDb,
         DatabaseType.ClickHouse,
         DatabaseType.Postgres,
+        DatabaseType.MySql,
+        DatabaseType.MariaDb,
+        DatabaseType.Redis,
     ];
     return databasesThatSupportDatabaseSwitching.includes(databaseType as DatabaseType);
 }
@@ -128,6 +136,8 @@ export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string |
 
 /**
  * Check if a database type uses the "database" concept instead of "schema".
+ * These are databases where the backend expects the "database" value to be passed
+ * in place of "schema" for queries.
  * @param databaseType - The database type (can be CE or EE type)
  * @returns True for databases that use database-level organization instead of schemas
  */
@@ -136,5 +146,15 @@ export function databaseTypesThatUseDatabaseInsteadOfSchema(databaseType: Databa
         return false;
     }
 
-    return databaseType === DatabaseType.MongoDb || databaseType === DatabaseType.ClickHouse;
+    // MySQL and MariaDB treat database=schema, so we pass the database value where schema is expected
+    // MongoDB, ClickHouse, and Redis only have a database concept, no schemas
+    const databasesThatUseDatabaseInsteadOfSchema = [
+        DatabaseType.MongoDb,
+        DatabaseType.ClickHouse,
+        DatabaseType.MySql,
+        DatabaseType.MariaDb,
+        DatabaseType.Redis,
+    ];
+
+    return databasesThatUseDatabaseInsteadOfSchema.includes(databaseType as DatabaseType);
 }

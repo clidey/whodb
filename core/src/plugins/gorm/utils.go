@@ -198,6 +198,10 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 
 	// Handle Array type. clickhouse specific
 	if strings.HasPrefix(baseType, "ARRAY") {
+		if !strings.Contains(columnType, "(") {
+			// Without element type, treat as a single-element array of the original value to avoid recursion
+			return []interface{}{value}, nil
+		}
 		return p.convertArrayValue(value, columnType)
 	}
 

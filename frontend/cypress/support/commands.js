@@ -148,7 +148,13 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
     // Handle database field based on type
     if (database !== undefined) {
         if (databaseType === "Sqlite3") {
+            // Wait for database dropdown to be enabled (not loading)
+            cy.get('[data-testid="database"]', { timeout: 10000 })
+                .should('not.be.disabled');
+            // Click to open dropdown
             cy.get('[data-testid="database"]').click();
+            // Wait for at least one option to appear (backend needs time to fetch databases)
+            cy.get('[role="option"]', { timeout: 10000 }).should('have.length.at.least', 1);
             cy.get(`[data-value="${database}"]`).click();
         } else {
             cy.get('[data-testid="database"]').clear();
@@ -181,8 +187,9 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     });
 
-    // Wait for successful login - sidebar should appear after navigation
-    cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 30000})
+    // Wait for successful login - sidebar profile exists for ALL database types
+    // (some like SQLite/Elasticsearch have neither database nor schema dropdowns)
+    cy.get('[data-testid="sidebar-profile"]', {timeout: 30000})
         .should('exist');
 });
 
@@ -1713,7 +1720,17 @@ Cypress.Commands.add('toggleChatSQLView', () => {
  * @param {string} expectedSQL - The expected SQL query (can be partial)
  */
 Cypress.Commands.add('verifyChatSQL', (expectedSQL) => {
-    cy.get('[data-testid="code-editor"]').last().should('contain.text', expectedSQL);
+    cy.get('[data-testid="code-editor"]').last().invoke('text').then((actualText) => {
+        // Remove line number prefixes (e.g., "1>", "912>") and normalize whitespace
+        const normalizedActual = actualText
+            .replace(/^\d+>/gm, '')  // Remove line number prefixes
+            .replace(/\s+/g, ' ')     // Normalize whitespace
+            .trim();
+        const normalizedExpected = expectedSQL
+            .replace(/\s+/g, ' ')     // Normalize whitespace
+            .trim();
+        expect(normalizedActual).to.contain(normalizedExpected);
+    });
 });
 
 /**

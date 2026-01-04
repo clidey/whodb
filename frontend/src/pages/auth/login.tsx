@@ -256,7 +256,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('loginSuccessfully'));
+                    return toast.success(t('loginSuccessful'));
                 }
                 return toast.error(t('loginFailed'));
             },
@@ -624,7 +624,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             { databaseType.fields?.password && (
                 <div className="flex flex-col gap-sm w-full">
                     <Label htmlFor="login-password">{t('password')}</Label>
-                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
+                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={true} />
                 </div>
             )}
             { databaseType.fields?.database && (
@@ -673,7 +673,9 @@ export const LoginForm: FC<LoginFormProps> = ({
             "w-full h-full": advancedDirection === "vertical",
             "flex gap-8": showSidePanel && advancedDirection === "horizontal",
         })} data-testid="login-form-container">
-            <div className="fixed top-4 right-4 z-20" data-testid="mode-toggle-login">
+            <div className={cn("fixed top-4 right-4 z-20", {
+                "hidden": !showSidePanel,
+            })} data-testid="mode-toggle-login">
                 <ModeToggle />
             </div>
             <div className={classNames("flex flex-col grow gap-lg", {
@@ -682,8 +684,8 @@ export const LoginForm: FC<LoginFormProps> = ({
             })}>
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
-                        <h1 className="flex items-center gap-sm text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8"/>}
+                        <h1 className="flex items-center gap-xs text-xl">
+                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
                             <span>{t('title')}</span>
                         </h1>

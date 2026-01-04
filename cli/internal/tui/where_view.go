@@ -156,7 +156,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 			v.parent.mode = ViewResults
 			return v, nil
 
-		case "a":
+		case "ctrl+a":
 			if !v.addingNew {
 				v.addingNew = true
 				v.selectedIndex = -1
@@ -167,7 +167,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "d":
+		case "ctrl+d":
 			if !v.addingNew && v.selectedIndex >= 0 && v.selectedIndex < len(v.conditions) {
 				v.conditions = append(v.conditions[:v.selectedIndex], v.conditions[v.selectedIndex+1:]...)
 				if v.selectedIndex >= len(v.conditions) && v.selectedIndex > 0 {
@@ -176,7 +176,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "e":
+		case "ctrl+e":
 			if !v.addingNew && v.selectedIndex >= 0 && v.selectedIndex < len(v.conditions) {
 				// Load the selected condition into edit mode
 				cond := v.conditions[v.selectedIndex]
@@ -407,9 +407,9 @@ func (v *WhereView) View() string {
 		b.WriteString(styles.RenderHelp(
 			"↑", "prev",
 			"↓", "next",
-			"[a]", "add new",
-			"[e]", "edit",
-			"[d]", "delete",
+			"ctrl+a", "add new",
+			"ctrl+e", "edit",
+			"ctrl+d", "delete",
 			"enter", "apply",
 			"esc", "back",
 			"ctrl+c", "quit",

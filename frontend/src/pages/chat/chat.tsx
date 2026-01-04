@@ -192,6 +192,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             columnTypes={data?.Columns.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
                             disableEdit={true}
+                            limitContextMenu={true}
                             databaseType={current?.Type}
                         />
                     </div>
@@ -424,10 +425,10 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
             <div className="flex flex-col w-full h-full gap-2">
-                <AIProvider 
+                {/* <AIProvider 
                     {...aiState}
                     onClear={handleClear}
-                />
+                /> */}
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "hidden": disableAll,
                 })}>

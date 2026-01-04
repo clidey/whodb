@@ -56,12 +56,17 @@ export const SchemaViewer: FC = () => {
     // Search state
     const [search, setSearch] = useState("");
 
+    // For databases that use database instead of schema, determine the schema value
+    const usesDatabase = databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type);
+    const schemaValue = usesDatabase ? (current?.Database ?? '') : selectedSchema;
+
     // Query for storage units (tables, views, etc.)
     const {data, loading, refetch} = useGetStorageUnitsQuery({
         variables: {
-            schema: databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? current?.Database ?? selectedSchema : selectedSchema,
+            schema: schemaValue,
         },
-        skip: !current || !selectedSchema,
+        // Skip if no current connection OR no schema value is available
+        skip: !current || !schemaValue,
     });
 
     // Refetch when profile changes (current?.Id changes means different server/credentials)
@@ -125,10 +130,11 @@ export const SchemaViewer: FC = () => {
                 unit,
             },
         });
-        window.location.reload();
     }, [navigate, state, data]);
 
-    if (treeData.length === 0) {
+    // Only hide sidebar if there's truly no data (no connection, no schema, etc.)
+    // Don't hide when search returns empty results
+    if (!data?.StorageUnit || (treeData.length === 0 && search.trim() === "")) {
         return null;
     }
 
@@ -155,9 +161,13 @@ export const SchemaViewer: FC = () => {
                                 <div className="flex-1 flex items-center justify-center">
                                     <Loading />
                                 </div>
+                            ) : treeData.length === 0 ? (
+                                <div className="flex-1 flex items-center justify-center px-4 text-center text-sm text-muted-foreground mt-4">
+                                    {t('noResults')}
+                                </div>
                             ) : (
                                 <Tree
-                                    className="flex-1 overflow-y-auto"  
+                                    className="flex-1 overflow-y-auto"
                                     data={treeData}
                                     initialSelectedItemId={state?.unit.Name}
                                     onSelectChange={handleSelect}

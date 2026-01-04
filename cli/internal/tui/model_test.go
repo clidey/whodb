@@ -285,3 +285,236 @@ func TestViewMode_String(t *testing.T) {
 		}
 	}
 }
+
+func TestMainModel_HelpOverlay(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	m := NewMainModel()
+
+	// In ViewResults (no text input), '?' should show help
+	m.mode = ViewResults
+
+	msg := tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune{'?'},
+	}
+
+	_, _ = m.Update(msg)
+
+	if !m.showingHelp {
+		t.Error("Expected showingHelp to be true in ViewResults after '?'")
+	}
+
+	// Any key should dismiss help
+	msg = tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune{'x'},
+	}
+
+	_, _ = m.Update(msg)
+
+	if m.showingHelp {
+		t.Error("Expected showingHelp to be false after pressing a key")
+	}
+}
+
+func TestMainModel_HelpOverlay_BlockedInEditor(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	m := NewMainModel()
+
+	// In ViewEditor (always has text input), '?' should NOT show help
+	m.mode = ViewEditor
+
+	msg := tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune{'?'},
+	}
+
+	_, _ = m.Update(msg)
+
+	if m.showingHelp {
+		t.Error("Expected showingHelp to remain false in ViewEditor")
+	}
+}
+
+func TestMainModel_IsHelpSafe(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	m := NewMainModel()
+
+	tests := []struct {
+		mode     ViewMode
+		setup    func()
+		expected bool
+		name     string
+	}{
+		{ViewResults, nil, true, "ViewResults always safe"},
+		{ViewHistory, nil, true, "ViewHistory always safe"},
+		{ViewColumns, nil, true, "ViewColumns always safe"},
+		{ViewSchema, nil, true, "ViewSchema always safe"},
+		{ViewEditor, nil, false, "ViewEditor always has text input"},
+		{ViewBrowser, func() { m.browserView.filtering = false }, true, "ViewBrowser safe when not filtering"},
+		{ViewBrowser, func() { m.browserView.filtering = true }, false, "ViewBrowser unsafe when filtering"},
+		{ViewConnection, func() { m.connectionView.mode = "list" }, true, "ViewConnection safe in list mode"},
+		{ViewConnection, func() { m.connectionView.mode = "form" }, false, "ViewConnection unsafe in form mode"},
+		{ViewWhere, func() { m.whereView.addingNew = false }, true, "ViewWhere safe when not adding"},
+		{ViewWhere, func() { m.whereView.addingNew = true }, false, "ViewWhere unsafe when adding"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m.mode = tt.mode
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			result := m.isHelpSafe()
+			if result != tt.expected {
+				t.Errorf("isHelpSafe() = %v, expected %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestMainModel_RenderHelpOverlay(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	m := NewMainModel()
+
+	modes := []ViewMode{
+		ViewBrowser,
+		ViewResults,
+		ViewHistory,
+		ViewChat,
+		ViewSchema,
+		ViewColumns,
+		ViewWhere,
+		ViewExport,
+		ViewConnection,
+	}
+
+	for _, mode := range modes {
+		t.Run(mode.String(), func(t *testing.T) {
+			m.mode = mode
+			output := m.renderHelpOverlay()
+
+			if output == "" {
+				t.Error("Expected non-empty help overlay")
+			}
+
+			// Should contain "Keyboard Shortcuts" title
+			if !contains(output, "Keyboard Shortcuts") {
+				t.Error("Expected help overlay to contain 'Keyboard Shortcuts'")
+			}
+
+			// Should contain dismiss instruction
+			if !contains(output, "Press any key to close") {
+				t.Error("Expected help overlay to contain dismiss instruction")
+			}
+		})
+	}
+}
+
+// Helper for ViewMode.String() - add if not exists
+func (v ViewMode) String() string {
+	names := []string{
+		"ViewConnection",
+		"ViewBrowser",
+		"ViewEditor",
+		"ViewResults",
+		"ViewHistory",
+		"ViewExport",
+		"ViewWhere",
+		"ViewColumns",
+		"ViewChat",
+		"ViewSchema",
+	}
+	if int(v) < len(names) {
+		return names[v]
+	}
+	return "Unknown"
+}
+
+func contains(s, substr string) bool {
+	return len(s) > 0 && len(substr) > 0 && stringContains(s, substr)
+}
+
+func stringContains(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+func TestMainModel_ErrorDismiss(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	m := NewMainModel()
+	m.err = os.ErrInvalid
+	m.mode = ViewBrowser
+
+	// Press Esc to dismiss error
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	_, _ = m.Update(msg)
+
+	if m.err != nil {
+		t.Error("Expected error to be cleared after Esc")
+	}
+
+	if m.mode != ViewBrowser {
+		t.Errorf("Expected mode to remain ViewBrowser, got %v", m.mode)
+	}
+}
+
+func TestMainModel_Update_AllModes(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	m := NewMainModel()
+
+	// Test that Update doesn't panic for any mode
+	modes := []ViewMode{
+		ViewConnection,
+		ViewBrowser,
+		ViewEditor,
+		ViewResults,
+		ViewHistory,
+		ViewExport,
+		ViewWhere,
+		ViewColumns,
+		ViewChat,
+		ViewSchema,
+	}
+
+	for _, mode := range modes {
+		t.Run(mode.String(), func(t *testing.T) {
+			m.mode = mode
+			m.err = nil
+
+			// Send a simple key message
+			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}}
+			_, _ = m.Update(msg)
+			// Just ensure no panic
+		})
+	}
+}

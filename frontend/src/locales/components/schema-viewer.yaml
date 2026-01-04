@@ -6,6 +6,7 @@ en:
   refresh: Refresh
   searchPlaceholder: Search Tables...
   searchAriaLabel: Search Tables
+  noResults: No tables found
 
 es:
   title: Esquema
@@ -15,3 +16,4 @@ es:
   refresh: Actualizar
   searchPlaceholder: Buscar tablas...
   searchAriaLabel: Buscar tablas
+  noResults: No se encontraron tablas
