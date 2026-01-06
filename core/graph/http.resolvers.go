@@ -474,10 +474,6 @@ func convertBAMLStreamResponseToMessage(bamlResp *stream_types.ChatResponse) map
 			opStr = "update"
 		case types.OperationTypeDELETE:
 			opStr = "delete"
-		case types.OperationTypeLINE_CHART:
-			opStr = "line-chart"
-		case types.OperationTypePIE_CHART:
-			opStr = "pie-chart"
 		case types.OperationTypeTEXT:
 			opStr = "text"
 		default:
@@ -508,10 +504,6 @@ func convertOperationType(operation types.OperationType) string {
 		return "sql:update"
 	case types.OperationTypeDELETE:
 		return "sql:delete"
-	case types.OperationTypeLINE_CHART:
-		return "sql:line-chart"
-	case types.OperationTypePIE_CHART:
-		return "sql:pie-chart"
 	case types.OperationTypeTEXT:
 		return "text"
 	default:

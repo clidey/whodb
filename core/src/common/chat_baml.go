@@ -126,10 +126,6 @@ func convertOperationType(operation types.OperationType) string {
 		return "sql:update"
 	case types.OperationTypeDELETE:
 		return "sql:delete"
-	case types.OperationTypeLINE_CHART:
-		return "sql:line-chart"
-	case types.OperationTypePIE_CHART:
-		return "sql:pie-chart"
 	case types.OperationTypeTEXT:
 		return "text"
 	default:

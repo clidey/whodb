@@ -91,13 +91,11 @@ func (e ChatMessageType) BamlTypeName() string {
 type OperationType string
 
 const (
-	OperationTypeGET        OperationType = "GET"
-	OperationTypeINSERT     OperationType = "INSERT"
-	OperationTypeUPDATE     OperationType = "UPDATE"
-	OperationTypeDELETE     OperationType = "DELETE"
-	OperationTypeLINE_CHART OperationType = "LINE_CHART"
-	OperationTypePIE_CHART  OperationType = "PIE_CHART"
-	OperationTypeTEXT       OperationType = "TEXT"
+	OperationTypeGET    OperationType = "GET"
+	OperationTypeINSERT OperationType = "INSERT"
+	OperationTypeUPDATE OperationType = "UPDATE"
+	OperationTypeDELETE OperationType = "DELETE"
+	OperationTypeTEXT   OperationType = "TEXT"
 )
 
 // Values returns all allowed values for the OperationType type.
@@ -107,8 +105,6 @@ func (OperationType) Values() []OperationType {
 		OperationTypeINSERT,
 		OperationTypeUPDATE,
 		OperationTypeDELETE,
-		OperationTypeLINE_CHART,
-		OperationTypePIE_CHART,
 		OperationTypeTEXT,
 	}
 }

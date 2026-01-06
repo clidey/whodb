@@ -7,8 +7,6 @@ enum OperationType {
   INSERT @alias("insert") @description("INSERT queries to add data")
   UPDATE @alias("update") @description("UPDATE queries to modify data")
   DELETE @alias("delete") @description("DELETE queries to remove data")
-  LINE_CHART @alias("line-chart") @description("Queries formatted for line charts (x: string, y: number)")
-  PIE_CHART @alias("pie-chart") @description("Queries formatted for pie charts (x: string, y: number)")
   TEXT @alias("text") @description("General text responses without SQL")
 }
 
@@ -84,8 +82,6 @@ function GenerateSQLQuery(
       - "insert" - for adding new records
       - "update" - for modifying existing records
       - "delete" - for removing records
-      - "line-chart" - for time-series analysis (returns x: string, y: number)
-      - "pie-chart" - for distribution analysis (returns x: string, y: number)
 
     **text** (required):
       - Your conversational message, explanation, or SQL query
