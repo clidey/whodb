@@ -87,14 +87,6 @@ func (t *OperationTypeEnumView) ValueDELETE() (EnumValueView, error) {
 	return t.inner.Value("DELETE")
 }
 
-func (t *OperationTypeEnumView) ValueLINE_CHART() (EnumValueView, error) {
-	return t.inner.Value("LINE_CHART")
-}
-
-func (t *OperationTypeEnumView) ValuePIE_CHART() (EnumValueView, error) {
-	return t.inner.Value("PIE_CHART")
-}
-
 func (t *OperationTypeEnumView) ValueTEXT() (EnumValueView, error) {
 	return t.inner.Value("TEXT")
 }
