@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 
 	AIProvider struct {
 		IsEnvironmentDefined func(childComplexity int) int
+		IsGeneric            func(childComplexity int) int
 		Name                 func(childComplexity int) int
 		ProviderID           func(childComplexity int) int
 		Type                 func(childComplexity int) int
@@ -251,6 +252,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AIProvider.IsEnvironmentDefined(childComplexity), true
+	case "AIProvider.IsGeneric":
+		if e.complexity.AIProvider.IsGeneric == nil {
+			break
+		}
+
+		return e.complexity.AIProvider.IsGeneric(childComplexity), true
 	case "AIProvider.Name":
 		if e.complexity.AIProvider.Name == nil {
 			break
@@ -1491,6 +1498,35 @@ func (ec *executionContext) _AIProvider_IsEnvironmentDefined(ctx context.Context
 }
 
 func (ec *executionContext) fieldContext_AIProvider_IsEnvironmentDefined(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIProvider_IsGeneric(ctx context.Context, field graphql.CollectedField, obj *model.AIProvider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AIProvider_IsGeneric,
+		func(ctx context.Context) (any, error) {
+			return obj.IsGeneric, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AIProvider_IsGeneric(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AIProvider",
 		Field:      field,
@@ -3170,6 +3206,8 @@ func (ec *executionContext) fieldContext_Query_AIProviders(_ context.Context, fi
 				return ec.fieldContext_AIProvider_ProviderId(ctx, field)
 			case "IsEnvironmentDefined":
 				return ec.fieldContext_AIProvider_IsEnvironmentDefined(ctx, field)
+			case "IsGeneric":
+				return ec.fieldContext_AIProvider_IsGeneric(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AIProvider", field.Name)
 		},
@@ -6068,6 +6106,11 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			}
 		case "IsEnvironmentDefined":
 			out.Values[i] = ec._AIProvider_IsEnvironmentDefined(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "IsGeneric":
+			out.Values[i] = ec._AIProvider_IsGeneric(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

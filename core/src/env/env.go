@@ -83,6 +83,7 @@ type ChatProvider struct {
 	APIKey     string
 	Endpoint   string
 	ProviderId string
+	IsGeneric  bool // True for generic/custom providers, false for built-in providers
 }
 
 // GenericProviderConfig holds configuration for a generic AI provider.
@@ -96,6 +97,12 @@ type GenericProviderConfig struct {
 }
 
 var GenericProviders []GenericProviderConfig
+
+// AddGenericProvider adds a generic provider to the GenericProviders list.
+// This is used by EE providers and other dynamic provider registration systems.
+func AddGenericProvider(config GenericProviderConfig) {
+	GenericProviders = append(GenericProviders, config)
+}
 
 // TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
@@ -147,6 +154,7 @@ func GetConfiguredChatProviders() []ChatProvider {
 			APIKey:     genericProvider.APIKey,
 			Endpoint:   genericProvider.BaseURL,
 			ProviderId: genericProvider.ProviderId,
+			IsGeneric:  true, // Mark as generic provider
 		})
 	}
 

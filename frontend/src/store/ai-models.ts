@@ -25,6 +25,7 @@ export type IAIModelType = {
   name?: string;
   token?: string;
   isEnvironmentDefined?: boolean;
+  isGeneric?: boolean;
 }
 
 type IAIModelsState = {

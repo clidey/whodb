@@ -4,5 +4,6 @@ query GetAIProviders {
     Name
     ProviderId
     IsEnvironmentDefined
+    IsGeneric
   }
 }

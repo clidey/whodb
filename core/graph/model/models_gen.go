@@ -20,6 +20,7 @@ type AIProvider struct {
 	Name                 string `json:"Name"`
 	ProviderID           string `json:"ProviderId"`
 	IsEnvironmentDefined bool   `json:"IsEnvironmentDefined"`
+	IsGeneric            bool   `json:"IsGeneric"`
 }
 
 type AtomicWhereCondition struct {

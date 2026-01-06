@@ -30,10 +30,22 @@ func init() {
 }
 
 // RegisterGenericProviders registers generic AI providers from environment configuration.
-// This is called by the env package after parsing generic provider configs.
-func RegisterGenericProviders(name string, providerId string, models []string, clientType string) {
+// This is called by the env package after parsing generic provider configs and by EE providers.
+// It registers the provider with both the LLM provider system (for backend operations)
+// and the env.GenericProviders list (for frontend display).
+func RegisterGenericProviders(name string, providerId string, models []string, clientType string, baseURL string, apiKey string) {
 	provider := providers.NewGenericProvider(providerId, name, models, clientType)
 	providers.RegisterProvider(provider)
+
+	// Also add to env.GenericProviders so it shows up in the frontend
+	env.AddGenericProvider(env.GenericProviderConfig{
+		ProviderId: providerId,
+		Name:       name,
+		ClientType: clientType,
+		BaseURL:    baseURL,
+		APIKey:     apiKey,
+		Models:     models,
+	})
 }
 
 // Type aliases for backward compatibility with llm package

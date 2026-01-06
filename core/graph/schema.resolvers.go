@@ -1001,6 +1001,7 @@ func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, e
 			Name:                 provider.Name,
 			ProviderID:           provider.ProviderId,
 			IsEnvironmentDefined: true,
+			IsGeneric:            provider.IsGeneric,
 		})
 	}
 	return aiProviders, nil

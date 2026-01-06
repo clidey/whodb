@@ -378,7 +378,7 @@ describe('Chat AI Integration', () => {
                 cy.get('[data-testid="external-model-cancel"]').click();
             });
 
-            it.only('requires token for external providers before model selection', () => {
+            it('requires token for external providers before model selection', () => {
                 cy.gotoChat();
 
                 // Open Add Provider dialog

@@ -57,6 +57,7 @@ import {
     ChevronDownIcon,
     LockClosedIcon,
     PlusCircleIcon,
+    SparklesIcon,
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
@@ -128,36 +129,45 @@ export const useAI = () => {
     }, [handleAIModelTypeChange]);
 
     useEffect(() => {
+        // Clear environment-defined providers from Redux state on mount to ensure fresh data
+        // Keep only user-added providers (those with tokens)
+        const modelTypesState = ensureModelTypesArray(reduxStore.getState().aiModels.modelTypes);
+        const userAddedProviders = modelTypesState.filter(model =>
+            model.token != null && model.token !== ""
+        );
+
         getAiProviders({
             onCompleted(data) {
                 const aiProviders = data.AIProviders || [];
-                const modelTypesState = ensureModelTypesArray(reduxStore.getState().aiModels.modelTypes);
-                const initialModelTypes = modelTypesState.filter(model => {
-                const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
-                return existingModel != null || (model.token != null && model.token !== "");
+
+                // Only keep user-added providers that still have tokens
+                const initialModelTypes = userAddedProviders.filter(model => {
+                    // Keep user-added providers (with tokens)
+                    return model.token != null && model.token !== "";
                 });
 
                 // Filter out providers that already exist in modelTypes
                 const newProviders = aiProviders.filter(provider =>
-                !initialModelTypes.some(model => model.id === provider.ProviderId)
+                    !initialModelTypes.some(model => model.id === provider.ProviderId)
                 );
 
                 const finalModelTypes = [
-                ...newProviders.map(provider => ({
-                    id: provider.ProviderId,
-                    modelType: provider.Type,
-                    name: provider.Name,
-                    isEnvironmentDefined: provider.IsEnvironmentDefined,
-                })),
-                ...initialModelTypes
+                    ...newProviders.map(provider => ({
+                        id: provider.ProviderId,
+                        modelType: provider.Type,
+                        name: provider.Name,
+                        isEnvironmentDefined: provider.IsEnvironmentDefined,
+                        isGeneric: provider.IsGeneric,
+                    })),
+                    ...initialModelTypes
                 ];
 
                 // Check if current model type exists in final model types
                 const currentModelType = reduxStore.getState().aiModels.current;
                 if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
-                dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
-                dispatch(AIModelsActions.setModels([]));
-                dispatch(AIModelsActions.setCurrentModel(undefined));
+                    dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
+                    dispatch(AIModelsActions.setModels([]));
+                    dispatch(AIModelsActions.setCurrentModel(undefined));
                 }
 
                 dispatch(AIModelsActions.setModelTypes(finalModelTypes));
@@ -183,7 +193,9 @@ export const useAI = () => {
         return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
             id: modelType.id,
             label: modelType.name || modelType.modelType,
-            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
+            icon: modelType.isGeneric
+                ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
+                : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
                 isEnvironmentDefined: modelType.isEnvironmentDefined,

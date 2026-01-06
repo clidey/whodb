@@ -64,7 +64,7 @@ func InitializeEngine() *engine.Engine {
 
 	// Register generic AI providers from environment configuration
 	for _, provider := range env.GenericProviders {
-		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType)
+		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType, provider.BaseURL, provider.APIKey)
 	}
 
 	// Initialize Enterprise Edition plugins if available

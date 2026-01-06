@@ -213,3 +213,7 @@ body.disable-animations *::after {
   flex: 1;
   flex-grow: 1;
 }
+
+*:focus {
+  outline: none;
+}

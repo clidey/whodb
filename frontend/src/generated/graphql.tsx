@@ -27,6 +27,7 @@ export type AiChatMessage = {
 export type AiProvider = {
   __typename?: 'AIProvider';
   IsEnvironmentDefined: Scalars['Boolean']['output'];
+  IsGeneric: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
   ProviderId: Scalars['String']['output'];
   Type: Scalars['String']['output'];
@@ -435,7 +436,7 @@ export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: '
 export type GetAiProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, Name: string, ProviderId: string, IsEnvironmentDefined: boolean }> };
+export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, Name: string, ProviderId: string, IsEnvironmentDefined: boolean, IsGeneric: boolean }> };
 
 export type GetAiChatQueryVariables = Exact<{
   providerId?: InputMaybe<Scalars['String']['input']>;
@@ -950,6 +951,7 @@ export const GetAiProvidersDocument = gql`
     Name
     ProviderId
     IsEnvironmentDefined
+    IsGeneric
   }
 }
     `;
