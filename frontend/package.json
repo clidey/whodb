@@ -91,9 +91,9 @@
     "coverage:clean": "rm -rf .nyc_output coverage",
     "coverage:clean:all": "bash ../dev/clean-coverage.sh",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
-    "generate": "pnpx graphql-codegen",
-    "generate:ce": "pnpx graphql-codegen --config codegen.ce.yml",
-    "generate:ee": "pnpx graphql-codegen --config codegen.ee.yml"
+    "generate": "graphql-codegen",
+    "generate:ce": "graphql-codegen --config codegen.ce.yml",
+    "generate:ee": "graphql-codegen --config codegen.ee.yml"
   },
   "browserslist": {
     "production": [

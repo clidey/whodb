@@ -1,22 +1,5 @@
-/*
- * Copyright 2025 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
-import {gql} from '@apollo/client';
-
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -44,6 +27,7 @@ export type AiChatMessage = {
 export type AiProvider = {
   __typename?: 'AIProvider';
   IsEnvironmentDefined: Scalars['Boolean']['output'];
+  Name: Scalars['String']['output'];
   ProviderId: Scalars['String']['output'];
   Type: Scalars['String']['output'];
 };
@@ -451,7 +435,7 @@ export type LogoutMutation = { __typename?: 'Mutation', Logout: { __typename?: '
 export type GetAiProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, ProviderId: string, IsEnvironmentDefined: boolean }> };
+export type GetAiProvidersQuery = { __typename?: 'Query', AIProviders: Array<{ __typename?: 'AIProvider', Type: string, Name: string, ProviderId: string, IsEnvironmentDefined: boolean }> };
 
 export type GetAiChatQueryVariables = Exact<{
   providerId?: InputMaybe<Scalars['String']['input']>;
@@ -963,6 +947,7 @@ export const GetAiProvidersDocument = gql`
     query GetAIProviders {
   AIProviders {
     Type
+    Name
     ProviderId
     IsEnvironmentDefined
   }
