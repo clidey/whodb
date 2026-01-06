@@ -73,21 +73,36 @@ EXTRA_WAIT="${WHODB_EXTRA_WAIT:-false}"
 # Convert space-separated string to array
 read -ra DATABASES <<< "$DATABASES_STR"
 
-# Build category map from colon-separated pairs
-declare -A DB_CATEGORIES
-for pair in $CATEGORIES_STR; do
-    db="${pair%%:*}"
-    cat="${pair#*:}"
-    DB_CATEGORIES[$db]="$cat"
-done
+# Lookup functions for category and cypress dir (Bash 3.2 compatible)
+get_category() {
+    local lookup_db="$1"
+    for pair in $CATEGORIES_STR; do
+        local db="${pair%%:*}"
+        local cat="${pair#*:}"
+        if [ "$db" = "$lookup_db" ]; then
+            echo "$cat"
+            return
+        fi
+    done
+    echo "unknown"
+}
 
-# Build cypress dir map from colon-separated pairs
-declare -A CYPRESS_DIRS
-for pair in $CYPRESS_DIRS_STR; do
-    db="${pair%%:*}"
-    dir="${pair#*:}"
-    CYPRESS_DIRS[$db]="$dir"
-done
+get_cypress_dir() {
+    local lookup_db="$1"
+    if [ -z "$CYPRESS_DIRS_STR" ]; then
+        echo "$PROJECT_ROOT/frontend"
+        return
+    fi
+    for pair in $CYPRESS_DIRS_STR; do
+        local db="${pair%%:*}"
+        local dir="${pair#*:}"
+        if [ "$db" = "$lookup_db" ]; then
+            echo "$dir"
+            return
+        fi
+    done
+    echo "$PROJECT_ROOT/frontend"
+}
 
 echo "🚀 Running Cypress tests sequentially ($EDITION_LABEL)"
 echo "   Headless: $HEADLESS"
@@ -174,11 +189,11 @@ FAILED_DBS=()
 for db in "${DATABASES[@]}"; do
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🧪 Testing: $db (${DB_CATEGORIES[$db]})"
+    echo "🧪 Testing: $db ($(get_category "$db"))"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     # Determine cypress directory (use override if set, otherwise default)
-    CYPRESS_DIR="${CYPRESS_DIRS[$db]:-$PROJECT_ROOT/frontend}"
+    CYPRESS_DIR="$(get_cypress_dir "$db")"
 
     # Build spec pattern
     if [ -n "$SPEC_FILE" ]; then
@@ -198,7 +213,7 @@ for db in "${DATABASES[@]}"; do
             (
                 cd "$CYPRESS_DIR"
                 CYPRESS_database="$db" \
-                CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                CYPRESS_category="$(get_category "$db")" \
                 CYPRESS_retries__runMode=2 \
                 CYPRESS_retries__openMode=0 \
                 NODE_ENV=test pnpx cypress run \
@@ -220,7 +235,7 @@ for db in "${DATABASES[@]}"; do
                 (
                     cd "$CYPRESS_DIR"
                     CYPRESS_database="$db" \
-                    CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                    CYPRESS_category="$(get_category "$db")" \
                     CYPRESS_retries__runMode=2 \
                     CYPRESS_retries__openMode=0 \
                     NODE_ENV=test pnpx cypress run \
@@ -234,7 +249,7 @@ for db in "${DATABASES[@]}"; do
                 (
                     cd "$CYPRESS_DIR"
                     CYPRESS_database="$db" \
-                    CYPRESS_category="${DB_CATEGORIES[$db]}" \
+                    CYPRESS_category="$(get_category "$db")" \
                     CYPRESS_retries__runMode=2 \
                     CYPRESS_retries__openMode=0 \
                     NODE_ENV=test pnpx cypress run \
@@ -248,7 +263,7 @@ for db in "${DATABASES[@]}"; do
         (
             cd "$CYPRESS_DIR"
             CYPRESS_database="$db" \
-            CYPRESS_category="${DB_CATEGORIES[$db]}" \
+            CYPRESS_category="$(get_category "$db")" \
             NODE_ENV=test pnpx cypress open \
                 --e2e \
                 --browser electron
@@ -285,7 +300,7 @@ if [ ${#FAILED_DBS[@]} -gt 0 ]; then
     echo "❌ Failed Tests:"
     for db in "${FAILED_DBS[@]}"; do
         echo ""
-        echo "   [$db] (${DB_CATEGORIES[$db]})"
+        echo "   [$db] ($(get_category "$db"))"
 
         LOG_FILE="$PROJECT_ROOT/frontend/cypress/logs/$db.log"
         if [ -f "$LOG_FILE" ]; then

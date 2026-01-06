@@ -122,11 +122,11 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 
 	providers := GetConfiguredChatProviders()
 	if len(providers) != 4 {
-		t.Fatalf("expected four providers (ChatGPT, Anthropic, OpenAI-Compatible, Ollama), got %d", len(providers))
+		t.Fatalf("expected four providers (OpenAI, Anthropic, OpenAI-Compatible, Ollama), got %d", len(providers))
 	}
 
-	if providers[0].Type != "ChatGPT" || providers[0].Endpoint != OpenAIEndpoint {
-		t.Fatalf("expected ChatGPT provider to use custom endpoint, got %+v", providers[0])
+	if providers[0].Type != "OpenAI" || providers[0].Endpoint != OpenAIEndpoint {
+		t.Fatalf("expected OpenAI provider to use custom endpoint, got %+v", providers[0])
 	}
 	if providers[1].Type != "Anthropic" {
 		t.Fatalf("expected Anthropic provider present, got %+v", providers[1])

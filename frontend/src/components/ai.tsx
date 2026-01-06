@@ -146,6 +146,7 @@ export const useAI = () => {
                 ...newProviders.map(provider => ({
                     id: provider.ProviderId,
                     modelType: provider.Type,
+                    name: provider.Name,
                     isEnvironmentDefined: provider.IsEnvironmentDefined,
                 })),
                 ...initialModelTypes
@@ -181,7 +182,7 @@ export const useAI = () => {
     const modelTypesDropdownItems = useMemo(() => {
         return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
             id: modelType.id,
-            label: modelType.modelType,
+            label: modelType.name || modelType.modelType,
             icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
@@ -245,6 +246,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>("");
+    const [externalModelName, setExternalModelName] = useState<string>("");
 
     const handleAddExternalModel = useCallback(() => {
         setAddExternalModel(status => !status);
@@ -256,6 +258,12 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     }, []);
 
     const handleExternalModelSubmit = useCallback(() => {
+        // Validate token is provided
+        if (!externalModelToken || externalModelToken.trim().length === 0) {
+            toast.error(t('tokenRequired'));
+            return;
+        }
+
         dispatch(AIModelsActions.setCurrentModel(undefined));
         dispatch(AIModelsActions.setModels([]));
         getAIModels({
@@ -269,11 +277,13 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 dispatch(AIModelsActions.addAIModelType({
                     id,
                     modelType: externalModelType,
+                    name: externalModelName || externalModelType,
                     token: externalModelToken,
                 }));
                 dispatch(AIModelsActions.setCurrentModelType({ id }));
                 setExternalModel(externalModelTypes[0].id);
                 setExternalModelToken("");
+                setExternalModelName("");
                 setAddExternalModel(false);
                 if (data.AIModel.length > 0) {
                     dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
@@ -283,7 +293,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 toast.error(`${t('unableToConnect')}: ${error.message}`);
             },
         });
-    }, [getAIModels, externalModelType, externalModelToken, dispatch]);
+    }, [getAIModels, externalModelType, externalModelToken, externalModelName, dispatch, t]);
 
     const handleOpenDocs = useCallback(() => {
         window.open("https://docs.whodb.com/ai/introduction", "_blank");
@@ -327,6 +337,14 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label>{t('name')}</Label>
+                        <Input
+                            value={externalModelName ?? ""}
+                            onChange={e => setExternalModelName(e.target.value)}
+                            placeholder={externalModelType}
+                        />
                     </div>
                     <div className="flex flex-col gap-2">
                         <Label>{t('token')}</Label>

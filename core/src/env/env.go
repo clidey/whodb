@@ -46,9 +46,13 @@ var OllamaPort = os.Getenv("WHODB_OLLAMA_PORT")
 
 var AnthropicAPIKey = os.Getenv("WHODB_ANTHROPIC_API_KEY")
 var AnthropicEndpoint = os.Getenv("WHODB_ANTHROPIC_ENDPOINT")
+var AnthropicName = os.Getenv("WHODB_ANTHROPIC_NAME")
 
 var OpenAIAPIKey = os.Getenv("WHODB_OPENAI_API_KEY")
 var OpenAIEndpoint = os.Getenv("WHODB_OPENAI_ENDPOINT")
+var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
+
+var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
 var OpenAICompatibleEndpoint = os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT")
 var OpenAICompatibleAPIKey = os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY")
@@ -75,27 +79,50 @@ var PosthogHost = "https://us.i.posthog.com"
 
 type ChatProvider struct {
 	Type       string
+	Name       string // Display name/alias for the provider
 	APIKey     string
 	Endpoint   string
 	ProviderId string
 }
+
+// GenericProviderConfig holds configuration for a generic AI provider.
+type GenericProviderConfig struct {
+	ProviderId string
+	Name       string
+	ClientType string // "openai-generic", "anthropic", etc.
+	BaseURL    string
+	APIKey     string
+	Models     []string
+}
+
+var GenericProviders []GenericProviderConfig
 
 // TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
 	var providers []ChatProvider
 
 	if len(OpenAIAPIKey) > 0 {
+		name := OpenAIName
+		if name == "" {
+			name = "OpenAI"
+		}
 		providers = append(providers, ChatProvider{
-			Type:       "ChatGPT",
+			Type:       "OpenAI",
+			Name:       name,
 			APIKey:     OpenAIAPIKey,
 			Endpoint:   GetOpenAIEndpoint(),
-			ProviderId: "chatgpt-1",
+			ProviderId: "openai-1",
 		})
 	}
 
 	if len(AnthropicAPIKey) > 0 {
+		name := AnthropicName
+		if name == "" {
+			name = "Anthropic"
+		}
 		providers = append(providers, ChatProvider{
 			Type:       "Anthropic",
+			Name:       name,
 			APIKey:     AnthropicAPIKey,
 			Endpoint:   GetAnthropicEndpoint(),
 			ProviderId: "anthropic-1",
@@ -105,14 +132,31 @@ func GetConfiguredChatProviders() []ChatProvider {
 	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 && len(CustomModels) > 0 {
 		providers = append(providers, ChatProvider{
 			Type:       "OpenAI-Compatible",
+			Name:       "OpenAI-Compatible",
 			APIKey:     OpenAICompatibleAPIKey,
 			Endpoint:   GetOpenAICompatibleEndpoint(),
 			ProviderId: "openai-compatible-1",
 		})
 	}
 
+	// Add all generic providers
+	for _, genericProvider := range GenericProviders {
+		providers = append(providers, ChatProvider{
+			Type:       genericProvider.ProviderId, // Use provider ID as type
+			Name:       genericProvider.Name,       // Display name
+			APIKey:     genericProvider.APIKey,
+			Endpoint:   genericProvider.BaseURL,
+			ProviderId: genericProvider.ProviderId,
+		})
+	}
+
+	name := OllamaName
+	if name == "" {
+		name = "Ollama"
+	}
 	providers = append(providers, ChatProvider{
 		Type:       "Ollama",
+		Name:       name,
 		APIKey:     "",
 		Endpoint:   GetOllamaEndpoint(),
 		ProviderId: "ollama-1",
@@ -240,4 +284,98 @@ func IsMockDataGenerationAllowed(tableName string) bool {
 
 func GetMockDataGenerationMaxRowCount() int {
 	return 200
+}
+
+// parseGenericProviders reads environment variables to discover generic AI provider configurations.
+// Environment variable format:
+// WHODB_AI_GENERIC_<ID>_NAME="Provider Display Name"
+// WHODB_AI_GENERIC_<ID>_TYPE="openai-generic"
+// WHODB_AI_GENERIC_<ID>_BASE_URL="https://api.example.com/v1"
+// WHODB_AI_GENERIC_<ID>_API_KEY="sk-..."
+// WHODB_AI_GENERIC_<ID>_MODELS="model-1,model-2,model-3"
+func parseGenericProviders() []GenericProviderConfig {
+	providers := []GenericProviderConfig{}
+	processed := make(map[string]bool)
+
+	// Iterate through all environment variables to find WHODB_AI_GENERIC_* patterns
+	for _, envVar := range os.Environ() {
+		if !strings.HasPrefix(envVar, "WHODB_AI_GENERIC_") {
+			continue
+		}
+
+		parts := strings.SplitN(envVar, "=", 2)
+		key := parts[0]
+
+		// Extract provider ID from key (e.g., "MISTRAL" from "WHODB_AI_GENERIC_MISTRAL_NAME")
+		keyParts := strings.Split(key, "_")
+		if len(keyParts) < 5 {
+			continue
+		}
+
+		// ID is everything between WHODB_AI_GENERIC_ and the final field
+		idParts := keyParts[3 : len(keyParts)-1]
+		providerID := strings.Join(idParts, "_")
+
+		if processed[providerID] {
+			continue
+		}
+
+		// Read all fields for this provider
+		prefix := fmt.Sprintf("WHODB_AI_GENERIC_%s_", providerID)
+		name := os.Getenv(prefix + "NAME")
+		clientType := os.Getenv(prefix + "TYPE")
+		baseURL := os.Getenv(prefix + "BASE_URL")
+		apiKey := os.Getenv(prefix + "API_KEY")
+		modelsStr := os.Getenv(prefix + "MODELS")
+
+		// Validate required fields
+		if baseURL == "" || modelsStr == "" {
+			log.Logger.Warnf("Incomplete generic provider config for %s, skipping (missing base_url or models)", providerID)
+			continue
+		}
+
+		// Parse models
+		models := common.FilterList(strings.Split(modelsStr, ","), func(item string) bool {
+			return strings.TrimSpace(item) != ""
+		})
+
+		if len(models) == 0 {
+			log.Logger.Warnf("No models specified for generic provider %s, skipping", providerID)
+			continue
+		}
+
+		// Default values
+		if name == "" {
+			name = providerID
+		}
+		if clientType == "" {
+			clientType = "openai-generic" // Default to OpenAI-compatible
+		}
+
+		providers = append(providers, GenericProviderConfig{
+			ProviderId: strings.ToLower(providerID),
+			Name:       name,
+			ClientType: clientType,
+			BaseURL:    baseURL,
+			APIKey:     apiKey,
+			Models:     models,
+		})
+
+		processed[providerID] = true
+	}
+
+	if len(providers) > 0 {
+		log.Logger.Infof("Discovered %d generic AI provider(s)", len(providers))
+		for _, provider := range providers {
+			log.Logger.Infof("  - %s (%s) with %d model(s)", provider.Name, provider.ProviderId, len(provider.Models))
+		}
+	}
+
+	return providers
+}
+
+func init() {
+	// Parse generic providers at initialization
+	// They will be registered with the LLM provider registry by src.InitializeEngine()
+	GenericProviders = parseGenericProviders()
 }

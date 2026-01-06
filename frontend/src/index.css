@@ -102,6 +102,20 @@ body {
   border-radius: 0.25rem;
 }
 
+/* Smooth fade-in animation for streaming chat messages */
+@keyframes fade-in {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
 /* UI Customization utility classes */
 .text-xs { font-size: var(--font-size-xs); }
 .text-sm { font-size: var(--font-size-sm); }

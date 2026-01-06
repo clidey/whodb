@@ -10,7 +10,7 @@ func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
 	llmInstance = nil
 	t.Cleanup(func() { llmInstance = nil })
 
-	cfg := &engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(ChatGPT_LLMType), Token: "key1"}}
+	cfg := &engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(OpenAI_LLMType), Token: "key1"}}
 	first := Instance(cfg)
 	if first.APIKey != "key1" {
 		t.Fatalf("expected API key to be set on first instance")
@@ -39,7 +39,7 @@ func TestValidateAPIKeyRequirements(t *testing.T) {
 		client  LLMClient
 		wantErr bool
 	}{
-		{name: "chatgpt missing key", client: LLMClient{Type: ChatGPT_LLMType, APIKey: ""}, wantErr: true},
+		{name: "chatgpt missing key", client: LLMClient{Type: OpenAI_LLMType, APIKey: ""}, wantErr: true},
 		{name: "anthropic missing key", client: LLMClient{Type: Anthropic_LLMType, APIKey: ""}, wantErr: true},
 		{name: "ollama no key needed", client: LLMClient{Type: Ollama_LLMType, APIKey: ""}, wantErr: false},
 		{name: "openai-compatible no key validation", client: LLMClient{Type: OpenAICompatible_LLMType, APIKey: ""}, wantErr: false},

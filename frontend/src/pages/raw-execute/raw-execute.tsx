@@ -1037,10 +1037,10 @@ export const RawExecutePage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
             <div className="flex flex-col w-full gap-2" data-testid="raw-execute-page">
-                {isEEFeatureEnabled('analyzeView') && <AIProvider 
+                {/* {isEEFeatureEnabled('analyzeView') && <AIProvider 
                     {...aiState}
                     disableNewChat={true}
-                />}
+                />} */}
                 <div className="flex justify-center items-center w-full mt-4">
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
