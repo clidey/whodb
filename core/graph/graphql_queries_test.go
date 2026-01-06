@@ -98,7 +98,7 @@ func TestAIModelQueryMissingAPIKey(t *testing.T) {
 	setEngineMock(t, mock)
 	srv := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
 
-	body, _ := json.Marshal(map[string]any{"query": `query { AIModel(modelType:"ChatGPT", token:"") }`})
+	body, _ := json.Marshal(map[string]any{"query": `query { AIModel(modelType:"OpenAI", token:"") }`})
 	req := httptest.NewRequest(http.MethodPost, "/api/query", bytes.NewBuffer(body))
 	req = req.WithContext(context.WithValue(req.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
 	req.Header.Set("Content-Type", "application/json")

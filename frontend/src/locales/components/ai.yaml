@@ -6,6 +6,7 @@ en:
   addExternalModel: Add External Model
   modelType: Model Type
   selectModelType: Select Model Type
+  name: Name (Optional)
   token: Token
   cancel: Cancel
   submit: Submit

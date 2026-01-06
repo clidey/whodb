@@ -147,7 +147,7 @@ func getBAMLClientFromConfig(externalModel *engine.ExternalModel) (clientName st
 	switch externalModel.Type {
 	case "Ollama":
 		return "CustomOllama", "", nil
-	case "ChatGPT":
+	case "OpenAI", "ChatGPT": // Support both OpenAI and deprecated ChatGPT
 		return "CustomGPT5", "", nil
 	case "Anthropic":
 		return "CustomSonnet4", "", nil

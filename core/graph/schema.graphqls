@@ -168,6 +168,7 @@ type AIChatMessage {
 
 type AIProvider {
   Type: String!
+  Name: String!
   ProviderId: String!
   IsEnvironmentDefined: Boolean!
 }
