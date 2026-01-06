@@ -258,6 +258,12 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     }, []);
 
     const handleExternalModelSubmit = useCallback(() => {
+        // Validate token is provided
+        if (!externalModelToken || externalModelToken.trim().length === 0) {
+            toast.error(t('tokenRequired'));
+            return;
+        }
+
         dispatch(AIModelsActions.setCurrentModel(undefined));
         dispatch(AIModelsActions.setModels([]));
         getAIModels({
