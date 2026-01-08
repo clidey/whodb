@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package mcp
 import (
 	"log/slog"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -85,21 +86,58 @@ func TestDefaultInstructions_ContainsToolNames(t *testing.T) {
 	}
 
 	for _, tool := range expectedTools {
-		if !containsString(defaultInstructions, tool) {
+		if !strings.Contains(defaultInstructions, tool) {
 			t.Errorf("defaultInstructions should mention %s", tool)
 		}
 	}
 }
 
-func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStringHelper(s, substr))
+// Security options tests
+
+func TestNewServer_SecurityDefaults(t *testing.T) {
+	// Test that NewServer(nil) creates a server with safe defaults (confirm-writes mode)
+	server := NewServer(nil)
+	if server == nil {
+		t.Fatal("NewServer() returned nil")
+	}
+
+	// NewServer(nil) should enable confirm-writes by default for safe operation
+	// The server is created successfully - we can't inspect internal state directly,
+	// but the test confirms NewServer handles nil opts without panicking
 }
 
-func containsStringHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
+func TestNewServer_WithSecurityOptions(t *testing.T) {
+	server := NewServer(&ServerOptions{
+		ReadOnly:      false,
+		ConfirmWrites: true,
+		SecurityLevel: "strict",
+		QueryTimeout:  60 * 1e9, // 60 seconds
+		MaxRows:       500,
+	})
+	if server == nil {
+		t.Fatal("NewServer() returned nil")
 	}
-	return false
+}
+
+func TestBuildQueryDescription(t *testing.T) {
+	// Test read-only mode description
+	readOnlyOpts := &SecurityOptions{ReadOnly: true}
+	desc := buildQueryDescription(readOnlyOpts)
+	if !strings.Contains(desc, "READ-ONLY") {
+		t.Error("Read-only description should contain 'READ-ONLY'")
+	}
+
+	// Test confirm-writes mode description
+	confirmOpts := &SecurityOptions{ReadOnly: false, ConfirmWrites: true}
+	desc = buildQueryDescription(confirmOpts)
+	if !strings.Contains(desc, "confirmation") {
+		t.Error("Confirm-writes description should mention 'confirmation'")
+	}
+
+	// Test allow-write mode description
+	writeOpts := &SecurityOptions{ReadOnly: false, ConfirmWrites: false}
+	desc = buildQueryDescription(writeOpts)
+	if strings.Contains(desc, "READ-ONLY") || strings.Contains(desc, "confirmation") {
+		t.Error("Allow-write description should not mention read-only or confirmation")
+	}
 }

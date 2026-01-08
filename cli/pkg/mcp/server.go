@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -34,22 +35,63 @@ type ServerOptions struct {
 	Logger *slog.Logger
 	// Instructions provides guidance to LLMs on how to use this server.
 	Instructions string
+	// ReadOnly prevents INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE operations.
+	// Default: true
+	ReadOnly bool
+	// ConfirmWrites enables human-in-the-loop confirmation for write operations.
+	// When enabled, write operations return a confirmation token that must be approved.
+	// Default: false
+	ConfirmWrites bool
+	// SecurityLevel controls the strictness of query validation.
+	// Options: "strict", "standard", "minimal". Default: "standard"
+	SecurityLevel SecurityLevel
+	// QueryTimeout is the maximum time a query can run before being cancelled.
+	// Default: 30 seconds
+	QueryTimeout time.Duration
+	// MaxRows limits the number of rows returned by queries.
+	// Default: 0 (unlimited). Set via --max-rows to enable truncation.
+	MaxRows int
+	// AllowMultiStatement permits multiple SQL statements in one query (separated by semicolons).
+	// WARNING: Enabling this increases SQL injection risk.
+	// Default: false
+	AllowMultiStatement bool
+	// AllowDrop permits DROP/TRUNCATE operations even in allow-write mode.
+	// Without this, DROP is blocked unless --confirm-writes is used
+	// Default: false
+	AllowDrop bool
+}
+
+// SecurityOptions contains runtime security settings for query execution
+type SecurityOptions struct {
+	ReadOnly            bool
+	ConfirmWrites       bool
+	SecurityLevel       SecurityLevel
+	QueryTimeout        time.Duration
+	MaxRows             int
+	AllowMultiStatement bool
+	AllowDrop           bool
 }
 
 // NewServer creates a new WhoDB MCP server with all tools registered.
 func NewServer(opts *ServerOptions) *mcp.Server {
 	if opts == nil {
-		opts = &ServerOptions{}
+		opts = &ServerOptions{ConfirmWrites: true} // Safe default
 	}
 
+	// Fill in zero-value defaults
 	if opts.Logger == nil {
 		opts.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 	}
-
 	if opts.Instructions == "" {
 		opts.Instructions = defaultInstructions
+	}
+	if opts.SecurityLevel == "" {
+		opts.SecurityLevel = SecurityLevelStandard
+	}
+	if opts.QueryTimeout == 0 {
+		opts.QueryTimeout = 30 * time.Second
 	}
 
 	server := mcp.NewServer(&mcp.Implementation{
@@ -60,8 +102,19 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		Logger:       opts.Logger,
 	})
 
-	// Register tools
-	registerTools(server)
+	// Create security options from server options
+	secOpts := &SecurityOptions{
+		ReadOnly:            opts.ReadOnly,
+		ConfirmWrites:       opts.ConfirmWrites,
+		SecurityLevel:       opts.SecurityLevel,
+		QueryTimeout:        opts.QueryTimeout,
+		MaxRows:             opts.MaxRows,
+		AllowMultiStatement: opts.AllowMultiStatement,
+		AllowDrop:           opts.AllowDrop,
+	}
+
+	// Register tools with security options
+	registerTools(server, secOpts)
 
 	// Register resources
 	registerResources(server)
@@ -70,12 +123,15 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 }
 
 // registerTools registers all database tools with the server.
-func registerTools(server *mcp.Server) {
-	// whodb_query - Execute SQL queries
+func registerTools(server *mcp.Server, secOpts *SecurityOptions) {
+	// Build query tool description based on security settings
+	queryDesc := buildQueryDescription(secOpts)
+
+	// whodb_query - Execute SQL queries (with security validation)
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "whodb_query",
-		Description: "Execute a SQL query against a database connection. Use this for SELECT, INSERT, UPDATE, DELETE, and other SQL operations.",
-	}, HandleQuery)
+		Description: queryDesc,
+	}, createQueryHandler(secOpts))
 
 	// whodb_schemas - List database schemas
 	mcp.AddTool(server, &mcp.Tool{
@@ -100,6 +156,39 @@ func registerTools(server *mcp.Server) {
 		Name:        "whodb_connections",
 		Description: "List all available database connections from saved configurations and environment variables.",
 	}, HandleConnections)
+
+	// whodb_confirm - Confirm pending write operations (only registered if confirm-writes is enabled)
+	if secOpts.ConfirmWrites {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_confirm",
+			Description: "Confirm a pending write operation. Use this after whodb_query returns a confirmation request for write operations.",
+		}, createConfirmHandler(secOpts))
+	}
+}
+
+// buildQueryDescription creates the tool description based on security settings
+func buildQueryDescription(secOpts *SecurityOptions) string {
+	if secOpts.ReadOnly {
+		return "Execute a SQL query against a database connection. READ-ONLY MODE: Only SELECT, SHOW, DESCRIBE, and EXPLAIN queries are allowed. Write operations (INSERT, UPDATE, DELETE, etc.) are blocked."
+	}
+	if secOpts.ConfirmWrites {
+		return "Execute a SQL query against a database connection. Write operations (INSERT, UPDATE, DELETE, etc.) require confirmation via the whodb_confirm tool."
+	}
+	return "Execute a SQL query against a database connection. Use this for SELECT, INSERT, UPDATE, DELETE, and other SQL operations."
+}
+
+// createQueryHandler creates a query handler with security options
+func createQueryHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input QueryInput) (*mcp.CallToolResult, QueryOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input QueryInput) (*mcp.CallToolResult, QueryOutput, error) {
+		return HandleQuery(ctx, req, input, secOpts)
+	}
+}
+
+// createConfirmHandler creates a confirmation handler with security options
+func createConfirmHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
+		return HandleConfirm(ctx, req, input, secOpts)
+	}
 }
 
 // registerResources registers MCP resources for the server.
@@ -138,6 +227,21 @@ Available tools:
 - whodb_tables: List tables in a schema
 - whodb_columns: Describe columns in a table
 - whodb_connections: List available database connections
+- whodb_confirm: Confirm pending write operations (enabled by default)
+
+SECURITY MODE:
+This server runs with confirm-writes enabled by default. When you execute write operations
+(INSERT, UPDATE, DELETE, etc.), the query will be shown to the user for approval before
+executing. This keeps the user in control while giving you full database functionality.
+
+IMPORTANT: When a write operation requires confirmation, inform the user clearly:
+- Tell them what query you're proposing to run
+- Explain what it will do in plain language
+- Let them know they'll see a confirmation prompt
+
+If the user wants different security settings, they can restart with:
+- --read-only: No writes allowed at all
+- --allow-write: Full write access without confirmation (not recommended for production)
 
 Connection names reference either:
 1. Environment variables: WHODB_{NAME}_URI (e.g., "prod" -> WHODB_PROD_URI)
@@ -149,10 +253,12 @@ Example workflow:
 3. List tables: whodb_tables(connection="mydb", schema="public")
 4. Describe table: whodb_columns(connection="mydb", table="users")
 5. Query data: whodb_query(connection="mydb", query="SELECT * FROM users LIMIT 10")
+6. Write data: whodb_query(connection="mydb", query="INSERT INTO...") -> user confirms -> whodb_confirm(token="...")
 
 Best practices:
+- Send ONE query at a time (multi-statement queries are blocked for security)
 - Always use LIMIT for exploratory queries
 - Check schema structure before writing queries
-- Use parameterized queries when possible
 - Prefer specific column selection over SELECT *
+- For writes, explain to the user what will happen before proposing the query
 `
