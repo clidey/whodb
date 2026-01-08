@@ -138,6 +138,15 @@ export type Column = {
   Type: Scalars['String']['output'];
 };
 
+export enum ConnectionStatus {
+  Available = 'Available',
+  Deleting = 'Deleting',
+  Failed = 'Failed',
+  Starting = 'Starting',
+  Stopped = 'Stopped',
+  Unknown = 'Unknown'
+}
+
 export type DatabaseMetadata = {
   __typename?: 'DatabaseMetadata';
   aliasMap: Array<Record>;
@@ -164,9 +173,9 @@ export type DiscoveredConnection = {
   Metadata: Array<Record>;
   Name: Scalars['String']['output'];
   ProviderID: Scalars['String']['output'];
-  ProviderType: Scalars['String']['output'];
+  ProviderType: CloudProviderType;
   Region?: Maybe<Scalars['String']['output']>;
-  Status: Scalars['String']['output'];
+  Status: ConnectionStatus;
 };
 
 export type GraphUnit = {
@@ -651,14 +660,14 @@ export type GetCloudProviderQuery = { __typename?: 'Query', CloudProvider?: { __
 export type GetDiscoveredConnectionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetDiscoveredConnectionsQuery = { __typename?: 'Query', DiscoveredConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: string, ProviderID: string, Name: string, DatabaseType: string, Region?: string | null, Status: string, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type GetDiscoveredConnectionsQuery = { __typename?: 'Query', DiscoveredConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: CloudProviderType, ProviderID: string, Name: string, DatabaseType: string, Region?: string | null, Status: ConnectionStatus, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
 
 export type GetProviderConnectionsQueryVariables = Exact<{
   providerId: Scalars['ID']['input'];
 }>;
 
 
-export type GetProviderConnectionsQuery = { __typename?: 'Query', ProviderConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: string, ProviderID: string, Name: string, DatabaseType: string, Region?: string | null, Status: string, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+export type GetProviderConnectionsQuery = { __typename?: 'Query', ProviderConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: CloudProviderType, ProviderID: string, Name: string, DatabaseType: string, Region?: string | null, Status: ConnectionStatus, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
 
 export type GetLocalAwsProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
