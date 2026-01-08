@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import {
 import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
 import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
+import {AwsProvidersSection} from "../../components/aws";
+import {useSettingsConfigQuery} from "@graphql";
 
 export const SettingsPage: FC = () => {
     const {t} = useTranslation('pages/settings');
@@ -49,6 +51,10 @@ export const SettingsPage: FC = () => {
     const language = useAppSelector(state => state.settings.language);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
+
+    // Check if cloud providers are enabled
+    const { data: settingsData } = useSettingsConfigQuery();
+    const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
@@ -289,6 +295,12 @@ export const SettingsPage: FC = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        )}
+                        {cloudProvidersEnabled && (
+                            <>
+                                <Separator className="my-6" />
+                                <AwsProvidersSection />
+                            </>
                         )}
                     </div>
                 </div>

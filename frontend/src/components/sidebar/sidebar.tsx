@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ import {
 import {Icons} from "../icons";
 import {Loading} from "../loading";
 import {updateProfileLastAccessed} from "../profile-info-tooltip";
+import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
@@ -128,7 +129,13 @@ export const Sidebar: FC = () => {
     const profileOptions = useMemo(() => profiles.map(profile => ({
         value: profile.Id,
         label: getProfileLabel(profile),
-        icon: getProfileIcon(profile),
+        icon: (
+            <DatabaseIconWithBadge
+                icon={getProfileIcon(profile)}
+                showCloudBadge={isAwsConnection(profile.Id)}
+                size="sm"
+            />
+        ),
         profile,
     })), [profiles]);
 

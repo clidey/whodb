@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 // This file will be automatically regenerated based on the schema, any resolver
@@ -15,12 +31,14 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/aws"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
@@ -262,7 +280,7 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, storageUnit string, fields []*model.RecordInput) (*model.StatusResponse, error) {
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
-	fieldsMap := []engine.Record{}
+	var fieldsMap []engine.Record
 	for _, field := range fields {
 		extraFields := map[string]string{}
 		for _, extraField := range field.Extra {
@@ -662,6 +680,214 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	}, nil
 }
 
+// AddAWSProvider is the resolver for the AddAWSProvider field.
+func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSProviderInput) (*model.AWSProvider, error) {
+	if !env.IsAWSProviderEnabled {
+		return nil, aws.ErrAWSProviderDisabled
+	}
+
+	id := settings.GenerateProviderID(input.Name, input.Region)
+
+	authMethod := "default"
+	if input.AuthMethod != nil && *input.AuthMethod != "" {
+		authMethod = *input.AuthMethod
+	}
+
+	discoverRDS := true
+	if input.DiscoverRds != nil {
+		discoverRDS = *input.DiscoverRds
+	}
+
+	discoverElastiCache := true
+	if input.DiscoverElastiCache != nil {
+		discoverElastiCache = *input.DiscoverElastiCache
+	}
+
+	discoverDocumentDB := true
+	if input.DiscoverDocumentDb != nil {
+		discoverDocumentDB = *input.DiscoverDocumentDb
+	}
+
+	cfg := &settings.AWSProviderConfig{
+		ID:                  id,
+		Name:                input.Name,
+		Region:              input.Region,
+		AuthMethod:          authMethod,
+		DiscoverRDS:         discoverRDS,
+		DiscoverElastiCache: discoverElastiCache,
+		DiscoverDocumentDB:  discoverDocumentDB,
+	}
+
+	if input.AccessKeyID != nil {
+		cfg.AccessKeyID = *input.AccessKeyID
+	}
+	if input.SecretAccessKey != nil {
+		cfg.SecretAccessKey = *input.SecretAccessKey
+	}
+	if input.SessionToken != nil {
+		cfg.SessionToken = *input.SessionToken
+	}
+	if input.ProfileName != nil {
+		cfg.ProfileName = *input.ProfileName
+	}
+	if input.DBUsername != nil {
+		cfg.DBUsername = *input.DBUsername
+	}
+
+	state, err := settings.AddAWSProvider(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return stateToAWSProvider(state), nil
+}
+
+// UpdateAWSProvider is the resolver for the UpdateAWSProvider field.
+func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, input model.AWSProviderInput) (*model.AWSProvider, error) {
+	if !env.IsAWSProviderEnabled {
+		return nil, aws.ErrAWSProviderDisabled
+	}
+
+	existing, err := settings.GetAWSProvider(id)
+	if err != nil {
+		return nil, err
+	}
+
+	authMethod := existing.Config.AuthMethod
+	if input.AuthMethod != nil && *input.AuthMethod != "" {
+		authMethod = *input.AuthMethod
+	}
+
+	discoverRDS := existing.Config.DiscoverRDS
+	if input.DiscoverRds != nil {
+		discoverRDS = *input.DiscoverRds
+	}
+
+	discoverElastiCache := existing.Config.DiscoverElastiCache
+	if input.DiscoverElastiCache != nil {
+		discoverElastiCache = *input.DiscoverElastiCache
+	}
+
+	discoverDocumentDB := existing.Config.DiscoverDocumentDB
+	if input.DiscoverDocumentDb != nil {
+		discoverDocumentDB = *input.DiscoverDocumentDb
+	}
+
+	cfg := &settings.AWSProviderConfig{
+		ID:                  id,
+		Name:                input.Name,
+		Region:              input.Region,
+		AuthMethod:          authMethod,
+		DiscoverRDS:         discoverRDS,
+		DiscoverElastiCache: discoverElastiCache,
+		DiscoverDocumentDB:  discoverDocumentDB,
+	}
+
+	// Clear credentials that don't apply to the new auth method to prevent stale data
+	authMethodChanged := authMethod != existing.Config.AuthMethod
+	switch authMethod {
+	case "static":
+		// Static auth uses AccessKeyID/SecretAccessKey
+		if input.AccessKeyID != nil {
+			cfg.AccessKeyID = *input.AccessKeyID
+		} else {
+			cfg.AccessKeyID = existing.Config.AccessKeyID
+		}
+		if input.SecretAccessKey != nil {
+			cfg.SecretAccessKey = *input.SecretAccessKey
+		} else {
+			cfg.SecretAccessKey = existing.Config.SecretAccessKey
+		}
+		if input.SessionToken != nil {
+			cfg.SessionToken = *input.SessionToken
+		} else {
+			cfg.SessionToken = existing.Config.SessionToken
+		}
+		// Clear profile if switching to static
+		if authMethodChanged {
+			cfg.ProfileName = ""
+		} else if input.ProfileName != nil {
+			cfg.ProfileName = *input.ProfileName
+		}
+	case "profile":
+		// Profile auth uses ProfileName - clear static credentials
+		if input.ProfileName != nil {
+			cfg.ProfileName = *input.ProfileName
+		} else {
+			cfg.ProfileName = existing.Config.ProfileName
+		}
+		if authMethodChanged {
+			// Clear static credentials when switching to profile
+			cfg.AccessKeyID = ""
+			cfg.SecretAccessKey = ""
+			cfg.SessionToken = ""
+		}
+	default:
+		// "default", "env", "iam" don't need stored credentials
+		if authMethodChanged {
+			cfg.AccessKeyID = ""
+			cfg.SecretAccessKey = ""
+			cfg.SessionToken = ""
+			cfg.ProfileName = ""
+		}
+	}
+
+	// Handle DBUsername (used for IAM auth)
+	if input.DBUsername != nil {
+		cfg.DBUsername = *input.DBUsername
+	} else {
+		cfg.DBUsername = existing.Config.DBUsername
+	}
+
+	state, err := settings.UpdateAWSProvider(id, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return stateToAWSProvider(state), nil
+}
+
+// RemoveCloudProvider is the resolver for the RemoveCloudProvider field.
+func (r *mutationResolver) RemoveCloudProvider(ctx context.Context, id string) (*model.StatusResponse, error) {
+	if !env.IsAWSProviderEnabled {
+		return &model.StatusResponse{Status: false}, aws.ErrAWSProviderDisabled
+	}
+
+	// Router pattern: when adding GCP, dispatch based on settings.GetProviderType(id).
+	// See .claude/docs/cloud-providers.md for full example.
+	err := settings.RemoveAWSProvider(id)
+	if err != nil {
+		return &model.StatusResponse{Status: false}, err
+	}
+	return &model.StatusResponse{Status: true}, nil
+}
+
+// TestCloudProvider is the resolver for the TestCloudProvider field.
+func (r *mutationResolver) TestCloudProvider(ctx context.Context, id string) (model.CloudProviderStatus, error) {
+	if !env.IsAWSProviderEnabled {
+		return model.CloudProviderStatusError, aws.ErrAWSProviderDisabled
+	}
+
+	status, err := settings.TestAWSProvider(id)
+	if err != nil {
+		return model.CloudProviderStatusError, err
+	}
+	return mapCloudProviderStatus(status), nil
+}
+
+// RefreshCloudProvider is the resolver for the RefreshCloudProvider field.
+func (r *mutationResolver) RefreshCloudProvider(ctx context.Context, id string) (*model.AWSProvider, error) {
+	if !env.IsAWSProviderEnabled {
+		return nil, aws.ErrAWSProviderDisabled
+	}
+
+	state, err := settings.RefreshAWSProvider(id)
+	if err != nil {
+		return nil, err
+	}
+	return stateToAWSProvider(state), nil
+}
+
 // Version is the resolver for the Version field.
 func (r *queryResolver) Version(ctx context.Context) (string, error) {
 	if env.ApplicationVersion != "" {
@@ -993,9 +1219,9 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 
 // AIProviders is the resolver for the AIProviders field.
 func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, error) {
-	providers := env.GetConfiguredChatProviders()
+	chatProviders := env.GetConfiguredChatProviders()
 	var aiProviders []*model.AIProvider
-	for _, provider := range providers {
+	for _, provider := range chatProviders {
 		aiProviders = append(aiProviders, &model.AIProvider{
 			Type:                 provider.Type,
 			Name:                 provider.Name,
@@ -1017,8 +1243,8 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 	}
 
 	if providerID != nil {
-		providers := env.GetConfiguredChatProviders()
-		for _, provider := range providers {
+		chatProviders := env.GetConfiguredChatProviders()
+		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel.Token = provider.APIKey
 				break
@@ -1045,8 +1271,8 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
 	if providerID != nil {
-		providers := env.GetConfiguredChatProviders()
-		for _, provider := range providers {
+		chatProviders := env.GetConfiguredChatProviders()
+		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel = &engine.ExternalModel{
 					Type:  modelType,
@@ -1108,7 +1334,10 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 // SettingsConfig is the resolver for the SettingsConfig field.
 func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConfig, error) {
 	currentSettings := settings.Get()
-	return &model.SettingsConfig{MetricsEnabled: &currentSettings.MetricsEnabled}, nil
+	return &model.SettingsConfig{
+		MetricsEnabled:        &currentSettings.MetricsEnabled,
+		CloudProvidersEnabled: env.IsAWSProviderEnabled,
+	}, nil
 }
 
 // MockDataMaxRowCount is the resolver for the MockDataMaxRowCount field.
@@ -1158,6 +1387,120 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 		Operators:       metadata.Operators,
 		AliasMap:        aliasMap,
 	}, nil
+}
+
+// CloudProviders is the resolver for the CloudProviders field.
+func (r *queryResolver) CloudProviders(ctx context.Context) ([]*model.AWSProvider, error) {
+	if !env.IsAWSProviderEnabled {
+		return []*model.AWSProvider{}, nil
+	}
+
+	// Router pattern: when adding GCP, append settings.GetGCPProviders() results here.
+	// See .claude/docs/cloud-providers.md for full example.
+	states := settings.GetAWSProviders()
+	result := make([]*model.AWSProvider, 0, len(states))
+	for _, state := range states {
+		result = append(result, stateToAWSProvider(state))
+	}
+	return result, nil
+}
+
+// CloudProvider is the resolver for the CloudProvider field.
+func (r *queryResolver) CloudProvider(ctx context.Context, id string) (*model.AWSProvider, error) {
+	if !env.IsAWSProviderEnabled {
+		return nil, nil
+	}
+
+	state, err := settings.GetAWSProvider(id)
+	if err != nil {
+		return nil, err
+	}
+	return stateToAWSProvider(state), nil
+}
+
+// DiscoveredConnections is the resolver for the DiscoveredConnections field.
+func (r *queryResolver) DiscoveredConnections(ctx context.Context) ([]*model.DiscoveredConnection, error) {
+	if !env.IsAWSProviderEnabled {
+		return []*model.DiscoveredConnection{}, nil
+	}
+
+	registry := providers.GetDefaultRegistry()
+	conns, err := registry.DiscoverAll(ctx)
+
+	result := make([]*model.DiscoveredConnection, 0, len(conns))
+	for _, conn := range conns {
+		result = append(result, discoveredConnectionToModel(&conn))
+	}
+
+	// Return partial results with error so UI can show a warning
+	if err != nil {
+		log.Logger.Warn("Error discovering connections: ", err)
+		return result, err
+	}
+	return result, nil
+}
+
+// ProviderConnections is the resolver for the ProviderConnections field.
+func (r *queryResolver) ProviderConnections(ctx context.Context, providerID string) ([]*model.DiscoveredConnection, error) {
+	if !env.IsAWSProviderEnabled {
+		return []*model.DiscoveredConnection{}, nil
+	}
+
+	registry := providers.GetDefaultRegistry()
+	conns, err := registry.FilterByProvider(ctx, providerID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.DiscoveredConnection, 0, len(conns))
+	for _, conn := range conns {
+		result = append(result, discoveredConnectionToModel(&conn))
+	}
+	return result, nil
+}
+
+// LocalAWSProfiles is the resolver for the LocalAWSProfiles field.
+func (r *queryResolver) LocalAWSProfiles(ctx context.Context) ([]*model.LocalAWSProfile, error) {
+	if !env.IsAWSProviderEnabled {
+		return []*model.LocalAWSProfile{}, nil
+	}
+
+	localProfiles, err := aws.DiscoverLocalProfiles()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.LocalAWSProfile, len(localProfiles))
+	for i, profile := range localProfiles {
+		var region *string
+		if profile.Region != "" {
+			region = &profile.Region
+		}
+		result[i] = &model.LocalAWSProfile{
+			Name:      profile.Name,
+			Region:    region,
+			Source:    profile.Source,
+			IsDefault: profile.IsDefault,
+		}
+	}
+	return result, nil
+}
+
+// AWSRegions is the resolver for the AWSRegions field.
+func (r *queryResolver) AWSRegions(ctx context.Context) ([]*model.AWSRegion, error) {
+	if !env.IsAWSProviderEnabled {
+		return []*model.AWSRegion{}, nil
+	}
+
+	regions := aws.GetRegions()
+	result := make([]*model.AWSRegion, len(regions))
+	for i, region := range regions {
+		result[i] = &model.AWSRegion{
+			ID:          region.ID,
+			Description: region.Description,
+		}
+	}
+	return result, nil
 }
 
 // Mutation returns MutationResolver implementation.

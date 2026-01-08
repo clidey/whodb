@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -33,6 +49,45 @@ export type AiProvider = {
   Type: Scalars['String']['output'];
 };
 
+export type AwsProvider = CloudProvider & {
+  __typename?: 'AWSProvider';
+  AuthMethod: Scalars['String']['output'];
+  DBUsername?: Maybe<Scalars['String']['output']>;
+  DiscoverDocumentDB: Scalars['Boolean']['output'];
+  DiscoverElastiCache: Scalars['Boolean']['output'];
+  DiscoverRDS: Scalars['Boolean']['output'];
+  DiscoveredCount: Scalars['Int']['output'];
+  Error?: Maybe<Scalars['String']['output']>;
+  HasCredentials: Scalars['Boolean']['output'];
+  Id: Scalars['ID']['output'];
+  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
+  Name: Scalars['String']['output'];
+  ProfileName?: Maybe<Scalars['String']['output']>;
+  ProviderType: CloudProviderType;
+  Region: Scalars['String']['output'];
+  Status: CloudProviderStatus;
+};
+
+export type AwsProviderInput = {
+  AccessKeyId?: InputMaybe<Scalars['String']['input']>;
+  AuthMethod?: InputMaybe<Scalars['String']['input']>;
+  DBUsername?: InputMaybe<Scalars['String']['input']>;
+  DiscoverDocumentDB?: InputMaybe<Scalars['Boolean']['input']>;
+  DiscoverElastiCache?: InputMaybe<Scalars['Boolean']['input']>;
+  DiscoverRDS?: InputMaybe<Scalars['Boolean']['input']>;
+  Name: Scalars['String']['input'];
+  ProfileName?: InputMaybe<Scalars['String']['input']>;
+  Region: Scalars['String']['input'];
+  SecretAccessKey?: InputMaybe<Scalars['String']['input']>;
+  SessionToken?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AwsRegion = {
+  __typename?: 'AWSRegion';
+  Description: Scalars['String']['output'];
+  Id: Scalars['String']['output'];
+};
+
 export type AtomicWhereCondition = {
   ColumnType: Scalars['String']['input'];
   Key: Scalars['String']['input'];
@@ -46,6 +101,29 @@ export type ChatInput = {
   Query: Scalars['String']['input'];
   Token?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type CloudProvider = {
+  DiscoveredCount: Scalars['Int']['output'];
+  Error?: Maybe<Scalars['String']['output']>;
+  Id: Scalars['ID']['output'];
+  LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
+  Name: Scalars['String']['output'];
+  ProviderType: CloudProviderType;
+  Region: Scalars['String']['output'];
+  Status: CloudProviderStatus;
+};
+
+export enum CloudProviderStatus {
+  Connected = 'Connected',
+  CredentialsRequired = 'CredentialsRequired',
+  Disconnected = 'Disconnected',
+  Discovering = 'Discovering',
+  Error = 'Error'
+}
+
+export enum CloudProviderType {
+  Aws = 'AWS'
+}
 
 export type Column = {
   __typename?: 'Column';
@@ -79,6 +157,18 @@ export enum DatabaseType {
   Sqlite3 = 'Sqlite3'
 }
 
+export type DiscoveredConnection = {
+  __typename?: 'DiscoveredConnection';
+  DatabaseType: Scalars['String']['output'];
+  Id: Scalars['ID']['output'];
+  Metadata: Array<Record>;
+  Name: Scalars['String']['output'];
+  ProviderID: Scalars['String']['output'];
+  ProviderType: Scalars['String']['output'];
+  Region?: Maybe<Scalars['String']['output']>;
+  Status: Scalars['String']['output'];
+};
+
 export type GraphUnit = {
   __typename?: 'GraphUnit';
   Relations: Array<GraphUnitRelationship>;
@@ -100,6 +190,14 @@ export enum GraphUnitRelationshipType {
   OneToOne = 'OneToOne',
   Unknown = 'Unknown'
 }
+
+export type LocalAwsProfile = {
+  __typename?: 'LocalAWSProfile';
+  IsDefault: Scalars['Boolean']['output'];
+  Name: Scalars['String']['output'];
+  Region?: Maybe<Scalars['String']['output']>;
+  Source: Scalars['String']['output'];
+};
 
 export type LoginCredentials = {
   Advanced?: InputMaybe<Array<RecordInput>>;
@@ -142,6 +240,7 @@ export type MockDataGenerationStatus = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  AddAWSProvider: AwsProvider;
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
   DeleteRow: StatusResponse;
@@ -149,8 +248,17 @@ export type Mutation = {
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
   Logout: StatusResponse;
+  RefreshCloudProvider: AwsProvider;
+  RemoveCloudProvider: StatusResponse;
+  TestCloudProvider: CloudProviderStatus;
+  UpdateAWSProvider: AwsProvider;
   UpdateSettings: StatusResponse;
   UpdateStorageUnit: StatusResponse;
+};
+
+
+export type MutationAddAwsProviderArgs = {
+  input: AwsProviderInput;
 };
 
 
@@ -190,6 +298,27 @@ export type MutationLoginWithProfileArgs = {
 };
 
 
+export type MutationRefreshCloudProviderArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveCloudProviderArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationTestCloudProviderArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateAwsProviderArgs = {
+  id: Scalars['ID']['input'];
+  input: AwsProviderInput;
+};
+
+
 export type MutationUpdateSettingsArgs = {
   newSettings: SettingsConfigInput;
 };
@@ -211,13 +340,19 @@ export type Query = {
   AIChat: Array<AiChatMessage>;
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
+  AWSRegions: Array<AwsRegion>;
+  CloudProvider?: Maybe<AwsProvider>;
+  CloudProviders: Array<AwsProvider>;
   Columns: Array<Column>;
   ColumnsBatch: Array<StorageUnitColumns>;
   Database: Array<Scalars['String']['output']>;
   DatabaseMetadata?: Maybe<DatabaseMetadata>;
+  DiscoveredConnections: Array<DiscoveredConnection>;
   Graph: Array<GraphUnit>;
+  LocalAWSProfiles: Array<LocalAwsProfile>;
   MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
+  ProviderConnections: Array<DiscoveredConnection>;
   RawExecute: RowsResult;
   Row: RowsResult;
   Schema: Array<Scalars['String']['output']>;
@@ -243,6 +378,11 @@ export type QueryAiModelArgs = {
 };
 
 
+export type QueryCloudProviderArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryColumnsArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
@@ -262,6 +402,11 @@ export type QueryDatabaseArgs = {
 
 export type QueryGraphArgs = {
   schema: Scalars['String']['input'];
+};
+
+
+export type QueryProviderConnectionsArgs = {
+  providerID: Scalars['ID']['input'];
 };
 
 
@@ -306,6 +451,7 @@ export type RowsResult = {
 
 export type SettingsConfig = {
   __typename?: 'SettingsConfig';
+  CloudProvidersEnabled: Scalars['Boolean']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -490,10 +636,80 @@ export type RawExecuteQueryVariables = Exact<{
 
 export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
+export type GetCloudProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCloudProvidersQuery = { __typename?: 'Query', CloudProviders: Array<{ __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null }> };
+
+export type GetCloudProviderQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetCloudProviderQuery = { __typename?: 'Query', CloudProvider?: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } | null };
+
+export type GetDiscoveredConnectionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetDiscoveredConnectionsQuery = { __typename?: 'Query', DiscoveredConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: string, ProviderID: string, Name: string, DatabaseType: string, Region?: string | null, Status: string, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+
+export type GetProviderConnectionsQueryVariables = Exact<{
+  providerId: Scalars['ID']['input'];
+}>;
+
+
+export type GetProviderConnectionsQuery = { __typename?: 'Query', ProviderConnections: Array<{ __typename?: 'DiscoveredConnection', Id: string, ProviderType: string, ProviderID: string, Name: string, DatabaseType: string, Region?: string | null, Status: string, Metadata: Array<{ __typename?: 'Record', Key: string, Value: string }> }> };
+
+export type GetLocalAwsProfilesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLocalAwsProfilesQuery = { __typename?: 'Query', LocalAWSProfiles: Array<{ __typename?: 'LocalAWSProfile', Name: string, Region?: string | null, Source: string, IsDefault: boolean }> };
+
+export type GetAwsRegionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAwsRegionsQuery = { __typename?: 'Query', AWSRegions: Array<{ __typename?: 'AWSRegion', Id: string, Description: string }> };
+
+export type AddAwsProviderMutationVariables = Exact<{
+  input: AwsProviderInput;
+}>;
+
+
+export type AddAwsProviderMutation = { __typename?: 'Mutation', AddAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+
+export type UpdateAwsProviderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: AwsProviderInput;
+}>;
+
+
+export type UpdateAwsProviderMutation = { __typename?: 'Mutation', UpdateAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+
+export type RemoveCloudProviderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveCloudProviderMutation = { __typename?: 'Mutation', RemoveCloudProvider: { __typename?: 'StatusResponse', Status: boolean } };
+
+export type TestCloudProviderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type TestCloudProviderMutation = { __typename?: 'Mutation', TestCloudProvider: CloudProviderStatus };
+
+export type RefreshCloudProviderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshCloudProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null } };
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean } };
 
 export type UpdateSettingsMutationVariables = Exact<{
   newSettings: SettingsConfigInput;
@@ -1281,10 +1497,500 @@ export type RawExecuteQueryHookResult = ReturnType<typeof useRawExecuteQuery>;
 export type RawExecuteLazyQueryHookResult = ReturnType<typeof useRawExecuteLazyQuery>;
 export type RawExecuteSuspenseQueryHookResult = ReturnType<typeof useRawExecuteSuspenseQuery>;
 export type RawExecuteQueryResult = Apollo.QueryResult<RawExecuteQuery, RawExecuteQueryVariables>;
+export const GetCloudProvidersDocument = gql`
+    query GetCloudProviders {
+  CloudProviders {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+    `;
+
+/**
+ * __useGetCloudProvidersQuery__
+ *
+ * To run a query within a React component, call `useGetCloudProvidersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCloudProvidersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCloudProvidersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCloudProvidersQuery(baseOptions?: Apollo.QueryHookOptions<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>(GetCloudProvidersDocument, options);
+      }
+export function useGetCloudProvidersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>(GetCloudProvidersDocument, options);
+        }
+export function useGetCloudProvidersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>(GetCloudProvidersDocument, options);
+        }
+export type GetCloudProvidersQueryHookResult = ReturnType<typeof useGetCloudProvidersQuery>;
+export type GetCloudProvidersLazyQueryHookResult = ReturnType<typeof useGetCloudProvidersLazyQuery>;
+export type GetCloudProvidersSuspenseQueryHookResult = ReturnType<typeof useGetCloudProvidersSuspenseQuery>;
+export type GetCloudProvidersQueryResult = Apollo.QueryResult<GetCloudProvidersQuery, GetCloudProvidersQueryVariables>;
+export const GetCloudProviderDocument = gql`
+    query GetCloudProvider($id: ID!) {
+  CloudProvider(id: $id) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+    `;
+
+/**
+ * __useGetCloudProviderQuery__
+ *
+ * To run a query within a React component, call `useGetCloudProviderQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCloudProviderQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCloudProviderQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetCloudProviderQuery(baseOptions: Apollo.QueryHookOptions<GetCloudProviderQuery, GetCloudProviderQueryVariables> & ({ variables: GetCloudProviderQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCloudProviderQuery, GetCloudProviderQueryVariables>(GetCloudProviderDocument, options);
+      }
+export function useGetCloudProviderLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCloudProviderQuery, GetCloudProviderQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCloudProviderQuery, GetCloudProviderQueryVariables>(GetCloudProviderDocument, options);
+        }
+export function useGetCloudProviderSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCloudProviderQuery, GetCloudProviderQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCloudProviderQuery, GetCloudProviderQueryVariables>(GetCloudProviderDocument, options);
+        }
+export type GetCloudProviderQueryHookResult = ReturnType<typeof useGetCloudProviderQuery>;
+export type GetCloudProviderLazyQueryHookResult = ReturnType<typeof useGetCloudProviderLazyQuery>;
+export type GetCloudProviderSuspenseQueryHookResult = ReturnType<typeof useGetCloudProviderSuspenseQuery>;
+export type GetCloudProviderQueryResult = Apollo.QueryResult<GetCloudProviderQuery, GetCloudProviderQueryVariables>;
+export const GetDiscoveredConnectionsDocument = gql`
+    query GetDiscoveredConnections {
+  DiscoveredConnections {
+    Id
+    ProviderType
+    ProviderID
+    Name
+    DatabaseType
+    Region
+    Status
+    Metadata {
+      Key
+      Value
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetDiscoveredConnectionsQuery__
+ *
+ * To run a query within a React component, call `useGetDiscoveredConnectionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDiscoveredConnectionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDiscoveredConnectionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetDiscoveredConnectionsQuery(baseOptions?: Apollo.QueryHookOptions<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>(GetDiscoveredConnectionsDocument, options);
+      }
+export function useGetDiscoveredConnectionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>(GetDiscoveredConnectionsDocument, options);
+        }
+export function useGetDiscoveredConnectionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>(GetDiscoveredConnectionsDocument, options);
+        }
+export type GetDiscoveredConnectionsQueryHookResult = ReturnType<typeof useGetDiscoveredConnectionsQuery>;
+export type GetDiscoveredConnectionsLazyQueryHookResult = ReturnType<typeof useGetDiscoveredConnectionsLazyQuery>;
+export type GetDiscoveredConnectionsSuspenseQueryHookResult = ReturnType<typeof useGetDiscoveredConnectionsSuspenseQuery>;
+export type GetDiscoveredConnectionsQueryResult = Apollo.QueryResult<GetDiscoveredConnectionsQuery, GetDiscoveredConnectionsQueryVariables>;
+export const GetProviderConnectionsDocument = gql`
+    query GetProviderConnections($providerId: ID!) {
+  ProviderConnections(providerID: $providerId) {
+    Id
+    ProviderType
+    ProviderID
+    Name
+    DatabaseType
+    Region
+    Status
+    Metadata {
+      Key
+      Value
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetProviderConnectionsQuery__
+ *
+ * To run a query within a React component, call `useGetProviderConnectionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProviderConnectionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProviderConnectionsQuery({
+ *   variables: {
+ *      providerId: // value for 'providerId'
+ *   },
+ * });
+ */
+export function useGetProviderConnectionsQuery(baseOptions: Apollo.QueryHookOptions<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables> & ({ variables: GetProviderConnectionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables>(GetProviderConnectionsDocument, options);
+      }
+export function useGetProviderConnectionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables>(GetProviderConnectionsDocument, options);
+        }
+export function useGetProviderConnectionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables>(GetProviderConnectionsDocument, options);
+        }
+export type GetProviderConnectionsQueryHookResult = ReturnType<typeof useGetProviderConnectionsQuery>;
+export type GetProviderConnectionsLazyQueryHookResult = ReturnType<typeof useGetProviderConnectionsLazyQuery>;
+export type GetProviderConnectionsSuspenseQueryHookResult = ReturnType<typeof useGetProviderConnectionsSuspenseQuery>;
+export type GetProviderConnectionsQueryResult = Apollo.QueryResult<GetProviderConnectionsQuery, GetProviderConnectionsQueryVariables>;
+export const GetLocalAwsProfilesDocument = gql`
+    query GetLocalAWSProfiles {
+  LocalAWSProfiles {
+    Name
+    Region
+    Source
+    IsDefault
+  }
+}
+    `;
+
+/**
+ * __useGetLocalAwsProfilesQuery__
+ *
+ * To run a query within a React component, call `useGetLocalAwsProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLocalAwsProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLocalAwsProfilesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLocalAwsProfilesQuery(baseOptions?: Apollo.QueryHookOptions<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>(GetLocalAwsProfilesDocument, options);
+      }
+export function useGetLocalAwsProfilesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>(GetLocalAwsProfilesDocument, options);
+        }
+export function useGetLocalAwsProfilesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>(GetLocalAwsProfilesDocument, options);
+        }
+export type GetLocalAwsProfilesQueryHookResult = ReturnType<typeof useGetLocalAwsProfilesQuery>;
+export type GetLocalAwsProfilesLazyQueryHookResult = ReturnType<typeof useGetLocalAwsProfilesLazyQuery>;
+export type GetLocalAwsProfilesSuspenseQueryHookResult = ReturnType<typeof useGetLocalAwsProfilesSuspenseQuery>;
+export type GetLocalAwsProfilesQueryResult = Apollo.QueryResult<GetLocalAwsProfilesQuery, GetLocalAwsProfilesQueryVariables>;
+export const GetAwsRegionsDocument = gql`
+    query GetAWSRegions {
+  AWSRegions {
+    Id
+    Description
+  }
+}
+    `;
+
+/**
+ * __useGetAwsRegionsQuery__
+ *
+ * To run a query within a React component, call `useGetAwsRegionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAwsRegionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAwsRegionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAwsRegionsQuery(baseOptions?: Apollo.QueryHookOptions<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>(GetAwsRegionsDocument, options);
+      }
+export function useGetAwsRegionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>(GetAwsRegionsDocument, options);
+        }
+export function useGetAwsRegionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>(GetAwsRegionsDocument, options);
+        }
+export type GetAwsRegionsQueryHookResult = ReturnType<typeof useGetAwsRegionsQuery>;
+export type GetAwsRegionsLazyQueryHookResult = ReturnType<typeof useGetAwsRegionsLazyQuery>;
+export type GetAwsRegionsSuspenseQueryHookResult = ReturnType<typeof useGetAwsRegionsSuspenseQuery>;
+export type GetAwsRegionsQueryResult = Apollo.QueryResult<GetAwsRegionsQuery, GetAwsRegionsQueryVariables>;
+export const AddAwsProviderDocument = gql`
+    mutation AddAWSProvider($input: AWSProviderInput!) {
+  AddAWSProvider(input: $input) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+    `;
+export type AddAwsProviderMutationFn = Apollo.MutationFunction<AddAwsProviderMutation, AddAwsProviderMutationVariables>;
+
+/**
+ * __useAddAwsProviderMutation__
+ *
+ * To run a mutation, you first call `useAddAwsProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddAwsProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addAwsProviderMutation, { data, loading, error }] = useAddAwsProviderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddAwsProviderMutation(baseOptions?: Apollo.MutationHookOptions<AddAwsProviderMutation, AddAwsProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddAwsProviderMutation, AddAwsProviderMutationVariables>(AddAwsProviderDocument, options);
+      }
+export type AddAwsProviderMutationHookResult = ReturnType<typeof useAddAwsProviderMutation>;
+export type AddAwsProviderMutationResult = Apollo.MutationResult<AddAwsProviderMutation>;
+export type AddAwsProviderMutationOptions = Apollo.BaseMutationOptions<AddAwsProviderMutation, AddAwsProviderMutationVariables>;
+export const UpdateAwsProviderDocument = gql`
+    mutation UpdateAWSProvider($id: ID!, $input: AWSProviderInput!) {
+  UpdateAWSProvider(id: $id, input: $input) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+    `;
+export type UpdateAwsProviderMutationFn = Apollo.MutationFunction<UpdateAwsProviderMutation, UpdateAwsProviderMutationVariables>;
+
+/**
+ * __useUpdateAwsProviderMutation__
+ *
+ * To run a mutation, you first call `useUpdateAwsProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAwsProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateAwsProviderMutation, { data, loading, error }] = useUpdateAwsProviderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateAwsProviderMutation(baseOptions?: Apollo.MutationHookOptions<UpdateAwsProviderMutation, UpdateAwsProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateAwsProviderMutation, UpdateAwsProviderMutationVariables>(UpdateAwsProviderDocument, options);
+      }
+export type UpdateAwsProviderMutationHookResult = ReturnType<typeof useUpdateAwsProviderMutation>;
+export type UpdateAwsProviderMutationResult = Apollo.MutationResult<UpdateAwsProviderMutation>;
+export type UpdateAwsProviderMutationOptions = Apollo.BaseMutationOptions<UpdateAwsProviderMutation, UpdateAwsProviderMutationVariables>;
+export const RemoveCloudProviderDocument = gql`
+    mutation RemoveCloudProvider($id: ID!) {
+  RemoveCloudProvider(id: $id) {
+    Status
+  }
+}
+    `;
+export type RemoveCloudProviderMutationFn = Apollo.MutationFunction<RemoveCloudProviderMutation, RemoveCloudProviderMutationVariables>;
+
+/**
+ * __useRemoveCloudProviderMutation__
+ *
+ * To run a mutation, you first call `useRemoveCloudProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveCloudProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeCloudProviderMutation, { data, loading, error }] = useRemoveCloudProviderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveCloudProviderMutation(baseOptions?: Apollo.MutationHookOptions<RemoveCloudProviderMutation, RemoveCloudProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveCloudProviderMutation, RemoveCloudProviderMutationVariables>(RemoveCloudProviderDocument, options);
+      }
+export type RemoveCloudProviderMutationHookResult = ReturnType<typeof useRemoveCloudProviderMutation>;
+export type RemoveCloudProviderMutationResult = Apollo.MutationResult<RemoveCloudProviderMutation>;
+export type RemoveCloudProviderMutationOptions = Apollo.BaseMutationOptions<RemoveCloudProviderMutation, RemoveCloudProviderMutationVariables>;
+export const TestCloudProviderDocument = gql`
+    mutation TestCloudProvider($id: ID!) {
+  TestCloudProvider(id: $id)
+}
+    `;
+export type TestCloudProviderMutationFn = Apollo.MutationFunction<TestCloudProviderMutation, TestCloudProviderMutationVariables>;
+
+/**
+ * __useTestCloudProviderMutation__
+ *
+ * To run a mutation, you first call `useTestCloudProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useTestCloudProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [testCloudProviderMutation, { data, loading, error }] = useTestCloudProviderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useTestCloudProviderMutation(baseOptions?: Apollo.MutationHookOptions<TestCloudProviderMutation, TestCloudProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<TestCloudProviderMutation, TestCloudProviderMutationVariables>(TestCloudProviderDocument, options);
+      }
+export type TestCloudProviderMutationHookResult = ReturnType<typeof useTestCloudProviderMutation>;
+export type TestCloudProviderMutationResult = Apollo.MutationResult<TestCloudProviderMutation>;
+export type TestCloudProviderMutationOptions = Apollo.BaseMutationOptions<TestCloudProviderMutation, TestCloudProviderMutationVariables>;
+export const RefreshCloudProviderDocument = gql`
+    mutation RefreshCloudProvider($id: ID!) {
+  RefreshCloudProvider(id: $id) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+    `;
+export type RefreshCloudProviderMutationFn = Apollo.MutationFunction<RefreshCloudProviderMutation, RefreshCloudProviderMutationVariables>;
+
+/**
+ * __useRefreshCloudProviderMutation__
+ *
+ * To run a mutation, you first call `useRefreshCloudProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRefreshCloudProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [refreshCloudProviderMutation, { data, loading, error }] = useRefreshCloudProviderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRefreshCloudProviderMutation(baseOptions?: Apollo.MutationHookOptions<RefreshCloudProviderMutation, RefreshCloudProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RefreshCloudProviderMutation, RefreshCloudProviderMutationVariables>(RefreshCloudProviderDocument, options);
+      }
+export type RefreshCloudProviderMutationHookResult = ReturnType<typeof useRefreshCloudProviderMutation>;
+export type RefreshCloudProviderMutationResult = Apollo.MutationResult<RefreshCloudProviderMutation>;
+export type RefreshCloudProviderMutationOptions = Apollo.BaseMutationOptions<RefreshCloudProviderMutation, RefreshCloudProviderMutationVariables>;
 export const SettingsConfigDocument = gql`
     query SettingsConfig {
   SettingsConfig {
     MetricsEnabled
+    CloudProvidersEnabled
   }
 }
     `;

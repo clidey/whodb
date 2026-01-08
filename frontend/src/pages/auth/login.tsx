@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ import {
     useGetProfilesQuery,
     useGetVersionQuery,
     useLoginMutation,
-    useLoginWithProfileMutation
+    useLoginWithProfileMutation,
+    useSettingsConfigQuery
 } from '@graphql';
 import classNames from "classnames";
 import entries from "lodash/entries";
@@ -58,6 +59,7 @@ import {SettingsActions} from "../../store/settings";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
+import {AwsConnectionPicker, AwsConnectionPrefillData} from '../../components/aws';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -113,6 +115,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
+    const usernameInputRef = useRef<HTMLInputElement>(null);
     const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
@@ -124,6 +127,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [loginWithProfile, { loading: loginWithProfileLoading }] = useLoginWithProfileMutation();
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useGetDatabaseLazyQuery();
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
+    const { data: settingsData } = useSettingsConfigQuery();
+    const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
@@ -344,6 +349,42 @@ export const LoginForm: FC<LoginFormProps> = ({
     const handleAvailableProfileChange = useCallback((itemId: string) => {
         setSelectedAvailableProfile(itemId);
     }, []);
+
+    /**
+     * Handle prefill from AWS connection picker.
+     * Updates the main login form with discovered connection details,
+     * then focuses the username field for easy credential entry.
+     */
+    const handleAwsConnectionPrefill = useCallback((data: AwsConnectionPrefillData) => {
+        // Find the database type in our dropdown items
+        const dbType = databaseTypeItems.find(item =>
+            item.id.toLowerCase() === data.databaseType.toLowerCase()
+        );
+
+        if (dbType) {
+            // Use the proper handler to set database type and reset fields
+            handleDatabaseTypeChange(dbType);
+
+            // Set hostname and advanced settings after type change completes
+            setTimeout(() => {
+                setHostName(data.hostname);
+
+                // Merge advanced settings
+                if (data.advanced && Object.keys(data.advanced).length > 0) {
+                    setAdvancedForm(prev => ({
+                        ...prev,
+                        ...data.advanced,
+                    }));
+                    setShowAdvanced(true);
+                }
+
+                // Focus username field after form updates
+                setTimeout(() => {
+                    usernameInputRef.current?.focus();
+                }, 50);
+            }, 0);
+        }
+    }, [databaseTypeItems, handleDatabaseTypeChange]);
 
     const handleBrowseSQLiteFile = useCallback(async () => {
         try {
@@ -618,7 +659,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             { databaseType.fields?.username && (
                 <div className="flex flex-col gap-sm w-full">
                     <Label htmlFor="login-username">{t('username')}</Label>
-                    <Input id="login-username" value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder={t('enterUsername')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
+                    <Input ref={usernameInputRef} id="login-username" value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder={t('enterUsername')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
             { databaseType.fields?.password && (
@@ -640,7 +681,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (databaseType.id === DatabaseType.Sqlite3) {
             return database.length > 0;
         }
-        if (databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) {
+        const redisCompatible = [DatabaseType.Redis, "ElastiCache"];
+        const mongoCompatible = [DatabaseType.MongoDb, "DocumentDB"];
+
+        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id)) {
             return hostName.length > 0;
         }
         if (databaseType.id === DatabaseType.ElasticSearch) {
@@ -795,6 +839,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     </>
                 }
+                {cloudProvidersEnabled && (
+                    <>
+                        <Separator className="my-8" />
+                        <AwsConnectionPicker onSelectConnection={handleAwsConnectionPrefill} />
+                    </>
+                )}
             </div>
             {
                 showSidePanel && advancedDirection === "horizontal" && (

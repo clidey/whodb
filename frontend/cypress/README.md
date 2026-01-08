@@ -380,7 +380,7 @@ describe('SQL Autocomplete', () => {
 2. Add to `DATABASES` array in `dev/run-cypress.sh`
 3. Add to `DB_CATEGORIES` map in `dev/run-cypress.sh`
 4. Add to `databaseConfigs` in `support/test-runner.js`
-5. Add Docker service to `dev/docker-compose.e2e.yaml`
+5. Add Docker service to `dev/docker-compose.yml`
 6. Add npm script to `package.json` (optional)
 
 ## Troubleshooting

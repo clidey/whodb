@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ const (
 	DatabaseType_Redis         = "Redis"
 	DatabaseType_ElasticSearch = "ElasticSearch"
 	DatabaseType_ClickHouse    = "ClickHouse"
+	DatabaseType_ElastiCache   = "ElastiCache" // Uses Redis plugin for now
+	DatabaseType_DocumentDB    = "DocumentDB"  // Uses MongoDB plugin for now
 )
 
 // LoginProfileRetriever is a function that retrieves stored database credentials.
@@ -57,12 +59,27 @@ func (e *Engine) RegistryPlugin(plugin *Plugin) {
 
 // Choose returns the plugin that matches the given database type, or nil if not found.
 func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
+	// resolve databases from their name to their underlying type
+	resolvedType := resolvePluginType(databaseType)
+
 	for _, plugin := range e.Plugins {
-		if strings.EqualFold(string(plugin.Type), string(databaseType)) {
+		if strings.EqualFold(string(plugin.Type), string(resolvedType)) {
 			return plugin
 		}
 	}
 	return nil
+}
+
+// resolvePluginType maps display database types to their underlying plugin types.
+func resolvePluginType(dbType DatabaseType) DatabaseType {
+	switch dbType {
+	case DatabaseType_ElastiCache:
+		return DatabaseType_Redis
+	case DatabaseType_DocumentDB:
+		return DatabaseType_MongoDB
+	default:
+		return dbType
+	}
 }
 
 // AddLoginProfile adds database credentials to the engine's profile list.
@@ -83,7 +100,7 @@ func (e *Engine) RegisterProfileRetriever(retriever LoginProfileRetriever) {
 
 // GetStorageUnitModel converts an engine StorageUnit to a GraphQL model StorageUnit.
 func GetStorageUnitModel(unit StorageUnit) *model.StorageUnit {
-	attributes := []*model.Record{}
+	var attributes []*model.Record
 	for _, attribute := range unit.Attributes {
 		attributes = append(attributes, &model.Record{
 			Key:   attribute.Key,

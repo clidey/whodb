@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +228,9 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	switch query.OperationName {
-	case "Login", "LoginWithProfile", "GetProfiles", "UpdateSettings", "SettingsConfig", "GetVersion":
+	case "Login", "LoginWithProfile", "GetProfiles", "UpdateSettings", "SettingsConfig", "GetVersion",
+		"GetAWSProviders", "GetDiscoveredConnections", "GetProviderConnections",
+		"GetLocalAWSProfiles", "GetAWSRegions":
 		return true
 	}
 	return false

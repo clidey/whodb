@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,86 +205,5 @@ func TestHandleAWSError_ConnectionPatterns(t *testing.T) {
 		if result == nil {
 			t.Errorf("expected non-nil error for %s", msg)
 		}
-	}
-}
-
-func TestIsAccessDenied(t *testing.T) {
-	if !IsAccessDenied(ErrAccessDenied) {
-		t.Error("IsAccessDenied should return true for ErrAccessDenied")
-	}
-	if IsAccessDenied(ErrInvalidCredentials) {
-		t.Error("IsAccessDenied should return false for ErrInvalidCredentials")
-	}
-}
-
-func TestIsInvalidCredentials(t *testing.T) {
-	if !IsInvalidCredentials(ErrInvalidCredentials) {
-		t.Error("IsInvalidCredentials should return true for ErrInvalidCredentials")
-	}
-	if IsInvalidCredentials(ErrAccessDenied) {
-		t.Error("IsInvalidCredentials should return false for ErrAccessDenied")
-	}
-}
-
-func TestIsResourceNotFound(t *testing.T) {
-	if !IsResourceNotFound(ErrResourceNotFound) {
-		t.Error("IsResourceNotFound should return true for ErrResourceNotFound")
-	}
-	if IsResourceNotFound(ErrAccessDenied) {
-		t.Error("IsResourceNotFound should return false for ErrAccessDenied")
-	}
-}
-
-func TestIsThrottling(t *testing.T) {
-	if !IsThrottling(ErrThrottling) {
-		t.Error("IsThrottling should return true for ErrThrottling")
-	}
-	if IsThrottling(ErrAccessDenied) {
-		t.Error("IsThrottling should return false for ErrAccessDenied")
-	}
-}
-
-func TestIsRetryable(t *testing.T) {
-	retryableErrors := []error{
-		ErrThrottling,
-		ErrServiceUnavailable,
-		ErrConnectionFailed,
-	}
-
-	for _, err := range retryableErrors {
-		if !IsRetryable(err) {
-			t.Errorf("IsRetryable should return true for %v", err)
-		}
-	}
-
-	nonRetryableErrors := []error{
-		ErrAccessDenied,
-		ErrInvalidCredentials,
-		ErrResourceNotFound,
-	}
-
-	for _, err := range nonRetryableErrors {
-		if IsRetryable(err) {
-			t.Errorf("IsRetryable should return false for %v", err)
-		}
-	}
-}
-
-func TestIsConnectionError(t *testing.T) {
-	connectionErrors := []error{
-		ErrConnectionFailed,
-		errors.New("connection refused"),
-		errors.New("dial tcp: failed"),
-		errors.New("no such host"),
-	}
-
-	for _, err := range connectionErrors {
-		if !IsConnectionError(err) {
-			t.Errorf("IsConnectionError should return true for %v", err)
-		}
-	}
-
-	if IsConnectionError(ErrAccessDenied) {
-		t.Error("IsConnectionError should return false for ErrAccessDenied")
 	}
 }

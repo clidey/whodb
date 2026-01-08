@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,17 @@ func main() {
 
 	src.InitializeEngine()
 	log.Logger.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
+
+	// Load persisted AWS providers from disk (if any)
+	if err := settings.LoadProvidersFromFile(); err != nil {
+		log.Logger.Warnf("Failed to load persisted AWS providers: %v", err)
+	}
+
+	// Initialize AWS providers from environment variables (may add or override persisted)
+	if err := settings.InitAWSProvidersFromEnv(); err != nil {
+		log.Logger.Warnf("Failed to initialize AWS providers from environment: %v", err)
+	}
+
 	r := router.InitializeRouter(staticFiles)
 
 	port := os.Getenv("PORT")

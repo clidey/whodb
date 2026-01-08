@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,18 @@ export const Icons = {
     ClickHouse: <svg className="w-6 h-6" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
       <path d="M0 0h54v54H0z" fill="#ffb300"/>
       <path d="M35.556 7.504h-3.764V43.05h3.764V7.504zm10.038 0h-3.764V43.05h3.764V7.504zM25.518 7.504h-3.764V43.05h3.764V7.504zm-10.038 0h-3.764V43.05h3.764V7.504zM5.442 7.504H1.678V43.05h3.764V7.504z" fill="#fff"/>
+    </svg>,
+    ElastiCache: <svg className="w-6 h-6" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+      <rect width="80" height="80" rx="8" fill="#3B48CC"/>
+      <path d="M40 16c-13.255 0-24 10.745-24 24s10.745 24 24 24 24-10.745 24-24-10.745-24-24-24zm0 4c11.046 0 20 8.954 20 20s-8.954 20-20 20-20-8.954-20-20 8.954-20 20-20z" fill="#fff"/>
+      <circle cx="40" cy="40" r="8" fill="#fff"/>
+      <path d="M40 28v8M40 44v8M28 40h8M44 40h8" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+    </svg>,
+    DocumentDB: <svg className="w-6 h-6" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+      <rect width="80" height="80" rx="8" fill="#3B48CC"/>
+      <path d="M24 20h24l12 12v32c0 2.2-1.8 4-4 4H24c-2.2 0-4-1.8-4-4V24c0-2.2 1.8-4 4-4z" fill="#fff"/>
+      <path d="M48 20v12h12" fill="none" stroke="#3B48CC" strokeWidth="2"/>
+      <path d="M28 36h24M28 44h24M28 52h16" stroke="#3B48CC" strokeWidth="2" strokeLinecap="round"/>
     </svg>,
     // Enterprise icons will be loaded dynamically
     Anthropic: <svg className="w-6 h-6 bg-white" width="256px" height="176px" viewBox="0 0 256 176" version="1.1" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">    <title>Anthropic</title>    <g fill="#181818">        <path d="M147.486878,0 C147.486878,0 217.568251,175.780074 217.568251,175.780074 C217.568251,175.780074 256,175.780074 256,175.780074 C256,175.780074 185.918621,0 185.918621,0 C185.918621,0 147.486878,0 147.486878,0 C147.486878,0 147.486878,0 147.486878,0 Z"></path>        <path d="M66.1828124,106.221191 C66.1828124,106.221191 90.1624677,44.4471185 90.1624677,44.4471185 C90.1624677,44.4471185 114.142128,106.221191 114.142128,106.221191 C114.142128,106.221191 66.1828124,106.221191 66.1828124,106.221191 C66.1828124,106.221191 66.1828124,106.221191 66.1828124,106.221191 Z M70.0705318,0 C70.0705318,0 0,175.780074 0,175.780074 C0,175.780074 39.179211,175.780074 39.179211,175.780074 C39.179211,175.780074 53.5097704,138.86606 53.5097704,138.86606 C53.5097704,138.86606 126.817544,138.86606 126.817544,138.86606 C126.817544,138.86606 141.145724,175.780074 141.145724,175.780074 C141.145724,175.780074 180.324935,175.780074 180.324935,175.780074 C180.324935,175.780074 110.254409,0 110.254409,0 C110.254409,0 70.0705318,0 70.0705318,0 C70.0705318,0 70.0705318,0 70.0705318,0 Z"></path>    </g></svg>,

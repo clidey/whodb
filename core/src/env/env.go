@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,10 @@ var ApplicationVersion string
 
 var PosthogAPIKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH"
 var PosthogHost = "https://us.i.posthog.com"
+
+// IsAWSProviderEnabled controls whether AWS provider functionality is available.
+// disabled by default for now until official release
+var IsAWSProviderEnabled = os.Getenv("WHODB_ENABLE_AWS_PROVIDER") == "true"
 
 type ChatProvider struct {
 	Type       string
@@ -294,6 +298,40 @@ func GetMockDataGenerationMaxRowCount() int {
 	return 200
 }
 
+func GetAWSProvidersFromEnv() ([]AWSProviderEnvConfig, error) {
+	val := os.Getenv("WHODB_AWS_PROVIDER")
+	if val == "" {
+		return nil, nil
+	}
+
+	var configs []AWSProviderEnvConfig
+	if err := json.Unmarshal([]byte(val), &configs); err != nil {
+		log.Logger.Error("[AWS Provider] Failed to parse WHODB_AWS_PROVIDER: ", err)
+		return nil, err
+	}
+
+	// Apply defaults
+	for i := range configs {
+		if configs[i].Auth == "" {
+			configs[i].Auth = "default"
+		}
+		if configs[i].DiscoverRDS == nil {
+			t := true
+			configs[i].DiscoverRDS = &t
+		}
+		if configs[i].DiscoverElastiCache == nil {
+			t := true
+			configs[i].DiscoverElastiCache = &t
+		}
+		if configs[i].DiscoverDocumentDB == nil {
+			t := true
+			configs[i].DiscoverDocumentDB = &t
+		}
+	}
+
+	return configs, nil
+}
+
 // parseGenericProviders reads environment variables to discover generic AI provider configurations.
 // Environment variable format:
 // WHODB_AI_GENERIC_<ID>_NAME="Provider Display Name"
@@ -302,7 +340,7 @@ func GetMockDataGenerationMaxRowCount() int {
 // WHODB_AI_GENERIC_<ID>_API_KEY="sk-..."
 // WHODB_AI_GENERIC_<ID>_MODELS="model-1,model-2,model-3"
 func parseGenericProviders() []GenericProviderConfig {
-	providers := []GenericProviderConfig{}
+	var providers []GenericProviderConfig
 	processed := make(map[string]bool)
 
 	// Iterate through all environment variables to find WHODB_AI_GENERIC_* patterns

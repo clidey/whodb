@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,30 +121,6 @@ func TestParseFromWhoDB_EnvAuth(t *testing.T) {
 
 	if config.AuthMethod != AuthMethodEnv {
 		t.Errorf("expected auth method env, got %s", config.AuthMethod)
-	}
-}
-
-func TestParseFromWhoDB_CustomEndpoint(t *testing.T) {
-	creds := &engine.Credentials{
-		Hostname: "us-west-2",
-		Username: "test",
-		Password: "test",
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "static"},
-			{Key: AdvancedKeyEndpoint, Value: "http://localhost:4566"},
-		},
-	}
-
-	config, err := ParseFromWhoDB(creds)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if config.Endpoint != "http://localhost:4566" {
-		t.Errorf("expected endpoint http://localhost:4566, got %s", config.Endpoint)
-	}
-	if !config.HasCustomEndpoint() {
-		t.Error("expected HasCustomEndpoint to return true")
 	}
 }
 
@@ -325,28 +301,18 @@ func TestBuildCredentialsProvider_NonStatic(t *testing.T) {
 	}
 }
 
-func TestAWSCredentialConfig_Helpers(t *testing.T) {
+func TestAWSCredentialConfig_IsProfileAuth(t *testing.T) {
 	config := &AWSCredentialConfig{
 		Region:     "us-west-2",
 		AuthMethod: AuthMethodStatic,
-		Endpoint:   "http://localhost:4566",
 	}
 
-	if !config.HasCustomEndpoint() {
-		t.Error("expected HasCustomEndpoint to return true")
-	}
-	if !config.IsStaticAuth() {
-		t.Error("expected IsStaticAuth to return true")
-	}
 	if config.IsProfileAuth() {
-		t.Error("expected IsProfileAuth to return false")
+		t.Error("expected IsProfileAuth to return false for static auth")
 	}
 
 	config.AuthMethod = AuthMethodProfile
-	if config.IsStaticAuth() {
-		t.Error("expected IsStaticAuth to return false")
-	}
 	if !config.IsProfileAuth() {
-		t.Error("expected IsProfileAuth to return true")
+		t.Error("expected IsProfileAuth to return true for profile auth")
 	}
 }

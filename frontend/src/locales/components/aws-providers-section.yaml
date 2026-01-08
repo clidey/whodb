@@ -1,0 +1,32 @@
+en:
+  cloudConnection: Cloud connection
+  title: AWS Accounts
+  description: Connect AWS accounts to auto-discover RDS, ElastiCache, and DocumentDB instances.
+
+  noProviders: No AWS accounts configured
+  addFirstProvider: Add your first AWS account to discover databases
+
+  addProvider: Add Account
+  refresh: Refresh All
+  refreshResources: Refresh Resources
+  edit: Edit
+  remove: Remove
+
+  status:
+    connected: Connected
+    discovering: Discovering
+    error: Error
+    disconnected: Disconnected
+    credentialsrequired: Credentials Required
+
+  envDefined: Environment
+  resourcesDiscovered: "{{count}} resources"
+  lastDiscovery: "Last: {{time}}"
+
+  providerRemoved: "Removed {{name}}"
+  removeFailed: "Failed to remove: {{error}}"
+  refreshComplete: "Found {{count}} resources"
+  refreshFailed: "Refresh failed: {{error}}"
+  unknownError: Unknown error
+
+  cannotRemoveEnv: Cannot remove environment-defined provider

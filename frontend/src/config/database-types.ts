@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,9 +105,9 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsModifiers: true,
         supportsScratchpad: true,
-        supportsSchema: false,  // MySQL treats database=schema, so no separate schema concept
-        supportsDatabaseSwitching: true,  // MySQL supports switching databases
-        usesSchemaForGraph: false,  // Uses database field for queries (database=schema in MySQL)
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,
     },
     {
         id: "MariaDB",
@@ -122,9 +122,9 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsModifiers: true,
         supportsScratchpad: true,
-        supportsSchema: false,  // MariaDB treats database=schema, so no separate schema concept
-        supportsDatabaseSwitching: true,  // MariaDB supports switching databases
-        usesSchemaForGraph: false,  // Uses database field for queries (database=schema in MariaDB)
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,
     },
     {
         id: "Sqlite3",
@@ -132,7 +132,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         icon: Icons.Logos.Sqlite3,
         extra: {},
         fields: {
-            database: true,  // SQLite only needs database field
+            database: true,
         },
         supportsModifiers: true,
         supportsScratchpad: true,
@@ -151,10 +151,10 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             password: true,
             database: true,
         },
-        supportsScratchpad: false,  // MongoDB doesn't support SQL scratchpad
-        supportsSchema: false,  // MongoDB doesn't have traditional schemas
+        supportsScratchpad: false,
+        supportsSchema: false,
         supportsDatabaseSwitching: true,
-        usesSchemaForGraph: false,  // Uses database field for graph queries
+        usesSchemaForGraph: false,
     },
     {
         id: "Redis",
@@ -163,14 +163,13 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         extra: {"Port": "6379"},
         fields: {
             hostname: true,
-            // username: false - Redis doesn't use username
+            username: true,  // Redis 6+ supports ACL with username
             password: true,
-            // database: false - Redis doesn't use database field
         },
-        supportsScratchpad: false,  // Redis doesn't support SQL scratchpad
-        supportsSchema: false,  // Redis doesn't have schemas
-        supportsDatabaseSwitching: true,  // Redis has numbered databases 0-15
-        usesSchemaForGraph: false,  // Uses database field for queries
+        supportsScratchpad: false,
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,
     },
     {
         id: "ElasticSearch",
@@ -181,12 +180,11 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             hostname: true,
             username: true,
             password: true,
-            // database: false - ElasticSearch doesn't use database field
         },
-        supportsScratchpad: false,  // ElasticSearch doesn't support SQL scratchpad
-        supportsSchema: false,  // ElasticSearch doesn't have schemas
+        supportsScratchpad: false,
+        supportsSchema: false,
         supportsDatabaseSwitching: false,
-        usesSchemaForGraph: false,  // Uses database field (empty) for graph queries
+        usesSchemaForGraph: false,
     },
     {
         id: "ClickHouse",
@@ -207,6 +205,38 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         },
         supportsModifiers: true,
         supportsScratchpad: true,
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,
+    },
+    // AWS managed database types (discovered via AWS providers, use underlying plugins)
+    {
+        id: "ElastiCache",
+        label: "ElastiCache",
+        icon: Icons.Logos.ElastiCache,
+        extra: {"Port": "6379", "TLS": "true"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+        },
+        supportsScratchpad: false,
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,
+    },
+    {
+        id: "DocumentDB",
+        label: "DocumentDB",
+        icon: Icons.Logos.DocumentDB,
+        extra: {"Port": "27017"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            database: true,
+        },
+        supportsScratchpad: false,
         supportsSchema: false,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,

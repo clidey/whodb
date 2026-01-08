@@ -8,6 +8,10 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
+	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.16
+	github.com/aws/aws-sdk-go-v2/service/docdb v1.48.8
+	github.com/aws/aws-sdk-go-v2/service/elasticache v1.51.8
+	github.com/aws/aws-sdk-go-v2/service/rds v1.113.1
 	github.com/aws/smithy-go v1.24.0
 	github.com/boundaryml/baml v0.215.2
 	github.com/brianvoe/gofakeit/v7 v7.12.0

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,11 @@ const errorLink = onError(({networkError}) => {
         if (currentProfile) {
             handleAutoLogin(currentProfile);
         } else {
-            toast.error("Session expired. Please login again.");
-            window.location.href = '/login';
+            // Don't redirect if already on login page to avoid infinite loop
+            if (!window.location.pathname.startsWith('/login')) {
+                toast.error("Session expired. Please login again.");
+                window.location.href = '/login';
+            }
         }
     } else if (networkError) {
         console.error('Network error:', networkError);

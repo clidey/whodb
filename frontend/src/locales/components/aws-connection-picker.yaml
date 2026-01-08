@@ -1,0 +1,28 @@
+en:
+  connectAwsAccount: Connect an AWS account to discover databases
+  addAwsAccount: Add AWS Account
+  awsConnections: AWS Connections
+  refresh: Refresh
+  addProvider: Add Provider
+  noDiscoveredConnections: No databases discovered. Add an AWS account to auto-discover RDS, ElastiCache, and DocumentDB instances.
+  refreshPartialError: Some AWS services could not be discovered. Check IAM permissions.
+  clickToFillForm: Click a connection to fill the login form above
+  connectionSelected: Settings loaded — enter your credentials
+
+  helpLabel: How to set up AWS
+  helpTitle: AWS Database Discovery
+  helpIntro: WhoDB can automatically discover your AWS databases. Add an AWS account to get started.
+  helpAuthMethods: "Authentication Methods:"
+  helpAuthDefault: Default
+  helpAuthDefaultDesc: uses ~/.aws/credentials, env vars, or IAM role
+  helpAuthProfile: Profile
+  helpAuthProfileDesc: uses a named profile from ~/.aws/credentials
+  helpAuthStatic: Access Key
+  helpAuthStaticDesc: enter AWS access key and secret directly
+  helpAuthIam: IAM Role
+  helpAuthIamDesc: for EC2/ECS/Lambda with attached role
+  helpServices: "Supported Services:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Redis clusters
+  helpDocumentdbDesc: MongoDB-compatible clusters
+  helpCredentialNote: "Note: WhoDB discovers connection endpoints from AWS but cannot access database passwords. You'll need to enter credentials when connecting."
