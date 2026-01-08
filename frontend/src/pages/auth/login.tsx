@@ -422,12 +422,12 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [searchParams, setTheme]);
 
-    // Load EE database types if available
+    // Load database types, filtering out AWS types when cloud providers are disabled
     useEffect(() => {
-        getDatabaseTypeDropdownItems().then(items => {
+        getDatabaseTypeDropdownItems({ cloudProvidersEnabled }).then(items => {
             setDatabaseTypeItems(items);
         });
-    }, []);
+    }, [cloudProvidersEnabled]);
 
     // Update last accessed time when a new profile is created during login
     useEffect(() => {
