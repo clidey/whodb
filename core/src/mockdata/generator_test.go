@@ -136,3 +136,309 @@ func TestParseMaxLenExtractsLength(t *testing.T) {
 		t.Fatalf("expected zero when no length specified, got %d", got)
 	}
 }
+
+func TestGenerateByColumnNameEmail(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"email", "user_email", "e_mail", "Email", "EMAIL"}
+	for _, colName := range testCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match email pattern", colName)
+		}
+		email, ok := value.(string)
+		if !ok {
+			t.Fatalf("expected string value for %q, got %T", colName, value)
+		}
+		if !strings.Contains(email, "@") {
+			t.Fatalf("expected email format for %q, got %q", colName, email)
+		}
+	}
+}
+
+func TestGenerateByColumnNameUsername(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"username", "user_name", "uname", "login"}
+	for _, colName := range testCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match username pattern", colName)
+		}
+		if _, ok := value.(string); !ok {
+			t.Fatalf("expected string value for %q, got %T", colName, value)
+		}
+	}
+}
+
+func TestGenerateByColumnNamePhone(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"phone", "phone_number", "mobile", "cell", "telephone", "tel"}
+	for _, colName := range testCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match phone pattern", colName)
+		}
+		if _, ok := value.(string); !ok {
+			t.Fatalf("expected string value for %q, got %T", colName, value)
+		}
+	}
+}
+
+func TestGenerateByColumnNameAddress(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []struct {
+		colName  string
+		pattern  string
+		expected bool
+	}{
+		{"address", "address", true},
+		{"street", "street", true},
+		{"city", "city", true},
+		{"state", "state", true},
+		{"country", "country", true},
+		{"zip", "zip", true},
+		{"postal_code", "postal", true},
+	}
+
+	for _, tc := range testCases {
+		value, matched := g.generateByColumnName(tc.colName, 0)
+		if matched != tc.expected {
+			t.Fatalf("expected column name %q match=%v, got match=%v", tc.colName, tc.expected, matched)
+		}
+		if matched {
+			if _, ok := value.(string); !ok {
+				t.Fatalf("expected string value for %q, got %T", tc.colName, value)
+			}
+		}
+	}
+}
+
+func TestGenerateByColumnNameUrl(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"url", "website", "link", "homepage"}
+	for _, colName := range testCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match URL pattern", colName)
+		}
+		url, ok := value.(string)
+		if !ok {
+			t.Fatalf("expected string value for %q, got %T", colName, value)
+		}
+		if !strings.HasPrefix(url, "http") {
+			t.Fatalf("expected URL format for %q, got %q", colName, url)
+		}
+	}
+}
+
+func TestGenerateByColumnNameIPAddress(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"ip", "ip_address", "ipaddress", "ip_addr"}
+	for _, colName := range testCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match IP pattern", colName)
+		}
+		ip, ok := value.(string)
+		if !ok {
+			t.Fatalf("expected string value for %q, got %T", colName, value)
+		}
+		// IPv4 should have dots
+		if !strings.Contains(ip, ".") {
+			t.Fatalf("expected IPv4 format for %q, got %q", colName, ip)
+		}
+	}
+}
+
+func TestGenerateByColumnNameNames(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []struct {
+		colName string
+		pattern string
+	}{
+		{"first_name", "first_name"},
+		{"firstname", "firstname"},
+		{"fname", "fname"},
+		{"last_name", "last_name"},
+		{"lastname", "lastname"},
+		{"lname", "lname"},
+		{"surname", "surname"},
+		{"name", "name"},
+		{"full_name", "full_name"},
+	}
+
+	for _, tc := range testCases {
+		value, matched := g.generateByColumnName(tc.colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match name pattern", tc.colName)
+		}
+		if _, ok := value.(string); !ok {
+			t.Fatalf("expected string value for %q, got %T", tc.colName, value)
+		}
+	}
+}
+
+func TestGenerateByColumnNameCompany(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"company", "organization", "org", "company_name"}
+	for _, colName := range testCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match company pattern", colName)
+		}
+		if _, ok := value.(string); !ok {
+			t.Fatalf("expected string value for %q, got %T", colName, value)
+		}
+	}
+}
+
+func TestGenerateByColumnNameNoMatch(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	testCases := []string{"created_at", "updated_at", "id", "status", "amount", "count"}
+	for _, colName := range testCases {
+		_, matched := g.generateByColumnName(colName, 0)
+		if matched {
+			t.Fatalf("expected column name %q to NOT match any pattern", colName)
+		}
+	}
+}
+
+func TestGenerateByColumnNameRespectsMaxLen(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	// Test with a short max length
+	value, matched := g.generateByColumnName("email", 10)
+	if !matched {
+		t.Fatal("expected email to match")
+	}
+	email, ok := value.(string)
+	if !ok {
+		t.Fatalf("expected string, got %T", value)
+	}
+	if len(email) > 10 {
+		t.Fatalf("expected email to be truncated to 10 chars, got %d: %q", len(email), email)
+	}
+}
+
+func TestGenerateValueUsesColumnNameContext(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	columns := []engine.Column{
+		{Name: "user_email", Type: "varchar(255)"},
+		{Name: "phone_number", Type: "varchar(20)"},
+		{Name: "website", Type: "text"},
+	}
+
+	for _, col := range columns {
+		value, err := g.GenerateValue(col.Name, col.Type, nil)
+		if err != nil {
+			t.Fatalf("unexpected error for %q: %v", col.Name, err)
+		}
+
+		str, ok := value.(string)
+		if !ok {
+			t.Fatalf("expected string for %q, got %T", col.Name, value)
+		}
+
+		switch col.Name {
+		case "user_email":
+			if !strings.Contains(str, "@") {
+				t.Fatalf("expected email format for user_email, got %q", str)
+			}
+		case "phone_number":
+			// Phone should have some digits
+			hasDigit := false
+			for _, r := range str {
+				if r >= '0' && r <= '9' {
+					hasDigit = true
+					break
+				}
+			}
+			if !hasDigit {
+				t.Fatalf("expected phone format for phone_number, got %q", str)
+			}
+		case "website":
+			if !strings.HasPrefix(str, "http") {
+				t.Fatalf("expected URL format for website, got %q", str)
+			}
+		}
+	}
+}
+
+func TestGenerateValueCheckValuesHasPriority(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	// Even though column is named "email", check_values should take priority
+	constraints := map[string]any{
+		"check_values": []string{"active", "inactive"},
+	}
+
+	value, err := g.GenerateValue("email", "varchar(50)", constraints)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	str, ok := value.(string)
+	if !ok {
+		t.Fatalf("expected string, got %T", value)
+	}
+
+	if str != "active" && str != "inactive" {
+		t.Fatalf("expected check_values to take priority, got %q", str)
+	}
+}
+
+func TestGenerateByColumnNameLatLong(t *testing.T) {
+	g := NewGenerator()
+	g.faker = gofakeit.New(1)
+
+	latCases := []string{"latitude", "lat"}
+	for _, colName := range latCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match latitude pattern", colName)
+		}
+		lat, ok := value.(float64)
+		if !ok {
+			t.Fatalf("expected float64 for latitude, got %T", value)
+		}
+		if lat < -90 || lat > 90 {
+			t.Fatalf("expected latitude in range [-90, 90], got %f", lat)
+		}
+	}
+
+	longCases := []string{"longitude", "lng", "lon"}
+	for _, colName := range longCases {
+		value, matched := g.generateByColumnName(colName, 0)
+		if !matched {
+			t.Fatalf("expected column name %q to match longitude pattern", colName)
+		}
+		lng, ok := value.(float64)
+		if !ok {
+			t.Fatalf("expected float64 for longitude, got %T", value)
+		}
+		if lng < -180 || lng > 180 {
+			t.Fatalf("expected longitude in range [-180, 180], got %f", lng)
+		}
+	}
+}
