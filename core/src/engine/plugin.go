@@ -20,15 +20,15 @@ import "github.com/clidey/whodb/core/graph/model"
 
 // Credentials holds authentication and connection details for a database.
 type Credentials struct {
-	Id          *string
-	Type        string
-	Hostname    string
-	Username    string
-	Password    string
-	Database    string
-	Advanced    []Record
-	AccessToken *string
-	IsProfile   bool
+	Id          *string  `json:"Id,omitempty"`
+	Type        string   `json:"Type"`
+	Hostname    string   `json:"Hostname"`
+	Username    string   `json:"Username"`
+	Password    string   `json:"Password"`
+	Database    string   `json:"Database"`
+	Advanced    []Record `json:"Advanced,omitempty"`
+	AccessToken *string  `json:"AccessToken,omitempty"`
+	IsProfile   bool     `json:"IsProfile,omitempty"`
 }
 
 // ExternalModel represents an external AI model configuration for chat functionality.
@@ -46,9 +46,9 @@ type PluginConfig struct {
 // Record represents a key-value pair with optional extra metadata,
 // used for column attributes, configuration, and data transfer.
 type Record struct {
-	Key   string
-	Value string
-	Extra map[string]string
+	Key   string            `json:"Key"`
+	Value string            `json:"Value"`
+	Extra map[string]string `json:"Extra,omitempty"`
 }
 
 // StorageUnit represents a database table, collection, or equivalent storage structure.
@@ -80,14 +80,6 @@ type GetRowsResult struct {
 
 // GraphUnitRelationshipType defines the cardinality of a relationship between tables.
 type GraphUnitRelationshipType string
-
-const (
-	GraphUnitRelationshipType_OneToOne   = "OneToOne"
-	GraphUnitRelationshipType_OneToMany  = "OneToMany"
-	GraphUnitRelationshipType_ManyToOne  = "ManyToOne"
-	GraphUnitRelationshipType_ManyToMany = "ManyToMany"
-	GraphUnitRelationshipType_Unknown    = "Unknown"
-)
 
 // GraphUnitRelationship describes a foreign key relationship between two tables.
 type GraphUnitRelationship struct {
