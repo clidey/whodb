@@ -20,46 +20,31 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/plugins/ssl"
-	"gorm.io/gorm"
 )
 
-// GetSSLStatus queries ClickHouse to verify the SSL status of the connection.
-// Uses the system.settings table. Results are cached.
+// GetSSLStatus returns the SSL status based on the configured SSL mode for ClickHouse.
+// ClickHouse native protocol doesn't expose connection-level SSL state via queries,
+// so we use config-based detection like Redis and Elasticsearch.
 func (p *ClickHousePlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLStatus, error) {
 	if cached := plugins.GetCachedSSLStatus(config); cached != nil {
 		return cached, nil
 	}
 
-	status, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.SSLStatus, error) {
-		var result struct {
-			Value string `gorm:"column:value"`
-		}
+	sslConfig := ssl.ParseSSLConfig(engine.DatabaseType_ClickHouse, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 
-		if err := db.Raw("SELECT value FROM system.settings WHERE name = 'secure'").Scan(&result).Error; err != nil {
-			return nil, err
+	var status *engine.SSLStatus
+	if sslConfig == nil || !sslConfig.IsEnabled() {
+		status = &engine.SSLStatus{
+			IsEnabled: false,
+			Mode:      string(ssl.SSLModeDisabled),
 		}
-
-		if result.Value != "1" {
-			return &engine.SSLStatus{
-				IsEnabled: false,
-				Mode:      string(ssl.SSLModeDisabled),
-			}, nil
-		}
-
-		sslConfig := ssl.ParseSSLConfig(engine.DatabaseType_ClickHouse, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
-		mode := "enabled"
-		if sslConfig != nil {
-			mode = string(sslConfig.Mode)
-		}
-
-		return &engine.SSLStatus{
+	} else {
+		status = &engine.SSLStatus{
 			IsEnabled: true,
-			Mode:      mode,
-		}, nil
-	})
-
-	if err == nil && status != nil {
-		plugins.SetCachedSSLStatus(config, status)
+			Mode:      string(sslConfig.Mode),
+		}
 	}
-	return status, err
+
+	plugins.SetCachedSSLStatus(config, status)
+	return status, nil
 }

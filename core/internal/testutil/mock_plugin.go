@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package testutil
 
@@ -49,6 +51,7 @@ type PluginMock struct {
 	GetForeignKeysFunc       func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
 	WithTransactionFunc      func(*engine.PluginConfig, func(tx any) error) error
 	GetDatabaseMetadataFunc  func() *engine.DatabaseMetadata
+	GetSSLStatusFunc         func(*engine.PluginConfig) (*engine.SSLStatus, error)
 }
 
 // NewPluginMock creates a PluginMock with the provided database type.
@@ -219,4 +222,11 @@ func (m *PluginMock) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		return m.GetDatabaseMetadataFunc()
 	}
 	return nil
+}
+
+func (m *PluginMock) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLStatus, error) {
+	if m.GetSSLStatusFunc != nil {
+		return m.GetSSLStatusFunc(config)
+	}
+	return nil, nil
 }
