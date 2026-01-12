@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,12 @@ type ForeignKeyRelationship struct {
 	ReferencedColumn string
 }
 
+// SSLStatus contains verified SSL/TLS connection status from the database.
+type SSLStatus struct {
+	IsEnabled bool   // Whether SSL/TLS is active on the current connection
+	Mode      string // SSL mode: disabled, required, verify-ca, verify-identity, etc.
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
@@ -150,6 +156,10 @@ type PluginFunctions interface {
 
 	// Database metadata for frontend type/operator configuration
 	GetDatabaseMetadata() *DatabaseMetadata
+
+	// GetSSLStatus returns the verified SSL/TLS status of the current connection.
+	// Returns nil if SSL status cannot be determined (e.g., SQLite) or is not applicable.
+	GetSSLStatus(config *PluginConfig) (*SSLStatus, error)
 }
 
 // Plugin wraps PluginFunctions with a database type identifier.
