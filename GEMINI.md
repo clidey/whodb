@@ -8,7 +8,7 @@ WhoDB is a database management tool with dual-edition architecture: Community Ed
 
 ## Non-Negotiable Rules
 
-1. **Analyze before coding** - Read relevant files and understand patterns before writing code
+1. **Analyze before coding** - Read relevant files and understand patterns before writing code. Always check to see if something existing was done, or if an existing pattern can be reused or adapted.
 2. **GraphQL-first** - All new API functionality via GraphQL. Never add HTTP resolvers unless explicitly needed (e.g., file downloads)
 3. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.claude/docs/sql-security.md`
 4. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.claude/docs/plugin-architecture.md`
@@ -18,6 +18,7 @@ WhoDB is a database management tool with dual-edition architecture: Community Ed
 8. **Verify before completing** - After finishing any task, verify: (1) type checks pass (`pnpm run typecheck` for frontend, `go build` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.claude/docs/verification.md`
 9. **Fallback clarification** - Do not include fallback logic UNLESS you were asked to. If you think the project could benefit from fallback logic, first ask and clarify
 10. **Show proof** - When making a claim about how something outside of our codebase works, for example a 3rd party library or function, always provide official documentation or the actual code to back that up. Check online if you have to.
+11. **No defensive code** - Do not program defensively. If there is an edge or use case that you think needs to be handled, first ask.
 
 ## Project Structure
 
@@ -82,8 +83,9 @@ See `.claude/docs/commands.md` for full reference. EE commands are in `ee/GEMINI
 - Do not modify existing functionality without justification
 - Do not rename variables/files unless necessary
 - Remove unused code - no leftovers
-- Only comment edge cases and complex logic, not obvious code
+- Comment WHY, not WHAT - explain reasoning, edge cases, and non-obvious behavior. Never comment obvious code
 - Ask questions to understand requirements fully
+- Use subagents to accomplish tasks faster
 - Maintain professional, neutral tone without excessive enthusiasm
 - When you finish a task, go back and check your work. Check that it is correct and that it is not over-engineered
 - When you finish a task, if the ee submodule is available, then go through it and see if it needs to be modified to accomodate your changes. For example if you change a plugin signature in CE, update it in EE as well
