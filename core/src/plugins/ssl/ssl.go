@@ -22,6 +22,7 @@ package ssl
 import (
 	"slices"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -206,4 +207,50 @@ func HasSSLSupport(dbType engine.DatabaseType) bool {
 // IsEnabled returns true if the SSL config has a non-disabled mode.
 func (c *SSLConfig) IsEnabled() bool {
 	return c != nil && c.Mode != SSLModeDisabled && c.Mode != ""
+}
+
+// ParseSSLConfig extracts SSL configuration from advanced options.
+// This is a shared implementation for databases using simple SSL modes (enabled/insecure/disabled).
+// Parameters:
+//   - dbType: database type for mode validation
+//   - advanced: key-value records containing SSL settings
+//   - hostname: default server name for certificate verification
+//   - isProfile: if true, allows path-based certificate loading (admin-controlled)
+func ParseSSLConfig(dbType engine.DatabaseType, advanced []engine.Record, hostname string, isProfile bool) *SSLConfig {
+	modeStr := common.GetRecordValueOrDefault(advanced, KeySSLMode, string(SSLModeDisabled))
+
+	// Normalize database-native mode names
+	mode := NormalizeSSLMode(dbType, modeStr)
+
+	// Validate the normalized mode for this database
+	if !ValidateSSLMode(dbType, mode) {
+		return nil
+	}
+
+	if mode == SSLModeDisabled {
+		return nil
+	}
+
+	config := &SSLConfig{
+		Mode: mode,
+		CACert: CertificateInput{
+			Content: common.GetRecordValueOrDefault(advanced, KeySSLCACertContent, ""),
+		},
+		ClientCert: CertificateInput{
+			Content: common.GetRecordValueOrDefault(advanced, KeySSLClientCertContent, ""),
+		},
+		ClientKey: CertificateInput{
+			Content: common.GetRecordValueOrDefault(advanced, KeySSLClientKeyContent, ""),
+		},
+		ServerName: common.GetRecordValueOrDefault(advanced, KeySSLServerName, hostname),
+	}
+
+	// Path-based loading only for profile connections
+	if isProfile {
+		config.CACert.Path = common.GetRecordValueOrDefault(advanced, KeySSLCACertPath, "")
+		config.ClientCert.Path = common.GetRecordValueOrDefault(advanced, KeySSLClientCertPath, "")
+		config.ClientKey.Path = common.GetRecordValueOrDefault(advanced, KeySSLClientKeyPath, "")
+	}
+
+	return config
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -70,6 +71,24 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 		Password: url.QueryEscape(config.Credentials.Password),
 	})
 
+	// Configure SSL/TLS
+	sslMode := "disabled"
+	sslConfig := ssl.ParseSSLConfig(engine.DatabaseType_MongoDB, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
+	if sslConfig != nil && sslConfig.IsEnabled() {
+		sslMode = string(sslConfig.Mode)
+		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
+		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname": config.Credentials.Hostname,
+				"sslMode":  sslConfig.Mode,
+			}).Error("Failed to build TLS configuration for MongoDB")
+			return nil, err
+		}
+		if tlsConfig != nil {
+			clientOptions.SetTLSConfig(tlsConfig)
+		}
+	}
+
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
@@ -78,6 +97,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 			"username":   config.Credentials.Username,
 			"dnsEnabled": dnsEnabled,
 			"port":       port,
+			"sslMode":    sslMode,
 		}).Error("Failed to connect to MongoDB")
 		return nil, err
 	}
