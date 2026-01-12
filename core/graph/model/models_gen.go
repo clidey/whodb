@@ -175,6 +175,7 @@ type LoginProfile struct {
 	Alias                *string      `json:"Alias,omitempty"`
 	ID                   string       `json:"Id"`
 	Type                 DatabaseType `json:"Type"`
+	Hostname             *string      `json:"Hostname,omitempty"`
 	Database             *string      `json:"Database,omitempty"`
 	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
 	Source               string       `json:"Source"`

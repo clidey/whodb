@@ -905,6 +905,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 		loginProfile := &model.LoginProfile{
 			ID:                   profileName,
 			Type:                 model.DatabaseType(profile.Type),
+			Hostname:             &profile.Hostname,
 			Database:             &profile.Database,
 			IsEnvironmentDefined: true,
 			Source:               profile.Source,

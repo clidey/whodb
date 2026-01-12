@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
 
 type ISettingsState = {
     metricsEnabled: boolean;
+    cloudProvidersEnabled: boolean;
     storageUnitView: 'list' | 'card';
     fontSize: 'small' | 'medium' | 'large';
     borderRadius: 'none' | 'small' | 'medium' | 'large';
@@ -47,6 +48,7 @@ const getInitialMetricsEnabled = (): boolean => {
 const getInitialState = (): ISettingsState => {
     return {
         metricsEnabled: getInitialMetricsEnabled(),
+        cloudProvidersEnabled: false,
         storageUnitView: 'card',
         fontSize: 'medium',
         borderRadius: 'medium',
@@ -68,6 +70,9 @@ export const settingsSlice = createSlice({
     reducers: {
         setMetricsEnabled: (state, action: PayloadAction<ISettingsState["metricsEnabled"]>) => {
             state.metricsEnabled = action.payload;
+        },
+        setCloudProvidersEnabled: (state, action: PayloadAction<ISettingsState["cloudProvidersEnabled"]>) => {
+            state.cloudProvidersEnabled = action.payload;
         },
         setStorageUnitView: (state, action: PayloadAction<ISettingsState["storageUnitView"]>) => {
             state.storageUnitView = action.payload;
