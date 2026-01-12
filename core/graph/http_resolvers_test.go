@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 import (
@@ -13,7 +29,7 @@ import (
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/llm"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -78,17 +94,8 @@ func TestRESTHandlersHandleErrors(t *testing.T) {
 }
 
 func TestRESTHandlersAIModelsAndChat(t *testing.T) {
-	originalCustom := env.CustomModels
-	originalCompatKey := env.OpenAICompatibleAPIKey
-	originalCompatEndpoint := env.OpenAICompatibleEndpoint
-	env.CustomModels = []string{"mixtral"}
-	env.OpenAICompatibleAPIKey = "token"
-	env.OpenAICompatibleEndpoint = "http://compat.local"
-	t.Cleanup(func() {
-		env.CustomModels = originalCustom
-		env.OpenAICompatibleAPIKey = originalCompatKey
-		env.OpenAICompatibleEndpoint = originalCompatEndpoint
-	})
+	// Register a generic provider for testing
+	llm.RegisterGenericProviders("TestProvider", "test-provider", []string{"mixtral"}, "openai-generic", "http://test.local", "token")
 
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.ChatFunc = func(*engine.PluginConfig, string, string, string, string) ([]*engine.ChatMessage, error) {
@@ -100,13 +107,13 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	router := chi.NewRouter()
 	SetupHTTPServer(router)
 
-	// AI models
-	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=OpenAI-Compatible&token=x", nil)
+	// AI models - use the registered generic provider
+	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=test-provider&token=x", nil)
 	modelReq = modelReq.WithContext(context.WithValue(modelReq.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
 	modelRec := httptest.NewRecorder()
 	router.ServeHTTP(modelRec, modelReq)
 	if modelRec.Code != http.StatusOK {
-		t.Fatalf("expected ai-models to return 200, got %d", modelRec.Code)
+		t.Fatalf("expected ai-models to return 200, got %d (%s)", modelRec.Code, modelRec.Body.String())
 	}
 
 	// AI chat

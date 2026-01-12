@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package llm
 
 import (
@@ -5,17 +21,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/llm/providers"
 )
 
-func TestParseChatGPTStreamingResponseAggregatesAndStreams(t *testing.T) {
+func TestOpenAIStreamingResponseAggregatesAndStreams(t *testing.T) {
 	stream := make(chan string, 4)
 	body := strings.NewReader(`{"choices":[{"delta":{"content":"Hello"}}],"finish_reason":""}
 {"choices":[{"delta":{"content":"!"}}],"finish_reason":"stop"}
 `)
-	builder := &strings.Builder{}
 
-	resp, err := parseChatGPTResponse(io.NopCloser(body), &stream, builder)
+	provider := providers.NewOpenAIProvider()
+	resp, err := provider.ParseResponse(io.NopCloser(body), &stream)
 	if err != nil {
 		t.Fatalf("unexpected error parsing streaming response: %v", err)
 	}
@@ -27,25 +43,14 @@ func TestParseChatGPTStreamingResponseAggregatesAndStreams(t *testing.T) {
 	}
 }
 
-func TestParseChatGPTModelsResponseFiltersGPT(t *testing.T) {
-	body := strings.NewReader(`{"data":[{"id":"gpt-4"},{"id":"text-embedding"}]}`)
-	models, err := parseChatGPTModelsResponse(io.NopCloser(body))
-	if err != nil {
-		t.Fatalf("unexpected error parsing models: %v", err)
-	}
-	if len(models) != 1 || models[0] != "gpt-4" {
-		t.Fatalf("expected only gpt-* models, got %v", models)
-	}
-}
-
-func TestParseOllamaResponseAggregatesChunks(t *testing.T) {
+func TestOllamaResponseAggregatesChunks(t *testing.T) {
 	stream := make(chan string, 4)
 	body := strings.NewReader(`{"response":"Hi","done":false}
 {"response":" there","done":true}
 `)
-	builder := &strings.Builder{}
 
-	resp, err := parseOllamaResponse(io.NopCloser(body), &stream, builder)
+	provider := providers.NewOllamaProvider()
+	resp, err := provider.ParseResponse(io.NopCloser(body), &stream)
 	if err != nil {
 		t.Fatalf("unexpected error parsing ollama response: %v", err)
 	}
@@ -57,13 +62,13 @@ func TestParseOllamaResponseAggregatesChunks(t *testing.T) {
 	}
 }
 
-func TestParseAnthropicResponseAggregatesUntilEndTurn(t *testing.T) {
+func TestAnthropicResponseAggregatesUntilEndTurn(t *testing.T) {
 	stream := make(chan string, 4)
 	body := strings.NewReader(`{"content":[{"text":"Hello","type":"text"}],"stop_reason":"end_turn"}
 `)
-	builder := &strings.Builder{}
 
-	resp, err := parseAnthropicResponse(io.NopCloser(body), &stream, builder)
+	provider := providers.NewAnthropicProvider()
+	resp, err := provider.ParseResponse(io.NopCloser(body), &stream)
 	if err != nil {
 		t.Fatalf("unexpected error parsing anthropic response: %v", err)
 	}
@@ -75,36 +80,35 @@ func TestParseAnthropicResponseAggregatesUntilEndTurn(t *testing.T) {
 	}
 }
 
-func TestParseOllamaModelsResponseParsesTags(t *testing.T) {
-	body := strings.NewReader(`{"models":[{"model":"phi"},{"model":"gemma"}]}`)
-	models, err := parseOllamaModelsResponse(io.NopCloser(body))
-	if err != nil {
-		t.Fatalf("unexpected error parsing ollama models: %v", err)
+func TestGenericProviderUsesConfiguredEndpoint(t *testing.T) {
+	// Test that GenericProvider validates endpoint is required
+	provider := providers.NewGenericProvider("test-provider", "Test", []string{"model1"}, "openai-generic")
+
+	config := &providers.ProviderConfig{
+		Type:     provider.GetType(),
+		APIKey:   "token",
+		Endpoint: "", // Empty endpoint should fail validation
 	}
-	if len(models) != 2 || models[0] != "phi" || models[1] != "gemma" {
-		t.Fatalf("expected models parsed from tags, got %v", models)
+
+	err := provider.ValidateConfig(config)
+	if err == nil {
+		t.Fatalf("expected error when endpoint is empty for generic provider")
+	}
+
+	// With endpoint configured, validation should pass
+	config.Endpoint = "http://test.local"
+	err = provider.ValidateConfig(config)
+	if err != nil {
+		t.Fatalf("expected no error when endpoint is configured, got %v", err)
 	}
 }
 
-func TestPrepareChatGPTRequestUsesCompatibleEndpoint(t *testing.T) {
-	original := env.OpenAICompatibleEndpoint
-	t.Cleanup(func() { env.OpenAICompatibleEndpoint = original })
-	env.OpenAICompatibleEndpoint = "http://compat.local"
-
-	client := &LLMClient{Type: OpenAICompatible_LLMType, APIKey: "token"}
-	url, _, _, err := prepareChatGPTRequest(client, "hello", "compat-model", nil, true)
-	if err != nil {
-		t.Fatalf("unexpected error preparing request: %v", err)
-	}
-	if !strings.HasPrefix(url, env.OpenAICompatibleEndpoint) {
-		t.Fatalf("expected compatible endpoint to be used, got %s", url)
-	}
-}
-
-func TestParseChatGPTNonStreamingErrorsOnMissingChoices(t *testing.T) {
+func TestOpenAINonStreamingErrorsOnMissingChoices(t *testing.T) {
 	body := strings.NewReader(`{"choices":[]}`)
-	builder := &strings.Builder{}
-	if resp, err := parseChatGPTResponse(io.NopCloser(body), nil, builder); err == nil || resp != nil {
+
+	provider := providers.NewOpenAIProvider()
+	resp, err := provider.ParseResponse(io.NopCloser(body), nil)
+	if err == nil || resp != nil {
 		t.Fatalf("expected error when no choices returned, got resp=%v err=%v", resp, err)
 	}
 }

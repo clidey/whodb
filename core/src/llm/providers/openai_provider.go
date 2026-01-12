@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,11 +151,12 @@ func (p *OpenAIProvider) Complete(config *ProviderConfig, prompt string, model L
 		return nil, errors.New(string(body))
 	}
 
-	return p.parseResponse(resp.Body, receiverChan)
+	return p.ParseResponse(resp.Body, receiverChan)
 }
 
-// parseResponse parses the OpenAI API response (streaming or non-streaming).
-func (p *OpenAIProvider) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
+// ParseResponse parses the OpenAI API response (streaming or non-streaming).
+// Exported for testing.
+func (p *OpenAIProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
 	responseBuilder := strings.Builder{}
 
 	if receiverChan != nil {
