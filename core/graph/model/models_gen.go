@@ -226,6 +226,18 @@ type RowsResult struct {
 	TotalCount    int        `json:"TotalCount"`
 }
 
+type SSLModeOption struct {
+	Value       string   `json:"Value"`
+	Label       string   `json:"Label"`
+	Description string   `json:"Description"`
+	Aliases     []string `json:"Aliases"`
+}
+
+type SSLStatus struct {
+	IsEnabled bool   `json:"IsEnabled"`
+	Mode      string `json:"Mode"`
+}
+
 type SettingsConfig struct {
 	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
 	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`

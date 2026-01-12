@@ -364,6 +364,8 @@ export type Query = {
   ProviderConnections: Array<DiscoveredConnection>;
   RawExecute: RowsResult;
   Row: RowsResult;
+  SSLModes?: Maybe<Array<SslModeOption>>;
+  SSLStatus?: Maybe<SslStatus>;
   Schema: Array<Scalars['String']['output']>;
   SettingsConfig: SettingsConfig;
   StorageUnit: Array<StorageUnit>;
@@ -434,6 +436,11 @@ export type QueryRowArgs = {
 };
 
 
+export type QuerySslModesArgs = {
+  type: Scalars['String']['input'];
+};
+
+
 export type QueryStorageUnitArgs = {
   schema: Scalars['String']['input'];
 };
@@ -456,6 +463,20 @@ export type RowsResult = {
   DisableUpdate: Scalars['Boolean']['output'];
   Rows: Array<Array<Scalars['String']['output']>>;
   TotalCount: Scalars['Int']['output'];
+};
+
+export type SslModeOption = {
+  __typename?: 'SSLModeOption';
+  Aliases: Array<Scalars['String']['output']>;
+  Description: Scalars['String']['output'];
+  Label: Scalars['String']['output'];
+  Value: Scalars['String']['output'];
+};
+
+export type SslStatus = {
+  __typename?: 'SSLStatus';
+  IsEnabled: Scalars['Boolean']['output'];
+  Mode: Scalars['String']['output'];
 };
 
 export type SettingsConfig = {
@@ -549,6 +570,18 @@ export type GetDatabaseMetadataQueryVariables = Exact<{ [key: string]: never; }>
 
 
 export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }> } | null };
+
+export type GetSslModesQueryVariables = Exact<{
+  type: Scalars['String']['input'];
+}>;
+
+
+export type GetSslModesQuery = { __typename?: 'Query', SSLModes?: Array<{ __typename?: 'SSLModeOption', Value: string, Label: string, Description: string, Aliases: Array<string> }> | null };
+
+export type GetSslStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSslStatusQuery = { __typename?: 'Query', SSLStatus?: { __typename?: 'SSLStatus', IsEnabled: boolean, Mode: string } | null };
 
 export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -963,6 +996,89 @@ export type GetDatabaseMetadataQueryHookResult = ReturnType<typeof useGetDatabas
 export type GetDatabaseMetadataLazyQueryHookResult = ReturnType<typeof useGetDatabaseMetadataLazyQuery>;
 export type GetDatabaseMetadataSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseMetadataSuspenseQuery>;
 export type GetDatabaseMetadataQueryResult = Apollo.QueryResult<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>;
+export const GetSslModesDocument = gql`
+    query GetSSLModes($type: String!) {
+  SSLModes(type: $type) {
+    Value
+    Label
+    Description
+    Aliases
+  }
+}
+    `;
+
+/**
+ * __useGetSslModesQuery__
+ *
+ * To run a query within a React component, call `useGetSslModesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSslModesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSslModesQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetSslModesQuery(baseOptions: Apollo.QueryHookOptions<GetSslModesQuery, GetSslModesQueryVariables> & ({ variables: GetSslModesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSslModesQuery, GetSslModesQueryVariables>(GetSslModesDocument, options);
+      }
+export function useGetSslModesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSslModesQuery, GetSslModesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSslModesQuery, GetSslModesQueryVariables>(GetSslModesDocument, options);
+        }
+export function useGetSslModesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSslModesQuery, GetSslModesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSslModesQuery, GetSslModesQueryVariables>(GetSslModesDocument, options);
+        }
+export type GetSslModesQueryHookResult = ReturnType<typeof useGetSslModesQuery>;
+export type GetSslModesLazyQueryHookResult = ReturnType<typeof useGetSslModesLazyQuery>;
+export type GetSslModesSuspenseQueryHookResult = ReturnType<typeof useGetSslModesSuspenseQuery>;
+export type GetSslModesQueryResult = Apollo.QueryResult<GetSslModesQuery, GetSslModesQueryVariables>;
+export const GetSslStatusDocument = gql`
+    query GetSSLStatus {
+  SSLStatus {
+    IsEnabled
+    Mode
+  }
+}
+    `;
+
+/**
+ * __useGetSslStatusQuery__
+ *
+ * To run a query within a React component, call `useGetSslStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSslStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSslStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetSslStatusQuery(baseOptions?: Apollo.QueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+      }
+export function useGetSslStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+        }
+export function useGetSslStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+        }
+export type GetSslStatusQueryHookResult = ReturnType<typeof useGetSslStatusQuery>;
+export type GetSslStatusLazyQueryHookResult = ReturnType<typeof useGetSslStatusLazyQuery>;
+export type GetSslStatusSuspenseQueryHookResult = ReturnType<typeof useGetSslStatusSuspenseQuery>;
+export type GetSslStatusQueryResult = Apollo.QueryResult<GetSslStatusQuery, GetSslStatusQueryVariables>;
 export const MockDataMaxRowCountDocument = gql`
     query MockDataMaxRowCount {
   MockDataMaxRowCount

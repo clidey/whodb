@@ -38,6 +38,7 @@ import (
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 	"golang.org/x/sync/errgroup"
@@ -1386,6 +1387,62 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 		TypeDefinitions: typeDefinitions,
 		Operators:       metadata.Operators,
 		AliasMap:        aliasMap,
+	}, nil
+}
+
+// SSLModes is the resolver for the SSLModes field.
+func (r *queryResolver) SSLModes(ctx context.Context, typeArg string) ([]*model.SSLModeOption, error) {
+	dbType := engine.DatabaseType(typeArg)
+	modes := ssl.GetSSLModes(dbType)
+
+	// Return nil for database types that don't support SSL (e.g., Sqlite3)
+	if modes == nil {
+		return nil, nil
+	}
+
+	result := make([]*model.SSLModeOption, len(modes))
+	for i, mode := range modes {
+		aliases := ssl.GetSSLModeAliases(dbType, mode.Value)
+		if aliases == nil {
+			aliases = []string{} // Ensure non-nil for GraphQL
+		}
+		result[i] = &model.SSLModeOption{
+			Value:       string(mode.Value),
+			Label:       mode.Label,
+			Description: mode.Description,
+			Aliases:     aliases,
+		}
+	}
+	return result, nil
+}
+
+// SSLStatus is the resolver for the SSLStatus field.
+func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error) {
+	plugin, config := GetPluginForContext(ctx)
+	if plugin == nil {
+		log.Logger.Debug("[SSL] SSLStatus resolver: no plugin context")
+		return nil, nil
+	}
+
+	log.Logger.Debugf("[SSL] SSLStatus resolver: querying SSL status for %s", config.Credentials.Type)
+	status, err := plugin.GetSSLStatus(config)
+	if err != nil {
+		log.Logger.Warnf("[SSL] SSLStatus resolver: error getting SSL status: %v", err)
+		return nil, err
+	}
+
+	// Return nil if SSL status is not applicable (e.g., SQLite)
+	if status == nil {
+		log.Logger.Debugf("[SSL] SSLStatus resolver: SSL not applicable for %s", config.Credentials.Type)
+		return nil, nil
+	}
+
+	log.Logger.Infof("[SSL] SSLStatus resolver: %s connection SSL enabled=%t, mode=%s",
+		config.Credentials.Type, status.IsEnabled, status.Mode)
+
+	return &model.SSLStatus{
+		IsEnabled: status.IsEnabled,
+		Mode:      status.Mode,
 	}, nil
 }
 

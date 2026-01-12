@@ -60,6 +60,7 @@ import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
 import {AwsConnectionPicker, AwsConnectionPrefillData} from '../../components/aws';
+import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -778,7 +779,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
-                            {entries(advancedForm).map(([key, value]) => (
+                            {entries(advancedForm)
+                                .filter(([key]) => !Object.values(SSL_KEYS).includes(key as any))
+                                .map(([key, value]) => (
                                 <div className="flex flex-col gap-sm" key={key}>
                                     <Label htmlFor={`${key}-input`}>{key}</Label>
                                     <Input
@@ -789,6 +792,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                                     />
                                 </div>
                             ))}
+                            {/* SSL Configuration */}
+                            <SSLConfig
+                                databaseType={databaseType.id}
+                                advancedForm={advancedForm}
+                                onAdvancedFormChange={handleAdvancedForm}
+                            />
                         </div>
                     }
                 </div>

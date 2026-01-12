@@ -1,0 +1,8 @@
+query GetSSLModes($type: String!) {
+  SSLModes(type: $type) {
+    Value
+    Label
+    Description
+    Aliases
+  }
+}
