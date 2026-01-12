@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2025 Clidey, Inc.
+# Copyright 2026 Clidey, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,6 +57,20 @@ SPEC_FILE="${3:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# Detect if SSL tests are being run
+# SSL containers should start if:
+# 1. Running all tests (no spec filter)
+# 2. Running ssl-modes.cy.js or ssl-config.cy.js
+ENABLE_SSL="false"
+if [ -z "$SPEC_FILE" ]; then
+    # Running all tests - include SSL
+    ENABLE_SSL="true"
+elif [[ "$SPEC_FILE" == *"ssl"* ]]; then
+    # Running SSL-related spec file
+    ENABLE_SSL="true"
+fi
+export WHODB_ENABLE_SSL="$ENABLE_SSL"
+
 # Default CE database configurations (can be overridden via env vars)
 DEFAULT_DATABASES="postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse"
 DEFAULT_CATEGORIES="postgres:sql mysql:sql mysql8:sql mariadb:sql sqlite:sql mongodb:document redis:keyvalue elasticsearch:document clickhouse:sql"
@@ -108,6 +122,7 @@ echo "🚀 Running Cypress tests sequentially ($EDITION_LABEL)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
 echo "   Log Level: $WHODB_LOG_LEVEL"
+echo "   SSL Tests: $ENABLE_SSL"
 if [ -n "$SPEC_FILE" ]; then
     echo "   Spec: $SPEC_FILE"
 fi
