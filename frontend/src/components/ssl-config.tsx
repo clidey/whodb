@@ -16,10 +16,10 @@
 
 import { Alert, AlertDescription, Button, Input, Label, TextArea, cn } from '@clidey/ux';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useGetSslModesLazyQuery, SslModeOption } from '@graphql';
 import { SearchSelect } from './ux';
 import { DocumentTextIcon, ExclamationCircleIcon, FolderIcon } from './heroicons';
 import { useTranslation } from '@/hooks/use-translation';
+import { SSLModeOption } from '@/config/database-types';
 
 // SSL configuration keys that match the backend constants.
 // Note: Path-based keys are intentionally not supported to prevent path traversal attacks.
@@ -42,8 +42,10 @@ const MODES_SUPPORTING_CLIENT_CERT = ['verify-ca', 'verify-identity', 'enabled']
 const SYSTEM_CA_ONLY_DATABASES = ['MSSQL', 'Oracle'];
 
 export interface SSLConfigProps {
-  /** Database type to fetch SSL modes for */
+  /** Database type (used for system CA detection) */
   databaseType: string;
+  /** SSL modes supported by this database (from database-types.ts) */
+  sslModes?: SSLModeOption[];
   /** Current advanced form values */
   advancedForm: Record<string, string>;
   /** Handler to update advanced form values */
@@ -67,12 +69,12 @@ function isInsecureConnection(): boolean {
  */
 export const SSLConfig: FC<SSLConfigProps> = ({
   databaseType,
+  sslModes,
   advancedForm,
   onAdvancedFormChange,
   className,
 }) => {
   const { t } = useTranslation('components/ssl-config');
-  const [getSSLModes, { data: sslModesData, loading }] = useGetSslModesLazyQuery();
   const [inputModes, setInputModes] = useState<Record<string, 'file' | 'paste'>>({
     ca: 'file',
     clientCert: 'file',
@@ -80,34 +82,26 @@ export const SSLConfig: FC<SSLConfigProps> = ({
   });
   const [showHttpWarning, setShowHttpWarning] = useState(false);
 
-  // Fetch SSL modes when database type changes
-  useEffect(() => {
-    if (databaseType) {
-      getSSLModes({ variables: { type: databaseType } });
-    }
-  }, [databaseType, getSSLModes]);
-
   // Check for insecure connection when component mounts
   useEffect(() => {
     setShowHttpWarning(isInsecureConnection());
   }, []);
 
-  const sslModes = useMemo(() => sslModesData?.SSLModes ?? [], [sslModesData]);
   const rawMode = advancedForm[SSL_KEYS.MODE] || 'disabled';
 
   // Normalize the current mode - if it matches an alias, convert to canonical value.
   // This handles cases where profiles use database-native names like PostgreSQL's "require"
   // instead of our canonical "required".
   const currentMode = useMemo(() => {
+    if (!sslModes) return rawMode;
+
     // First check if the raw mode is a canonical value
-    const exactMatch = sslModes.find((m: SslModeOption) => m.Value === rawMode);
+    const exactMatch = sslModes.find((m) => m.value === rawMode);
     if (exactMatch) return rawMode;
 
     // Check if the raw mode is an alias for any canonical mode
-    const aliasMatch = sslModes.find((m: SslModeOption) =>
-      m.Aliases?.includes(rawMode)
-    );
-    if (aliasMatch) return aliasMatch.Value;
+    const aliasMatch = sslModes.find((m) => m.aliases?.includes(rawMode));
+    if (aliasMatch) return aliasMatch.value;
 
     // Fallback to the raw mode (might be invalid, will show as no selection)
     return rawMode;
@@ -153,30 +147,23 @@ export const SSLConfig: FC<SSLConfigProps> = ({
     }));
   }, []);
 
-  // Get localized label for a mode
-  const getModeLabel = useCallback((mode: SslModeOption) => {
-    return t(`modes.${mode.Value}.label`);
-  }, [t]);
-
-  // Get localized description for a mode
-  const getModeDescription = useCallback((mode: SslModeOption) => {
-    return t(`modes.${mode.Value}.description`);
-  }, [t]);
-
   // Mode dropdown options with localized labels
-  const modeOptions = useMemo(() => sslModes.map((mode: SslModeOption) => ({
-    value: mode.Value,
-    label: getModeLabel(mode),
-  })), [sslModes, getModeLabel]);
+  const modeOptions = useMemo(() => {
+    if (!sslModes) return [];
+    return sslModes.map((mode) => ({
+      value: mode.value,
+      label: t(`modes.${mode.value}.label`),
+    }));
+  }, [sslModes, t]);
 
   // Get current mode info for description
   const currentModeInfo = useMemo(
-    () => sslModes.find((m: SslModeOption) => m.Value === currentMode),
+    () => sslModes?.find((m) => m.value === currentMode),
     [sslModes, currentMode]
   );
 
   // Don't render if no SSL modes available (e.g., SQLite)
-  if (sslModes.length === 0 && !loading) {
+  if (!sslModes || sslModes.length === 0) {
     return null;
   }
 
@@ -202,12 +189,11 @@ export const SSLConfig: FC<SSLConfigProps> = ({
           placeholder={t('selectMode')}
           buttonProps={{
             "data-testid": "ssl-mode-select",
-            disabled: loading,
           }}
         />
         {currentModeInfo && (
           <span className="text-xs text-muted-foreground">
-            {getModeDescription(currentModeInfo)}
+            {t(`modes.${currentModeInfo.value}.description`)}
           </span>
         )}
       </div>

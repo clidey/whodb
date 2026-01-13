@@ -38,7 +38,6 @@ import (
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 	"golang.org/x/sync/errgroup"
@@ -1388,32 +1387,6 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 		Operators:       metadata.Operators,
 		AliasMap:        aliasMap,
 	}, nil
-}
-
-// SSLModes is the resolver for the SSLModes field.
-func (r *queryResolver) SSLModes(ctx context.Context, typeArg string) ([]*model.SSLModeOption, error) {
-	dbType := engine.DatabaseType(typeArg)
-	modes := ssl.GetSSLModes(dbType)
-
-	// Return nil for database types that don't support SSL (e.g., Sqlite3)
-	if modes == nil {
-		return nil, nil
-	}
-
-	result := make([]*model.SSLModeOption, len(modes))
-	for i, mode := range modes {
-		aliases := ssl.GetSSLModeAliases(dbType, mode.Value)
-		if aliases == nil {
-			aliases = []string{} // Ensure non-nil for GraphQL
-		}
-		result[i] = &model.SSLModeOption{
-			Value:       string(mode.Value),
-			Label:       mode.Label,
-			Description: mode.Description,
-			Aliases:     aliases,
-		}
-	}
-	return result, nil
 }
 
 // SSLStatus is the resolver for the SSLStatus field.

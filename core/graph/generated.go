@@ -198,7 +198,6 @@ type ComplexityRoot struct {
 		ProviderConnections   func(childComplexity int, providerID string) int
 		RawExecute            func(childComplexity int, query string) int
 		Row                   func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
-		SSLModes              func(childComplexity int, typeArg string) int
 		SSLStatus             func(childComplexity int) int
 		Schema                func(childComplexity int) int
 		SettingsConfig        func(childComplexity int) int
@@ -216,13 +215,6 @@ type ComplexityRoot struct {
 		DisableUpdate func(childComplexity int) int
 		Rows          func(childComplexity int) int
 		TotalCount    func(childComplexity int) int
-	}
-
-	SSLModeOption struct {
-		Aliases     func(childComplexity int) int
-		Description func(childComplexity int) int
-		Label       func(childComplexity int) int
-		Value       func(childComplexity int) int
 	}
 
 	SSLStatus struct {
@@ -294,7 +286,6 @@ type QueryResolver interface {
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 	MockDataMaxRowCount(ctx context.Context) (int, error)
 	DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error)
-	SSLModes(ctx context.Context, typeArg string) ([]*model.SSLModeOption, error)
 	SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 	CloudProviders(ctx context.Context) ([]*model.AWSProvider, error)
 	CloudProvider(ctx context.Context, id string) (*model.AWSProvider, error)
@@ -1021,17 +1012,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["sort"].([]*model.SortCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
-	case "Query.SSLModes":
-		if e.complexity.Query.SSLModes == nil {
-			break
-		}
-
-		args, err := ec.field_Query_SSLModes_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.SSLModes(childComplexity, args["type"].(string)), true
 	case "Query.SSLStatus":
 		if e.complexity.Query.SSLStatus == nil {
 			break
@@ -1105,31 +1085,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RowsResult.TotalCount(childComplexity), true
-
-	case "SSLModeOption.Aliases":
-		if e.complexity.SSLModeOption.Aliases == nil {
-			break
-		}
-
-		return e.complexity.SSLModeOption.Aliases(childComplexity), true
-	case "SSLModeOption.Description":
-		if e.complexity.SSLModeOption.Description == nil {
-			break
-		}
-
-		return e.complexity.SSLModeOption.Description(childComplexity), true
-	case "SSLModeOption.Label":
-		if e.complexity.SSLModeOption.Label == nil {
-			break
-		}
-
-		return e.complexity.SSLModeOption.Label(childComplexity), true
-	case "SSLModeOption.Value":
-		if e.complexity.SSLModeOption.Value == nil {
-			break
-		}
-
-		return e.complexity.SSLModeOption.Value(childComplexity), true
 
 	case "SSLStatus.IsEnabled":
 		if e.complexity.SSLStatus.IsEnabled == nil {
@@ -1739,17 +1694,6 @@ func (ec *executionContext) field_Query_Row_args(ctx context.Context, rawArgs ma
 		return nil, err
 	}
 	args["pageOffset"] = arg5
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_SSLModes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "type", ec.unmarshalNString2string)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg0
 	return args, nil
 }
 
@@ -5090,57 +5034,6 @@ func (ec *executionContext) fieldContext_Query_DatabaseMetadata(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_SSLModes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_SSLModes,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().SSLModes(ctx, fc.Args["type"].(string))
-		},
-		nil,
-		ec.marshalOSSLModeOption2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLModeOptionᚄ,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_SSLModes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "Value":
-				return ec.fieldContext_SSLModeOption_Value(ctx, field)
-			case "Label":
-				return ec.fieldContext_SSLModeOption_Label(ctx, field)
-			case "Description":
-				return ec.fieldContext_SSLModeOption_Description(ctx, field)
-			case "Aliases":
-				return ec.fieldContext_SSLModeOption_Aliases(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SSLModeOption", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_SSLModes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_SSLStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5787,122 +5680,6 @@ func (ec *executionContext) fieldContext_RowsResult_TotalCount(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSLModeOption_Value(ctx context.Context, field graphql.CollectedField, obj *model.SSLModeOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSLModeOption_Value,
-		func(ctx context.Context) (any, error) {
-			return obj.Value, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSLModeOption_Value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSLModeOption",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSLModeOption_Label(ctx context.Context, field graphql.CollectedField, obj *model.SSLModeOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSLModeOption_Label,
-		func(ctx context.Context) (any, error) {
-			return obj.Label, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSLModeOption_Label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSLModeOption",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSLModeOption_Description(ctx context.Context, field graphql.CollectedField, obj *model.SSLModeOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSLModeOption_Description,
-		func(ctx context.Context) (any, error) {
-			return obj.Description, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSLModeOption_Description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSLModeOption",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSLModeOption_Aliases(ctx context.Context, field graphql.CollectedField, obj *model.SSLModeOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSLModeOption_Aliases,
-		func(ctx context.Context) (any, error) {
-			return obj.Aliases, nil
-		},
-		nil,
-		ec.marshalNString2ᚕstringᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSLModeOption_Aliases(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSLModeOption",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9615,25 +9392,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "SSLModes":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_SSLModes(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "SSLStatus":
 			field := field
 
@@ -9885,60 +9643,6 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			}
 		case "TotalCount":
 			out.Values[i] = ec._RowsResult_TotalCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var sSLModeOptionImplementors = []string{"SSLModeOption"}
-
-func (ec *executionContext) _SSLModeOption(ctx context.Context, sel ast.SelectionSet, obj *model.SSLModeOption) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, sSLModeOptionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SSLModeOption")
-		case "Value":
-			out.Values[i] = ec._SSLModeOption_Value(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "Label":
-			out.Values[i] = ec._SSLModeOption_Label(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "Description":
-			out.Values[i] = ec._SSLModeOption_Description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "Aliases":
-			out.Values[i] = ec._SSLModeOption_Aliases(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11349,16 +11053,6 @@ func (ec *executionContext) marshalNRowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 	return ec._RowsResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSSLModeOption2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLModeOption(ctx context.Context, sel ast.SelectionSet, v *model.SSLModeOption) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SSLModeOption(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNSettingsConfig2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSettingsConfig(ctx context.Context, sel ast.SelectionSet, v model.SettingsConfig) graphql.Marshaler {
 	return ec._SettingsConfig(ctx, sel, &v)
 }
@@ -12039,53 +11733,6 @@ func (ec *executionContext) marshalORowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSSLModeOption2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLModeOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SSLModeOption) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSSLModeOption2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLModeOption(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalOSSLStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLStatus(ctx context.Context, sel ast.SelectionSet, v *model.SSLStatus) graphql.Marshaler {

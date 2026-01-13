@@ -206,13 +206,6 @@ type DatabaseMetadata {
 # SSL/TLS Configuration Types
 # =============================================================================
 
-type SSLModeOption {
-  Value: String!
-  Label: String!
-  Description: String!
-  Aliases: [String!]!
-}
-
 type SSLStatus {
   IsEnabled: Boolean!
   Mode: String!
@@ -348,7 +341,6 @@ type Query {
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
   DatabaseMetadata: DatabaseMetadata
-  SSLModes(type: String!): [SSLModeOption!]
   SSLStatus: SSLStatus
 
   # Cloud Provider Queries (Generic)
