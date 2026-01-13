@@ -319,6 +319,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsSchema: dbType.supportsSchema,
                 supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
                 usesSchemaForGraph: dbType.usesSchemaForGraph,
+                sslModes: dbType.sslModes,
             }));
             
         } else {
