@@ -47,6 +47,7 @@ This document covers SSL/TLS support in WhoDB, including architecture, configura
 | `core/src/plugins/ssl/tls.go` | `BuildTLSConfig()`, certificate loading |
 | `core/src/plugins/gorm/db.go` | `parseSSLConfig()` for Gorm-based plugins |
 | `core/src/engine/plugin.go` | `SSLStatus` type, `GetSSLStatus()` interface |
+| `frontend/src/config/database-types.ts` | SSL modes per database (static, duplicated from backend) |
 | `frontend/src/components/ssl-config.tsx` | SSL configuration UI component |
 
 ## SSL Modes
@@ -75,8 +76,8 @@ WhoDB uses unified SSL mode names across all databases:
 | MongoDB | `disabled`, `enabled`, `insecure` |
 | Redis | `disabled`, `enabled`, `insecure` |
 | Elasticsearch | `disabled`, `enabled`, `insecure` |
-| Oracle (EE) | `disabled`, `enabled`, `insecure` |
-| MSSQL (EE) | `disabled`, `required`, `verify-ca`, `verify-identity` |
+
+> **Note**: EE databases (Oracle, MSSQL, etc.) have SSL mode documentation in `ee/CLAUDE.md`.
 
 ## Mode Aliasing
 
@@ -359,22 +360,39 @@ SHOW SESSION STATUS LIKE 'Ssl_cipher';
 
 ## Checklist for New Database SSL Support
 
-- [ ] SSL modes registered (`ssl.go` or `RegisterDatabaseSSLModes`)
-- [ ] Aliases registered if database has native mode names
+- [ ] SSL modes registered in backend (`ssl.go` or `RegisterDatabaseSSLModes`)
+- [ ] SSL modes added to frontend (`database-types.ts` sslModes array)
+- [ ] Aliases registered if database has native mode names (both backend and frontend)
 - [ ] `parseSSLConfig()` implemented or using GormPlugin base
 - [ ] `ssl.BuildTLSConfig()` called in DB connection
 - [ ] TLS config applied to database driver correctly
 - [ ] `GetSSLStatus()` implemented in `ssl_status.go`
 - [ ] Logging added for SSL operations
 - [ ] Backend builds: `cd core && go build .`
+- [ ] Frontend type checks: `cd frontend && ./node_modules/.bin/tsc --noEmit`
 - [ ] EE builds (if applicable): `go build -tags ee ./core`
 
 ## Frontend Integration
 
 The `SSLConfig` component (`frontend/src/components/ssl-config.tsx`) automatically:
-- Fetches available modes via `GetSSLModes` GraphQL query
+- Receives SSL modes via props from `database-types.ts`
 - Handles mode aliasing (shows correct selection for aliased values)
 - Shows/hides certificate inputs based on mode requirements
 - Supports file picker and paste modes for certificates
 
-No frontend changes needed when adding a new database - modes are fetched dynamically from the backend.
+### Intentional Duplication
+
+**SSL modes are duplicated between frontend and backend.** This is intentional:
+
+- **Backend** (`core/src/plugins/ssl/ssl.go`): Source of truth for validation during connection
+- **Frontend** (`frontend/src/config/database-types.ts`): Display data for the login form dropdown
+
+**Why duplicate?** SSL modes are defined by database protocols and rarely change. Duplicating them:
+- Eliminates a network request on every login page load
+- Avoids authentication complexity (modes needed before user logs in)
+- Removes loading states and race conditions
+- Simplifies the frontend component
+
+**When adding a new database**, update both:
+1. Backend: `ssl.go` mode registry (for validation)
+2. Frontend: `database-types.ts` sslModes array (for display)
