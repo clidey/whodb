@@ -472,7 +472,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         data-testid="chat-delete-provider"
                         variant="secondary"
                         className={cn({
-                            "hidden": disableNewChat,
+                            "hidden": disableNewChat || modelType?.isEnvironmentDefined,
                         })}
                     >
                         <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}

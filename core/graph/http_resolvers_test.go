@@ -101,7 +101,7 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	SetupHTTPServer(router)
 
 	// AI models
-	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=OpenAI-Compatible&token=x", nil)
+	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=Ollama&token=", nil)
 	modelReq = modelReq.WithContext(context.WithValue(modelReq.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
 	modelRec := httptest.NewRecorder()
 	router.ServeHTTP(modelRec, modelReq)

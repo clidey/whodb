@@ -1244,12 +1244,20 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 	}
 
 	if providerID != nil {
+		// Try to find provider in environment-defined providers first
 		chatProviders := env.GetConfiguredChatProviders()
+		found := false
 		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel.Token = provider.APIKey
+				found = true
 				break
 			}
+		}
+		// If provider not found in environment but token is provided, use the token
+		// This handles user-added providers that aren't in environment
+		if !found && token != nil {
+			config.ExternalModel.Token = *token
 		}
 	} else if token != nil {
 		config.ExternalModel.Token = *token
@@ -1272,13 +1280,27 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
 	if providerID != nil {
+		// Try to find provider in environment-defined providers first
 		chatProviders := env.GetConfiguredChatProviders()
+		found := false
 		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel = &engine.ExternalModel{
 					Type:  modelType,
 					Token: provider.APIKey,
 				}
+				found = true
+				break
+			}
+		}
+		// If provider not found in environment but token is provided, use the token
+		// This handles user-added providers that aren't in environment
+		if !found {
+			config.ExternalModel = &engine.ExternalModel{
+				Type: modelType,
+			}
+			if token != nil {
+				config.ExternalModel.Token = *token
 			}
 		}
 	} else {
