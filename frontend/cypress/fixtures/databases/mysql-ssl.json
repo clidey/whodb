@@ -1,0 +1,46 @@
+{
+  "type": "MySQL",
+  "id": "mysql-ssl",
+  "category": "sql",
+  "description": "MySQL with SSL (verify-ca mode)",
+  "connection": {
+    "host": "localhost",
+    "port": 3309,
+    "user": "user",
+    "password": "password",
+    "database": "test_db",
+    "advanced": {
+      "SSL Mode": "verify-ca",
+      "SSL CA Path": "/app/certs/ca/mysql/ca.pem"
+    }
+  },
+  "schema": "test_db",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "firstName": "john_doe",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    }
+  },
+  "features": {
+    "graph": false,
+    "export": false,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": false,
+    "queryHistory": false,
+    "sslConnection": true
+  },
+  "ssl": {
+    "enabled": true,
+    "mode": "verify-ca",
+    "caCertPath": "/app/certs/ca/mysql/ca.pem"
+  }
+}

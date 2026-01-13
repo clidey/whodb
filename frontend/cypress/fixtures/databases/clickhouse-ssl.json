@@ -1,0 +1,46 @@
+{
+  "type": "ClickHouse",
+  "id": "clickhouse-ssl",
+  "category": "sql",
+  "description": "ClickHouse with SSL",
+  "connection": {
+    "host": "localhost",
+    "port": 9440,
+    "user": "user",
+    "password": "password",
+    "database": "test_db",
+    "advanced": {
+      "SSL Mode": "enabled",
+      "SSL CA Path": "/app/certs/ca/clickhouse/ca.pem"
+    }
+  },
+  "schema": null,
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "firstName": "john_doe",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    }
+  },
+  "features": {
+    "graph": false,
+    "export": false,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": false,
+    "queryHistory": false,
+    "sslConnection": true
+  },
+  "ssl": {
+    "enabled": true,
+    "mode": "enabled",
+    "caCertPath": "/app/certs/ca/clickhouse/ca.pem"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "type": "MongoDB",
+  "id": "mongodb-ssl",
+  "category": "document",
+  "description": "MongoDB with TLS",
+  "connection": {
+    "host": "localhost",
+    "port": 27018,
+    "user": "user",
+    "password": "password",
+    "database": "test_db",
+    "advanced": {
+      "SSL Mode": "enabled",
+      "SSL CA Path": "/app/certs/ca/mongodb/ca.pem"
+    }
+  },
+  "schema": null,
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "_id",
+    "firstId": "1",
+    "firstName": "john_doe",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    }
+  },
+  "features": {
+    "graph": false,
+    "export": false,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": false,
+    "queryHistory": false,
+    "sslConnection": true
+  },
+  "ssl": {
+    "enabled": true,
+    "mode": "enabled",
+    "caCertPath": "/app/certs/ca/mongodb/ca.pem"
+  }
+}

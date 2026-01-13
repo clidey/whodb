@@ -1,0 +1,46 @@
+{
+  "type": "ElasticSearch",
+  "id": "elasticsearch-ssl",
+  "category": "document",
+  "description": "Elasticsearch with TLS",
+  "connection": {
+    "host": "localhost",
+    "port": 9201,
+    "user": "elastic",
+    "password": "password",
+    "database": null,
+    "advanced": {
+      "SSL Mode": "enabled",
+      "SSL CA Path": "/app/certs/ca/elasticsearch/ca.pem"
+    }
+  },
+  "schema": null,
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "_id",
+    "firstId": "1",
+    "firstName": "john_doe",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    }
+  },
+  "features": {
+    "graph": false,
+    "export": false,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": false,
+    "queryHistory": false,
+    "sslConnection": true
+  },
+  "ssl": {
+    "enabled": true,
+    "mode": "enabled",
+    "caCertPath": "/app/certs/ca/elasticsearch/ca.pem"
+  }
+}
