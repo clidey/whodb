@@ -19,6 +19,7 @@ WhoDB is a database management tool with dual-edition architecture: Community Ed
 9. **Fallback clarification** - Do not include fallback logic UNLESS you were asked to. If you think the project could benefit from fallback logic, first ask and clarify
 10. **Show proof** - When making a claim about how something outside of our codebase works, for example a 3rd party library or function, always provide official documentation or the actual code to back that up. Check online if you have to.
 11. **No defensive code** - Do not program defensively. If there is an edge or use case that you think needs to be handled, first ask.
+12. **No mention of EE in CE** - Under no circumstance can you mention ANY EE databases, features, or functionality in the CE version.
 
 ## Project Structure
 
