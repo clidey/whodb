@@ -162,10 +162,12 @@ rm -rf cypress/videos/* 2>/dev/null || true
 
 # Start frontend dev server
 echo "🌐 Starting frontend dev server..."
+# WHODB_BACKEND_PORT can be set by EE script for containerized backend (default: 8080)
+BACKEND_PORT="${WHODB_BACKEND_PORT:-8080}"
 if [ -n "$VITE_EDITION" ]; then
-    VITE_BUILD_EDITION="$VITE_EDITION" NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
+    VITE_BUILD_EDITION="$VITE_EDITION" VITE_BACKEND_PORT="$BACKEND_PORT" NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
 else
-    NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
+    VITE_BACKEND_PORT="$BACKEND_PORT" NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > cypress/logs/frontend.log 2>&1 &
 fi
 FRONTEND_PID=$!
 
