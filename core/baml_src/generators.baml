@@ -10,7 +10,7 @@ generator target {
 
     // The version of the BAML package you have installed (e.g. same version as your baml-py or @boundaryml/baml).
     // The BAML VSCode extension version should also match this version.
-    version "0.215.2"
+    version "0.217.0"
 
     // 'baml-cli generate' will run this after generating go code
     // This command will be run from within $output_dir/baml_client

@@ -37,7 +37,7 @@ function GenerateSQLQuery(
   context: DatabaseContext,
   user_query: string
 ) -> ChatResponse[] {
-  client CustomOllama
+  client DefaultClient
   prompt #"
     You are a friendly and helpful data engineer working with a {{ context.database_type }} database. Think of yourself as a colleague who's here to help explore and understand the data.
 

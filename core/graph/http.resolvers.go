@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import (
 	"github.com/clidey/whodb/core/baml_client/stream_types"
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
@@ -280,6 +281,8 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		ModelType string          `json:"modelType"`
 		Token     string          `json:"token"`
+		Model     string          `json:"model"`
+		Endpoint  string          `json:"endpoint"`
 		Schema    string          `json:"schema"`
 		Input     model.ChatInput `json:"input"`
 	}
@@ -304,11 +307,21 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	// Get plugin and config from context
 	plugin, config := GetPluginForContext(r.Context())
 
-	// Set up external model
-	if req.Token != "" {
+	// Set up external model configuration
+	if req.ModelType != "" && req.Model != "" {
 		config.ExternalModel = &engine.ExternalModel{
-			Type:  req.ModelType,
-			Token: req.Token,
+			Type:     req.ModelType,
+			Token:    req.Token,
+			Model:    req.Model,
+			Endpoint: req.Endpoint,
+		}
+	}
+
+	// Create dynamic BAML client based on external model config
+	var callOpts []baml_client.CallOptionFunc
+	if config.ExternalModel != nil && config.ExternalModel.Model != "" {
+		if registry := common.CreateDynamicBAMLClient(config.ExternalModel); registry != nil {
+			callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
 		}
 	}
 
@@ -338,7 +351,7 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Stream BAML responses
 	streamCtx := ctx.Background()
-	stream, err := baml_client.Stream.GenerateSQLQuery(streamCtx, dbContext, req.Input.Query)
+	stream, err := baml_client.Stream.GenerateSQLQuery(streamCtx, dbContext, req.Input.Query, callOpts...)
 	if err != nil {
 		sendSSEError(w, flusher, fmt.Sprintf("Failed to start stream: %v", err))
 		return

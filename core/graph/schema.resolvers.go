@@ -1286,8 +1286,10 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel = &engine.ExternalModel{
-					Type:  modelType,
-					Token: provider.APIKey,
+					Type:     modelType,
+					Token:    provider.APIKey,
+					Model:    input.Model,
+					Endpoint: provider.Endpoint,
 				}
 				found = true
 				break
@@ -1297,7 +1299,8 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 		// This handles user-added providers that aren't in environment
 		if !found {
 			config.ExternalModel = &engine.ExternalModel{
-				Type: modelType,
+				Type:  modelType,
+				Model: input.Model,
 			}
 			if token != nil {
 				config.ExternalModel.Token = *token
@@ -1305,13 +1308,14 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 		}
 	} else {
 		config.ExternalModel = &engine.ExternalModel{
-			Type: modelType,
+			Type:  modelType,
+			Model: input.Model,
 		}
 		if token != nil {
 			config.ExternalModel.Token = *token
 		}
 	}
-	messages, err := plugin.Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
+	messages, err := plugin.Chat(config, schema, input.PreviousConversation, input.Query)
 
 	if err != nil {
 		log.LogFields(log.Fields{

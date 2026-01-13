@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,21 +47,22 @@ func SQLChatBAML(
 		Previous_conversation: previousConversation,
 	}
 
-	// Determine which BAML client to use based on ExternalModel config
+	// Create dynamic BAML client based on ExternalModel config
 	var callOpts []baml_client.CallOptionFunc
-	if config.ExternalModel != nil {
-		clientName, model, err := getBAMLClientFromConfig(config.ExternalModel)
-		if err != nil {
-			log.Logger.WithError(err).Warnf("Failed to get BAML client from config, using default")
-		} else if clientName != "" {
-			// Create a client registry to override the client at runtime
-			registry, err := createClientRegistry(clientName, model, config.ExternalModel.Token)
-			if err != nil {
-				log.Logger.WithError(err).Warnf("Failed to create client registry, using default")
-			} else {
-				callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
-			}
+	if config.ExternalModel != nil && config.ExternalModel.Model != "" {
+		if registry := CreateDynamicBAMLClient(config.ExternalModel); registry != nil {
+			callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
 		}
+
+		// Log AI model configuration
+		fields := log.Fields{
+			"provider": config.ExternalModel.Type,
+			"model":    config.ExternalModel.Model,
+		}
+		if config.ExternalModel.Endpoint != "" {
+			fields["endpoint"] = config.ExternalModel.Endpoint
+		}
+		log.LogFields(fields).Info("AI chat request")
 	}
 
 	// Call BAML function to generate SQL
@@ -133,37 +134,87 @@ func convertOperationType(operation types.OperationType) string {
 	}
 }
 
-// getBAMLClientFromConfig maps WhoDB ExternalModel to BAML client name and model
-func getBAMLClientFromConfig(externalModel *engine.ExternalModel) (clientName string, model string, err error) {
+// CreateDynamicBAMLClient creates a BAML ClientRegistry with a dynamically configured client
+// based on the user's selected provider, model, API key, and endpoint.
+func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) *baml.ClientRegistry {
 	if externalModel == nil {
-		return "", "", nil
+		return nil
 	}
 
-	// Map WhoDB model type to BAML client name
-	switch externalModel.Type {
-	case "Ollama":
-		return "CustomOllama", "", nil
-	case "OpenAI", "ChatGPT": // Support both OpenAI and deprecated ChatGPT
-		return "CustomGPT5", "", nil
-	case "Anthropic":
-		return "CustomSonnet4", "", nil
-	case "OpenAI-Compatible":
-		return "CustomOllama", "", nil // Use Ollama client for OpenAI-compatible APIs
-	default:
-		// Default to Ollama if type not recognized
-		return "CustomOllama", "", nil
-	}
-}
-
-// createClientRegistry creates a BAML ClientRegistry with the specified client and model
-func createClientRegistry(clientName string, model string, apiKey string) (*baml.ClientRegistry, error) {
 	registry := baml.NewClientRegistry()
 
-	// Set the primary client for all BAML function calls
-	registry.SetPrimaryClient(clientName)
+	provider, opts := getBAMLProviderAndOptions(externalModel)
 
-	// If we have a specific model or API key, we could add a dynamic client here
-	// For now, we rely on the pre-configured clients in clients.baml
+	registry.AddLlmClient("DynamicClient", provider, opts)
+	registry.SetPrimaryClient("DynamicClient")
 
-	return registry, nil
+	return registry
+}
+
+// getBAMLProviderAndOptions maps WhoDB ExternalModel to BAML provider string and options
+func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any) {
+	opts := map[string]any{
+		"model": m.Model,
+	}
+
+	switch m.Type {
+	case "OpenAI", "ChatGPT":
+		if m.Token != "" {
+			opts["api_key"] = m.Token
+		}
+		// Use custom endpoint if provided, otherwise use default
+		if m.Endpoint != "" {
+			opts["base_url"] = m.Endpoint
+		}
+		return "openai", opts
+
+	case "Anthropic":
+		if m.Token != "" {
+			opts["api_key"] = m.Token
+		}
+		// Use custom endpoint if provided, otherwise use default
+		if m.Endpoint != "" {
+			opts["base_url"] = m.Endpoint
+		}
+		return "anthropic", opts
+
+	case "Ollama":
+		// Ollama uses openai-generic provider with special options
+		endpoint := m.Endpoint
+		if endpoint == "" {
+			// Default Ollama endpoint - user should configure in provider settings
+			endpoint = "http://localhost:11434"
+		}
+		// Ensure endpoint ends with /v1 for OpenAI compatibility
+		if len(endpoint) > 0 && endpoint[len(endpoint)-1] == '/' {
+			endpoint = endpoint[:len(endpoint)-1]
+		}
+		if len(endpoint) < 3 || endpoint[len(endpoint)-3:] != "/v1" {
+			endpoint = endpoint + "/v1"
+		}
+		opts["base_url"] = endpoint
+		opts["default_role"] = "user"           // Ollama prefers user role
+		opts["request_timeout_ms"] = int(60000) // 60 seconds for local inference
+		return "openai-generic", opts
+
+	case "OpenAI-Compatible":
+		// Generic OpenAI-compatible endpoint
+		if m.Endpoint != "" {
+			opts["base_url"] = m.Endpoint
+		}
+		if m.Token != "" {
+			opts["api_key"] = m.Token
+		}
+		return "openai-generic", opts
+
+	default:
+		// Generic/custom providers use openai-generic
+		if m.Endpoint != "" {
+			opts["base_url"] = m.Endpoint
+		}
+		if m.Token != "" {
+			opts["api_key"] = m.Token
+		}
+		return "openai-generic", opts
+	}
 }

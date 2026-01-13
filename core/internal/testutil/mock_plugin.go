@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package testutil
 
@@ -40,7 +42,7 @@ type PluginMock struct {
 	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
 	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
 	RawExecuteFunc           func(*engine.PluginConfig, string) (*engine.GetRowsResult, error)
-	ChatFunc                 func(*engine.PluginConfig, string, string, string, string) ([]*engine.ChatMessage, error)
+	ChatFunc                 func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
 	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
 	FormatValueFunc          func(any) string
 	GetColumnsForTableFunc   func(*engine.PluginConfig, string, string) ([]engine.Column, error)
@@ -155,9 +157,9 @@ func (m *PluginMock) RawExecute(config *engine.PluginConfig, query string) (*eng
 	return nil, nil
 }
 
-func (m *PluginMock) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
+func (m *PluginMock) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	if m.ChatFunc != nil {
-		return m.ChatFunc(config, schema, model, previousConversation, query)
+		return m.ChatFunc(config, schema, previousConversation, query)
 	}
 	return nil, nil
 }
