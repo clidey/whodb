@@ -108,7 +108,6 @@ func AddGenericProvider(config GenericProviderConfig) {
 	GenericProviders = append(GenericProviders, config)
 }
 
-// TODO: need to make this more dynamic so users can configure more than one key for each provider
 func GetConfiguredChatProviders() []ChatProvider {
 	var providers []ChatProvider
 
