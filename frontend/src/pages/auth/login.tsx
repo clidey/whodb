@@ -795,6 +795,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             {/* SSL Configuration */}
                             <SSLConfig
                                 databaseType={databaseType.id}
+                                sslModes={databaseType.sslModes}
                                 advancedForm={advancedForm}
                                 onAdvancedFormChange={handleAdvancedForm}
                             />
