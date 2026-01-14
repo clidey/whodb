@@ -225,7 +225,7 @@ services:
     container_name: e2e_postgres_ssl
     environment:
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: jio53$*(@nfe)
       POSTGRES_DB: test_db
       PGDATA: /data/postgres
     volumes:
