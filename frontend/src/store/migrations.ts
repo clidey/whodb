@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,6 +223,64 @@ function clearChatStateV2(): void {
 }
 
 /**
+ * Rename "ChatGPT" modelType to "OpenAI" in persisted AI models state.
+ * This handles the rename from the old provider name to the new one.
+ */
+function migrateChatGPTToOpenAIV3(): void {
+  try {
+    const persistedAIModelsState = localStorage.getItem('persist:aiModels');
+    if (!persistedAIModelsState) {
+      return;
+    }
+
+    const aiModelsState = JSON.parse(persistedAIModelsState);
+    let needsUpdate = false;
+
+    // Migrate modelTypes array
+    if (aiModelsState.modelTypes) {
+      try {
+        const modelTypes = JSON.parse(aiModelsState.modelTypes);
+        if (Array.isArray(modelTypes)) {
+          const updatedModelTypes = modelTypes.map((mt: IAIModelType) => {
+            if (mt && mt.modelType === 'ChatGPT') {
+              needsUpdate = true;
+              return { ...mt, modelType: 'OpenAI' };
+            }
+            return mt;
+          });
+          if (needsUpdate) {
+            aiModelsState.modelTypes = JSON.stringify(updatedModelTypes);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing modelTypes during ChatGPT migration:', e);
+      }
+    }
+
+    // Migrate current selection if it has ChatGPT
+    if (aiModelsState.current) {
+      try {
+        const current = JSON.parse(aiModelsState.current);
+        if (current && current.modelType === 'ChatGPT') {
+          current.modelType = 'OpenAI';
+          aiModelsState.current = JSON.stringify(current);
+          needsUpdate = true;
+        }
+      } catch (e) {
+        console.error('Error parsing current during ChatGPT migration:', e);
+      }
+    }
+
+    if (needsUpdate) {
+      localStorage.setItem('persist:aiModels', JSON.stringify(aiModelsState));
+      console.log('Migrated ChatGPT to OpenAI in AI models state');
+    }
+  } catch (error) {
+    console.error('Error during ChatGPT to OpenAI migration:', error);
+  }
+}
+
+/**
  * Run all necessary migrations
  */
 export function runMigrations(): void {
@@ -237,6 +295,11 @@ export function runMigrations(): void {
   if (currentVersion < 2) {
     clearChatStateV2();
     setMigrationVersion(2);
+  }
+
+  if (currentVersion < 3) {
+    migrateChatGPTToOpenAIV3();
+    setMigrationVersion(3);
   }
 
   // Always ensure AI models state is valid
