@@ -62,7 +62,7 @@ import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
 import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
 import {chooseRandomItems} from "../../utils/functions";
-import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
@@ -266,7 +266,17 @@ export const ChatPage: FC = () => {
     const chats = useAppSelector(state => state.houdini.chats);
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const schema = useAppSelector(state => state.database.schema);
+    const schemaFromState = useAppSelector(state => state.database.schema);
+    const authProfile = useAppSelector(state => state.auth.current);
+
+    // For databases that use "database" instead of "schema" (MySQL, MariaDB, etc.),
+    // we need to pass the database value where the backend expects "schema"
+    const schema = useMemo(() => {
+        if (databaseTypesThatUseDatabaseInsteadOfSchema(authProfile?.Type)) {
+            return authProfile?.Database || '';
+        }
+        return schemaFromState;
+    }, [authProfile?.Type, authProfile?.Database, schemaFromState]);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
 
     const dispatch = useAppDispatch();
