@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package elasticsearch
@@ -43,7 +43,7 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 	}
 
 	// Unmarshal the JSON to extract the _id field
-	var jsonValues map[string]interface{}
+	var jsonValues map[string]any
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for deletion")
 		return false, err
@@ -82,7 +82,7 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 	}
 
 	// Decode the response to check the result
-	var deleteResponse map[string]interface{}
+	var deleteResponse map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&deleteResponse); err != nil {
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch delete response")
 		return false, err

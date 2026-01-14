@@ -52,7 +52,9 @@ func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
 		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for availability check")
 		return false
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 	return true
 }
 
@@ -62,9 +64,11 @@ func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for database listing")
 		return nil, err
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 
-	databases, err := client.ListDatabaseNames(context.TODO(), bson.M{})
+	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to list MongoDB database names")
 		return nil, err
@@ -79,9 +83,11 @@ func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, er
 		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for schema listing")
 		return nil, err
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 
-	databases, err := client.ListDatabaseNames(context.TODO(), bson.M{})
+	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to list MongoDB database names")
 		return nil, err
@@ -92,31 +98,33 @@ func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, er
 func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database string) ([]engine.StorageUnit, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to connect to MongoDB for storage unit listing")
 		return nil, err
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 
 	db := client.Database(database)
 	listOpts := options.ListCollections().SetAuthorizedCollections(true)
-	cursor, err := db.ListCollections(context.TODO(), bson.M{}, listOpts)
+	cursor, err := db.ListCollections(ctx, bson.M{}, listOpts)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to list MongoDB collections")
 		return nil, err
 	}
-	defer cursor.Close(context.TODO())
+	defer cursor.Close(ctx)
 
 	storageUnits := []engine.StorageUnit{}
-	for cursor.Next(context.TODO()) {
+	for cursor.Next(ctx) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
+			log.Logger.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"database": database,
 			}).Error("Failed to decode MongoDB collection info")
@@ -142,9 +150,9 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 			}
 		} else {
 			stats := bson.M{}
-			err := db.RunCommand(context.TODO(), bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
+			err := db.RunCommand(ctx, bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
 			if err != nil {
-				log.Logger.WithError(err).WithFields(map[string]interface{}{
+				log.Logger.WithError(err).WithFields(map[string]any{
 					"hostname":   config.Credentials.Hostname,
 					"database":   database,
 					"collection": collectionName,
@@ -163,7 +171,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	}
 
 	if err := cursor.Err(); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("MongoDB cursor error while listing collections")
@@ -178,10 +186,12 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 	if err != nil {
 		return false, err
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 
 	db := client.Database(database)
-	names, err := db.ListCollectionNames(context.TODO(), bson.M{"name": collection})
+	names, err := db.ListCollectionNames(ctx, bson.M{"name": collection})
 	if err != nil {
 		return false, err
 	}
@@ -191,21 +201,23 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":   config.Credentials.Hostname,
 			"database":   database,
 			"collection": collection,
 		}).Error("Failed to connect to MongoDB for row retrieval")
 		return nil, err
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 
 	db := client.Database(database)
 	coll := db.Collection(collection)
 
 	bsonFilter, err := convertWhereConditionToMongoDB(where)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":   config.Credentials.Hostname,
 			"database":   database,
 			"collection": collection,
@@ -219,7 +231,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	go func() {
 		var countErr error
 		// codeql[go/nosql-injection]: collection name validated by StorageUnitExists before reaching this code
-		totalCount, countErr = coll.CountDocuments(context.TODO(), bsonFilter)
+		totalCount, countErr = coll.CountDocuments(ctx, bsonFilter)
 		countDone <- countErr
 	}()
 
@@ -240,9 +252,9 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		findOptions.SetSort(sortMap)
 	}
 
-	cursor, err := coll.Find(context.TODO(), bsonFilter, findOptions)
+	cursor, err := coll.Find(ctx, bsonFilter, findOptions)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":   config.Credentials.Hostname,
 			"database":   database,
 			"collection": collection,
@@ -251,11 +263,11 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 		}).Error("Failed to execute MongoDB find query")
 		return nil, err
 	}
-	defer cursor.Close(context.TODO())
+	defer cursor.Close(ctx)
 
 	var rowsResult []bson.M
-	if err = cursor.All(context.TODO(), &rowsResult); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+	if err = cursor.All(ctx, &rowsResult); err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":   config.Credentials.Hostname,
 			"database":   database,
 			"collection": collection,
@@ -273,7 +285,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	for _, doc := range rowsResult {
 		jsonBytes, err := json.Marshal(doc)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
+			log.Logger.WithError(err).WithFields(map[string]any{
 				"hostname":   config.Credentials.Hostname,
 				"database":   database,
 				"collection": collection,

@@ -123,7 +123,7 @@ func (p *AnthropicProvider) Complete(config *ProviderConfig, prompt string, mode
 	// Determine max_tokens based on model
 	maxTokens := p.getMaxTokensForModel(string(model))
 
-	requestBody, err := json.Marshal(map[string]interface{}{
+	requestBody, err := json.Marshal(map[string]any{
 		"model":      string(model),
 		"max_tokens": maxTokens,
 		"messages": []map[string]string{
@@ -233,12 +233,12 @@ func (p *AnthropicProvider) GetBAMLClientType() string {
 }
 
 // CreateBAMLClientOptions creates BAML client options for Anthropic.
-func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]interface{}, error) {
+func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"model":   model,
 		"api_key": config.APIKey,
 	}, nil

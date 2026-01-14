@@ -46,7 +46,7 @@ import (
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
-	var advanced []engine.Record
+	advanced := make([]engine.Record, 0, len(credentials.Advanced))
 	for _, recordInput := range credentials.Advanced {
 		advanced = append(advanced, engine.Record{
 			Key:   recordInput.Key,
@@ -139,7 +139,7 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 				Password: resolved.Password,
 				Database: resolved.Database,
 				Advanced: func() []*model.RecordInput {
-					var out []*model.RecordInput
+					out := make([]*model.RecordInput, 0, len(resolved.Advanced))
 					for _, rec := range resolved.Advanced {
 						out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
 					}

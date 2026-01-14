@@ -322,10 +322,10 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	}
 
 	var buf bytes.Buffer
-	query := map[string]interface{}{
+	query := map[string]any{
 		"size": 100,
-		"query": map[string]interface{}{
-			"match_all": map[string]interface{}{},
+		"query": map[string]any{
+			"match_all": map[string]any{},
 		},
 	}
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
@@ -349,24 +349,24 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		return []engine.Column{}, nil
 	}
 
-	var searchResult map[string]interface{}
+	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to decode search result")
 		return nil, err
 	}
 
-	hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+	hits := searchResult["hits"].(map[string]any)["hits"].([]any)
 	if len(hits) == 0 {
 		return []engine.Column{}, nil
 	}
 
 	fieldTypes := make(map[string]string)
 	for _, h := range hits {
-		hitMap, ok := h.(map[string]interface{})
+		hitMap, ok := h.(map[string]any)
 		if !ok {
 			continue
 		}
-		source, ok := hitMap["_source"].(map[string]interface{})
+		source, ok := hitMap["_source"].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -388,13 +388,13 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		return nil, fmt.Errorf("error getting indices: %s", indicesRes.String())
 	}
 
-	var stats map[string]interface{}
+	var stats map[string]any
 	if err := json.NewDecoder(indicesRes.Body).Decode(&stats); err != nil {
 		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats")
 		return nil, err
 	}
 
-	indicesStats := stats["indices"].(map[string]interface{})
+	indicesStats := stats["indices"].(map[string]any)
 	var indices []string
 	for indexName := range indicesStats {
 		indices = append(indices, indexName)

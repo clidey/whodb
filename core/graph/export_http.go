@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,7 +227,7 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 			})
 
 			// Write headers with style
-			cells := make([]interface{}, len(row))
+			cells := make([]any, len(row))
 			for i, header := range row {
 				cells[i] = excelize.Cell{StyleID: styleID, Value: header}
 			}
@@ -238,7 +238,7 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 			}
 		} else {
 			// Write data row
-			cells := make([]interface{}, len(row))
+			cells := make([]any, len(row))
 			for i, value := range row {
 				cells[i] = value
 			}

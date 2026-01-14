@@ -598,7 +598,7 @@ func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, previousC
 	return nil, errors.ErrUnsupported
 }
 
-func (p *RedisPlugin) FormatValue(val interface{}) string {
+func (p *RedisPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -606,8 +606,8 @@ func (p *RedisPlugin) FormatValue(val interface{}) string {
 }
 
 // GetColumnConstraints - not supported for Redis
-func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
-	return make(map[string]map[string]interface{}), nil
+func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	return make(map[string]map[string]any), nil
 }
 
 // ClearTableData - not supported for Redis

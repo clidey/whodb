@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return false, err
 		}
 
-		conditions := make(map[string]interface{})
-		convertedValues := make(map[string]interface{})
-		unchangedValues := make(map[string]interface{})
+		conditions := make(map[string]any)
+		convertedValues := make(map[string]any)
+		unchangedValues := make(map[string]any)
 
 		for column, strValue := range values {
 			isPK := common.ContainsString(pkColumns, column)

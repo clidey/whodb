@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package mongodb
@@ -32,7 +32,7 @@ import (
 func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -45,7 +45,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 
 	err = createCollectionIfNotExists(database, storageUnit, fields)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -59,7 +59,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -70,7 +70,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 
 	collection := client.Database(schema).Collection(storageUnit)
 
-	document := make(map[string]interface{})
+	document := make(map[string]any)
 	for _, value := range values {
 		document[value.Key] = coerceMongoValue(value.Key, value.Value)
 	}
@@ -84,7 +84,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 
 	_, err = collection.InsertOne(context.Background(), document)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"schema":         schema,
 			"storageUnit":    storageUnit,

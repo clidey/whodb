@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package elasticsearch
@@ -55,13 +55,13 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		return nil, err
 	}
 
-	var stats map[string]interface{}
+	var stats map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&stats); err != nil {
 		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats for graph generation")
 		return nil, err
 	}
 
-	indicesStats := stats["indices"].(map[string]interface{})
+	indicesStats := stats["indices"].(map[string]any)
 
 	indices := []string{}
 	for indexName := range indicesStats {
@@ -73,10 +73,10 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 	for indexName := range indicesStats {
 		var buf bytes.Buffer
-		query := map[string]interface{}{
+		query := map[string]any{
 			"size": 100,
-			"query": map[string]interface{}{
-				"match_all": map[string]interface{}{},
+			"query": map[string]any{
+				"match_all": map[string]any{},
 			},
 		}
 		if err := json.NewEncoder(&buf).Encode(query); err != nil {
@@ -101,13 +101,13 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 			return nil, err
 		}
 
-		var searchResult map[string]interface{}
+		var searchResult map[string]any
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 			log.Logger.WithError(err).WithField("indexName", indexName).Error("Failed to decode ElasticSearch search result for graph generation")
 			return nil, err
 		}
 
-		hits := searchResult["hits"].(map[string]interface{})["hits"].([]interface{})
+		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
 		if len(hits) > 0 {
 			foreignKeys := make(map[string]string)
 

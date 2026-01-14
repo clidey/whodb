@@ -72,7 +72,7 @@ export function migrateAIModelsFromDatabase(): void {
     }
 
     // Create the new aiModels state
-    const aiModelsState: any = {};
+    const aiModelsState: Record<string, string> = {};
     
     // Ensure we have at least the default model types if none exist
     const defaultModelTypes = ["Ollama"].map(modelType => ({
@@ -145,7 +145,7 @@ function ensureValidAIModelsState(): void {
           needsUpdate = true;
         } else {
           // Ensure each modelType has required properties
-          const validModelTypes = modelTypes.filter((mt: any) => mt && mt.id && mt.modelType);
+          const validModelTypes = modelTypes.filter((mt: IAIModelType | null) => mt && mt.id && mt.modelType);
           if (validModelTypes.length !== modelTypes.length) {
             modelTypes = validModelTypes.length > 0 ? validModelTypes : ensureModelTypesArray(null);
             aiModelsState.modelTypes = JSON.stringify(modelTypes);

@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package clickhouse
@@ -80,7 +80,7 @@ func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
 
-func (p *ClickHousePlugin) ConvertStringValue(value, columnType string) (interface{}, error) {
+func (p *ClickHousePlugin) ConvertStringValue(value, columnType string) (any, error) {
 	normalized := strings.ToUpper(p.NormalizeType(columnType))
 	if strings.Contains(normalized, "JSON") {
 		if !json.Valid([]byte(value)) {
@@ -146,7 +146,7 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string)
 	return p.executeRawSQL(config, query)
 }
 
-func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
+func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
@@ -198,20 +198,20 @@ func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
 }
 
 // GetColumnScanner returns appropriate scanner for ClickHouse column types
-func (p *ClickHousePlugin) GetColumnScanner(typeName string) interface{} {
+func (p *ClickHousePlugin) GetColumnScanner(typeName string) any {
 	upper := strings.ToUpper(typeName)
 	if strings.HasPrefix(upper, "INT128") || strings.HasPrefix(upper, "INT256") || strings.HasPrefix(upper, "UINT128") || strings.HasPrefix(upper, "UINT256") {
 		return new(big.Int)
 	}
-	// For special ClickHouse types, use interface{} to handle any type
-	var value interface{}
+	// For special ClickHouse types, use any to handle any type
+	var value any
 	return &value
 }
 
 // FormatColumnValue formats the value for display
-func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{}) (string, error) {
-	// Handle the interface{} pointer we created in GetColumnScanner
-	if ptr, ok := value.(*interface{}); ok && ptr != nil {
+func (p *ClickHousePlugin) FormatColumnValue(typeName string, value any) (string, error) {
+	// Handle the any pointer we created in GetColumnScanner
+	if ptr, ok := value.(*any); ok && ptr != nil {
 		actualValue := *ptr
 		if actualValue == nil {
 			return "", nil
@@ -229,14 +229,14 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value interface{})
 		case []string:
 			// Array of strings
 			return fmt.Sprintf("[%s]", strings.Join(v, ", ")), nil
-		case []interface{}:
+		case []any:
 			// Array of mixed types
 			parts := make([]string, len(v))
 			for i, item := range v {
 				parts[i] = fmt.Sprintf("%v", item)
 			}
 			return fmt.Sprintf("[%s]", strings.Join(parts, ", ")), nil
-		case map[string]interface{}:
+		case map[string]any:
 			if b, err := json.Marshal(v); err == nil {
 				return string(b), nil
 			}
