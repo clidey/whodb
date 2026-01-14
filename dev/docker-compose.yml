@@ -328,6 +328,29 @@ services:
     networks:
       - db
     command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "--tls", "--cacert", "/tls/ca.pem", "-a", "password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-ssl-init:
+    profiles: ["ssl"]
+    image: redis:latest
+    depends_on:
+      e2e_redis_ssl:
+        condition: service_healthy
+    volumes:
+      - ./sample-data/redis/init.sh:/init.sh:ro
+      - ./certs/ca/redis/ca.pem:/certs/ca.pem:ro
+    environment:
+      REDIS_HOST: e2e_redis_ssl
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: password
+      REDIS_CACERT: /certs/ca.pem
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - db
 
   # SSL-enabled ClickHouse for SSL E2E tests
   e2e_clickhouse_ssl:
@@ -383,7 +406,9 @@ services:
       - ./certs/server/elasticsearch/server-cert.pem:/usr/share/elasticsearch/config/certs/server-cert.pem:ro
       - ./certs/server/elasticsearch/server-key.pem:/usr/share/elasticsearch/config/certs/server-key.pem:ro
     networks:
-      - db
+      db:
+        aliases:
+          - es-ssl
     healthcheck:
       test: ["CMD-SHELL", "curl -s -k https://localhost:9200/_cluster/health -u elastic:password || exit 1"]
       interval: 30s
@@ -399,7 +424,7 @@ services:
     volumes:
       - ./sample-data/elasticsearch/upload.sh:/upload.sh:ro
       - ./certs/ca/elasticsearch/ca.pem:/certs/ca.pem:ro
-    entrypoint: ["/bin/sh", "-c", "ES_HOST=https://e2e_elasticsearch_ssl:9200 ES_USER=elastic ES_PASS=password ES_CACERT=/certs/ca.pem sh /upload.sh"]
+    entrypoint: ["/bin/sh", "-c", "ES_HOST=https://es-ssl:9200 ES_USER=elastic ES_PASS=password ES_CACERT=/certs/ca.pem sh /upload.sh"]
     networks:
       - db
 

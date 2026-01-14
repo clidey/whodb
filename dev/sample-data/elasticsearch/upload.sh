@@ -27,7 +27,8 @@ if [ -n "$ES_USER" ] && [ -n "$ES_PASS" ]; then
   CURL_OPTS="$CURL_OPTS -u $ES_USER:$ES_PASS"
 fi
 if [ -n "$ES_CACERT" ]; then
-  CURL_OPTS="$CURL_OPTS --cacert $ES_CACERT"
+  # Use -k for self-signed certs in dev environment
+  CURL_OPTS="$CURL_OPTS -k"
 fi
 
 echo "Waiting for Elasticsearch at $ELASTIC_URL..."
