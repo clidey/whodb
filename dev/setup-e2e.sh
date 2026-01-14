@@ -29,9 +29,6 @@ else
     SKIP_CE_DATABASES="false"
 fi
 
-# Check if SSL tests are enabled (set by run-cypress.sh)
-ENABLE_SSL="${WHODB_ENABLE_SSL:-false}"
-
 # Get the script directory (so it works from any location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -40,9 +37,6 @@ echo "📁 Working from project root: $PROJECT_ROOT"
 echo "🔧 Setting up $EDITION E2E environment..."
 if [ "$TARGET_DB" != "all" ]; then
     echo "🎯 Target database: $TARGET_DB"
-fi
-if [ "$ENABLE_SSL" = "true" ]; then
-    echo "🔒 SSL containers: enabled"
 fi
 
 # Map database names to Docker service names and ports
@@ -89,13 +83,9 @@ get_db_wait_time() {
     esac
 }
 
-# Build docker-compose command with optional SSL profile
+# Build docker-compose command (always includes SSL profile)
 docker_compose_cmd() {
-    local cmd="docker-compose -f docker-compose.yml"
-    if [ "$ENABLE_SSL" = "true" ]; then
-        cmd="$cmd --profile ssl"
-    fi
-    echo "$cmd"
+    echo "docker-compose -f docker-compose.yml --profile ssl"
 }
 
 
@@ -283,26 +273,24 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
 
         ALL_PIDS="$PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES"
 
-        # SSL container wait_for_port calls (only when SSL is enabled)
-        if [ "$ENABLE_SSL" = "true" ]; then
-            echo "🔒 Starting SSL container health checks..."
-            wait_for_port "PostgreSQL-SSL" 5433 90 &
-            PID_PG_SSL=$!
-            wait_for_port "MySQL-SSL" 3309 90 &
-            PID_MYSQL_SSL=$!
-            wait_for_port "MariaDB-SSL" 3310 90 &
-            PID_MARIA_SSL=$!
-            wait_for_port "MongoDB-SSL" 27018 30 &
-            PID_MONGO_SSL=$!
-            wait_for_port "Redis-SSL" 6380 30 &
-            PID_REDIS_SSL=$!
-            wait_for_port "ClickHouse-SSL" 9440 30 &
-            PID_CH_SSL=$!
-            wait_for_port "ElasticSearch-SSL" 9201 90 &
-            PID_ES_SSL=$!
+        # SSL container wait_for_port calls
+        echo "🔒 Starting SSL container health checks..."
+        wait_for_port "PostgreSQL-SSL" 5433 90 &
+        PID_PG_SSL=$!
+        wait_for_port "MySQL-SSL" 3309 90 &
+        PID_MYSQL_SSL=$!
+        wait_for_port "MariaDB-SSL" 3310 90 &
+        PID_MARIA_SSL=$!
+        wait_for_port "MongoDB-SSL" 27018 30 &
+        PID_MONGO_SSL=$!
+        wait_for_port "Redis-SSL" 6380 30 &
+        PID_REDIS_SSL=$!
+        wait_for_port "ClickHouse-SSL" 9440 30 &
+        PID_CH_SSL=$!
+        wait_for_port "ElasticSearch-SSL" 9201 90 &
+        PID_ES_SSL=$!
 
-            ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
-        fi
+        ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
 
         # Wait for all background processes
         echo "⏳ Waiting for all services to be ready in parallel..."

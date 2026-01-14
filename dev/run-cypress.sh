@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-# Sequential Cypress test runner for WhoDB
-# Runs tests for multiple databases sequentially with a single backend+frontend
+# Cypress test runner for WhoDB
+# Runs tests with a single backend+frontend
 #
 # Usage:
 #   ./run-cypress.sh [headless] [database] [spec]
@@ -37,10 +37,11 @@
 #
 # Examples:
 #   ./run-cypress.sh true postgres data-types    # Headless, postgres only, data-types spec
+#   ./run-cypress.sh false all                   # GUI mode, all databases in single session
 #
 # Architecture:
-#   Single shared stack for all database tests:
-#   - backend:8080 ← frontend:3000 ← cypress (sequential per database)
+#   - Headless mode: Loops through databases sequentially for better isolation/logging
+#   - GUI mode: Single Cypress session, forEachDatabase handles iteration internally
 
 set -e
 
@@ -56,20 +57,6 @@ SPEC_FILE="${3:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-
-# Detect if SSL tests are being run
-# SSL containers should start if:
-# 1. Running all tests (no spec filter)
-# 2. Running ssl-modes.cy.js or ssl-config.cy.js
-ENABLE_SSL="false"
-if [ -z "$SPEC_FILE" ]; then
-    # Running all tests - include SSL
-    ENABLE_SSL="true"
-elif [[ "$SPEC_FILE" == *"ssl"* ]]; then
-    # Running SSL-related spec file
-    ENABLE_SSL="true"
-fi
-export WHODB_ENABLE_SSL="$ENABLE_SSL"
 
 # Default CE database configurations (can be overridden via env vars)
 DEFAULT_DATABASES="postgres mysql mysql8 mariadb sqlite mongodb redis elasticsearch clickhouse"
@@ -118,11 +105,10 @@ get_cypress_dir() {
     echo "$PROJECT_ROOT/frontend"
 }
 
-echo "🚀 Running Cypress tests sequentially ($EDITION_LABEL)"
+echo "🚀 Running Cypress tests ($EDITION_LABEL)"
 echo "   Headless: $HEADLESS"
 echo "   Target DB: $TARGET_DB"
 echo "   Log Level: $WHODB_LOG_LEVEL"
-echo "   SSL Tests: $ENABLE_SSL"
 if [ -n "$SPEC_FILE" ]; then
     echo "   Spec: $SPEC_FILE"
 fi
@@ -197,34 +183,33 @@ if [ "$EXTRA_WAIT" = "true" ]; then
     sleep 2
 fi
 
-echo "📋 Running ${#DATABASES[@]} database tests sequentially..."
-
 # Track results
 FAILED_DBS=()
 
-# Run tests for each database sequentially
-for db in "${DATABASES[@]}"; do
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🧪 Testing: $db ($(get_category "$db"))"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-    # Determine cypress directory (use override if set, otherwise default)
-    CYPRESS_DIR="$(get_cypress_dir "$db")"
-
-    # Build spec pattern
-    if [ -n "$SPEC_FILE" ]; then
-        if [[ "$SPEC_FILE" == *.cy.* ]]; then
-            SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE"
-        else
-            SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE.cy.js"
-        fi
+# Build spec pattern
+if [ -n "$SPEC_FILE" ]; then
+    if [[ "$SPEC_FILE" == *.cy.* ]]; then
+        SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE"
     else
-        SPEC_PATTERN="cypress/e2e/features/**/*.cy.js"
+        SPEC_PATTERN="cypress/e2e/features/$SPEC_FILE.cy.js"
     fi
+else
+    SPEC_PATTERN="cypress/e2e/features/**/*.cy.js"
+fi
 
-    # Run Cypress test
-    if [ "$HEADLESS" = "true" ]; then
+if [ "$HEADLESS" = "true" ]; then
+    # Headless mode: Loop through databases for better isolation and per-database logs
+    echo "📋 Running ${#DATABASES[@]} database tests sequentially..."
+
+    for db in "${DATABASES[@]}"; do
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🧪 Testing: $db ($(get_category "$db"))"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+        # Determine cypress directory (use override if set, otherwise default)
+        CYPRESS_DIR="$(get_cypress_dir "$db")"
+
         if [ "$CYPRESS_DIR" = "$PROJECT_ROOT/frontend" ]; then
             # Default dir - use spec pattern
             (
@@ -276,25 +261,37 @@ for db in "${DATABASES[@]}"; do
                 ) && RESULT=0 || RESULT=$?
             fi
         fi
-    else
-        (
-            cd "$CYPRESS_DIR"
-            CYPRESS_database="$db" \
-            CYPRESS_category="$(get_category "$db")" \
-            NODE_ENV=test pnpx cypress open \
-                --e2e \
-                --browser electron
-            exit $?
-        ) && RESULT=0 || RESULT=$?
+
+        if [ $RESULT -eq 0 ]; then
+            echo "✅ $db passed"
+        else
+            echo "❌ $db failed"
+            FAILED_DBS+=("$db")
+        fi
+    done
+else
+    # GUI mode: Single Cypress session, forEachDatabase handles iteration internally
+    echo "📋 Opening Cypress GUI (forEachDatabase handles database iteration)..."
+
+    # Determine cypress directory (use first database's dir, or default)
+    CYPRESS_DIR="$(get_cypress_dir "${DATABASES[0]}")"
+
+    # Set database filter if specific database requested
+    ENV_VARS=""
+    if [ "$TARGET_DB" != "all" ]; then
+        ENV_VARS="CYPRESS_database=$TARGET_DB CYPRESS_category=$(get_category "$TARGET_DB")"
     fi
 
-    if [ $RESULT -eq 0 ]; then
-        echo "✅ $db passed"
-    else
-        echo "❌ $db failed"
-        FAILED_DBS+=("$db")
+    (
+        cd "$CYPRESS_DIR"
+        env $ENV_VARS NODE_ENV=test pnpx cypress open --e2e --browser electron
+        exit $?
+    ) && RESULT=0 || RESULT=$?
+
+    if [ $RESULT -ne 0 ]; then
+        FAILED_DBS+=("gui-session")
     fi
-done
+fi
 
 # Cleanup
 echo ""
