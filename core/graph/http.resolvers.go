@@ -317,13 +317,8 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Create dynamic BAML client based on external model config
-	var callOpts []baml_client.CallOptionFunc
-	if config.ExternalModel != nil && config.ExternalModel.Model != "" {
-		if registry := common.CreateDynamicBAMLClient(config.ExternalModel); registry != nil {
-			callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
-		}
-	}
+	// Create dynamic BAML client and log request
+	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
 
 	// Build table context (same as non-streaming version)
 	rows, err := plugin.GetStorageUnits(config, req.Schema)

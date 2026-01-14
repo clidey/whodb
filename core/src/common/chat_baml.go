@@ -47,23 +47,8 @@ func SQLChatBAML(
 		Previous_conversation: previousConversation,
 	}
 
-	// Create dynamic BAML client based on ExternalModel config
-	var callOpts []baml_client.CallOptionFunc
-	if config.ExternalModel != nil && config.ExternalModel.Model != "" {
-		if registry := CreateDynamicBAMLClient(config.ExternalModel); registry != nil {
-			callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
-		}
-
-		// Log AI model configuration
-		fields := log.Fields{
-			"provider": config.ExternalModel.Type,
-			"model":    config.ExternalModel.Model,
-		}
-		if config.ExternalModel.Endpoint != "" {
-			fields["endpoint"] = config.ExternalModel.Endpoint
-		}
-		log.LogFields(fields).Info("AI chat request")
-	}
+	// Create dynamic BAML client and log request
+	callOpts := SetupAIClientWithLogging(config.ExternalModel)
 
 	// Call BAML function to generate SQL
 	responses, err := baml_client.GenerateSQLQuery(ctx, dbContext, userQuery, callOpts...)
@@ -132,6 +117,31 @@ func convertOperationType(operation types.OperationType) string {
 	default:
 		return "sql"
 	}
+}
+
+// SetupAIClientWithLogging creates the BAML client options and logs the AI request configuration.
+// This should be used by all AI request paths to ensure consistent logging.
+func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []baml_client.CallOptionFunc {
+	var callOpts []baml_client.CallOptionFunc
+	if externalModel == nil || externalModel.Model == "" {
+		return callOpts
+	}
+
+	if registry := CreateDynamicBAMLClient(externalModel); registry != nil {
+		callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
+	}
+
+	// Log AI model configuration
+	fields := log.Fields{
+		"provider": externalModel.Type,
+		"model":    externalModel.Model,
+	}
+	if externalModel.Endpoint != "" {
+		fields["endpoint"] = externalModel.Endpoint
+	}
+	log.LogFields(fields).Info("AI chat request")
+
+	return callOpts
 }
 
 // CreateDynamicBAMLClient creates a BAML ClientRegistry with a dynamically configured client
