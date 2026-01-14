@@ -17,23 +17,17 @@
 import {VALID_FEATURES, validateAllFixtures} from './helpers/fixture-validator';
 
 // CE Database configurations - loaded from fixtures
+// SSL config is now included in each main fixture under the "ssl" key
 const ceDatabaseConfigs = {
     postgres: require('../fixtures/databases/postgres.json'),
-    'postgres-ssl': require('../fixtures/databases/postgres-ssl.json'),
     mysql: require('../fixtures/databases/mysql.json'),
-    'mysql-ssl': require('../fixtures/databases/mysql-ssl.json'),
     mysql8: require('../fixtures/databases/mysql8.json'),
     mariadb: require('../fixtures/databases/mariadb.json'),
-    'mariadb-ssl': require('../fixtures/databases/mariadb-ssl.json'),
     sqlite: require('../fixtures/databases/sqlite.json'),
     mongodb: require('../fixtures/databases/mongodb.json'),
-    'mongodb-ssl': require('../fixtures/databases/mongodb-ssl.json'),
     redis: require('../fixtures/databases/redis.json'),
-    'redis-ssl': require('../fixtures/databases/redis-ssl.json'),
     elasticsearch: require('../fixtures/databases/elasticsearch.json'),
-    'elasticsearch-ssl': require('../fixtures/databases/elasticsearch-ssl.json'),
     clickhouse: require('../fixtures/databases/clickhouse.json'),
-    'clickhouse-ssl': require('../fixtures/databases/clickhouse-ssl.json'),
 };
 
 // Validate CE fixtures on module load
