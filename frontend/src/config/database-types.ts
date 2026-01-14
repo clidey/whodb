@@ -217,7 +217,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         id: "ElasticSearch",
         label: "ElasticSearch",
         icon: Icons.Logos.ElasticSearch,
-        extra: {"Port": "9200", "SSL Mode": "disable"},
+        extra: {"Port": "9200"},
         fields: {
             hostname: true,
             username: true,
@@ -235,7 +235,6 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         icon: Icons.Logos.ClickHouse,
         extra: {
             "Port": "9000",
-            "SSL mode": "disable",
             "HTTP Protocol": "disable",
             "Readonly": "disable",
             "Debug": "disable"
