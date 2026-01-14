@@ -5,7 +5,7 @@ en:
   placeholder: Ask AI...
   addExternalModel: Add External Model
   modelType: Model Type
-  selectModelType: Select Model Type
+  selectProvider: Select Provider
   name: Name (Optional)
   token: Token
   cancel: Cancel

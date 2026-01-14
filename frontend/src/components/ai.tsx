@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -425,7 +425,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         const item = modelTypesDropdownItems.find(i => i.id === id);
                         if (item) handleAIProviderChange(item.id);
                     }}
-                    placeholder={t('selectModelType')}
+                    placeholder={t('selectProvider')}
                     side="right"
                     align="start"
                     extraOptions={
@@ -446,7 +446,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     }}
                 />
                 <SearchSelect
-                    disabled={modelType == null}
+                    disabled={modelType == null || getAIModelsLoading}
                     options={modelDropdownItems.map(item => ({
                         value: item.id,
                         label: item.label,
