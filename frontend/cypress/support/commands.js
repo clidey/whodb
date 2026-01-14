@@ -129,18 +129,18 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     }
 
-    // Only interact with username field if explicitly provided
+    // Only interact with username field if explicitly provided (not undefined)
     if (username !== undefined) {
         cy.get('[data-testid="username"]').clear();
-        if (username !== null && username !== '') {
+        if (username != null && username !== '') {
             cy.get('[data-testid="username"]').type(username);
         }
     }
 
-    // Only interact with password field if explicitly provided
+    // Only interact with password field if explicitly provided (not undefined)
     if (password !== undefined) {
         cy.get('[data-testid="password"]').clear();
-        if (password !== null && password !== '') {
+        if (password != null && password !== '') {
             cy.get('[data-testid="password"]').type(password, {log: false});
         }
     }
@@ -178,7 +178,7 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         // Handle regular advanced fields (Port, etc.)
         for (const [key, value] of Object.entries(advancedFields)) {
             cy.get(`[data-testid="${key}-input"]`).clear();
-            if (value !== '') {
+            if (value != null && value !== '') {
                 cy.get(`[data-testid="${key}-input"]`).type(value);
             }
         }

@@ -120,16 +120,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
 				token = dbCookie.Value
 				onceCookie.Do(func() { log.Logger.Info("Auth: using cookie-based auth") })
+			} else {
+				log.Logger.Debugf("[Auth] Cookie not found: %v", err)
 			}
 		}
 
 		if token == "" {
+			log.Logger.Debug("[Auth] No token found (no cookie or header), returning 401")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		decodedValue, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
+			log.Logger.Debugf("[Auth] Failed to decode base64 token: %v (token len=%d)", err, len(token))
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -137,6 +141,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		credentials := &engine.Credentials{}
 		err = json.Unmarshal(decodedValue, credentials)
 		if err != nil {
+			log.Logger.Debugf("[Auth] Failed to unmarshal credentials JSON: %v", err)
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}

@@ -685,12 +685,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         const redisCompatible = [DatabaseType.Redis, "ElastiCache"];
         const mongoCompatible = [DatabaseType.MongoDb, "DocumentDB"];
 
-        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id)) {
+        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id) || (databaseType.id === DatabaseType.ElasticSearch)) {
             return hostName.length > 0;
         }
-        if (databaseType.id === DatabaseType.ElasticSearch) {
-            return hostName.length > 0 && username.length > 0 && password.length > 0;
-        }
+
         return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
     }, [databaseType.id, hostName, username, password, database]);
 

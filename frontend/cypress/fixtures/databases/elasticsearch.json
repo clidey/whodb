@@ -117,6 +117,8 @@
   },
   "ssl": {
     "port": 9201,
+    "user": "elastic",
+    "password": "password",
     "caCertPath": "/app/certs/ca/elasticsearch/ca.pem",
     "modes": [
       { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No TLS on TLS-only endpoint" },

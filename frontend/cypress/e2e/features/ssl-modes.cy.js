@@ -56,6 +56,10 @@ describe('SSL Modes', () => {
         const ssl = db.ssl;
         const conn = db.connection;
 
+        // Use SSL-specific credentials if provided, otherwise fall back to connection credentials
+        const sslUser = ssl.user ?? conn.user;
+        const sslPassword = ssl.password ?? conn.password;
+
         db.ssl.modes
             .filter(({ shouldSucceed }) => shouldSucceed)
             .forEach(({ mode, needsCert, description }) => {
@@ -66,8 +70,8 @@ describe('SSL Modes', () => {
                             cy.login(
                                 db.type,
                                 conn.host,
-                                conn.user,
-                                conn.password,
+                                sslUser,
+                                sslPassword,
                                 conn.database,
                                 {
                                     Port: String(ssl.port),
@@ -80,8 +84,8 @@ describe('SSL Modes', () => {
                         cy.login(
                             db.type,
                             conn.host,
-                            conn.user,
-                            conn.password,
+                            sslUser,
+                            sslPassword,
                             conn.database,
                             {
                                 Port: String(ssl.port),

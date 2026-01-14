@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,10 +332,6 @@ export const StorageUnitPage: FC = () => {
             return newF;
         })
     }, [fields.length]);
-
-    useEffect(() => {
-        refetch();
-    }, [current, refetch]);
 
     useEffect(() => {
         if (!data?.StorageUnit || data.StorageUnit.length === 0) return;

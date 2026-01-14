@@ -17,6 +17,8 @@
 package elasticsearch
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"net/http"
@@ -31,17 +33,20 @@ import (
 )
 
 func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
+	log.Logger.Debug("[ES DB] Creating Elasticsearch client")
 	var addresses []string
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "9200"))
 	if err != nil {
 		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Invalid port number for ElasticSearch connection")
 		return nil, err
 	}
+	log.Logger.Debugf("[ES DB] Port: %d", port)
 
 	hostName := url.QueryEscape(config.Credentials.Hostname)
 
 	// Configure SSL/TLS
 	sslMode := "disabled"
+	log.Logger.Debugf("[ES DB] Parsing SSL config for %s", hostName)
 	sslConfig := ssl.ParseSSLConfig(engine.DatabaseType_ElasticSearch, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 
 	// Determine scheme based on SSL mode
@@ -49,6 +54,9 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	if sslConfig != nil && sslConfig.IsEnabled() {
 		scheme = "https"
 		sslMode = string(sslConfig.Mode)
+		log.Logger.Debugf("[ES DB] SSL enabled, mode=%s, scheme=%s", sslMode, scheme)
+	} else {
+		log.Logger.Debug("[ES DB] SSL disabled or not configured")
 	}
 
 	addressUrl := url.URL{
@@ -59,6 +67,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	addresses = []string{
 		addressUrl.String(),
 	}
+	log.Logger.Debugf("[ES DB] Connecting to: %s", addresses[0])
 
 	cfg := elasticsearch.Config{
 		Addresses: addresses,
@@ -68,23 +77,53 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 
 	// Configure TLS if enabled
 	if sslConfig != nil && sslConfig.IsEnabled() {
-		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
-		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
-				"hostname": config.Credentials.Hostname,
-				"sslMode":  sslConfig.Mode,
-			}).Error("Failed to build TLS configuration for Elasticsearch")
-			return nil, err
-		}
-
-		if tlsConfig != nil {
-			// we need to use a custom Transport
+		// For insecure mode, skip certificate verification
+		if sslConfig.Mode == ssl.SSLModeInsecure {
+			log.Logger.Debug("[ES DB] Insecure mode: skipping certificate verification")
 			cfg.Transport = &http.Transport{
-				TLSClientConfig: tlsConfig,
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			}
+		} else {
+			// For enabled mode, use the native CACert option if CA is provided
+			caCertPEM, err := sslConfig.CACert.Load()
+			if err != nil {
+				log.Logger.WithError(err).Error("[ES DB] Failed to load CA certificate")
+				return nil, err
+			}
+
+			if caCertPEM != nil {
+				log.Logger.Debugf("[ES DB] Using CA certificate (%d bytes)", len(caCertPEM))
+				cfg.CACert = caCertPEM
+			}
+
+			// Handle client certificates for mutual TLS
+			if !sslConfig.ClientCert.IsEmpty() && !sslConfig.ClientKey.IsEmpty() {
+				log.Logger.Debug("[ES DB] Loading client certificate for mutual TLS")
+				tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
+				if err != nil {
+					log.Logger.WithError(err).Error("[ES DB] Failed to build TLS config for client certs")
+					return nil, err
+				}
+				if tlsConfig != nil && len(tlsConfig.Certificates) > 0 {
+					// If we have client certs, we need custom transport
+					// But also include CA verification
+					if caCertPEM != nil {
+						rootCAs := x509.NewCertPool()
+						rootCAs.AppendCertsFromPEM(caCertPEM)
+						tlsConfig.RootCAs = rootCAs
+					}
+					cfg.Transport = &http.Transport{
+						TLSClientConfig: tlsConfig,
+					}
+					cfg.CACert = nil // Clear this since we're using transport
+				}
 			}
 		}
 	}
 
+	log.Logger.Debug("[ES DB] Creating Elasticsearch client instance")
 	client, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
@@ -95,15 +134,27 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 		return nil, err
 	}
 
+	log.Logger.Debug("[ES DB] Pinging Elasticsearch server")
 	res, err := client.Info()
 	if err != nil || res.IsError() {
+		errMsg := "no error"
+		if err != nil {
+			errMsg = err.Error()
+		}
+		resStatus := "N/A"
+		if res != nil {
+			resStatus = res.Status()
+		}
 		log.Logger.WithError(err).WithFields(map[string]interface{}{
-			"hostname": config.Credentials.Hostname,
-			"port":     port,
-			"sslMode":  sslMode,
+			"hostname":  config.Credentials.Hostname,
+			"port":      port,
+			"sslMode":   sslMode,
+			"error":     errMsg,
+			"resStatus": resStatus,
 		}).Error("Failed to ping ElasticSearch server")
 		return nil, fmt.Errorf("error pinging Elasticsearch: %v", err)
 	}
 
+	log.Logger.Debugf("[ES DB] Successfully connected to Elasticsearch at %s", addresses[0])
 	return client, nil
 }
