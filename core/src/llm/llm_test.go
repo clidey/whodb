@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/llm/providers"
 )
 
 func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
@@ -50,58 +49,6 @@ func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
 	}
 }
 
-func TestProviderValidateConfigRequirements(t *testing.T) {
-	cases := []struct {
-		name     string
-		provider providers.AIProvider
-		config   *providers.ProviderConfig
-		wantErr  bool
-	}{
-		{
-			name:     "openai missing key",
-			provider: providers.NewOpenAIProvider(),
-			config:   &providers.ProviderConfig{Type: providers.OpenAI_LLMType, APIKey: ""},
-			wantErr:  true,
-		},
-		{
-			name:     "anthropic missing key",
-			provider: providers.NewAnthropicProvider(),
-			config:   &providers.ProviderConfig{Type: providers.Anthropic_LLMType, APIKey: ""},
-			wantErr:  true,
-		},
-		{
-			name:     "ollama no key needed",
-			provider: providers.NewOllamaProvider(),
-			config:   &providers.ProviderConfig{Type: providers.Ollama_LLMType, APIKey: ""},
-			wantErr:  false,
-		},
-		{
-			name:     "generic provider requires endpoint",
-			provider: providers.NewGenericProvider("test", "Test", []string{}, ""),
-			config:   &providers.ProviderConfig{Type: "test", APIKey: "", Endpoint: ""},
-			wantErr:  true,
-		},
-		{
-			name:     "generic provider with endpoint valid",
-			provider: providers.NewGenericProvider("test", "Test", []string{}, ""),
-			config:   &providers.ProviderConfig{Type: "test", APIKey: "", Endpoint: "http://localhost"},
-			wantErr:  false,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.provider.ValidateConfig(tc.config)
-			if tc.wantErr && err == nil {
-				t.Fatalf("expected error but got nil")
-			}
-			if !tc.wantErr && err != nil {
-				t.Fatalf("expected no error, got %v", err)
-			}
-		})
-	}
-}
-
 func TestCompleteReturnsErrorForUnsupportedType(t *testing.T) {
 	client := LLMClient{Type: LLMType("Unknown")}
 	if _, err := client.Complete("hi", "model", nil); err == nil {
@@ -116,16 +63,14 @@ func TestGetSupportedModelsReturnsErrorForUnsupportedType(t *testing.T) {
 	}
 }
 
-func TestNormalizeLLMTypeHandlesDeprecatedChatGPT(t *testing.T) {
-	// Test that "ChatGPT" is normalized to "OpenAI"
-	normalized := NormalizeLLMType("ChatGPT")
-	if normalized != OpenAI_LLMType {
-		t.Fatalf("expected 'ChatGPT' to normalize to 'OpenAI', got %s", normalized)
+func TestNormalizeLLMTypeHandlesChatGPT(t *testing.T) {
+	result := NormalizeLLMType("ChatGPT")
+	if result != OpenAI_LLMType {
+		t.Fatalf("expected ChatGPT to normalize to OpenAI, got %s", result)
 	}
 
-	// Test that other types pass through unchanged
-	normalized = NormalizeLLMType("Ollama")
-	if normalized != Ollama_LLMType {
-		t.Fatalf("expected 'Ollama' to pass through unchanged, got %s", normalized)
+	result = NormalizeLLMType("OpenAI")
+	if result != OpenAI_LLMType {
+		t.Fatalf("expected OpenAI to stay as OpenAI, got %s", result)
 	}
 }

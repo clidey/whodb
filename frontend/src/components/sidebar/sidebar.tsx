@@ -68,6 +68,7 @@ import {
 } from "../../utils/database-features";
 import {isEEFeatureEnabled} from "../../utils/ee-loader";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {isAwsHostname} from "../../utils/cloud-connection-prefill";
 import {
     ArrowLeftStartOnRectangleIcon,
     ChevronDownIcon,
@@ -99,6 +100,7 @@ export const Sidebar: FC = () => {
     const { t } = useTranslation('components/sidebar');
     const schema = useAppSelector(state => state.database.schema);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
+    const cloudProvidersEnabled = useAppSelector(state => state.settings.cloudProvidersEnabled);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
@@ -135,20 +137,22 @@ export const Sidebar: FC = () => {
     const { toggleSidebar, open } = useSidebar();
     const isInitialMount = useRef(true);
 
-    // Profile select logic
-    const profileOptions = useMemo(() => profiles.map(profile => ({
-        value: profile.Id,
-        label: getProfileLabel(profile),
-        icon: (
-            <DatabaseIconWithBadge
-                icon={getProfileIcon(profile)}
-                showCloudBadge={isAwsConnection(profile.Id)}
-                sslStatus={profile.Id === current?.Id ? sslStatus : undefined}
-                size="sm"
-            />
-        ),
-        profile,
-    })), [profiles, current?.Id, sslStatus]);
+    // Profile select logic - filter out AWS profiles when cloud providers disabled
+    const profileOptions = useMemo(() => profiles
+        .filter(profile => cloudProvidersEnabled || !isAwsHostname(profile.Hostname))
+        .map(profile => ({
+            value: profile.Id,
+            label: getProfileLabel(profile),
+            icon: (
+                <DatabaseIconWithBadge
+                    icon={getProfileIcon(profile)}
+                    showCloudBadge={isAwsConnection(profile.Id)}
+                    sslStatus={profile.Id === current?.Id ? sslStatus : undefined}
+                    size="sm"
+                />
+            ),
+            profile,
+        })), [profiles, current?.Id, sslStatus]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;

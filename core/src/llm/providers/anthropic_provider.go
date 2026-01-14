@@ -71,19 +71,45 @@ func (p *AnthropicProvider) ValidateConfig(config *ProviderConfig) error {
 	return nil
 }
 
-// GetSupportedModels returns the list of supported Claude models.
-// Anthropic doesn't provide a models API, so we return a hardcoded list.
+// GetSupportedModels fetches the list of available models from Anthropic.
 func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string, error) {
-	models := []string{
-		"claude-opus-4-20250514",
-		"claude-sonnet-4-20250514",
-		"claude-3-7-sonnet-20250219",
-		"claude-3-5-sonnet-20241022",
-		"claude-3-5-sonnet-20240620",
-		"claude-3-5-opus-20241022",
-		"claude-3-5-haiku-20241022",
-		"claude-3-opus-20240229",
-		"claude-3-haiku-20240307",
+	if err := p.ValidateConfig(config); err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("%s/models", config.Endpoint)
+	headers := map[string]string{
+		"x-api-key":         config.APIKey,
+		"anthropic-version": "2023-06-01",
+		"Content-Type":      "application/json",
+	}
+
+	resp, err := sendHTTPRequest("GET", url, nil, headers)
+	if err != nil {
+		log.Logger.WithError(err).Errorf("Failed to fetch models from Anthropic at %s", url)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Logger.Errorf("Anthropic models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("failed to fetch models: %s", string(body))
+	}
+
+	var modelsResp struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode Anthropic models response")
+		return nil, err
+	}
+
+	models := make([]string, len(modelsResp.Data))
+	for i, model := range modelsResp.Data {
+		models[i] = model.ID
 	}
 	return models, nil
 }
@@ -97,7 +123,7 @@ func (p *AnthropicProvider) Complete(config *ProviderConfig, prompt string, mode
 	// Determine max_tokens based on model
 	maxTokens := p.getMaxTokensForModel(string(model))
 
-	requestBody, err := json.Marshal(map[string]interface{}{
+	requestBody, err := json.Marshal(map[string]any{
 		"model":      string(model),
 		"max_tokens": maxTokens,
 		"messages": []map[string]string{
@@ -207,12 +233,12 @@ func (p *AnthropicProvider) GetBAMLClientType() string {
 }
 
 // CreateBAMLClientOptions creates BAML client options for Anthropic.
-func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]interface{}, error) {
+func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"model":   model,
 		"api_key": config.APIKey,
 	}, nil

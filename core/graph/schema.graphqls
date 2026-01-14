@@ -133,9 +133,10 @@ type LoginProfile {
   Alias: String
   Id: String!
   Type: DatabaseType!
+  Hostname: String
   Database: String
   IsEnvironmentDefined: Boolean!
-    Source: String!
+  Source: String!
 }
 
 type StatusResponse {

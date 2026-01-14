@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ var (
 	xmlTypes      = common.XMLTypes
 )
 
-func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error) {
-	data := make(map[string]interface{}, len(values))
+func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[string]any, error) {
+	data := make(map[string]any, len(values))
 	for _, value := range values {
 		// Check if this is a NULL value
 		if value.Extra != nil && value.Extra["IsNull"] == "true" {
@@ -153,7 +153,7 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 
 // todo: test this thouroughly for each DB to ensure that the casting is correct and there's no data loss
 // todo: how do we handle if user doesn't pass in a value, or it's null
-func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, error) {
+func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	// handle nullable type. clickhouse specific
 	isNullable := false
 	if strings.HasPrefix(columnType, "Nullable(") {
@@ -200,7 +200,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (interface{}, 
 	if strings.HasPrefix(baseType, "ARRAY") {
 		if !strings.Contains(columnType, "(") {
 			// Without element type, treat as a single-element array of the original value to avoid recursion
-			return []interface{}{value}, nil
+			return []any{value}, nil
 		}
 		return p.convertArrayValue(value, columnType)
 	}
@@ -397,7 +397,7 @@ func (p *GormPlugin) parseDate(value string) (time.Time, error) {
 	return c.StartOfDay().StdTime(), nil
 }
 
-func (p *GormPlugin) convertArrayValue(value string, columnType string) (interface{}, error) {
+func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, error) {
 	// Extract the element type from Array(Type)
 	elementType := strings.TrimPrefix(columnType, "Array(")
 	elementType = strings.TrimSuffix(elementType, ")")
@@ -405,11 +405,11 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (interfa
 	// Remove brackets and split by comma
 	value = strings.Trim(value, "[]")
 	if value == "" {
-		return []interface{}{}, nil
+		return []any{}, nil
 	}
 
 	elements := strings.Split(value, ",")
-	result := make([]interface{}, 0, len(elements))
+	result := make([]any, 0, len(elements))
 
 	for _, element := range elements {
 		element = strings.TrimSpace(element)

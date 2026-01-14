@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,19 +77,12 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
         if (isDesktopApp()) {
           const arrayBuffer = await blob.arrayBuffer();
           const data = new Uint8Array(arrayBuffer);
-          console.log('Export: Attempting to save file', {
-            filename,
-            dataSize: data.length,
-            format,
-            isDesktop: isDesktopApp()
-          });
           const savedPath = await desktopService.saveBinaryFile(data, filename);
           if (!savedPath) {
             console.error('Export: Save dialog was cancelled or failed');
             // Don't throw error if user just cancelled the dialog
             return;
           }
-          console.log('Export: File saved successfully to', savedPath);
         } else {
           // Browser download fallback
           const downloadUrl = window.URL.createObjectURL(blob);

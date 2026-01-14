@@ -17,6 +17,8 @@
 package main
 
 import (
+	_ "github.com/clidey/whodb/core/src/bamlconfig" // Must be first - sets BAML_LOG before native library loads
+
 	"context"
 	"fmt"
 	"net/http"

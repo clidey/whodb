@@ -16,6 +16,19 @@
 
 import { LocalDiscoveredConnection } from "@/store/providers";
 
+/** Matches AWS managed database hostnames (RDS, ElastiCache, DocumentDB) */
+const AWS_HOSTNAME_PATTERNS = [
+    /\.rds\.amazonaws\.com$/i,
+    /\.cache\.amazonaws\.com$/i,
+    /\.docdb\.amazonaws\.com$/i,
+];
+
+/** Checks if a hostname belongs to an AWS managed database service */
+export function isAwsHostname(hostname: string | undefined | null): boolean {
+    if (!hostname) return false;
+    return AWS_HOSTNAME_PATTERNS.some(pattern => pattern.test(hostname));
+}
+
 /**
  * Data structure for prefilling the login form from a discovered cloud connection.
  */

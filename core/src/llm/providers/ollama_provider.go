@@ -112,7 +112,7 @@ func (p *OllamaProvider) Complete(config *ProviderConfig, prompt string, model L
 		return nil, err
 	}
 
-	requestBody, err := json.Marshal(map[string]interface{}{
+	requestBody, err := json.Marshal(map[string]any{
 		"model":  string(model),
 		"prompt": prompt,
 	})
@@ -188,7 +188,7 @@ func (p *OllamaProvider) GetBAMLClientType() string {
 }
 
 // CreateBAMLClientOptions creates BAML client options for Ollama.
-func (p *OllamaProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]interface{}, error) {
+func (p *OllamaProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (p *OllamaProvider) CreateBAMLClientOptions(config *ProviderConfig, model s
 	// Ollama expects base_url without /api suffix for OpenAI-compatible endpoint
 	baseURL := strings.TrimSuffix(config.Endpoint, "/api") + "/v1"
 
-	return map[string]interface{}{
+	return map[string]any{
 		"base_url":           baseURL,
 		"model":              model,
 		"default_role":       "user",

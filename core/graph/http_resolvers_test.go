@@ -29,7 +29,7 @@ import (
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -94,11 +94,20 @@ func TestRESTHandlersHandleErrors(t *testing.T) {
 }
 
 func TestRESTHandlersAIModelsAndChat(t *testing.T) {
-	// Register a generic provider for testing
-	llm.RegisterGenericProviders("TestProvider", "test-provider", []string{"mixtral"}, "openai-generic", "http://test.local", "token")
+	originalCustom := env.CustomModels
+	originalCompatKey := env.OpenAICompatibleAPIKey
+	originalCompatEndpoint := env.OpenAICompatibleEndpoint
+	env.CustomModels = []string{"mixtral"}
+	env.OpenAICompatibleAPIKey = "token"
+	env.OpenAICompatibleEndpoint = "http://compat.local"
+	t.Cleanup(func() {
+		env.CustomModels = originalCustom
+		env.OpenAICompatibleAPIKey = originalCompatKey
+		env.OpenAICompatibleEndpoint = originalCompatEndpoint
+	})
 
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.ChatFunc = func(*engine.PluginConfig, string, string, string, string) ([]*engine.ChatMessage, error) {
+	mock.ChatFunc = func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error) {
 		return nil, errors.New("chat error")
 	}
 	mock.GetDatabasesFunc = func(*engine.PluginConfig) ([]string, error) { return []string{"db"}, nil }
@@ -107,13 +116,13 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	router := chi.NewRouter()
 	SetupHTTPServer(router)
 
-	// AI models - use the registered generic provider
-	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=test-provider&token=x", nil)
+	// AI models
+	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=Ollama&token=", nil)
 	modelReq = modelReq.WithContext(context.WithValue(modelReq.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
 	modelRec := httptest.NewRecorder()
 	router.ServeHTTP(modelRec, modelReq)
 	if modelRec.Code != http.StatusOK {
-		t.Fatalf("expected ai-models to return 200, got %d (%s)", modelRec.Code, modelRec.Body.String())
+		t.Fatalf("expected ai-models to return 200, got %d", modelRec.Code)
 	}
 
 	// AI chat

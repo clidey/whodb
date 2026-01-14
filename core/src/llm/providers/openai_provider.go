@@ -122,7 +122,7 @@ func (p *OpenAIProvider) Complete(config *ProviderConfig, prompt string, model L
 		return nil, err
 	}
 
-	requestBody, err := json.Marshal(map[string]interface{}{
+	requestBody, err := json.Marshal(map[string]any{
 		"model":    string(model),
 		"messages": []map[string]string{{"role": "user", "content": prompt}},
 		"stream":   receiverChan != nil,
@@ -234,12 +234,12 @@ func (p *OpenAIProvider) GetBAMLClientType() string {
 }
 
 // CreateBAMLClientOptions creates BAML client options for OpenAI.
-func (p *OpenAIProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]interface{}, error) {
+func (p *OpenAIProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"model":   model,
 		"api_key": config.APIKey,
 	}, nil

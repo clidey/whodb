@@ -20,6 +20,7 @@ import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
+import {isAwsHostname} from '../utils/cloud-connection-prefill';
 
 // Always use a relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -73,14 +74,15 @@ const errorLink = onError(({networkError}) => {
 
 /**
  * Handles automatic login using the current profile.
- *
- * If the profile is a saved profile, use LoginWithProfile mutation.
- * Otherwise, use Login mutation with credentials.
- *
- * @param currentProfile - The current user profile from Redux store
  */
 async function handleAutoLogin(currentProfile: any) {
     try {
+        // Don't auto-login to AWS connections when cloud providers are disabled
+        const cloudProvidersEnabled = reduxStore.getState().settings.cloudProvidersEnabled;
+        if (isAwsHostname(currentProfile.Hostname) && !cloudProvidersEnabled) {
+            return;
+        }
+
         let response, result;
         if (currentProfile.Saved) {
             // Login with profile

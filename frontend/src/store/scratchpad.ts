@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ export const scratchpadSlice = createSlice({
   initialState,
   reducers: {
     initializeScratchpad: (state) => {
-      console.log('initializeScratchpad called, current pages length:', state.pages.length);
       if (state.pages.length === 0) {
         const newId = v4();
         const cellId = v4();
@@ -68,7 +67,6 @@ export const scratchpadSlice = createSlice({
         state.pages = [firstPage];
         state.cells[cellId] = firstCell;
         state.activePageId = newId;
-        console.log('Scratchpad initialized:', { pages: state.pages, cells: state.cells, activePageId: state.activePageId });
       }
     },
     addPage: (state, action: PayloadAction<{ name?: string; initialQuery?: string }>) => {

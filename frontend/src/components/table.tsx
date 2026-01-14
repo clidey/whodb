@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1134,7 +1134,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     >
                         <TrashIcon className="w-4 h-4 text-destructive" />
                         {t('deleteRow')}
-                        <ContextMenuShortcut>Delete</ContextMenuShortcut>
+                        <ContextMenuShortcut>{formatShortcut(["Mod", "Delete"])}</ContextMenuShortcut>
                     </ContextMenuItem>
                 )}
             </ContextMenuContent>

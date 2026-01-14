@@ -93,7 +93,7 @@ func (p *GenericProvider) Complete(config *ProviderConfig, prompt string, model 
 		return nil, err
 	}
 
-	requestBody, err := json.Marshal(map[string]interface{}{
+	requestBody, err := json.Marshal(map[string]any{
 		"model":    string(model),
 		"messages": []map[string]string{{"role": "user", "content": prompt}},
 		"stream":   receiverChan != nil,
@@ -223,12 +223,12 @@ func (p *GenericProvider) GetBAMLClientType() string {
 }
 
 // CreateBAMLClientOptions creates BAML client options for the generic provider.
-func (p *GenericProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]interface{}, error) {
+func (p *GenericProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
 		return nil, err
 	}
 
-	opts := map[string]interface{}{
+	opts := map[string]any{
 		"base_url":           config.Endpoint,
 		"model":              model,
 		"default_role":       "user",

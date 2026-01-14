@@ -60,6 +60,7 @@ import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
 import {AwsConnectionPicker, AwsConnectionPrefillData} from '../../components/aws';
+import {isAwsHostname} from '../../utils/cloud-connection-prefill';
 import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 
 /**
@@ -130,6 +131,11 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const { data: settingsData } = useSettingsConfigQuery();
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
+
+    useEffect(() => {
+        dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
+    }, [cloudProvidersEnabled, dispatch]);
+
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
@@ -441,13 +447,15 @@ export const LoginForm: FC<LoginFormProps> = ({
     const availableProfiles = useMemo(() => {
         return profiles?.Profiles
             .filter(profile => profile.Source !== "builtin")
+            // Filter out AWS-hosted profiles when cloud providers are disabled
+            .filter(profile => cloudProvidersEnabled || !isAwsHostname(profile.Hostname))
             .map(profile => ({
                 value: profile.Id,
                 label: profile.Alias ?? profile.Id,
                 icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
                 rightIcon: sources[profile.Source],
             })) ?? [];
-    }, [profiles?.Profiles]);
+    }, [profiles?.Profiles, cloudProvidersEnabled]);
 
     const sampleProfile = useMemo(() => {
         return profiles?.Profiles.find(p => p.Source === "builtin");
@@ -790,7 +798,6 @@ export const LoginForm: FC<LoginFormProps> = ({
                                     />
                                 </div>
                             ))}
-                            {/* SSL Configuration */}
                             <SSLConfig
                                 databaseType={databaseType.id}
                                 sslModes={databaseType.sslModes}

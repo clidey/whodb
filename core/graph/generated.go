@@ -152,6 +152,7 @@ type ComplexityRoot struct {
 	LoginProfile struct {
 		Alias                func(childComplexity int) int
 		Database             func(childComplexity int) int
+		Hostname             func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		IsEnvironmentDefined func(childComplexity int) int
 		Source               func(childComplexity int) int
@@ -672,6 +673,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginProfile.Database(childComplexity), true
+	case "LoginProfile.Hostname":
+		if e.complexity.LoginProfile.Hostname == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.Hostname(childComplexity), true
 	case "LoginProfile.Id":
 		if e.complexity.LoginProfile.ID == nil {
 			break
@@ -3538,6 +3545,35 @@ func (ec *executionContext) fieldContext_LoginProfile_Type(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _LoginProfile_Hostname(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LoginProfile_Hostname,
+		func(ctx context.Context) (any, error) {
+			return obj.Hostname, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_Hostname(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LoginProfile_Database(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4411,6 +4447,8 @@ func (ec *executionContext) fieldContext_Query_Profiles(_ context.Context, field
 				return ec.fieldContext_LoginProfile_Id(ctx, field)
 			case "Type":
 				return ec.fieldContext_LoginProfile_Type(ctx, field)
+			case "Hostname":
+				return ec.fieldContext_LoginProfile_Hostname(ctx, field)
 			case "Database":
 				return ec.fieldContext_LoginProfile_Database(ctx, field)
 			case "IsEnvironmentDefined":
@@ -8810,6 +8848,8 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "Hostname":
+			out.Values[i] = ec._LoginProfile_Hostname(ctx, field, obj)
 		case "Database":
 			out.Values[i] = ec._LoginProfile_Database(ctx, field, obj)
 		case "IsEnvironmentDefined":

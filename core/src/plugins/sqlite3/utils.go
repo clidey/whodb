@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import (
 type DateTimeString string
 
 // Scan implements sql.Scanner interface to read datetime values as strings
-func (ds *DateTimeString) Scan(value interface{}) error {
+func (ds *DateTimeString) Scan(value any) error {
 	if value == nil {
 		*ds = ""
 		return nil
@@ -58,7 +58,7 @@ func (ds DateTimeString) Value() (driver.Value, error) {
 }
 
 // ConvertStringValue overrides the base GORM implementation to preserve datetime strings
-func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (interface{}, error) {
+func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (any, error) {
 	// For datetime types, preserve the original string value
 	normalizedType := strings.ToUpper(columnType)
 	if normalizedType == "DATE" || normalizedType == "DATETIME" || normalizedType == "TIMESTAMP" {

@@ -46,7 +46,7 @@ import (
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
-	var advanced []engine.Record
+	advanced := make([]engine.Record, 0, len(credentials.Advanced))
 	for _, recordInput := range credentials.Advanced {
 		advanced = append(advanced, engine.Record{
 			Key:   recordInput.Key,
@@ -139,7 +139,7 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 				Password: resolved.Password,
 				Database: resolved.Database,
 				Advanced: func() []*model.RecordInput {
-					var out []*model.RecordInput
+					out := make([]*model.RecordInput, 0, len(resolved.Advanced))
 					for _, rec := range resolved.Advanced {
 						out = append(out, &model.RecordInput{Key: rec.Key, Value: rec.Value})
 					}
@@ -905,6 +905,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 		loginProfile := &model.LoginProfile{
 			ID:                   profileName,
 			Type:                 model.DatabaseType(profile.Type),
+			Hostname:             &profile.Hostname,
 			Database:             &profile.Database,
 			IsEnvironmentDefined: true,
 			Source:               profile.Source,
@@ -1243,12 +1244,20 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 	}
 
 	if providerID != nil {
+		// Try to find provider in environment-defined providers first
 		chatProviders := env.GetConfiguredChatProviders()
+		found := false
 		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel.Token = provider.APIKey
+				found = true
 				break
 			}
+		}
+		// If provider not found in environment but token is provided, use the token
+		// This handles user-added providers that aren't in environment
+		if !found && token != nil {
+			config.ExternalModel.Token = *token
 		}
 	} else if token != nil {
 		config.ExternalModel.Token = *token
@@ -1271,24 +1280,42 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
 	if providerID != nil {
+		// Try to find provider in environment-defined providers first
 		chatProviders := env.GetConfiguredChatProviders()
+		found := false
 		for _, provider := range chatProviders {
 			if provider.ProviderId == *providerID {
 				config.ExternalModel = &engine.ExternalModel{
-					Type:  modelType,
-					Token: provider.APIKey,
+					Type:     modelType,
+					Token:    provider.APIKey,
+					Model:    input.Model,
+					Endpoint: provider.Endpoint,
 				}
+				found = true
+				break
+			}
+		}
+		// If provider not found in environment but token is provided, use the token
+		// This handles user-added providers that aren't in environment
+		if !found {
+			config.ExternalModel = &engine.ExternalModel{
+				Type:  modelType,
+				Model: input.Model,
+			}
+			if token != nil {
+				config.ExternalModel.Token = *token
 			}
 		}
 	} else {
 		config.ExternalModel = &engine.ExternalModel{
-			Type: modelType,
+			Type:  modelType,
+			Model: input.Model,
 		}
 		if token != nil {
 			config.ExternalModel.Token = *token
 		}
 	}
-	messages, err := plugin.Chat(config, schema, input.Model, input.PreviousConversation, input.Query)
+	messages, err := plugin.Chat(config, schema, input.PreviousConversation, input.Query)
 
 	if err != nil {
 		log.LogFields(log.Fields{

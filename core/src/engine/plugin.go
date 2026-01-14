@@ -33,8 +33,10 @@ type Credentials struct {
 
 // ExternalModel represents an external AI model configuration for chat functionality.
 type ExternalModel struct {
-	Type  string
-	Token string
+	Type     string // Provider type: "OpenAI", "Anthropic", "Ollama", etc.
+	Token    string // API key
+	Model    string // User-selected model: "gpt-4o", "claude-sonnet-4", etc.
+	Endpoint string // Base URL (for Ollama/generic providers)
 }
 
 // PluginConfig contains all configuration needed to connect to and operate on a database.
@@ -131,7 +133,7 @@ type PluginFunctions interface {
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
-	Chat(config *PluginConfig, schema string, model string, previousConversation string, query string) ([]*ChatMessage, error)
+	Chat(config *PluginConfig, schema string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)

@@ -61,7 +61,7 @@ func isPublicRoute(r *http.Request) bool {
 			return false
 		}
 
-		var query map[string]interface{}
+		var query map[string]any
 		if err := json.Unmarshal(body, &query); err != nil {
 			return false
 		}
@@ -71,7 +71,7 @@ func isPublicRoute(r *http.Request) bool {
 		}
 	}
 
-	return (!strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api")
+	return !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api"
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -214,8 +214,8 @@ func readRequestBody(r *http.Request) ([]byte, error) {
 }
 
 type GraphQLRequest struct {
-	OperationName string                 `json:"operationName"`
-	Variables     map[string]interface{} `json:"variables"`
+	OperationName string         `json:"operationName"`
+	Variables     map[string]any `json:"variables"`
 }
 
 func isAllowed(r *http.Request, body []byte) bool {
