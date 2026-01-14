@@ -216,7 +216,6 @@ function clearChatStateV2(): void {
   try {
     // Clear the persisted chat (houdini) state
     localStorage.removeItem('persist:houdini');
-    console.log('Cleared chat state for IChatMessage type migration');
   } catch (error) {
     console.error('Error clearing chat state:', error);
   }
@@ -273,7 +272,6 @@ function migrateChatGPTToOpenAIV3(): void {
 
     if (needsUpdate) {
       localStorage.setItem('persist:aiModels', JSON.stringify(aiModelsState));
-      console.log('Migrated ChatGPT to OpenAI in AI models state');
     }
   } catch (error) {
     console.error('Error during ChatGPT to OpenAI migration:', error);

@@ -131,8 +131,8 @@ export const useAI = () => {
     useEffect(() => {
         // Clear environment-defined providers from Redux state on mount to ensure fresh data
         // Keep only user-added providers (those with tokens)
-        const modelTypesState = ensureModelTypesArray(reduxStore.getState().aiModels.modelTypes);
-        const userAddedProviders = modelTypesState.filter(model =>
+        // Use modelTypes from Redux hook to ensure persistence has rehydrated
+        const userAddedProviders = modelTypes.filter(model =>
             model.token != null && model.token !== ""
         );
 
@@ -163,29 +163,27 @@ export const useAI = () => {
                 ];
 
                 // Check if current model type exists in final model types
-                const currentModelType = reduxStore.getState().aiModels.current;
-                if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
+                // Use modelType from Redux hook instead of direct store access
+                if (modelType && !finalModelTypes.some(model => model.id === modelType.id)) {
                     dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
                     dispatch(AIModelsActions.setModels([]));
                     dispatch(AIModelsActions.setCurrentModel(undefined));
                 }
 
                 dispatch(AIModelsActions.setModelTypes(finalModelTypes));
-                getAIModels({
-                    variables: {
-                        providerId: currentModelType?.id,
-                        modelType: currentModelType?.modelType ?? "",
-                        token: currentModelType?.token ?? "",
-                    },
-                });
+
+                // Only fetch models if there's a current model type
+                if (modelType) {
+                    getAIModels({
+                        variables: {
+                            providerId: modelType.id,
+                            modelType: modelType.modelType ?? "",
+                            token: modelType.token ?? "",
+                        },
+                    });
+                }
             },
         });
-
-        const modelType = modelTypes[0];
-        if (modelType == null || models.length > 0) {
-            return;
-        }
-        handleAIModelTypeChange(modelType.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

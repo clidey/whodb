@@ -281,6 +281,7 @@ export const ChatPage: FC = () => {
     }, [t]);
 
     const [loading, setLoading] = useState(false);
+    const loadingPhraseRef = useRef<string>("");
 
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
@@ -315,6 +316,7 @@ export const ChatPage: FC = () => {
         }
 
         setLoading(true);
+        loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
         dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, }));
         setQuery("");
 
@@ -389,9 +391,6 @@ export const ChatPage: FC = () => {
                                 // BAML sends full accumulated text in each chunk, not deltas
                                 const text = parsed.text || '';
 
-                                // Debug: log what we're receiving
-                                console.log('Chunk received:', { type: parsed.type, text: text.substring(0, 50) });
-
                                 // Update streaming message with the latest text
                                 // Ignore SQL/error types during streaming (they'll come in 'message' event)
                                 const chunkType = parsed.type || '';
@@ -444,7 +443,10 @@ export const ChatPage: FC = () => {
                                 setLoading(false);
                             } else if (currentEventType === 'error') {
                                 dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
-                                toast.error(t('unableToQuery') + " " + parsed.error);
+                                const errorMessage = typeof parsed.error === 'string'
+                                    ? parsed.error
+                                    : parsed.error?.message || parsed.message || 'Unknown error';
+                                toast.error(t('unableToQuery') + " " + errorMessage);
                                 setLoading(false);
                             }
                         } catch (e) {
@@ -455,14 +457,19 @@ export const ChatPage: FC = () => {
             }
         } catch (error) {
             dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
-            toast.error(t('unableToQuery') + " " + (error instanceof Error ? error.message : 'Unknown error'));
+            const errorMessage = error instanceof Error
+                ? error.message
+                : typeof error === 'string'
+                ? error
+                : 'Unknown error';
+            toast.error(t('unableToQuery') + " " + errorMessage);
             setLoading(false);
         }
     }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef]);
 
     const disableChat = useMemo(() => {
-        return loading || models.length === 0 || !modelAvailable || query.trim().length === 0;
-    }, [loading, modelAvailable, models.length, query]);
+        return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
+    }, [loading, modelAvailable, models.length, currentModel, query]);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "Enter") {
@@ -509,8 +516,8 @@ export const ChatPage: FC = () => {
     }, [dispatch]);
 
     const disableAll = useMemo(() => {
-        return models.length === 0 || !modelAvailable;
-    }, [modelAvailable, models.length]);
+        return models.length === 0 || (!modelAvailable && !currentModel);
+    }, [modelAvailable, models.length, currentModel]);
 
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
@@ -588,7 +595,7 @@ export const ChatPage: FC = () => {
                                         })
                                     }
                                     { loading &&  <div className="flex w-full mt-4">
-                                        <Loading loadingText={isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0]} size="sm" />
+                                        <Loading loadingText={loadingPhraseRef.current} size="sm" />
                                     </div> }
                                 </div>
                             </div>
@@ -596,7 +603,7 @@ export const ChatPage: FC = () => {
                     }
                 </div>
                 {
-                    (!modelAvailable || models.length === 0) &&
+                    (models.length === 0 || (!modelAvailable && !currentModel)) &&
                     <EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
                 }
                 <div className={classNames("flex justify-between items-center gap-2", {

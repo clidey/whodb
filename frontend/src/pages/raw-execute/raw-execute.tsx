@@ -955,9 +955,7 @@ export const RawExecutePage: FC = () => {
     // Initialize scratchpad and ensure all pages have cells
     const hasInitialized = useRef(false);
     useEffect(() => {
-        console.log('Initialization check:', { pagesLength: pages.length, hasInitialized: hasInitialized.current });
         if (!hasInitialized.current) {
-            console.log('Ensuring scratchpad has proper structure...');
             hasInitialized.current = true;
             dispatch(ScratchpadActions.ensurePagesHaveCells());
         }

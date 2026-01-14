@@ -217,3 +217,7 @@ body.disable-animations *::after {
 *:focus {
   outline: none;
 }
+
+[data-testid="chat-delete-provider-confirm"] {
+  color: white;
+}
