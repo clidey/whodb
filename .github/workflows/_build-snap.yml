@@ -39,27 +39,28 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             _http._tcp.azure.archive.ubuntu.com:443
+            _http._tcp.ports.ubuntu.com:443
             _https._tcp.deb.nodesource.com:443
             _https._tcp.esm.ubuntu.com:443
             _https._tcp.motd.ubuntu.com:443
             _https._tcp.packages.microsoft.com:443
+            _https._tcp.ppa.launchpadcontent.net:443
             api.github.com:443
             api.snapcraft.io:443
             azure.archive.ubuntu.com:80
             canonical-bos01.cdn.snapcraftcontent.com:443
             canonical-lgw01.cdn.snapcraftcontent.com:443
+            deb.debian.org:443
             deb.nodesource.com:443
             esm.ubuntu.com:443
             github.com:443
             packages.microsoft.com:443
-            proxy.golang.org:443
-            registry.npmjs.org:443
-            storage.googleapis.com:443
-            release-assets.githubusercontent.com:443
-            _http._tcp.ports.ubuntu.com:443
-            _https._tcp.ppa.launchpadcontent.net:443
             ports.ubuntu.com:80
             ppa.launchpadcontent.net:443
+            proxy.golang.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            storage.googleapis.com:443
             sum.golang.org:443
 
       - name: Checkout

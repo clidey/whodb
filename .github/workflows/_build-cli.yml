@@ -35,14 +35,15 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            deb.debian.org:443
+            dl.google.com:443
             github.com:443
+            go.dev:443
+            golang.org:443
             objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
-            go.dev:443
-            golang.org:443
-            dl.google.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -76,20 +77,21 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            proxy.golang.org:443
-            storage.googleapis.com:443
-            sum.golang.org:443
-            go.dev:443
-            golang.org:443
-            dl.google.com:443
-            azure.archive.ubuntu.com:80
             archive.ubuntu.com:80
             archive.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            deb.debian.org:443
+            dl.google.com:443
+            github.com:443
+            go.dev:443
+            golang.org:443
+            objects.githubusercontent.com:443
+            packages.microsoft.com:443
+            proxy.golang.org:443
             security.ubuntu.com:80
             security.ubuntu.com:443
-            packages.microsoft.com:443
+            storage.googleapis.com:443
+            sum.golang.org:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -128,14 +130,15 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            deb.debian.org:443
+            dl.google.com:443
             github.com:443
+            go.dev:443
+            golang.org:443
             objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
-            go.dev:443
-            golang.org:443
-            dl.google.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -192,14 +195,15 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            deb.debian.org:443
+            dl.google.com:443
             github.com:443
+            go.dev:443
+            golang.org:443
             objects.githubusercontent.com:443
             proxy.golang.org:443
             storage.googleapis.com:443
             sum.golang.org:443
-            go.dev:443
-            golang.org:443
-            dl.google.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -235,6 +239,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            deb.debian.org:443
 
       - name: Download all CLI binaries
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0

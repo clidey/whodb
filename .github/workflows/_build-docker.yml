@@ -45,7 +45,9 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            app.posthog.com:443
             auth.docker.io:443
+            deb.debian.org:443
             dl-cdn.alpinelinux.org:443
             github.com:443
             objects.githubusercontent.com:443
@@ -57,7 +59,7 @@ jobs:
             storage.googleapis.com:443
             sum.golang.org:443
             us.i.posthog.com:443
-            app.posthog.com:443
+            us.posthog.com:443
 
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0

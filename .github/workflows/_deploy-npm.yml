@@ -25,11 +25,12 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            deb.debian.org:443
+            fulcio.sigstore.dev:443
             github.com:443
             registry.npmjs.org:443
-            token.actions.githubusercontent.com:443
-            fulcio.sigstore.dev:443
             rekor.sigstore.dev:443
+            token.actions.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
