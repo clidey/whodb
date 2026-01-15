@@ -482,6 +482,12 @@ func convertBAMLStreamResponseToMessage(bamlResp *stream_types.ChatResponse) map
 			opStr = "update"
 		case types.OperationTypeDELETE:
 			opStr = "delete"
+		case types.OperationTypeCREATE:
+			opStr = "create"
+		case types.OperationTypeALTER:
+			opStr = "alter"
+		case types.OperationTypeDROP:
+			opStr = "drop"
 		case types.OperationTypeTEXT:
 			opStr = "text"
 		default:
@@ -512,6 +518,12 @@ func convertOperationType(operation types.OperationType) string {
 		return "sql:update"
 	case types.OperationTypeDELETE:
 		return "sql:delete"
+	case types.OperationTypeCREATE:
+		return "sql:create"
+	case types.OperationTypeALTER:
+		return "sql:alter"
+	case types.OperationTypeDROP:
+		return "sql:drop"
 	case types.OperationTypeTEXT:
 		return "text"
 	default:

@@ -7,6 +7,9 @@ enum OperationType {
   INSERT @alias("insert") @description("INSERT queries to add data")
   UPDATE @alias("update") @description("UPDATE queries to modify data")
   DELETE @alias("delete") @description("DELETE queries to remove data")
+  CREATE @alias("create") @description("CREATE TABLE, CREATE INDEX and other schema creation operations")
+  ALTER @alias("alter") @description("ALTER TABLE and other schema modification operations")
+  DROP @alias("drop") @description("DROP TABLE, DROP INDEX and other schema deletion operations")
   TEXT @alias("text") @description("General text responses without SQL")
 }
 
@@ -82,6 +85,9 @@ function GenerateSQLQuery(
       - "insert" - for adding new records
       - "update" - for modifying existing records
       - "delete" - for removing records
+      - "create" - for CREATE TABLE, CREATE INDEX and other schema creation operations
+      - "alter" - for ALTER TABLE and other schema modification operations
+      - "drop" - for DROP TABLE, DROP INDEX and other schema deletion operations
 
     **text** (required):
       - Your conversational message, explanation, or SQL query
@@ -119,6 +125,13 @@ function GenerateSQLQuery(
     - Then provide the SQL query with FULL schema names
     - Return both a message and a sql response
     - Example query structure: SELECT * FROM {{ context.schema }}.users LIMIT 100;
+
+    **Schema modification requests (CREATE TABLE, ALTER TABLE, DROP TABLE):**
+    - First provide a brief explanation of what you'll do
+    - Then provide the DDL SQL query with FULL schema names
+    - Return both a message and a sql response with the appropriate operation type (create/alter/drop)
+    - Always use appropriate data types for the target database
+    - Example: [{"type": "message", "operation": null, "text": "I'll create a countries table with id and name columns."}, {"type": "sql", "operation": "create", "text": "CREATE TABLE {{ context.schema }}.countries (id INTEGER PRIMARY KEY, name VARCHAR(100));"}]
 
     **Ambiguous requests:**
     - Ask friendly clarifying questions

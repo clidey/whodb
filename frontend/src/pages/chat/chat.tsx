@@ -188,15 +188,15 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
                     ? <div className="h-[250px] w-full">
                         <StorageUnitTable
-                            columns={data?.Columns.map(c => c.Name) ?? []}
-                            columnTypes={data?.Columns.map(c => c.Type) ?? []}
+                            columns={data?.Columns?.map(c => c.Name) ?? []}
+                            columnTypes={data?.Columns?.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
                             disableEdit={true}
                             limitContextMenu={true}
                             databaseType={current?.Type}
                         />
                     </div>
-                    : (type.startsWith("sql:") && (type === "sql:insert" || type === "sql:update" || type === "sql:delete"))
+                    : (type.startsWith("sql:") && (type === "sql:insert" || type === "sql:update" || type === "sql:delete" || type === "sql:create" || type === "sql:alter" || type === "sql:drop"))
                     ? <Alert title={t('actionExecuted')} className="w-fit">
                         <CheckCircleIcon className="w-4 h-4" />
                         <AlertTitle>{t('actionExecuted')}</AlertTitle>
@@ -591,9 +591,9 @@ export const ChatPage: FC = () => {
                                                 return <div key={`chat-${i}`} className="flex items-center self-start relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="table-message">
