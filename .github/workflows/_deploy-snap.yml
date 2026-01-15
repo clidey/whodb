@@ -33,6 +33,7 @@ jobs:
             canonical-lgw01.cdn.snapcraftcontent.com:443
             dashboard.snapcraft.io:443
             deb.debian.org:443
+            deb.debian.org:80
             github.com:443
             login.ubuntu.com:443
             storage.snapcraftcontent.com:443

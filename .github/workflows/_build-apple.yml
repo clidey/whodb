@@ -45,6 +45,7 @@ jobs:
             api.github.com:443
             app.posthog.com:443
             deb.debian.org:443
+            deb.debian.org:80
             github.com:443
             objects.githubusercontent.com:443
             proxy.golang.org:443

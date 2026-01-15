@@ -38,6 +38,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             deb.debian.org:443
+            deb.debian.org:80
             fulcio.sigstore.dev:443
             github.com:443
             rekor.sigstore.dev:443
@@ -132,6 +133,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             deb.debian.org:443
+deb.debian.org:80
             github.com:443
             release-assets.githubusercontent.com:443
 

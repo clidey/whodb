@@ -48,6 +48,7 @@ jobs:
             app.posthog.com:443
             auth.docker.io:443
             deb.debian.org:443
+            deb.debian.org:80
             dl-cdn.alpinelinux.org:443
             github.com:443
             objects.githubusercontent.com:443
