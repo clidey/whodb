@@ -347,7 +347,7 @@ jobs:
           allowed-endpoints: >-
             api.github.com:443
             deb.debian.org:443
-deb.debian.org:80
+            deb.debian.org:80
             github.com:443
 
       - name: Checkout for scripts
