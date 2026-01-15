@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -890,20 +890,22 @@ func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previo
 				config.ExternalModel = &engine.ExternalModel{
 					Type:  modelType,
 					Token: provider.APIKey,
+					Model: model,
 				}
 				break
 			}
 		}
 	} else {
 		config.ExternalModel = &engine.ExternalModel{
-			Type: modelType,
+			Type:  modelType,
+			Model: model,
 		}
 		if token != "" {
 			config.ExternalModel.Token = token
 		}
 	}
 
-	messages, err := plugin.Chat(config, schema, model, previousConversation, query)
+	messages, err := plugin.Chat(config, schema, previousConversation, query)
 	if err != nil {
 		return nil, err
 	}

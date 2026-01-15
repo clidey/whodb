@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ export function migrateAIModelsFromDatabase(): void {
     }
 
     // Create the new aiModels state
-    const aiModelsState: any = {};
+    const aiModelsState: Record<string, string> = {};
     
     // Ensure we have at least the default model types if none exist
     const defaultModelTypes = ["Ollama"].map(modelType => ({
@@ -145,7 +145,7 @@ function ensureValidAIModelsState(): void {
           needsUpdate = true;
         } else {
           // Ensure each modelType has required properties
-          const validModelTypes = modelTypes.filter((mt: any) => mt && mt.id && mt.modelType);
+          const validModelTypes = modelTypes.filter((mt: IAIModelType | null) => mt && mt.id && mt.modelType);
           if (validModelTypes.length !== modelTypes.length) {
             modelTypes = validModelTypes.length > 0 ? validModelTypes : ensureModelTypesArray(null);
             aiModelsState.modelTypes = JSON.stringify(modelTypes);
@@ -210,23 +210,96 @@ function setMigrationVersion(version: number): void {
 }
 
 /**
+ * Clear chat state to fix IChatMessage type mismatch
+ */
+function clearChatStateV2(): void {
+  try {
+    // Clear the persisted chat (houdini) state
+    localStorage.removeItem('persist:houdini');
+  } catch (error) {
+    console.error('Error clearing chat state:', error);
+  }
+}
+
+/**
+ * Rename "ChatGPT" modelType to "OpenAI" in persisted AI models state.
+ * This handles the rename from the old provider name to the new one.
+ */
+function migrateChatGPTToOpenAIV3(): void {
+  try {
+    const persistedAIModelsState = localStorage.getItem('persist:aiModels');
+    if (!persistedAIModelsState) {
+      return;
+    }
+
+    const aiModelsState = JSON.parse(persistedAIModelsState);
+    let needsUpdate = false;
+
+    // Migrate modelTypes array
+    if (aiModelsState.modelTypes) {
+      try {
+        const modelTypes = JSON.parse(aiModelsState.modelTypes);
+        if (Array.isArray(modelTypes)) {
+          const updatedModelTypes = modelTypes.map((mt: IAIModelType) => {
+            if (mt && mt.modelType === 'ChatGPT') {
+              needsUpdate = true;
+              return { ...mt, modelType: 'OpenAI' };
+            }
+            return mt;
+          });
+          if (needsUpdate) {
+            aiModelsState.modelTypes = JSON.stringify(updatedModelTypes);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing modelTypes during ChatGPT migration:', e);
+      }
+    }
+
+    // Migrate current selection if it has ChatGPT
+    if (aiModelsState.current) {
+      try {
+        const current = JSON.parse(aiModelsState.current);
+        if (current && current.modelType === 'ChatGPT') {
+          current.modelType = 'OpenAI';
+          aiModelsState.current = JSON.stringify(current);
+          needsUpdate = true;
+        }
+      } catch (e) {
+        console.error('Error parsing current during ChatGPT migration:', e);
+      }
+    }
+
+    if (needsUpdate) {
+      localStorage.setItem('persist:aiModels', JSON.stringify(aiModelsState));
+    }
+  } catch (error) {
+    console.error('Error during ChatGPT to OpenAI migration:', error);
+  }
+}
+
+/**
  * Run all necessary migrations
  */
 export function runMigrations(): void {
   const currentVersion = getMigrationVersion();
-  
+
   // Run migrations in order based on version
   if (currentVersion < 1) {
     migrateAIModelsFromDatabase();
     setMigrationVersion(1);
   }
-  
-  // Future migrations can be added here
-  // if (currentVersion < 2) {
-  //   runMigrationV2();
-  //   setMigrationVersion(2);
-  // }
-  
+
+  if (currentVersion < 2) {
+    clearChatStateV2();
+    setMigrationVersion(2);
+  }
+
+  if (currentVersion < 3) {
+    migrateChatGPTToOpenAIV3();
+    setMigrationVersion(3);
+  }
+
   // Always ensure AI models state is valid
   ensureValidAIModelsState();
 }

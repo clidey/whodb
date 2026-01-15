@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,7 +283,7 @@ func (g *Generator) GenerateRowDataWithConstraints(columns []engine.Column, colC
 			return nil, fmt.Errorf("failed to generate value for column %s: %w", col.Name, err)
 		}
 
-		// TODO: Refactor engine.Record to support interface{}/any values instead of strings.
+		// TODO: Refactor engine.Record to support any/any values instead of strings.
 		// This would allow us to pass typed values directly to database plugins,
 		// letting each plugin handle formatting according to its specific requirements.
 		// Current approach requires converting typed values to strings here, which

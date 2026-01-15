@@ -41,10 +41,10 @@
 
 :root {
   --brand-foreground: #11518E;
-  --icon: var(--text-muted);
-  --icon-foreground: #11518E;
+  --muted: oklch(0.97 0 0);
   --primary: #11518E;
-  
+  --icon-foreground: #11518E;
+
   /* UI Customization defaults - these will be overridden by theme-customization.ts */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -67,9 +67,15 @@ body {
 }
 
 .dark {
+  --brand-foreground: #8EBFFB;
   --icon: var(--text-muted);
-  --icon-foreground: #8EBFFB;
   --primary: #8EBFFB;
+  --muted: oklch(0.269 0 0);
+  --icon-foreground: #8EBFFB;
+}
+
+.bg-icon {
+  background-color: var(--text-muted);
 }
 
 .dark .react-flow__controls-button {
@@ -94,6 +100,20 @@ body {
 .table-search-highlight {
   transition: background-color 0.3s ease-in-out;
   border-radius: 0.25rem;
+}
+
+/* Smooth fade-in animation for streaming chat messages */
+@keyframes fade-in {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }
 
 /* UI Customization utility classes */
@@ -161,17 +181,14 @@ body {
   }
 }
 
-/* Accessibility: Screen reader only utility */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+/* Disable all animations when user preference is set */
+body.disable-animations *,
+body.disable-animations *::before,
+body.disable-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 [data-testid="storage-unit-card-list"]:not(.hidden) {
@@ -195,4 +212,12 @@ body {
   width: 100%;
   flex: 1;
   flex-grow: 1;
+}
+
+*:focus {
+  outline: none;
+}
+
+[data-testid="chat-delete-provider-confirm"] {
+  color: white;
 }

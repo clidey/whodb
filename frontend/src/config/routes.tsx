@@ -66,11 +66,6 @@ export const InternalRoutes = {
             path: "/storage-unit/explore",
             component: <LazyRoute component={ExploreStorageUnit} />,
         },
-        ExploreStorageUnitWithScratchpad: {
-            name: "Explore",
-            path: "/storage-unit/explore/scratchpad",
-            component: <LazyRoute component={() => <ExploreStorageUnit scratchpad={true} />} />,
-        },
     },
     Graph: {
         name: "Graph",

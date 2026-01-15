@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package postgres
 
 import (
+	"crypto/tls"
 	"maps"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -52,6 +53,23 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database
 
+	// Configure SSL/TLS based on SSLMode
+	// Modes: disable (default), require, verify-ca, verify-full
+	switch connectionInput.SSLMode {
+	case "require":
+		// SSL required but don't verify certificate (like libpq sslmode=require)
+		pgxConfig.TLSConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	case "verify-ca", "verify-full":
+		// SSL with certificate verification
+		// For verify-full, ServerName enables hostname verification
+		pgxConfig.TLSConfig = &tls.Config{
+			ServerName: connectionInput.Hostname,
+		}
+		// case "disable" or default: pgxConfig.TLSConfig remains nil (no SSL)
+	}
+
 	if connectionInput.ExtraOptions != nil {
 		if pgxConfig.RuntimeParams == nil {
 			pgxConfig.RuntimeParams = make(map[string]string)
@@ -64,6 +82,7 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,
 		"username": connectionInput.Username,
+		"sslMode":  connectionInput.SSLMode,
 	})
 
 	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})

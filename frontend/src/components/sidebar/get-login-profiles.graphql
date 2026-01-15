@@ -3,8 +3,9 @@ query GetProfiles {
     Alias
     Id
     Type
+    Hostname
     Database
     IsEnvironmentDefined
-      Source
+    Source
   }
 }

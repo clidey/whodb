@@ -18,8 +18,10 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { AiChatMessage } from '@graphql';
 
 
-type IChatMessage = AiChatMessage & {
+export type IChatMessage = AiChatMessage & {
     isUserInput?: boolean;
+    isStreaming?: boolean;
+    id?: number;
 };
 
 type IChatState = {
@@ -36,6 +38,22 @@ export const houdiniSlice = createSlice({
   reducers: {
     addChatMessage: (state, action: PayloadAction<IChatMessage>) => {
         state.chats.push(action.payload);
+    },
+    updateChatMessage: (state, action: PayloadAction<{ id: number; Text: string }>) => {
+        const message = state.chats.find(chat => chat.id === action.payload.id);
+        if (message) {
+            message.Text = action.payload.Text;
+        }
+    },
+    completeStreamingMessage: (state, action: PayloadAction<{ id: number; message: Partial<IChatMessage> }>) => {
+        const message = state.chats.find(chat => chat.id === action.payload.id);
+        if (message) {
+            Object.assign(message, action.payload.message);
+            message.isStreaming = false;
+        }
+    },
+    removeChatMessage: (state, action: PayloadAction<number>) => {
+        state.chats = state.chats.filter(chat => chat.id !== action.payload);
     },
     clear: (state) => {
         state.chats = [];

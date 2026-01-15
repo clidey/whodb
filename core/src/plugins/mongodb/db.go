@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -30,11 +31,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// DefaultOperationTimeout is the default timeout for MongoDB operations.
+const DefaultOperationTimeout = 30 * time.Second
+
+// opCtx returns a context with a timeout for MongoDB operations.
+func opCtx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), DefaultOperationTimeout)
+}
+
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
-	ctx := context.Background()
+	ctx, cancel := opCtx()
+	defer cancel()
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"))
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":  config.Credentials.Hostname,
 			"portValue": common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"),
 		}).Error("Failed to parse MongoDB port number")
@@ -43,7 +53,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	queryParams := common.GetRecordValueOrDefault(config.Credentials.Advanced, "URL Params", "")
 	dnsEnabled, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"))
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":        config.Credentials.Hostname,
 			"dnsEnabledValue": common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"),
 		}).Error("Failed to parse MongoDB DNS enabled flag")
@@ -72,7 +82,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":   config.Credentials.Hostname,
 			"database":   config.Credentials.Database,
 			"username":   config.Credentials.Username,
@@ -83,7 +93,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	}
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": config.Credentials.Database,
 			"username": config.Credentials.Username,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
 import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
+import {isAwsHostname} from '../utils/cloud-connection-prefill';
 
 // Always use a relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -60,8 +61,11 @@ const errorLink = onError(({networkError}) => {
         if (currentProfile) {
             handleAutoLogin(currentProfile);
         } else {
-            toast.error("Session expired. Please login again.");
-            window.location.href = '/login';
+            // Don't redirect if already on login page to avoid infinite loop
+            if (!window.location.pathname.startsWith('/login')) {
+                toast.error("Session expired. Please login again.");
+                window.location.href = '/login';
+            }
         }
     } else if (networkError) {
         console.error('Network error:', networkError);
@@ -70,14 +74,15 @@ const errorLink = onError(({networkError}) => {
 
 /**
  * Handles automatic login using the current profile.
- *
- * If the profile is a saved profile, use LoginWithProfile mutation.
- * Otherwise, use Login mutation with credentials.
- *
- * @param currentProfile - The current user profile from Redux store
  */
 async function handleAutoLogin(currentProfile: any) {
     try {
+        // Don't auto-login to AWS connections when cloud providers are disabled
+        const cloudProvidersEnabled = reduxStore.getState().settings.cloudProvidersEnabled;
+        if (isAwsHostname(currentProfile.Hostname) && !cloudProvidersEnabled) {
+            return;
+        }
+
         let response, result;
         if (currentProfile.Saved) {
             // Login with profile

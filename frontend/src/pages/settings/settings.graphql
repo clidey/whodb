@@ -1,5 +1,6 @@
 query SettingsConfig {
     SettingsConfig {
         MetricsEnabled
+        CloudProvidersEnabled
     }
 }

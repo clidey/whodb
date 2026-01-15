@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -594,11 +594,11 @@ func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*en
 	return nil, errors.ErrUnsupported
 }
 
-func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, model string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
+func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return nil, errors.ErrUnsupported
 }
 
-func (p *RedisPlugin) FormatValue(val interface{}) string {
+func (p *RedisPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
@@ -606,8 +606,8 @@ func (p *RedisPlugin) FormatValue(val interface{}) string {
 }
 
 // GetColumnConstraints - not supported for Redis
-func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
-	return make(map[string]map[string]interface{}), nil
+func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	return make(map[string]map[string]any), nil
 }
 
 // ClearTableData - not supported for Redis

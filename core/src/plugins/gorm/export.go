@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	return nil
 }
 
-// FormatValue converts interface{} values to strings appropriately for CSV
+// FormatValue converts any values to strings appropriately for CSV
 func (p *GormPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""

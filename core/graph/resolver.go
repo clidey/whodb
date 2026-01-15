@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/providers"
+	"github.com/clidey/whodb/core/src/settings"
 )
 
 // This file will not be regenerated automatically.
@@ -129,4 +131,137 @@ func FetchColumnsForStorageUnit(
 
 	_ = typeArg // Used for logging in callers if needed
 	return MapColumnsToModel(columnsResult, constraints, foreignKeys), nil
+}
+
+// stateToAWSProvider converts settings.AWSProviderState to the GraphQL model.
+func stateToAWSProvider(state *settings.AWSProviderState) *model.AWSProvider {
+	hasCredentials := state.Config.AccessKeyID != "" && state.Config.SecretAccessKey != ""
+
+	var profileName *string
+	if state.Config.ProfileName != "" {
+		profileName = &state.Config.ProfileName
+	}
+
+	var lastDiscoveryAt *string
+	if state.LastDiscoveryAt != nil {
+		t := state.LastDiscoveryAt.Format("2006-01-02T15:04:05Z")
+		lastDiscoveryAt = &t
+	}
+
+	var errorStr *string
+	if state.Error != "" {
+		errorStr = &state.Error
+	}
+
+	var dbUsername *string
+	if state.Config.DBUsername != "" {
+		dbUsername = &state.Config.DBUsername
+	}
+
+	return &model.AWSProvider{
+		ID:                  state.Config.ID,
+		ProviderType:        model.CloudProviderTypeAWS,
+		Name:                state.Config.Name,
+		Region:              state.Config.Region,
+		AuthMethod:          state.Config.AuthMethod,
+		ProfileName:         profileName,
+		HasCredentials:      hasCredentials,
+		DiscoverRds:         state.Config.DiscoverRDS,
+		DiscoverElastiCache: state.Config.DiscoverElastiCache,
+		DiscoverDocumentDb:  state.Config.DiscoverDocumentDB,
+		DBUsername:          dbUsername,
+		Status:              mapCloudProviderStatus(state.Status),
+		LastDiscoveryAt:     lastDiscoveryAt,
+		DiscoveredCount:     state.DiscoveredCount,
+		Error:               errorStr,
+	}
+}
+
+// mapCloudProviderStatus converts a status string to the GraphQL enum.
+func mapCloudProviderStatus(status string) model.CloudProviderStatus {
+	switch status {
+	case "Connected":
+		return model.CloudProviderStatusConnected
+	case "Discovering":
+		return model.CloudProviderStatusDiscovering
+	case "Error":
+		return model.CloudProviderStatusError
+	case "CredentialsRequired":
+		return model.CloudProviderStatusCredentialsRequired
+	default:
+		return model.CloudProviderStatusDisconnected
+	}
+}
+
+// mapProviderTypeToModel converts providers.ProviderType to the GraphQL enum.
+func mapProviderTypeToModel(pt providers.ProviderType) model.CloudProviderType {
+	switch pt {
+	case providers.ProviderTypeAWS:
+		return model.CloudProviderTypeAWS
+	default:
+		// Default to AWS since only cloud providers appear in DiscoveredConnection
+		return model.CloudProviderTypeAWS
+	}
+}
+
+// mapConnectionStatusToModel converts providers.ConnectionStatus to the GraphQL enum.
+func mapConnectionStatusToModel(status providers.ConnectionStatus) model.ConnectionStatus {
+	switch status {
+	case providers.ConnectionStatusAvailable:
+		return model.ConnectionStatusAvailable
+	case providers.ConnectionStatusStarting:
+		return model.ConnectionStatusStarting
+	case providers.ConnectionStatusStopped:
+		return model.ConnectionStatusStopped
+	case providers.ConnectionStatusDeleting:
+		return model.ConnectionStatusDeleting
+	case providers.ConnectionStatusFailed:
+		return model.ConnectionStatusFailed
+	default:
+		return model.ConnectionStatusUnknown
+	}
+}
+
+// discoveredConnectionToModel converts providers.DiscoveredConnection to the GraphQL model.
+// Connection metadata (endpoint, port, TLS settings) is exposed to the frontend for
+// prefilling the login form, allowing users to modify values before connecting.
+func discoveredConnectionToModel(conn *providers.DiscoveredConnection) *model.DiscoveredConnection {
+	var region *string
+	if conn.Region != "" {
+		region = &conn.Region
+	}
+
+	// Expose metadata needed for UI prefill and connection decisions.
+	// - endpoint: database hostname for connection prefill
+	// - port: database port for connection prefill
+	// - transitEncryption: TLS setting for ElastiCache/Redis
+	// - serverless: indicates serverless deployment (affects UI hints)
+	// - iamAuthEnabled: determines if password is optional for RDS
+	// - authTokenEnabled: Redis AUTH token hint
+	allowedMetadataKeys := map[string]bool{
+		"endpoint":          true,
+		"port":              true,
+		"transitEncryption": true,
+		"serverless":        true,
+		"iamAuthEnabled":    true,
+		"authTokenEnabled":  true,
+	}
+
+	var metadata []*model.Record
+	for k, v := range conn.Metadata {
+		if allowedMetadataKeys[k] {
+			metadata = append(metadata, &model.Record{Key: k, Value: v})
+		}
+	}
+
+	return &model.DiscoveredConnection{
+		ID:           conn.ID,
+		ProviderType: mapProviderTypeToModel(conn.ProviderType),
+		ProviderID:   conn.ProviderID,
+		Name:         conn.Name,
+		DatabaseType: string(conn.DatabaseType),
+		Region:       region,
+		Status:       mapConnectionStatusToModel(conn.Status),
+		Metadata:     metadata,
+	}
 }

@@ -1,9 +1,13 @@
 {
   "name": "@clidey/whodb-cli-win32-arm64",
-  "version": "0.0.0",
-  "description": "WhoDB MCP server binary for Windows ARM64",
-  "os": ["win32"],
-  "cpu": ["arm64"],
+  "version": "0.1.0",
+  "description": "WhoDB CLI server binary for Windows ARM64",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/clidey/whodb.git"

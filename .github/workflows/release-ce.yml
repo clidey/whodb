@@ -72,7 +72,7 @@ on:
         type: boolean
         default: false
       deploy-cli:
-        description: 'Build CLI binaries for MCP server (all platforms)'
+        description: 'Build CLI binaries (all platforms)'
         required: false
         type: boolean
         default: false
@@ -146,7 +146,7 @@ jobs:
           deploy-apple: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-apple) && 'true' || 'false') }}
           deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
           deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
-          deploy-cli: ${{ github.event_name == 'push' && 'false' || (fromJSON(inputs.deploy-cli) && 'true' || 'false') }}  # Manual dispatch only until npm auth is configured
+          deploy-cli: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-cli) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Extract release notes from PR

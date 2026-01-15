@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {eeSettingsDefaults} from '../config/ee-imports';
 
 const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
 
 type ISettingsState = {
     metricsEnabled: boolean;
+    cloudProvidersEnabled: boolean;
     storageUnitView: 'list' | 'card';
     fontSize: 'small' | 'medium' | 'large';
     borderRadius: 'none' | 'small' | 'medium' | 'large';
@@ -28,6 +30,7 @@ type ISettingsState = {
     defaultPageSize: number;
     language: 'en' | 'es';
     databaseSchemaTerminology: 'database' | 'schema';
+    disableAnimations: boolean;
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -45,6 +48,7 @@ const getInitialMetricsEnabled = (): boolean => {
 const getInitialState = (): ISettingsState => {
     return {
         metricsEnabled: getInitialMetricsEnabled(),
+        cloudProvidersEnabled: false,
         storageUnitView: 'card',
         fontSize: 'medium',
         borderRadius: 'medium',
@@ -53,6 +57,8 @@ const getInitialState = (): ISettingsState => {
         defaultPageSize: 100,
         language: 'en',
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
+        // Use EE default if available, otherwise default to false (animations enabled)
+        disableAnimations: eeSettingsDefaults.disableAnimations ?? false,
     };
 };
 
@@ -64,6 +70,9 @@ export const settingsSlice = createSlice({
     reducers: {
         setMetricsEnabled: (state, action: PayloadAction<ISettingsState["metricsEnabled"]>) => {
             state.metricsEnabled = action.payload;
+        },
+        setCloudProvidersEnabled: (state, action: PayloadAction<ISettingsState["cloudProvidersEnabled"]>) => {
+            state.cloudProvidersEnabled = action.payload;
         },
         setStorageUnitView: (state, action: PayloadAction<ISettingsState["storageUnitView"]>) => {
             state.storageUnitView = action.payload;
@@ -89,6 +98,9 @@ export const settingsSlice = createSlice({
         },
         setDatabaseSchemaTerminology: (state, action: PayloadAction<ISettingsState["databaseSchemaTerminology"]>) => {
             state.databaseSchemaTerminology = action.payload;
+        },
+        setDisableAnimations: (state, action: PayloadAction<ISettingsState["disableAnimations"]>) => {
+            state.disableAnimations = action.payload;
         },
     },
 });

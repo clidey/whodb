@@ -71,7 +71,7 @@ const TOOLTIP_CLASSES = {
     "min-w-[180px]",
     "animate-fade"
   ),
-  button: "flex items-center justify-center w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-full transition-colors"
+  button: "flex items-center justify-center w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full transition-colors"
 };
 
 export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, className }) => {

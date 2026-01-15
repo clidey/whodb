@@ -116,6 +116,7 @@ input LoginCredentials {
 
 type SettingsConfig {
   MetricsEnabled: Boolean
+  CloudProvidersEnabled: Boolean!
 }
 
 input SettingsConfigInput {
@@ -132,9 +133,10 @@ type LoginProfile {
   Alias: String
   Id: String!
   Type: DatabaseType!
+  Hostname: String
   Database: String
   IsEnvironmentDefined: Boolean!
-    Source: String!
+  Source: String!
 }
 
 type StatusResponse {
@@ -168,8 +170,10 @@ type AIChatMessage {
 
 type AIProvider {
   Type: String!
+  Name: String!
   ProviderId: String!
   IsEnvironmentDefined: Boolean!
+  IsGeneric: Boolean!
 }
 
 enum TypeCategory {
@@ -199,6 +203,118 @@ type DatabaseMetadata {
   aliasMap: [Record!]!
 }
 
+# =============================================================================
+# Cloud Provider Types (Generic Infrastructure)
+# =============================================================================
+
+# Supported cloud provider types
+enum CloudProviderType {
+  AWS
+  # GCP - future
+  # Azure - future
+}
+
+# Provider status (shared across all cloud providers)
+enum CloudProviderStatus {
+  Connected
+  Discovering
+  Error
+  Disconnected
+  CredentialsRequired
+}
+
+# Connection status for discovered resources
+enum ConnectionStatus {
+  Available
+  Starting
+  Stopped
+  Deleting
+  Failed
+  Unknown
+}
+
+# Common fields for all cloud providers
+interface CloudProvider {
+  Id: ID!
+  ProviderType: CloudProviderType!
+  Name: String!
+  Region: String!
+  Status: CloudProviderStatus!
+  LastDiscoveryAt: String
+  DiscoveredCount: Int!
+  Error: String
+}
+
+# =============================================================================
+# AWS Provider
+# =============================================================================
+
+type AWSProvider implements CloudProvider {
+  # Interface fields
+  Id: ID!
+  ProviderType: CloudProviderType!
+  Name: String!
+  Region: String!
+  Status: CloudProviderStatus!
+  LastDiscoveryAt: String
+  DiscoveredCount: Int!
+  Error: String
+  # AWS-specific fields
+  AuthMethod: String!
+  ProfileName: String
+  HasCredentials: Boolean!
+  DiscoverRDS: Boolean!
+  DiscoverElastiCache: Boolean!
+  DiscoverDocumentDB: Boolean!
+  DBUsername: String
+}
+
+input AWSProviderInput {
+  Name: String!
+  Region: String!
+  AuthMethod: String
+  AccessKeyId: String
+  SecretAccessKey: String
+  SessionToken: String
+  ProfileName: String
+  DiscoverRDS: Boolean
+  DiscoverElastiCache: Boolean
+  DiscoverDocumentDB: Boolean
+  DBUsername: String
+}
+
+# Local AWS profile discovered from ~/.aws/credentials and ~/.aws/config
+type LocalAWSProfile {
+  Name: String!
+  Region: String
+  Source: String!  # "credentials", "config", or "environment"
+  IsDefault: Boolean!
+}
+
+# AWS region from SDK partition data
+type AWSRegion {
+  Id: String!
+  Description: String!
+}
+
+# =============================================================================
+# Discovered Connections (Generic - works with any provider)
+# =============================================================================
+
+type DiscoveredConnection {
+  Id: ID!
+  ProviderType: CloudProviderType!
+  ProviderID: String!
+  Name: String!
+  DatabaseType: String!
+  Region: String
+  Status: ConnectionStatus!
+  Metadata: [Record!]!
+}
+
+# =============================================================================
+# Queries
+# =============================================================================
 
 type Query {
   Version: String!
@@ -217,6 +333,16 @@ type Query {
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
   DatabaseMetadata: DatabaseMetadata
+
+  # Cloud Provider Queries (Generic)
+  CloudProviders: [AWSProvider!]!
+  CloudProvider(id: ID!): AWSProvider
+  DiscoveredConnections: [DiscoveredConnection!]!
+  ProviderConnections(providerID: ID!): [DiscoveredConnection!]!
+
+  # AWS-specific helpers
+  LocalAWSProfiles: [LocalAWSProfile!]!
+  AWSRegions: [AWSRegion!]!
 }
 
 type Mutation {
@@ -230,4 +356,13 @@ type Mutation {
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationStatus!
+
+  # Cloud Provider Mutations
+  # Provider-specific add/update (type-safe inputs)
+  AddAWSProvider(input: AWSProviderInput!): AWSProvider!
+  UpdateAWSProvider(id: ID!, input: AWSProviderInput!): AWSProvider!
+  # Generic operations (work with any provider type)
+  RemoveCloudProvider(id: ID!): StatusResponse!
+  TestCloudProvider(id: ID!): CloudProviderStatus!
+  RefreshCloudProvider(id: ID!): AWSProvider!
 }

@@ -78,6 +78,11 @@ export interface FeatureFlags {
     autoStartTourOnLogin: boolean; // Auto-start tour when logging in with sample database
 }
 
+// Settings defaults that can be overridden by EE
+export interface SettingsDefaults {
+    disableAnimations?: boolean;
+}
+
 // EE Database type definition
 export interface EEDatabaseType {
     id: string;

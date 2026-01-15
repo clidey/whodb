@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import (
 )
 
 // GetColumnConstraints retrieves column constraints for PostgreSQL tables
-func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
-	constraints := make(map[string]map[string]interface{})
+func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	constraints := make(map[string]map[string]any)
 
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		// Get primary keys using Postgres system catalogs
@@ -48,7 +48,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 					continue
 				}
 				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]interface{}{}
+					constraints[columnName] = map[string]any{}
 				}
 				constraints[columnName]["primary"] = true
 			}
@@ -71,7 +71,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			}
 
 			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]interface{}{}
+				constraints[columnName] = map[string]any{}
 			}
 			constraints[columnName]["nullable"] = strings.EqualFold(isNullable, "YES")
 		}
@@ -96,7 +96,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			}
 
 			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]interface{}{}
+				constraints[columnName] = map[string]any{}
 			}
 			constraints[columnName]["unique"] = true
 		}
@@ -132,7 +132,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 }
 
 // parseCheckConstraint parses PostgreSQL CHECK constraint clauses to extract column constraints
-func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints map[string]map[string]interface{}) {
+func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints map[string]map[string]any) {
 	// PostgreSQL formats CHECK constraints like:
 	// - CHECK ((price >= (0)::numeric))
 	// - CHECK ((stock_quantity >= 0))
@@ -152,7 +152,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			return
 		}
 		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]interface{}{}
+			constraints[columnName] = map[string]any{}
 		}
 		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
 			if strings.Contains(matches[0], ">=") {
@@ -172,7 +172,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			return
 		}
 		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]interface{}{}
+			constraints[columnName] = map[string]any{}
 		}
 		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
 			if strings.Contains(matches[0], "<=") {
@@ -192,7 +192,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 			return
 		}
 		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]interface{}{}
+			constraints[columnName] = map[string]any{}
 		}
 		// Extract values from ARRAY
 		valuesStr := matches[2]

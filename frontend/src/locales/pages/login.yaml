@@ -22,7 +22,6 @@ en:
   allFieldsRequired: All Fields Are Required
   selectProfileRequired: Select a Profile
   loginSuccessful: Login Successful
-  loginSuccessfully: Login Successfully
   loginFailed: Login Failed
   loginFailedWithError: "Login Failed: {error}"
   sampleDatabaseNotFound: Sample Database Not Found

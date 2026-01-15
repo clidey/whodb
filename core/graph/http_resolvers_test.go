@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 import (
@@ -91,7 +107,7 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	})
 
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.ChatFunc = func(*engine.PluginConfig, string, string, string, string) ([]*engine.ChatMessage, error) {
+	mock.ChatFunc = func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error) {
 		return nil, errors.New("chat error")
 	}
 	mock.GetDatabasesFunc = func(*engine.PluginConfig) ([]string, error) { return []string{"db"}, nil }
@@ -101,7 +117,7 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	SetupHTTPServer(router)
 
 	// AI models
-	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=OpenAI-Compatible&token=x", nil)
+	modelReq := httptest.NewRequest(http.MethodGet, "/api/ai-models?modelType=Ollama&token=", nil)
 	modelReq = modelReq.WithContext(context.WithValue(modelReq.Context(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"}))
 	modelRec := httptest.NewRecorder()
 	router.ServeHTTP(modelRec, modelReq)

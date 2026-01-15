@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
+	"time"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
-
-// Tool input types - JSON tags define the schema
 
 // QueryInput is the input for the whodb_query tool.
 type QueryInput struct {
@@ -37,9 +40,13 @@ type QueryInput struct {
 
 // QueryOutput is the output for the whodb_query tool.
 type QueryOutput struct {
-	Columns []string `json:"columns"`
-	Rows    [][]any  `json:"rows"`
-	Error   string   `json:"error,omitempty"`
+	Columns              []string `json:"columns"`
+	Rows                 [][]any  `json:"rows"`
+	Error                string   `json:"error,omitempty"`
+	Warning              string   `json:"warning,omitempty"`
+	ConfirmationRequired bool     `json:"confirmation_required,omitempty"`
+	ConfirmationToken    string   `json:"confirmation_token,omitempty"`
+	ConfirmationQuery    string   `json:"confirmation_query,omitempty"`
 }
 
 // SchemasInput is the input for the whodb_schemas tool.
@@ -123,10 +130,164 @@ type ConnectionsOutput struct {
 	Error       string           `json:"error,omitempty"`
 }
 
+// ConfirmInput is the input for the whodb_confirm tool.
+type ConfirmInput struct {
+	// Token is the confirmation token from a previous query response
+	Token string `json:"token"`
+}
+
+// ConfirmOutput is the output for the whodb_confirm tool.
+type ConfirmOutput struct {
+	Columns []string `json:"columns"`
+	Rows    [][]any  `json:"rows"`
+	Error   string   `json:"error,omitempty"`
+	Message string   `json:"message,omitempty"`
+}
+
+// PendingConfirmation stores a query awaiting user confirmation
+type PendingConfirmation struct {
+	Token      string
+	Query      string
+	Connection string
+	ExpiresAt  time.Time
+}
+
+// pendingConfirmations stores queries awaiting confirmation
+var (
+	pendingConfirmations = make(map[string]*PendingConfirmation)
+	pendingMutex         sync.RWMutex
+)
+
+// generateConfirmationToken creates a secure random token
+func generateConfirmationToken() string {
+	return uuid.New().String()
+}
+
+// storePendingConfirmation stores a query for later confirmation
+func storePendingConfirmation(query, connection string) string {
+	token := generateConfirmationToken()
+
+	pendingMutex.Lock()
+	defer pendingMutex.Unlock()
+
+	// Clean up expired confirmations
+	now := time.Now()
+	for k, v := range pendingConfirmations {
+		if v.ExpiresAt.Before(now) {
+			delete(pendingConfirmations, k)
+		}
+	}
+
+	pendingConfirmations[token] = &PendingConfirmation{
+		Token:      token,
+		Query:      query,
+		Connection: connection,
+		ExpiresAt:  now.Add(60 * time.Second), // 60 second expiry
+	}
+
+	return token
+}
+
+// getPendingConfirmation retrieves and removes a pending confirmation
+func getPendingConfirmation(token string) (*PendingConfirmation, error) {
+	pendingMutex.Lock()
+	defer pendingMutex.Unlock()
+
+	pending, ok := pendingConfirmations[token]
+	if !ok {
+		return nil, errors.New("confirmation token not found or expired")
+	}
+
+	if pending.ExpiresAt.Before(time.Now()) {
+		delete(pendingConfirmations, token)
+		return nil, errors.New("confirmation token has expired")
+	}
+
+	// Remove after use (one-time use)
+	delete(pendingConfirmations, token)
+	return pending, nil
+}
+
+// Query execution helpers
+
+// executeQuery runs a query with optional timeout and returns the result
+func executeQuery(ctx context.Context, mgr *dbmgr.Manager, query string, timeout time.Duration) (*engine.GetRowsResult, error) {
+	if timeout > 0 {
+		queryCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		return mgr.ExecuteQueryWithContext(queryCtx, query)
+	}
+	return mgr.ExecuteQuery(query)
+}
+
+// convertColumns extracts column names from the result
+func convertColumns(result *engine.GetRowsResult) []string {
+	columns := make([]string, len(result.Columns))
+	for i, col := range result.Columns {
+		columns[i] = col.Name
+	}
+	return columns
+}
+
+// convertRows converts result rows to [][]any with optional row limit
+// Returns the converted rows and whether results were truncated
+func convertRows(result *engine.GetRowsResult, maxRows int) ([][]any, bool) {
+	totalRows := len(result.Rows)
+	rowLimit := totalRows
+	if maxRows > 0 && totalRows > maxRows {
+		rowLimit = maxRows
+	}
+
+	rows := make([][]any, rowLimit)
+	for i := 0; i < rowLimit; i++ {
+		row := result.Rows[i]
+		rows[i] = make([]any, len(row))
+		for j, val := range row {
+			rows[i][j] = val
+		}
+	}
+
+	return rows, totalRows > rowLimit
+}
+
 // Tool handlers
 
-// HandleQuery executes a SQL query against the specified connection.
-func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput) (*mcp.CallToolResult, QueryOutput, error) {
+// HandleQuery executes a SQL query against the specified connection with security validation.
+func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput, secOpts *SecurityOptions) (*mcp.CallToolResult, QueryOutput, error) {
+
+	// Detect statement type first
+	stmtType := DetectStatementType(input.Query)
+
+	// In confirm-writes mode, write operations need confirmation before execution
+	if secOpts.ConfirmWrites && IsWriteStatement(stmtType) {
+		// Validate the query first (check for other issues like multi-statement, dangerous functions)
+		// Pass allowWrite=true and allowDestructive=true since user will confirm
+		err := ValidateSQLStatement(input.Query, true, secOpts.SecurityLevel, secOpts.AllowMultiStatement, true)
+		if err != nil {
+			// Query has other issues beyond just being a write operation
+			return nil, QueryOutput{Error: fmt.Sprintf("query blocked: %v", err)}, nil
+		}
+
+		// Create a pending confirmation for the write operation
+		token := storePendingConfirmation(input.Query, input.Connection)
+
+		return nil, QueryOutput{
+			ConfirmationRequired: true,
+			ConfirmationToken:    token,
+			ConfirmationQuery:    input.Query,
+			Warning:              fmt.Sprintf("This %s operation requires confirmation. Ask the user to confirm, then call whodb_confirm with the token.", stmtType),
+		}, nil
+	}
+
+	// Validate the query against security settings
+	// allowDestructive: only if --allow-drop flag is set (confirm-writes handled above)
+	allowWrite := !secOpts.ReadOnly
+	allowDestructive := secOpts.AllowDrop
+	err := ValidateSQLStatement(input.Query, allowWrite, secOpts.SecurityLevel, secOpts.AllowMultiStatement, allowDestructive)
+	if err != nil {
+		return nil, QueryOutput{Error: fmt.Sprintf("query blocked: %v", err)}, nil
+	}
+
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
 		return nil, QueryOutput{Error: err.Error()}, nil
@@ -142,27 +303,66 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	}
 	defer mgr.Disconnect()
 
-	result, err := mgr.ExecuteQuery(input.Query)
+	result, err := executeQuery(ctx, mgr, input.Query, secOpts.QueryTimeout)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, QueryOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout)}, nil
+		}
 		return nil, QueryOutput{Error: fmt.Sprintf("query failed: %v", err)}, nil
 	}
 
-	// Convert columns
-	columns := make([]string, len(result.Columns))
-	for i, col := range result.Columns {
-		columns[i] = col.Name
+	columns := convertColumns(result)
+	rows, truncated := convertRows(result, secOpts.MaxRows)
+
+	output := QueryOutput{Columns: columns, Rows: rows}
+	if truncated {
+		output.Warning = fmt.Sprintf("Results truncated to %d rows. Use LIMIT in your query for more control.", secOpts.MaxRows)
 	}
 
-	// Convert rows from [][]string to [][]any
-	rows := make([][]any, len(result.Rows))
-	for i, row := range result.Rows {
-		rows[i] = make([]any, len(row))
-		for j, val := range row {
-			rows[i][j] = val
+	return nil, output, nil
+}
+
+// HandleConfirm confirms and executes a pending write operation.
+func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput, secOpts *SecurityOptions) (*mcp.CallToolResult, ConfirmOutput, error) {
+	// Get the pending confirmation
+	pending, err := getPendingConfirmation(input.Token)
+	if err != nil {
+		return nil, ConfirmOutput{Error: err.Error()}, nil
+	}
+
+	// Resolve connection
+	conn, err := ResolveConnectionOrDefault(pending.Connection)
+	if err != nil {
+		return nil, ConfirmOutput{Error: err.Error()}, nil
+	}
+
+	mgr, err := dbmgr.NewManager()
+	if err != nil {
+		return nil, ConfirmOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+	}
+
+	if err := mgr.Connect(conn); err != nil {
+		return nil, ConfirmOutput{Error: fmt.Sprintf("cannot connect to database: %v", err)}, nil
+	}
+	defer mgr.Disconnect()
+
+	result, err := executeQuery(ctx, mgr, pending.Query, secOpts.QueryTimeout)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, ConfirmOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout)}, nil
 		}
+		return nil, ConfirmOutput{Error: fmt.Sprintf("query failed: %v", err)}, nil
 	}
 
-	return nil, QueryOutput{Columns: columns, Rows: rows}, nil
+	columns := convertColumns(result)
+	rows, _ := convertRows(result, 0) // No row limit for confirmed writes
+
+	stmtType := DetectStatementType(pending.Query)
+	return nil, ConfirmOutput{
+		Columns: columns,
+		Rows:    rows,
+		Message: fmt.Sprintf("%s operation completed successfully", stmtType),
+	}, nil
 }
 
 // HandleSchemas lists all schemas in the database.

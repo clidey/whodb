@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import {
   ChevronUpIcon as ChevronUpIconCE,
   CircleStackIcon as CircleStackIconCE,
   ClipboardDocumentIcon as ClipboardDocumentIconCE,
+  CloudIcon as CloudIconCE,
   ClipboardIcon as ClipboardIconCE,
   ClockIcon as ClockIconCE,
   CogIcon as CogIconCE,
@@ -53,6 +54,7 @@ import {
   EllipsisHorizontalIcon as EllipsisHorizontalIconCE,
   EllipsisVerticalIcon as EllipsisVerticalIconCE,
   EnvelopeIcon as EnvelopeIconCE,
+  ExclamationCircleIcon as ExclamationCircleIconCE,
   EyeIcon as EyeIconCE,
   EyeSlashIcon as EyeSlashIconCE,
   FolderIcon as FolderIconCE,
@@ -118,6 +120,7 @@ export const ChevronRightIcon = EEOverrides.ChevronRightIcon ?? ChevronRightIcon
 export const ChevronUpIcon = EEOverrides.ChevronUpIcon ?? ChevronUpIconCE;
 export const CircleStackIcon = EEOverrides.CircleStackIcon ?? CircleStackIconCE;
 export const ClipboardDocumentIcon = EEOverrides.ClipboardDocumentIcon ?? ClipboardDocumentIconCE;
+export const CloudIcon = EEOverrides.CloudIcon ?? CloudIconCE;
 export const ClipboardIcon = EEOverrides.ClipboardIcon ?? ClipboardIconCE;
 export const ClockIcon = EEOverrides.ClockIcon ?? ClockIconCE;
 export const CogIcon = EEOverrides.CogIcon ?? CogIconCE;
@@ -130,6 +133,7 @@ export const DocumentTextIcon = EEOverrides.DocumentTextIcon ?? DocumentTextIcon
 export const EllipsisHorizontalIcon = EEOverrides.EllipsisHorizontalIcon ?? EllipsisHorizontalIconCE;
 export const EllipsisVerticalIcon = EEOverrides.EllipsisVerticalIcon ?? EllipsisVerticalIconCE;
 export const EnvelopeIcon = EEOverrides.EnvelopeIcon ?? EnvelopeIconCE;
+export const ExclamationCircleIcon = EEOverrides.ExclamationCircleIcon ?? ExclamationCircleIconCE;
 export const EyeIcon = EEOverrides.EyeIcon ?? EyeIconCE;
 export const EyeSlashIcon = EEOverrides.EyeSlashIcon ?? EyeSlashIconCE;
 export const FolderIcon = EEOverrides.FolderIcon ?? FolderIconCE;

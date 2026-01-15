@@ -10,7 +10,7 @@ func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
 	llmInstance = nil
 	t.Cleanup(func() { llmInstance = nil })
 
-	cfg := &engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(ChatGPT_LLMType), Token: "key1"}}
+	cfg := &engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(OpenAI_LLMType), Token: "key1"}}
 	first := Instance(cfg)
 	if first.APIKey != "key1" {
 		t.Fatalf("expected API key to be set on first instance")
@@ -33,31 +33,6 @@ func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
 	}
 }
 
-func TestValidateAPIKeyRequirements(t *testing.T) {
-	cases := []struct {
-		name    string
-		client  LLMClient
-		wantErr bool
-	}{
-		{name: "chatgpt missing key", client: LLMClient{Type: ChatGPT_LLMType, APIKey: ""}, wantErr: true},
-		{name: "anthropic missing key", client: LLMClient{Type: Anthropic_LLMType, APIKey: ""}, wantErr: true},
-		{name: "ollama no key needed", client: LLMClient{Type: Ollama_LLMType, APIKey: ""}, wantErr: false},
-		{name: "openai-compatible no key validation", client: LLMClient{Type: OpenAICompatible_LLMType, APIKey: ""}, wantErr: false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.client.validateAPIKey()
-			if tc.wantErr && err == nil {
-				t.Fatalf("expected error but got nil")
-			}
-			if !tc.wantErr && err != nil {
-				t.Fatalf("expected no error, got %v", err)
-			}
-		})
-	}
-}
-
 func TestCompleteReturnsErrorForUnsupportedType(t *testing.T) {
 	client := LLMClient{Type: LLMType("Unknown")}
 	if _, err := client.Complete("hi", "model", nil); err == nil {
@@ -69,5 +44,17 @@ func TestGetSupportedModelsReturnsErrorForUnsupportedType(t *testing.T) {
 	client := LLMClient{Type: LLMType("Unknown")}
 	if _, err := client.GetSupportedModels(); err == nil {
 		t.Fatalf("expected error for unsupported type")
+	}
+}
+
+func TestNormalizeLLMTypeHandlesChatGPT(t *testing.T) {
+	result := NormalizeLLMType("ChatGPT")
+	if result != OpenAI_LLMType {
+		t.Fatalf("expected ChatGPT to normalize to OpenAI, got %s", result)
+	}
+
+	result = NormalizeLLMType("OpenAI")
+	if result != OpenAI_LLMType {
+		t.Fatalf("expected OpenAI to stay as OpenAI, got %s", result)
 	}
 }

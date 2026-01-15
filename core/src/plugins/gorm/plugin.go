@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -55,9 +56,9 @@ type GormPluginFunctions interface {
 	// these below are meant to be generic-ish implementations by the base gorm plugin
 	ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error)
 
-	ConvertStringValue(value, columnType string) (interface{}, error)
+	ConvertStringValue(value, columnType string) (any, error)
 	ConvertRawToRows(raw *sql.Rows) (*engine.GetRowsResult, error)
-	ConvertRecordValuesToMap(values []engine.Record) (map[string]interface{}, error)
+	ConvertRecordValuesToMap(values []engine.Record) (map[string]any, error)
 
 	// CreateSQLBuilder creates a SQL builder instance - can be overridden by specific plugins
 	CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface
@@ -87,11 +88,11 @@ type GormPluginFunctions interface {
 
 	// GetColumnScanner returns a scanner for a specific column type
 	// This is called when ShouldHandleColumnType returns true
-	GetColumnScanner(columnType string) interface{}
+	GetColumnScanner(columnType string) any
 
 	// FormatColumnValue formats a scanned value for a specific column type
 	// This is called when ShouldHandleColumnType returns true
-	FormatColumnValue(columnType string, scanner interface{}) (string, error)
+	FormatColumnValue(columnType string, scanner any) (string, error)
 
 	// GetCustomColumnTypeName returns a custom column type name for display
 	// Return empty string to use the default type name
@@ -106,7 +107,7 @@ type GormPluginFunctions interface {
 
 	// HandleCustomDataType allows plugins to handle their own data type conversions
 	// Return (value, true) if handled, or (nil, false) to use default handling
-	HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error)
+	HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error)
 
 	// GetPrimaryKeyColumns returns the primary key columns for a table
 	GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]string, error)
@@ -173,9 +174,9 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 				"query": query,
 			})
 		}
-		var schemaNames []string
-		for _, schema := range schemas {
-			schemaNames = append(schemaNames, fmt.Sprintf("%s", schema))
+		schemaNames := make([]string, len(schemas))
+		for i, schema := range schemas {
+			schemaNames[i] = schema.(string)
 		}
 		return schemaNames, nil
 	})
@@ -244,7 +245,7 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 		// Enrich columns with primary key and foreign key information
 		for i := range columns {
 			// Check if column is a primary key
-			columns[i].IsPrimary = contains(primaryKeys, columns[i].Name)
+			columns[i].IsPrimary = slices.Contains(primaryKeys, columns[i].Name)
 
 			// Check if column is a foreign key
 			if fk, exists := fkRelationships[columns[i].Name]; exists {
@@ -256,15 +257,6 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 
 		return columns, nil
 	})
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }
 
 // SQLite-specific row retrieval is implemented in the sqlite3 plugin override.
@@ -401,7 +393,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 					return query, nil
 				}
 				parts := strings.Split(raw, ",")
-				vals := make([]interface{}, 0, len(parts))
+				vals := make([]any, 0, len(parts))
 				for _, part := range parts {
 					v := strings.TrimSpace(part)
 					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType)
@@ -550,7 +542,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	}
 
 	for rows.Next() {
-		columnPointers := make([]interface{}, len(columns))
+		columnPointers := make([]any, len(columns))
 		row := make([]string, len(columns))
 
 		for i, col := range columns {
@@ -661,12 +653,12 @@ func (p *GormPlugin) ShouldHandleColumnType(columnType string) bool {
 }
 
 // GetColumnScanner returns nil by default
-func (p *GormPlugin) GetColumnScanner(columnType string) interface{} {
+func (p *GormPlugin) GetColumnScanner(columnType string) any {
 	return nil
 }
 
 // FormatColumnValue returns empty string by default
-func (p *GormPlugin) FormatColumnValue(columnType string, scanner interface{}) (string, error) {
+func (p *GormPlugin) FormatColumnValue(columnType string, scanner any) (string, error) {
 	return "", nil
 }
 
@@ -709,7 +701,7 @@ func formatTimeOnly(value string) string {
 }
 
 // HandleCustomDataType returns false by default (no custom handling)
-func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (interface{}, bool, error) {
+func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error) {
 	return nil, false, nil
 }
 
@@ -774,7 +766,7 @@ func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sch
 // QueryForeignKeyRelationships executes a foreign key query and returns the relationships map.
 // This is a helper for SQL plugins that query system catalogs for FK information.
 // The query must return exactly 3 columns: column_name, referenced_table, referenced_column.
-func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, query string, params ...interface{}) (map[string]*engine.ForeignKeyRelationship, error) {
+func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, query string, params ...any) (map[string]*engine.ForeignKeyRelationship, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {

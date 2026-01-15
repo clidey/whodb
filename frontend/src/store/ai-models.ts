@@ -17,13 +17,15 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 export const availableInternalModelTypes = ["Ollama"];
-export const availableExternalModelTypes = ["ChatGPT", "Anthropic"];
+export const availableExternalModelTypes = ["OpenAI", "Anthropic"];
 
 export type IAIModelType = {
   id: string;
   modelType: string;
+  name?: string;
   token?: string;
   isEnvironmentDefined?: boolean;
+  isGeneric?: boolean;
 }
 
 type IAIModelsState = {

@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="./docs/logo/logo.svg" width="30px" height="auto" />  whodb
+# <img src="./docs/logo/logo.svg" width="30px" height="auto" />  WhoDB
 
 ### *Lightweight, Fast, and Beautiful Database Management*
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,14 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/common/config"
+	"github.com/clidey/whodb/core/src/common/datadir"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 const (
 	// File permissions
 	filePermissionUserRW = 0644 // User read/write, group/others read
-	dirPermissionUserRWX = 0755 // User read/write/execute, group/others read/execute
 )
 
 // App struct
@@ -78,7 +80,21 @@ func (a *App) Startup(ctx context.Context) {
 
 // Shutdown is called when the app is closing
 func (a *App) Shutdown(ctx context.Context) {
-	a.SaveWindowState()
+	// DEBUG: Write to file to confirm shutdown is called
+	opts := a.getConfigOptions()
+	if dir, err := datadir.Get(opts); err == nil {
+		debugPath := filepath.Join(dir, "shutdown-debug.txt")
+		os.WriteFile(debugPath, []byte("shutdown called"), 0644)
+	}
+
+	if err := a.SaveWindowState(); err != nil {
+		// Write error to debug file
+		if dir, err2 := datadir.Get(opts); err2 == nil {
+			debugPath := filepath.Join(dir, "save-error.txt")
+			os.WriteFile(debugPath, []byte(err.Error()), 0644)
+		}
+		log.Logger.Warnf("Failed to save window state: %v", err)
+	}
 
 	// Track desktop app shutdown
 	analytics.Capture(ctx, "desktop_app_closed", map[string]any{
@@ -241,6 +257,15 @@ func (a *App) GetFromClipboard() (string, error) {
 
 // Window Management
 
+// getConfigOptions returns the datadir options for this app edition.
+func (a *App) getConfigOptions() datadir.Options {
+	return datadir.Options{
+		AppName:           "whodb",
+		EnterpriseEdition: a.edition == "ee",
+		Development:       false,
+	}
+}
+
 // SaveWindowState saves current window position, size, and zoom
 func (a *App) SaveWindowState() error {
 	// Get current window state
@@ -256,27 +281,25 @@ func (a *App) SaveWindowState() error {
 		Maximized: maximized,
 	}
 
-	// Save to local storage
-	settingsPath := a.getSettingsPath()
-	data, err := json.MarshalIndent(a.windowSettings, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(settingsPath, data, filePermissionUserRW)
+	// Save to unified config.json
+	opts := a.getConfigOptions()
+	return config.WriteSection(config.SectionDesktop, a.windowSettings, opts)
 }
 
 // RestoreWindowState restores window position, size, and zoom
 func (a *App) RestoreWindowState() error {
-	settingsPath := a.getSettingsPath()
-	data, err := os.ReadFile(settingsPath)
-	if err != nil {
-		// File doesn't exist, use defaults
-		return nil
-	}
+	opts := a.getConfigOptions()
 
-	err = json.Unmarshal(data, &a.windowSettings)
-	if err != nil {
+	// ====================================================================
+	// MIGRATION CODE - CAN BE REMOVED AFTER
+	// ====================================================================
+	a.migrateFromWindowSettingsJSON(opts)
+	// ====================================================================
+	// END MIGRATION CODE
+	// ====================================================================
+
+	// Read from unified config.json
+	if err := config.ReadSection(config.SectionDesktop, &a.windowSettings, opts); err != nil {
 		return err
 	}
 
@@ -293,6 +316,54 @@ func (a *App) RestoreWindowState() error {
 
 	return nil
 }
+
+// ============================================================================
+// MIGRATION CODE - can be removed a couple versions in
+// ============================================================================
+
+var migrationDone bool
+
+// migrateFromWindowSettingsJSON migrates from the old window-settings.json
+// to the unified config.json (same directory, just different file).
+func (a *App) migrateFromWindowSettingsJSON(opts datadir.Options) {
+	if migrationDone {
+		return
+	}
+	migrationDone = true
+
+	// Check if unified config already has desktop section
+	var existing WindowSettings
+	if err := config.ReadSection(config.SectionDesktop, &existing, opts); err == nil {
+		if existing.Width > 0 || existing.Height > 0 {
+			return // Already has data
+		}
+	}
+
+	// Check for old window-settings.json in the same data directory
+	dir, err := datadir.Get(opts)
+	if err != nil {
+		return
+	}
+
+	oldPath := filepath.Join(dir, "window-settings.json")
+	data, err := os.ReadFile(oldPath)
+	if err != nil {
+		return // No old file
+	}
+
+	var settings WindowSettings
+	if err := json.Unmarshal(data, &settings); err != nil {
+		return
+	}
+
+	if err := config.WriteSection(config.SectionDesktop, settings, opts); err == nil {
+		log.Logger.Infof("Migrated window settings to unified config.json")
+	}
+}
+
+// ============================================================================
+// END MIGRATION CODE
+// ============================================================================
 
 // MinimizeWindow minimizes the window
 func (a *App) MinimizeWindow() {
@@ -333,34 +404,6 @@ Documentation: https://docs.whodb.com`,
 		Title:   "About WhoDB",
 		Message: message,
 	})
-}
-
-// getSettingsPath returns the path to store window settings
-func (a *App) getSettingsPath() string {
-	suffix := ""
-	if a.edition == "ee" {
-		suffix = "-ee"
-	}
-
-	if snapUserCommon := os.Getenv("SNAP_USER_COMMON"); snapUserCommon != "" {
-		configDir := filepath.Join(snapUserCommon, "config"+suffix)
-		os.MkdirAll(configDir, dirPermissionUserRWX)
-		return filepath.Join(configDir, "window-settings.json")
-	}
-
-	if configDir, err := os.UserConfigDir(); err == nil && configDir != "" {
-		target := filepath.Join(configDir, "whodb"+suffix)
-		os.MkdirAll(target, dirPermissionUserRWX)
-		return filepath.Join(target, "window-settings.json")
-	}
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		homeDir = os.TempDir()
-	}
-	fallbackDir := filepath.Join(homeDir, ".whodb"+suffix)
-	os.MkdirAll(fallbackDir, dirPermissionUserRWX)
-	return filepath.Join(fallbackDir, "window-settings.json")
 }
 
 // SetupApplicationMenu creates and sets the application menu

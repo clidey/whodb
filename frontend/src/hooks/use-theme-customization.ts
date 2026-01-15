@@ -28,4 +28,12 @@ export const useThemeCustomization = () => {
   useEffect(() => {
     applyUICustomization(settings);
   }, [settings.fontSize, settings.borderRadius, settings.spacing]);
+
+  useEffect(() => {
+    if (settings.disableAnimations) {
+      document.body.classList.add('disable-animations');
+    } else {
+      document.body.classList.remove('disable-animations');
+    }
+  }, [settings.disableAnimations]);
 };

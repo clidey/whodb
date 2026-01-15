@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-package llm
-
-import (
-	"github.com/clidey/whodb/core/src/env"
-)
-
-func getOpenAICompatibleModels() ([]string, error) {
-	if len(env.CustomModels) > 0 {
-		return env.CustomModels, nil
-	}
-	return []string{}, nil
-}
+export * from './aws-provider-modal';
+export * from './aws-providers-section';
+export * from './aws-connection-picker';
+export * from './database-icon-with-badge';

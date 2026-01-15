@@ -20,7 +20,7 @@ frontend/coverage
 frontend/.nyc_output
 tmp/
 core/tmp/
-ee/frontend/node_modules/
+*node_modules*
 worktree/
 frontend/cypress/screenshots/
 frontend/cypress/downloads/

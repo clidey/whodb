@@ -37,8 +37,14 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.25.4-alpine3.22 AS backend-stage
-RUN apk update && apk add --no-cache gcc musl-dev git
+FROM golang:1.25.4-bookworm AS backend-stage
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	gcc \
+	libc6-dev \
+	git \
+	ca-certificates \
+	curl \
+	&& rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy ee-stub for CE builds (provides stub packages for EE imports)
@@ -57,13 +63,33 @@ COPY --from=build-stage /app/build/ ./build/
 ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
-RUN CGO_ENABLED=1 GOOS=linux go build -tags prod \
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod \
 	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
 
-FROM alpine:3.22
-RUN apk update && apk add --no-cache ca-certificates
+# Pre-download BAML native library for the target architecture
+# BAML version should match the version in go.mod (0.215.2)
+ARG TARGETARCH
+RUN BAML_VERSION=0.215.2 && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        BAML_ARCH="x86_64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        BAML_ARCH="aarch64"; \
+    else \
+        echo "Unsupported architecture: $TARGETARCH" && exit 1; \
+    fi && \
+    mkdir -p /root/.cache/baml/libs/${BAML_VERSION} && \
+    curl -L -o /root/.cache/baml/libs/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-gnu.so \
+        https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-gnu.so && \
+    echo "Downloaded BAML library for ${BAML_ARCH}"
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=backend-stage /core /core
+# Copy pre-downloaded BAML library cache
+COPY --from=backend-stage /root/.cache/baml /root/.cache/baml
 
 CMD ["/core"]
