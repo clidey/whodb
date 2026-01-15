@@ -34,6 +34,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             deb.debian.org:443
+            deb.debian.org:80
             github.com:443
 
       - name: Checkout
@@ -287,6 +288,7 @@ jobs:
             appstoreconnect.apple.com:443
             contentdelivery.itunes.apple.com:443
             deb.debian.org:443
+deb.debian.org:80
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443

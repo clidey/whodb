@@ -23,6 +23,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             deb.debian.org:443
+            deb.debian.org:80
             github.com:443
 
       - name: Checkout

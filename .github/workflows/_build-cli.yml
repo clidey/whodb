@@ -36,6 +36,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             deb.debian.org:443
+            deb.debian.org:80
             dl.google.com:443
             github.com:443
             go.dev:443
@@ -81,6 +82,7 @@ jobs:
             archive.ubuntu.com:443
             azure.archive.ubuntu.com:80
             deb.debian.org:443
+deb.debian.org:80
             dl.google.com:443
             github.com:443
             go.dev:443
@@ -131,6 +133,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             deb.debian.org:443
+deb.debian.org:80
             dl.google.com:443
             github.com:443
             go.dev:443
@@ -196,6 +199,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             deb.debian.org:443
+deb.debian.org:80
             dl.google.com:443
             github.com:443
             go.dev:443
@@ -240,6 +244,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             deb.debian.org:443
+deb.debian.org:80
 
       - name: Download all CLI binaries
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0

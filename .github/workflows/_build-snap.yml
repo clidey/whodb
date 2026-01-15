@@ -51,6 +51,7 @@ jobs:
             canonical-bos01.cdn.snapcraftcontent.com:443
             canonical-lgw01.cdn.snapcraftcontent.com:443
             deb.debian.org:443
+            deb.debian.org:80
             deb.nodesource.com:443
             esm.ubuntu.com:443
             github.com:443

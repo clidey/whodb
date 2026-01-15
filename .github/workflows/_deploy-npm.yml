@@ -26,6 +26,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             deb.debian.org:443
+            deb.debian.org:80
             fulcio.sigstore.dev:443
             github.com:443
             registry.npmjs.org:443

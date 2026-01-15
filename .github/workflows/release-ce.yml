@@ -327,6 +327,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             deb.debian.org:443
+            deb.debian.org:80
             github.com:443
             uploads.github.com:443
 
@@ -636,6 +637,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             deb.debian.org:443
+deb.debian.org:80
 
       - name: Generate comprehensive summary
         run: |
