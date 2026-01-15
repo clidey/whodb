@@ -637,7 +637,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             deb.debian.org:443
-deb.debian.org:80
+            deb.debian.org:80
 
       - name: Generate comprehensive summary
         run: |
