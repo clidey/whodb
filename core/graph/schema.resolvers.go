@@ -38,6 +38,7 @@ import (
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 	"golang.org/x/sync/errgroup"
@@ -902,6 +903,13 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 	var profiles []*model.LoginProfile
 	for i, profile := range src.GetLoginProfiles() {
 		profileName := src.GetLoginProfileId(i, profile)
+
+		// Check if SSL is configured (mode is set and not "disabled")
+		sslConfigured := false
+		if mode, ok := profile.Config[ssl.KeySSLMode]; ok && mode != "" && mode != string(ssl.SSLModeDisabled) {
+			sslConfigured = true
+		}
+
 		loginProfile := &model.LoginProfile{
 			ID:                   profileName,
 			Type:                 model.DatabaseType(profile.Type),
@@ -909,6 +917,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 			Database:             &profile.Database,
 			IsEnvironmentDefined: true,
 			Source:               profile.Source,
+			SSLConfigured:        sslConfigured,
 		}
 		if len(profile.Alias) > 0 {
 			loginProfile.Alias = &profile.Alias

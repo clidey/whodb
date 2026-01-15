@@ -18,7 +18,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { v4 } from 'uuid';
 import { LoginCredentials } from '@graphql';
 
-export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean});
+export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean, SSLConfigured?: boolean});
 
 export type SSLStatus = {
   IsEnabled: boolean;

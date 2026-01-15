@@ -179,6 +179,7 @@ type LoginProfile struct {
 	Database             *string      `json:"Database,omitempty"`
 	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
 	Source               string       `json:"Source"`
+	SSLConfigured        bool         `json:"SSLConfigured"`
 }
 
 type LoginProfileInput struct {

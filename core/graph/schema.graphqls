@@ -137,6 +137,7 @@ type LoginProfile {
   Database: String
   IsEnvironmentDefined: Boolean!
   Source: String!
+  SSLConfigured: Boolean!
 }
 
 type StatusResponse {

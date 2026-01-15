@@ -155,6 +155,7 @@ type ComplexityRoot struct {
 		Hostname             func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		IsEnvironmentDefined func(childComplexity int) int
+		SSLConfigured        func(childComplexity int) int
 		Source               func(childComplexity int) int
 		Type                 func(childComplexity int) int
 	}
@@ -691,6 +692,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginProfile.IsEnvironmentDefined(childComplexity), true
+	case "LoginProfile.SSLConfigured":
+		if e.complexity.LoginProfile.SSLConfigured == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.SSLConfigured(childComplexity), true
 	case "LoginProfile.Source":
 		if e.complexity.LoginProfile.Source == nil {
 			break
@@ -3661,6 +3668,35 @@ func (ec *executionContext) fieldContext_LoginProfile_Source(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _LoginProfile_SSLConfigured(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LoginProfile_SSLConfigured,
+		func(ctx context.Context) (any, error) {
+			return obj.SSLConfigured, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_SSLConfigured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MockDataGenerationStatus_AmountGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4455,6 +4491,8 @@ func (ec *executionContext) fieldContext_Query_Profiles(_ context.Context, field
 				return ec.fieldContext_LoginProfile_IsEnvironmentDefined(ctx, field)
 			case "Source":
 				return ec.fieldContext_LoginProfile_Source(ctx, field)
+			case "SSLConfigured":
+				return ec.fieldContext_LoginProfile_SSLConfigured(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LoginProfile", field.Name)
 		},
@@ -8859,6 +8897,11 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 			}
 		case "Source":
 			out.Values[i] = ec._LoginProfile_Source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "SSLConfigured":
+			out.Values[i] = ec._LoginProfile_SSLConfigured(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

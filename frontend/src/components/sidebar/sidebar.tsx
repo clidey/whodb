@@ -147,12 +147,14 @@ export const Sidebar: FC = () => {
                 <DatabaseIconWithBadge
                     icon={getProfileIcon(profile)}
                     showCloudBadge={isAwsConnection(profile.Id)}
-                    sslStatus={profile.Id === current?.Id ? sslStatus : undefined}
+                    sslStatus={profile.Id === current?.Id
+                        ? sslStatus
+                        : (profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined)}
                     size="sm"
                 />
             ),
             profile,
-        })), [profiles, current?.Id, sslStatus]);
+        })), [profiles, current?.Id, sslStatus, cloudProvidersEnabled]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;

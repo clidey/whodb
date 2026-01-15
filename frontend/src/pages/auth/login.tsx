@@ -59,7 +59,7 @@ import {SettingsActions} from "../../store/settings";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {AwsConnectionPicker, AwsConnectionPrefillData} from '../../components/aws';
+import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
 import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 
@@ -192,7 +192,11 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onCompleted(data) {
                 if (data.Login.Status) {
-                    const profileData = { ...credentials };
+                    const sslMode = advancedForm[SSL_KEYS.MODE];
+                    const profileData = {
+                        ...credentials,
+                        SSLConfigured: sslMode != null && sslMode !== 'disabled' && sslMode !== '',
+                    };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
                     markFirstLoginComplete();
@@ -253,6 +257,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
+                        SSLConfigured: profile?.SSLConfigured ?? false,
                     }));
                     markFirstLoginComplete();
 
@@ -305,6 +310,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: sampleProfile.IsEnvironmentDefined ?? false,
+                        SSLConfigured: sampleProfile.SSLConfigured ?? false,
                     }));
                     markFirstLoginComplete();
                     if (featureFlags.autoStartTourOnLogin) {
@@ -452,7 +458,14 @@ export const LoginForm: FC<LoginFormProps> = ({
             .map(profile => ({
                 value: profile.Id,
                 label: profile.Alias ?? profile.Id,
-                icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+                icon: (
+                    <DatabaseIconWithBadge
+                        icon={(Icons.Logos as Record<string, ReactElement>)[profile.Type]}
+                        showCloudBadge={isAwsConnection(profile.Id)}
+                        sslStatus={profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined}
+                        size="sm"
+                    />
+                ),
                 rightIcon: sources[profile.Source],
             })) ?? [];
     }, [profiles?.Profiles, cloudProvidersEnabled]);
