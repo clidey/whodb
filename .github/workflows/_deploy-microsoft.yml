@@ -29,6 +29,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >-
             api.github.com:443
+            deb.debian.org:443
             github.com:443
 
       - name: Checkout
@@ -344,6 +345,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >-
             api.github.com:443
+            deb.debian.org:443
             github.com:443
 
       - name: Checkout for scripts
