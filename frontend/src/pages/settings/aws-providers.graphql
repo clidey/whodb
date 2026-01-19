@@ -1,0 +1,152 @@
+query GetCloudProviders {
+  CloudProviders {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+
+query GetCloudProvider($id: ID!) {
+  CloudProvider(id: $id) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+
+query GetDiscoveredConnections {
+  DiscoveredConnections {
+    Id
+    ProviderType
+    ProviderID
+    Name
+    DatabaseType
+    Region
+    Status
+    Metadata {
+      Key
+      Value
+    }
+  }
+}
+
+query GetProviderConnections($providerId: ID!) {
+  ProviderConnections(providerID: $providerId) {
+    Id
+    ProviderType
+    ProviderID
+    Name
+    DatabaseType
+    Region
+    Status
+    Metadata {
+      Key
+      Value
+    }
+  }
+}
+
+query GetLocalAWSProfiles {
+  LocalAWSProfiles {
+    Name
+    Region
+    Source
+    IsDefault
+  }
+}
+
+query GetAWSRegions {
+  AWSRegions {
+    Id
+    Description
+  }
+}
+
+mutation AddAWSProvider($input: AWSProviderInput!) {
+  AddAWSProvider(input: $input) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+
+mutation UpdateAWSProvider($id: ID!, $input: AWSProviderInput!) {
+  UpdateAWSProvider(id: $id, input: $input) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}
+
+mutation RemoveCloudProvider($id: ID!) {
+  RemoveCloudProvider(id: $id) {
+    Status
+  }
+}
+
+mutation TestCloudProvider($id: ID!) {
+  TestCloudProvider(id: $id)
+}
+
+mutation RefreshCloudProvider($id: ID!) {
+  RefreshCloudProvider(id: $id) {
+    Id
+    ProviderType
+    Name
+    Region
+    AuthMethod
+    ProfileName
+    HasCredentials
+    DiscoverRDS
+    DiscoverElastiCache
+    DiscoverDocumentDB
+    Status
+    LastDiscoveryAt
+    DiscoveredCount
+    Error
+  }
+}

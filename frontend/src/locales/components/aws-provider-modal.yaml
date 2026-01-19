@@ -1,0 +1,72 @@
+en:
+  addProvider: Add AWS Account
+  editProvider: Edit AWS Account
+
+  detectedProfiles: Detected AWS Profiles
+  clickToAutofill: Click a profile to auto-fill the form
+  defaultAwsName: Default AWS
+  awsProfileName: "AWS ({{name}})"
+  profileSourceTooltip: "Found in {{source}}"
+  defaultProfileName: default
+
+  sourceCredentials: "~/.aws/credentials"
+  sourceConfig: "~/.aws/config"
+  sourceEnvironment: Environment vars
+
+  authStatic: Access Key
+  authProfile: AWS Profile
+  authIam: IAM Role
+  authEnv: Environment Variables
+  staticWarning: Static access keys are long-lived; prefer IAM roles or shared profiles and rotate keys regularly.
+
+  displayName: Display Name
+  namePlaceholder: e.g., Production AWS
+  awsRegion: AWS Region
+  selectRegion: Select region
+  customRegion: Custom region...
+  customRegionPlaceholder: e.g., us-gov-west-1
+  authMethod: Authentication Method
+  authDefault: Default (Recommended)
+  authDefaultDesc: Uses AWS SDK credential chain (env vars → ~/.aws/credentials → IAM role)
+  authStaticDesc: Enter AWS access key and secret directly
+  authProfileDesc: Use a named profile from ~/.aws/credentials
+  authIamDesc: Use IAM role attached to EC2/ECS/Lambda
+  authEnvDesc: Use AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+
+  accessKeyId: Access Key ID
+  accessKeyPlaceholder: AKIAIOSFODNN7EXAMPLE
+  secretAccessKey: Secret Access Key
+  secretKeyPlaceholder: Enter secret access key
+  sessionTokenOptional: Session Token (Optional)
+  sessionTokenPlaceholder: For temporary credentials
+
+  profileName: Profile Name
+  profilePlaceholder: e.g., production
+
+  resourceDiscovery: Resource Discovery
+  rdsLabel: RDS Databases
+  rdsDesc: PostgreSQL, MySQL, MariaDB instances
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Redis clusters
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB-compatible clusters
+
+  testConnection: Test Connection
+  testing: Testing...
+  connectionSuccessful: Connection successful
+  connectionFailed: Connection test failed
+  testFailed: "Test failed: {{error}}"
+  saveBeforeTest: Save the provider before testing
+  cancel: Cancel
+  save: Save
+  add: Add
+  saving: Saving...
+  providerAdded: AWS account added successfully
+  providerUpdated: AWS account updated successfully
+  operationFailed: "Operation failed: {{error}}"
+  unknownError: Unknown error occurred
+
+  nameRequired: Display name is required
+  regionRequired: Region is required
+  credentialsRequired: Access key ID and secret access key are required
+  profileRequired: Profile name is required

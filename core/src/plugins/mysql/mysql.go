@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -42,7 +41,19 @@ type MySQLPlugin struct {
 }
 
 func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
+		var databases []struct {
+			Database string `gorm:"column:Database"`
+		}
+		if err := db.Raw("SHOW DATABASES").Scan(&databases).Error; err != nil {
+			return nil, err
+		}
+		var databaseNames []string
+		for _, database := range databases {
+			databaseNames = append(databaseNames, database.Database)
+		}
+		return databaseNames, nil
+	})
 }
 
 func (p *MySQLPlugin) GetAllSchemasQuery() string {
@@ -97,7 +108,7 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engin
 	return tableName, attributes
 }
 
-func (p *MySQLPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...interface{}) (*engine.GetRowsResult, error) {
+func (p *MySQLPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {

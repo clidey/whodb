@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package main
 
 import (
+	_ "github.com/clidey/whodb/core/src/bamlconfig" // Must be first - sets BAML_LOG before native library loads
+
 	"github.com/clidey/whodb/cli/cmd"
 	"github.com/clidey/whodb/cli/pkg/crash"
 	"github.com/clidey/whodb/core/src/log"

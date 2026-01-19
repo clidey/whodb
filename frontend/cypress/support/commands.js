@@ -148,7 +148,13 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
     // Handle database field based on type
     if (database !== undefined) {
         if (databaseType === "Sqlite3") {
+            // Wait for database dropdown to be enabled (not loading)
+            cy.get('[data-testid="database"]', { timeout: 10000 })
+                .should('not.be.disabled');
+            // Click to open dropdown
             cy.get('[data-testid="database"]').click();
+            // Wait for at least one option to appear (backend needs time to fetch databases)
+            cy.get('[role="option"]', { timeout: 10000 }).should('have.length.at.least', 1);
             cy.get(`[data-value="${database}"]`).click();
         } else {
             cy.get('[data-testid="database"]').clear();
@@ -181,8 +187,9 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     });
 
-    // Wait for successful login - sidebar should appear after navigation
-    cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', {timeout: 30000})
+    // Wait for successful login - sidebar profile exists for ALL database types
+    // (some like SQLite/Elasticsearch have neither database nor schema dropdowns)
+    cy.get('[data-testid="sidebar-profile"]', {timeout: 30000})
         .should('exist');
 });
 
@@ -1385,8 +1392,7 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
     // Reset chat response using test-scoped storage
     Cypress.env(CHAT_RESPONSE_KEY, null);
 
-    // Single comprehensive intercept that handles all chat-related GraphQL operations
-    // Note: The actual endpoint is /api/query, not /graphql
+    // Intercept GraphQL operations for provider and model info
     cy.intercept('POST', '**/api/query', (req) => {
         const operation = req.body.operationName;
         console.log('[CYPRESS] Intercepted GraphQL operation:', operation);
@@ -1397,6 +1403,7 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
                 data: {
                     AIProviders: [{
                         Type: modelType,
+                        Name: modelType, // Provider display name
                         ProviderId: providerId,
                         IsEnvironmentDefined: false
                     }]
@@ -1415,56 +1422,73 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
             return;
         }
 
-        if (operation === 'GetAIChat') {
-            console.log('[CYPRESS] Intercepted GetAIChat');
-            console.log('[CYPRESS] Request body:', JSON.stringify(req.body, null, 2));
-
-            // Use the stored response from test-scoped storage
-            const storedResponse = Cypress.env(CHAT_RESPONSE_KEY);
-            console.log('[CYPRESS] storedResponse:', JSON.stringify(storedResponse, null, 2));
-            const responseData = storedResponse || [];
-
-            if (responseData.length === 0) {
-                console.warn('[CYPRESS] WARNING: No chat response configured! Sending empty array.');
-            }
-
-            const chatMessages = responseData.map(response => {
-                const msg = {
-                    Type: response.type || 'text',
-                    Text: response.text || '',
-                    __typename: 'AIChatMessage',
-                    Result: response.result || null
-                };
-
-                return msg;
-            });
-
-            console.log('[CYPRESS] Mapped chat messages:', JSON.stringify(chatMessages, null, 2));
-
-            // Clear the response BEFORE replying using test-scoped storage
-            const responseCopy = [...chatMessages];
-            Cypress.env(CHAT_RESPONSE_KEY, null);
-
-            // Reply immediately with GraphQL format
-            req.reply({
-                statusCode: 200,
-                headers: {
-                    'content-type': 'application/json'
-                },
-                body: {
-                    data: {
-                        AIChat: responseCopy
-                    }
-                }
-            });
-
-            console.log('[CYPRESS] Response sent successfully');
-            return;
-        }
-
         // Let other GraphQL operations pass through
         req.continue();
     }).as('graphqlMock');
+
+    // Intercept the streaming chat endpoint
+    cy.intercept('POST', '**/api/ai-chat/stream', (req) => {
+        console.log('[CYPRESS] Intercepted streaming chat request');
+        console.log('[CYPRESS] Request body:', JSON.stringify(req.body, null, 2));
+
+        // Use the stored response from test-scoped storage
+        const storedResponse = Cypress.env(CHAT_RESPONSE_KEY);
+        console.log('[CYPRESS] storedResponse:', JSON.stringify(storedResponse, null, 2));
+        const responseData = storedResponse || [];
+
+        if (responseData.length === 0) {
+            console.warn('[CYPRESS] WARNING: No chat response configured! Sending empty response.');
+        }
+
+        // Build SSE response
+        let sseData = '';
+
+        for (const response of responseData) {
+            const type = response.type || 'text';
+            const text = response.text || '';
+            const result = response.result || null;
+
+            // Send text messages as streaming chunks
+            if (type === 'text' || type === 'message') {
+                sseData += `event: chunk\n`;
+                sseData += `data: ${JSON.stringify({ type: 'text', text })}\n\n`;
+            }
+
+            // Send SQL results as complete messages
+            if (type.startsWith('sql:')) {
+                sseData += `event: message\n`;
+                sseData += `data: ${JSON.stringify({ Type: type, Text: text, Result: result })}\n\n`;
+            }
+
+            // Send errors as error events (will show as toast in UI)
+            if (type === 'error') {
+                sseData += `event: error\n`;
+                sseData += `data: ${JSON.stringify({ error: text })}\n\n`;
+            }
+        }
+
+        // Send done event
+        sseData += `event: done\n`;
+        sseData += `data: {}\n\n`;
+
+        console.log('[CYPRESS] Sending SSE response:', sseData);
+
+        // Clear the response after using it
+        Cypress.env(CHAT_RESPONSE_KEY, null);
+
+        // Reply with SSE format
+        req.reply({
+            statusCode: 200,
+            headers: {
+                'content-type': 'text/event-stream',
+                'cache-control': 'no-cache',
+                'connection': 'keep-alive'
+            },
+            body: sseData
+        });
+
+        console.log('[CYPRESS] Response sent successfully');
+    }).as('streamMock');
 });
 
 /**
@@ -1713,7 +1737,17 @@ Cypress.Commands.add('toggleChatSQLView', () => {
  * @param {string} expectedSQL - The expected SQL query (can be partial)
  */
 Cypress.Commands.add('verifyChatSQL', (expectedSQL) => {
-    cy.get('[data-testid="code-editor"]').last().should('contain.text', expectedSQL);
+    cy.get('[data-testid="code-editor"]').last().invoke('text').then((actualText) => {
+        // Remove line number prefixes (e.g., "1>", "912>") and normalize whitespace
+        const normalizedActual = actualText
+            .replace(/^\d+>/gm, '')  // Remove line number prefixes
+            .replace(/\s+/g, ' ')     // Normalize whitespace
+            .trim();
+        const normalizedExpected = expectedSQL
+            .replace(/\s+/g, ' ')     // Normalize whitespace
+            .trim();
+        expect(normalizedActual).to.contain(normalizedExpected);
+    });
 });
 
 /**

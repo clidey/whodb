@@ -24,41 +24,25 @@ import {getDocumentId, parseDocument} from '../../support/categories/document';
  * @returns {string} Operator string for this database
  */
 function getOperator(db, operatorKey) {
-    if (db.whereOperators && db.whereOperators[operatorKey]) {
-        return db.whereOperators[operatorKey];
-    }
-    // Default fallbacks
-    const defaults = {
-        equals: '=',
-        notEquals: '!=',
-        greaterThan: '>',
-        lessThan: '<',
-    };
-    return defaults[operatorKey] || '=';
+    return db.whereOperators[operatorKey];
 }
 
 describe('Where Conditions', () => {
 
     // SQL Databases
     forEachDatabase('sql', (db) => {
-        const testTable = db.testTable || {
-            name: 'users',
-            idField: 'id',
-            identifierField: 'username',
-            firstName: 'john_doe',
-            identifierColIndex: 1
-        };
+        const testTable = db.testTable;
         const tableName = testTable.name;
-        const idField = testTable.idField || 'id';
-        const nameField = testTable.identifierField || 'username';
-        const firstName = testTable.firstName || 'john_doe';
-        const colIndex = testTable.identifierColIndex || 1;
+        const idField = testTable.idField;
+        const nameField = testTable.identifierField;
+        const firstName = testTable.firstName;
+        const colIndex = testTable.identifierColIndex;
         const eq = getOperator(db, 'equals');
 
-        const whereConfig = testTable.whereConditions || {};
-        const testId1 = whereConfig.testId1 || '1';
-        const testId2 = whereConfig.testId2 || '2';
-        const testId3 = whereConfig.testId3 || '3';
+        const whereConfig = testTable.whereConditions;
+        const testId1 = whereConfig.testId1;
+        const testId2 = whereConfig.testId2;
+        const testId3 = whereConfig.testId3;
 
         it('applies where condition and filters data', () => {
             cy.data(tableName);
@@ -159,10 +143,9 @@ describe('Where Conditions', () => {
             const neq = getOperator(db, 'notEquals');
 
             // Get config-driven values for third condition
-            const whereConfig = testTable.whereConditions || {};
-            const thirdCol = whereConfig.thirdColumn || 'email';
-            const thirdVal = whereConfig.thirdValue || 'jane@example.com';
-            const expectedName = whereConfig.expectedValue || 'admin_user';
+            const thirdCol = whereConfig.thirdColumn;
+            const thirdVal = whereConfig.thirdValue;
+            const expectedName = whereConfig.expectedValue;
 
             // Add 3 conditions - should show "+1 more" button
             cy.whereTable([
@@ -226,7 +209,7 @@ describe('Where Conditions', () => {
             cy.clearWhereConditions();
             cy.submitTable();
         });
-    }, { features: ['whereConditions'] });
+    }, {features: ['whereConditions']});
 
     // Document Databases
     forEachDatabase('document', (db) => {
@@ -314,6 +297,6 @@ describe('Where Conditions', () => {
                 }
             });
         });
-    }, { features: ['whereConditions'] });
+    }, {features: ['whereConditions']});
 
 });

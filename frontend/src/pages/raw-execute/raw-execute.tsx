@@ -922,7 +922,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void; isActiv
             onChange={handleChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-auto max-w-[40ch] border-b border-gray-400 focus:outline-none focus:border-blue-500 transition-colors text-inherit"
+            className="w-auto max-w-[40ch] border-b border-gray-400 transition-colors text-inherit"
           />
         ) : (
           <span className={cn("text-sm text-nowrap", {
@@ -946,6 +946,7 @@ export const RawExecutePage: FC = () => {
     const location = useLocation();
     const dispatch = useAppDispatch();
     const { pages = [], cells = {}, activePageId } = useAppSelector(state => state.scratchpad);
+    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
@@ -954,9 +955,7 @@ export const RawExecutePage: FC = () => {
     // Initialize scratchpad and ensure all pages have cells
     const hasInitialized = useRef(false);
     useEffect(() => {
-        console.log('Initialization check:', { pagesLength: pages.length, hasInitialized: hasInitialized.current });
         if (!hasInitialized.current) {
-            console.log('Ensuring scratchpad has proper structure...');
             hasInitialized.current = true;
             dispatch(ScratchpadActions.ensurePagesHaveCells());
         }
@@ -1036,10 +1035,10 @@ export const RawExecutePage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
             <div className="flex flex-col w-full gap-2" data-testid="raw-execute-page">
-                {isEEFeatureEnabled('analyzeView') && <AIProvider 
+                {/* {isEEFeatureEnabled('analyzeView') && <AIProvider 
                     {...aiState}
                     disableNewChat={true}
-                />}
+                />} */}
                 <div className="flex justify-center items-center w-full mt-4">
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
@@ -1088,10 +1087,11 @@ export const RawExecutePage: FC = () => {
                                                 className={classNames({
                                                     "hidden": page.id !== activePageId,
                                                 })}
-                                                // TODO: Improve page transition animation
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
+                                                {...(disableAnimations ? {} : {
+                                                    initial: { opacity: 0, y: 10 },
+                                                    animate: { opacity: 1, y: 0 },
+                                                    exit: { opacity: 0, y: -10 }
+                                                })}
                                             >
                                                 <RawExecuteSubPage 
                                                     key={page.id} 

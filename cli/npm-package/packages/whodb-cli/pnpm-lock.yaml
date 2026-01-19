@@ -1,0 +1,25 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    optionalDependencies:
+      '@clidey/whodb-cli-darwin-arm64':
+        specifier: 0.1.0
+        version: 0.1.0
+
+packages:
+
+  '@clidey/whodb-cli-darwin-arm64@0.1.0':
+    resolution: {integrity: sha512-Z2d46XGKmmmtVGaWTj1qgpx6o9vGSgo76/hr3eQPCcVUhDfOtX7DmFdNui76ntv6TjKUXsGUj0xFID2Cmffjlg==}
+    cpu: [arm64]
+    os: [darwin]
+
+snapshots:
+
+  '@clidey/whodb-cli-darwin-arm64@0.1.0':
+    optional: true

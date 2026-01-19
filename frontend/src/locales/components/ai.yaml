@@ -5,7 +5,8 @@ en:
   placeholder: Ask AI...
   addExternalModel: Add External Model
   modelType: Model Type
-  selectModelType: Select Model Type
+  selectProvider: Select Provider
+  name: Name (Optional)
   token: Token
   cancel: Cancel
   submit: Submit
@@ -23,3 +24,4 @@ en:
   ollamaRunCommand: ollama run llama3.1
   ollamaDocsText: Check our documentation for more information on how to setup Ollama.
   unableToConnect: Unable to Connect to the Model
+  tokenRequired: Token is required to connect to the provider

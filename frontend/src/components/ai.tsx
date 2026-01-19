@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import {
     ChevronDownIcon,
     LockClosedIcon,
     PlusCircleIcon,
+    SparklesIcon,
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
@@ -128,61 +129,71 @@ export const useAI = () => {
     }, [handleAIModelTypeChange]);
 
     useEffect(() => {
+        // Clear environment-defined providers from Redux state on mount to ensure fresh data
+        // Keep only user-added providers (those with tokens)
+        // Use modelTypes from Redux hook to ensure persistence has rehydrated
+        const userAddedProviders = modelTypes.filter(model =>
+            model.token != null && model.token !== ""
+        );
+
         getAiProviders({
             onCompleted(data) {
                 const aiProviders = data.AIProviders || [];
-                const modelTypesState = ensureModelTypesArray(reduxStore.getState().aiModels.modelTypes);
-                const initialModelTypes = modelTypesState.filter(model => {
-                const existingModel = aiProviders.find(provider => provider.ProviderId === model.id);
-                return existingModel != null || (model.token != null && model.token !== "");
+
+                // Only keep user-added providers that still have tokens
+                const initialModelTypes = userAddedProviders.filter(model => {
+                    // Keep user-added providers (with tokens)
+                    return model.token != null && model.token !== "";
                 });
 
                 // Filter out providers that already exist in modelTypes
                 const newProviders = aiProviders.filter(provider =>
-                !initialModelTypes.some(model => model.id === provider.ProviderId)
+                    !initialModelTypes.some(model => model.id === provider.ProviderId)
                 );
 
                 const finalModelTypes = [
-                ...newProviders.map(provider => ({
-                    id: provider.ProviderId,
-                    modelType: provider.Type,
-                    isEnvironmentDefined: provider.IsEnvironmentDefined,
-                })),
-                ...initialModelTypes
+                    ...newProviders.map(provider => ({
+                        id: provider.ProviderId,
+                        modelType: provider.Type,
+                        name: provider.Name,
+                        isEnvironmentDefined: provider.IsEnvironmentDefined,
+                        isGeneric: provider.IsGeneric,
+                    })),
+                    ...initialModelTypes
                 ];
 
                 // Check if current model type exists in final model types
-                const currentModelType = reduxStore.getState().aiModels.current;
-                if (currentModelType && !finalModelTypes.some(model => model.id === currentModelType.id)) {
-                dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
-                dispatch(AIModelsActions.setModels([]));
-                dispatch(AIModelsActions.setCurrentModel(undefined));
+                // Use modelType from Redux hook instead of direct store access
+                if (modelType && !finalModelTypes.some(model => model.id === modelType.id)) {
+                    dispatch(AIModelsActions.setCurrentModelType({ id: "" }));
+                    dispatch(AIModelsActions.setModels([]));
+                    dispatch(AIModelsActions.setCurrentModel(undefined));
                 }
 
                 dispatch(AIModelsActions.setModelTypes(finalModelTypes));
-                getAIModels({
-                    variables: {
-                        providerId: currentModelType?.id,
-                        modelType: currentModelType?.modelType ?? "",
-                        token: currentModelType?.token ?? "",
-                    },
-                });
+
+                // Only fetch models if there's a current model type
+                if (modelType) {
+                    getAIModels({
+                        variables: {
+                            providerId: modelType.id,
+                            modelType: modelType.modelType ?? "",
+                            token: modelType.token ?? "",
+                        },
+                    });
+                }
             },
         });
-
-        const modelType = modelTypes[0];
-        if (modelType == null || models.length > 0) {
-            return;
-        }
-        handleAIModelTypeChange(modelType.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const modelTypesDropdownItems = useMemo(() => {
         return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
             id: modelType.id,
-            label: modelType.modelType,
-            icon: (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
+            label: modelType.name || modelType.modelType,
+            icon: modelType.isGeneric
+                ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
+                : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
             extra: {
                 token: modelType.token,
                 isEnvironmentDefined: modelType.isEnvironmentDefined,
@@ -245,6 +256,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     const [addExternalModel, setAddExternalModel] = useState(false);
     const [externalModelType, setExternalModel] = useState<string>(externalModelTypes[0].id);
     const [externalModelToken, setExternalModelToken] = useState<string>("");
+    const [externalModelName, setExternalModelName] = useState<string>("");
 
     const handleAddExternalModel = useCallback(() => {
         setAddExternalModel(status => !status);
@@ -256,6 +268,12 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     }, []);
 
     const handleExternalModelSubmit = useCallback(() => {
+        // Validate token is provided
+        if (!externalModelToken || externalModelToken.trim().length === 0) {
+            toast.error(t('tokenRequired'));
+            return;
+        }
+
         dispatch(AIModelsActions.setCurrentModel(undefined));
         dispatch(AIModelsActions.setModels([]));
         getAIModels({
@@ -269,11 +287,13 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 dispatch(AIModelsActions.addAIModelType({
                     id,
                     modelType: externalModelType,
+                    name: externalModelName || externalModelType,
                     token: externalModelToken,
                 }));
                 dispatch(AIModelsActions.setCurrentModelType({ id }));
                 setExternalModel(externalModelTypes[0].id);
                 setExternalModelToken("");
+                setExternalModelName("");
                 setAddExternalModel(false);
                 if (data.AIModel.length > 0) {
                     dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
@@ -283,7 +303,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 toast.error(`${t('unableToConnect')}: ${error.message}`);
             },
         });
-    }, [getAIModels, externalModelType, externalModelToken, dispatch]);
+    }, [getAIModels, externalModelType, externalModelToken, externalModelName, dispatch, t]);
 
     const handleOpenDocs = useCallback(() => {
         window.open("https://docs.whodb.com/ai/introduction", "_blank");
@@ -327,6 +347,14 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label>{t('name')}</Label>
+                        <Input
+                            value={externalModelName ?? ""}
+                            onChange={e => setExternalModelName(e.target.value)}
+                            placeholder={externalModelType}
+                        />
                     </div>
                     <div className="flex flex-col gap-2">
                         <Label>{t('token')}</Label>
@@ -395,7 +423,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         const item = modelTypesDropdownItems.find(i => i.id === id);
                         if (item) handleAIProviderChange(item.id);
                     }}
-                    placeholder={t('selectModelType')}
+                    placeholder={t('selectProvider')}
                     side="right"
                     align="start"
                     extraOptions={
@@ -416,7 +444,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     }}
                 />
                 <SearchSelect
-                    disabled={modelType == null}
+                    disabled={modelType == null || getAIModelsLoading}
                     options={modelDropdownItems.map(item => ({
                         value: item.id,
                         label: item.label,
@@ -442,7 +470,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         data-testid="chat-delete-provider"
                         variant="secondary"
                         className={cn({
-                            "hidden": disableNewChat,
+                            "hidden": disableNewChat || modelType?.isEnvironmentDefined,
                         })}
                     >
                         <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}

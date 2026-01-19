@@ -36,13 +36,18 @@ type IPageProps = {
 }
 
 export const Page: FC<IPageProps> = (props) => {
+    const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
+    const animationProps = disableAnimations ? {} : {
+        initial: { opacity: 0 },
+        animate: { opacity: 100, transition: { duration: 0.5 } },
+        exit: { opacity: 0 }
+    };
+
     return <div className={twMerge("flex grow px-8 py-6 flex-col h-full w-full", props.wrapperClassName)}>
         <AnimatePresence>
             <motion.div className={twMerge("flex flex-row grow flex-wrap gap-sm w-full h-full overflow-y-auto", props.className)}
                 data-testid="page-scroll-container"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 100, transition: { duration: 0.5 } }}
-                exit={{ opacity: 0 }}>
+                {...animationProps}>
                     {props.children}
             </motion.div>
         </AnimatePresence>
@@ -120,7 +125,6 @@ const KeyboardShortcutsHint: FC = () => {
 };
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
-    const { t } = useTranslation('components/page');
     const current = useAppSelector(state => state.auth.current);
 
     // Fetch database metadata when logged in - this populates Redux store
@@ -129,13 +133,6 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
 
     return (
         <Container>
-            {/* Skip link for keyboard navigation */}
-            <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-                {t('skipToContent')}
-            </a>
             <div className="flex flex-row grow">
                 <SidebarProvider defaultOpen={props.sidebar == null}>
                     <Sidebar />

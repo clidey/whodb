@@ -1,0 +1,18 @@
+{
+  "name": "@clidey/whodb-cli-linux-arm",
+  "version": "0.1.0",
+  "description": "WhoDB CLI server binary for Linux ARMv7",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clidey/whodb.git"
+  },
+  "author": "Clidey",
+  "license": "Apache-2.0",
+  "preferUnplugged": true
+}

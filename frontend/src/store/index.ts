@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import { aiModelsReducers } from './ai-models';
 import { scratchpadReducers, IScratchpadState } from './scratchpad';
 import { tourReducers } from './tour';
 import { databaseMetadataReducers } from './database-metadata';
+import { providersReducers } from './providers';
 import { runMigrations } from './migrations';
 
 // Run migrations before initializing the store
@@ -122,6 +123,7 @@ const persistedReducer = combineReducers({
   }, scratchpadReducers),
   tour: persistReducer({ key: "tour", storage }, tourReducers),
   databaseMetadata: persistReducer({ key: "databaseMetadata", storage }, databaseMetadataReducers),
+  providers: persistReducer({ key: "providers", storage }, providersReducers),
 });
 
 export const reduxStore = configureStore({

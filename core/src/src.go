@@ -29,6 +29,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/mockdata"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 )
@@ -60,6 +61,11 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
 
 	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
+
+	// Register generic AI providers from environment configuration
+	for _, provider := range env.GenericProviders {
+		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType, provider.BaseURL, provider.APIKey)
+	}
 
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {

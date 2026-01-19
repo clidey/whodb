@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,6 +225,7 @@ interface TableProps {
     height?: number;
     onRowUpdate?: (row: Record<string, string | number>, originalRow?: Record<string, string | number>) => Promise<void>;
     disableEdit?: boolean;
+    limitContextMenu?: boolean;
     schema?: string;
     storageUnit?: string;
     onRefresh?: () => void;
@@ -254,6 +255,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     height = 500,
     onRowUpdate,
     disableEdit = false,
+    limitContextMenu = false,
     schema,
     storageUnit,
     onRefresh,
@@ -305,9 +307,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
-
-    // Accessibility: live region for screen reader announcements
-    const [liveAnnouncement, setLiveAnnouncement] = useState<string>('');
 
     const handleEdit = (index: number) => {
         setEditIndex(index);
@@ -499,15 +498,6 @@ export const StorageUnitTable: FC<TableProps> = ({
         const isCurrentlySelected = checked.includes(rowIndex);
         const newChecked = isCurrentlySelected ? checked.filter(i => i !== rowIndex) : [...checked, rowIndex];
         setChecked(newChecked);
-        // Announce selection change to screen readers
-        const selectedCount = newChecked.length;
-        if (selectedCount === 0) {
-            setLiveAnnouncement(t('noRowsSelected'));
-        } else if (selectedCount === 1) {
-            setLiveAnnouncement(t('oneRowSelected'));
-        } else {
-            setLiveAnnouncement(t('rowsSelected', { count: selectedCount }));
-        }
     }, [checked, t]);
 
     // Track click timeouts to prevent single-click when double-click occurs
@@ -893,8 +883,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             rows.forEach((row, rowIdx) => {
                 row.forEach((cellValue, colIdx) => {
                     if (cellValue !== undefined && cellValue !== null) {
-                        // Trim trailing null characters for comparison (e.g., ClickHouse FixedString)
-                        const searchValue = String(cellValue).replace(/\0+$/, '');
+                        const searchValue = String(cellValue);
                         if (searchValue.toLowerCase().includes(search.toLowerCase())) {
                             matches.push({ rowIdx, colIdx });
                         }
@@ -911,9 +900,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                 }
                 // Update last search state
                 lastSearchState.current = { search, matchIdx };
-
-                // Announce search result to screen readers
-                setLiveAnnouncement(t('searchMatchFound', { current: matchIdx + 1, total: matches.length }));
 
                 const { rowIdx, colIdx } = matches[matchIdx];
                 // Compose a unique selector for the cell
@@ -937,7 +923,6 @@ export const StorageUnitTable: FC<TableProps> = ({
             } else {
                 // No matches, reset state
                 lastSearchState.current = { search, matchIdx: 0 };
-                setLiveAnnouncement(t('noSearchMatches'));
             }
         };
 
@@ -954,74 +939,74 @@ export const StorageUnitTable: FC<TableProps> = ({
         const isFocused = focusedRowIndex === index;
         const isSelected = checked.includes(index);
 
+        const tableRow = (
+            <TableRow
+                data-row-idx={index}
+                role="row"
+                aria-rowindex={index + 1}
+                aria-selected={isSelected}
+                data-focused={isFocused || undefined}
+                tabIndex={isFocused ? 0 : -1}
+                className={cn(
+                    "group relative cursor-pointer",
+                    // Focus styling - visible ring around focused row
+                    isFocused && "bg-primary/5",
+                    // Selected styling
+                    isSelected && "bg-muted"
+                )}
+                style={style}
+                onClick={() => setFocusedRowIndex(index)}
+                onFocus={() => setFocusedRowIndex(index)}
+            >
+                <TableCell
+                    role="gridcell"
+                    className={cn("min-w-[40px] w-[40px]", {
+                        "hidden": disableEdit,
+                    })}
+                >
+                    <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index])}
+                        aria-label={isSelected ? t('deselectRow') : t('selectRow')}
+                    />
+                    <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Manually trigger context menu on this row
+                        const event = new MouseEvent("contextmenu", {
+                            bubbles: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY,
+                        });
+                        e.currentTarget.dispatchEvent(event);
+                        }} data-testid="icon-button" aria-label={t('moreActions')}>
+                        <EllipsisVerticalIcon className="w-4 h-4" />
+                    </Button>
+                </TableCell>
+                {paginatedRows[index]?.map((cell, cellIdx) => (
+                    <TableCell
+                        key={cellIdx}
+                        role="gridcell"
+                        className="cursor-pointer"
+                        title={t('cellInteractionHint')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setFocusedRowIndex(index);
+                            handleCellClick(index, cellIdx);
+                        }}
+                        onDoubleClick={() => handleCellDoubleClick(index)}
+                        onContextMenu={() => !limitContextMenu && setContextMenuCellIdx(cellIdx)}
+                        data-col-idx={cellIdx}
+                    >
+                        {cell}
+                    </TableCell>
+                ))}
+            </TableRow>
+        );
+
         return <ContextMenu key={index}>
             <ContextMenuTrigger className="contents">
-                <TableRow
-                    data-row-idx={index}
-                    role="row"
-                    aria-rowindex={index + 1}
-                    aria-selected={isSelected}
-                    data-focused={isFocused || undefined}
-                    tabIndex={isFocused ? 0 : -1}
-                    className={cn(
-                        "group relative cursor-pointer outline-none",
-                        // Focus styling - visible ring around focused row
-                        isFocused && "ring-2 ring-primary ring-inset bg-primary/5",
-                        // Selected styling
-                        isSelected && "bg-muted"
-                    )}
-                    style={style}
-                    onClick={() => setFocusedRowIndex(index)}
-                    onFocus={() => setFocusedRowIndex(index)}
-                >
-                    <TableCell
-                        role="gridcell"
-                        className={cn("min-w-[40px] w-[40px]", {
-                            "hidden": disableEdit,
-                        })}
-                    >
-                        <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index])}
-                            aria-label={isSelected ? t('deselectRow') : t('selectRow')}
-                        />
-                        <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Manually trigger context menu on this row
-                            const event = new MouseEvent("contextmenu", {
-                                bubbles: true,
-                                clientX: e.clientX,
-                                clientY: e.clientY,
-                            });
-                            e.currentTarget.dispatchEvent(event);
-                            }} data-testid="icon-button" aria-label={t('moreActions')}>
-                            <EllipsisVerticalIcon className="w-4 h-4" />
-                        </Button>
-                    </TableCell>
-                    {paginatedRows[index]?.map((cell, cellIdx) => {
-                        // Trim trailing null characters (e.g., from ClickHouse FixedString)
-                        const displayValue = typeof cell === 'string' ? cell.replace(/\0+$/, '') : cell;
-                        return (
-                            <TableCell
-                                key={cellIdx}
-                                role="gridcell"
-                                className="cursor-pointer"
-                                title={t('cellInteractionHint')}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setFocusedRowIndex(index);
-                                    handleCellClick(index, cellIdx);
-                                }}
-                                onDoubleClick={() => handleCellDoubleClick(index)}
-                                onContextMenu={() => setContextMenuCellIdx(cellIdx)}
-                                data-col-idx={cellIdx}
-                            >
-                                {displayValue}
-                            </TableCell>
-                        );
-                    })}
-                </TableRow>
+                {tableRow}
             </ContextMenuTrigger>
             <ContextMenuContent
                 className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
@@ -1033,7 +1018,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
                             if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                const copyValue = typeof cell === 'string' ? cell.replace(/\0+$/, '') : String(cell);
+                                const copyValue = String(cell);
                                 navigator.clipboard.writeText(copyValue);
                                 toast.success(t('copiedCellToClipboard'));
                             }
@@ -1077,16 +1062,20 @@ export const StorageUnitTable: FC<TableProps> = ({
                     {t('copyRow')}
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
-                <ContextMenuItem onSelect={() => handleSelectRow(index)}>
-                    <CheckCircleIcon className="w-4 h-4 text-primary" />
-                    {checked.includes(index) ? t('deselectRow') : t('selectRow')}
-                    <ContextMenuShortcut>Space</ContextMenuShortcut>
-                </ContextMenuItem>
-                <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
-                    <PencilSquareIcon className="w-4 h-4" />
-                    {t('editRow')}
-                    <ContextMenuShortcut>Enter</ContextMenuShortcut>
-                </ContextMenuItem>
+                {!limitContextMenu && (
+                    <ContextMenuItem onSelect={() => handleSelectRow(index)}>
+                        <CheckCircleIcon className="w-4 h-4 text-primary" />
+                        {checked.includes(index) ? t('deselectRow') : t('selectRow')}
+                        <ContextMenuShortcut>Space</ContextMenuShortcut>
+                    </ContextMenuItem>
+                )}
+                {!limitContextMenu && (
+                    <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
+                        <PencilSquareIcon className="w-4 h-4" />
+                        {t('editRow')}
+                        <ContextMenuShortcut>Enter</ContextMenuShortcut>
+                    </ContextMenuItem>
+                )}
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
                         <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
@@ -1125,40 +1114,35 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
-                <ContextMenuItem
-                    onSelect={() => setShowMockDataSheet(true)}
-                >
-                    <DocumentDuplicateIcon className="w-4 h-4" />
-                    {t('mockData')}
-                    <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
-                </ContextMenuItem>
-                <ContextMenuItem
-                    variant="destructive"
-                    disabled={deleting}
-                    onSelect={async () => {
-                        await handleDeleteRow(index);
-                    }}
-                    data-testid="context-menu-delete-row"
-                >
-                    <TrashIcon className="w-4 h-4 text-destructive" />
-                    {t('deleteRow')}
-                    <ContextMenuShortcut>Delete</ContextMenuShortcut>
-                </ContextMenuItem>
+                {!limitContextMenu && (
+                    <ContextMenuItem
+                        onSelect={() => setShowMockDataSheet(true)}
+                    >
+                        <DocumentDuplicateIcon className="w-4 h-4" />
+                        {t('mockData')}
+                        <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                    </ContextMenuItem>
+                )}
+                {!limitContextMenu && (
+                    <ContextMenuItem
+                        variant="destructive"
+                        disabled={deleting}
+                        onSelect={async () => {
+                            await handleDeleteRow(index);
+                        }}
+                        data-testid="context-menu-delete-row"
+                    >
+                        <TrashIcon className="w-4 h-4 text-destructive" />
+                        {t('deleteRow')}
+                        <ContextMenuShortcut>{formatShortcut(["Mod", "Delete"])}</ContextMenuShortcut>
+                    </ContextMenuItem>
+                )}
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex]);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex]);
 
     return (
         <div ref={tableRef} className="h-full flex">
-            {/* Screen reader live region for announcements */}
-            <div
-                role="status"
-                aria-live="polite"
-                aria-atomic="true"
-                className="sr-only"
-            >
-                {liveAnnouncement}
-            </div>
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }} data-testid="table-container">
@@ -1171,134 +1155,139 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
-                                <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
-                                    <TableHead className={cn("min-w-[40px] w-[40px] relative", {
-                                        "hidden": disableEdit,
-                                    })}>
-                                        <Checkbox
-                                            checked={checked.length === paginatedRows.length && paginatedRows.length > 0}
-                                            onCheckedChange={() => {
+                                    <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
+                                        <TableHead className={cn("min-w-[40px] w-[40px] relative", {
+                                            "hidden": disableEdit,
+                                        })}>
+                                            <Checkbox
+                                                checked={checked.length === paginatedRows.length && paginatedRows.length > 0}
+                                                onCheckedChange={() => {
+                                                    setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
+                                                }}
+                                                aria-label={checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
+                                            />
+                                            <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 top-1.5 w-0" onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                // Manually trigger context menu on this row
+                                                const event = new MouseEvent("contextmenu", {
+                                                    bubbles: true,
+                                                    clientX: e.clientX,
+                                                    clientY: e.clientY,
+                                                });
+                                                e.currentTarget.dispatchEvent(event);
+                                                }} data-testid="icon-button" aria-label={t('moreActions')}>
+                                                <EllipsisVerticalIcon className="w-4 h-4" aria-hidden="true" />
+                                            </Button>
+                                        </TableHead>
+                                        {columns.map((col, idx) => (
+                                            <TableHead
+                                                key={col + idx}
+                                                icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
+                                                className={cn({
+                                                    "cursor-pointer select-none": onColumnSort,
+                                                })}
+                                                tabIndex={onColumnSort ? 0 : undefined}
+                                                onClick={() => onColumnSort?.(col)}
+                                                onKeyDown={(e) => {
+                                                    if (onColumnSort && (e.key === 'Enter' || e.key === ' ')) {
+                                                        e.preventDefault();
+                                                        onColumnSort(col);
+                                                    }
+                                                }}
+                                                onFocus={() => { focusedColumnRef.current = col; }}
+                                                data-testid={`column-header-${col}`}
+                                                data-column-name={col}
+                                                data-sort-direction={sortedColumns?.get(col) || undefined}
+                                            >
+                                                <Tip>
+                                                    <p className={cn("flex items-center gap-xs", {
+                                                        "font-bold": columnIsPrimary?.[idx],
+                                                        "italic": columnIsForeignKey?.[idx] && !columnIsPrimary?.[idx],
+                                                    })}>
+                                                        {col}
+                                                        {onColumnSort && sortedColumns?.has(col) && (
+                                                            sortedColumns.get(col) === 'asc'
+                                                                ? <ChevronUpIcon className="w-4 h-4" data-testid="sort-indicator" />
+                                                                : <ChevronDownIcon className="w-4 h-4" data-testid="sort-indicator" />
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
+                                                </Tip>
+                                            </TableHead>
+                                        ))}
+                                    </TableHeadRow>
+                                </ContextMenuTrigger>
+                                <ContextMenuContent
+                    className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                    collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
+                >
+                                    {!limitContextMenu && (
+                                        <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
+                                            <CalculatorIcon className="w-4 h-4" />
+                                            {t('mockData')}
+                                            <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                                        </ContextMenuItem>
+                                    )}
+                                    {!limitContextMenu && <ContextMenuSeparator />}
+                                    <ContextMenuSub>
+                                        <ContextMenuSubTrigger>
+                                            <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                            {t('exportData')}
+                                        </ContextMenuSubTrigger>
+                                        <ContextMenuSubContent
+                                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                                        >
+                                            <ContextMenuItem
+                                                onSelect={() => setShowExportConfirm(true)}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                {t('exportAllAsCsv')}
+                                                <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() => setShowExportConfirm(true)}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                {t('exportAllAsExcel')}
+                                            </ContextMenuItem>
+                                            <ContextMenuSeparator />
+                                            <ContextMenuItem
+                                                onSelect={() => setShowExportConfirm(true)}
+                                                disabled={checked.length === 0}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                {t('exportSelectedAsCsv')}
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() => setShowExportConfirm(true)}
+                                                disabled={checked.length === 0}
+                                            >
+                                                <DocumentIcon className="w-4 h-4" />
+                                                {t('exportSelectedAsExcel')}
+                                            </ContextMenuItem>
+                                        </ContextMenuSubContent>
+                                    </ContextMenuSub>
+                                    <ContextMenuSeparator />
+                                    {!limitContextMenu && (
+                                        <ContextMenuItem onSelect={() => onRefresh?.()}>
+                                            <CircleStackIcon className="w-4 h-4" />
+                                            {t('refreshData')}
+                                            <ContextMenuShortcut>{formatShortcut(["Mod", "R"])}</ContextMenuShortcut>
+                                        </ContextMenuItem>
+                                    )}
+                                    {!limitContextMenu && (
+                                        <ContextMenuItem
+                                            onSelect={() => {
                                                 setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                                             }}
-                                            aria-label={checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
-                                        />
-                                        <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 top-1.5 w-0" onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            // Manually trigger context menu on this row
-                                            const event = new MouseEvent("contextmenu", {
-                                                bubbles: true,
-                                                clientX: e.clientX,
-                                                clientY: e.clientY,
-                                            });
-                                            e.currentTarget.dispatchEvent(event);
-                                            }} data-testid="icon-button" aria-label={t('moreActions')}>
-                                            <EllipsisVerticalIcon className="w-4 h-4" aria-hidden="true" />
-                                        </Button>
-                                    </TableHead>
-                                    {columns.map((col, idx) => (
-                                        <TableHead
-                                            key={col + idx}
-                                            icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
-                                            className={cn({
-                                                "cursor-pointer select-none": onColumnSort,
-                                                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset": onColumnSort,
-                                            })}
-                                            tabIndex={onColumnSort ? 0 : undefined}
-                                            onClick={() => onColumnSort?.(col)}
-                                            onKeyDown={(e) => {
-                                                if (onColumnSort && (e.key === 'Enter' || e.key === ' ')) {
-                                                    e.preventDefault();
-                                                    onColumnSort(col);
-                                                }
-                                            }}
-                                            onFocus={() => { focusedColumnRef.current = col; }}
-                                            data-testid={`column-header-${col}`}
-                                            data-column-name={col}
-                                            data-sort-direction={sortedColumns?.get(col) || undefined}
                                         >
-                                            <Tip>
-                                                <p className={cn("flex items-center gap-xs", {
-                                                    "font-bold": columnIsPrimary?.[idx],
-                                                    "italic": columnIsForeignKey?.[idx] && !columnIsPrimary?.[idx],
-                                                })}>
-                                                    {col}
-                                                    {onColumnSort && sortedColumns?.has(col) && (
-                                                        sortedColumns.get(col) === 'asc'
-                                                            ? <ChevronUpIcon className="w-4 h-4" data-testid="sort-indicator" />
-                                                            : <ChevronDownIcon className="w-4 h-4" data-testid="sort-indicator" />
-                                                    )}
-                                                </p>
-                                                <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
-                                            </Tip>
-                                        </TableHead>
-                                    ))}
-                                </TableHeadRow>
-                            </ContextMenuTrigger>
-                            <ContextMenuContent
-                className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
-            >
-                                <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
-                                    <CalculatorIcon className="w-4 h-4" />
-                                    {t('mockData')}
-                                    <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
-                                </ContextMenuItem>
-                                <ContextMenuSeparator />
-                                <ContextMenuSub>
-                                    <ContextMenuSubTrigger>
-                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
-                                        {t('exportData')}
-                                    </ContextMenuSubTrigger>
-                                    <ContextMenuSubContent
-                                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                                    >
-                                        <ContextMenuItem
-                                            onSelect={() => setShowExportConfirm(true)}
-                                        >
-                                            <DocumentIcon className="w-4 h-4" />
-                                            {t('exportAllAsCsv')}
-                                            <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                            <CheckCircleIcon className="w-4 h-4" />
+                                            {checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
+                                            <ContextMenuShortcut>{formatShortcut(["Mod", "A"])}</ContextMenuShortcut>
                                         </ContextMenuItem>
-                                        <ContextMenuItem
-                                            onSelect={() => setShowExportConfirm(true)}
-                                        >
-                                            <DocumentIcon className="w-4 h-4" />
-                                            {t('exportAllAsExcel')}
-                                        </ContextMenuItem>
-                                        <ContextMenuSeparator />
-                                        <ContextMenuItem
-                                            onSelect={() => setShowExportConfirm(true)}
-                                            disabled={checked.length === 0}
-                                        >
-                                            <DocumentIcon className="w-4 h-4" />
-                                            {t('exportSelectedAsCsv')}
-                                        </ContextMenuItem>
-                                        <ContextMenuItem
-                                            onSelect={() => setShowExportConfirm(true)}
-                                            disabled={checked.length === 0}
-                                        >
-                                            <DocumentIcon className="w-4 h-4" />
-                                            {t('exportSelectedAsExcel')}
-                                        </ContextMenuItem>
-                                    </ContextMenuSubContent>
-                                </ContextMenuSub>
-                                <ContextMenuSeparator />
-                                <ContextMenuItem onSelect={() => onRefresh?.()}>
-                                    <CircleStackIcon className="w-4 h-4" />
-                                    {t('refreshData')}
-                                    <ContextMenuShortcut>{formatShortcut(["Mod", "R"])}</ContextMenuShortcut>
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                    onSelect={() => {
-                                        setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
-                                    }}
-                                >
-                                    <CheckCircleIcon className="w-4 h-4" />
-                                    {checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
-                                    <ContextMenuShortcut>{formatShortcut(["Mod", "A"])}</ContextMenuShortcut>
-                                </ContextMenuItem>
-                            </ContextMenuContent>
+                                    )}
+                                </ContextMenuContent>
                         </ContextMenu>
                     </TableHeader>
                     {paginatedRows.length > 0 && (

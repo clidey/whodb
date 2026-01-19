@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,18 @@ import (
 	"strconv"
 )
 
+type CloudProvider interface {
+	IsCloudProvider()
+	GetID() string
+	GetProviderType() CloudProviderType
+	GetName() string
+	GetRegion() string
+	GetStatus() CloudProviderStatus
+	GetLastDiscoveryAt() *string
+	GetDiscoveredCount() int
+	GetError() *string
+}
+
 type AIChatMessage struct {
 	Type   string      `json:"Type"`
 	Result *RowsResult `json:"Result,omitempty"`
@@ -33,8 +45,57 @@ type AIChatMessage struct {
 
 type AIProvider struct {
 	Type                 string `json:"Type"`
+	Name                 string `json:"Name"`
 	ProviderID           string `json:"ProviderId"`
 	IsEnvironmentDefined bool   `json:"IsEnvironmentDefined"`
+	IsGeneric            bool   `json:"IsGeneric"`
+}
+
+type AWSProvider struct {
+	ID                  string              `json:"Id"`
+	ProviderType        CloudProviderType   `json:"ProviderType"`
+	Name                string              `json:"Name"`
+	Region              string              `json:"Region"`
+	Status              CloudProviderStatus `json:"Status"`
+	LastDiscoveryAt     *string             `json:"LastDiscoveryAt,omitempty"`
+	DiscoveredCount     int                 `json:"DiscoveredCount"`
+	Error               *string             `json:"Error,omitempty"`
+	AuthMethod          string              `json:"AuthMethod"`
+	ProfileName         *string             `json:"ProfileName,omitempty"`
+	HasCredentials      bool                `json:"HasCredentials"`
+	DiscoverRds         bool                `json:"DiscoverRDS"`
+	DiscoverElastiCache bool                `json:"DiscoverElastiCache"`
+	DiscoverDocumentDb  bool                `json:"DiscoverDocumentDB"`
+	DBUsername          *string             `json:"DBUsername,omitempty"`
+}
+
+func (AWSProvider) IsCloudProvider()                        {}
+func (this AWSProvider) GetID() string                      { return this.ID }
+func (this AWSProvider) GetProviderType() CloudProviderType { return this.ProviderType }
+func (this AWSProvider) GetName() string                    { return this.Name }
+func (this AWSProvider) GetRegion() string                  { return this.Region }
+func (this AWSProvider) GetStatus() CloudProviderStatus     { return this.Status }
+func (this AWSProvider) GetLastDiscoveryAt() *string        { return this.LastDiscoveryAt }
+func (this AWSProvider) GetDiscoveredCount() int            { return this.DiscoveredCount }
+func (this AWSProvider) GetError() *string                  { return this.Error }
+
+type AWSProviderInput struct {
+	Name                string  `json:"Name"`
+	Region              string  `json:"Region"`
+	AuthMethod          *string `json:"AuthMethod,omitempty"`
+	AccessKeyID         *string `json:"AccessKeyId,omitempty"`
+	SecretAccessKey     *string `json:"SecretAccessKey,omitempty"`
+	SessionToken        *string `json:"SessionToken,omitempty"`
+	ProfileName         *string `json:"ProfileName,omitempty"`
+	DiscoverRds         *bool   `json:"DiscoverRDS,omitempty"`
+	DiscoverElastiCache *bool   `json:"DiscoverElastiCache,omitempty"`
+	DiscoverDocumentDb  *bool   `json:"DiscoverDocumentDB,omitempty"`
+	DBUsername          *string `json:"DBUsername,omitempty"`
+}
+
+type AWSRegion struct {
+	ID          string `json:"Id"`
+	Description string `json:"Description"`
 }
 
 type AtomicWhereCondition struct {
@@ -70,6 +131,17 @@ type DatabaseMetadata struct {
 	AliasMap        []*Record         `json:"aliasMap"`
 }
 
+type DiscoveredConnection struct {
+	ID           string            `json:"Id"`
+	ProviderType CloudProviderType `json:"ProviderType"`
+	ProviderID   string            `json:"ProviderID"`
+	Name         string            `json:"Name"`
+	DatabaseType string            `json:"DatabaseType"`
+	Region       *string           `json:"Region,omitempty"`
+	Status       ConnectionStatus  `json:"Status"`
+	Metadata     []*Record         `json:"Metadata"`
+}
+
 type GraphUnit struct {
 	Unit      *StorageUnit             `json:"Unit"`
 	Relations []*GraphUnitRelationship `json:"Relations"`
@@ -80,6 +152,13 @@ type GraphUnitRelationship struct {
 	Relationship GraphUnitRelationshipType `json:"Relationship"`
 	SourceColumn *string                   `json:"SourceColumn,omitempty"`
 	TargetColumn *string                   `json:"TargetColumn,omitempty"`
+}
+
+type LocalAWSProfile struct {
+	Name      string  `json:"Name"`
+	Region    *string `json:"Region,omitempty"`
+	Source    string  `json:"Source"`
+	IsDefault bool    `json:"IsDefault"`
 }
 
 type LoginCredentials struct {
@@ -96,6 +175,7 @@ type LoginProfile struct {
 	Alias                *string      `json:"Alias,omitempty"`
 	ID                   string       `json:"Id"`
 	Type                 DatabaseType `json:"Type"`
+	Hostname             *string      `json:"Hostname,omitempty"`
 	Database             *string      `json:"Database,omitempty"`
 	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
 	Source               string       `json:"Source"`
@@ -148,7 +228,8 @@ type RowsResult struct {
 }
 
 type SettingsConfig struct {
-	MetricsEnabled *bool `json:"MetricsEnabled,omitempty"`
+	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
+	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
 }
 
 type SettingsConfigInput struct {
@@ -190,6 +271,183 @@ type WhereCondition struct {
 	Atomic *AtomicWhereCondition    `json:"Atomic,omitempty"`
 	And    *OperationWhereCondition `json:"And,omitempty"`
 	Or     *OperationWhereCondition `json:"Or,omitempty"`
+}
+
+type CloudProviderStatus string
+
+const (
+	CloudProviderStatusConnected           CloudProviderStatus = "Connected"
+	CloudProviderStatusDiscovering         CloudProviderStatus = "Discovering"
+	CloudProviderStatusError               CloudProviderStatus = "Error"
+	CloudProviderStatusDisconnected        CloudProviderStatus = "Disconnected"
+	CloudProviderStatusCredentialsRequired CloudProviderStatus = "CredentialsRequired"
+)
+
+var AllCloudProviderStatus = []CloudProviderStatus{
+	CloudProviderStatusConnected,
+	CloudProviderStatusDiscovering,
+	CloudProviderStatusError,
+	CloudProviderStatusDisconnected,
+	CloudProviderStatusCredentialsRequired,
+}
+
+func (e CloudProviderStatus) IsValid() bool {
+	switch e {
+	case CloudProviderStatusConnected, CloudProviderStatusDiscovering, CloudProviderStatusError, CloudProviderStatusDisconnected, CloudProviderStatusCredentialsRequired:
+		return true
+	}
+	return false
+}
+
+func (e CloudProviderStatus) String() string {
+	return string(e)
+}
+
+func (e *CloudProviderStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CloudProviderStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CloudProviderStatus", str)
+	}
+	return nil
+}
+
+func (e CloudProviderStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CloudProviderStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CloudProviderStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CloudProviderType string
+
+const (
+	CloudProviderTypeAWS CloudProviderType = "AWS"
+)
+
+var AllCloudProviderType = []CloudProviderType{
+	CloudProviderTypeAWS,
+}
+
+func (e CloudProviderType) IsValid() bool {
+	switch e {
+	case CloudProviderTypeAWS:
+		return true
+	}
+	return false
+}
+
+func (e CloudProviderType) String() string {
+	return string(e)
+}
+
+func (e *CloudProviderType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CloudProviderType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CloudProviderType", str)
+	}
+	return nil
+}
+
+func (e CloudProviderType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CloudProviderType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CloudProviderType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ConnectionStatus string
+
+const (
+	ConnectionStatusAvailable ConnectionStatus = "Available"
+	ConnectionStatusStarting  ConnectionStatus = "Starting"
+	ConnectionStatusStopped   ConnectionStatus = "Stopped"
+	ConnectionStatusDeleting  ConnectionStatus = "Deleting"
+	ConnectionStatusFailed    ConnectionStatus = "Failed"
+	ConnectionStatusUnknown   ConnectionStatus = "Unknown"
+)
+
+var AllConnectionStatus = []ConnectionStatus{
+	ConnectionStatusAvailable,
+	ConnectionStatusStarting,
+	ConnectionStatusStopped,
+	ConnectionStatusDeleting,
+	ConnectionStatusFailed,
+	ConnectionStatusUnknown,
+}
+
+func (e ConnectionStatus) IsValid() bool {
+	switch e {
+	case ConnectionStatusAvailable, ConnectionStatusStarting, ConnectionStatusStopped, ConnectionStatusDeleting, ConnectionStatusFailed, ConnectionStatusUnknown:
+		return true
+	}
+	return false
+}
+
+func (e ConnectionStatus) String() string {
+	return string(e)
+}
+
+func (e *ConnectionStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ConnectionStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ConnectionStatus", str)
+	}
+	return nil
+}
+
+func (e ConnectionStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ConnectionStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ConnectionStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type DatabaseType string

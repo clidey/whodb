@@ -76,7 +76,6 @@ export const Export: FC<IExportProps> = ({
         {value: ',', label: t('delimiterComma')},
         {value: ';', label: t('delimiterSemicolon')},
         {value: '|', label: t('delimiterPipe')},
-        {value: '\t', label: t('delimiterTab')},
     ] as const, [t]);
 
     // Selected rows are already in the correct format for the hook.

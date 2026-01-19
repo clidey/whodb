@@ -1,0 +1,160 @@
+name: Deploy npm Packages
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to publish'
+        required: true
+        type: string
+
+# OIDC permissions for npm Trusted Publishers
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+jobs:
+  publish-npm:
+    name: Publish npm Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            deb.debian.org:443
+            deb.debian.org:80
+            fulcio.sigstore.dev:443
+            github.com:443
+            registry.npmjs.org:443
+            rekor.sigstore.dev:443
+            token.actions.githubusercontent.com:443
+            tuf-repo-cdn.sigstore.dev:443
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify npm version
+        run: |
+          echo "npm version: $(npm --version)"
+          # Trusted Publishers requires npm >= 11.5
+          npm install -g npm@latest
+          echo "npm version after upgrade: $(npm --version)"
+
+      - name: Download CLI binaries
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: cli-binaries
+          path: cli-binaries/
+
+      - name: List downloaded binaries
+        run: |
+          echo "Downloaded binaries:"
+          ls -la cli-binaries/
+
+      - name: Prepare platform packages
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cd cli/npm-package/packages
+
+          # Map CLI binary names to npm package directories
+          declare -A BINARY_MAP
+          BINARY_MAP["whodb-cli-darwin-arm64"]="whodb-cli-darwin-arm64"
+          BINARY_MAP["whodb-cli-darwin-amd64"]="whodb-cli-darwin-x64"
+          BINARY_MAP["whodb-cli-linux-arm64"]="whodb-cli-linux-arm64"
+          BINARY_MAP["whodb-cli-linux-amd64"]="whodb-cli-linux-x64"
+          BINARY_MAP["whodb-cli-linux-armv7"]="whodb-cli-linux-arm"
+          BINARY_MAP["whodb-cli-windows-amd64.exe"]="whodb-cli-win32-x64"
+          # Windows ARM64 disabled
+          # BINARY_MAP["whodb-cli-windows-arm64.exe"]="whodb-cli-win32-arm64"
+
+          # Process each platform package
+          for binary_name in "${!BINARY_MAP[@]}"; do
+            pkg_dir="${BINARY_MAP[$binary_name]}"
+            binary_path="../../../cli-binaries/${binary_name}"
+
+            if [ -f "$binary_path" ]; then
+              echo "Setting up $pkg_dir with $binary_name"
+
+              # Create bin directory
+              mkdir -p "$pkg_dir/bin"
+
+              # Determine target binary name
+              if [[ "$binary_name" == *.exe ]]; then
+                target_name="whodb-cli.exe"
+              else
+                target_name="whodb-cli"
+              fi
+
+              # Copy binary
+              cp "$binary_path" "$pkg_dir/bin/$target_name"
+              chmod +x "$pkg_dir/bin/$target_name"
+
+              # Update version in package.json
+              jq --arg v "$VERSION" '.version = $v' "$pkg_dir/package.json" > "$pkg_dir/package.json.tmp"
+              mv "$pkg_dir/package.json.tmp" "$pkg_dir/package.json"
+
+              echo "Prepared $pkg_dir ($(ls -lh "$pkg_dir/bin/$target_name" | awk '{print $5}'))"
+            else
+              echo "Binary not found: $binary_path"
+            fi
+          done
+
+          # Update main package version and optionalDependencies versions
+          cd whodb-cli
+          jq --arg v "$VERSION" '
+            .version = $v |
+            .optionalDependencies = (.optionalDependencies | to_entries | map(.value = $v) | from_entries)
+          ' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Updated main package to version $VERSION"
+          cat package.json
+
+      - name: Publish platform packages
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cd cli/npm-package/packages
+
+          # Publish each platform package with provenance (OIDC auth)
+          for pkg_dir in whodb-cli-darwin-* whodb-cli-linux-* whodb-cli-win32-*; do
+            if [ -d "$pkg_dir" ]; then
+              if [ -f "$pkg_dir/bin/whodb-cli" ] || [ -f "$pkg_dir/bin/whodb-cli.exe" ]; then
+                echo "Publishing $pkg_dir..."
+                cd "$pkg_dir"
+                npm publish --access public --provenance || echo "Failed to publish $pkg_dir (may already exist)"
+                cd ..
+              else
+                echo "Skipping $pkg_dir (no binary found)"
+              fi
+            fi
+          done
+
+      - name: Publish main package
+        run: |
+          cd cli/npm-package/packages/whodb-cli
+          echo "Publishing main package..."
+          npm publish --access public --provenance
+
+      - name: Verify publication
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "Waiting for npm to propagate..."
+          sleep 10
+
+          echo "Verifying @clidey/whodb-cli@${VERSION}..."
+          npm view "@clidey/whodb-cli@${VERSION}" version || echo "Main package not found yet"

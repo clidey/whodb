@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,23 +144,31 @@ func isUnsupportedOperation(err any) bool {
 	return false
 }
 
-// isLevelEnabled checks if the given level should be logged based on current log level
-// Levels from most to least verbose: debug > info > warning > error > none
+// levelPriority maps log levels to numeric priorities.
+//
+//	When you set a threshold, you see messages at that level and above (more severe).
+//
+// Setting debug (lowest) shows everything; setting error (highest) shows only errors
+var levelPriority = map[string]int{
+	"debug":   0,
+	"info":    1,
+	"warning": 2,
+	"error":   3,
+	"none":    4,
+}
+
+// isLevelEnabled checks if the given level should be logged based on current log level.
+// A message is logged if its priority >= the configured level's priority.
 func isLevelEnabled(level string) bool {
-	switch logLevel {
-	case "none":
-		return false
-	case "error":
-		return level == "error"
-	case "warning":
-		return level == "error" || level == "warning"
-	case "info":
-		return level == "error" || level == "warning" || level == "info"
-	case "debug":
-		return true // debug enables all levels
-	default:
-		return level == "error" || level == "warning" || level == "info" // Default to info level (no debug)
+	configPriority, ok := levelPriority[logLevel]
+	if !ok {
+		configPriority = levelPriority["info"] // default to info
 	}
+	msgPriority, ok := levelPriority[level]
+	if !ok {
+		return false
+	}
+	return msgPriority >= configPriority
 }
 
 func (c *ConditionalLogger) WithError(err error) *ConditionalEntry {

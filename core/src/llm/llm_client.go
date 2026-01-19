@@ -17,24 +17,58 @@
 package llm
 
 import (
-	"errors"
-	"io"
-	"net/http"
-	"strings"
-
+	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/log"
 )
 
-type LLMType string
+func init() {
+	// Register built-in providers
+	providers.RegisterProvider(providers.NewOpenAIProvider())
+	providers.RegisterProvider(providers.NewAnthropicProvider())
+	providers.RegisterProvider(providers.NewOllamaProvider())
+}
+
+// RegisterGenericProviders registers generic AI providers from environment configuration.
+// This is called by the env package after parsing generic provider configs and by EE providers.
+// It registers the provider with both the LLM provider system (for backend operations)
+// and the env.GenericProviders list (for frontend display).
+func RegisterGenericProviders(name string, providerId string, models []string, clientType string, baseURL string, apiKey string) {
+	provider := providers.NewGenericProvider(providerId, name, models, clientType)
+	providers.RegisterProvider(provider)
+
+	// Also add to env.GenericProviders so it shows up in the frontend
+	env.AddGenericProvider(env.GenericProviderConfig{
+		ProviderId: providerId,
+		Name:       name,
+		ClientType: clientType,
+		BaseURL:    baseURL,
+		APIKey:     apiKey,
+		Models:     models,
+	})
+}
+
+// Type aliases for backward compatibility with llm package
+type LLMType = providers.LLMType
+type LLMModel = providers.LLMModel
 
 const (
-	Ollama_LLMType           LLMType = "Ollama"
-	ChatGPT_LLMType          LLMType = "ChatGPT"
-	Anthropic_LLMType        LLMType = "Anthropic"
-	OpenAICompatible_LLMType LLMType = "OpenAI-Compatible"
+	Ollama_LLMType    = providers.Ollama_LLMType
+	OpenAI_LLMType    = providers.OpenAI_LLMType
+	Anthropic_LLMType = providers.Anthropic_LLMType
+	// Deprecated: Use OpenAI_LLMType instead
+	ChatGPT_LLMType LLMType = "ChatGPT"
 )
 
-type LLMModel string
+// NormalizeLLMType normalizes LLM type strings for backward compatibility.
+// Maps deprecated "ChatGPT" to "OpenAI".
+func NormalizeLLMType(typeStr string) LLMType {
+	if typeStr == "ChatGPT" {
+		log.Logger.Warn("'ChatGPT' provider name is deprecated, use 'OpenAI' instead")
+		return OpenAI_LLMType
+	}
+	return LLMType(typeStr)
+}
 
 type LLMClient struct {
 	Type      LLMType
@@ -43,128 +77,67 @@ type LLMClient struct {
 }
 
 func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
-	// Validate API key for services that require it
-	if err := c.validateAPIKey(); err != nil {
+	// Normalize type for backward compatibility
+	normalizedType := NormalizeLLMType(string(c.Type))
+
+	// Get provider from registry
+	provider, err := providers.GetProvider(normalizedType)
+	if err != nil {
+		log.Logger.WithError(err).Errorf("Provider not found for type: %s", normalizedType)
 		return nil, err
 	}
 
-	var url string
-	var headers map[string]string
-	var requestBody []byte
-	var err error
+	// Build provider config with endpoint from environment
+	config := &providers.ProviderConfig{
+		Type:     normalizedType,
+		APIKey:   c.APIKey,
+		Endpoint: getEndpointForProvider(normalizedType),
+	}
 
-	switch c.Type {
-	case Ollama_LLMType:
-		url, requestBody, headers, err = prepareOllamaRequest(prompt, model)
-	case ChatGPT_LLMType:
-		url, requestBody, headers, err = prepareChatGPTRequest(c, prompt, model, receiverChan, false)
+	// Use provider to complete the request
+	return provider.Complete(config, prompt, model, receiverChan)
+}
+
+// getEndpointForProvider returns the appropriate endpoint for a provider type
+func getEndpointForProvider(providerType LLMType) string {
+	switch providerType {
+	case OpenAI_LLMType:
+		return env.GetOpenAIEndpoint()
 	case Anthropic_LLMType:
-		url, requestBody, headers, err = prepareAnthropicRequest(c, prompt, model)
-	case OpenAICompatible_LLMType:
-		url, requestBody, headers, err = prepareChatGPTRequest(c, prompt, model, receiverChan, true)
+		return env.GetAnthropicEndpoint()
+	case Ollama_LLMType:
+		return env.GetOllamaEndpoint()
 	default:
-		return nil, errors.New("unsupported LLM type")
-	}
-
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to prepare %s LLM request for model %s", c.Type, model)
-		return nil, err
-	}
-
-	resp, err := sendHTTPRequest("POST", url, requestBody, headers)
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to send HTTP request to %s LLM service at %s", c.Type, url)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Logger.WithError(err).Errorf("Failed to read error response body from %s LLM service (status: %d)", c.Type, resp.StatusCode)
-			return nil, err
+		// For generic providers, look up endpoint from environment configuration
+		for _, provider := range env.GenericProviders {
+			if providers.LLMType(provider.ProviderId) == providerType {
+				return provider.BaseURL
+			}
 		}
-		log.Logger.Errorf("%s LLM service returned non-OK status: %d, body: %s", c.Type, resp.StatusCode, string(body))
-		return nil, errors.New(string(body))
+		log.Logger.Warnf("No endpoint found for provider type: %s", providerType)
+		return ""
 	}
-
-	return c.parseResponse(resp.Body, receiverChan)
 }
 
 func (c *LLMClient) GetSupportedModels() ([]string, error) {
-	// Validate API key for services that require it
-	if err := c.validateAPIKey(); err != nil {
-		return nil, err
-	}
+	// Normalize type for backward compatibility
+	normalizedType := NormalizeLLMType(string(c.Type))
 
-	var url string
-	var headers map[string]string
-
-	switch c.Type {
-	case Ollama_LLMType:
-		url, headers = prepareOllamaModelsRequest()
-	case ChatGPT_LLMType:
-		url, headers = prepareChatGPTModelsRequest(c.APIKey)
-	case Anthropic_LLMType:
-		return getAnthropicModels(c.APIKey)
-	case OpenAICompatible_LLMType:
-		return getOpenAICompatibleModels()
-	default:
-		return nil, errors.New("unsupported LLM type")
-	}
-
-	resp, err := sendHTTPRequest("GET", url, nil, headers)
+	// Get provider from registry
+	provider, err := providers.GetProvider(normalizedType)
 	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to fetch models from %s LLM service at %s", c.Type, url)
+		log.Logger.WithError(err).Errorf("Provider not found for type: %s", normalizedType)
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Logger.WithError(err).Errorf("Failed to read models error response body from %s LLM service (status: %d)", c.Type, resp.StatusCode)
-			return nil, err
-		}
-		log.Logger.Errorf("%s LLM service models endpoint returned non-OK status: %d, body: %s", c.Type, resp.StatusCode, string(body))
-		return nil, errors.New(string(body))
+	// Build provider config with endpoint from environment
+	config := &providers.ProviderConfig{
+		Type:     normalizedType,
+		APIKey:   c.APIKey,
+		Endpoint: getEndpointForProvider(normalizedType),
 	}
 
-	return c.parseModelsResponse(resp.Body)
+	// Use provider to get supported models
+	return provider.GetSupportedModels(config)
 }
 
-func (c *LLMClient) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
-	responseBuilder := strings.Builder{}
-	switch c.Type {
-	case Ollama_LLMType:
-		return parseOllamaResponse(body, receiverChan, &responseBuilder)
-	case ChatGPT_LLMType:
-		return parseChatGPTResponse(body, receiverChan, &responseBuilder)
-	case Anthropic_LLMType:
-		return parseAnthropicResponse(body, receiverChan, &responseBuilder)
-	case OpenAICompatible_LLMType:
-		return parseChatGPTResponse(body, receiverChan, &responseBuilder)
-	default:
-		return nil, errors.New("unsupported LLM type")
-	}
-}
-
-func (c *LLMClient) parseModelsResponse(body io.ReadCloser) ([]string, error) {
-	switch c.Type {
-	case Ollama_LLMType:
-		return parseOllamaModelsResponse(body)
-	case ChatGPT_LLMType:
-		return parseChatGPTModelsResponse(body)
-	default:
-		return nil, errors.New("unsupported LLM type")
-	}
-}
-
-// validateAPIKey checks if API key is present for services that require it
-func (c *LLMClient) validateAPIKey() error {
-	requiresAPIKey := c.Type == ChatGPT_LLMType || c.Type == Anthropic_LLMType
-	if requiresAPIKey && strings.TrimSpace(c.APIKey) == "" {
-		return errors.New("API key is required for " + string(c.Type))
-	}
-	return nil
-}

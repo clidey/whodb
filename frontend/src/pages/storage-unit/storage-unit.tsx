@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2025 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import {
@@ -76,7 +76,7 @@ import {InternalRoutes} from "../../config/routes";
 import {trackFrontendEvent} from "../../config/posthog";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {databaseSupportsModifiers} from "../../utils/database-data-types";
-import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {Tip} from '../../components/tip';
 import {SettingsActions} from '../../store/settings';
@@ -223,9 +223,9 @@ export const StorageUnitPage: FC = () => {
         });
     }, [current?.Type, trackFrontendEvent, view]);
 
-    // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
-    if (current?.Type === DatabaseType.ClickHouse || current?.Type === DatabaseType.MongoDb) {
-        schema = current.Database
+    // Databases like MySQL, MariaDB, ClickHouse, MongoDB use database name as schema parameter since they treat database=schema
+    if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type)) {
+        schema = current?.Database ?? '';
     }
 
     const { loading, data, refetch } = useGetStorageUnitsQuery({

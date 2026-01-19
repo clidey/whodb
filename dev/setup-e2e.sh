@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2025 Clidey, Inc.
+# Copyright 2026 Clidey, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -223,10 +223,10 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     elif [ -n "$DOCKER_SERVICES" ]; then
         # Start only specific services
         echo "📦 Ensuring Docker images are available for: $TARGET_DB..."
-        docker-compose -f docker-compose.e2e.yaml pull --quiet $DOCKER_SERVICES 2>/dev/null || true
+        docker-compose -f docker-compose.yml pull --quiet $DOCKER_SERVICES 2>/dev/null || true
 
         echo "🚀 Starting $TARGET_DB database service(s)..."
-        docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans $DOCKER_SERVICES
+        docker-compose -f docker-compose.yml up -d --remove-orphans $DOCKER_SERVICES
 
         # Wait for the specific service
         DB_PORT=$(get_db_port "$TARGET_DB")
@@ -240,10 +240,10 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     else
         # Start all services (TARGET_DB=all or unknown)
         echo "📦 Ensuring Docker images are available..."
-        docker-compose -f docker-compose.e2e.yaml pull --quiet 2>/dev/null || true
+        docker-compose -f docker-compose.yml pull --quiet 2>/dev/null || true
 
         echo "🚀 Starting all CE database services..."
-        docker-compose -f docker-compose.e2e.yaml up -d --remove-orphans
+        docker-compose -f docker-compose.yml up -d --remove-orphans
 
         # Wait for services using parallel port checks
         echo "⏳ Waiting for services to be ready..."

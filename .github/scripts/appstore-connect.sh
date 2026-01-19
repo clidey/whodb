@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2025 Clidey, Inc.
+# Copyright 2026 Clidey, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -166,6 +166,13 @@ api_request() {
         error ""
         error "This usually indicates a network or proxy issue."
         return 1
+    fi
+
+    # HTTP 204 (No Content) is a success response with no body - common for relationship updates
+    if [[ "$http_code" == "204" ]]; then
+        # Return empty JSON object for successful no-content responses
+        echo "{}"
+        return 0
     fi
 
     # Validate response is JSON
@@ -440,18 +447,79 @@ EOF
     log "Release notes updated successfully"
 }
 
-# Submit the version for App Store review
+# Submit the version for App Store review using the new reviewSubmissions API
 submit_for_review() {
     local version_id="$1"
+    local app_id="$2"
 
     log "Submitting version for App Store review..."
 
-    local data
-    data=$(cat <<EOF
+    # Step 1: Create a review submission for the app
+    log "Creating review submission..."
+    local create_data
+    create_data=$(cat <<EOF
 {
     "data": {
-        "type": "appStoreVersionSubmissions",
+        "type": "reviewSubmissions",
+        "attributes": {
+            "platform": "MAC_OS"
+        },
         "relationships": {
+            "app": {
+                "data": {
+                    "type": "apps",
+                    "id": "$app_id"
+                }
+            }
+        }
+    }
+}
+EOF
+)
+
+    local response
+    response=$(api_request POST "/reviewSubmissions" "$create_data")
+
+    local review_submission_id
+    review_submission_id=$(echo "$response" | jq -r '.data.id // empty')
+
+    if [[ -z "$review_submission_id" ]]; then
+        # Check if there's already a review submission in progress
+        local error_detail
+        error_detail=$(echo "$response" | jq -r '.errors[0].detail // empty')
+        if [[ "$error_detail" == *"already"* ]] || [[ "$error_detail" == *"in progress"* ]]; then
+            log "Review submission already in progress, fetching existing..."
+            response=$(api_request GET "/apps/$app_id/reviewSubmissions?filter[state]=READY_FOR_REVIEW,WAITING_FOR_REVIEW&limit=1")
+            review_submission_id=$(echo "$response" | jq -r '.data[0].id // empty')
+            if [[ -z "$review_submission_id" ]]; then
+                error "Could not find existing review submission"
+                error "Response: $response"
+                return 1
+            fi
+            log "Found existing review submission: $review_submission_id"
+        else
+            error "Failed to create review submission"
+            error "Response: $response"
+            return 1
+        fi
+    else
+        log "Created review submission: $review_submission_id"
+    fi
+
+    # Step 2: Add the app store version to the review submission items
+    log "Adding app store version to review submission..."
+    local item_data
+    item_data=$(cat <<EOF
+{
+    "data": {
+        "type": "reviewSubmissionItems",
+        "relationships": {
+            "reviewSubmission": {
+                "data": {
+                    "type": "reviewSubmissions",
+                    "id": "$review_submission_id"
+                }
+            },
             "appStoreVersion": {
                 "data": {
                     "type": "appStoreVersions",
@@ -464,24 +532,60 @@ submit_for_review() {
 EOF
 )
 
-    local response
-    response=$(api_request POST "/appStoreVersionSubmissions" "$data")
+    response=$(api_request POST "/reviewSubmissionItems" "$item_data")
 
-    local submission_id
-    submission_id=$(echo "$response" | jq -r '.data.id // empty')
+    local item_id
+    item_id=$(echo "$response" | jq -r '.data.id // empty')
 
-    if [[ -z "$submission_id" ]]; then
-        # Check if already submitted
-        if echo "$response" | jq -e '.errors[].code == "ENTITY_ERROR.RELATIONSHIP.INVALID"' > /dev/null 2>&1; then
-            log "Version appears to already be submitted"
-            return 0
+    if [[ -z "$item_id" ]]; then
+        # Item might already exist, which is fine
+        local error_code
+        error_code=$(echo "$response" | jq -r '.errors[0].code // empty')
+        if [[ "$error_code" != "ENTITY_ERROR"* ]]; then
+            error "Failed to add app store version to review submission"
+            error "Response: $response"
+            return 1
         fi
-        error "Failed to submit for review"
-        error "Response: $response"
-        return 1
+        log "App store version may already be in review submission"
+    else
+        log "Added review submission item: $item_id"
     fi
 
-    log "Submitted for review (submission ID: $submission_id)"
+    # Step 3: Submit the review submission
+    log "Submitting for review..."
+    local submit_data
+    submit_data=$(cat <<EOF
+{
+    "data": {
+        "type": "reviewSubmissions",
+        "id": "$review_submission_id",
+        "attributes": {
+            "submitted": true
+        }
+    }
+}
+EOF
+)
+
+    response=$(api_request PATCH "/reviewSubmissions/$review_submission_id" "$submit_data")
+
+    local state
+    state=$(echo "$response" | jq -r '.data.attributes.state // empty')
+
+    if [[ "$state" == "WAITING_FOR_REVIEW" ]] || [[ "$state" == "IN_REVIEW" ]]; then
+        log "Successfully submitted for review (state: $state)"
+    elif [[ -z "$state" ]]; then
+        # Check if the response indicates success despite no state
+        if echo "$response" | jq -e '.data.id' > /dev/null 2>&1; then
+            log "Submitted for review (submission ID: $review_submission_id)"
+        else
+            error "Failed to submit for review"
+            error "Response: $response"
+            return 1
+        fi
+    else
+        log "Review submission state: $state"
+    fi
 }
 
 # Main command: submit a new version
@@ -518,8 +622,8 @@ cmd_submit_version() {
     # Step 5: Set release notes
     set_release_notes "$version_id" "$release_notes"
 
-    # Step 6: Submit for review
-    submit_for_review "$version_id"
+    # Step 6: Submit for review (using new reviewSubmissions API)
+    submit_for_review "$version_id" "$app_id"
 
     echo ""
     echo "═══════════════════════════════════════════════════════════"

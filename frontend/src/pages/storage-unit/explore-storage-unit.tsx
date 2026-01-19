@@ -97,7 +97,7 @@ if (BUILD_EDITION === 'ee') {
     });
 }
 
-export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad }) => {
+export const ExploreStorageUnit: FC = () => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
     const {
         pageSize,
@@ -115,6 +115,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     const [whereCondition, setWhereCondition] = useState<WhereCondition>();
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
     const unit: StorageUnit = useLocation().state?.unit;
+    const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -301,6 +302,21 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [unit, rows?.TotalCount, rows?.Rows.length]);
 
     useEffect(() => {
+        // Reset all state when switching to a new table to prevent cached data
+        setCurrentPage(1);
+        setWhereCondition(undefined);
+        whereConditionRef.current = undefined;
+        setSortConditions([]);
+        setSearch("");
+        setRows(undefined);
+        setShowAdd(false);
+        setAddRowData({});
+        setAddRowError(null);
+        setShowEntitySearchSheet(false);
+        setEntitySearchData(null);
+        setEntitySearchResults(null);
+
+        // Fetch fresh data for the new table
         handleSubmitRequest();
         setCode(initialScratchpadQuery);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -321,7 +337,6 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 name,
             },
             InternalRoutes.Dashboard.ExploreStorageUnit,
-            ...(scratchpad ? [InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad] : []),
         ];
     }, [current]);
     
@@ -471,23 +486,14 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
     }, [code, current, rawExecute]);
 
     const handleOpenScratchpad = useCallback(() => {
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnitWithScratchpad.path, {
-            state: {
-                unit,
-            }
-        });
+        setIsScratchpadOpen(true);
         handleScratchpad();
         setCode(initialScratchpadQuery);
-        document.body.classList.add("!pointer-events-auto");
-    }, [schema, unit]);
+    }, [handleScratchpad, initialScratchpadQuery]);
 
     const handleCloseScratchpad = useCallback(() => {
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
-            state: {
-                unit,
-            }
-        });
-    }, [unit]);
+        setIsScratchpadOpen(false);
+    }, []);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, tTable), [columns, columnTypes, tTable]);
 
@@ -657,8 +663,7 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                                     if (e.key === "Enter") {
                                         searchRef.current?.(search);
                                     }
-                                }}
-                                         data-testid="table-search"
+                                }} data-testid="table-search"
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -829,8 +834,8 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 }
             </div>
         </div>
-        <Drawer open={scratchpad} onOpenChange={handleCloseScratchpad}>
-            <DrawerContent className="px-8 min-h-[65vh]" data-testid="scratchpad-drawer">
+        <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>
+            <DrawerContent className="px-8 min-h-[65vh] max-h-[80vh] overflow-hidden flex flex-col" data-testid="scratchpad-drawer">
                 <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
                     <XMarkIcon className="w-4 h-4" />
                 </Button>
@@ -848,17 +853,20 @@ export const ExploreStorageUnit: FC<{ scratchpad?: boolean }> = ({ scratchpad })
                 <div className="flex flex-col gap-sm h-[150px] mb-4">
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <StorageUnitTable
-                    columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
-                    columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
-                    rows={rawExecuteData?.RawExecute.Rows ?? []}
-                    disableEdit={true}
-                    schema={schema}
-                    storageUnit={unitName}
-                    onRefresh={handleSubmitRequest}
-                    showPagination={false}
-                    databaseType={current?.Type}
-                />
+                <div className="flex-1 overflow-y-auto">
+                    <StorageUnitTable
+                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
+                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
+                        rows={rawExecuteData?.RawExecute.Rows ?? []}
+                        disableEdit={true}
+                        limitContextMenu={true}
+                        schema={schema}
+                        storageUnit={unitName}
+                        onRefresh={handleSubmitRequest}
+                        showPagination={false}
+                        databaseType={current?.Type}
+                    />
+                </div>
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>

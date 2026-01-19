@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import (
 )
 
 // GetColumnConstraints retrieves column constraints for SQLite tables
-func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]interface{}, error) {
-	constraints := make(map[string]map[string]interface{})
+func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	constraints := make(map[string]map[string]any)
 
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		// Use SQLite-specific SQL builder.
@@ -56,7 +56,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			var name string
 			var dataType string
 			var notNull int
-			var dfltValue interface{}
+			var dfltValue any
 			var pk int
 
 			if err := rows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk); err != nil {
@@ -64,7 +64,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			}
 
 			if constraints[name] == nil {
-				constraints[name] = map[string]interface{}{}
+				constraints[name] = map[string]any{}
 			}
 			constraints[name]["nullable"] = notNull == 0
 
@@ -129,7 +129,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 				// Only mark as unique if it's a single-column index
 				if columnCount == 1 && columnName != "" {
 					if constraints[columnName] == nil {
-						constraints[columnName] = map[string]interface{}{}
+						constraints[columnName] = map[string]any{}
 					}
 					constraints[columnName]["unique"] = true
 				}
@@ -157,7 +157,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 }
 
 // parseCheckConstraints extracts CHECK constraints from SQLite's CREATE TABLE statement
-func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[string]map[string]interface{}) {
+func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[string]map[string]any) {
 	// SQLite stores CHECK constraints in the CREATE TABLE statement like:
 	// CREATE TABLE products (
 	//   price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
@@ -178,13 +178,13 @@ func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[
 }
 
 // parseSingleCheckConstraint parses a single CHECK constraint clause
-func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constraints map[string]map[string]interface{}) {
+func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constraints map[string]map[string]any) {
 	// Pattern for >= or > constraints
 	minPattern := regexp.MustCompile(`(\w+)\s*>=?\s*([\-]?\d+(?:\.\d+)?)`)
 	if matches := minPattern.FindStringSubmatch(checkClause); len(matches) > 2 {
 		columnName := matches[1]
 		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]interface{}{}
+			constraints[columnName] = map[string]any{}
 		}
 		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
 			if strings.Contains(matches[0], ">=") {
@@ -200,7 +200,7 @@ func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constrain
 	if matches := maxPattern.FindStringSubmatch(checkClause); len(matches) > 2 {
 		columnName := matches[1]
 		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]interface{}{}
+			constraints[columnName] = map[string]any{}
 		}
 		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
 			if strings.Contains(matches[0], "<=") {
@@ -220,7 +220,7 @@ func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constrain
 		if len(origMatches) > 1 {
 			columnName := origMatches[1]
 			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]interface{}{}
+				constraints[columnName] = map[string]any{}
 			}
 			if minVal, err := strconv.ParseFloat(matches[2], 64); err == nil {
 				constraints[columnName]["check_min"] = minVal
@@ -240,7 +240,7 @@ func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constrain
 		if len(origMatches) > 1 {
 			columnName := origMatches[1]
 			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]interface{}{}
+				constraints[columnName] = map[string]any{}
 			}
 			// Extract values from IN clause
 			valuesStr := matches[2]

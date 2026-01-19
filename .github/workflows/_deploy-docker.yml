@@ -30,6 +30,8 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             auth.docker.io:443
+            deb.debian.org:443
+            deb.debian.org:80
             fulcio.sigstore.dev:443
             github.com:443
             index.docker.io:443

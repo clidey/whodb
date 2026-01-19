@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package elasticsearch
@@ -53,7 +53,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		return false, err
 	}
 
-	var jsonValues map[string]interface{}
+	var jsonValues map[string]any
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for update")
 		return false, err
@@ -74,8 +74,8 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 	}
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(map[string]interface{}{
-		"script": map[string]interface{}{
+	if err := json.NewEncoder(&buf).Encode(map[string]any{
+		"script": map[string]any{
 			"source": script,
 			"lang":   "painless",
 			"params": jsonValues,
@@ -105,7 +105,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		return false, err
 	}
 
-	var updateResponse map[string]interface{}
+	var updateResponse map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&updateResponse); err != nil {
 		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch update response")
 		return false, err

@@ -3,7 +3,7 @@
  * This file handles conditional imports for Enterprise Edition features
  */
 
-import { EEComponentTypes } from './ee-types';
+import { EEComponentTypes, SettingsDefaults } from './ee-types';
 
 // Check if we're in EE mode
 export const isEEMode = import.meta.env.VITE_BUILD_EDITION === 'ee';
@@ -15,9 +15,12 @@ export const EEComponents: EEComponentTypes = {
     PieChart: null,
 };
 
-// Load EE components if in EE mode
+// Export EE settings defaults
+export let eeSettingsDefaults: SettingsDefaults = {};
+
+// Load EE components and config if in EE mode
 if (isEEMode) {
-    // Dynamic imports for EE components
+    // Dynamic imports for EE components and config
     const loadEEComponents = async () => {
         try {
             // Load all EE exports at once
@@ -34,5 +37,17 @@ if (isEEMode) {
         }
     };
 
+    const loadEEConfig = async () => {
+        try {
+            const eeConfig = await import('@ee/config').catch(() => null);
+            if (eeConfig?.eeSettingsDefaults) {
+                eeSettingsDefaults = eeConfig.eeSettingsDefaults;
+            }
+        } catch (error) {
+            console.warn('EE config could not be loaded:', error);
+        }
+    };
+
     loadEEComponents();
+    loadEEConfig();
 }

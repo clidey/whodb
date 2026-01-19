@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,12 @@ import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
-import {HoudiniActions} from "../../store/chat";
+import {HoudiniActions, IChatMessage} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
 import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
 import {chooseRandomItems} from "../../utils/functions";
-import {databaseSupportsScratchpad} from "../../utils/database-features";
+import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
@@ -188,20 +188,23 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
                     ? <div className="h-[250px] w-full">
                         <StorageUnitTable
-                            columns={data?.Columns.map(c => c.Name) ?? []}
-                            columnTypes={data?.Columns.map(c => c.Type) ?? []}
+                            columns={data?.Columns?.map(c => c.Name) ?? []}
+                            columnTypes={data?.Columns?.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
                             disableEdit={true}
+                            limitContextMenu={true}
                             databaseType={current?.Type}
                         />
                     </div>
-                    : <Alert title={t('actionExecuted')} className="w-fit">
+                    : (type.startsWith("sql:") && (type === "sql:insert" || type === "sql:update" || type === "sql:delete" || type === "sql:create" || type === "sql:alter" || type === "sql:drop"))
+                    ? <Alert title={t('actionExecuted')} className="w-fit">
                         <CheckCircleIcon className="w-4 h-4" />
                         <AlertTitle>{t('actionExecuted')}</AlertTitle>
                         <AlertDescription>
                             {previewResult}
                         </AlertDescription>
                     </Alert>
+                    : null
             }
         </div>
         
@@ -257,17 +260,23 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
     </div>
 }
 
-type IChatMessage = AiChatMessage & {
-    isUserInput?: boolean;
-};
-
 export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
     const chats = useAppSelector(state => state.houdini.chats);
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const schema = useAppSelector(state => state.database.schema);
+    const schemaFromState = useAppSelector(state => state.database.schema);
+    const authProfile = useAppSelector(state => state.auth.current);
+
+    // For databases that use "database" instead of "schema" (MySQL, MariaDB, etc.),
+    // we need to pass the database value where the backend expects "schema"
+    const schema = useMemo(() => {
+        if (databaseTypesThatUseDatabaseInsteadOfSchema(authProfile?.Type)) {
+            return authProfile?.Database || '';
+        }
+        return schemaFromState;
+    }, [authProfile?.Type, authProfile?.Database, schemaFromState]);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
 
     const dispatch = useAppDispatch();
@@ -281,9 +290,8 @@ export const ChatPage: FC = () => {
         return Array.from({ length: THINKING_PHRASES_COUNT }, (_, i) => t(`thinking${i}`));
     }, [t]);
 
-    const loading = useMemo(() => {
-        return getAIChatLoading;
-    }, [getAIChatLoading]);
+    const [loading, setLoading] = useState(false);
+    const loadingPhraseRef = useRef<string>("");
 
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
@@ -311,13 +319,26 @@ export const ChatPage: FC = () => {
         return exampleIndicesRef.current.map(i => chatExamples[i]);
     }, [chatExamples]);
 
-    const handleSubmitQuery = useCallback(() => {
+    const handleSubmitQuery = useCallback(async () => {
         const sanitizedQuery = query.trim();
         if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
 
+        setLoading(true);
+        loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
         dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, }));
+        setQuery("");
+
+        // Add a placeholder for streaming text
+        const streamingMessageId = Date.now();
+        dispatch(HoudiniActions.addChatMessage({
+            Type: "message",
+            Text: "",
+            isStreaming: true,
+            id: streamingMessageId
+        }));
+
         setTimeout(() => {
             if (scrollContainerRef.current != null) {
                 scrollContainerRef.current.scroll({
@@ -326,52 +347,139 @@ export const ChatPage: FC = () => {
                 });
             }
         }, 250);
-        getAIChat({
-            variables: {
-                providerId: modelType.id,
-                modelType: modelType.modelType,
-                token: modelType.token,
-                query: sanitizedQuery,
-                model: currentModel ?? "",
-                previousConversation: chats.map(chat => `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`).join("\n"),
-                schema,
-            },
-            onCompleted(data) {
-                const systemChats: IChatMessage[] = data.AIChat.map(chat => {
-                    if (chat.Type.startsWith("sql")) {
-                        return {
-                            Type: chat.Type,
-                            Text: chat.Text,
-                            Result: chat.Result as AiChatMessage["Result"],
+
+        try {
+            const response = await fetch('/api/ai-chat/stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                },
+                body: JSON.stringify({
+                    schema,
+                    modelType: modelType.modelType,
+                    token: modelType.token || '',
+                    model: currentModel ?? '',
+                    input: {
+                        Query: sanitizedQuery,
+                        PreviousConversation: chats.map(chat =>
+                            `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`
+                        ).join("\n"),
+                    },
+                }),
+            });
+
+            if (!response.body) {
+                throw new Error('No response body');
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let streamingText = '';
+            let currentEventType = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        currentEventType = line.slice(7).trim();
+                    } else if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (!data.trim()) continue;
+
+                        try {
+                            const parsed = JSON.parse(data);
+
+                            if (currentEventType === 'chunk') {
+                                // BAML sends full accumulated text in each chunk, not deltas
+                                const text = parsed.text || '';
+
+                                // Update streaming message with the latest text
+                                // Ignore SQL/error types during streaming (they'll come in 'message' event)
+                                const chunkType = parsed.type || '';
+                                if (chunkType !== 'sql' && chunkType !== 'error') {
+                                    dispatch(HoudiniActions.updateChatMessage({
+                                        id: streamingMessageId,
+                                        Text: text,
+                                    }));
+                                    streamingText = text;
+                                }
+
+                                // Auto-scroll
+                                if (scrollContainerRef.current != null) {
+                                    scrollContainerRef.current.scroll({
+                                        top: scrollContainerRef.current.scrollHeight,
+                                        behavior: "smooth",
+                                    });
+                                }
+                            } else if (currentEventType === 'message') {
+                                // Handle complete messages (SQL responses after streaming)
+                                if (parsed.Type?.startsWith("sql") && parsed.Result) {
+                                    // Add SQL results as a new message
+                                    dispatch(HoudiniActions.addChatMessage({
+                                        Type: parsed.Type,
+                                        Text: parsed.Text,
+                                        Result: parsed.Result,
+                                    }));
+
+                                    setTimeout(() => {
+                                        if (scrollContainerRef.current != null) {
+                                            scrollContainerRef.current.scroll({
+                                                top: scrollContainerRef.current.scrollHeight,
+                                                behavior: "smooth",
+                                            });
+                                        }
+                                    }, 100);
+                                }
+                            } else if (currentEventType === 'done') {
+                                // Stream complete - finalize the streaming message
+                                if (streamingText === '' || streamingText.trim() === '') {
+                                    // No message text was streamed, remove placeholder
+                                    dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+                                } else {
+                                    // Complete the streaming message with final text
+                                    dispatch(HoudiniActions.completeStreamingMessage({
+                                        id: streamingMessageId,
+                                        message: { Type: "message", Text: streamingText },
+                                    }));
+                                }
+                                setLoading(false);
+                            } else if (currentEventType === 'error') {
+                                dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+                                const errorMessage = typeof parsed.error === 'string'
+                                    ? parsed.error
+                                    : parsed.error?.message || parsed.message || 'Unknown error';
+                                toast.error(t('unableToQuery') + " " + errorMessage);
+                                setLoading(false);
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse SSE data:', e);
                         }
                     }
-                    return {
-                        Type: chat.Type,
-                        Text: chat.Text,
-                    }
-                });
-                for (const systemChat of systemChats) {
-                    dispatch(HoudiniActions.addChatMessage(systemChat));
                 }
-                setTimeout(() => {
-                    if (scrollContainerRef.current != null) {
-                        scrollContainerRef.current.scroll({
-                            top: scrollContainerRef.current.scrollHeight,
-                            behavior: "smooth",
-                        });
-                    }
-                }, 250);
-            },
-            onError(error) {
-                toast.error(t('unableToQuery')+" "+error.message);
-            },
-        });
-        setQuery("");
-    }, [chats, currentModel, getAIChat, modelType, query, schema, dispatch, t]);
+            }
+        } catch (error) {
+            dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+            const errorMessage = error instanceof Error
+                ? error.message
+                : typeof error === 'string'
+                ? error
+                : 'Unknown error';
+            toast.error(t('unableToQuery') + " " + errorMessage);
+            setLoading(false);
+        }
+    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef]);
 
     const disableChat = useMemo(() => {
-        return loading || models.length === 0 || !modelAvailable || query.trim().length === 0;
-    }, [loading, modelAvailable, models.length, query]);
+        return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
+    }, [loading, modelAvailable, models.length, currentModel, query]);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "Enter") {
@@ -418,13 +526,13 @@ export const ChatPage: FC = () => {
     }, [dispatch]);
 
     const disableAll = useMemo(() => {
-        return models.length === 0 || !modelAvailable;
-    }, [modelAvailable, models.length]);
+        return models.length === 0 || (!modelAvailable && !currentModel);
+    }, [modelAvailable, models.length, currentModel]);
 
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
             <div className="flex flex-col w-full h-full gap-2">
-                <AIProvider 
+                <AIProvider
                     {...aiState}
                     onClear={handleClear}
                 />
@@ -464,8 +572,10 @@ export const ChatPage: FC = () => {
                                                     <p className={classNames("py-2 rounded-xl whitespace-pre-wrap", {
                                                         "bg-neutral-600/5 dark:bg-[#2C2F33] px-4": chat.isUserInput,
                                                         "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
+                                                        "animate-fade-in": chat.isStreaming,
                                                     })} data-input-message={chat.isUserInput ? "user" : "system"}>
                                                         {chat.Text}
+                                                        {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
                                                     </p>
                                                 </div>
                                             } else if (chat.Type === "error") {
@@ -481,9 +591,9 @@ export const ChatPage: FC = () => {
                                                 return <div key={`chat-${i}`} className="flex items-center self-start relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="table-message">
@@ -495,7 +605,7 @@ export const ChatPage: FC = () => {
                                         })
                                     }
                                     { loading &&  <div className="flex w-full mt-4">
-                                        <Loading loadingText={isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0]} size="sm" />
+                                        <Loading loadingText={loadingPhraseRef.current} size="sm" />
                                     </div> }
                                 </div>
                             </div>
@@ -503,7 +613,7 @@ export const ChatPage: FC = () => {
                     }
                 </div>
                 {
-                    (!modelAvailable || models.length === 0) &&
+                    (models.length === 0 || (!modelAvailable && !currentModel)) &&
                     <EmptyState title={t('noModelTitle')} description={t('noModelDescription')} icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
                 }
                 <div className={classNames("flex justify-between items-center gap-2", {

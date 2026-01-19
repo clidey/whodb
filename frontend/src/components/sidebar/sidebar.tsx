@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import {
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import classNames from "classnames";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useState} from "react";
+import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
@@ -67,6 +67,7 @@ import {
 } from "../../utils/database-features";
 import {isEEFeatureEnabled} from "../../utils/ee-loader";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {isAwsHostname} from "../../utils/cloud-connection-prefill";
 import {
     ArrowLeftStartOnRectangleIcon,
     ChevronDownIcon,
@@ -81,6 +82,7 @@ import {
 import {Icons} from "../icons";
 import {Loading} from "../loading";
 import {updateProfileLastAccessed} from "../profile-info-tooltip";
+import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
@@ -96,6 +98,8 @@ function getProfileIcon(profile: LocalLoginProfile) {
 export const Sidebar: FC = () => {
     const { t } = useTranslation('components/sidebar');
     const schema = useAppSelector(state => state.database.schema);
+    const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
+    const cloudProvidersEnabled = useAppSelector(state => state.settings.cloudProvidersEnabled);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
@@ -104,16 +108,12 @@ export const Sidebar: FC = () => {
         variables: {
             type: current?.Type as DatabaseType,
         },
-        skip: current == null || databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type),
+        skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
         onCompleted(data) {
             if (current == null) return;
             if (schema === "") {
-                if (([DatabaseType.MySql, DatabaseType.MariaDb].includes(current.Type as DatabaseType)) && data.Schema.includes(current.Database)) {
-                    dispatch(DatabaseActions.setSchema(current.Database));
-                    return;
-                }
                 dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
             }
         },
@@ -125,14 +125,23 @@ export const Sidebar: FC = () => {
     const navigate = useNavigate();
     const [showLoginCard, setShowLoginCard] = useState(false);
     const { toggleSidebar, open } = useSidebar();
+    const isInitialMount = useRef(true);
 
-    // Profile select logic
-    const profileOptions = useMemo(() => profiles.map(profile => ({
-        value: profile.Id,
-        label: getProfileLabel(profile),
-        icon: getProfileIcon(profile),
-        profile,
-    })), [profiles]);
+    // Profile select logic - filter out AWS profiles when cloud providers disabled
+    const profileOptions = useMemo(() => profiles
+        .filter(profile => cloudProvidersEnabled || !isAwsHostname(profile.Hostname))
+        .map(profile => ({
+            value: profile.Id,
+            label: getProfileLabel(profile),
+            icon: (
+                <DatabaseIconWithBadge
+                    icon={getProfileIcon(profile)}
+                    showCloudBadge={isAwsConnection(profile.Id)}
+                    size="sm"
+                />
+            ),
+            profile,
+        })), [profiles, cloudProvidersEnabled]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;
@@ -158,8 +167,6 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (databaseSupportsDatabaseSwitching(selectedProfile.Type)) getDatabases();
-                        if (databaseSupportsSchema(selectedProfile.Type)) getSchemas();
                     }
                 },
                 onError(error) {
@@ -184,8 +191,6 @@ export const Sidebar: FC = () => {
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: selectedProfile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                        if (databaseSupportsDatabaseSwitching(selectedProfile.Type)) getDatabases();
-                        if (databaseSupportsSchema(selectedProfile.Type)) getSchemas();
                     }
                 },
                 onError(error) {
@@ -193,7 +198,7 @@ export const Sidebar: FC = () => {
                 },
             });
         }
-    }, [profiles, login, loginWithProfile, dispatch, navigate, getDatabases, getSchemas]);
+    }, [profiles, login, loginWithProfile, dispatch, navigate, t]);
 
     // Database select logic
     const databaseOptions = useMemo(() => {
@@ -273,16 +278,45 @@ export const Sidebar: FC = () => {
 
     // Add profile logic
     const handleAddProfile = useCallback(() => {
-        setShowLoginCard(true);
-    }, [navigate]);
+        // Small delay to allow dropdown to close before opening sheet
+        setTimeout(() => {
+            setShowLoginCard(true);
+        }, 100);
+    }, []);
 
     const loading = availableDatabasesLoading || availableSchemasLoading;
+
+    // Compute the label for the database dropdown based on the database type and user terminology preference
+    const databaseDropdownLabel = useMemo(() => {
+        // For databases where database=schema (MySQL, MariaDB, ClickHouse, MongoDB, Redis), allow user to choose terminology
+        if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type)) {
+            return databaseSchemaTerminology === 'schema' ? t('schema') : t('database');
+        }
+        // For all other databases, use "Database"
+        return t('database');
+    }, [current?.Type, databaseSchemaTerminology, t]);
 
     useEffect(() => {
         if (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open) {
             toggleSidebar();
         }
     }, []);
+
+    // Refetch databases and schemas when the current profile changes
+    // This ensures queries use the correct auth context after profile switch
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        if (!current) return;
+        if (databaseSupportsDatabaseSwitching(current.Type)) {
+            getDatabases();
+        }
+        if (databaseSupportsSchema(current.Type)) {
+            getSchemas();
+        }
+    }, [current?.Id]);
 
     // Listen for menu event to open add profile form
     useEffect(() => {
@@ -317,8 +351,8 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
-                            {open && <span className="text-lg font-bold">{extensions.AppName ?? "whodb"}</span>}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />}
+                            {open && <span className="text-3xl font-bold">{extensions.AppName ?? "WhoDB"}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>
@@ -363,43 +397,44 @@ export const Sidebar: FC = () => {
                                         }}
                                     />
                                 </div>
-                                {/* Database Select */}
-                                <div className={cn("flex flex-col gap-sm w-full", {
-                                    "opacity-0 pointer-events-none": !open,
-                                    "hidden": !databaseSupportsDatabaseSwitching(current?.Type),
-                                })}>
-                                    <h2 className="text-sm">{t('database')}</h2>
-                                    <SearchSelect
-                                        label={t('database')}
-                                        options={databaseOptions}
-                                        value={current?.Database}
-                                        onChange={handleDatabaseChange}
-                                        placeholder={t('selectDatabase')}
-                                        searchPlaceholder={t('searchDatabase')}
-                                        side="left" align="start"
-                                        buttonProps={{
-                                            "data-testid": "sidebar-database",
-                                        }}
-                                    />
-                                </div>
-                                <div className={cn("flex flex-col gap-sm w-full", {
-                                    "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
-                                    "hidden": !databaseSupportsSchema(current?.Type),
-                                })}>
-                                    <h2 className="text-sm">{t('schema')}</h2>
-                                    <SearchSelect
-                                        label={t('schema')}
-                                        options={schemaOptions}
-                                        value={schema}
-                                        onChange={handleSchemaChange}
-                                        placeholder={t('selectSchema')}
-                                        searchPlaceholder={t('searchSchema')}
-                                        side="left" align="start"
-                                        buttonProps={{
-                                            "data-testid": "sidebar-schema",
-                                        }}
-                                    />
-                                </div>
+                                {databaseSupportsDatabaseSwitching(current?.Type) && (
+                                    <div className={cn("flex flex-col gap-sm w-full", {
+                                        "opacity-0 pointer-events-none": !open,
+                                    })}>
+                                        <h2 className="text-sm">{databaseDropdownLabel}</h2>
+                                        <SearchSelect
+                                            label={databaseDropdownLabel}
+                                            options={databaseOptions}
+                                            value={current?.Database}
+                                            onChange={handleDatabaseChange}
+                                            placeholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('selectSchema') : t('selectDatabase')}
+                                            searchPlaceholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('searchSchema') : t('searchDatabase')}
+                                            side="left" align="start"
+                                            buttonProps={{
+                                                "data-testid": "sidebar-database",
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                {databaseSupportsSchema(current?.Type) && (
+                                    <div className={cn("flex flex-col gap-sm w-full", {
+                                        "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
+                                    })}>
+                                        <h2 className="text-sm">{t('schema')}</h2>
+                                        <SearchSelect
+                                            label={t('schema')}
+                                            options={schemaOptions}
+                                            value={schema}
+                                            onChange={handleSchemaChange}
+                                            placeholder={t('selectSchema')}
+                                            searchPlaceholder={t('searchSchema')}
+                                            side="left" align="start"
+                                            buttonProps={{
+                                                "data-testid": "sidebar-schema",
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Main navigation */}
@@ -427,7 +462,12 @@ export const Sidebar: FC = () => {
                                 {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
-                                            <Link to={InternalRoutes.ContactUs.path} className="flex items-center gap-2">
+                                            <Link
+                                                to={InternalRoutes.ContactUs.path}
+                                                className={classNames("flex items-center gap-2", {
+                                                    "font-bold": pathname === InternalRoutes.ContactUs.path,
+                                                })}
+                                            >
                                                 <QuestionMarkCircleIcon className="w-4 h-4" />
                                                 {open && <span>{t('contactUs')}</span>}
                                             </Link>
@@ -437,7 +477,12 @@ export const Sidebar: FC = () => {
                                 {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild>
-                                            <Link to={InternalRoutes.Settings.path} className="flex items-center gap-2">
+                                            <Link
+                                                to={InternalRoutes.Settings.path}
+                                                className={classNames("flex items-center gap-2", {
+                                                    "font-bold": pathname === InternalRoutes.Settings.path,
+                                                })}
+                                            >
                                                 <CogIcon className="w-4 h-4" />
                                                 {open && <span>{t('settings')}</span>}
                                             </Link>

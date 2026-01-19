@@ -17,9 +17,12 @@
 package tui
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textarea"
@@ -39,6 +42,7 @@ type chatMessage struct {
 
 type chatResponseMsg struct {
 	messages []*database.ChatMessage
+	query    string
 	err      error
 }
 
@@ -66,6 +70,12 @@ type ChatView struct {
 	focusField       int
 	// Consent gate for data governance
 	consented bool
+	// Cancellation support
+	chatCancel   context.CancelFunc
+	modelsCancel context.CancelFunc
+	// Retry prompt state for timed out requests
+	retryPrompt   bool
+	timedOutQuery string
 }
 
 const (
@@ -163,12 +173,24 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 	switch msg := msg.(type) {
 	case chatResponseMsg:
 		v.sending = false
+		v.chatCancel = nil
 		maxVisibleMessages := 6 // Must match View()
 		if msg.err != nil {
+			// Check for cancellation - don't show error
+			if errors.Is(msg.err, context.Canceled) {
+				return v, nil
+			}
+			// Check for timeout - enable retry prompt
+			if errors.Is(msg.err, context.DeadlineExceeded) {
+				v.err = fmt.Errorf("request timed out")
+				v.retryPrompt = true
+				v.timedOutQuery = msg.query
+				return v, nil
+			}
 			v.err = msg.err
 			v.messages = append(v.messages, chatMessage{
 				Role:    "system",
-				Content: fmt.Sprintf("Error: %s", msg.err.Error()),
+				Content: fmt.Sprintf("Error: %s", v.err.Error()),
 				Type:    "error",
 			})
 			if len(v.messages) > maxVisibleMessages {
@@ -195,8 +217,18 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 
 	case modelsLoadedMsg:
 		v.loadingModels = false
+		v.modelsCancel = nil
 		if msg.err != nil {
-			v.err = msg.err
+			// Check for cancellation - don't show error
+			if errors.Is(msg.err, context.Canceled) {
+				return v, nil
+			}
+			// Check for timeout
+			if errors.Is(msg.err, context.DeadlineExceeded) {
+				v.err = fmt.Errorf("loading models timed out")
+			} else {
+				v.err = msg.err
+			}
 			return v, nil
 		}
 		v.models = msg.models
@@ -213,6 +245,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		return v, nil
 
 	case tea.MouseMsg:
+		// todo: fix these deprecated Mouse up /down
 		switch msg.Type {
 		case tea.MouseWheelUp:
 			if v.focusField == focusFieldMessage {
@@ -237,6 +270,34 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		return v, nil
 
 	case tea.KeyMsg:
+		// Handle retry prompt for timed out requests
+		if v.retryPrompt {
+			switch msg.String() {
+			case "1":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 60*time.Second)
+			case "2":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 2*time.Minute)
+			case "3":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 5*time.Minute)
+			case "4":
+				v.retryPrompt = false
+				v.err = nil
+				return v, v.sendChatWithTimeout(v.timedOutQuery, 24*time.Hour)
+			case "esc":
+				v.retryPrompt = false
+				v.timedOutQuery = ""
+				return v, nil
+			}
+			// Ignore other keys while in retry prompt
+			return v, nil
+		}
+
 		switch msg.String() {
 		case "ctrl+r":
 			// Revoke consent
@@ -248,6 +309,15 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			return v, nil
 
 		case "esc":
+			// First priority: cancel ongoing operations
+			if v.sending && v.chatCancel != nil {
+				v.chatCancel()
+				return v, nil
+			}
+			if v.loadingModels && v.modelsCancel != nil {
+				v.modelsCancel()
+				return v, nil
+			}
 			if v.viewingResult {
 				v.viewingResult = false
 				return v, nil
@@ -324,25 +394,6 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "h":
-			if v.focusField != focusFieldMessage {
-				if v.focusField == focusFieldProvider {
-					if v.selectedProvider > 0 {
-						v.selectedProvider--
-					} else {
-						v.selectedProvider = len(v.providers) - 1
-					}
-					return v, nil
-				} else if v.focusField == focusFieldModel && len(v.models) > 0 {
-					if v.selectedModel > 0 {
-						v.selectedModel--
-					} else {
-						v.selectedModel = len(v.models) - 1
-					}
-					return v, nil
-				}
-			}
-
 		case "right":
 			if v.focusField == focusFieldProvider {
 				if v.selectedProvider < len(v.providers)-1 {
@@ -360,25 +411,6 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "l":
-			if v.focusField != focusFieldMessage {
-				if v.focusField == focusFieldProvider {
-					if v.selectedProvider < len(v.providers)-1 {
-						v.selectedProvider++
-					} else {
-						v.selectedProvider = 0
-					}
-					return v, nil
-				} else if v.focusField == focusFieldModel && len(v.models) > 0 {
-					if v.selectedModel < len(v.models)-1 {
-						v.selectedModel++
-					} else {
-						v.selectedModel = 0
-					}
-					return v, nil
-				}
-			}
-
 		case "ctrl+l":
 			if !v.loadingModels {
 				v.loadingModels = true
@@ -386,22 +418,17 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "v":
-			// Only handle when not typing in message input
-			if v.focusField != focusFieldMessage {
-				if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
-					msg := v.messages[v.selectedMessage]
-					if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
-						v.parent.resultsView.SetResults(msg.Result, "")
-						v.parent.resultsView.returnTo = ViewChat
-						v.parent.mode = ViewResults
-						return v, nil
-					}
-				}
-				return v, nil
-			}
-
 		case "enter":
+			// View table if a message with result is selected
+			if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
+				msg := v.messages[v.selectedMessage]
+				if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
+					v.parent.resultsView.SetResults(msg.Result, "")
+					v.parent.resultsView.returnTo = ViewChat
+					v.parent.mode = ViewResults
+					return v, nil
+				}
+			}
 			if v.focusField == focusFieldProvider {
 				// Confirm provider selection, load models, and move to model field
 				if !v.loadingModels {
@@ -457,6 +484,25 @@ func (v *ChatView) View() string {
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
+	// Show retry prompt for timed out requests
+	if v.retryPrompt {
+		b.WriteString(styles.ErrorStyle.Render("Request timed out"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
+		b.WriteString("\n")
+		b.WriteString(styles.KeyStyle.Render("[1]"))
+		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
+		b.WriteString(styles.KeyStyle.Render("[2]"))
+		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[3]"))
+		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
+		b.WriteString(styles.KeyStyle.Render("[4]"))
+		b.WriteString(styles.MutedStyle.Render(" No limit"))
+		b.WriteString("\n\n")
+		b.WriteString(styles.RenderHelp("esc", "cancel"))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	if v.err != nil && !v.sending {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
@@ -491,7 +537,7 @@ func (v *ChatView) View() string {
 	b.WriteString(modelLabel)
 	b.WriteString(" ")
 	if v.loadingModels {
-		b.WriteString(styles.MutedStyle.Render("Loading models..."))
+		b.WriteString(styles.MutedStyle.Render("Loading models... Press ESC to cancel"))
 	} else if len(v.models) == 0 {
 		b.WriteString(styles.MutedStyle.Render("Press Ctrl+L to load models"))
 	} else {
@@ -606,7 +652,7 @@ func (v *ChatView) View() string {
 	}
 
 	if v.sending {
-		b.WriteString(styles.MutedStyle.Render("Thinking..."))
+		b.WriteString(styles.MutedStyle.Render("Thinking... Press ESC to cancel"))
 		b.WriteString("\n\n")
 	}
 
@@ -618,9 +664,8 @@ func (v *ChatView) View() string {
 	b.WriteString(styles.RenderHelp(
 		"↑/↓", "cycle fields",
 		"←/→", "change selection",
-		"enter", "confirm/send",
+		"enter", "confirm/send/view",
 		"ctrl+p/n", "select message",
-		"[v]", "view table",
 		"ctrl+r", "revoke consent",
 		"esc", "back",
 	))
@@ -734,15 +779,23 @@ func (v *ChatView) renderTable(result *engine.GetRowsResult) string {
 }
 
 func (v *ChatView) loadModels() tea.Cmd {
-	return func() tea.Msg {
-		if v.selectedProvider >= len(v.providers) {
+	if v.selectedProvider >= len(v.providers) {
+		return func() tea.Msg {
 			return modelsLoadedMsg{models: []string{}, err: fmt.Errorf("invalid provider selected")}
 		}
+	}
 
-		provider := v.providers[v.selectedProvider]
-		modelType := provider.Type
+	provider := v.providers[v.selectedProvider]
+	modelType := provider.Type
 
-		models, err := v.parent.dbManager.GetAIModels(provider.ProviderId, modelType, "")
+	// Get timeout from config
+	timeout := v.parent.config.GetQueryTimeout()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.modelsCancel = cancel
+
+	return func() tea.Msg {
+		defer cancel()
+		models, err := v.parent.dbManager.GetAIModelsWithContext(ctx, provider.ProviderId, modelType, "")
 		if err != nil {
 			return modelsLoadedMsg{models: []string{}, err: err}
 		}
@@ -752,34 +805,51 @@ func (v *ChatView) loadModels() tea.Cmd {
 }
 
 func (v *ChatView) sendChat(query string) tea.Cmd {
+	return v.sendChatWithTimeout(query, v.parent.config.GetQueryTimeout())
+}
+
+func (v *ChatView) sendChatWithTimeout(query string, timeout time.Duration) tea.Cmd {
+	// Validate inputs before creating closure
+	if v.selectedProvider >= len(v.providers) {
+		return func() tea.Msg {
+			return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("invalid provider selected")}
+		}
+	}
+	if len(v.models) == 0 || v.selectedModel >= len(v.models) {
+		return func() tea.Msg {
+			return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("please select a model first")}
+		}
+	}
+
+	// Capture values for closure
+	provider := v.providers[v.selectedProvider]
+	modelType := provider.Type
+	model := v.models[v.selectedModel]
+	schema := v.parent.browserView.currentSchema
+	messages := v.messages
+
+	// Set sending state and create context
+	v.sending = true
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	v.chatCancel = cancel
+
 	return func() tea.Msg {
-		v.sending = true
-
-		if v.selectedProvider >= len(v.providers) {
-			return chatResponseMsg{messages: nil, err: fmt.Errorf("invalid provider selected")}
-		}
-		if len(v.models) == 0 || v.selectedModel >= len(v.models) {
-			return chatResponseMsg{messages: nil, err: fmt.Errorf("please select a model first")}
-		}
-
-		provider := v.providers[v.selectedProvider]
-		modelType := provider.Type
-		model := v.models[v.selectedModel]
+		defer cancel()
 
 		// Use the schema selected in browser view if available
-		schema := v.parent.browserView.currentSchema
-		if schema == "" {
+		currentSchema := schema
+		if currentSchema == "" {
 			schemas, err := v.parent.dbManager.GetSchemas()
 			if err != nil {
-				return chatResponseMsg{messages: nil, err: fmt.Errorf("failed to get schema: %w", err)}
+				return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("failed to get schema: %w", err)}
 			}
-			schema = selectBestSchema(schemas)
+			currentSchema = selectBestSchema(schemas)
 		}
 
 		previousConversation := ""
-		if len(v.messages) > 1 {
-			convMessages := []map[string]string{}
-			for _, msg := range v.messages {
+		if len(messages) > 1 {
+			var convMessages []map[string]string
+			for _, msg := range messages {
 				if msg.Type != "error" {
 					convMessages = append(convMessages, map[string]string{
 						"role":    msg.Role,
@@ -791,21 +861,22 @@ func (v *ChatView) sendChat(query string) tea.Cmd {
 			previousConversation = string(convBytes)
 		}
 
-		messages, err := v.parent.dbManager.SendAIChat(
+		result, err := v.parent.dbManager.SendAIChatWithContext(
+			ctx,
 			provider.ProviderId,
 			modelType,
 			"",
-			schema,
+			currentSchema,
 			model,
 			previousConversation,
 			query,
 		)
 
 		if err != nil {
-			return chatResponseMsg{messages: nil, err: err}
+			return chatResponseMsg{messages: nil, query: query, err: err}
 		}
 
-		return chatResponseMsg{messages: messages, err: nil}
+		return chatResponseMsg{messages: result, query: query, err: nil}
 	}
 }
 

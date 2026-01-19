@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,20 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
+	"time"
+
+	"github.com/clidey/whodb/core/src/common/config"
 )
+
+// resetConfigDir resets the cached config directory for testing.
+func resetConfigDir() {
+	configDirOnce = sync.Once{}
+	configDir = ""
+	configDirErr = nil
+	config.ResetConfigPath()
+}
 
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
@@ -47,6 +59,52 @@ func TestDefaultConfig(t *testing.T) {
 
 	if cfg.Display.PageSize != 50 {
 		t.Errorf("Expected PageSize 50, got %d", cfg.Display.PageSize)
+	}
+
+	// Test QueryConfig defaults
+	if cfg.Query.TimeoutSeconds != 30 {
+		t.Errorf("Expected Query.TimeoutSeconds 30, got %d", cfg.Query.TimeoutSeconds)
+	}
+}
+
+func TestGetQueryTimeout(t *testing.T) {
+	tests := []struct {
+		name           string
+		timeoutSeconds int
+		expected       time.Duration
+	}{
+		{
+			name:           "default timeout",
+			timeoutSeconds: 30,
+			expected:       30 * time.Second,
+		},
+		{
+			name:           "custom timeout",
+			timeoutSeconds: 60,
+			expected:       60 * time.Second,
+		},
+		{
+			name:           "zero falls back to default",
+			timeoutSeconds: 0,
+			expected:       30 * time.Second,
+		},
+		{
+			name:           "negative falls back to default",
+			timeoutSeconds: -1,
+			expected:       30 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := DefaultConfig()
+			cfg.Query.TimeoutSeconds = tt.timeoutSeconds
+
+			result := cfg.GetQueryTimeout()
+			if result != tt.expected {
+				t.Errorf("GetQueryTimeout() = %v, expected %v", result, tt.expected)
+			}
+		})
 	}
 }
 
@@ -190,6 +248,10 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", origHome)
 
+	// Reset cached config dir so it picks up new HOME
+	resetConfigDir()
+	defer resetConfigDir()
+
 	cfg := DefaultConfig()
 	conn := Connection{
 		Name:     "test-db",
@@ -206,7 +268,8 @@ func TestSaveAndLoadConfig(t *testing.T) {
 		t.Fatalf("Save failed: %v", err)
 	}
 
-	configPath := filepath.Join(tempDir, ".whodb-cli", "config.yaml")
+	// XDG path: ~/.local/share/whodb/config.json (unified config)
+	configPath := filepath.Join(tempDir, ".local", "share", "whodb", "config.json")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		t.Fatalf("Config file was not created at %s", configPath)
 	}
@@ -225,11 +288,15 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_CreatesDefault(t *testing.T) {
+func TestLoadConfig_ReturnsDefaults(t *testing.T) {
 	tempDir := t.TempDir()
 	origHome := os.Getenv("HOME")
 	os.Setenv("HOME", tempDir)
 	defer os.Setenv("HOME", origHome)
+
+	// Reset cached config dir so it picks up new HOME
+	resetConfigDir()
+	defer resetConfigDir()
 
 	cfg, err := LoadConfig()
 	if err != nil {
@@ -240,9 +307,12 @@ func TestLoadConfig_CreatesDefault(t *testing.T) {
 		t.Fatal("LoadConfig returned nil")
 	}
 
-	configPath := filepath.Join(tempDir, ".whodb-cli", "config.yaml")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		t.Fatalf("Default config file was not created at %s", configPath)
+	// Verify defaults are used when no config exists
+	if cfg.Display.Theme != "dark" {
+		t.Errorf("Expected default theme 'dark', got '%s'", cfg.Display.Theme)
+	}
+	if cfg.History.MaxEntries != 1000 {
+		t.Errorf("Expected default MaxEntries 1000, got %d", cfg.History.MaxEntries)
 	}
 }
 
@@ -271,7 +341,7 @@ func TestGetConfigPath(t *testing.T) {
 		t.Error("GetConfigPath returned empty string")
 	}
 
-	if filepath.Ext(path) != ".yaml" {
-		t.Errorf("Expected .yaml extension, got '%s'", filepath.Ext(path))
+	if filepath.Ext(path) != ".json" {
+		t.Errorf("Expected .json extension, got '%s'", filepath.Ext(path))
 	}
 }
