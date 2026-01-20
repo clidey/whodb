@@ -112,7 +112,7 @@ docker-compose-down:
 .PHONY: ci-build-darwin-amd64 ci-build-darwin-arm64
 .PHONY: ci-build-windows-amd64 ci-build-windows-arm64
 
-CI_LDFLAGS=-ldflags "-s -w -X main.Version=$(VERSION)"
+CI_LDFLAGS=-trimpath -ldflags "-s -w -X main.Version=$(VERSION)"
 
 ci-build-linux-amd64:
 	@echo "Building CLI for linux/amd64..."

@@ -1,3 +1,5 @@
+//go:build !arm
+
 /*
  * Copyright 2026 Clidey, Inc.
  *

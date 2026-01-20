@@ -63,7 +63,7 @@ ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod \
-	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
+	-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
 
 # Pre-download BAML native library for the target architecture (musl for Alpine)
