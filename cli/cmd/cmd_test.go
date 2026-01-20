@@ -18,14 +18,13 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestRootCmd(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 
 	if rootCmd == nil {
 		t.Fatal("rootCmd is nil")
@@ -41,10 +40,8 @@ func TestRootCmd(t *testing.T) {
 }
 
 func TestRootCmd_HasSubcommands(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 
 	commands := rootCmd.Commands()
 	if len(commands) == 0 {
@@ -66,10 +63,8 @@ func TestRootCmd_HasSubcommands(t *testing.T) {
 }
 
 func TestRootCmd_Flags(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 
 	flag := rootCmd.PersistentFlags().Lookup("config")
 	if flag == nil {
@@ -83,14 +78,16 @@ func TestRootCmd_Flags(t *testing.T) {
 }
 
 func TestInitConfig(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 
 	initConfig()
 
-	configDir := tempDir + "/.whodb-cli"
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("Failed to resolve home directory: %v", err)
+	}
+	configDir := filepath.Join(home, ".whodb-cli")
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		t.Errorf("Config directory was not created: %s", configDir)
 	}

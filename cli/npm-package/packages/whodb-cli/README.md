@@ -16,7 +16,7 @@ npm install -g @clidey/whodb-cli
 
 - **Interactive TUI**: Full terminal UI for database management
 - **Programmatic Commands**: Query, export, and manage databases from scripts
-- **MCP Server**: Integrate with Claude Desktop, Claude Code, and other AI assistants
+- **MCP Server**: Integrate with Claude Desktop, Claude Code, and other MCP clients
 
 ## Supported Databases
 
@@ -27,8 +27,6 @@ npm install -g @clidey/whodb-cli
 - Redis
 - Elasticsearch
 - ClickHouse
-
-Enterprise Edition adds: MSSQL, Oracle, DynamoDB
 
 ## Usage
 
@@ -54,7 +52,7 @@ npx @clidey/whodb-cli tables --connection mydb --schema public
 npx @clidey/whodb-cli columns --connection mydb --table users
 
 # Export data
-npx @clidey/whodb-cli export --connection mydb --table users --format csv
+npx @clidey/whodb-cli export --connection mydb --table users --format csv --output users.csv
 ```
 
 ### MCP Server Mode
@@ -65,39 +63,21 @@ Start as an MCP server for AI assistant integration:
 npx @clidey/whodb-cli mcp serve
 ```
 
-## Usage with Claude Desktop
+Write operations require confirmation by default. Use `--allow-write` to disable confirmations or `--read-only` to block writes.
 
-Add to your `~/.config/claude/claude_desktop_config.json`:
+## MCP Client Configuration (Example)
+
+Example configuration (from `whodb-cli mcp serve --help`):
 
 ```json
 {
   "mcpServers": {
     "whodb": {
-      "command": "npx",
-      "args": ["-y", "@clidey/whodb-cli", "mcp", "serve"],
+      "command": "whodb-cli",
+      "args": ["mcp", "serve"],
       "env": {
-        "WHODB_DEFAULT_URI": "postgres://user:pass@localhost:5432/mydb"
+        "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
       }
-    }
-  }
-}
-```
-
-## Usage with Claude Code
-
-```bash
-claude --mcp-server "npx -y @clidey/whodb-cli mcp serve"
-```
-
-Or add to your `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "whodb": {
-      "command": "npx",
-      "args": ["-y", "@clidey/whodb-cli", "mcp", "serve"],
-      "env": {}
     }
   }
 }
@@ -105,12 +85,14 @@ Or add to your `.mcp.json`:
 
 ## Environment Variables
 
-Configure database connections via environment variables:
+Configure database connections via environment profiles, for example `WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"db","port":"5432"}]'` or `WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"devdb","port":"3306"}'`. Each object supports `alias` (connection name), `host`, `user`, `password`, `database`, `port`, and optional `config`.
 
 | Variable | Description |
 |----------|-------------|
-| `WHODB_DEFAULT_URI` | Default database connection string |
-| `WHODB_{NAME}_URI` | Named connection (e.g., `WHODB_PROD_URI`) |
+| `WHODB_<DBTYPE>` | JSON array of credential objects for a database type |
+| `WHODB_<DBTYPE>_N` | JSON object for a single credential (numbered profiles) |
+
+Use the `alias` field to set the connection name (e.g., `prod`). If omitted, the CLI assigns a name like `postgres-1`.
 
 ## Available MCP Tools
 
@@ -121,6 +103,7 @@ Configure database connections via environment variables:
 | `whodb_tables` | List tables in a schema |
 | `whodb_columns` | Get column details for a table |
 | `whodb_query` | Execute SQL queries |
+| `whodb_confirm` | Confirm pending write operations (only when confirm-writes is enabled) |
 
 ## Platform Support
 

@@ -34,14 +34,14 @@ var (
 var connectionsCmd = &cobra.Command{
 	Use:   "connections",
 	Short: "Manage database connections",
-	Long: `Manage saved database connections.
+	Long: `Manage database connections.
 
 Subcommands:
-  list    - List all saved connections
+  list    - List available connections
   add     - Add a new connection
   remove  - Remove a saved connection
   test    - Test a connection`,
-	Example: `  # List all saved connections
+	Example: `  # List all connections
   whodb-cli connections list
 
   # Add a new connection
@@ -57,7 +57,7 @@ Subcommands:
 // connections list
 var connectionsListCmd = &cobra.Command{
 	Use:           "list",
-	Short:         "List all saved connections",
+	Short:         "List available connections",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -71,14 +71,14 @@ var connectionsListCmd = &cobra.Command{
 			output.WithQuiet(connectionsQuiet),
 		)
 
-		cfg, err := config.LoadConfig()
+		mgr, err := dbmgr.NewManager()
 		if err != nil {
-			return fmt.Errorf("cannot load config: %w", err)
+			return fmt.Errorf("cannot initialize database manager: %w", err)
 		}
 
-		connections := cfg.Connections
+		connections := mgr.ListConnectionsWithSource()
 		if len(connections) == 0 {
-			out.Info("No saved connections. Create one with:")
+			out.Info("No connections available. Create one with:")
 			out.Info("  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			// Output empty result for scripting
 			if format == output.FormatJSON {
@@ -97,18 +97,21 @@ var connectionsListCmd = &cobra.Command{
 				Username string `json:"username"`
 				Database string `json:"database"`
 				Schema   string `json:"schema,omitempty"`
+				Source   string `json:"source"`
 			}
 
 			safeConns := make([]safeConnection, len(connections))
 			for i, c := range connections {
+				conn := c.Connection
 				safeConns[i] = safeConnection{
-					Name:     c.Name,
-					Type:     c.Type,
-					Host:     c.Host,
-					Port:     c.Port,
-					Username: c.Username,
-					Database: c.Database,
-					Schema:   c.Schema,
+					Name:     conn.Name,
+					Type:     conn.Type,
+					Host:     conn.Host,
+					Port:     conn.Port,
+					Username: conn.Username,
+					Database: conn.Database,
+					Schema:   conn.Schema,
+					Source:   c.Source,
 				}
 			}
 
@@ -125,11 +128,13 @@ var connectionsListCmd = &cobra.Command{
 			{Name: "port", Type: "int"},
 			{Name: "database", Type: "string"},
 			{Name: "username", Type: "string"},
+			{Name: "source", Type: "string"},
 		}
 
 		rows := make([][]any, len(connections))
 		for i, c := range connections {
-			rows[i] = []any{c.Name, c.Type, c.Host, c.Port, c.Database, c.Username}
+			conn := c.Connection
+			rows[i] = []any{conn.Name, conn.Type, conn.Host, conn.Port, conn.Database, conn.Username, c.Source}
 		}
 
 		result := &output.QueryResult{
@@ -220,6 +225,19 @@ var connectionsRemoveCmd = &cobra.Command{
 		name := args[0]
 		out := output.New(output.WithQuiet(connectionsQuiet))
 
+		mgr, err := dbmgr.NewManager()
+		if err != nil {
+			return fmt.Errorf("cannot initialize database manager: %w", err)
+		}
+
+		_, source, err := mgr.ResolveConnection(name)
+		if err != nil {
+			return err
+		}
+		if source == dbmgr.ConnectionSourceEnv {
+			return fmt.Errorf("connection %q is defined via environment variables and cannot be removed", name)
+		}
+
 		cfg, err := config.LoadConfig()
 		if err != nil {
 			return fmt.Errorf("cannot load config: %w", err)
@@ -240,7 +258,7 @@ var connectionsRemoveCmd = &cobra.Command{
 
 var connectionsTestCmd = &cobra.Command{
 	Use:           "test [name]",
-	Short:         "Test a saved connection",
+	Short:         "Test a connection",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	Args:          cobra.ExactArgs(1),
@@ -254,9 +272,9 @@ var connectionsTestCmd = &cobra.Command{
 			return fmt.Errorf("cannot initialize database manager: %w", err)
 		}
 
-		conn, err := mgr.GetConnection(name)
+		conn, _, err := mgr.ResolveConnection(name)
 		if err != nil {
-			return fmt.Errorf("connection %q not found", name)
+			return err
 		}
 
 		var spinner *output.Spinner

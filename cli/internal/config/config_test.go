@@ -268,8 +268,10 @@ func TestSaveAndLoadConfig(t *testing.T) {
 		t.Fatalf("Save failed: %v", err)
 	}
 
-	// XDG path: ~/.local/share/whodb/config.json (unified config)
-	configPath := filepath.Join(tempDir, ".local", "share", "whodb", "config.json")
+	configPath, err := GetConfigPath()
+	if err != nil {
+		t.Fatalf("GetConfigPath failed: %v", err)
+	}
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		t.Fatalf("Config file was not created at %s", configPath)
 	}

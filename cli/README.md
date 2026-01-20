@@ -4,17 +4,18 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 
 ## Features
 
-- **Interactive TUI** - Beautiful terminal-based user interface built with Bubble Tea
-- **Multi-Database Support** - PostgreSQL, MySQL, SQLite, MongoDB, Redis, ClickHouse, and more
+- **Interactive TUI** - Terminal UI built with Bubble Tea
+- **Multi-Database Support** - PostgreSQL, MySQL/MariaDB, SQLite, MongoDB, Redis, ClickHouse, ElasticSearch
 - **Table Browser** - Navigate schemas and tables with visual grid layout
-- **Visual Query Builder** - Build WHERE conditions interactively
-- **SQL Editor** - Syntax highlighting with autocomplete
-- **AI Assistant** - Natural language to SQL conversion (requires AI backend)
-- **Responsive Data Viewer** - Paginated results with horizontal scrolling
+- **WHERE Builder** - Build AND-based filters for table browsing
+- **SQL Editor** - Multi-line editor with schema-aware autocomplete
+- **AI Chat** - Optional AI-assisted querying with consent gate (requires configured provider)
+- **Responsive Data Viewer** - Paginated results with horizontal column scrolling
+- **Column Selection** - Choose which columns are visible in results
 - **Export Capabilities** - Export to CSV and Excel formats
 - **Query History** - Persistent history with re-execution
-- **Shell Completion** - Bash, Zsh, and Fish autocompletion
-- **Programmatic Mode** - JSON/CSV output for scripting and automation
+- **Shell Completion** - Bash/Zsh/Fish install plus PowerShell script generation
+- **Programmatic Mode** - JSON/CSV/plain output for scripting and automation
 - **MCP Server** - Model Context Protocol server for AI assistants (Claude, Cursor, etc.)
 
 ## Installation
@@ -43,6 +44,12 @@ whodb-cli --help
 
 ### 1. Connect to a Database
 
+If you omit required flags, the interactive connection form opens:
+
+```bash
+whodb-cli connect
+```
+
 #### PostgreSQL
 
 ```bash
@@ -51,9 +58,21 @@ whodb-cli connect \
   --host localhost \
   --port 5432 \
   --user postgres \
-  --password mypassword \
   --database mydb \
   --name my-postgres
+```
+
+#### PostgreSQL (non-interactive password)
+
+```bash
+printf "%s\n" "$PGPASSWORD" | whodb-cli connect \
+  --type postgres \
+  --host localhost \
+  --port 5432 \
+  --user postgres \
+  --database mydb \
+  --name my-postgres \
+  --password
 ```
 
 #### MySQL
@@ -64,7 +83,6 @@ whodb-cli connect \
   --host localhost \
   --port 3306 \
   --user root \
-  --password mypassword \
   --database mydb \
   --name my-mysql
 ```
@@ -74,6 +92,7 @@ whodb-cli connect \
 ```bash
 whodb-cli connect \
   --type sqlite \
+  --user sqlite \
   --database /path/to/database.db \
   --name my-sqlite
 ```
@@ -86,9 +105,20 @@ whodb-cli connect \
   --host localhost \
   --port 27017 \
   --user admin \
-  --password mypassword \
   --database mydb \
   --name my-mongo
+```
+
+### 1b. Use Environment Profiles
+
+Commands that accept `--connection` can also use environment profiles, for example `WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"mydb","port":"5432"}]'` or `WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"devdb","port":"3306"}'`. Each object supports `alias` (connection name), `host`, `user`, `password`, `database`, `port`, and optional `config` for advanced settings.
+
+```bash
+# Array format (multiple profiles for a database type)
+export WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"mydb","port":"5432"}]'
+
+# Numbered format (one profile per variable)
+export WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"devdb","port":"3306"}'
 ```
 
 ### 2. Start Interactive Mode
@@ -116,12 +146,13 @@ whodb-cli [flags]
 
 Flags:
 
-- `--config`: Config file path (default: `~/.whodb-cli/config.yaml`)
+- `--config`: Legacy CLI config path for debug/no-color settings (connections/history use the unified `config.json`; see Configuration)
 - `--debug`: Enable debug mode
+- `--no-color`: Disable colored output
 
 ### connect
 
-Connect to a database and optionally save the connection.
+Connect to a database and optionally save the connection. If required flags are missing, the interactive connection form opens.
 
 ```bash
 whodb-cli connect [flags]
@@ -129,17 +160,20 @@ whodb-cli connect [flags]
 
 Flags:
 
-- `--type`: Database type (required) - postgres, mysql, sqlite, mongodb, redis, clickhouse
+- `--type`: Database type (postgres, mysql, sqlite, mongodb, redis, clickhouse, elasticsearch, mariadb)
 - `--host`: Database host (default: localhost)
 - `--port`: Database port (default varies by type)
 - `--user`: Username
-- `--password`: Password
 - `--database`: Database name
+- `--schema`: Preferred schema (optional)
 - `--name`: Connection name (saves for later use)
+- `--password`: Read password from stdin when not using a TTY (pipe a single line)
+
+On a TTY, you will be prompted for the password with input hidden.
 
 ### query
 
-Execute a SQL query directly.
+Execute a SQL query directly. Use `-` to read SQL from stdin.
 
 ```bash
 whodb-cli query "SQL" [flags]
@@ -147,7 +181,11 @@ whodb-cli query "SQL" [flags]
 
 Flags:
 
-- `--connection`: Connection name to use
+- `--connection, -c`: Connection name to use (optional; if omitted, the first available connection is used)
+- `--format, -f`: Output format: `auto`, `table`, `plain`, `json`, `csv`
+- `--quiet, -q`: Suppress informational messages
+
+`auto` uses table output for terminals and plain output for pipes.
 
 ### completion
 
@@ -161,6 +199,7 @@ whodb-cli completion
 whodb-cli completion bash
 whodb-cli completion zsh
 whodb-cli completion fish
+whodb-cli completion powershell
 
 # Install completion (auto-detects shell)
 whodb-cli completion install
@@ -172,11 +211,12 @@ whodb-cli completion install bash
 whodb-cli completion uninstall
 ```
 
-Install paths (rc files updated automatically):
+Install paths (bash/zsh rc files updated automatically):
 
 - Bash: `~/.local/share/bash-completion/completions/whodb-cli`
 - Zsh: `~/.zsh/completions/_whodb-cli`
 - Fish: `~/.config/fish/completions/whodb-cli.fish`
+- PowerShell: Manual install (see `whodb-cli completion powershell`)
 
 ## Programmatic Commands
 
@@ -191,8 +231,9 @@ whodb-cli schemas --connection my-postgres --format json
 ```
 
 Flags:
-- `--connection, -c`: Connection name (required if multiple connections exist)
-- `--format, -f`: Output format: `json`, `table`, `plain` (default: table)
+- `--connection, -c`: Connection name (optional; if omitted, the first available connection is used)
+- `--format, -f`: Output format: `auto`, `table`, `plain`, `json`, `csv`
+- `--quiet, -q`: Suppress informational messages
 
 ### tables
 
@@ -203,9 +244,10 @@ whodb-cli tables --connection my-postgres --schema public --format json
 ```
 
 Flags:
-- `--connection, -c`: Connection name
+- `--connection, -c`: Connection name (optional; if omitted, the first available connection is used)
 - `--schema, -s`: Schema name (default varies by database)
-- `--format, -f`: Output format: `json`, `table`, `plain`
+- `--format, -f`: Output format: `auto`, `table`, `plain`, `json`, `csv`
+- `--quiet, -q`: Suppress informational messages
 
 ### columns
 
@@ -216,10 +258,11 @@ whodb-cli columns --connection my-postgres --table users --format json
 ```
 
 Flags:
-- `--connection, -c`: Connection name
+- `--connection, -c`: Connection name (optional; if omitted, the first available connection is used)
 - `--table, -t`: Table name (required)
 - `--schema, -s`: Schema name
-- `--format, -f`: Output format: `json`, `table`, `plain`
+- `--format, -f`: Output format: `auto`, `table`, `plain`, `json`, `csv`
+- `--quiet, -q`: Suppress informational messages
 
 ### connections
 
@@ -239,9 +282,13 @@ whodb-cli connections add --name prod --type postgres --host db.example.com --po
 whodb-cli connections remove prod
 ```
 
+Flags (applies to all subcommands):
+- `--format, -f`: Output format: `auto`, `table`, `plain`, `json`, `csv`
+- `--quiet, -q`: Suppress informational messages
+
 ### export
 
-Export table data to file.
+Export table data or query results to file.
 
 ```bash
 # Export to CSV
@@ -249,14 +296,20 @@ whodb-cli export --connection my-postgres --table users --format csv --output us
 
 # Export to Excel
 whodb-cli export --connection my-postgres --table orders --format excel --output orders.xlsx
+
+# Export query results
+whodb-cli export --connection my-postgres --query "SELECT * FROM users" --output users.csv
 ```
 
 Flags:
-- `--connection, -c`: Connection name
-- `--table, -t`: Table name (required)
+- `--connection, -c`: Connection name (optional; if omitted, the first available connection is used)
+- `--table, -t`: Table name (required unless using `--query`)
+- `--query, -Q`: SQL query to export results from (use instead of `--table`)
 - `--schema, -s`: Schema name
-- `--format, -f`: Export format: `csv`, `excel`
-- `--output, -o`: Output file path
+- `--format, -f`: Export format: `csv` or `excel` (auto-detected from filename if omitted)
+- `--output, -o`: Output file path (required)
+- `--delimiter, -d`: CSV delimiter (default: comma)
+- `--quiet, -q`: Suppress informational messages
 
 ### history
 
@@ -274,8 +327,9 @@ whodb-cli history clear
 ```
 
 Flags:
-- `--limit, -l`: Number of entries to show (default: 10)
-- `--format, -f`: Output format: `json`, `table`, `plain`
+- `--limit, -l`: Limit number of results (0 = no limit)
+- `--format, -f`: Output format: `auto`, `table`, `plain`, `json`, `csv`
+- `--quiet, -q`: Suppress informational messages
 
 ## MCP Server
 
@@ -296,61 +350,70 @@ This starts a stdio-based MCP server that exposes these tools:
 | `whodb_tables` | List tables in a schema |
 | `whodb_columns` | Describe table columns |
 | `whodb_query` | Execute SQL queries |
+| `whodb_confirm` | Confirm pending write operations (only when confirm-writes is enabled) |
+
+Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
+
+### MCP Flags
+
+- `--read-only`: Block all write operations
+- `--allow-write`: Allow writes without confirmation (use with caution)
+- `--allow-drop`: Allow DROP/TRUNCATE when running with `--allow-write`
+- `--security`: Validation level (`strict`, `standard`, `minimal`)
+- `--timeout`: Query timeout (default 30s)
+- `--max-rows`: Limit rows returned per query (0 = unlimited)
+- `--allow-multi-statement`: Allow multiple SQL statements in one query
 
 ### Configure Connections
 
-The MCP server uses a hybrid credential system:
+The MCP server uses the same connection sources as the CLI:
 
-**Option 1: Environment Variables** (recommended for production)
+**Option 1: Environment Profiles** (recommended for production)
+
+Use env profiles like `WHODB_POSTGRES='[{"alias":"prod","host":"host","user":"user","password":"pass","database":"dbname","port":"5432"}]'` or `WHODB_MYSQL_1='{"alias":"staging","host":"host","user":"user","password":"pass","database":"dbname","port":"3306"}'`. Each object supports `alias` (connection name), `host`, `user`, `password`, `database`, `port`, and optional `config`.
+
+Use the core JSON format. `alias` sets the connection name used in MCP tools.
 
 ```bash
-# Format: WHODB_{NAME}_URI
-export WHODB_PROD_URI="postgres://user:pass@host:5432/dbname"
-export WHODB_STAGING_URI="mysql://user:pass@host:3306/dbname"
+# Array format
+export WHODB_POSTGRES='[{"alias":"prod","host":"host","user":"user","password":"pass","database":"dbname","port":"5432"}]'
+
+# Numbered format (one profile per variable)
+export WHODB_MYSQL_1='{"alias":"staging","host":"host","user":"user","password":"pass","database":"dbname","port":"3306"}'
 ```
+
+If `alias` is omitted, the CLI assigns a name like `postgres-1`.
+Saved connections take precedence if names collide.
 
 **Option 2: Saved Connections**
 
 Use `whodb-cli connect --name mydb ...` to save connections that the MCP server can access.
 
-### Claude Desktop Configuration
+If a tool call omits `connection`, the MCP server uses the only available connection or returns an error if multiple are available.
 
-Add to `~/.config/claude/claude_desktop_config.json` (Linux) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+### MCP Client Configuration (Example)
+
+Example configuration (from `whodb-cli mcp serve --help`):
 
 ```json
 {
   "mcpServers": {
-    "whodb": {
-      "command": "/path/to/whodb-cli",
-      "args": ["mcp", "serve"],
-      "env": {
-        "WHODB_PROD_URI": "postgres://user:pass@host:5432/db"
+      "whodb": {
+        "command": "whodb-cli",
+        "args": ["mcp", "serve"],
+        "env": {
+          "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
+        }
       }
     }
   }
-}
-```
-
-### Claude Code Configuration
-
-Create `.mcp.json` in your project root:
-
-```json
-{
-  "mcpServers": {
-    "whodb": {
-      "command": "whodb-cli",
-      "args": ["mcp", "serve"]
-    }
-  }
-}
 ```
 
 ### Docker MCP Server
 
 ```bash
 docker run -i --rm \
-  -e WHODB_PROD_URI="postgres://user:pass@host:5432/db" \
+  -e WHODB_POSTGRES_1='{"alias":"prod","host":"host","user":"user","password":"pass","database":"db"}' \
   --network host \
   whodb-cli:latest mcp serve
 ```
@@ -363,12 +426,15 @@ Select and manage database connections.
 
 | Key     | Action                       |
 |---------|------------------------------|
-| `↑/k`   | Move up                      |
-| `↓/j`   | Move down                    |
-| `Enter` | Connect to selected database |
-| `n`     | New connection               |
-| `d`     | Delete connection            |
-| `Esc`   | Back / Cancel                |
+| `↑/k/Shift+Tab` | Move up                    |
+| `↓/j/Tab`       | Move down                  |
+| `Enter`         | Connect to selected database |
+| `n`             | New connection             |
+| `d`             | Delete connection          |
+| `Esc`           | Back (form) / press twice to quit (list) |
+| `Ctrl+C`        | Force quit                 |
+
+Form mode: `Tab`/`Shift+Tab` or `↑/↓` to move fields, `←/→` to change database type, `Enter` to connect.
 
 ### 2. Browser View
 
@@ -378,30 +444,33 @@ Navigate schemas and tables in a visual grid layout.
 |-------------------------|--------------------|
 | `↑/k` `↓/j` `←/h` `→/l` | Navigate grid      |
 | `/` or `f`              | Filter tables      |
-| `s`                     | Switch schema      |
+| `Ctrl+S`                | Select schema      |
 | `Enter`                 | View table data    |
-| `e`                     | Open SQL editor    |
+| `Ctrl+E`                | Open SQL editor    |
 | `Ctrl+H`                | View query history |
-| `a`                     | Open AI assistant  |
-| `r`                     | Refresh table list |
+| `Ctrl+A`                | Open AI chat       |
+| `Ctrl+R`                | Refresh table list |
+| `Tab`                   | Next view          |
 | `Esc`                   | Disconnect         |
+| `Ctrl+C`                | Quit               |
 
 ### 3. Editor View
 
-Write and execute SQL queries with syntax highlighting and autocomplete.
+Write and execute SQL queries with schema-aware autocomplete.
 
 | Key                              | Action               |
 |----------------------------------|----------------------|
 | `Alt+Enter` (`Option+Enter` Mac) | Execute query        |
-| `Ctrl+Space`                | Trigger autocomplete |
-| `Tab` / `Shift+Tab`         | Navigate suggestions |
+| `Ctrl+Space` (`Ctrl+@`)     | Trigger autocomplete |
+| `↑/↓` or `Ctrl+P/N`         | Navigate suggestions |
+| `Enter`                     | Accept suggestion    |
 | `Ctrl+L`                    | Clear editor         |
+| `Tab`                       | Next view            |
 | `Esc`                       | Back to browser      |
 
 Features:
 
-- SQL syntax highlighting
-- Schema-aware autocomplete (tables, columns, keywords)
+- Schema-aware autocomplete (tables, columns, keywords, snippets)
 - Multi-line editing
 - Error display
 
@@ -415,14 +484,17 @@ View query results in a responsive, paginated table.
 | `←/h` `→/l` | Scroll columns      |
 | `n`         | Next page           |
 | `p`         | Previous page       |
+| `s`         | Cycle page size     |
+| `Shift+S`   | Custom page size    |
 | `e`         | Export data         |
 | `w`         | Add WHERE condition |
+| `c`         | Select columns      |
 | `Esc`       | Back                |
 
 Features:
 
 - Pagination (configurable, default 50 rows)
-- Column resizing
+- Column selection
 - Data export (CSV, Excel)
 
 ### 5. History View
@@ -435,71 +507,95 @@ Browse and re-execute past queries.
 | `/`         | Filter history         |
 | `Enter`     | Load query into editor |
 | `r`         | Re-run query           |
-| `c`         | Clear history          |
+| `Shift+D`   | Clear history          |
+| `y`/`n`     | Confirm clear          |
+| `Tab`       | Next view              |
 | `Esc`       | Back                   |
 
 ### 6. AI Chat View
 
-Natural language database queries (requires AI backend configuration).
+AI-assisted database chat (requires a configured provider and consent).
 
-| Key      | Action          |
-|----------|-----------------|
-| `Enter`  | Send message    |
-| `Ctrl+M` | Change AI model |
-| `Esc`    | Back to browser |
+| Key           | Action                 |
+|---------------|------------------------|
+| `↑/↓`         | Cycle fields           |
+| `←/→`         | Change selection       |
+| `Ctrl+L`      | Load models            |
+| `Ctrl+I`      | Focus message input    |
+| `Ctrl+P/N`    | Select message         |
+| `Enter`       | Confirm/send/view      |
+| `Ctrl+R`      | Revoke consent         |
+| `Esc`         | Back to browser        |
+
+Consent gate: press `a` to accept or `Esc` to exit.
 
 ### 7. Export View
 
 Export data to CSV or Excel format.
 
-| Key     | Action                    |
-|---------|---------------------------|
-| `Tab`   | Switch format (CSV/Excel) |
-| `Enter` | Confirm export            |
-| `Esc`   | Cancel                    |
+| Key         | Action                         |
+|-------------|--------------------------------|
+| `Tab`/`↑/↓` | Move between fields            |
+| `←/→`       | Change format/delimiter/toggle |
+| `Enter`     | Confirm export                 |
+| `Esc`       | Cancel                         |
 
 ## Configuration
 
 ### Config File Location
 
-```
-~/.whodb-cli/config.yaml
-```
+WhoDB CLI stores data in the unified WhoDB config:
+
+- macOS: `~/Library/Application Support/whodb/config.json`
+- Linux: `$XDG_DATA_HOME/whodb/config.json` (default: `~/.local/share/whodb/config.json`)
+- Windows: `%APPDATA%\\whodb\\config.json`
+
+Development builds append `-dev` to the data directory name, and EE builds append `-ee`.
+
+Query history is stored alongside the config as `history.json`. If a legacy `~/.whodb-cli/config.yaml` exists, it is migrated automatically.
 
 ### Config Structure
 
-```yaml
-connections:
-  - name: local-postgres
-    type: postgres
-    host: localhost
-    port: 5432
-    username: postgres
-    database: mydb
-
-  - name: prod-mysql
-    type: mysql
-    host: prod-server
-    port: 3306
-    username: app_user
-    database: production
-
-history:
-  max_entries: 1000
-  persist: true
-
-display:
-  theme: dark
-  page_size: 50
+```json
+{
+  "cli": {
+    "connections": [
+      {
+        "name": "local-postgres",
+        "type": "Postgres",
+        "host": "localhost",
+        "port": 5432,
+        "username": "postgres",
+        "database": "mydb",
+        "schema": "public"
+      }
+    ],
+    "history": {
+      "max_entries": 1000,
+      "persist": true
+    },
+    "display": {
+      "theme": "dark",
+      "page_size": 50
+    },
+    "ai": {
+      "consent_given": false
+    },
+    "query": {
+      "timeout_seconds": 30
+    }
+  }
+}
 ```
+
+Passwords are stored in the OS keyring when available. If not available, they are written to `config.json` (new files are created with `0600` permissions).
 
 ### Environment Variables
 
-Override configuration with environment variables:
-
 ```bash
 export WHODB_CLI_DEBUG=true
-export WHODB_CLI_CONFIG=/custom/path/config.yaml
+export WHODB_CLI_NO_COLOR=true
+export NO_COLOR=1
 ```
 
 ## Docker Usage
@@ -530,7 +626,7 @@ docker run -it --rm --network host whodb-cli:latest query "SELECT version()"
 
 ```bash
 docker run -it --rm \
-  -v ~/.whodb-cli:/root/.whodb-cli \
+  -v ~/.local/share/whodb:/root/.local/share/whodb \
   --network host \
   whodb-cli:latest
 ```
@@ -538,7 +634,7 @@ docker run -it --rm \
 ### Environment Variables
 
 - `TERM=xterm-256color` - Proper terminal colors (set by default)
-- `WHODB_CLI_*` - Any config can be set via environment variables
+- `WHODB_CLI_DEBUG` / `WHODB_CLI_NO_COLOR` / `NO_COLOR` - Control CLI output
 
 ## Keyboard Reference Card
 
@@ -603,15 +699,16 @@ Recommended terminals: iTerm2, Alacritty, Windows Terminal, Kitty
 **"Config not found"**
 
 ```bash
-mkdir -p ~/.whodb-cli
+mkdir -p ~/.local/share/whodb
 whodb-cli connect --type postgres --host localhost --name test
 ```
+Adjust the path for your OS (see Configuration).
 
 **"Permissions error"**
 
 ```bash
-chmod 700 ~/.whodb-cli
-chmod 600 ~/.whodb-cli/config.yaml
+chmod 700 ~/.local/share/whodb
+chmod 600 ~/.local/share/whodb/config.json ~/.local/share/whodb/history.json
 ```
 
 ### Debug Mode
@@ -646,8 +743,11 @@ cli/
 │   │   ├── history_view.go
 │   │   ├── chat_view.go
 │   │   ├── export_view.go
-│   │   └── where_view.go
-│   ├── config/         # Configuration (Viper)
+│   │   ├── where_view.go
+│   │   ├── columns_view.go
+│   │   ├── schema_view.go
+│   │   └── messages.go
+│   ├── config/         # Unified config.json + keyring storage
 │   ├── database/       # Database manager
 │   └── history/        # Query history
 ├── pkg/
@@ -655,7 +755,10 @@ cli/
 │   │   ├── server.go   # Server setup
 │   │   ├── tools.go    # Tool handlers
 │   │   └── credentials.go # Connection resolution
-│   └── styles/         # UI styling (Lipgloss)
+│   ├── output/         # Programmatic output formatting
+│   ├── styles/         # UI styling (Lipgloss)
+│   ├── version/        # Build/version info
+│   └── crash/          # Panic handler and crash report
 ├── skills/             # Claude Code skills
 │   ├── whodb/          # Main database skill
 │   ├── query-builder/  # Natural language → SQL

@@ -244,8 +244,11 @@ If the user wants different security settings, they can restart with:
 - --allow-write: Full write access without confirmation (not recommended for production)
 
 Connection names reference either:
-1. Environment variables: WHODB_{NAME}_URI (e.g., "prod" -> WHODB_PROD_URI)
+1. Environment profiles, for example:
+   - WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"db","port":"5432"}]'
+   - WHODB_MYSQL_1='{"alias":"staging","host":"localhost","user":"user","password":"pass","database":"db","port":"3306"}'
 2. Saved connections from WhoDB CLI configuration
+Saved connections take precedence when names collide.
 
 Example workflow:
 1. List connections: whodb_connections
