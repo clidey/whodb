@@ -214,6 +214,50 @@ export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (k
     });
 }
 
+/**
+ * Maps column data types to HTML5 input attributes for native validation.
+ * Leverages browser-native validation and appropriate input types.
+ *
+ * @param rawType - The column type string (e.g., "INTEGER", "VARCHAR(255)", "TIMESTAMP")
+ * @returns Object with HTML input attributes (type, step, min, inputMode)
+ */
+export function getInputPropsForColumnType(rawType: string): {
+    type?: React.HTMLInputTypeAttribute;
+    step?: string;
+    min?: string;
+    inputMode?: 'text' | 'numeric' | 'decimal' | 'none' | 'tel' | 'url' | 'email' | 'search';
+} {
+    const type = stripTypeSuffix(rawType).toUpperCase();
+
+    // Integer types - use number input with step=1
+    if (intTypes.has(type)) {
+        return { type: 'number', step: '1', inputMode: 'numeric' };
+    }
+
+    // Unsigned integer types - use number input with min=0 and step=1
+    if (uintTypes.has(type)) {
+        return { type: 'number', step: '1', min: '0', inputMode: 'numeric' };
+    }
+
+    // Float/decimal types - use number input with step=any
+    if (floatTypes.has(type)) {
+        return { type: 'number', step: 'any', inputMode: 'decimal' };
+    }
+
+    // Date types - use date input
+    if (dateTypes.has(type)) {
+        return { type: 'date' };
+    }
+
+    // DateTime/timestamp types - use datetime-local input
+    if (dateTimeTypes.has(type)) {
+        return { type: 'datetime-local' };
+    }
+
+    // Default to text input with text keyboard
+    return { type: 'text', inputMode: 'text' };
+}
+
 
 interface TableProps {
     columns: string[];
@@ -1432,6 +1476,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                         value={editRow[idx] ?? ""}
                                                         onChange={e => handleInputChange(e.target.value, idx)}
                                                         data-testid={`editable-field-${idx}`}
+                                                        {...getInputPropsForColumnType(columnTypes?.[idx] || '')}
                                                     />
                                                     : <TextArea
                                                         key={`textarea-${idx}`}
