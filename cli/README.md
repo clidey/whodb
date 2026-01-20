@@ -146,7 +146,6 @@ whodb-cli [flags]
 
 Flags:
 
-- `--config`: Legacy CLI config path for debug/no-color settings (connections/history use the unified `config.json`; see Configuration)
 - `--debug`: Enable debug mode
 - `--no-color`: Disable colored output
 
