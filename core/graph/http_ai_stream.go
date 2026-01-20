@@ -120,14 +120,19 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 			// Send final complete responses
 			final := chunk.Final()
 			if final != nil {
+				log.Logger.Infof("Processing final chunk with %d responses", len(*final))
 				for _, bamlResp := range *final {
+					log.Logger.Infof("Final response type: %s, operation: %v, text_len: %d", bamlResp.Type, bamlResp.Operation, len(bamlResp.Text))
 					// Only execute SQL for SQL-type responses
 					if bamlResp.Type == types.ChatMessageTypeSQL {
 						message := convertBAMLResponseToMessage(&bamlResp, config, plugin)
+						log.Logger.Infof("Sending SQL message: type=%s, has_result=%v, requires_confirmation=%v", message.Type, message.Result != nil, message.RequiresConfirmation)
 						sendSSEMessage(w, flusher, message)
 					}
 					// Message-type responses were already streamed
 				}
+			} else {
+				log.Logger.Warn("Final chunk has no responses")
 			}
 			// Send done event
 			fmt.Fprintf(w, "event: done\ndata: {}\n\n")
@@ -180,31 +185,80 @@ func sendSSEError(w http.ResponseWriter, flusher http.Flusher, errorMsg string) 
 // convertBAMLResponseToMessage converts a BAML response to a chat message (executes SQL if needed)
 func convertBAMLResponseToMessage(bamlResp *types.ChatResponse, config *engine.PluginConfig, plugin *engine.Plugin) *model.AIChatMessage {
 	message := &model.AIChatMessage{
-		Type: string(bamlResp.Type),
-		Text: bamlResp.Text,
+		Type:                 string(bamlResp.Type),
+		Text:                 bamlResp.Text,
+		RequiresConfirmation: false,
 	}
 
 	// Execute SQL if it's a query
-	if bamlResp.Type == types.ChatMessageTypeSQL && bamlResp.Operation != nil {
-		result, execErr := plugin.RawExecute(config, bamlResp.Text)
-		if execErr != nil {
-			message.Type = "error"
-			message.Text = execErr.Error()
+	if bamlResp.Type == types.ChatMessageTypeSQL {
+		log.Logger.Infof("Processing SQL response: operation=%v, text_len=%d", bamlResp.Operation, len(bamlResp.Text))
+
+		if bamlResp.Operation == nil {
+			// If operation is not specified, assume it's a read query and execute it
+			log.Logger.Warn("SQL response missing operation type, executing as read query")
+			result, execErr := plugin.RawExecute(config, bamlResp.Text)
+			if execErr != nil {
+				log.Logger.WithError(execErr).Error("Failed to execute SQL query")
+				message.Type = "error"
+				message.Text = execErr.Error()
+			} else {
+				// Convert result
+				var columns []*model.Column
+				for _, column := range result.Columns {
+					columns = append(columns, &model.Column{
+						Type: column.Type,
+						Name: column.Name,
+					})
+				}
+				message.Result = &model.RowsResult{
+					Columns: columns,
+					Rows:    result.Rows,
+				}
+				message.Type = "sql:get"
+				log.Logger.Infof("SQL query executed successfully, rows=%d", len(result.Rows))
+			}
 		} else {
-			// Convert result
-			var columns []*model.Column
-			for _, column := range result.Columns {
-				columns = append(columns, &model.Column{
-					Type: column.Type,
-					Name: column.Name,
-				})
+			// Check if operation is a mutation that requires confirmation
+			isMutation := *bamlResp.Operation == types.OperationTypeINSERT ||
+				*bamlResp.Operation == types.OperationTypeUPDATE ||
+				*bamlResp.Operation == types.OperationTypeDELETE ||
+				*bamlResp.Operation == types.OperationTypeCREATE ||
+				*bamlResp.Operation == types.OperationTypeALTER ||
+				*bamlResp.Operation == types.OperationTypeDROP
+
+			if isMutation {
+				// Don't execute mutations immediately - require user confirmation
+				log.Logger.Infof("SQL mutation detected, requiring confirmation: operation=%v", *bamlResp.Operation)
+				message.Type = convertOperationType(*bamlResp.Operation)
+				message.RequiresConfirmation = true
+				message.Result = nil
+			} else {
+				// Execute non-mutation queries (SELECT, etc.) immediately
+				log.Logger.Infof("Executing non-mutation query: operation=%v", *bamlResp.Operation)
+				result, execErr := plugin.RawExecute(config, bamlResp.Text)
+				if execErr != nil {
+					log.Logger.WithError(execErr).Error("Failed to execute SQL query")
+					message.Type = "error"
+					message.Text = execErr.Error()
+				} else {
+					// Convert result
+					var columns []*model.Column
+					for _, column := range result.Columns {
+						columns = append(columns, &model.Column{
+							Type: column.Type,
+							Name: column.Name,
+						})
+					}
+					message.Result = &model.RowsResult{
+						Columns: columns,
+						Rows:    result.Rows,
+					}
+					// Set operation-specific type
+					message.Type = convertOperationType(*bamlResp.Operation)
+					log.Logger.Infof("SQL query executed successfully, rows=%d", len(result.Rows))
+				}
 			}
-			message.Result = &model.RowsResult{
-				Columns: columns,
-				Rows:    result.Rows,
-			}
-			// Set operation-specific type
-			message.Type = convertOperationType(*bamlResp.Operation)
 		}
 	}
 
