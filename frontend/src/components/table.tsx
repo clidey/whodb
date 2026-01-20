@@ -244,16 +244,6 @@ export function getInputPropsForColumnType(rawType: string): {
         return { type: 'number', step: 'any', inputMode: 'decimal' };
     }
 
-    // Date types - use date input
-    if (dateTypes.has(type)) {
-        return { type: 'date' };
-    }
-
-    // DateTime/timestamp types - use datetime-local input
-    if (dateTimeTypes.has(type)) {
-        return { type: 'datetime-local' };
-    }
-
     // Default to text input with text keyboard
     return { type: 'text', inputMode: 'text' };
 }
