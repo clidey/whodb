@@ -77,19 +77,26 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	// Create dynamic BAML client and log request
 	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
 
-	// Build table context (same as non-streaming version)
-	rows, err := plugin.GetStorageUnits(config, req.Schema)
+	// Get table names first
+	storageUnits, err := plugin.GetStorageUnits(config, req.Schema)
 	if err != nil {
 		sendSSEError(w, flusher, fmt.Sprintf("Failed to get table info: %v", err))
 		return
 	}
 
-	// Build table details string
+	// Build table details string with actual column definitions
 	tableDetails := ""
-	for _, unit := range rows {
+	for _, unit := range storageUnits {
+		// Get actual column definitions for each table
+		columns, err := plugin.GetColumnsForTable(config, req.Schema, unit.Name)
+		if err != nil {
+			log.Logger.WithError(err).Warnf("Failed to get columns for table %s in streaming chat", unit.Name)
+			continue
+		}
+
 		tableDetails += fmt.Sprintf("table: %s\n", unit.Name)
-		for _, attr := range unit.Attributes {
-			tableDetails += fmt.Sprintf("- %s (%s)\n", attr.Key, attr.Value)
+		for _, col := range columns {
+			tableDetails += fmt.Sprintf("- %s (%s)\n", col.Name, col.Type)
 		}
 	}
 
