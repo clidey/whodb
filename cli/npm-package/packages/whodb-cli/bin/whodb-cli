@@ -15,6 +15,16 @@ const PLATFORM_PACKAGES = {
   'win32-arm64': '@clidey/whodb-cli-win32-arm64',
 };
 
+// Map Node.js platform/arch to BAML library names
+const BAML_LIBRARIES = {
+  'darwin-arm64': 'libbaml_cffi-aarch64-apple-darwin.dylib',
+  'darwin-x64': 'libbaml_cffi-x86_64-apple-darwin.dylib',
+  'linux-arm64': 'libbaml_cffi-aarch64-unknown-linux-gnu.so',
+  'linux-x64': 'libbaml_cffi-x86_64-unknown-linux-gnu.so',
+  'win32-x64': 'baml_cffi-x86_64-pc-windows-msvc.dll',
+  // linux-arm (armv7) not supported by BAML - will fall back to runtime download
+};
+
 function getBinaryPath() {
   const platformKey = `${process.platform}-${process.arch}`;
   const packageName = PLATFORM_PACKAGES[platformKey];
@@ -69,10 +79,40 @@ function getBinaryPath() {
 
 const binaryPath = getBinaryPath();
 
+// Find bundled BAML library if available
+function getBamlLibraryPath(binaryPath) {
+  const platformKey = `${process.platform}-${process.arch}`;
+  const bamlLibName = BAML_LIBRARIES[platformKey];
+
+  if (!bamlLibName) {
+    // Platform not supported for bundled BAML, will use runtime download
+    return null;
+  }
+
+  // BAML library should be in the same directory as the binary
+  const binDir = path.dirname(binaryPath);
+  const bamlPath = path.join(binDir, bamlLibName);
+
+  if (fs.existsSync(bamlPath)) {
+    return bamlPath;
+  }
+
+  return null;
+}
+
+const bamlLibraryPath = getBamlLibraryPath(binaryPath);
+
+// Set up environment with BAML_LIBRARY_PATH if bundled library exists
+const env = { ...process.env };
+if (bamlLibraryPath) {
+  env.BAML_LIBRARY_PATH = bamlLibraryPath;
+}
+
 // Pass through all arguments directly to the CLI
 const args = process.argv.slice(2);
 const child = spawn(binaryPath, args, {
   stdio: 'inherit',
+  env,
 });
 
 child.on('error', (err) => {
