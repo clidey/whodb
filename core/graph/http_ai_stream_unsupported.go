@@ -1,4 +1,4 @@
-//go:build arm
+//go:build arm || riscv64
 
 /*
  * Copyright 2026 Clidey, Inc.
@@ -42,7 +42,7 @@ func aiChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Send error via SSE
 	errorData := map[string]string{
-		"error": "AI features are not supported on this platform (armv7). BAML requires amd64 or arm64 architecture.",
+		"error": "AI features are not supported on this platform (arm/riscv64). BAML requires amd64 or arm64 architecture.",
 	}
 	data, _ := json.Marshal(errorData)
 	fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)

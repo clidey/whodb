@@ -1,4 +1,4 @@
-//go:build arm
+//go:build arm || riscv64
 
 /*
  * Copyright 2026 Clidey, Inc.
@@ -30,7 +30,7 @@ import (
 )
 
 // ErrBAMLNotSupported is returned when AI features are used on unsupported platforms
-var ErrBAMLNotSupported = errors.New("AI features are not supported on this platform (armv7). BAML requires amd64 or arm64 architecture")
+var ErrBAMLNotSupported = errors.New("AI features are not supported on this platform (arm/riscv64). BAML requires amd64 or arm64 architecture")
 
 // SQLChatBAML returns an error on unsupported platforms
 func SQLChatBAML(

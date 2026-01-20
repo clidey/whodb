@@ -1,4 +1,4 @@
-//go:build arm
+//go:build arm || riscv64
 
 /*
  * Copyright 2026 Clidey, Inc.
@@ -25,7 +25,7 @@ import (
 
 func init() {
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "⚠️  Notice: AI features are unavailable on this architecture (arm/armv7).")
+	fmt.Fprintln(os.Stderr, "⚠️  Notice: AI features are unavailable on this architecture (arm/riscv64).")
 	fmt.Fprintln(os.Stderr, "   All other database features work normally.")
 	fmt.Fprintln(os.Stderr, "")
 }
