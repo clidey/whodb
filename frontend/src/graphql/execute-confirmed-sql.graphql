@@ -1,0 +1,23 @@
+mutation ExecuteConfirmedSQL($query: String!, $operationType: String!) {
+  ExecuteConfirmedSQL(query: $query, operationType: $operationType) {
+    Type
+    Text
+    Result {
+      Columns {
+        Type
+        Name
+        IsPrimary
+        IsForeignKey
+        ReferencedTable
+        ReferencedColumn
+        Length
+        Precision
+        Scale
+      }
+      Rows
+      DisableUpdate
+      TotalCount
+    }
+    RequiresConfirmation
+  }
+}

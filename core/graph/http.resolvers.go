@@ -423,31 +423,48 @@ func sendSSEError(w http.ResponseWriter, flusher http.Flusher, errorMsg string) 
 // convertBAMLResponseToMessage converts a BAML response to a chat message (executes SQL if needed)
 func convertBAMLResponseToMessage(bamlResp *types.ChatResponse, config *engine.PluginConfig, plugin *engine.Plugin) *model.AIChatMessage {
 	message := &model.AIChatMessage{
-		Type: string(bamlResp.Type),
-		Text: bamlResp.Text,
+		Type:                 string(bamlResp.Type),
+		Text:                 bamlResp.Text,
+		RequiresConfirmation: false,
 	}
 
 	// Execute SQL if it's a query
 	if bamlResp.Type == types.ChatMessageTypeSQL && bamlResp.Operation != nil {
-		result, execErr := plugin.RawExecute(config, bamlResp.Text)
-		if execErr != nil {
-			message.Type = "error"
-			message.Text = execErr.Error()
-		} else {
-			// Convert result
-			var columns []*model.Column
-			for _, column := range result.Columns {
-				columns = append(columns, &model.Column{
-					Type: column.Type,
-					Name: column.Name,
-				})
-			}
-			message.Result = &model.RowsResult{
-				Columns: columns,
-				Rows:    result.Rows,
-			}
-			// Set operation-specific type
+		// Check if operation is a mutation that requires confirmation
+		isMutation := *bamlResp.Operation == types.OperationTypeINSERT ||
+			*bamlResp.Operation == types.OperationTypeUPDATE ||
+			*bamlResp.Operation == types.OperationTypeDELETE ||
+			*bamlResp.Operation == types.OperationTypeCREATE ||
+			*bamlResp.Operation == types.OperationTypeALTER ||
+			*bamlResp.Operation == types.OperationTypeDROP
+
+		if isMutation {
+			// Don't execute mutations immediately - require user confirmation
 			message.Type = convertOperationType(*bamlResp.Operation)
+			message.RequiresConfirmation = true
+			message.Result = nil
+		} else {
+			// Execute non-mutation queries (SELECT, etc.) immediately
+			result, execErr := plugin.RawExecute(config, bamlResp.Text)
+			if execErr != nil {
+				message.Type = "error"
+				message.Text = execErr.Error()
+			} else {
+				// Convert result
+				var columns []*model.Column
+				for _, column := range result.Columns {
+					columns = append(columns, &model.Column{
+						Type: column.Type,
+						Name: column.Name,
+					})
+				}
+				message.Result = &model.RowsResult{
+					Columns: columns,
+					Rows:    result.Rows,
+				}
+				// Set operation-specific type
+				message.Type = convertOperationType(*bamlResp.Operation)
+			}
 		}
 	}
 

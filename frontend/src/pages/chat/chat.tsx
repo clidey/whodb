@@ -37,7 +37,7 @@ import {
     SelectValue,
     toast
 } from "@clidey/ux";
-import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery} from '@graphql';
+import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useExecuteConfirmedSqlMutation} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
@@ -265,9 +265,13 @@ export const ChatPage: FC = () => {
     const [query, setQuery] = useState("");
     const chats = useAppSelector(state => state.houdini.chats);
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
+    const [executeConfirmedSql] = useExecuteConfirmedSqlMutation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
+    const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
+    const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
+    const messageIdCounter = useRef(0);
 
     // For databases that use "database" instead of "schema" (MySQL, MariaDB, etc.),
     // we need to pass the database value where the backend expects "schema"
@@ -280,6 +284,12 @@ export const ChatPage: FC = () => {
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
 
     const dispatch = useAppDispatch();
+
+    // Generate unique message IDs to prevent collisions
+    const getUniqueMessageId = useCallback(() => {
+        messageIdCounter.current += 1;
+        return Date.now() * 1000 + messageIdCounter.current;
+    }, []);
 
     const aiState = useAI();
     const { modelType, currentModel, modelAvailable, models } = aiState;
@@ -327,16 +337,17 @@ export const ChatPage: FC = () => {
 
         setLoading(true);
         loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
-        dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, }));
+        dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, RequiresConfirmation: false }));
         setQuery("");
 
         // Add a placeholder for streaming text
-        const streamingMessageId = Date.now();
+        const streamingMessageId = getUniqueMessageId();
         dispatch(HoudiniActions.addChatMessage({
             Type: "message",
             Text: "",
             isStreaming: true,
-            id: streamingMessageId
+            id: streamingMessageId,
+            RequiresConfirmation: false
         }));
 
         setTimeout(() => {
@@ -370,13 +381,16 @@ export const ChatPage: FC = () => {
             });
 
             if (!response.body) {
-                throw new Error('No response body');
+                toast.error(t('unableToQuery') + " " + response.statusText);
+                setLoading(false);
+                return;
             }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let streamingText = '';
             let currentEventType = '';
+            let addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -398,18 +412,16 @@ export const ChatPage: FC = () => {
                             const parsed = JSON.parse(data);
 
                             if (currentEventType === 'chunk') {
-                                // BAML sends full accumulated text in each chunk, not deltas
                                 const text = parsed.text || '';
-
-                                // Update streaming message with the latest text
-                                // Ignore SQL/error types during streaming (they'll come in 'message' event)
                                 const chunkType = parsed.type || '';
-                                if (chunkType !== 'sql' && chunkType !== 'error') {
+
+                                // Only update message text if it's longer (ignore SQL/error chunks)
+                                if (chunkType !== 'sql' && chunkType !== 'error' && text && text.length > streamingText.length) {
+                                    streamingText = text;
                                     dispatch(HoudiniActions.updateChatMessage({
                                         id: streamingMessageId,
-                                        Text: text,
+                                        Text: streamingText,
                                     }));
-                                    streamingText = text;
                                 }
 
                                 // Auto-scroll
@@ -421,22 +433,32 @@ export const ChatPage: FC = () => {
                                 }
                             } else if (currentEventType === 'message') {
                                 // Handle complete messages (SQL responses after streaming)
-                                if (parsed.Type?.startsWith("sql") && parsed.Result) {
-                                    // Add SQL results as a new message
-                                    dispatch(HoudiniActions.addChatMessage({
-                                        Type: parsed.Type,
-                                        Text: parsed.Text,
-                                        Result: parsed.Result,
-                                    }));
+                                if (parsed.Type?.startsWith("sql")) {
+                                    // Create a unique key for this SQL message to avoid duplicates
+                                    const sqlKey = `${parsed.Type}:${parsed.Text}`;
 
-                                    setTimeout(() => {
-                                        if (scrollContainerRef.current != null) {
-                                            scrollContainerRef.current.scroll({
-                                                top: scrollContainerRef.current.scrollHeight,
-                                                behavior: "smooth",
-                                            });
-                                        }
-                                    }, 100);
+                                    // Only add if we haven't seen this SQL message before
+                                    if (!addedSqlMessages.has(sqlKey)) {
+                                        addedSqlMessages.add(sqlKey);
+
+                                        const messageId = getUniqueMessageId();
+                                        dispatch(HoudiniActions.addChatMessage({
+                                            Type: parsed.Type,
+                                            Text: parsed.Text,
+                                            Result: parsed.Result,
+                                            RequiresConfirmation: parsed.RequiresConfirmation || false,
+                                            id: messageId,
+                                        }));
+
+                                        setTimeout(() => {
+                                            if (scrollContainerRef.current != null) {
+                                                scrollContainerRef.current.scroll({
+                                                    top: scrollContainerRef.current.scrollHeight,
+                                                    behavior: "smooth",
+                                                });
+                                            }
+                                        }, 100);
+                                    }
                                 }
                             } else if (currentEventType === 'done') {
                                 // Stream complete - finalize the streaming message
@@ -475,7 +497,7 @@ export const ChatPage: FC = () => {
             toast.error(t('unableToQuery') + " " + errorMessage);
             setLoading(false);
         }
-    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef]);
+    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef, getUniqueMessageId]);
 
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
@@ -524,6 +546,62 @@ export const ChatPage: FC = () => {
         setQuery("");
         setCurrentSearchIndex(undefined);
     }, [dispatch]);
+
+    const handleConfirmSQL = useCallback(async (messageId: number, sql: string, operationType: string) => {
+        setExecutingConfirmedId(messageId);
+        try {
+            const { data, errors } = await executeConfirmedSql({
+                variables: {
+                    query: sql,
+                    operationType: operationType,
+                },
+            });
+
+            if (errors || !data) {
+                toast.error(t('unableToQuery') + " " + (errors?.[0]?.message || t('failedToExecuteSQL')));
+                setLoading(false);
+                return;
+            }
+
+            const result = data.ExecuteConfirmedSQL;
+
+            // Update the confirmation message in place with the result
+            dispatch(HoudiniActions.completeStreamingMessage({
+                id: messageId,
+                message: {
+                    Type: result.Type,
+                    Text: result.Text,
+                    Result: result.Result,
+                    RequiresConfirmation: false,
+                },
+            }));
+
+            // Scroll to bottom
+            setTimeout(() => {
+                if (scrollContainerRef.current != null) {
+                    scrollContainerRef.current.scroll({
+                        top: scrollContainerRef.current.scrollHeight,
+                        behavior: "smooth",
+                    });
+                }
+            }, 100);
+
+        } catch (error) {
+            const errorMessage = error instanceof Error
+                ? error.message
+                : typeof error === 'string'
+                ? error
+                : 'Unknown error';
+            toast.error(t('unableToQuery') + " " + errorMessage);
+        } finally {
+            setExecutingConfirmedId(null);
+        }
+    }, [executeConfirmedSql, dispatch, t, scrollContainerRef]);
+
+    const handleCancelSQL = useCallback((messageId: number) => {
+        dispatch(HoudiniActions.removeChatMessage(messageId));
+        toast.info(t('queryCancelled') || 'Query cancelled');
+    }, [dispatch, t]);
 
     const disableAll = useMemo(() => {
         return models.length === 0 || (!modelAvailable && !currentModel);
@@ -594,6 +672,64 @@ export const ChatPage: FC = () => {
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                </div>
+                                            } else if (chat.RequiresConfirmation) {
+                                                // Show confirmation UI inline
+                                                const isExecuting = executingConfirmedId === chat.id;
+                                                const showQuery = showQueryForId === chat.id;
+
+                                                return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="confirmation-message">
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput
+                                                        ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
+                                                        : <div className="pl-4" />}
+                                                    <div className="flex flex-col gap-3 w-[calc(100%-50px)]">
+                                                        <Alert className="w-full">
+                                                            <SparklesIcon className="w-4 h-4" />
+                                                            <AlertTitle>{t('confirmExecutionTitle') || 'Confirm Execution'}</AlertTitle>
+                                                            <AlertDescription>
+                                                                {t('confirmExecutionDescription') || 'This operation will modify your database. Review and confirm to proceed.'}
+                                                            </AlertDescription>
+                                                        </Alert>
+
+                                                        {/* SQL Query Toggle */}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setShowQueryForId(showQuery ? null : (chat.id ?? null))}
+                                                            className="w-fit"
+                                                        >
+                                                            <CodeBracketIcon className="w-4 h-4 mr-2" />
+                                                            {showQuery ? t('hideQuery') || 'Hide Query' : t('showQuery') || 'Show Query'}
+                                                        </Button>
+
+                                                        {/* SQL Query Display */}
+                                                        {showQuery && (
+                                                            <div className="bg-neutral-100 dark:bg-neutral-800 p-4 rounded-lg">
+                                                                <code className="text-sm whitespace-pre-wrap break-words">
+                                                                    {chat.Text}
+                                                                </code>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Action Buttons */}
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                onClick={() => chat.id && handleCancelSQL(chat.id)}
+                                                                disabled={isExecuting}
+                                                                size="sm"
+                                                            >
+                                                                {t('no') || 'No'}
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() => chat.id && handleConfirmSQL(chat.id, chat.Text, chat.Type)}
+                                                                disabled={isExecuting}
+                                                                size="sm"
+                                                            >
+                                                                {isExecuting ? (t('executing') || 'Executing...') : (t('yes') || 'Yes')}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="table-message">
