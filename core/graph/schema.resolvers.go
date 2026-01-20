@@ -680,6 +680,41 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	}, nil
 }
 
+// ExecuteConfirmedSQL is the resolver for the ExecuteConfirmedSQL field.
+func (r *mutationResolver) ExecuteConfirmedSQL(ctx context.Context, query string, operationType string) (*model.AIChatMessage, error) {
+	// Get plugin and config from context
+	plugin, config := GetPluginForContext(ctx)
+
+	// Execute the SQL query
+	result, execErr := plugin.RawExecute(config, query)
+
+	message := &model.AIChatMessage{
+		Type:                 operationType,
+		Text:                 query,
+		RequiresConfirmation: false,
+	}
+
+	if execErr != nil {
+		message.Type = "error"
+		message.Text = execErr.Error()
+	} else {
+		// Convert result
+		var columns []*model.Column
+		for _, column := range result.Columns {
+			columns = append(columns, &model.Column{
+				Type: column.Type,
+				Name: column.Name,
+			})
+		}
+		message.Result = &model.RowsResult{
+			Columns: columns,
+			Rows:    result.Rows,
+		}
+	}
+
+	return message, nil
+}
+
 // AddAWSProvider is the resolver for the AddAWSProvider field.
 func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSProviderInput) (*model.AWSProvider, error) {
 	if !env.IsAWSProviderEnabled {
@@ -1349,9 +1384,10 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 			}
 		}
 		chatResponse = append(chatResponse, &model.AIChatMessage{
-			Type:   message.Type,
-			Result: result,
-			Text:   message.Text,
+			Type:                 message.Type,
+			Result:               result,
+			Text:                 message.Text,
+			RequiresConfirmation: message.RequiresConfirmation,
 		})
 	}
 

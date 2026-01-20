@@ -25,10 +25,7 @@ import (
 )
 
 func TestNewMainModel(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 	if m == nil {
@@ -81,10 +78,8 @@ func TestNewMainModelWithConnection(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
+	setupTestEnv(t)
 	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
 
 	dbPath := tempDir + "/test.db"
 	conn := &config.Connection{
@@ -113,10 +108,7 @@ func TestNewMainModelWithConnection(t *testing.T) {
 }
 
 func TestMainModel_Init(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 	cmd := m.Init()
@@ -127,10 +119,7 @@ func TestMainModel_Init(t *testing.T) {
 }
 
 func TestMainModel_Update_WindowSize(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 
@@ -151,10 +140,7 @@ func TestMainModel_Update_WindowSize(t *testing.T) {
 }
 
 func TestMainModel_Update_CtrlC(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 
@@ -170,10 +156,7 @@ func TestMainModel_Update_CtrlC(t *testing.T) {
 }
 
 func TestMainModel_View(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 	view := m.View()
@@ -188,10 +171,8 @@ func TestMainModel_HandleTabSwitch(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
+	setupTestEnv(t)
 	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
 
 	dbPath := tempDir + "/test.db"
 	conn := &config.Connection{
@@ -220,10 +201,7 @@ func TestMainModel_HandleTabSwitch(t *testing.T) {
 }
 
 func TestMainModel_HandleTabSwitch_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 	initialMode := m.mode
@@ -240,10 +218,7 @@ func TestMainModel_HandleTabSwitch_NotConnected(t *testing.T) {
 }
 
 func TestMainModel_ErrorHandling(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := &MainModel{
 		err: os.ErrInvalid,
@@ -287,10 +262,7 @@ func TestViewMode_String(t *testing.T) {
 }
 
 func TestMainModel_HelpOverlay(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 
@@ -322,10 +294,7 @@ func TestMainModel_HelpOverlay(t *testing.T) {
 }
 
 func TestMainModel_HelpOverlay_BlockedInEditor(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 
@@ -345,10 +314,7 @@ func TestMainModel_HelpOverlay_BlockedInEditor(t *testing.T) {
 }
 
 func TestMainModel_IsHelpSafe(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 
@@ -387,10 +353,7 @@ func TestMainModel_IsHelpSafe(t *testing.T) {
 }
 
 func TestMainModel_RenderHelpOverlay(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 
@@ -462,10 +425,7 @@ func stringContains(s, substr string) bool {
 }
 
 func TestMainModel_ErrorDismiss(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 	m.err = os.ErrInvalid
@@ -485,10 +445,7 @@ func TestMainModel_ErrorDismiss(t *testing.T) {
 }
 
 func TestMainModel_Update_AllModes(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	m := NewMainModel()
 

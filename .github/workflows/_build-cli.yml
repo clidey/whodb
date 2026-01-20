@@ -110,6 +110,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-arm-linux-gnueabihf
 
+      - name: Add armv7 build tags to BAML client
+        run: |
+          # BAML doesn't support armv7 or riscv64, so we exclude baml_client from these builds
+          # This allows the CLI to work for non-AI features on armv7
+          for dir in core/baml_client core/baml_client/types core/baml_client/stream_types core/baml_client/type_builder; do
+            for file in "$dir"/*.go; do
+              if [ -f "$file" ] && ! head -1 "$file" | grep -q "^//go:build"; then
+                { echo '//go:build !arm && !riscv64'; echo ''; cat "$file"; } > "$file.tmp" && mv "$file.tmp" "$file"
+              fi
+            done
+          done
+
       - name: Build CLI
         working-directory: ./cli
         run: make ci-build-linux-armv7 VERSION=${{ inputs.version }}

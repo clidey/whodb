@@ -39,15 +39,16 @@ var (
 )
 
 type Connection struct {
-	Name     string            `json:"name"`
-	Type     string            `json:"type"`
-	Host     string            `json:"host"`
-	Port     int               `json:"port"`
-	Username string            `json:"username"`
-	Password string            `json:"password,omitempty"`
-	Database string            `json:"database"`
-	Schema   string            `json:"schema,omitempty"`
-	Advanced map[string]string `json:"advanced,omitempty"`
+	Name      string            `json:"name"`
+	Type      string            `json:"type"`
+	Host      string            `json:"host"`
+	Port      int               `json:"port"`
+	Username  string            `json:"username"`
+	Password  string            `json:"password,omitempty"`
+	Database  string            `json:"database"`
+	Schema    string            `json:"schema,omitempty"`
+	Advanced  map[string]string `json:"advanced,omitempty"`
+	IsProfile bool              `json:"is_profile,omitempty"`
 }
 
 type HistoryConfig struct {

@@ -29,6 +29,7 @@ jobs:
             deb.debian.org:80
             fulcio.sigstore.dev:443
             github.com:443
+            objects.githubusercontent.com:443
             registry.npmjs.org:443
             rekor.sigstore.dev:443
             token.actions.githubusercontent.com:443
@@ -63,6 +64,44 @@ jobs:
           echo "Downloaded binaries:"
           ls -la cli-binaries/
 
+      - name: Extract BAML version from go.mod
+        id: baml-version
+        run: |
+          BAML_VERSION=$(grep 'github.com/boundaryml/baml ' core/go.mod | awk '{print $2}' | sed 's/^v//')
+          echo "version=$BAML_VERSION" >> $GITHUB_OUTPUT
+          echo "BAML version: $BAML_VERSION"
+
+      - name: Download BAML libraries
+        env:
+          BAML_VERSION: ${{ steps.baml-version.outputs.version }}
+        run: |
+          mkdir -p baml-libs
+
+          # Map npm package directories to BAML library URLs
+          # Format: pkg_dir -> baml_lib_name
+          declare -A BAML_MAP
+          BAML_MAP["whodb-cli-darwin-arm64"]="libbaml_cffi-aarch64-apple-darwin.dylib"
+          BAML_MAP["whodb-cli-darwin-x64"]="libbaml_cffi-x86_64-apple-darwin.dylib"
+          BAML_MAP["whodb-cli-linux-arm64"]="libbaml_cffi-aarch64-unknown-linux-gnu.so"
+          BAML_MAP["whodb-cli-linux-x64"]="libbaml_cffi-x86_64-unknown-linux-gnu.so"
+          # Note: linux-arm (armv7) not supported by BAML - will fall back to runtime download
+          BAML_MAP["whodb-cli-win32-x64"]="baml_cffi-x86_64-pc-windows-msvc.dll"
+
+          BASE_URL="https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}"
+
+          for pkg_dir in "${!BAML_MAP[@]}"; do
+            lib_name="${BAML_MAP[$pkg_dir]}"
+            echo "Downloading BAML library for $pkg_dir..."
+            curl -L -o "baml-libs/${pkg_dir}-${lib_name}" "${BASE_URL}/${lib_name}" || {
+              echo "Warning: Failed to download BAML library for $pkg_dir"
+              continue
+            }
+            echo "Downloaded: baml-libs/${pkg_dir}-${lib_name} ($(ls -lh "baml-libs/${pkg_dir}-${lib_name}" | awk '{print $5}'))"
+          done
+
+          echo "BAML libraries downloaded:"
+          ls -la baml-libs/
+
       - name: Prepare platform packages
         env:
           VERSION: ${{ inputs.version }}
@@ -79,6 +118,14 @@ jobs:
           BINARY_MAP["whodb-cli-windows-amd64.exe"]="whodb-cli-win32-x64"
           # Windows ARM64 disabled
           # BINARY_MAP["whodb-cli-windows-arm64.exe"]="whodb-cli-win32-arm64"
+
+          # Map npm packages to BAML library file names (must match download step)
+          declare -A BAML_LIB_MAP
+          BAML_LIB_MAP["whodb-cli-darwin-arm64"]="libbaml_cffi-aarch64-apple-darwin.dylib"
+          BAML_LIB_MAP["whodb-cli-darwin-x64"]="libbaml_cffi-x86_64-apple-darwin.dylib"
+          BAML_LIB_MAP["whodb-cli-linux-arm64"]="libbaml_cffi-aarch64-unknown-linux-gnu.so"
+          BAML_LIB_MAP["whodb-cli-linux-x64"]="libbaml_cffi-x86_64-unknown-linux-gnu.so"
+          BAML_LIB_MAP["whodb-cli-win32-x64"]="baml_cffi-x86_64-pc-windows-msvc.dll"
 
           # Process each platform package
           for binary_name in "${!BINARY_MAP[@]}"; do
@@ -101,6 +148,18 @@ jobs:
               # Copy binary
               cp "$binary_path" "$pkg_dir/bin/$target_name"
               chmod +x "$pkg_dir/bin/$target_name"
+
+              # Copy BAML library if available
+              baml_lib="${BAML_LIB_MAP[$pkg_dir]}"
+              if [ -n "$baml_lib" ]; then
+                baml_src="../../../baml-libs/${pkg_dir}-${baml_lib}"
+                if [ -f "$baml_src" ]; then
+                  cp "$baml_src" "$pkg_dir/bin/$baml_lib"
+                  echo "  Bundled BAML library: $baml_lib ($(ls -lh "$pkg_dir/bin/$baml_lib" | awk '{print $5}'))"
+                else
+                  echo "  Warning: BAML library not found for $pkg_dir (will use runtime download)"
+                fi
+              fi
 
               # Update version in package.json
               jq --arg v "$VERSION" '.version = $v' "$pkg_dir/package.json" > "$pkg_dir/package.json.tmp"

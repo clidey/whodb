@@ -97,6 +97,18 @@ jobs:
           mkdir -p core/build
           cp -r frontend/build/* core/build/
 
+      - name: Add arm/riscv64 build tags to BAML client
+        run: |
+          # BAML doesn't support arm (armv6/armv7) or riscv64, so we exclude baml_client from these builds
+          # This allows the server to work for non-AI features on arm and riscv64
+          for dir in core/baml_client core/baml_client/types core/baml_client/stream_types core/baml_client/type_builder; do
+            for file in "$dir"/*.go; do
+              if [ -f "$file" ] && ! head -1 "$file" | grep -q "^//go:build"; then
+                { echo '//go:build !arm && !riscv64'; echo ''; cat "$file"; } > "$file.tmp" && mv "$file.tmp" "$file"
+              fi
+            done
+          done
+
       - name: Build all server binaries
         working-directory: ./desktop-ce
         env:

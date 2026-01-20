@@ -86,14 +86,14 @@ The output format is determined by:
 
 		var conn *dbmgr.Connection
 		if exportConnection != "" {
-			conn, err = mgr.GetConnection(exportConnection)
+			conn, _, err = mgr.ResolveConnection(exportConnection)
 			if err != nil {
-				return fmt.Errorf("connection %q not found", exportConnection)
+				return err
 			}
 		} else {
-			conns := mgr.ListConnections()
+			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no saved connections. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)
@@ -198,7 +198,7 @@ The output format is determined by:
 func init() {
 	rootCmd.AddCommand(exportCmd)
 
-	exportCmd.Flags().StringVarP(&exportConnection, "connection", "c", "", "saved connection name to use")
+	exportCmd.Flags().StringVarP(&exportConnection, "connection", "c", "", "connection name to use")
 	exportCmd.Flags().StringVarP(&exportSchema, "schema", "s", "", "schema containing the table")
 	exportCmd.Flags().StringVarP(&exportTable, "table", "t", "", "table to export")
 	exportCmd.Flags().StringVarP(&exportQuery, "query", "Q", "", "SQL query to export results from")

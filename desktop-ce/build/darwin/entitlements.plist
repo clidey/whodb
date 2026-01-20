@@ -14,6 +14,15 @@
 	<true/>
 	<key>com.apple.security.files.bookmarks.app-scope</key>
 	<true/>
+	<!-- Disable library validation to allow loading BAML's unsigned FFI dylib -->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+	<!-- Allow JIT compilation for JavaScript engines -->
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<!-- Allow unsigned executable memory for native FFI libraries -->
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
 	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
 	<array>
 		<string>.whodb/</string>

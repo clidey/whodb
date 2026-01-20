@@ -73,14 +73,14 @@ Output formats:
 
 		var conn *dbmgr.Connection
 		if schemasConnection != "" {
-			conn, err = mgr.GetConnection(schemasConnection)
+			conn, _, err = mgr.ResolveConnection(schemasConnection)
 			if err != nil {
-				return fmt.Errorf("connection %q not found", schemasConnection)
+				return err
 			}
 		} else {
-			conns := mgr.ListConnections()
+			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no saved connections. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)
@@ -128,7 +128,7 @@ Output formats:
 func init() {
 	rootCmd.AddCommand(schemasCmd)
 
-	schemasCmd.Flags().StringVarP(&schemasConnection, "connection", "c", "", "saved connection name to use")
+	schemasCmd.Flags().StringVarP(&schemasConnection, "connection", "c", "", "connection name to use")
 	schemasCmd.Flags().StringVarP(&schemasFormat, "format", "f", "auto", "output format: auto, table, plain, json, csv")
 	schemasCmd.Flags().BoolVarP(&schemasQuiet, "quiet", "q", false, "suppress informational messages")
 }

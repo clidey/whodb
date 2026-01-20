@@ -79,14 +79,14 @@ Output formats:
 
 		var conn *dbmgr.Connection
 		if columnsConnection != "" {
-			conn, err = mgr.GetConnection(columnsConnection)
+			conn, _, err = mgr.ResolveConnection(columnsConnection)
 			if err != nil {
-				return fmt.Errorf("connection %q not found", columnsConnection)
+				return err
 			}
 		} else {
-			conns := mgr.ListConnections()
+			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no saved connections. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)
@@ -174,7 +174,7 @@ Output formats:
 func init() {
 	rootCmd.AddCommand(columnsCmd)
 
-	columnsCmd.Flags().StringVarP(&columnsConnection, "connection", "c", "", "saved connection name to use")
+	columnsCmd.Flags().StringVarP(&columnsConnection, "connection", "c", "", "connection name to use")
 	columnsCmd.Flags().StringVarP(&columnsSchema, "schema", "s", "", "schema containing the table")
 	columnsCmd.Flags().StringVarP(&columnsTable, "table", "t", "", "table to describe (required)")
 	columnsCmd.Flags().StringVarP(&columnsFormat, "format", "f", "auto", "output format: auto, table, plain, json, csv")

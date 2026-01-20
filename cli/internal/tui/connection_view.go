@@ -28,15 +28,23 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/internal/config"
+	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
 type connectionItem struct {
-	conn config.Connection
+	conn   config.Connection
+	source string
 }
 
-func (i connectionItem) Title() string       { return i.conn.Name }
-func (i connectionItem) Description() string { return fmt.Sprintf("%s@%s", i.conn.Type, i.conn.Host) }
+func (i connectionItem) Title() string { return i.conn.Name }
+func (i connectionItem) Description() string {
+	desc := fmt.Sprintf("%s@%s", i.conn.Type, i.conn.Host)
+	if i.source == dbmgr.ConnectionSourceEnv {
+		desc += " (env)"
+	}
+	return desc
+}
 func (i connectionItem) FilterValue() string { return i.conn.Name }
 
 type connectionDelegate struct{}
@@ -91,8 +99,8 @@ type ConnectionView struct {
 // from the parent's config. If no connections exist, it starts in form mode.
 func NewConnectionView(parent *MainModel) *ConnectionView {
 	var items []list.Item
-	for _, conn := range parent.config.Connections {
-		items = append(items, connectionItem{conn: conn})
+	for _, info := range parent.dbManager.ListConnectionsWithSource() {
+		items = append(items, connectionItem{conn: info.Connection, source: info.Source})
 	}
 
 	l := list.New(items, connectionDelegate{}, 0, 0)
@@ -172,7 +180,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	inputs = append(inputs, schemaInput)
 
 	mode := "list"
-	if len(parent.config.Connections) == 0 {
+	if len(items) == 0 {
 		mode = "form"
 		inputs[0].Focus()
 	}
@@ -604,8 +612,8 @@ func (v *ConnectionView) renderForm() string {
 
 func (v *ConnectionView) refreshList() {
 	var items []list.Item
-	for _, conn := range v.parent.config.Connections {
-		items = append(items, connectionItem{conn: conn})
+	for _, info := range v.parent.dbManager.ListConnectionsWithSource() {
+		items = append(items, connectionItem{conn: info.Connection, source: info.Source})
 	}
 	v.list.SetItems(items)
 }

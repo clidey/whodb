@@ -107,9 +107,10 @@ type GraphUnit struct {
 
 // ChatMessage represents a message in an AI chat conversation with optional query results.
 type ChatMessage struct {
-	Type   string
-	Result *GetRowsResult
-	Text   string
+	Type                 string
+	Result               *GetRowsResult
+	Text                 string
+	RequiresConfirmation bool
 }
 
 // ForeignKeyRelationship describes a foreign key constraint on a column.
