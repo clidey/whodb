@@ -28,6 +28,11 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 )
 
+// RawExecutePlugin defines the interface for executing raw SQL queries
+type RawExecutePlugin interface {
+	RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error)
+}
+
 // SQLChatBAML generates SQL queries using BAML for structured prompt engineering
 // This replaces the old string-based prompt and JSON parsing approach
 func SQLChatBAML(

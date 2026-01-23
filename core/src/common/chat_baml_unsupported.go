@@ -29,6 +29,11 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
+// RawExecutePlugin defines the interface for executing raw SQL queries
+type RawExecutePlugin interface {
+	RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error)
+}
+
 // ErrBAMLNotSupported is returned when AI features are used on unsupported platforms
 var ErrBAMLNotSupported = errors.New("AI features are not supported on this platform (arm/riscv64). BAML requires amd64 or arm64 architecture")
 
