@@ -12,12 +12,11 @@ en:
   edit: Edit
   remove: Remove
 
-  status:
-    connected: Connected
-    discovering: Discovering
-    error: Error
-    disconnected: Disconnected
-    credentialsrequired: Credentials Required
+  status.connected: Connected
+  status.discovering: Discovering
+  status.error: Error
+  status.disconnected: Disconnected
+  status.credentialsrequired: Credentials Required
 
   envDefined: Environment
   resourcesDiscovered: "{{count}} resources"

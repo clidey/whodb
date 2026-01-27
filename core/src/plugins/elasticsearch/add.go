@@ -1,17 +1,17 @@
 /*
- * // Copyright 2025 Clidey, Inc.
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //     http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package elasticsearch
@@ -37,15 +37,19 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 	// Build mapping from provided fields, best-effort. If none provided, keep default.
 	var body *bytes.Buffer
 	if len(fields) > 0 {
-		mapping := map[string]any{
-			"mappings": map[string]any{
-				"properties": buildElasticMappings(fields),
-			},
-		}
-		body = new(bytes.Buffer)
-		if err := json.NewEncoder(body).Encode(mapping); err != nil {
-			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to encode ElasticSearch mapping for index creation")
-			return false, err
+		props := buildElasticMappings(fields)
+		// Only include mapping if there are valid (non-empty) fields
+		if len(props) > 0 {
+			mapping := map[string]any{
+				"mappings": map[string]any{
+					"properties": props,
+				},
+			}
+			body = new(bytes.Buffer)
+			if err := json.NewEncoder(body).Encode(mapping); err != nil {
+				log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to encode ElasticSearch mapping for index creation")
+				return false, err
+			}
 		}
 	}
 
@@ -126,9 +130,14 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 }
 
 // buildElasticMappings converts field definitions into an Elasticsearch properties map.
+// Empty field names are filtered out since Elasticsearch rejects them.
 func buildElasticMappings(fields []engine.Record) map[string]any {
 	props := make(map[string]any, len(fields))
 	for _, f := range fields {
+		// Skip empty field names - Elasticsearch rejects them
+		if strings.TrimSpace(f.Key) == "" {
+			continue
+		}
 		props[f.Key] = map[string]any{
 			"type": mapElasticFieldType(f.Value),
 		}

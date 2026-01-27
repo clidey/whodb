@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
  */
 
 import {ComponentType} from 'react';
-import {TypeDefinition} from './database-types';
+import {TypeDefinition, SSLModeOption} from './database-types';
 
 // Types from analyze-view component
 type IPlanNode = {
@@ -103,4 +103,5 @@ export interface EEDatabaseType {
     supportsSchema?: boolean;
     supportsDatabaseSwitching?: boolean;
     usesSchemaForGraph?: boolean;
+    sslModes?: SSLModeOption[];
 }

@@ -18,14 +18,52 @@ import {ApolloClient, createHttpLink, InMemoryCache} from '@apollo/client';
 import {setContext} from '@apollo/client/link/context';
 import {onError} from '@apollo/client/link/error';
 import {toast} from '@clidey/ux';
+import {print} from 'graphql';
+import {
+    DatabaseType,
+    LoginDocument,
+    LoginMutationVariables,
+    LoginWithProfileDocument,
+    LoginWithProfileMutationVariables
+} from '@graphql';
+import {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
 import {isAwsHostname} from '../utils/cloud-connection-prefill';
+import {getTranslation, loadTranslations} from '../utils/i18n';
 
 // Always use a relative URI so that:
 // - Desktop/Wails uses the embedded router handler
 // - Dev server (vite) proxies to the backend via server.proxy in vite.config.ts
 const uri = "/api/query";
+const loginWithProfileQuery = print(LoginWithProfileDocument);
+const loginMutationQuery = print(LoginDocument);
+
+type SupportedLanguage = 'en' | 'es';
+type GraphQLClientTranslationKey = 'sessionExpired' | 'autoLoginSuccess' | 'autoLoginFailed';
+type TranslatorFn = (key: GraphQLClientTranslationKey) => string;
+
+let cachedTranslationLanguage: SupportedLanguage | undefined;
+let cachedTranslationsPromise: Promise<Record<string, string>> | null = null;
+
+const getTranslator = async (): Promise<TranslatorFn> => {
+    const language = (reduxStore.getState().settings.language ?? 'en') as SupportedLanguage;
+    if (!cachedTranslationsPromise || cachedTranslationLanguage !== language) {
+        cachedTranslationLanguage = language;
+        cachedTranslationsPromise = loadTranslations('config/graphql-client', language);
+    }
+    const translations = await cachedTranslationsPromise;
+    return (key: GraphQLClientTranslationKey) => getTranslation(translations, key);
+};
+
+const redirectToLoginWithMessage = async (
+    key: GraphQLClientTranslationKey,
+    translator?: TranslatorFn
+) => {
+    const t = translator ?? await getTranslator();
+    toast.error(t(key));
+    window.location.href = '/login';
+};
 
 const httpLink = createHttpLink({
   uri,
@@ -59,12 +97,11 @@ const errorLink = onError(({networkError}) => {
         const currentProfile = authState.current;
 
         if (currentProfile) {
-            handleAutoLogin(currentProfile);
+            void handleAutoLogin(currentProfile);
         } else {
             // Don't redirect if already on login page to avoid infinite loop
             if (!window.location.pathname.startsWith('/login')) {
-                toast.error("Session expired. Please login again.");
-                window.location.href = '/login';
+                void redirectToLoginWithMessage('sessionExpired');
             }
         }
     } else if (networkError) {
@@ -75,7 +112,8 @@ const errorLink = onError(({networkError}) => {
 /**
  * Handles automatic login using the current profile.
  */
-async function handleAutoLogin(currentProfile: any) {
+async function handleAutoLogin(currentProfile: LocalLoginProfile) {
+    const t = await getTranslator();
     try {
         // Don't auto-login to AWS connections when cloud providers are disabled
         const cloudProvidersEnabled = reduxStore.getState().settings.cloudProvidersEnabled;
@@ -86,6 +124,12 @@ async function handleAutoLogin(currentProfile: any) {
         let response, result;
         if (currentProfile.Saved) {
             // Login with profile
+            const variables: LoginWithProfileMutationVariables = {
+                profile: {
+                    Id: currentProfile.Id,
+                    Type: currentProfile.Type as DatabaseType,
+                },
+            };
             response = await fetch(uri, {
                 method: 'POST',
                 headers: addAuthHeader({
@@ -94,33 +138,31 @@ async function handleAutoLogin(currentProfile: any) {
                 credentials: 'include',
                 body: JSON.stringify({
                     operationName: 'LoginWithProfile',
-                    query: `
-            mutation LoginWithProfile($profile: LoginProfileInput!) {
-              LoginWithProfile(profile: $profile) {
-                Status
-              }
-            }
-          `,
-                    variables: {
-                        profile: {
-                            Id: currentProfile.Id,
-                            Type: currentProfile.Type,
-                        },
-                    },
+                    query: loginWithProfileQuery,
+                    variables,
                 }),
             });
             result = await response.json();
             if (result.data?.LoginWithProfile?.Status) {
-                toast.success("Automatically re-authenticated");
+                toast.success(t('autoLoginSuccess'));
                 window.location.reload();
                 return;
             } else {
-                toast.error("Auto-login failed. Please login manually.");
-                window.location.href = '/login';
+                await redirectToLoginWithMessage('autoLoginFailed', t);
                 return;
             }
         } else {
             // Normal login with credentials
+            const variables: LoginMutationVariables = {
+                credentials: {
+                    Type: currentProfile.Type,
+                    Hostname: currentProfile.Hostname,
+                    Database: currentProfile.Database,
+                    Username: currentProfile.Username,
+                    Password: currentProfile.Password,
+                    Advanced: currentProfile.Advanced || [],
+                },
+            };
             response = await fetch(uri, {
                 method: 'POST',
                 headers: addAuthHeader({
@@ -129,40 +171,23 @@ async function handleAutoLogin(currentProfile: any) {
                 credentials: 'include',
                 body: JSON.stringify({
                     operationName: 'Login',
-                    query: `
-            mutation Login($credentials: LoginCredentials!) {
-              Login(credentials: $credentials) {
-                Status
-              }
-            }
-          `,
-                    variables: {
-                        credentials: {
-                            Type: currentProfile.Type,
-                            Hostname: currentProfile.Hostname,
-                            Database: currentProfile.Database,
-                            Username: currentProfile.Username,
-                            Password: currentProfile.Password,
-                            Advanced: currentProfile.Advanced || [],
-                        },
-                    },
+                    query: loginMutationQuery,
+                    variables,
                 }),
             });
             result = await response.json();
             if (result.data?.Login?.Status) {
-                toast.success("Automatically re-authenticated");
+                toast.success(t('autoLoginSuccess'));
                 window.location.reload();
                 return;
             } else {
-                toast.error("Auto-login failed. Please login manually.");
-                window.location.href = '/login';
+                await redirectToLoginWithMessage('autoLoginFailed', t);
                 return;
             }
         }
     } catch (error) {
         console.error('Auto-login error:', error);
-        toast.error("Auto-login failed. Please login manually.");
-        window.location.href = '/login';
+        await redirectToLoginWithMessage('autoLoginFailed', t);
     }
 }
 

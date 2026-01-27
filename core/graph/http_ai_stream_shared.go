@@ -38,11 +38,11 @@ type StreamRequest struct {
 
 // StreamContext contains all context needed for streaming
 type StreamContext struct {
-	Writer   http.ResponseWriter
-	Flusher  http.Flusher
-	Plugin   *engine.Plugin
-	Config   *engine.PluginConfig
-	Request  *StreamRequest
+	Writer  http.ResponseWriter
+	Flusher http.Flusher
+	Plugin  *engine.Plugin
+	Config  *engine.PluginConfig
+	Request *StreamRequest
 }
 
 // ParseStreamRequest parses and validates the SSE request

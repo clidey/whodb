@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,39 +18,22 @@ package auth
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"net/http"
-	"time"
 
 	"github.com/clidey/whodb/core/graph/model"
-	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func Login(ctx context.Context, input *model.LoginCredentials) (*model.StatusResponse, error) {
-	loginInfoJSON, err := json.Marshal(input)
-	if err != nil {
-		return nil, err
-	}
+	log.Logger.Debugf("[Login] type=%s, hostname=%s, username=%s, database=%s, advanced=%d",
+		input.Type, input.Hostname, input.Username, input.Database, len(input.Advanced))
 
-	cookieValue := base64.StdEncoding.EncodeToString(loginInfoJSON)
+	// Note: We no longer set cookies for authentication.
+	// Credentials are sent via Authorization header on each request. This avoids the ~4KB cookie size
+	// limit which can be exceeded when SSL certificates are included.
+	log.Logger.Debugf("[Login] Login successful for %s at %s", input.Type, input.Hostname)
 
-	cookie := &http.Cookie{
-		Name:     string(AuthKey_Token),
-		Value:    cookieValue,
-		Path:     "/",
-		HttpOnly: true,
-		MaxAge:   7 * 24 * 60 * 60,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		SameSite: http.SameSiteLaxMode,
-	}
-	// Ensure cookies are HTTPS-only in production
-	// cookie.Secure = !env.IsDevelopment
-
-	http.SetCookie(ctx.Value(common.RouterKey_ResponseWriter).(http.ResponseWriter), cookie)
-
-	// Persist credentials in OS keychain when an Id is provided
+	// Persist credentials in OS keychain when an Id is provided (for future use)
 	if input.ID != nil && *input.ID != "" {
 		advanced := make([]engine.Record, 0, len(input.Advanced))
 		for _, rec := range input.Advanced {

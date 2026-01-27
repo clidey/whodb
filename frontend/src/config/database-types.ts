@@ -23,6 +23,17 @@ import {Icons} from "../components/icons";
 export type TypeCategory = 'numeric' | 'text' | 'binary' | 'datetime' | 'boolean' | 'json' | 'other';
 
 /**
+ * SSL mode option for database connections.
+ * Matches backend ssl.SSLModeInfo structure.
+ */
+export interface SSLModeOption {
+    /** Mode value used in configuration (e.g., "required", "verify-ca") */
+    value: string;
+    /** Accepted aliases for this mode (e.g., PostgreSQL's "require" for "required") */
+    aliases?: string[];
+}
+
+/**
  * Defines a canonical database type for use in type selectors.
  * Types are from each database's official documentation.
  */
@@ -74,7 +85,31 @@ export interface IDatabaseDropdownItem {
     usesSchemaForGraph?: boolean;
     // Whether this database type is an AWS managed service (hidden when cloud providers disabled)
     isAwsManaged?: boolean;
+    // SSL modes supported by this database (undefined = no SSL support, e.g., SQLite)
+    sslModes?: SSLModeOption[];
 }
+
+// Common SSL mode sets matching backend ssl.go definitions
+const SSL_MODES_STANDARD: SSLModeOption[] = [
+    { value: 'disabled' },
+    { value: 'required', aliases: ['require'] },  // PostgreSQL uses 'require'
+    { value: 'verify-ca' },
+    { value: 'verify-identity', aliases: ['verify-full'] },  // PostgreSQL uses 'verify-full'
+];
+
+const SSL_MODES_WITH_PREFERRED: SSLModeOption[] = [
+    { value: 'disabled', aliases: ['DISABLED'] },
+    { value: 'preferred', aliases: ['PREFERRED'] },
+    { value: 'required', aliases: ['REQUIRED'] },
+    { value: 'verify-ca', aliases: ['VERIFY_CA'] },
+    { value: 'verify-identity', aliases: ['VERIFY_IDENTITY'] },
+];
+
+const SSL_MODES_SIMPLE: SSLModeOption[] = [
+    { value: 'disabled' },
+    { value: 'enabled' },
+    { value: 'insecure' },
+];
 
 export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
     {
@@ -93,6 +128,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: true,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: true,
+        sslModes: SSL_MODES_STANDARD,
     },
     {
         id: "MySQL",
@@ -110,6 +146,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: false,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
+        sslModes: SSL_MODES_WITH_PREFERRED,
     },
     {
         id: "MariaDB",
@@ -127,6 +164,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: false,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
+        sslModes: SSL_MODES_WITH_PREFERRED,
     },
     {
         id: "Sqlite3",
@@ -157,6 +195,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: false,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
+        sslModes: SSL_MODES_SIMPLE,
     },
     {
         id: "Redis",
@@ -172,12 +211,13 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: false,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
+        sslModes: SSL_MODES_SIMPLE,
     },
     {
         id: "ElasticSearch",
         label: "ElasticSearch",
         icon: Icons.Logos.ElasticSearch,
-        extra: {"Port": "9200", "SSL Mode": "disable"},
+        extra: {"Port": "9200"},
         fields: {
             hostname: true,
             username: true,
@@ -187,6 +227,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: false,
         supportsDatabaseSwitching: false,
         usesSchemaForGraph: false,
+        sslModes: SSL_MODES_SIMPLE,
     },
     {
         id: "ClickHouse",
@@ -194,7 +235,6 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         icon: Icons.Logos.ClickHouse,
         extra: {
             "Port": "9000",
-            "SSL mode": "disable",
             "HTTP Protocol": "disable",
             "Readonly": "disable",
             "Debug": "disable"
@@ -210,6 +250,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: false,
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
+        sslModes: SSL_MODES_SIMPLE,
     },
     // AWS managed database types (discovered via AWS providers, use underlying plugins)
     {
@@ -227,6 +268,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
         isAwsManaged: true,
+        sslModes: SSL_MODES_SIMPLE,  // Uses Redis SSL modes
     },
     {
         id: "DocumentDB",
@@ -244,6 +286,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
         isAwsManaged: true,
+        sslModes: SSL_MODES_SIMPLE,  // Uses MongoDB SSL modes
     },
 ];
 
@@ -275,6 +318,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsSchema: dbType.supportsSchema,
                 supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
                 usesSchemaForGraph: dbType.usesSchemaForGraph,
+                sslModes: dbType.sslModes,
             }));
             
         } else {

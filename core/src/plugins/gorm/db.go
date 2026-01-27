@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +35,6 @@ const (
 	parseTimeKey               = "Parse Time"
 	locKey                     = "Loc"
 	allowClearTextPasswordsKey = "Allow clear text passwords"
-	sslModeKey                 = "SSL Mode"
 	httpProtocolKey            = "HTTP Protocol"
 	readOnlyKey                = "Readonly"
 	debugKey                   = "Debug"
@@ -55,12 +55,13 @@ type ConnectionInput struct {
 	AllowClearTextPasswords bool           `validate:"boolean"`
 
 	//clickhouse
-	SSLMode      string
 	HTTPProtocol string
 	ReadOnly     string
 	Debug        string
 
 	ConnectionTimeout int
+
+	SSLConfig *ssl.SSLConfig
 
 	ExtraOptions map[string]string `validate:"omitnil"`
 }
@@ -95,10 +96,11 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 	}
 
 	//clickhouse specific
-	sslMode := common.GetRecordValueOrDefault(config.Credentials.Advanced, sslModeKey, "disable")
 	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
 	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
 	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
+
+	sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 
 	connectionTimeout, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, connectionTimeoutKey, "90"))
 	if err != nil {
@@ -120,11 +122,11 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		ParseTime:               parseTime,
 		Loc:                     loc,
 		AllowClearTextPasswords: allowClearTextPasswords,
-		SSLMode:                 sslMode,
 		HTTPProtocol:            httpProtocol,
 		ReadOnly:                readOnly,
 		Debug:                   debug,
 		ConnectionTimeout:       connectionTimeout,
+		SSLConfig:               sslConfig,
 	}
 
 	// if this config is a pre-configured profile, then allow reading of additional params
@@ -132,10 +134,13 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		params := make(map[string]string)
 		for _, record := range config.Credentials.Advanced {
 			switch record.Key {
-			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, sslModeKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey:
+			// Skip known keys that are already parsed + skip SSL keyss
+			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey,
+				ssl.KeySSLMode, ssl.KeySSLCACertContent, ssl.KeySSLClientCertContent, ssl.KeySSLClientKeyContent,
+				ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath, ssl.KeySSLServerName:
 				continue
 			default:
-				// TODO: BIG EDGE CASE - PostgreSQL doesn't need URL escaping for params?
+				// PostgreSQL doesn't need URL escaping for params
 				if p.Type == engine.DatabaseType_Postgres {
 					params[record.Key] = record.Value
 				} else {

@@ -288,5 +288,17 @@
     "errorPatterns": {
       "tableNotFound": "Unknown table"
     }
+  },
+  "ssl": {
+    "port": 9440,
+    "caCertPath": "/app/certs/ca/clickhouse/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No SSL on SSL-only port" },
+      { "mode": "enabled", "shouldSucceed": true, "needsCert": true, "description": "SSL enabled with CA verification" },
+      { "mode": "insecure", "shouldSucceed": true, "needsCert": false, "description": "SSL without certificate verification" }
+    ],
+    "negativeTests": [
+      { "mode": "enabled", "withCert": false, "description": "enabled without CA cert should fail" }
+    ]
   }
 }

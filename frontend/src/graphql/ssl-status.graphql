@@ -1,0 +1,6 @@
+query GetSSLStatus {
+  SSLStatus {
+    IsEnabled
+    Mode
+  }
+}

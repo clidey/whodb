@@ -136,11 +136,11 @@ func (p *OllamaProvider) Complete(config *ProviderConfig, prompt string, model L
 		return nil, fmt.Errorf("ollama error: %s", string(body))
 	}
 
-	return p.parseResponse(resp.Body, receiverChan)
+	return p.ParseResponse(resp.Body, receiverChan)
 }
 
-// parseResponse parses the Ollama API response (always streaming).
-func (p *OllamaProvider) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
+// ParseResponse parses the Ollama API response (always streaming).
+func (p *OllamaProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
 	responseBuilder := strings.Builder{}
 	reader := bufio.NewReader(body)
 

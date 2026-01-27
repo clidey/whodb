@@ -1,0 +1,26 @@
+[req]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+req_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+C = US
+ST = Test
+L = Test
+O = WhoDB-Test
+CN = mariadb
+
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+DNS.2 = mariadb
+DNS.3 = e2e_mariadb_ssl
+DNS.4 = *.localhost
+IP.1 = 127.0.0.1
+

@@ -156,6 +156,7 @@ type ComplexityRoot struct {
 		Hostname             func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		IsEnvironmentDefined func(childComplexity int) int
+		SSLConfigured        func(childComplexity int) int
 		Source               func(childComplexity int) int
 		Type                 func(childComplexity int) int
 	}
@@ -201,6 +202,7 @@ type ComplexityRoot struct {
 		ProviderConnections   func(childComplexity int, providerID string) int
 		RawExecute            func(childComplexity int, query string) int
 		Row                   func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
+		SSLStatus             func(childComplexity int) int
 		Schema                func(childComplexity int) int
 		SettingsConfig        func(childComplexity int) int
 		StorageUnit           func(childComplexity int, schema string) int
@@ -217,6 +219,11 @@ type ComplexityRoot struct {
 		DisableUpdate func(childComplexity int) int
 		Rows          func(childComplexity int) int
 		TotalCount    func(childComplexity int) int
+	}
+
+	SSLStatus struct {
+		IsEnabled func(childComplexity int) int
+		Mode      func(childComplexity int) int
 	}
 
 	SettingsConfig struct {
@@ -284,6 +291,7 @@ type QueryResolver interface {
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 	MockDataMaxRowCount(ctx context.Context) (int, error)
 	DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error)
+	SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 	CloudProviders(ctx context.Context) ([]*model.AWSProvider, error)
 	CloudProvider(ctx context.Context, id string) (*model.AWSProvider, error)
 	DiscoveredConnections(ctx context.Context) ([]*model.DiscoveredConnection, error)
@@ -693,6 +701,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginProfile.IsEnvironmentDefined(childComplexity), true
+	case "LoginProfile.SSLConfigured":
+		if e.complexity.LoginProfile.SSLConfigured == nil {
+			break
+		}
+
+		return e.complexity.LoginProfile.SSLConfigured(childComplexity), true
 	case "LoginProfile.Source":
 		if e.complexity.LoginProfile.Source == nil {
 			break
@@ -1032,6 +1046,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Row(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["where"].(*model.WhereCondition), args["sort"].([]*model.SortCondition), args["pageSize"].(int), args["pageOffset"].(int)), true
+	case "Query.SSLStatus":
+		if e.complexity.Query.SSLStatus == nil {
+			break
+		}
+
+		return e.complexity.Query.SSLStatus(childComplexity), true
 	case "Query.Schema":
 		if e.complexity.Query.Schema == nil {
 			break
@@ -1099,6 +1119,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RowsResult.TotalCount(childComplexity), true
+
+	case "SSLStatus.IsEnabled":
+		if e.complexity.SSLStatus.IsEnabled == nil {
+			break
+		}
+
+		return e.complexity.SSLStatus.IsEnabled(childComplexity), true
+	case "SSLStatus.Mode":
+		if e.complexity.SSLStatus.Mode == nil {
+			break
+		}
+
+		return e.complexity.SSLStatus.Mode(childComplexity), true
 
 	case "SettingsConfig.CloudProvidersEnabled":
 		if e.complexity.SettingsConfig.CloudProvidersEnabled == nil {
@@ -3700,6 +3733,35 @@ func (ec *executionContext) fieldContext_LoginProfile_Source(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _LoginProfile_SSLConfigured(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LoginProfile_SSLConfigured,
+		func(ctx context.Context) (any, error) {
+			return obj.SSLConfigured, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_SSLConfigured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MockDataGenerationStatus_AmountGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4545,6 +4607,8 @@ func (ec *executionContext) fieldContext_Query_Profiles(_ context.Context, field
 				return ec.fieldContext_LoginProfile_IsEnvironmentDefined(ctx, field)
 			case "Source":
 				return ec.fieldContext_LoginProfile_Source(ctx, field)
+			case "SSLConfigured":
+				return ec.fieldContext_LoginProfile_SSLConfigured(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LoginProfile", field.Name)
 		},
@@ -5164,6 +5228,41 @@ func (ec *executionContext) fieldContext_Query_DatabaseMetadata(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_SSLStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_SSLStatus,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().SSLStatus(ctx)
+		},
+		nil,
+		ec.marshalOSSLStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLStatus,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_SSLStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "IsEnabled":
+				return ec.fieldContext_SSLStatus_IsEnabled(ctx, field)
+			case "Mode":
+				return ec.fieldContext_SSLStatus_Mode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SSLStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_CloudProviders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5775,6 +5874,64 @@ func (ec *executionContext) fieldContext_RowsResult_TotalCount(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SSLStatus_IsEnabled(ctx context.Context, field graphql.CollectedField, obj *model.SSLStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SSLStatus_IsEnabled,
+		func(ctx context.Context) (any, error) {
+			return obj.IsEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SSLStatus_IsEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SSLStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SSLStatus_Mode(ctx context.Context, field graphql.CollectedField, obj *model.SSLStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SSLStatus_Mode,
+		func(ctx context.Context) (any, error) {
+			return obj.Mode, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SSLStatus_Mode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SSLStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8866,6 +9023,11 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "SSLConfigured":
+			out.Values[i] = ec._LoginProfile_SSLConfigured(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9443,6 +9605,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "SSLStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_SSLStatus(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "CloudProviders":
 			field := field
 
@@ -9675,6 +9856,50 @@ func (ec *executionContext) _RowsResult(ctx context.Context, sel ast.SelectionSe
 			}
 		case "TotalCount":
 			out.Values[i] = ec._RowsResult_TotalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sSLStatusImplementors = []string{"SSLStatus"}
+
+func (ec *executionContext) _SSLStatus(ctx context.Context, sel ast.SelectionSet, obj *model.SSLStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sSLStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SSLStatus")
+		case "IsEnabled":
+			out.Values[i] = ec._SSLStatus_IsEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Mode":
+			out.Values[i] = ec._SSLStatus_Mode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11725,6 +11950,13 @@ func (ec *executionContext) marshalORowsResult2ᚖgithubᚗcomᚋclideyᚋwhodb�
 		return graphql.Null
 	}
 	return ec._RowsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSSLStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSSLStatus(ctx context.Context, sel ast.SelectionSet, v *model.SSLStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SSLStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOSortCondition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSortConditionᚄ(ctx context.Context, v any) ([]*model.SortCondition, error) {

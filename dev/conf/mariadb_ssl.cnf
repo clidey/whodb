@@ -1,0 +1,9 @@
+# MariaDB SSL configuration for E2E testing
+# DO NOT USE IN PRODUCTION
+
+[mysqld]
+ssl-ca=/etc/mysql/certs/ca.pem
+ssl-cert=/etc/mysql/certs/server-cert.pem
+ssl-key=/etc/mysql/certs/server-key.pem
+# Don't require SSL for all connections (allows testing both modes)
+require_secure_transport=OFF

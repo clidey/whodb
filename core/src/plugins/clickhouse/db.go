@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package clickhouse
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"strconv"
 	"time"
@@ -30,6 +29,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	gorm_clickhouse "gorm.io/driver/clickhouse"
 )
 
@@ -78,8 +78,19 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		}
 	}
 
-	if connectionInput.SSLMode != "disable" && connectionInput.SSLMode != "none" {
-		options.TLS = &tls.Config{InsecureSkipVerify: connectionInput.SSLMode == "relaxed"}
+	// Configure SSL/TLS
+	sslMode := "disabled"
+	if connectionInput.SSLConfig != nil && connectionInput.SSLConfig.IsEnabled() {
+		sslMode = string(connectionInput.SSLConfig.Mode)
+		tlsConfig, err := ssl.BuildTLSConfig(connectionInput.SSLConfig, connectionInput.Hostname)
+		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]any{
+				"hostname": connectionInput.Hostname,
+				"sslMode":  connectionInput.SSLConfig.Mode,
+			}).Error("Failed to build TLS configuration for ClickHouse")
+			return nil, err
+		}
+		options.TLS = tlsConfig
 	}
 
 	conn := clickhouse.OpenDB(options)
@@ -89,6 +100,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,
 		"username": connectionInput.Username,
+		"sslMode":  sslMode,
 		"protocol": func() string {
 			if connectionInput.HTTPProtocol != "disable" {
 				return "HTTP"

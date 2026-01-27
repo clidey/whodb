@@ -77,6 +77,7 @@ import {
   QuestionMarkCircleIcon as QuestionMarkCircleIconCE,
   RectangleGroupIcon as RectangleGroupIconCE,
   ShareIcon as ShareIconCE,
+  ShieldCheckIcon as ShieldCheckIconCE,
   ShoppingBagIcon as ShoppingBagIconCE,
   SparklesIcon as SparklesIconCE,
   StarIcon as StarIconCE,
@@ -156,6 +157,7 @@ export const PresentationChartLineIcon = EEOverrides.PresentationChartLineIcon ?
 export const QuestionMarkCircleIcon = EEOverrides.QuestionMarkCircleIcon ?? QuestionMarkCircleIconCE;
 export const RectangleGroupIcon = EEOverrides.RectangleGroupIcon ?? RectangleGroupIconCE;
 export const ShareIcon = EEOverrides.ShareIcon ?? ShareIconCE;
+export const ShieldCheckIcon = EEOverrides.ShieldCheckIcon ?? ShieldCheckIconCE;
 export const ShoppingBagIcon = EEOverrides.ShoppingBagIcon ?? ShoppingBagIconCE;
 export const SparklesIcon = EEOverrides.SparklesIcon ?? SparklesIconCE;
 export const StarIcon = EEOverrides.StarIcon ?? StarIconCE;

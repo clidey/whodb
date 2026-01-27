@@ -1,0 +1,53 @@
+<!--
+  ~ Copyright 2026 Clidey, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!-- ClickHouse SSL configuration for E2E testing -->
+<!-- DO NOT USE IN PRODUCTION -->
+<clickhouse>
+    <openSSL>
+        <server>
+            <certificateFile>/etc/clickhouse-server/certs/server-cert.pem</certificateFile>
+            <privateKeyFile>/etc/clickhouse-server/certs/server-key.pem</privateKeyFile>
+            <caConfig>/etc/clickhouse-server/certs/ca.pem</caConfig>
+            <verificationMode>none</verificationMode>
+            <loadDefaultCAFile>false</loadDefaultCAFile>
+            <cacheSessions>true</cacheSessions>
+            <disableProtocols>sslv2,sslv3</disableProtocols>
+            <preferServerCiphers>true</preferServerCiphers>
+        </server>
+        <client>
+            <loadDefaultCAFile>false</loadDefaultCAFile>
+            <caConfig>/etc/clickhouse-server/certs/ca.pem</caConfig>
+            <cacheSessions>true</cacheSessions>
+            <disableProtocols>sslv2,sslv3</disableProtocols>
+            <preferServerCiphers>true</preferServerCiphers>
+            <verificationMode>none</verificationMode>
+            <invalidCertificateHandler>
+                <name>AcceptCertificateHandler</name>
+            </invalidCertificateHandler>
+        </client>
+    </openSSL>
+
+    <!-- Enable HTTPS port -->
+    <https_port>8443</https_port>
+
+    <!-- Enable secure native port -->
+    <tcp_port_secure>9440</tcp_port_secure>
+
+    <!-- Keep non-SSL ports for backward compatibility testing -->
+    <http_port>8123</http_port>
+    <tcp_port>9000</tcp_port>
+</clickhouse>

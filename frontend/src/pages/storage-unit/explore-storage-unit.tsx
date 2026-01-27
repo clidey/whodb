@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -425,9 +425,14 @@ export const ExploreStorageUnit: FC = () => {
             try {
                 const json = JSON.parse(addRowData.document);
                 for (const key of keys(json)) {
+                    const val = json[key];
+                    // Convert non-string values to string for GraphQL
+                    const stringValue = typeof val === 'object' && val !== null
+                        ? JSON.stringify(val)
+                        : String(val);
                     values.push({
                         Key: key,
-                        Value: json[key],
+                        Value: stringValue,
                     });
                 }
             } catch (e) {
@@ -719,27 +724,43 @@ export const ExploreStorageUnit: FC = () => {
                     >
                         <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
-                            <div className="flex flex-col gap-4">
-                                {rows?.Columns?.map((col, index) => (
-                                    <div key={col.Name} className="flex flex-col gap-2"
-                                         data-testid={`add-row-field-${col.Name}`}>
-                                        <Tip>
-                                            <div className="flex items-center gap-xs">
-                                                {columnIcons[index]}
-                                                <Label className="w-fit">
-                                                    {col.Name}
-                                                </Label> 
-                                            </div>
-                                            <p className="text-xs">{col.Type?.toLowerCase()}</p>
-                                        </Tip>
-                                        <Input
-                                            value={addRowData[col.Name] ?? ""}
-                                            onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
-                                            placeholder={`Enter value for ${col.Name}`}
+                            {/* NoSQL Document input - show JSON editor */}
+                            {isNoSQL(current?.Type as DatabaseType) && rows?.Columns?.length === 1 && rows?.Columns?.[0]?.Type === "Document" ? (
+                                <div className="flex flex-col gap-4" data-testid="add-row-field-document">
+                                    <Label>{t('documentJson')}</Label>
+                                    <p className="text-xs text-muted-foreground">{t('documentJsonHelp')}</p>
+                                    <div className="h-[300px] border rounded-md overflow-hidden">
+                                        <CodeEditor
+                                            language="json"
+                                            value={addRowData.document ?? "{\n  \n}"}
+                                            setValue={(value) => handleAddRowFieldChange("document", value)}
                                         />
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ) : (
+                                /* Regular column-based input for SQL databases */
+                                <div className="flex flex-col gap-4">
+                                    {rows?.Columns?.map((col, index) => (
+                                        <div key={col.Name} className="flex flex-col gap-2"
+                                             data-testid={`add-row-field-${col.Name}`}>
+                                            <Tip>
+                                                <div className="flex items-center gap-xs">
+                                                    {columnIcons[index]}
+                                                    <Label className="w-fit">
+                                                        {col.Name}
+                                                    </Label>
+                                                </div>
+                                                <p className="text-xs">{col.Type?.toLowerCase()}</p>
+                                            </Tip>
+                                            <Input
+                                                value={addRowData[col.Name] ?? ""}
+                                                onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
+                                                placeholder={`Enter value for ${col.Name}`}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                             {addRowError && (
                                 <ErrorState error={addRowError} />
                             )}

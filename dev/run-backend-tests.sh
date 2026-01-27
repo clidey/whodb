@@ -22,7 +22,7 @@ set -euo pipefail
 # - Runs CE unit tests (excludes interactive server_test)
 # - Runs EE tests when the ee module is present
 # - Runs live integration tests (docker-compose) by default; set MODE to limit
-#   MODE values: all (default) | unit | integration
+#   MODE values: all (default) | unit | integration | ssl
 
 ROOT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GOCACHE_DIR="$ROOT_DIR/core/.gocache"
@@ -86,6 +86,41 @@ run_integration() {
   )
 }
 
+run_ssl() {
+  (
+    set -euo pipefail
+    echo "→ Running SSL integration tests (docker-compose ssl profile required)"
+    COMPOSE_FILE="$ROOT_DIR/dev/docker-compose.yml"
+    MANAGE_COMPOSE="${WHODB_MANAGE_COMPOSE:-1}"
+    COMPOSE_STARTED=0
+
+    cleanup() {
+      if [ "$MANAGE_COMPOSE" = "1" ] && [ "$COMPOSE_STARTED" -eq 1 ]; then
+        echo "→ Tearing down SSL docker-compose stack"
+        docker compose -f "$COMPOSE_FILE" --profile ssl down --volumes --remove-orphans
+      fi
+    }
+    trap cleanup EXIT
+
+    if [ "$MANAGE_COMPOSE" = "1" ]; then
+      if docker compose -f "$COMPOSE_FILE" --profile ssl ps -q | grep -q .; then
+        echo "ℹ️  Reusing existing SSL docker-compose stack"
+      else
+        echo "🐳 Starting SSL docker-compose stack (profile: ssl)"
+        docker compose -f "$COMPOSE_FILE" --profile ssl up -d
+        COMPOSE_STARTED=1
+        echo "⏳ Waiting for SSL services to be ready..."
+        sleep 10
+      fi
+    else
+      echo "ℹ️  WHODB_MANAGE_COMPOSE=0, assuming SSL services are already running"
+    fi
+
+    cd "$ROOT_DIR/core"
+    WHODB_SSL_TESTS=1 go test -tags integration -v -run "SSL" ./test/integration/...
+  )
+}
+
 case "$MODE" in
   all)
     run_unit
@@ -97,9 +132,12 @@ case "$MODE" in
   integration)
     run_integration
     ;;
+  ssl)
+    run_ssl
+    ;;
   *)
     echo "Unknown MODE: $MODE"
-    echo "Usage: $(basename "$0") [all|unit|integration]"
+    echo "Usage: $(basename "$0") [all|unit|integration|ssl]"
     exit 1
     ;;
 esac
