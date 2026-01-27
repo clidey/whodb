@@ -87,6 +87,18 @@ func (t *OperationTypeEnumView) ValueDELETE() (EnumValueView, error) {
 	return t.inner.Value("DELETE")
 }
 
+func (t *OperationTypeEnumView) ValueCREATE() (EnumValueView, error) {
+	return t.inner.Value("CREATE")
+}
+
+func (t *OperationTypeEnumView) ValueALTER() (EnumValueView, error) {
+	return t.inner.Value("ALTER")
+}
+
+func (t *OperationTypeEnumView) ValueDROP() (EnumValueView, error) {
+	return t.inner.Value("DROP")
+}
+
 func (t *OperationTypeEnumView) ValueTEXT() (EnumValueView, error) {
 	return t.inner.Value("TEXT")
 }

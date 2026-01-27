@@ -1,3 +1,5 @@
+//go:build !arm && !riscv64
+
 /*
  * Copyright 2026 Clidey, Inc.
  *
@@ -25,6 +27,11 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 )
+
+// RawExecutePlugin defines the interface for executing raw SQL queries
+type RawExecutePlugin interface {
+	RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error)
+}
 
 // SQLChatBAML generates SQL queries using BAML for structured prompt engineering
 // This replaces the old string-based prompt and JSON parsing approach
@@ -60,9 +67,10 @@ func SQLChatBAML(
 	var chatMessages []*engine.ChatMessage
 	for _, bamlResp := range responses {
 		message := &engine.ChatMessage{
-			Type:   string(bamlResp.Type),
-			Text:   bamlResp.Text,
-			Result: &engine.GetRowsResult{},
+			Type:                 string(bamlResp.Type),
+			Text:                 bamlResp.Text,
+			Result:               &engine.GetRowsResult{},
+			RequiresConfirmation: false,
 		}
 
 		// Convert BAML type to WhoDB type format
@@ -70,15 +78,31 @@ func SQLChatBAML(
 
 		// Execute SQL if it's a query
 		if bamlResp.Type == types.ChatMessageTypeSQL && bamlResp.Operation != nil {
-			result, execErr := plugin.RawExecute(config, bamlResp.Text)
-			if execErr != nil {
-				message.Type = "error"
-				message.Text = execErr.Error()
-			} else {
-				// Set operation-specific type
+			// Check if operation is a mutation that requires confirmation
+			isMutation := *bamlResp.Operation == types.OperationTypeINSERT ||
+				*bamlResp.Operation == types.OperationTypeUPDATE ||
+				*bamlResp.Operation == types.OperationTypeDELETE ||
+				*bamlResp.Operation == types.OperationTypeCREATE ||
+				*bamlResp.Operation == types.OperationTypeALTER ||
+				*bamlResp.Operation == types.OperationTypeDROP
+
+			if isMutation {
+				// Don't execute mutations immediately - require user confirmation
 				message.Type = convertOperationType(*bamlResp.Operation)
+				message.RequiresConfirmation = true
+				message.Result = nil
+			} else {
+				// Execute non-mutation queries (SELECT, etc.) immediately
+				result, execErr := plugin.RawExecute(config, bamlResp.Text)
+				if execErr != nil {
+					message.Type = "error"
+					message.Text = execErr.Error()
+				} else {
+					// Set operation-specific type
+					message.Type = convertOperationType(*bamlResp.Operation)
+				}
+				message.Result = result
 			}
-			message.Result = result
 		}
 
 		chatMessages = append(chatMessages, message)
@@ -112,6 +136,12 @@ func convertOperationType(operation types.OperationType) string {
 		return "sql:update"
 	case types.OperationTypeDELETE:
 		return "sql:delete"
+	case types.OperationTypeCREATE:
+		return "sql:create"
+	case types.OperationTypeALTER:
+		return "sql:alter"
+	case types.OperationTypeDROP:
+		return "sql:drop"
 	case types.OperationTypeTEXT:
 		return "text"
 	default:

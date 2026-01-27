@@ -38,11 +38,14 @@ var queryCmd = &cobra.Command{
 	Short:         "Execute a SQL query",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Long: `Execute a SQL query against a saved connection.
+	Long: `Execute a SQL query against a connection.
 
 Prerequisites:
-  Create and save a connection first via:
+  Use a saved connection:
     whodb-cli connect --type <db> --host <host> --user <user> --database <db> --name <name>
+  Or configure an environment profile, for example:
+    WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"db","port":"5432"}]'
+    WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"db","port":"3306"}'
 
 Output formats:
   auto   - Table for terminals, plain for pipes (default)
@@ -109,14 +112,14 @@ Output formats:
 
 		var conn *dbmgr.Connection
 		if queryConnection != "" {
-			conn, err = mgr.GetConnection(queryConnection)
+			conn, _, err = mgr.ResolveConnection(queryConnection)
 			if err != nil {
-				return fmt.Errorf("connection %q not found", queryConnection)
+				return err
 			}
 		} else {
-			conns := mgr.ListConnections()
+			conns := mgr.ListAvailableConnections()
 			if len(conns) == 0 {
-				return fmt.Errorf("no saved connections. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
+				return fmt.Errorf("no connections available. Create one first:\n  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			conn = &conns[0]
 			out.Info("Using connection: %s", conn.Name)
@@ -170,7 +173,7 @@ Output formats:
 func init() {
 	rootCmd.AddCommand(queryCmd)
 
-	queryCmd.Flags().StringVarP(&queryConnection, "connection", "c", "", "saved connection name to use")
+	queryCmd.Flags().StringVarP(&queryConnection, "connection", "c", "", "connection name to use")
 	queryCmd.Flags().StringVarP(&queryFormat, "format", "f", "auto", "output format: auto, table, plain, json, csv")
 	queryCmd.Flags().BoolVarP(&queryQuiet, "quiet", "q", false, "suppress informational messages")
 }

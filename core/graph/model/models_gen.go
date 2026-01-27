@@ -38,9 +38,10 @@ type CloudProvider interface {
 }
 
 type AIChatMessage struct {
-	Type   string      `json:"Type"`
-	Result *RowsResult `json:"Result,omitempty"`
-	Text   string      `json:"Text"`
+	Type                 string      `json:"Type"`
+	Result               *RowsResult `json:"Result,omitempty"`
+	Text                 string      `json:"Text"`
+	RequiresConfirmation bool        `json:"RequiresConfirmation"`
 }
 
 type AIProvider struct {

@@ -28,10 +28,8 @@ func TestSQLiteIntegration(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
+	setupTestEnv(t)
 	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
 
 	dbPath := tempDir + "/test.db"
 
@@ -138,10 +136,8 @@ func TestExportIntegration(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
+	setupTestEnv(t)
 	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
 
 	dbPath := tempDir + "/test.db"
 
@@ -223,10 +219,7 @@ func TestConnect_InvalidPlugin(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -251,10 +244,7 @@ func TestConnect_UnavailableDatabase(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {

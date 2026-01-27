@@ -31,8 +31,7 @@ import (
 
 // QueryInput is the input for the whodb_query tool.
 type QueryInput struct {
-	// Connection is the name of a saved connection or environment variable
-	// (e.g., 'prod' resolves to WHODB_PROD_URI)
+	// Connection is the name of a saved connection or environment profile.
 	Connection string `json:"connection"`
 	// Query is the SQL query to execute
 	Query string `json:"query"`
@@ -51,7 +50,7 @@ type QueryOutput struct {
 
 // SchemasInput is the input for the whodb_schemas tool.
 type SchemasInput struct {
-	// Connection is the name of a saved connection or environment variable
+	// Connection is the name of a saved connection or environment profile.
 	Connection string `json:"connection"`
 }
 
@@ -63,7 +62,7 @@ type SchemasOutput struct {
 
 // TablesInput is the input for the whodb_tables tool.
 type TablesInput struct {
-	// Connection is the name of a saved connection or environment variable
+	// Connection is the name of a saved connection or environment profile.
 	Connection string `json:"connection"`
 	// Schema to list tables from (uses default if not specified)
 	Schema string `json:"schema,omitempty"`
@@ -84,7 +83,7 @@ type TablesOutput struct {
 
 // ColumnsInput is the input for the whodb_columns tool.
 type ColumnsInput struct {
-	// Connection is the name of a saved connection or environment variable
+	// Connection is the name of a saved connection or environment profile.
 	Connection string `json:"connection"`
 	// Schema containing the table
 	Schema string `json:"schema,omitempty"`
@@ -113,7 +112,7 @@ type ColumnsOutput struct {
 // ConnectionsInput is the input for the whodb_connections tool.
 type ConnectionsInput struct{}
 
-// ConnectionInfo represents a saved connection (without sensitive data).
+// ConnectionInfo represents a connection (without sensitive data).
 type ConnectionInfo struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
@@ -507,45 +506,22 @@ func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsI
 func HandleConnections(ctx context.Context, req *mcp.CallToolRequest, input ConnectionsInput) (*mcp.CallToolResult, ConnectionsOutput, error) {
 	var connections []ConnectionInfo
 
-	// Get saved connections
 	mgr, err := dbmgr.NewManager()
-	if err == nil {
-		for _, conn := range mgr.ListConnections() {
-			connections = append(connections, ConnectionInfo{
-				Name:     conn.Name,
-				Type:     conn.Type,
-				Host:     conn.Host,
-				Port:     conn.Port,
-				Database: conn.Database,
-				Schema:   conn.Schema,
-				Source:   "saved",
-			})
-		}
+	if err != nil {
+		return nil, ConnectionsOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
 	}
 
-	// Check for environment variable connections
-	envConns, _ := ListAvailableConnections()
-	savedNames := make(map[string]bool)
-	for _, c := range connections {
-		savedNames[c.Name] = true
-	}
-
-	for _, name := range envConns {
-		if !savedNames[name] {
-			// This is an env-only connection
-			conn, err := ResolveConnection(name)
-			if err == nil {
-				connections = append(connections, ConnectionInfo{
-					Name:     name,
-					Type:     conn.Type,
-					Host:     conn.Host,
-					Port:     conn.Port,
-					Database: conn.Database,
-					Schema:   conn.Schema,
-					Source:   "env",
-				})
-			}
-		}
+	for _, info := range mgr.ListConnectionsWithSource() {
+		conn := info.Connection
+		connections = append(connections, ConnectionInfo{
+			Name:     conn.Name,
+			Type:     conn.Type,
+			Host:     conn.Host,
+			Port:     conn.Port,
+			Database: conn.Database,
+			Schema:   conn.Schema,
+			Source:   info.Source,
+		})
 	}
 
 	return nil, ConnectionsOutput{Connections: connections}, nil

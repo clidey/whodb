@@ -18,7 +18,6 @@ package database
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -27,10 +26,7 @@ import (
 )
 
 func TestNewManager(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -51,10 +47,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestGetCurrentConnection_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -68,10 +61,7 @@ func TestGetCurrentConnection_NotConnected(t *testing.T) {
 }
 
 func TestDisconnect(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -90,10 +80,7 @@ func TestDisconnect(t *testing.T) {
 }
 
 func TestListConnections(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	cfg := config.DefaultConfig()
 	cfg.AddConnection(config.Connection{
@@ -120,10 +107,7 @@ func TestListConnections(t *testing.T) {
 }
 
 func TestGetConnection(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	cfg := config.DefaultConfig()
 	cfg.AddConnection(config.Connection{
@@ -156,10 +140,7 @@ func TestGetConnection(t *testing.T) {
 }
 
 func TestGetConnection_NotFound(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -173,10 +154,7 @@ func TestGetConnection_NotFound(t *testing.T) {
 }
 
 func TestGetSchemas_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -190,10 +168,7 @@ func TestGetSchemas_NotConnected(t *testing.T) {
 }
 
 func TestGetStorageUnits_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -207,10 +182,7 @@ func TestGetStorageUnits_NotConnected(t *testing.T) {
 }
 
 func TestExecuteQuery_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -224,10 +196,7 @@ func TestExecuteQuery_NotConnected(t *testing.T) {
 }
 
 func TestGetRows_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -241,10 +210,7 @@ func TestGetRows_NotConnected(t *testing.T) {
 }
 
 func TestGetColumns_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -258,10 +224,7 @@ func TestGetColumns_NotConnected(t *testing.T) {
 }
 
 func TestExportToCSV_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -275,10 +238,7 @@ func TestExportToCSV_NotConnected(t *testing.T) {
 }
 
 func TestExportToExcel_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -292,10 +252,7 @@ func TestExportToExcel_NotConnected(t *testing.T) {
 }
 
 func TestExportResultsToCSV_NilResult(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -309,10 +266,7 @@ func TestExportResultsToCSV_NilResult(t *testing.T) {
 }
 
 func TestExportResultsToExcel_NilResult(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -326,10 +280,7 @@ func TestExportResultsToExcel_NilResult(t *testing.T) {
 }
 
 func TestGetAIProviders(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -343,10 +294,7 @@ func TestGetAIProviders(t *testing.T) {
 }
 
 func TestBuildCredentials(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -399,10 +347,7 @@ func TestBuildCredentials(t *testing.T) {
 // Tests for context-aware methods
 
 func TestExecuteQueryWithContext_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -417,10 +362,7 @@ func TestExecuteQueryWithContext_NotConnected(t *testing.T) {
 }
 
 func TestExecuteQueryWithContext_Cancelled(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -439,10 +381,7 @@ func TestExecuteQueryWithContext_Cancelled(t *testing.T) {
 }
 
 func TestGetRowsWithContext_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -457,10 +396,7 @@ func TestGetRowsWithContext_NotConnected(t *testing.T) {
 }
 
 func TestGetSchemasWithContext_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -475,10 +411,7 @@ func TestGetSchemasWithContext_NotConnected(t *testing.T) {
 }
 
 func TestGetStorageUnitsWithContext_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -493,10 +426,7 @@ func TestGetStorageUnitsWithContext_NotConnected(t *testing.T) {
 }
 
 func TestGetAIModelsWithContext_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -511,10 +441,7 @@ func TestGetAIModelsWithContext_NotConnected(t *testing.T) {
 }
 
 func TestSendAIChatWithContext_NotConnected(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -529,10 +456,7 @@ func TestSendAIChatWithContext_NotConnected(t *testing.T) {
 }
 
 func TestGetConfig(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -551,10 +475,7 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestContextTimeout(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -741,10 +662,7 @@ func TestMetadataCache_TTLExpiration(t *testing.T) {
 }
 
 func TestManager_CacheInitialized(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -757,10 +675,7 @@ func TestManager_CacheInitialized(t *testing.T) {
 }
 
 func TestManager_InvalidateCache(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -785,10 +700,7 @@ func TestManager_InvalidateCache(t *testing.T) {
 }
 
 func TestManager_DisconnectClearsCache(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	mgr, err := NewManager()
 	if err != nil {

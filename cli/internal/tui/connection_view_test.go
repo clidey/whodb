@@ -28,9 +28,17 @@ import (
 func setupConnectionViewTest(t *testing.T) (*ConnectionView, func()) {
 	t.Helper()
 
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
+	setupTestEnv(t)
+
+	clearedEnv := make(map[string]string)
+	for _, envVar := range os.Environ() {
+		parts := strings.SplitN(envVar, "=", 2)
+		key := parts[0]
+		if strings.HasPrefix(key, "WHODB_") && !strings.HasPrefix(key, "WHODB_CLI_") {
+			clearedEnv[key] = os.Getenv(key)
+			os.Unsetenv(key)
+		}
+	}
 
 	parent := NewMainModel()
 	if parent.err != nil {
@@ -38,7 +46,9 @@ func setupConnectionViewTest(t *testing.T) (*ConnectionView, func()) {
 	}
 
 	cleanup := func() {
-		os.Setenv("HOME", origHome)
+		for key, value := range clearedEnv {
+			os.Setenv(key, value)
+		}
 	}
 
 	return parent.connectionView, cleanup
@@ -64,10 +74,7 @@ func TestNewConnectionView_NoConnections(t *testing.T) {
 }
 
 func TestNewConnectionView_WithConnections(t *testing.T) {
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	setupTestEnv(t)
 
 	// Create config with connections
 	cfg, _ := config.LoadConfig()
@@ -95,6 +102,7 @@ func TestConnectionView_ListMode_Navigation_Tab(t *testing.T) {
 	// Add some items for navigation
 	v.parent.config.AddConnection(config.Connection{Name: "conn1"})
 	v.parent.config.AddConnection(config.Connection{Name: "conn2"})
+	_ = v.parent.config.Save()
 	v.refreshList()
 
 	// Tab moves down
@@ -111,6 +119,7 @@ func TestConnectionView_ListMode_Navigation_ShiftTab(t *testing.T) {
 	v.mode = "list"
 	v.parent.config.AddConnection(config.Connection{Name: "conn1"})
 	v.parent.config.AddConnection(config.Connection{Name: "conn2"})
+	_ = v.parent.config.Save()
 	v.refreshList()
 
 	// Shift+Tab moves up
@@ -141,6 +150,7 @@ func TestConnectionView_ListMode_Delete(t *testing.T) {
 
 	v.mode = "list"
 	v.parent.config.AddConnection(config.Connection{Name: "to-delete", Type: "Postgres"})
+	_ = v.parent.config.Save()
 	v.refreshList()
 
 	initialCount := len(v.parent.config.Connections)
@@ -345,7 +355,7 @@ func TestConnectionView_FormMode_PasswordPrompt(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 8 // Connect button
+	v.focusIndex = 8         // Connect button
 	v.inputs[4].SetValue("") // Empty password
 
 	// Press Enter - should show password prompt
@@ -468,6 +478,7 @@ func TestConnectionView_MouseScroll_List(t *testing.T) {
 	v.mode = "list"
 	v.parent.config.AddConnection(config.Connection{Name: "conn1"})
 	v.parent.config.AddConnection(config.Connection{Name: "conn2"})
+	_ = v.parent.config.Save()
 	v.refreshList()
 
 	// Mouse wheel down
@@ -511,6 +522,7 @@ func TestConnectionView_View_List(t *testing.T) {
 
 	v.mode = "list"
 	v.parent.config.AddConnection(config.Connection{Name: "my-db", Type: "Postgres", Host: "localhost"})
+	_ = v.parent.config.Save()
 	v.refreshList()
 
 	view := v.View()
@@ -698,6 +710,7 @@ func TestConnectionView_RefreshList(t *testing.T) {
 	defer cleanup()
 
 	v.parent.config.AddConnection(config.Connection{Name: "new-conn"})
+	_ = v.parent.config.Save()
 
 	v.refreshList()
 

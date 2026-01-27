@@ -21,7 +21,6 @@ en:
   delimiterComma: Comma (,) - Standard CSV
   delimiterSemicolon: Semicolon (;) - Excel in some locales
   delimiterPipe: Pipe (|) - Less common in data
-  delimiterTab: Tab - TSV Format
   jsonLineDelimited: Line-delimited JSON (one document per row)
   jsonEncoding: UTF-8 Encoding
   jsonDetails: Preserves nested fields without flattening

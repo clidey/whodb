@@ -95,6 +95,9 @@ const (
 	OperationTypeINSERT OperationType = "INSERT"
 	OperationTypeUPDATE OperationType = "UPDATE"
 	OperationTypeDELETE OperationType = "DELETE"
+	OperationTypeCREATE OperationType = "CREATE"
+	OperationTypeALTER  OperationType = "ALTER"
+	OperationTypeDROP   OperationType = "DROP"
 	OperationTypeTEXT   OperationType = "TEXT"
 )
 
@@ -105,6 +108,9 @@ func (OperationType) Values() []OperationType {
 		OperationTypeINSERT,
 		OperationTypeUPDATE,
 		OperationTypeDELETE,
+		OperationTypeCREATE,
+		OperationTypeALTER,
+		OperationTypeDROP,
 		OperationTypeTEXT,
 	}
 }

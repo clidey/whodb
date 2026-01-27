@@ -8,6 +8,7 @@ en:
   queryMoved: Query Moved to Scratchpad
   moveToScratchpad: Move to Scratchpad
   unableToQuery: Unable to Query. Try Again.
+  failedToExecuteSQL: Failed to Execute SQL. Try Again.
   actionExecuted: Action Executed
   noDataReturned: No Data Was Returned.
   dialogTitle: Move to Scratchpad
@@ -18,6 +19,16 @@ en:
   newPagePlaceholder: Enter Page Name
   createNewPage: Create New Page
   cancel: Cancel
+
+  # SQL Confirmation
+  confirmExecutionTitle: Confirm Execution
+  confirmExecutionDescription: This operation will modify your database. Review and confirm to proceed.
+  showQuery: Show Query
+  hideQuery: Hide Query
+  yes: Yes
+  no: No
+  executing: Executing...
+  queryCancelled: Query Cancelled
 
   # Accessibility
   sendMessage: Send message

@@ -29,18 +29,14 @@ import (
 func setupExportViewTest(t *testing.T) (*ExportView, func()) {
 	t.Helper()
 
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
+	setupTestEnv(t)
 
 	parent := NewMainModel()
 	if parent.err != nil {
 		t.Fatalf("Failed to create MainModel: %v", parent.err)
 	}
 
-	cleanup := func() {
-		os.Setenv("HOME", origHome)
-	}
+	cleanup := func() {}
 
 	return parent.exportView, cleanup
 }

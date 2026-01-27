@@ -37,14 +37,13 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.25.4-bookworm AS backend-stage
-RUN apt-get update && apt-get install -y --no-install-recommends \
+FROM golang:1.25-alpine3.22 AS backend-stage
+RUN apk add --no-cache \
 	gcc \
-	libc6-dev \
+	musl-dev \
 	git \
 	ca-certificates \
-	curl \
-	&& rm -rf /var/lib/apt/lists/*
+	curl
 WORKDIR /app
 
 # Copy ee-stub for CE builds (provides stub packages for EE imports)
@@ -64,13 +63,13 @@ ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod \
-	-ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
+	-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
 
-# Pre-download BAML native library for the target architecture
-# BAML version should match the version in go.mod (0.215.2)
+# Pre-download BAML native library for the target architecture (musl for Alpine)
+# Extract BAML version from go.mod to stay in sync
 ARG TARGETARCH
-RUN BAML_VERSION=0.215.2 && \
+RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' | sed 's/^v//') && \
     if [ "$TARGETARCH" = "amd64" ]; then \
         BAML_ARCH="x86_64"; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
@@ -78,18 +77,18 @@ RUN BAML_VERSION=0.215.2 && \
     else \
         echo "Unsupported architecture: $TARGETARCH" && exit 1; \
     fi && \
-    mkdir -p /root/.cache/baml/libs/${BAML_VERSION} && \
-    curl -L -o /root/.cache/baml/libs/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-gnu.so \
-        https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-gnu.so && \
-    echo "Downloaded BAML library for ${BAML_ARCH}"
+    mkdir -p /baml-lib && \
+    curl -L -o /baml-lib/libbaml_cffi.so \
+        https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
+    echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
-FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	ca-certificates \
-	&& rm -rf /var/lib/apt/lists/*
+FROM alpine:3.22
+RUN apk add --no-cache ca-certificates libgcc
 WORKDIR /app
 COPY --from=backend-stage /core /core
-# Copy pre-downloaded BAML library cache
-COPY --from=backend-stage /root/.cache/baml /root/.cache/baml
+# Copy BAML musl library and set path via env var
+# (BAML Go client's isMusl() is not implemented, so we must use BAML_LIBRARY_PATH)
+COPY --from=backend-stage /baml-lib/libbaml_cffi.so /usr/local/lib/libbaml_cffi.so
+ENV BAML_LIBRARY_PATH=/usr/local/lib/libbaml_cffi.so
 
 CMD ["/core"]

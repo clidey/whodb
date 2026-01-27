@@ -16,10 +16,7 @@
 
 package cmd
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 // TestMcpCmd_Exists verifies the mcp command is registered
 func TestMcpCmd_Exists(t *testing.T) {
@@ -79,16 +76,5 @@ func TestMcpServeCmd_SilencesErrors(t *testing.T) {
 	}
 	if !mcpServeCmd.SilenceErrors {
 		t.Error("Expected SilenceErrors to be true")
-	}
-}
-
-// setupTestEnv creates an isolated test environment (if not already defined)
-func setupMcpTestEnv(t *testing.T) func() {
-	t.Helper()
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	return func() {
-		os.Setenv("HOME", origHome)
 	}
 }

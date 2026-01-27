@@ -17,7 +17,6 @@
 package tui
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -29,18 +28,14 @@ import (
 func setupBrowserViewTest(t *testing.T) (*BrowserView, func()) {
 	t.Helper()
 
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
+	setupTestEnv(t)
 
 	parent := NewMainModel()
 	if parent.err != nil {
 		t.Fatalf("Failed to create MainModel: %v", parent.err)
 	}
 
-	cleanup := func() {
-		os.Setenv("HOME", origHome)
-	}
+	cleanup := func() {}
 
 	return parent.browserView, cleanup
 }
@@ -500,11 +495,11 @@ func TestBrowserView_ApplyFilter(t *testing.T) {
 		expectedCount int
 		expectedReset bool
 	}{
-		{"", 5, false},           // Empty filter shows all
-		{"user", 2, true},        // Matches "users" and "user_roles"
-		{"order", 2, true},       // Matches "orders" and "order_items"
-		{"xyz", 0, true},         // No matches
-		{"PRODUCTS", 1, true},    // Case insensitive
+		{"", 5, false},        // Empty filter shows all
+		{"user", 2, true},     // Matches "users" and "user_roles"
+		{"order", 2, true},    // Matches "orders" and "order_items"
+		{"xyz", 0, true},      // No matches
+		{"PRODUCTS", 1, true}, // Case insensitive
 	}
 
 	for _, tt := range tests {

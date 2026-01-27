@@ -326,6 +326,8 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            deb.debian.org:443
+            deb.debian.org:80
             github.com:443
             uploads.github.com:443
 
@@ -633,7 +635,9 @@ jobs:
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: block
-          allowed-endpoints: >+
+          allowed-endpoints: >
+            deb.debian.org:443
+            deb.debian.org:80
 
       - name: Generate comprehensive summary
         run: |

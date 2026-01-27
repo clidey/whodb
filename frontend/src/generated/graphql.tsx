@@ -35,6 +35,7 @@ export type Scalars = {
 
 export type AiChatMessage = {
   __typename?: 'AIChatMessage';
+  RequiresConfirmation: Scalars['Boolean']['output'];
   Result?: Maybe<RowsResult>;
   Text: Scalars['String']['output'];
   Type: Scalars['String']['output'];
@@ -255,6 +256,7 @@ export type Mutation = {
   AddRow: StatusResponse;
   AddStorageUnit: StatusResponse;
   DeleteRow: StatusResponse;
+  ExecuteConfirmedSQL: AiChatMessage;
   GenerateMockData: MockDataGenerationStatus;
   Login: StatusResponse;
   LoginWithProfile: StatusResponse;
@@ -291,6 +293,12 @@ export type MutationDeleteRowArgs = {
   schema: Scalars['String']['input'];
   storageUnit: Scalars['String']['input'];
   values: Array<RecordInput>;
+};
+
+
+export type MutationExecuteConfirmedSqlArgs = {
+  operationType: Scalars['String']['input'];
+  query: Scalars['String']['input'];
 };
 
 
@@ -558,6 +566,14 @@ export type GetDatabaseMetadataQueryVariables = Exact<{ [key: string]: never; }>
 
 
 export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }> } | null };
+
+export type ExecuteConfirmedSqlMutationVariables = Exact<{
+  query: Scalars['String']['input'];
+  operationType: Scalars['String']['input'];
+}>;
+
+
+export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
 
 export type GetSslStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -979,6 +995,58 @@ export type GetDatabaseMetadataQueryHookResult = ReturnType<typeof useGetDatabas
 export type GetDatabaseMetadataLazyQueryHookResult = ReturnType<typeof useGetDatabaseMetadataLazyQuery>;
 export type GetDatabaseMetadataSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseMetadataSuspenseQuery>;
 export type GetDatabaseMetadataQueryResult = Apollo.QueryResult<GetDatabaseMetadataQuery, GetDatabaseMetadataQueryVariables>;
+export const ExecuteConfirmedSqlDocument = gql`
+    mutation ExecuteConfirmedSQL($query: String!, $operationType: String!) {
+  ExecuteConfirmedSQL(query: $query, operationType: $operationType) {
+    Type
+    Text
+    Result {
+      Columns {
+        Type
+        Name
+        IsPrimary
+        IsForeignKey
+        ReferencedTable
+        ReferencedColumn
+        Length
+        Precision
+        Scale
+      }
+      Rows
+      DisableUpdate
+      TotalCount
+    }
+    RequiresConfirmation
+  }
+}
+    `;
+export type ExecuteConfirmedSqlMutationFn = Apollo.MutationFunction<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+
+/**
+ * __useExecuteConfirmedSqlMutation__
+ *
+ * To run a mutation, you first call `useExecuteConfirmedSqlMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useExecuteConfirmedSqlMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [executeConfirmedSqlMutation, { data, loading, error }] = useExecuteConfirmedSqlMutation({
+ *   variables: {
+ *      query: // value for 'query'
+ *      operationType: // value for 'operationType'
+ *   },
+ * });
+ */
+export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHookOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>(ExecuteConfirmedSqlDocument, options);
+      }
+export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
+export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
+export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
 export const GetSslStatusDocument = gql`
     query GetSSLStatus {
   SSLStatus {

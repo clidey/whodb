@@ -24,17 +24,6 @@ import (
 	"testing"
 )
 
-// setupTestEnv creates an isolated test environment
-func setupTestEnv(t *testing.T) func() {
-	t.Helper()
-	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	return func() {
-		os.Setenv("HOME", origHome)
-	}
-}
-
 // TestSchemasCmd_Exists verifies the schemas command is registered
 func TestSchemasCmd_Exists(t *testing.T) {
 	cleanup := setupTestEnv(t)
@@ -215,6 +204,59 @@ func TestConnectionsListCmd_EmptyJSON(t *testing.T) {
 
 	if output != "[]" {
 		t.Errorf("Expected empty JSON array, got: '%s'", output)
+	}
+}
+
+func TestConnectionsListCmd_EnvProfileJSON(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	os.Setenv("WHODB_POSTGRES", `[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"db","port":"5432"}]`)
+
+	connectionsFormat = "json"
+	connectionsQuiet = true
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := connectionsListCmd.RunE(connectionsListCmd, []string{})
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := strings.TrimSpace(buf.String())
+
+	var conns []map[string]any
+	if err := json.Unmarshal([]byte(output), &conns); err != nil {
+		t.Fatalf("Failed to parse JSON output: %v", err)
+	}
+
+	if len(conns) != 1 {
+		t.Fatalf("Expected 1 connection, got %d", len(conns))
+	}
+
+	conn := conns[0]
+	if conn["name"] != "prod" {
+		t.Errorf("Expected name 'prod', got %v", conn["name"])
+	}
+	if conn["type"] != "Postgres" {
+		t.Errorf("Expected type 'Postgres', got %v", conn["type"])
+	}
+	if conn["host"] != "localhost" {
+		t.Errorf("Expected host 'localhost', got %v", conn["host"])
+	}
+	if conn["database"] != "db" {
+		t.Errorf("Expected database 'db', got %v", conn["database"])
+	}
+	if conn["source"] != "env" {
+		t.Errorf("Expected source 'env', got %v", conn["source"])
 	}
 }
 

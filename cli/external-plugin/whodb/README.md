@@ -113,9 +113,9 @@ If you prefer Docker, update your Claude Code settings to use:
 Configure database connections using environment variables:
 
 ```bash
-# Format: WHODB_{NAME}_URI
-export WHODB_PROD_URI="postgres://user:pass@localhost:5432/mydb"
-export WHODB_DEV_URI="mysql://user:pass@localhost:3306/devdb"
+# Environment profiles (examples below)
+export WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"mydb","port":"5432"}]'
+export WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"devdb","port":"3306"}'
 ```
 
 Or use the CLI to save connections:
@@ -135,6 +135,7 @@ This plugin provides the following tools:
 | `whodb_tables` | List tables in a schema |
 | `whodb_columns` | Describe table columns and types |
 | `whodb_query` | Execute SQL queries |
+| `whodb_confirm` | Confirm pending write operations (only when confirm-writes is enabled) |
 
 ## Skills
 

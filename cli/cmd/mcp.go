@@ -85,10 +85,12 @@ Available tools:
 
 Connection Resolution:
   Tools accept a 'connection' parameter that references either:
-  1. Environment variable: WHODB_{NAME}_URI (e.g., "prod" -> WHODB_PROD_URI)
+  1. Environment profiles, for example:
+     - WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"db","port":"5432"}]'
+     - WHODB_MYSQL_1='{"alias":"staging","host":"localhost","user":"user","password":"pass","database":"db","port":"3306"}'
   2. Saved connection from 'whodb-cli connections add'
 
-  Environment variables take precedence over saved connections.`,
+  Saved connections take precedence when names collide.`,
 	Example: `  # Start MCP server (confirm-writes by default - you approve each write)
   whodb-cli mcp serve
 
@@ -111,7 +113,7 @@ Connection Resolution:
         "command": "whodb-cli",
         "args": ["mcp", "serve"],
         "env": {
-          "WHODB_PROD_URI": "postgres://user:pass@host:5432/db"
+          "WHODB_POSTGRES_1": "{\"alias\":\"prod\",\"host\":\"localhost\",\"user\":\"user\",\"password\":\"pass\",\"database\":\"db\"}"
         }
       }
     }

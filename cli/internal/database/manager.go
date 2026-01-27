@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,10 +33,23 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/types"
 	"github.com/xuri/excelize/v2"
 )
 
 type Connection = config.Connection
+
+// ConnectionSourceSaved indicates a connection stored in the CLI config.
+const ConnectionSourceSaved = "saved"
+
+// ConnectionSourceEnv indicates a connection loaded from environment variables.
+const ConnectionSourceEnv = "env"
+
+// ConnectionSourceInfo describes a connection and where it was loaded from.
+type ConnectionSourceInfo struct {
+	Connection Connection
+	Source     string
+}
 
 // DefaultCacheTTL is the default time-to-live for cached metadata
 const DefaultCacheTTL = 5 * time.Minute
@@ -164,18 +179,34 @@ type Manager struct {
 
 func (m *Manager) buildCredentials(conn *Connection) *engine.Credentials {
 	credentials := &engine.Credentials{
-		Type:     conn.Type,
-		Hostname: conn.Host,
-		Username: conn.Username,
-		Password: conn.Password,
-		Database: conn.Database,
+		Type:      conn.Type,
+		Hostname:  conn.Host,
+		Username:  conn.Username,
+		Password:  conn.Password,
+		Database:  conn.Database,
+		IsProfile: conn.IsProfile,
 	}
 
+	var advanced []engine.Record
 	if conn.Port > 0 {
-		credentials.Advanced = append(credentials.Advanced, engine.Record{
+		advanced = append(advanced, engine.Record{
 			Key:   "Port",
 			Value: fmt.Sprintf("%d", conn.Port),
 		})
+	}
+
+	for key, value := range conn.Advanced {
+		if key == "Port" && conn.Port > 0 {
+			continue
+		}
+		advanced = append(advanced, engine.Record{
+			Key:   key,
+			Value: value,
+		})
+	}
+
+	if len(advanced) > 0 {
+		credentials.Advanced = advanced
 	}
 
 	return credentials
@@ -196,12 +227,74 @@ func NewManager() (*Manager, error) {
 	}, nil
 }
 
+// ListConnections returns saved connections from the CLI config.
 func (m *Manager) ListConnections() []Connection {
 	return m.config.Connections
 }
 
+// ListConnectionsWithSource returns saved and environment connections with their source.
+// Saved connections take precedence when names collide.
+func (m *Manager) ListConnectionsWithSource() []ConnectionSourceInfo {
+	saved := m.loadSavedConnections()
+	envConnections := m.getEnvConnections()
+
+	infos := make([]ConnectionSourceInfo, 0, len(saved)+len(envConnections))
+	usedNames := make(map[string]bool, len(saved)+len(envConnections))
+
+	for _, conn := range saved {
+		infos = append(infos, ConnectionSourceInfo{
+			Connection: conn,
+			Source:     ConnectionSourceSaved,
+		})
+		usedNames[conn.Name] = true
+	}
+
+	for _, conn := range envConnections {
+		if conn.Name == "" {
+			continue
+		}
+		if usedNames[conn.Name] {
+			continue
+		}
+		infos = append(infos, ConnectionSourceInfo{
+			Connection: conn,
+			Source:     ConnectionSourceEnv,
+		})
+		usedNames[conn.Name] = true
+	}
+
+	return infos
+}
+
+// ListAvailableConnections returns saved and environment connections.
+// Saved connections take precedence when names collide.
+func (m *Manager) ListAvailableConnections() []Connection {
+	infos := m.ListConnectionsWithSource()
+	conns := make([]Connection, len(infos))
+	for i, info := range infos {
+		conns[i] = info.Connection
+	}
+	return conns
+}
+
 func (m *Manager) GetConnection(name string) (*Connection, error) {
 	return m.config.GetConnection(name)
+}
+
+// ResolveConnection finds a connection by name from saved or environment connections.
+func (m *Manager) ResolveConnection(name string) (*Connection, string, error) {
+	if name == "" {
+		return nil, "", fmt.Errorf("connection name is required")
+	}
+
+	for _, info := range m.ListConnectionsWithSource() {
+		if info.Connection.Name == name {
+			conn := info.Connection
+			return &conn, info.Source, nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("connection %q not found", name)
 }
 
 func (m *Manager) Connect(conn *Connection) error {
@@ -246,6 +339,81 @@ func (m *Manager) GetCache() *MetadataCache {
 
 func (m *Manager) GetCurrentConnection() *Connection {
 	return m.currentConnection
+}
+
+func (m *Manager) loadSavedConnections() []Connection {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return m.config.Connections
+	}
+	m.config = cfg
+	return cfg.Connections
+}
+
+func (m *Manager) getEnvConnections() []Connection {
+	if m.engine == nil {
+		return nil
+	}
+
+	typeCounts := make(map[string]int)
+	var connections []Connection
+
+	for _, plugin := range m.engine.Plugins {
+		dbType := string(plugin.Type)
+		profiles := env.GetDefaultDatabaseCredentials(dbType)
+		for _, profile := range profiles {
+			typeCounts[dbType]++
+			conn := envProfileToConnection(profile, dbType, typeCounts[dbType])
+			connections = append(connections, conn)
+		}
+	}
+
+	return connections
+}
+
+func envProfileToConnection(profile types.DatabaseCredentials, dbType string, index int) Connection {
+	name := envProfileName(profile, dbType, index)
+
+	var advanced map[string]string
+	if profile.Port != "" || len(profile.Config) > 0 {
+		advanced = make(map[string]string, len(profile.Config)+1)
+		for key, value := range profile.Config {
+			advanced[key] = value
+		}
+		if profile.Port != "" {
+			advanced["Port"] = profile.Port
+		}
+	}
+
+	port := 0
+	if profile.Port != "" {
+		if parsedPort, err := strconv.Atoi(profile.Port); err == nil {
+			port = parsedPort
+		}
+	}
+
+	return Connection{
+		Name:      name,
+		Type:      dbType,
+		Host:      profile.Hostname,
+		Port:      port,
+		Username:  profile.Username,
+		Password:  profile.Password,
+		Database:  profile.Database,
+		Advanced:  advanced,
+		IsProfile: true,
+	}
+}
+
+func envProfileName(profile types.DatabaseCredentials, dbType string, index int) string {
+	if profile.CustomId != "" {
+		return profile.CustomId
+	}
+	if profile.Alias != "" {
+		return profile.Alias
+	}
+	normalizedType := strings.ToLower(dbType)
+	return fmt.Sprintf("%s-%d", normalizedType, index)
 }
 
 func (m *Manager) GetSchemas() ([]string, error) {

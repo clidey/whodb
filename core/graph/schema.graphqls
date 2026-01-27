@@ -167,6 +167,7 @@ type AIChatMessage {
   Type: String!
   Result: RowsResult
   Text: String!
+  RequiresConfirmation: Boolean!
 }
 
 type AIProvider {
@@ -367,6 +368,9 @@ type Mutation {
   AddRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   DeleteRow(schema: String!, storageUnit: String!, values: [RecordInput!]!): StatusResponse!
   GenerateMockData(input: MockDataGenerationInput!): MockDataGenerationStatus!
+
+  # AI Chat Mutations
+  ExecuteConfirmedSQL(query: String!, operationType: String!): AIChatMessage!
 
   # Cloud Provider Mutations
   # Provider-specific add/update (type-safe inputs)

@@ -67,7 +67,6 @@ func init() {
 	// Disable Cobra's default completion command; we provide our own with install support
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.whodb-cli/config.yaml)")
 	rootCmd.PersistentFlags().Bool("debug", false, "enable debug mode")
 	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output")
 
