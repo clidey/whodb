@@ -60,10 +60,10 @@ import {
     toast,
     VirtualizedTableBody
 } from "@clidey/ux";
-import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
-import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Export} from "./export";
-import {useTranslation} from '@/hooks/use-translation';
+import { useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery } from '@graphql';
+import { FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Export } from "./export";
+import { useTranslation } from '@/hooks/use-translation';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -91,8 +91,8 @@ import {
     TrashIcon,
     XMarkIcon
 } from "./heroicons";
-import {Tip} from "./tip";
-import {formatShortcut, isModKeyPressed} from "@/utils/platform";
+import { Tip } from "./tip";
+import { formatShortcut, isModKeyPressed } from "@/utils/platform";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -328,7 +328,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     // Track focused column header for focus restoration after sort/refresh
     const focusedColumnRef = useRef<string | null>(null);
-    
+
     // Mock data state
     const [showMockDataSheet, setShowMockDataSheet] = useState(false);
     const [mockDataRowCount, setMockDataRowCount] = useState("100");
@@ -337,15 +337,15 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
-    
+
     // Use server-side pagination
     const currentPage = serverCurrentPage || 1;
     const totalRows = totalCount || 0;
     const totalPages = Math.ceil(totalRows / pageSize);
 
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
-    const [deleteRow, ] = useDeleteRowMutation();
-    const [containerWidth, setContainerWidth] = useState<number>(0);
+    const [deleteRow,] = useDeleteRowMutation();
+
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
 
     const handleEdit = (index: number) => {
@@ -545,13 +545,13 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     const handleCellClick = useCallback((rowIndex: number, cellIndex: number) => {
         const cellKey = `${rowIndex}-${cellIndex}`;
-        
+
         // Clear any existing timeout for this cell
         const existingTimeout = clickTimeouts.current.get(cellKey);
         if (existingTimeout) {
             clearTimeout(existingTimeout);
         }
-        
+
         // Set a new timeout for the single-click action
         const timeout = setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
@@ -577,7 +577,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 clickTimeouts.current.delete(cellKey);
             }
         }
-        
+
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
@@ -596,7 +596,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         // Only allow numeric input
         const numericValue = value.replace(/[^0-9]/g, '');
         const parsedValue = parseInt(numericValue) || 0;
-        
+
         // Enforce max limit
         if (parsedValue > maxRowCount) {
             setMockDataRowCount(maxRowCount.toString());
@@ -625,7 +625,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.error(t('rowCountExceedsMax', { max: maxRowCount }));
             return;
         }
-        
+
         try {
             const result = await generateMockData({
                 variables: {
@@ -888,11 +888,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
 
 
-    useEffect(() => {
-        if (tableRef.current) {
-            setContainerWidth(tableRef.current.offsetWidth);
-        }
-    }, [tableRef]);
+
 
     // Highlight and scroll to the searched cell using document querySelector, no state needed
 
@@ -1031,6 +1027,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                         title={t('cellInteractionHint')}
                         onClick={(e) => {
                             e.stopPropagation();
+                            // Manually trigger context menu on this row
+                            const event = new MouseEvent("contextmenu", {
+                                bubbles: true,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                            });
+                            e.currentTarget.dispatchEvent(event);
+                        }} data-testid="icon-button" aria-label={t('moreActions')}>
+                            <EllipsisVerticalIcon className="w-4 h-4" />
+                        </Button>
                             setFocusedRowIndex(index);
                             handleCellClick(index, cellIdx);
                         }}
@@ -1183,6 +1189,16 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     return (
         <div ref={tableRef} className="h-full flex">
+            {/* Screen reader live region for announcements */}
+            <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="sr-only"
+            >
+                {liveAnnouncement}
+            </div>
+            <div className="flex flex-col h-full space-y-4 w-full flex-1 overflow-x-auto" data-testid="table-container">
             <div className="flex flex-col h-full space-y-4 w-0" style={{
                 width: `${containerWidth}px`,
             }} data-testid="table-container">
@@ -1195,6 +1211,100 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
+                                <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
+                                    <TableHead className={cn("min-w-[40px] w-[40px] relative", {
+                                        "hidden": disableEdit,
+                                    })}>
+                                        <Checkbox
+                                            checked={checked.length === paginatedRows.length && paginatedRows.length > 0}
+                                            onCheckedChange={() => {
+                                                setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
+                                            }}
+                                            aria-label={checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
+                                        />
+                                        <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 top-1.5 w-0" onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            // Manually trigger context menu on this row
+                                            const event = new MouseEvent("contextmenu", {
+                                                bubbles: true,
+                                                clientX: e.clientX,
+                                                clientY: e.clientY,
+                                            });
+                                            e.currentTarget.dispatchEvent(event);
+                                        }} data-testid="icon-button" aria-label={t('moreActions')}>
+                                            <EllipsisVerticalIcon className="w-4 h-4" aria-hidden="true" />
+                                        </Button>
+                                    </TableHead>
+                                    {columns.map((col, idx) => (
+                                        <TableHead
+                                            key={col + idx}
+                                            icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
+                                            className={cn({
+                                                "cursor-pointer select-none": onColumnSort,
+                                                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset": onColumnSort,
+                                            })}
+                                            tabIndex={onColumnSort ? 0 : undefined}
+                                            onClick={() => onColumnSort?.(col)}
+                                            onKeyDown={(e) => {
+                                                if (onColumnSort && (e.key === 'Enter' || e.key === ' ')) {
+                                                    e.preventDefault();
+                                                    onColumnSort(col);
+                                                }
+                                            }}
+                                            onFocus={() => { focusedColumnRef.current = col; }}
+                                            data-testid={`column-header-${col}`}
+                                            data-column-name={col}
+                                            data-sort-direction={sortedColumns?.get(col) || undefined}
+                                        >
+                                            <Tip>
+                                                <p className={cn("flex items-center gap-xs", {
+                                                    "font-bold": columnIsPrimary?.[idx],
+                                                    "italic": columnIsForeignKey?.[idx] && !columnIsPrimary?.[idx],
+                                                })}>
+                                                    {col}
+                                                    {onColumnSort && sortedColumns?.has(col) && (
+                                                        sortedColumns.get(col) === 'asc'
+                                                            ? <ChevronUpIcon className="w-4 h-4" data-testid="sort-indicator" />
+                                                            : <ChevronDownIcon className="w-4 h-4" data-testid="sort-indicator" />
+                                                    )}
+                                                </p>
+                                                <p className="text-xs">{columnTypes?.[idx]?.toLowerCase()}</p>
+                                            </Tip>
+                                        </TableHead>
+                                    ))}
+                                </TableHeadRow>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent
+                                className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                                collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
+                            >
+                                <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
+                                    <CalculatorIcon className="w-4 h-4" />
+                                    {t('mockData')}
+                                    <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuSub>
+                                    <ContextMenuSubTrigger>
+                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                        {t('exportData')}
+                                    </ContextMenuSubTrigger>
+                                    <ContextMenuSubContent
+                                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                                    >
+                                        <ContextMenuItem
+                                            onSelect={() => setShowExportConfirm(true)}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            {t('exportAllAsCsv')}
+                                            <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                        </ContextMenuItem>
+                                        <ContextMenuItem
+                                            onSelect={() => setShowExportConfirm(true)}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            {t('exportAllAsExcel')}
                                     <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
                                         <TableHead className={cn("min-w-[40px] w-[40px] relative", {
                                             "hidden": disableEdit,
@@ -1349,9 +1459,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent
-                className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
-                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-            >
+                            className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
+                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                        >
                             <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} className={cn({
                                 "hidden": disableEdit,
                             })}>
@@ -1509,10 +1619,10 @@ export const StorageUnitTable: FC<TableProps> = ({
             </div>
             <Sheet open={showMockDataSheet} onOpenChange={(open) => {
                 setShowMockDataSheet(open);
-                    if (!open) {
-                        setShowMockDataConfirmation(false);
-                    }
-                }}>
+                if (!open) {
+                    setShowMockDataConfirmation(false);
+                }
+            }}>
                 <SheetContent side="right" className="p-8" data-testid="mock-data-sheet">
                     <div className="flex flex-col gap-lg h-full">
                         <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockDataTitle')}</SheetTitle>
