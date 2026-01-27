@@ -1334,7 +1334,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <VirtualizedTableBody
                             rowCount={paginatedRows.length}
                             rowHeight={rowHeight}
-                            height={Math.min(Math.min(height, window.innerHeight * 0.5), paginatedRows.length * rowHeight)}
+                            height={height}
                             overscan={10}
                         >
                             {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
