@@ -22,6 +22,9 @@ RUN apk update && apk add --no-cache gcc musl-dev git bash curl
 
 WORKDIR /app
 
+# Copy ee-stub for CE builds (provides stub packages for EE imports)
+COPY ./ee-stub/ ./ee-stub/
+
 # Copy core module
 COPY core/go.mod core/go.sum ./core/
 WORKDIR /app/core
