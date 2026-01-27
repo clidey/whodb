@@ -14,7 +14,7 @@
 
 # WhoDB CLI Dockerfile
 
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine3.22 AS builder
 
 ARG VERSION=dev
 
@@ -61,7 +61,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' /app/core/go.mod | awk '{p
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
 # Final stage
-FROM alpine:3.21
+FROM alpine:3.22
 
 RUN apk update && apk add --no-cache ca-certificates libgcc
 
