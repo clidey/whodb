@@ -1,3 +1,5 @@
+//go:build !arm && !riscv64
+
 /*
  * Copyright 2026 Clidey, Inc.
  *
