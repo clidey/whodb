@@ -72,7 +72,7 @@ on:
         type: boolean
         default: false
       deploy-cli:
-        description: 'Build CLI binaries (all platforms)'
+        description: 'Build CLI binaries (all platforms) - also generates Homebrew formula'
         required: false
         type: boolean
         default: false
@@ -595,7 +595,17 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 8: Generate Homebrew cask (disabled - run manually when needed)
+  # Step 8: Generate Homebrew formula for CLI (disabled - homebrew-core auto-updates via livecheck)
+  # To generate manually: .github/scripts/generate-homebrew-formula.sh <version>
+  deploy-homebrew-formula:
+    name: Deploy Homebrew Formula
+    needs: [ calculate-version, create-github-release ]
+    if: false
+    uses: ./.github/workflows/_deploy-homebrew-formula.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  # Step 8b: Generate Homebrew cask for desktop app (disabled - run manually when needed)
   generate-homebrew-cask:
     name: Generate Homebrew Cask
     needs: [ calculate-version, create-github-release ]
@@ -608,7 +618,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 9: Final summary
+  # Step 10: Final summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -622,6 +632,7 @@ jobs:
       build-linux-terminal,
       build-cli,
       sign-and-validate,
+      deploy-homebrew-formula,
       deploy-docker,
       deploy-snap,
       deploy-microsoft,
@@ -773,11 +784,20 @@ jobs:
             echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Homebrew
+          # Homebrew Formula (CLI)
+          if [ "${{ needs.deploy-homebrew-formula.result }}" = "success" ]; then
+            echo "| Homebrew Formula | ✅ Generated | brew install clidey/tap/whodb-cli |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-homebrew-formula.result }}" = "skipped" ]; then
+            echo "| Homebrew Formula | ⏭️ Skipped | CLI not selected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Homebrew Formula | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Homebrew Cask (Desktop App - disabled)
           if [ "${{ needs.generate-homebrew-cask.result }}" = "success" ]; then
-            echo "| Homebrew Cask | ✅ Generated | Formula created |" >> $GITHUB_STEP_SUMMARY
+            echo "| Homebrew Cask | ✅ Generated | Desktop app cask |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.generate-homebrew-cask.result }}" = "skipped" ]; then
-            echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
+            echo "| Homebrew Cask | ⏭️ Skipped | Disabled |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi

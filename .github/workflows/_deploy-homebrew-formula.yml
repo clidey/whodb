@@ -1,0 +1,96 @@
+name: Deploy Homebrew Formula
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  generate-homebrew-formula:
+    name: Generate Homebrew Formula
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            codeload.github.com:443
+            deb.debian.org:443
+            deb.debian.org:80
+            github.com:443
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Generate Homebrew formula
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          chmod +x .github/scripts/generate-homebrew-formula.sh
+          .github/scripts/generate-homebrew-formula.sh "$VERSION" whodb-cli.rb
+
+      - name: Upload formula as artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: homebrew-formula
+          path: whodb-cli.rb
+          retention-days: 30
+
+      - name: Create submission instructions
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cat > HOMEBREW_SUBMISSION.md << 'EOF'
+          # Homebrew-Core Submission Instructions
+
+          Formula generated for WhoDB CLI v${VERSION}.
+
+          ## Testing Locally
+
+          ```bash
+          # Download the formula
+          curl -O https://raw.githubusercontent.com/clidey/whodb/main/.github/artifacts/whodb-cli.rb
+
+          # Test the build
+          brew install --build-from-source ./whodb-cli.rb
+
+          # Run audit
+          brew audit --new whodb-cli
+          ```
+
+          ## Submitting to Homebrew-Core
+
+          1. Fork https://github.com/Homebrew/homebrew-core
+          2. Clone your fork
+          3. Create branch: `git checkout -b whodb-cli`
+          4. Copy formula to `Formula/w/whodb-cli.rb`
+          5. Commit: `git commit -am "whodb-cli ${VERSION} (new formula)"`
+          6. Push and open PR
+
+          ## PR Requirements
+
+          - Formula must build on macOS (Intel + ARM) and Linux x86_64
+          - Tests must pass
+          - `brew audit --new whodb-cli` must pass
+          - Software must be stable (not alpha/beta)
+          EOF
+
+          echo "Submission instructions generated"
+
+      - name: Upload instructions
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: homebrew-submission-instructions
+          path: HOMEBREW_SUBMISSION.md
+          retention-days: 30
