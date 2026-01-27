@@ -213,8 +213,227 @@ func (g *Generator) generateByType(dbType string, columnType string, constraints
 	}
 }
 
-// GenerateValue generates a mock value based on column type only
-// Returns properly typed values that the database driver can handle
+// generateByColumnName attempts to generate contextual data based on the column name.
+// Returns the generated value and true if a pattern was matched, or nil and false otherwise.
+func (g *Generator) generateByColumnName(columnName string, maxLen int) (any, bool) {
+	lowerName := strings.ToLower(columnName)
+
+	// Email patterns
+	if strings.Contains(lowerName, "email") || strings.Contains(lowerName, "e_mail") {
+		email := g.faker.Email()
+		if maxLen > 0 && len(email) > maxLen {
+			email = email[:maxLen]
+		}
+		return email, true
+	}
+
+	// Username patterns
+	if strings.Contains(lowerName, "username") || strings.Contains(lowerName, "user_name") ||
+		lowerName == "uname" || lowerName == "login" {
+		username := g.faker.Username()
+		if maxLen > 0 && len(username) > maxLen {
+			username = username[:maxLen]
+		}
+		return username, true
+	}
+
+	// First name patterns
+	if strings.Contains(lowerName, "first_name") || strings.Contains(lowerName, "firstname") ||
+		lowerName == "fname" || lowerName == "given_name" {
+		name := g.faker.FirstName()
+		if maxLen > 0 && len(name) > maxLen {
+			name = name[:maxLen]
+		}
+		return name, true
+	}
+
+	// Last name patterns
+	if strings.Contains(lowerName, "last_name") || strings.Contains(lowerName, "lastname") ||
+		lowerName == "lname" || lowerName == "surname" || lowerName == "family_name" {
+		name := g.faker.LastName()
+		if maxLen > 0 && len(name) > maxLen {
+			name = name[:maxLen]
+		}
+		return name, true
+	}
+
+	// Full name patterns (check after first/last name to avoid false positives)
+	if lowerName == "name" || strings.Contains(lowerName, "full_name") ||
+		strings.Contains(lowerName, "fullname") || lowerName == "display_name" {
+		name := g.faker.Name()
+		if maxLen > 0 && len(name) > maxLen {
+			name = name[:maxLen]
+		}
+		return name, true
+	}
+
+	// Phone patterns
+	if strings.Contains(lowerName, "phone") || strings.Contains(lowerName, "mobile") ||
+		strings.Contains(lowerName, "cell") || strings.Contains(lowerName, "telephone") ||
+		lowerName == "tel" {
+		phone := g.faker.Phone()
+		if maxLen > 0 && len(phone) > maxLen {
+			phone = phone[:maxLen]
+		}
+		return phone, true
+	}
+
+	// Address patterns
+	if lowerName == "address" || lowerName == "street" || strings.Contains(lowerName, "street_address") ||
+		strings.Contains(lowerName, "address_line") {
+		addr := g.faker.Street()
+		if maxLen > 0 && len(addr) > maxLen {
+			addr = addr[:maxLen]
+		}
+		return addr, true
+	}
+
+	// City patterns
+	if lowerName == "city" || strings.Contains(lowerName, "city_name") {
+		city := g.faker.City()
+		if maxLen > 0 && len(city) > maxLen {
+			city = city[:maxLen]
+		}
+		return city, true
+	}
+
+	// State/Province patterns
+	if lowerName == "state" || lowerName == "province" || lowerName == "region" {
+		state := g.faker.State()
+		if maxLen > 0 && len(state) > maxLen {
+			state = state[:maxLen]
+		}
+		return state, true
+	}
+
+	// Country patterns
+	if lowerName == "country" || lowerName == "country_name" {
+		country := g.faker.Country()
+		if maxLen > 0 && len(country) > maxLen {
+			country = country[:maxLen]
+		}
+		return country, true
+	}
+
+	// Zip/Postal code patterns
+	if strings.Contains(lowerName, "zip") || strings.Contains(lowerName, "postal") ||
+		lowerName == "postcode" {
+		zip := g.faker.Zip()
+		if maxLen > 0 && len(zip) > maxLen {
+			zip = zip[:maxLen]
+		}
+		return zip, true
+	}
+
+	// URL patterns
+	if lowerName == "url" || lowerName == "website" || lowerName == "link" ||
+		strings.Contains(lowerName, "homepage") || strings.Contains(lowerName, "web_url") {
+		url := g.faker.URL()
+		if maxLen > 0 && len(url) > maxLen {
+			url = url[:maxLen]
+		}
+		return url, true
+	}
+
+	// IP address patterns
+	if lowerName == "ip" || strings.Contains(lowerName, "ip_address") ||
+		lowerName == "ipaddress" || lowerName == "ip_addr" {
+		return g.faker.IPv4Address(), true
+	}
+
+	// Company patterns
+	if lowerName == "company" || lowerName == "organization" || lowerName == "org" ||
+		strings.Contains(lowerName, "company_name") || strings.Contains(lowerName, "org_name") {
+		company := g.faker.Company()
+		if maxLen > 0 && len(company) > maxLen {
+			company = company[:maxLen]
+		}
+		return company, true
+	}
+
+	// Job title patterns
+	if strings.Contains(lowerName, "job_title") || strings.Contains(lowerName, "jobtitle") ||
+		lowerName == "title" || lowerName == "position" || lowerName == "role" {
+		title := g.faker.JobTitle()
+		if maxLen > 0 && len(title) > maxLen {
+			title = title[:maxLen]
+		}
+		return title, true
+	}
+
+	// Description/Bio patterns
+	if strings.Contains(lowerName, "description") || lowerName == "bio" ||
+		lowerName == "about" || lowerName == "summary" {
+		desc := g.faker.Sentence(g.faker.IntRange(5, 15))
+		if maxLen > 0 && len(desc) > maxLen {
+			desc = desc[:maxLen]
+		}
+		return desc, true
+	}
+
+	// Color patterns
+	if lowerName == "color" || lowerName == "colour" {
+		return g.faker.Color(), true
+	}
+
+	// Domain patterns
+	if lowerName == "domain" || strings.Contains(lowerName, "domain_name") {
+		domain := g.faker.DomainName()
+		if maxLen > 0 && len(domain) > maxLen {
+			domain = domain[:maxLen]
+		}
+		return domain, true
+	}
+
+	// Country code patterns (2-letter)
+	if lowerName == "country_code" || lowerName == "countrycode" {
+		return g.faker.CountryAbr(), true
+	}
+
+	// Currency patterns
+	if lowerName == "currency" || lowerName == "currency_code" {
+		return g.faker.CurrencyShort(), true
+	}
+
+	// Language patterns
+	if lowerName == "language" || lowerName == "lang" {
+		lang := g.faker.Language()
+		if maxLen > 0 && len(lang) > maxLen {
+			lang = lang[:maxLen]
+		}
+		return lang, true
+	}
+
+	// Latitude/Longitude patterns
+	if lowerName == "latitude" || lowerName == "lat" {
+		return g.faker.Latitude(), true
+	}
+	if lowerName == "longitude" || lowerName == "lng" || lowerName == "lon" {
+		return g.faker.Longitude(), true
+	}
+
+	// User agent patterns
+	if strings.Contains(lowerName, "user_agent") || lowerName == "useragent" {
+		ua := g.faker.UserAgent()
+		if maxLen > 0 && len(ua) > maxLen {
+			ua = ua[:maxLen]
+		}
+		return ua, true
+	}
+
+	// Credit card number patterns
+	if strings.Contains(lowerName, "card_number") || strings.Contains(lowerName, "credit_card") ||
+		lowerName == "cardnumber" || lowerName == "ccnumber" {
+		return g.faker.CreditCardNumber(nil), true
+	}
+
+	// No pattern matched
+	return nil, false
+}
+
+// GenerateValue generates a mock value based on column name and type.
+// It first attempts contextual generation based on column name patterns,
+// then falls back to type-based generation if no pattern matches.
 func (g *Generator) GenerateValue(columnName string, columnType string, constraints map[string]any) (any, error) {
 	columnTypeLower := strings.ToLower(columnType)
 	log.Logger.WithField("column", columnName).WithField("type", columnType).Debug("Generating value for column")
@@ -236,11 +455,35 @@ func (g *Generator) GenerateValue(columnName string, columnType string, constrai
 		return nil, nil
 	}
 
-	// Generate value based on database type and constraints
+	// Detect the database type
 	dbType := detectDatabaseType(columnTypeLower)
 	log.Logger.WithField("column", columnName).WithField("dbType", dbType).Debug("Detected database type")
-	value := g.generateByType(dbType, columnTypeLower, constraints)
-	log.Logger.WithField("column", columnName).WithField("value", value).Debug("Generated value")
+
+	var value any
+
+	// For text-like types, try contextual generation based on column name first
+	if dbType == "text" {
+		// Check for check_values constraint first - takes priority
+		if constraints != nil {
+			if _, hasCheckValues := constraints["check_values"]; hasCheckValues {
+				value = g.generateByType(dbType, columnTypeLower, constraints)
+				log.Logger.WithField("column", columnName).WithField("value", value).Debug("Generated value from check_values")
+				return value, nil
+			}
+		}
+
+		maxLen := parseMaxLen(columnType)
+		if contextValue, matched := g.generateByColumnName(columnName, maxLen); matched {
+			value = contextValue
+			log.Logger.WithField("column", columnName).WithField("value", value).Debug("Generated contextual value based on column name")
+		}
+	}
+
+	// Fall back to type-based generation if no contextual value was generated
+	if value == nil {
+		value = g.generateByType(dbType, columnTypeLower, constraints)
+		log.Logger.WithField("column", columnName).WithField("value", value).Debug("Generated value based on type")
+	}
 
 	// For columns that require uniqueness, use inherently unique generators
 	if requireUnique {
