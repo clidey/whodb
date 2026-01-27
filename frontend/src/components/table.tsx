@@ -225,23 +225,29 @@ export function getInputPropsForColumnType(rawType: string): {
     type?: React.HTMLInputTypeAttribute;
     step?: string;
     min?: string;
-    inputMode?: 'text' | 'numeric' | 'decimal' | 'none' | 'tel' | 'url' | 'email' | 'search';
+    inputMode?: 'text' | 'numeric' | 'decimal',
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 } {
     const type = stripTypeSuffix(rawType).toUpperCase();
 
+    // the html5 spec for numbers allows "e" to be used to mean exponent, so 2e2 => 2*10^2 => 200.
+    // that requires extra backend handling and databases do not usually show nums like that.
+    // so we avoid "e" as well as "+" because if a number doesn't have "-", it's already positive.
+    const numOnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {if (e.key === "e" || e.key === "E" || e.key === "+") e.preventDefault();}
+
     // Integer types - use number input with step=1
     if (intTypes.has(type)) {
-        return { type: 'number', step: '1', inputMode: 'numeric' };
+        return { type: 'number', step: '1', inputMode: 'numeric',  onKeyDown: numOnKeyDown};
     }
 
     // Unsigned integer types - use number input with min=0 and step=1
     if (uintTypes.has(type)) {
-        return { type: 'number', step: '1', min: '0', inputMode: 'numeric' };
+        return { type: 'number', step: '1', min: '0', inputMode: 'numeric', onKeyDown: numOnKeyDown };
     }
 
     // Float/decimal types - use number input with step=any
     if (floatTypes.has(type)) {
-        return { type: 'number', step: 'any', inputMode: 'decimal' };
+        return { type: 'number', step: 'any', inputMode: 'decimal', onKeyDown: numOnKeyDown };
     }
 
     // Default to text input with text keyboard
