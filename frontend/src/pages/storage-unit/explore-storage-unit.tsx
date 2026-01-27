@@ -71,7 +71,7 @@ import {
 import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
-import {getColumnIcons, StorageUnitTable} from "../../components/table";
+import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
 import {Tip} from "../../components/tip";
 import {BUILD_EDITION} from "../../config/edition";
 import {InternalRoutes} from "../../config/routes";
@@ -736,6 +736,7 @@ export const ExploreStorageUnit: FC = () => {
                                             value={addRowData[col.Name] ?? ""}
                                             onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
                                             placeholder={`Enter value for ${col.Name}`}
+                                            {...getInputPropsForColumnType(col.Type || '')}
                                         />
                                     </div>
                                 ))}
