@@ -1,0 +1,145 @@
+name: Deploy CLI to Docker Hub
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version being deployed'
+        required: true
+        type: string
+      stage-only:
+        description: 'Stage only deployment'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+jobs:
+  deploy-docker-cli:
+    name: Deploy CLI to Docker Hub
+    runs-on: ubuntu-latest
+    environment: deploy-docker
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            auth.docker.io:443
+            fulcio.sigstore.dev:443
+            github.com:443
+            index.docker.io:443
+            production.cloudflare.docker.com:443
+            registry-1.docker.io:443
+            rekor.sigstore.dev:443
+            release-assets.githubusercontent.com:443
+            timestamp.sigstore.dev:443
+            tuf-repo-cdn.sigstore.dev:443
+
+      - name: Checkout for scripts
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Download CLI Docker images
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          pattern: docker-cli-image-*
+          path: docker-cli-images/
+
+      - name: Check Docker credentials
+        id: check_creds
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          STAGE_ONLY: ${{ inputs.stage-only }}
+        run: |
+          if [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "Docker credentials are configured"
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "Docker credentials not configured"
+
+            if [ "$STAGE_ONLY" != "true" ]; then
+              echo "::error::Production deployment requires Docker credentials"
+              exit 1
+            else
+              echo "Continuing without credentials for stage-only mode"
+            fi
+          fi
+
+      - name: Login to Docker Hub
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Load and push CLI Docker images
+        if: steps.check_creds.outputs.has_creds == 'true'
+        env:
+          VERSION: ${{ inputs.version }}
+          STAGE_ONLY: ${{ inputs.stage-only }}
+        run: |
+          echo "Deploying CLI Docker images for version ${VERSION}"
+
+          # Load images
+          echo "Loading AMD64 image..."
+          docker load < docker-cli-images/docker-cli-image-amd64/whodb-cli-docker-amd64.tar
+
+          echo "Loading ARM64 image..."
+          docker load < docker-cli-images/docker-cli-image-arm64/whodb-cli-docker-arm64.tar
+
+          # Tag and push individual architecture images
+          echo "Pushing AMD64 image..."
+          docker tag clidey/whodb-cli:${VERSION}-amd64 clidey/whodb-cli:${VERSION}-amd64
+          docker push clidey/whodb-cli:${VERSION}-amd64
+
+          echo "Pushing ARM64 image..."
+          docker tag clidey/whodb-cli:${VERSION}-arm64 clidey/whodb-cli:${VERSION}-arm64
+          docker push clidey/whodb-cli:${VERSION}-arm64
+
+          # Create and push multi-arch manifest
+          echo "Creating multi-arch manifest..."
+          docker manifest create clidey/whodb-cli:${VERSION} \
+            clidey/whodb-cli:${VERSION}-amd64 \
+            clidey/whodb-cli:${VERSION}-arm64
+          docker manifest push clidey/whodb-cli:${VERSION}
+
+          # Update latest tag (production only)
+          if [ "$STAGE_ONLY" != "true" ]; then
+            echo "Updating latest tag..."
+            docker manifest create clidey/whodb-cli:latest \
+              clidey/whodb-cli:${VERSION}-amd64 \
+              clidey/whodb-cli:${VERSION}-arm64
+            docker manifest push clidey/whodb-cli:latest
+          fi
+
+          echo "CLI Docker images deployed successfully"
+
+      - name: Sign CLI Docker images with Cosign
+        if: steps.check_creds.outputs.has_creds == 'true'
+        env:
+          VERSION: ${{ inputs.version }}
+          STAGE_ONLY: ${{ inputs.stage-only }}
+        run: |
+          # Install Cosign
+          curl -sSL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o cosign
+          chmod +x cosign
+          sudo mv cosign /usr/local/bin/
+
+          echo "Signing CLI Docker images..."
+          cosign sign --yes clidey/whodb-cli:${VERSION}
+
+          if [ "$STAGE_ONLY" != "true" ]; then
+            cosign sign --yes clidey/whodb-cli:latest
+          fi
+
+          echo "CLI Docker images signed"

@@ -20,11 +20,70 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 
 ## Installation
 
+### Native Install (Recommended)
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.ps1 | iex
+```
+
+The native installer:
+- Detects your OS and architecture
+- Downloads the correct binary from GitHub releases
+- Installs to `~/.local/bin` (macOS/Linux) or `%LOCALAPPDATA%\WhoDB\bin` (Windows)
+- Adds to PATH if needed
+
+To install a specific version:
+
+```bash
+# macOS/Linux
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash -s v0.62.0
+
+# Windows
+$env:WHODB_VERSION = "v0.62.0"; irm https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.ps1 | iex
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew install whodb-cli
+```
+
+### npm
+
+```bash
+npm install -g @clidey/whodb-cli
+```
+
+Or with npx (no install):
+
+```bash
+npx @clidey/whodb-cli
+```
+
 ### From Source
+
+Requires Go 1.21+:
+
+```bash
+git clone https://github.com/clidey/whodb.git
+cd whodb/cli
+go build -o whodb-cli .
+```
+
+Or using the Makefile:
 
 ```bash
 cd cli
-go build -o whodb-cli .
+make build
+make install  # installs to /usr/local/bin
 ```
 
 ### Using Docker
@@ -32,11 +91,15 @@ go build -o whodb-cli .
 ```bash
 # Build the Docker image (from repo root)
 docker build -t whodb-cli:latest -f cli/Dockerfile .
+
+# Or pull pre-built
+docker pull clidey/whodb-cli:latest
 ```
 
 ### Verify Installation
 
 ```bash
+whodb-cli --version
 whodb-cli --help
 ```
 
@@ -111,7 +174,7 @@ whodb-cli connect \
 
 ### 1b. Use Environment Profiles
 
-Commands that accept `--connection` can also use environment profiles, for example `WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"mydb","port":"5432"}]'` or `WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"devdb","port":"3306"}'`. Each object supports `alias` (connection name), `host`, `user`, `password`, `database`, `port`, and optional `config` for advanced settings.
+Commands that accept `--connection` can also use environment profiles, for example `WHODB_POSTGRES='[{"alias":"prod","host":"localhost","user":"user","password":"pass","database":"mydb","port":"5432"}]'` or `WHODB_MYSQL_1='{"alias":"dev","host":"localhost","user":"user","password":"pass","database":"devdb","port":"3306"}'`. Each object supports `alias` (connection name), `host`, `user`, `password`, `database`, `port`, and optional `config` for advanced settings. `port` stays at the root level; the CLI also forwards it as the `Port` advanced key when building plugin credentials, so you do not need to include `Port` in `config`. Advanced `config` keys are plugin-specific; see `core/src/plugins/*/db.go` for the keys that are read.
 
 ```bash
 # Array format (multiple profiles for a database type)
@@ -146,7 +209,6 @@ whodb-cli [flags]
 
 Flags:
 
-- `--config`: Legacy CLI config path for debug/no-color settings (connections/history use the unified `config.json`; see Configuration)
 - `--debug`: Enable debug mode
 - `--no-color`: Disable colored output
 
@@ -372,7 +434,7 @@ The MCP server uses the same connection sources as the CLI:
 
 Use env profiles like `WHODB_POSTGRES='[{"alias":"prod","host":"host","user":"user","password":"pass","database":"dbname","port":"5432"}]'` or `WHODB_MYSQL_1='{"alias":"staging","host":"host","user":"user","password":"pass","database":"dbname","port":"3306"}'`. Each object supports `alias` (connection name), `host`, `user`, `password`, `database`, `port`, and optional `config`.
 
-Use the core JSON format. `alias` sets the connection name used in MCP tools.
+Use the JSON formats shown above. `alias` sets the connection name used in MCP tools.
 
 ```bash
 # Array format

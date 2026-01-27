@@ -72,7 +72,7 @@ on:
         type: boolean
         default: false
       deploy-cli:
-        description: 'Build CLI binaries (all platforms)'
+        description: 'Build CLI binaries (all platforms) - also generates Homebrew formula'
         required: false
         type: boolean
         default: false
@@ -282,14 +282,24 @@ jobs:
       version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
+  build-docker-cli:
+    name: Build CLI Docker
+    needs: [ calculate-version ]
+    if: needs.calculate-version.outputs.deploy-docker == 'true'
+    uses: ./.github/workflows/_build-docker-cli.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+    secrets: inherit
+
   # Step 3: Sign and validate all builds (best effort - continues even if any build fails)
   sign-and-validate:
     name: Sign and Validate
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, build-cli ]
+    needs: [ calculate-version, build-docker, build-docker-cli, build-windows, build-apple, build-snap, build-linux-terminal, build-cli ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped' || needs.build-docker.result == 'failure') &&
+      (needs.build-docker-cli.result == 'success' || needs.build-docker-cli.result == 'skipped' || needs.build-docker-cli.result == 'failure') &&
       (needs.build-windows.result == 'success' || needs.build-windows.result == 'skipped' || needs.build-windows.result == 'failure') &&
       (needs.build-apple.result == 'success' || needs.build-apple.result == 'skipped' || needs.build-apple.result == 'failure') &&
       (needs.build-snap.result == 'success' || needs.build-snap.result == 'skipped' || needs.build-snap.result == 'failure') &&
@@ -306,12 +316,13 @@ jobs:
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [ calculate-version, build-docker, build-windows, build-apple, build-snap, build-linux-terminal, build-cli, sign-and-validate ]
+    needs: [ calculate-version, build-docker, build-docker-cli, build-windows, build-apple, build-snap, build-linux-terminal, build-cli, sign-and-validate ]
     if: |
       always() &&
       needs.calculate-version.result == 'success' &&
       needs.sign-and-validate.result == 'success' &&
       (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker.result == 'success') &&
+      (needs.calculate-version.outputs.deploy-docker != 'true' || needs.build-docker-cli.result == 'success') &&
       (needs.calculate-version.outputs.deploy-snap != 'true' || needs.build-snap.result == 'success') &&
       (needs.calculate-version.outputs.deploy-microsoft != 'true' || needs.build-windows.result == 'success') &&
       (needs.calculate-version.outputs.deploy-apple != 'true' || needs.build-apple.result == 'success') &&
@@ -582,6 +593,20 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
+  # Step 6b: Deploy CLI to Docker Hub (after GitHub release)
+  deploy-docker-cli:
+    name: Deploy CLI Docker
+    needs: [ calculate-version, create-github-release ]
+    if: |
+      always() &&
+      needs.calculate-version.outputs.deploy-docker == 'true' &&
+      needs.create-github-release.result == 'success'
+    uses: ./.github/workflows/_deploy-docker-cli.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
+    secrets: inherit
+
   # Step 7: Deploy to npm (after CLI build and GitHub release)
   deploy-npm:
     name: Deploy npm
@@ -595,7 +620,17 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 8: Generate Homebrew cask (disabled - run manually when needed)
+  # Step 8: Generate Homebrew formula for CLI (disabled - homebrew-core auto-updates via livecheck)
+  # To generate manually: .github/scripts/generate-homebrew-formula.sh <version>
+  deploy-homebrew-formula:
+    name: Deploy Homebrew Formula
+    needs: [ calculate-version, create-github-release ]
+    if: false
+    uses: ./.github/workflows/_deploy-homebrew-formula.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+
+  # Step 8b: Generate Homebrew cask for desktop app (disabled - run manually when needed)
   generate-homebrew-cask:
     name: Generate Homebrew Cask
     needs: [ calculate-version, create-github-release ]
@@ -608,7 +643,7 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 9: Final summary
+  # Step 10: Final summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -616,13 +651,16 @@ jobs:
     needs: [
       calculate-version,
       build-docker,
+      build-docker-cli,
       build-windows,
       build-apple,
       build-snap,
       build-linux-terminal,
       build-cli,
       sign-and-validate,
+      deploy-homebrew-formula,
       deploy-docker,
+      deploy-docker-cli,
       deploy-snap,
       deploy-microsoft,
       deploy-apple,
@@ -658,6 +696,14 @@ jobs:
             echo "| Docker | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.build-docker-cli.result }}" = "success" ]; then
+            echo "| CLI Docker | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-docker-cli.result }}" = "skipped" ]; then
+            echo "| CLI Docker | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| CLI Docker | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${{ needs.build-windows.result }}" = "success" ]; then
@@ -720,6 +766,19 @@ jobs:
             echo "| Docker Hub | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
+          # Docker Hub CLI
+          if [ "${{ needs.deploy-docker-cli.result }}" = "success" ]; then
+            echo "| Docker Hub (CLI) | ✅ Deployed | Latest tag updated |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-docker-cli.result }}" = "skipped" ]; then
+            if [ "${{ needs.calculate-version.outputs.stage-only }}" = "true" ]; then
+              echo "| Docker Hub (CLI) | ⏭️ Skipped | Stage-only mode |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Docker Hub (CLI) | ⏭️ Skipped | Not selected |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| Docker Hub (CLI) | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
           # Snap Store
           if [ "${{ needs.deploy-snap.result }}" = "success" ]; then
             CHANNEL="${{ needs.calculate-version.outputs.stage-only == 'true' && 'edge' || 'stable' }}"
@@ -773,11 +832,20 @@ jobs:
             echo "| GitHub Release | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Homebrew
+          # Homebrew Formula (CLI)
+          if [ "${{ needs.deploy-homebrew-formula.result }}" = "success" ]; then
+            echo "| Homebrew Formula | ✅ Generated | brew install clidey/tap/whodb-cli |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-homebrew-formula.result }}" = "skipped" ]; then
+            echo "| Homebrew Formula | ⏭️ Skipped | CLI not selected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Homebrew Formula | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Homebrew Cask (Desktop App - disabled)
           if [ "${{ needs.generate-homebrew-cask.result }}" = "success" ]; then
-            echo "| Homebrew Cask | ✅ Generated | Formula created |" >> $GITHUB_STEP_SUMMARY
+            echo "| Homebrew Cask | ✅ Generated | Desktop app cask |" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.generate-homebrew-cask.result }}" = "skipped" ]; then
-            echo "| Homebrew Cask | ⏭️ Skipped | Not production |" >> $GITHUB_STEP_SUMMARY
+            echo "| Homebrew Cask | ⏭️ Skipped | Disabled |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Homebrew Cask | ❌ Failed | Check logs |" >> $GITHUB_STEP_SUMMARY
           fi

@@ -31,6 +31,7 @@
 [![Windows](https://img.shields.io/badge/Windows-available-brightgreen)](https://apps.microsoft.com/detail/9pftx5bv4ds6)
 [![macOS](https://img.shields.io/badge/macOS-available-brightgreen)](https://apps.apple.com/app/whodb/id6754566536)
 [![Snap](https://img.shields.io/badge/Snap-available-brightgreen)](http://snapcraft.io/whodb)
+[![CLI](https://img.shields.io/badge/CLI-available-brightgreen)](./cli/README.md)
 
 [🚀 Quick Start](#quick-start) • [📖 Documentation](https://docs.whodb.com/) • [🎮 Live Demo](https://whodb.com/demo/login?host=quick-container-491288b0-3138-48fa-93b4-1e730296c0b7.hello.svc.cluster.local&username=user&password=password&database=Adventureworks) • [💬 Community](https://github.com/clidey/whodb/discussions)
 
@@ -238,6 +239,43 @@ services:
 4. **Manage data** - Edit, add, and delete records with ease
 
 📖 **For detailed installation options and configuration**, see our [Documentation](https://docs.whodb.com/)
+
+---
+
+## 💻 WhoDB CLI
+
+WhoDB also offers a powerful command-line interface with an interactive TUI (Terminal User Interface) and MCP server support for AI assistants.
+
+### Features
+
+- **Interactive TUI** - Full-featured terminal interface for database management
+- **MCP Server** - Model Context Protocol support for Claude, Cursor, and other AI tools
+- **Cross-Platform** - Available for macOS, Linux, and Windows
+
+### Quick Install
+
+```bash
+# macOS/Linux
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash
+
+# Homebrew (coming soon)
+brew install whodb-cli
+
+# npm
+npm install -g @clidey/whodb-cli
+```
+
+### Usage
+
+```bash
+# Launch interactive TUI
+whodb-cli
+
+# Run as MCP server for AI assistants
+whodb-cli mcp serve
+```
+
+📖 **For full CLI documentation**, see the [CLI README](./cli/README.md)
 
 ---
 

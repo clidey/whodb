@@ -1,5 +1,5 @@
 // SQL Query Generation for WhoDB
-// This replaces the RawSQLQueryPrompt from core/src/common/chat.go
+// This BAML schema defines structured SQL generation using AI models
 
 // Database operation types
 enum OperationType {
