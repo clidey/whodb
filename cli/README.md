@@ -20,11 +20,70 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 
 ## Installation
 
+### Native Install (Recommended)
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.ps1 | iex
+```
+
+The native installer:
+- Detects your OS and architecture
+- Downloads the correct binary from GitHub releases
+- Installs to `~/.local/bin` (macOS/Linux) or `%LOCALAPPDATA%\WhoDB\bin` (Windows)
+- Adds to PATH if needed
+
+To install a specific version:
+
+```bash
+# macOS/Linux
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash -s v0.62.0
+
+# Windows
+$env:WHODB_VERSION = "v0.62.0"; irm https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.ps1 | iex
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew install whodb-cli
+```
+
+### npm
+
+```bash
+npm install -g @clidey/whodb-cli
+```
+
+Or with npx (no install):
+
+```bash
+npx @clidey/whodb-cli
+```
+
 ### From Source
+
+Requires Go 1.21+:
+
+```bash
+git clone https://github.com/clidey/whodb.git
+cd whodb/cli
+go build -o whodb-cli .
+```
+
+Or using the Makefile:
 
 ```bash
 cd cli
-go build -o whodb-cli .
+make build
+make install  # installs to /usr/local/bin
 ```
 
 ### Using Docker
@@ -32,11 +91,15 @@ go build -o whodb-cli .
 ```bash
 # Build the Docker image (from repo root)
 docker build -t whodb-cli:latest -f cli/Dockerfile .
+
+# Or pull pre-built
+docker pull clidey/whodb-cli:latest
 ```
 
 ### Verify Installation
 
 ```bash
+whodb-cli --version
 whodb-cli --help
 ```
 
