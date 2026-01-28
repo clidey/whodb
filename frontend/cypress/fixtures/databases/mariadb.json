@@ -367,6 +367,6 @@
   },
   "mockData": {
     "supportedTable": "users",
-    "unsupportedTable": "orders"
+    "tableWithFKs": "orders"
   }
 }

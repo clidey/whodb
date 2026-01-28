@@ -38,7 +38,7 @@
   "schema": null,
   "mockData": {
     "supportedTable": "user:1",
-    "unsupportedTable": "orders"
+    "tableWithFKs": "orders"
   },
   "sidebar": {
     "showsDatabaseDropdown": true,
