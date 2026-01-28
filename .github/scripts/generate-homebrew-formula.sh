@@ -19,6 +19,9 @@ set -e
 
 # Script to generate Homebrew formula for WhoDB CLI (source build)
 # Usage: ./generate-homebrew-formula.sh <version> [output-file]
+#
+# The CLI downloads BAML native libraries at runtime on first use,
+# so the Homebrew formula is a simple source-only build.
 
 VERSION="${1}"
 OUTPUT_FILE="${2:-whodb-cli.rb}"
@@ -42,20 +45,21 @@ echo "Template: $TEMPLATE_FILE"
 echo "Output: $OUTPUT_FILE"
 echo ""
 
+# Create temp directory for downloads
+TMP_DIR=$(mktemp -d)
+trap "rm -rf $TMP_DIR" EXIT
+
 # Download source tarball and calculate SHA256
 TARBALL_URL="https://github.com/clidey/whodb/archive/refs/tags/${VERSION}.tar.gz"
 echo "Downloading source tarball: $TARBALL_URL"
 
-TMP_FILE=$(mktemp)
-trap "rm -f $TMP_FILE" EXIT
-
+TMP_FILE="$TMP_DIR/source.tar.gz"
 if curl -fsSL -o "$TMP_FILE" "$TARBALL_URL"; then
   SHA256=$(shasum -a 256 "$TMP_FILE" | cut -d' ' -f1)
   echo "SHA256: $SHA256"
 else
-  echo "Error: Failed to download tarball. Release may not exist yet."
-  echo "Using placeholder SHA256 - you'll need to update this after release."
-  SHA256="PLACEHOLDER_UPDATE_AFTER_RELEASE"
+  echo "Error: Failed to download source tarball"
+  exit 1
 fi
 
 echo ""
