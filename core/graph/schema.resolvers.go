@@ -46,6 +46,16 @@ import (
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
+	if env.DisableCredentialForm {
+		log.LogFields(log.Fields{
+			"type": credentials.Type,
+			"hostname": credentials.Hostname,
+			"username": credentials.Username,
+			"database": credentials.Database,
+		}).Error("Login with credentials is disabled; use preconfigured connections")
+		return nil, errors.New("login with credentials is disabled; use preconfigured connections")
+	}
+
 	advanced := make([]engine.Record, 0, len(credentials.Advanced))
 	for _, recordInput := range credentials.Advanced {
 		advanced = append(advanced, engine.Record{
@@ -125,6 +135,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 
 // LoginWithProfile is the resolver for the LoginWithProfile field.
 func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error) {
+
 	profiles := src.GetLoginProfiles()
 	for i, loginProfile := range profiles {
 		profileId := src.GetLoginProfileId(i, loginProfile)
@@ -1400,6 +1411,7 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 	return &model.SettingsConfig{
 		MetricsEnabled:        &currentSettings.MetricsEnabled,
 		CloudProvidersEnabled: env.IsAWSProviderEnabled,
+		DisableCredentialForm: env.DisableCredentialForm,
 	}, nil
 }
 

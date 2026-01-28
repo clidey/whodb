@@ -1,4 +1,6 @@
 en:
+  noConnectionsTitle: No connections available
+  noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or cloud providers, or contact your administrator.
   loggingIn: Logging In
   title: Login
   databaseType: Database Type

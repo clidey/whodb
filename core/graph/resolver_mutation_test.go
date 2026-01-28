@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"net/http/httptest"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src"
@@ -12,7 +14,6 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
-	"net/http/httptest"
 )
 
 func TestAddRowSuccess(t *testing.T) {
@@ -183,6 +184,31 @@ func TestLoginFailsWhenPluginUnavailable(t *testing.T) {
 		t.Fatalf("expected login to fail when plugin unavailable")
 	}
 }
+
+func TestLoginFailsWhenCredentialFormDisabled(t *testing.T) {
+	resolver := &Resolver{}
+	mut := resolver.Mutation()
+
+	orig := env.DisableCredentialForm
+    env.DisableCredentialForm = true
+    t.Cleanup(func() { env.DisableCredentialForm = orig })
+
+	
+	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
+	reqCtx := context.WithValue(ctx, common.RouterKey_ResponseWriter, httptest.NewRecorder())
+
+	_, err := mut.Login(reqCtx, model.LoginCredentials{
+		Type:     "Test",
+		Hostname: "h",
+		Username: "u",
+		Password: "p",
+		Database: "d",
+	})
+	if err == nil {
+		t.Fatalf("expected login to fail when credential form disabled")
+	}
+}
+
 
 func setEngineMock(t *testing.T, mock *testutil.PluginMock) {
 	t.Helper()
