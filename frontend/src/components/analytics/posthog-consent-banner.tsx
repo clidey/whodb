@@ -33,6 +33,11 @@ export const PosthogConsentBanner = () => {
             setVisible(false);
             return;
         }
+        // Hide consent banner during E2E tests
+        if (import.meta.env.VITE_E2E_TEST === 'true') {
+            setVisible(false);
+            return;
+        }
         setVisible(getStoredConsentState() === 'unknown');
     }, [metricsEnabled]);
 

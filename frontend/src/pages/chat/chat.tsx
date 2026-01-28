@@ -432,14 +432,14 @@ export const ChatPage: FC = () => {
                                     });
                                 }
                             } else if (currentEventType === 'message') {
-                                // Handle complete messages (SQL responses after streaming)
-                                if (parsed.Type?.startsWith("sql")) {
-                                    // Create a unique key for this SQL message to avoid duplicates
-                                    const sqlKey = `${parsed.Type}:${parsed.Text}`;
+                                // Handle complete messages (SQL responses and errors after streaming)
+                                if (parsed.Type?.startsWith("sql") || parsed.Type === "error") {
+                                    // Create a unique key for this message to avoid duplicates
+                                    const messageKey = `${parsed.Type}:${parsed.Text}`;
 
-                                    // Only add if we haven't seen this SQL message before
-                                    if (!addedSqlMessages.has(sqlKey)) {
-                                        addedSqlMessages.add(sqlKey);
+                                    // Only add if we haven't seen this message before
+                                    if (!addedSqlMessages.has(messageKey)) {
+                                        addedSqlMessages.add(messageKey);
 
                                         const messageId = getUniqueMessageId();
                                         dispatch(HoudiniActions.addChatMessage({

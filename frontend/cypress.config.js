@@ -20,8 +20,8 @@ import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
 
 export default defineConfig({
     numTestsKeptInMemory: 0,
-    viewportWidth: 1280,
-    viewportHeight: 768,
+    viewportWidth: 1920,
+    viewportHeight: 1080,
     // Screenshot and video settings
     screenshotOnRunFailure: true,
     screenshotsFolder: 'cypress/screenshots',
@@ -37,6 +37,34 @@ export default defineConfig({
         on('file:preprocessor', createBundler({
             sourcemap: "inline",
         }));
+
+        // Configure browser for high-resolution screenshots
+        on('before:browser:launch', (browser, launchOptions) => {
+          const width = 1920;
+          const height = 1080;
+
+          if (browser.name === 'chrome' && browser.isHeadless) {
+            launchOptions.args.push(`--window-size=${width},${height}`);
+            launchOptions.args.push('--force-device-scale-factor=1');
+          }
+
+          if (browser.name === 'chromium' && browser.isHeadless) {
+            launchOptions.args.push(`--window-size=${width},${height}`);
+            launchOptions.args.push('--force-device-scale-factor=1');
+          }
+
+          if (browser.name === 'firefox' && browser.isHeadless) {
+            launchOptions.args.push(`--width=${width}`);
+            launchOptions.args.push(`--height=${height}`);
+          }
+
+          if (browser.name === 'edge' && browser.isHeadless) {
+            launchOptions.args.push(`--window-size=${width},${height}`);
+            launchOptions.args.push('--force-device-scale-factor=1');
+          }
+
+          return launchOptions;
+        });
 
         config.env = config.env || {};
 
