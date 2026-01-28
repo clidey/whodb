@@ -1,19 +1,3 @@
-/*
- * Copyright 2026 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -470,6 +454,7 @@ export type RowsResult = {
 export type SettingsConfig = {
   __typename?: 'SettingsConfig';
   CloudProvidersEnabled: Scalars['Boolean']['output'];
+  DisableCredentialForm: Scalars['Boolean']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -735,7 +720,7 @@ export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshClo
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean } };
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean } };
 
 export type UpdateSettingsMutationVariables = Exact<{
   newSettings: SettingsConfigInput;
@@ -2070,6 +2055,7 @@ export const SettingsConfigDocument = gql`
   SettingsConfig {
     MetricsEnabled
     CloudProvidersEnabled
+    DisableCredentialForm
   }
 }
     `;
