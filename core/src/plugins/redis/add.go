@@ -29,3 +29,11 @@ func (p *RedisPlugin) AddStorageUnit(config *engine.PluginConfig, schema string,
 func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	return false, errors.ErrUnsupported
 }
+
+func (p *RedisPlugin) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
+	return 0, errors.ErrUnsupported
+}
+
+func (p *RedisPlugin) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
+	return false, errors.ErrUnsupported
+}

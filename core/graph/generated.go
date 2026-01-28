@@ -160,8 +160,30 @@ type ComplexityRoot struct {
 		Type                 func(childComplexity int) int
 	}
 
+	MockDataDependencyAnalysis struct {
+		Error           func(childComplexity int) int
+		GenerationOrder func(childComplexity int) int
+		Tables          func(childComplexity int) int
+		TotalRows       func(childComplexity int) int
+		Warnings        func(childComplexity int) int
+	}
+
 	MockDataGenerationStatus struct {
 		AmountGenerated func(childComplexity int) int
+		Details         func(childComplexity int) int
+	}
+
+	MockDataTableDetail struct {
+		RowsGenerated    func(childComplexity int) int
+		Table            func(childComplexity int) int
+		UsedExistingData func(childComplexity int) int
+	}
+
+	MockDataTableInfo struct {
+		IsBlocked        func(childComplexity int) int
+		RowsToGenerate   func(childComplexity int) int
+		Table            func(childComplexity int) int
+		UsesExistingData func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -183,28 +205,29 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AIChat                func(childComplexity int, providerID *string, modelType string, token *string, schema string, input model.ChatInput) int
-		AIModel               func(childComplexity int, providerID *string, modelType string, token *string) int
-		AIProviders           func(childComplexity int) int
-		AWSRegions            func(childComplexity int) int
-		CloudProvider         func(childComplexity int, id string) int
-		CloudProviders        func(childComplexity int) int
-		Columns               func(childComplexity int, schema string, storageUnit string) int
-		ColumnsBatch          func(childComplexity int, schema string, storageUnits []string) int
-		Database              func(childComplexity int, typeArg string) int
-		DatabaseMetadata      func(childComplexity int) int
-		DiscoveredConnections func(childComplexity int) int
-		Graph                 func(childComplexity int, schema string) int
-		LocalAWSProfiles      func(childComplexity int) int
-		MockDataMaxRowCount   func(childComplexity int) int
-		Profiles              func(childComplexity int) int
-		ProviderConnections   func(childComplexity int, providerID string) int
-		RawExecute            func(childComplexity int, query string) int
-		Row                   func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
-		Schema                func(childComplexity int) int
-		SettingsConfig        func(childComplexity int) int
-		StorageUnit           func(childComplexity int, schema string) int
-		Version               func(childComplexity int) int
+		AIChat                      func(childComplexity int, providerID *string, modelType string, token *string, schema string, input model.ChatInput) int
+		AIModel                     func(childComplexity int, providerID *string, modelType string, token *string) int
+		AIProviders                 func(childComplexity int) int
+		AWSRegions                  func(childComplexity int) int
+		AnalyzeMockDataDependencies func(childComplexity int, schema string, storageUnit string, rowCount int, fkDensityRatio *int) int
+		CloudProvider               func(childComplexity int, id string) int
+		CloudProviders              func(childComplexity int) int
+		Columns                     func(childComplexity int, schema string, storageUnit string) int
+		ColumnsBatch                func(childComplexity int, schema string, storageUnits []string) int
+		Database                    func(childComplexity int, typeArg string) int
+		DatabaseMetadata            func(childComplexity int) int
+		DiscoveredConnections       func(childComplexity int) int
+		Graph                       func(childComplexity int, schema string) int
+		LocalAWSProfiles            func(childComplexity int) int
+		MockDataMaxRowCount         func(childComplexity int) int
+		Profiles                    func(childComplexity int) int
+		ProviderConnections         func(childComplexity int, providerID string) int
+		RawExecute                  func(childComplexity int, query string) int
+		Row                         func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
+		Schema                      func(childComplexity int) int
+		SettingsConfig              func(childComplexity int) int
+		StorageUnit                 func(childComplexity int, schema string) int
+		Version                     func(childComplexity int) int
 	}
 
 	Record struct {
@@ -283,6 +306,7 @@ type QueryResolver interface {
 	AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error)
 	SettingsConfig(ctx context.Context) (*model.SettingsConfig, error)
 	MockDataMaxRowCount(ctx context.Context) (int, error)
+	AnalyzeMockDataDependencies(ctx context.Context, schema string, storageUnit string, rowCount int, fkDensityRatio *int) (*model.MockDataDependencyAnalysis, error)
 	DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error)
 	CloudProviders(ctx context.Context) ([]*model.AWSProvider, error)
 	CloudProvider(ctx context.Context, id string) (*model.AWSProvider, error)
@@ -706,12 +730,93 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.LoginProfile.Type(childComplexity), true
 
+	case "MockDataDependencyAnalysis.Error":
+		if e.complexity.MockDataDependencyAnalysis.Error == nil {
+			break
+		}
+
+		return e.complexity.MockDataDependencyAnalysis.Error(childComplexity), true
+	case "MockDataDependencyAnalysis.GenerationOrder":
+		if e.complexity.MockDataDependencyAnalysis.GenerationOrder == nil {
+			break
+		}
+
+		return e.complexity.MockDataDependencyAnalysis.GenerationOrder(childComplexity), true
+	case "MockDataDependencyAnalysis.Tables":
+		if e.complexity.MockDataDependencyAnalysis.Tables == nil {
+			break
+		}
+
+		return e.complexity.MockDataDependencyAnalysis.Tables(childComplexity), true
+	case "MockDataDependencyAnalysis.TotalRows":
+		if e.complexity.MockDataDependencyAnalysis.TotalRows == nil {
+			break
+		}
+
+		return e.complexity.MockDataDependencyAnalysis.TotalRows(childComplexity), true
+	case "MockDataDependencyAnalysis.Warnings":
+		if e.complexity.MockDataDependencyAnalysis.Warnings == nil {
+			break
+		}
+
+		return e.complexity.MockDataDependencyAnalysis.Warnings(childComplexity), true
+
 	case "MockDataGenerationStatus.AmountGenerated":
 		if e.complexity.MockDataGenerationStatus.AmountGenerated == nil {
 			break
 		}
 
 		return e.complexity.MockDataGenerationStatus.AmountGenerated(childComplexity), true
+	case "MockDataGenerationStatus.Details":
+		if e.complexity.MockDataGenerationStatus.Details == nil {
+			break
+		}
+
+		return e.complexity.MockDataGenerationStatus.Details(childComplexity), true
+
+	case "MockDataTableDetail.RowsGenerated":
+		if e.complexity.MockDataTableDetail.RowsGenerated == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableDetail.RowsGenerated(childComplexity), true
+	case "MockDataTableDetail.Table":
+		if e.complexity.MockDataTableDetail.Table == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableDetail.Table(childComplexity), true
+	case "MockDataTableDetail.UsedExistingData":
+		if e.complexity.MockDataTableDetail.UsedExistingData == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableDetail.UsedExistingData(childComplexity), true
+
+	case "MockDataTableInfo.IsBlocked":
+		if e.complexity.MockDataTableInfo.IsBlocked == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableInfo.IsBlocked(childComplexity), true
+	case "MockDataTableInfo.RowsToGenerate":
+		if e.complexity.MockDataTableInfo.RowsToGenerate == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableInfo.RowsToGenerate(childComplexity), true
+	case "MockDataTableInfo.Table":
+		if e.complexity.MockDataTableInfo.Table == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableInfo.Table(childComplexity), true
+	case "MockDataTableInfo.UsesExistingData":
+		if e.complexity.MockDataTableInfo.UsesExistingData == nil {
+			break
+		}
+
+		return e.complexity.MockDataTableInfo.UsesExistingData(childComplexity), true
 
 	case "Mutation.AddAWSProvider":
 		if e.complexity.Mutation.AddAWSProvider == nil {
@@ -908,6 +1013,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.AWSRegions(childComplexity), true
+	case "Query.AnalyzeMockDataDependencies":
+		if e.complexity.Query.AnalyzeMockDataDependencies == nil {
+			break
+		}
+
+		args, err := ec.field_Query_AnalyzeMockDataDependencies_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AnalyzeMockDataDependencies(childComplexity, args["schema"].(string), args["storageUnit"].(string), args["rowCount"].(int), args["fkDensityRatio"].(*int)), true
 	case "Query.CloudProvider":
 		if e.complexity.Query.CloudProvider == nil {
 			break
@@ -1588,6 +1704,32 @@ func (ec *executionContext) field_Query_AIModel_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["token"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_AnalyzeMockDataDependencies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "schema", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["schema"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "storageUnit", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["storageUnit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "rowCount", ec.unmarshalNInt2int)
+	if err != nil {
+		return nil, err
+	}
+	args["rowCount"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "fkDensityRatio", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["fkDensityRatio"] = arg3
 	return args, nil
 }
 
@@ -3700,6 +3842,161 @@ func (ec *executionContext) fieldContext_LoginProfile_Source(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _MockDataDependencyAnalysis_GenerationOrder(ctx context.Context, field graphql.CollectedField, obj *model.MockDataDependencyAnalysis) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataDependencyAnalysis_GenerationOrder,
+		func(ctx context.Context) (any, error) {
+			return obj.GenerationOrder, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataDependencyAnalysis_GenerationOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataDependencyAnalysis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataDependencyAnalysis_Tables(ctx context.Context, field graphql.CollectedField, obj *model.MockDataDependencyAnalysis) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataDependencyAnalysis_Tables,
+		func(ctx context.Context) (any, error) {
+			return obj.Tables, nil
+		},
+		nil,
+		ec.marshalNMockDataTableInfo2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableInfoᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataDependencyAnalysis_Tables(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataDependencyAnalysis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Table":
+				return ec.fieldContext_MockDataTableInfo_Table(ctx, field)
+			case "RowsToGenerate":
+				return ec.fieldContext_MockDataTableInfo_RowsToGenerate(ctx, field)
+			case "IsBlocked":
+				return ec.fieldContext_MockDataTableInfo_IsBlocked(ctx, field)
+			case "UsesExistingData":
+				return ec.fieldContext_MockDataTableInfo_UsesExistingData(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MockDataTableInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataDependencyAnalysis_TotalRows(ctx context.Context, field graphql.CollectedField, obj *model.MockDataDependencyAnalysis) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataDependencyAnalysis_TotalRows,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalRows, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataDependencyAnalysis_TotalRows(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataDependencyAnalysis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataDependencyAnalysis_Warnings(ctx context.Context, field graphql.CollectedField, obj *model.MockDataDependencyAnalysis) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataDependencyAnalysis_Warnings,
+		func(ctx context.Context) (any, error) {
+			return obj.Warnings, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataDependencyAnalysis_Warnings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataDependencyAnalysis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataDependencyAnalysis_Error(ctx context.Context, field graphql.CollectedField, obj *model.MockDataDependencyAnalysis) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataDependencyAnalysis_Error,
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataDependencyAnalysis_Error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataDependencyAnalysis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MockDataGenerationStatus_AmountGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3724,6 +4021,246 @@ func (ec *executionContext) fieldContext_MockDataGenerationStatus_AmountGenerate
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataGenerationStatus_Details(ctx context.Context, field graphql.CollectedField, obj *model.MockDataGenerationStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataGenerationStatus_Details,
+		func(ctx context.Context) (any, error) {
+			return obj.Details, nil
+		},
+		nil,
+		ec.marshalOMockDataTableDetail2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableDetailᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataGenerationStatus_Details(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataGenerationStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Table":
+				return ec.fieldContext_MockDataTableDetail_Table(ctx, field)
+			case "RowsGenerated":
+				return ec.fieldContext_MockDataTableDetail_RowsGenerated(ctx, field)
+			case "UsedExistingData":
+				return ec.fieldContext_MockDataTableDetail_UsedExistingData(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MockDataTableDetail", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableDetail_Table(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableDetail_Table,
+		func(ctx context.Context) (any, error) {
+			return obj.Table, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableDetail_Table(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableDetail_RowsGenerated(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableDetail_RowsGenerated,
+		func(ctx context.Context) (any, error) {
+			return obj.RowsGenerated, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableDetail_RowsGenerated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableDetail_UsedExistingData(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableDetail_UsedExistingData,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedExistingData, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableDetail_UsedExistingData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableInfo_Table(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableInfo_Table,
+		func(ctx context.Context) (any, error) {
+			return obj.Table, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableInfo_Table(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableInfo_RowsToGenerate(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableInfo_RowsToGenerate,
+		func(ctx context.Context) (any, error) {
+			return obj.RowsToGenerate, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableInfo_RowsToGenerate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableInfo_IsBlocked(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableInfo_IsBlocked,
+		func(ctx context.Context) (any, error) {
+			return obj.IsBlocked, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableInfo_IsBlocked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MockDataTableInfo_UsesExistingData(ctx context.Context, field graphql.CollectedField, obj *model.MockDataTableInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MockDataTableInfo_UsesExistingData,
+		func(ctx context.Context) (any, error) {
+			return obj.UsesExistingData, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MockDataTableInfo_UsesExistingData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MockDataTableInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4104,6 +4641,8 @@ func (ec *executionContext) fieldContext_Mutation_GenerateMockData(ctx context.C
 			switch field.Name {
 			case "AmountGenerated":
 				return ec.fieldContext_MockDataGenerationStatus_AmountGenerated(ctx, field)
+			case "Details":
+				return ec.fieldContext_MockDataGenerationStatus_Details(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MockDataGenerationStatus", field.Name)
 		},
@@ -5121,6 +5660,59 @@ func (ec *executionContext) fieldContext_Query_MockDataMaxRowCount(_ context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_AnalyzeMockDataDependencies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_AnalyzeMockDataDependencies,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().AnalyzeMockDataDependencies(ctx, fc.Args["schema"].(string), fc.Args["storageUnit"].(string), fc.Args["rowCount"].(int), fc.Args["fkDensityRatio"].(*int))
+		},
+		nil,
+		ec.marshalNMockDataDependencyAnalysis2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_AnalyzeMockDataDependencies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "GenerationOrder":
+				return ec.fieldContext_MockDataDependencyAnalysis_GenerationOrder(ctx, field)
+			case "Tables":
+				return ec.fieldContext_MockDataDependencyAnalysis_Tables(ctx, field)
+			case "TotalRows":
+				return ec.fieldContext_MockDataDependencyAnalysis_TotalRows(ctx, field)
+			case "Warnings":
+				return ec.fieldContext_MockDataDependencyAnalysis_Warnings(ctx, field)
+			case "Error":
+				return ec.fieldContext_MockDataDependencyAnalysis_Error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MockDataDependencyAnalysis", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_AnalyzeMockDataDependencies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -7997,7 +8589,7 @@ func (ec *executionContext) unmarshalInputMockDataGenerationInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Schema", "StorageUnit", "RowCount", "Method", "OverwriteExisting"}
+	fieldsInOrder := [...]string{"Schema", "StorageUnit", "RowCount", "Method", "OverwriteExisting", "FkDensityRatio"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8039,6 +8631,13 @@ func (ec *executionContext) unmarshalInputMockDataGenerationInput(ctx context.Co
 				return it, err
 			}
 			it.OverwriteExisting = data
+		case "FkDensityRatio":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("FkDensityRatio"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FkDensityRatio = data
 		}
 	}
 
@@ -8889,6 +9488,62 @@ func (ec *executionContext) _LoginProfile(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var mockDataDependencyAnalysisImplementors = []string{"MockDataDependencyAnalysis"}
+
+func (ec *executionContext) _MockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataDependencyAnalysis) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mockDataDependencyAnalysisImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MockDataDependencyAnalysis")
+		case "GenerationOrder":
+			out.Values[i] = ec._MockDataDependencyAnalysis_GenerationOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Tables":
+			out.Values[i] = ec._MockDataDependencyAnalysis_Tables(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "TotalRows":
+			out.Values[i] = ec._MockDataDependencyAnalysis_TotalRows(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Warnings":
+			out.Values[i] = ec._MockDataDependencyAnalysis_Warnings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Error":
+			out.Values[i] = ec._MockDataDependencyAnalysis_Error(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mockDataGenerationStatusImplementors = []string{"MockDataGenerationStatus"}
 
 func (ec *executionContext) _MockDataGenerationStatus(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataGenerationStatus) graphql.Marshaler {
@@ -8902,6 +9557,111 @@ func (ec *executionContext) _MockDataGenerationStatus(ctx context.Context, sel a
 			out.Values[i] = graphql.MarshalString("MockDataGenerationStatus")
 		case "AmountGenerated":
 			out.Values[i] = ec._MockDataGenerationStatus_AmountGenerated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Details":
+			out.Values[i] = ec._MockDataGenerationStatus_Details(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var mockDataTableDetailImplementors = []string{"MockDataTableDetail"}
+
+func (ec *executionContext) _MockDataTableDetail(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataTableDetail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mockDataTableDetailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MockDataTableDetail")
+		case "Table":
+			out.Values[i] = ec._MockDataTableDetail_Table(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "RowsGenerated":
+			out.Values[i] = ec._MockDataTableDetail_RowsGenerated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "UsedExistingData":
+			out.Values[i] = ec._MockDataTableDetail_UsedExistingData(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var mockDataTableInfoImplementors = []string{"MockDataTableInfo"}
+
+func (ec *executionContext) _MockDataTableInfo(ctx context.Context, sel ast.SelectionSet, obj *model.MockDataTableInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mockDataTableInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MockDataTableInfo")
+		case "Table":
+			out.Values[i] = ec._MockDataTableInfo_Table(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "RowsToGenerate":
+			out.Values[i] = ec._MockDataTableInfo_RowsToGenerate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "IsBlocked":
+			out.Values[i] = ec._MockDataTableInfo_IsBlocked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "UsesExistingData":
+			out.Values[i] = ec._MockDataTableInfo_UsesExistingData(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9412,6 +10172,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_MockDataMaxRowCount(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "AnalyzeMockDataDependencies":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_AnalyzeMockDataDependencies(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -10938,6 +11720,20 @@ func (ec *executionContext) unmarshalNLoginProfileInput2githubᚗcomᚋclideyᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNMockDataDependencyAnalysis2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, v model.MockDataDependencyAnalysis) graphql.Marshaler {
+	return ec._MockDataDependencyAnalysis(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMockDataDependencyAnalysis2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataDependencyAnalysis(ctx context.Context, sel ast.SelectionSet, v *model.MockDataDependencyAnalysis) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MockDataDependencyAnalysis(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNMockDataGenerationInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataGenerationInput(ctx context.Context, v any) (model.MockDataGenerationInput, error) {
 	res, err := ec.unmarshalInputMockDataGenerationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10955,6 +11751,70 @@ func (ec *executionContext) marshalNMockDataGenerationStatus2ᚖgithubᚗcomᚋc
 		return graphql.Null
 	}
 	return ec._MockDataGenerationStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMockDataTableDetail2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableDetail(ctx context.Context, sel ast.SelectionSet, v *model.MockDataTableDetail) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MockDataTableDetail(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMockDataTableInfo2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableInfoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MockDataTableInfo) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMockDataTableInfo2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMockDataTableInfo2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableInfo(ctx context.Context, sel ast.SelectionSet, v *model.MockDataTableInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MockDataTableInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {
@@ -11692,6 +12552,53 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOMockDataTableDetail2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableDetailᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MockDataTableDetail) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMockDataTableDetail2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐMockDataTableDetail(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOOperationWhereCondition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐOperationWhereCondition(ctx context.Context, v any) (*model.OperationWhereCondition, error) {

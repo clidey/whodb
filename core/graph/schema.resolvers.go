@@ -37,11 +37,9 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
-	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm"
 )
 
 // Login is the resolver for the Login field.
@@ -483,200 +481,33 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 	plugin, config := GetPluginForContext(ctx)
 
-	rowsResult, err := plugin.GetRows(config, input.Schema, input.StorageUnit, nil, []*model.SortCondition{}, 1, 0)
+	fkRatio := 0
+	if input.FkDensityRatio != nil {
+		fkRatio = *input.FkDensityRatio
+	}
+	generator := src.NewMockDataGenerator(fkRatio)
+	result, err := generator.Generate(plugin, config, input.Schema, input.StorageUnit, input.RowCount, input.OverwriteExisting)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to get table schema")
-		return nil, fmt.Errorf("failed to get table schema: %w", err)
-	}
-	log.Logger.WithField("columnCount", len(rowsResult.Columns)).Debug("Got table columns")
-
-	constraints, err := plugin.GetColumnConstraints(config, input.Schema, input.StorageUnit)
-	if err != nil {
-		log.Logger.WithError(err).Warn("Failed to get column constraints, using empty constraints")
-		constraints = make(map[string]map[string]any)
-	}
-	log.Logger.WithField("constraintCount", len(constraints)).Debug("Got column constraints")
-
-	// Generate extra rows as buffer for potential constraint violations
-	// We'll generate 50% more rows as buffer, capped at requested + 100
-	generator := src.NewMockDataGenerator()
-	bufferSize := min(input.RowCount/2, 100)
-	maxGenerationAttempts := input.RowCount + bufferSize
-
-	generatedRowsBuffer := make([][]engine.Record, 0, maxGenerationAttempts)
-	attemptsCount := 0
-	maxTotalAttempts := maxGenerationAttempts * 10 // Overall safety limit to prevent infinite loops
-
-	// Keep generating until we have enough rows or hit the safety limit
-	log.Logger.WithField("targetRows", maxGenerationAttempts).Info("Starting row generation")
-	for len(generatedRowsBuffer) < maxGenerationAttempts && attemptsCount < maxTotalAttempts {
-		attemptsCount++
-		rowData, genErr := generator.GenerateRowDataWithConstraints(rowsResult.Columns, constraints)
-		if genErr != nil {
-			log.Logger.WithError(genErr).WithField("attempt", attemptsCount).Debug("Failed to generate row")
-			continue
-		}
-		generatedRowsBuffer = append(generatedRowsBuffer, rowData)
-	}
-
-	log.Logger.WithField("generatedRows", len(generatedRowsBuffer)).WithField("attempts", attemptsCount).Info("Completed row generation buffer")
-
-	if len(generatedRowsBuffer) == 0 {
-		log.Logger.Error("Failed to generate any valid rows")
-		return nil, errors.New("failed to generate any valid rows after multiple attempts")
-	}
-
-	gormPlugin, isGormPlugin := plugin.PluginFunctions.(*gorm_plugin.GormPlugin)
-
-	generatedRows := 0
-	if isGormPlugin {
-		// SQL databases use transactions for atomicity
-		err = gormPlugin.ExecuteInTransaction(config, func(tx *gorm.DB) error {
-			if input.OverwriteExisting {
-				if err := gormPlugin.ClearTableDataInTx(tx, input.Schema, input.StorageUnit); err != nil {
-					return fmt.Errorf("failed to clear existing data: %w", err)
-				}
-			}
-
-			// keep trying from buffer until we hit the exact count
-			successfulRows := 0
-			bufferIndex := 0
-			retryWithDefaults := false
-
-			for successfulRows < input.RowCount && bufferIndex < len(generatedRowsBuffer) {
-				rowData := generatedRowsBuffer[bufferIndex]
-				bufferIndex++
-
-				if err := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, rowData); err != nil {
-					errStr := err.Error()
-					log.Logger.WithError(err).WithField("rowIndex", bufferIndex).WithField("successfulSoFar", successfulRows).Error("Failed to insert row")
-					// If it's a constraint error, try with default values
-					if strings.Contains(errStr, "constraint") || strings.Contains(errStr, "CHECK") || strings.Contains(errStr, "check") {
-						log.Logger.Error("Constraint violation detected, trying with default values")
-						// Try once with defaults
-						if !retryWithDefaults {
-							defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
-							if retryErr := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, defaultRow); retryErr == nil {
-								log.Logger.Info("Successfully inserted row with default values")
-								successfulRows++
-								retryWithDefaults = false
-								continue
-							} else {
-								log.Logger.WithError(retryErr).Error("Failed to insert row with default values")
-							}
-							retryWithDefaults = true // Mark that we've tried defaults
-						}
-						// Skip this row and try next from buffer
-						continue
-					}
-					// For non-constraint errors in overwrite mode, fail the transaction
-					if input.OverwriteExisting {
-						log.Logger.WithError(err).Error("Non-constraint error in overwrite mode, failing transaction")
-						return fmt.Errorf("failed to insert row: %w", err)
-					}
-					log.Logger.WithError(err).Warn("Non-constraint error in append mode, skipping row")
-					// For append mode, skip and continue
-					continue
-				}
-				successfulRows++
-				retryWithDefaults = false
-				if successfulRows%10 == 0 {
-					log.Logger.WithField("progress", successfulRows).WithField("target", input.RowCount).Debug("Mock data insertion progress")
-				}
-			}
-
-			// If we couldn't generate exactly the requested amount, try generating more on the fly
-			log.Logger.WithField("successfulRows", successfulRows).WithField("target", input.RowCount).Debug("Checking if additional generation needed")
-			additionalAttempts := 0
-			maxAdditionalAttempts := input.RowCount * 5 // Safety limit
-
-			for successfulRows < input.RowCount && additionalAttempts < maxAdditionalAttempts {
-				additionalAttempts++
-
-				// Generate a new row
-				newRow, genErr := generator.GenerateRowDataWithConstraints(rowsResult.Columns, constraints)
-				if genErr != nil {
-					continue
-				}
-
-				if err := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, newRow); err != nil {
-					defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
-					if retryErr := gormPlugin.AddRowInTx(tx, input.Schema, input.StorageUnit, defaultRow); retryErr == nil {
-						successfulRows++
-					}
-					continue
-				}
-				successfulRows++
-			}
-
-			generatedRows = successfulRows
-			log.Logger.WithField("generatedRows", generatedRows).WithField("target", input.RowCount).Info("Completed mock data insertion in transaction")
-
-			// If overwriting and we couldn't generate enough rows, fail the transaction
-			if input.OverwriteExisting && generatedRows == 0 {
-				log.Logger.Error("Failed to generate any valid rows in overwrite mode")
-				return errors.New("failed to generate any valid rows - existing data preserved")
-			}
-
-			return nil
-		})
-	} else {
-		// NoSQL: no transaction support, operations may partially succeed
-		if input.OverwriteExisting {
-			if _, err := plugin.ClearTableData(config, input.Schema, input.StorageUnit); err != nil {
-				return nil, fmt.Errorf("failed to clear existing data: %w", err)
-			}
-		}
-
-		bufferIndex := 0
-		for generatedRows < input.RowCount && bufferIndex < len(generatedRowsBuffer) {
-			rowData := generatedRowsBuffer[bufferIndex]
-			bufferIndex++
-
-			success, addErr := plugin.AddRow(config, input.Schema, input.StorageUnit, rowData)
-			if addErr != nil || !success {
-				defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
-				success2, err2 := plugin.AddRow(config, input.Schema, input.StorageUnit, defaultRow)
-				if err2 == nil && success2 {
-					generatedRows++
-				}
-				continue
-			}
-			generatedRows++
-		}
-
-		additionalAttempts := 0
-		maxAdditionalAttempts := input.RowCount * 5
-
-		for generatedRows < input.RowCount && additionalAttempts < maxAdditionalAttempts {
-			additionalAttempts++
-
-			newRow, genErr := generator.GenerateRowDataWithConstraints(rowsResult.Columns, constraints)
-			if genErr != nil {
-				continue
-			}
-
-			success, addErr := plugin.AddRow(config, input.Schema, input.StorageUnit, newRow)
-			if addErr != nil || !success {
-				defaultRow := generator.GenerateRowWithDefaults(rowsResult.Columns)
-				success2, err2 := plugin.AddRow(config, input.Schema, input.StorageUnit, defaultRow)
-				if err2 == nil && success2 {
-					generatedRows++
-				}
-				continue
-			}
-			generatedRows++
-		}
-	}
-
-	if err != nil {
-		log.Logger.WithError(err).WithField("generatedRows", generatedRows).Error("Mock data generation failed")
+		log.Logger.WithError(err).Error("Mock data generation failed")
 		return nil, fmt.Errorf("mock data generation failed: %w", err)
 	}
 
-	log.Logger.WithField("generatedRows", generatedRows).Info("Mock data generation completed successfully")
+	var details []*model.MockDataTableDetail
+	if len(result.Details) > 0 {
+		details = make([]*model.MockDataTableDetail, len(result.Details))
+		for i, d := range result.Details {
+			details[i] = &model.MockDataTableDetail{
+				Table:            d.Table,
+				RowsGenerated:    d.RowsGenerated,
+				UsedExistingData: d.UsedExistingData,
+			}
+		}
+	}
+
+	log.Logger.WithField("generatedRows", result.TotalGenerated).Info("Mock data generation completed successfully")
 	return &model.MockDataGenerationStatus{
-		AmountGenerated: generatedRows,
+		AmountGenerated: result.TotalGenerated,
+		Details:         details,
 	}, nil
 }
 
@@ -1406,6 +1237,65 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 // MockDataMaxRowCount is the resolver for the MockDataMaxRowCount field.
 func (r *queryResolver) MockDataMaxRowCount(ctx context.Context) (int, error) {
 	return env.GetMockDataGenerationMaxRowCount(), nil
+}
+
+// AnalyzeMockDataDependencies analyzes FK dependencies for mock data generation.
+func (r *queryResolver) AnalyzeMockDataDependencies(ctx context.Context, schema string, storageUnit string, rowCount int, fkDensityRatio *int) (*model.MockDataDependencyAnalysis, error) {
+	maxRowLimit := env.GetMockDataGenerationMaxRowCount()
+	if rowCount > maxRowLimit {
+		errMsg := fmt.Sprintf("row count exceeds maximum limit of %d", maxRowLimit)
+		return &model.MockDataDependencyAnalysis{
+			Error: &errMsg,
+		}, nil
+	}
+
+	if !env.IsMockDataGenerationAllowed(storageUnit) {
+		errMsg := "mock data generation is not allowed for this table"
+		return &model.MockDataDependencyAnalysis{
+			Error: &errMsg,
+		}, nil
+	}
+
+	plugin, config := GetPluginForContext(ctx)
+	if plugin == nil {
+		return nil, errors.New("no database connection")
+	}
+
+	fkRatio := 0
+	if fkDensityRatio != nil {
+		fkRatio = *fkDensityRatio
+	}
+	generator := src.NewMockDataGenerator(fkRatio)
+	analysis, err := generator.AnalyzeDependencies(plugin, config, schema, storageUnit, rowCount)
+	if err != nil {
+		errMsg := err.Error()
+		return &model.MockDataDependencyAnalysis{
+			Error: &errMsg,
+		}, nil
+	}
+
+	tables := make([]*model.MockDataTableInfo, 0, len(analysis.Tables))
+	for _, t := range analysis.Tables {
+		tables = append(tables, &model.MockDataTableInfo{
+			Table:            t.Table,
+			RowsToGenerate:   t.RowCount,
+			IsBlocked:        t.IsBlocked,
+			UsesExistingData: t.UsesExistingData,
+		})
+	}
+
+	var errorPtr *string
+	if analysis.Error != "" {
+		errorPtr = &analysis.Error
+	}
+
+	return &model.MockDataDependencyAnalysis{
+		GenerationOrder: analysis.GenerationOrder,
+		Tables:          tables,
+		TotalRows:       analysis.TotalRows,
+		Warnings:        analysis.Warnings,
+		Error:           errorPtr,
+	}, nil
 }
 
 // DatabaseMetadata is the resolver for the DatabaseMetadata field.

@@ -188,16 +188,39 @@ type LoginProfileInput struct {
 	Database *string      `json:"Database,omitempty"`
 }
 
+type MockDataDependencyAnalysis struct {
+	GenerationOrder []string             `json:"GenerationOrder"`
+	Tables          []*MockDataTableInfo `json:"Tables"`
+	TotalRows       int                  `json:"TotalRows"`
+	Warnings        []string             `json:"Warnings"`
+	Error           *string              `json:"Error,omitempty"`
+}
+
 type MockDataGenerationInput struct {
 	Schema            string `json:"Schema"`
 	StorageUnit       string `json:"StorageUnit"`
 	RowCount          int    `json:"RowCount"`
 	Method            string `json:"Method"`
 	OverwriteExisting bool   `json:"OverwriteExisting"`
+	FkDensityRatio    *int   `json:"FkDensityRatio,omitempty"`
 }
 
 type MockDataGenerationStatus struct {
-	AmountGenerated int `json:"AmountGenerated"`
+	AmountGenerated int                    `json:"AmountGenerated"`
+	Details         []*MockDataTableDetail `json:"Details,omitempty"`
+}
+
+type MockDataTableDetail struct {
+	Table            string `json:"Table"`
+	RowsGenerated    int    `json:"RowsGenerated"`
+	UsedExistingData bool   `json:"UsedExistingData"`
+}
+
+type MockDataTableInfo struct {
+	Table            string `json:"Table"`
+	RowsToGenerate   int    `json:"RowsToGenerate"`
+	IsBlocked        bool   `json:"IsBlocked"`
+	UsesExistingData bool   `json:"UsesExistingData"`
 }
 
 type Mutation struct {

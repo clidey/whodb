@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
+import {gql} from '@apollo/client';
+
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -236,7 +237,17 @@ export type LoginProfileInput = {
   Type: DatabaseType;
 };
 
+export type MockDataDependencyAnalysis = {
+  __typename?: 'MockDataDependencyAnalysis';
+  Error?: Maybe<Scalars['String']['output']>;
+  GenerationOrder: Array<Scalars['String']['output']>;
+  Tables: Array<MockDataTableInfo>;
+  TotalRows: Scalars['Int']['output'];
+  Warnings: Array<Scalars['String']['output']>;
+};
+
 export type MockDataGenerationInput = {
+  FkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
   Method: Scalars['String']['input'];
   OverwriteExisting: Scalars['Boolean']['input'];
   RowCount: Scalars['Int']['input'];
@@ -247,6 +258,22 @@ export type MockDataGenerationInput = {
 export type MockDataGenerationStatus = {
   __typename?: 'MockDataGenerationStatus';
   AmountGenerated: Scalars['Int']['output'];
+  Details?: Maybe<Array<MockDataTableDetail>>;
+};
+
+export type MockDataTableDetail = {
+  __typename?: 'MockDataTableDetail';
+  RowsGenerated: Scalars['Int']['output'];
+  Table: Scalars['String']['output'];
+  UsedExistingData: Scalars['Boolean']['output'];
+};
+
+export type MockDataTableInfo = {
+  __typename?: 'MockDataTableInfo';
+  IsBlocked: Scalars['Boolean']['output'];
+  RowsToGenerate: Scalars['Int']['output'];
+  Table: Scalars['String']['output'];
+  UsesExistingData: Scalars['Boolean']['output'];
 };
 
 export type Mutation = {
@@ -359,6 +386,7 @@ export type Query = {
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
   AWSRegions: Array<AwsRegion>;
+  AnalyzeMockDataDependencies: MockDataDependencyAnalysis;
   CloudProvider?: Maybe<AwsProvider>;
   CloudProviders: Array<AwsProvider>;
   Columns: Array<Column>;
@@ -393,6 +421,14 @@ export type QueryAiModelArgs = {
   modelType: Scalars['String']['input'];
   providerId?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryAnalyzeMockDataDependenciesArgs = {
+  fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
+  rowCount: Scalars['Int']['input'];
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
 };
 
 
@@ -567,6 +603,16 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
 
+export type AnalyzeMockDataDependenciesQueryVariables = Exact<{
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  rowCount: Scalars['Int']['input'];
+  fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type AnalyzeMockDataDependenciesQuery = { __typename?: 'Query', AnalyzeMockDataDependencies: { __typename?: 'MockDataDependencyAnalysis', GenerationOrder: Array<string>, TotalRows: number, Warnings: Array<string>, Error?: string | null, Tables: Array<{ __typename?: 'MockDataTableInfo', Table: string, RowsToGenerate: number, IsBlocked: boolean, UsesExistingData: boolean }> } };
+
 export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -577,7 +623,7 @@ export type GenerateMockDataMutationVariables = Exact<{
 }>;
 
 
-export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number } };
+export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number, Details?: Array<{ __typename?: 'MockDataTableDetail', Table: string, RowsGenerated: number, UsedExistingData: boolean }> | null } };
 
 export type GetDatabaseQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -1033,6 +1079,63 @@ export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHook
 export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+export const AnalyzeMockDataDependenciesDocument = gql`
+    query AnalyzeMockDataDependencies($schema: String!, $storageUnit: String!, $rowCount: Int!, $fkDensityRatio: Int) {
+  AnalyzeMockDataDependencies(
+    schema: $schema
+    storageUnit: $storageUnit
+    rowCount: $rowCount
+    fkDensityRatio: $fkDensityRatio
+  ) {
+    GenerationOrder
+    Tables {
+      Table
+      RowsToGenerate
+      IsBlocked
+      UsesExistingData
+    }
+    TotalRows
+    Warnings
+    Error
+  }
+}
+    `;
+
+/**
+ * __useAnalyzeMockDataDependenciesQuery__
+ *
+ * To run a query within a React component, call `useAnalyzeMockDataDependenciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAnalyzeMockDataDependenciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAnalyzeMockDataDependenciesQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      rowCount: // value for 'rowCount'
+ *      fkDensityRatio: // value for 'fkDensityRatio'
+ *   },
+ * });
+ */
+export function useAnalyzeMockDataDependenciesQuery(baseOptions: Apollo.QueryHookOptions<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables> & ({ variables: AnalyzeMockDataDependenciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>(AnalyzeMockDataDependenciesDocument, options);
+      }
+export function useAnalyzeMockDataDependenciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>(AnalyzeMockDataDependenciesDocument, options);
+        }
+export function useAnalyzeMockDataDependenciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>(AnalyzeMockDataDependenciesDocument, options);
+        }
+export type AnalyzeMockDataDependenciesQueryHookResult = ReturnType<typeof useAnalyzeMockDataDependenciesQuery>;
+export type AnalyzeMockDataDependenciesLazyQueryHookResult = ReturnType<typeof useAnalyzeMockDataDependenciesLazyQuery>;
+export type AnalyzeMockDataDependenciesSuspenseQueryHookResult = ReturnType<typeof useAnalyzeMockDataDependenciesSuspenseQuery>;
+export type AnalyzeMockDataDependenciesQueryResult = Apollo.QueryResult<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>;
 export const MockDataMaxRowCountDocument = gql`
     query MockDataMaxRowCount {
   MockDataMaxRowCount
@@ -1074,6 +1177,11 @@ export const GenerateMockDataDocument = gql`
     mutation GenerateMockData($input: MockDataGenerationInput!) {
   GenerateMockData(input: $input) {
     AmountGenerated
+    Details {
+      Table
+      RowsGenerated
+      UsedExistingData
+    }
   }
 }
     `;
