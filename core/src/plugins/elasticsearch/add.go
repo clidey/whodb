@@ -19,6 +19,7 @@ package elasticsearch
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -123,6 +124,16 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 	}
 
 	return true, nil
+}
+
+// AddRowReturningID is not supported for Elasticsearch (document IDs are strings).
+// Returns 0 as Elasticsearch doesn't use auto-increment integer IDs.
+func (p *ElasticSearchPlugin) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
+	return 0, errors.ErrUnsupported
+}
+
+func (p *ElasticSearchPlugin) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
+	return false, errors.ErrUnsupported
 }
 
 // buildElasticMappings converts field definitions into an Elasticsearch properties map.

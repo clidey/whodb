@@ -150,10 +150,33 @@ input MockDataGenerationInput {
   RowCount: Int!
   Method: String!
   OverwriteExisting: Boolean!
+  FkDensityRatio: Int
+}
+
+type MockDataTableInfo {
+  Table: String!
+  RowsToGenerate: Int!
+  IsBlocked: Boolean!
+  UsesExistingData: Boolean!
+}
+
+type MockDataTableDetail {
+  Table: String!
+  RowsGenerated: Int!
+  UsedExistingData: Boolean!
+}
+
+type MockDataDependencyAnalysis {
+  GenerationOrder: [String!]!
+  Tables: [MockDataTableInfo!]!
+  TotalRows: Int!
+  Warnings: [String!]!
+  Error: String
 }
 
 type MockDataGenerationStatus {
   AmountGenerated: Int!
+  Details: [MockDataTableDetail!]
 }
 
 input ChatInput {
@@ -334,6 +357,7 @@ type Query {
   AIChat(providerId: String, modelType: String!, token: String, schema: String!, input: ChatInput!): [AIChatMessage!]!
   SettingsConfig: SettingsConfig!
   MockDataMaxRowCount: Int!
+  AnalyzeMockDataDependencies(schema: String!, storageUnit: String!, rowCount: Int!, fkDensityRatio: Int): MockDataDependencyAnalysis!
   DatabaseMetadata: DatabaseMetadata
 
   # Cloud Provider Queries (Generic)

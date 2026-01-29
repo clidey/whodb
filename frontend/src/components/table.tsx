@@ -60,7 +60,12 @@ import {
     toast,
     VirtualizedTableBody
 } from "@clidey/ux";
-import {useDeleteRowMutation, useGenerateMockDataMutation, useMockDataMaxRowCountQuery} from '@graphql';
+import {
+    useAnalyzeMockDataDependenciesLazyQuery,
+    useDeleteRowMutation,
+    useGenerateMockDataMutation,
+    useMockDataMaxRowCountQuery
+} from '@graphql';
 import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Export} from "./export";
 import {useTranslation} from '@/hooks/use-translation';
@@ -334,7 +339,9 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataRowCount, setMockDataRowCount] = useState("100");
     const [mockDataMethod, setMockDataMethod] = useState("Normal");
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
+    const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
+    const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch";
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
@@ -344,6 +351,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const totalPages = Math.ceil(totalRows / pageSize);
 
     const [generateMockData, { loading: generatingMockData }] = useGenerateMockDataMutation();
+    const [analyzeDependencies, { data: depAnalysis, loading: analyzingDeps }] = useAnalyzeMockDataDependenciesLazyQuery();
     const [deleteRow, ] = useDeleteRowMutation();
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
@@ -635,6 +643,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         RowCount: count,
                         Method: mockDataMethod,
                         OverwriteExisting: mockDataOverwriteExisting === "overwrite",
+                        FkDensityRatio: parseInt(mockDataFkDensityRatio) || 20,
                     }
                 }
             });
@@ -658,7 +667,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 toast.error(t('mockDataFailed', { message: error.message }));
             }
         }
-    }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, showMockDataConfirmation, maxRowCount, onRefresh, t]);
+    }, [generateMockData, schema, storageUnit, mockDataRowCount, mockDataMethod, mockDataOverwriteExisting, mockDataFkDensityRatio, showMockDataConfirmation, maxRowCount, onRefresh, t]);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, t), [columns, columnTypes, t]);
 
@@ -670,6 +679,59 @@ export const StorageUnitTable: FC<TableProps> = ({
             clickTimeouts.current.clear();
         };
     }, []);
+
+    useEffect(() => {
+        if (showMockDataSheet && schema && storageUnit) {
+            const rowCount = parseInt(mockDataRowCount) || 100;
+            if (rowCount > 0 && rowCount <= maxRowCount) {
+                analyzeDependencies({
+                    variables: {
+                        schema,
+                        storageUnit,
+                        rowCount,
+                        fkDensityRatio: null,
+                    },
+                });
+            }
+        }
+    }, [showMockDataSheet, schema, storageUnit, mockDataRowCount, maxRowCount, analyzeDependencies]);
+
+    const adjustedDepAnalysis = useMemo(() => {
+        const analysis = depAnalysis?.AnalyzeMockDataDependencies;
+        if (!analysis || analysis.Error || !analysis.Tables || analysis.Tables.length <= 1) {
+            return analysis;
+        }
+
+        const ratio = parseInt(mockDataFkDensityRatio) || 20;
+        const requestedRows = parseInt(mockDataRowCount) || 100;
+        const tables = [...analysis.Tables];
+
+        // Tables are in generation order (parents first, target last)
+        // Recalculate: target gets requested count, parents get child/ratio
+        const recalculated = tables.map((t, i) => ({ ...t }));
+
+        // Start from the end (target table) and work backwards
+        let childRowCount = requestedRows;
+        for (let i = recalculated.length - 1; i >= 0; i--) {
+            if (i === recalculated.length - 1) {
+                // Target table gets the requested row count
+                recalculated[i] = { ...recalculated[i], RowsToGenerate: requestedRows };
+            } else {
+                // Parent tables get childCount/ratio (min 1)
+                const parentRows = Math.max(1, Math.floor(childRowCount / ratio));
+                recalculated[i] = { ...recalculated[i], RowsToGenerate: parentRows };
+                childRowCount = parentRows;
+            }
+        }
+
+        const totalRows = recalculated.reduce((sum, t) => sum + t.RowsToGenerate, 0);
+
+        return {
+            ...analysis,
+            Tables: recalculated,
+            TotalRows: totalRows,
+        };
+    }, [depAnalysis, mockDataFkDensityRatio, mockDataRowCount]);
 
     // Listen for menu export trigger
     useEffect(() => {
@@ -835,9 +897,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                 // Handle Cmd/Ctrl+Key combinations (without Shift)
                 switch (event.key.toLowerCase()) {
                     case 'm':
-                        // Mod+M: Mock data
-                        event.preventDefault();
-                        setShowMockDataSheet(true);
+                        // Mod+M: Mock data (only for databases that support it)
+                        if (isMockDataSupported) {
+                            event.preventDefault();
+                            setShowMockDataSheet(true);
+                        }
                         break;
                     case 'r':
                         // Mod+R: Refresh table
@@ -1154,7 +1218,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
-                {!limitContextMenu && (
+                {!limitContextMenu && isMockDataSupported && (
                     <ContextMenuItem
                         onSelect={() => setShowMockDataSheet(true)}
                     >
@@ -1179,7 +1243,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex]);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported]);
 
     return (
         <div ref={tableRef} className="h-full flex">
@@ -1262,14 +1326,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     className="w-64 max-h-[calc(100vh-2rem)] overflow-y-auto"
                     collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
                 >
-                                    {!limitContextMenu && (
+                                    {!limitContextMenu && isMockDataSupported && (
                                         <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
                                             <CalculatorIcon className="w-4 h-4" />
                                             {t('mockData')}
                                             <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                     )}
-                                    {!limitContextMenu && <ContextMenuSeparator />}
+                                    {!limitContextMenu && isMockDataSupported && <ContextMenuSeparator />}
                                     <ContextMenuSub>
                                         <ContextMenuSubTrigger>
                                             <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
@@ -1353,7 +1417,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
             >
                             <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} className={cn({
-                                "hidden": disableEdit,
+                                "hidden": disableEdit || !isMockDataSupported,
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
                                 {t('mockData')}
@@ -1548,6 +1612,58 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         <SelectItem value="overwrite" data-value="overwrite">{t('overwriteExisting')}</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <div>
+                                    <Label>{t('fkVariety')}</Label>
+                                    <p className="text-sm text-muted-foreground mb-2">{t('fkVarietyDescription')}</p>
+                                </div>
+                                <Select value={mockDataFkDensityRatio} onValueChange={setMockDataFkDensityRatio}>
+                                    <SelectTrigger className="w-full" data-testid="mock-data-fk-variety-select">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="5" data-value="5">{t('fkVarietyHigh')}</SelectItem>
+                                        <SelectItem value="10" data-value="10">{t('fkVarietyMedium')}</SelectItem>
+                                        <SelectItem value="20" data-value="20">{t('fkVarietyNormal')}</SelectItem>
+                                        <SelectItem value="50" data-value="50">{t('fkVarietyLow')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {/* Dependency preview when FK tables will be populated */}
+                                {adjustedDepAnalysis?.Error && (
+                                    <Alert variant="destructive" className="mt-4">
+                                        <AlertTitle>{t('dependencyError')}</AlertTitle>
+                                        <AlertDescription>
+                                            {adjustedDepAnalysis.Error}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                {adjustedDepAnalysis && !adjustedDepAnalysis.Error && adjustedDepAnalysis.Tables && adjustedDepAnalysis.Tables.length > 1 && (
+                                    <div className="mt-4 p-3 border rounded-md bg-muted/50">
+                                        <p className="text-sm font-medium mb-2">{t('tablesToPopulate')}</p>
+                                        <ul className="text-sm space-y-1">
+                                            {adjustedDepAnalysis.Tables.map((tbl) => (
+                                                <li key={tbl.Table} className="flex items-center gap-2">
+                                                    <span className="font-mono">{tbl.Table}</span>
+                                                    <span className="text-muted-foreground">
+                                                        ({tbl.RowsToGenerate} {t('rows')})
+                                                    </span>
+                                                    {tbl.UsesExistingData && (
+                                                        <span className="text-xs px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">
+                                                            {t('usingExisting')}
+                                                        </span>
+                                                    )}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                            {t('totalRows', { count: adjustedDepAnalysis.TotalRows })}
+                                        </p>
+                                    </div>
+                                )}
+                                {analyzingDeps && (
+                                    <div className="mt-4 flex justify-center">
+                                        <Spinner />
+                                    </div>
+                                )}
                                 {generatingMockData && (
                                     <div className="mt-8 flex justify-center">
                                         <Spinner />

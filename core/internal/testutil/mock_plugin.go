@@ -37,6 +37,8 @@ type PluginMock struct {
 	AddStorageUnitFunc       func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
 	UpdateStorageUnitFunc    func(*engine.PluginConfig, string, string, map[string]string, []string) (bool, error)
 	AddRowFunc               func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
+	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
+	BulkAddRowsFunc          func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
 	DeleteRowFunc            func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
 	GetRowsFunc              func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error)
 	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
@@ -120,6 +122,26 @@ func (m *PluginMock) AddRow(config *engine.PluginConfig, schema string, storageU
 		return m.AddRowFunc(config, schema, storageUnit, values)
 	}
 	return false, nil
+}
+
+func (m *PluginMock) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
+	if m.AddRowReturningIDFunc != nil {
+		return m.AddRowReturningIDFunc(config, schema, storageUnit, values)
+	}
+	return 0, nil
+}
+
+func (m *PluginMock) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
+	if m.BulkAddRowsFunc != nil {
+		return m.BulkAddRowsFunc(config, schema, storageUnit, rows)
+	}
+	// Default: call AddRow for each row
+	for _, row := range rows {
+		if _, err := m.AddRow(config, schema, storageUnit, row); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 func (m *PluginMock) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {

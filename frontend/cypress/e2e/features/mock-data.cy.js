@@ -21,7 +21,7 @@ describe('Mock Data Generation', () => {
     // SQL Databases with mock data support
     forEachDatabase('sql', (db) => {
         const supportedTable = db.mockData.supportedTable;
-        const unsupportedTable = db.mockData.unsupportedTable;
+        const tableWithFKs = db.mockData.tableWithFKs;
 
         it('shows mock data generation UI', () => {
             cy.data(supportedTable);
@@ -73,16 +73,67 @@ describe('Mock Data Generation', () => {
             cy.get('body').type('{esc}');
         });
 
-        it('prevents mock data on tables with foreign keys', () => {
-            cy.data(unsupportedTable);
+        it('generates mock data and adds rows to table', () => {
+            cy.data(supportedTable);
 
-            cy.selectMockData();
+            // Get initial row count
+            cy.get('table tbody tr').its('length').then(initialCount => {
+                cy.selectMockData();
 
-            cy.generateMockData();
+                // Generate 5 rows (append mode - default)
+                cy.setMockDataRows(5);
+                cy.generateMockData();
 
-            // Should show error about foreign key constraint
-            cy.contains('Mock Data Generation Is Not Allowed for This Table').should('exist');
+                // Wait for success toast
+                cy.contains('Successfully Generated', { timeout: 30000 }).should('be.visible');
+
+                // Sheet should close after success
+                cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+
+                // Verify rows were added (may need to account for pagination)
+                cy.get('table tbody tr').its('length').should('be.gte', initialCount);
+            });
         });
+
+        // Skip FK dependency test for databases without FK support (e.g., ClickHouse)
+        if (tableWithFKs) {
+            it('shows dependency preview for tables with foreign keys', () => {
+                cy.data(tableWithFKs);
+
+                cy.selectMockData();
+
+                // Set row count to trigger dependency analysis
+                cy.setMockDataRows(10);
+
+                // Should show dependency preview with parent tables
+                cy.contains('Tables to populate').should('be.visible');
+                cy.contains('Total:').should('be.visible');
+
+                // Generate button should be enabled (FK tables now supported)
+                cy.get('[data-testid="mock-data-generate-button"]').should('not.be.disabled');
+
+                cy.get('body').type('{esc}');
+            });
+
+            it('generates mock data for FK table and populates parent tables', () => {
+                cy.data(tableWithFKs);
+
+                cy.selectMockData();
+
+                // Generate rows for FK table
+                cy.setMockDataRows(5);
+                cy.generateMockData();
+
+                // Wait for success toast - FK generation may take longer
+                cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
+
+                // Sheet should close after success
+                cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+
+                // Verify the FK table has data
+                cy.get('table tbody tr').should('have.length.gte', 1);
+            });
+        }
     }, {features: ['mockData']});
 
     // Document Databases - mock data not supported (inverse: runs when feature is NOT present)

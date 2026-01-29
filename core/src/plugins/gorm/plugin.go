@@ -126,6 +126,11 @@ type GormPluginFunctions interface {
 	// GetColumnTypes returns a map of column names to their types for a table.
 	// Used for type conversion during CRUD operations.
 	GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error)
+
+	// GetLastInsertID returns the most recently auto-generated ID after an INSERT.
+	// This is used by the mock data generator to track PKs for FK references.
+	// Returns 0 if the database doesn't support this or no ID was generated.
+	GetLastInsertID(db *gorm.DB) (int64, error)
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -243,6 +248,7 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 		}
 
 		// Enrich columns with primary key and foreign key information
+		// Note: IsAutoIncrement is already set by GORM's native detection in GetOrderedColumns
 		for i := range columns {
 			// Check if column is a primary key
 			columns[i].IsPrimary = slices.Contains(primaryKeys, columns[i].Name)

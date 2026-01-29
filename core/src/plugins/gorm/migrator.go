@@ -148,9 +148,12 @@ func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, e
 		normalizedType := m.plugin.NormalizeType(fullType)
 		baseName := strings.ToUpper(col.DatabaseTypeName())
 
+		isAutoIncr, _ := col.AutoIncrement()
+
 		column := engine.Column{
-			Name: col.Name(),
-			Type: normalizedType,
+			Name:            col.Name(),
+			Type:            normalizedType,
+			IsAutoIncrement: isAutoIncr,
 		}
 
 		// Only extract length for types where it's user-specifiable

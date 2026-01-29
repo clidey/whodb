@@ -96,6 +96,56 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 	return true, nil
 }
 
+// AddRowReturningID is not supported for MongoDB (document IDs are generated client-side).
+// Returns 0 as MongoDB uses ObjectIDs, not auto-increment integers.
+func (p *MongoDBPlugin) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
+	_, err := p.AddRow(config, schema, storageUnit, values)
+	if err != nil {
+		return 0, err
+	}
+	return 0, nil
+}
+
+func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
+	if len(rows) == 0 {
+		return true, nil
+	}
+
+	client, err := DB(config)
+	if err != nil {
+		return false, err
+	}
+	defer client.Disconnect(context.Background())
+
+	collection := client.Database(schema).Collection(storageUnit)
+
+	documents := make([]any, len(rows))
+	for i, row := range rows {
+		document := make(map[string]any)
+		for _, value := range row {
+			document[value.Key] = coerceMongoValue(value.Key, value.Value)
+		}
+		if rawID, exists := document["_id"]; exists {
+			if id, err := normalizeMongoID(rawID); err == nil {
+				document["_id"] = id
+			}
+		}
+		documents[i] = document
+	}
+
+	_, err = collection.InsertMany(context.Background(), documents)
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"schema":      schema,
+			"storageUnit": storageUnit,
+			"rowCount":    len(rows),
+		}).Error("Failed to bulk insert documents into MongoDB collection")
+		return false, handleMongoError(err)
+	}
+
+	return true, nil
+}
+
 func createCollectionIfNotExists(database *mongo.Database, collectionName string, fields []engine.Record) error {
 	collections, err := database.ListCollectionNames(context.Background(), bson.D{})
 	if err != nil {

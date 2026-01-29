@@ -71,6 +71,12 @@ en:
   dataHandling: Data Handling
   appendToExisting: Append to Existing Data
   overwriteExisting: Overwrite Existing Data
+  fkVariety: FK Variety
+  fkVarietyDescription: Controls how many unique parent values are generated
+  fkVarietyHigh: High (1:5 ratio)
+  fkVarietyMedium: Medium (1:10 ratio)
+  fkVarietyNormal: Normal (1:20 ratio)
+  fkVarietyLow: Low (1:50 ratio)
   generate: Generate
 
   # Mock data confirmation
@@ -79,7 +85,13 @@ en:
 
   # Mock data alert
   mockDataNote: Note
-  mockDataWarning: Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+  mockDataWarning: Mock data generation will populate foreign key parent tables as needed.
+
+  dependencyError: Cannot Generate
+  tablesToPopulate: "Tables to populate:"
+  rows: rows
+  usingExisting: using existing
+  totalRows: "Total: {count} rows"
 
   # Total count
   totalCount: "Total Count:"

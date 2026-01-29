@@ -4,7 +4,7 @@
   "dataTypesTable": "data_types",
   "mockData": {
     "supportedTable": "users",
-    "unsupportedTable": "orders"
+    "tableWithFKs": null
   },
   "testTable": {
     "name": "users",
@@ -55,7 +55,7 @@
     "export": true,
     "scratchpad": true,
     "scratchpadUpdate": true,
-    "mockData": false,
+    "mockData": true,
     "chat": true,
     "whereConditions": true,
     "multiConditionFilter": true,
@@ -64,9 +64,7 @@
     "typeCasting": true
   },
   "mutationDelay": 2000,
-  "featureNotes": {
-    "mockData": "Mock data generation not supported for ClickHouse MergeTree tables"
-  },
+  "featureNotes": {},
   "expectedTables": [
     "data_types",
     "order_items",

@@ -64,6 +64,7 @@ type Column struct {
 	Type             string
 	Name             string
 	IsPrimary        bool
+	IsAutoIncrement  bool
 	IsForeignKey     bool
 	ReferencedTable  *string
 	ReferencedColumn *string
@@ -131,6 +132,8 @@ type PluginFunctions interface {
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields []Record) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
+	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)
+	BulkAddRows(config *PluginConfig, schema string, storageUnit string, rows [][]Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
