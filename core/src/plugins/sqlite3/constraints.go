@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
@@ -214,7 +215,23 @@ func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[
 func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constraints map[string]map[string]any) {
 	columnName := gorm_plugin.ExtractColumnNameFromClause(checkClause)
 	if columnName == "" {
+		log.Logger.WithField("checkClause", checkClause).Debug("Could not extract column name from CHECK clause")
 		return
+	}
+
+	// SQLite column names are case-insensitive. To ensure we merge constraints
+	// with those from PRAGMA table_info (which may use a different case),
+	// do a case-insensitive lookup first.
+	var existingKey string
+	lowerName := strings.ToLower(columnName)
+	for key := range constraints {
+		if strings.ToLower(key) == lowerName {
+			existingKey = key
+			break
+		}
+	}
+	if existingKey != "" {
+		columnName = existingKey // Use the existing key's case
 	}
 
 	colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
@@ -224,5 +241,9 @@ func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constrain
 
 	if values := gorm_plugin.ParseINClauseValues(checkClause); len(values) > 0 {
 		colConstraints["check_values"] = values
+		log.Logger.WithFields(map[string]any{
+			"column":      columnName,
+			"checkValues": values,
+		}).Debug("Parsed CHECK IN constraint")
 	}
 }

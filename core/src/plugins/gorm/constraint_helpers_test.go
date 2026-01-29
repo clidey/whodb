@@ -90,6 +90,26 @@ func TestParseINClauseValues(t *testing.T) {
 			clause:   "status IN ()",
 			expected: nil,
 		},
+		{
+			name:     "multi-line CHECK constraint",
+			clause:   "status\n    IN\n(\n    'pending',\n    'completed',\n    'canceled'\n)",
+			expected: []string{"pending", "completed", "canceled"},
+		},
+		{
+			name:     "tabs and spaces",
+			clause:   "status\t IN \t('active',\t'inactive')",
+			expected: []string{"active", "inactive"},
+		},
+		{
+			name:     "PostgreSQL type casts in IN clause",
+			clause:   "status IN ('pending'::text, 'completed'::text, 'canceled'::text)",
+			expected: []string{"pending", "completed", "canceled"},
+		},
+		{
+			name:     "PostgreSQL type casts with character varying",
+			clause:   "status IN ('active'::character varying, 'inactive'::character varying)",
+			expected: []string{"active", "inactive"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -127,6 +147,16 @@ func TestParseValueList(t *testing.T) {
 			name:     "empty",
 			content:  "",
 			expected: nil,
+		},
+		{
+			name:     "PostgreSQL type casts",
+			content:  "'pending'::text, 'completed'::text",
+			expected: []string{"pending", "completed"},
+		},
+		{
+			name:     "PostgreSQL array type cast",
+			content:  "'values'::text[]",
+			expected: []string{"values"},
 		},
 	}
 
@@ -306,6 +336,21 @@ func TestExtractColumnNameFromClause(t *testing.T) {
 			name:     "empty clause",
 			clause:   "",
 			expected: "",
+		},
+		{
+			name:     "length function",
+			clause:   "length((password)::text) >= 8",
+			expected: "password",
+		},
+		{
+			name:     "char_length function",
+			clause:   "char_length(username) >= 3",
+			expected: "username",
+		},
+		{
+			name:     "upper function",
+			clause:   "upper(status) IN ('ACTIVE', 'INACTIVE')",
+			expected: "status",
 		},
 	}
 

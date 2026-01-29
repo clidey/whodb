@@ -160,6 +160,41 @@ func TestDetectDatabaseTypeHandlesArrayAndDefaults(t *testing.T) {
 	}
 }
 
+func TestDetectDatabaseTypeHandlesTimestampVariants(t *testing.T) {
+	// PostgreSQL timestamp types with timezone
+	timestampTypes := []string{
+		"TIMESTAMP",
+		"TIMESTAMP WITH TIME ZONE",
+		"TIMESTAMP WITHOUT TIME ZONE",
+		"timestamp with time zone",
+		"timestamptz",
+	}
+	for _, typeName := range timestampTypes {
+		if got := detectDatabaseType(typeName); got != "datetime" {
+			t.Errorf("expected datetime for %q, got %s", typeName, got)
+		}
+	}
+
+	// Time types
+	timeTypes := []string{
+		"TIME",
+		"TIME WITH TIME ZONE",
+		"TIME WITHOUT TIME ZONE",
+		"time with time zone",
+		"timetz",
+	}
+	for _, typeName := range timeTypes {
+		if got := detectDatabaseType(typeName); got != "datetime" {
+			t.Errorf("expected datetime for %q, got %s", typeName, got)
+		}
+	}
+
+	// TINYINT should NOT be detected as time
+	if got := detectDatabaseType("TINYINT"); got == "datetime" {
+		t.Errorf("TINYINT should not be detected as datetime, got %s", got)
+	}
+}
+
 // TestDetectDatabaseTypeHandlesCommonTypes tests the type detection function
 // Note: parseMaxLen was removed in favor of constraint-based length handling
 

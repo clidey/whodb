@@ -370,7 +370,15 @@ func GetGormLogConfig() logger.LogLevel {
 // WithConnection manages the database connection lifecycle for an operation.
 // Connections are cached and reused across operations to prevent connection exhaustion.
 // The underlying sql.DB handles connection pooling internally.
+// If config.Transaction is set (as a *gorm.DB), it will be used instead of creating a new connection
 func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, operation DBOperation[T]) (T, error) {
+	// Check if we're operating within a transaction
+	if config != nil && config.Transaction != nil {
+		if tx, ok := config.Transaction.(*gorm.DB); ok {
+			return operation(tx)
+		}
+	}
+
 	db, err := getOrCreateConnection(config, DB)
 	if err != nil {
 		log.Logger.WithFields(map[string]any{

@@ -39,6 +39,13 @@ const (
 
 	// RegularNullProbability is the chance a regular nullable column gets NULL
 	RegularNullProbability = 0.1
+
+	// MaxPKRetries is the maximum number of attempts to generate a unique PK value
+	MaxPKRetries = 100
+
+	// MaxExistingPKsToLoad limits how many existing rows to load for PK uniqueness checks.
+	// Beyond this limit, uniqueness violations may occur for tables with many rows.
+	MaxExistingPKsToLoad = 10000
 )
 
 // Use shared database type sets
@@ -92,6 +99,7 @@ type Generator struct {
 	fkDensityRatio int                         // Parent rows = child rows / ratio (default: 20)
 	generatedPKs   map[string][]map[string]any // Cache of generated PK rows per table (supports composite PKs)
 	existingPKs    map[string][]map[string]any // Cache of existing PK rows for blocked tables
+	usedPKValues   map[string]map[string]bool  // Track used PK values: table -> pkValueString -> true
 }
 
 // NewGenerator creates a new mock data generator with the specified FK density ratio.
@@ -107,6 +115,7 @@ func NewGenerator(fkDensityRatio int) *Generator {
 		fkDensityRatio: fkDensityRatio,
 		generatedPKs:   make(map[string][]map[string]any),
 		existingPKs:    make(map[string][]map[string]any),
+		usedPKValues:   make(map[string]map[string]bool),
 	}
 }
 
@@ -322,6 +331,8 @@ func topoSort(adjacency map[string][]string) ([]string, error) {
 }
 
 // Generate creates mock data for the target table and its FK dependencies.
+// All inserts are wrapped in a transaction for atomicity - either all tables
+// are populated successfully, or all changes are rolled back on any error.
 func (g *Generator) Generate(
 	plugin engine.PluginFunctions,
 	config *engine.PluginConfig,
@@ -339,13 +350,14 @@ func (g *Generator) Generate(
 	// Reset caches for fresh generation
 	g.generatedPKs = make(map[string][]map[string]any)
 	g.existingPKs = make(map[string][]map[string]any)
+	g.usedPKValues = make(map[string]map[string]bool)
 
 	result := &GenerationResult{
 		Details:  []TableDetail{},
 		Warnings: []string{},
 	}
 
-	// Analyze dependencies
+	// Analyze dependencies (read-only, outside transaction)
 	log.Logger.Debug("Analyzing table dependencies")
 	analysis, err := g.AnalyzeDependencies(plugin, config, schema, table, rowCount)
 	if err != nil {
@@ -365,42 +377,60 @@ func (g *Generator) Generate(
 
 	result.Warnings = analysis.Warnings
 
-	// Generate data for each table in order
-	for i, tblDep := range analysis.Tables {
-		log.Logger.WithFields(map[string]any{
-			"step":      fmt.Sprintf("%d/%d", i+1, len(analysis.Tables)),
-			"table":     tblDep.Table,
-			"rowCount":  tblDep.RowCount,
-			"dependsOn": tblDep.DependsOn,
-		}).Info("Processing table")
+	// Wrap all inserts in a transaction for atomicity
+	// If any insert fails, all changes are rolled back
+	err = plugin.WithTransaction(config, func(tx any) error {
+		// Create a transactional config that passes the transaction to all operations
+		txConfig := &engine.PluginConfig{
+			Credentials:   config.Credentials,
+			ExternalModel: config.ExternalModel,
+			Transaction:   tx,
+		}
 
-		// Load existing PKs for blocked tables
-		if tblDep.UsesExistingData {
-			log.Logger.WithField("table", tblDep.Table).Debug("Table uses existing data, loading PKs")
-			if err := g.loadExistingPKs(plugin, config, schema, tblDep.Table); err != nil {
-				return nil, fmt.Errorf("failed to load existing PKs for %s: %w", tblDep.Table, err)
+		// Generate data for each table in order
+		for i, tblDep := range analysis.Tables {
+			log.Logger.WithFields(map[string]any{
+				"step":      fmt.Sprintf("%d/%d", i+1, len(analysis.Tables)),
+				"table":     tblDep.Table,
+				"rowCount":  tblDep.RowCount,
+				"dependsOn": tblDep.DependsOn,
+			}).Info("Processing table")
+
+			// Load existing PKs for blocked tables
+			if tblDep.UsesExistingData {
+				log.Logger.WithField("table", tblDep.Table).Debug("Table uses existing data, loading PKs")
+				if err := g.loadExistingPKs(plugin, txConfig, schema, tblDep.Table); err != nil {
+					return fmt.Errorf("failed to load existing PKs for %s: %w", tblDep.Table, err)
+				}
+				result.Details = append(result.Details, TableDetail{
+					Table:            tblDep.Table,
+					RowsGenerated:    0,
+					UsedExistingData: true,
+				})
+				continue
 			}
+
+			// Generate rows for this table
+			isTargetTable := tblDep.Table == table
+			generated, err := g.generateTableRows(plugin, txConfig, schema, tblDep.Table, tblDep.RowCount, overwrite && isTargetTable, isTargetTable)
+			if err != nil {
+				return fmt.Errorf("failed to generate rows for %s: %w", tblDep.Table, err)
+			}
+
+			result.TotalGenerated += generated
 			result.Details = append(result.Details, TableDetail{
 				Table:            tblDep.Table,
-				RowsGenerated:    0,
-				UsedExistingData: true,
+				RowsGenerated:    generated,
+				UsedExistingData: false,
 			})
-			continue
 		}
 
-		// Generate rows for this table
-		isTargetTable := tblDep.Table == table
-		generated, err := g.generateTableRows(plugin, config, schema, tblDep.Table, tblDep.RowCount, overwrite && isTargetTable, isTargetTable)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate rows for %s: %w", tblDep.Table, err)
-		}
+		return nil
+	})
 
-		result.TotalGenerated += generated
-		result.Details = append(result.Details, TableDetail{
-			Table:            tblDep.Table,
-			RowsGenerated:    generated,
-			UsedExistingData: false,
-		})
+	if err != nil {
+		log.Logger.WithError(err).Error("Mock data generation failed, transaction rolled back")
+		return nil, err
 	}
 
 	log.Logger.WithFields(map[string]any{
@@ -515,9 +545,22 @@ func (g *Generator) generateTableRows(
 		return 0, fmt.Errorf("failed to get columns: %w", err)
 	}
 
+	// Log column details for debugging PK/auto-increment issues
+	columnDetails := make([]map[string]any, 0, len(columns))
+	for _, col := range columns {
+		if col.IsPrimary || col.IsAutoIncrement {
+			columnDetails = append(columnDetails, map[string]any{
+				"name":       col.Name,
+				"type":       col.Type,
+				"isPrimary":  col.IsPrimary,
+				"isAutoIncr": col.IsAutoIncrement,
+			})
+		}
+	}
 	log.Logger.WithFields(map[string]any{
 		"table":       table,
 		"columnCount": len(columns),
+		"pkColumns":   columnDetails,
 	}).Debug("Retrieved column definitions")
 
 	constraints, err := plugin.GetColumnConstraints(config, schema, table)
@@ -525,9 +568,27 @@ func (g *Generator) generateTableRows(
 		log.Logger.WithError(err).WithField("table", table).Warn("Failed to get constraints, using defaults")
 		constraints = make(map[string]map[string]any)
 	} else {
+		// Log constraint details for debugging
+		constraintDetails := make(map[string][]string)
+		for col, c := range constraints {
+			var details []string
+			if checkVals, ok := c["check_values"]; ok {
+				details = append(details, fmt.Sprintf("check_values=%v", checkVals))
+			}
+			if checkMin, ok := c["check_min"]; ok {
+				details = append(details, fmt.Sprintf("check_min=%v", checkMin))
+			}
+			if checkMax, ok := c["check_max"]; ok {
+				details = append(details, fmt.Sprintf("check_max=%v", checkMax))
+			}
+			if len(details) > 0 {
+				constraintDetails[col] = details
+			}
+		}
 		log.Logger.WithFields(map[string]any{
-			"table":           table,
-			"constraintCount": len(constraints),
+			"table":            table,
+			"constraintCount":  len(constraints),
+			"checkConstraints": constraintDetails,
 		}).Debug("Retrieved column constraints")
 	}
 
@@ -548,6 +609,14 @@ func (g *Generator) generateTableRows(
 		log.Logger.WithField("table", table).Debug("Clearing existing table data")
 		if _, err := plugin.ClearTableData(config, schema, table); err != nil {
 			log.Logger.WithError(err).WithField("table", table).Warn("Failed to clear table data")
+		}
+		// Clear used PK values since table is being cleared
+		g.usedPKValues[table] = make(map[string]bool)
+	} else {
+		// Load existing PKs to prevent uniqueness violations
+		if err := g.loadExistingPKsForUniqueness(plugin, config, schema, table, columns); err != nil {
+			log.Logger.WithError(err).WithField("table", table).Warn("Failed to load existing PKs for uniqueness check")
+			// Continue anyway - worst case we get unique constraint errors
 		}
 	}
 
@@ -578,8 +647,32 @@ func (g *Generator) generateRowsBulk(
 	// Generate all rows first
 	rows := make([][]engine.Record, 0, rowCount)
 	failedCount := 0
+	pkCollisions := 0
 	for i := 0; i < rowCount; i++ {
-		row, err := g.generateRow(columns, constraints, fks, table)
+		var row []engine.Record
+		var err error
+
+		// Try to generate a row with unique PK (retry on collision)
+		for attempt := 0; attempt < MaxPKRetries; attempt++ {
+			row, err = g.generateRow(columns, constraints, fks, table)
+			if err != nil {
+				break // Generation error, not a collision
+			}
+
+			// Check if PK is unique
+			if !g.isPKValueUsed(table, columns, row) {
+				// Mark PK as used and proceed
+				g.markPKValueUsed(table, columns, row)
+				break
+			}
+
+			// PK collision - retry
+			if attempt == MaxPKRetries-1 {
+				err = fmt.Errorf("failed to generate unique PK after %d attempts", MaxPKRetries)
+				pkCollisions++
+			}
+		}
+
 		if err != nil {
 			log.Logger.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to generate row")
 			failedCount++
@@ -590,8 +683,9 @@ func (g *Generator) generateRowsBulk(
 
 	if failedCount > 0 {
 		log.Logger.WithFields(map[string]any{
-			"table":       table,
-			"failedCount": failedCount,
+			"table":        table,
+			"failedCount":  failedCount,
+			"pkCollisions": pkCollisions,
 		}).Warn("Some rows failed to generate")
 	}
 
@@ -650,9 +744,36 @@ func (g *Generator) generateRowsSingle(
 	generated := 0
 	failedGenerate := 0
 	failedInsert := 0
+	pkCollisions := 0
 
 	for i := 0; i < rowCount; i++ {
-		row, err := g.generateRow(columns, constraints, fks, table)
+		var row []engine.Record
+		var err error
+
+		// Try to generate a row with unique PK (retry on collision)
+		for attempt := 0; attempt < MaxPKRetries; attempt++ {
+			row, err = g.generateRow(columns, constraints, fks, table)
+			if err != nil {
+				break // Generation error, not a collision
+			}
+
+			// Check if PK is unique (skip for auto-increment as DB handles it)
+			if autoIncrementPKCol == nil && g.isPKValueUsed(table, columns, row) {
+				// PK collision - retry
+				if attempt == MaxPKRetries-1 {
+					err = fmt.Errorf("failed to generate unique PK after %d attempts", MaxPKRetries)
+					pkCollisions++
+				}
+				continue
+			}
+
+			// Mark PK as used (for non-auto-increment PKs)
+			if autoIncrementPKCol == nil {
+				g.markPKValueUsed(table, columns, row)
+			}
+			break
+		}
+
 		if err != nil {
 			log.Logger.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to generate row")
 			failedGenerate++
@@ -663,8 +784,9 @@ func (g *Generator) generateRowsSingle(
 		generatedID, err := plugin.AddRowReturningID(config, schema, table, row)
 		if err != nil {
 			log.Logger.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to insert row")
-			failedInsert++
-			continue
+			// Return error immediately to trigger transaction rollback
+			// This ensures atomicity - either all tables are populated or none are
+			return 0, fmt.Errorf("failed to insert row %d into %s: %w", i, table, err)
 		}
 
 		// Track generated PK for FK references
@@ -701,6 +823,7 @@ func (g *Generator) generateRowsSingle(
 			"table":          table,
 			"failedGenerate": failedGenerate,
 			"failedInsert":   failedInsert,
+			"pkCollisions":   pkCollisions,
 		}).Warn("Some rows failed during generation")
 	}
 
@@ -736,12 +859,17 @@ func (g *Generator) generateRow(
 			continue
 		}
 
-		colConstraints := constraints[col.Name]
+		// Use case-insensitive lookup for constraints (needed for SQLite)
+		colConstraints := getConstraintsForColumn(constraints, col.Name)
 		var value any
+		var err error
 
 		// Check if this is a FK column
 		if fk, isFk := fks[col.Name]; isFk {
-			value = g.generateFKValue(col, colConstraints, fk, table, selectedParentRows)
+			value, err = g.generateFKValue(col, colConstraints, fk, table, selectedParentRows)
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate FK value for column %s: %w", col.Name, err)
+			}
 		} else {
 			value = g.generateColumnValue(col, colConstraints)
 		}
@@ -757,36 +885,14 @@ func (g *Generator) generateRow(
 // generateFKValue generates a value for a FK column.
 // selectedParentRows caches which parent row was selected for each table,
 // ensuring composite FKs use consistent values from the same parent row.
+// Returns an error if no parent PKs are available for a non-nullable FK.
 func (g *Generator) generateFKValue(
 	col engine.Column,
 	constraints map[string]any,
 	fk *engine.ForeignKeyRelationship,
 	currentTable string,
 	selectedParentRows map[string]map[string]any,
-) any {
-	// Self-reference: return NULL if nullable
-	if fk.ReferencedTable == currentTable {
-		isNullable := false
-		if constraints != nil {
-			if n, ok := constraints["nullable"].(bool); ok {
-				isNullable = n
-			}
-		}
-		if isNullable {
-			log.Logger.WithFields(map[string]any{
-				"table":  currentTable,
-				"column": col.Name,
-			}).Debug("Self-referencing FK set to NULL")
-			return nil
-		}
-		// Non-nullable self-reference - this is problematic
-		log.Logger.WithField("column", col.Name).Warn("Non-nullable self-reference, using default value")
-		return g.generateColumnValue(col, constraints)
-	}
-
-	// Check for nullable FK with random NULL
-	// Only do this if we haven't already selected a parent row for this table
-	// (to ensure composite FK columns are consistently NULL or not)
+) (any, error) {
 	isNullable := false
 	if constraints != nil {
 		if n, ok := constraints["nullable"].(bool); ok {
@@ -794,12 +900,33 @@ func (g *Generator) generateFKValue(
 		}
 	}
 
+	log.Logger.WithFields(map[string]any{
+		"table":      currentTable,
+		"column":     col.Name,
+		"isNullable": isNullable,
+		"fkTarget":   fk.ReferencedTable,
+	}).Debug("Generating FK value")
+
+	// Self-reference: return NULL if nullable, otherwise error
+	if fk.ReferencedTable == currentTable {
+		if isNullable {
+			log.Logger.WithFields(map[string]any{
+				"table":  currentTable,
+				"column": col.Name,
+			}).Debug("Self-referencing FK set to NULL")
+			return nil, nil
+		}
+		// Non-nullable self-reference - cannot generate valid data
+		return nil, fmt.Errorf("cannot generate data for non-nullable self-referencing FK column %s", col.Name)
+	}
+
 	// Check if we've already selected a row for this parent table
+	// (to ensure composite FK columns are consistently NULL or not)
 	if selectedRow, exists := selectedParentRows[fk.ReferencedTable]; exists {
 		// Use the already-selected row for composite FK consistency
 		if selectedRow == nil {
 			// Previously decided to use NULL
-			return nil
+			return nil, nil
 		}
 		value := selectedRow[fk.ReferencedColumn]
 		log.Logger.WithFields(map[string]any{
@@ -809,7 +936,7 @@ func (g *Generator) generateFKValue(
 			"referencedColumn": fk.ReferencedColumn,
 			"value":            value,
 		}).Debug("Using cached parent row for composite FK")
-		return value
+		return value, nil
 	}
 
 	// First FK column for this parent table - decide NULL or select a row
@@ -819,15 +946,28 @@ func (g *Generator) generateFKValue(
 			"column": col.Name,
 		}).Debug("Nullable FK set to NULL (random)")
 		selectedParentRows[fk.ReferencedTable] = nil // Cache the NULL decision
-		return nil
+		return nil, nil
 	}
 
 	// Get parent PK rows
 	parentRows := g.getPKRowsForTable(fk.ReferencedTable)
+	log.Logger.WithFields(map[string]any{
+		"column":          col.Name,
+		"referencedTable": fk.ReferencedTable,
+		"parentRowCount":  len(parentRows),
+	}).Debug("Looking up parent PKs for FK")
+
 	if len(parentRows) == 0 {
-		log.Logger.WithField("column", col.Name).WithField("referencedTable", fk.ReferencedTable).
-			Warn("No parent PKs available, using default value")
-		return g.generateColumnValue(col, constraints)
+		// No parent PKs available - this is an error for non-nullable FK columns
+		if isNullable {
+			log.Logger.WithFields(map[string]any{
+				"column":          col.Name,
+				"referencedTable": fk.ReferencedTable,
+			}).Debug("No parent PKs available, using NULL for nullable FK")
+			selectedParentRows[fk.ReferencedTable] = nil
+			return nil, nil
+		}
+		return nil, fmt.Errorf("no parent rows available for non-nullable FK column %s (references %s)", col.Name, fk.ReferencedTable)
 	}
 
 	// Pick a random parent row and cache it
@@ -847,7 +987,7 @@ func (g *Generator) generateFKValue(
 		"availableRows":    len(parentRows),
 	}).Debug("Selected FK value from parent table")
 
-	return value
+	return value, nil
 }
 
 // getPKRowsForTable returns available PK rows for a table.
@@ -984,6 +1124,15 @@ func detectDatabaseType(columnType string) string {
 		return "array"
 	}
 
+	// Handle timestamp/time types with timezone suffixes before other checks
+	// PostgreSQL uses "TIMESTAMP WITH TIME ZONE", "TIME WITH TIME ZONE", etc.
+	if strings.HasPrefix(upperType, "TIMESTAMP") {
+		return "datetime"
+	}
+	if strings.HasPrefix(upperType, "TIME") && !strings.HasPrefix(upperType, "TINYINT") {
+		return "datetime"
+	}
+
 	// Remove size specifiers like VARCHAR(255) -> VARCHAR
 	if idx := strings.Index(upperType, "("); idx > 0 {
 		upperType = upperType[:idx]
@@ -1011,5 +1160,134 @@ func detectDatabaseType(columnType string) string {
 		return "text"
 	default:
 		return "text"
+	}
+}
+
+// getConstraintsForColumn performs case-insensitive lookup for column constraints.
+// This is necessary because SQLite (and some other databases) treat column names
+// as case-insensitive, but the constraint map keys might not match the column case.
+func getConstraintsForColumn(constraints map[string]map[string]any, columnName string) map[string]any {
+	// Try exact match first
+	if c, ok := constraints[columnName]; ok {
+		return c
+	}
+	// Try case-insensitive match
+	lowerName := strings.ToLower(columnName)
+	for key, value := range constraints {
+		if strings.ToLower(key) == lowerName {
+			return value
+		}
+	}
+	return nil
+}
+
+// pkValueKey creates a string key for a PK value to use in the usedPKValues set.
+// For composite PKs, concatenates all column values with a separator.
+func pkValueKey(pkColumns []engine.Column, row []engine.Record) string {
+	// Build a map of record key -> value for quick lookup
+	rowValues := make(map[string]string)
+	for _, rec := range row {
+		rowValues[rec.Key] = rec.Value
+	}
+
+	// Concatenate PK column values
+	var parts []string
+	for _, col := range pkColumns {
+		if col.IsPrimary && !col.IsAutoIncrement {
+			if val, exists := rowValues[col.Name]; exists {
+				parts = append(parts, fmt.Sprintf("%s=%s", col.Name, val))
+			}
+		}
+	}
+	return strings.Join(parts, "|")
+}
+
+// loadExistingPKsForUniqueness loads existing PK values from a table into the usedPKValues set.
+// This prevents generating PK values that already exist in the database.
+func (g *Generator) loadExistingPKsForUniqueness(
+	plugin engine.PluginFunctions,
+	config *engine.PluginConfig,
+	schema, table string,
+	columns []engine.Column,
+) error {
+	// Find non-auto-increment PK columns
+	var pkColumns []engine.Column
+	for _, col := range columns {
+		if col.IsPrimary && !col.IsAutoIncrement {
+			pkColumns = append(pkColumns, col)
+		}
+	}
+
+	// No non-auto-increment PKs to check
+	if len(pkColumns) == 0 {
+		return nil
+	}
+
+	log.Logger.WithFields(map[string]any{
+		"table":     table,
+		"pkColumns": len(pkColumns),
+	}).Debug("Loading existing PK values for uniqueness check")
+
+	// Initialize the used PK set for this table
+	if g.usedPKValues[table] == nil {
+		g.usedPKValues[table] = make(map[string]bool)
+	}
+
+	// Get existing rows (limit to avoid memory issues)
+	rows, err := plugin.GetRows(config, schema, table, nil, nil, MaxExistingPKsToLoad, 0)
+	if err != nil {
+		return fmt.Errorf("failed to load existing rows for PK uniqueness check: %w", err)
+	}
+
+	// Build column name -> index map
+	colIdxMap := make(map[string]int)
+	for i, col := range rows.Columns {
+		colIdxMap[col.Name] = i
+	}
+
+	// Extract and store PK values
+	for _, row := range rows.Rows {
+		// Build a pseudo-record for pkValueKey
+		records := make([]engine.Record, 0, len(pkColumns))
+		for _, pkCol := range pkColumns {
+			if idx, exists := colIdxMap[pkCol.Name]; exists && idx < len(row) {
+				records = append(records, engine.Record{Key: pkCol.Name, Value: row[idx]})
+			}
+		}
+		if len(records) > 0 {
+			key := pkValueKey(pkColumns, records)
+			g.usedPKValues[table][key] = true
+		}
+	}
+
+	log.Logger.WithFields(map[string]any{
+		"table":          table,
+		"existingPKs":    len(g.usedPKValues[table]),
+		"totalRowsFound": len(rows.Rows),
+	}).Debug("Loaded existing PK values")
+
+	return nil
+}
+
+// isPKValueUsed checks if a PK value combination is already used.
+func (g *Generator) isPKValueUsed(table string, columns []engine.Column, row []engine.Record) bool {
+	if g.usedPKValues[table] == nil {
+		return false
+	}
+	key := pkValueKey(columns, row)
+	if key == "" {
+		return false // No non-auto-increment PKs
+	}
+	return g.usedPKValues[table][key]
+}
+
+// markPKValueUsed marks a PK value combination as used.
+func (g *Generator) markPKValueUsed(table string, columns []engine.Column, row []engine.Record) {
+	if g.usedPKValues[table] == nil {
+		g.usedPKValues[table] = make(map[string]bool)
+	}
+	key := pkValueKey(columns, row)
+	if key != "" {
+		g.usedPKValues[table][key] = true
 	}
 }

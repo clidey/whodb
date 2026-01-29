@@ -28,7 +28,7 @@ var (
 	ltePattern        = regexp.MustCompile(`<=\s*(-?\d+(?:\.\d+)?)`)
 	ltPattern         = regexp.MustCompile(`<\s*(-?\d+(?:\.\d+)?)`)
 	betweenPattern    = regexp.MustCompile(`(?i)between\s+(-?\d+(?:\.\d+)?)\s+and\s+(-?\d+(?:\.\d+)?)`)
-	typeCastPattern   = regexp.MustCompile(`::\w+(\[\])?`)
+	typeCastPattern   = regexp.MustCompile(`::\w+(\s+\w+)?(\[\])?`)
 	columnNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*`)
 )
 
@@ -45,8 +45,11 @@ func EnsureConstraintEntry(constraints map[string]map[string]any, columnName str
 //   - column IN ('val1', 'val2', 'val3')
 //   - [column] IN (N'val1', N'val2')  (MSSQL Unicode)
 //   - column IN ("val1", "val2")
+//   - Multi-line CHECK constraints with whitespace/newlines
 func ParseINClauseValues(clause string) []string {
-	clauseLower := strings.ToLower(clause)
+	// Normalize whitespace (newlines, tabs, multiple spaces) to single spaces
+	normalizedClause := strings.Join(strings.Fields(clause), " ")
+	clauseLower := strings.ToLower(normalizedClause)
 
 	inIdx := strings.Index(clauseLower, " in ")
 	if inIdx == -1 {
@@ -55,6 +58,9 @@ func ParseINClauseValues(clause string) []string {
 	if inIdx == -1 {
 		return nil
 	}
+
+	// Use the normalized clause for parsing
+	clause = normalizedClause
 
 	startIdx := strings.Index(clause[inIdx:], "(")
 	if startIdx == -1 {
@@ -92,6 +98,7 @@ func ParseINClauseValues(clause string) []string {
 //   - Single quotes: 'value'
 //   - Double quotes: "value"
 //   - MySQL charset prefix: _utf8mb4'value'
+//   - PostgreSQL type casts: 'value'::text
 func ParseValueList(content string) []string {
 	var values []string
 	parts := strings.Split(content, ",")
@@ -105,6 +112,9 @@ func ParseValueList(content string) []string {
 		if idx := strings.Index(part, "'"); idx > 0 && part[0] == '_' {
 			part = part[idx:]
 		}
+
+		// Remove PostgreSQL type casts like ::text, ::varchar, ::character varying
+		part = typeCastPattern.ReplaceAllString(part, "")
 
 		// Remove quotes and add to values
 		if len(part) >= 2 {
@@ -217,6 +227,7 @@ func SanitizeConstraintValue(value string) string {
 // ExtractColumnNameFromClause extracts the column name from a CHECK constraint clause.
 // Handles various database-specific formats:
 //   - PostgreSQL: (column)::text = ... or column >= 0
+//   - PostgreSQL with functions: length((password)::text) >= 8
 //   - MySQL: `column` IN (...) or column >= 0
 //   - SQLite: column IN (...) or column >= 0
 func ExtractColumnNameFromClause(clause string) string {
@@ -230,6 +241,21 @@ func ExtractColumnNameFromClause(clause string) string {
 	clause = strings.TrimSpace(clause)
 	clause = strings.TrimPrefix(clause, "(")
 
+	// Check if this starts with a function call like length(...), upper(...), etc.
+	// Pattern: word followed by (
+	firstWord := columnNamePattern.FindString(clause)
+	if firstWord != "" {
+		afterWord := strings.TrimPrefix(clause, firstWord)
+		afterWord = strings.TrimSpace(afterWord)
+		if strings.HasPrefix(afterWord, "(") {
+			// This is a function call - extract column from inside
+			col := extractColumnFromFunction(afterWord)
+			if col != "" {
+				return col
+			}
+		}
+	}
+
 	// Remove type casts like ::text
 	if idx := strings.Index(clause, "::"); idx > 0 {
 		clause = clause[:idx]
@@ -242,4 +268,23 @@ func ExtractColumnNameFromClause(clause string) string {
 	// Extract the first word (column name)
 	match := columnNamePattern.FindString(clause)
 	return match
+}
+
+// extractColumnFromFunction extracts a column name from inside a function call.
+// Input like "((password)::text)" returns "password"
+func extractColumnFromFunction(funcArgs string) string {
+	// Remove leading parentheses
+	funcArgs = strings.TrimLeft(funcArgs, "(")
+
+	// Remove type casts
+	if idx := strings.Index(funcArgs, "::"); idx > 0 {
+		funcArgs = funcArgs[:idx]
+	}
+
+	// Remove trailing parentheses
+	funcArgs = strings.TrimRight(funcArgs, ")")
+	funcArgs = strings.TrimSpace(funcArgs)
+
+	// Extract column name
+	return columnNamePattern.FindString(funcArgs)
 }

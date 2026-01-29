@@ -12,6 +12,7 @@ en:
   maximumRowCount: "Maximum Row Count Is {max}"
   storageUnitRequired: Storage Unit Is Required for Mock Data Generation
   rowCountExceedsMax: "Row Count Cannot Exceed {max}"
+  rowCountMustBePositive: Row Count Must Be At Least 1
   successfullyGenerated: "Successfully Generated {count} Rows"
   failedToMockData: Failed to Mock Data
   mockDataNotAllowed: Mock Data Generation Is Not Allowed for This Table

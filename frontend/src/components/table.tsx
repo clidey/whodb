@@ -626,9 +626,14 @@ export const StorageUnitTable: FC<TableProps> = ({
             return;
         }
 
-        const count = parseInt(mockDataRowCount) || 100;
+        const count = parseInt(mockDataRowCount);
 
-        // Double-check the limit
+        // Validate row count
+        if (isNaN(count) || count < 1) {
+            toast.error(t('rowCountMustBePositive'));
+            return;
+        }
+
         if (count > maxRowCount) {
             toast.error(t('rowCountExceedsMax', { max: maxRowCount }));
             return;
@@ -681,12 +686,13 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, []);
 
     useEffect(() => {
-        if (showMockDataSheet && schema && storageUnit) {
+        // Note: schema can be empty for SQLite which doesn't use schemas
+        if (showMockDataSheet && storageUnit) {
             const rowCount = parseInt(mockDataRowCount) || 100;
             if (rowCount > 0 && rowCount <= maxRowCount) {
                 analyzeDependencies({
                     variables: {
-                        schema,
+                        schema: schema || "",
                         storageUnit,
                         rowCount,
                         fkDensityRatio: null,
@@ -1699,11 +1705,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                             {t('cancel')}
                         </Button>
                         {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} data-testid="mock-data-generate-button">
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
                                 {t('generate')}
                             </Button>
                         ) : (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData} variant="destructive" data-testid="mock-data-overwrite-button">
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
                                 {t('yesOverwrite')}
                             </Button>
                         )}

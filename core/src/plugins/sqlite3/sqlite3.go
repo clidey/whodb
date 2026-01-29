@@ -147,6 +147,81 @@ func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
 	return "?"
 }
 
+// GetColumnsForTable overrides the base implementation to properly detect SQLite auto-increment.
+func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, storageUnit string) ([]engine.Column, error) {
+	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
+
+	// SQLite's INTEGER PRIMARY KEY is always auto-increment
+	_, err = plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
+		if !ok {
+			return false, fmt.Errorf("failed to create SQLite SQL builder")
+		}
+
+		tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
+		if err != nil {
+			return false, err
+		}
+
+		rows, err := db.Raw(tableInfoQuery).Rows()
+		if err != nil {
+			return false, err
+		}
+		defer rows.Close()
+
+		// Build a map of primary key columns with their types
+		pkColTypes := make(map[string]string)
+		for rows.Next() {
+			var cid int
+			var name string
+			var dataType string
+			var notNull int
+			var dfltValue any
+			var pk int
+
+			if err := rows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk); err != nil {
+				continue
+			}
+
+			// pk = 1 means this column is part of the PRIMARY KEY
+			if pk == 1 {
+				pkColTypes[name] = strings.ToUpper(dataType)
+			}
+		}
+
+		// Update IsAutoIncrement for INTEGER PRIMARY KEY columns
+		for i := range columns {
+			if columns[i].IsPrimary {
+				colType := strings.ToUpper(columns[i].Type)
+				pkType, isPK := pkColTypes[columns[i].Name]
+
+				// SQLite INTEGER PRIMARY KEY is auto-increment when it's the only PK column
+				// and the type is exactly INTEGER (not INT, not BIGINT)
+				if isPK && (pkType == "INTEGER" || colType == "INTEGER") && len(pkColTypes) == 1 {
+					if !columns[i].IsAutoIncrement {
+						log.Logger.WithFields(map[string]any{
+							"table":  storageUnit,
+							"column": columns[i].Name,
+						}).Debug("Detected SQLite INTEGER PRIMARY KEY as auto-increment")
+						columns[i].IsAutoIncrement = true
+					}
+				}
+			}
+		}
+
+		return true, nil
+	})
+
+	if err != nil {
+		log.Logger.WithError(err).Warn("Failed to detect SQLite auto-increment columns, using GORM defaults")
+	}
+
+	return columns, nil
+}
+
 func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
 	if err := rows.Scan(&tableName, &tableType); err != nil {

@@ -22,17 +22,14 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 )
 
-// Pre-compiled regexes for PostgreSQL-specific constraint parsing
-var (
-	// PostgreSQL-specific: ANY(ARRAY[...]) syntax
-	pgAnyArrayPattern = regexp.MustCompile(`\(?(\w+)\)?.*?ANY\s*\(ARRAY\[(.*?)\]`)
-	pgTypeCastPattern = regexp.MustCompile(`::\w+`)
-)
+// Pre-compiled regex for PostgreSQL type casts like ::text, ::character varying
+var pgTypeCastPattern = regexp.MustCompile(`::\w+(\s+\w+)?`)
 
 // GetColumnConstraints retrieves column constraints for PostgreSQL tables
 func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
@@ -167,6 +164,8 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	// - CHECK ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text]))
 	// - CHECK (status IN ('pending', 'completed', 'canceled'))
 
+	log.Logger.WithField("checkClause", checkClause).Debug("Parsing CHECK constraint")
+
 	// Remove CHECK keyword and outer parentheses
 	clause := strings.TrimPrefix(checkClause, "CHECK ")
 	clause = strings.Trim(clause, "()")
@@ -185,26 +184,70 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	minMax := gorm_plugin.ParseMinMaxConstraints(clause)
 	gorm_plugin.ApplyMinMaxToConstraints(colConstraints, minMax)
 
-	if matches := pgAnyArrayPattern.FindStringSubmatch(clause); len(matches) > 2 {
-		valuesStr := matches[2]
-		var values []string
-		parts := strings.Split(valuesStr, ",")
-		for _, part := range parts {
-			cleaned := strings.TrimSpace(part)
-			// Remove ::text or other type casts
-			cleaned = pgTypeCastPattern.ReplaceAllString(cleaned, "")
-			cleaned = strings.Trim(cleaned, "'\"")
-			if cleaned != "" {
-				values = append(values, cleaned)
-			}
-		}
-		if len(values) > 0 {
-			colConstraints["check_values"] = values
-		}
+	// Try to extract values from ARRAY[...] syntax
+	// This handles any PostgreSQL format: ANY(ARRAY[...]), ANY((ARRAY[...])::text[]), etc.
+	if values := extractArrayValues(clause); len(values) > 0 {
+		colConstraints["check_values"] = values
+		log.Logger.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via ARRAY pattern")
 		return
 	}
 
+	// Fallback to IN clause parsing
 	if values := gorm_plugin.ParseINClauseValues(clause); len(values) > 0 {
 		colConstraints["check_values"] = values
+		log.Logger.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via IN clause pattern")
+	} else {
+		log.Logger.WithField("column", columnName).WithField("clause", clause).Debug("No check_values extracted from clause")
 	}
+}
+
+// extractArrayValues extracts values from PostgreSQL ARRAY[...] syntax.
+// it just finds ARRAY[ and extracts values up to the matching ].
+func extractArrayValues(clause string) []string {
+	upper := strings.ToUpper(clause)
+	arrayIdx := strings.Index(upper, "ARRAY[")
+	if arrayIdx == -1 {
+		return nil
+	}
+
+	// Find the start of values (after "ARRAY[")
+	startIdx := arrayIdx + 6
+
+	// Find matching closing bracket, accounting for nested brackets
+	depth := 1
+	endIdx := -1
+	for i := startIdx; i < len(clause); i++ {
+		switch clause[i] {
+		case '[':
+			depth++
+		case ']':
+			depth--
+			if depth == 0 {
+				endIdx = i
+			}
+		}
+		if endIdx != -1 {
+			break
+		}
+	}
+
+	if endIdx == -1 || endIdx <= startIdx {
+		return nil
+	}
+
+	content := clause[startIdx:endIdx]
+
+	var values []string
+	parts := strings.Split(content, ",")
+	for _, part := range parts {
+		cleaned := strings.TrimSpace(part)
+		// Remove PostgreSQL type casts like ::text, ::character varying
+		cleaned = pgTypeCastPattern.ReplaceAllString(cleaned, "")
+		cleaned = strings.Trim(cleaned, "'\"")
+		if cleaned != "" {
+			values = append(values, cleaned)
+		}
+	}
+
+	return values
 }

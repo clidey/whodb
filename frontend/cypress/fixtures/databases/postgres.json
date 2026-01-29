@@ -36,7 +36,14 @@
   "schema": "test_schema",
   "mockData": {
     "supportedTable": "users",
-    "tableWithFKs": "orders"
+    "tableWithFKs": "orders",
+    "fkRelationships": {
+      "orders": {
+        "parentTable": "users",
+        "fkColumn": "user_id",
+        "parentPkColumn": "id"
+      }
+    }
   },
   "whereOperators": {
     "equals": "=",

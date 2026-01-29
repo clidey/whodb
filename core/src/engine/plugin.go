@@ -43,6 +43,7 @@ type ExternalModel struct {
 type PluginConfig struct {
 	Credentials   *Credentials
 	ExternalModel *ExternalModel
+	Transaction   any // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
 }
 
 // Record represents a key-value pair with optional extra metadata,

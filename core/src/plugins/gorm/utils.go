@@ -212,6 +212,13 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		baseType = common.ParseTypeSpec(columnType).BaseType
 	}
 
+	// Numeric types cannot be parsed from empty strings
+	isNumericType := intTypes.Contains(baseType) || uintTypes.Contains(baseType) ||
+		bigIntTypes.Contains(baseType) || decimalTypes.Contains(baseType) || floatTypes.Contains(baseType)
+	if value == "" && isNumericType {
+		return nil, fmt.Errorf("cannot convert empty string to %s (column is not nullable)", columnType)
+	}
+
 	switch {
 	case intTypes.Contains(baseType):
 		parsedValue, err := strconv.ParseInt(value, 10, 64)
