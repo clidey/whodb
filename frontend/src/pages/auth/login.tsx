@@ -408,6 +408,16 @@ export const LoginForm: FC<LoginFormProps> = ({
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Detect embedded mode from URL parameters
+    useEffect(() => {
+        const hasAutoLoginParams = searchParams.has("credentials") ||
+                                   searchParams.has("resource") ||
+                                   searchParams.has("login");
+        if (hasAutoLoginParams) {
+            dispatch(AuthActions.setEmbedded(true));
+        }
+    }, [searchParams, dispatch]);
+
     // Handle locale URL parameter
     useEffect(() => {
         if (searchParams.has("locale")) {
