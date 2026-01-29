@@ -202,6 +202,12 @@ export enum GraphUnitRelationshipType {
   Unknown = 'Unknown'
 }
 
+export type HealthStatus = {
+  __typename?: 'HealthStatus';
+  Database: Scalars['String']['output'];
+  Server: Scalars['String']['output'];
+};
+
 export type LocalAwsProfile = {
   __typename?: 'LocalAWSProfile';
   IsDefault: Scalars['Boolean']['output'];
@@ -395,6 +401,7 @@ export type Query = {
   DatabaseMetadata?: Maybe<DatabaseMetadata>;
   DiscoveredConnections: Array<DiscoveredConnection>;
   Graph: Array<GraphUnit>;
+  Health: HealthStatus;
   LocalAWSProfiles: Array<LocalAwsProfile>;
   MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
@@ -602,6 +609,11 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
+
+export type GetHealthQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetHealthQuery = { __typename?: 'Query', Health: { __typename?: 'HealthStatus', Server: string, Database: string } };
 
 export type AnalyzeMockDataDependenciesQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -1079,6 +1091,46 @@ export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHook
 export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+export const GetHealthDocument = gql`
+    query GetHealth {
+  Health {
+    Server
+    Database
+  }
+}
+    `;
+
+/**
+ * __useGetHealthQuery__
+ *
+ * To run a query within a React component, call `useGetHealthQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetHealthQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetHealthQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetHealthQuery(baseOptions?: Apollo.QueryHookOptions<GetHealthQuery, GetHealthQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetHealthQuery, GetHealthQueryVariables>(GetHealthDocument, options);
+      }
+export function useGetHealthLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetHealthQuery, GetHealthQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetHealthQuery, GetHealthQueryVariables>(GetHealthDocument, options);
+        }
+export function useGetHealthSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHealthQuery, GetHealthQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetHealthQuery, GetHealthQueryVariables>(GetHealthDocument, options);
+        }
+export type GetHealthQueryHookResult = ReturnType<typeof useGetHealthQuery>;
+export type GetHealthLazyQueryHookResult = ReturnType<typeof useGetHealthLazyQuery>;
+export type GetHealthSuspenseQueryHookResult = ReturnType<typeof useGetHealthSuspenseQuery>;
+export type GetHealthQueryResult = Apollo.QueryResult<GetHealthQuery, GetHealthQueryVariables>;
 export const AnalyzeMockDataDependenciesDocument = gql`
     query AnalyzeMockDataDependencies($schema: String!, $storageUnit: String!, $rowCount: Int!, $fkDensityRatio: Int) {
   AnalyzeMockDataDependencies(

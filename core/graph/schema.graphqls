@@ -340,8 +340,14 @@ type DiscoveredConnection {
 # Queries
 # =============================================================================
 
+type HealthStatus {
+  Server: String!
+  Database: String!
+}
+
 type Query {
   Version: String!
+  Health: HealthStatus!
   Profiles: [LoginProfile!]!
   Database(type: String!): [String!]!
   Schema: [String!]!

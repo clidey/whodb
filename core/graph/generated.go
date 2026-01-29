@@ -143,6 +143,11 @@ type ComplexityRoot struct {
 		TargetColumn func(childComplexity int) int
 	}
 
+	HealthStatus struct {
+		Database func(childComplexity int) int
+		Server   func(childComplexity int) int
+	}
+
 	LocalAWSProfile struct {
 		IsDefault func(childComplexity int) int
 		Name      func(childComplexity int) int
@@ -218,6 +223,7 @@ type ComplexityRoot struct {
 		DatabaseMetadata            func(childComplexity int) int
 		DiscoveredConnections       func(childComplexity int) int
 		Graph                       func(childComplexity int, schema string) int
+		Health                      func(childComplexity int) int
 		LocalAWSProfiles            func(childComplexity int) int
 		MockDataMaxRowCount         func(childComplexity int) int
 		Profiles                    func(childComplexity int) int
@@ -292,6 +298,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
+	Health(ctx context.Context) (*model.HealthStatus, error)
 	Profiles(ctx context.Context) ([]*model.LoginProfile, error)
 	Database(ctx context.Context, typeArg string) ([]string, error)
 	Schema(ctx context.Context) ([]string, error)
@@ -661,6 +668,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.GraphUnitRelationship.TargetColumn(childComplexity), true
+
+	case "HealthStatus.Database":
+		if e.complexity.HealthStatus.Database == nil {
+			break
+		}
+
+		return e.complexity.HealthStatus.Database(childComplexity), true
+	case "HealthStatus.Server":
+		if e.complexity.HealthStatus.Server == nil {
+			break
+		}
+
+		return e.complexity.HealthStatus.Server(childComplexity), true
 
 	case "LocalAWSProfile.IsDefault":
 		if e.complexity.LocalAWSProfile.IsDefault == nil {
@@ -1097,6 +1117,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Graph(childComplexity, args["schema"].(string)), true
+	case "Query.Health":
+		if e.complexity.Query.Health == nil {
+			break
+		}
+
+		return e.complexity.Query.Health(childComplexity), true
 	case "Query.LocalAWSProfiles":
 		if e.complexity.Query.LocalAWSProfiles == nil {
 			break
@@ -3523,6 +3549,64 @@ func (ec *executionContext) fieldContext_GraphUnitRelationship_TargetColumn(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _HealthStatus_Server(ctx context.Context, field graphql.CollectedField, obj *model.HealthStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_HealthStatus_Server,
+		func(ctx context.Context) (any, error) {
+			return obj.Server, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_HealthStatus_Server(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HealthStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HealthStatus_Database(ctx context.Context, field graphql.CollectedField, obj *model.HealthStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_HealthStatus_Database,
+		func(ctx context.Context) (any, error) {
+			return obj.Database, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_HealthStatus_Database(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HealthStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LocalAWSProfile_Name(ctx context.Context, field graphql.CollectedField, obj *model.LocalAWSProfile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5041,6 +5125,41 @@ func (ec *executionContext) fieldContext_Query_Version(_ context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_Health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_Health,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().Health(ctx)
+		},
+		nil,
+		ec.marshalNHealthStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_Health(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Server":
+				return ec.fieldContext_HealthStatus_Server(ctx, field)
+			case "Database":
+				return ec.fieldContext_HealthStatus_Database(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HealthStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -9377,6 +9496,50 @@ func (ec *executionContext) _GraphUnitRelationship(ctx context.Context, sel ast.
 	return out
 }
 
+var healthStatusImplementors = []string{"HealthStatus"}
+
+func (ec *executionContext) _HealthStatus(ctx context.Context, sel ast.SelectionSet, obj *model.HealthStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, healthStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HealthStatus")
+		case "Server":
+			out.Values[i] = ec._HealthStatus_Server(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Database":
+			out.Values[i] = ec._HealthStatus_Database(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var localAWSProfileImplementors = []string{"LocalAWSProfile"}
 
 func (ec *executionContext) _LocalAWSProfile(ctx context.Context, sel ast.SelectionSet, obj *model.LocalAWSProfile) graphql.Marshaler {
@@ -9864,6 +10027,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_Version(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "Health":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Health(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11568,6 +11753,20 @@ func (ec *executionContext) unmarshalNGraphUnitRelationshipType2githubᚗcomᚋc
 
 func (ec *executionContext) marshalNGraphUnitRelationshipType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGraphUnitRelationshipType(ctx context.Context, sel ast.SelectionSet, v model.GraphUnitRelationshipType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNHealthStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus(ctx context.Context, sel ast.SelectionSet, v model.HealthStatus) graphql.Marshaler {
+	return ec._HealthStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHealthStatus2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐHealthStatus(ctx context.Context, sel ast.SelectionSet, v *model.HealthStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HealthStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {

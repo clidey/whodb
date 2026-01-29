@@ -68,7 +68,7 @@ import {
     TableCellsIcon,
     XMarkIcon
 } from "../../components/heroicons";
-import {LoadingPage} from "../../components/loading";
+import {Loading, LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
 import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
@@ -596,12 +596,6 @@ export const ExploreStorageUnit: FC = () => {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
 
-    if (loading) {
-        return <InternalPage routes={routes}>
-            <LoadingPage />
-        </InternalPage>
-    }
-
     // Prevent rendering if unit is not available and we don't have a table name
     if (!unit && !currentTableName) {
         return <InternalPage routes={routes}>
@@ -763,8 +757,11 @@ export const ExploreStorageUnit: FC = () => {
 
             </div>
             <div className="grow">
-                {
-                    rows != null &&
+                {loading ? (
+                    <div className="flex justify-center items-center h-full">
+                        <Loading />
+                    </div>
+                ) : rows != null ? (
                     <StorageUnitTable
                         columns={columns}
                         rows={rows.Rows}
@@ -795,7 +792,7 @@ export const ExploreStorageUnit: FC = () => {
                             </Button>
                         </div>
                     </StorageUnitTable>
-                }
+                ) : null}
             </div>
         </div>
         <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>
