@@ -100,6 +100,7 @@ export const Sidebar: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const cloudProvidersEnabled = useAppSelector(state => state.settings.cloudProvidersEnabled);
+    const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
@@ -378,7 +379,7 @@ export const Sidebar: FC = () => {
                                         placeholder={t('selectProfile')}
                                         searchPlaceholder={t('searchProfile')}
                                         onlyIcon={!open}
-                                        extraOptions={
+                                        extraOptions={!isEmbedded ? (
                                             <CommandItem
                                                 key="__add__"
                                                 value="__add__"
@@ -389,7 +390,7 @@ export const Sidebar: FC = () => {
                                                     {t('addAnotherProfile')}
                                                 </span>
                                             </CommandItem>
-                                        }
+                                        ) : undefined}
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
@@ -490,39 +491,41 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuItem>
                                 )}
                                 <div className="grow" />
+                                {!isEmbedded && (
                                     <SidebarMenuItem className="flex justify-between items-center w-full">
-                                    {/* Logout Profile button */}
-                                    <SidebarMenuButton asChild>
-                                        <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
-                                            <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                            {open && <span>{t('logOutProfile')}</span>}
-                                        </div>
-                                    </SidebarMenuButton>
-                                    {/* Dropdown for additional logout options */}
-                                    <SidebarMenuButton asChild>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger className={cn({
-                                                "hidden": !open,
-                                            })}>
-                                                <Button
-                                                    className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
-                                                    aria-label={t('moreLogoutOptions')}
-                                                    variant="ghost"
-                                                >
-                                                    <ChevronDownIcon className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent side="right" align="start">
-                                                <DropdownMenuItem
-                                                    onClick={handleLogout}
-                                                >
-                                                    <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                                    <span className="ml-2">{t('logoutAllProfiles')}</span>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
+                                        {/* Logout Profile button */}
+                                        <SidebarMenuButton asChild>
+                                            <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
+                                                <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                {open && <span>{t('logOutProfile')}</span>}
+                                            </div>
+                                        </SidebarMenuButton>
+                                        {/* Dropdown for additional logout options */}
+                                        <SidebarMenuButton asChild>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger className={cn({
+                                                    "hidden": !open,
+                                                })}>
+                                                    <Button
+                                                        className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
+                                                        aria-label={t('moreLogoutOptions')}
+                                                        variant="ghost"
+                                                    >
+                                                        <ChevronDownIcon className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent side="right" align="start">
+                                                    <DropdownMenuItem
+                                                        onClick={handleLogout}
+                                                    >
+                                                        <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                        <span className="ml-2">{t('logoutAllProfiles')}</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
                             </SidebarMenu>
                         </SidebarGroup>
                     )}

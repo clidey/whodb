@@ -24,11 +24,13 @@ export type IAuthState = {
   status: "logged-in" | "unauthorized";
   current?: LocalLoginProfile;
   profiles: LocalLoginProfile[];
+  isEmbedded: boolean;
 }
 
 const initialState: IAuthState = {
   status: "unauthorized",
   profiles: [],
+  isEmbedded: false,
 };
 
 export const authSlice = createSlice({
@@ -77,6 +79,9 @@ export const authSlice = createSlice({
         state.current.Database = action.payload.database;
       }
       profile.Database = action.payload.database;
+    },
+    setEmbedded: (state, action: PayloadAction<boolean>) => {
+      state.isEmbedded = action.payload;
     }
   },
 });
