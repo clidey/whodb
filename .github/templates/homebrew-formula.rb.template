@@ -10,7 +10,7 @@ class WhodbCli < Formula
 
   def install
     ENV["CGO_ENABLED"] = "1"
-    baml_version = File.read("core/go.mod")[/github\.com\/boundaryml\/baml\s+v?([\d.]+)/, 1]
+    baml_version = File.read("core/go.mod")[%r{github\.com/boundaryml/baml\s+v?([\d.]+)}, 1]
     ldflags = %W[
       -s -w
       -X github.com/clidey/whodb/cli/pkg/version.Version=#{version}
