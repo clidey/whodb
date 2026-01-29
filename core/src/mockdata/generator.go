@@ -453,7 +453,7 @@ func (g *Generator) loadExistingPKs(
 	}
 
 	// Get existing rows
-	rows, err := plugin.GetRows(config, schema, table, nil, nil, 1000, 0)
+	rows, err := plugin.GetRows(config, schema, table, nil, nil, 50, 0)
 	if err != nil {
 		return err
 	}
