@@ -77,7 +77,6 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	// Use GORM's CreateInBatches for efficient bulk insert
 	if b.config.UseBulkInsert {
-		// For bulk insert, we need to use Table() to specify the table
 		result := db.Table(fullTableName).CreateInBatches(records, b.config.BatchSize)
 		if result.Error != nil {
 			log.Logger.WithError(result.Error).

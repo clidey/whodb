@@ -340,8 +340,11 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 			log.Logger.WithField("value", value).WithField("columnType", columnType).Error("Invalid JSON value")
 			return nil, fmt.Errorf("invalid JSON format")
 		}
-		// todo: not sure about nullable json, can json even be nullable
-		return json.RawMessage(value), nil
+		// Return as string, not json.RawMessage ([]byte), because:
+		// - MariaDB's JSON type is LONGTEXT with JSON_VALID constraint (expects string)
+		// - MySQL's JSON type accepts string input
+		// - PostgreSQL's JSON/JSONB types accept string input
+		return value, nil
 	case networkTypes.Contains(baseType):
 		// MAC addresses (MACADDR, MACADDR8) stay as strings
 		if baseType == "IPV4" || baseType == "IPV6" || baseType == "INET" || baseType == "CIDR" {

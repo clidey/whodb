@@ -67,6 +67,69 @@ db.payments.insertMany([
     { order_id: db.orders.findOne({ status: "pending" })._id, payment_date: new Date(), amount: 150.00, payment_method: "paypal" }
 ]);
 
+// Collection with Schema Validation for Mock Data Testing
+// This demonstrates MongoDB's $jsonSchema validator support
+db.createCollection("validated_products", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["name", "price", "status", "category"],
+            properties: {
+                name: {
+                    bsonType: "string",
+                    maxLength: 100,
+                    description: "Product name - required, max 100 chars"
+                },
+                price: {
+                    bsonType: "double",
+                    minimum: 0,
+                    maximum: 99999.99,
+                    description: "Price must be between 0 and 99999.99"
+                },
+                status: {
+                    bsonType: "string",
+                    enum: ["active", "inactive", "discontinued"],
+                    description: "Status must be one of: active, inactive, discontinued"
+                },
+                category: {
+                    bsonType: "string",
+                    enum: ["electronics", "clothing", "food", "other"],
+                    description: "Category type"
+                },
+                stock_quantity: {
+                    bsonType: "int",
+                    minimum: 0,
+                    maximum: 10000,
+                    description: "Stock quantity 0-10000"
+                },
+                description: {
+                    bsonType: "string",
+                    maxLength: 500,
+                    description: "Optional product description"
+                },
+                rating: {
+                    bsonType: "double",
+                    minimum: 0,
+                    maximum: 5,
+                    description: "Rating from 0 to 5"
+                }
+            }
+        }
+    },
+    validationLevel: "strict",
+    validationAction: "error"
+});
+
+// Insert sample data into validated_products
+// Note: Double() ensures proper BSON double type for strict schema validation
+db.validated_products.insertMany([
+    { name: "Gaming Laptop", price: Double(1599.99), status: "active", category: "electronics", stock_quantity: NumberInt(25), description: "High-end gaming laptop with RTX graphics", rating: Double(4.8) },
+    { name: "Wireless Mouse", price: Double(49.99), status: "active", category: "electronics", stock_quantity: NumberInt(150), description: "Ergonomic wireless mouse", rating: Double(4.2) },
+    { name: "Coffee Beans", price: Double(24.99), status: "active", category: "food", stock_quantity: NumberInt(500), description: "Premium arabica coffee beans", rating: Double(4.6) },
+    { name: "Winter Jacket", price: Double(199.99), status: "inactive", category: "clothing", stock_quantity: NumberInt(0), description: "Warm winter jacket - out of season", rating: Double(4.0) },
+    { name: "Old Keyboard", price: Double(29.99), status: "discontinued", category: "electronics", stock_quantity: NumberInt(5), description: "Legacy keyboard model", rating: Double(3.5) }
+]);
+
 // Aggregation View Equivalent: Order Summary
 db.createCollection("order_summary", {
     viewOn: "orders",

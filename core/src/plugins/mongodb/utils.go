@@ -43,7 +43,8 @@ func normalizeMongoID(value any) (any, error) {
 
 // coerceMongoValue attempts to convert a string to a sensible BSON value.
 // Numbers and booleans are converted; everything else remains a string.
-func coerceMongoValue(key string, raw string) any {
+// The typeHint (from schema validation) is used to select the correct type.
+func coerceMongoValue(key string, raw string, typeHint string) any {
 	if key == "_id" {
 		id, err := normalizeMongoID(raw)
 		if err == nil {
@@ -51,15 +52,50 @@ func coerceMongoValue(key string, raw string) any {
 		}
 	}
 
-	if b, err := strconv.ParseBool(raw); err == nil {
+	// If we have a type hint, use it to coerce to the correct type
+	// This prevents issues like "0" being parsed as boolean false when double is expected
+	switch typeHint {
+	case "double":
+		if f, err := strconv.ParseFloat(raw, 64); err == nil {
+			return f
+		}
+		return raw
+	case "int":
+		if i, err := strconv.ParseInt(raw, 10, 32); err == nil {
+			return int32(i)
+		}
+		return raw
+	case "long":
+		if i, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			return i
+		}
+		return raw
+	case "bool":
+		if b, err := strconv.ParseBool(raw); err == nil {
+			return b
+		}
+		return raw
+	case "string":
+		return raw
+	}
+
+	// No type hint - try to infer the type (original behavior)
+	// Try boolean first (but only for explicit true/false values, not "0"/"1")
+	if raw == "true" || raw == "false" {
+		b, _ := strconv.ParseBool(raw)
 		return b
 	}
+
+	// Try integer
 	if i, err := strconv.ParseInt(raw, 10, 64); err == nil {
 		return i
 	}
+
+	// Try float
 	if f, err := strconv.ParseFloat(raw, 64); err == nil {
 		return f
 	}
+
 	return raw
 }
 

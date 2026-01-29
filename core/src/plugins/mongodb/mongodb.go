@@ -619,6 +619,7 @@ func convertWhereConditionToMongoDB(where *model.WhereCondition) (bson.M, error)
 }
 
 // convertMongoValue handles ObjectID conversion for _id and basic numeric/bool coercion.
+// Used for query building where type hints are not available.
 func convertMongoValue(key string, raw string) any {
 	if key == "_id" {
 		id, err := normalizeMongoID(raw)
@@ -627,7 +628,7 @@ func convertMongoValue(key string, raw string) any {
 		}
 		return raw
 	}
-	return coerceMongoValue(key, raw)
+	return coerceMongoValue(key, raw, "") // No type hint for queries
 }
 
 func parseCommaSeparatedValues(key string, raw string) []any {
@@ -662,14 +663,205 @@ func (p *MongoDBPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
 
-// GetColumnConstraints returns empty constraints for MongoDB since mock data generation doesn't apply to NoSQL databases
+// GetColumnConstraints retrieves MongoDB schema validation rules and maps them to the constraint format
+// used by the mock data generator. Supports $jsonSchema validator with:
+// - required fields → nullable: false
+// - enum → check_values
+// - minimum/maximum → check_min/check_max
+// - minLength/maxLength → length (uses maxLength)
+// - pattern → pattern (stored for reference)
 func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
-	return make(map[string]map[string]any), nil
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname":    config.Credentials.Hostname,
+			"schema":      schema,
+			"storageUnit": storageUnit,
+		}).Error("Failed to connect to MongoDB for column constraints")
+		return make(map[string]map[string]any), nil
+	}
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
+
+	db := client.Database(schema)
+
+	// Get collection info with validator
+	filter := bson.M{"name": storageUnit}
+	cursor, err := db.ListCollections(ctx, filter)
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"schema":      schema,
+			"storageUnit": storageUnit,
+		}).Debug("Failed to list collections for schema validation")
+		return make(map[string]map[string]any), nil
+	}
+	defer cursor.Close(ctx)
+
+	var collInfo bson.M
+	if !cursor.Next(ctx) {
+		return make(map[string]map[string]any), nil
+	}
+	if err := cursor.Decode(&collInfo); err != nil {
+		log.Logger.WithError(err).WithField("collection", storageUnit).Debug("Failed to decode collection info")
+		return make(map[string]map[string]any), nil
+	}
+
+	// Extract validator from collection options
+	opts, ok := collInfo["options"].(bson.M)
+	if !ok {
+		return make(map[string]map[string]any), nil
+	}
+
+	validator, ok := opts["validator"].(bson.M)
+	if !ok {
+		return make(map[string]map[string]any), nil
+	}
+
+	// Extract $jsonSchema
+	jsonSchema, ok := validator["$jsonSchema"].(bson.M)
+	if !ok {
+		return make(map[string]map[string]any), nil
+	}
+
+	constraints := parseMongoDBJsonSchema(jsonSchema)
+	log.Logger.WithFields(map[string]any{
+		"collection":      storageUnit,
+		"constraintCount": len(constraints),
+	}).Debug("Parsed MongoDB schema validation constraints")
+
+	return constraints, nil
 }
 
-// ClearTableData returns not supported error for MongoDB since mock data generation doesn't apply to NoSQL databases
+// parseMongoDBJsonSchema extracts constraints from a MongoDB $jsonSchema validator.
+func parseMongoDBJsonSchema(schema bson.M) map[string]map[string]any {
+	constraints := make(map[string]map[string]any)
+
+	// Get required fields
+	requiredFields := make(map[string]bool)
+	if required, ok := schema["required"].(bson.A); ok {
+		for _, field := range required {
+			if fieldName, ok := field.(string); ok {
+				requiredFields[fieldName] = true
+			}
+		}
+	}
+
+	// Get properties
+	properties, ok := schema["properties"].(bson.M)
+	if !ok {
+		return constraints
+	}
+
+	for fieldName, fieldSchemaRaw := range properties {
+		fieldSchema, ok := fieldSchemaRaw.(bson.M)
+		if !ok {
+			continue
+		}
+
+		colConstraints := make(map[string]any)
+
+		// Set nullable based on required array
+		colConstraints["nullable"] = !requiredFields[fieldName]
+
+		// Get bsonType
+		if bsonType, ok := fieldSchema["bsonType"].(string); ok {
+			colConstraints["type"] = bsonType
+		}
+
+		// Get enum values → check_values
+		if enum, ok := fieldSchema["enum"].(bson.A); ok {
+			values := make([]string, 0, len(enum))
+			for _, v := range enum {
+				if s, ok := v.(string); ok {
+					values = append(values, s)
+				}
+			}
+			if len(values) > 0 {
+				colConstraints["check_values"] = values
+			}
+		}
+
+		// Get minimum/maximum → check_min/check_max
+		// MongoDB may return int32 or float64 depending on how the schema was defined
+		if minVal := toFloat64(fieldSchema["minimum"]); minVal != nil {
+			colConstraints["check_min"] = *minVal
+		}
+		if maxVal := toFloat64(fieldSchema["maximum"]); maxVal != nil {
+			colConstraints["check_max"] = *maxVal
+		}
+
+		// Get maxLength → length (mock data generator uses this to limit string length)
+		if maxLen := toFloat64(fieldSchema["maxLength"]); maxLen != nil {
+			colConstraints["length"] = int(*maxLen)
+		}
+
+		// Store pattern for reference (could be used for custom validation in future)
+		if pattern, ok := fieldSchema["pattern"].(string); ok {
+			colConstraints["pattern"] = pattern
+		}
+
+		if len(colConstraints) > 0 {
+			constraints[fieldName] = colConstraints
+		}
+	}
+
+	return constraints
+}
+
+// toFloat64 converts common BSON numeric types to float64.
+func toFloat64(v any) *float64 {
+	var result float64
+	switch val := v.(type) {
+	case float64:
+		result = val
+	case float32:
+		result = float64(val)
+	case int:
+		result = float64(val)
+	case int32:
+		result = float64(val)
+	case int64:
+		result = float64(val)
+	default:
+		return nil
+	}
+	return &result
+}
+
+// ClearTableData deletes all documents from a MongoDB collection.
+// This is used by the mock data generator when overwrite mode is enabled.
 func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
-	return false, errors.ErrUnsupported
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"hostname":    config.Credentials.Hostname,
+			"schema":      schema,
+			"storageUnit": storageUnit,
+		}).Error("Failed to connect to MongoDB to clear collection")
+		return false, err
+	}
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
+
+	collection := client.Database(schema).Collection(storageUnit)
+	result, err := collection.DeleteMany(ctx, bson.M{})
+	if err != nil {
+		log.Logger.WithError(err).WithFields(map[string]any{
+			"schema":      schema,
+			"storageUnit": storageUnit,
+		}).Error("Failed to clear MongoDB collection")
+		return false, err
+	}
+
+	log.Logger.WithFields(map[string]any{
+		"schema":       schema,
+		"storageUnit":  storageUnit,
+		"deletedCount": result.DeletedCount,
+	}).Info("Cleared MongoDB collection for mock data generation")
+
+	return true, nil
 }
 
 // WithTransaction executes the operation directly since MongoDB doesn't support transactions in the same way as SQL databases

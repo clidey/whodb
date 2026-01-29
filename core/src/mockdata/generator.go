@@ -874,8 +874,16 @@ func (g *Generator) generateRow(
 			value = g.generateColumnValue(col, colConstraints)
 		}
 
+		// Get constraint type if available (important for MongoDB schema validation)
+		constraintType := ""
+		if colConstraints != nil {
+			if t, ok := colConstraints["type"].(string); ok {
+				constraintType = t
+			}
+		}
+
 		// Convert value to record
-		record := valueToRecord(col, value)
+		record := valueToRecord(col, value, constraintType)
 		records = append(records, record)
 	}
 
@@ -1059,6 +1067,13 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 		}
 	}
 
+	// Check for is_json constraint (MariaDB stores JSON as LONGTEXT with JSON_VALID check)
+	if constraints != nil {
+		if isJSON, ok := constraints["is_json"].(bool); ok && isJSON {
+			return GenerateByType("json", nil, g.faker)
+		}
+	}
+
 	// Merge column length into constraints if available
 	effectiveConstraints := constraints
 	if col.Length != nil && *col.Length > 0 {
@@ -1095,9 +1110,17 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 }
 
 // valueToRecord converts a value to an engine.Record.
-func valueToRecord(col engine.Column, value any) engine.Record {
+// If constraintType is provided (non-empty), it overrides the column type for type hints.
+// This is important for MongoDB where schema validation types are more authoritative
+// than types inferred from documents.
+func valueToRecord(col engine.Column, value any, constraintType string) engine.Record {
+	typeHint := col.Type
+	if constraintType != "" {
+		typeHint = constraintType
+	}
+
 	extra := map[string]string{
-		"Type": col.Type,
+		"Type": typeHint,
 	}
 
 	var valueStr string

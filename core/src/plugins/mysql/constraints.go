@@ -139,7 +139,21 @@ func (p *MySQLPlugin) parseCheckConstraint(checkClause string, constraints map[s
 	// - (`stock_quantity` >= 0)
 	// - (`age` between 18 and 120)
 	// - (`status` in (_utf8mb4'active',_utf8mb4'inactive'))
+	// - json_valid(`col_json`) - MariaDB's implicit JSON constraint
 
+	// Check for JSON_VALID constraint BEFORE trimming parentheses
+	// (trimming would remove the closing paren from json_valid())
+	lowerClause := strings.ToLower(checkClause)
+	if strings.Contains(lowerClause, "json_valid(") {
+		columnName := extractJSONValidColumn(checkClause)
+		if columnName != "" && common.ValidateColumnName(columnName) {
+			colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+			colConstraints["is_json"] = true
+			return
+		}
+	}
+
+	// Now trim outer parentheses for other constraint types
 	clause := strings.Trim(checkClause, "()")
 
 	columnName := gorm_plugin.ExtractColumnNameFromClause(clause)
@@ -160,6 +174,33 @@ func (p *MySQLPlugin) parseCheckConstraint(checkClause string, constraints map[s
 	if values := gorm_plugin.ParseINClauseValues(clause); len(values) > 0 {
 		colConstraints["check_values"] = values
 	}
+}
+
+// extractJSONValidColumn extracts the column name from a json_valid() constraint
+// Handles: json_valid(`col_name`), json_valid(col_name), JSON_VALID(`col`)
+func extractJSONValidColumn(clause string) string {
+	lowerClause := strings.ToLower(clause)
+	idx := strings.Index(lowerClause, "json_valid(")
+	if idx == -1 {
+		return ""
+	}
+
+	// Find the opening paren position in the original clause
+	start := idx + len("json_valid(")
+	if start >= len(clause) {
+		return ""
+	}
+
+	// Find the closing paren
+	end := strings.Index(clause[start:], ")")
+	if end == -1 {
+		return ""
+	}
+
+	colRef := strings.TrimSpace(clause[start : start+end])
+	// Remove backticks or quotes
+	colRef = strings.Trim(colRef, "`\"'")
+	return colRef
 }
 
 // parseEnumValues extracts values from MySQL ENUM type definition

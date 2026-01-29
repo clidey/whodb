@@ -72,7 +72,12 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 
 	document := make(map[string]any)
 	for _, value := range values {
-		document[value.Key] = coerceMongoValue(value.Key, value.Value)
+		// Skip null values - MongoDB treats missing fields as null for optional fields
+		if value.Extra["IsNull"] == "true" {
+			continue
+		}
+		typeHint := value.Extra["Type"]
+		document[value.Key] = coerceMongoValue(value.Key, value.Value, typeHint)
 	}
 
 	// If _id provided as hex string, convert to ObjectID for proper identity handling
@@ -123,7 +128,12 @@ func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, 
 	for i, row := range rows {
 		document := make(map[string]any)
 		for _, value := range row {
-			document[value.Key] = coerceMongoValue(value.Key, value.Value)
+			// Skip null values - MongoDB treats missing fields as null for optional fields
+			if value.Extra["IsNull"] == "true" {
+				continue
+			}
+			typeHint := value.Extra["Type"]
+			document[value.Key] = coerceMongoValue(value.Key, value.Value, typeHint)
 		}
 		if rawID, exists := document["_id"]; exists {
 			if id, err := normalizeMongoID(rawID); err == nil {
