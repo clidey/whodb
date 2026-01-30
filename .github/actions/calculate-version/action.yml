@@ -8,6 +8,10 @@ inputs:
     description: 'Version bump type (major, minor, patch, current)'
     required: false
     default: 'minor'
+  explicit-version:
+    description: 'Explicit version to use (overrides version-bump calculation)'
+    required: false
+    default: ''
   deploy-docker:
     description: 'Deploy to Docker Hub'
     required: false
@@ -127,6 +131,8 @@ runs:
     - name: Calculate version
       id: version
       shell: bash
+      env:
+        EXPLICIT_VERSION: ${{ inputs.explicit-version }}
       run: |
         # Get all tags, strip 'v' prefix if present, sort by semantic version
         LATEST_TAG=$(git tag | sed 's/^v//' | sort -V | tail -1)
@@ -137,6 +143,22 @@ runs:
         fi
 
         PREVIOUS_VERSION="$LATEST_TAG"
+
+        # Check if explicit version was provided
+        if [ -n "$EXPLICIT_VERSION" ]; then
+          # Validate version format (basic semver check)
+          if [[ "$EXPLICIT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            NEXT_VERSION="$EXPLICIT_VERSION"
+            echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+            echo "previous-version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+            echo "📦 Version: $NEXT_VERSION (explicit version, previous: $PREVIOUS_VERSION)"
+            exit 0
+          else
+            echo "❌ Invalid explicit version format: $EXPLICIT_VERSION"
+            echo "   Expected format: X.Y.Z (e.g., 0.65.0)"
+            exit 1
+          fi
+        fi
 
         # Calculate next version based on bump type
         IFS='.' read -r major minor patch <<< "$PREVIOUS_VERSION"
