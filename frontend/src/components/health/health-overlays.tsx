@@ -20,7 +20,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useNavigate } from 'react-router-dom';
 import { PublicRoutes } from '@/config/routes';
 import { XCircleIcon } from '@heroicons/react/24/outline';
-import { useLoginWithProfileMutation } from '@graphql';
+import { DatabaseType, useLoginWithProfileMutation } from '@graphql';
 import { useState } from 'react';
 
 /**
@@ -113,7 +113,7 @@ export const DatabaseDownOverlay = () => {
                 variables: {
                     profile: {
                         Id: profile.Id,
-                        Type: profile.Type,
+                        Type: profile.Type as DatabaseType,
                         Database: profile.Database,
                     }
                 }
