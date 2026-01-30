@@ -170,6 +170,8 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		ModelType string          `json:"modelType"`
 		Token     string          `json:"token"`
+		Model     string          `json:"model"`
+		Endpoint  string          `json:"endpoint"`
 		Schema    string          `json:"schema"`
 		Input     model.ChatInput `json:"input"`
 	}
@@ -179,11 +181,18 @@ func aiChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Copy top-level model to input.Model for GraphQL resolver compatibility
+	// Frontend sends model at top level (matching streaming endpoint format)
+	if req.Model != "" && req.Input.Model == "" {
+		req.Input.Model = req.Model
+	}
+
 	messages, err := resolver.Query().AIChat(r.Context(), nil, req.ModelType, &req.Token, req.Schema, req.Input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	err = json.NewEncoder(w).Encode(messages)
 	if err != nil {
 		return

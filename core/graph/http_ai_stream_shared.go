@@ -28,21 +28,22 @@ import (
 
 // StreamRequest represents the incoming SSE request
 type StreamRequest struct {
-	ModelType string          `json:"modelType"`
-	Token     string          `json:"token"`
-	Model     string          `json:"model"`
-	Endpoint  string          `json:"endpoint"`
-	Schema    string          `json:"schema"`
-	Input     model.ChatInput `json:"input"`
+	ModelType  string          `json:"modelType"`
+	Token      string          `json:"token"`
+	Model      string          `json:"model"`
+	Endpoint   string          `json:"endpoint"`
+	Schema     string          `json:"schema"`
+	ProviderId string          `json:"providerId"`
+	Input      model.ChatInput `json:"input"`
 }
 
 // StreamContext contains all context needed for streaming
 type StreamContext struct {
-	Writer   http.ResponseWriter
-	Flusher  http.Flusher
-	Plugin   *engine.Plugin
-	Config   *engine.PluginConfig
-	Request  *StreamRequest
+	Writer  http.ResponseWriter
+	Flusher http.Flusher
+	Plugin  *engine.Plugin
+	Config  *engine.PluginConfig
+	Request *StreamRequest
 }
 
 // ParseStreamRequest parses and validates the SSE request
