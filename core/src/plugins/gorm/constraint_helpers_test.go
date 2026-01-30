@@ -170,6 +170,54 @@ func TestParseValueList(t *testing.T) {
 	}
 }
 
+func TestParseORClauseValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		clause   string
+		expected []string
+	}{
+		{
+			name:     "MSSQL OR chain with brackets",
+			clause:   "([status]='Cancelled' OR [status]='Delivered' OR [status]='Shipped' OR [status]='Pending')",
+			expected: []string{"Cancelled", "Delivered", "Shipped", "Pending"},
+		},
+		{
+			name:     "MSSQL OR chain with Unicode prefix",
+			clause:   "([col]=N'value1' OR [col]=N'value2')",
+			expected: []string{"value1", "value2"},
+		},
+		{
+			name:     "OR chain without brackets",
+			clause:   "(status='active' OR status='inactive')",
+			expected: []string{"active", "inactive"},
+		},
+		{
+			name:     "no OR clause",
+			clause:   "status IN ('active', 'inactive')",
+			expected: nil,
+		},
+		{
+			name:     "empty",
+			clause:   "",
+			expected: nil,
+		},
+		{
+			name:     "min/max constraint (not OR equality)",
+			clause:   "([age]>=(18))",
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ParseORClauseValues(tt.clause)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("ParseORClauseValues(%q) = %v, want %v", tt.clause, result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestParseMinMaxConstraints(t *testing.T) {
 	tests := []struct {
 		name           string

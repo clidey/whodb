@@ -30,6 +30,9 @@ var (
 	betweenPattern    = regexp.MustCompile(`(?i)between\s+(-?\d+(?:\.\d+)?)\s+and\s+(-?\d+(?:\.\d+)?)`)
 	typeCastPattern   = regexp.MustCompile(`::\w+(\s+\w+)?(\[\])?`)
 	columnNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*`)
+	// Pattern for OR-style equality constraints: [col]='value' OR [col]='value2'
+	// Matches: [column]='value' or column='value' (with single or double quotes)
+	orEqualityPattern = regexp.MustCompile(`(?:\[?\w+\]?)\s*=\s*(?:N)?['"]([^'"]+)['"]`)
 )
 
 // EnsureConstraintEntry initializes a constraint map entry for a column if it doesn't exist.
@@ -91,6 +94,42 @@ func ParseINClauseValues(clause string) []string {
 	content := clause[startIdx:endIdx]
 
 	return ParseValueList(content)
+}
+
+// ParseORClauseValues extracts values from OR equality constraints.
+// Handles formats like:
+//   - ([status]='Pending' OR [status]='Shipped' OR [status]='Delivered')
+//   - (col='a' OR col='b')
+//   - ([col]=N'value1' OR [col]=N'value2')  (MSSQL Unicode)
+func ParseORClauseValues(clause string) []string {
+	// Check if this looks like an OR-style constraint
+	clauseLower := strings.ToLower(clause)
+	if !strings.Contains(clauseLower, " or ") {
+		return nil
+	}
+
+	// Find all [col]='value' or col='value' patterns
+	matches := orEqualityPattern.FindAllStringSubmatch(clause, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+
+	values := make([]string, 0, len(matches))
+	seen := make(map[string]bool)
+	for _, match := range matches {
+		if len(match) > 1 {
+			val := match[1]
+			if !seen[val] {
+				values = append(values, val)
+				seen[val] = true
+			}
+		}
+	}
+
+	if len(values) == 0 {
+		return nil
+	}
+	return values
 }
 
 // ParseValueList parses a comma-separated list of quoted values.
