@@ -66,6 +66,7 @@ import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema}
 import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
+import {addAuthHeader} from "../../utils/auth-headers";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -362,10 +363,9 @@ export const ChatPage: FC = () => {
         try {
             const response = await fetch('/api/ai-chat/stream', {
                 method: 'POST',
-                headers: {
+                headers: addAuthHeader({
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-                },
+                }),
                 body: JSON.stringify({
                     schema,
                     modelType: modelType.modelType,
