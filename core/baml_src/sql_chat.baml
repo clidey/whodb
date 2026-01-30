@@ -156,9 +156,24 @@ function GenerateSQLQuery(
 
     ### Additional Guidelines:
     - For large result sets, warn the user and add LIMIT clauses
-    - For complex requests, break them into multiple queries if needed
     - Before DELETE/UPDATE operations, always confirm with the user first
     - When you can provide both explanation and query, do so (message first, then sql)
+
+    ### CRITICAL: ONE SQL STATEMENT PER RESPONSE OBJECT
+    **Each SQL query MUST be in its own separate ChatResponse object in the array.**
+
+    ❌ WRONG - Multiple statements in one text field:
+    [{"type": "sql", "operation": "get", "text": "SELECT * FROM schema.users; SELECT * FROM schema.orders;"}]
+
+    ✅ CORRECT - Separate objects for each query:
+    [
+      {"type": "message", "operation": null, "text": "I'll get the users and orders for you."},
+      {"type": "sql", "operation": "get", "text": "SELECT * FROM schema.users LIMIT 100;"},
+      {"type": "sql", "operation": "get", "text": "SELECT * FROM schema.orders LIMIT 100;"}
+    ]
+
+    This is MANDATORY because databases can only execute one statement at a time.
+    For complex requests requiring multiple queries, return multiple sql objects.
 
     Previous Conversation:
     {{ context.previous_conversation }}
