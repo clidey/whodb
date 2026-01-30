@@ -57,7 +57,8 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 		"tinyint unsigned", "smallint unsigned", "mediumint unsigned", "int unsigned", "bigint unsigned":
 		return genUint(constraints, faker)
 
-	case "float", "float4", "float8", "real", "double", "double precision", "decimal", "numeric", "number", "money":
+	case "float", "float4", "float8", "real", "double", "double precision", "decimal", "numeric", "number", "money", "smallmoney",
+		"binary_float", "binary_double":
 		return genDecimal(constraints, faker)
 
 	case "bool", "boolean", "bit":
@@ -65,11 +66,12 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 
 	case "date", "date32":
 		return genDate(faker)
-	case "datetime", "datetime2", "datetime64", "smalldatetime":
+	case "datetime", "datetime2", "datetime64", "smalldatetime",
+		"timestamp with local time zone":
 		return genDateTime(faker)
 	case "datetimeoffset":
 		return genDateTimeOffset(faker)
-	case "interval":
+	case "interval", "interval year to month", "interval day to second":
 		return genInterval(faker)
 	case "year":
 		return genYear(faker)
@@ -80,10 +82,12 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	case "json", "jsonb":
 		return genJSON(faker)
 
-	case "bytea", "blob", "binary", "varbinary", "image", "tinyblob", "mediumblob", "longblob":
+	case "bytea", "blob", "binary", "varbinary", "image", "tinyblob", "mediumblob", "longblob",
+		"raw", "long raw", "bfile":
 		return genBinary(constraints, faker)
 
-	case "text", "string", "varchar", "char", "character", "character varying", "nvarchar", "nchar", "ntext", "fixedstring", "clob", "nclob", "long":
+	case "text", "string", "varchar", "char", "character", "character varying", "nvarchar", "nchar", "ntext", "fixedstring", "clob", "nclob", "long",
+		"varchar2", "nvarchar2":
 		return genText(constraints, faker)
 
 	case "enum":
@@ -97,7 +101,7 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	case "point":
 		return genPoint(faker)
 
-	case "xml":
+	case "xml", "xmltype":
 		return genXML(faker)
 
 	// =============================================================================
@@ -302,7 +306,8 @@ func genJSON(f *gofakeit.Faker) any {
 	return string(jsonBytes)
 }
 
-// genBinary generates binary data as hex string
+// genBinary generates binary data as hex string (0x prefixed)
+// The hex format survives string serialization and can be decoded by ConvertStringValue
 func genBinary(c map[string]any, f *gofakeit.Faker) any {
 	length := 16
 	if c != nil {
@@ -315,7 +320,8 @@ func genBinary(c map[string]any, f *gofakeit.Faker) any {
 	for i := range bytes {
 		bytes[i] = byte(f.Number(0, 255))
 	}
-	return bytes
+	// Return as hex string with 0x prefix for proper round-trip through string serialization
+	return fmt.Sprintf("0x%x", bytes)
 }
 
 // genArray generates a PostgreSQL-style array literal like {val1,val2,val3}

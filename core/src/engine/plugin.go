@@ -66,6 +66,7 @@ type Column struct {
 	Name             string
 	IsPrimary        bool
 	IsAutoIncrement  bool
+	IsComputed       bool // Database-managed, generated, etc
 	IsForeignKey     bool
 	ReferencedTable  *string
 	ReferencedColumn *string
@@ -84,14 +85,6 @@ type GetRowsResult struct {
 
 // GraphUnitRelationshipType defines the cardinality of a relationship between tables.
 type GraphUnitRelationshipType string
-
-const (
-	GraphUnitRelationshipType_OneToOne   = "OneToOne"
-	GraphUnitRelationshipType_OneToMany  = "OneToMany"
-	GraphUnitRelationshipType_ManyToOne  = "ManyToOne"
-	GraphUnitRelationshipType_ManyToMany = "ManyToMany"
-	GraphUnitRelationshipType_Unknown    = "Unknown"
-)
 
 // GraphUnitRelationship describes a foreign key relationship between two tables.
 type GraphUnitRelationship struct {

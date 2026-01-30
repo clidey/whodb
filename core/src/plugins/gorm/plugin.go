@@ -797,6 +797,29 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 	})
 }
 
+// QueryComputedColumns executes a query and returns a set of computed column names.
+// This is a helper for SQL plugins that query system catalogs for generated/computed columns.
+// The query must return exactly 1 column: column_name.
+func (p *GormPlugin) QueryComputedColumns(config *engine.PluginConfig, query string, params ...any) (map[string]bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]bool, error) {
+		rows, err := db.Raw(query, params...).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		computed := make(map[string]bool)
+		for rows.Next() {
+			var columnName string
+			if err := rows.Scan(&columnName); err != nil {
+				continue
+			}
+			computed[columnName] = true
+		}
+		return computed, nil
+	})
+}
+
 // NormalizeType returns the type unchanged by default.
 // Database plugins should override this to normalize aliases to canonical types.
 func (p *GormPlugin) NormalizeType(typeName string) string {

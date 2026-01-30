@@ -43,7 +43,7 @@ var (
 	)
 
 	DecimalTypes = mapset.NewSet(
-		"NUMERIC", "DECIMAL", "NUMBER", "MONEY",
+		"NUMERIC", "DECIMAL", "NUMBER", "MONEY", "SMALLMONEY",
 		"DECIMAL32", "DECIMAL64", "DECIMAL128", "DECIMAL256",
 	)
 
@@ -51,6 +51,7 @@ var (
 		"REAL", "DOUBLE PRECISION",
 		"FLOAT", "DOUBLE",
 		"FLOAT32", "FLOAT64",
+		"BINARY_FLOAT", "BINARY_DOUBLE",
 	)
 
 	BoolTypes = mapset.NewSet(
@@ -65,16 +66,17 @@ var (
 	)
 
 	DateTimeTypes = mapset.NewSet(
-		"TIMESTAMP", "TIMESTAMP WITH TIME ZONE",
+		"TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITH LOCAL TIME ZONE",
 		"TIME", "TIME WITH TIME ZONE",
 		"DATETIME", "YEAR",
-		"DATETIME2", "SMALLDATETIME",
-		"INTERVAL",
+		"DATETIME2", "SMALLDATETIME", "DATETIMEOFFSET",
+		"INTERVAL", "INTERVAL YEAR TO MONTH", "INTERVAL DAY TO SECOND",
 		"DATETIME64",
 	)
 
 	UuidTypes = mapset.NewSet(
 		"UUID",
+		"UNIQUEIDENTIFIER",
 	)
 
 	TextTypes = mapset.NewSet(
@@ -82,6 +84,8 @@ var (
 		"VARCHAR", "CHAR",
 		"TINYTEXT", "MEDIUMTEXT", "LONGTEXT",
 		"STRING", "FIXEDSTRING",
+		"NVARCHAR", "NCHAR", "NTEXT",
+		"VARCHAR2", "NVARCHAR2", "CLOB", "NCLOB", "LONG",
 	)
 
 	JsonTypes = mapset.NewSet(
@@ -94,6 +98,7 @@ var (
 		"BINARY", "VARBINARY",
 		"TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB",
 		"IMAGE",
+		"RAW", "LONG RAW", "BFILE",
 	)
 
 	ArrayTypes = mapset.NewSet(
@@ -112,5 +117,6 @@ var (
 
 	XMLTypes = mapset.NewSet(
 		"XML",
+		"XMLTYPE",
 	)
 )

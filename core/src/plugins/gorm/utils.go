@@ -18,6 +18,7 @@ package gorm_plugin
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -320,7 +321,18 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		}
 		return datetime, nil
 	case binaryTypes.Contains(baseType):
-		blobData := []byte(value)
+		// Handle hex-encoded binary data (0x prefix from mock data generator)
+		var blobData []byte
+		if strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X") {
+			var err error
+			blobData, err = hex.DecodeString(value[2:])
+			if err != nil {
+				log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to decode hex binary value")
+				return nil, fmt.Errorf("invalid hex binary format: %v", err)
+			}
+		} else {
+			blobData = []byte(value)
+		}
 		if isNullable && len(blobData) == 0 {
 			return sql.NullString{Valid: false}, nil
 		}

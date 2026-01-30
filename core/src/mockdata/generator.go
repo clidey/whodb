@@ -545,22 +545,23 @@ func (g *Generator) generateTableRows(
 		return 0, fmt.Errorf("failed to get columns: %w", err)
 	}
 
-	// Log column details for debugging PK/auto-increment issues
+	// Log column details for debugging PK/auto-increment/computed issues
 	columnDetails := make([]map[string]any, 0, len(columns))
 	for _, col := range columns {
-		if col.IsPrimary || col.IsAutoIncrement {
+		if col.IsPrimary || col.IsAutoIncrement || col.IsComputed {
 			columnDetails = append(columnDetails, map[string]any{
 				"name":       col.Name,
 				"type":       col.Type,
 				"isPrimary":  col.IsPrimary,
 				"isAutoIncr": col.IsAutoIncrement,
+				"isComputed": col.IsComputed,
 			})
 		}
 	}
 	log.Logger.WithFields(map[string]any{
-		"table":       table,
-		"columnCount": len(columns),
-		"pkColumns":   columnDetails,
+		"table":          table,
+		"columnCount":    len(columns),
+		"specialColumns": columnDetails,
 	}).Debug("Retrieved column definitions")
 
 	constraints, err := plugin.GetColumnConstraints(config, schema, table)
@@ -856,6 +857,16 @@ func (g *Generator) generateRow(
 				"table":  table,
 				"column": col.Name,
 			}).Debug("Skipping auto-increment column")
+			continue
+		}
+
+		// Skip computed/database-managed columns
+		if col.IsComputed {
+			log.Logger.WithFields(map[string]any{
+				"table":  table,
+				"column": col.Name,
+				"type":   col.Type,
+			}).Debug("Skipping computed column")
 			continue
 		}
 
