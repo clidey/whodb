@@ -342,6 +342,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
     const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch";
+    const isClickHouse = databaseType === "ClickHouse";
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
@@ -1618,21 +1619,25 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         <SelectItem value="overwrite" data-value="overwrite">{t('overwriteExisting')}</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <div>
-                                    <Label>{t('fkVariety')}</Label>
-                                    <p className="text-sm text-muted-foreground mb-2">{t('fkVarietyDescription')}</p>
-                                </div>
-                                <Select value={mockDataFkDensityRatio} onValueChange={setMockDataFkDensityRatio}>
-                                    <SelectTrigger className="w-full" data-testid="mock-data-fk-variety-select">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="5" data-value="5">{t('fkVarietyHigh')}</SelectItem>
-                                        <SelectItem value="10" data-value="10">{t('fkVarietyMedium')}</SelectItem>
-                                        <SelectItem value="20" data-value="20">{t('fkVarietyNormal')}</SelectItem>
-                                        <SelectItem value="50" data-value="50">{t('fkVarietyLow')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                {!isClickHouse && (
+                                    <>
+                                        <div>
+                                            <Label>{t('fkVariety')}</Label>
+                                            <p className="text-sm text-muted-foreground mb-2">{t('fkVarietyDescription')}</p>
+                                        </div>
+                                        <Select value={mockDataFkDensityRatio} onValueChange={setMockDataFkDensityRatio}>
+                                            <SelectTrigger className="w-full" data-testid="mock-data-fk-variety-select">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="5" data-value="5">{t('fkVarietyHigh')}</SelectItem>
+                                                <SelectItem value="10" data-value="10">{t('fkVarietyMedium')}</SelectItem>
+                                                <SelectItem value="20" data-value="20">{t('fkVarietyNormal')}</SelectItem>
+                                                <SelectItem value="50" data-value="50">{t('fkVarietyLow')}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </>
+                                )}
                                 {/* Dependency preview when FK tables will be populated */}
                                 {adjustedDepAnalysis?.Error && (
                                     <Alert variant="destructive" className="mt-4">
@@ -1690,10 +1695,10 @@ export const StorageUnitTable: FC<TableProps> = ({
                         )}
                     </div>
                     <SheetFooter className="flex gap-sm px-0">
-                        <Alert variant="info" className="mb-4">
+                        <Alert variant={isClickHouse ? "default" : "info"} className="mb-4">
                             <AlertTitle>{t('mockDataNote')}</AlertTitle>
                             <AlertDescription>
-                                {t('mockDataWarning')}
+                                {isClickHouse ? t('mockDataWarningClickHouse') : t('mockDataWarning')}
                             </AlertDescription>
                         </Alert>
                         <Button

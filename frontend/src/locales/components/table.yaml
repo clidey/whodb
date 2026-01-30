@@ -87,6 +87,7 @@ en:
   # Mock data alert
   mockDataNote: Note
   mockDataWarning: Mock data generation will populate foreign key parent tables as needed.
+  mockDataWarningClickHouse: ClickHouse does not support foreign keys. Mock data will be generated for this table only.
 
   dependencyError: Cannot Generate
   tablesToPopulate: "Tables to populate:"
