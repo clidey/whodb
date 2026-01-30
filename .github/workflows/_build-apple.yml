@@ -413,7 +413,60 @@ jobs:
           echo "Using certificate: $MAS_CERT_ID"
           echo "Using entitlements: build/darwin/entitlements.plist"
 
-          # Sign the app bundle (following Wails documentation approach)
+          # Step 2a: Sign nested binaries FIRST (dylibs, frameworks)
+          # This is required because third-party libraries may include unsigned dylibs
+          echo ""
+          echo "📦 Step 2a: Signing nested binaries (dylibs, frameworks)..."
+
+          # Find and sign all dylibs
+          DYLIB_COUNT=0
+          while IFS= read -r -d '' dylib; do
+            echo "  Signing: $(basename "$dylib")"
+            codesign --force \
+              --sign "$MAS_CERT_ID" \
+              --options runtime \
+              --timestamp \
+              "$dylib"
+            DYLIB_COUNT=$((DYLIB_COUNT + 1))
+          done < <(find "$APP_PATH" -name "*.dylib" -print0 2>/dev/null)
+
+          # Find and sign all .so files (some libraries use this extension)
+          while IFS= read -r -d '' sofile; do
+            echo "  Signing: $(basename "$sofile")"
+            codesign --force \
+              --sign "$MAS_CERT_ID" \
+              --options runtime \
+              --timestamp \
+              "$sofile"
+            DYLIB_COUNT=$((DYLIB_COUNT + 1))
+          done < <(find "$APP_PATH" -name "*.so" -print0 2>/dev/null)
+
+          # Sign frameworks (if any)
+          while IFS= read -r -d '' framework; do
+            echo "  Signing framework: $(basename "$framework")"
+            codesign --force \
+              --sign "$MAS_CERT_ID" \
+              --options runtime \
+              --timestamp \
+              "$framework"
+            DYLIB_COUNT=$((DYLIB_COUNT + 1))
+          done < <(find "$APP_PATH/Contents/Frameworks" -maxdepth 1 -name "*.framework" -print0 2>/dev/null)
+
+          echo "✅ Signed $DYLIB_COUNT nested binaries"
+
+          # Step 2b: Sign the main executable
+          echo ""
+          echo "📦 Step 2b: Signing main executable..."
+          codesign --force \
+            --sign "$MAS_CERT_ID" \
+            --entitlements build/darwin/entitlements.plist \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH/Contents/MacOS/whodb"
+
+          # Step 2c: Sign the app bundle (following Wails documentation approach)
+          echo ""
+          echo "📦 Step 2c: Signing app bundle..."
           codesign --force \
             --sign "$MAS_CERT_ID" \
             --entitlements build/darwin/entitlements.plist \
