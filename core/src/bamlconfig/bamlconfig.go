@@ -75,8 +75,8 @@ func configureBamlLibraryPath() {
 		return
 	}
 
-	// Only applies to macOS desktop builds
-	if runtime.GOOS != "darwin" || os.Getenv("WHODB_DESKTOP") != "true" {
+	// Only applies to macOS
+	if runtime.GOOS != "darwin" {
 		return
 	}
 
