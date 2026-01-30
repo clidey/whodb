@@ -37,7 +37,7 @@ import {
     SelectValue,
     toast
 } from "@clidey/ux";
-import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useExecuteConfirmedSqlMutation} from '@graphql';
+import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGetAiChatLazyQuery} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
@@ -57,7 +57,7 @@ import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
-import {HoudiniActions, IChatMessage} from "../../store/chat";
+import {HoudiniActions} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
 import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
@@ -361,8 +361,10 @@ export const ChatPage: FC = () => {
         }, 250);
 
         try {
+            toast.info('[DEBUG] Fetching /api/ai-chat/stream...');
             const response = await fetch('/api/ai-chat/stream', {
                 method: 'POST',
+                credentials: 'include',
                 headers: addAuthHeader({
                     'Content-Type': 'application/json',
                 }),
@@ -379,9 +381,17 @@ export const ChatPage: FC = () => {
                     },
                 }),
             });
+            toast.info(`[DEBUG] Response: ${response.status} ${response.statusText} (URL: ${response.url})`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                toast.error(`[DEBUG] Error ${response.status}: ${errorText || response.statusText}`);
+                setLoading(false);
+                return;
+            }
 
             if (!response.body) {
-                toast.error(t('unableToQuery') + " " + response.statusText);
+                toast.error('[DEBUG] No response body received');
                 setLoading(false);
                 return;
             }
