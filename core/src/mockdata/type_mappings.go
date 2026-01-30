@@ -50,15 +50,17 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	}
 
 	switch normalizedType {
-	case "int", "integer", "int2", "int4", "int8", "smallint", "bigint", "tinyint", "mediumint", "serial", "bigserial", "smallserial":
+	case "int", "integer", "int2", "int4", "int8", "smallint", "bigint", "tinyint", "mediumint", "serial", "bigserial", "smallserial",
+		"int16", "int32", "int64", "int128", "int256":
 		return genInt(constraints, faker)
 
-	case "uint", "uint8", "uint16", "uint32", "uint64",
+	case "uint", "uint8", "uint16", "uint32", "uint64", "uint128", "uint256",
 		"tinyint unsigned", "smallint unsigned", "mediumint unsigned", "int unsigned", "bigint unsigned":
 		return genUint(constraints, faker)
 
 	case "float", "float4", "float8", "real", "double", "double precision", "decimal", "numeric", "number", "money", "smallmoney",
-		"binary_float", "binary_double":
+		"binary_float", "binary_double",
+		"float32", "float64":
 		return genDecimal(constraints, faker)
 
 	case "bool", "boolean", "bit":
@@ -87,14 +89,23 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 		return genBinary(constraints, faker)
 
 	case "text", "string", "varchar", "char", "character", "character varying", "nvarchar", "nchar", "ntext", "fixedstring", "clob", "nclob", "long",
-		"varchar2", "nvarchar2":
+		"varchar2", "nvarchar2",
+		"tinytext", "mediumtext", "longtext":
 		return genText(constraints, faker)
 
-	case "enum":
+	case "hstore":
+		return genHstore(faker)
+
+	case "enum", "enum8", "enum16":
 		return genText(constraints, faker)
 
-	case "inet", "cidr":
+	case "set":
+		return genText(constraints, faker)
+
+	case "inet", "cidr", "ipv4":
 		return genIPv4(faker)
+	case "ipv6":
+		return genIPv6(faker)
 	case "macaddr", "macaddr8":
 		return genMACAddr(faker)
 
@@ -136,12 +147,6 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 		return genText(constraints, faker) // TODO: implement genSpatial
 
 	// ClickHouse big integer types - need big.Int handling
-	// These are typically non-editable but listed for completeness
-	// INT128 range: -2^127 to 2^127-1
-	// UINT128 range: 0 to 2^128-1
-	case "int128", "int256", "uint128", "uint256":
-		return genText(constraints, faker) // TODO: implement genBigInt
-
 	// ClickHouse decimal types with specific precision
 	// DECIMAL32 example: up to 9 digits
 	// DECIMAL64 example: up to 18 digits
@@ -158,7 +163,7 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 // Uses practical defaults for mock data rather than full INT range.
 func genInt(c map[string]any, f *gofakeit.Faker) any {
 	minVal := int64(1)
-	maxVal := int64(100)
+	maxVal := int64(1000000)
 
 	if c != nil {
 		if v, ok := c["check_min"].(float64); ok {
@@ -180,7 +185,7 @@ func genInt(c map[string]any, f *gofakeit.Faker) any {
 // genUint generates an unsigned integer respecting check_min/check_max constraints.
 func genUint(c map[string]any, f *gofakeit.Faker) any {
 	minVal := uint64(0)
-	maxVal := uint64(100)
+	maxVal := uint64(1000000)
 
 	if c != nil {
 		if v, ok := c["check_min"].(float64); ok && v >= 0 {
@@ -277,6 +282,11 @@ func genIPv4(f *gofakeit.Faker) any {
 	return f.IPv4Address()
 }
 
+// genIPv6 generates an IPv6 address string
+func genIPv6(f *gofakeit.Faker) any {
+	return f.IPv6Address()
+}
+
 // genMACAddr generates a MAC address string
 func genMACAddr(f *gofakeit.Faker) any {
 	return f.MacAddress()
@@ -304,6 +314,17 @@ func genJSON(f *gofakeit.Faker) any {
 	}
 	jsonBytes, _ := json.Marshal(data)
 	return string(jsonBytes)
+}
+
+// genHstore generates a PostgreSQL hstore value as "key1"=>"value1","key2"=>"value2"
+func genHstore(f *gofakeit.Faker) any {
+	pairs := make([]string, f.Number(1, 3))
+	for i := range pairs {
+		key := f.Word()
+		value := f.Word()
+		pairs[i] = fmt.Sprintf("\"%s\"=>\"%s\"", key, value)
+	}
+	return strings.Join(pairs, ",")
 }
 
 // genBinary generates binary data as hex string (0x prefixed)

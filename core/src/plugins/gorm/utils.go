@@ -170,14 +170,6 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	// This is needed because type sets contain only base types, not parameterized types
 	baseType := common.ParseTypeSpec(columnType).BaseType
 
-	// Debug logging for type conversion
-	log.Logger.WithFields(map[string]any{
-		"columnType":   columnType,
-		"baseType":     baseType,
-		"isBinary":     binaryTypes.Contains(baseType),
-		"valuePreview": value[:50],
-	}).Debug("ConvertStringValue processing")
-
 	// Check if plugin wants to handle this data type
 	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, columnType, isNullable); handled {
 		return customValue, err
