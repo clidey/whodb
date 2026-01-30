@@ -170,6 +170,14 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	// This is needed because type sets contain only base types, not parameterized types
 	baseType := common.ParseTypeSpec(columnType).BaseType
 
+	// Debug logging for type conversion
+	log.Logger.WithFields(map[string]any{
+		"columnType":   columnType,
+		"baseType":     baseType,
+		"isBinary":     binaryTypes.Contains(baseType),
+		"valuePreview": value[:50],
+	}).Debug("ConvertStringValue processing")
+
 	// Check if plugin wants to handle this data type
 	if customValue, handled, err := p.GormPluginFunctions.HandleCustomDataType(value, columnType, isNullable); handled {
 		return customValue, err
@@ -322,6 +330,12 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		return datetime, nil
 	case binaryTypes.Contains(baseType):
 		// Handle hex-encoded binary data (0x prefix from mock data generator)
+		log.Logger.WithFields(map[string]any{
+			"baseType":     baseType,
+			"columnType":   columnType,
+			"valueLen":     len(value),
+			"hasHexPrefix": strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X"),
+		}).Debug("Converting binary type value")
 		var blobData []byte
 		if strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X") {
 			var err error

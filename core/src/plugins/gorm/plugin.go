@@ -131,6 +131,11 @@ type GormPluginFunctions interface {
 	// This is used by the mock data generator to track PKs for FK references.
 	// Returns 0 if the database doesn't support this or no ID was generated.
 	GetLastInsertID(db *gorm.DB) (int64, error)
+
+	// GetMaxBulkInsertParameters returns the maximum number of parameters supported
+	// for bulk insert operations. Used to calculate appropriate batch sizes.
+	// Default: 65535 (PostgreSQL/MySQL limit). Override for databases with lower limits.
+	GetMaxBulkInsertParameters() int
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -826,6 +831,13 @@ func (p *GormPlugin) NormalizeType(typeName string) string {
 	// Default: strip length and return uppercase base type
 	spec := common.ParseTypeSpec(typeName)
 	return common.FormatTypeSpec(spec)
+}
+
+// GetMaxBulkInsertParameters returns the default limit of 65535 parameters.
+// PostgreSQL and MySQL both support this limit. Override for databases with
+// lower limits (e.g., SQLite: 999, MSSQL: 2100, Oracle: 1000).
+func (p *GormPlugin) GetMaxBulkInsertParameters() int {
+	return 65535
 }
 
 // GetDatabaseMetadata returns nil by default.

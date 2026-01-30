@@ -885,6 +885,11 @@ func (g *Generator) generateRow(
 			value = g.generateColumnValue(col, colConstraints)
 		}
 
+		// Skip nil values - let the database use default values instead of explicit NULLs.
+		if value == nil {
+			continue
+		}
+
 		// Get constraint type if available (important for MongoDB schema validation)
 		constraintType := ""
 		if colConstraints != nil {

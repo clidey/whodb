@@ -275,6 +275,45 @@ func TestParseMinMaxConstraints(t *testing.T) {
 			name:   "no constraints",
 			clause: "status IN ('a', 'b')",
 		},
+		// MSSQL parenthesized format tests
+		{
+			name:           "MSSQL greater than or equal parenthesized",
+			clause:         "([price]>=(0))",
+			expectedMin:    0,
+			expectedHasMin: true,
+		},
+		{
+			name:           "MSSQL greater than parenthesized",
+			clause:         "([quantity]>(0))",
+			expectedMin:    1,
+			expectedHasMin: true,
+		},
+		{
+			name:           "MSSQL less than or equal parenthesized",
+			clause:         "([score]<=(100))",
+			expectedMax:    100,
+			expectedHasMax: true,
+		},
+		{
+			name:           "MSSQL less than parenthesized",
+			clause:         "([age]<(120))",
+			expectedMax:    119,
+			expectedHasMax: true,
+		},
+		{
+			name:           "MSSQL decimal in parentheses",
+			clause:         "([price]>=(0.01))",
+			expectedMin:    0.01,
+			expectedHasMin: true,
+		},
+		{
+			name:           "MSSQL between parenthesized",
+			clause:         "([rating] BETWEEN (1) AND (5))",
+			expectedMin:    1,
+			expectedMax:    5,
+			expectedHasMin: true,
+			expectedHasMax: true,
+		},
 	}
 
 	for _, tt := range tests {

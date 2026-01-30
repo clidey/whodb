@@ -573,6 +573,11 @@ func (p *Sqlite3Plugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
 }
 
+// GetMaxBulkInsertParameters returns 999 for SQLite.
+func (p *Sqlite3Plugin) GetMaxBulkInsertParameters() int {
+	return 999
+}
+
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}
 	plugin.Type = engine.DatabaseType_Sqlite3
