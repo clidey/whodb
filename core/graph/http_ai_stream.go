@@ -28,6 +28,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 func init() {
@@ -35,35 +36,57 @@ func init() {
 }
 
 func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
+	log.DebugFileAlways("AI Chat Stream: Handler started")
+
 	// Parse request
 	req, err := ParseStreamRequest(r)
 	if err != nil {
+		log.DebugFileAlways("AI Chat Stream: ParseStreamRequest failed: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.DebugFileAlways("AI Chat Stream: Request parsed - model=%s, schema=%s, query=%s", req.ModelType, req.Schema, req.Input.Query)
 
 	// Setup SSE
 	flusher := SetupSSEHeaders(w)
 	if flusher == nil {
+		log.DebugFileAlways("AI Chat Stream: Flusher is nil - streaming unsupported")
 		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
+	log.DebugFileAlways("AI Chat Stream: SSE headers set, flusher available")
 
 	// Get plugin and config
 	plugin, config := GetPluginForContext(r.Context())
+	if plugin == nil {
+		log.DebugFileAlways("AI Chat Stream: Plugin is nil")
+		SendSSEError(w, flusher, "No database plugin available")
+		return
+	}
+	if config == nil || config.Credentials == nil {
+		log.DebugFileAlways("AI Chat Stream: Config or credentials is nil")
+		SendSSEError(w, flusher, "No credentials available")
+		return
+	}
+	log.DebugFileAlways("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
+
 	config.ExternalModel = &engine.ExternalModel{
 		Type:     req.ModelType,
 		Token:    req.Token,
 		Model:    req.Model,
 		Endpoint: req.Endpoint,
 	}
+	log.DebugFileAlways("AI Chat Stream: ExternalModel set - type=%s, model=%s", req.ModelType, req.Model)
 
 	// Build table details
+	log.DebugFileAlways("AI Chat Stream: Building table details for schema=%s", req.Schema)
 	tableDetails, err := BuildTableDetails(plugin, config, req.Schema)
 	if err != nil {
+		log.DebugFileAlways("AI Chat Stream: BuildTableDetails failed: %v", err)
 		SendSSEError(w, flusher, "Failed to get table info: "+err.Error())
 		return
 	}
+	log.DebugFileAlways("AI Chat Stream: Table details built, length=%d", len(tableDetails))
 
 	// Setup BAML context
 	dbContext := types.DatabaseContext{
@@ -72,17 +95,24 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		Tables_and_fields:     tableDetails,
 		Previous_conversation: req.Input.PreviousConversation,
 	}
+	log.DebugFileAlways("AI Chat Stream: BAML context created")
 
 	// Create BAML stream
+	log.DebugFileAlways("AI Chat Stream: Setting up AI client...")
 	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
+	log.DebugFileAlways("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
 	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
+		log.DebugFileAlways("AI Chat Stream: GenerateSQLQuery failed: %v", err)
 		SendSSEError(w, flusher, "Failed to start stream: "+err.Error())
 		return
 	}
+	log.DebugFileAlways("AI Chat Stream: BAML stream created successfully")
 
 	// Process stream
+	log.DebugFileAlways("AI Chat Stream: Starting to process stream...")
 	processStream(w, flusher, stream, plugin, config)
+	log.DebugFileAlways("AI Chat Stream: Stream processing completed")
 }
 
 func processStream(
