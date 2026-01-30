@@ -119,6 +119,61 @@ func NewGenerator(fkDensityRatio int) *Generator {
 	}
 }
 
+// findChildTables returns all tables that have FK references to the given table.
+// The graph structure stores parent -> children relationships, so we look at the
+// target table's Relations to find its children (tables that reference it).
+func findChildTables(graph []engine.GraphUnit, targetTable string) []string {
+	for _, unit := range graph {
+		if unit.Unit.Name == targetTable {
+			var children []string
+			for _, rel := range unit.Relations {
+				children = append(children, rel.Name)
+			}
+			return children
+		}
+	}
+	return nil
+}
+
+// clearTableWithDependencies clears a table and all tables that reference it (children first).
+// This ensures FK constraints are respected by deleting in the correct order.
+func (g *Generator) clearTableWithDependencies(
+	plugin engine.PluginFunctions,
+	config *engine.PluginConfig,
+	schema, table string,
+	graph []engine.GraphUnit,
+	cleared map[string]bool,
+) error {
+	// Avoid clearing the same table twice (handles cycles)
+	if cleared[table] {
+		return nil
+	}
+
+	// Find tables that reference this table (children)
+	children := findChildTables(graph, table)
+
+	// Clear children first (recursive)
+	for _, child := range children {
+		if err := g.clearTableWithDependencies(plugin, config, schema, child, graph, cleared); err != nil {
+			return err
+		}
+	}
+
+	// Now safe to clear this table
+	log.Logger.WithFields(map[string]any{
+		"table":    table,
+		"children": children,
+	}).Debug("Clearing table data (children already cleared)")
+
+	if _, err := plugin.ClearTableData(config, schema, table); err != nil {
+		return fmt.Errorf("failed to clear table %s: %w", table, err)
+	}
+
+	cleared[table] = true
+	g.usedPKValues[table] = make(map[string]bool)
+	return nil
+}
+
 // AnalyzeDependencies collects all tables in dependency order with cycle detection.
 // Returns an analysis result with ordered tables, row counts, and any errors.
 func (g *Generator) AnalyzeDependencies(
@@ -377,6 +432,25 @@ func (g *Generator) Generate(
 
 	result.Warnings = analysis.Warnings
 
+	// If overwrite mode, clear target table and all child tables first (in FK-safe order)
+	if overwrite {
+		log.Logger.Debug("Overwrite mode: clearing target table and child tables")
+		graph, err := plugin.GetGraph(config, schema)
+		if err != nil {
+			log.Logger.WithError(err).Warn("Failed to get graph for FK-safe clearing, attempting direct clear")
+			// Fall back to direct clear (may fail with FK constraints)
+			if _, err := plugin.ClearTableData(config, schema, table); err != nil {
+				return nil, fmt.Errorf("failed to clear table %s: %w", table, err)
+			}
+		} else {
+			cleared := make(map[string]bool)
+			if err := g.clearTableWithDependencies(plugin, config, schema, table, graph, cleared); err != nil {
+				return nil, fmt.Errorf("failed to clear tables for overwrite: %w", err)
+			}
+			log.Logger.WithField("clearedTables", len(cleared)).Info("Cleared tables for overwrite")
+		}
+	}
+
 	// Wrap all inserts in a transaction for atomicity
 	// If any insert fails, all changes are rolled back
 	err = plugin.WithTransaction(config, func(tx any) error {
@@ -605,16 +679,9 @@ func (g *Generator) generateTableRows(
 		}).Debug("Retrieved FK relationships")
 	}
 
-	// Clear existing data if overwrite
-	if overwrite {
-		log.Logger.WithField("table", table).Debug("Clearing existing table data")
-		if _, err := plugin.ClearTableData(config, schema, table); err != nil {
-			log.Logger.WithError(err).WithField("table", table).Warn("Failed to clear table data")
-		}
-		// Clear used PK values since table is being cleared
-		g.usedPKValues[table] = make(map[string]bool)
-	} else {
-		// Load existing PKs to prevent uniqueness violations
+	// Load existing PKs to prevent uniqueness violations (only when not overwriting)
+	// When overwriting, tables are already cleared at the top level in Generate()
+	if !overwrite {
 		if err := g.loadExistingPKsForUniqueness(plugin, config, schema, table, columns); err != nil {
 			log.Logger.WithError(err).WithField("table", table).Warn("Failed to load existing PKs for uniqueness check")
 			// Continue anyway - worst case we get unique constraint errors
@@ -850,6 +917,11 @@ func (g *Generator) generateRow(
 	// Maps parent table name -> selected row (or nil for NULL)
 	selectedParentRows := make(map[string]map[string]any)
 
+	// Track skip reasons for debugging
+	skippedAutoIncr := 0
+	skippedComputed := 0
+	skippedNil := 0
+
 	for _, col := range columns {
 		// Skip auto-increment columns - database will generate these values
 		if col.IsAutoIncrement {
@@ -857,6 +929,7 @@ func (g *Generator) generateRow(
 				"table":  table,
 				"column": col.Name,
 			}).Debug("Skipping auto-increment column")
+			skippedAutoIncr++
 			continue
 		}
 
@@ -867,6 +940,7 @@ func (g *Generator) generateRow(
 				"column": col.Name,
 				"type":   col.Type,
 			}).Debug("Skipping computed column")
+			skippedComputed++
 			continue
 		}
 
@@ -887,6 +961,7 @@ func (g *Generator) generateRow(
 
 		// Skip nil values - let the database use default values instead of explicit NULLs.
 		if value == nil {
+			skippedNil++
 			continue
 		}
 
@@ -901,6 +976,17 @@ func (g *Generator) generateRow(
 		// Convert value to record
 		record := valueToRecord(col, value, constraintType)
 		records = append(records, record)
+	}
+
+	// Log summary if no records were generated (indicates a bug)
+	if len(records) == 0 {
+		log.Logger.WithFields(map[string]any{
+			"table":           table,
+			"totalColumns":    len(columns),
+			"skippedAutoIncr": skippedAutoIncr,
+			"skippedComputed": skippedComputed,
+			"skippedNil":      skippedNil,
+		}).Warn("No records generated - all columns were skipped")
 	}
 
 	return records, nil

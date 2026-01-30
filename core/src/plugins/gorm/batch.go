@@ -107,6 +107,15 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 	if len(records) > 0 {
 		columnCount = len(records[0])
 	}
+
+	if columnCount == 0 {
+		log.Logger.WithFields(map[string]any{
+			"table":       tableName,
+			"recordCount": len(records),
+		}).Error("All records are empty - no columns to insert")
+		return fmt.Errorf("cannot insert empty records into %s: all columns were skipped (check for incorrect auto-increment/computed detection)", tableName)
+	}
+
 	effectiveBatchSize := b.calculateBatchSize(columnCount)
 
 	var fullTableName string

@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -133,7 +134,7 @@ func TestGenerateMockDataStopsWhenExceedingMax(t *testing.T) {
 	}
 }
 
-func TestGenerateMockDataContinuesWhenClearTableFails(t *testing.T) {
+func TestGenerateMockDataFailsWhenClearTableFails(t *testing.T) {
 	r := &mutationResolver{}
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.GetColumnsForTableFunc = func(_ *engine.PluginConfig, _, _ string) ([]engine.Column, error) {
@@ -157,21 +158,22 @@ func TestGenerateMockDataContinuesWhenClearTableFails(t *testing.T) {
 	src.MainEngine.RegistryPlugin(mock.AsPlugin())
 	t.Cleanup(func() { src.MainEngine = origEngine })
 
-	// Clear failure is now a warning, not an error - generation should continue
-	status, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
+	// Overwrite mode requires clearing the table first
+	// If clear fails, the entire operation should fail to prevent duplicate data
+	_, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
 		Schema:            "public",
 		StorageUnit:       "orders",
 		RowCount:          1,
 		Method:            "default",
 		OverwriteExisting: true,
 	})
-	if err != nil {
-		t.Fatalf("expected success despite clear failure, got %v", err)
+	if err == nil {
+		t.Fatalf("expected error when clear fails in overwrite mode")
 	}
 	if !clearCalled {
 		t.Fatalf("expected ClearTableData to be called")
 	}
-	if status == nil || status.AmountGenerated != 1 {
-		t.Fatalf("expected 1 row generated, got %#v", status)
+	if !strings.Contains(err.Error(), "clear") {
+		t.Fatalf("expected error message to mention clear failure, got %v", err)
 	}
 }
