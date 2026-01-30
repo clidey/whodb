@@ -765,7 +765,6 @@ func (r *queryResolver) Version(ctx context.Context) (string, error) {
 }
 
 // Health is the resolver for the Health field.
-// Health is the resolver for the Health field.
 func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error) {
 	status := &model.HealthStatus{
 		Server:   "healthy",
@@ -775,45 +774,37 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 	// Check if user is authenticated and has credentials
 	credentials := auth.GetCredentials(ctx)
 	if credentials != nil && credentials.Type != "" {
-		// User is logged in - check database connection health
 		config := engine.NewPluginConfig(credentials)
 		plugin := src.MainEngine.Choose(engine.DatabaseType(config.Credentials.Type))
 
 		if plugin != nil {
-			// Run health check with timeout and panic recovery
-			type result struct {
-				err error
-			}
-			resultChan := make(chan result, 1)
+			// Create a context with 2 second timeout
+			healthCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			done := make(chan bool, 1)
 
 			go func() {
 				defer func() {
-					// Recover from any panics in database check
 					if r := recover(); r != nil {
-						resultChan <- result{err: fmt.Errorf("database health check panicked")}
+						// Panic in database check - mark as error
 					}
+					done <- true
 				}()
 
 				_, err := plugin.GetDatabases(config)
-				resultChan <- result{err: err}
-			}()
-
-			// Wait for result or timeout (2 second timeout for health checks)
-			timeout := make(chan bool, 1)
-			go func() {
-				time.Sleep(2 * time.Second)
-				timeout <- true
-			}()
-
-			select {
-			case res := <-resultChan:
-				if res.err == nil {
+				if err == nil {
 					status.Database = "healthy"
 				} else {
 					status.Database = "error"
 				}
-			case <-timeout:
-				// Timeout - database is not responding quickly enough
+			}()
+
+			select {
+			case <-done:
+				// Health check completed
+			case <-healthCtx.Done():
+				// Timeout - database is not responding
 				status.Database = "error"
 			}
 		}
