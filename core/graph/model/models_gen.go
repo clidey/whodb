@@ -243,6 +243,7 @@ type RowsResult struct {
 type SettingsConfig struct {
 	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
 	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
+	DisableCredentialForm bool  `json:"DisableCredentialForm"`
 }
 
 type SettingsConfigInput struct {

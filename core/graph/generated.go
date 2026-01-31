@@ -250,6 +250,7 @@ type ComplexityRoot struct {
 
 	SettingsConfig struct {
 		CloudProvidersEnabled func(childComplexity int) int
+		DisableCredentialForm func(childComplexity int) int
 		MetricsEnabled        func(childComplexity int) int
 	}
 
@@ -1248,6 +1249,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SettingsConfig.CloudProvidersEnabled(childComplexity), true
+	case "SettingsConfig.DisableCredentialForm":
+		if e.complexity.SettingsConfig.DisableCredentialForm == nil {
+			break
+		}
+
+		return e.complexity.SettingsConfig.DisableCredentialForm(childComplexity), true
 	case "SettingsConfig.MetricsEnabled":
 		if e.complexity.SettingsConfig.MetricsEnabled == nil {
 			break
@@ -5747,6 +5754,8 @@ func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context,
 				return ec.fieldContext_SettingsConfig_MetricsEnabled(ctx, field)
 			case "CloudProvidersEnabled":
 				return ec.fieldContext_SettingsConfig_CloudProvidersEnabled(ctx, field)
+			case "DisableCredentialForm":
+				return ec.fieldContext_SettingsConfig_DisableCredentialForm(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SettingsConfig", field.Name)
 		},
@@ -6537,6 +6546,35 @@ func (ec *executionContext) _SettingsConfig_CloudProvidersEnabled(ctx context.Co
 }
 
 func (ec *executionContext) fieldContext_SettingsConfig_CloudProvidersEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_DisableCredentialForm(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SettingsConfig_DisableCredentialForm,
+		func(ctx context.Context) (any, error) {
+			return obj.DisableCredentialForm, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_DisableCredentialForm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SettingsConfig",
 		Field:      field,
@@ -10683,6 +10721,11 @@ func (ec *executionContext) _SettingsConfig(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._SettingsConfig_MetricsEnabled(ctx, field, obj)
 		case "CloudProvidersEnabled":
 			out.Values[i] = ec._SettingsConfig_CloudProvidersEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DisableCredentialForm":
+			out.Values[i] = ec._SettingsConfig_DisableCredentialForm(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

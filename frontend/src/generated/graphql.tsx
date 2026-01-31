@@ -513,6 +513,7 @@ export type RowsResult = {
 export type SettingsConfig = {
   __typename?: 'SettingsConfig';
   CloudProvidersEnabled: Scalars['Boolean']['output'];
+  DisableCredentialForm: Scalars['Boolean']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -793,7 +794,7 @@ export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshClo
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean } };
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean } };
 
 export type UpdateSettingsMutationVariables = Exact<{
   newSettings: SettingsConfigInput;
@@ -2230,6 +2231,7 @@ export const SettingsConfigDocument = gql`
   SettingsConfig {
     MetricsEnabled
     CloudProvidersEnabled
+    DisableCredentialForm
   }
 }
     `;

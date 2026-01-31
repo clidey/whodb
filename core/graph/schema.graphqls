@@ -117,6 +117,7 @@ input LoginCredentials {
 type SettingsConfig {
   MetricsEnabled: Boolean
   CloudProvidersEnabled: Boolean!
+  DisableCredentialForm: Boolean!
 }
 
 input SettingsConfigInput {
