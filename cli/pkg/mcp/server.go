@@ -19,7 +19,10 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
@@ -251,12 +254,85 @@ func registerResources(server *mcp.Server) {
 	})
 }
 
-// Run starts the MCP server with the given transport.
+// TransportType specifies the transport mechanism for the MCP server.
+type TransportType string
+
+const (
+	// TransportStdio uses stdin/stdout for communication (default, for CLI integration).
+	TransportStdio TransportType = "stdio"
+	// TransportHTTP runs as an HTTP server with streaming support.
+	TransportHTTP TransportType = "http"
+)
+
+// HTTPOptions configures the HTTP transport.
+type HTTPOptions struct {
+	// Host to bind to (default: "localhost").
+	Host string
+	// Port to listen on (default: 3000).
+	Port int
+}
+
+// Run starts the MCP server with stdio transport.
 func Run(ctx context.Context, server *mcp.Server) error {
 	return server.Run(ctx, &mcp.StdioTransport{})
 }
 
-// Tool descriptions with usage guidance (Firecrawl-style)
+// RunHTTP starts the MCP server as an HTTP service.
+func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger *slog.Logger) error {
+	if opts == nil {
+		opts = &HTTPOptions{}
+	}
+	if opts.Host == "" {
+		opts.Host = "localhost"
+	}
+	if opts.Port == 0 {
+		opts.Port = 3000
+	}
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
+	}
+
+	// Warn if binding to non-localhost (network exposure)
+	if opts.Host != "localhost" && opts.Host != "127.0.0.1" {
+		logger.Warn("MCP server binding to network interface - no authentication is configured",
+			"host", opts.Host,
+			"recommendation", "Use --host=localhost for local development, or add authentication for production")
+	}
+
+	// Create HTTP handler for MCP
+	handler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
+		return server
+	}, nil)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
+	mux.Handle("/mcp", handler)
+
+	addr := fmt.Sprintf("%s:%d", opts.Host, opts.Port)
+	httpServer := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = httpServer.Shutdown(shutdownCtx)
+	}()
+
+	logger.Info("MCP server listening", "transport", "http", "address", addr, "endpoint", "/mcp", "health", "/health")
+	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("HTTP server error: %w", err)
+	}
+	return nil
+}
+
+// Tool descriptions with usage guidance
 
 const descSchemas = `List all schemas (namespaces) in a database.
 

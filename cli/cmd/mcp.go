@@ -39,6 +39,13 @@ var (
 	mcpAllowMultiStatement bool
 )
 
+// transport flags
+var (
+	mcpTransport string
+	mcpHost      string
+	mcpPort      int
+)
+
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
 	Short: "Model Context Protocol server",
@@ -53,10 +60,19 @@ var mcpServeCmd = &cobra.Command{
 	Short:         "Start the MCP server",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Long: `Start WhoDB as an MCP server using stdio transport.
+	Long: `Start WhoDB as an MCP server.
 
-The server communicates over stdin/stdout using JSON-RPC, making it
-compatible with Claude Desktop, Cursor, and other MCP clients.
+TRANSPORT:
+  --transport stdio  (default) Communicate via stdin/stdout for CLI integration
+  --transport http   Run as HTTP service for cloud/shared deployments
+
+  HTTP mode options:
+    --host HOST      Bind address (default: localhost)
+    --port PORT      Listen port (default: 3000)
+
+  HTTP mode exposes:
+    /mcp      - MCP endpoint (streaming HTTP)
+    /health   - Health check endpoint (returns {"status":"ok"})
 
 SECURITY:
   Write operations require user confirmation by default. This keeps you in
@@ -106,7 +122,15 @@ Connection Resolution:
   # Custom timeout and row limit
   whodb-cli mcp serve --timeout=60s --max-rows=500
 
-  # Claude Desktop / Claude Code configuration:
+  # Run as HTTP service
+  whodb-cli mcp serve --transport=http --port=3000
+  # Endpoint: http://localhost:3000/mcp
+  # Health:   http://localhost:3000/health
+
+  # HTTP mode bound to all interfaces (can be used in Docker/Kubernetes)
+  whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+
+  # Claude Desktop / Claude Code configuration (stdio):
   {
     "mcpServers": {
       "whodb": {
@@ -155,9 +179,18 @@ Connection Resolution:
 			AllowDrop:           mcpAllowDrop,
 		}
 
-		// Create and run the MCP server
 		server := whodbmcp.NewServer(opts)
-		return whodbmcp.Run(ctx, server)
+
+		// Run with selected transport
+		switch whodbmcp.TransportType(mcpTransport) {
+		case whodbmcp.TransportHTTP:
+			return whodbmcp.RunHTTP(ctx, server, &whodbmcp.HTTPOptions{
+				Host: mcpHost,
+				Port: mcpPort,
+			}, opts.Logger)
+		default:
+			return whodbmcp.Run(ctx, server)
+		}
 	},
 }
 
@@ -184,6 +217,14 @@ func init() {
 		"Limit rows returned per query (0 = unlimited, default)")
 	mcpServeCmd.Flags().BoolVar(&mcpAllowMultiStatement, "allow-multi-statement", false,
 		"Allow multiple SQL statements in one query (security risk)")
+
+	// Transport flags
+	mcpServeCmd.Flags().StringVar(&mcpTransport, "transport", "stdio",
+		"Transport type: stdio (default) or http")
+	mcpServeCmd.Flags().StringVar(&mcpHost, "host", "localhost",
+		"Host to bind to (only used with --transport=http)")
+	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
+		"Port to listen on (only used with --transport=http)")
 
 	// Mark flags as mutually exclusive
 	mcpServeCmd.MarkFlagsMutuallyExclusive("read-only", "allow-write")
