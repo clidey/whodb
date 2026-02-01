@@ -47,6 +47,15 @@ var (
 	mcpPort      int
 )
 
+// tool enablement flags
+var (
+	mcpEnabledTools  []string
+	mcpDisabledTools []string
+)
+
+// analytics flags
+var mcpNoAnalytics bool
+
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
 	Short: "Model Context Protocol server",
@@ -101,6 +110,20 @@ Available tools:
   whodb_connections - List available connections
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
 
+TOOL SELECTION:
+  --tools           - Comma-separated list of tools to enable (default: all)
+                      Valid: query, schemas, tables, columns, connections, confirm
+  --disable-tools   - Comma-separated list of tools to disable (takes precedence)
+
+ANALYTICS:
+  Anonymous usage analytics are enabled by default to help improve WhoDB.
+  No query content, database credentials, or personal data is ever collected.
+  Only tool usage patterns and error rates are tracked.
+
+  To disable analytics:
+    --no-analytics                        Flag to disable analytics
+    WHODB_MCP_ANALYTICS_DISABLED=true     Environment variable to disable
+
 Connection Resolution:
   Tools accept a 'connection' parameter that references either:
   1. Environment profiles, for example:
@@ -135,6 +158,12 @@ Connection Resolution:
   # HTTP mode bound to all interfaces (can be used in Docker/Kubernetes)
   whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
 
+  # Enable only specific tools (minimal surface for read-only exploration)
+  whodb-cli mcp serve --tools=schemas,tables,columns,connections
+
+  # Disable query tool (only schema exploration)
+  whodb-cli mcp serve --disable-tools=query,confirm
+
   # Claude Desktop / Claude Code configuration (stdio):
   {
     "mcpServers": {
@@ -159,6 +188,16 @@ Connection Resolution:
 			<-sigChan
 			cancel()
 		}()
+
+		// Initialize analytics (enabled by default)
+		if err := whodbmcp.InitializeAnalytics(&whodbmcp.AnalyticsConfig{
+			Enabled:    !mcpNoAnalytics,
+			AppVersion: whodbmcp.Version,
+		}); err != nil {
+			// Analytics initialization failure is non-fatal
+			// Continue without analytics
+		}
+		defer whodbmcp.ShutdownAnalytics()
 
 		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)
@@ -188,9 +227,28 @@ Connection Resolution:
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
 			AllowDrop:           mcpAllowDrop,
+			EnabledTools:        mcpEnabledTools,
+			DisabledTools:       mcpDisabledTools,
 		}
 
 		server := whodbmcp.NewServer(opts)
+
+		// Determine security mode name for tracking
+		securityModeName := "confirm-writes"
+		if mcpSafeMode {
+			securityModeName = "safe-mode"
+		} else if mcpReadOnly {
+			securityModeName = "read-only"
+		} else if mcpAllowWrite {
+			securityModeName = "allow-write"
+		}
+
+		// Track server start
+		whodbmcp.TrackServerStart(ctx, mcpTransport, securityModeName, map[string]any{
+			"enabled_tools":  mcpEnabledTools,
+			"disabled_tools": mcpDisabledTools,
+			"security_level": securityLevel,
+		})
 
 		// Run with selected transport
 		switch whodbmcp.TransportType(mcpTransport) {
@@ -238,6 +296,16 @@ func init() {
 		"Host to bind to (only used with --transport=http)")
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
+
+	// Tool enablement flags
+	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
+		"Comma-separated list of tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm")
+	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,
+		"Comma-separated list of tools to disable (takes precedence over --tools)")
+
+	// Analytics flags
+	mcpServeCmd.Flags().BoolVar(&mcpNoAnalytics, "no-analytics", false,
+		"Disable anonymous usage analytics (can also set WHODB_MCP_ANALYTICS_DISABLED=true)")
 
 	// Mark flags as mutually exclusive
 	mcpServeCmd.MarkFlagsMutuallyExclusive("read-only", "allow-write")

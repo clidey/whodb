@@ -141,3 +141,155 @@ func TestBuildQueryDescription(t *testing.T) {
 		t.Error("Allow-write description should not mention read-only or confirmation")
 	}
 }
+
+// Tool enablement tests
+
+func TestToolEnablement_AllEnabledByDefault(t *testing.T) {
+	te := &ToolEnablement{}
+
+	tools := []string{"query", "schemas", "tables", "columns", "connections", "confirm"}
+	for _, tool := range tools {
+		if !te.isToolEnabled(tool) {
+			t.Errorf("Tool %s should be enabled by default", tool)
+		}
+	}
+}
+
+func TestToolEnablement_OnlySpecificEnabled(t *testing.T) {
+	te := &ToolEnablement{
+		EnabledTools: []string{"query", "schemas"},
+	}
+
+	if !te.isToolEnabled("query") {
+		t.Error("Tool 'query' should be enabled")
+	}
+	if !te.isToolEnabled("schemas") {
+		t.Error("Tool 'schemas' should be enabled")
+	}
+	if te.isToolEnabled("tables") {
+		t.Error("Tool 'tables' should be disabled when not in EnabledTools list")
+	}
+	if te.isToolEnabled("connections") {
+		t.Error("Tool 'connections' should be disabled when not in EnabledTools list")
+	}
+}
+
+func TestToolEnablement_DisabledTakesPrecedence(t *testing.T) {
+	te := &ToolEnablement{
+		EnabledTools:  []string{"query", "schemas", "tables"},
+		DisabledTools: []string{"query"},
+	}
+
+	if te.isToolEnabled("query") {
+		t.Error("Tool 'query' should be disabled (DisabledTools takes precedence)")
+	}
+	if !te.isToolEnabled("schemas") {
+		t.Error("Tool 'schemas' should be enabled")
+	}
+}
+
+func TestToolEnablement_DisableOnlySpecific(t *testing.T) {
+	te := &ToolEnablement{
+		DisabledTools: []string{"confirm"},
+	}
+
+	if !te.isToolEnabled("query") {
+		t.Error("Tool 'query' should be enabled (not in disabled list)")
+	}
+	if te.isToolEnabled("confirm") {
+		t.Error("Tool 'confirm' should be disabled")
+	}
+}
+
+func TestNewServer_WithToolEnablement(t *testing.T) {
+	server := NewServer(&ServerOptions{
+		EnabledTools: []string{"schemas", "tables", "columns"},
+	})
+	if server == nil {
+		t.Fatal("NewServer() returned nil with tool enablement")
+	}
+}
+
+func TestNewServer_WithDisabledTools(t *testing.T) {
+	server := NewServer(&ServerOptions{
+		DisabledTools: []string{"query", "confirm"},
+	})
+	if server == nil {
+		t.Fatal("NewServer() returned nil with disabled tools")
+	}
+}
+
+// Helper function tests
+
+func TestBoolPtr(t *testing.T) {
+	truePtr := boolPtr(true)
+	falsePtr := boolPtr(false)
+
+	if truePtr == nil || *truePtr != true {
+		t.Error("boolPtr(true) should return pointer to true")
+	}
+	if falsePtr == nil || *falsePtr != false {
+		t.Error("boolPtr(false) should return pointer to false")
+	}
+}
+
+// Prompt content tests
+
+func TestBuildQueryHelpContent(t *testing.T) {
+	// Test basic content
+	content := buildQueryHelpContent("", "")
+	if !strings.Contains(content, "LIMIT") {
+		t.Error("Query help should mention LIMIT")
+	}
+	if !strings.Contains(content, "WhoDB") {
+		t.Error("Query help should mention WhoDB")
+	}
+
+	// Test with database type
+	pgContent := buildQueryHelpContent("postgres", "")
+	if !strings.Contains(pgContent, "ILIKE") || !strings.Contains(pgContent, "jsonb") {
+		t.Error("Postgres-specific help should mention ILIKE and jsonb")
+	}
+
+	mysqlContent := buildQueryHelpContent("mysql", "")
+	if !strings.Contains(mysqlContent, "BINARY") {
+		t.Error("MySQL-specific help should mention BINARY")
+	}
+
+	// Test with query type
+	selectContent := buildQueryHelpContent("", "select")
+	if !strings.Contains(selectContent, "SELECT") {
+		t.Error("Select query help should contain SELECT examples")
+	}
+
+	joinContent := buildQueryHelpContent("", "join")
+	if !strings.Contains(joinContent, "JOIN") {
+		t.Error("Join query help should contain JOIN examples")
+	}
+}
+
+func TestBuildWorkflowHelpContent(t *testing.T) {
+	// Test analysis workflow
+	analysisContent := buildWorkflowHelpContent("analysis")
+	if !strings.Contains(analysisContent, "Data Analysis") {
+		t.Error("Analysis workflow should mention 'Data Analysis'")
+	}
+
+	// Test debugging workflow
+	debugContent := buildWorkflowHelpContent("debugging")
+	if !strings.Contains(debugContent, "Debugging") {
+		t.Error("Debugging workflow should mention 'Debugging'")
+	}
+
+	// Test relationships workflow
+	relContent := buildWorkflowHelpContent("relationships")
+	if !strings.Contains(relContent, "foreign") {
+		t.Error("Relationships workflow should mention foreign keys")
+	}
+
+	// Test default workflow
+	defaultContent := buildWorkflowHelpContent("unknown")
+	if !strings.Contains(defaultContent, "Schema Exploration") {
+		t.Error("Default workflow should list available workflows")
+	}
+}

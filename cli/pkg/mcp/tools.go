@@ -18,6 +18,8 @@ package mcp
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
@@ -28,6 +30,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// generateRequestID creates a unique request ID for tracing.
+// Format: toolname-timestamp-randomhex (e.g., "query-1706745600123-a1b2c3d4")
+func generateRequestID(toolName string) string {
+	randomBytes := make([]byte, 4)
+	if _, err := rand.Read(randomBytes); err != nil {
+		// Fallback to timestamp-only if random fails
+		return fmt.Sprintf("%s-%d", toolName, time.Now().UnixMilli())
+	}
+	return fmt.Sprintf("%s-%d-%s", toolName, time.Now().UnixMilli(), hex.EncodeToString(randomBytes))
+}
 
 // QueryInput is the input for the whodb_query tool.
 type QueryInput struct {
@@ -46,6 +59,7 @@ type QueryOutput struct {
 	ConfirmationRequired bool     `json:"confirmation_required,omitempty"`
 	ConfirmationToken    string   `json:"confirmation_token,omitempty"`
 	ConfirmationQuery    string   `json:"confirmation_query,omitempty"`
+	RequestID            string   `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // SchemasInput is the input for the whodb_schemas tool.
@@ -56,8 +70,9 @@ type SchemasInput struct {
 
 // SchemasOutput is the output for the whodb_schemas tool.
 type SchemasOutput struct {
-	Schemas []string `json:"schemas"`
-	Error   string   `json:"error,omitempty"`
+	Schemas   []string `json:"schemas"`
+	Error     string   `json:"error,omitempty"`
+	RequestID string   `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // TablesInput is the input for the whodb_tables tool.
@@ -76,9 +91,10 @@ type TableInfo struct {
 
 // TablesOutput is the output for the whodb_tables tool.
 type TablesOutput struct {
-	Tables []TableInfo `json:"tables"`
-	Schema string      `json:"schema"`
-	Error  string      `json:"error,omitempty"`
+	Tables    []TableInfo `json:"tables"`
+	Schema    string      `json:"schema"`
+	Error     string      `json:"error,omitempty"`
+	RequestID string      `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // ColumnsInput is the input for the whodb_columns tool.
@@ -103,10 +119,11 @@ type ColumnInfo struct {
 
 // ColumnsOutput is the output for the whodb_columns tool.
 type ColumnsOutput struct {
-	Columns []ColumnInfo `json:"columns"`
-	Table   string       `json:"table"`
-	Schema  string       `json:"schema"`
-	Error   string       `json:"error,omitempty"`
+	Columns   []ColumnInfo `json:"columns"`
+	Table     string       `json:"table"`
+	Schema    string       `json:"schema"`
+	Error     string       `json:"error,omitempty"`
+	RequestID string       `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // ConnectionsInput is the input for the whodb_connections tool.
@@ -127,6 +144,7 @@ type ConnectionInfo struct {
 type ConnectionsOutput struct {
 	Connections []ConnectionInfo `json:"connections"`
 	Error       string           `json:"error,omitempty"`
+	RequestID   string           `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // ConfirmInput is the input for the whodb_confirm tool.
@@ -137,10 +155,11 @@ type ConfirmInput struct {
 
 // ConfirmOutput is the output for the whodb_confirm tool.
 type ConfirmOutput struct {
-	Columns []string `json:"columns"`
-	Rows    [][]any  `json:"rows"`
-	Error   string   `json:"error,omitempty"`
-	Message string   `json:"message,omitempty"`
+	Columns   []string `json:"columns"`
+	Rows      [][]any  `json:"rows"`
+	Error     string   `json:"error,omitempty"`
+	Message   string   `json:"message,omitempty"`
+	RequestID string   `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // PendingConfirmation stores a query awaiting user confirmation
@@ -259,10 +278,14 @@ func convertRows(result *engine.GetRowsResult, maxRows int) ([][]any, bool) {
 
 // HandleQuery executes a SQL query against the specified connection with security validation.
 func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput, secOpts *SecurityOptions) (*mcp.CallToolResult, QueryOutput, error) {
+	requestID := generateRequestID("query")
+	startTime := time.Now()
+
 	// Validate input
 	connCount := countAvailableConnections()
 	if err := ValidateQueryInput(&input, connCount); err != nil {
-		return nil, QueryOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, QueryOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	// Detect statement type first
@@ -275,17 +298,20 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 		err := ValidateSQLStatement(input.Query, true, secOpts.SecurityLevel, secOpts.AllowMultiStatement, true)
 		if err != nil {
 			// Query has other issues beyond just being a write operation
-			return nil, QueryOutput{Error: fmt.Sprintf("query blocked: %v", err)}, nil
+			TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation", "statement_type": stmtType})
+			return nil, QueryOutput{Error: fmt.Sprintf("query blocked: %v", err), RequestID: requestID}, nil
 		}
 
 		// Create a pending confirmation for the write operation
 		token := storePendingConfirmation(input.Query, input.Connection)
 
+		TrackToolCall(ctx, "query", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "statement_type": stmtType})
 		return nil, QueryOutput{
 			ConfirmationRequired: true,
 			ConfirmationToken:    token,
 			ConfirmationQuery:    input.Query,
 			Warning:              fmt.Sprintf("This %s operation requires your approval before it runs. You have 60 seconds to confirm or cancel.", stmtType),
+			RequestID:            requestID,
 		}, nil
 	}
 
@@ -295,142 +321,185 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	allowDestructive := secOpts.AllowDrop
 	err := ValidateSQLStatement(input.Query, allowWrite, secOpts.SecurityLevel, secOpts.AllowMultiStatement, allowDestructive)
 	if err != nil {
-		return nil, QueryOutput{Error: fmt.Sprintf("query blocked: %v", err)}, nil
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "security", "statement_type": stmtType})
+		return nil, QueryOutput{Error: fmt.Sprintf("query blocked: %v", err), RequestID: requestID}, nil
 	}
 
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
-		return nil, QueryOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_resolve"})
+		return nil, QueryOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
-		return nil, QueryOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
+		return nil, QueryOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
 
 	if err := mgr.Connect(conn); err != nil {
-		return nil, QueryOutput{Error: fmt.Sprintf("cannot connect to database: %v", err)}, nil
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection", "db_type": conn.Type})
+		return nil, QueryOutput{Error: fmt.Sprintf("cannot connect to database: %v", err), RequestID: requestID}, nil
 	}
 	defer mgr.Disconnect()
 
 	result, err := executeQuery(ctx, mgr, input.Query, secOpts.QueryTimeout)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, QueryOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout)}, nil
+			TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})
+			return nil, QueryOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout), RequestID: requestID}, nil
 		}
-		return nil, QueryOutput{Error: fmt.Sprintf("query failed: %v", err)}, nil
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "execution", "db_type": conn.Type})
+		return nil, QueryOutput{Error: fmt.Sprintf("query failed: %v", err), RequestID: requestID}, nil
 	}
 
 	columns := convertColumns(result)
 	rows, truncated := convertRows(result, secOpts.MaxRows)
 
-	output := QueryOutput{Columns: columns, Rows: rows}
+	output := QueryOutput{Columns: columns, Rows: rows, RequestID: requestID}
 	if truncated {
 		output.Warning = fmt.Sprintf("Results truncated to %d rows. Use LIMIT in your query for more control.", secOpts.MaxRows)
 	}
 
+	TrackToolCall(ctx, "query", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{
+		"statement_type": stmtType,
+		"row_count":      len(rows),
+		"truncated":      truncated,
+		"db_type":        conn.Type,
+	})
 	return nil, output, nil
 }
 
 // HandleConfirm confirms and executes a pending write operation.
 func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput, secOpts *SecurityOptions) (*mcp.CallToolResult, ConfirmOutput, error) {
+	requestID := generateRequestID("confirm")
+	startTime := time.Now()
+
 	// Validate input
 	if err := ValidateConfirmInput(&input); err != nil {
-		return nil, ConfirmOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	// Get the pending confirmation
 	pending, err := getPendingConfirmation(input.Token)
 	if err != nil {
-		return nil, ConfirmOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "token_invalid"})
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	// Resolve connection
 	conn, err := ResolveConnectionOrDefault(pending.Connection)
 	if err != nil {
-		return nil, ConfirmOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_resolve"})
+		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
-		return nil, ConfirmOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
+		return nil, ConfirmOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
 
 	if err := mgr.Connect(conn); err != nil {
-		return nil, ConfirmOutput{Error: fmt.Sprintf("cannot connect to database: %v", err)}, nil
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection", "db_type": conn.Type})
+		return nil, ConfirmOutput{Error: fmt.Sprintf("cannot connect to database: %v", err), RequestID: requestID}, nil
 	}
 	defer mgr.Disconnect()
 
 	result, err := executeQuery(ctx, mgr, pending.Query, secOpts.QueryTimeout)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, ConfirmOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout)}, nil
+			TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})
+			return nil, ConfirmOutput{Error: fmt.Sprintf("query timed out after %v", secOpts.QueryTimeout), RequestID: requestID}, nil
 		}
-		return nil, ConfirmOutput{Error: fmt.Sprintf("query failed: %v", err)}, nil
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "execution", "db_type": conn.Type})
+		return nil, ConfirmOutput{Error: fmt.Sprintf("query failed: %v", err), RequestID: requestID}, nil
 	}
 
 	columns := convertColumns(result)
 	rows, _ := convertRows(result, 0) // No row limit for confirmed writes
 
 	stmtType := DetectStatementType(pending.Query)
+	TrackToolCall(ctx, "confirm", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{
+		"statement_type": stmtType,
+		"db_type":        conn.Type,
+	})
 	return nil, ConfirmOutput{
-		Columns: columns,
-		Rows:    rows,
-		Message: fmt.Sprintf("%s operation completed successfully", stmtType),
+		Columns:   columns,
+		Rows:      rows,
+		Message:   fmt.Sprintf("%s operation completed successfully", stmtType),
+		RequestID: requestID,
 	}, nil
 }
 
 // HandleSchemas lists all schemas in the database.
 func HandleSchemas(ctx context.Context, req *mcp.CallToolRequest, input SchemasInput) (*mcp.CallToolResult, SchemasOutput, error) {
+	requestID := generateRequestID("schemas")
+	startTime := time.Now()
+
 	// Validate input
 	connCount := countAvailableConnections()
 	if err := ValidateSchemasInput(&input, connCount); err != nil {
-		return nil, SchemasOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "schemas", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, SchemasOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
-		return nil, SchemasOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "schemas", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_resolve"})
+		return nil, SchemasOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
-		return nil, SchemasOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+		TrackToolCall(ctx, "schemas", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
+		return nil, SchemasOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
 
 	if err := mgr.Connect(conn); err != nil {
-		return nil, SchemasOutput{Error: fmt.Sprintf("cannot connect to database: %v", err)}, nil
+		TrackToolCall(ctx, "schemas", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection", "db_type": conn.Type})
+		return nil, SchemasOutput{Error: fmt.Sprintf("cannot connect to database: %v", err), RequestID: requestID}, nil
 	}
 	defer mgr.Disconnect()
 
 	schemas, err := mgr.GetSchemas()
 	if err != nil {
-		return nil, SchemasOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err)}, nil
+		TrackToolCall(ctx, "schemas", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "fetch", "db_type": conn.Type})
+		return nil, SchemasOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err), RequestID: requestID}, nil
 	}
 
-	return nil, SchemasOutput{Schemas: schemas}, nil
+	TrackToolCall(ctx, "schemas", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"schema_count": len(schemas), "db_type": conn.Type})
+	return nil, SchemasOutput{Schemas: schemas, RequestID: requestID}, nil
 }
 
 // HandleTables lists all tables in a schema.
 func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInput) (*mcp.CallToolResult, TablesOutput, error) {
+	requestID := generateRequestID("tables")
+	startTime := time.Now()
+
 	// Validate input
 	connCount := countAvailableConnections()
 	if err := ValidateTablesInput(&input, connCount); err != nil {
-		return nil, TablesOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, TablesOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
-		return nil, TablesOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_resolve"})
+		return nil, TablesOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
-		return nil, TablesOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+		TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
+		return nil, TablesOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
 
 	if err := mgr.Connect(conn); err != nil {
-		return nil, TablesOutput{Error: fmt.Sprintf("cannot connect to database: %v", err)}, nil
+		TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection", "db_type": conn.Type})
+		return nil, TablesOutput{Error: fmt.Sprintf("cannot connect to database: %v", err), RequestID: requestID}, nil
 	}
 	defer mgr.Disconnect()
 
@@ -442,17 +511,20 @@ func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInp
 	if schema == "" {
 		schemas, err := mgr.GetSchemas()
 		if err != nil {
-			return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err)}, nil
+			TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "schema_fetch", "db_type": conn.Type})
+			return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err), RequestID: requestID}, nil
 		}
 		if len(schemas) == 0 {
-			return nil, TablesOutput{Error: "no schemas found in database"}, nil
+			TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "no_schemas", "db_type": conn.Type})
+			return nil, TablesOutput{Error: "no schemas found in database", RequestID: requestID}, nil
 		}
 		schema = schemas[0]
 	}
 
 	tables, err := mgr.GetStorageUnits(schema)
 	if err != nil {
-		return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch tables: %v", err)}, nil
+		TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "fetch", "db_type": conn.Type})
+		return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch tables: %v", err), RequestID: requestID}, nil
 	}
 
 	// Convert to output format
@@ -468,29 +540,37 @@ func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInp
 		}
 	}
 
-	return nil, TablesOutput{Tables: tableInfos, Schema: schema}, nil
+	TrackToolCall(ctx, "tables", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"table_count": len(tableInfos), "db_type": conn.Type})
+	return nil, TablesOutput{Tables: tableInfos, Schema: schema, RequestID: requestID}, nil
 }
 
 // HandleColumns describes columns in a table.
 func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsInput) (*mcp.CallToolResult, ColumnsOutput, error) {
+	requestID := generateRequestID("columns")
+	startTime := time.Now()
+
 	// Validate input
 	connCount := countAvailableConnections()
 	if err := ValidateColumnsInput(&input, connCount); err != nil {
-		return nil, ColumnsOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "validation"})
+		return nil, ColumnsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
-		return nil, ColumnsOutput{Error: err.Error()}, nil
+		TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_resolve"})
+		return nil, ColumnsOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
-		return nil, ColumnsOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+		TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
+		return nil, ColumnsOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
 
 	if err := mgr.Connect(conn); err != nil {
-		return nil, ColumnsOutput{Error: fmt.Sprintf("cannot connect to database: %v", err)}, nil
+		TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection", "db_type": conn.Type})
+		return nil, ColumnsOutput{Error: fmt.Sprintf("cannot connect to database: %v", err), RequestID: requestID}, nil
 	}
 	defer mgr.Disconnect()
 
@@ -502,17 +582,20 @@ func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsI
 	if schema == "" {
 		schemas, err := mgr.GetSchemas()
 		if err != nil {
-			return nil, ColumnsOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err)}, nil
+			TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "schema_fetch", "db_type": conn.Type})
+			return nil, ColumnsOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err), RequestID: requestID}, nil
 		}
 		if len(schemas) == 0 {
-			return nil, ColumnsOutput{Error: "no schemas found in database"}, nil
+			TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "no_schemas", "db_type": conn.Type})
+			return nil, ColumnsOutput{Error: "no schemas found in database", RequestID: requestID}, nil
 		}
 		schema = schemas[0]
 	}
 
 	columns, err := mgr.GetColumns(schema, input.Table)
 	if err != nil {
-		return nil, ColumnsOutput{Error: fmt.Sprintf("failed to fetch columns: %v", err)}, nil
+		TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "fetch", "db_type": conn.Type})
+		return nil, ColumnsOutput{Error: fmt.Sprintf("failed to fetch columns: %v", err), RequestID: requestID}, nil
 	}
 
 	// Convert to output format
@@ -533,16 +616,20 @@ func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsI
 		columnInfos[i] = info
 	}
 
-	return nil, ColumnsOutput{Columns: columnInfos, Table: input.Table, Schema: schema}, nil
+	TrackToolCall(ctx, "columns", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"column_count": len(columnInfos), "db_type": conn.Type})
+	return nil, ColumnsOutput{Columns: columnInfos, Table: input.Table, Schema: schema, RequestID: requestID}, nil
 }
 
 // HandleConnections lists all available connections.
 func HandleConnections(ctx context.Context, req *mcp.CallToolRequest, input ConnectionsInput) (*mcp.CallToolResult, ConnectionsOutput, error) {
+	requestID := generateRequestID("connections")
+	startTime := time.Now()
 	var connections []ConnectionInfo
 
 	mgr, err := dbmgr.NewManager()
 	if err != nil {
-		return nil, ConnectionsOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err)}, nil
+		TrackToolCall(ctx, "connections", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "manager_init"})
+		return nil, ConnectionsOutput{Error: fmt.Sprintf("cannot initialize database manager: %v", err), RequestID: requestID}, nil
 	}
 
 	for _, info := range mgr.ListConnectionsWithSource() {
@@ -558,5 +645,6 @@ func HandleConnections(ctx context.Context, req *mcp.CallToolRequest, input Conn
 		})
 	}
 
-	return nil, ConnectionsOutput{Connections: connections}, nil
+	TrackToolCall(ctx, "connections", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"connection_count": len(connections)})
+	return nil, ConnectionsOutput{Connections: connections, RequestID: requestID}, nil
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
 )
@@ -58,6 +61,9 @@ Output formats:
   # Output as JSON for automation
   whodb-cli columns --connection mydb --table users --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		startTime := time.Now()
+
 		if columnsTable == "" {
 			return fmt.Errorf("--table flag is required")
 		}
@@ -131,6 +137,8 @@ Output formats:
 			return fmt.Errorf("failed to fetch columns: %w", err)
 		}
 		spinner.Stop()
+
+		analytics.TrackColumnsListed(ctx, conn.Type, len(columns), time.Since(startTime).Milliseconds())
 
 		// Convert to QueryResult format
 		outputColumns := []output.Column{

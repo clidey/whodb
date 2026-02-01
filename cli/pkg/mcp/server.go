@@ -62,6 +62,12 @@ type ServerOptions struct {
 	// Without this, DROP is blocked unless --confirm-writes is used
 	// Default: false
 	AllowDrop bool
+	// EnabledTools specifies which tools to enable. If empty, all tools are enabled.
+	// Valid values: "query", "schemas", "tables", "columns", "connections", "confirm"
+	EnabledTools []string
+	// DisabledTools specifies which tools to disable. Takes precedence over EnabledTools.
+	// Valid values: "query", "schemas", "tables", "columns", "connections", "confirm"
+	DisabledTools []string
 }
 
 // SecurityOptions contains runtime security settings for query execution
@@ -116,8 +122,17 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		AllowDrop:           opts.AllowDrop,
 	}
 
-	// Register tools with security options
-	registerTools(server, secOpts)
+	// Create tool enablement from server options
+	toolEnablement := &ToolEnablement{
+		EnabledTools:  opts.EnabledTools,
+		DisabledTools: opts.DisabledTools,
+	}
+
+	// Register tools with security options and enablement
+	registerTools(server, secOpts, toolEnablement)
+
+	// Register prompts for AI assistant guidance
+	registerPrompts(server)
 
 	// Register resources
 	registerResources(server)
@@ -125,46 +140,137 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	return server
 }
 
+// ToolEnablement tracks which tools should be registered.
+type ToolEnablement struct {
+	EnabledTools  []string
+	DisabledTools []string
+}
+
+// isToolEnabled checks if a tool should be registered based on enabled/disabled lists.
+func (te *ToolEnablement) isToolEnabled(toolName string) bool {
+	// If disabled list contains this tool, it's disabled
+	for _, t := range te.DisabledTools {
+		if t == toolName {
+			return false
+		}
+	}
+	// If enabled list is empty, all tools are enabled by default
+	if len(te.EnabledTools) == 0 {
+		return true
+	}
+	// If enabled list is specified, only those tools are enabled
+	for _, t := range te.EnabledTools {
+		if t == toolName {
+			return true
+		}
+	}
+	return false
+}
+
+// boolPtr returns a pointer to a bool value (helper for ToolAnnotations).
+func boolPtr(b bool) *bool {
+	return &b
+}
+
 // registerTools registers all database tools with the server.
-func registerTools(server *mcp.Server, secOpts *SecurityOptions) {
+func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement *ToolEnablement) {
+	if toolEnablement == nil {
+		toolEnablement = &ToolEnablement{}
+	}
+
 	// Build query tool description based on security settings
 	queryDesc := buildQueryDescription(secOpts)
 
 	// whodb_query - Execute SQL queries (with security validation)
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "whodb_query",
-		Description: queryDesc,
-	}, createQueryHandler(secOpts))
+	// Hints: Can modify data (not read-only), potentially destructive (DELETE/DROP),
+	// not idempotent (same INSERT twice = duplicates), closed world (database only)
+	if toolEnablement.isToolEnabled("query") {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_query",
+			Description: queryDesc,
+			Annotations: &mcp.ToolAnnotations{
+				Title:           "Execute SQL Query",
+				ReadOnlyHint:    secOpts.ReadOnly, // If server is read-only, this tool is read-only
+				DestructiveHint: boolPtr(!secOpts.ReadOnly && !secOpts.ConfirmWrites), // Destructive only if writes allowed without confirmation
+				IdempotentHint:  false,            // Queries can have side effects
+				OpenWorldHint:   boolPtr(false),   // Closed world (database only)
+			},
+		}, createQueryHandler(secOpts))
+	}
 
 	// whodb_schemas - List database schemas
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "whodb_schemas",
-		Description: descSchemas,
-	}, HandleSchemas)
+	// Hints: Read-only, idempotent, closed world
+	if toolEnablement.isToolEnabled("schemas") {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_schemas",
+			Description: descSchemas,
+			Annotations: &mcp.ToolAnnotations{
+				Title:          "List Database Schemas",
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+				OpenWorldHint:  boolPtr(false),
+			},
+		}, HandleSchemas)
+	}
 
 	// whodb_tables - List tables in a schema
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "whodb_tables",
-		Description: descTables,
-	}, HandleTables)
+	// Hints: Read-only, idempotent, closed world
+	if toolEnablement.isToolEnabled("tables") {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_tables",
+			Description: descTables,
+			Annotations: &mcp.ToolAnnotations{
+				Title:          "List Database Tables",
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+				OpenWorldHint:  boolPtr(false),
+			},
+		}, HandleTables)
+	}
 
 	// whodb_columns - Describe table columns
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "whodb_columns",
-		Description: descColumns,
-	}, HandleColumns)
+	// Hints: Read-only, idempotent, closed world
+	if toolEnablement.isToolEnabled("columns") {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_columns",
+			Description: descColumns,
+			Annotations: &mcp.ToolAnnotations{
+				Title:          "Describe Table Columns",
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+				OpenWorldHint:  boolPtr(false),
+			},
+		}, HandleColumns)
+	}
 
 	// whodb_connections - List available connections
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "whodb_connections",
-		Description: descConnections,
-	}, HandleConnections)
+	// Hints: Read-only, idempotent, closed world
+	if toolEnablement.isToolEnabled("connections") {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_connections",
+			Description: descConnections,
+			Annotations: &mcp.ToolAnnotations{
+				Title:          "List Database Connections",
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+				OpenWorldHint:  boolPtr(false),
+			},
+		}, HandleConnections)
+	}
 
 	// whodb_confirm - Confirm pending write operations (only registered if confirm-writes is enabled)
-	if secOpts.ConfirmWrites {
+	// Hints: Not read-only (executes writes), potentially destructive, not idempotent (tokens are single-use)
+	if secOpts.ConfirmWrites && toolEnablement.isToolEnabled("confirm") {
 		mcp.AddTool(server, &mcp.Tool{
 			Name:        "whodb_confirm",
 			Description: descConfirm,
+			Annotations: &mcp.ToolAnnotations{
+				Title:           "Confirm Write Operation",
+				ReadOnlyHint:    false,
+				DestructiveHint: boolPtr(true), // Can execute destructive operations
+				IdempotentHint:  false,         // Tokens are single-use
+				OpenWorldHint:   boolPtr(false),
+			},
 		}, createConfirmHandler(secOpts))
 	}
 }
@@ -252,6 +358,339 @@ func registerResources(server *mcp.Server) {
 			},
 		}, nil
 	})
+}
+
+// registerPrompts registers MCP prompts for AI assistant guidance.
+func registerPrompts(server *mcp.Server) {
+	// query_help - Guidance on writing SQL queries
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "query_help",
+		Title:       "SQL Query Help",
+		Description: "Get guidance on writing SQL queries with WhoDB, including best practices and examples.",
+		Arguments: []*mcp.PromptArgument{
+			{
+				Name:        "database_type",
+				Title:       "Database Type",
+				Description: "The type of database (postgres, mysql, sqlite, etc.) for dialect-specific help.",
+				Required:    false,
+			},
+			{
+				Name:        "query_type",
+				Title:       "Query Type",
+				Description: "The type of query you need help with (select, insert, update, delete, join, aggregate).",
+				Required:    false,
+			},
+		},
+	}, handleQueryHelpPrompt)
+
+	// schema_exploration_help - Guidance on exploring database structure
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "schema_exploration_help",
+		Title:       "Schema Exploration Help",
+		Description: "Learn how to effectively explore database schemas, tables, and relationships using WhoDB tools.",
+	}, handleSchemaExplorationHelpPrompt)
+
+	// workflow_help - Common database workflows
+	server.AddPrompt(&mcp.Prompt{
+		Name:        "workflow_help",
+		Title:       "Database Workflow Help",
+		Description: "Get guidance on common database workflows like data analysis, debugging queries, or understanding table relationships.",
+		Arguments: []*mcp.PromptArgument{
+			{
+				Name:        "workflow",
+				Title:       "Workflow Type",
+				Description: "The workflow you need help with (analysis, debugging, relationships, migration).",
+				Required:    false,
+			},
+		},
+	}, handleWorkflowHelpPrompt)
+}
+
+// handleQueryHelpPrompt returns guidance for writing SQL queries.
+func handleQueryHelpPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	dbType := ""
+	queryType := ""
+	if req.Params.Arguments != nil {
+		if v, ok := req.Params.Arguments["database_type"]; ok {
+			dbType = v
+		}
+		if v, ok := req.Params.Arguments["query_type"]; ok {
+			queryType = v
+		}
+	}
+
+	content := buildQueryHelpContent(dbType, queryType)
+	return &mcp.GetPromptResult{
+		Description: "SQL query guidance for WhoDB",
+		Messages: []*mcp.PromptMessage{
+			{
+				Role:    "user",
+				Content: &mcp.TextContent{Text: content},
+			},
+		},
+	}, nil
+}
+
+// handleSchemaExplorationHelpPrompt returns guidance for exploring database structure.
+func handleSchemaExplorationHelpPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	content := `I need help exploring a database schema. Please guide me through the WhoDB workflow:
+
+## Recommended Exploration Workflow
+
+1. **Start with connections** - Use whodb_connections to see available databases
+2. **List schemas** - Use whodb_schemas to discover namespaces (public, analytics, etc.)
+3. **Explore tables** - Use whodb_tables to see tables in a schema with metadata
+4. **Understand structure** - Use whodb_columns to see columns, types, and relationships
+5. **Query data** - Use whodb_query for actual data exploration
+
+## Tips for Effective Exploration
+
+- Always check foreign key relationships in whodb_columns output
+- Use row counts from whodb_tables to identify large tables before querying
+- Look for naming patterns (e.g., *_id columns often indicate relationships)
+- Check for audit columns (created_at, updated_at) to understand data lifecycle
+
+## Example Exploration Session
+
+` + "```" + `
+# Step 1: What databases are available?
+whodb_connections → [{name: "mydb", type: "postgres", ...}]
+
+# Step 2: What schemas exist?
+whodb_schemas(connection="mydb") → ["public", "analytics"]
+
+# Step 3: What tables are in public schema?
+whodb_tables(connection="mydb", schema="public") → [{name: "users", ...}, {name: "orders", ...}]
+
+# Step 4: What's the structure of the users table?
+whodb_columns(connection="mydb", table="users") → [{name: "id", is_primary: true}, ...]
+
+# Step 5: Sample some data
+whodb_query(connection="mydb", query="SELECT * FROM users LIMIT 5")
+` + "```" + `
+
+Please help me explore my database using this workflow.`
+
+	return &mcp.GetPromptResult{
+		Description: "Database schema exploration guidance",
+		Messages: []*mcp.PromptMessage{
+			{
+				Role:    "user",
+				Content: &mcp.TextContent{Text: content},
+			},
+		},
+	}, nil
+}
+
+// handleWorkflowHelpPrompt returns guidance for common database workflows.
+func handleWorkflowHelpPrompt(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	workflow := "general"
+	if req.Params.Arguments != nil {
+		if v, ok := req.Params.Arguments["workflow"]; ok {
+			workflow = v
+		}
+	}
+
+	content := buildWorkflowHelpContent(workflow)
+	return &mcp.GetPromptResult{
+		Description: "Database workflow guidance",
+		Messages: []*mcp.PromptMessage{
+			{
+				Role:    "user",
+				Content: &mcp.TextContent{Text: content},
+			},
+		},
+	}, nil
+}
+
+// buildQueryHelpContent builds context-aware query help.
+func buildQueryHelpContent(dbType, queryType string) string {
+	base := `I need help writing SQL queries with WhoDB. Please provide guidance on:
+
+## Query Best Practices
+
+1. **Always use LIMIT** for exploratory queries to avoid overwhelming results
+2. **Select specific columns** instead of SELECT * for better performance
+3. **Check schema first** with whodb_columns before writing complex queries
+4. **Use parameterized patterns** when constructing dynamic queries
+
+## Security Notes
+
+- WhoDB validates queries before execution
+- Multi-statement queries (separated by ;) are blocked by default
+- Dangerous functions may be blocked depending on security level
+- Write operations may require confirmation depending on server mode
+
+`
+
+	if dbType != "" {
+		base += fmt.Sprintf("\n## %s-Specific Tips\n\n", dbType)
+		switch dbType {
+		case "postgres":
+			base += `- Use ILIKE for case-insensitive pattern matching
+- Use jsonb operators (->>, @>) for JSON columns
+- Use CTEs (WITH clause) for complex queries
+- Use EXPLAIN ANALYZE to understand query performance
+`
+		case "mysql":
+			base += `- Use LIKE with BINARY for case-sensitive matching
+- Use JSON_EXTRACT() for JSON columns
+- Use SHOW CREATE TABLE to see table definitions
+- Use EXPLAIN to understand query execution
+`
+		case "sqlite":
+			base += `- SQLite is type-flexible, but be consistent
+- Use json_extract() for JSON columns
+- Use .schema command equivalent via whodb_columns
+- VACUUM periodically for performance
+`
+		}
+	}
+
+	if queryType != "" {
+		base += fmt.Sprintf("\n## %s Query Examples\n\n", queryType)
+		switch queryType {
+		case "select":
+			base += "```sql\n-- Basic select with filtering\nSELECT id, name, email FROM users WHERE active = true LIMIT 10;\n\n-- With ordering\nSELECT * FROM orders ORDER BY created_at DESC LIMIT 20;\n```\n"
+		case "insert":
+			base += "```sql\n-- Single row insert\nINSERT INTO users (name, email) VALUES ('John', 'john@example.com');\n\n-- Multiple rows\nINSERT INTO users (name, email) VALUES ('A', 'a@x.com'), ('B', 'b@x.com');\n```\n"
+		case "update":
+			base += "```sql\n-- Update with WHERE clause (always use WHERE!)\nUPDATE users SET active = false WHERE last_login < '2024-01-01';\n\n-- Update single row by ID\nUPDATE orders SET status = 'shipped' WHERE id = 123;\n```\n"
+		case "delete":
+			base += "```sql\n-- Delete with WHERE clause (always use WHERE!)\nDELETE FROM sessions WHERE expires_at < NOW();\n\n-- Delete by ID\nDELETE FROM users WHERE id = 456;\n```\n"
+		case "join":
+			base += "```sql\n-- Inner join\nSELECT u.name, o.total FROM users u\nJOIN orders o ON u.id = o.user_id\nWHERE o.status = 'completed' LIMIT 10;\n\n-- Left join to include users without orders\nSELECT u.name, COUNT(o.id) as order_count\nFROM users u LEFT JOIN orders o ON u.id = o.user_id\nGROUP BY u.id, u.name;\n```\n"
+		case "aggregate":
+			base += "```sql\n-- Count with grouping\nSELECT status, COUNT(*) as count FROM orders GROUP BY status;\n\n-- Sum with filtering\nSELECT user_id, SUM(total) as total_spent\nFROM orders WHERE created_at > '2024-01-01'\nGROUP BY user_id HAVING SUM(total) > 100;\n```\n"
+		}
+	}
+
+	base += "\nPlease help me write effective SQL queries following these guidelines."
+	return base
+}
+
+// buildWorkflowHelpContent builds workflow-specific guidance.
+func buildWorkflowHelpContent(workflow string) string {
+	switch workflow {
+	case "analysis":
+		return `I need help with data analysis using WhoDB. Guide me through:
+
+## Data Analysis Workflow
+
+1. **Understand the data** - Explore schema to find relevant tables
+2. **Sample the data** - Run small queries to understand data patterns
+3. **Aggregate and summarize** - Use GROUP BY, COUNT, SUM, AVG
+4. **Filter and refine** - Add WHERE clauses based on findings
+5. **Export or report** - Format results for further use
+
+## Useful Analysis Patterns
+
+` + "```sql" + `
+-- Distribution analysis
+SELECT column, COUNT(*) as count
+FROM table GROUP BY column ORDER BY count DESC;
+
+-- Time-based analysis
+SELECT DATE(created_at) as date, COUNT(*) as daily_count
+FROM events GROUP BY DATE(created_at) ORDER BY date;
+
+-- Percentile/quantile analysis (PostgreSQL)
+SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY value) as median
+FROM measurements;
+` + "```" + `
+
+Please help me analyze my data using these patterns.`
+
+	case "debugging":
+		return `I need help debugging database queries with WhoDB. Guide me through:
+
+## Query Debugging Workflow
+
+1. **Start simple** - Run the simplest version of your query
+2. **Add complexity gradually** - Add one clause at a time
+3. **Check data types** - Use whodb_columns to verify column types
+4. **Verify relationships** - Check foreign keys before JOINs
+5. **Inspect intermediate results** - Break complex queries into steps
+
+## Common Issues to Check
+
+- NULL handling (use IS NULL, not = NULL)
+- Data type mismatches in comparisons
+- Missing indexes causing slow queries
+- Incorrect JOIN conditions causing duplicates
+- Case sensitivity in string comparisons
+
+## Debugging Steps
+
+` + "```" + `
+# Step 1: Check table structure
+whodb_columns(table="problematic_table")
+
+# Step 2: Sample raw data
+SELECT * FROM table LIMIT 5;
+
+# Step 3: Check for NULLs
+SELECT COUNT(*), COUNT(column) FROM table;
+
+# Step 4: Verify JOIN data exists
+SELECT COUNT(*) FROM table1 t1
+JOIN table2 t2 ON t1.id = t2.foreign_id;
+` + "```" + `
+
+Please help me debug my query using this approach.`
+
+	case "relationships":
+		return `I need help understanding table relationships with WhoDB.
+
+## Finding Relationships
+
+1. **Check foreign keys** - whodb_columns shows is_foreign_key and referenced_table
+2. **Look for naming patterns** - Columns like user_id, order_id suggest relationships
+3. **Verify with data** - Query to confirm relationships exist
+
+## Relationship Discovery Workflow
+
+` + "```" + `
+# Step 1: Get columns with FK info
+whodb_columns(table="orders")
+# Look for: is_foreign_key: true, referenced_table: "users"
+
+# Step 2: Verify the relationship
+SELECT o.id, u.name
+FROM orders o JOIN users u ON o.user_id = u.id LIMIT 5;
+
+# Step 3: Check cardinality
+SELECT user_id, COUNT(*) as order_count
+FROM orders GROUP BY user_id ORDER BY order_count DESC LIMIT 10;
+` + "```" + `
+
+## Common Relationship Types
+
+- **One-to-Many**: user_id in orders (one user has many orders)
+- **Many-to-Many**: Usually via junction table (user_roles with user_id and role_id)
+- **One-to-One**: Rare, usually same primary key in both tables
+
+Please help me map out the relationships in my database.`
+
+	default:
+		return `I need help with database operations using WhoDB.
+
+## Available Workflows
+
+1. **Schema Exploration** - Discover tables, columns, and relationships
+2. **Data Analysis** - Aggregate, summarize, and understand data
+3. **Query Debugging** - Troubleshoot slow or incorrect queries
+4. **Relationship Mapping** - Understand how tables connect
+
+## General Best Practices
+
+- Always start with whodb_connections to see available databases
+- Use whodb_schemas → whodb_tables → whodb_columns before querying
+- Always use LIMIT for exploratory queries
+- Check column types and relationships before writing JOINs
+
+Please guide me through the appropriate workflow for my task.`
+	}
 }
 
 // TransportType specifies the transport mechanism for the MCP server.
@@ -456,6 +895,11 @@ Available tools:
 - whodb_columns: Describe columns in a table
 - whodb_connections: List available database connections
 - whodb_confirm: Confirm pending write operations (enabled by default)
+
+Available prompts (for guidance):
+- query_help: Get SQL query writing guidance (supports database_type and query_type args)
+- schema_exploration_help: Learn how to explore database structure effectively
+- workflow_help: Get guidance on common database workflows (analysis, debugging, relationships)
 
 SECURITY MODE:
 This server runs with confirm-writes enabled by default. When you execute write operations
