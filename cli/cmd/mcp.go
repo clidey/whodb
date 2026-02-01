@@ -37,6 +37,7 @@ var (
 	mcpTimeout             time.Duration
 	mcpMaxRows             int
 	mcpAllowMultiStatement bool
+	mcpSafeMode            bool
 )
 
 // transport flags
@@ -80,6 +81,7 @@ SECURITY:
 
   Permission Modes (controls whether writes are allowed):
     (default)        - Confirm-writes: All writes require user confirmation
+    --safe-mode      - Safe mode: read-only + strict security
     --read-only      - Read-only: SELECT, SHOW, DESCRIBE, EXPLAIN only
     --allow-write    - Full write access without confirmation (use with caution)
 
@@ -109,6 +111,9 @@ Connection Resolution:
   Saved connections take precedence when names collide.`,
 	Example: `  # Start MCP server (confirm-writes by default - you approve each write)
   whodb-cli mcp serve
+
+  # Safe mode for demos/playgrounds (read-only + strict security)
+  whodb-cli mcp serve --safe-mode
 
   # Read-only mode (no writes at all)
   whodb-cli mcp serve --read-only
@@ -157,11 +162,17 @@ Connection Resolution:
 
 		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)
-		// Priority: --allow-write > --read-only > default (confirm-writes)
+		// Priority: --safe-mode > --allow-write > --read-only > default (confirm-writes)
 		readOnly := false
 		confirmWrites := true // Default: confirm-writes enabled
+		securityLevel := mcpSecurity
 
-		if mcpAllowWrite {
+		if mcpSafeMode {
+			// Safe mode: read-only + strict security
+			readOnly = true
+			confirmWrites = false
+			securityLevel = "strict"
+		} else if mcpAllowWrite {
 			confirmWrites = false // No confirmation needed
 		} else if mcpReadOnly {
 			readOnly = true
@@ -172,7 +183,7 @@ Connection Resolution:
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
-			SecurityLevel:       whodbmcp.SecurityLevel(mcpSecurity),
+			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
 			QueryTimeout:        mcpTimeout,
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
@@ -199,6 +210,8 @@ func init() {
 	mcpCmd.AddCommand(mcpServeCmd)
 
 	// Security flags
+	mcpServeCmd.Flags().BoolVar(&mcpSafeMode, "safe-mode", false,
+		"Enable safe mode (read-only + strict security) for demos and playgrounds")
 	mcpServeCmd.Flags().BoolVar(&mcpReadOnly, "read-only", false,
 		"Enable read-only mode (blocks all write operations)")
 	mcpServeCmd.Flags().BoolVar(&mcpConfirmWrites, "confirm-writes", false,
