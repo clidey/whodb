@@ -136,45 +136,82 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions) {
 	// whodb_schemas - List database schemas
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "whodb_schemas",
-		Description: "List all schemas (namespaces) in a database. Schemas organize tables and other objects.",
+		Description: descSchemas,
 	}, HandleSchemas)
 
 	// whodb_tables - List tables in a schema
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "whodb_tables",
-		Description: "List all tables in a database schema. Returns table names and metadata like row counts and sizes.",
+		Description: descTables,
 	}, HandleTables)
 
 	// whodb_columns - Describe table columns
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "whodb_columns",
-		Description: "Describe the columns in a database table. Returns column names, types, primary keys, and foreign key relationships.",
+		Description: descColumns,
 	}, HandleColumns)
 
 	// whodb_connections - List available connections
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "whodb_connections",
-		Description: "List all available database connections from saved configurations and environment variables.",
+		Description: descConnections,
 	}, HandleConnections)
 
 	// whodb_confirm - Confirm pending write operations (only registered if confirm-writes is enabled)
 	if secOpts.ConfirmWrites {
 		mcp.AddTool(server, &mcp.Tool{
 			Name:        "whodb_confirm",
-			Description: "Confirm a pending write operation. Use this after whodb_query returns a confirmation request for write operations.",
+			Description: descConfirm,
 		}, createConfirmHandler(secOpts))
 	}
 }
 
 // buildQueryDescription creates the tool description based on security settings
 func buildQueryDescription(secOpts *SecurityOptions) string {
+	base := `Execute a SQL query against a database connection.
+
+**Best for:** Running SQL SELECT, INSERT, UPDATE, DELETE statements when you need to query or modify data.
+**Not recommended for:** Schema exploration (use whodb_schemas, whodb_tables, whodb_columns instead for faster, structured results).
+**Common mistakes:** Running queries without specifying connection when multiple exist; using SELECT * instead of specific columns; forgetting LIMIT on large tables.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_query",
+  "arguments": {
+    "connection": "mydb",
+    "query": "SELECT id, name, email FROM users WHERE active = true LIMIT 10"
+  }
+}
+` + "```" + `
+
+**Best practices:**
+- Always use LIMIT for exploratory queries to avoid overwhelming results
+- Prefer specific column selection over SELECT *
+- Check schema structure with whodb_columns before writing complex queries
+- Use parameterized values in your queries when possible`
+
 	if secOpts.ReadOnly {
-		return "Execute a SQL query against a database connection. READ-ONLY MODE: Only SELECT, SHOW, DESCRIBE, and EXPLAIN queries are allowed. Write operations (INSERT, UPDATE, DELETE, etc.) are blocked."
+		return base + `
+
+**Security Mode: READ-ONLY**
+Only SELECT, SHOW, DESCRIBE, and EXPLAIN queries are allowed. Write operations (INSERT, UPDATE, DELETE, DROP, etc.) are blocked.`
 	}
 	if secOpts.ConfirmWrites {
-		return "Execute a SQL query against a database connection. Write operations (INSERT, UPDATE, DELETE, etc.) require confirmation via the whodb_confirm tool."
+		return base + `
+
+**Security Mode: CONFIRM-WRITES (Default)**
+Write operations (INSERT, UPDATE, DELETE, etc.) require user confirmation. When you submit a write query:
+1. The query is validated but NOT executed
+2. You receive a confirmation_token
+3. Explain to the user what the query will do
+4. Call whodb_confirm with the token after user approves
+5. The query executes and returns results`
 	}
-	return "Execute a SQL query against a database connection. Use this for SELECT, INSERT, UPDATE, DELETE, and other SQL operations."
+	return base + `
+
+**Security Mode: ALLOW-WRITE**
+Full write access enabled. All queries execute immediately. Use with caution in production.`
 }
 
 // createQueryHandler creates a query handler with security options
@@ -218,6 +255,121 @@ func registerResources(server *mcp.Server) {
 func Run(ctx context.Context, server *mcp.Server) error {
 	return server.Run(ctx, &mcp.StdioTransport{})
 }
+
+// Tool descriptions with usage guidance (Firecrawl-style)
+
+const descSchemas = `List all schemas (namespaces) in a database.
+
+**Best for:** Discovering what schemas exist in a database; understanding database organization before exploring tables.
+**Not recommended for:** When you already know the schema name (proceed directly to whodb_tables).
+**Common mistakes:** Calling this repeatedly - schema lists rarely change during a session.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_schemas",
+  "arguments": {
+    "connection": "mydb"
+  }
+}
+` + "```" + `
+
+**Returns:** Array of schema names (e.g., ["public", "analytics", "audit"]).
+**Typical workflow:** whodb_schemas → whodb_tables → whodb_columns → whodb_query`
+
+const descTables = `List all tables in a database schema.
+
+**Best for:** Discovering what tables exist in a schema; getting table metadata like row counts.
+**Not recommended for:** When you already know the table name (proceed directly to whodb_columns or whodb_query).
+**Common mistakes:** Not specifying schema when the database has multiple schemas with same-named tables.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_tables",
+  "arguments": {
+    "connection": "mydb",
+    "schema": "public"
+  }
+}
+` + "```" + `
+
+**Returns:** Array of table objects with name and attributes (row count, size, etc.).
+**Note:** If schema is omitted, uses the connection's default schema or the first available schema.`
+
+const descColumns = `Describe the columns in a database table.
+
+**Best for:** Understanding table structure before writing queries; discovering primary keys and foreign key relationships.
+**Not recommended for:** When you need actual data (use whodb_query with SELECT).
+**Common mistakes:** Forgetting to specify the table name; not using this before writing INSERT/UPDATE queries.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_columns",
+  "arguments": {
+    "connection": "mydb",
+    "table": "users",
+    "schema": "public"
+  }
+}
+` + "```" + `
+
+**Returns:** Array of column objects with:
+- name: Column name
+- type: Data type (varchar, integer, timestamp, etc.)
+- is_primary: Whether this is a primary key
+- is_foreign_key: Whether this references another table
+- referenced_table/referenced_column: Foreign key target (if applicable)
+
+**Pro tip:** Always call this before writing INSERT queries to ensure correct column names and types.`
+
+const descConnections = `List all available database connections.
+
+**Best for:** Discovering what databases are configured; choosing which connection to use.
+**Not recommended for:** When you already know the connection name.
+**Common mistakes:** Not calling this first when connection name is unknown.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_connections",
+  "arguments": {}
+}
+` + "```" + `
+
+**Returns:** Array of connection objects with:
+- name: Connection identifier to use in other tools
+- type: Database type (postgres, mysql, sqlite, etc.)
+- host/port/database: Connection details (passwords are never exposed)
+- source: "saved" (from CLI config) or "env" (from environment variables)
+
+**Note:** If only one connection exists, other tools will use it automatically when connection is omitted.`
+
+const descConfirm = `Confirm and execute a pending write operation.
+
+**Best for:** Executing write queries after user approval in confirm-writes mode.
+**Not recommended for:** Read queries (they execute immediately without confirmation).
+**Common mistakes:** Using an expired token (tokens expire after 60 seconds); not explaining the query to the user before confirming.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_confirm",
+  "arguments": {
+    "token": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+` + "```" + `
+
+**Workflow:**
+1. Call whodb_query with a write operation (INSERT, UPDATE, DELETE, etc.)
+2. Receive confirmation_required=true and a confirmation_token
+3. Explain to the user what the query will do in plain language
+4. After user approves, call whodb_confirm with the token
+5. Query executes and returns results
+
+**Important:** Tokens are single-use and expire after 60 seconds. If expired, re-submit the original query to get a new token.`
 
 const defaultInstructions = `WhoDB MCP Server - Database Management Tools
 

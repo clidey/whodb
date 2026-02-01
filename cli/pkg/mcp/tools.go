@@ -274,7 +274,7 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 			ConfirmationRequired: true,
 			ConfirmationToken:    token,
 			ConfirmationQuery:    input.Query,
-			Warning:              fmt.Sprintf("This %s operation requires confirmation. Ask the user to confirm, then call whodb_confirm with the token.", stmtType),
+			Warning:              fmt.Sprintf("This %s operation requires your approval before it runs. You have 60 seconds to confirm or cancel.", stmtType),
 		}, nil
 	}
 
