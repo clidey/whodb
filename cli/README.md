@@ -400,10 +400,14 @@ WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants 
 ### Start the MCP Server
 
 ```bash
+# Default: stdio transport (for Claude Desktop, Claude Code, etc.)
 whodb-cli mcp serve
+
+# HTTP transport (for cloud deployments, Docker, Kubernetes)
+whodb-cli mcp serve --transport=http --port=3000
 ```
 
-This starts a stdio-based MCP server that exposes these tools:
+This starts an MCP server that exposes these tools:
 
 | Tool | Description |
 |------|-------------|
@@ -416,15 +420,117 @@ This starts a stdio-based MCP server that exposes these tools:
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 
+### Transport Modes
+
+**stdio (default)** - For local CLI integration with Claude Desktop, Claude Code, etc.
+
+```bash
+whodb-cli mcp serve
+```
+
+**HTTP** - For cloud deployments, Docker, Kubernetes, or shared access.
+
+```bash
+whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+```
+
+HTTP mode exposes:
+- `/mcp` - MCP endpoint (streaming HTTP)
+- `/health` - Health check endpoint (returns status + rate limit stats)
+
+### Security Modes
+
+| Mode | Flag | Description |
+|------|------|-------------|
+| Confirm-writes | *(default)* | Write operations require user approval |
+| Safe mode | `--safe-mode` | Read-only + strict security (for demos/playgrounds) |
+| Read-only | `--read-only` | Blocks all write operations |
+| Allow-write | `--allow-write` | Full write access without confirmation |
+
+### Rate Limiting (HTTP transport only)
+
+Protect your server from abuse with IP-based rate limiting:
+
+```bash
+# Enable rate limiting with defaults (10 QPS, 1000 daily per IP)
+whodb-cli mcp serve --transport=http --rate-limit
+
+# Custom limits
+whodb-cli mcp serve --transport=http --rate-limit --rate-limit-qps=5 --rate-limit-daily=500
+
+# Allow trusted clients to bypass limits
+whodb-cli mcp serve --transport=http --rate-limit --rate-limit-bypass=my-secret-token
+```
+
+Rate-limited responses include:
+- HTTP 429 Too Many Requests
+- `Retry-After` header with seconds to wait
+- `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers
+
+Trusted clients bypass limits by including: `X-RateLimit-Bypass: my-secret-token`
+
 ### MCP Flags
 
+**Security:**
+- `--safe-mode`: Read-only + strict security (for demos/playgrounds)
 - `--read-only`: Block all write operations
 - `--allow-write`: Allow writes without confirmation (use with caution)
 - `--allow-drop`: Allow DROP/TRUNCATE when running with `--allow-write`
 - `--security`: Validation level (`strict`, `standard`, `minimal`)
+
+**Query Limits:**
 - `--timeout`: Query timeout (default 30s)
 - `--max-rows`: Limit rows returned per query (0 = unlimited)
 - `--allow-multi-statement`: Allow multiple SQL statements in one query
+
+**Transport (HTTP):**
+- `--transport`: `stdio` (default) or `http`
+- `--host`: Bind address (default: localhost)
+- `--port`: Listen port (default: 3000)
+
+**Rate Limiting (HTTP only):**
+- `--rate-limit`: Enable IP-based rate limiting
+- `--rate-limit-qps`: Max requests per second per IP (default: 10)
+- `--rate-limit-daily`: Max requests per day per IP (default: 1000, 0=unlimited)
+- `--rate-limit-bypass`: Token for trusted clients to bypass limits
+
+### Configuration File
+
+All MCP options can be set in `~/.whodb-cli/config.yaml` under the `mcp` key. CLI flags override config file values.
+
+```yaml
+mcp:
+  # Transport settings
+  transport: http
+  host: 0.0.0.0
+  port: 8080
+
+  # Security settings
+  security: strict
+  read_only: false
+  allow_write: false
+  allow_drop: false
+  safe_mode: false
+
+  # Query limits
+  timeout: 60s
+  max_rows: 1000
+  allow_multi_statement: false
+
+  # Rate limiting (HTTP only)
+  rate_limit:
+    enabled: true
+    qps: 10
+    daily: 1000
+    bypass_token: my-secret-token
+```
+
+You can then run with config defaults and override specific options:
+
+```bash
+# Uses config file defaults, overrides just the port
+whodb-cli mcp serve --port=9000
+```
 
 ### Configure Connections
 

@@ -31,6 +31,7 @@ cli/
     root.go         # Root command, starts TUI
     connect.go      # Database connection
     query.go        # Query execution
+    mcp.go          # MCP server command
     completion.go   # Shell completion (bash/zsh/fish)
   internal/
     tui/            # Terminal UI (Bubble Tea)
@@ -40,6 +41,12 @@ cli/
     database/       # DB connection handling
     history/        # Query history
   pkg/
+    mcp/            # MCP server implementation
+      server.go     # Server setup, transport handling
+      tools.go      # Tool handlers (query, schemas, etc.)
+      validation.go # SQL security validation
+      ratelimit.go  # IP-based rate limiting
+      credentials.go# Connection resolution
     styles/         # UI styling (Lipgloss)
 ```
 

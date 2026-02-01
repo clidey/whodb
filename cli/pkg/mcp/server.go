@@ -270,6 +270,9 @@ type HTTPOptions struct {
 	Host string
 	// Port to listen on (default: 3000).
 	Port int
+	// RateLimit configures rate limiting for the HTTP transport.
+	// Rate limiting is disabled by default.
+	RateLimit RateLimitOptions
 }
 
 // Run starts the MCP server with stdio transport.
@@ -300,15 +303,45 @@ func RunHTTP(ctx context.Context, server *mcp.Server, opts *HTTPOptions, logger 
 	}
 
 	// Create HTTP handler for MCP
-	handler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
+	mcpHandler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
 		return server
 	}, nil)
+
+	// Wrap with rate limiter if enabled
+	var handler http.Handler = mcpHandler
+	var rateLimiter *RateLimiter
+	if opts.RateLimit.Enabled {
+		rateLimiter = NewRateLimiter(opts.RateLimit)
+		handler = rateLimiter.Middleware(mcpHandler)
+		logger.Info("Rate limiting enabled",
+			"qps", opts.RateLimit.QPS,
+			"daily", opts.RateLimit.Daily,
+			"bypass", opts.RateLimit.BypassToken != "")
+
+		// Start cleanup goroutine to prevent memory growth
+		go func() {
+			ticker := time.NewTicker(5 * time.Minute)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					rateLimiter.Cleanup(10 * time.Minute)
+				}
+			}
+		}()
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
+		response := map[string]any{"status": "ok"}
+		if rateLimiter != nil {
+			response["rate_limit"] = rateLimiter.Stats()
+		}
+		_ = json.NewEncoder(w).Encode(response)
 	})
 	mux.Handle("/mcp", handler)
 
