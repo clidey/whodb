@@ -653,3 +653,128 @@ func TestHandleQuery_EmptyQuery(t *testing.T) {
 		})
 	}
 }
+
+// =============================================================================
+// Input Validation Integration Tests
+// These tests verify that validation error messages are properly returned
+// from handlers, not just that validation functions work in isolation.
+// =============================================================================
+
+// TestHandleQuery_ValidationErrors tests that HandleQuery returns proper validation errors
+func TestHandleQuery_ValidationErrors(t *testing.T) {
+	ctx := t.Context()
+	secOpts := &SecurityOptions{
+		ReadOnly:      true,
+		SecurityLevel: SecurityLevelStandard,
+		QueryTimeout:  30 * time.Second,
+	}
+
+	t.Run("empty query returns specific error message", func(t *testing.T) {
+		input := QueryInput{Query: "", Connection: "test"}
+		_, output, _ := HandleQuery(ctx, nil, input, secOpts)
+
+		if output.Error == "" {
+			t.Fatal("expected error for empty query")
+		}
+		if !strings.Contains(output.Error, "query is required") {
+			t.Errorf("expected error to contain 'query is required', got: %s", output.Error)
+		}
+	})
+
+	t.Run("whitespace-only query returns specific error message", func(t *testing.T) {
+		input := QueryInput{Query: "   \t\n  ", Connection: "test"}
+		_, output, _ := HandleQuery(ctx, nil, input, secOpts)
+
+		if output.Error == "" {
+			t.Fatal("expected error for whitespace query")
+		}
+		if !strings.Contains(output.Error, "query is required") {
+			t.Errorf("expected error to contain 'query is required', got: %s", output.Error)
+		}
+	})
+}
+
+// TestHandleColumns_ValidationErrors tests that HandleColumns returns proper validation errors
+func TestHandleColumns_ValidationErrors(t *testing.T) {
+	ctx := t.Context()
+
+	t.Run("empty table returns specific error message", func(t *testing.T) {
+		input := ColumnsInput{Table: "", Connection: "test"}
+		_, output, _ := HandleColumns(ctx, nil, input)
+
+		if output.Error == "" {
+			t.Fatal("expected error for empty table")
+		}
+		if !strings.Contains(output.Error, "table is required") {
+			t.Errorf("expected error to contain 'table is required', got: %s", output.Error)
+		}
+	})
+
+	t.Run("whitespace-only table returns specific error message", func(t *testing.T) {
+		input := ColumnsInput{Table: "   ", Connection: "test"}
+		_, output, _ := HandleColumns(ctx, nil, input)
+
+		if output.Error == "" {
+			t.Fatal("expected error for whitespace table")
+		}
+		if !strings.Contains(output.Error, "table is required") {
+			t.Errorf("expected error to contain 'table is required', got: %s", output.Error)
+		}
+	})
+}
+
+// TestHandleConfirm_ValidationErrors tests that HandleConfirm returns proper validation errors
+func TestHandleConfirm_ValidationErrors(t *testing.T) {
+	ctx := t.Context()
+	secOpts := &SecurityOptions{ConfirmWrites: true}
+
+	t.Run("empty token returns specific error message", func(t *testing.T) {
+		input := ConfirmInput{Token: ""}
+		_, output, _ := HandleConfirm(ctx, nil, input, secOpts)
+
+		if output.Error == "" {
+			t.Fatal("expected error for empty token")
+		}
+		if !strings.Contains(output.Error, "token is required") {
+			t.Errorf("expected error to contain 'token is required', got: %s", output.Error)
+		}
+	})
+
+	t.Run("invalid token format returns specific error message", func(t *testing.T) {
+		input := ConfirmInput{Token: "not-a-valid-uuid-format"}
+		_, output, _ := HandleConfirm(ctx, nil, input, secOpts)
+
+		if output.Error == "" {
+			t.Fatal("expected error for invalid token")
+		}
+		if !strings.Contains(output.Error, "not a valid") {
+			t.Errorf("expected error to mention invalid format, got: %s", output.Error)
+		}
+	})
+
+	t.Run("too short token returns specific error message", func(t *testing.T) {
+		input := ConfirmInput{Token: "abc123"}
+		_, output, _ := HandleConfirm(ctx, nil, input, secOpts)
+
+		if output.Error == "" {
+			t.Fatal("expected error for short token")
+		}
+		if !strings.Contains(output.Error, "not a valid") {
+			t.Errorf("expected error to mention invalid format, got: %s", output.Error)
+		}
+	})
+
+	t.Run("valid format but nonexistent token returns token not found error", func(t *testing.T) {
+		// This token has valid UUID format but doesn't exist in pending confirmations
+		input := ConfirmInput{Token: "550e8400-e29b-41d4-a716-446655440000"}
+		_, output, _ := HandleConfirm(ctx, nil, input, secOpts)
+
+		if output.Error == "" {
+			t.Fatal("expected error for nonexistent token")
+		}
+		// This should pass validation but fail on lookup
+		if !strings.Contains(output.Error, "not found") && !strings.Contains(output.Error, "expired") {
+			t.Errorf("expected error about token not found/expired, got: %s", output.Error)
+		}
+	})
+}

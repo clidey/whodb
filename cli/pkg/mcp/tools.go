@@ -207,6 +207,12 @@ func getPendingConfirmation(token string) (*PendingConfirmation, error) {
 	return pending, nil
 }
 
+// countAvailableConnections returns the number of available database connections.
+func countAvailableConnections() int {
+	conns, _ := ListAvailableConnections()
+	return len(conns)
+}
+
 // Query execution helpers
 
 // executeQuery runs a query with optional timeout and returns the result
@@ -253,6 +259,11 @@ func convertRows(result *engine.GetRowsResult, maxRows int) ([][]any, bool) {
 
 // HandleQuery executes a SQL query against the specified connection with security validation.
 func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput, secOpts *SecurityOptions) (*mcp.CallToolResult, QueryOutput, error) {
+	// Validate input
+	connCount := countAvailableConnections()
+	if err := ValidateQueryInput(&input, connCount); err != nil {
+		return nil, QueryOutput{Error: err.Error()}, nil
+	}
 
 	// Detect statement type first
 	stmtType := DetectStatementType(input.Query)
@@ -323,6 +334,11 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 
 // HandleConfirm confirms and executes a pending write operation.
 func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput, secOpts *SecurityOptions) (*mcp.CallToolResult, ConfirmOutput, error) {
+	// Validate input
+	if err := ValidateConfirmInput(&input); err != nil {
+		return nil, ConfirmOutput{Error: err.Error()}, nil
+	}
+
 	// Get the pending confirmation
 	pending, err := getPendingConfirmation(input.Token)
 	if err != nil {
@@ -366,6 +382,12 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 
 // HandleSchemas lists all schemas in the database.
 func HandleSchemas(ctx context.Context, req *mcp.CallToolRequest, input SchemasInput) (*mcp.CallToolResult, SchemasOutput, error) {
+	// Validate input
+	connCount := countAvailableConnections()
+	if err := ValidateSchemasInput(&input, connCount); err != nil {
+		return nil, SchemasOutput{Error: err.Error()}, nil
+	}
+
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
 		return nil, SchemasOutput{Error: err.Error()}, nil
@@ -391,6 +413,12 @@ func HandleSchemas(ctx context.Context, req *mcp.CallToolRequest, input SchemasI
 
 // HandleTables lists all tables in a schema.
 func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInput) (*mcp.CallToolResult, TablesOutput, error) {
+	// Validate input
+	connCount := countAvailableConnections()
+	if err := ValidateTablesInput(&input, connCount); err != nil {
+		return nil, TablesOutput{Error: err.Error()}, nil
+	}
+
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
 		return nil, TablesOutput{Error: err.Error()}, nil
@@ -445,6 +473,12 @@ func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInp
 
 // HandleColumns describes columns in a table.
 func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsInput) (*mcp.CallToolResult, ColumnsOutput, error) {
+	// Validate input
+	connCount := countAvailableConnections()
+	if err := ValidateColumnsInput(&input, connCount); err != nil {
+		return nil, ColumnsOutput{Error: err.Error()}, nil
+	}
+
 	conn, err := ResolveConnectionOrDefault(input.Connection)
 	if err != nil {
 		return nil, ColumnsOutput{Error: err.Error()}, nil
