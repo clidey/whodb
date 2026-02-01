@@ -45,7 +45,6 @@ cli/
       server.go     # Server setup, transport handling
       tools.go      # Tool handlers (query, schemas, etc.)
       validation.go # SQL security validation
-      ratelimit.go  # IP-based rate limiting
       credentials.go# Connection resolution
     styles/         # UI styling (Lipgloss)
 ```

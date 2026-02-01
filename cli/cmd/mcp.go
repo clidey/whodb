@@ -25,7 +25,6 @@ import (
 
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // security flags
@@ -46,14 +45,6 @@ var (
 	mcpTransport string
 	mcpHost      string
 	mcpPort      int
-)
-
-// rate limiting flags (HTTP transport only)
-var (
-	mcpRateLimitEnabled bool
-	mcpRateLimitQPS     int
-	mcpRateLimitDaily   int
-	mcpRateLimitBypass  string
 )
 
 var mcpCmd = &cobra.Command{
@@ -82,20 +73,7 @@ TRANSPORT:
 
   HTTP mode exposes:
     /mcp      - MCP endpoint (streaming HTTP)
-    /health   - Health check endpoint (returns {"status":"ok"} + rate limit stats)
-
-RATE LIMITING (HTTP transport only):
-  Protect your server from abuse with IP-based rate limiting.
-
-    --rate-limit           Enable rate limiting (disabled by default)
-    --rate-limit-qps N     Max requests per second per IP (default: 10)
-    --rate-limit-daily N   Max requests per day per IP (default: 1000, 0=unlimited)
-    --rate-limit-bypass T  Token for trusted clients to bypass limits
-
-  Rate-limited responses include:
-    - HTTP 429 Too Many Requests
-    - Retry-After header with seconds to wait
-    - X-RateLimit-Limit and X-RateLimit-Remaining headers
+    /health   - Health check endpoint (returns {"status":"ok"})
 
 SECURITY:
   Write operations require user confirmation by default. This keeps you in
@@ -130,28 +108,7 @@ Connection Resolution:
      - WHODB_MYSQL_1='{"alias":"staging","host":"localhost","user":"user","password":"pass","database":"db","port":"3306"}'
   2. Saved connection from 'whodb-cli connections add'
 
-  Saved connections take precedence when names collide.
-
-CONFIGURATION FILE:
-  All MCP options can be set in ~/.whodb-cli/config.yaml under the 'mcp' key.
-  CLI flags override config file values. Example config:
-
-    mcp:
-      transport: http
-      host: 0.0.0.0
-      port: 8080
-      security: strict
-      timeout: 60s
-      max_rows: 1000
-      read_only: false
-      allow_write: false
-      allow_drop: false
-      allow_multi_statement: false
-      rate_limit:
-        enabled: true
-        qps: 10
-        daily: 1000
-        bypass_token: my-secret-token`,
+  Saved connections take precedence when names collide.`,
 	Example: `  # Start MCP server (confirm-writes by default - you approve each write)
   whodb-cli mcp serve
 
@@ -178,23 +135,6 @@ CONFIGURATION FILE:
   # HTTP mode bound to all interfaces (can be used in Docker/Kubernetes)
   whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
 
-  # HTTP with rate limiting (recommended for public endpoints)
-  whodb-cli mcp serve --transport=http --rate-limit --rate-limit-qps=5 --rate-limit-daily=500
-
-  # HTTP with rate limit bypass for trusted clients
-  whodb-cli mcp serve --transport=http --rate-limit --rate-limit-bypass=my-secret-token
-  # Clients bypass limits by including: X-RateLimit-Bypass: my-secret-token
-
-  # Use config file for defaults, override specific options via CLI
-  # ~/.whodb-cli/config.yaml:
-  #   mcp:
-  #     transport: http
-  #     port: 8080
-  #     rate_limit:
-  #       enabled: true
-  #       bypass_token: my-secret-token
-  whodb-cli mcp serve --port=9000  # Overrides port from config
-
   # Claude Desktop / Claude Code configuration (stdio):
   {
     "mcpServers": {
@@ -220,68 +160,44 @@ CONFIGURATION FILE:
 			cancel()
 		}()
 
-		// Read all settings from Viper (merges config file + env vars + CLI flags)
-		safeMode := viper.GetBool("mcp.safe_mode")
-		allowWrite := viper.GetBool("mcp.allow_write")
-		isReadOnly := viper.GetBool("mcp.read_only")
-		securityLevel := viper.GetString("mcp.security")
-		timeout := viper.GetDuration("mcp.timeout")
-		maxRows := viper.GetInt("mcp.max_rows")
-		allowMultiStatement := viper.GetBool("mcp.allow_multi_statement")
-		allowDrop := viper.GetBool("mcp.allow_drop")
-
-		transport := viper.GetString("mcp.transport")
-		host := viper.GetString("mcp.host")
-		port := viper.GetInt("mcp.port")
-
-		rateLimitEnabled := viper.GetBool("mcp.rate_limit.enabled")
-		rateLimitQPS := viper.GetInt("mcp.rate_limit.qps")
-		rateLimitDaily := viper.GetInt("mcp.rate_limit.daily")
-		rateLimitBypass := viper.GetString("mcp.rate_limit.bypass_token")
-
-		// Determine mode based on settings
+		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)
 		// Priority: --safe-mode > --allow-write > --read-only > default (confirm-writes)
 		readOnly := false
 		confirmWrites := true // Default: confirm-writes enabled
+		securityLevel := mcpSecurity
 
-		if safeMode {
+		if mcpSafeMode {
 			// Safe mode: read-only + strict security
 			readOnly = true
 			confirmWrites = false
 			securityLevel = "strict"
-		} else if allowWrite {
+		} else if mcpAllowWrite {
 			confirmWrites = false // No confirmation needed
-		} else if isReadOnly {
+		} else if mcpReadOnly {
 			readOnly = true
 			confirmWrites = false // Read-only, no writes to confirm
 		}
 
-		// Build server options
+		// Build server options from flags
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
 			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
-			QueryTimeout:        timeout,
-			MaxRows:             maxRows,
-			AllowMultiStatement: allowMultiStatement,
-			AllowDrop:           allowDrop,
+			QueryTimeout:        mcpTimeout,
+			MaxRows:             mcpMaxRows,
+			AllowMultiStatement: mcpAllowMultiStatement,
+			AllowDrop:           mcpAllowDrop,
 		}
 
 		server := whodbmcp.NewServer(opts)
 
 		// Run with selected transport
-		switch whodbmcp.TransportType(transport) {
+		switch whodbmcp.TransportType(mcpTransport) {
 		case whodbmcp.TransportHTTP:
 			return whodbmcp.RunHTTP(ctx, server, &whodbmcp.HTTPOptions{
-				Host: host,
-				Port: port,
-				RateLimit: whodbmcp.RateLimitOptions{
-					Enabled:     rateLimitEnabled,
-					QPS:         rateLimitQPS,
-					Daily:       rateLimitDaily,
-					BypassToken: rateLimitBypass,
-				},
+				Host: mcpHost,
+				Port: mcpPort,
 			}, opts.Logger)
 		default:
 			return whodbmcp.Run(ctx, server)
@@ -322,43 +238,6 @@ func init() {
 		"Host to bind to (only used with --transport=http)")
 	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
 		"Port to listen on (only used with --transport=http)")
-
-	// Rate limiting flags (HTTP transport only)
-	mcpServeCmd.Flags().BoolVar(&mcpRateLimitEnabled, "rate-limit", false,
-		"Enable IP-based rate limiting (HTTP transport only)")
-	mcpServeCmd.Flags().IntVar(&mcpRateLimitQPS, "rate-limit-qps", 10,
-		"Max requests per second per IP (default: 10)")
-	mcpServeCmd.Flags().IntVar(&mcpRateLimitDaily, "rate-limit-daily", 1000,
-		"Max requests per day per IP (default: 1000, 0=unlimited)")
-	mcpServeCmd.Flags().StringVar(&mcpRateLimitBypass, "rate-limit-bypass", "",
-		"Token for trusted clients to bypass rate limits (via X-RateLimit-Bypass header)")
-
-	// Bind all flags to Viper for config file support
-	// Config file uses nested structure: mcp.transport, mcp.rate_limit.enabled, etc.
-	viper.BindPFlag("mcp.safe_mode", mcpServeCmd.Flags().Lookup("safe-mode"))
-	viper.BindPFlag("mcp.read_only", mcpServeCmd.Flags().Lookup("read-only"))
-	viper.BindPFlag("mcp.allow_write", mcpServeCmd.Flags().Lookup("allow-write"))
-	viper.BindPFlag("mcp.allow_drop", mcpServeCmd.Flags().Lookup("allow-drop"))
-	viper.BindPFlag("mcp.security", mcpServeCmd.Flags().Lookup("security"))
-	viper.BindPFlag("mcp.timeout", mcpServeCmd.Flags().Lookup("timeout"))
-	viper.BindPFlag("mcp.max_rows", mcpServeCmd.Flags().Lookup("max-rows"))
-	viper.BindPFlag("mcp.allow_multi_statement", mcpServeCmd.Flags().Lookup("allow-multi-statement"))
-	viper.BindPFlag("mcp.transport", mcpServeCmd.Flags().Lookup("transport"))
-	viper.BindPFlag("mcp.host", mcpServeCmd.Flags().Lookup("host"))
-	viper.BindPFlag("mcp.port", mcpServeCmd.Flags().Lookup("port"))
-	viper.BindPFlag("mcp.rate_limit.enabled", mcpServeCmd.Flags().Lookup("rate-limit"))
-	viper.BindPFlag("mcp.rate_limit.qps", mcpServeCmd.Flags().Lookup("rate-limit-qps"))
-	viper.BindPFlag("mcp.rate_limit.daily", mcpServeCmd.Flags().Lookup("rate-limit-daily"))
-	viper.BindPFlag("mcp.rate_limit.bypass_token", mcpServeCmd.Flags().Lookup("rate-limit-bypass"))
-
-	// Set defaults for Viper (same as flag defaults)
-	viper.SetDefault("mcp.security", "standard")
-	viper.SetDefault("mcp.timeout", 30*time.Second)
-	viper.SetDefault("mcp.transport", "stdio")
-	viper.SetDefault("mcp.host", "localhost")
-	viper.SetDefault("mcp.port", 3000)
-	viper.SetDefault("mcp.rate_limit.qps", 10)
-	viper.SetDefault("mcp.rate_limit.daily", 1000)
 
 	// Mark flags as mutually exclusive
 	mcpServeCmd.MarkFlagsMutuallyExclusive("read-only", "allow-write")
