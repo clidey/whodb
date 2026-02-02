@@ -144,7 +144,6 @@ export const DatabaseDownOverlay = () => {
 
         // Hide the dialog immediately when switching starts
         setIsSwitching(true);
-
         switchProfile(profile);
     };
 

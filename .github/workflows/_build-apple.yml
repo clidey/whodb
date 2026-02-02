@@ -236,6 +236,34 @@ jobs:
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ci-build-prod-mac VERSION=${{ inputs.version }}
 
+      - name: Bundle BAML native library
+        if: matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          APP_PATH="build/darwin/universal/WhoDB.app"
+          FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
+          BAML_VERSION="0.217.0"
+
+          echo "📦 Bundling BAML native library..."
+          mkdir -p "$FRAMEWORKS_DIR"
+
+          # Download both architectures for universal binary support
+          for arch in "aarch64" "x86_64"; do
+            DYLIB_NAME="libbaml_cffi-${arch}-apple-darwin.dylib"
+            DOWNLOAD_URL="https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/${DYLIB_NAME}"
+
+            echo "  Downloading $DYLIB_NAME..."
+            if curl -fsSL -o "$FRAMEWORKS_DIR/$DYLIB_NAME" "$DOWNLOAD_URL"; then
+              echo "  ✅ Downloaded $DYLIB_NAME"
+              chmod 755 "$FRAMEWORKS_DIR/$DYLIB_NAME"
+            else
+              echo "  ⚠️ Failed to download $DYLIB_NAME (may not be critical if not running on $arch)"
+            fi
+          done
+
+          echo "📁 Frameworks directory contents:"
+          ls -la "$FRAMEWORKS_DIR"
+
       - name: Verify entitlements after build
         if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}

@@ -23,13 +23,18 @@ import (
 )
 
 var (
-	gtePattern        = regexp.MustCompile(`>=\s*(-?\d+(?:\.\d+)?)`)
-	gtPattern         = regexp.MustCompile(`>\s*(-?\d+(?:\.\d+)?)`)
-	ltePattern        = regexp.MustCompile(`<=\s*(-?\d+(?:\.\d+)?)`)
-	ltPattern         = regexp.MustCompile(`<\s*(-?\d+(?:\.\d+)?)`)
-	betweenPattern    = regexp.MustCompile(`(?i)between\s+(-?\d+(?:\.\d+)?)\s+and\s+(-?\d+(?:\.\d+)?)`)
+	// Patterns for numeric comparison constraints.
+	// The \(? and \)? allow optional parentheses around numbers for MSSQL format like ([col]>=(0))
+	gtePattern        = regexp.MustCompile(`>=\s*\(?(-?\d+(?:\.\d+)?)\)?`)
+	gtPattern         = regexp.MustCompile(`>[^=]\s*\(?(-?\d+(?:\.\d+)?)\)?|>\s*\(?(-?\d+(?:\.\d+)?)\)?$`)
+	ltePattern        = regexp.MustCompile(`<=\s*\(?(-?\d+(?:\.\d+)?)\)?`)
+	ltPattern         = regexp.MustCompile(`<[^=]\s*\(?(-?\d+(?:\.\d+)?)\)?|<\s*\(?(-?\d+(?:\.\d+)?)\)?$`)
+	betweenPattern    = regexp.MustCompile(`(?i)between\s+\(?(-?\d+(?:\.\d+)?)\)?\s+and\s+\(?(-?\d+(?:\.\d+)?)\)?`)
 	typeCastPattern   = regexp.MustCompile(`::\w+(\s+\w+)?(\[\])?`)
 	columnNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*`)
+	// Pattern for OR-style equality constraints: [col]='value' OR [col]='value2'
+	// Matches: [column]='value' or column='value' (with single or double quotes)
+	orEqualityPattern = regexp.MustCompile(`(?:\[?\w+\]?)\s*=\s*(?:N)?['"]([^'"]+)['"]`)
 )
 
 // EnsureConstraintEntry initializes a constraint map entry for a column if it doesn't exist.
@@ -93,6 +98,42 @@ func ParseINClauseValues(clause string) []string {
 	return ParseValueList(content)
 }
 
+// ParseORClauseValues extracts values from OR equality constraints.
+// Handles formats like:
+//   - ([status]='Pending' OR [status]='Shipped' OR [status]='Delivered')
+//   - (col='a' OR col='b')
+//   - ([col]=N'value1' OR [col]=N'value2')  (MSSQL Unicode)
+func ParseORClauseValues(clause string) []string {
+	// Check if this looks like an OR-style constraint
+	clauseLower := strings.ToLower(clause)
+	if !strings.Contains(clauseLower, " or ") {
+		return nil
+	}
+
+	// Find all [col]='value' or col='value' patterns
+	matches := orEqualityPattern.FindAllStringSubmatch(clause, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+
+	values := make([]string, 0, len(matches))
+	seen := make(map[string]bool)
+	for _, match := range matches {
+		if len(match) > 1 {
+			val := match[1]
+			if !seen[val] {
+				values = append(values, val)
+				seen[val] = true
+			}
+		}
+	}
+
+	if len(values) == 0 {
+		return nil
+	}
+	return values
+}
+
 // ParseValueList parses a comma-separated list of quoted values.
 // Handles:
 //   - Single quotes: 'value'
@@ -143,6 +184,7 @@ type MinMaxResult struct {
 //   - column <= 100
 //   - column < 100
 //   - column BETWEEN 0 AND 100
+//   - ([column]>=(0)), ([column]>(0))
 func ParseMinMaxConstraints(clause string) MinMaxResult {
 	result := MinMaxResult{}
 	clauseLower := strings.ToLower(clause)
@@ -153,16 +195,20 @@ func ParseMinMaxConstraints(clause string) MinMaxResult {
 			result.Min = val
 			result.HasMin = true
 		}
-	} else if matches := gtPattern.FindStringSubmatch(clause); len(matches) > 1 {
+	} else if matches := gtPattern.FindStringSubmatch(clause); len(matches) > 0 {
 		// Pattern for > value (exclusive, so add 1 for integers)
-		if val, err := strconv.ParseFloat(matches[1], 64); err == nil {
-			// For integers, > 0 means >= 1
-			if val == float64(int64(val)) {
-				result.Min = val + 1
-			} else {
-				result.Min = val
+		// GT pattern has two capture groups due to alternation; use first non-empty one
+		numStr := getFirstNonEmptyMatch(matches[1:])
+		if numStr != "" {
+			if val, err := strconv.ParseFloat(numStr, 64); err == nil {
+				// For integers, > 0 means >= 1
+				if val == float64(int64(val)) {
+					result.Min = val + 1
+				} else {
+					result.Min = val
+				}
+				result.HasMin = true
 			}
-			result.HasMin = true
 		}
 	}
 
@@ -172,10 +218,12 @@ func ParseMinMaxConstraints(clause string) MinMaxResult {
 			result.Max = val
 			result.HasMax = true
 		}
-	} else if matches := ltPattern.FindStringSubmatch(clause); len(matches) > 1 {
+	} else if matches := ltPattern.FindStringSubmatch(clause); len(matches) > 0 {
 		// Pattern for < value (exclusive, so subtract 1 for integers)
-		if !strings.Contains(clause[strings.Index(clauseLower, "<"):], "=") {
-			if val, err := strconv.ParseFloat(matches[1], 64); err == nil {
+		// LT pattern has two capture groups due to alternation; use first non-empty one
+		numStr := getFirstNonEmptyMatch(matches[1:])
+		if numStr != "" && !strings.Contains(clause[strings.Index(clauseLower, "<"):], "=") {
+			if val, err := strconv.ParseFloat(numStr, 64); err == nil {
 				// For integers, < 100 means <= 99
 				if val == float64(int64(val)) {
 					result.Max = val - 1
@@ -202,6 +250,17 @@ func ParseMinMaxConstraints(clause string) MinMaxResult {
 	}
 
 	return result
+}
+
+// getFirstNonEmptyMatch returns the first non-empty string from the slice.
+// Used for regex patterns with alternation that have multiple capture groups.
+func getFirstNonEmptyMatch(matches []string) string {
+	for _, m := range matches {
+		if m != "" {
+			return m
+		}
+	}
+	return ""
 }
 
 // ApplyMinMaxToConstraints applies MinMaxResult values to a constraint map

@@ -146,6 +146,40 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string)
 	return p.executeRawSQL(config, query)
 }
 
+func (p *ClickHousePlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
+// ClearTableData handles ClickHouse-specific DELETE semantics.
+// ClickHouse DELETE is an async mutation (ALTER TABLE DELETE) that doesn't return results
+// in the same way as traditional SQL DELETE. GORM's Delete method doesn't handle this properly.
+func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		tableName := p.FormTableName(schema, storageUnit)
+
+		query := fmt.Sprintf("ALTER TABLE %s DELETE WHERE 1=1", tableName)
+
+		// Execute the DELETE mutation
+		err := db.Exec(query).Error
+		if err != nil {
+			// ClickHouse mutations may return "driver: bad connection" when trying to read
+			// the non-existent result set. Verify the connection is still healthy.
+			if err.Error() == "driver: bad connection" {
+				var result int
+				if db.Raw("SELECT 1").Scan(&result).Error == nil {
+					// Connection is healthy, mutation was accepted
+					log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE mutation accepted")
+					return true, nil
+				}
+			}
+			return false, err
+		}
+
+		log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE executed")
+		return true, nil
+	})
+}
+
 func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		rows, err := db.Raw(query, params...).Rows()

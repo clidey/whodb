@@ -185,3 +185,63 @@ func IsWriteStatement(stmtType StatementType) bool {
 	}
 	return false
 }
+
+// Input validation errors - designed to be helpful for AI assistants
+var (
+	ErrQueryRequired      = errors.New("query is required and cannot be empty")
+	ErrTableRequired      = errors.New("table is required - specify which table to describe")
+	ErrTokenRequired      = errors.New("token is required - use the confirmation_token from the previous query response")
+	ErrTokenInvalid       = errors.New("token is not a valid confirmation token format")
+	ErrConnectionRequired = errors.New("connection is required when multiple connections are configured (use whodb_connections to list available connections)")
+)
+
+// ValidateQueryInput validates the input for whodb_query tool.
+func ValidateQueryInput(input *QueryInput, connectionCount int) error {
+	if strings.TrimSpace(input.Query) == "" {
+		return ErrQueryRequired
+	}
+	if connectionCount > 1 && strings.TrimSpace(input.Connection) == "" {
+		return ErrConnectionRequired
+	}
+	return nil
+}
+
+// ValidateSchemasInput validates the input for whodb_schemas tool.
+func ValidateSchemasInput(input *SchemasInput, connectionCount int) error {
+	if connectionCount > 1 && strings.TrimSpace(input.Connection) == "" {
+		return ErrConnectionRequired
+	}
+	return nil
+}
+
+// ValidateTablesInput validates the input for whodb_tables tool.
+func ValidateTablesInput(input *TablesInput, connectionCount int) error {
+	if connectionCount > 1 && strings.TrimSpace(input.Connection) == "" {
+		return ErrConnectionRequired
+	}
+	return nil
+}
+
+// ValidateColumnsInput validates the input for whodb_columns tool.
+func ValidateColumnsInput(input *ColumnsInput, connectionCount int) error {
+	if strings.TrimSpace(input.Table) == "" {
+		return ErrTableRequired
+	}
+	if connectionCount > 1 && strings.TrimSpace(input.Connection) == "" {
+		return ErrConnectionRequired
+	}
+	return nil
+}
+
+// ValidateConfirmInput validates the input for whodb_confirm tool.
+func ValidateConfirmInput(input *ConfirmInput) error {
+	token := strings.TrimSpace(input.Token)
+	if token == "" {
+		return ErrTokenRequired
+	}
+	// Basic UUID format check (8-4-4-4-12 pattern)
+	if len(token) != 36 || token[8] != '-' || token[13] != '-' || token[18] != '-' || token[23] != '-' {
+		return ErrTokenInvalid
+	}
+	return nil
+}

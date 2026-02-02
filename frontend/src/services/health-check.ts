@@ -41,7 +41,7 @@ const DEFAULT_CONFIG: HealthCheckConfig = {
  * Monitors both server and database connectivity status.
  */
 class HealthCheckService {
-    private intervalId: NodeJS.Timeout | null = null;
+    private intervalId: ReturnType<typeof setTimeout> | null = null;
     private currentInterval: number;
     private config: HealthCheckConfig;
     private consecutiveFailures: number = 0;

@@ -9,7 +9,7 @@ class WhodbCli < Formula
   depends_on "go" => :build
 
   def install
-    ENV["CGO_ENABLED"] = "1"
+    ENV["CGO_ENABLED"] = "1" if OS.linux? && Hardware::CPU.arm?
     baml_version = File.read("core/go.mod")[%r{github\.com/boundaryml/baml\s+v?([\d.]+)}, 1]
     ldflags = %W[
       -s -w
@@ -34,6 +34,6 @@ class WhodbCli < Formula
     assert_match version.to_s, shell_output("#{bin}/whodb-cli version")
 
     output = shell_output("#{bin}/whodb-cli connections list --format json")
-    assert_match(/^\[.*\]$/m, output)
+    JSON.parse(output)
   end
 end

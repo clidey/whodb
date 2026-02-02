@@ -288,6 +288,8 @@ interface TableProps {
     isValidForeignKey?: (columnName: string) => boolean;
     onEntitySearch?: (columnName: string, value: string) => void;
     databaseType?: string;
+    // Mock data generation control - set to false for views/materialized views
+    isMockDataGenerationAllowed?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -318,6 +320,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     isValidForeignKey,
     onEntitySearch,
     databaseType,
+    // Mock data generation control
+    isMockDataGenerationAllowed = true,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -341,7 +345,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
-    const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch";
+    const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch" && isMockDataGenerationAllowed;
     const isClickHouse = databaseType === "ClickHouse";
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;

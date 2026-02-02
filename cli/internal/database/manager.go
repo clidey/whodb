@@ -548,6 +548,61 @@ func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*e
 	}
 }
 
+// ExecuteQueryWithParams executes a parameterized query against the current database.
+// Parameters are passed safely to the database driver, preventing SQL injection.
+func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+	return plugin.RawExecuteWithParams(pluginConfig, query, params)
+}
+
+// ExecuteQueryWithContextAndParams executes a parameterized query with context support.
+// If the context is cancelled or times out, the function returns immediately with ctx.Err().
+// Note: The underlying database operation may continue running; only the wait is cancelled.
+func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query string, params []any) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := engine.DatabaseType(m.currentConnection.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	credentials := m.buildCredentials(m.currentConnection)
+	pluginConfig := engine.NewPluginConfig(credentials)
+
+	// Use channels to receive result from goroutine
+	type result struct {
+		data *engine.GetRowsResult
+		err  error
+	}
+	resultCh := make(chan result, 1)
+
+	go func() {
+		data, err := plugin.RawExecuteWithParams(pluginConfig, query, params)
+		resultCh <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		return res.data, res.err
+	}
+}
+
 // GetRowsWithContext fetches rows with context support for cancellation and timeout.
 // If the context is cancelled or times out, the function returns immediately with ctx.Err().
 // Note: The underlying database operation may continue running; only the wait is cancelled.

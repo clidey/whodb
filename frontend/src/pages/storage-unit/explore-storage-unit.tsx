@@ -117,6 +117,15 @@ export const ExploreStorageUnit: FC = () => {
     const unit: StorageUnit = useLocation().state?.unit;
     const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
 
+    // Check if this is a view/materialized view - mock data generation not allowed for these
+    const isMockDataGenerationAllowed = useMemo(() => {
+        if (!unit?.Attributes) return true;
+        const typeAttr = unit.Attributes.find(attr => attr.Key === "Type");
+        if (!typeAttr) return true;
+        const upperType = typeAttr.Value.toUpperCase();
+        return !upperType.includes("VIEW") && !upperType.includes("MATERIALIZED") && !upperType.includes("SYSTEM");
+    }, [unit?.Attributes]);
+
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
@@ -785,6 +794,8 @@ export const ExploreStorageUnit: FC = () => {
                         isValidForeignKey={isValidForeignKey}
                         onEntitySearch={handleEntitySearch}
                         databaseType={current?.Type}
+                        // Mock data control - disabled for views/materialized views
+                        isMockDataGenerationAllowed={isMockDataGenerationAllowed}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">

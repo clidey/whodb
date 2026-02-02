@@ -147,7 +147,7 @@ func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
 	return "?"
 }
 
-// GetColumnsForTable overrides the base implementation to properly detect SQLite auto-increment.
+// GetColumnsForTable overrides the base implementation to properly detect SQLite auto-increment and generated columns.
 func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, storageUnit string) ([]engine.Column, error) {
 	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
 	if err != nil {
@@ -155,6 +155,7 @@ func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, 
 	}
 
 	// SQLite's INTEGER PRIMARY KEY is always auto-increment
+	// Also detect generated columns
 	_, err = plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
 		if !ok {
@@ -192,8 +193,48 @@ func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, 
 			}
 		}
 
+		// Query generated columns using table_xinfo
+		// hidden = 2 means virtual generated, hidden = 3 means stored generated
+		generatedCols := make(map[string]bool)
+		tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
+		if err == nil {
+			xrows, xerr := db.Raw(tableXInfoQuery).Rows()
+			if xerr == nil {
+				defer xrows.Close()
+				for xrows.Next() {
+					var cid int
+					var name string
+					var dataType string
+					var notNull int
+					var dfltValue any
+					var pk int
+					var hidden int
+
+					if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
+						continue
+					}
+
+					// hidden = 2 (virtual generated) or hidden = 3 (stored generated)
+					if hidden == 2 || hidden == 3 {
+						generatedCols[name] = true
+					}
+				}
+			}
+		}
+
 		// Update IsAutoIncrement for INTEGER PRIMARY KEY columns
+		// Update IsComputed for generated columns
 		for i := range columns {
+			// Check for generated columns
+			if generatedCols[columns[i].Name] {
+				columns[i].IsComputed = true
+				log.Logger.WithFields(map[string]any{
+					"table":  storageUnit,
+					"column": columns[i].Name,
+				}).Debug("Detected SQLite generated column")
+			}
+
+			// Check for auto-increment
 			if columns[i].IsPrimary {
 				colType := strings.ToUpper(columns[i].Type)
 				pkType, isPK := pkColTypes[columns[i].Name]
@@ -395,6 +436,10 @@ func (p *Sqlite3Plugin) RawExecute(config *engine.PluginConfig, query string) (*
 	return p.executeRawSQL(config, query)
 }
 
+func (p *Sqlite3Plugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
 // ConvertRawToRows overrides the parent to handle SQLite datetime columns specially
 // This maintains backward compatibility for non-STRICT tables
 func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {
@@ -530,6 +575,11 @@ func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, 
 // NormalizeType converts SQLite type aliases to their canonical form.
 func (p *Sqlite3Plugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
+}
+
+// GetMaxBulkInsertParameters returns 999 for SQLite.
+func (p *Sqlite3Plugin) GetMaxBulkInsertParameters() int {
+	return 999
 }
 
 func NewSqlite3Plugin() *engine.Plugin {

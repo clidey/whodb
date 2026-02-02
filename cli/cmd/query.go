@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
 )
@@ -78,6 +81,8 @@ Output formats:
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		startTime := time.Now()
 		sql := args[0]
 
 		if sql == "-" {
@@ -132,6 +137,7 @@ Output formats:
 		spinner.Start()
 		if err := mgr.Connect(conn); err != nil {
 			spinner.StopWithError("Connection failed")
+			analytics.TrackConnectError(ctx, conn.Type, "connection_failed", time.Since(startTime).Milliseconds())
 			return fmt.Errorf("cannot connect to database: %w", err)
 		}
 		spinner.StopWithSuccess("Connected")
@@ -141,9 +147,11 @@ Output formats:
 			spinner = output.NewSpinner("Executing query...")
 		}
 		spinner.Start()
+		queryStart := time.Now()
 		result, err := mgr.ExecuteQuery(sql)
 		if err != nil {
 			spinner.StopWithError("Query failed")
+			analytics.TrackQueryError(ctx, conn.Type, "execution_failed", time.Since(queryStart).Milliseconds())
 			return fmt.Errorf("query failed: %w", err)
 		}
 		spinner.Stop()
@@ -161,6 +169,12 @@ Output formats:
 			}
 		}
 
+		// Track successful query execution
+		analytics.TrackQueryExecute(ctx, conn.Type, detectStatementType(sql), true,
+			time.Since(queryStart).Milliseconds(), len(rows), map[string]any{
+				"format": string(format),
+			})
+
 		queryResult := &output.QueryResult{
 			Columns: columns,
 			Rows:    rows,
@@ -168,6 +182,37 @@ Output formats:
 
 		return out.WriteQueryResult(queryResult)
 	},
+}
+
+// detectStatementType returns the SQL statement type (SELECT, INSERT, etc.)
+func detectStatementType(sql string) string {
+	sql = strings.TrimSpace(strings.ToUpper(sql))
+	switch {
+	case strings.HasPrefix(sql, "SELECT"), strings.HasPrefix(sql, "WITH"):
+		return "SELECT"
+	case strings.HasPrefix(sql, "INSERT"):
+		return "INSERT"
+	case strings.HasPrefix(sql, "UPDATE"):
+		return "UPDATE"
+	case strings.HasPrefix(sql, "DELETE"):
+		return "DELETE"
+	case strings.HasPrefix(sql, "CREATE"):
+		return "CREATE"
+	case strings.HasPrefix(sql, "ALTER"):
+		return "ALTER"
+	case strings.HasPrefix(sql, "DROP"):
+		return "DROP"
+	case strings.HasPrefix(sql, "TRUNCATE"):
+		return "TRUNCATE"
+	case strings.HasPrefix(sql, "SHOW"):
+		return "SHOW"
+	case strings.HasPrefix(sql, "DESCRIBE"), strings.HasPrefix(sql, "DESC"):
+		return "DESCRIBE"
+	case strings.HasPrefix(sql, "EXPLAIN"):
+		return "EXPLAIN"
+	default:
+		return "OTHER"
+	}
 }
 
 func init() {

@@ -29,6 +29,7 @@ import (
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -69,6 +70,14 @@ func setupServer(router *chi.Mux, staticFiles embed.FS) {
 	setupPlaygroundHandler(router, server)
 }
 
+// debugRequestMiddleware logs all incoming requests to the debug file
+func debugRequestMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.DebugFileAlways("HTTP Request: %s %s (Host: %s, RemoteAddr: %s)", r.Method, r.URL.Path, r.Host, r.RemoteAddr)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func setupMiddlewares(router *chi.Mux) {
 	allowedOrigins := env.AllowedOrigins
 	if len(allowedOrigins) == 0 {
@@ -76,6 +85,7 @@ func setupMiddlewares(router *chi.Mux) {
 	}
 
 	middlewares := []func(http.Handler) http.Handler{
+		debugRequestMiddleware, // Log all requests to debug file
 		middleware.ThrottleBacklog(100, 50, time.Second*5),
 		middleware.RequestID,
 		middleware.RealIP,

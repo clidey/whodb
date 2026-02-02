@@ -170,6 +170,54 @@ func TestParseValueList(t *testing.T) {
 	}
 }
 
+func TestParseORClauseValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		clause   string
+		expected []string
+	}{
+		{
+			name:     "MSSQL OR chain with brackets",
+			clause:   "([status]='Cancelled' OR [status]='Delivered' OR [status]='Shipped' OR [status]='Pending')",
+			expected: []string{"Cancelled", "Delivered", "Shipped", "Pending"},
+		},
+		{
+			name:     "MSSQL OR chain with Unicode prefix",
+			clause:   "([col]=N'value1' OR [col]=N'value2')",
+			expected: []string{"value1", "value2"},
+		},
+		{
+			name:     "OR chain without brackets",
+			clause:   "(status='active' OR status='inactive')",
+			expected: []string{"active", "inactive"},
+		},
+		{
+			name:     "no OR clause",
+			clause:   "status IN ('active', 'inactive')",
+			expected: nil,
+		},
+		{
+			name:     "empty",
+			clause:   "",
+			expected: nil,
+		},
+		{
+			name:     "min/max constraint (not OR equality)",
+			clause:   "([age]>=(18))",
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ParseORClauseValues(tt.clause)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("ParseORClauseValues(%q) = %v, want %v", tt.clause, result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestParseMinMaxConstraints(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -226,6 +274,45 @@ func TestParseMinMaxConstraints(t *testing.T) {
 		{
 			name:   "no constraints",
 			clause: "status IN ('a', 'b')",
+		},
+		// MSSQL parenthesized format tests
+		{
+			name:           "MSSQL greater than or equal parenthesized",
+			clause:         "([price]>=(0))",
+			expectedMin:    0,
+			expectedHasMin: true,
+		},
+		{
+			name:           "MSSQL greater than parenthesized",
+			clause:         "([quantity]>(0))",
+			expectedMin:    1,
+			expectedHasMin: true,
+		},
+		{
+			name:           "MSSQL less than or equal parenthesized",
+			clause:         "([score]<=(100))",
+			expectedMax:    100,
+			expectedHasMax: true,
+		},
+		{
+			name:           "MSSQL less than parenthesized",
+			clause:         "([age]<(120))",
+			expectedMax:    119,
+			expectedHasMax: true,
+		},
+		{
+			name:           "MSSQL decimal in parentheses",
+			clause:         "([price]>=(0.01))",
+			expectedMin:    0.01,
+			expectedHasMin: true,
+		},
+		{
+			name:           "MSSQL between parenthesized",
+			clause:         "([rating] BETWEEN (1) AND (5))",
+			expectedMin:    1,
+			expectedMax:    5,
+			expectedHasMin: true,
+			expectedHasMax: true,
 		},
 	}
 

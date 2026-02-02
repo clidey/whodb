@@ -30,7 +30,7 @@ on:
           - 'stage-only'     # Deploy selected stores to edge/draft channels
           - 'production'     # Deploy selected stores to stable/production channels
       version-bump:
-        description: 'Version Bump Type'
+        description: 'Version Bump Type (ignored if explicit version is set)'
         required: true
         type: choice
         default: 'minor'
@@ -39,6 +39,11 @@ on:
           - 'minor'          # 0.61.0 -> 0.62.0
           - 'patch'          # 0.61.0 -> 0.61.1
           - 'current'        # Use current version (rebuild without increment)
+      explicit-version:
+        description: 'Explicit Version (e.g., 0.65.0) - overrides version bump'
+        required: false
+        type: string
+        default: ''
       # Store selection (applies to both stage and production modes)
       deploy-docker:
         description: 'Deploy to Docker Hub'
@@ -140,6 +145,7 @@ jobs:
         with:
           deployment-mode: ${{ steps.deployment_mode.outputs.mode }}
           version-bump: ${{ steps.deployment_mode.outputs.version_bump }}
+          explicit-version: ${{ inputs.explicit-version }}
           deploy-docker: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-docker) && 'true' || 'false') }}
           deploy-snap: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-snap) && 'true' || 'false') }}
           deploy-microsoft: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-microsoft) && 'true' || 'false') }}

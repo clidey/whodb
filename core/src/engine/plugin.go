@@ -66,6 +66,7 @@ type Column struct {
 	Name             string
 	IsPrimary        bool
 	IsAutoIncrement  bool
+	IsComputed       bool // Database-managed, generated, etc
 	IsForeignKey     bool
 	ReferencedTable  *string
 	ReferencedColumn *string
@@ -84,14 +85,6 @@ type GetRowsResult struct {
 
 // GraphUnitRelationshipType defines the cardinality of a relationship between tables.
 type GraphUnitRelationshipType string
-
-const (
-	GraphUnitRelationshipType_OneToOne   = "OneToOne"
-	GraphUnitRelationshipType_OneToMany  = "OneToMany"
-	GraphUnitRelationshipType_ManyToOne  = "ManyToOne"
-	GraphUnitRelationshipType_ManyToMany = "ManyToMany"
-	GraphUnitRelationshipType_Unknown    = "Unknown"
-)
 
 // GraphUnitRelationship describes a foreign key relationship between two tables.
 type GraphUnitRelationship struct {
@@ -140,6 +133,10 @@ type PluginFunctions interface {
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
+	// RawExecuteWithParams executes a raw SQL query with parameterized arguments.
+	// Parameters are passed safely to the database driver, preventing SQL injection.
+	// For NoSQL databases, this returns an error indicating params are not supported.
+	RawExecuteWithParams(config *PluginConfig, query string, params []any) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
