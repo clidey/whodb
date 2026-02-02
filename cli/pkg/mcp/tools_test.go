@@ -782,6 +782,96 @@ func TestHandleConfirm_ValidationErrors(t *testing.T) {
 }
 
 // =============================================================================
+// Default Connection Injection Tests
+// These tests verify that the --connection flag properly injects the default
+// connection when users don't specify one.
+// =============================================================================
+
+// TestHandleQuery_DefaultConnectionInjection tests that HandleQuery uses the default connection
+func TestHandleQuery_DefaultConnectionInjection(t *testing.T) {
+	ctx := t.Context()
+
+	t.Run("uses default connection when input.Connection is empty", func(t *testing.T) {
+		secOpts := &SecurityOptions{
+			ReadOnly:          true,
+			SecurityLevel:     SecurityLevelStandard,
+			QueryTimeout:      30 * time.Second,
+			DefaultConnection: "mydefaultdb", // This should be used
+		}
+
+		input := QueryInput{
+			Query:      "SELECT 1",
+			Connection: "", // Empty - should use default
+		}
+
+		// The handler should try to resolve "mydefaultdb" (which won't exist, but proves injection worked)
+		_, output, err := HandleQuery(ctx, nil, input, secOpts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// Should fail at connection resolution (not validation) with the default connection name
+		if output.Error == "" {
+			t.Error("expected error (connection not found)")
+		}
+		// The error should NOT be about missing connection parameter
+		if strings.Contains(output.Error, "Please specify which one") {
+			t.Error("should have used default connection, not asked for one")
+		}
+	})
+
+	t.Run("explicit connection overrides default", func(t *testing.T) {
+		secOpts := &SecurityOptions{
+			ReadOnly:          true,
+			SecurityLevel:     SecurityLevelStandard,
+			QueryTimeout:      30 * time.Second,
+			DefaultConnection: "default_conn",
+		}
+
+		input := QueryInput{
+			Query:      "SELECT 1",
+			Connection: "explicit_conn", // Explicitly specified
+		}
+
+		_, output, err := HandleQuery(ctx, nil, input, secOpts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// Should try to resolve "explicit_conn", not "default_conn"
+		// (Both will fail, but error message reveals which was tried)
+		if output.Error == "" {
+			t.Error("expected error (connection not found)")
+		}
+	})
+
+	t.Run("no default connection falls back to original behavior", func(t *testing.T) {
+		secOpts := &SecurityOptions{
+			ReadOnly:          true,
+			SecurityLevel:     SecurityLevelStandard,
+			QueryTimeout:      30 * time.Second,
+			DefaultConnection: "", // No default set
+		}
+
+		input := QueryInput{
+			Query:      "SELECT 1",
+			Connection: "",
+		}
+
+		_, output, err := HandleQuery(ctx, nil, input, secOpts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// Without default connection and with no connections available,
+		// should get the "no database connections available" or similar error
+		if output.Error == "" {
+			t.Error("expected error about connections")
+		}
+	})
+}
+
+// =============================================================================
 // Prompt Injection Protection Tests
 // These tests verify that query results are wrapped with safety boundaries
 // to protect against prompt injection attacks from malicious database content.

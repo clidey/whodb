@@ -65,6 +65,12 @@ npx @clidey/whodb-cli mcp serve
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations or `--read-only` to block writes.
 
+Restrict AI access to specific connections with `--allowed-connections`:
+
+```bash
+npx @clidey/whodb-cli mcp serve --allowed-connections prod,staging
+```
+
 ## MCP Client Configuration (Example)
 
 Example configuration (from `whodb-cli mcp serve --help`):

@@ -49,6 +49,10 @@ type QueryInput struct {
 	Connection string `json:"connection"`
 	// Query is the SQL query to execute
 	Query string `json:"query"`
+	// Parameters for parameterized queries (optional).
+	// Use placeholders in the query ($1, $2 for Postgres; ? for MySQL/SQLite).
+	// Example: query="SELECT * FROM users WHERE id = $1", parameters=[42]
+	Parameters []any `json:"parameters,omitempty"`
 }
 
 // QueryOutput is the output for the whodb_query tool.
@@ -235,12 +239,22 @@ func countAvailableConnections() int {
 
 // Query execution helpers
 
-// executeQuery runs a query with optional timeout and returns the result
-func executeQuery(ctx context.Context, mgr *dbmgr.Manager, query string, timeout time.Duration) (*engine.GetRowsResult, error) {
+// executeQuery runs a query with optional timeout and parameters, returning the result.
+// If params is non-empty, uses parameterized query execution for SQL injection safety.
+func executeQuery(ctx context.Context, mgr *dbmgr.Manager, query string, params []any, timeout time.Duration) (*engine.GetRowsResult, error) {
+	hasParams := len(params) > 0
+
 	if timeout > 0 {
 		queryCtx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
+		if hasParams {
+			return mgr.ExecuteQueryWithContextAndParams(queryCtx, query, params)
+		}
 		return mgr.ExecuteQueryWithContext(queryCtx, query)
+	}
+
+	if hasParams {
+		return mgr.ExecuteQueryWithParams(query, params)
 	}
 	return mgr.ExecuteQuery(query)
 }
@@ -338,6 +352,17 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	requestID := generateRequestID("query")
 	startTime := time.Now()
 
+	// Inject default connection if not specified
+	if input.Connection == "" && secOpts.DefaultConnection != "" {
+		input.Connection = secOpts.DefaultConnection
+	}
+
+	// Validate connection is allowed
+	if !secOpts.isConnectionAllowed(input.Connection) {
+		TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_not_allowed"})
+		return nil, QueryOutput{Error: fmt.Sprintf("connection %q is not allowed", input.Connection), RequestID: requestID}, nil
+	}
+
 	// Validate input
 	connCount := countAvailableConnections()
 	if err := ValidateQueryInput(&input, connCount); err != nil {
@@ -400,7 +425,7 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	}
 	defer mgr.Disconnect()
 
-	result, err := executeQuery(ctx, mgr, input.Query, secOpts.QueryTimeout)
+	result, err := executeQuery(ctx, mgr, input.Query, input.Parameters, secOpts.QueryTimeout)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			TrackToolCall(ctx, "query", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})
@@ -453,6 +478,12 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, ConfirmOutput{Error: err.Error(), RequestID: requestID}, nil
 	}
 
+	// Validate connection is still allowed (defense-in-depth)
+	if !secOpts.isConnectionAllowed(pending.Connection) {
+		TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "connection_not_allowed"})
+		return nil, ConfirmOutput{Error: fmt.Sprintf("connection %q is not allowed", pending.Connection), RequestID: requestID}, nil
+	}
+
 	// Resolve connection
 	conn, err := ResolveConnectionOrDefault(pending.Connection)
 	if err != nil {
@@ -472,7 +503,8 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 	}
 	defer mgr.Disconnect()
 
-	result, err := executeQuery(ctx, mgr, pending.Query, secOpts.QueryTimeout)
+	// Confirmed queries don't use parameters (the original query was stored as-is)
+	result, err := executeQuery(ctx, mgr, pending.Query, nil, secOpts.QueryTimeout)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			TrackToolCall(ctx, "confirm", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "timeout", "db_type": conn.Type})

@@ -124,6 +124,10 @@ func (p *MySQLPlugin) RawExecute(config *engine.PluginConfig, query string) (*en
 	return p.executeRawSQL(config, query)
 }
 
+func (p *MySQLPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
 // CreateSQLBuilder creates a MySQL-specific SQL builder
 func (p *MySQLPlugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInterface {
 	return NewMySQLSQLBuilder(db, p)

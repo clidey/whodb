@@ -648,6 +648,10 @@ func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string) (*
 	return nil, errors.ErrUnsupported
 }
 
+func (p *MongoDBPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return nil, errors.ErrUnsupported
 }

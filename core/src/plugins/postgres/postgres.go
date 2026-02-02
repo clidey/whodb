@@ -132,6 +132,10 @@ func (p *PostgresPlugin) RawExecute(config *engine.PluginConfig, query string) (
 	return p.executeRawSQL(config, query)
 }
 
+func (p *PostgresPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
 func (p *PostgresPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
 	query := `
 		SELECT

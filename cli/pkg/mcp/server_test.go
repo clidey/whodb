@@ -293,3 +293,91 @@ func TestBuildWorkflowHelpContent(t *testing.T) {
 		t.Error("Default workflow should list available workflows")
 	}
 }
+
+// Connection allowlist tests
+
+func TestIsConnectionAllowed_NoRestrictions(t *testing.T) {
+	secOpts := &SecurityOptions{
+		AllowedConnections: nil, // No restrictions
+	}
+
+	// Any connection should be allowed
+	if !secOpts.isConnectionAllowed("prod") {
+		t.Error("With no restrictions, 'prod' should be allowed")
+	}
+	if !secOpts.isConnectionAllowed("staging") {
+		t.Error("With no restrictions, 'staging' should be allowed")
+	}
+	if !secOpts.isConnectionAllowed("") {
+		t.Error("With no restrictions, empty connection should be allowed")
+	}
+}
+
+func TestIsConnectionAllowed_EmptySlice(t *testing.T) {
+	secOpts := &SecurityOptions{
+		AllowedConnections: []string{}, // Empty slice = no restrictions
+	}
+
+	if !secOpts.isConnectionAllowed("any") {
+		t.Error("With empty AllowedConnections, any connection should be allowed")
+	}
+}
+
+func TestIsConnectionAllowed_SingleConnection(t *testing.T) {
+	secOpts := &SecurityOptions{
+		AllowedConnections: []string{"prod"},
+	}
+
+	if !secOpts.isConnectionAllowed("prod") {
+		t.Error("'prod' should be allowed when it's in the list")
+	}
+	if secOpts.isConnectionAllowed("staging") {
+		t.Error("'staging' should NOT be allowed when only 'prod' is in the list")
+	}
+	if secOpts.isConnectionAllowed("") {
+		t.Error("Empty connection should NOT be allowed when restrictions are set")
+	}
+}
+
+func TestIsConnectionAllowed_MultipleConnections(t *testing.T) {
+	secOpts := &SecurityOptions{
+		AllowedConnections: []string{"prod", "staging", "dev"},
+	}
+
+	if !secOpts.isConnectionAllowed("prod") {
+		t.Error("'prod' should be allowed")
+	}
+	if !secOpts.isConnectionAllowed("staging") {
+		t.Error("'staging' should be allowed")
+	}
+	if !secOpts.isConnectionAllowed("dev") {
+		t.Error("'dev' should be allowed")
+	}
+	if secOpts.isConnectionAllowed("test") {
+		t.Error("'test' should NOT be allowed")
+	}
+}
+
+func TestNewServer_AllowedConnectionsSetsDefault(t *testing.T) {
+	// When AllowedConnections is set and DefaultConnection is not,
+	// the first allowed connection becomes the default
+	server := NewServer(&ServerOptions{
+		AllowedConnections: []string{"staging", "prod"},
+	})
+	if server == nil {
+		t.Fatal("NewServer() returned nil with AllowedConnections")
+	}
+	// We can't directly inspect secOpts, but the server should be created successfully
+}
+
+func TestNewServer_ExplicitDefaultOverridesFirst(t *testing.T) {
+	// When both DefaultConnection and AllowedConnections are set,
+	// DefaultConnection takes precedence
+	server := NewServer(&ServerOptions{
+		DefaultConnection:  "prod",
+		AllowedConnections: []string{"staging", "dev"},
+	})
+	if server == nil {
+		t.Fatal("NewServer() returned nil with explicit DefaultConnection")
+	}
+}

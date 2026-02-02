@@ -146,6 +146,10 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string)
 	return p.executeRawSQL(config, query)
 }
 
+func (p *ClickHousePlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
 // ClearTableData handles ClickHouse-specific DELETE semantics.
 // ClickHouse DELETE is an async mutation (ALTER TABLE DELETE) that doesn't return results
 // in the same way as traditional SQL DELETE. GORM's Delete method doesn't handle this properly.

@@ -436,6 +436,10 @@ func (p *Sqlite3Plugin) RawExecute(config *engine.PluginConfig, query string) (*
 	return p.executeRawSQL(config, query)
 }
 
+func (p *Sqlite3Plugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
 // ConvertRawToRows overrides the parent to handle SQLite datetime columns specially
 // This maintains backward compatibility for non-STRICT tables
 func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {

@@ -466,6 +466,26 @@ HTTP mode exposes:
 - `--host`: Bind address (default: localhost)
 - `--port`: Listen port (default: 3000)
 
+**Connection Scoping:**
+- `--allowed-connections`: Comma-separated list of connections to allow (restricts access)
+- `--default-connection`: Default connection when not specified (does not restrict access)
+
+```bash
+# Restrict AI to specific connections only
+whodb-cli mcp serve --allowed-connections prod,staging
+
+# Set default without restricting access
+whodb-cli mcp serve --default-connection prod
+
+# Combine: restrict to prod/staging, default to staging
+whodb-cli mcp serve --allowed-connections prod,staging --default-connection staging
+```
+
+When `--allowed-connections` is set:
+- `whodb_connections` only shows allowed connections
+- Queries to other connections are rejected
+- First allowed connection becomes the default (unless `--default-connection` is set)
+
 ### Configure Connections
 
 The MCP server uses the same connection sources as the CLI:

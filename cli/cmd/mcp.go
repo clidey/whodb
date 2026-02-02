@@ -53,6 +53,10 @@ var (
 	mcpDisabledTools []string
 )
 
+// connection scoping flags
+var mcpConnection string
+var mcpAllowedConnections []string
+
 // analytics flags
 var mcpNoAnalytics bool
 
@@ -124,6 +128,18 @@ ANALYTICS:
     --no-analytics                        Flag to disable analytics
     WHODB_MCP_ANALYTICS_DISABLED=true     Environment variable to disable
 
+CONNECTION SCOPING:
+  --default-connection NAME     Set default connection (no access restriction)
+  --allowed-connections A,B,C   Restrict access to listed connections only
+
+  With --allowed-connections:
+  - whodb_connections only shows allowed connections
+  - Queries to other connections are rejected
+  - First allowed connection becomes the default (unless --default-connection set)
+
+  With --default-connection only:
+  - Sets the default, but all connections remain accessible
+
 Connection Resolution:
   Tools accept a 'connection' parameter that references either:
   1. Environment profiles, for example:
@@ -163,6 +179,12 @@ Connection Resolution:
 
   # Disable query tool (only schema exploration)
   whodb-cli mcp serve --disable-tools=query,confirm
+
+  # Restrict to specific connections (first becomes default)
+  whodb-cli mcp serve --allowed-connections=prod,staging
+
+  # Set default connection without restricting access
+  whodb-cli mcp serve --default-connection=prod
 
   # Claude Desktop / Claude Code configuration (stdio):
   {
@@ -229,6 +251,8 @@ Connection Resolution:
 			AllowDrop:           mcpAllowDrop,
 			EnabledTools:        mcpEnabledTools,
 			DisabledTools:       mcpDisabledTools,
+			DefaultConnection:   mcpConnection,
+			AllowedConnections:  mcpAllowedConnections,
 		}
 
 		server := whodbmcp.NewServer(opts)
@@ -302,6 +326,12 @@ func init() {
 		"Comma-separated list of tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm")
 	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,
 		"Comma-separated list of tools to disable (takes precedence over --tools)")
+
+	// Connection scoping
+	mcpServeCmd.Flags().StringVar(&mcpConnection, "default-connection", "",
+		"Default connection to use when not specified (does not restrict access)")
+	mcpServeCmd.Flags().StringSliceVar(&mcpAllowedConnections, "allowed-connections", nil,
+		"Comma-separated list of connections to allow (restricts access, first one becomes default)")
 
 	// Analytics flags
 	mcpServeCmd.Flags().BoolVar(&mcpNoAnalytics, "no-analytics", false,

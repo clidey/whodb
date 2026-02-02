@@ -68,6 +68,13 @@ type ServerOptions struct {
 	// DisabledTools specifies which tools to disable. Takes precedence over EnabledTools.
 	// Valid values: "query", "schemas", "tables", "columns", "connections", "confirm"
 	DisabledTools []string
+	// DefaultConnection is the connection to use when none is specified.
+	// This simplifies AI interaction when working with a single database.
+	DefaultConnection string
+	// AllowedConnections restricts which connections can be used.
+	// When set, only these connections are visible and accessible.
+	// If DefaultConnection is not set, the first allowed connection becomes the default.
+	AllowedConnections []string
 }
 
 // SecurityOptions contains runtime security settings for query execution
@@ -79,6 +86,8 @@ type SecurityOptions struct {
 	MaxRows             int
 	AllowMultiStatement bool
 	AllowDrop           bool
+	DefaultConnection   string   // Injected connection when not specified
+	AllowedConnections  []string // If set, only these connections are accessible
 }
 
 // NewServer creates a new WhoDB MCP server with all tools registered.
@@ -111,6 +120,12 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		Logger:       opts.Logger,
 	})
 
+	// Determine default connection: explicit flag takes precedence, then first allowed connection
+	defaultConn := opts.DefaultConnection
+	if defaultConn == "" && len(opts.AllowedConnections) > 0 {
+		defaultConn = opts.AllowedConnections[0]
+	}
+
 	// Create security options from server options
 	secOpts := &SecurityOptions{
 		ReadOnly:            opts.ReadOnly,
@@ -120,6 +135,8 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 		MaxRows:             opts.MaxRows,
 		AllowMultiStatement: opts.AllowMultiStatement,
 		AllowDrop:           opts.AllowDrop,
+		DefaultConnection:   defaultConn,
+		AllowedConnections:  opts.AllowedConnections,
 	}
 
 	// Create tool enablement from server options
@@ -172,6 +189,20 @@ func boolPtr(b bool) *bool {
 	return &b
 }
 
+// isConnectionAllowed checks if a connection name is in the allowed list.
+// Returns true if AllowedConnections is empty (no restrictions) or if the connection is in the list.
+func (so *SecurityOptions) isConnectionAllowed(connection string) bool {
+	if len(so.AllowedConnections) == 0 {
+		return true // No restrictions
+	}
+	for _, allowed := range so.AllowedConnections {
+		if allowed == connection {
+			return true
+		}
+	}
+	return false
+}
+
 // registerTools registers all database tools with the server.
 func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement *ToolEnablement) {
 	if toolEnablement == nil {
@@ -210,7 +241,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				IdempotentHint: true,
 				OpenWorldHint:  boolPtr(false),
 			},
-		}, HandleSchemas)
+		}, createSchemasHandler(secOpts))
 	}
 
 	// whodb_tables - List tables in a schema
@@ -225,7 +256,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				IdempotentHint: true,
 				OpenWorldHint:  boolPtr(false),
 			},
-		}, HandleTables)
+		}, createTablesHandler(secOpts))
 	}
 
 	// whodb_columns - Describe table columns
@@ -240,7 +271,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				IdempotentHint: true,
 				OpenWorldHint:  boolPtr(false),
 			},
-		}, HandleColumns)
+		}, createColumnsHandler(secOpts))
 	}
 
 	// whodb_connections - List available connections
@@ -255,7 +286,7 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 				IdempotentHint: true,
 				OpenWorldHint:  boolPtr(false),
 			},
-		}, HandleConnections)
+		}, createConnectionsHandler(secOpts))
 	}
 
 	// whodb_confirm - Confirm pending write operations (only registered if confirm-writes is enabled)
@@ -283,7 +314,7 @@ func buildQueryDescription(secOpts *SecurityOptions) string {
 **Not recommended for:** Schema exploration (use whodb_schemas, whodb_tables, whodb_columns instead for faster, structured results).
 **Common mistakes:** Running queries without specifying connection when multiple exist; using SELECT * instead of specific columns; forgetting LIMIT on large tables.
 
-**Usage Example:**
+**Usage Example (simple query):**
 ` + "```json" + `
 {
   "name": "whodb_query",
@@ -294,11 +325,24 @@ func buildQueryDescription(secOpts *SecurityOptions) string {
 }
 ` + "```" + `
 
+**Usage Example (parameterized query - RECOMMENDED for user input):**
+` + "```json" + `
+{
+  "name": "whodb_query",
+  "arguments": {
+    "connection": "mydb",
+    "query": "SELECT * FROM users WHERE id = $1 AND status = $2",
+    "parameters": [123, "active"]
+  }
+}
+` + "```" + `
+**Placeholder syntax by database:** PostgreSQL uses $1, $2, $3; MySQL/SQLite/ClickHouse use ?
+
 **Best practices:**
+- **Use parameterized queries** when incorporating user-provided values - this prevents SQL injection
 - Always use LIMIT for exploratory queries to avoid overwhelming results
 - Prefer specific column selection over SELECT *
-- Check schema structure with whodb_columns before writing complex queries
-- Use parameterized values in your queries when possible`
+- Check schema structure with whodb_columns before writing complex queries`
 
 	if secOpts.ReadOnly {
 		return base + `
@@ -334,6 +378,72 @@ func createQueryHandler(secOpts *SecurityOptions) func(ctx context.Context, req 
 func createConfirmHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
 		return HandleConfirm(ctx, req, input, secOpts)
+	}
+}
+
+// createSchemasHandler creates a schemas handler with connection injection and validation
+func createSchemasHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input SchemasInput) (*mcp.CallToolResult, SchemasOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input SchemasInput) (*mcp.CallToolResult, SchemasOutput, error) {
+		// Inject default connection if not specified
+		if input.Connection == "" && secOpts.DefaultConnection != "" {
+			input.Connection = secOpts.DefaultConnection
+		}
+		// Validate connection is allowed
+		if !secOpts.isConnectionAllowed(input.Connection) {
+			return nil, SchemasOutput{Error: fmt.Sprintf("connection %q is not allowed", input.Connection)}, nil
+		}
+		return HandleSchemas(ctx, req, input)
+	}
+}
+
+// createTablesHandler creates a tables handler with connection injection and validation
+func createTablesHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input TablesInput) (*mcp.CallToolResult, TablesOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input TablesInput) (*mcp.CallToolResult, TablesOutput, error) {
+		// Inject default connection if not specified
+		if input.Connection == "" && secOpts.DefaultConnection != "" {
+			input.Connection = secOpts.DefaultConnection
+		}
+		// Validate connection is allowed
+		if !secOpts.isConnectionAllowed(input.Connection) {
+			return nil, TablesOutput{Error: fmt.Sprintf("connection %q is not allowed", input.Connection)}, nil
+		}
+		return HandleTables(ctx, req, input)
+	}
+}
+
+// createColumnsHandler creates a columns handler with connection injection and validation
+func createColumnsHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input ColumnsInput) (*mcp.CallToolResult, ColumnsOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input ColumnsInput) (*mcp.CallToolResult, ColumnsOutput, error) {
+		// Inject default connection if not specified
+		if input.Connection == "" && secOpts.DefaultConnection != "" {
+			input.Connection = secOpts.DefaultConnection
+		}
+		// Validate connection is allowed
+		if !secOpts.isConnectionAllowed(input.Connection) {
+			return nil, ColumnsOutput{Error: fmt.Sprintf("connection %q is not allowed", input.Connection)}, nil
+		}
+		return HandleColumns(ctx, req, input)
+	}
+}
+
+// createConnectionsHandler creates a connections handler that filters by allowed connections
+func createConnectionsHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input ConnectionsInput) (*mcp.CallToolResult, ConnectionsOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input ConnectionsInput) (*mcp.CallToolResult, ConnectionsOutput, error) {
+		result, output, err := HandleConnections(ctx, req, input)
+		if err != nil || output.Error != "" {
+			return result, output, err
+		}
+		// Filter connections if AllowedConnections is set
+		if len(secOpts.AllowedConnections) > 0 {
+			filtered := make([]ConnectionInfo, 0)
+			for _, conn := range output.Connections {
+				if secOpts.isConnectionAllowed(conn.Name) {
+					filtered = append(filtered, conn)
+				}
+			}
+			output.Connections = filtered
+		}
+		return result, output, err
 	}
 }
 
@@ -936,4 +1046,6 @@ Best practices:
 - Check schema structure before writing queries
 - Prefer specific column selection over SELECT *
 - For writes, explain to the user what will happen before proposing the query
+- Use parameterized queries when incorporating user input: whodb_query(query="SELECT * FROM users WHERE id = $1", parameters=[42])
+  Placeholders: PostgreSQL uses $1, $2; MySQL/SQLite/ClickHouse use ?
 `
