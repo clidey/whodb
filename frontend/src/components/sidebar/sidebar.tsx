@@ -34,7 +34,6 @@ import {
     SidebarMenuItem,
     SidebarSeparator,
     SidebarTrigger,
-    toast,
     useSidebar
 } from "@clidey/ux";
 import {SearchSelect} from "../ux";
@@ -43,8 +42,6 @@ import {
     useGetDatabaseQuery,
     useGetSchemaQuery,
     useGetVersionQuery,
-    useLoginMutation,
-    useLoginWithProfileMutation
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
@@ -81,8 +78,8 @@ import {
 } from "../heroicons";
 import {Icons} from "../icons";
 import {Loading} from "../loading";
-import {updateProfileLastAccessed} from "../profile-info-tooltip";
 import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
+import {useProfileSwitch} from "@/hooks/use-profile-switch";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
@@ -121,12 +118,13 @@ export const Sidebar: FC = () => {
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
     const { data: version } = useGetVersionQuery();
-    const [login] = useLoginMutation();
-    const [loginWithProfile] = useLoginWithProfileMutation();
     const navigate = useNavigate();
     const [showLoginCard, setShowLoginCard] = useState(false);
     const { toggleSidebar, open } = useSidebar();
     const isInitialMount = useRef(true);
+    const { switchProfile } = useProfileSwitch({
+        errorMessage: t('errorSigningIn'),
+    });
 
     // Profile select logic - filter out AWS profiles when cloud providers disabled
     const profileOptions = useMemo(() => profiles
@@ -152,54 +150,9 @@ export const Sidebar: FC = () => {
     const handleProfileChange = useCallback(async (value: string, database?: string) => {
         const selectedProfile = profiles.find(profile => profile.Id === value);
         if (!selectedProfile) return;
-        dispatch(DatabaseActions.setSchema(""));
-        if (selectedProfile.Saved) {
-            await loginWithProfile({
-                variables: {
-                    profile: {
-                        Id: selectedProfile.Id,
-                        Type: selectedProfile.Type as DatabaseType,
-                        Database: database ?? selectedProfile.Database,
-                    },
-                },
-                onCompleted(status) {
-                    if (status.LoginWithProfile.Status) {
-                        updateProfileLastAccessed(selectedProfile.Id);
-                        dispatch(DatabaseActions.setSchema(""));
-                        dispatch(AuthActions.switch({ id: selectedProfile.Id }));
-                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    }
-                },
-                onError(error) {
-                    toast.error(`${t('errorSigningIn')} ${error.message}`);
-                },
-            });
-        } else {
-            await login({
-                variables: {
-                    credentials: {
-                        Type: selectedProfile.Type,
-                        Database: database ?? selectedProfile.Database,
-                        Hostname: selectedProfile.Hostname,
-                        Password: selectedProfile.Password,
-                        Username: selectedProfile.Username,
-                        Advanced: selectedProfile.Advanced,
-                    },
-                },
-                onCompleted(status) {
-                    if (status.Login.Status) {
-                        updateProfileLastAccessed(selectedProfile.Id);
-                        dispatch(DatabaseActions.setSchema(""));
-                        dispatch(AuthActions.switch({ id: selectedProfile.Id }));
-                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    }
-                },
-                onError(error) {
-                    toast.error(`${t('errorSigningIn')} ${error.message}`);
-                },
-            });
-        }
-    }, [profiles, login, loginWithProfile, dispatch, navigate, t]);
+
+        await switchProfile(selectedProfile, database);
+    }, [profiles, switchProfile]);
 
     // Database select logic
     const databaseOptions = useMemo(() => {

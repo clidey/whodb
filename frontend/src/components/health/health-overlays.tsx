@@ -14,14 +14,36 @@
  * limitations under the License.
  */
 
-import { Button, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@clidey/ux';
+import { Button, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAppSelector } from '@/store/hooks';
 import { useNavigate } from 'react-router-dom';
 import { PublicRoutes } from '@/config/routes';
 import { XCircleIcon } from '@heroicons/react/24/outline';
-import { useLoginWithProfileMutation } from '@graphql';
 import { useState } from 'react';
+import { LocalLoginProfile } from '@/store/auth';
+import { useProfileSwitch } from '@/hooks/use-profile-switch';
+
+/**
+ * Generate a display label for a profile in the health overlay.
+ * Handles missing data gracefully.
+ */
+function getProfileLabel(profile: LocalLoginProfile): string {
+    // Prefer database name if available
+    if (profile.Database) {
+        return profile.Type
+            ? `${profile.Database} (${profile.Type})`
+            : profile.Database;
+    }
+    // Fall back to hostname for databases like Redis
+    if (profile.Hostname) {
+        return profile.Type
+            ? `${profile.Hostname} (${profile.Type})`
+            : profile.Hostname;
+    }
+    // Last resort: use ID or Type
+    return profile.Id || profile.Type || 'Unknown';
+}
 
 /**
  * ServerDownOverlay displays when the backend server is unreachable.
@@ -84,15 +106,27 @@ export const DatabaseDownOverlay = () => {
     const allProfiles = useAppSelector(state => state.auth.profiles);
 
     const [selectedProfileId, setSelectedProfileId] = useState<string>('');
-    const [loginWithProfile, { loading }] = useLoginWithProfileMutation();
+    const [isSwitching, setIsSwitching] = useState(false);
+
+    const { switchProfile, loading } = useProfileSwitch({
+        onSuccess: () => {
+            toast.success(t('switchSuccessful'));
+        },
+        onError: () => {
+            setIsSwitching(false);
+        },
+        errorMessage: t('switchFailed'),
+    });
 
     // Only show database overlay if:
     // - User is logged in
     // - Server is healthy
     // - Database is explicitly in 'error' state (not 'unavailable' or 'unknown')
+    // - Not currently switching profiles (hide during switch)
     const shouldShow = authStatus === 'logged-in' &&
         serverStatus === 'healthy' &&
-        databaseStatus === 'error';
+        databaseStatus === 'error' &&
+        !isSwitching;
 
     if (!shouldShow) {
         return null;
@@ -102,28 +136,16 @@ export const DatabaseDownOverlay = () => {
     const otherProfiles = allProfiles.filter(p => p.Id !== currentProfile?.Id);
     const hasOtherProfiles = otherProfiles.length > 0;
 
-    const handleSwitchProfile = async () => {
+    const handleSwitchProfile = () => {
         if (!selectedProfileId) return;
 
         const profile = otherProfiles.find(p => p.Id === selectedProfileId);
         if (!profile) return;
 
-        try {
-            await loginWithProfile({
-                variables: {
-                    profile: {
-                        Id: profile.Id,
-                        Type: profile.Type,
-                        Database: profile.Database,
-                    }
-                }
-            });
+        // Hide the dialog immediately when switching starts
+        setIsSwitching(true);
 
-            // Reload page to refresh all data with new connection
-            window.location.reload();
-        } catch (error) {
-            console.error('Failed to switch profile:', error);
-        }
+        switchProfile(profile);
     };
 
     const handleLogout = () => {
@@ -163,7 +185,10 @@ export const DatabaseDownOverlay = () => {
                                     <SelectTrigger className="w-full">
                                         <SelectValue>
                                             {selectedProfileId
-                                                ? otherProfiles.find(p => p.Id === selectedProfileId)?.Database + ' (' + otherProfiles.find(p => p.Id === selectedProfileId)?.Type + ')'
+                                                ? (() => {
+                                                    const profile = otherProfiles.find(p => p.Id === selectedProfileId);
+                                                    return profile ? getProfileLabel(profile) : t('selectProfilePlaceholder');
+                                                })()
                                                 : t('selectProfilePlaceholder')
                                             }
                                         </SelectValue>
@@ -171,7 +196,7 @@ export const DatabaseDownOverlay = () => {
                                     <SelectContent>
                                         {otherProfiles.map((profile) => (
                                             <SelectItem key={profile.Id} value={profile.Id}>
-                                                {profile.Database} ({profile.Type})
+                                                {getProfileLabel(profile)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
