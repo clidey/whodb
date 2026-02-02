@@ -634,12 +634,21 @@ func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInp
 		return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch tables: %v", err), RequestID: requestID}, nil
 	}
 
-	// Convert to output format
+	// Convert to output format, filtering to essential attributes only.
+	// Keep "Type" (all databases) and "View On" (MongoDB views) to reduce token usage.
+	// Size/count metrics don't help LLMs generate queries.
+	essentialAttributes := map[string]bool{
+		"Type":    true, // Distinguishes TABLE from VIEW
+		"View On": true, // MongoDB: which collection the view is based on
+	}
+
 	tableInfos := make([]TableInfo, len(tables))
 	for i, t := range tables {
 		attrs := make(map[string]string)
 		for _, attr := range t.Attributes {
-			attrs[attr.Key] = attr.Value
+			if essentialAttributes[attr.Key] {
+				attrs[attr.Key] = attr.Value
+			}
 		}
 		tableInfos[i] = TableInfo{
 			Name:       t.Name,

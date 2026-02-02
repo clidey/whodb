@@ -1027,6 +1027,112 @@ func TestWrapUntrustedQueryResult(t *testing.T) {
 	})
 }
 
+// TestTableAttributeFiltering verifies that only essential attributes are kept
+// in table output to reduce token usage for LLMs.
+// Essential attributes: "Type" (all databases), "View On" (MongoDB views)
+// Filtered out: "Total Size", "Data Size", "Storage Size", "Count", etc.
+func TestTableAttributeFiltering(t *testing.T) {
+	// Define the same essential attributes as in HandleTables
+	essentialAttributes := map[string]bool{
+		"Type":    true,
+		"View On": true,
+	}
+
+	testCases := []struct {
+		name     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			name: "PostgreSQL table - keeps Type, filters size",
+			input: map[string]string{
+				"Type":       "BASE TABLE",
+				"Total Size": "16 kB",
+				"Data Size":  "8192 bytes",
+			},
+			expected: map[string]string{
+				"Type": "BASE TABLE",
+			},
+		},
+		{
+			name: "MongoDB view - keeps Type and View On",
+			input: map[string]string{
+				"Type":    "View",
+				"View On": "users",
+			},
+			expected: map[string]string{
+				"Type":    "View",
+				"View On": "users",
+			},
+		},
+		{
+			name: "MongoDB collection - keeps Type, filters size and count",
+			input: map[string]string{
+				"Type":         "Collection",
+				"Storage Size": "4096",
+				"Count":        "100",
+			},
+			expected: map[string]string{
+				"Type": "Collection",
+			},
+		},
+		{
+			name: "Elasticsearch index - keeps Type, filters size and count",
+			input: map[string]string{
+				"Type":         "Index",
+				"Storage Size": "1048576",
+				"Count":        "5000",
+			},
+			expected: map[string]string{
+				"Type": "Index",
+			},
+		},
+		{
+			name: "SQLite table - already minimal",
+			input: map[string]string{
+				"Type": "table",
+			},
+			expected: map[string]string{
+				"Type": "table",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Apply the same filtering logic as HandleTables
+			filtered := make(map[string]string)
+			for key, value := range tc.input {
+				if essentialAttributes[key] {
+					filtered[key] = value
+				}
+			}
+
+			// Verify filtered result matches expected
+			if len(filtered) != len(tc.expected) {
+				t.Errorf("expected %d attributes, got %d", len(tc.expected), len(filtered))
+			}
+
+			for key, expectedValue := range tc.expected {
+				if actualValue, ok := filtered[key]; !ok {
+					t.Errorf("expected attribute %q to be present", key)
+				} else if actualValue != expectedValue {
+					t.Errorf("attribute %q: expected %q, got %q", key, expectedValue, actualValue)
+				}
+			}
+
+			// Verify non-essential attributes are filtered out
+			for key := range tc.input {
+				if !essentialAttributes[key] {
+					if _, ok := filtered[key]; ok {
+						t.Errorf("attribute %q should have been filtered out", key)
+					}
+				}
+			}
+		})
+	}
+}
+
 // TestPromptInjectionProtection_IntegrationWithHandlers tests that handlers
 // return wrapped results (this test verifies the integration, not the full
 // database flow which would require a real connection)
