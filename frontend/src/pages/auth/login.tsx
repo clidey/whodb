@@ -815,7 +815,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     "justify-between": advancedForm != null,
                 })}>
                     <Button className={classNames({
-                        "hidden": advancedForm == null,
+                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>

@@ -9,4 +9,7 @@ en:
   selectProfilePlaceholder: Choose a profile...
   switchProfile: Switch Profile
   switching: Switching...
+  switchSuccessful: Successfully switched profile
+  switchFailed: Failed to switch profile
+  switchFailedWithError: "Failed to switch profile: {{error}}"
   logout: Logout
