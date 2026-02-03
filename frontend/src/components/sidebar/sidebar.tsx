@@ -316,7 +316,7 @@ export const Sidebar: FC = () => {
                 })}>
                     {loading ? (
                         <div className="flex justify-center items-center h-full">
-                            <Loading />
+                            <Loading size="lg" />
                         </div>
                     ) : (
                         <SidebarGroup className="grow">

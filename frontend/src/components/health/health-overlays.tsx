@@ -17,7 +17,7 @@
 import { Button, cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, toast } from '@clidey/ux';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAppSelector } from '@/store/hooks';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PublicRoutes } from '@/config/routes';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
@@ -52,12 +52,14 @@ function getProfileLabel(profile: LocalLoginProfile): string {
  */
 export const ServerDownOverlay = () => {
     const { t } = useTranslation('components/health-overlay');
+    const location = useLocation();
     const serverStatus = useAppSelector(state => state.health.serverStatus);
     const authStatus = useAppSelector(state => state.auth.status);
 
     // Only show overlay if user is logged in AND status is explicitly 'error'
-    // Don't show for 'unknown' status (haven't checked yet)
-    const shouldShow = authStatus === 'logged-in' && serverStatus === 'error';
+    // Don't show for 'unknown' status (haven't checked yet), when logged out, or on login page
+    const isOnLoginPage = location.pathname === PublicRoutes.Login.path;
+    const shouldShow = authStatus === 'logged-in' && serverStatus === 'error' && !isOnLoginPage;
 
     if (!shouldShow) {
         return null;
@@ -99,11 +101,13 @@ export const ServerDownOverlay = () => {
 export const DatabaseDownOverlay = () => {
     const { t } = useTranslation('components/health-overlay');
     const navigate = useNavigate();
+    const location = useLocation();
     const databaseStatus = useAppSelector(state => state.health.databaseStatus);
     const serverStatus = useAppSelector(state => state.health.serverStatus);
     const authStatus = useAppSelector(state => state.auth.status);
     const currentProfile = useAppSelector(state => state.auth.current);
     const allProfiles = useAppSelector(state => state.auth.profiles);
+    const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
 
     const [selectedProfileId, setSelectedProfileId] = useState<string>('');
     const [isSwitching, setIsSwitching] = useState(false);
@@ -119,11 +123,14 @@ export const DatabaseDownOverlay = () => {
     });
 
     // Only show database overlay if:
-    // - User is logged in
+    // - User is logged in (don't show when logged out)
+    // - Not on the login page (prevents showing during logout/redirect)
     // - Server is healthy
     // - Database is explicitly in 'error' state (not 'unavailable' or 'unknown')
     // - Not currently switching profiles (hide during switch)
+    const isOnLoginPage = location.pathname === PublicRoutes.Login.path;
     const shouldShow = authStatus === 'logged-in' &&
+        !isOnLoginPage &&
         serverStatus === 'healthy' &&
         databaseStatus === 'error' &&
         !isSwitching;
@@ -210,17 +217,21 @@ export const DatabaseDownOverlay = () => {
                                 >
                                     {loading ? t('switching') : t('switchProfile')}
                                 </Button>
+                                {!isEmbedded && (
+                                    <Button variant="destructive" size="sm" onClick={handleLogout}>
+                                        {t('logout')}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        !isEmbedded && (
+                            <div className="flex justify-end mt-4">
                                 <Button variant="destructive" size="sm" onClick={handleLogout}>
                                     {t('logout')}
                                 </Button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex justify-end mt-4">
-                            <Button variant="destructive" size="sm" onClick={handleLogout}>
-                                {t('logout')}
-                            </Button>
-                        </div>
+                        )
                     )}
                 </div>
             </div>

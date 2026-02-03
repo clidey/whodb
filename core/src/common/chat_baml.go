@@ -189,20 +189,6 @@ func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) *baml.ClientRe
 
 	provider, opts := getBAMLProviderAndOptions(externalModel)
 
-	// Log opts without exposing the full api_key
-	safeOpts := make(map[string]any)
-	for k, v := range opts {
-		if k == "api_key" {
-			if s, ok := v.(string); ok && len(s) > 8 {
-				safeOpts[k] = s[:4] + "..." + s[len(s)-4:]
-			} else {
-				safeOpts[k] = "[set]"
-			}
-		} else {
-			safeOpts[k] = v
-		}
-	}
-
 	// Register as "DefaultClient" to override the static client reference in BAML functions
 	registry.AddLlmClient("DefaultClient", provider, opts)
 	registry.SetPrimaryClient("DefaultClient")
@@ -267,7 +253,7 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 		return "openai-generic", opts
 
 	default:
-		// Generic/custom providers use openai-generic
+		// Standard generic provider (OpenAI-compatible)
 		if m.Endpoint != "" {
 			opts["base_url"] = m.Endpoint
 		}

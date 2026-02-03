@@ -152,8 +152,8 @@ func GetConfiguredChatProviders() []ChatProvider {
 	// Add all generic providers
 	for _, genericProvider := range GenericProviders {
 		providers = append(providers, ChatProvider{
-			Type:       genericProvider.ProviderId, // Use provider ID as type
-			Name:       genericProvider.Name,       // Display name
+			Type:       genericProvider.ClientType, // Use client type (e.g., "aws-bedrock", "openai-generic")
+			Name:       genericProvider.Name,        // Display name
 			APIKey:     genericProvider.APIKey,
 			Endpoint:   genericProvider.BaseURL,
 			ProviderId: genericProvider.ProviderId,

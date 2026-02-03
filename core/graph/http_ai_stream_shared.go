@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
@@ -111,12 +112,87 @@ func SendSSEChunk(w http.ResponseWriter, flusher http.Flusher, chunk map[string]
 	flusher.Flush()
 }
 
-// SendSSEError sends an error via SSE
+// SendSSEError sends an error via SSE and completes the stream
 func SendSSEError(w http.ResponseWriter, flusher http.Flusher, errorMsg string) {
-	errorData := map[string]string{"error": errorMsg}
-	data, _ := json.Marshal(errorData)
-	fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
-	flusher.Flush()
+	// Sanitize error message to avoid leaking technical details
+	sanitized := sanitizeErrorMessage(errorMsg)
+
+	// For better UX, send errors as chat messages instead of error events
+	// This makes them appear inline in the chat
+	SendSSEMessage(w, flusher, &model.AIChatMessage{
+		Type: "error",
+		Text: sanitized,
+	})
+
+	// Send done event to stop loading spinner
+	SendSSEDone(w, flusher)
+}
+
+// sanitizeErrorMessage removes technical details and JSON from error messages
+func sanitizeErrorMessage(msg string) string {
+	// Check for specific error patterns and return user-friendly messages
+
+	// LLM Service errors
+	if strings.Contains(msg, "LLM Failure:") || strings.Contains(msg, "ServiceError") {
+		// Extract any meaningful message after the error type
+		if strings.Contains(msg, "throttling") || strings.Contains(msg, "rate limit") {
+			return "AI service is busy. Please try again in a moment."
+		}
+		if strings.Contains(msg, "access denied") || strings.Contains(msg, "AccessDenied") {
+			return "Access denied. Please check your credentials."
+		}
+		if strings.Contains(msg, "validation") || strings.Contains(msg, "ValidationException") {
+			return "Invalid request. Please check your model selection."
+		}
+		return "AI service error. Please try again."
+	}
+
+	// BAML/Network errors
+	if strings.Contains(msg, "reqwest::Error") || strings.Contains(msg, "Failed to build request") {
+		return "Unable to connect to AI service. Please check your configuration."
+	}
+
+	if strings.Contains(msg, "RelativeUrlWithoutBase") {
+		return "AI service configuration error. Please contact support."
+	}
+
+	// Stream/connection errors
+	if strings.Contains(msg, "Failed to start stream") || strings.Contains(msg, "Failed to stream") {
+		return "Unable to query. Please try again."
+	}
+
+	// API key/auth errors
+	if strings.Contains(msg, "API key") || strings.Contains(msg, "api_key") ||
+	   strings.Contains(msg, "OPENAI_API_KEY") || strings.Contains(msg, "unauthorized") {
+		return "AI service not configured. Please set up your API key."
+	}
+
+	// Model errors
+	if strings.Contains(msg, "model") && (strings.Contains(msg, "not found") || strings.Contains(msg, "invalid")) {
+		return "Selected model is not available. Please choose a different model."
+	}
+
+	// If error contains technical markers (JSON, stack traces, etc.), simplify
+	if len(msg) > 150 || strings.Contains(msg, "{") || strings.Contains(msg, "---") ||
+	   strings.Contains(msg, "Error {") || strings.Contains(msg, "Prompt:") {
+		// Try to extract first meaningful sentence
+		for _, prefix := range []string{"Failed to", "Unable to", "Error:", "error:"} {
+			if idx := strings.Index(msg, prefix); idx >= 0 {
+				remaining := msg[idx:]
+				// Find end of sentence (period, colon, newline)
+				for _, end := range []string{".", ":", "\n"} {
+					if endIdx := strings.Index(remaining, end); endIdx > 10 && endIdx < 100 {
+						return remaining[:endIdx] + "."
+					}
+				}
+			}
+		}
+		// Couldn't extract meaningful message, return generic
+		return "Unable to query. Please try again."
+	}
+
+	// Return original if it's short and doesn't contain technical details
+	return msg
 }
 
 // SendSSEDone sends the done event

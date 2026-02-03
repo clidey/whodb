@@ -786,9 +786,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="table-message">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                    ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
-                                                    : <div className="pl-4" />}
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
                                             </div>
                                         })

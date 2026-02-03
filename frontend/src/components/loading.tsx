@@ -27,7 +27,7 @@ type ILoadingProps = {
   loadingText?: string;
 }
 
-export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText, loadingText}) => {
+export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText = true, loadingText}) => {
   const { t } = useTranslation('components/loading');
   let textSize = "text-base";
   if (size === "sm") {

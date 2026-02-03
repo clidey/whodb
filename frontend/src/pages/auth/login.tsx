@@ -719,7 +719,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
-                    <Loading hideText={true} />
+                    <Loading size="lg" />
                 </div>
                 <h1 className="text-xl">
                     {t('loggingIn')}
