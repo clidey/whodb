@@ -87,7 +87,8 @@ type ChatProvider struct {
 	APIKey     string
 	Endpoint   string
 	ProviderId string
-	IsGeneric  bool // True for generic/custom providers, false for built-in providers
+	ClientType string // BAML client type (openai-generic, anthropic, aws-bedrock) - only for generic providers
+	IsGeneric  bool   // True for generic/custom providers, false for built-in providers
 }
 
 // GenericProviderConfig holds configuration for a generic AI provider.
@@ -152,12 +153,13 @@ func GetConfiguredChatProviders() []ChatProvider {
 	// Add all generic providers
 	for _, genericProvider := range GenericProviders {
 		providers = append(providers, ChatProvider{
-			Type:       genericProvider.ClientType, // Use client type (e.g., "aws-bedrock", "openai-generic")
+			Type:       genericProvider.ProviderId, // Use provider ID as type
 			Name:       genericProvider.Name,        // Display name
 			APIKey:     genericProvider.APIKey,
 			Endpoint:   genericProvider.BaseURL,
 			ProviderId: genericProvider.ProviderId,
-			IsGeneric:  true, // Mark as generic provider
+			ClientType: genericProvider.ClientType, // BAML client type
+			IsGeneric:  true,                       // Mark as generic provider
 		})
 	}
 

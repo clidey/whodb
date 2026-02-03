@@ -1167,6 +1167,15 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 			if provider.ProviderId == *providerID {
 				config.ExternalModel.Token = provider.APIKey
 				found = true
+
+				// For generic providers, return models from config instead of querying registry
+				if provider.IsGeneric {
+					for _, genericProvider := range env.GenericProviders {
+						if genericProvider.ProviderId == *providerID {
+							return genericProvider.Models, nil
+						}
+					}
+				}
 				break
 			}
 		}
