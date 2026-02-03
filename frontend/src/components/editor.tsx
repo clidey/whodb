@@ -41,6 +41,7 @@ import remarkGfm from "remark-gfm";
 import {useApolloClient} from "@apollo/client";
 import {createSQLAutocomplete} from "./editor-autocomplete";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAppSelector } from "@/store/hooks";
 
 const isValidSQLQuery = (text: string): boolean => {
   const trimmed = text.trim();
@@ -217,6 +218,12 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const onRunReference = useRef<Function>();
   const darkModeEnabled = useTheme().theme === "dark";
   const apolloClient = useApolloClient();
+  const currentSchema = useAppSelector(state => state.database.schema);
+  const currentProfile = useAppSelector(state => state.auth.current);
+
+  // For databases like MySQL where database and schema are the same,
+  // use the connection database as fallback if no schema is selected
+  const defaultSchema = currentSchema || currentProfile?.Database || '';
 
   useEffect(() => {
     onRunReference.current = onRun;
@@ -347,7 +354,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             languageExtension != null ? languageExtension : [],
             // Add autocomplete for SQL, but allow disabling it during Cypress tests to prevent flakiness.
             // It is disabled by default in the test environment.
-            (language === "sql" && !((window as any).Cypress && (window as any).Cypress.env('disableAutocomplete') !== false)) ? createSQLAutocomplete({apolloClient}) : [],
+            (language === "sql" && !((window as any).Cypress && (window as any).Cypress.env('disableAutocomplete') !== false)) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },
@@ -406,7 +413,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, apolloClient, darkModeEnabled]);
+  }, [language, apolloClient, darkModeEnabled, defaultSchema]);
 
   const handlePreviewToggle = useCallback(() => {
     setShowPreview((prev) => !prev);
