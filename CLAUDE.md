@@ -42,7 +42,28 @@ desktop-common/         # Shared desktop code
 .github/workflows/      # CI/CD pipelines (release, build, deploy)
 ```
 
-Additional docs: `.claude/docs/cli.md` (CLI), `.claude/docs/desktop.md` (desktop), `.claude/docs/ci-cd.md` (GitHub Actions).
+Additional docs: `.claude/docs/cli.md` (CLI), `.claude/docs/desktop.md` (desktop), `.claude/docs/ci-cd.md` (GitHub Actions), `.claude/docs/testing.md` (testing).
+
+## Testing
+
+See `.claude/docs/testing.md` for comprehensive testing documentation including:
+- Frontend Cypress E2E tests (CE and EE)
+- Docker container setup for test databases
+- Go backend unit and integration tests
+- CLI tests
+
+Quick reference:
+```bash
+# Frontend Cypress
+cd frontend && pnpm cypress:ce:headless     # CE headless
+cd frontend && pnpm cypress:ee:headless     # EE headless (requires ee/)
+
+# Backend Go tests
+bash dev/run-backend-tests.sh all           # Unit + integration
+
+# CLI tests
+bash dev/run-cli-tests.sh                   # All CLI tests
+```
 
 ## When Working on Backend (Go)
 
