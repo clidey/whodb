@@ -76,8 +76,10 @@ describe('Mock Data Generation', () => {
         it('generates mock data and adds rows to table', () => {
             cy.data(supportedTable);
 
-            // Get initial row count
-            cy.get('table tbody tr').its('length').then(initialCount => {
+            // Get initial total count from UI
+            cy.get('[data-testid="total-count-top"]').invoke('text').then(text => {
+                const initialCount = parseInt(text.replace(/[^0-9]/g, ''), 10) || 0;
+
                 cy.selectMockData();
 
                 // Generate 5 rows (append mode - default)
@@ -90,8 +92,11 @@ describe('Mock Data Generation', () => {
                 // Sheet should close after success
                 cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
 
-                // Verify rows were added (may need to account for pagination)
-                cy.get('table tbody tr').its('length').should('be.gte', initialCount);
+                // Verify Total Count increased by exactly 5
+                cy.get('[data-testid="total-count-top"]').should($el => {
+                    const newCount = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                    expect(newCount).to.equal(initialCount + 5);
+                });
             });
         });
 
@@ -118,20 +123,28 @@ describe('Mock Data Generation', () => {
             it('generates mock data for FK table and populates parent tables', () => {
                 cy.data(tableWithFKs);
 
-                cy.selectMockData();
+                // Get initial total count
+                cy.get('[data-testid="total-count-top"]').invoke('text').then(text => {
+                    const initialCount = parseInt(text.replace(/[^0-9]/g, ''), 10) || 0;
 
-                // Generate rows for FK table
-                cy.setMockDataRows(5);
-                cy.generateMockData();
+                    cy.selectMockData();
 
-                // Wait for success toast - FK generation may take longer
-                cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
+                    // Generate rows for FK table
+                    cy.setMockDataRows(5);
+                    cy.generateMockData();
 
-                // Sheet should close after success
-                cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+                    // Wait for success toast - FK generation may take longer
+                    cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
 
-                // Verify the FK table has data
-                cy.get('table tbody tr').should('have.length.gte', 1);
+                    // Sheet should close after success
+                    cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+
+                    // Verify Total Count increased by at least 5
+                    cy.get('[data-testid="total-count-top"]').should($el => {
+                        const newCount = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                        expect(newCount).to.be.gte(initialCount + 5);
+                    });
+                });
             });
 
             // Edge case: Low row count with FK tables (bug fix verification)
@@ -139,20 +152,28 @@ describe('Mock Data Generation', () => {
             it('generates low row count (1-3 rows) for FK table successfully', () => {
                 cy.data(tableWithFKs);
 
-                cy.selectMockData();
+                // Get initial total count
+                cy.get('[data-testid="total-count-top"]').invoke('text').then(text => {
+                    const initialCount = parseInt(text.replace(/[^0-9]/g, ''), 10) || 0;
 
-                // Generate only 2 rows - previously this would fail with FK constraint error
-                cy.setMockDataRows(2);
-                cy.generateMockData();
+                    cy.selectMockData();
 
-                // Should succeed without FK constraint errors
-                cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
+                    // Generate only 2 rows - previously this would fail with FK constraint error
+                    cy.setMockDataRows(2);
+                    cy.generateMockData();
 
-                // Sheet should close
-                cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+                    // Should succeed without FK constraint errors
+                    cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
 
-                // Table should have data
-                cy.get('table tbody tr').should('have.length.gte', 1);
+                    // Sheet should close
+                    cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+
+                    // Verify Total Count increased by at least 2
+                    cy.get('[data-testid="total-count-top"]').should($el => {
+                        const newCount = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                        expect(newCount).to.be.gte(initialCount + 2);
+                    });
+                });
             });
 
             // Comprehensive FK verification: checks row counts and FK->PK relationships
@@ -171,16 +192,16 @@ describe('Mock Data Generation', () => {
                 let initialFkTableCount = 0;
                 let expectedParentRows = 0;
 
-                // Step 1: Get initial parent table row count
+                // Step 1: Get initial parent table Total Count
                 cy.data(parentTable);
-                cy.get('table tbody tr').then($rows => {
-                    initialParentCount = $rows.length;
+                cy.get('[data-testid="total-count-top"]').invoke('text').then(text => {
+                    initialParentCount = parseInt(text.replace(/[^0-9]/g, ''), 10) || 0;
                 });
 
-                // Step 2: Get initial FK table row count
+                // Step 2: Get initial FK table Total Count
                 cy.data(tableWithFKs);
-                cy.get('table tbody tr').then($rows => {
-                    initialFkTableCount = $rows.length;
+                cy.get('[data-testid="total-count-top"]').invoke('text').then(text => {
+                    initialFkTableCount = parseInt(text.replace(/[^0-9]/g, ''), 10) || 0;
                 });
 
                 // Step 3: Open mock data dialog and set row count
@@ -205,9 +226,12 @@ describe('Mock Data Generation', () => {
                 cy.generateMockData();
                 cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
 
-                // Step 6: Verify parent table has the expected row count increase
+                // Step 6: Verify parent table Total Count increased
                 cy.data(parentTable);
-                cy.get('table tbody tr').should('have.length.gte', initialParentCount + expectedParentRows);
+                cy.get('[data-testid="total-count-top"]').should($el => {
+                    const newCount = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                    expect(newCount).to.be.gte(initialParentCount + expectedParentRows);
+                });
 
                 // Step 7: Collect parent PKs
                 const parentPKs = new Set();
@@ -237,9 +261,12 @@ describe('Mock Data Generation', () => {
                     });
                 });
 
-                // Step 8: Navigate to FK table and verify row count increase
+                // Step 8: Navigate to FK table and verify Total Count increased
                 cy.data(tableWithFKs);
-                cy.get('table tbody tr').should('have.length.gte', initialFkTableCount + rowsToGenerate);
+                cy.get('[data-testid="total-count-top"]').should($el => {
+                    const newCount = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                    expect(newCount).to.be.gte(initialFkTableCount + rowsToGenerate);
+                });
 
                 // Step 9: Verify FK values exist in parent PKs
                 cy.get('@parentPKs').then(parentPKArray => {
@@ -302,8 +329,45 @@ describe('Mock Data Generation', () => {
             // Sheet should close after success
             cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
 
-            // Verify table has exactly the generated rows (overwrite replaces all)
-            cy.get('table tbody tr').should('have.length', 5);
+            // Verify Total Count is exactly 5 (overwrite replaces all)
+            cy.get('[data-testid="total-count-top"]').should($el => {
+                const count = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                expect(count).to.equal(5);
+            });
+        });
+
+        // Test mock data generation for data_types table (covers all column types)
+        // This validates type-specific generation: smallint limits, decimal precision, etc.
+        it('generates mock data for data_types table with various column types', function() {
+            const dataTypesTable = db.dataTypesTable;
+            if (!dataTypesTable) {
+                this.skip();
+                return;
+            }
+
+            cy.data(dataTypesTable);
+
+            cy.selectMockData();
+
+            cy.setMockDataRows(100);
+            cy.setMockDataHandling('overwrite');
+
+            cy.generateMockData();
+
+            // Confirm overwrite
+            cy.get('[data-testid="mock-data-overwrite-button"]').should('be.visible').click();
+
+            // Wait for success - type generation may require more time
+            cy.contains('Successfully Generated', { timeout: 60000 }).should('be.visible');
+
+            // Sheet should close
+            cy.get('[data-testid="mock-data-sheet"]').should('not.exist');
+
+            // Verify Total Count is exactly 100
+            cy.get('[data-testid="total-count-top"]').should($el => {
+                const count = parseInt($el.text().replace(/[^0-9]/g, ''), 10);
+                expect(count).to.equal(100);
+            });
         });
     }, {features: ['mockData']});
 
