@@ -26,10 +26,28 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 )
 
+// TypeGenerator is a function that generates mock data for a database type.
+// Returns (value, handled). If handled is false, the caller falls back to default handling.
+type TypeGenerator func(dbType string, constraints map[string]any, faker *gofakeit.Faker) (any, bool)
+
+var eeTypeGenerator TypeGenerator
+
+// RegisterEETypeGenerator allows EE to register a handler for EE-specific types
+func RegisterEETypeGenerator(gen TypeGenerator) {
+	eeTypeGenerator = gen
+}
+
 // GenerateByType generates a value for a database type, respecting constraints.
 // The dbType parameter is the raw column type (e.g., "int", "text[]", "varchar(255)").
 // The constraints map contains check_min, check_max, length, scale, check_values, etc.
 func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.Faker) any {
+	// Try ee first
+	if eeTypeGenerator != nil {
+		if value, handled := eeTypeGenerator(dbType, constraints, faker); handled {
+			return value
+		}
+	}
+
 	normalizedType := strings.ToLower(dbType)
 
 	if strings.HasSuffix(normalizedType, "[]") {
@@ -58,8 +76,7 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 		"tinyint unsigned", "smallint unsigned", "mediumint unsigned", "int unsigned", "bigint unsigned":
 		return genUint(constraints, faker)
 
-	case "float", "float4", "float8", "real", "double", "double precision", "decimal", "numeric", "number", "money", "smallmoney",
-		"binary_float", "binary_double",
+	case "float", "float4", "float8", "real", "double", "double precision", "decimal", "numeric", "number", "money",
 		"float32", "float64":
 		return genDecimal(constraints, faker)
 
@@ -68,28 +85,23 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 
 	case "date", "date32":
 		return genDate(faker)
-	case "datetime", "datetime2", "datetime64", "smalldatetime",
-		"timestamp with local time zone":
+	case "datetime", "datetime64":
 		return genDateTime(faker)
-	case "datetimeoffset":
-		return genDateTimeOffset(faker)
-	case "interval", "interval year to month", "interval day to second":
+	case "interval":
 		return genInterval(faker)
 	case "year":
 		return genYear(faker)
 
-	case "uuid", "uniqueidentifier":
+	case "uuid":
 		return faker.UUID()
 
 	case "json", "jsonb":
 		return genJSON(faker)
 
-	case "bytea", "blob", "binary", "varbinary", "image", "tinyblob", "mediumblob", "longblob",
-		"raw", "long raw", "bfile":
+	case "bytea", "blob", "binary", "varbinary", "image", "tinyblob", "mediumblob", "longblob":
 		return genBinary(constraints, faker)
 
-	case "text", "string", "varchar", "char", "character", "character varying", "nvarchar", "nchar", "ntext", "fixedstring", "clob", "nclob", "long",
-		"varchar2", "nvarchar2",
+	case "text", "string", "varchar", "char", "character", "character varying", "nvarchar", "nchar", "ntext", "fixedstring", "clob", "long",
 		"tinytext", "mediumtext", "longtext":
 		return genText(constraints, faker)
 
@@ -112,19 +124,8 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	case "point":
 		return genPoint(faker)
 
-	case "xml", "xmltype":
+	case "xml":
 		return genXML(faker)
-
-	// =============================================================================
-	// NOT IMPLEMENTED - These types need proper mock data generators
-	// Currently fall through to genText which will likely fail on INSERT
-	// =============================================================================
-
-	// MSSQL HIERARCHYID - represents position in a hierarchy tree
-	// Format: "/1/2/3/" (path notation)
-	// Example: "/", "/1/", "/1/2/", "/1/2/1/"
-	case "hierarchyid":
-		return genText(constraints, faker) // TODO: implement genHierarchyId
 
 	// PostgreSQL/PostGIS geometry types - need WKT (Well-Known Text) format
 	// LINE example: "[(0,0),(1,1)]" or "{0,0,1,1}" (PostgreSQL line)
@@ -136,7 +137,7 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	case "line", "lseg", "box", "path", "polygon", "circle":
 		return genText(constraints, faker) // TODO: implement genGeometry
 
-	// PostGIS/MSSQL spatial types - need WKT format
+	// PostGIS spatial types - need WKT format
 	// GEOMETRY example: "POINT(0 0)" or "LINESTRING(0 0, 1 1)"
 	// GEOGRAPHY example: "POINT(-122.34 47.65)" (longitude latitude)
 	// LINESTRING example: "LINESTRING(0 0, 1 1, 2 2)"
@@ -247,21 +248,6 @@ func genDateTime(f *gofakeit.Faker) any {
 // genTime generates a time value
 func genTime(f *gofakeit.Faker) any {
 	return f.Date().Format("15:04:05")
-}
-
-// genDateTimeOffset generates a MSSQL DATETIMEOFFSET value with timezone
-func genDateTimeOffset(f *gofakeit.Faker) any {
-	start := time.Now().AddDate(-10, 0, 0)
-	end := time.Now()
-	dt := f.DateRange(start, end)
-	// MSSQL DATETIMEOFFSET format: YYYY-MM-DD HH:MM:SS.nnnnnnn +/-HH:MM
-	offset := f.IntRange(-12, 12)
-	sign := "+"
-	if offset < 0 {
-		sign = "-"
-		offset = -offset
-	}
-	return fmt.Sprintf("%s %s%02d:00", dt.Format("2006-01-02 15:04:05.0000000"), sign, offset)
 }
 
 // genYear generates a year value (MySQL YEAR type: 1901-2155)
