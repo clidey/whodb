@@ -57,8 +57,10 @@ describe('SSL Modes', () => {
         const conn = db.connection;
 
         // Use SSL-specific credentials if provided, otherwise fall back to connection credentials
-        const sslUser = ssl.user ?? conn.user;
+        // Pass undefined instead of null to skip fields that don't exist (Redis has no user/database)
+        const sslUser = (ssl.user ?? conn.user) ?? undefined;
         const sslPassword = ssl.password ?? conn.password;
+        const database = conn.database ?? undefined;
 
         db.ssl.modes
             .filter(({ shouldSucceed }) => shouldSucceed)
@@ -72,7 +74,7 @@ describe('SSL Modes', () => {
                                 conn.host,
                                 sslUser,
                                 sslPassword,
-                                conn.database,
+                                database,
                                 {
                                     Port: String(ssl.port),
                                     ssl: { mode, caCertContent: certContent }
@@ -86,7 +88,7 @@ describe('SSL Modes', () => {
                             conn.host,
                             sslUser,
                             sslPassword,
-                            conn.database,
+                            database,
                             {
                                 Port: String(ssl.port),
                                 ssl: { mode }
