@@ -127,33 +127,14 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	case "xml":
 		return genXML(faker)
 
-	// PostgreSQL/PostGIS geometry types - need WKT (Well-Known Text) format
-	// LINE example: "[(0,0),(1,1)]" or "{0,0,1,1}" (PostgreSQL line)
-	// POLYGON example: "POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))" (WKT)
-	// BOX example: "(1,1),(0,0)"
-	// PATH example: "[(0,0),(1,1),(2,0)]" or "((0,0),(1,1),(2,0))"
-	// CIRCLE example: "<(0,0),1>" (center and radius)
-	// LSEG example: "[(0,0),(1,1)]" (line segment)
 	case "line", "lseg", "box", "path", "polygon", "circle":
-		return genText(constraints, faker) // TODO: implement genGeometry
+		return genGeometry(normalizedType, faker)
 
-	// PostGIS spatial types - need WKT format
-	// GEOMETRY example: "POINT(0 0)" or "LINESTRING(0 0, 1 1)"
-	// GEOGRAPHY example: "POINT(-122.34 47.65)" (longitude latitude)
-	// LINESTRING example: "LINESTRING(0 0, 1 1, 2 2)"
-	// MULTIPOINT example: "MULTIPOINT((0 0), (1 1))"
-	// MULTILINESTRING example: "MULTILINESTRING((0 0, 1 1), (2 2, 3 3))"
-	// MULTIPOLYGON example: "MULTIPOLYGON(((0 0, 1 0, 1 1, 0 0)))"
 	case "geometry", "geography", "linestring", "multipoint", "multilinestring", "multipolygon", "geometrycollection":
-		return genText(constraints, faker) // TODO: implement genSpatial
+		return genSpatial(normalizedType, faker)
 
-	// ClickHouse big integer types - need big.Int handling
-	// ClickHouse decimal types with specific precision
-	// DECIMAL32 example: up to 9 digits
-	// DECIMAL64 example: up to 18 digits
-	// DECIMAL128 example: up to 38 digits
 	case "decimal32", "decimal64", "decimal128", "decimal256":
-		return genText(constraints, faker) // TODO: implement genClickHouseDecimal
+		return genClickHouseDecimal(normalizedType, faker)
 
 	default:
 		return genText(constraints, faker)
@@ -283,6 +264,62 @@ func genPoint(f *gofakeit.Faker) any {
 	x := f.Float64Range(-180, 180)
 	y := f.Float64Range(-90, 90)
 	return fmt.Sprintf("(%f,%f)", x, y)
+}
+
+// genGeometry generates PostgreSQL native geometry types
+func genGeometry(typeName string, f *gofakeit.Faker) any {
+	switch typeName {
+	case "line":
+		return "{1,2,3}"
+	case "lseg":
+		return "[(0,0),(1,1)]"
+	case "box":
+		return "(1,1),(0,0)"
+	case "path":
+		return "[(0,0),(1,1),(2,0)]"
+	case "polygon":
+		return "((0,0),(1,0),(1,1),(0,1),(0,0))"
+	case "circle":
+		return "<(0,0),1>"
+	default:
+		return "(0,0)"
+	}
+}
+
+// genSpatial generates PostGIS/spatial types in WKT format
+func genSpatial(typeName string, f *gofakeit.Faker) any {
+	switch typeName {
+	case "geometry", "geography":
+		return "POINT(0 0)"
+	case "linestring":
+		return "LINESTRING(0 0, 1 1, 2 2)"
+	case "multipoint":
+		return "MULTIPOINT((0 0), (1 1))"
+	case "multilinestring":
+		return "MULTILINESTRING((0 0, 1 1), (2 2, 3 3))"
+	case "multipolygon":
+		return "MULTIPOLYGON(((0 0, 1 0, 1 1, 0 0)))"
+	case "geometrycollection":
+		return "GEOMETRYCOLLECTION(POINT(0 0), LINESTRING(0 0, 1 1))"
+	default:
+		return "POINT(0 0)"
+	}
+}
+
+// genClickHouseDecimal generates ClickHouse decimal values as strings
+func genClickHouseDecimal(typeName string, f *gofakeit.Faker) any {
+	switch typeName {
+	case "decimal32":
+		return fmt.Sprintf("%.2f", f.Float64Range(0, 9999999))
+	case "decimal64":
+		return fmt.Sprintf("%.2f", f.Float64Range(0, 999999999999999))
+	case "decimal128":
+		return fmt.Sprintf("%.2f", f.Float64Range(0, 999999999999999))
+	case "decimal256":
+		return fmt.Sprintf("%.2f", f.Float64Range(0, 999999999999999))
+	default:
+		return "0.00"
+	}
 }
 
 // genXML generates a simple XML element
