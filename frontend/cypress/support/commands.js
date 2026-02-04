@@ -1404,6 +1404,24 @@ Cypress.Commands.add('disableAutocomplete', () => {
 const CHAT_RESPONSE_KEY = '__chatMockResponses__';
 
 /**
+ * Sets up a mock for the Version query to return a consistent version string
+ * @param {string} version - The version string to return (default: 'v1.1.1')
+ */
+Cypress.Commands.add('mockVersion', (version = 'v1.1.1') => {
+    cy.intercept('POST', '**/api/query', (req) => {
+        if (req.body.operationName === 'GetVersion') {
+            req.reply({
+                data: {
+                    Version: version
+                }
+            });
+        } else {
+            req.continue();
+        }
+    }).as('versionMock');
+});
+
+/**
  * Sets up a mock AI provider for chat testing
  * This creates a comprehensive intercept that handles all GraphQL operations for chat
  * @param {Object} options - Configuration options
@@ -1483,10 +1501,10 @@ Cypress.Commands.add('setupChatMock', ({ modelType = 'Ollama', model = 'llama3.1
                 sseData += `data: ${JSON.stringify({ Type: type, Text: text, Result: result })}\n\n`;
             }
 
-            // Send errors as error events (will show as toast in UI)
+            // Send errors as complete messages (will appear in chat history)
             if (type === 'error') {
-                sseData += `event: error\n`;
-                sseData += `data: ${JSON.stringify({ error: text })}\n\n`;
+                sseData += `event: message\n`;
+                sseData += `data: ${JSON.stringify({ Type: 'error', Text: text, Result: result })}\n\n`;
             }
         }
 
@@ -1892,7 +1910,7 @@ Cypress.Commands.add('highlightElement', (selector, {
     padding = '4px',
     shadow = true
 } = {}) => {
-    cy.get(selector).scrollIntoView().should('be.visible').then($el => {
+    cy.get(selector).first().scrollIntoView().should('be.visible').then($el => {
         const rect = $el[0].getBoundingClientRect();
         cy.document().then(doc => {
             const overlay = doc.createElement('div');

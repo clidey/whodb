@@ -39,6 +39,7 @@ import {ColumnsDocument, GetSchemaDocument, GetStorageUnitsDocument} from "@grap
 
 interface AutocompleteOptions {
     apolloClient: ApolloClient<any>;
+    defaultSchema?: string;
 }
 
 // SQL keywords to ignore when determining context
@@ -52,7 +53,7 @@ const SQL_KEYWORDS = new Set([
 
 async function fetchSchemas(client: ApolloClient<any>): Promise<string[]> {
     try {
-        const res = await client.query({query: GetSchemaDocument, fetchPolicy: 'cache-first'});
+        const res = await client.query({query: GetSchemaDocument, fetchPolicy: 'network-only'});
         // Adapt to your GraphQL response shape
         return res.data?.Schema ?? [];
     } catch (e) {
@@ -340,7 +341,7 @@ function fromSelectIndex(combinedUpper: string, lastSelectIndex: number) {
 }
 
 async function sqlAutocomplete(context: CompletionContext, options: AutocompleteOptions): Promise<CompletionResult | null> {
-    const {apolloClient} = options;
+    const {apolloClient, defaultSchema} = options;
     const {state, pos} = context;
     const text = state.doc.toString();
 
@@ -375,13 +376,20 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
         } : null;
 
         if (sqlContext.type === 'schema') {
-            // Suggest schema names
+            // Suggest schema names AND tables from the current default schema
             const schemas = await fetchSchemas(apolloClient);
-            completions = schemas.map(s => createCompletion(s, 'namespace', 'Schema'));
-            completions = applyPrefixFilter(completions, token);
-            if (completions.length) {
-                return {from, options: completions, validFor: /^[\w`\.]*$/};
+            completions = schemas.map(s => createCompletion(s, 'namespace', 'Schema/Database'));
+
+            // Also suggest tables from the default schema if available (use non-empty string check)
+            if (defaultSchema && defaultSchema.trim()) {
+                const tables = await fetchTables(apolloClient, defaultSchema);
+                const tableCompletions = tables.map((t: any) => createCompletion(t.Name, 'class', 'Table', t.Name));
+                completions = completions.concat(tableCompletions);
             }
+
+            completions = applyPrefixFilter(completions, token);
+            // Always return completions even if empty (better than falling back to keywords)
+            return {from, options: completions, validFor: /^[\w`\.]*$/};
         }
 
         if (sqlContext.type === 'table') {
@@ -398,13 +406,19 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
                     return {from: from + schemaName.length + 1, options: completions, validFor: /^[\w`\.]*$/};
                 }
             } else {
-                // No schema known: suggest schemas and unqualified tables (if your backend supports listing database-wide tables you'd fetch them here)
+                // No schema known: suggest schemas and tables from default schema
                 const schemas = await fetchSchemas(apolloClient);
-                completions = schemas.map(s => createCompletion(s, 'namespace', 'Schema'));
-                completions = applyPrefixFilter(completions, token);
-                if (completions.length) {
-                    return {from, options: completions, validFor: /^[\w`\.]*$/};
+                completions = schemas.map(s => createCompletion(s, 'namespace', 'Schema/Database'));
+
+                // Also suggest tables from the default schema if available
+                if (defaultSchema && defaultSchema.trim()) {
+                    const tables = await fetchTables(apolloClient, defaultSchema);
+                    const tableCompletions = tables.map((t: any) => createCompletion(t.Name, 'class', 'Table', t.Name));
+                    completions = completions.concat(tableCompletions);
                 }
+
+                completions = applyPrefixFilter(completions, token);
+                return {from, options: completions, validFor: /^[\w`\.]*$/};
             }
         }
 
@@ -418,7 +432,7 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
                 const matched = tables.find(t => (t.alias && t.alias.toUpperCase() === before.toUpperCase()) || t.table.toUpperCase() === before.toUpperCase());
                 if (matched) {
                     // fetch columns for matched.table (and matched.schema if present)
-                    const schemaToUse = matched.schema || sqlContext.schema || (matched.table ? detectSchemaFromText(text, matched.table) : undefined);
+                    const schemaToUse = matched.schema || sqlContext.schema || (matched.table ? detectSchemaFromText(text, matched.table) : undefined) || defaultSchema;
                     if (matched.table && schemaToUse) {
                         const cols = await fetchColumns(apolloClient, schemaToUse, matched.table);
                         // produce both qualified and unqualified suggestions depending on whether user typed alias or table
@@ -434,7 +448,7 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
                         }
                     } else if (matched.table) {
                         // no schema but we can still ask backend maybe with default schema
-                        const cols = await fetchColumns(apolloClient, matched.schema ?? '', matched.table);
+                        const cols = await fetchColumns(apolloClient, matched.schema ?? defaultSchema ?? '', matched.table);
                         completions = cols.map(c => createCompletion(`${before}.${c.Name}`, 'property', c.Type ?? 'column', `${before}.${c.Name}`));
                         completions = applyPrefixFilter(completions, dotMatch.after || '');
                         if (completions.length) {
@@ -456,7 +470,7 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
                 const tables = sqlContext.tablesInQuery ?? extractTablesAndAliasesFromQuery(text);
                 if (tables.length === 1) {
                     const t = tables[0];
-                    const schemaToUse = t.schema || sqlContext.schema || detectSchemaFromText(text, t.table);
+                    const schemaToUse = t.schema || sqlContext.schema || detectSchemaFromText(text, t.table) || defaultSchema;
                     if (t.table && schemaToUse) {
                         const cols = await fetchColumns(apolloClient, schemaToUse, t.table);
                         completions = cols.map(c => createCompletion(c.Name, 'property', c.Type ?? 'column', c.Name));
@@ -500,7 +514,7 @@ async function sqlAutocomplete(context: CompletionContext, options: Autocomplete
             // Fetch columns for up to 3 tables to keep performance reasonable
             const limitFetch = tables.slice(0, 3);
             for (const t of limitFetch) {
-                const schemaToUse = t.schema || detectSchemaFromText(text, t.table) || '';
+                const schemaToUse = t.schema || detectSchemaFromText(text, t.table) || defaultSchema || '';
                 if (t.table) {
                     const cols = await fetchColumns(apolloClient, schemaToUse, t.table);
                     for (const c of cols) {

@@ -105,8 +105,11 @@ func (p *GormPlugin) getColumnConstraintsRaw(db *gorm.DB, schema string, storage
 // clearTableDataWithDB performs the actual table data clearing using the provided database connection
 func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUnit string) error {
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
-	// Delete all rows: {"1": 1} is a tautology condition that matches everything
-	result := builder.DeleteQuery(schema, storageUnit, map[string]any{"1": 1})
+	tableName := builder.BuildFullTableName(schema, storageUnit)
+
+	// Use raw SQL with "WHERE 1=1" to delete all rows
+	// This works across all SQL databases and bypasses GORM's safety check
+	result := db.Table(tableName).Where("1=1").Delete(nil)
 	return result.Error
 }
 

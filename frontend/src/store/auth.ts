@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { v4 } from 'uuid';
-import { LoginCredentials } from '@graphql';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {v4} from 'uuid';
+import {LoginCredentials} from '@graphql';
 
 export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean, SSLConfigured?: boolean});
 
@@ -30,12 +30,14 @@ export type IAuthState = {
   current?: LocalLoginProfile;
   profiles: LocalLoginProfile[];
   sslStatus?: SSLStatus;
+  isEmbedded: boolean;
 }
 
 const initialState: IAuthState = {
   status: "unauthorized",
   profiles: [],
   sslStatus: undefined,
+  isEmbedded: false,
 };
 
 export const authSlice = createSlice({
@@ -89,6 +91,9 @@ export const authSlice = createSlice({
         state.current.Database = action.payload.database;
       }
       profile.Database = action.payload.database;
+    },
+    setEmbedded: (state, action: PayloadAction<boolean>) => {
+      state.isEmbedded = action.payload;
     }
   },
 });

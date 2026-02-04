@@ -37,7 +37,7 @@ import {
     SelectValue,
     toast
 } from "@clidey/ux";
-import {AiChatMessage, GetAiChatQuery, useGetAiChatLazyQuery, useExecuteConfirmedSqlMutation} from '@graphql';
+import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGetAiChatLazyQuery} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
@@ -57,7 +57,7 @@ import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
-import {HoudiniActions, IChatMessage} from "../../store/chat";
+import {HoudiniActions} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
 import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
@@ -66,6 +66,7 @@ import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema}
 import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
+import {addAuthHeader, isDesktopScheme} from "../../utils/auth-headers";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -360,28 +361,80 @@ export const ChatPage: FC = () => {
         }, 250);
 
         try {
-            const response = await fetch('/api/ai-chat/stream', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            const isDesktop = isDesktopScheme();
+            const endpoint = '/api/ai-chat/stream';
+
+            const requestBody = {
+                schema,
+                modelType: modelType.modelType,
+                providerId: modelType.id || '',
+                token: modelType.token || '',
+                model: currentModel ?? '',
+                input: {
+                    Query: sanitizedQuery,
+                    PreviousConversation: chats.map(chat =>
+                        `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`
+                    ).join("\n"),
                 },
-                body: JSON.stringify({
-                    schema,
-                    modelType: modelType.modelType,
-                    token: modelType.token || '',
-                    model: currentModel ?? '',
-                    input: {
-                        Query: sanitizedQuery,
-                        PreviousConversation: chats.map(chat =>
-                            `${chat.isUserInput ? "<User>" : "<System>"}${chat.Text}${chat.isUserInput ? "</User>" : "</System>"}`
-                        ).join("\n"),
-                    },
+            };
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                credentials: 'include',
+                headers: addAuthHeader({
+                    'Content-Type': 'application/json',
                 }),
+                body: JSON.stringify(requestBody),
             });
 
+            if (!response.ok) {
+                setLoading(false);
+                return;
+            }
+
+            // Check response type - server returns JSON for non-streaming (Wails), SSE for streaming
+            const contentType = response.headers.get('Content-Type') || '';
+            const isNonStreaming = contentType.includes('application/json') || isDesktop;
+
+            // Non-streaming mode (desktop/Wails) - server returns JSON
+            if (isNonStreaming) {
+                const data = await response.json();
+                // Server returns { messages: [...], done: true }
+                const messages = data.messages || data;
+
+                // Remove the placeholder streaming message
+                dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
+
+                // Add all messages from the response
+                if (Array.isArray(messages)) {
+                    for (const msg of messages) {
+                        const messageId = getUniqueMessageId();
+                        dispatch(HoudiniActions.addChatMessage({
+                            Type: msg.Type,
+                            Text: msg.Text,
+                            Result: msg.Result,
+                            RequiresConfirmation: msg.RequiresConfirmation || false,
+                            id: messageId,
+                        }));
+                    }
+                }
+
+                setLoading(false);
+
+                // Scroll to bottom
+                setTimeout(() => {
+                    if (scrollContainerRef.current != null) {
+                        scrollContainerRef.current.scroll({
+                            top: scrollContainerRef.current.scrollHeight,
+                            behavior: "smooth",
+                        });
+                    }
+                }, 100);
+                return;
+            }
+
+            // SSE streaming mode (browser)
             if (!response.body) {
-                toast.error(t('unableToQuery') + " " + response.statusText);
                 setLoading(false);
                 return;
             }
@@ -432,14 +485,14 @@ export const ChatPage: FC = () => {
                                     });
                                 }
                             } else if (currentEventType === 'message') {
-                                // Handle complete messages (SQL responses after streaming)
-                                if (parsed.Type?.startsWith("sql")) {
-                                    // Create a unique key for this SQL message to avoid duplicates
-                                    const sqlKey = `${parsed.Type}:${parsed.Text}`;
+                                // Handle complete messages (SQL responses and errors after streaming)
+                                if (parsed.Type?.startsWith("sql") || parsed.Type === "error") {
+                                    // Create a unique key for this message to avoid duplicates
+                                    const messageKey = `${parsed.Type}:${parsed.Text}`;
 
-                                    // Only add if we haven't seen this SQL message before
-                                    if (!addedSqlMessages.has(sqlKey)) {
-                                        addedSqlMessages.add(sqlKey);
+                                    // Only add if we haven't seen this message before
+                                    if (!addedSqlMessages.has(messageKey)) {
+                                        addedSqlMessages.add(messageKey);
 
                                         const messageId = getUniqueMessageId();
                                         dispatch(HoudiniActions.addChatMessage({
@@ -733,9 +786,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="table-message">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                    ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
-                                                    : <div className="pl-4" />}
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
                                             </div>
                                         })

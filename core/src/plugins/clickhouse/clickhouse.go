@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -144,6 +145,40 @@ func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []
 
 func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
 	return p.executeRawSQL(config, query)
+}
+
+func (p *ClickHousePlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
+// ClearTableData handles ClickHouse-specific DELETE semantics.
+// ClickHouse DELETE is an async mutation (ALTER TABLE DELETE) that doesn't return results
+// in the same way as traditional SQL DELETE. GORM's Delete method doesn't handle this properly.
+func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		tableName := p.FormTableName(schema, storageUnit)
+
+		query := fmt.Sprintf("ALTER TABLE %s DELETE WHERE 1=1", tableName)
+
+		// Execute the DELETE mutation
+		err := db.Exec(query).Error
+		if err != nil {
+			// ClickHouse mutations may return "driver: bad connection" when trying to read
+			// the non-existent result set. Verify the connection is still healthy.
+			if err.Error() == "driver: bad connection" {
+				var result int
+				if db.Raw("SELECT 1").Scan(&result).Error == nil {
+					// Connection is healthy, mutation was accepted
+					log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE mutation accepted")
+					return true, nil
+				}
+			}
+			return false, err
+		}
+
+		log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE executed")
+		return true, nil
+	})
 }
 
 func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
@@ -330,8 +365,25 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 			primaryKeys = []string{}
 		}
 
-		// Enrich columns with primary key information
+		// Enrich columns with primary key information + edge case fix regarding auto-increment fields
 		for i := range columns {
+			// ClickHouse doesn't have traditional auto-increment columns. ClickHouse 25.01+
+			// introduced generateSerialID() which provides auto-increment behavior via DEFAULT
+			// expressions (e.g., DEFAULT generateSerialID('counter')), but this is not a column
+			// attribute - it's a default value. GORM may incorrectly detect columns as auto-increment,
+			// so we explicitly disable it for all columns.
+			columns[i].IsAutoIncrement = false
+
+			// ClickHouse GORM driver embeds length in type name (e.g., "FixedString(10)")
+			// but doesn't expose it via Length(). Parse it from the type string.
+			if columns[i].Length == nil {
+				typeSpec := common.ParseTypeSpec(columns[i].Type)
+				if typeSpec.Length > 0 {
+					columns[i].Length = &typeSpec.Length
+				}
+			}
+
+			// Set primary key flag
 			for _, pk := range primaryKeys {
 				if columns[i].Name == pk {
 					columns[i].IsPrimary = true

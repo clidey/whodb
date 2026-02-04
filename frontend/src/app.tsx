@@ -30,6 +30,9 @@ import {useSidebarShortcuts} from "./hooks/useSidebarShortcuts";
 import {TourProvider} from "./components/tour/tour-provider";
 import {useKeyboardShortcutsHelp} from "./components/keyboard-shortcuts-help";
 import {useCommandPalette} from "./components/command-palette";
+import {healthCheckService} from "./services/health-check";
+import {ServerDownOverlay, DatabaseDownOverlay} from "./components/health/health-overlays";
+import {HealthActions} from "./store/health";
 
 export const App = () => {
     const [updateSettings] = useUpdateSettingsMutation();
@@ -104,12 +107,30 @@ export const App = () => {
     updateBackendWithSettings();
   }, [updateBackendWithSettings]);
 
+  // Start health check service when user logs in, stop when they log out
+  const authStatus = useAppSelector(state => state.auth.status);
+  useEffect(() => {
+    if (authStatus === 'logged-in') {
+      healthCheckService.start();
+    } else {
+      healthCheckService.stop();
+      // Reset health state when logged out
+      dispatch(HealthActions.resetHealth());
+    }
+
+    return () => {
+      healthCheckService.stop();
+    };
+  }, [authStatus, dispatch]);
+
   return (
     <TourProvider>
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
         <Toaster />
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
+        <ServerDownOverlay />
+        <DatabaseDownOverlay />
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
             {map(getRoutes(), route => (

@@ -18,14 +18,18 @@ package postgres
 
 import (
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 )
+
+// Pre-compiled regex for PostgreSQL type casts like ::text, ::character varying
+var pgTypeCastPattern = regexp.MustCompile(`::\w+(\s+\w+)?`)
 
 // GetColumnConstraints retrieves column constraints for PostgreSQL tables
 func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
@@ -47,10 +51,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 				if err := primaryRows.Scan(&columnName); err != nil {
 					continue
 				}
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-				constraints[columnName]["primary"] = true
+				gorm_plugin.EnsureConstraintEntry(constraints, columnName)["primary"] = true
 			}
 		}
 
@@ -70,10 +71,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 				continue
 			}
 
-			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]any{}
-			}
-			constraints[columnName]["nullable"] = strings.EqualFold(isNullable, "YES")
+			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = strings.EqualFold(isNullable, "YES")
 		}
 
 		// Get unique single-column indexes using GORM's query builder
@@ -95,10 +93,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 				continue
 			}
 
-			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]any{}
-			}
-			constraints[columnName]["unique"] = true
+			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 		}
 
 		// Get CHECK constraints using GORM's query builder
@@ -121,6 +116,35 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		}
 		// Ignore error if query fails
 
+		// Get ENUM type values for columns that use native PostgreSQL ENUMs
+		enumRows, err := db.Raw(`
+			SELECT c.column_name, e.enumlabel
+			FROM information_schema.columns c
+			JOIN pg_type t ON t.typname = c.udt_name
+			JOIN pg_enum e ON e.enumtypid = t.oid
+			WHERE c.table_schema = $1 AND c.table_name = $2
+			ORDER BY c.column_name, e.enumsortorder
+		`, schema, storageUnit).Rows()
+		if err == nil {
+			defer enumRows.Close()
+
+			// Group enum values by column name
+			enumValues := make(map[string][]string)
+			for enumRows.Next() {
+				var columnName, enumLabel string
+				if err := enumRows.Scan(&columnName, &enumLabel); err != nil {
+					continue
+				}
+				enumValues[columnName] = append(enumValues[columnName], enumLabel)
+			}
+
+			// Add enum values to constraints
+			for columnName, values := range enumValues {
+				gorm_plugin.EnsureConstraintEntry(constraints, columnName)["check_values"] = values
+			}
+		}
+		// Ignore error if query fails (table may not have any ENUM columns)
+
 		return true, nil
 	})
 
@@ -138,80 +162,92 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	// - CHECK ((stock_quantity >= 0))
 	// - CHECK ((age >= 18) AND (age <= 120))
 	// - CHECK ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text]))
+	// - CHECK (status IN ('pending', 'completed', 'canceled'))
+
+	log.Logger.WithField("checkClause", checkClause).Debug("Parsing CHECK constraint")
 
 	// Remove CHECK keyword and outer parentheses
 	clause := strings.TrimPrefix(checkClause, "CHECK ")
 	clause = strings.Trim(clause, "()")
 
-	// Pattern for >= or > constraints
-	minPattern := regexp.MustCompile(`\(?(\w+)\)?\s*>=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
-	if matches := minPattern.FindStringSubmatch(clause); len(matches) > 2 {
-		columnName := matches[1]
-		// Validate column name to prevent SQL injection
-		if !common.ValidateColumnName(columnName) {
-			return
-		}
-		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]any{}
-		}
-		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
-			if strings.Contains(matches[0], ">=") {
-				constraints[columnName]["check_min"] = val
-			} else {
-				constraints[columnName]["check_min"] = val + 1
+	columnName := gorm_plugin.ExtractColumnNameFromClause(clause)
+	if columnName == "" {
+		return
+	}
+
+	if !common.ValidateColumnName(columnName) {
+		return
+	}
+
+	colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+
+	minMax := gorm_plugin.ParseMinMaxConstraints(clause)
+	gorm_plugin.ApplyMinMaxToConstraints(colConstraints, minMax)
+
+	// Try to extract values from ARRAY[...] syntax
+	// This handles any PostgreSQL format: ANY(ARRAY[...]), ANY((ARRAY[...])::text[]), etc.
+	if values := extractArrayValues(clause); len(values) > 0 {
+		colConstraints["check_values"] = values
+		log.Logger.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via ARRAY pattern")
+		return
+	}
+
+	// Fallback to IN clause parsing
+	if values := gorm_plugin.ParseINClauseValues(clause); len(values) > 0 {
+		colConstraints["check_values"] = values
+		log.Logger.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via IN clause pattern")
+	} else {
+		log.Logger.WithField("column", columnName).WithField("clause", clause).Debug("No check_values extracted from clause")
+	}
+}
+
+// extractArrayValues extracts values from PostgreSQL ARRAY[...] syntax.
+// it just finds ARRAY[ and extracts values up to the matching ].
+func extractArrayValues(clause string) []string {
+	upper := strings.ToUpper(clause)
+	arrayIdx := strings.Index(upper, "ARRAY[")
+	if arrayIdx == -1 {
+		return nil
+	}
+
+	// Find the start of values (after "ARRAY[")
+	startIdx := arrayIdx + 6
+
+	// Find matching closing bracket, accounting for nested brackets
+	depth := 1
+	endIdx := -1
+	for i := startIdx; i < len(clause); i++ {
+		switch clause[i] {
+		case '[':
+			depth++
+		case ']':
+			depth--
+			if depth == 0 {
+				endIdx = i
 			}
+		}
+		if endIdx != -1 {
+			break
 		}
 	}
 
-	// Pattern for <= or < constraints
-	maxPattern := regexp.MustCompile(`\(?(\w+)\)?\s*<=?\s*\(?([\-]?\d+(?:\.\d+)?)\)?`)
-	if matches := maxPattern.FindStringSubmatch(clause); len(matches) > 2 {
-		columnName := matches[1]
-		// Validate column name to prevent SQL injection
-		if !common.ValidateColumnName(columnName) {
-			return
-		}
-		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]any{}
-		}
-		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
-			if strings.Contains(matches[0], "<=") {
-				constraints[columnName]["check_max"] = val
-			} else {
-				constraints[columnName]["check_max"] = val - 1
-			}
+	if endIdx == -1 || endIdx <= startIdx {
+		return nil
+	}
+
+	content := clause[startIdx:endIdx]
+
+	var values []string
+	parts := strings.Split(content, ",")
+	for _, part := range parts {
+		cleaned := strings.TrimSpace(part)
+		// Remove PostgreSQL type casts like ::text, ::character varying
+		cleaned = pgTypeCastPattern.ReplaceAllString(cleaned, "")
+		cleaned = strings.Trim(cleaned, "'\"")
+		if cleaned != "" {
+			values = append(values, cleaned)
 		}
 	}
 
-	// Pattern for ANY (ARRAY[...]) constraints (PostgreSQL's way of doing IN)
-	anyArrayPattern := regexp.MustCompile(`\(?(\w+)\)?.*?ANY\s*\(ARRAY\[(.*?)\]`)
-	if matches := anyArrayPattern.FindStringSubmatch(clause); len(matches) > 2 {
-		columnName := matches[1]
-		// Validate column name to prevent SQL injection
-		if !common.ValidateColumnName(columnName) {
-			return
-		}
-		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]any{}
-		}
-		// Extract values from ARRAY
-		valuesStr := matches[2]
-		var values []string
-		// Split by comma and clean up
-		parts := strings.Split(valuesStr, ",")
-		for _, part := range parts {
-			cleaned := strings.TrimSpace(part)
-			// Remove ::text or other type casts
-			cleaned = regexp.MustCompile(`::\w+`).ReplaceAllString(cleaned, "")
-			cleaned = strings.Trim(cleaned, "'\"")
-			if cleaned != "" {
-				if sanitized, ok := common.SanitizeConstraintValue(cleaned); ok {
-					values = append(values, sanitized)
-				}
-			}
-		}
-		if len(values) > 0 {
-			constraints[columnName]["check_values"] = values
-		}
-	}
+	return values
 }

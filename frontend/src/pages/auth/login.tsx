@@ -131,6 +131,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const { data: settingsData } = useSettingsConfigQuery();
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
+    const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
 
     useEffect(() => {
         dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
@@ -415,6 +416,16 @@ export const LoginForm: FC<LoginFormProps> = ({
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Detect embedded mode from URL parameters
+    useEffect(() => {
+        const hasAutoLoginParams = searchParams.has("credentials") ||
+                                   searchParams.has("resource") ||
+                                   searchParams.has("login");
+        if (hasAutoLoginParams) {
+            dispatch(AuthActions.setEmbedded(true));
+        }
+    }, [searchParams, dispatch]);
+
     // Handle locale URL parameter
     useEffect(() => {
         if (searchParams.has("locale")) {
@@ -470,10 +481,12 @@ export const LoginForm: FC<LoginFormProps> = ({
             })) ?? [];
     }, [profiles?.Profiles, cloudProvidersEnabled]);
 
+    const hasAvailableProfiles = availableProfiles.length > 0;
+
     const sampleProfile = useMemo(() => {
         return profiles?.Profiles.find(p => p.Source === "builtin");
     }, [profiles?.Profiles]);
-    
+
     // Handle URL parameters for pre-filling credentials or auto-login
     // Note: This effect intentionally does NOT clear selectedAvailableProfile because:
     // 1. Initial state is already undefined via useState
@@ -721,7 +734,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
-                    <Loading hideText={true} />
+                    <Loading size="lg" />
                 </div>
                 <h1 className="text-xl">
                     {t('loggingIn')}
@@ -769,27 +782,42 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
-                            <div className="flex flex-col gap-sm w-full">
-                                <Label>{t('databaseType')}</Label>
-                                <SearchSelect
-                                    value={databaseType?.id || ""}
-                                    onChange={(value) => {
-                                        const selected = databaseTypeItems.find(item => item.id === value);
-                                        handleDatabaseTypeChange(selected ?? databaseTypeItems[0]);
-                                    }}
-                                    options={databaseTypeItems.map(item => ({
-                                        value: item.id,
-                                        label: item.label,
-                                        icon: item.icon,
-                                    }))}
-                                    buttonProps={{
-                                        "data-testid": "database-type-select",
-                                    }}
-                                    contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
-                                    rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
-                                />
-                            </div>
-                            {fields}
+                            {disableCredentialForm && !hasAvailableProfiles ? (
+                                <Card className="p-6 max-w-md">
+                                    <h1 className="text-xl font-semibold">
+                                        {t('noConnectionsTitle')}
+                                    </h1>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        {t('noConnectionsDescription')}
+                                    </p>
+                                </Card>
+                            ) : (
+                                <>
+                                    {!disableCredentialForm && (
+                                        <div className="flex flex-col gap-sm w-full">
+                                            <Label>{t('databaseType')}</Label>
+                                            <SearchSelect
+                                                value={databaseType?.id || ""}
+                                                onChange={(value) => {
+                                                    const selected = databaseTypeItems.find(item => item.id === value);
+                                                    handleDatabaseTypeChange(selected ?? databaseTypeItems[0]);
+                                                }}
+                                                options={databaseTypeItems.map(item => ({
+                                                    value: item.id,
+                                                    label: item.label,
+                                                    icon: item.icon,
+                                                }))}
+                                                buttonProps={{
+                                                    "data-testid": "database-type-select",
+                                                }}
+                                                contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
+                                                rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
+                                            />
+                                        </div>
+                                    )}
+                                    {!disableCredentialForm && fields}
+                                </>
+                            )}
                         </div>
                     </div>
                     {
@@ -824,8 +852,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,
                 })}>
+                    {!disableCredentialForm && <>
                     <Button className={classNames({
-                        "hidden": advancedForm == null,
+                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>
@@ -834,20 +863,23 @@ export const LoginForm: FC<LoginFormProps> = ({
                             <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
                     )}
+                    </>}
                 </div>
                 {advancedDirection === "vertical" && (
                     <div className={cn("flex flex-col justify-end", {
                         "grow": availableProfiles.length === 0,
                     })}>
+                        {!disableCredentialForm && <>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
+                        </>}
                     </div>
                 )}
                 {
                     availableProfiles.length > 0 &&
                     <>
-                        <Separator className="my-8" />
+                        {!disableCredentialForm && <Separator className="my-8" />}
                         <div className="flex flex-col gap-lg">
                             <Label>{t('availableProfiles')}</Label>
                             <SearchSelect

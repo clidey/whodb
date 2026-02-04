@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -34,10 +35,10 @@ func TestGenerateMockDataRejectsWhenNotAllowed(t *testing.T) {
 func TestGenerateMockDataHandlesSchemaAndConstraintErrors(t *testing.T) {
 	r := &mutationResolver{}
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	rowsCalled := false
-	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
-		rowsCalled = true
-		return nil, errors.New("failed to fetch schema")
+	columnsCalled := false
+	mock.GetColumnsForTableFunc = func(_ *engine.PluginConfig, _, _ string) ([]engine.Column, error) {
+		columnsCalled = true
+		return nil, errors.New("failed to fetch columns")
 	}
 
 	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
@@ -51,29 +52,31 @@ func TestGenerateMockDataHandlesSchemaAndConstraintErrors(t *testing.T) {
 		Method:            "default",
 		OverwriteExisting: false,
 	})
-	if err == nil || !rowsCalled {
-		t.Fatalf("expected error when GetRows fails and function to be called")
+	if err == nil || !columnsCalled {
+		t.Fatalf("expected error when GetColumnsForTable fails and function to be called")
 	}
 }
 
 func TestGenerateMockDataSucceedsForNoSQLPlugin(t *testing.T) {
 	r := &mutationResolver{}
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
-		return &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "name", Type: "text"}},
-			Rows:    [][]string{},
-		}, nil
+	mock.GetColumnsForTableFunc = func(_ *engine.PluginConfig, _, _ string) ([]engine.Column, error) {
+		return []engine.Column{{Name: "name", Type: "text"}}, nil
 	}
 	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
 		return map[string]map[string]any{}, nil
 	}
 
-	callCount := 0
-	mock.AddRowFunc = func(_ *engine.PluginConfig, _, _ string, values []engine.Record) (bool, error) {
-		callCount++
-		if len(values) == 0 || values[0].Key != "name" {
-			t.Fatalf("expected generated value for name column, got %#v", values)
+	bulkCalled := false
+	mock.BulkAddRowsFunc = func(_ *engine.PluginConfig, _, _ string, rows [][]engine.Record) (bool, error) {
+		bulkCalled = true
+		if len(rows) != 2 {
+			t.Fatalf("expected 2 rows, got %d", len(rows))
+		}
+		for i, row := range rows {
+			if len(row) == 0 || row[0].Key != "name" {
+				t.Fatalf("row %d: expected generated value for name column, got %#v", i, row)
+			}
 		}
 		return true, nil
 	}
@@ -97,24 +100,21 @@ func TestGenerateMockDataSucceedsForNoSQLPlugin(t *testing.T) {
 	if status == nil || status.AmountGenerated != 2 {
 		t.Fatalf("expected two rows generated, got %#v", status)
 	}
-	if callCount < 2 {
-		t.Fatalf("expected AddRow to be called for each requested row, got %d", callCount)
+	if !bulkCalled {
+		t.Fatalf("expected BulkAddRows to be called")
 	}
 }
 
 func TestGenerateMockDataStopsWhenExceedingMax(t *testing.T) {
 	r := &mutationResolver{}
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
-		return &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "name", Type: "text"}},
-			Rows:    [][]string{},
-		}, nil
+	mock.GetColumnsForTableFunc = func(_ *engine.PluginConfig, _, _ string) ([]engine.Column, error) {
+		return []engine.Column{{Name: "name", Type: "text"}}, nil
 	}
 	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
 		return map[string]map[string]any{}, nil
 	}
-	mock.AddRowFunc = func(_ *engine.PluginConfig, _, _ string, _ []engine.Record) (bool, error) { return true, nil }
+	mock.BulkAddRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ [][]engine.Record) (bool, error) { return true, nil }
 
 	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
 	origEngine := src.MainEngine
@@ -134,20 +134,22 @@ func TestGenerateMockDataStopsWhenExceedingMax(t *testing.T) {
 	}
 }
 
-func TestGenerateMockDataErrorsWhenClearTableFails(t *testing.T) {
+func TestGenerateMockDataFailsWhenClearTableFails(t *testing.T) {
 	r := &mutationResolver{}
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, _ *model.WhereCondition, _ []*model.SortCondition, _ int, _ int) (*engine.GetRowsResult, error) {
-		return &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "name", Type: "text"}},
-			Rows:    [][]string{},
-		}, nil
+	mock.GetColumnsForTableFunc = func(_ *engine.PluginConfig, _, _ string) ([]engine.Column, error) {
+		return []engine.Column{{Name: "name", Type: "text"}}, nil
 	}
 	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
 		return map[string]map[string]any{}, nil
 	}
+	clearCalled := false
 	mock.ClearTableDataFunc = func(*engine.PluginConfig, string, string) (bool, error) {
+		clearCalled = true
 		return false, errors.New("clear failed")
+	}
+	mock.BulkAddRowsFunc = func(_ *engine.PluginConfig, _, _ string, rows [][]engine.Record) (bool, error) {
+		return true, nil
 	}
 
 	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
@@ -156,6 +158,8 @@ func TestGenerateMockDataErrorsWhenClearTableFails(t *testing.T) {
 	src.MainEngine.RegistryPlugin(mock.AsPlugin())
 	t.Cleanup(func() { src.MainEngine = origEngine })
 
+	// Overwrite mode requires clearing the table first
+	// If clear fails, the entire operation should fail to prevent duplicate data
 	_, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
 		Schema:            "public",
 		StorageUnit:       "orders",
@@ -164,6 +168,12 @@ func TestGenerateMockDataErrorsWhenClearTableFails(t *testing.T) {
 		OverwriteExisting: true,
 	})
 	if err == nil {
-		t.Fatalf("expected error when clearing table fails")
+		t.Fatalf("expected error when clear fails in overwrite mode")
+	}
+	if !clearCalled {
+		t.Fatalf("expected ClearTableData to be called")
+	}
+	if !strings.Contains(err.Error(), "clear") {
+		t.Fatalf("expected error message to mention clear failure, got %v", err)
 	}
 }

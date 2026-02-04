@@ -135,6 +135,8 @@ func GetLoginCredentials(profile types.DatabaseCredentials) *engine.Credentials 
 	}
 }
 
-func NewMockDataGenerator() *mockdata.Generator {
-	return mockdata.NewGenerator()
+// NewMockDataGenerator creates a new mock data generator with the specified FK density ratio.
+// Pass 0 for the default ratio (20).
+func NewMockDataGenerator(fkDensityRatio int) *mockdata.Generator {
+	return mockdata.NewGenerator(fkDensityRatio)
 }

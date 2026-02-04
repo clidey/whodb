@@ -155,7 +155,9 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
                     </div>
                     {
                         current == null
-                        ? <Loading />
+                        ? <div className="flex justify-center items-center h-full">
+                            <Loading size="lg" />
+                        </div>
                             : <main
                                 id="main-content"
                                 className="flex grow flex-wrap gap-sm py-4 content-start relative px-8"

@@ -26,6 +26,11 @@ describe('Postgres Screenshot Generation', () => {
 
   // Tests that need clean login page (01-04)
   context('Login Flow Screenshots', () => {
+    beforeEach(() => {
+      // Mock the Version query for consistent version display in screenshots
+      cy.mockVersion('v1.1.1');
+    });
+
     it('01 - Login Page', () => {
       cy.visit('/login');
       cy.wait(500);
@@ -77,8 +82,16 @@ describe('Postgres Screenshot Generation', () => {
   // All other tests that need logged-in state with schema selected (05+)
   context('Main Application Screenshots', () => {
     beforeEach(() => {
-      cy.login('Postgres', dbHost, dbUser, dbPassword, 'test_db');
-      cy.selectSchema('test_schema');
+      // Mock the Version query for consistent version display in screenshots
+      cy.mockVersion('v1.1.1');
+
+      cy.session(['postgres-session', dbHost, dbUser, 'test_db'], () => {
+        cy.login('Postgres', dbHost, dbUser, dbPassword, 'test_db');
+        cy.selectSchema('test_schema');
+      }, {
+        cacheAcrossSpecs: true
+      });
+      cy.visit('/storage-unit');
     });
 
     it('05 - Storage Unit List Page', () => {
@@ -237,7 +250,7 @@ describe('Postgres Screenshot Generation', () => {
 
     it('20 - Data View - Export Dialog', () => {
       cy.data('users');
-      cy.contains('button', 'Export all').click();
+      cy.contains('button', 'Export All').click();
       cy.wait(500);
       cy.screenshot(`${screenshotDir}/20-data-view-export-dialog`, {
         overwrite: true
@@ -247,7 +260,7 @@ describe('Postgres Screenshot Generation', () => {
 
     it('21 - Data View - Export Format Dropdown', () => {
       cy.data('users');
-      cy.contains('button', 'Export all').click();
+      cy.contains('button', 'Export All').click();
       cy.wait(300);
       cy.get('[data-testid="export-format-select"]').click();
       cy.wait(300);
@@ -490,7 +503,6 @@ describe('Postgres Screenshot Generation', () => {
   it('43 - Context Menu - Delete Row Option', () => {
     cy.data('products');
     cy.get('table tbody tr').first().rightclick({ force: true });
-    cy.get('[data-testid="context-menu-more-actions"]').click();
     cy.wait(200);
     cy.screenshotWithHighlight('[data-testid="context-menu-delete-row"]', `${screenshotDir}/43-context-menu-delete-option`);
     cy.get('body').click(0, 0);
@@ -540,7 +552,7 @@ describe('Postgres Screenshot Generation', () => {
     cy.wait(300);
     cy.get('[data-testid="mock-data-handling-select"]').should('be.visible').click({force: true});
     cy.wait(500);
-    cy.contains('[role="option"]', 'Overwrite existing data').should('be.visible').click({force: true});
+    cy.contains('[role="option"]', 'Overwrite Existing Data').should('be.visible').click({force: true});
     cy.wait(300);
     cy.get('[data-testid="mock-data-generate-button"]').should('be.visible').click({force: true});
     cy.wait(1000);
@@ -594,6 +606,11 @@ describe('Postgres Screenshot Generation', () => {
   // ============================================================================
 
   context('Additional Login Page Screenshots', () => {
+    beforeEach(() => {
+      // Mock the Version query for consistent version display in screenshots
+      cy.mockVersion('v1.1.1');
+    });
+
     it('51 - Login - Database Type - All Options Visible', () => {
       cy.visit('/login');
       cy.get('[data-testid="database-type-select"]').click();
@@ -637,8 +654,16 @@ describe('Postgres Screenshot Generation', () => {
 
   context('Continued Application Screenshots', () => {
     beforeEach(() => {
-      cy.login('Postgres', dbHost, dbUser, dbPassword, 'test_db');
-      cy.selectSchema('test_schema');
+      // Mock the Version query for consistent version display in screenshots
+      cy.mockVersion('v1.1.1');
+
+      cy.session(['postgres-session', dbHost, dbUser, 'test_db'], () => {
+        cy.login('Postgres', dbHost, dbUser, dbPassword, 'test_db');
+        cy.selectSchema('test_schema');
+      }, {
+        cacheAcrossSpecs: true
+      });
+      cy.visit('/storage-unit');
     });
 
     it('55 - Page Size - Dropdown All Options', () => {
@@ -746,7 +771,7 @@ describe('Postgres Screenshot Generation', () => {
 
     it('65 - Export Format - CSV Option Highlighted', () => {
       cy.data('users');
-      cy.contains('button', 'Export all').click();
+      cy.contains('button', 'Export All').click();
       cy.wait(300);
       cy.get('[data-testid="export-format-select"]').click();
       cy.wait(300);
@@ -756,7 +781,7 @@ describe('Postgres Screenshot Generation', () => {
 
     it('66 - Export Format - Excel Option Highlighted', () => {
       cy.data('users');
-      cy.contains('button', 'Export all').click();
+      cy.contains('button', 'Export All').click();
       cy.wait(300);
       cy.get('[data-testid="export-format-select"]').click();
       cy.wait(300);
@@ -766,7 +791,7 @@ describe('Postgres Screenshot Generation', () => {
 
     it('67 - Export Delimiter - Comma Option', () => {
       cy.data('users');
-      cy.contains('button', 'Export all').click();
+      cy.contains('button', 'Export All').click();
       cy.wait(300);
       cy.get('[data-testid="export-delimiter-select"]').click();
       cy.wait(300);
@@ -777,7 +802,7 @@ describe('Postgres Screenshot Generation', () => {
     it('68 - Export Delimiter - Semicolon Option', () => {
       cy.data('users');
       cy.wait(800);
-      cy.contains('button', 'Export all').should('be.visible').click({force: true});
+      cy.contains('button', 'Export All').should('be.visible').click({force: true});
       cy.wait(500);
       cy.get('[data-testid="export-delimiter-select"]').should('be.visible').click({force: true});
       cy.wait(500);
@@ -794,7 +819,7 @@ describe('Postgres Screenshot Generation', () => {
     it('69 - Export Delimiter - Pipe Option', () => {
       cy.data('users');
       cy.wait(800);
-      cy.contains('button', 'Export all').should('be.visible').click({force: true});
+      cy.contains('button', 'Export All').should('be.visible').click({force: true});
       cy.wait(500);
       cy.get('[data-testid="export-delimiter-select"]').should('be.visible').click({force: true});
       cy.wait(500);
@@ -804,18 +829,7 @@ describe('Postgres Screenshot Generation', () => {
       cy.get('body').type('{esc}');
     });
 
-    it('70 - Export Delimiter - Tab Option', () => {
-      cy.data('users');
-      cy.wait(800);
-      cy.contains('button', 'Export all').should('be.visible').click({force: true});
-      cy.wait(500);
-      cy.get('[data-testid="export-delimiter-select"]').should('be.visible').click({force: true});
-      cy.wait(500);
-      cy.screenshotWithHighlight('[role="option"][data-value="\t"]', `${screenshotDir}/70-export-delimiter-tab`);
-      cy.get('body').type('{esc}');
-      cy.wait(200);
-      cy.get('body').type('{esc}');
-    });
+    // Test 70 removed - Tab delimiter option does not exist (only Comma, Semicolon, and Pipe are available)
 
     it('71 - Mock Data - Append Mode Selected', () => {
       cy.data('products');
@@ -1426,6 +1440,6 @@ describe('Postgres Screenshot Generation', () => {
   });
 
   after(() => {
-    cy.log('Completed comprehensive Postgres screenshot generation with 115 tests');
+    cy.log('Completed comprehensive Postgres screenshot generation with 114 tests');
   });
 });

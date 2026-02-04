@@ -38,6 +38,13 @@ done
 
 echo "Elasticsearch is up!"
 
+# Delete existing indices to ensure clean state
+echo "Deleting existing indices (if any)..."
+curl -X DELETE "$ELASTIC_URL/users,products,orders,order_items,payments" -s || true
+
+# Wait a moment for deletion to complete
+sleep 2
+
 # Creating Users Index
 echo "Creating users index..."
 curl -X PUT $CURL_OPTS "$ELASTIC_URL/users" -H "Content-Type: application/json" -d '{

@@ -18,12 +18,12 @@ package sqlite3
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 )
 
@@ -165,98 +165,85 @@ func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[
 	//   status TEXT CHECK (status IN ('active', 'inactive'))
 	// )
 
-	// Find all CHECK clauses
-	checkPattern := regexp.MustCompile(`CHECK\s*\((.*?)\)(?:,|\s|$)`)
-	checkMatches := checkPattern.FindAllStringSubmatch(createSQL, -1)
+	upper := strings.ToUpper(createSQL)
+	searchStart := 0
 
-	for _, match := range checkMatches {
-		if len(match) > 1 {
-			checkClause := match[1]
-			p.parseSingleCheckConstraint(checkClause, constraints)
+	for {
+		checkIdx := strings.Index(upper[searchStart:], "CHECK")
+		if checkIdx == -1 {
+			break
 		}
+		checkIdx += searchStart
+
+		parenStart := strings.Index(createSQL[checkIdx:], "(")
+		if parenStart == -1 {
+			searchStart = checkIdx + 5
+			continue
+		}
+		parenStart += checkIdx
+
+		depth := 1
+		parenEnd := -1
+		for i := parenStart + 1; i < len(createSQL); i++ {
+			switch createSQL[i] {
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth == 0 {
+					parenEnd = i
+				}
+			}
+			if parenEnd != -1 {
+				break
+			}
+		}
+
+		if parenEnd == -1 {
+			searchStart = checkIdx + 5
+			continue
+		}
+
+		checkClause := createSQL[parenStart+1 : parenEnd]
+		p.parseSingleCheckConstraint(checkClause, constraints)
+
+		searchStart = parenEnd + 1
 	}
 }
 
 // parseSingleCheckConstraint parses a single CHECK constraint clause
 func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constraints map[string]map[string]any) {
-	// Pattern for >= or > constraints
-	minPattern := regexp.MustCompile(`(\w+)\s*>=?\s*([\-]?\d+(?:\.\d+)?)`)
-	if matches := minPattern.FindStringSubmatch(checkClause); len(matches) > 2 {
-		columnName := matches[1]
-		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]any{}
-		}
-		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
-			if strings.Contains(matches[0], ">=") {
-				constraints[columnName]["check_min"] = val
-			} else {
-				constraints[columnName]["check_min"] = val + 1
-			}
-		}
+	columnName := gorm_plugin.ExtractColumnNameFromClause(checkClause)
+	if columnName == "" {
+		log.Logger.WithField("checkClause", checkClause).Debug("Could not extract column name from CHECK clause")
+		return
 	}
 
-	// Pattern for <= or < constraints
-	maxPattern := regexp.MustCompile(`(\w+)\s*<=?\s*([\-]?\d+(?:\.\d+)?)`)
-	if matches := maxPattern.FindStringSubmatch(checkClause); len(matches) > 2 {
-		columnName := matches[1]
-		if constraints[columnName] == nil {
-			constraints[columnName] = map[string]any{}
-		}
-		if val, err := strconv.ParseFloat(matches[2], 64); err == nil {
-			if strings.Contains(matches[0], "<=") {
-				constraints[columnName]["check_max"] = val
-			} else {
-				constraints[columnName]["check_max"] = val - 1
-			}
+	// SQLite column names are case-insensitive. To ensure we merge constraints
+	// with those from PRAGMA table_info (which may use a different case),
+	// do a case-insensitive lookup first.
+	var existingKey string
+	lowerName := strings.ToLower(columnName)
+	for key := range constraints {
+		if strings.ToLower(key) == lowerName {
+			existingKey = key
+			break
 		}
 	}
-
-	// Pattern for BETWEEN constraints
-	betweenPattern := regexp.MustCompile(`(\w+)\s+BETWEEN\s+([\-]?\d+(?:\.\d+)?)\s+AND\s+([\-]?\d+(?:\.\d+)?)`)
-	if matches := betweenPattern.FindStringSubmatch(strings.ToUpper(checkClause)); len(matches) > 3 {
-		// Get original column name (case-sensitive)
-		origPattern := regexp.MustCompile(`(\w+)\s+(?i)between`)
-		origMatches := origPattern.FindStringSubmatch(checkClause)
-		if len(origMatches) > 1 {
-			columnName := origMatches[1]
-			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]any{}
-			}
-			if minVal, err := strconv.ParseFloat(matches[2], 64); err == nil {
-				constraints[columnName]["check_min"] = minVal
-			}
-			if maxVal, err := strconv.ParseFloat(matches[3], 64); err == nil {
-				constraints[columnName]["check_max"] = maxVal
-			}
-		}
+	if existingKey != "" {
+		columnName = existingKey // Use the existing key's case
 	}
 
-	// Pattern for IN constraints
-	inPattern := regexp.MustCompile(`(\w+)\s+IN\s*\((.*?)\)`)
-	if matches := inPattern.FindStringSubmatch(strings.ToUpper(checkClause)); len(matches) > 2 {
-		// Get original column name (case-sensitive)
-		origPattern := regexp.MustCompile(`(\w+)\s+(?i)in\s*\(`)
-		origMatches := origPattern.FindStringSubmatch(checkClause)
-		if len(origMatches) > 1 {
-			columnName := origMatches[1]
-			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]any{}
-			}
-			// Extract values from IN clause
-			valuesStr := matches[2]
-			values := []string{}
-			// Split by comma and clean up
-			parts := strings.Split(valuesStr, ",")
-			for _, part := range parts {
-				cleaned := strings.TrimSpace(part)
-				cleaned = strings.Trim(cleaned, "'\"")
-				if cleaned != "" {
-					values = append(values, cleaned)
-				}
-			}
-			if len(values) > 0 {
-				constraints[columnName]["check_values"] = values
-			}
-		}
+	colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+
+	minMax := gorm_plugin.ParseMinMaxConstraints(checkClause)
+	gorm_plugin.ApplyMinMaxToConstraints(colConstraints, minMax)
+
+	if values := gorm_plugin.ParseINClauseValues(checkClause); len(values) > 0 {
+		colConstraints["check_values"] = values
+		log.Logger.WithFields(map[string]any{
+			"column":      columnName,
+			"checkValues": values,
+		}).Debug("Parsed CHECK IN constraint")
 	}
 }

@@ -221,3 +221,7 @@ body.disable-animations *::after {
 [data-testid="chat-delete-provider-confirm"] {
   color: white;
 }
+
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
+}

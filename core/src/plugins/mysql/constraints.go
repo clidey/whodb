@@ -17,12 +17,12 @@
 package mysql
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 )
 
@@ -45,16 +45,13 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 				if err := primaryRows.Scan(&columnName); err != nil {
 					continue
 				}
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-				constraints[columnName]["primary"] = true
+				gorm_plugin.EnsureConstraintEntry(constraints, columnName)["primary"] = true
 			}
 		}
 
-		// Get nullability using GORM's query builder
+		// Get nullability and column type (for ENUM detection) using GORM's query builder
 		rows, err := db.Table("information_schema.columns").
-			Select("COLUMN_NAME, IS_NULLABLE").
+			Select("COLUMN_NAME, IS_NULLABLE, COLUMN_TYPE").
 			Where("table_schema = DATABASE() AND table_name = ?", storageUnit).
 			Rows()
 		if err != nil {
@@ -63,15 +60,22 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 		defer rows.Close()
 
 		for rows.Next() {
-			var columnName, isNullable string
-			if err := rows.Scan(&columnName, &isNullable); err != nil {
+			var columnName, isNullable, columnType string
+			if err := rows.Scan(&columnName, &isNullable, &columnType); err != nil {
 				continue
 			}
 
-			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]any{}
+			colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+			colConstraints["nullable"] = strings.EqualFold(isNullable, "YES")
+
+			// Parse ENUM types to extract allowed values
+			// MySQL ENUM columns have column_type like: enum('active','inactive','pending')
+			if strings.HasPrefix(strings.ToLower(columnType), "enum(") {
+				values := parseEnumValues(columnType)
+				if len(values) > 0 {
+					colConstraints["check_values"] = values
+				}
 			}
-			constraints[columnName]["nullable"] = strings.EqualFold(isNullable, "YES")
 		}
 
 		// Get unique single-column indexes using GORM's query builder
@@ -92,10 +96,7 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 				continue
 			}
 
-			if constraints[columnName] == nil {
-				constraints[columnName] = map[string]any{}
-			}
-			constraints[columnName]["unique"] = true
+			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 		}
 
 		// Get CHECK constraints (MySQL 8.0.16+)
@@ -138,180 +139,93 @@ func (p *MySQLPlugin) parseCheckConstraint(checkClause string, constraints map[s
 	// - (`stock_quantity` >= 0)
 	// - (`age` between 18 and 120)
 	// - (`status` in (_utf8mb4'active',_utf8mb4'inactive'))
+	// - json_valid(`col_json`) - MariaDB's implicit JSON constraint
 
-	// Remove backticks and outer parentheses for easier parsing
-	clause := strings.ReplaceAll(checkClause, "`", "")
-	clause = strings.Trim(clause, "()")
-	clauseLower := strings.ToLower(clause)
-
-	// Extract column name - it's usually the first word before an operator
-	tokens := strings.Fields(clause)
-	if len(tokens) < 3 {
-		return
+	// Check for JSON_VALID constraint BEFORE trimming parentheses
+	// (trimming would remove the closing paren from json_valid())
+	lowerClause := strings.ToLower(checkClause)
+	if strings.Contains(lowerClause, "json_valid(") {
+		columnName := extractJSONValidColumn(checkClause)
+		if columnName != "" && common.ValidateColumnName(columnName) {
+			colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+			colConstraints["is_json"] = true
+			return
+		}
 	}
 
-	columnName := tokens[0]
+	// Now trim outer parentheses for other constraint types
+	clause := strings.Trim(checkClause, "()")
+
+	columnName := gorm_plugin.ExtractColumnNameFromClause(clause)
+	if columnName == "" {
+		return
+	}
 
 	// Validate column name to prevent SQL injection
 	if !common.ValidateColumnName(columnName) {
 		return
 	}
 
-	// Check for >= or > constraints
-	if strings.Contains(clause, ">=") {
-		idx := strings.Index(clause, ">=")
-		if idx > 0 && idx+2 < len(clause) {
-			valueStr := strings.TrimSpace(clause[idx+2:])
-			// Extract the number part
-			valueStr = extractNumber(valueStr)
-			if val, err := strconv.ParseFloat(valueStr, 64); err == nil {
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-				constraints[columnName]["check_min"] = val
-			}
-		}
-	} else if strings.Contains(clause, ">") && !strings.Contains(clause, ">=") {
-		idx := strings.Index(clause, ">")
-		if idx > 0 && idx+1 < len(clause) {
-			valueStr := strings.TrimSpace(clause[idx+1:])
-			valueStr = extractNumber(valueStr)
-			if val, err := strconv.ParseFloat(valueStr, 64); err == nil {
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-				constraints[columnName]["check_min"] = val + 1
-			}
-		}
-	}
+	colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
 
-	// Check for <= or < constraints
-	if strings.Contains(clause, "<=") {
-		idx := strings.Index(clause, "<=")
-		if idx > 0 && idx+2 < len(clause) {
-			valueStr := strings.TrimSpace(clause[idx+2:])
-			valueStr = extractNumber(valueStr)
-			if val, err := strconv.ParseFloat(valueStr, 64); err == nil {
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-				constraints[columnName]["check_max"] = val
-			}
-		}
-	} else if strings.Contains(clause, "<") && !strings.Contains(clause, "<=") {
-		idx := strings.Index(clause, "<")
-		if idx > 0 && idx+1 < len(clause) {
-			valueStr := strings.TrimSpace(clause[idx+1:])
-			valueStr = extractNumber(valueStr)
-			if val, err := strconv.ParseFloat(valueStr, 64); err == nil {
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-				constraints[columnName]["check_max"] = val - 1
-			}
-		}
-	}
+	minMax := gorm_plugin.ParseMinMaxConstraints(clause)
+	gorm_plugin.ApplyMinMaxToConstraints(colConstraints, minMax)
 
-	// Check for BETWEEN constraints
-	if strings.Contains(clauseLower, " between ") {
-		betweenIdx := strings.Index(clauseLower, " between ")
-		if betweenIdx > 0 {
-			afterBetween := clause[betweenIdx+9:] // length of " between "
-			andIdx := strings.Index(strings.ToLower(afterBetween), " and ")
-			if andIdx > 0 {
-				minStr := strings.TrimSpace(afterBetween[:andIdx])
-				maxStr := strings.TrimSpace(afterBetween[andIdx+5:]) // length of " and "
-
-				minStr = extractNumber(minStr)
-				maxStr = extractNumber(maxStr)
-
-				if constraints[columnName] == nil {
-					constraints[columnName] = map[string]any{}
-				}
-
-				if minVal, err := strconv.ParseFloat(minStr, 64); err == nil {
-					constraints[columnName]["check_min"] = minVal
-				}
-				if maxVal, err := strconv.ParseFloat(maxStr, 64); err == nil {
-					constraints[columnName]["check_max"] = maxVal
-				}
-			}
-		}
-	}
-
-	// Check for IN constraints
-	if strings.Contains(clauseLower, " in ") || strings.Contains(clauseLower, " in(") {
-		inIdx := strings.Index(clauseLower, " in")
-		if inIdx > 0 {
-			afterIn := clause[inIdx+3:]
-			// Find the opening parenthesis
-			parenIdx := strings.Index(afterIn, "(")
-			if parenIdx >= 0 {
-				afterParen := afterIn[parenIdx+1:]
-				// Find the closing parenthesis
-				closeIdx := strings.Index(afterParen, ")")
-				if closeIdx > 0 {
-					valuesStr := afterParen[:closeIdx]
-					values := parseInValues(valuesStr)
-					if len(values) > 0 {
-						if constraints[columnName] == nil {
-							constraints[columnName] = map[string]any{}
-						}
-						constraints[columnName]["check_values"] = values
-					}
-				}
-			}
-		}
+	if values := gorm_plugin.ParseINClauseValues(clause); len(values) > 0 {
+		colConstraints["check_values"] = values
 	}
 }
 
-// extractNumber extracts the numeric part from a string
-func extractNumber(s string) string {
-	s = strings.TrimSpace(s)
-	// Remove parentheses if present
-	s = strings.Trim(s, "()")
-
-	// Find where the number ends
-	endIdx := 0
-	for i, ch := range s {
-		if ch == '-' && i == 0 {
-			continue // Allow negative sign at start
-		}
-		if ch >= '0' && ch <= '9' || ch == '.' {
-			endIdx = i + 1
-		} else {
-			break
-		}
+// extractJSONValidColumn extracts the column name from a json_valid() constraint
+// Handles: json_valid(`col_name`), json_valid(col_name), JSON_VALID(`col`)
+func extractJSONValidColumn(clause string) string {
+	lowerClause := strings.ToLower(clause)
+	idx := strings.Index(lowerClause, "json_valid(")
+	if idx == -1 {
+		return ""
 	}
 
-	if endIdx > 0 {
-		return s[:endIdx]
+	// Find the opening paren position in the original clause
+	start := idx + len("json_valid(")
+	if start >= len(clause) {
+		return ""
 	}
-	return s
+
+	// Find the closing paren
+	end := strings.Index(clause[start:], ")")
+	if end == -1 {
+		return ""
+	}
+
+	colRef := strings.TrimSpace(clause[start : start+end])
+	// Remove backticks or quotes
+	colRef = strings.Trim(colRef, "`\"'")
+	return colRef
 }
 
-// parseInValues parses the values from an IN clause with SQL injection protection
-func parseInValues(valuesStr string) []string {
+// parseEnumValues extracts values from MySQL ENUM type definition
+// Input format: enum('active','inactive','pending')
+func parseEnumValues(columnType string) []string {
+	// Find the content between parentheses
+	start := strings.Index(columnType, "(")
+	end := strings.LastIndex(columnType, ")")
+	if start == -1 || end == -1 || end <= start {
+		return nil
+	}
+
+	content := columnType[start+1 : end]
 	var values []string
-	parts := strings.Split(valuesStr, ",")
 
+	// Split by comma, handling quoted strings
+	// Values are quoted with single quotes: 'value1','value2'
+	parts := strings.Split(content, ",")
 	for _, part := range parts {
 		cleaned := strings.TrimSpace(part)
-
-		// Remove charset prefixes like _utf8mb4
-		if idx := strings.Index(cleaned, "'"); idx > 0 {
-			cleaned = cleaned[idx:]
-		}
-
-		// Remove quotes
 		cleaned = strings.Trim(cleaned, "'\"")
-
 		if cleaned != "" {
-			// Validate the value to prevent SQL injection
 			if sanitized, ok := common.SanitizeConstraintValue(cleaned); ok {
 				values = append(values, sanitized)
 			}
-			// Skip malicious values silently
 		}
 	}
 

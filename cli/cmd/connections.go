@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
 )
@@ -78,11 +81,11 @@ var connectionsListCmd = &cobra.Command{
 
 		connections := mgr.ListConnectionsWithSource()
 		if len(connections) == 0 {
-			out.Info("No connections available. Create one with:")
-			out.Info("  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
-			// Output empty result for scripting
 			if format == output.FormatJSON {
 				fmt.Println("[]")
+			} else {
+				out.Info("No connections available. Create one with:")
+				out.Info("  whodb-cli connect --type postgres --host localhost --user myuser --database mydb --name myconn")
 			}
 			return nil
 		}
@@ -173,6 +176,8 @@ Supported database types:
   # Add with schema
   whodb-cli connections add --name mydb --type Postgres --host localhost --user admin --database myapp --schema public`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+
 		if connAddName == "" {
 			return fmt.Errorf("--name is required")
 		}
@@ -209,6 +214,7 @@ Supported database types:
 			return fmt.Errorf("failed to save connection: %w", err)
 		}
 
+		analytics.TrackConnectionAdd(ctx, connAddType)
 		out.Success("Connection %q saved", connAddName)
 		return nil
 	},
@@ -222,6 +228,7 @@ var connectionsRemoveCmd = &cobra.Command{
 	Args:          cobra.ExactArgs(1),
 	Example:       `  whodb-cli connections remove mydb`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
 		name := args[0]
 		out := output.New(output.WithQuiet(connectionsQuiet))
 
@@ -251,6 +258,7 @@ var connectionsRemoveCmd = &cobra.Command{
 			return fmt.Errorf("failed to save config: %w", err)
 		}
 
+		analytics.TrackConnectionRemove(ctx)
 		out.Success("Connection %q removed", name)
 		return nil
 	},
@@ -264,6 +272,8 @@ var connectionsTestCmd = &cobra.Command{
 	Args:          cobra.ExactArgs(1),
 	Example:       `  whodb-cli connections test mydb`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		startTime := time.Now()
 		name := args[0]
 		out := output.New(output.WithQuiet(connectionsQuiet))
 
@@ -285,10 +295,12 @@ var connectionsTestCmd = &cobra.Command{
 
 		if err := mgr.Connect(conn); err != nil {
 			spinner.StopWithError("Connection failed")
+			analytics.TrackConnectionTest(ctx, conn.Type, false, time.Since(startTime).Milliseconds())
 			return fmt.Errorf("connection test failed: %w", err)
 		}
 		defer mgr.Disconnect()
 
+		analytics.TrackConnectionTest(ctx, conn.Type, true, time.Since(startTime).Milliseconds())
 		spinner.StopWithSuccess("Connection successful")
 		out.Success("Successfully connected to %s (%s)", name, conn.Type)
 		return nil

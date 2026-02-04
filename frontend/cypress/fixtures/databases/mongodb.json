@@ -34,7 +34,7 @@
   "schema": null,
   "mockData": {
     "supportedTable": "users",
-    "unsupportedTable": "orders"
+    "tableWithFKs": "orders"
   },
   "sidebar": {
     "showsDatabaseDropdown": true,
@@ -44,14 +44,13 @@
     "graph": true,
     "export": true,
     "scratchpad": false,
-    "mockData": false,
+    "mockData": true,
     "chat": true,
     "whereConditions": true,
     "queryHistory": false
   },
   "featureNotes": {
     "scratchpad": "Scratchpad requires SQL execution which MongoDB does not support natively",
-    "mockData": "Mock data generation not implemented for document databases",
     "queryHistory": "Query history not supported for document databases"
   },
   "whereOperators": {

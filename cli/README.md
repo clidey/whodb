@@ -20,11 +20,70 @@ An interactive, production-ready command-line interface for WhoDB with a Claude 
 
 ## Installation
 
+### Native Install (Recommended)
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.ps1 | iex
+```
+
+The native installer:
+- Detects your OS and architecture
+- Downloads the correct binary from GitHub releases
+- Installs to `~/.local/bin` (macOS/Linux) or `%LOCALAPPDATA%\WhoDB\bin` (Windows)
+- Adds to PATH if needed
+
+To install a specific version:
+
+```bash
+# macOS/Linux
+curl -fsSL https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.sh | bash -s v0.62.0
+
+# Windows
+$env:WHODB_VERSION = "v0.62.0"; irm https://raw.githubusercontent.com/clidey/whodb/main/cli/install/install.ps1 | iex
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew install whodb-cli
+```
+
+### npm
+
+```bash
+npm install -g @clidey/whodb-cli
+```
+
+Or with npx (no install):
+
+```bash
+npx @clidey/whodb-cli
+```
+
 ### From Source
+
+Requires Go 1.21+:
+
+```bash
+git clone https://github.com/clidey/whodb.git
+cd whodb/cli
+go build -o whodb-cli .
+```
+
+Or using the Makefile:
 
 ```bash
 cd cli
-go build -o whodb-cli .
+make build
+make install  # installs to /usr/local/bin
 ```
 
 ### Using Docker
@@ -32,11 +91,15 @@ go build -o whodb-cli .
 ```bash
 # Build the Docker image (from repo root)
 docker build -t whodb-cli:latest -f cli/Dockerfile .
+
+# Or pull pre-built
+docker pull clidey/whodb-cli:latest
 ```
 
 ### Verify Installation
 
 ```bash
+whodb-cli --version
 whodb-cli --help
 ```
 
@@ -337,10 +400,14 @@ WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants 
 ### Start the MCP Server
 
 ```bash
+# Default: stdio transport (for Claude Desktop, Claude Code, etc.)
 whodb-cli mcp serve
+
+# HTTP transport (for cloud deployments, Docker, Kubernetes)
+whodb-cli mcp serve --transport=http --port=3000
 ```
 
-This starts a stdio-based MCP server that exposes these tools:
+This starts an MCP server that exposes these tools:
 
 | Tool | Description |
 |------|-------------|
@@ -353,15 +420,71 @@ This starts a stdio-based MCP server that exposes these tools:
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 
+### Transport Modes
+
+**stdio (default)** - For local CLI integration with Claude Desktop, Claude Code, etc.
+
+```bash
+whodb-cli mcp serve
+```
+
+**HTTP** - For cloud deployments, Docker, Kubernetes, or shared access.
+
+```bash
+whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+```
+
+HTTP mode exposes:
+- `/mcp` - MCP endpoint (streaming HTTP)
+- `/health` - Health check endpoint
+
+### Security Modes
+
+| Mode | Flag | Description |
+|------|------|-------------|
+| Confirm-writes | *(default)* | Write operations require user approval |
+| Safe mode | `--safe-mode` | Read-only + strict security (for demos/playgrounds) |
+| Read-only | `--read-only` | Blocks all write operations |
+| Allow-write | `--allow-write` | Full write access without confirmation |
+
 ### MCP Flags
 
+**Security:**
+- `--safe-mode`: Read-only + strict security (for demos/playgrounds)
 - `--read-only`: Block all write operations
 - `--allow-write`: Allow writes without confirmation (use with caution)
 - `--allow-drop`: Allow DROP/TRUNCATE when running with `--allow-write`
 - `--security`: Validation level (`strict`, `standard`, `minimal`)
+
+**Query Limits:**
 - `--timeout`: Query timeout (default 30s)
 - `--max-rows`: Limit rows returned per query (0 = unlimited)
 - `--allow-multi-statement`: Allow multiple SQL statements in one query
+
+**Transport:**
+- `--transport`: `stdio` (default) or `http`
+- `--host`: Bind address (default: localhost)
+- `--port`: Listen port (default: 3000)
+
+**Connection Scoping:**
+- `--allowed-connections`: Comma-separated list of connections to allow (restricts access)
+- `--default-connection`: Default connection when not specified (does not restrict access)
+
+```bash
+# Restrict AI to specific connections only
+whodb-cli mcp serve --allowed-connections prod,staging
+
+# Set default without restricting access
+whodb-cli mcp serve --default-connection prod
+
+# Combine: restrict to prod/staging, default to staging
+whodb-cli mcp serve --allowed-connections prod,staging --default-connection staging
+```
+
+When `--allowed-connections` is set:
+- `whodb_connections` only shows allowed connections
+- Queries to other connections are rejected
+- First allowed connection becomes the default (unless `--default-connection` is set)
 
 ### Configure Connections
 

@@ -12,6 +12,7 @@ en:
   maximumRowCount: "Maximum Row Count Is {max}"
   storageUnitRequired: Storage Unit Is Required for Mock Data Generation
   rowCountExceedsMax: "Row Count Cannot Exceed {max}"
+  rowCountMustBePositive: Row Count Must Be At Least 1
   successfullyGenerated: "Successfully Generated {count} Rows"
   failedToMockData: Failed to Mock Data
   mockDataNotAllowed: Mock Data Generation Is Not Allowed for This Table
@@ -71,6 +72,12 @@ en:
   dataHandling: Data Handling
   appendToExisting: Append to Existing Data
   overwriteExisting: Overwrite Existing Data
+  fkVariety: FK Variety
+  fkVarietyDescription: Controls how many unique parent values are generated
+  fkVarietyHigh: High (1:5 ratio)
+  fkVarietyMedium: Medium (1:10 ratio)
+  fkVarietyNormal: Normal (1:20 ratio)
+  fkVarietyLow: Low (1:50 ratio)
   generate: Generate
 
   # Mock data confirmation
@@ -79,7 +86,14 @@ en:
 
   # Mock data alert
   mockDataNote: Note
-  mockDataWarning: Mock data generation does not yet fully support foreign keys and all constraints. You may experience some errors or missing data.
+  mockDataWarning: Mock data generation will populate foreign key parent tables as needed.
+  mockDataWarningClickHouse: ClickHouse does not support foreign keys. Mock data will be generated for this table only.
+
+  dependencyError: Cannot Generate
+  tablesToPopulate: "Tables to populate:"
+  rows: rows
+  usingExisting: using existing
+  totalRows: "Total: {count} rows"
 
   # Total count
   totalCount: "Total Count:"

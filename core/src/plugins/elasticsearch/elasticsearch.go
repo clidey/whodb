@@ -89,13 +89,18 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 
 	indicesStats, ok := stats["indices"].(map[string]any)
 	if !ok {
-		log.Logger.Error("Unexpected indices stats format from ElasticSearch")
+		log.Logger.WithField("stats", stats).Error("Unexpected indices stats format from ElasticSearch")
 		return nil, fmt.Errorf("unexpected indices stats format")
 	}
 
 	storageUnits := make([]engine.StorageUnit, 0, len(indicesStats))
 
 	for indexName, indexStatsInterface := range indicesStats {
+		// Skip hidden/system indices (those starting with .)
+		if strings.HasPrefix(indexName, ".") {
+			continue
+		}
+
 		indexStats, ok := indexStatsInterface.(map[string]any)
 		if !ok {
 			log.Logger.Warnf("Skipping index %s: unexpected stats format", indexName)
@@ -822,6 +827,10 @@ func parseRangeBounds(raw string) (string, string) {
 }
 
 func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
+	return nil, errors.ErrUnsupported
+}
+
+func (p *ElasticSearchPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
 

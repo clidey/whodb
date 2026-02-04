@@ -25,10 +25,12 @@ DOCKER_IMAGE=clidey/whodb-cli:latest
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+BAML_VERSION ?= $(shell grep 'github.com/boundaryml/baml ' ../core/go.mod | awk '{print $$2}' | sed 's/^v//')
 
 # ldflags for version injection
 VERSION_PKG=github.com/clidey/whodb/cli/pkg/version
-LDFLAGS=-ldflags "-s -w -X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).Commit=$(COMMIT) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE)"
+BAML_PKG=github.com/clidey/whodb/cli/internal/baml
+LDFLAGS=-ldflags "-s -w -X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).Commit=$(COMMIT) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(BAML_PKG).BAMLVersion=$(BAML_VERSION)"
 
 help:
 	@echo "WhoDB CLI - Makefile targets:"
@@ -112,7 +114,7 @@ docker-compose-down:
 .PHONY: ci-build-darwin-amd64 ci-build-darwin-arm64
 .PHONY: ci-build-windows-amd64 ci-build-windows-arm64
 
-CI_LDFLAGS=-trimpath -ldflags "-s -w -X main.Version=$(VERSION)"
+CI_LDFLAGS=-trimpath -ldflags "-s -w -X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).Commit=$(COMMIT) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE) -X $(BAML_PKG).BAMLVersion=$(BAML_VERSION)"
 
 ci-build-linux-amd64:
 	@echo "Building CLI for linux/amd64..."

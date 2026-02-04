@@ -1,0 +1,14 @@
+query AnalyzeMockDataDependencies($schema: String!, $storageUnit: String!, $rowCount: Int!, $fkDensityRatio: Int) {
+  AnalyzeMockDataDependencies(schema: $schema, storageUnit: $storageUnit, rowCount: $rowCount, fkDensityRatio: $fkDensityRatio) {
+    GenerationOrder
+    Tables {
+      Table
+      RowsToGenerate
+      IsBlocked
+      UsesExistingData
+    }
+    TotalRows
+    Warnings
+    Error
+  }
+}

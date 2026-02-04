@@ -71,7 +71,7 @@ import {
 import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
-import {getColumnIcons, StorageUnitTable} from "../../components/table";
+import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
 import {Tip} from "../../components/tip";
 import {BUILD_EDITION} from "../../config/edition";
 import {InternalRoutes} from "../../config/routes";
@@ -116,6 +116,15 @@ export const ExploreStorageUnit: FC = () => {
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
     const unit: StorageUnit = useLocation().state?.unit;
     const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
+
+    // Check if this is a view/materialized view - mock data generation not allowed for these
+    const isMockDataGenerationAllowed = useMemo(() => {
+        if (!unit?.Attributes) return true;
+        const typeAttr = unit.Attributes.find(attr => attr.Key === "Type");
+        if (!typeAttr) return true;
+        const upperType = typeAttr.Value.toUpperCase();
+        return !upperType.includes("VIEW") && !upperType.includes("MATERIALIZED") && !upperType.includes("SYSTEM");
+    }, [unit?.Attributes]);
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -429,7 +438,7 @@ export const ExploreStorageUnit: FC = () => {
                     // Convert non-string values to string for GraphQL
                     const stringValue = typeof val === 'object' && val !== null
                         ? JSON.stringify(val)
-                        : String(val);
+                        : val;
                     values.push({
                         Key: key,
                         Value: stringValue,
@@ -601,12 +610,6 @@ export const ExploreStorageUnit: FC = () => {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
 
-    if (loading) {
-        return <InternalPage routes={routes}>
-            <LoadingPage />
-        </InternalPage>
-    }
-
     // Prevent rendering if unit is not available and we don't have a table name
     if (!unit && !currentTableName) {
         return <InternalPage routes={routes}>
@@ -756,6 +759,7 @@ export const ExploreStorageUnit: FC = () => {
                                                 value={addRowData[col.Name] ?? ""}
                                                 onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
                                                 placeholder={`Enter value for ${col.Name}`}
+                                                {...getInputPropsForColumnType(col.Type || '')}
                                             />
                                         </div>
                                     ))}
@@ -783,8 +787,11 @@ export const ExploreStorageUnit: FC = () => {
 
             </div>
             <div className="grow">
-                {
-                    rows != null &&
+                {loading ? (
+                    <div className="flex justify-center items-center h-full">
+                        <Loading />
+                    </div>
+                ) : rows != null ? (
                     <StorageUnitTable
                         columns={columns}
                         rows={rows.Rows}
@@ -808,6 +815,8 @@ export const ExploreStorageUnit: FC = () => {
                         isValidForeignKey={isValidForeignKey}
                         onEntitySearch={handleEntitySearch}
                         databaseType={current?.Type}
+                        // Mock data control - disabled for views/materialized views
+                        isMockDataGenerationAllowed={isMockDataGenerationAllowed}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -815,7 +824,7 @@ export const ExploreStorageUnit: FC = () => {
                             </Button>
                         </div>
                     </StorageUnitTable>
-                }
+                ) : null}
             </div>
         </div>
         <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>

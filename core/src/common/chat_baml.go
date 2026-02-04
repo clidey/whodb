@@ -153,7 +153,10 @@ func convertOperationType(operation types.OperationType) string {
 // This should be used by all AI request paths to ensure consistent logging.
 func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []baml_client.CallOptionFunc {
 	var callOpts []baml_client.CallOptionFunc
-	if externalModel == nil || externalModel.Model == "" {
+	if externalModel == nil {
+		return callOpts
+	}
+	if externalModel.Model == "" {
 		return callOpts
 	}
 
@@ -176,6 +179,7 @@ func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []baml_client
 
 // CreateDynamicBAMLClient creates a BAML ClientRegistry with a dynamically configured client
 // based on the user's selected provider, model, API key, and endpoint.
+// We register as "DefaultClient" to override the BAML function's explicit client reference.
 func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) *baml.ClientRegistry {
 	if externalModel == nil {
 		return nil
@@ -185,8 +189,9 @@ func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) *baml.ClientRe
 
 	provider, opts := getBAMLProviderAndOptions(externalModel)
 
-	registry.AddLlmClient("DynamicClient", provider, opts)
-	registry.SetPrimaryClient("DynamicClient")
+	// Register as "DefaultClient" to override the static client reference in BAML functions
+	registry.AddLlmClient("DefaultClient", provider, opts)
+	registry.SetPrimaryClient("DefaultClient")
 
 	return registry
 }
@@ -248,7 +253,7 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 		return "openai-generic", opts
 
 	default:
-		// Generic/custom providers use openai-generic
+		// Standard generic provider (OpenAI-compatible)
 		if m.Endpoint != "" {
 			opts["base_url"] = m.Endpoint
 		}

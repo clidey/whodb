@@ -106,12 +106,22 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	// Filter to only include gpt-* models
-	models := []string{}
+	// Filter to only include chat-compatible models
+	// Exclude: *-instruct (completions), *-codex (completions), *-base (base models)
+	var models []string
 	for _, model := range modelsResp.Models {
-		if strings.HasPrefix(model.Name, "gpt-") {
-			models = append(models, model.Name)
+		name := model.Name
+		// Must be a GPT model or chatgpt model
+		if !strings.HasPrefix(name, "gpt-") && !strings.HasPrefix(name, "chatgpt-") {
+			continue
 		}
+		// Exclude non-chat models
+		if strings.HasSuffix(name, "-instruct") ||
+			strings.Contains(name, "-codex") ||
+			strings.HasSuffix(name, "-base") {
+			continue
+		}
+		models = append(models, name)
 	}
 	return models, nil
 }

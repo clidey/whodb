@@ -151,3 +151,48 @@ func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageU
 		return err == nil, err
 	})
 }
+
+// AddRowReturningID inserts a row and returns the auto-generated ID.
+// Returns 0 if the table has no auto-increment column or the database doesn't support it.
+func (p *GormPlugin) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
+	if p.errorHandler == nil {
+		p.InitPlugin()
+	}
+
+	if storageUnit == "" {
+		log.Logger.Error("AddRowReturningID called with empty storageUnit name")
+		return 0, fmt.Errorf("storage unit name cannot be empty")
+	}
+
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
+		var lastID int64
+
+		// Use a transaction to ensure INSERT and lastval() use the same connection.
+		// This is critical for PostgreSQL where lastval() is session-specific.
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if err := p.addRowWithDB(tx, schema, storageUnit, values); err != nil {
+				return err
+			}
+
+			var err error
+			lastID, err = p.GormPluginFunctions.GetLastInsertID(tx)
+			if err != nil {
+				log.Logger.WithError(err).Warn("Failed to get last insert ID")
+				return nil
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			err = p.errorHandler.HandleError(err, "AddRowReturningID", map[string]any{
+				"schema":      schema,
+				"storageUnit": storageUnit,
+				"valueCount":  len(values),
+			})
+			return 0, err
+		}
+
+		return lastID, nil
+	})
+}

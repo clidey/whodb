@@ -594,6 +594,10 @@ func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*en
 	return nil, errors.ErrUnsupported
 }
 
+func (p *RedisPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return nil, errors.ErrUnsupported
+}
+
 func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
 	return nil, errors.ErrUnsupported
 }

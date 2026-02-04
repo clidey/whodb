@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,20 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clidey/whodb/cli/internal/tui"
+	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+// Version is set at build time via ldflags
+var Version = "dev"
 
 var cfgFile string
 
@@ -55,6 +60,7 @@ Features:
 }
 
 func Execute() {
+	defer analytics.Shutdown()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -62,16 +68,35 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initColorMode)
+	cobra.OnInitialize(initConfig, initColorMode, initAnalytics)
 
 	// Disable Cobra's default completion command; we provide our own with install support
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.PersistentFlags().Bool("debug", false, "enable debug mode")
 	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output")
+	rootCmd.PersistentFlags().Bool("no-analytics", false, "disable anonymous usage analytics")
 
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 	viper.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color"))
+	viper.BindPFlag("no-analytics", rootCmd.PersistentFlags().Lookup("no-analytics"))
+}
+
+func initAnalytics() {
+	// Skip analytics if disabled via flag or env
+	if viper.GetBool("no-analytics") || os.Getenv("WHODB_CLI_ANALYTICS_DISABLED") == "true" {
+		return
+	}
+
+	// Initialize analytics (errors are silently ignored - analytics should never block CLI)
+	_ = analytics.Initialize(Version)
+
+	// Track CLI startup with the command being run
+	if len(os.Args) > 1 {
+		analytics.TrackCLIStartup(context.Background(), os.Args[1])
+	} else {
+		analytics.TrackCLIStartup(context.Background(), "tui")
+	}
 }
 
 func initColorMode() {

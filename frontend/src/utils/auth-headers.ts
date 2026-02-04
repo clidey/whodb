@@ -23,7 +23,7 @@ const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
  * Checks if the app is running in a desktop/webview environment
  * where cookies might not be properly supported.
  */
-function isDesktopScheme(): boolean {
+export function isDesktopScheme(): boolean {
     // Check if Wails bindings are available - more reliable than protocol check
     if (typeof window !== 'undefined') {
         const wailsGo = (window as any).go;

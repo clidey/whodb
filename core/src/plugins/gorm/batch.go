@@ -62,11 +62,61 @@ func NewBatchProcessor(plugin GormPluginFunctions, dbType engine.DatabaseType, c
 	}
 }
 
+// getMaxParametersForDB returns the maximum number of parameters supported by the database.
+func (b *BatchProcessor) getMaxParametersForDB() int {
+	return b.plugin.GetMaxBulkInsertParameters()
+}
+
+// calculateBatchSize returns an appropriate batch size based on column count and DB limits.
+func (b *BatchProcessor) calculateBatchSize(columnCount int) int {
+	if columnCount == 0 {
+		return b.config.BatchSize
+	}
+
+	maxParams := b.getMaxParametersForDB()
+	// Leave some margin (10%) for safety
+	safeMaxParams := int(float64(maxParams) * 0.9)
+	maxRowsForDB := safeMaxParams / columnCount
+
+	if maxRowsForDB < 1 {
+		maxRowsForDB = 1
+	}
+
+	// Use the smaller of configured batch size and calculated max
+	if maxRowsForDB < b.config.BatchSize {
+		log.Logger.WithFields(map[string]any{
+			"configuredBatchSize": b.config.BatchSize,
+			"calculatedMaxRows":   maxRowsForDB,
+			"columnCount":         columnCount,
+			"maxParameters":       maxParams,
+			"dbType":              b.dbType,
+		}).Debug("Reducing batch size due to database parameter limit")
+		return maxRowsForDB
+	}
+
+	return b.config.BatchSize
+}
+
 // InsertBatch inserts multiple rows in batches
 func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, records []map[string]any) error {
 	if len(records) == 0 {
 		return nil
 	}
+
+	columnCount := 0
+	if len(records) > 0 {
+		columnCount = len(records[0])
+	}
+
+	if columnCount == 0 {
+		log.Logger.WithFields(map[string]any{
+			"table":       tableName,
+			"recordCount": len(records),
+		}).Error("All records are empty - no columns to insert")
+		return fmt.Errorf("cannot insert empty records into %s: all columns were skipped (check for incorrect auto-increment/computed detection)", tableName)
+	}
+
+	effectiveBatchSize := b.calculateBatchSize(columnCount)
 
 	var fullTableName string
 	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
@@ -77,8 +127,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	// Use GORM's CreateInBatches for efficient bulk insert
 	if b.config.UseBulkInsert {
-		// For bulk insert, we need to use Table() to specify the table
-		result := db.Table(fullTableName).CreateInBatches(records, b.config.BatchSize)
+		result := db.Table(fullTableName).CreateInBatches(records, effectiveBatchSize)
 		if result.Error != nil {
 			log.Logger.WithError(result.Error).
 				WithField("table", fullTableName).
@@ -98,8 +147,8 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	// Fall back to individual inserts if bulk insert is disabled
 	totalRecords := len(records)
-	for i := 0; i < totalRecords; i += b.config.BatchSize {
-		end := i + b.config.BatchSize
+	for i := 0; i < totalRecords; i += effectiveBatchSize {
+		end := i + effectiveBatchSize
 		if end > totalRecords {
 			end = totalRecords
 		}
@@ -414,8 +463,7 @@ func (p *GormPlugin) BulkAddRows(config *engine.PluginConfig, schema string, sto
 			records = append(records, record)
 		}
 
-		// Use batch processor for bulk insert
-		processor := NewBatchProcessor(p, p.Type, &BatchConfig{
+		processor := NewBatchProcessor(p.GormPluginFunctions, p.Type, &BatchConfig{
 			BatchSize:     1000,
 			UseBulkInsert: true,
 			FailOnError:   true,

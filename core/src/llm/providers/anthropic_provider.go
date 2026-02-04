@@ -107,9 +107,12 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		return nil, err
 	}
 
-	models := make([]string, len(modelsResp.Data))
-	for i, model := range modelsResp.Data {
-		models[i] = model.ID
+	// Filter to only include claude-* models (all Claude models are chat-compatible)
+	var models []string
+	for _, model := range modelsResp.Data {
+		if strings.HasPrefix(model.ID, "claude-") {
+			models = append(models, model.ID)
+		}
 	}
 	return models, nil
 }
