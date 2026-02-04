@@ -1,6 +1,10 @@
 /**
  * EE Import Configuration
  * This file handles conditional imports for Enterprise Edition features
+ *
+ * IMPORTANT: This module uses top-level await to ensure EE settings are loaded
+ * synchronously before Redux store initialization. Do not import this module
+ * from any code that runs before the store is created.
  */
 
 import { EEComponentTypes, SettingsDefaults } from './ee-types';
@@ -15,12 +19,27 @@ export const EEComponents: EEComponentTypes = {
     PieChart: null,
 };
 
-// Export EE settings defaults
-export let eeSettingsDefaults: SettingsDefaults = {};
+// Load EE settings FIRST using top-level await before exporting
+// This ensures eeSettingsDefaults is populated before any consumer can access it
+let settingsDefaults: SettingsDefaults = {};
 
-// Load EE components and config if in EE mode
 if (isEEMode) {
-    // Dynamic imports for EE components and config
+    try {
+        // Top-level await - blocks module initialization until config is loaded
+        const eeConfig = await import('@ee/config');
+        if (eeConfig?.eeSettingsDefaults) {
+            settingsDefaults = eeConfig.eeSettingsDefaults;
+        }
+    } catch (error) {
+        console.warn('EE config could not be loaded:', error);
+    }
+}
+
+// Export AFTER loading
+export const eeSettingsDefaults: SettingsDefaults = settingsDefaults;
+
+// Load EE components asynchronously (they're not needed at module initialization)
+if (isEEMode) {
     const loadEEComponents = async () => {
         try {
             // Load all EE exports at once
@@ -37,17 +56,5 @@ if (isEEMode) {
         }
     };
 
-    const loadEEConfig = async () => {
-        try {
-            const eeConfig = await import('@ee/config').catch(() => null);
-            if (eeConfig?.eeSettingsDefaults) {
-                eeSettingsDefaults = eeConfig.eeSettingsDefaults;
-            }
-        } catch (error) {
-            console.warn('EE config could not be loaded:', error);
-        }
-    };
-
     loadEEComponents();
-    loadEEConfig();
 }
