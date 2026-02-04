@@ -41,6 +41,7 @@ import {
     DatabaseType,
     useGetDatabaseQuery,
     useGetSchemaQuery,
+    useGetSslStatusQuery,
     useGetVersionQuery,
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
@@ -102,6 +103,7 @@ export const Sidebar: FC = () => {
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
+    const sslStatus = useAppSelector(state => state.auth.sslStatus);
     const {data: availableDatabases, loading: availableDatabasesLoading, refetch: getDatabases} = useGetDatabaseQuery({
         variables: {
             type: current?.Type as DatabaseType,
@@ -118,6 +120,14 @@ export const Sidebar: FC = () => {
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
     const { data: version } = useGetVersionQuery();
+    const { refetch: refetchSslStatus } = useGetSslStatusQuery({
+        skip: current == null || sslStatus !== undefined,
+        onCompleted(data) {
+            if (data.SSLStatus) {
+                dispatch(AuthActions.setSSLStatus(data.SSLStatus));
+            }
+        },
+    });
     const navigate = useNavigate();
     const [showLoginCard, setShowLoginCard] = useState(false);
     const { toggleSidebar, open } = useSidebar();
@@ -136,11 +146,14 @@ export const Sidebar: FC = () => {
                 <DatabaseIconWithBadge
                     icon={getProfileIcon(profile)}
                     showCloudBadge={isAwsConnection(profile.Id)}
+                    sslStatus={profile.Id === current?.Id
+                        ? sslStatus
+                        : (profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined)}
                     size="sm"
                 />
             ),
             profile,
-        })), [profiles, cloudProvidersEnabled]);
+        })), [profiles, current?.Id, sslStatus, cloudProvidersEnabled]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;
@@ -256,7 +269,7 @@ export const Sidebar: FC = () => {
         }
     }, []);
 
-    // Refetch databases and schemas when the current profile changes
+    // Refetch databases, schemas, and SSL status when the current profile changes
     // This ensures queries use the correct auth context after profile switch
     useEffect(() => {
         if (isInitialMount.current) {
@@ -270,6 +283,11 @@ export const Sidebar: FC = () => {
         if (databaseSupportsSchema(current.Type)) {
             getSchemas();
         }
+        refetchSslStatus().then(({ data }) => {
+            if (data?.SSLStatus) {
+                dispatch(AuthActions.setSSLStatus(data.SSLStatus));
+            }
+        });
     }, [current?.Id]);
 
     // Listen for menu event to open add profile form

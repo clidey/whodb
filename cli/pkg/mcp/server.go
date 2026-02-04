@@ -221,10 +221,10 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 			Description: queryDesc,
 			Annotations: &mcp.ToolAnnotations{
 				Title:           "Execute SQL Query",
-				ReadOnlyHint:    secOpts.ReadOnly, // If server is read-only, this tool is read-only
+				ReadOnlyHint:    secOpts.ReadOnly,                                     // If server is read-only, this tool is read-only
 				DestructiveHint: boolPtr(!secOpts.ReadOnly && !secOpts.ConfirmWrites), // Destructive only if writes allowed without confirmation
-				IdempotentHint:  false,            // Queries can have side effects
-				OpenWorldHint:   boolPtr(false),   // Closed world (database only)
+				IdempotentHint:  false,                                                // Queries can have side effects
+				OpenWorldHint:   boolPtr(false),                                       // Closed world (database only)
 			},
 		}, createQueryHandler(secOpts))
 	}

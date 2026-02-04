@@ -138,6 +138,7 @@ type LoginProfile {
   Database: String
   IsEnvironmentDefined: Boolean!
   Source: String!
+  SSLConfigured: Boolean!
 }
 
 type StatusResponse {
@@ -226,6 +227,15 @@ type DatabaseMetadata {
   typeDefinitions: [TypeDefinition!]!
   operators: [String!]!
   aliasMap: [Record!]!
+}
+
+# =============================================================================
+# SSL/TLS Configuration Types
+# =============================================================================
+
+type SSLStatus {
+  IsEnabled: Boolean!
+  Mode: String!
 }
 
 # =============================================================================
@@ -365,6 +375,7 @@ type Query {
   MockDataMaxRowCount: Int!
   AnalyzeMockDataDependencies(schema: String!, storageUnit: String!, rowCount: Int!, fkDensityRatio: Int): MockDataDependencyAnalysis!
   DatabaseMetadata: DatabaseMetadata
+  SSLStatus: SSLStatus
 
   # Cloud Provider Queries (Generic)
   CloudProviders: [AWSProvider!]!

@@ -236,9 +236,9 @@ func SetupCleanEnv(t *testing.T) func() {
 	if origHome != "" {
 		// Try common BAML cache locations
 		possibleCacheDirs := []string{
-			filepath.Join(origHome, ".cache", "baml", "libs"),                    // Linux/Mac
-			filepath.Join(os.Getenv("LOCALAPPDATA"), "baml", "libs"),             // Windows
-			filepath.Join(origValues["USERPROFILE"], ".cache", "baml", "libs"),   // Windows fallback
+			filepath.Join(origHome, ".cache", "baml", "libs"),                  // Linux/Mac
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "baml", "libs"),           // Windows
+			filepath.Join(origValues["USERPROFILE"], ".cache", "baml", "libs"), // Windows fallback
 		}
 
 		for _, cacheDir := range possibleCacheDirs {

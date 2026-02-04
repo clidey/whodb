@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@
 package mysql
 
 import (
+	"fmt"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	mysqldriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -46,11 +49,42 @@ func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	mysqlConfig.Loc = connectionInput.Loc
 	mysqlConfig.Params = connectionInput.ExtraOptions
 
+	// Configure SSL/TLS
+	sslMode := "disabled"
+	if connectionInput.SSLConfig != nil && connectionInput.SSLConfig.IsEnabled() {
+		sslMode = string(connectionInput.SSLConfig.Mode)
+
+		// MySQL driver requires registering TLS configs by name
+		// Handle "preferred" mode specially - it's a DSN parameter, not a registered config
+		if connectionInput.SSLConfig.Mode == ssl.SSLModePreferred {
+			mysqlConfig.TLSConfig = "preferred"
+		} else {
+			// Build and register TLS config for other modes
+			tlsConfig, err := ssl.BuildTLSConfig(connectionInput.SSLConfig, connectionInput.Hostname)
+			if err != nil {
+				log.Logger.WithError(err).WithFields(map[string]any{
+					"hostname": connectionInput.Hostname,
+					"sslMode":  connectionInput.SSLConfig.Mode,
+				}).Error("Failed to build TLS configuration for MySQL")
+				return nil, err
+			}
+
+			// Register TLS config with unique name
+			configName := fmt.Sprintf("whodb_%s_%d", connectionInput.Database, time.Now().UnixNano())
+			if err := mysqldriver.RegisterTLSConfig(configName, tlsConfig); err != nil {
+				log.Logger.WithError(err).WithField("configName", configName).Error("Failed to register TLS config for MySQL")
+				return nil, err
+			}
+			mysqlConfig.TLSConfig = configName
+		}
+	}
+
 	l := log.Logger.WithFields(map[string]any{
 		"hostname": connectionInput.Hostname,
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,
 		"username": connectionInput.Username,
+		"sslMode":  sslMode,
 	})
 
 	db, err := gorm.Open(mysql.Open(mysqlConfig.FormatDSN()), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})

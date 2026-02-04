@@ -15,15 +15,22 @@
  */
 
 import { FC, ReactElement, ReactNode } from "react";
-import { cn } from "@clidey/ux";
-import { CloudIcon } from "../heroicons";
+import { cn, Tooltip, TooltipContent, TooltipTrigger } from "@clidey/ux";
+import { CloudIcon, ShieldCheckIcon } from "../heroicons";
 import { useTranslation } from "@/hooks/use-translation";
+
+interface SSLStatus {
+    IsEnabled: boolean;
+    Mode: string;
+}
 
 interface DatabaseIconWithBadgeProps {
     /** The database icon element */
     icon: ReactElement | null;
     /** Whether to show the cloud badge */
     showCloudBadge?: boolean;
+    /** SSL status for the connection */
+    sslStatus?: SSLStatus | null;
     /** Additional class name for the container */
     className?: string;
     /** Size variant */
@@ -31,16 +38,19 @@ interface DatabaseIconWithBadgeProps {
 }
 
 /**
- * Wraps a database icon and optionally displays a small cloud badge
- * to indicate the connection is from a cloud provider (AWS).
+ * Wraps a database icon and optionally displays badges for:
+ * - Cloud connection (AWS)
+ * - SSL/TLS enabled connection
  */
 export const DatabaseIconWithBadge: FC<DatabaseIconWithBadgeProps> = ({
     icon,
     showCloudBadge = false,
+    sslStatus,
     className,
     size = "md",
 }) => {
     const { t } = useTranslation("components/aws-providers-section");
+    const { t: tSidebar } = useTranslation("components/sidebar");
 
     const sizeClasses = {
         sm: "w-4 h-4",
@@ -54,7 +64,16 @@ export const DatabaseIconWithBadge: FC<DatabaseIconWithBadgeProps> = ({
         lg: "w-4 h-4 -right-1 -bottom-1",
     };
 
+    // SSL badge position (top-right when cloud badge is shown at bottom-right)
+    const sslBadgeSizeClasses = {
+        sm: "w-2 h-2 -right-0.5 -top-0.5",
+        md: "w-3 h-3 -right-1 -top-1",
+        lg: "w-4 h-4 -right-1 -top-1",
+    };
+
     if (!icon) return null;
+
+    const showSslBadge = sslStatus?.IsEnabled;
 
     return (
         <div className={cn("relative inline-flex", sizeClasses[size], className)}>
@@ -72,6 +91,27 @@ export const DatabaseIconWithBadge: FC<DatabaseIconWithBadgeProps> = ({
                         size === "sm" ? "w-1.5 h-1.5" : size === "md" ? "w-2 h-2" : "w-2.5 h-2.5"
                     )} />
                 </div>
+            )}
+            {showSslBadge && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div
+                            data-testid="ssl-badge"
+                            className={cn(
+                                "absolute rounded-full bg-background border border-border flex items-center justify-center",
+                                sslBadgeSizeClasses[size]
+                            )}
+                        >
+                            <ShieldCheckIcon className={cn(
+                                "text-green-500",
+                                size === "sm" ? "w-1.5 h-1.5" : size === "md" ? "w-2 h-2" : "w-2.5 h-2.5"
+                            )} />
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {tSidebar('sslSecured', { mode: sslStatus?.Mode })}
+                    </TooltipContent>
+                </Tooltip>
             )}
         </div>
     );

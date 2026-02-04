@@ -59,8 +59,9 @@ import {SettingsActions} from "../../store/settings";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {AwsConnectionPicker, AwsConnectionPrefillData} from '../../components/aws';
+import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
+import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -192,7 +193,11 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onCompleted(data) {
                 if (data.Login.Status) {
-                    const profileData = { ...credentials };
+                    const sslMode = advancedForm[SSL_KEYS.MODE];
+                    const profileData = {
+                        ...credentials,
+                        SSLConfigured: sslMode != null && sslMode !== 'disabled' && sslMode !== '',
+                    };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
                     markFirstLoginComplete();
@@ -253,6 +258,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
+                        SSLConfigured: profile?.SSLConfigured ?? false,
                     }));
                     markFirstLoginComplete();
 
@@ -305,6 +311,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: sampleProfile.IsEnvironmentDefined ?? false,
+                        SSLConfigured: sampleProfile.SSLConfigured ?? false,
                     }));
                     markFirstLoginComplete();
                     if (featureFlags.autoStartTourOnLogin) {
@@ -462,7 +469,14 @@ export const LoginForm: FC<LoginFormProps> = ({
             .map(profile => ({
                 value: profile.Id,
                 label: profile.Alias ?? profile.Id,
-                icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+                icon: (
+                    <DatabaseIconWithBadge
+                        icon={(Icons.Logos as Record<string, ReactElement>)[profile.Type]}
+                        showCloudBadge={isAwsConnection(profile.Id)}
+                        sslStatus={profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined}
+                        size="sm"
+                    />
+                ),
                 rightIcon: sources[profile.Source],
             })) ?? [];
     }, [profiles?.Profiles, cloudProvidersEnabled]);
@@ -705,12 +719,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         const redisCompatible = [DatabaseType.Redis, "ElastiCache"];
         const mongoCompatible = [DatabaseType.MongoDb, "DocumentDB"];
 
-        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id)) {
+        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id) || (databaseType.id === DatabaseType.ElasticSearch)) {
             return hostName.length > 0;
         }
-        if (databaseType.id === DatabaseType.ElasticSearch) {
-            return hostName.length > 0 && username.length > 0 && password.length > 0;
-        }
+
         return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
     }, [databaseType.id, hostName, username, password, database]);
 
@@ -814,7 +826,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
-                            {entries(advancedForm).map(([key, value]) => (
+                            {entries(advancedForm)
+                                .filter(([key]) => !Object.values(SSL_KEYS).includes(key as any))
+                                .map(([key, value]) => (
                                 <div className="flex flex-col gap-sm" key={key}>
                                     <Label htmlFor={`${key}-input`}>{key}</Label>
                                     <Input
@@ -825,6 +839,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                                     />
                                 </div>
                             ))}
+                            <SSLConfig
+                                databaseType={databaseType.id}
+                                sslModes={databaseType.sslModes}
+                                advancedForm={advancedForm}
+                                onAdvancedFormChange={handleAdvancedForm}
+                            />
                         </div>
                     }
                 </div>

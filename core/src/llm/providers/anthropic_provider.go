@@ -158,7 +158,7 @@ func (p *AnthropicProvider) Complete(config *ProviderConfig, prompt string, mode
 		return nil, errors.New(string(body))
 	}
 
-	return p.parseResponse(resp.Body, receiverChan)
+	return p.ParseResponse(resp.Body, receiverChan)
 }
 
 // getMaxTokensForModel returns the appropriate max_tokens value for each model.
@@ -177,8 +177,8 @@ func (p *AnthropicProvider) getMaxTokensForModel(model string) int {
 	}
 }
 
-// parseResponse parses the Anthropic API response.
-func (p *AnthropicProvider) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
+// ParseResponse parses the Anthropic API response.
+func (p *AnthropicProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
 	responseBuilder := strings.Builder{}
 	reader := bufio.NewReader(body)
 

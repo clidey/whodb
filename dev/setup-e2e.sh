@@ -83,6 +83,11 @@ get_db_wait_time() {
     esac
 }
 
+# Build docker-compose command (always includes SSL profile)
+docker_compose_cmd() {
+    echo "docker-compose -f docker-compose.yml --profile ssl"
+}
+
 
 # Run cleanup first to ensure clean state
 echo "🧹 Running cleanup first..."
@@ -223,10 +228,10 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     elif [ -n "$DOCKER_SERVICES" ]; then
         # Start only specific services
         echo "📦 Ensuring Docker images are available for: $TARGET_DB..."
-        docker-compose -f docker-compose.yml pull --quiet $DOCKER_SERVICES 2>/dev/null || true
+        $(docker_compose_cmd) pull --quiet $DOCKER_SERVICES 2>/dev/null || true
 
         echo "🚀 Starting $TARGET_DB database service(s)..."
-        docker-compose -f docker-compose.yml up -d --remove-orphans $DOCKER_SERVICES
+        $(docker_compose_cmd) up -d --remove-orphans $DOCKER_SERVICES
 
         # Wait for the specific service
         DB_PORT=$(get_db_port "$TARGET_DB")
@@ -240,10 +245,10 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     else
         # Start all services (TARGET_DB=all or unknown)
         echo "📦 Ensuring Docker images are available..."
-        docker-compose -f docker-compose.yml pull --quiet 2>/dev/null || true
+        $(docker_compose_cmd) pull --quiet 2>/dev/null || true
 
         echo "🚀 Starting all CE database services..."
-        docker-compose -f docker-compose.yml up -d --remove-orphans
+        $(docker_compose_cmd) up -d --remove-orphans
 
         # Wait for services using parallel port checks
         echo "⏳ Waiting for services to be ready..."
@@ -266,10 +271,31 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         wait_for_port "ElasticSearch" 9200 60 &
         PID_ES=$!
 
+        ALL_PIDS="$PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES"
+
+        # SSL container wait_for_port calls
+        echo "🔒 Starting SSL container health checks..."
+        wait_for_port "PostgreSQL-SSL" 5433 90 &
+        PID_PG_SSL=$!
+        wait_for_port "MySQL-SSL" 3309 90 &
+        PID_MYSQL_SSL=$!
+        wait_for_port "MariaDB-SSL" 3310 90 &
+        PID_MARIA_SSL=$!
+        wait_for_port "MongoDB-SSL" 27018 30 &
+        PID_MONGO_SSL=$!
+        wait_for_port "Redis-SSL" 6380 30 &
+        PID_REDIS_SSL=$!
+        wait_for_port "ClickHouse-SSL" 9440 30 &
+        PID_CH_SSL=$!
+        wait_for_port "ElasticSearch-SSL" 9201 90 &
+        PID_ES_SSL=$!
+
+        ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
+
         # Wait for all background processes
         echo "⏳ Waiting for all services to be ready in parallel..."
         FAILED=false
-        for pid in $PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES; do
+        for pid in $ALL_PIDS; do
             if ! wait $pid; then
                 FAILED=true
             fi
