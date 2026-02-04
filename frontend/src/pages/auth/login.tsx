@@ -130,8 +130,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const { data: settingsData } = useSettingsConfigQuery();
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
-    const disableCredentialForm =  settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
-
+    const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
 
     useEffect(() => {
         dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
@@ -458,12 +457,12 @@ export const LoginForm: FC<LoginFormProps> = ({
             })) ?? [];
     }, [profiles?.Profiles, cloudProvidersEnabled]);
 
-    const hasAvailableProfiles =  availableProfiles.length > 0;
+    const hasAvailableProfiles = availableProfiles.length > 0;
 
     const sampleProfile = useMemo(() => {
         return profiles?.Profiles.find(p => p.Source === "builtin");
     }, [profiles?.Profiles]);
-    
+
     // Handle URL parameters for pre-filling credentials or auto-login
     // Note: This effect intentionally does NOT clear selectedAvailableProfile because:
     // 1. Initial state is already undefined via useState
@@ -722,8 +721,6 @@ export const LoginForm: FC<LoginFormProps> = ({
         );
     }
 
-
-
     const showSidePanel = sampleProfile && !hideHeader && featureFlags.sampleDatabaseTour && isFirstLogin && !hasCompletedOnboarding();
 
     return (
@@ -755,8 +752,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         }
                     </header>
                 )}
-                
-               <div className={classNames("flex", {
+                <div className={classNames("flex", {
                     "flex-row grow": advancedDirection === "horizontal",
                     "flex-col w-full gap-lg": advancedDirection === "vertical",
                 })} data-testid="login-form">
@@ -822,7 +818,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     }
                 </div>
-                 <div className={classNames("flex login-action-buttons", {
+                <div className={classNames("flex login-action-buttons", {
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,
                 })}>
@@ -837,10 +833,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
                     )}
-                    
                     </>}
                 </div>
-                {advancedDirection === "vertical" &&  (
+                {advancedDirection === "vertical" && (
                     <div className={cn("flex flex-col justify-end", {
                         "grow": availableProfiles.length === 0,
                     })}>
@@ -855,7 +850,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     availableProfiles.length > 0 &&
                     <>
                         {!disableCredentialForm && <Separator className="my-8" />}
-                        <div className="flex flex-col gap-lg ">
+                        <div className="flex flex-col gap-lg">
                             <Label>{t('availableProfiles')}</Label>
                             <SearchSelect
                                 value={selectedAvailableProfile}

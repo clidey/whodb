@@ -46,7 +46,7 @@ import (
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
 	if env.DisableCredentialForm {
 		log.LogFields(log.Fields{
-			"type": credentials.Type,
+			"type":     credentials.Type,
 			"hostname": credentials.Hostname,
 			"username": credentials.Username,
 			"database": credentials.Database,
@@ -133,7 +133,6 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 
 // LoginWithProfile is the resolver for the LoginWithProfile field.
 func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error) {
-
 	profiles := src.GetLoginProfiles()
 	for i, loginProfile := range profiles {
 		profileId := src.GetLoginProfileId(i, loginProfile)

@@ -190,10 +190,9 @@ func TestLoginFailsWhenCredentialFormDisabled(t *testing.T) {
 	mut := resolver.Mutation()
 
 	orig := env.DisableCredentialForm
-    env.DisableCredentialForm = true
-    t.Cleanup(func() { env.DisableCredentialForm = orig })
+	env.DisableCredentialForm = true
+	t.Cleanup(func() { env.DisableCredentialForm = orig })
 
-	
 	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})
 	reqCtx := context.WithValue(ctx, common.RouterKey_ResponseWriter, httptest.NewRecorder())
 
@@ -208,7 +207,6 @@ func TestLoginFailsWhenCredentialFormDisabled(t *testing.T) {
 		t.Fatalf("expected login to fail when credential form disabled")
 	}
 }
-
 
 func setEngineMock(t *testing.T, mock *testutil.PluginMock) {
 	t.Helper()

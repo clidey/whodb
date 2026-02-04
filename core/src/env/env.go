@@ -84,7 +84,6 @@ var IsAWSProviderEnabled = os.Getenv("WHODB_ENABLE_AWS_PROVIDER") == "true"
 // DisableCredentialForm controls whether the credential form is disabled.
 var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
 
-
 type ChatProvider struct {
 	Type       string
 	Name       string // Display name/alias for the provider
