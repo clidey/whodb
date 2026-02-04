@@ -54,6 +54,7 @@ type PluginMock struct {
 	GetForeignKeysFunc       func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
 	WithTransactionFunc      func(*engine.PluginConfig, func(tx any) error) error
 	GetDatabaseMetadataFunc  func() *engine.DatabaseMetadata
+	GetSSLStatusFunc         func(*engine.PluginConfig) (*engine.SSLStatus, error)
 }
 
 // NewPluginMock creates a PluginMock with the provided database type.
@@ -251,4 +252,11 @@ func (m *PluginMock) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		return m.GetDatabaseMetadataFunc()
 	}
 	return nil
+}
+
+func (m *PluginMock) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLStatus, error) {
+	if m.GetSSLStatusFunc != nil {
+		return m.GetSSLStatusFunc(config)
+	}
+	return nil, nil
 }

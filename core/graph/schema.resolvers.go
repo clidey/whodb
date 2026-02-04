@@ -38,6 +38,7 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 	"golang.org/x/sync/errgroup"
@@ -45,6 +46,16 @@ import (
 
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
+	if env.DisableCredentialForm {
+		log.LogFields(log.Fields{
+			"type":     credentials.Type,
+			"hostname": credentials.Hostname,
+			"username": credentials.Username,
+			"database": credentials.Database,
+		}).Error("Login with credentials is disabled; use preconfigured connections")
+		return nil, errors.New("login with credentials is disabled; use preconfigured connections")
+	}
+
 	advanced := make([]engine.Record, 0, len(credentials.Advanced))
 	for _, recordInput := range credentials.Advanced {
 		advanced = append(advanced, engine.Record{
@@ -818,6 +829,13 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 	var profiles []*model.LoginProfile
 	for i, profile := range src.GetLoginProfiles() {
 		profileName := src.GetLoginProfileId(i, profile)
+
+		// Check if SSL is configured (mode is set and not "disabled")
+		sslConfigured := false
+		if mode, ok := profile.Config[ssl.KeySSLMode]; ok && mode != "" && mode != string(ssl.SSLModeDisabled) {
+			sslConfigured = true
+		}
+
 		loginProfile := &model.LoginProfile{
 			ID:                   profileName,
 			Type:                 model.DatabaseType(profile.Type),
@@ -825,6 +843,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 			Database:             &profile.Database,
 			IsEnvironmentDefined: true,
 			Source:               profile.Source,
+			SSLConfigured:        sslConfigured,
 		}
 		if len(profile.Alias) > 0 {
 			loginProfile.Alias = &profile.Alias
@@ -1290,6 +1309,7 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 	return &model.SettingsConfig{
 		MetricsEnabled:        &currentSettings.MetricsEnabled,
 		CloudProvidersEnabled: env.IsAWSProviderEnabled,
+		DisableCredentialForm: env.DisableCredentialForm,
 	}, nil
 }
 
@@ -1398,6 +1418,36 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 		TypeDefinitions: typeDefinitions,
 		Operators:       metadata.Operators,
 		AliasMap:        aliasMap,
+	}, nil
+}
+
+// SSLStatus is the resolver for the SSLStatus field.
+func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error) {
+	plugin, config := GetPluginForContext(ctx)
+	if plugin == nil {
+		log.Logger.Debug("[SSL] SSLStatus resolver: no plugin context")
+		return nil, nil
+	}
+
+	log.Logger.Debugf("[SSL] SSLStatus resolver: querying SSL status for %s", config.Credentials.Type)
+	status, err := plugin.GetSSLStatus(config)
+	if err != nil {
+		log.Logger.Warnf("[SSL] SSLStatus resolver: error getting SSL status: %v", err)
+		return nil, err
+	}
+
+	// Return nil if SSL status is not applicable (e.g., SQLite)
+	if status == nil {
+		log.Logger.Debugf("[SSL] SSLStatus resolver: SSL not applicable for %s", config.Credentials.Type)
+		return nil, nil
+	}
+
+	log.Logger.Infof("[SSL] SSLStatus resolver: %s connection SSL enabled=%t, mode=%s",
+		config.Credentials.Type, status.IsEnabled, status.Mode)
+
+	return &model.SSLStatus{
+		IsEnabled: status.IsEnabled,
+		Mode:      status.Mode,
 	}, nil
 }
 

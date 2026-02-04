@@ -169,6 +169,7 @@ type LoginProfile struct {
 	Database             *string      `json:"Database,omitempty"`
 	IsEnvironmentDefined bool         `json:"IsEnvironmentDefined"`
 	Source               string       `json:"Source"`
+	SSLConfigured        bool         `json:"SSLConfigured"`
 }
 
 type LoginProfileInput struct {
@@ -240,9 +241,15 @@ type RowsResult struct {
 	TotalCount    int        `json:"TotalCount"`
 }
 
+type SSLStatus struct {
+	IsEnabled bool   `json:"IsEnabled"`
+	Mode      string `json:"Mode"`
+}
+
 type SettingsConfig struct {
 	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
 	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
+	DisableCredentialForm bool  `json:"DisableCredentialForm"`
 }
 
 type SettingsConfigInput struct {

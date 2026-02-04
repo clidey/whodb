@@ -9,6 +9,8 @@ en:
   scratchpad: Scratchpad
   addRowTitle: Add New Row
   addRowButton: Add Row
+  documentJson: Document JSON
+  documentJsonHelp: Enter the document as a JSON object. All fields will be indexed.
   cancel: Cancel
   submit: Submit
   scratchpadTitle: Scratchpad

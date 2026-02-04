@@ -23,13 +23,6 @@ class WhodbCli < Formula
     generate_completions_from_executable(bin/"whodb-cli", "completion")
   end
 
-  def caveats
-    <<~EOS
-      AI features require an additional download on first use.
-      The CLI will automatically download the required components.
-    EOS
-  end
-
   test do
     assert_match version.to_s, shell_output("#{bin}/whodb-cli version")
 

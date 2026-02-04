@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,18 +129,18 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     }
 
-    // Only interact with username field if explicitly provided
+    // Only interact with username field if explicitly provided (not undefined)
     if (username !== undefined) {
         cy.get('[data-testid="username"]').clear();
-        if (username !== null && username !== '') {
+        if (username != null && username !== '') {
             cy.get('[data-testid="username"]').type(username);
         }
     }
 
-    // Only interact with password field if explicitly provided
+    // Only interact with password field if explicitly provided (not undefined)
     if (password !== undefined) {
         cy.get('[data-testid="password"]').clear();
-        if (password !== null && password !== '') {
+        if (password != null && password !== '') {
             cy.get('[data-testid="password"]').type(password, {log: false});
         }
     }
@@ -164,14 +164,37 @@ Cypress.Commands.add('login', (databaseType, hostname, username, password, datab
         }
     }
 
-    // Handle advanced options
-    if (Object.keys(advanced).length > 0) {
+    // Handle advanced options (including SSL)
+    // ssl object: { mode: 'required', caCertContent: '...' }
+    const ssl = advanced.ssl || {};
+    const advancedFields = {...advanced};
+    delete advancedFields.ssl; // Remove ssl from fields to avoid treating it as a text input
+
+    const hasAdvancedOptions = Object.keys(advancedFields).length > 0 || Object.keys(ssl).length > 0;
+
+    if (hasAdvancedOptions) {
         cy.get('[data-testid="advanced-button"]').click();
-        for (const [key, value] of Object.entries(advanced)) {
+
+        // Handle regular advanced fields (Port, etc.)
+        for (const [key, value] of Object.entries(advancedFields)) {
             cy.get(`[data-testid="${key}-input"]`).clear();
-            if (value !== '') {
+            if (value != null && value !== '') {
                 cy.get(`[data-testid="${key}-input"]`).type(value);
             }
+        }
+
+        // Handle SSL mode selection
+        if (ssl.mode) {
+            cy.get('[data-testid="ssl-mode-select"]').click();
+            cy.get(`[data-value="${ssl.mode}"]`).click();
+        }
+
+        // Handle CA certificate content
+        if (ssl.caCertContent) {
+            // Switch to paste mode
+            cy.contains('button', 'Paste PEM').first().click();
+            // Enter certificate content
+            cy.get('[data-testid="ssl-ca-certificate-content"]').type(ssl.caCertContent, { parseSpecialCharSequences: false, delay: 0 });
         }
     }
 

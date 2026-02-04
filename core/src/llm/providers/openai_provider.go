@@ -161,11 +161,12 @@ func (p *OpenAIProvider) Complete(config *ProviderConfig, prompt string, model L
 		return nil, errors.New(string(body))
 	}
 
-	return p.parseResponse(resp.Body, receiverChan)
+	return p.ParseResponse(resp.Body, receiverChan)
 }
 
-// parseResponse parses the OpenAI API response (streaming or non-streaming).
-func (p *OpenAIProvider) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
+// ParseResponse parses the OpenAI API response (streaming or non-streaming).
+// Exported for testing.
+func (p *OpenAIProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
 	responseBuilder := strings.Builder{}
 
 	if receiverChan != nil {

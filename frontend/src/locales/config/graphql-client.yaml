@@ -1,0 +1,4 @@
+en:
+  sessionExpired: Session expired. Please login again.
+  autoLoginSuccess: Automatically re-authenticated
+  autoLoginFailed: Auto-login failed. Please login manually.

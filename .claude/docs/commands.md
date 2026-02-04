@@ -9,8 +9,9 @@ cd core && go run .
 # Build CE binary
 cd core && go build -o whodb .
 
-# Run tests
+# Run tests (see testing.md for full guide)
 cd core && go test ./...
+bash dev/run-backend-tests.sh all    # Unit + integration
 ```
 
 ## Frontend
@@ -19,11 +20,10 @@ cd core && go test ./...
 # Run frontend (separate terminal)
 cd frontend && pnpm start
 
-# E2E tests (all CE databases)
-cd frontend && pnpm run cypress:ce
-
-# E2E test single database
-cd frontend && pnpm run cypress:db postgres
+# E2E tests - see testing.md for full guide
+cd frontend && pnpm cypress:ce           # Interactive, all CE databases
+cd frontend && pnpm cypress:ce:headless  # Headless, all CE databases
+cd frontend && pnpm cypress:db postgres  # Single database
 # Available: postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse
 
 # Type check
@@ -39,8 +39,9 @@ cd cli && go build -o whodb-cli .
 # Run interactive mode
 cd cli && go run .
 
-# Run CLI tests
-cd cli && go test ./...
+# Run CLI tests (see testing.md for full guide)
+bash dev/run-cli-tests.sh            # All CLI tests
+cd cli && go test ./...              # Unit tests only
 ```
 
 ## GraphQL Workflow

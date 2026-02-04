@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {VALID_FEATURES, validateAllFixtures} from './helpers/fixture-validator';
 
 // CE Database configurations - loaded from fixtures
+// SSL config is now included in each main fixture under the "ssl" key
 const ceDatabaseConfigs = {
     postgres: require('../fixtures/databases/postgres.json'),
     mysql: require('../fixtures/databases/mysql.json'),

@@ -163,7 +163,7 @@ func sanitizeErrorMessage(msg string) string {
 
 	// API key/auth errors
 	if strings.Contains(msg, "API key") || strings.Contains(msg, "api_key") ||
-	   strings.Contains(msg, "OPENAI_API_KEY") || strings.Contains(msg, "unauthorized") {
+		strings.Contains(msg, "OPENAI_API_KEY") || strings.Contains(msg, "unauthorized") {
 		return "AI service not configured. Please set up your API key."
 	}
 
@@ -174,7 +174,7 @@ func sanitizeErrorMessage(msg string) string {
 
 	// If error contains technical markers (JSON, stack traces, etc.), simplify
 	if len(msg) > 150 || strings.Contains(msg, "{") || strings.Contains(msg, "---") ||
-	   strings.Contains(msg, "Error {") || strings.Contains(msg, "Prompt:") {
+		strings.Contains(msg, "Error {") || strings.Contains(msg, "Prompt:") {
 		// Try to extract first meaningful sentence
 		for _, prefix := range []string{"Failed to", "Unable to", "Error:", "error:"} {
 			if idx := strings.Index(msg, prefix); idx >= 0 {

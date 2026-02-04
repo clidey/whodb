@@ -20,15 +20,15 @@ import "github.com/clidey/whodb/core/graph/model"
 
 // Credentials holds authentication and connection details for a database.
 type Credentials struct {
-	Id          *string
-	Type        string
-	Hostname    string
-	Username    string
-	Password    string
-	Database    string
-	Advanced    []Record
-	AccessToken *string
-	IsProfile   bool
+	Id          *string  `json:"Id,omitempty"`
+	Type        string   `json:"Type"`
+	Hostname    string   `json:"Hostname"`
+	Username    string   `json:"Username"`
+	Password    string   `json:"Password"`
+	Database    string   `json:"Database"`
+	Advanced    []Record `json:"Advanced,omitempty"`
+	AccessToken *string  `json:"AccessToken,omitempty"`
+	IsProfile   bool     `json:"IsProfile,omitempty"`
 }
 
 // ExternalModel represents an external AI model configuration for chat functionality.
@@ -49,9 +49,9 @@ type PluginConfig struct {
 // Record represents a key-value pair with optional extra metadata,
 // used for column attributes, configuration, and data transfer.
 type Record struct {
-	Key   string
-	Value string
-	Extra map[string]string
+	Key   string            `json:"Key"`
+	Value string            `json:"Value"`
+	Extra map[string]string `json:"Extra,omitempty"`
 }
 
 // StorageUnit represents a database table, collection, or equivalent storage structure.
@@ -115,6 +115,12 @@ type ForeignKeyRelationship struct {
 	ReferencedColumn string
 }
 
+// SSLStatus contains verified SSL/TLS connection status from the database.
+type SSLStatus struct {
+	IsEnabled bool   // Whether SSL/TLS is active on the current connection
+	Mode      string // SSL mode: disabled, required, verify-ca, verify-identity, etc.
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
@@ -154,6 +160,10 @@ type PluginFunctions interface {
 
 	// Database metadata for frontend type/operator configuration
 	GetDatabaseMetadata() *DatabaseMetadata
+
+	// GetSSLStatus returns the verified SSL/TLS status of the current connection.
+	// Returns nil if SSL status cannot be determined (e.g., SQLite) or is not applicable.
+	GetSSLStatus(config *PluginConfig) (*SSLStatus, error)
 }
 
 // Plugin wraps PluginFunctions with a database type identifier.

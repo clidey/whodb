@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -364,8 +365,25 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 			primaryKeys = []string{}
 		}
 
-		// Enrich columns with primary key information
+		// Enrich columns with primary key information + edge case fix regarding auto-increment fields
 		for i := range columns {
+			// ClickHouse doesn't have traditional auto-increment columns. ClickHouse 25.01+
+			// introduced generateSerialID() which provides auto-increment behavior via DEFAULT
+			// expressions (e.g., DEFAULT generateSerialID('counter')), but this is not a column
+			// attribute - it's a default value. GORM may incorrectly detect columns as auto-increment,
+			// so we explicitly disable it for all columns.
+			columns[i].IsAutoIncrement = false
+
+			// ClickHouse GORM driver embeds length in type name (e.g., "FixedString(10)")
+			// but doesn't expose it via Length(). Parse it from the type string.
+			if columns[i].Length == nil {
+				typeSpec := common.ParseTypeSpec(columns[i].Type)
+				if typeSpec.Length > 0 {
+					columns[i].Length = &typeSpec.Length
+				}
+			}
+
+			// Set primary key flag
 			for _, pk := range primaryKeys {
 				if columns[i].Name == pk {
 					columns[i].IsPrimary = true

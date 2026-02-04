@@ -18,14 +18,13 @@ package redis
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"strconv"
-	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -54,15 +53,29 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 		DB:       database,
 	}
 
-	// Enable TLS if requested (e.g., for AWS ElastiCache with transit encryption)
-	tlsEnabled := strings.EqualFold(common.GetRecordValueOrDefault(config.Credentials.Advanced, "TLS", ""), "true")
-	if tlsEnabled {
-		opts.TLSConfig = &tls.Config{}
+	// Configure SSL/TLS
+	sslMode := "disabled"
+	sslConfig := ssl.ParseSSLConfig(engine.DatabaseType_Redis, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
+	if sslConfig != nil && sslConfig.IsEnabled() {
+		sslMode = string(sslConfig.Mode)
+		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
+		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]interface{}{
+				"hostname": config.Credentials.Hostname,
+				"sslMode":  sslConfig.Mode,
+			}).Error("Failed to build TLS configuration for Redis")
+			return nil, err
+		}
+		opts.TLSConfig = tlsConfig
 	}
 
 	client := redis.NewClient(opts)
 	if _, err := client.Ping(ctx).Result(); err != nil {
-		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).WithField("database", database).Error("Failed to ping Redis server")
+		log.Logger.WithError(err).WithFields(map[string]interface{}{
+			"hostname": config.Credentials.Hostname,
+			"database": database,
+			"sslMode":  sslMode,
+		}).Error("Failed to ping Redis server")
 		return nil, err
 	}
 	return client, nil
