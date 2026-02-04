@@ -36,6 +36,7 @@ declare module '@ee/config.tsx' {
   export const eeSources: Record<string, any>;
   export const eeSettingsDefaults: {
     whereConditionMode: 'sheet' | 'popover';
+    disableAnimations: boolean;
   };
   export const isEEDatabase: any;
   export const isEENoSQLDatabase: any;
@@ -75,5 +76,6 @@ declare module '@ee/pages/raw-execute/index' {
 declare module '@ee/settings-defaults' {
   export const eeSettingsDefaults: {
     whereConditionMode: 'sheet' | 'popover';
+    disableAnimations: boolean;
   };
 }
