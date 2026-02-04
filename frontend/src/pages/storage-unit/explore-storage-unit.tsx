@@ -68,7 +68,7 @@ import {
     TableCellsIcon,
     XMarkIcon
 } from "../../components/heroicons";
-import {LoadingPage} from "../../components/loading";
+import {Loading, LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
 import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
