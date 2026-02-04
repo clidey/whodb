@@ -619,15 +619,15 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
 
-export type GetSslStatusQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetSslStatusQuery = { __typename?: 'Query', SSLStatus?: { __typename?: 'SSLStatus', IsEnabled: boolean, Mode: string } | null };
-
 export type GetHealthQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetHealthQuery = { __typename?: 'Query', Health: { __typename?: 'HealthStatus', Server: string, Database: string } };
+
+export type GetSslStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSslStatusQuery = { __typename?: 'Query', SSLStatus?: { __typename?: 'SSLStatus', IsEnabled: boolean, Mode: string } | null };
 
 export type AnalyzeMockDataDependenciesQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -1146,6 +1146,46 @@ export type GetHealthQueryHookResult = ReturnType<typeof useGetHealthQuery>;
 export type GetHealthLazyQueryHookResult = ReturnType<typeof useGetHealthLazyQuery>;
 export type GetHealthSuspenseQueryHookResult = ReturnType<typeof useGetHealthSuspenseQuery>;
 export type GetHealthQueryResult = Apollo.QueryResult<GetHealthQuery, GetHealthQueryVariables>;
+export const GetSslStatusDocument = gql`
+    query GetSSLStatus {
+  SSLStatus {
+    IsEnabled
+    Mode
+  }
+}
+    `;
+
+/**
+ * __useGetSslStatusQuery__
+ *
+ * To run a query within a React component, call `useGetSslStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSslStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSslStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetSslStatusQuery(baseOptions?: Apollo.QueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+      }
+export function useGetSslStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+        }
+export function useGetSslStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+        }
+export type GetSslStatusQueryHookResult = ReturnType<typeof useGetSslStatusQuery>;
+export type GetSslStatusLazyQueryHookResult = ReturnType<typeof useGetSslStatusLazyQuery>;
+export type GetSslStatusSuspenseQueryHookResult = ReturnType<typeof useGetSslStatusSuspenseQuery>;
+export type GetSslStatusQueryResult = Apollo.QueryResult<GetSslStatusQuery, GetSslStatusQueryVariables>;
 export const AnalyzeMockDataDependenciesDocument = gql`
     query AnalyzeMockDataDependencies($schema: String!, $storageUnit: String!, $rowCount: Int!, $fkDensityRatio: Int) {
   AnalyzeMockDataDependencies(

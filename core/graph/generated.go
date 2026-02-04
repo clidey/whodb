@@ -231,6 +231,7 @@ type ComplexityRoot struct {
 		ProviderConnections         func(childComplexity int, providerID string) int
 		RawExecute                  func(childComplexity int, query string) int
 		Row                         func(childComplexity int, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
+		SSLStatus                   func(childComplexity int) int
 		Schema                      func(childComplexity int) int
 		SettingsConfig              func(childComplexity int) int
 		StorageUnit                 func(childComplexity int, schema string) int
@@ -3965,6 +3966,35 @@ func (ec *executionContext) fieldContext_LoginProfile_Source(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _LoginProfile_SSLConfigured(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LoginProfile_SSLConfigured,
+		func(ctx context.Context) (any, error) {
+			return obj.SSLConfigured, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LoginProfile_SSLConfigured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MockDataDependencyAnalysis_GenerationOrder(ctx context.Context, field graphql.CollectedField, obj *model.MockDataDependencyAnalysis) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4115,35 +4145,6 @@ func (ec *executionContext) fieldContext_MockDataDependencyAnalysis_Error(_ cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _LoginProfile_SSLConfigured(ctx context.Context, field graphql.CollectedField, obj *model.LoginProfile) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_LoginProfile_SSLConfigured,
-		func(ctx context.Context) (any, error) {
-			return obj.SSLConfigured, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_LoginProfile_SSLConfigured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LoginProfile",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
