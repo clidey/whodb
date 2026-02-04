@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ export const VALID_FEATURES = [
     'crud',                // Optional: databases with async mutations may disable (e.g., ClickHouse)
     'scratchpadUpdate',    // Optional: databases that don't support UPDATE via scratchpad
     'multiConditionFilter', // Optional: databases that don't support multiple WHERE conditions
-    'typeCasting'          // Optional: databases that support numeric type casting
+    'typeCasting',         // Optional: databases that support numeric type casting
+    'sslConnection'        // Optional: databases configured with SSL/TLS
 ];
 
 /**

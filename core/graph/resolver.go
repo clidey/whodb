@@ -24,6 +24,7 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 )
@@ -36,7 +37,12 @@ type Resolver struct{}
 
 // GetPluginForContext returns the appropriate database plugin and config for the current session.
 func GetPluginForContext(ctx context.Context) (*engine.Plugin, *engine.PluginConfig) {
-	config := engine.NewPluginConfig(auth.GetCredentials(ctx))
+	creds := auth.GetCredentials(ctx)
+	log.Logger.Debugf("[GetPluginForContext] credentials: type=%s, hostname=%s, advanced count=%d", creds.Type, creds.Hostname, len(creds.Advanced))
+	for _, rec := range creds.Advanced {
+		log.Logger.Debugf("[GetPluginForContext] advanced: key=%q value=%q", rec.Key, rec.Value)
+	}
+	config := engine.NewPluginConfig(creds)
 	plugin := src.MainEngine.Choose(engine.DatabaseType(config.Credentials.Type))
 	return plugin, config
 }

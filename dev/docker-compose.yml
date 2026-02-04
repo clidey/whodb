@@ -152,6 +152,8 @@ services:
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       - bootstrap.memory_lock=true
+      # Disable disk watermark for dev environments with limited disk space
+      - cluster.routing.allocation.disk.threshold_enabled=false
     ulimits:
       memlock:
         soft: -1
@@ -218,6 +220,216 @@ services:
 #      - db
 
 
+  # SSL-enabled PostgreSQL for SSL E2E tests
+  e2e_postgres_ssl:
+    profiles: ["ssl"]
+    image: postgres
+    container_name: e2e_postgres_ssl
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: jio53$*(@nfe)
+      POSTGRES_DB: test_db
+      PGDATA: /data/postgres
+    volumes:
+      - e2e_postgres_ssl:/data/postgres
+      - ./sample-data/postgres/data.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./certs/server/postgres/server-cert.pem:/certs-src/server-cert.pem:ro
+      - ./certs/server/postgres/server-key.pem:/certs-src/server-key.pem:ro
+      - ./certs/ca/postgres/ca.pem:/certs-src/ca.pem:ro
+    command: >
+      bash -c "
+        mkdir -p /certs &&
+        cp /certs-src/* /certs/ &&
+        chown postgres:postgres /certs/* &&
+        chmod 600 /certs/server-key.pem &&
+        chmod 644 /certs/server-cert.pem /certs/ca.pem &&
+        exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/certs/server-cert.pem -c ssl_key_file=/certs/server-key.pem -c ssl_ca_file=/certs/ca.pem
+      "
+    ports:
+      - "5433:5432"
+    networks:
+      - db
+
+  # SSL-enabled MySQL for SSL E2E tests
+  e2e_mysql_ssl:
+    profiles: ["ssl"]
+    image: mysql
+    container_name: e2e_mysql_ssl
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: test_db
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mysql_ssl:/var/lib/mysql
+      - ./sample-data/mysql/data.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./certs/ca/mysql/ca.pem:/etc/mysql/certs/ca.pem:ro
+      - ./certs/server/mysql/server-cert.pem:/etc/mysql/certs/server-cert.pem:ro
+      - ./certs/server/mysql/server-key.pem:/etc/mysql/certs/server-key.pem:ro
+      - ./conf/mysql_ssl.cnf:/etc/mysql/conf.d/ssl.cnf:ro
+    ports:
+      - "3309:3306"
+    networks:
+      - db
+
+  # SSL-enabled MariaDB for SSL E2E tests
+  e2e_mariadb_ssl:
+    profiles: ["ssl"]
+    image: mariadb
+    container_name: e2e_mariadb_ssl
+    environment:
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: test_db
+      MARIADB_ROOT_PASSWORD: password
+    volumes:
+      - e2e_mariadb_ssl:/var/lib/mysql
+      - ./sample-data/mariadb/data.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./certs/ca/mariadb/ca.pem:/etc/mysql/certs/ca.pem:ro
+      - ./certs/server/mariadb/server-cert.pem:/etc/mysql/certs/server-cert.pem:ro
+      - ./certs/server/mariadb/server-key.pem:/etc/mysql/certs/server-key.pem:ro
+      - ./conf/mariadb_ssl.cnf:/etc/mysql/conf.d/ssl.cnf:ro
+    ports:
+      - "3310:3306"
+    networks:
+      - db
+
+  # SSL-enabled MongoDB for SSL E2E tests
+  e2e_mongo_ssl:
+    profiles: ["ssl"]
+    image: mongo
+    container_name: e2e_mongo_ssl
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: test_db
+    volumes:
+      - e2e_mongo_ssl:/data/db
+      - ./sample-data/mongo/data.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./certs/server/mongodb/mongodb.pem:/etc/ssl/mongodb.pem:ro
+      - ./certs/ca/mongodb/ca.pem:/etc/ssl/ca.pem:ro
+    ports:
+      - "27018:27017"
+    networks:
+      - db
+    command: mongod --tlsMode requireTLS --tlsCertificateKeyFile /etc/ssl/mongodb.pem --tlsCAFile /etc/ssl/ca.pem --tlsAllowConnectionsWithoutCertificates
+
+  # SSL-enabled Redis for SSL E2E tests
+  e2e_redis_ssl:
+    profiles: ["ssl"]
+    image: redis:latest
+    container_name: e2e_redis_ssl
+    ports:
+      - "6380:6379"
+    volumes:
+      - e2e_redis_ssl:/data
+      - ./certs/server/redis/server-cert.pem:/tls/server-cert.pem:ro
+      - ./certs/server/redis/server-key.pem:/tls/server-key.pem:ro
+      - ./certs/ca/redis/ca.pem:/tls/ca.pem:ro
+      - ./conf/redis_ssl.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - db
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "--tls", "--cacert", "/tls/ca.pem", "-a", "password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-ssl-init:
+    profiles: ["ssl"]
+    image: redis:latest
+    depends_on:
+      e2e_redis_ssl:
+        condition: service_healthy
+    volumes:
+      - ./sample-data/redis/init.sh:/init.sh:ro
+      - ./certs/ca/redis/ca.pem:/certs/ca.pem:ro
+    environment:
+      REDIS_HOST: e2e_redis_ssl
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: password
+      REDIS_CACERT: /certs/ca.pem
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - db
+
+  # SSL-enabled ClickHouse for SSL E2E tests
+  e2e_clickhouse_ssl:
+    profiles: ["ssl"]
+    image: clickhouse/clickhouse-server
+    container_name: e2e_clickhouse_ssl
+    user: clickhouse:clickhouse
+    ports:
+      - "8443:8443"
+      - "9440:9440"
+    environment:
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: test_db
+      CLICKHOUSE_ALWAYS_RUN_INITDB_SCRIPTS: "true"
+    volumes:
+      - e2e_clickhouse_ssl:/var/lib/clickhouse
+      - ./sample-data/clickhouse/data.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./certs/ca/clickhouse/ca.pem:/etc/clickhouse-server/certs/ca.pem:ro
+      - ./certs/server/clickhouse/server-cert.pem:/etc/clickhouse-server/certs/server-cert.pem:ro
+      - ./certs/server/clickhouse/server-key.pem:/etc/clickhouse-server/certs/server-key.pem:ro
+      - ./conf/clickhouse_ssl.xml:/etc/clickhouse-server/config.d/ssl.xml:ro
+    networks:
+      - db
+
+  # SSL-enabled Elasticsearch for SSL E2E tests
+  e2e_elasticsearch_ssl:
+    profiles: ["ssl"]
+    image: elasticsearch:8.11.1
+    container_name: e2e_elasticsearch_ssl
+    platform: linux/amd64
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=/usr/share/elasticsearch/config/certs/server-key.pem
+      - xpack.security.http.ssl.certificate=/usr/share/elasticsearch/config/certs/server-cert.pem
+      - xpack.security.http.ssl.certificate_authorities=/usr/share/elasticsearch/config/certs/ca.pem
+      - xpack.security.http.ssl.verification_mode=none
+      - xpack.security.transport.ssl.enabled=false
+      - ELASTIC_PASSWORD=password
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9201:9200"
+    volumes:
+      - e2e_elasticsearch_ssl:/usr/share/elasticsearch/data
+      - ./certs/ca/elasticsearch/ca.pem:/usr/share/elasticsearch/config/certs/ca.pem:ro
+      - ./certs/server/elasticsearch/server-cert.pem:/usr/share/elasticsearch/config/certs/server-cert.pem:ro
+      - ./certs/server/elasticsearch/server-key.pem:/usr/share/elasticsearch/config/certs/server-key.pem:ro
+    networks:
+      db:
+        aliases:
+          - es-ssl
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -k https://localhost:9200/_cluster/health -u elastic:password || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  elasticsearch-ssl-init:
+    profiles: ["ssl"]
+    image: curlimages/curl:latest
+    depends_on:
+      e2e_elasticsearch_ssl:
+        condition: service_healthy
+    volumes:
+      - ./sample-data/elasticsearch/upload.sh:/upload.sh:ro
+      - ./certs/ca/elasticsearch/ca.pem:/certs/ca.pem:ro
+    entrypoint: ["/bin/sh", "-c", "ES_HOST=https://es-ssl:9200 ES_USER=elastic ES_PASS=password ES_CACERT=/certs/ca.pem sh /upload.sh"]
+    networks:
+      - db
+
 networks:
   db:
     driver: bridge
@@ -225,11 +437,18 @@ networks:
 volumes:
   # e2e_sqlite3:
   e2e_postgres:
+  e2e_postgres_ssl:
   e2e_mysql:
+  e2e_mysql_ssl:
   e2e_mariadb:
+  e2e_mariadb_ssl:
   e2e_mongo:
+  e2e_mongo_ssl:
   e2e_clickhouse:
+  e2e_clickhouse_ssl:
   e2e_redis:
+  e2e_redis_ssl:
   e2e_elasticsearch:
+  e2e_elasticsearch_ssl:
   #  e2e_elasticsearch_922:
   e2e_mysql_842:

@@ -5,7 +5,7 @@ en:
   scratchpad: Scratchpad
   cardView: Card View
   listView: List View
-  describe: Describe
+  describe: Info
   data: Data
   sampledSchemaBadge: Schema inferred from sample
   createPrefix: Create a

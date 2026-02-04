@@ -106,12 +106,22 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	// Filter to only include gpt-* models
-	models := []string{}
+	// Filter to only include chat-compatible models
+	// Exclude: *-instruct (completions), *-codex (completions), *-base (base models)
+	var models []string
 	for _, model := range modelsResp.Models {
-		if strings.HasPrefix(model.Name, "gpt-") {
-			models = append(models, model.Name)
+		name := model.Name
+		// Must be a GPT model or chatgpt model
+		if !strings.HasPrefix(name, "gpt-") && !strings.HasPrefix(name, "chatgpt-") {
+			continue
 		}
+		// Exclude non-chat models
+		if strings.HasSuffix(name, "-instruct") ||
+			strings.Contains(name, "-codex") ||
+			strings.HasSuffix(name, "-base") {
+			continue
+		}
+		models = append(models, name)
 	}
 	return models, nil
 }
@@ -151,11 +161,12 @@ func (p *OpenAIProvider) Complete(config *ProviderConfig, prompt string, model L
 		return nil, errors.New(string(body))
 	}
 
-	return p.parseResponse(resp.Body, receiverChan)
+	return p.ParseResponse(resp.Body, receiverChan)
 }
 
-// parseResponse parses the OpenAI API response (streaming or non-streaming).
-func (p *OpenAIProvider) parseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
+// ParseResponse parses the OpenAI API response (streaming or non-streaming).
+// Exported for testing.
+func (p *OpenAIProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
 	responseBuilder := strings.Builder{}
 
 	if receiverChan != nil {

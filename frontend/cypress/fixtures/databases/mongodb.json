@@ -34,7 +34,7 @@
   "schema": null,
   "mockData": {
     "supportedTable": "users",
-    "unsupportedTable": "orders"
+    "tableWithFKs": "orders"
   },
   "sidebar": {
     "showsDatabaseDropdown": true,
@@ -44,14 +44,13 @@
     "graph": true,
     "export": true,
     "scratchpad": false,
-    "mockData": false,
+    "mockData": true,
     "chat": true,
     "whereConditions": true,
     "queryHistory": false
   },
   "featureNotes": {
     "scratchpad": "Scratchpad requires SQL execution which MongoDB does not support natively",
-    "mockData": "Mock data generation not implemented for document databases",
     "queryHistory": "Query history not supported for document databases"
   },
   "whereOperators": {
@@ -114,5 +113,17 @@
       "payments": ["orders"],
       "order_summary": []
     }
+  },
+  "ssl": {
+    "port": 27018,
+    "caCertPath": "/app/certs/ca/mongodb/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No TLS - server requires TLS" },
+      { "mode": "enabled", "shouldSucceed": true, "needsCert": true, "description": "TLS enabled with CA verification" },
+      { "mode": "insecure", "shouldSucceed": true, "needsCert": false, "description": "TLS without certificate verification" }
+    ],
+    "negativeTests": [
+      { "mode": "enabled", "withCert": false, "description": "enabled without CA cert should fail" }
+    ]
   }
 }

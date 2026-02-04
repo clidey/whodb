@@ -172,13 +172,39 @@ export const useAI = () => {
 
                 dispatch(AIModelsActions.setModelTypes(finalModelTypes));
 
-                // Only fetch models if there's a current model type
-                if (modelType) {
+                // Auto-select first provider if none is selected and providers are available
+                if (!modelType && finalModelTypes.length > 0) {
+                    const firstProvider = finalModelTypes[0];
+                    dispatch(AIModelsActions.setCurrentModelType({ id: firstProvider.id }));
+
+                    // Fetch models for the first provider
+                    getAIModels({
+                        variables: {
+                            providerId: firstProvider.id,
+                            modelType: firstProvider.modelType ?? "",
+                            token: (firstProvider as any).token ?? "",
+                        },
+                        onCompleted(data) {
+                            dispatch(AIModelsActions.setModels(data.AIModel));
+                            if (data.AIModel.length > 0) {
+                                dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
+                            }
+                        },
+                    });
+                } else if (modelType) {
+                    // Only fetch models if there's a current model type
                     getAIModels({
                         variables: {
                             providerId: modelType.id,
                             modelType: modelType.modelType ?? "",
                             token: modelType.token ?? "",
+                        },
+                        onCompleted(data) {
+                            dispatch(AIModelsActions.setModels(data.AIModel));
+                            // Auto-select first model if none is selected
+                            if (data.AIModel.length > 0 && !currentModel) {
+                                dispatch(AIModelsActions.setCurrentModel(data.AIModel[0]));
+                            }
                         },
                     });
                 }

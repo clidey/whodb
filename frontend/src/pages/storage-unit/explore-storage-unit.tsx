@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,15 @@ export const ExploreStorageUnit: FC = () => {
     const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
     const unit: StorageUnit = useLocation().state?.unit;
     const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
+
+    // Check if this is a view/materialized view - mock data generation not allowed for these
+    const isMockDataGenerationAllowed = useMemo(() => {
+        if (!unit?.Attributes) return true;
+        const typeAttr = unit.Attributes.find(attr => attr.Key === "Type");
+        if (!typeAttr) return true;
+        const upperType = typeAttr.Value.toUpperCase();
+        return !upperType.includes("VIEW") && !upperType.includes("MATERIALIZED") && !upperType.includes("SYSTEM");
+    }, [unit?.Attributes]);
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
@@ -425,9 +434,14 @@ export const ExploreStorageUnit: FC = () => {
             try {
                 const json = JSON.parse(addRowData.document);
                 for (const key of keys(json)) {
+                    const val = json[key];
+                    // Convert non-string values to string for GraphQL
+                    const stringValue = typeof val === 'object' && val !== null
+                        ? JSON.stringify(val)
+                        : val;
                     values.push({
                         Key: key,
-                        Value: json[key],
+                        Value: stringValue,
                     });
                 }
             } catch (e) {
@@ -596,12 +610,6 @@ export const ExploreStorageUnit: FC = () => {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
 
-    if (loading) {
-        return <InternalPage routes={routes}>
-            <LoadingPage />
-        </InternalPage>
-    }
-
     // Prevent rendering if unit is not available and we don't have a table name
     if (!unit && !currentTableName) {
         return <InternalPage routes={routes}>
@@ -719,28 +727,44 @@ export const ExploreStorageUnit: FC = () => {
                     >
                         <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
-                            <div className="flex flex-col gap-4">
-                                {rows?.Columns?.map((col, index) => (
-                                    <div key={col.Name} className="flex flex-col gap-2"
-                                         data-testid={`add-row-field-${col.Name}`}>
-                                        <Tip>
-                                            <div className="flex items-center gap-xs">
-                                                {columnIcons[index]}
-                                                <Label className="w-fit">
-                                                    {col.Name}
-                                                </Label> 
-                                            </div>
-                                            <p className="text-xs">{col.Type?.toLowerCase()}</p>
-                                        </Tip>
-                                        <Input
-                                            value={addRowData[col.Name] ?? ""}
-                                            onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
-                                            placeholder={`Enter value for ${col.Name}`}
-                                            {...getInputPropsForColumnType(col.Type || '')}
+                            {/* NoSQL Document input - show JSON editor */}
+                            {isNoSQL(current?.Type as DatabaseType) && rows?.Columns?.length === 1 && rows?.Columns?.[0]?.Type === "Document" ? (
+                                <div className="flex flex-col gap-4" data-testid="add-row-field-document">
+                                    <Label>{t('documentJson')}</Label>
+                                    <p className="text-xs text-muted-foreground">{t('documentJsonHelp')}</p>
+                                    <div className="h-[300px] border rounded-md overflow-hidden">
+                                        <CodeEditor
+                                            language="json"
+                                            value={addRowData.document ?? "{\n  \n}"}
+                                            setValue={(value) => handleAddRowFieldChange("document", value)}
                                         />
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ) : (
+                                /* Regular column-based input for SQL databases */
+                                <div className="flex flex-col gap-4">
+                                    {rows?.Columns?.map((col, index) => (
+                                        <div key={col.Name} className="flex flex-col gap-2"
+                                             data-testid={`add-row-field-${col.Name}`}>
+                                            <Tip>
+                                                <div className="flex items-center gap-xs">
+                                                    {columnIcons[index]}
+                                                    <Label className="w-fit">
+                                                        {col.Name}
+                                                    </Label>
+                                                </div>
+                                                <p className="text-xs">{col.Type?.toLowerCase()}</p>
+                                            </Tip>
+                                            <Input
+                                                value={addRowData[col.Name] ?? ""}
+                                                onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
+                                                placeholder={`Enter value for ${col.Name}`}
+                                                {...getInputPropsForColumnType(col.Type || '')}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                             {addRowError && (
                                 <ErrorState error={addRowError} />
                             )}
@@ -763,8 +787,11 @@ export const ExploreStorageUnit: FC = () => {
 
             </div>
             <div className="grow">
-                {
-                    rows != null &&
+                {loading ? (
+                    <div className="flex justify-center items-center h-full">
+                        <Loading />
+                    </div>
+                ) : rows != null ? (
                     <StorageUnitTable
                         columns={columns}
                         rows={rows.Rows}
@@ -788,6 +815,8 @@ export const ExploreStorageUnit: FC = () => {
                         isValidForeignKey={isValidForeignKey}
                         onEntitySearch={handleEntitySearch}
                         databaseType={current?.Type}
+                        // Mock data control - disabled for views/materialized views
+                        isMockDataGenerationAllowed={isMockDataGenerationAllowed}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -795,7 +824,7 @@ export const ExploreStorageUnit: FC = () => {
                             </Button>
                         </div>
                     </StorageUnitTable>
-                }
+                ) : null}
             </div>
         </div>
         <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>

@@ -81,13 +81,17 @@ var PosthogHost = "https://us.i.posthog.com"
 // disabled by default for now until official release
 var IsAWSProviderEnabled = os.Getenv("WHODB_ENABLE_AWS_PROVIDER") == "true"
 
+// DisableCredentialForm controls whether the credential form is disabled.
+var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
+
 type ChatProvider struct {
 	Type       string
 	Name       string // Display name/alias for the provider
 	APIKey     string
 	Endpoint   string
 	ProviderId string
-	IsGeneric  bool // True for generic/custom providers, false for built-in providers
+	ClientType string // BAML client type (openai-generic, anthropic, aws-bedrock) - only for generic providers
+	IsGeneric  bool   // True for generic/custom providers, false for built-in providers
 }
 
 // GenericProviderConfig holds configuration for a generic AI provider.
@@ -157,7 +161,8 @@ func GetConfiguredChatProviders() []ChatProvider {
 			APIKey:     genericProvider.APIKey,
 			Endpoint:   genericProvider.BaseURL,
 			ProviderId: genericProvider.ProviderId,
-			IsGeneric:  true, // Mark as generic provider
+			ClientType: genericProvider.ClientType, // BAML client type
+			IsGeneric:  true,                       // Mark as generic provider
 		})
 	}
 

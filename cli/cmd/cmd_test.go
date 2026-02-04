@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,14 +66,19 @@ func TestRootCmd_Flags(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
 
-	flag := rootCmd.PersistentFlags().Lookup("config")
-	if flag == nil {
-		t.Error("Expected 'config' flag to exist")
-	}
-
 	debugFlag := rootCmd.PersistentFlags().Lookup("debug")
 	if debugFlag == nil {
 		t.Error("Expected 'debug' flag to exist")
+	}
+
+	noColorFlag := rootCmd.PersistentFlags().Lookup("no-color")
+	if noColorFlag == nil {
+		t.Error("Expected 'no-color' flag to exist")
+	}
+
+	noAnalyticsFlag := rootCmd.PersistentFlags().Lookup("no-analytics")
+	if noAnalyticsFlag == nil {
+		t.Error("Expected 'no-analytics' flag to exist")
 	}
 }
 

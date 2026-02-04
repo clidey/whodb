@@ -64,15 +64,11 @@ trap cleanup EXIT
 echo "🔨 Building test binary..."
 cd "$PROJECT_ROOT/core"
 
-# Check if we need to rebuild
+# Always rebuild the test binary to ensure the latest schema changes are included
 BINARY_PATH="$PROJECT_ROOT/core/server.test"
-if [ -f "$BINARY_PATH" ]; then
-    echo "   Using existing test binary"
-else
-    echo "   Building new test binary..."
-    go test -coverpkg=./... -c -o server.test
-    echo "   ✅ Test binary built"
-fi
+echo "   Building test binary..."
+go test -coverpkg=./... -c -o server.test
+echo "   ✅ Test binary built"
 
 # Step 2: Setup SQLite database
 echo ""
@@ -127,7 +123,7 @@ sleep 5
 echo ""
 echo "🚀 Starting backend test server..."
 cd "$PROJECT_ROOT/core"
-ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='orders' \
+ENVIRONMENT=dev WHODB_DISABLE_MOCK_DATA_GENERATION='' \
     ./server.test -test.run=^TestMain$ &
 TEST_SERVER_PID=$!
 echo $TEST_SERVER_PID > "$PROJECT_ROOT/core/tmp/screenshot-server.pid"
@@ -196,7 +192,7 @@ fi
 echo "   Using browser: $BROWSER"
 echo "   Test spec: cypress/e2e/postgres-screenshots.cy.js"
 
-NODE_ENV=test pnpx cypress run \
+NODE_ENV=test npx cypress run \
     --browser "$BROWSER" \
     --spec "cypress/e2e/postgres-screenshots.cy.js" \
     --config video=false

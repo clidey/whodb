@@ -18,6 +18,7 @@ package gorm_plugin
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -212,6 +213,13 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		baseType = common.ParseTypeSpec(columnType).BaseType
 	}
 
+	// Numeric types cannot be parsed from empty strings
+	isNumericType := intTypes.Contains(baseType) || uintTypes.Contains(baseType) ||
+		bigIntTypes.Contains(baseType) || decimalTypes.Contains(baseType) || floatTypes.Contains(baseType)
+	if value == "" && isNumericType {
+		return nil, fmt.Errorf("cannot convert empty string to %s (column is not nullable)", columnType)
+	}
+
 	switch {
 	case intTypes.Contains(baseType):
 		parsedValue, err := strconv.ParseInt(value, 10, 64)
@@ -313,7 +321,24 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		}
 		return datetime, nil
 	case binaryTypes.Contains(baseType):
-		blobData := []byte(value)
+		// Handle hex-encoded binary data (0x prefix from mock data generator)
+		log.Logger.WithFields(map[string]any{
+			"baseType":     baseType,
+			"columnType":   columnType,
+			"valueLen":     len(value),
+			"hasHexPrefix": strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X"),
+		}).Debug("Converting binary type value")
+		var blobData []byte
+		if strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X") {
+			var err error
+			blobData, err = hex.DecodeString(value[2:])
+			if err != nil {
+				log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to decode hex binary value")
+				return nil, fmt.Errorf("invalid hex binary format: %v", err)
+			}
+		} else {
+			blobData = []byte(value)
+		}
 		if isNullable && len(blobData) == 0 {
 			return sql.NullString{Valid: false}, nil
 		}
@@ -333,8 +358,11 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 			log.Logger.WithField("value", value).WithField("columnType", columnType).Error("Invalid JSON value")
 			return nil, fmt.Errorf("invalid JSON format")
 		}
-		// todo: not sure about nullable json, can json even be nullable
-		return json.RawMessage(value), nil
+		// Return as string, not json.RawMessage ([]byte), because:
+		// - MariaDB's JSON type is LONGTEXT with JSON_VALID constraint (expects string)
+		// - MySQL's JSON type accepts string input
+		// - PostgreSQL's JSON/JSONB types accept string input
+		return value, nil
 	case networkTypes.Contains(baseType):
 		// MAC addresses (MACADDR, MACADDR8) stay as strings
 		if baseType == "IPV4" || baseType == "IPV6" || baseType == "INET" || baseType == "CIDR" {
@@ -395,6 +423,35 @@ func (p *GormPlugin) parseDate(value string) (time.Time, error) {
 	}
 	// Truncate to date only (no time component)
 	return c.StartOfDay().StdTime(), nil
+}
+
+// GetLastInsertID returns the most recently auto-generated ID.
+// This default implementation handles MySQL, PostgreSQL, and SQLite.
+// Other databases may need to override this method.
+func (p *GormPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
+	var id int64
+	var query string
+
+	switch p.Type {
+	case engine.DatabaseType_MySQL, engine.DatabaseType_MariaDB:
+		query = "SELECT LAST_INSERT_ID()"
+	case engine.DatabaseType_Postgres:
+		query = "SELECT lastval()"
+	case engine.DatabaseType_Sqlite3:
+		query = "SELECT last_insert_rowid()"
+	default:
+		log.Logger.WithField("dbType", p.Type).Debug("GetLastInsertID not supported for this database type")
+		return 0, nil
+	}
+
+	if err := db.Raw(query).Scan(&id).Error; err != nil {
+		if p.Type == engine.DatabaseType_Postgres && strings.Contains(err.Error(), "lastval is not yet defined") {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, error) {

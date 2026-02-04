@@ -59,8 +59,9 @@ import {SettingsActions} from "../../store/settings";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {AwsConnectionPicker, AwsConnectionPrefillData} from '../../components/aws';
+import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
+import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -130,6 +131,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { loading: profilesLoading, data: profiles } = useGetProfilesQuery();
     const { data: settingsData } = useSettingsConfigQuery();
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
+    const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
 
     useEffect(() => {
         dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
@@ -191,7 +193,11 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onCompleted(data) {
                 if (data.Login.Status) {
-                    const profileData = { ...credentials };
+                    const sslMode = advancedForm[SSL_KEYS.MODE];
+                    const profileData = {
+                        ...credentials,
+                        SSLConfigured: sslMode != null && sslMode !== 'disabled' && sslMode !== '',
+                    };
                     shouldUpdateLastAccessed.current = true;
                     dispatch(AuthActions.login(profileData));
                     markFirstLoginComplete();
@@ -252,6 +258,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: profile?.IsEnvironmentDefined ?? false,
+                        SSLConfigured: profile?.SSLConfigured ?? false,
                     }));
                     markFirstLoginComplete();
 
@@ -304,6 +311,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         Username: "",
                         Saved: true,
                         IsEnvironmentDefined: sampleProfile.IsEnvironmentDefined ?? false,
+                        SSLConfigured: sampleProfile.SSLConfigured ?? false,
                     }));
                     markFirstLoginComplete();
                     if (featureFlags.autoStartTourOnLogin) {
@@ -408,6 +416,16 @@ export const LoginForm: FC<LoginFormProps> = ({
         dispatch(DatabaseActions.setSchema(""));
     }, [dispatch]);
 
+    // Detect embedded mode from URL parameters
+    useEffect(() => {
+        const hasAutoLoginParams = searchParams.has("credentials") ||
+                                   searchParams.has("resource") ||
+                                   searchParams.has("login");
+        if (hasAutoLoginParams) {
+            dispatch(AuthActions.setEmbedded(true));
+        }
+    }, [searchParams, dispatch]);
+
     // Handle locale URL parameter
     useEffect(() => {
         if (searchParams.has("locale")) {
@@ -451,15 +469,24 @@ export const LoginForm: FC<LoginFormProps> = ({
             .map(profile => ({
                 value: profile.Id,
                 label: profile.Alias ?? profile.Id,
-                icon: (Icons.Logos as Record<string, ReactElement>)[profile.Type],
+                icon: (
+                    <DatabaseIconWithBadge
+                        icon={(Icons.Logos as Record<string, ReactElement>)[profile.Type]}
+                        showCloudBadge={isAwsConnection(profile.Id)}
+                        sslStatus={profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined}
+                        size="sm"
+                    />
+                ),
                 rightIcon: sources[profile.Source],
             })) ?? [];
     }, [profiles?.Profiles, cloudProvidersEnabled]);
 
+    const hasAvailableProfiles = availableProfiles.length > 0;
+
     const sampleProfile = useMemo(() => {
         return profiles?.Profiles.find(p => p.Source === "builtin");
     }, [profiles?.Profiles]);
-    
+
     // Handle URL parameters for pre-filling credentials or auto-login
     // Note: This effect intentionally does NOT clear selectedAvailableProfile because:
     // 1. Initial state is already undefined via useState
@@ -692,12 +719,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         const redisCompatible = [DatabaseType.Redis, "ElastiCache"];
         const mongoCompatible = [DatabaseType.MongoDb, "DocumentDB"];
 
-        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id)) {
+        if (redisCompatible.includes(databaseType.id) || mongoCompatible.includes(databaseType.id) || (databaseType.id === DatabaseType.ElasticSearch)) {
             return hostName.length > 0;
         }
-        if (databaseType.id === DatabaseType.ElasticSearch) {
-            return hostName.length > 0 && username.length > 0 && password.length > 0;
-        }
+
         return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
     }, [databaseType.id, hostName, username, password, database]);
 
@@ -709,7 +734,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
-                    <Loading hideText={true} />
+                    <Loading size="lg" />
                 </div>
                 <h1 className="text-xl">
                     {t('loggingIn')}
@@ -757,27 +782,42 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <div className={cn("flex flex-col grow gap-lg", {
                             "justify-center": advancedDirection === "horizontal" && !showSidePanel,
                         })}>
-                            <div className="flex flex-col gap-sm w-full">
-                                <Label>{t('databaseType')}</Label>
-                                <SearchSelect
-                                    value={databaseType?.id || ""}
-                                    onChange={(value) => {
-                                        const selected = databaseTypeItems.find(item => item.id === value);
-                                        handleDatabaseTypeChange(selected ?? databaseTypeItems[0]);
-                                    }}
-                                    options={databaseTypeItems.map(item => ({
-                                        value: item.id,
-                                        label: item.label,
-                                        icon: item.icon,
-                                    }))}
-                                    buttonProps={{
-                                        "data-testid": "database-type-select",
-                                    }}
-                                    contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
-                                    rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
-                                />
-                            </div>
-                            {fields}
+                            {disableCredentialForm && !hasAvailableProfiles ? (
+                                <Card className="p-6 max-w-md">
+                                    <h1 className="text-xl font-semibold">
+                                        {t('noConnectionsTitle')}
+                                    </h1>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        {t('noConnectionsDescription')}
+                                    </p>
+                                </Card>
+                            ) : (
+                                <>
+                                    {!disableCredentialForm && (
+                                        <div className="flex flex-col gap-sm w-full">
+                                            <Label>{t('databaseType')}</Label>
+                                            <SearchSelect
+                                                value={databaseType?.id || ""}
+                                                onChange={(value) => {
+                                                    const selected = databaseTypeItems.find(item => item.id === value);
+                                                    handleDatabaseTypeChange(selected ?? databaseTypeItems[0]);
+                                                }}
+                                                options={databaseTypeItems.map(item => ({
+                                                    value: item.id,
+                                                    label: item.label,
+                                                    icon: item.icon,
+                                                }))}
+                                                buttonProps={{
+                                                    "data-testid": "database-type-select",
+                                                }}
+                                                contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
+                                                rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
+                                            />
+                                        </div>
+                                    )}
+                                    {!disableCredentialForm && fields}
+                                </>
+                            )}
                         </div>
                     </div>
                     {
@@ -786,7 +826,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                             "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
-                            {entries(advancedForm).map(([key, value]) => (
+                            {entries(advancedForm)
+                                .filter(([key]) => !Object.values(SSL_KEYS).includes(key as any))
+                                .map(([key, value]) => (
                                 <div className="flex flex-col gap-sm" key={key}>
                                     <Label htmlFor={`${key}-input`}>{key}</Label>
                                     <Input
@@ -797,6 +839,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                                     />
                                 </div>
                             ))}
+                            <SSLConfig
+                                databaseType={databaseType.id}
+                                sslModes={databaseType.sslModes}
+                                advancedForm={advancedForm}
+                                onAdvancedFormChange={handleAdvancedForm}
+                            />
                         </div>
                     }
                 </div>
@@ -804,8 +852,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                     "justify-end": advancedForm == null,
                     "justify-between": advancedForm != null,
                 })}>
+                    {!disableCredentialForm && <>
                     <Button className={classNames({
-                        "hidden": advancedForm == null,
+                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>
@@ -814,20 +863,23 @@ export const LoginForm: FC<LoginFormProps> = ({
                             <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
                     )}
+                    </>}
                 </div>
                 {advancedDirection === "vertical" && (
                     <div className={cn("flex flex-col justify-end", {
                         "grow": availableProfiles.length === 0,
                     })}>
+                        {!disableCredentialForm && <>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
                         </Button>
+                        </>}
                     </div>
                 )}
                 {
                     availableProfiles.length > 0 &&
                     <>
-                        <Separator className="my-8" />
+                        {!disableCredentialForm && <Separator className="my-8" />}
                         <div className="flex flex-col gap-lg">
                             <Label>{t('availableProfiles')}</Label>
                             <SearchSelect

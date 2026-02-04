@@ -236,6 +236,34 @@ jobs:
         working-directory: ./desktop-${{ inputs.edition }}
         run: make ci-build-prod-mac VERSION=${{ inputs.version }}
 
+      - name: Bundle BAML native library
+        if: matrix.enabled != false
+        working-directory: ./desktop-${{ inputs.edition }}
+        run: |
+          APP_PATH="build/darwin/universal/WhoDB.app"
+          FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
+          BAML_VERSION="0.217.0"
+
+          echo "📦 Bundling BAML native library..."
+          mkdir -p "$FRAMEWORKS_DIR"
+
+          # Download both architectures for universal binary support
+          for arch in "aarch64" "x86_64"; do
+            DYLIB_NAME="libbaml_cffi-${arch}-apple-darwin.dylib"
+            DOWNLOAD_URL="https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/${DYLIB_NAME}"
+
+            echo "  Downloading $DYLIB_NAME..."
+            if curl -fsSL -o "$FRAMEWORKS_DIR/$DYLIB_NAME" "$DOWNLOAD_URL"; then
+              echo "  ✅ Downloaded $DYLIB_NAME"
+              chmod 755 "$FRAMEWORKS_DIR/$DYLIB_NAME"
+            else
+              echo "  ⚠️ Failed to download $DYLIB_NAME (may not be critical if not running on $arch)"
+            fi
+          done
+
+          echo "📁 Frameworks directory contents:"
+          ls -la "$FRAMEWORKS_DIR"
+
       - name: Verify entitlements after build
         if: matrix.enabled != false
         working-directory: ./desktop-${{ inputs.edition }}
@@ -413,7 +441,60 @@ jobs:
           echo "Using certificate: $MAS_CERT_ID"
           echo "Using entitlements: build/darwin/entitlements.plist"
 
-          # Sign the app bundle (following Wails documentation approach)
+          # Step 2a: Sign nested binaries FIRST (dylibs, frameworks)
+          # This is required because third-party libraries may include unsigned dylibs
+          echo ""
+          echo "📦 Step 2a: Signing nested binaries (dylibs, frameworks)..."
+
+          # Find and sign all dylibs
+          DYLIB_COUNT=0
+          while IFS= read -r -d '' dylib; do
+            echo "  Signing: $(basename "$dylib")"
+            codesign --force \
+              --sign "$MAS_CERT_ID" \
+              --options runtime \
+              --timestamp \
+              "$dylib"
+            DYLIB_COUNT=$((DYLIB_COUNT + 1))
+          done < <(find "$APP_PATH" -name "*.dylib" -print0 2>/dev/null)
+
+          # Find and sign all .so files (some libraries use this extension)
+          while IFS= read -r -d '' sofile; do
+            echo "  Signing: $(basename "$sofile")"
+            codesign --force \
+              --sign "$MAS_CERT_ID" \
+              --options runtime \
+              --timestamp \
+              "$sofile"
+            DYLIB_COUNT=$((DYLIB_COUNT + 1))
+          done < <(find "$APP_PATH" -name "*.so" -print0 2>/dev/null)
+
+          # Sign frameworks (if any)
+          while IFS= read -r -d '' framework; do
+            echo "  Signing framework: $(basename "$framework")"
+            codesign --force \
+              --sign "$MAS_CERT_ID" \
+              --options runtime \
+              --timestamp \
+              "$framework"
+            DYLIB_COUNT=$((DYLIB_COUNT + 1))
+          done < <(find "$APP_PATH/Contents/Frameworks" -maxdepth 1 -name "*.framework" -print0 2>/dev/null)
+
+          echo "✅ Signed $DYLIB_COUNT nested binaries"
+
+          # Step 2b: Sign the main executable
+          echo ""
+          echo "📦 Step 2b: Signing main executable..."
+          codesign --force \
+            --sign "$MAS_CERT_ID" \
+            --entitlements build/darwin/entitlements.plist \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH/Contents/MacOS/whodb"
+
+          # Step 2c: Sign the app bundle (following Wails documentation approach)
+          echo ""
+          echo "📦 Step 2c: Signing app bundle..."
           codesign --force \
             --sign "$MAS_CERT_ID" \
             --entitlements build/darwin/entitlements.plist \

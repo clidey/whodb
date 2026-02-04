@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { v4 } from 'uuid';
-import { LoginCredentials } from '@graphql';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {v4} from 'uuid';
+import {LoginCredentials} from '@graphql';
 
-export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean});
+export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean, SSLConfigured?: boolean});
+
+export type SSLStatus = {
+  IsEnabled: boolean;
+  Mode: string;
+};
 
 export type IAuthState = {
   status: "logged-in" | "unauthorized";
   current?: LocalLoginProfile;
   profiles: LocalLoginProfile[];
+  sslStatus?: SSLStatus;
+  isEmbedded: boolean;
 }
 
 const initialState: IAuthState = {
   status: "unauthorized",
   profiles: [],
+  sslStatus: undefined,
+  isEmbedded: false,
 };
 
 export const authSlice = createSlice({
@@ -56,6 +65,7 @@ export const authSlice = createSlice({
     },
     switch: (state, action: PayloadAction<{id: string}>) => {
       state.current = state.profiles.find(profile => profile.Id === action.payload.id);
+      state.sslStatus = undefined; // Clear SSL status on profile switch
     },
     remove: (state, action: PayloadAction<{id: string}>) => {
       state.profiles = state.profiles.filter(profile => profile.Id !== action.payload.id);
@@ -67,6 +77,10 @@ export const authSlice = createSlice({
       state.profiles = [];
       state.current = undefined;
       state.status = "unauthorized";
+      state.sslStatus = undefined;
+    },
+    setSSLStatus: (state, action: PayloadAction<SSLStatus | undefined>) => {
+      state.sslStatus = action.payload;
     },
     setLoginProfileDatabase: (state, action: PayloadAction<{ id: string, database: string }>) => {
       const profile = state.profiles.find(profile => profile.Id === action.payload.id);
@@ -77,6 +91,9 @@ export const authSlice = createSlice({
         state.current.Database = action.payload.database;
       }
       profile.Database = action.payload.database;
+    },
+    setEmbedded: (state, action: PayloadAction<boolean>) => {
+      state.isEmbedded = action.payload;
     }
   },
 });

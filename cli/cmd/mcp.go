@@ -37,7 +37,28 @@ var (
 	mcpTimeout             time.Duration
 	mcpMaxRows             int
 	mcpAllowMultiStatement bool
+	mcpSafeMode            bool
 )
+
+// transport flags
+var (
+	mcpTransport string
+	mcpHost      string
+	mcpPort      int
+)
+
+// tool enablement flags
+var (
+	mcpEnabledTools  []string
+	mcpDisabledTools []string
+)
+
+// connection scoping flags
+var mcpConnection string
+var mcpAllowedConnections []string
+
+// analytics flags
+var mcpNoAnalytics bool
 
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
@@ -53,10 +74,19 @@ var mcpServeCmd = &cobra.Command{
 	Short:         "Start the MCP server",
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	Long: `Start WhoDB as an MCP server using stdio transport.
+	Long: `Start WhoDB as an MCP server.
 
-The server communicates over stdin/stdout using JSON-RPC, making it
-compatible with Claude Desktop, Cursor, and other MCP clients.
+TRANSPORT:
+  --transport stdio  (default) Communicate via stdin/stdout for CLI integration
+  --transport http   Run as HTTP service for cloud/shared deployments
+
+  HTTP mode options:
+    --host HOST      Bind address (default: localhost)
+    --port PORT      Listen port (default: 3000)
+
+  HTTP mode exposes:
+    /mcp      - MCP endpoint (streaming HTTP)
+    /health   - Health check endpoint (returns {"status":"ok"})
 
 SECURITY:
   Write operations require user confirmation by default. This keeps you in
@@ -64,6 +94,7 @@ SECURITY:
 
   Permission Modes (controls whether writes are allowed):
     (default)        - Confirm-writes: All writes require user confirmation
+    --safe-mode      - Safe mode: read-only + strict security
     --read-only      - Read-only: SELECT, SHOW, DESCRIBE, EXPLAIN only
     --allow-write    - Full write access without confirmation (use with caution)
 
@@ -83,6 +114,32 @@ Available tools:
   whodb_connections - List available connections
   whodb_confirm     - Confirm pending writes (only with --confirm-writes)
 
+TOOL SELECTION:
+  --tools           - Comma-separated list of tools to enable (default: all)
+                      Valid: query, schemas, tables, columns, connections, confirm
+  --disable-tools   - Comma-separated list of tools to disable (takes precedence)
+
+ANALYTICS:
+  Anonymous usage analytics are enabled by default to help improve WhoDB.
+  No query content, database credentials, or personal data is ever collected.
+  Only tool usage patterns and error rates are tracked.
+
+  To disable analytics:
+    --no-analytics                        Flag to disable analytics
+    WHODB_MCP_ANALYTICS_DISABLED=true     Environment variable to disable
+
+CONNECTION SCOPING:
+  --default-connection NAME     Set default connection (no access restriction)
+  --allowed-connections A,B,C   Restrict access to listed connections only
+
+  With --allowed-connections:
+  - whodb_connections only shows allowed connections
+  - Queries to other connections are rejected
+  - First allowed connection becomes the default (unless --default-connection set)
+
+  With --default-connection only:
+  - Sets the default, but all connections remain accessible
+
 Connection Resolution:
   Tools accept a 'connection' parameter that references either:
   1. Environment profiles, for example:
@@ -93,6 +150,9 @@ Connection Resolution:
   Saved connections take precedence when names collide.`,
 	Example: `  # Start MCP server (confirm-writes by default - you approve each write)
   whodb-cli mcp serve
+
+  # Safe mode for demos/playgrounds (read-only + strict security)
+  whodb-cli mcp serve --safe-mode
 
   # Read-only mode (no writes at all)
   whodb-cli mcp serve --read-only
@@ -106,7 +166,27 @@ Connection Resolution:
   # Custom timeout and row limit
   whodb-cli mcp serve --timeout=60s --max-rows=500
 
-  # Claude Desktop / Claude Code configuration:
+  # Run as HTTP service
+  whodb-cli mcp serve --transport=http --port=3000
+  # Endpoint: http://localhost:3000/mcp
+  # Health:   http://localhost:3000/health
+
+  # HTTP mode bound to all interfaces (can be used in Docker/Kubernetes)
+  whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+
+  # Enable only specific tools (minimal surface for read-only exploration)
+  whodb-cli mcp serve --tools=schemas,tables,columns,connections
+
+  # Disable query tool (only schema exploration)
+  whodb-cli mcp serve --disable-tools=query,confirm
+
+  # Restrict to specific connections (first becomes default)
+  whodb-cli mcp serve --allowed-connections=prod,staging
+
+  # Set default connection without restricting access
+  whodb-cli mcp serve --default-connection=prod
+
+  # Claude Desktop / Claude Code configuration (stdio):
   {
     "mcpServers": {
       "whodb": {
@@ -131,13 +211,29 @@ Connection Resolution:
 			cancel()
 		}()
 
+		// Initialize analytics (enabled by default)
+		if err := whodbmcp.InitializeAnalytics(&whodbmcp.AnalyticsConfig{
+			Enabled:    !mcpNoAnalytics,
+			AppVersion: whodbmcp.Version,
+		}); err != nil {
+			// Analytics initialization failure is non-fatal
+			// Continue without analytics
+		}
+		defer whodbmcp.ShutdownAnalytics()
+
 		// Determine mode based on flags
 		// Default: confirm-writes (human-in-the-loop)
-		// Priority: --allow-write > --read-only > default (confirm-writes)
+		// Priority: --safe-mode > --allow-write > --read-only > default (confirm-writes)
 		readOnly := false
 		confirmWrites := true // Default: confirm-writes enabled
+		securityLevel := mcpSecurity
 
-		if mcpAllowWrite {
+		if mcpSafeMode {
+			// Safe mode: read-only + strict security
+			readOnly = true
+			confirmWrites = false
+			securityLevel = "strict"
+		} else if mcpAllowWrite {
 			confirmWrites = false // No confirmation needed
 		} else if mcpReadOnly {
 			readOnly = true
@@ -148,16 +244,46 @@ Connection Resolution:
 		opts := &whodbmcp.ServerOptions{
 			ReadOnly:            readOnly,
 			ConfirmWrites:       confirmWrites,
-			SecurityLevel:       whodbmcp.SecurityLevel(mcpSecurity),
+			SecurityLevel:       whodbmcp.SecurityLevel(securityLevel),
 			QueryTimeout:        mcpTimeout,
 			MaxRows:             mcpMaxRows,
 			AllowMultiStatement: mcpAllowMultiStatement,
 			AllowDrop:           mcpAllowDrop,
+			EnabledTools:        mcpEnabledTools,
+			DisabledTools:       mcpDisabledTools,
+			DefaultConnection:   mcpConnection,
+			AllowedConnections:  mcpAllowedConnections,
 		}
 
-		// Create and run the MCP server
 		server := whodbmcp.NewServer(opts)
-		return whodbmcp.Run(ctx, server)
+
+		// Determine security mode name for tracking
+		securityModeName := "confirm-writes"
+		if mcpSafeMode {
+			securityModeName = "safe-mode"
+		} else if mcpReadOnly {
+			securityModeName = "read-only"
+		} else if mcpAllowWrite {
+			securityModeName = "allow-write"
+		}
+
+		// Track server start
+		whodbmcp.TrackServerStart(ctx, mcpTransport, securityModeName, map[string]any{
+			"enabled_tools":  mcpEnabledTools,
+			"disabled_tools": mcpDisabledTools,
+			"security_level": securityLevel,
+		})
+
+		// Run with selected transport
+		switch whodbmcp.TransportType(mcpTransport) {
+		case whodbmcp.TransportHTTP:
+			return whodbmcp.RunHTTP(ctx, server, &whodbmcp.HTTPOptions{
+				Host: mcpHost,
+				Port: mcpPort,
+			}, opts.Logger)
+		default:
+			return whodbmcp.Run(ctx, server)
+		}
 	},
 }
 
@@ -166,6 +292,8 @@ func init() {
 	mcpCmd.AddCommand(mcpServeCmd)
 
 	// Security flags
+	mcpServeCmd.Flags().BoolVar(&mcpSafeMode, "safe-mode", false,
+		"Enable safe mode (read-only + strict security) for demos and playgrounds")
 	mcpServeCmd.Flags().BoolVar(&mcpReadOnly, "read-only", false,
 		"Enable read-only mode (blocks all write operations)")
 	mcpServeCmd.Flags().BoolVar(&mcpConfirmWrites, "confirm-writes", false,
@@ -184,6 +312,30 @@ func init() {
 		"Limit rows returned per query (0 = unlimited, default)")
 	mcpServeCmd.Flags().BoolVar(&mcpAllowMultiStatement, "allow-multi-statement", false,
 		"Allow multiple SQL statements in one query (security risk)")
+
+	// Transport flags
+	mcpServeCmd.Flags().StringVar(&mcpTransport, "transport", "stdio",
+		"Transport type: stdio (default) or http")
+	mcpServeCmd.Flags().StringVar(&mcpHost, "host", "localhost",
+		"Host to bind to (only used with --transport=http)")
+	mcpServeCmd.Flags().IntVar(&mcpPort, "port", 3000,
+		"Port to listen on (only used with --transport=http)")
+
+	// Tool enablement flags
+	mcpServeCmd.Flags().StringSliceVar(&mcpEnabledTools, "tools", nil,
+		"Comma-separated list of tools to enable (default: all). Valid: query, schemas, tables, columns, connections, confirm")
+	mcpServeCmd.Flags().StringSliceVar(&mcpDisabledTools, "disable-tools", nil,
+		"Comma-separated list of tools to disable (takes precedence over --tools)")
+
+	// Connection scoping
+	mcpServeCmd.Flags().StringVar(&mcpConnection, "default-connection", "",
+		"Default connection to use when not specified (does not restrict access)")
+	mcpServeCmd.Flags().StringSliceVar(&mcpAllowedConnections, "allowed-connections", nil,
+		"Comma-separated list of connections to allow (restricts access, first one becomes default)")
+
+	// Analytics flags
+	mcpServeCmd.Flags().BoolVar(&mcpNoAnalytics, "no-analytics", false,
+		"Disable anonymous usage analytics (can also set WHODB_MCP_ANALYTICS_DISABLED=true)")
 
 	// Mark flags as mutually exclusive
 	mcpServeCmd.MarkFlagsMutuallyExclusive("read-only", "allow-write")

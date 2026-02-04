@@ -97,7 +97,7 @@ The most universal format, compatible with Excel, Google Sheets, and data analys
 - Scriptable processing
 
 **Configuration**:
-- **Delimiter**: Choose separator (comma, semicolon, pipe, tab)
+- **Delimiter**: Choose separator (comma, semicolon, pipe)
 - **Encoding**: UTF-8 (recommended), Latin-1, or other encodings
 - **Headers**: Include or exclude column names as first row
 
@@ -256,23 +256,6 @@ id|name|email
 - Data contains commas or semicolons
 - Legacy system requires pipe delimiter
 - Working with fixed-width or complex data
-
-### Tab (\t)
-
-![Tab Delimiter](/images/70-export-delimiter-tab.png)
-
-**TSV Format** - Tab-separated values for data that contains commas.
-
-```
-id    name    email
-1     Alice   alice@example.com
-2     Bob     bob@example.com
-```
-
-**Use when**:
-- Data contains commas frequently
-- Tab-separated format is required
-- Excel TSV import is needed
 
 ## Complete Export Workflow
 

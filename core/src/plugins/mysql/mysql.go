@@ -124,6 +124,10 @@ func (p *MySQLPlugin) RawExecute(config *engine.PluginConfig, query string) (*en
 	return p.executeRawSQL(config, query)
 }
 
+func (p *MySQLPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	return p.executeRawSQL(config, query, params...)
+}
+
 // CreateSQLBuilder creates a MySQL-specific SQL builder
 func (p *MySQLPlugin) CreateSQLBuilder(db *gorm.DB) gorm_plugin.SQLBuilderInterface {
 	return NewMySQLSQLBuilder(db, p)
@@ -146,6 +150,30 @@ func (p *MySQLPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sc
 // NormalizeType converts MySQL type aliases to their canonical form.
 func (p *MySQLPlugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
+}
+
+// GetColumnsForTable returns columns with computed column detection.
+// Generated columns (VIRTUAL or STORED) are marked as IsComputed.
+func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
+	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
+	if err != nil {
+		return nil, err
+	}
+
+	computed, err := p.QueryComputedColumns(config, `
+		SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND GENERATION_EXPRESSION IS NOT NULL AND GENERATION_EXPRESSION != ''
+	`, schema, storageUnit)
+	if err != nil {
+		log.Logger.WithError(err).Warn("Failed to get generated columns for MySQL table")
+	}
+
+	for i := range columns {
+		if computed[columns[i].Name] {
+			columns[i].IsComputed = true
+		}
+	}
+	return columns, nil
 }
 
 func NewMySQLPlugin() *engine.Plugin {

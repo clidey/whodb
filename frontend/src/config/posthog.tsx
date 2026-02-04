@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
 const apiHost = "https://us.i.posthog.com";
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
 const getBuildEdition = () => import.meta.env.VITE_BUILD_EDITION ?? 'ce';
+const isE2ETest = () => import.meta.env.VITE_E2E_TEST === 'true';
 
 const getStoredConsent = (): ConsentState => {
     if (typeof window === 'undefined') {
@@ -169,6 +170,9 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     if (isEEMode) {
         return null;
     }
+    if (isE2ETest()) {
+        return null;
+    }
     if (!posthogKey) {
         return null;
     }
@@ -206,6 +210,7 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
             capture_pageview: consent === 'granted',
             enable_heatmaps: consent === 'granted',
             disable_web_experiments: consent !== 'granted',
+            disable_surveys: true,
             //@ts-ignore
             opt_out_capturing_by_default: consent === 'denied',
             loaded: (client) => {

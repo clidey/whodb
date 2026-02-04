@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
 )
@@ -67,6 +70,9 @@ The output format is determined by:
   # Specify schema
   whodb-cli export --connection mydb --schema public --table users --output users.csv`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		startTime := time.Now()
+
 		if exportTable == "" && exportQuery == "" {
 			return fmt.Errorf("either --table or --query is required")
 		}
@@ -188,6 +194,9 @@ The output format is determined by:
 			spinner.StopWithError("Export failed")
 			return fmt.Errorf("export failed: %w", exportErr)
 		}
+
+		// Track export (row count is not always available, use -1 when unknown)
+		analytics.TrackExport(ctx, conn.Type, format, -1, time.Since(startTime).Milliseconds())
 
 		spinner.StopWithSuccess("Export complete")
 		out.Success("Exported to %s", exportOutput)

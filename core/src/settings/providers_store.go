@@ -88,6 +88,9 @@ func saveProvidersToFile() error {
 // For static auth providers, credentials will be empty and status will indicate
 // that credentials need to be re-entered.
 func LoadProvidersFromFile() error {
+	if !env.IsAWSProviderEnabled {
+		return nil
+	}
 	opts := getConfigOptions()
 
 	var section awsSection

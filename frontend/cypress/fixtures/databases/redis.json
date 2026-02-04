@@ -38,7 +38,7 @@
   "schema": null,
   "mockData": {
     "supportedTable": "user:1",
-    "unsupportedTable": "orders"
+    "tableWithFKs": "orders"
   },
   "sidebar": {
     "showsDatabaseDropdown": true,
@@ -256,5 +256,17 @@
       "supportsUpdate": false,
       "supportsDelete": false
     }
+  },
+  "ssl": {
+    "port": 6380,
+    "caCertPath": "/app/certs/ca/redis/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No TLS - server requires TLS" },
+      { "mode": "enabled", "shouldSucceed": true, "needsCert": true, "description": "TLS enabled with CA verification" },
+      { "mode": "insecure", "shouldSucceed": true, "needsCert": false, "description": "TLS without certificate verification" }
+    ],
+    "negativeTests": [
+      { "mode": "enabled", "withCert": false, "description": "enabled without CA cert should fail" }
+    ]
   }
 }

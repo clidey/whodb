@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
 )
@@ -57,6 +60,9 @@ Output formats:
   # Output as JSON
   whodb-cli tables --connection mydb --format json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		startTime := time.Now()
+
 		format, err := output.ParseFormat(tablesFormat)
 		if err != nil {
 			return err
@@ -127,6 +133,8 @@ Output formats:
 			return fmt.Errorf("failed to fetch tables: %w", err)
 		}
 		spinner.Stop()
+
+		analytics.TrackTablesListed(ctx, conn.Type, len(tables), time.Since(startTime).Milliseconds())
 
 		// Collect all attribute keys from all tables
 		attrKeys := make(map[string]bool)

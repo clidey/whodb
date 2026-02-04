@@ -34,7 +34,6 @@ import {
     SidebarMenuItem,
     SidebarSeparator,
     SidebarTrigger,
-    toast,
     useSidebar
 } from "@clidey/ux";
 import {SearchSelect} from "../ux";
@@ -42,9 +41,8 @@ import {
     DatabaseType,
     useGetDatabaseQuery,
     useGetSchemaQuery,
+    useGetSslStatusQuery,
     useGetVersionQuery,
-    useLoginMutation,
-    useLoginWithProfileMutation
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
@@ -81,8 +79,8 @@ import {
 } from "../heroicons";
 import {Icons} from "../icons";
 import {Loading} from "../loading";
-import {updateProfileLastAccessed} from "../profile-info-tooltip";
 import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
+import {useProfileSwitch} from "@/hooks/use-profile-switch";
 
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
@@ -100,10 +98,12 @@ export const Sidebar: FC = () => {
     const schema = useAppSelector(state => state.database.schema);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const cloudProvidersEnabled = useAppSelector(state => state.settings.cloudProvidersEnabled);
+    const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const dispatch = useDispatch();
     const pathname = useLocation().pathname;
     const current = useAppSelector(state => state.auth.current);
     const profiles = useAppSelector(state => state.auth.profiles);
+    const sslStatus = useAppSelector(state => state.auth.sslStatus);
     const {data: availableDatabases, loading: availableDatabasesLoading, refetch: getDatabases} = useGetDatabaseQuery({
         variables: {
             type: current?.Type as DatabaseType,
@@ -120,12 +120,21 @@ export const Sidebar: FC = () => {
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
     const { data: version } = useGetVersionQuery();
-    const [login] = useLoginMutation();
-    const [loginWithProfile] = useLoginWithProfileMutation();
+    const { refetch: refetchSslStatus } = useGetSslStatusQuery({
+        skip: current == null || sslStatus !== undefined,
+        onCompleted(data) {
+            if (data.SSLStatus) {
+                dispatch(AuthActions.setSSLStatus(data.SSLStatus));
+            }
+        },
+    });
     const navigate = useNavigate();
     const [showLoginCard, setShowLoginCard] = useState(false);
     const { toggleSidebar, open } = useSidebar();
     const isInitialMount = useRef(true);
+    const { switchProfile } = useProfileSwitch({
+        errorMessage: t('errorSigningIn'),
+    });
 
     // Profile select logic - filter out AWS profiles when cloud providers disabled
     const profileOptions = useMemo(() => profiles
@@ -137,11 +146,14 @@ export const Sidebar: FC = () => {
                 <DatabaseIconWithBadge
                     icon={getProfileIcon(profile)}
                     showCloudBadge={isAwsConnection(profile.Id)}
+                    sslStatus={profile.Id === current?.Id
+                        ? sslStatus
+                        : (profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined)}
                     size="sm"
                 />
             ),
             profile,
-        })), [profiles, cloudProvidersEnabled]);
+        })), [profiles, current?.Id, sslStatus, cloudProvidersEnabled]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;
@@ -151,54 +163,9 @@ export const Sidebar: FC = () => {
     const handleProfileChange = useCallback(async (value: string, database?: string) => {
         const selectedProfile = profiles.find(profile => profile.Id === value);
         if (!selectedProfile) return;
-        dispatch(DatabaseActions.setSchema(""));
-        if (selectedProfile.Saved) {
-            await loginWithProfile({
-                variables: {
-                    profile: {
-                        Id: selectedProfile.Id,
-                        Type: selectedProfile.Type as DatabaseType,
-                        Database: database ?? selectedProfile.Database,
-                    },
-                },
-                onCompleted(status) {
-                    if (status.LoginWithProfile.Status) {
-                        updateProfileLastAccessed(selectedProfile.Id);
-                        dispatch(DatabaseActions.setSchema(""));
-                        dispatch(AuthActions.switch({ id: selectedProfile.Id }));
-                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    }
-                },
-                onError(error) {
-                    toast.error(`${t('errorSigningIn')} ${error.message}`);
-                },
-            });
-        } else {
-            await login({
-                variables: {
-                    credentials: {
-                        Type: selectedProfile.Type,
-                        Database: database ?? selectedProfile.Database,
-                        Hostname: selectedProfile.Hostname,
-                        Password: selectedProfile.Password,
-                        Username: selectedProfile.Username,
-                        Advanced: selectedProfile.Advanced,
-                    },
-                },
-                onCompleted(status) {
-                    if (status.Login.Status) {
-                        updateProfileLastAccessed(selectedProfile.Id);
-                        dispatch(DatabaseActions.setSchema(""));
-                        dispatch(AuthActions.switch({ id: selectedProfile.Id }));
-                        navigate(InternalRoutes.Dashboard.StorageUnit.path);
-                    }
-                },
-                onError(error) {
-                    toast.error(`${t('errorSigningIn')} ${error.message}`);
-                },
-            });
-        }
-    }, [profiles, login, loginWithProfile, dispatch, navigate, t]);
+
+        await switchProfile(selectedProfile, database);
+    }, [profiles, switchProfile]);
 
     // Database select logic
     const databaseOptions = useMemo(() => {
@@ -302,7 +269,7 @@ export const Sidebar: FC = () => {
         }
     }, []);
 
-    // Refetch databases and schemas when the current profile changes
+    // Refetch databases, schemas, and SSL status when the current profile changes
     // This ensures queries use the correct auth context after profile switch
     useEffect(() => {
         if (isInitialMount.current) {
@@ -316,6 +283,11 @@ export const Sidebar: FC = () => {
         if (databaseSupportsSchema(current.Type)) {
             getSchemas();
         }
+        refetchSslStatus().then(({ data }) => {
+            if (data?.SSLStatus) {
+                dispatch(AuthActions.setSSLStatus(data.SSLStatus));
+            }
+        });
     }, [current?.Id]);
 
     // Listen for menu event to open add profile form
@@ -362,7 +334,7 @@ export const Sidebar: FC = () => {
                 })}>
                     {loading ? (
                         <div className="flex justify-center items-center h-full">
-                            <Loading />
+                            <Loading size="lg" />
                         </div>
                     ) : (
                         <SidebarGroup className="grow">
@@ -378,7 +350,7 @@ export const Sidebar: FC = () => {
                                         placeholder={t('selectProfile')}
                                         searchPlaceholder={t('searchProfile')}
                                         onlyIcon={!open}
-                                        extraOptions={
+                                        extraOptions={!isEmbedded ? (
                                             <CommandItem
                                                 key="__add__"
                                                 value="__add__"
@@ -389,7 +361,7 @@ export const Sidebar: FC = () => {
                                                     {t('addAnotherProfile')}
                                                 </span>
                                             </CommandItem>
-                                        }
+                                        ) : undefined}
                                         side="left" align="start"
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
@@ -490,39 +462,41 @@ export const Sidebar: FC = () => {
                                     </SidebarMenuItem>
                                 )}
                                 <div className="grow" />
+                                {!isEmbedded && (
                                     <SidebarMenuItem className="flex justify-between items-center w-full">
-                                    {/* Logout Profile button */}
-                                    <SidebarMenuButton asChild>
-                                        <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
-                                            <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                            {open && <span>{t('logOutProfile')}</span>}
-                                        </div>
-                                    </SidebarMenuButton>
-                                    {/* Dropdown for additional logout options */}
-                                    <SidebarMenuButton asChild>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger className={cn({
-                                                "hidden": !open,
-                                            })}>
-                                                <Button
-                                                    className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
-                                                    aria-label={t('moreLogoutOptions')}
-                                                    variant="ghost"
-                                                >
-                                                    <ChevronDownIcon className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent side="right" align="start">
-                                                <DropdownMenuItem
-                                                    onClick={handleLogout}
-                                                >
-                                                    <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
-                                                    <span className="ml-2">{t('logoutAllProfiles')}</span>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
+                                        {/* Logout Profile button */}
+                                        <SidebarMenuButton asChild>
+                                            <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
+                                                <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                {open && <span>{t('logOutProfile')}</span>}
+                                            </div>
+                                        </SidebarMenuButton>
+                                        {/* Dropdown for additional logout options */}
+                                        <SidebarMenuButton asChild>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger className={cn({
+                                                    "hidden": !open,
+                                                })}>
+                                                    <Button
+                                                        className="flex items-center justify-center p-1 rounded hover:bg-gray-100 dark:hover:bg-neutral-800 ml-2"
+                                                        aria-label={t('moreLogoutOptions')}
+                                                        variant="ghost"
+                                                    >
+                                                        <ChevronDownIcon className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent side="right" align="start">
+                                                    <DropdownMenuItem
+                                                        onClick={handleLogout}
+                                                    >
+                                                        <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
+                                                        <span className="ml-2">{t('logoutAllProfiles')}</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
                             </SidebarMenu>
                         </SidebarGroup>
                     )}

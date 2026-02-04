@@ -37,11 +37,14 @@ type PluginMock struct {
 	AddStorageUnitFunc       func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
 	UpdateStorageUnitFunc    func(*engine.PluginConfig, string, string, map[string]string, []string) (bool, error)
 	AddRowFunc               func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
+	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
+	BulkAddRowsFunc          func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
 	DeleteRowFunc            func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
 	GetRowsFunc              func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error)
 	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
 	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
 	RawExecuteFunc           func(*engine.PluginConfig, string) (*engine.GetRowsResult, error)
+	RawExecuteWithParamsFunc func(*engine.PluginConfig, string, []any) (*engine.GetRowsResult, error)
 	ChatFunc                 func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
 	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
 	FormatValueFunc          func(any) string
@@ -51,6 +54,7 @@ type PluginMock struct {
 	GetForeignKeysFunc       func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
 	WithTransactionFunc      func(*engine.PluginConfig, func(tx any) error) error
 	GetDatabaseMetadataFunc  func() *engine.DatabaseMetadata
+	GetSSLStatusFunc         func(*engine.PluginConfig) (*engine.SSLStatus, error)
 }
 
 // NewPluginMock creates a PluginMock with the provided database type.
@@ -122,6 +126,26 @@ func (m *PluginMock) AddRow(config *engine.PluginConfig, schema string, storageU
 	return false, nil
 }
 
+func (m *PluginMock) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
+	if m.AddRowReturningIDFunc != nil {
+		return m.AddRowReturningIDFunc(config, schema, storageUnit, values)
+	}
+	return 0, nil
+}
+
+func (m *PluginMock) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
+	if m.BulkAddRowsFunc != nil {
+		return m.BulkAddRowsFunc(config, schema, storageUnit, rows)
+	}
+	// Default: call AddRow for each row
+	for _, row := range rows {
+		if _, err := m.AddRow(config, schema, storageUnit, row); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
 func (m *PluginMock) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
 	if m.DeleteRowFunc != nil {
 		return m.DeleteRowFunc(config, schema, storageUnit, values)
@@ -153,6 +177,13 @@ func (m *PluginMock) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 func (m *PluginMock) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
 	if m.RawExecuteFunc != nil {
 		return m.RawExecuteFunc(config, query)
+	}
+	return nil, nil
+}
+
+func (m *PluginMock) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+	if m.RawExecuteWithParamsFunc != nil {
+		return m.RawExecuteWithParamsFunc(config, query, params)
 	}
 	return nil, nil
 }
@@ -221,4 +252,11 @@ func (m *PluginMock) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		return m.GetDatabaseMetadataFunc()
 	}
 	return nil
+}
+
+func (m *PluginMock) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLStatus, error) {
+	if m.GetSSLStatusFunc != nil {
+		return m.GetSSLStatusFunc(config)
+	}
+	return nil, nil
 }

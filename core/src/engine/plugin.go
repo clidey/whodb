@@ -20,15 +20,15 @@ import "github.com/clidey/whodb/core/graph/model"
 
 // Credentials holds authentication and connection details for a database.
 type Credentials struct {
-	Id          *string
-	Type        string
-	Hostname    string
-	Username    string
-	Password    string
-	Database    string
-	Advanced    []Record
-	AccessToken *string
-	IsProfile   bool
+	Id          *string  `json:"Id,omitempty"`
+	Type        string   `json:"Type"`
+	Hostname    string   `json:"Hostname"`
+	Username    string   `json:"Username"`
+	Password    string   `json:"Password"`
+	Database    string   `json:"Database"`
+	Advanced    []Record `json:"Advanced,omitempty"`
+	AccessToken *string  `json:"AccessToken,omitempty"`
+	IsProfile   bool     `json:"IsProfile,omitempty"`
 }
 
 // ExternalModel represents an external AI model configuration for chat functionality.
@@ -43,14 +43,15 @@ type ExternalModel struct {
 type PluginConfig struct {
 	Credentials   *Credentials
 	ExternalModel *ExternalModel
+	Transaction   any // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
 }
 
 // Record represents a key-value pair with optional extra metadata,
 // used for column attributes, configuration, and data transfer.
 type Record struct {
-	Key   string
-	Value string
-	Extra map[string]string
+	Key   string            `json:"Key"`
+	Value string            `json:"Value"`
+	Extra map[string]string `json:"Extra,omitempty"`
 }
 
 // StorageUnit represents a database table, collection, or equivalent storage structure.
@@ -64,6 +65,8 @@ type Column struct {
 	Type             string
 	Name             string
 	IsPrimary        bool
+	IsAutoIncrement  bool
+	IsComputed       bool // Database-managed, generated, etc
 	IsForeignKey     bool
 	ReferencedTable  *string
 	ReferencedColumn *string
@@ -82,14 +85,6 @@ type GetRowsResult struct {
 
 // GraphUnitRelationshipType defines the cardinality of a relationship between tables.
 type GraphUnitRelationshipType string
-
-const (
-	GraphUnitRelationshipType_OneToOne   = "OneToOne"
-	GraphUnitRelationshipType_OneToMany  = "OneToMany"
-	GraphUnitRelationshipType_ManyToOne  = "ManyToOne"
-	GraphUnitRelationshipType_ManyToMany = "ManyToMany"
-	GraphUnitRelationshipType_Unknown    = "Unknown"
-)
 
 // GraphUnitRelationship describes a foreign key relationship between two tables.
 type GraphUnitRelationship struct {
@@ -120,6 +115,12 @@ type ForeignKeyRelationship struct {
 	ReferencedColumn string
 }
 
+// SSLStatus contains verified SSL/TLS connection status from the database.
+type SSLStatus struct {
+	IsEnabled bool   // Whether SSL/TLS is active on the current connection
+	Mode      string // SSL mode: disabled, required, verify-ca, verify-identity, etc.
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
@@ -131,11 +132,17 @@ type PluginFunctions interface {
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields []Record) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
+	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)
+	BulkAddRows(config *PluginConfig, schema string, storageUnit string, rows [][]Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
 	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
+	// RawExecuteWithParams executes a raw SQL query with parameterized arguments.
+	// Parameters are passed safely to the database driver, preventing SQL injection.
+	// For NoSQL databases, this returns an error indicating params are not supported.
+	RawExecuteWithParams(config *PluginConfig, query string, params []any) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
@@ -153,6 +160,10 @@ type PluginFunctions interface {
 
 	// Database metadata for frontend type/operator configuration
 	GetDatabaseMetadata() *DatabaseMetadata
+
+	// GetSSLStatus returns the verified SSL/TLS status of the current connection.
+	// Returns nil if SSL status cannot be determined (e.g., SQLite) or is not applicable.
+	GetSSLStatus(config *PluginConfig) (*SSLStatus, error)
 }
 
 // Plugin wraps PluginFunctions with a database type identifier.

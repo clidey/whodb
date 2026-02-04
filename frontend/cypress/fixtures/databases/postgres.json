@@ -36,7 +36,14 @@
   "schema": "test_schema",
   "mockData": {
     "supportedTable": "users",
-    "unsupportedTable": "orders"
+    "tableWithFKs": "orders",
+    "fkRelationships": {
+      "orders": {
+        "parentTable": "users",
+        "fkColumn": "user_id",
+        "parentPkColumn": "id"
+      }
+    }
   },
   "whereOperators": {
     "equals": "=",
@@ -393,5 +400,19 @@
     "errorPatterns": {
       "tableNotFound": "ERROR: relation \"test_schema.users1\" does not exist (SQLSTATE 42P01)"
     }
+  },
+  "ssl": {
+    "port": 5433,
+    "caCertPath": "/app/certs/ca/postgres/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": true, "needsCert": false, "description": "No SSL encryption" },
+      { "mode": "required", "shouldSucceed": true, "needsCert": false, "description": "SSL without certificate verification" },
+      { "mode": "verify-ca", "shouldSucceed": true, "needsCert": true, "description": "Verify server certificate against CA" },
+      { "mode": "verify-identity", "shouldSucceed": true, "needsCert": true, "description": "Verify CA and hostname" }
+    ],
+    "negativeTests": [
+      { "mode": "verify-ca", "withCert": false, "description": "verify-ca without CA cert should fail" },
+      { "mode": "verify-identity", "withCert": false, "description": "verify-identity without CA cert should fail" }
+    ]
   }
 }

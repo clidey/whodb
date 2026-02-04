@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@ import (
 
 // cachedConnection holds a cached GORM database instance.
 type cachedConnection struct {
-	db       *gorm.DB
-	lastUsed time.Time
+	db        *gorm.DB
+	lastUsed  time.Time
+	sslStatus *engine.SSLStatus
 }
 
 // connectionCacheTTL is how long unused connections stay in cache before cleanup.
@@ -233,7 +234,7 @@ func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc)
 		if sqlDB, err := cached.db.DB(); err == nil && sqlDB != nil {
 			if err := sqlDB.Ping(); err == nil {
 				cached.lastUsed = time.Now()
-				l.Debug("Race: using connection created by another goroutine")
+				l.Debug("using connection created by another goroutine")
 				// Close the connection we just created since we won't use it
 				closeGormDB(db)
 				return cached.db, nil
@@ -370,7 +371,15 @@ func GetGormLogConfig() logger.LogLevel {
 // WithConnection manages the database connection lifecycle for an operation.
 // Connections are cached and reused across operations to prevent connection exhaustion.
 // The underlying sql.DB handles connection pooling internally.
+// If config.Transaction is set (as a *gorm.DB), it will be used instead of creating a new connection
 func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, operation DBOperation[T]) (T, error) {
+	// Check if we're operating within a transaction
+	if config != nil && config.Transaction != nil {
+		if tx, ok := config.Transaction.(*gorm.DB); ok {
+			return operation(tx)
+		}
+	}
+
 	db, err := getOrCreateConnection(config, DB)
 	if err != nil {
 		log.Logger.WithFields(map[string]any{
@@ -387,4 +396,30 @@ func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, opera
 	}
 
 	return operation(db)
+}
+
+// GetCachedSSLStatus retrieves the SSL status from the connection cache.
+// Returns nil if not cached or connection doesn't exist.
+func GetCachedSSLStatus(config *engine.PluginConfig) *engine.SSLStatus {
+	key := getConnectionCacheKey(config)
+
+	connectionCacheMu.Lock()
+	defer connectionCacheMu.Unlock()
+
+	if cached, found := connectionCache[key]; found {
+		return cached.sslStatus
+	}
+	return nil
+}
+
+// SetCachedSSLStatus stores SSL status in the connection cache.
+func SetCachedSSLStatus(config *engine.PluginConfig, status *engine.SSLStatus) {
+	key := getConnectionCacheKey(config)
+
+	connectionCacheMu.Lock()
+	defer connectionCacheMu.Unlock()
+
+	if cached, found := connectionCache[key]; found {
+		cached.sslStatus = status
+	}
 }

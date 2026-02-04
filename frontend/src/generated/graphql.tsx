@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
+import {gql} from '@apollo/client';
+
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -201,6 +202,12 @@ export enum GraphUnitRelationshipType {
   Unknown = 'Unknown'
 }
 
+export type HealthStatus = {
+  __typename?: 'HealthStatus';
+  Database: Scalars['String']['output'];
+  Server: Scalars['String']['output'];
+};
+
 export type LocalAwsProfile = {
   __typename?: 'LocalAWSProfile';
   IsDefault: Scalars['Boolean']['output'];
@@ -226,6 +233,7 @@ export type LoginProfile = {
   Hostname?: Maybe<Scalars['String']['output']>;
   Id: Scalars['String']['output'];
   IsEnvironmentDefined: Scalars['Boolean']['output'];
+  SSLConfigured: Scalars['Boolean']['output'];
   Source: Scalars['String']['output'];
   Type: DatabaseType;
 };
@@ -236,7 +244,17 @@ export type LoginProfileInput = {
   Type: DatabaseType;
 };
 
+export type MockDataDependencyAnalysis = {
+  __typename?: 'MockDataDependencyAnalysis';
+  Error?: Maybe<Scalars['String']['output']>;
+  GenerationOrder: Array<Scalars['String']['output']>;
+  Tables: Array<MockDataTableInfo>;
+  TotalRows: Scalars['Int']['output'];
+  Warnings: Array<Scalars['String']['output']>;
+};
+
 export type MockDataGenerationInput = {
+  FkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
   Method: Scalars['String']['input'];
   OverwriteExisting: Scalars['Boolean']['input'];
   RowCount: Scalars['Int']['input'];
@@ -247,6 +265,22 @@ export type MockDataGenerationInput = {
 export type MockDataGenerationStatus = {
   __typename?: 'MockDataGenerationStatus';
   AmountGenerated: Scalars['Int']['output'];
+  Details?: Maybe<Array<MockDataTableDetail>>;
+};
+
+export type MockDataTableDetail = {
+  __typename?: 'MockDataTableDetail';
+  RowsGenerated: Scalars['Int']['output'];
+  Table: Scalars['String']['output'];
+  UsedExistingData: Scalars['Boolean']['output'];
+};
+
+export type MockDataTableInfo = {
+  __typename?: 'MockDataTableInfo';
+  IsBlocked: Scalars['Boolean']['output'];
+  RowsToGenerate: Scalars['Int']['output'];
+  Table: Scalars['String']['output'];
+  UsesExistingData: Scalars['Boolean']['output'];
 };
 
 export type Mutation = {
@@ -359,6 +393,7 @@ export type Query = {
   AIModel: Array<Scalars['String']['output']>;
   AIProviders: Array<AiProvider>;
   AWSRegions: Array<AwsRegion>;
+  AnalyzeMockDataDependencies: MockDataDependencyAnalysis;
   CloudProvider?: Maybe<AwsProvider>;
   CloudProviders: Array<AwsProvider>;
   Columns: Array<Column>;
@@ -367,12 +402,14 @@ export type Query = {
   DatabaseMetadata?: Maybe<DatabaseMetadata>;
   DiscoveredConnections: Array<DiscoveredConnection>;
   Graph: Array<GraphUnit>;
+  Health: HealthStatus;
   LocalAWSProfiles: Array<LocalAwsProfile>;
   MockDataMaxRowCount: Scalars['Int']['output'];
   Profiles: Array<LoginProfile>;
   ProviderConnections: Array<DiscoveredConnection>;
   RawExecute: RowsResult;
   Row: RowsResult;
+  SSLStatus?: Maybe<SslStatus>;
   Schema: Array<Scalars['String']['output']>;
   SettingsConfig: SettingsConfig;
   StorageUnit: Array<StorageUnit>;
@@ -393,6 +430,14 @@ export type QueryAiModelArgs = {
   modelType: Scalars['String']['input'];
   providerId?: InputMaybe<Scalars['String']['input']>;
   token?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryAnalyzeMockDataDependenciesArgs = {
+  fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
+  rowCount: Scalars['Int']['input'];
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
 };
 
 
@@ -467,9 +512,16 @@ export type RowsResult = {
   TotalCount: Scalars['Int']['output'];
 };
 
+export type SslStatus = {
+  __typename?: 'SSLStatus';
+  IsEnabled: Scalars['Boolean']['output'];
+  Mode: Scalars['String']['output'];
+};
+
 export type SettingsConfig = {
   __typename?: 'SettingsConfig';
   CloudProvidersEnabled: Scalars['Boolean']['output'];
+  DisableCredentialForm: Scalars['Boolean']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -542,7 +594,7 @@ export enum WhereConditionType {
 export type GetProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Hostname?: string | null, Database?: string | null, IsEnvironmentDefined: boolean, Source: string }> };
+export type GetProfilesQuery = { __typename?: 'Query', Profiles: Array<{ __typename?: 'LoginProfile', Alias?: string | null, Id: string, Type: DatabaseType, Hostname?: string | null, Database?: string | null, IsEnvironmentDefined: boolean, Source: string, SSLConfigured: boolean }> };
 
 export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -567,6 +619,26 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
 
+export type GetHealthQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetHealthQuery = { __typename?: 'Query', Health: { __typename?: 'HealthStatus', Server: string, Database: string } };
+
+export type GetSslStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSslStatusQuery = { __typename?: 'Query', SSLStatus?: { __typename?: 'SSLStatus', IsEnabled: boolean, Mode: string } | null };
+
+export type AnalyzeMockDataDependenciesQueryVariables = Exact<{
+  schema: Scalars['String']['input'];
+  storageUnit: Scalars['String']['input'];
+  rowCount: Scalars['Int']['input'];
+  fkDensityRatio?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type AnalyzeMockDataDependenciesQuery = { __typename?: 'Query', AnalyzeMockDataDependencies: { __typename?: 'MockDataDependencyAnalysis', GenerationOrder: Array<string>, TotalRows: number, Warnings: Array<string>, Error?: string | null, Tables: Array<{ __typename?: 'MockDataTableInfo', Table: string, RowsToGenerate: number, IsBlocked: boolean, UsesExistingData: boolean }> } };
+
 export type MockDataMaxRowCountQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -577,7 +649,7 @@ export type GenerateMockDataMutationVariables = Exact<{
 }>;
 
 
-export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number } };
+export type GenerateMockDataMutation = { __typename?: 'Mutation', GenerateMockData: { __typename?: 'MockDataGenerationStatus', AmountGenerated: number, Details?: Array<{ __typename?: 'MockDataTableDetail', Table: string, RowsGenerated: number, UsedExistingData: boolean }> | null } };
 
 export type GetDatabaseQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -735,7 +807,7 @@ export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshClo
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean } };
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean } };
 
 export type UpdateSettingsMutationVariables = Exact<{
   newSettings: SettingsConfigInput;
@@ -819,6 +891,7 @@ export const GetProfilesDocument = gql`
     Database
     IsEnvironmentDefined
     Source
+    SSLConfigured
   }
 }
     `;
@@ -1033,6 +1106,143 @@ export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHook
 export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+export const GetHealthDocument = gql`
+    query GetHealth {
+  Health {
+    Server
+    Database
+  }
+}
+    `;
+
+/**
+ * __useGetHealthQuery__
+ *
+ * To run a query within a React component, call `useGetHealthQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetHealthQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetHealthQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetHealthQuery(baseOptions?: Apollo.QueryHookOptions<GetHealthQuery, GetHealthQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetHealthQuery, GetHealthQueryVariables>(GetHealthDocument, options);
+      }
+export function useGetHealthLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetHealthQuery, GetHealthQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetHealthQuery, GetHealthQueryVariables>(GetHealthDocument, options);
+        }
+export function useGetHealthSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHealthQuery, GetHealthQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetHealthQuery, GetHealthQueryVariables>(GetHealthDocument, options);
+        }
+export type GetHealthQueryHookResult = ReturnType<typeof useGetHealthQuery>;
+export type GetHealthLazyQueryHookResult = ReturnType<typeof useGetHealthLazyQuery>;
+export type GetHealthSuspenseQueryHookResult = ReturnType<typeof useGetHealthSuspenseQuery>;
+export type GetHealthQueryResult = Apollo.QueryResult<GetHealthQuery, GetHealthQueryVariables>;
+export const GetSslStatusDocument = gql`
+    query GetSSLStatus {
+  SSLStatus {
+    IsEnabled
+    Mode
+  }
+}
+    `;
+
+/**
+ * __useGetSslStatusQuery__
+ *
+ * To run a query within a React component, call `useGetSslStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSslStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSslStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetSslStatusQuery(baseOptions?: Apollo.QueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+      }
+export function useGetSslStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+        }
+export function useGetSslStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSslStatusQuery, GetSslStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSslStatusQuery, GetSslStatusQueryVariables>(GetSslStatusDocument, options);
+        }
+export type GetSslStatusQueryHookResult = ReturnType<typeof useGetSslStatusQuery>;
+export type GetSslStatusLazyQueryHookResult = ReturnType<typeof useGetSslStatusLazyQuery>;
+export type GetSslStatusSuspenseQueryHookResult = ReturnType<typeof useGetSslStatusSuspenseQuery>;
+export type GetSslStatusQueryResult = Apollo.QueryResult<GetSslStatusQuery, GetSslStatusQueryVariables>;
+export const AnalyzeMockDataDependenciesDocument = gql`
+    query AnalyzeMockDataDependencies($schema: String!, $storageUnit: String!, $rowCount: Int!, $fkDensityRatio: Int) {
+  AnalyzeMockDataDependencies(
+    schema: $schema
+    storageUnit: $storageUnit
+    rowCount: $rowCount
+    fkDensityRatio: $fkDensityRatio
+  ) {
+    GenerationOrder
+    Tables {
+      Table
+      RowsToGenerate
+      IsBlocked
+      UsesExistingData
+    }
+    TotalRows
+    Warnings
+    Error
+  }
+}
+    `;
+
+/**
+ * __useAnalyzeMockDataDependenciesQuery__
+ *
+ * To run a query within a React component, call `useAnalyzeMockDataDependenciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAnalyzeMockDataDependenciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAnalyzeMockDataDependenciesQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *      storageUnit: // value for 'storageUnit'
+ *      rowCount: // value for 'rowCount'
+ *      fkDensityRatio: // value for 'fkDensityRatio'
+ *   },
+ * });
+ */
+export function useAnalyzeMockDataDependenciesQuery(baseOptions: Apollo.QueryHookOptions<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables> & ({ variables: AnalyzeMockDataDependenciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>(AnalyzeMockDataDependenciesDocument, options);
+      }
+export function useAnalyzeMockDataDependenciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>(AnalyzeMockDataDependenciesDocument, options);
+        }
+export function useAnalyzeMockDataDependenciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>(AnalyzeMockDataDependenciesDocument, options);
+        }
+export type AnalyzeMockDataDependenciesQueryHookResult = ReturnType<typeof useAnalyzeMockDataDependenciesQuery>;
+export type AnalyzeMockDataDependenciesLazyQueryHookResult = ReturnType<typeof useAnalyzeMockDataDependenciesLazyQuery>;
+export type AnalyzeMockDataDependenciesSuspenseQueryHookResult = ReturnType<typeof useAnalyzeMockDataDependenciesSuspenseQuery>;
+export type AnalyzeMockDataDependenciesQueryResult = Apollo.QueryResult<AnalyzeMockDataDependenciesQuery, AnalyzeMockDataDependenciesQueryVariables>;
 export const MockDataMaxRowCountDocument = gql`
     query MockDataMaxRowCount {
   MockDataMaxRowCount
@@ -1074,6 +1284,11 @@ export const GenerateMockDataDocument = gql`
     mutation GenerateMockData($input: MockDataGenerationInput!) {
   GenerateMockData(input: $input) {
     AmountGenerated
+    Details {
+      Table
+      RowsGenerated
+      UsedExistingData
+    }
   }
 }
     `;
@@ -2070,6 +2285,7 @@ export const SettingsConfigDocument = gql`
   SettingsConfig {
     MetricsEnabled
     CloudProvidersEnabled
+    DisableCredentialForm
   }
 }
     `;

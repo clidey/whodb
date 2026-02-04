@@ -1,0 +1,35 @@
+en:
+  sslMode: SSL Mode
+  selectMode: Select SSL Mode
+  caCertificate: CA Certificate
+  clientCertificate: Client Certificate
+  clientKey: Client Private Key
+  serverName: Server Name Override
+  serverNamePlaceholder: hostname for certificate verification
+  optional: optional
+  pasteContent: Paste PEM
+  chooseFile: Choose File
+  switchToPaste: Switch to paste certificate content
+  switchToFile: Switch to file picker
+  fileReadError: Failed to read file
+  clear: Clear
+  contentLoaded: Certificate loaded
+  httpWarning: "Warning: You are using an insecure (HTTP) connection. Certificate data will be transmitted unencrypted."
+  privateKeyHttpWarning: "Private keys should not be uploaded over insecure connections."
+  systemCaOnly: "This database uses system CA certificates for verification. Custom CA upload is not supported."
+
+  # SSL mode labels and descriptions (keyed by mode value)
+  modes.disabled.label: Disabled
+  modes.disabled.description: No SSL/TLS encryption
+  modes.preferred.label: Preferred
+  modes.preferred.description: Use TLS if server supports it
+  modes.required.label: Required
+  modes.required.description: Require TLS, skip certificate verification
+  modes.verify-ca.label: Verify CA
+  modes.verify-ca.description: Verify server certificate against CA
+  modes.verify-identity.label: Verify Identity
+  modes.verify-identity.description: Verify CA and server hostname
+  modes.enabled.label: Enabled
+  modes.enabled.description: Enable TLS with certificate verification
+  modes.insecure.label: Insecure
+  modes.insecure.description: Enable TLS, skip certificate verification

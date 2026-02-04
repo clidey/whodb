@@ -308,3 +308,226 @@ func TestValidateSQLStatement_DestructiveSafetyNet(t *testing.T) {
 		})
 	}
 }
+
+// Input validation tests
+
+func TestValidateQueryInput(t *testing.T) {
+	cases := []struct {
+		name      string
+		input     QueryInput
+		connCount int
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "valid query single connection",
+			input:     QueryInput{Query: "SELECT * FROM users"},
+			connCount: 1,
+			wantErr:   false,
+		},
+		{
+			name:      "valid query with connection specified",
+			input:     QueryInput{Query: "SELECT * FROM users", Connection: "mydb"},
+			connCount: 2,
+			wantErr:   false,
+		},
+		{
+			name:      "empty query",
+			input:     QueryInput{Query: ""},
+			connCount: 1,
+			wantErr:   true,
+			errMsg:    "query is required",
+		},
+		{
+			name:      "whitespace only query",
+			input:     QueryInput{Query: "   "},
+			connCount: 1,
+			wantErr:   true,
+			errMsg:    "query is required",
+		},
+		{
+			name:      "missing connection with multiple connections",
+			input:     QueryInput{Query: "SELECT 1"},
+			connCount: 2,
+			wantErr:   true,
+			errMsg:    "connection is required",
+		},
+		{
+			name:      "connection not required with single connection",
+			input:     QueryInput{Query: "SELECT 1"},
+			connCount: 1,
+			wantErr:   false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateQueryInput(&tc.input, tc.connCount)
+			if tc.wantErr {
+				if err == nil {
+					t.Error("expected error but got nil")
+				} else if tc.errMsg != "" && !contains(err.Error(), tc.errMsg) {
+					t.Errorf("expected error containing %q, got %q", tc.errMsg, err.Error())
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestValidateColumnsInput(t *testing.T) {
+	cases := []struct {
+		name      string
+		input     ColumnsInput
+		connCount int
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "valid input",
+			input:     ColumnsInput{Table: "users"},
+			connCount: 1,
+			wantErr:   false,
+		},
+		{
+			name:      "valid input with connection",
+			input:     ColumnsInput{Table: "users", Connection: "mydb"},
+			connCount: 2,
+			wantErr:   false,
+		},
+		{
+			name:      "empty table",
+			input:     ColumnsInput{Table: ""},
+			connCount: 1,
+			wantErr:   true,
+			errMsg:    "table is required",
+		},
+		{
+			name:      "missing connection with multiple connections",
+			input:     ColumnsInput{Table: "users"},
+			connCount: 2,
+			wantErr:   true,
+			errMsg:    "connection is required",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateColumnsInput(&tc.input, tc.connCount)
+			if tc.wantErr {
+				if err == nil {
+					t.Error("expected error but got nil")
+				} else if tc.errMsg != "" && !contains(err.Error(), tc.errMsg) {
+					t.Errorf("expected error containing %q, got %q", tc.errMsg, err.Error())
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestValidateConfirmInput(t *testing.T) {
+	cases := []struct {
+		name    string
+		input   ConfirmInput
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "valid UUID token",
+			input:   ConfirmInput{Token: "550e8400-e29b-41d4-a716-446655440000"},
+			wantErr: false,
+		},
+		{
+			name:    "empty token",
+			input:   ConfirmInput{Token: ""},
+			wantErr: true,
+			errMsg:  "token is required",
+		},
+		{
+			name:    "whitespace only token",
+			input:   ConfirmInput{Token: "   "},
+			wantErr: true,
+			errMsg:  "token is required",
+		},
+		{
+			name:    "invalid token format",
+			input:   ConfirmInput{Token: "not-a-valid-uuid"},
+			wantErr: true,
+			errMsg:  "not a valid confirmation token",
+		},
+		{
+			name:    "too short token",
+			input:   ConfirmInput{Token: "abc123"},
+			wantErr: true,
+			errMsg:  "not a valid confirmation token",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateConfirmInput(&tc.input)
+			if tc.wantErr {
+				if err == nil {
+					t.Error("expected error but got nil")
+				} else if tc.errMsg != "" && !contains(err.Error(), tc.errMsg) {
+					t.Errorf("expected error containing %q, got %q", tc.errMsg, err.Error())
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestValidateSchemasInput(t *testing.T) {
+	// Connection required only when multiple connections exist
+	err := ValidateSchemasInput(&SchemasInput{}, 1)
+	if err != nil {
+		t.Errorf("unexpected error with single connection: %v", err)
+	}
+
+	err = ValidateSchemasInput(&SchemasInput{}, 2)
+	if err == nil {
+		t.Error("expected error when multiple connections and none specified")
+	}
+
+	err = ValidateSchemasInput(&SchemasInput{Connection: "mydb"}, 2)
+	if err != nil {
+		t.Errorf("unexpected error with connection specified: %v", err)
+	}
+}
+
+func TestValidateTablesInput(t *testing.T) {
+	// Connection required only when multiple connections exist
+	err := ValidateTablesInput(&TablesInput{}, 1)
+	if err != nil {
+		t.Errorf("unexpected error with single connection: %v", err)
+	}
+
+	err = ValidateTablesInput(&TablesInput{}, 2)
+	if err == nil {
+		t.Error("expected error when multiple connections and none specified")
+	}
+
+	err = ValidateTablesInput(&TablesInput{Connection: "mydb"}, 2)
+	if err != nil {
+		t.Errorf("unexpected error with connection specified: %v", err)
+	}
+}
+
+// Helper function for error message checking
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstring(s, substr))
+}
+
+func containsSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

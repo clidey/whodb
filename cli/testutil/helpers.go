@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,10 @@ func SetupTestEnvironment(t *testing.T) (string, func()) {
 	if err := os.Setenv("APPDATA", testHome); err != nil {
 		t.Fatalf("Failed to set APPDATA: %v", err)
 	}
+	// Enable desktop mode so SQLite plugin uses paths directly without /db/ prefix
+	if err := os.Setenv("WHODB_DESKTOP", "true"); err != nil {
+		t.Fatalf("Failed to set WHODB_DESKTOP: %v", err)
+	}
 	cleanupConfigFiles(t)
 
 	tempDir := t.TempDir()
@@ -91,7 +95,7 @@ func CreateTestSQLiteConnection(t *testing.T, tempDir string) *config.Connection
 	dbPath := tempDir + "/test.db"
 	return &config.Connection{
 		Name:     "test-sqlite",
-		Type:     "Sqlite",
+		Type:     "Sqlite3",
 		Host:     dbPath,
 		Database: dbPath,
 	}
@@ -108,6 +112,14 @@ func SetupTestDatabase(t *testing.T) (*database.Manager, *config.Connection, fun
 	}
 
 	conn := CreateTestSQLiteConnection(t, tempDir)
+
+	// Create the SQLite database file before connecting
+	// The SQLite plugin requires the file to exist in desktop mode
+	dbFile, err := os.Create(conn.Database)
+	if err != nil {
+		t.Fatalf("Failed to create SQLite database file: %v", err)
+	}
+	dbFile.Close()
 
 	err = mgr.Connect(conn)
 	if err != nil {

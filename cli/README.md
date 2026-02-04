@@ -400,10 +400,14 @@ WhoDB can run as an MCP (Model Context Protocol) server, enabling AI assistants 
 ### Start the MCP Server
 
 ```bash
+# Default: stdio transport (for Claude Desktop, Claude Code, etc.)
 whodb-cli mcp serve
+
+# HTTP transport (for cloud deployments, Docker, Kubernetes)
+whodb-cli mcp serve --transport=http --port=3000
 ```
 
-This starts a stdio-based MCP server that exposes these tools:
+This starts an MCP server that exposes these tools:
 
 | Tool | Description |
 |------|-------------|
@@ -416,15 +420,71 @@ This starts a stdio-based MCP server that exposes these tools:
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 
+### Transport Modes
+
+**stdio (default)** - For local CLI integration with Claude Desktop, Claude Code, etc.
+
+```bash
+whodb-cli mcp serve
+```
+
+**HTTP** - For cloud deployments, Docker, Kubernetes, or shared access.
+
+```bash
+whodb-cli mcp serve --transport=http --host=0.0.0.0 --port=8080
+```
+
+HTTP mode exposes:
+- `/mcp` - MCP endpoint (streaming HTTP)
+- `/health` - Health check endpoint
+
+### Security Modes
+
+| Mode | Flag | Description |
+|------|------|-------------|
+| Confirm-writes | *(default)* | Write operations require user approval |
+| Safe mode | `--safe-mode` | Read-only + strict security (for demos/playgrounds) |
+| Read-only | `--read-only` | Blocks all write operations |
+| Allow-write | `--allow-write` | Full write access without confirmation |
+
 ### MCP Flags
 
+**Security:**
+- `--safe-mode`: Read-only + strict security (for demos/playgrounds)
 - `--read-only`: Block all write operations
 - `--allow-write`: Allow writes without confirmation (use with caution)
 - `--allow-drop`: Allow DROP/TRUNCATE when running with `--allow-write`
 - `--security`: Validation level (`strict`, `standard`, `minimal`)
+
+**Query Limits:**
 - `--timeout`: Query timeout (default 30s)
 - `--max-rows`: Limit rows returned per query (0 = unlimited)
 - `--allow-multi-statement`: Allow multiple SQL statements in one query
+
+**Transport:**
+- `--transport`: `stdio` (default) or `http`
+- `--host`: Bind address (default: localhost)
+- `--port`: Listen port (default: 3000)
+
+**Connection Scoping:**
+- `--allowed-connections`: Comma-separated list of connections to allow (restricts access)
+- `--default-connection`: Default connection when not specified (does not restrict access)
+
+```bash
+# Restrict AI to specific connections only
+whodb-cli mcp serve --allowed-connections prod,staging
+
+# Set default without restricting access
+whodb-cli mcp serve --default-connection prod
+
+# Combine: restrict to prod/staging, default to staging
+whodb-cli mcp serve --allowed-connections prod,staging --default-connection staging
+```
+
+When `--allowed-connections` is set:
+- `whodb_connections` only shows allowed connections
+- Queries to other connections are rejected
+- First allowed connection becomes the default (unless `--default-connection` is set)
 
 ### Configure Connections
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ const analyticsHeaderName = 'X-WhoDB-Analytics-Id';
  * Checks if the app is running in a desktop/webview environment
  * where cookies might not be properly supported.
  */
-function isDesktopScheme(): boolean {
+export function isDesktopScheme(): boolean {
     // Check if Wails bindings are available - more reliable than protocol check
     if (typeof window !== 'undefined') {
         const wailsGo = (window as any).go;
@@ -39,16 +39,15 @@ function isDesktopScheme(): boolean {
  * Gets the Authorization header value for the current user session.
  * Returns null if no authentication is needed or available.
  *
- * In desktop/webview environments (wails://), cookies don't work reliably,
- * so we need to pass credentials via Authorization header.
+ * We always send credentials via Authorization header because:
+ * - Cookies have a ~4KB size limit
+ * - SSL certificates in Advanced fields can exceed this limit
+ * - Browser silently drops oversized cookies, causing auth failures
+ * - Authorization headers have no practical size limit
+ * - Credentials are stored in localStorage via Redux persist
  */
 export function getAuthorizationHeader(): string | null {
   try {
-    // Only attach for non-HTTP(s) schemes (e.g., wails://)
-    if (!isDesktopScheme()) {
-      return null;
-    }
-
     // @ts-ignore - auth state type not fully defined
     const authState = reduxStore.getState().auth;
     const current = authState?.current;

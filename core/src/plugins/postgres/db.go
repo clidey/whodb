@@ -17,12 +17,12 @@
 package postgres
 
 import (
-	"crypto/tls"
 	"maps"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
+	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
@@ -53,21 +53,19 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database
 
-	// Configure SSL/TLS based on SSLMode
-	// Modes: disable (default), require, verify-ca, verify-full
-	switch connectionInput.SSLMode {
-	case "require":
-		// SSL required but don't verify certificate (like libpq sslmode=require)
-		pgxConfig.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true,
+	// Configure SSL/TLS
+	sslMode := "disabled"
+	if connectionInput.SSLConfig != nil && connectionInput.SSLConfig.IsEnabled() {
+		sslMode = string(connectionInput.SSLConfig.Mode)
+		tlsConfig, err := ssl.BuildTLSConfig(connectionInput.SSLConfig, connectionInput.Hostname)
+		if err != nil {
+			log.Logger.WithError(err).WithFields(map[string]any{
+				"hostname": connectionInput.Hostname,
+				"sslMode":  connectionInput.SSLConfig.Mode,
+			}).Error("Failed to build TLS configuration for PostgreSQL")
+			return nil, err
 		}
-	case "verify-ca", "verify-full":
-		// SSL with certificate verification
-		// For verify-full, ServerName enables hostname verification
-		pgxConfig.TLSConfig = &tls.Config{
-			ServerName: connectionInput.Hostname,
-		}
-		// case "disable" or default: pgxConfig.TLSConfig remains nil (no SSL)
+		pgxConfig.TLSConfig = tlsConfig
 	}
 
 	if connectionInput.ExtraOptions != nil {
@@ -82,7 +80,7 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,
 		"username": connectionInput.Username,
-		"sslMode":  connectionInput.SSLMode,
+		"sslMode":  sslMode,
 	})
 
 	db, err := gorm.Open(postgres.New(postgres.Config{Conn: stdlib.OpenDB(*pgxConfig)}), &gorm.Config{Logger: logger.Default.LogMode(plugins.GetGormLogConfig())})
