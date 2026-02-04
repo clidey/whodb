@@ -80,6 +80,7 @@ export interface FeatureFlags {
 
 // Settings defaults that can be overridden by EE
 export interface SettingsDefaults {
+    whereConditionMode?: 'popover' | 'sheet';
     disableAnimations?: boolean;
 }
 

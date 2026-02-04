@@ -53,7 +53,8 @@ const getInitialState = (): ISettingsState => {
         fontSize: 'medium',
         borderRadius: 'medium',
         spacing: 'comfortable',
-        whereConditionMode: 'popover',
+        // Use EE default if available, otherwise default to 'popover'
+        whereConditionMode: eeSettingsDefaults.whereConditionMode ?? 'popover',
         defaultPageSize: 100,
         language: 'en',
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
