@@ -81,8 +81,8 @@ See `.claude/docs/commands.md` for full reference. EE commands are in `ee/CLAUDE
 - Only add what is required - no overengineering
 - Do not modify existing functionality without justification
 - Do not rename variables/files unless necessary
-- Remove unused code - no leftovers
-- Comment WHY, not WHAT - explain reasoning, edge cases, and non-obvious behavior. Never comment obvious code
+- Remove unused code - no leftovers 
+- Only comment edge cases and complex logic, not obvious code
 - Ask questions to understand requirements fully
 - Use subagents to accomplish tasks faster
 - Maintain professional, neutral tone without excessive enthusiasm

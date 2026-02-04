@@ -28,7 +28,7 @@ import (
 
 // TypeGenerator is a function that generates mock data for a database type.
 // Returns (value, handled). If handled is false, the caller falls back to default handling.
-type TypeGenerator func(dbType string, constraints map[string]any, faker *gofakeit.Faker) (any, bool)
+type TypeGenerator func(dbType string, databaseType string, constraints map[string]any, faker *gofakeit.Faker) (any, bool)
 
 var eeTypeGenerator TypeGenerator
 
@@ -40,10 +40,10 @@ func RegisterEETypeGenerator(gen TypeGenerator) {
 // GenerateByType generates a value for a database type, respecting constraints.
 // The dbType parameter is the raw column type (e.g., "int", "text[]", "varchar(255)").
 // The constraints map contains check_min, check_max, length, scale, check_values, etc.
-func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.Faker) any {
+func GenerateByType(dbType string, databaseType string, constraints map[string]any, faker *gofakeit.Faker) any {
 	// Try ee first
 	if eeTypeGenerator != nil {
-		if value, handled := eeTypeGenerator(dbType, constraints, faker); handled {
+		if value, handled := eeTypeGenerator(dbType, databaseType, constraints, faker); handled {
 			return value
 		}
 	}
@@ -70,11 +70,11 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	switch normalizedType {
 	case "int", "integer", "int2", "int4", "int8", "smallint", "bigint", "tinyint", "mediumint", "serial", "bigserial", "smallserial",
 		"int16", "int32", "int64", "int128", "int256":
-		return genInt(constraints, faker)
+		return genInt(normalizedType, constraints, faker)
 
 	case "uint", "uint8", "uint16", "uint32", "uint64", "uint128", "uint256",
 		"tinyint unsigned", "smallint unsigned", "mediumint unsigned", "int unsigned", "bigint unsigned":
-		return genUint(constraints, faker)
+		return genUint(normalizedType, constraints, faker)
 
 	case "float", "float4", "float8", "real", "double", "double precision", "decimal", "numeric", "number", "money",
 		"float32", "float64":
@@ -141,12 +141,24 @@ func GenerateByType(dbType string, constraints map[string]any, faker *gofakeit.F
 	}
 }
 
-// genInt generates an integer respecting check_min/check_max constraints.
-// Uses practical defaults for mock data rather than full INT range.
-func genInt(c map[string]any, f *gofakeit.Faker) any {
-	minVal := int64(1)
-	maxVal := int64(1000000)
+// genInt generates an integer respecting type limits and check_min/check_max constraints.
+// Type-specific limits are applied as defaults when no constraints are provided.
+func genInt(typeName string, c map[string]any, f *gofakeit.Faker) any {
+	// Type-specific default limits (using safe positive ranges for mock data)
+	var minVal, maxVal int64
+	switch typeName {
+	case "tinyint":
+		minVal, maxVal = 1, 127
+	case "smallint", "int2", "int16", "smallserial":
+		minVal, maxVal = 1, 32767
+	case "mediumint":
+		minVal, maxVal = 1, 8388607
+	default:
+		// int, integer, int4, int8, bigint, serial, bigserial, int32, int64, int128, int256
+		minVal, maxVal = 1, 1000000
+	}
 
+	// Override with explicit constraints if provided
 	if c != nil {
 		if v, ok := c["check_min"].(float64); ok {
 			minVal = int64(v)
@@ -164,11 +176,23 @@ func genInt(c map[string]any, f *gofakeit.Faker) any {
 	return f.IntRange(int(minVal), int(maxVal))
 }
 
-// genUint generates an unsigned integer respecting check_min/check_max constraints.
-func genUint(c map[string]any, f *gofakeit.Faker) any {
-	minVal := uint64(0)
-	maxVal := uint64(1000000)
+// genUint generates an unsigned integer respecting type limits and check_min/check_max constraints.
+func genUint(typeName string, c map[string]any, f *gofakeit.Faker) any {
+	// Type-specific default limits
+	var minVal, maxVal uint64
+	switch typeName {
+	case "uint8", "tinyint unsigned":
+		minVal, maxVal = 0, 255
+	case "uint16", "smallint unsigned":
+		minVal, maxVal = 0, 65535
+	case "mediumint unsigned":
+		minVal, maxVal = 0, 16777215
+	default:
+		// uint, uint32, uint64, uint128, uint256, int unsigned, bigint unsigned
+		minVal, maxVal = 0, 1000000
+	}
 
+	// Override with explicit constraints if provided
 	if c != nil {
 		if v, ok := c["check_min"].(float64); ok && v >= 0 {
 			minVal = uint64(v)
@@ -185,21 +209,31 @@ func genUint(c map[string]any, f *gofakeit.Faker) any {
 	return f.UintRange(uint(minVal), uint(maxVal))
 }
 
-// genDecimal generates a decimal number respecting check_min/check_max and scale.
+// genDecimal generates a decimal number respecting precision, scale, and check_min/check_max constraints.
 func genDecimal(c map[string]any, f *gofakeit.Faker) any {
 	minVal := 0.0
 	maxVal := 1000.0
 	scale := 2
 
 	if c != nil {
+		if s, ok := c["scale"].(int); ok && s >= 0 {
+			scale = s
+		}
+		// Calculate max from precision if available: decimal(5,2) → max 999.99
+		if p, ok := c["precision"].(int64); ok && p > 0 {
+			intDigits := int(p) - scale
+			if intDigits > 0 {
+				maxVal = math.Pow(10, float64(intDigits)) - math.Pow(10, -float64(scale))
+			} else {
+				maxVal = 1 - math.Pow(10, -float64(scale)) // e.g., decimal(2,2) → 0.99
+			}
+		}
+		// Explicit constraints override precision-derived max
 		if v, ok := c["check_min"].(float64); ok {
 			minVal = v
 		}
 		if v, ok := c["check_max"].(float64); ok {
 			maxVal = v
-		}
-		if s, ok := c["scale"].(int); ok && s > 0 {
-			scale = s
 		}
 	}
 

@@ -100,6 +100,7 @@ type Generator struct {
 	generatedPKs   map[string][]map[string]any // Cache of generated PK rows per table (supports composite PKs)
 	existingPKs    map[string][]map[string]any // Cache of existing PK rows for blocked tables
 	usedPKValues   map[string]map[string]bool  // Track used PK values: table -> pkValueString -> true
+	databaseType   string                      // Database type for type-specific generation (e.g., "MSSQL", "PostgreSQL")
 }
 
 // NewGenerator creates a new mock data generator with the specified FK density ratio.
@@ -406,6 +407,11 @@ func (g *Generator) Generate(
 	g.generatedPKs = make(map[string][]map[string]any)
 	g.existingPKs = make(map[string][]map[string]any)
 	g.usedPKValues = make(map[string]map[string]bool)
+
+	// Set database type for type-specific generation
+	if metadata := plugin.GetDatabaseMetadata(); metadata != nil {
+		g.databaseType = string(metadata.DatabaseType)
+	}
 
 	result := &GenerationResult{
 		Details:  []TableDetail{},
@@ -1172,7 +1178,7 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 	// Check for is_json constraint (MariaDB stores JSON as LONGTEXT with JSON_VALID check)
 	if constraints != nil {
 		if isJSON, ok := constraints["is_json"].(bool); ok && isJSON {
-			return GenerateByType("json", nil, g.faker)
+			return GenerateByType("json", g.databaseType, nil, g.faker)
 		}
 	}
 
@@ -1194,7 +1200,7 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 		// Skip pattern matching if we have check_values (ENUM)
 		if effectiveConstraints != nil {
 			if _, hasCheckValues := effectiveConstraints["check_values"]; hasCheckValues {
-				return GenerateByType(col.Type, effectiveConstraints, g.faker)
+				return GenerateByType(col.Type, g.databaseType, effectiveConstraints, g.faker)
 			}
 		}
 
@@ -1208,7 +1214,7 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 	}
 
 	// Fall back to type-based generation
-	return GenerateByType(col.Type, effectiveConstraints, g.faker)
+	return GenerateByType(col.Type, g.databaseType, effectiveConstraints, g.faker)
 }
 
 // valueToRecord converts a value to an engine.Record.
