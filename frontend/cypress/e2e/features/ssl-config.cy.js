@@ -136,10 +136,10 @@ describe('SSL Configuration', () => {
             cy.get('[data-testid="database-type-select"]').click();
             cy.get('[data-value="Sqlite3"]').click();
 
-            // Open advanced options
-            cy.get('[data-testid="advanced-button"]').click();
+            // Advanced button should be hidden for SQLite (no SSL/advanced options)
+            cy.get('[data-testid="advanced-button"]').should('not.be.visible');
 
-            // SSL mode dropdown should NOT be visible (SQLite doesn't support SSL)
+            // SSL mode dropdown should NOT exist (SQLite doesn't support SSL)
             cy.get('[data-testid="ssl-mode-select"]').should('not.exist');
         });
     });
@@ -351,275 +351,79 @@ describe('SSL Configuration', () => {
 describe('SSL Integration Tests', () => {
     beforeEach(() => {
         clearBrowserState();
-        cy.visit('/login');
+    });
 
-        // Dismiss telemetry modal if it appears
-        cy.get('body').then($body => {
-            const $btn = $body.find('button').filter(function () {
-                return this.textContent.includes('Disable Telemetry');
+    /**
+     * Helper to login with SSL using cy.login() and proper credential handling.
+     * Uses SSL-specific credentials (user/password) when available in db.ssl,
+     * otherwise falls back to db.connection credentials.
+     */
+    function loginWithSSL(db, sslMode, options = {}) {
+        const ssl = db.ssl;
+        const conn = db.connection;
+
+        // Use SSL-specific credentials if provided, otherwise fall back to connection credentials
+        // Pass undefined instead of null to skip fields that don't exist (Redis has no user/database)
+        const sslUser = (ssl.user ?? conn.user) ?? undefined;
+        const sslPassword = ssl.password ?? conn.password;
+        const database = conn.database ?? undefined;
+
+        const hostPath = containerPathToHostPath(ssl.caCertPath);
+
+        if (hostPath) {
+            cy.readFile(hostPath).then((certContent) => {
+                cy.login(
+                    db.type,
+                    conn.host,
+                    sslUser,
+                    sslPassword,
+                    database,
+                    {
+                        Port: String(ssl.port),
+                        ssl: { mode: sslMode, caCertContent: certContent },
+                        ...options
+                    }
+                );
             });
-            if ($btn.length) {
-                cy.wrap($btn).click();
-            }
-        });
-    });
+        } else {
+            cy.login(
+                db.type,
+                conn.host,
+                sslUser,
+                sslPassword,
+                database,
+                {
+                    Port: String(ssl.port),
+                    ssl: { mode: sslMode },
+                    ...options
+                }
+            );
+        }
+    }
 
-    describe('PostgreSQL SSL Connection', () => {
-        it('connects to PostgreSQL with SSL verify-ca mode', () => {
-            const db = getDatabaseConfig('postgres');
-            if (!db.ssl) {
-                cy.log('Skipping: postgres SSL config not available');
-                return;
-            }
+    // SSL mode mapping: databases use different modes for certificate verification
+    const sslModeMap = {
+        postgres: 'verify-ca',
+        mysql: 'verify-ca',
+        mariadb: 'verify-ca',
+        mongodb: 'enabled',
+        redis: 'enabled',
+        clickhouse: 'enabled',
+        elasticsearch: 'enabled'
+    };
 
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get(`[data-value="${db.type}"]`).click();
+    // Test SSL connections for each database type
+    ['postgres', 'mysql', 'mariadb', 'mongodb', 'redis', 'clickhouse', 'elasticsearch'].forEach((dbName) => {
+        describe(`${dbName.charAt(0).toUpperCase() + dbName.slice(1)} SSL Connection`, () => {
+            it(`connects to ${dbName} with SSL ${sslModeMap[dbName]} mode`, () => {
+                const db = getDatabaseConfig(dbName);
+                if (!db.ssl) {
+                    cy.log(`Skipping: ${dbName} SSL config not available`);
+                    return;
+                }
 
-            // Fill connection details
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            // Configure SSL
-            cy.get('[data-testid="advanced-button"]').click();
-
-            // Set SSL port
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            // Select SSL mode (verify-ca)
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="verify-ca"]').click();
-
-            // Set CA certificate
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            // Attempt login
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            // Wait for connection - should succeed with SSL
-            cy.wait('@loginQuery', { timeout: 30000 });
-
-            // Should redirect to storage-unit page on success
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 15000 })
-                .should('exist');
-        });
-    });
-
-    describe('MySQL SSL Connection', () => {
-        it('connects to MySQL with SSL verify-ca mode', () => {
-            const db = getDatabaseConfig('mysql');
-            if (!db.ssl) {
-                cy.log('Skipping: mysql SSL config not available');
-                return;
-            }
-
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get(`[data-value="${db.type}"]`).click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="verify-ca"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 15000 })
-                .should('exist');
-        });
-    });
-
-    describe('MariaDB SSL Connection', () => {
-        it('connects to MariaDB with SSL verify-ca mode', () => {
-            const db = getDatabaseConfig('mariadb');
-            if (!db.ssl) {
-                cy.log('Skipping: mariadb SSL config not available');
-                return;
-            }
-
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get(`[data-value="${db.type}"]`).click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="verify-ca"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 15000 })
-                .should('exist');
-        });
-    });
-
-    describe('MongoDB SSL Connection', () => {
-        it('connects to MongoDB with TLS enabled', () => {
-            const db = getDatabaseConfig('mongodb');
-            if (!db.ssl) {
-                cy.log('Skipping: mongodb SSL config not available');
-                return;
-            }
-
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get('[data-value="MongoDB"]').click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="enabled"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-database"], [data-testid="sidebar-schema"]', { timeout: 15000 })
-                .should('exist');
-        });
-    });
-
-    describe('Redis SSL Connection', () => {
-        it('connects to Redis with TLS enabled', () => {
-            const db = getDatabaseConfig('redis');
-            if (!db.ssl) {
-                cy.log('Skipping: redis SSL config not available');
-                return;
-            }
-
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get('[data-value="Redis"]').click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="enabled"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-profile"]', { timeout: 15000 })
-                .should('exist');
-        });
-    });
-
-    describe('ClickHouse SSL Connection', () => {
-        it('connects to ClickHouse with SSL enabled', () => {
-            const db = getDatabaseConfig('clickhouse');
-            if (!db.ssl) {
-                cy.log('Skipping: clickhouse SSL config not available');
-                return;
-            }
-
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get('[data-value="ClickHouse"]').click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="enabled"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-profile"]', { timeout: 15000 })
-                .should('exist');
-        });
-    });
-
-    describe('Elasticsearch SSL Connection', () => {
-        it('connects to Elasticsearch with TLS enabled', () => {
-            const db = getDatabaseConfig('elasticsearch');
-            if (!db.ssl) {
-                cy.log('Skipping: elasticsearch SSL config not available');
-                return;
-            }
-
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get('[data-value="ElasticSearch"]').click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="enabled"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
-            cy.get('[data-testid="sidebar-profile"]', { timeout: 15000 })
-                .should('exist');
+                loginWithSSL(db, sslModeMap[dbName]);
+            });
         });
     });
 
@@ -631,29 +435,20 @@ describe('SSL Integration Tests', () => {
                 return;
             }
 
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get(`[data-value="${db.type}"]`).click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            cy.get('[data-testid="advanced-button"]').click();
-            cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
-
-            cy.get('[data-testid="ssl-mode-select"]').click();
-            cy.get('[data-value="verify-ca"]').click();
-
-            if (db.ssl.caCertPath) {
-                enterCertificateContent(db.ssl.caCertPath);
-            }
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
+            const hostPath = containerPathToHostPath(db.ssl.caCertPath);
+            cy.readFile(hostPath).then((certContent) => {
+                cy.login(
+                    db.type,
+                    db.connection.host,
+                    db.connection.user,
+                    db.connection.password,
+                    db.connection.database,
+                    {
+                        Port: String(db.ssl.port),
+                        ssl: { mode: 'verify-ca', caCertContent: certContent }
+                    }
+                );
+            });
 
             // SSL shield badge should appear in the profile selector when SSL is enabled
             cy.get('[data-testid="sidebar-profile"]', { timeout: 15000 }).within(() => {
@@ -664,19 +459,13 @@ describe('SSL Integration Tests', () => {
         it('does not show SSL badge when connected without SSL', () => {
             const db = getDatabaseConfig('postgres');
 
-            cy.get('[data-testid="database-type-select"]').click();
-            cy.get(`[data-value="${db.type}"]`).click();
-
-            cy.get('[data-testid="hostname"]').type(db.connection.host);
-            cy.get('[data-testid="username"]').type(db.connection.user);
-            cy.get('[data-testid="password"]').type(db.connection.password, { log: false });
-            cy.get('[data-testid="database"]').type(db.connection.database);
-
-            cy.intercept('POST', '**/api/query').as('loginQuery');
-            cy.get('[data-testid="login-button"]').click();
-
-            cy.wait('@loginQuery', { timeout: 30000 });
-            cy.url().should('include', '/storage-unit');
+            cy.login(
+                db.type,
+                db.connection.host,
+                db.connection.user,
+                db.connection.password,
+                db.connection.database
+            );
 
             // Without SSL, there should be no SSL badge
             cy.get('[data-testid="sidebar-profile"]', { timeout: 15000 }).within(() => {
@@ -693,27 +482,31 @@ describe('SSL Integration Tests', () => {
                 return;
             }
 
+            // This test verifies graceful error handling when SSL is misconfigured.
+            // We use the SSL port but wrong credentials and no SSL config.
+            // Note: cy.login() cannot be used here as it expects success.
+            cy.visit('/login');
+
             cy.get('[data-testid="database-type-select"]').click();
             cy.get('[data-value="Postgres"]').click();
 
-            // Use SSL database port but no SSL config
             cy.get('[data-testid="hostname"]').type('localhost');
-            cy.get('[data-testid="username"]').type('user');
-            cy.get('[data-testid="password"]').type('password');
+            cy.get('[data-testid="username"]').type('wrong_user');
+            cy.get('[data-testid="password"]').type('wrong_password');
             cy.get('[data-testid="database"]').type('test_db');
 
             cy.get('[data-testid="advanced-button"]').click();
             cy.get('[data-testid="Port-input"]').clear().type(String(db.ssl.port));
 
-            // Don't configure SSL - connection may fail or succeed depending on server config
+            // Don't configure SSL - connection should fail
             cy.intercept('POST', '**/api/query').as('loginQuery');
             cy.get('[data-testid="login-button"]').click();
 
-            // Wait and check result - we mainly want to ensure no crash
+            // Wait for the request to complete - we just want to ensure no crash
             cy.wait('@loginQuery', { timeout: 30000 });
 
-            // Note: Result depends on server SSL configuration (optional vs required)
-            // This test ensures the system handles the attempt gracefully
+            // Should remain on login page (connection failed)
+            cy.url().should('include', '/login');
         });
     });
 });
