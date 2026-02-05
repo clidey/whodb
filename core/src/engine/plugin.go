@@ -41,9 +41,10 @@ type ExternalModel struct {
 
 // PluginConfig contains all configuration needed to connect to and operate on a database.
 type PluginConfig struct {
-	Credentials   *Credentials
-	ExternalModel *ExternalModel
-	Transaction   any // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
+	Credentials    *Credentials
+	ExternalModel  *ExternalModel
+	Transaction    any  // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
+	MultiStatement bool // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
 }
 
 // Record represents a key-value pair with optional extra metadata,
