@@ -1,0 +1,4 @@
+id,username,email,password,created_at
+501,csv_alex,csv.alex@example.com,csvpass001,2025-01-15 10:30:00
+502,csv_bianca,csv.bianca@example.com,csvpass002,2025-01-16 11:45:00
+503,csv_carlos,csv.carlos@example.com,csvpass003,2025-01-17 09:15:00
