@@ -103,7 +103,8 @@ describe('Data Import', () => {
                 }
 
                 // Verify imported data appears in table
-                cy.waitForRowContaining('csv_alex', { timeout: 15000 });
+                const verifyValue = db.import.csvVerifyValue || 'csv_alex';
+                cy.waitForRowContaining(verifyValue, { timeout: 15000 });
             });
 
             it('shows validation error for wrong columns', () => {
@@ -220,9 +221,9 @@ describe('Data Import', () => {
                 // Switch to SQL mode
                 cy.selectImportMode('sql');
 
-                // Type a simple INSERT into the editor using the DB's schema prefix
-                const schemaPrefix = db.sql?.schemaPrefix || '';
-                const sql = `INSERT INTO ${schemaPrefix}users (id, username, email, password, created_at) VALUES (7777, 'editor_user', 'editor@test.com', 'editorpass', '2025-06-01 12:00:00')`;
+                // Use DB-specific SQL if provided, otherwise default INSERT for CE tables
+                const sql = db.import.pastedSql
+                    || `INSERT INTO ${db.sql?.schemaPrefix || ''}users (id, username, email, password, created_at) VALUES (7777, 'editor_user', 'editor@test.com', 'editorpass', '2025-06-01 12:00:00')`;
                 cy.typeSqlInEditor(sql);
 
                 // Confirm and submit
