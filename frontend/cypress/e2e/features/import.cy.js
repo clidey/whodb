@@ -23,7 +23,8 @@ import {forEachDatabase} from '../../support/test-runner';
  * @returns {string} Path relative to the Cypress project root
  */
 function samplePath(db, fileName) {
-    return `../dev/sample-import-data/${db.import.sampleDataDir}/${fileName}`;
+    const basePath = db.import.sampleDataBasePath || 'dev/sample-import-data';
+    return `../${basePath}/${db.import.sampleDataDir}/${fileName}`;
 }
 
 /**
