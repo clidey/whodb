@@ -33,6 +33,10 @@ import (
 )
 
 func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
+	return p.openDB(config, false)
+}
+
+func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
 		return nil, err
@@ -48,6 +52,7 @@ func (p *MySQLPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	mysqlConfig.ParseTime = connectionInput.ParseTime
 	mysqlConfig.Loc = connectionInput.Loc
 	mysqlConfig.Params = connectionInput.ExtraOptions
+	mysqlConfig.MultiStatements = multiStatements
 
 	// Configure SSL/TLS
 	sslMode := "disabled"
