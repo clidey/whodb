@@ -222,7 +222,6 @@ export type ImportFileInput = {
 export type ImportFileOptions = {
   Delimiter?: InputMaybe<Scalars['String']['input']>;
   Format: ImportFileFormat;
-  HasHeader: Scalars['Boolean']['input'];
   Sheet?: InputMaybe<Scalars['String']['input']>;
 };
 

@@ -198,7 +198,6 @@ export const ImportData: FC<ImportDataProps> = ({
     if (dataFormat === "csv") {
       const csvOptions: ImportFileOptions = {
         Format: ImportFileFormat.Csv,
-        HasHeader: true,
       };
       if (delimiter !== "auto") {
         csvOptions.Delimiter = delimiter;
@@ -208,7 +207,6 @@ export const ImportData: FC<ImportDataProps> = ({
 
     return {
       Format: ImportFileFormat.Excel,
-      HasHeader: true,
     };
   }, [dataFormat, delimiter]);
 

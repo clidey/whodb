@@ -25,7 +25,6 @@ import (
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 )
@@ -61,38 +60,17 @@ func ValidateStorageUnit(plugin engine.PluginFunctions, config *engine.PluginCon
 	return nil
 }
 
-// MapColumnsToModel converts engine columns to GraphQL model columns,
-// enriching them with constraint and foreign key information.
-func MapColumnsToModel(
-	columnsResult []engine.Column,
-	constraints map[string]map[string]any,
-	foreignKeys map[string]*engine.ForeignKeyRelationship,
-) []*model.Column {
+// MapColumnsToModel converts engine columns to GraphQL model columns
+func MapColumnsToModel(columnsResult []engine.Column) []*model.Column {
 	var columns []*model.Column
 	for _, column := range columnsResult {
-		isPrimary := column.IsPrimary
-		if !isPrimary {
-			isPrimary = gorm_plugin.IsPrimary(constraints[column.Name])
-		}
-
-		isForeignKey := column.IsForeignKey
-		referencedTable := column.ReferencedTable
-		referencedColumn := column.ReferencedColumn
-		if !isForeignKey {
-			if fk, exists := foreignKeys[column.Name]; exists {
-				isForeignKey = true
-				referencedTable = &fk.ReferencedTable
-				referencedColumn = &fk.ReferencedColumn
-			}
-		}
-
 		columns = append(columns, &model.Column{
 			Type:             column.Type,
 			Name:             column.Name,
-			IsPrimary:        isPrimary,
-			IsForeignKey:     isForeignKey,
-			ReferencedTable:  referencedTable,
-			ReferencedColumn: referencedColumn,
+			IsPrimary:        column.IsPrimary,
+			IsForeignKey:     column.IsForeignKey,
+			ReferencedTable:  column.ReferencedTable,
+			ReferencedColumn: column.ReferencedColumn,
 			Length:           column.Length,
 			Precision:        column.Precision,
 			Scale:            column.Scale,
@@ -101,16 +79,13 @@ func MapColumnsToModel(
 	return columns
 }
 
-// FetchColumnsForStorageUnit retrieves column information for a single storage unit,
-// including constraints and foreign key relationships.
+// FetchColumnsForStorageUnit retrieves column information for a single storage unit.
 func FetchColumnsForStorageUnit(
 	plugin engine.PluginFunctions,
 	config *engine.PluginConfig,
 	schema string,
 	storageUnit string,
 ) ([]*model.Column, error) {
-	typeArg := config.Credentials.Type
-
 	if err := ValidateStorageUnit(plugin, config, schema, storageUnit); err != nil {
 		return nil, err
 	}
@@ -120,18 +95,7 @@ func FetchColumnsForStorageUnit(
 		return nil, fmt.Errorf("failed to get columns for %s.%s: %w", schema, storageUnit, err)
 	}
 
-	constraints, err := plugin.GetColumnConstraints(config, schema, storageUnit)
-	if err != nil {
-		constraints = make(map[string]map[string]any)
-	}
-
-	foreignKeys, err := plugin.GetForeignKeyRelationships(config, schema, storageUnit)
-	if err != nil {
-		foreignKeys = make(map[string]*engine.ForeignKeyRelationship)
-	}
-
-	_ = typeArg // Used for logging in callers if needed
-	return MapColumnsToModel(columnsResult, constraints, foreignKeys), nil
+	return MapColumnsToModel(columnsResult), nil
 }
 
 // stateToAWSProvider converts settings.AWSProviderState to the GraphQL model.

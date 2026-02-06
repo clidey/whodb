@@ -171,7 +171,6 @@ type ImportFileOptions struct {
 	Format    ImportFileFormat `json:"Format"`
 	Delimiter *string          `json:"Delimiter,omitempty"`
 	Sheet     *string          `json:"Sheet,omitempty"`
-	HasHeader bool             `json:"HasHeader"`
 }
 
 type ImportPreview struct {

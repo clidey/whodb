@@ -9642,7 +9642,7 @@ func (ec *executionContext) unmarshalInputImportFileOptions(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Format", "Delimiter", "Sheet", "HasHeader"}
+	fieldsInOrder := [...]string{"Format", "Delimiter", "Sheet"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9670,13 +9670,6 @@ func (ec *executionContext) unmarshalInputImportFileOptions(ctx context.Context,
 				return it, err
 			}
 			it.Sheet = data
-		case "HasHeader":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("HasHeader"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HasHeader = data
 		}
 	}
 

@@ -94,7 +94,6 @@ input ImportFileOptions {
   Format: ImportFileFormat!
   Delimiter: String
   Sheet: String
-  HasHeader: Boolean!
 }
 
 input ImportColumnMapping {
