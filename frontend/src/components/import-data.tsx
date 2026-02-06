@@ -505,6 +505,12 @@ export const ImportData: FC<ImportDataProps> = ({
                           return;
                         }
 
+                        if (file.size > importLimits.maxFileSizeBytes) {
+                          toast.error(t("fileTooLarge", { size: importSizeMB }));
+                          event.target.value = "";
+                          return;
+                        }
+
                         const detected = detectDataFormat(file);
                         if (!detected) {
                           toast.error(t("fileTypeUnsupported"));
@@ -684,6 +690,11 @@ export const ImportData: FC<ImportDataProps> = ({
                       }}
                       onChange={(event) => {
                         const file = event.target.files?.[0] ?? null;
+                        if (file && file.size > importLimits.maxFileSizeBytes) {
+                          toast.error(t("fileTooLarge", { size: importSizeMB }));
+                          event.target.value = "";
+                          return;
+                        }
                         setSqlFile(file);
                       }}
                     />

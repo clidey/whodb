@@ -76,6 +76,7 @@ en:
 
   fileRequired: Select a file to continue
   fileTypeUnsupported: Unsupported file type. Please upload a CSV or Excel file.
+  fileTooLarge: "File exceeds the maximum size of {size} MB."
   previewFailed: "Preview failed: {message}"
   importSuccess: Import completed
   importFailed: "Import failed: {message}"
