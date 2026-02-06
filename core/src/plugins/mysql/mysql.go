@@ -119,6 +119,22 @@ func (p *MySQLPlugin) executeRawSQL(config *engine.PluginConfig, query string, p
 	}
 
 	return plugins.WithConnection(config, dbFunc, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// For multi-statement scripts, use the underlying *sql.DB directly
+		if multiStatement {
+			sqlDB, err := db.DB()
+			if err != nil {
+				return nil, err
+			}
+			_, err = sqlDB.Exec(query)
+			if err != nil {
+				return nil, err
+			}
+			return &engine.GetRowsResult{
+				Columns: []engine.Column{},
+				Rows:    [][]string{},
+			}, nil
+		}
+
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err

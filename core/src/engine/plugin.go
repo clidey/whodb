@@ -16,7 +16,15 @@
 
 package engine
 
-import "github.com/clidey/whodb/core/graph/model"
+import (
+	"errors"
+
+	"github.com/clidey/whodb/core/graph/model"
+)
+
+// ErrMultiStatementUnsupported is returned by plugins that do not support
+// executing multiple SQL statements in a single request.
+var ErrMultiStatementUnsupported = errors.New("multi-statement SQL is not supported by this database")
 
 // Credentials holds authentication and connection details for a database.
 type Credentials struct {

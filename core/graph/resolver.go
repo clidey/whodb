@@ -25,6 +25,7 @@ import (
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
 )
@@ -71,13 +72,7 @@ func MapColumnsToModel(
 	for _, column := range columnsResult {
 		isPrimary := column.IsPrimary
 		if !isPrimary {
-			if colConstraints, ok := constraints[column.Name]; ok {
-				if primary, exists := colConstraints["primary"]; exists {
-					if primaryBool, isBool := primary.(bool); isBool {
-						isPrimary = primaryBool
-					}
-				}
-			}
+			isPrimary = gorm_plugin.IsPrimary(constraints[column.Name])
 		}
 
 		isForeignKey := column.IsForeignKey
