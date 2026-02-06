@@ -93,6 +93,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                             limitContextMenu={true}
                             height={250}
                             databaseType={current?.Type}
+                            rawQuery={code}
                         />
                     )
                 }

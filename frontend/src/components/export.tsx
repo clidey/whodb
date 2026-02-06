@@ -44,6 +44,7 @@ interface IExportProps {
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
     databaseType?: string;
+    rawQuery?: string;
 }
 
 export const Export: FC<IExportProps> = ({
@@ -55,6 +56,7 @@ export const Export: FC<IExportProps> = ({
                                              selectedRowsData,
                                              checkedRowsCount,
                                              databaseType,
+                                             rawQuery,
                                          }) => {
     const { t } = useTranslation('components/export');
     const [exportDelimiter, setExportDelimiter] = useState(',');
@@ -93,7 +95,8 @@ export const Export: FC<IExportProps> = ({
         hasSelectedRows,
         exportDelimiter,
         selectedRowsForExport,
-        exportFormat
+        exportFormat,
+        rawQuery
     );
 
     const handleExportConfirm = useCallback(async () => {
@@ -118,7 +121,7 @@ export const Export: FC<IExportProps> = ({
                             <p>
                                 {hasSelectedRows
                                     ? t('selectedRows', { count: checkedRowsCount })
-                                    : t('allData')}
+                                    : rawQuery ? t('allDataRawQuery') : t('allData')}
                             </p>
                             <div className="mb-4 flex flex-col gap-2">
                                 <Label>

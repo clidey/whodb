@@ -195,6 +195,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             disableEdit={true}
                             limitContextMenu={true}
                             databaseType={current?.Type}
+                            rawQuery={text}
                         />
                     </div>
                     : (type.startsWith("sql:") && (type === "sql:insert" || type === "sql:update" || type === "sql:delete" || type === "sql:create" || type === "sql:alter" || type === "sql:drop"))

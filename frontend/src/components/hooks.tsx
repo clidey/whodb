@@ -20,7 +20,7 @@ import {isDesktopApp} from "../utils/external-links";
 import {addAuthHeader} from "../utils/auth-headers";
 
 
-export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' | 'ndjson' = 'csv') => {
+export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly: boolean = false, delimiter: string = ',', selectedRows?: Record<string, any>[], format: 'csv' | 'excel' | 'ndjson' = 'csv', rawQuery?: string) => {
     return useCallback(async () => {
       try {
         // Prepare request body
@@ -30,6 +30,10 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
           delimiter,
           format,
         };
+
+        if (rawQuery) {
+          requestBody.rawQuery = rawQuery;
+        }
 
         // Add selected rows if provided
         // For now, we'll use the full row data approach for selections
@@ -62,7 +66,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
         const contentDisposition = response.headers.get('Content-Disposition');
         // Only include schema in filename if it exists (for SQLite, schema is empty)
         const extension = format === 'excel' ? 'xlsx' : format === 'ndjson' ? 'ndjson' : 'csv';
-        let filename = schema ? `${schema}_${storageUnit}.${extension}` : `${storageUnit}.${extension}`;
+        let filename = rawQuery ? `query_export.${extension}` : schema ? `${schema}_${storageUnit}.${extension}` : `${storageUnit}.${extension}`;
         if (contentDisposition) {
           const filenameMatch = contentDisposition.match(/filename="(.+)"/);
           if (filenameMatch) {
@@ -104,7 +108,7 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
       } catch (error) {
         throw error;
       }
-    }, [schema, storageUnit, selectedOnly, delimiter, selectedRows, format]);
+    }, [schema, storageUnit, selectedOnly, delimiter, selectedRows, format, rawQuery]);
 };
 
 type ILongPressProps = {

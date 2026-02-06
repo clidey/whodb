@@ -117,6 +117,7 @@ const DynamicExport: FC<{
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
     databaseType?: string;
+    rawQuery?: string;
 }> = (props) => {
     // Use EE Export if available, otherwise fall back to CE Export
     const ExportComponent = EEExport || Export;
@@ -290,6 +291,7 @@ interface TableProps {
     databaseType?: string;
     // Mock data generation control - set to false for views/materialized views
     isMockDataGenerationAllowed?: boolean;
+    rawQuery?: string;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -322,6 +324,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     databaseType,
     // Mock data generation control
     isMockDataGenerationAllowed = true,
+    rawQuery,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -1735,6 +1738,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     selectedRowsData={selectedRowsData}
                     checkedRowsCount={checked.length}
                     databaseType={databaseType}
+                    rawQuery={rawQuery}
                 />
             </Suspense>
         </div>

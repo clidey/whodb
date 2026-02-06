@@ -25,6 +25,7 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/xuri/excelize/v2"
 )
@@ -81,6 +82,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		Delimiter    string           `json:"delimiter,omitempty"`
 		Format       string           `json:"format,omitempty"`
 		SelectedRows []map[string]any `json:"selectedRows,omitempty"`
+		RawQuery     string           `json:"rawQuery,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -115,7 +117,8 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if schema == "" && storageUnit == "" {
+	rawQuery := strings.TrimSpace(req.RawQuery)
+	if schema == "" && storageUnit == "" && rawQuery == "" {
 		http.Error(w, "Missing required parameters", http.StatusBadRequest)
 		return
 	}
@@ -128,6 +131,16 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 
 	pluginConfig := engine.NewPluginConfig(credentials)
 	plugin := src.MainEngine.Choose(engine.DatabaseType(credentials.Type))
+
+	if rawQuery != "" {
+		result, err := plugin.RawExecute(pluginConfig, rawQuery)
+		if err != nil {
+			http.Error(w, "Query execution failed", http.StatusInternalServerError)
+			return
+		}
+		handleRawQueryExport(w, result, format, delimiter)
+		return
+	}
 
 	switch format {
 	case "excel":
@@ -290,6 +303,164 @@ func handleExcelExport(w http.ResponseWriter, plugin *engine.Plugin, pluginConfi
 	if err := f.Write(w); err != nil {
 		http.Error(w, "Failed to generate Excel file", http.StatusInternalServerError)
 		return
+	}
+}
+
+// handleRawQueryExport exports the result of a raw query execution in the requested format.
+func handleRawQueryExport(w http.ResponseWriter, result *engine.GetRowsResult, format string, delimiter string) {
+	switch format {
+	case "excel":
+		handleRawQueryExcelExport(w, result)
+	case "ndjson":
+		handleRawQueryNDJSONExport(w, result)
+	default:
+		handleRawQueryCSVExport(w, result, delimiter)
+	}
+}
+
+func handleRawQueryCSVExport(w http.ResponseWriter, result *engine.GetRowsResult, delimiter string) {
+	delimRune := rune(delimiter[0])
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"query_export.csv\"")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	csvWriter := csv.NewWriter(w)
+	csvWriter.Comma = delimRune
+	defer csvWriter.Flush()
+
+	// Write headers
+	headers := make([]string, len(result.Columns))
+	for i, col := range result.Columns {
+		headers[i] = common.FormatCSVHeader(col.Name, col.Type)
+	}
+	if err := csvWriter.Write(headers); err != nil {
+		return
+	}
+
+	// Write rows
+	for i, row := range result.Rows {
+		escaped := make([]string, len(row))
+		for j, val := range row {
+			escaped[j] = common.EscapeFormula(val)
+		}
+		if err := csvWriter.Write(escaped); err != nil {
+			return
+		}
+		if (i+1)%100 == 0 {
+			csvWriter.Flush()
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+		}
+	}
+}
+
+func handleRawQueryExcelExport(w http.ResponseWriter, result *engine.GetRowsResult) {
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheetName := "Data"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		http.Error(w, "Failed to create Excel sheet", http.StatusInternalServerError)
+		return
+	}
+	f.SetActiveSheet(index)
+	f.DeleteSheet("Sheet1")
+
+	streamWriter, err := f.NewStreamWriter(sheetName)
+	if err != nil {
+		http.Error(w, "Failed to create Excel stream writer", http.StatusInternalServerError)
+		return
+	}
+
+	// Write headers with bold style
+	styleID, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#E0E0E0"},
+			Pattern: 1,
+		},
+	})
+
+	headerCells := make([]any, len(result.Columns))
+	for i, col := range result.Columns {
+		headerCells[i] = excelize.Cell{StyleID: styleID, Value: common.FormatCSVHeader(col.Name, col.Type)}
+	}
+	cell, _ := excelize.CoordinatesToCellName(1, 1)
+	if err := streamWriter.SetRow(cell, headerCells); err != nil {
+		http.Error(w, "Failed to write Excel headers", http.StatusInternalServerError)
+		return
+	}
+
+	// Write data rows
+	for i, row := range result.Rows {
+		if i >= MaxExcelRows {
+			break
+		}
+		cells := make([]any, len(row))
+		for j, val := range row {
+			cells[j] = val
+		}
+		cell, _ := excelize.CoordinatesToCellName(1, i+2)
+		if err := streamWriter.SetRow(cell, cells); err != nil {
+			http.Error(w, "Failed to write Excel row", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Set column widths
+	for i := 0; i < len(result.Columns); i++ {
+		streamWriter.SetColWidth(i+1, i+1, 15)
+	}
+
+	if err := streamWriter.Flush(); err != nil {
+		http.Error(w, "Failed to flush Excel data", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"query_export.xlsx\"")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	if err := f.Write(w); err != nil {
+		http.Error(w, "Failed to generate Excel file", http.StatusInternalServerError)
+		return
+	}
+}
+
+func handleRawQueryNDJSONExport(w http.ResponseWriter, result *engine.GetRowsResult) {
+	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"query_export.ndjson\"")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	for i, row := range result.Rows {
+		doc := make(map[string]string, len(result.Columns))
+		for j, col := range result.Columns {
+			if j < len(row) {
+				doc[col.Name] = row[j]
+			}
+		}
+		line, err := json.Marshal(doc)
+		if err != nil {
+			return
+		}
+		if _, err := w.Write(append(line, '\n')); err != nil {
+			return
+		}
+		if (i+1)%100 == 0 {
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+		}
 	}
 }
 
