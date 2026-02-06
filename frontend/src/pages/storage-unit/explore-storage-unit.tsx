@@ -83,6 +83,7 @@ import {usePageSize} from "../../hooks/use-page-size";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 import {useTranslation} from "../../hooks/use-translation";
+import {whereConditionToSql} from "../../utils/where-condition-to-sql";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -187,6 +188,36 @@ export const ExploreStorageUnit: FC = () => {
         const qualified = schema ? `${schema}.${unitName}` : unitName;
         return `SELECT * FROM ${qualified} LIMIT 5`;
     }, [schema, unitName, current?.Type, generateInitialQuery]);
+
+    const scratchpadQueryWithConditions = useMemo(() => {
+        if (generateInitialQuery && current?.Type) {
+            const baseQuery = generateInitialQuery(current?.Type, schema, unitName);
+            const whereClause = whereConditionToSql(whereCondition);
+
+            if (!whereClause) {
+                return baseQuery;
+            }
+
+            // Insert WHERE clause before LIMIT if present
+            const limitMatch = baseQuery.match(/\s+LIMIT\s+\d+/i);
+            if (limitMatch) {
+                const beforeLimit = baseQuery.substring(0, limitMatch.index);
+                const limitPart = baseQuery.substring(limitMatch.index!);
+                return `${beforeLimit} WHERE ${whereClause}${limitPart}`;
+            }
+
+            return `${baseQuery} WHERE ${whereClause}`;
+        }
+
+        const qualified = schema ? `${schema}.${unitName}` : unitName;
+        const whereClause = whereConditionToSql(whereCondition);
+
+        if (!whereClause) {
+            return `SELECT * FROM ${qualified} LIMIT 5`;
+        }
+
+        return `SELECT * FROM ${qualified} WHERE ${whereClause} LIMIT 5`;
+    }, [schema, unitName, current?.Type, generateInitialQuery, whereCondition]);
 
     const [code, setCode] = useState(initialScratchpadQuery);
 
@@ -497,9 +528,9 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleOpenScratchpad = useCallback(() => {
         setIsScratchpadOpen(true);
-        handleScratchpad();
-        setCode(initialScratchpadQuery);
-    }, [handleScratchpad, initialScratchpadQuery]);
+        setCode(scratchpadQueryWithConditions);
+        handleScratchpad(scratchpadQueryWithConditions);
+    }, [handleScratchpad, scratchpadQueryWithConditions]);
 
     const handleCloseScratchpad = useCallback(() => {
         setIsScratchpadOpen(false);
