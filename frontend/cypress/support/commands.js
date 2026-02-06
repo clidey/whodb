@@ -1959,3 +1959,111 @@ Cypress.Commands.add('screenshotWithHighlight', (selector, screenshotName, highl
     cy.screenshot(screenshotName, { overwrite: true, ...screenshotOptions });
     cy.removeHighlights();
 });
+
+// ============================================================================
+// Import Commands
+// ============================================================================
+
+/**
+ * Opens the import dialog for a given table.
+ * Navigates to the table's data view, then clicks the import button.
+ * @param {string} tableName - The table to open import for
+ */
+Cypress.Commands.add('openImport', (tableName) => {
+    cy.data(tableName);
+    cy.get('[data-testid="import-button"]', { timeout: 10000 }).should('be.visible').click();
+    cy.get('[data-testid="import-dialog"]', { timeout: 10000 }).should('be.visible');
+});
+
+/**
+ * Selects the import mode (data or sql) in the import dialog.
+ * @param {'data' | 'sql'} mode - The import mode to select
+ */
+Cypress.Commands.add('selectImportMode', (mode) => {
+    cy.get('[data-testid="import-mode-select"]').click();
+    cy.get(`[data-value="${mode}"]`).click();
+});
+
+/**
+ * Uploads a data file (CSV/Excel) in the import dialog.
+ * @param {string} filePath - Path to the file (relative to project root)
+ */
+Cypress.Commands.add('uploadDataFile', (filePath) => {
+    cy.get('[data-testid="import-data-file-input"]').selectFile(filePath, { force: true });
+});
+
+/**
+ * Uploads a SQL file in the import dialog.
+ * @param {string} filePath - Path to the SQL file (relative to project root)
+ */
+Cypress.Commands.add('uploadSqlFile', (filePath) => {
+    cy.get('[data-testid="import-sql-file-input"]').selectFile(filePath, { force: true });
+});
+
+/**
+ * Waits for the import preview to finish loading.
+ * Asserts that either the preview table or an error is visible.
+ */
+Cypress.Commands.add('waitForPreview', () => {
+    // Wait for loading to disappear
+    cy.get('[data-testid="import-preview-loading"]', { timeout: 3000 }).should('not.exist');
+    // Either preview table or error should be visible
+    cy.get('[data-testid="import-preview-section"]', { timeout: 15000 }).should('exist');
+});
+
+/**
+ * Extracts preview data (columns and rows) from the import preview table.
+ * @returns {{ columns: string[], rows: string[][] }}
+ */
+Cypress.Commands.add('getPreviewData', () => {
+    return cy.get('[data-testid="import-preview-table"]', { timeout: 10000 }).then($table => {
+        const columns = Cypress.$.makeArray($table.find('thead th'))
+            .map(el => el.innerText.trim());
+        const rows = Cypress.$.makeArray($table.find('tbody tr')).map(row => {
+            return Cypress.$.makeArray(Cypress.$(row).find('td'))
+                .map(cell => cell.innerText.trim());
+        });
+        return { columns, rows };
+    });
+});
+
+/**
+ * Clicks the import submit button for data mode.
+ */
+Cypress.Commands.add('confirmImportData', () => {
+    cy.get('[data-testid="import-submit-button"]').should('not.be.disabled').click();
+});
+
+/**
+ * Checks the SQL confirm checkbox and clicks the import submit button.
+ */
+Cypress.Commands.add('confirmSqlImport', () => {
+    cy.get('[data-testid="import-sql-confirm-checkbox"]').click({ force: true });
+    cy.get('[data-testid="import-submit-button"]').should('not.be.disabled').click();
+});
+
+/**
+ * Selects the data import mode (Append or Overwrite).
+ * @param {'APPEND' | 'OVERWRITE'} mode - The data mode value
+ */
+Cypress.Commands.add('selectImportDataMode', (mode) => {
+    cy.get('[data-testid="import-data-mode-select"]').click();
+    cy.get(`[data-value="${mode}"]`).click();
+});
+
+/**
+ * Types SQL into the CodeMirror editor in the import dialog.
+ * @param {string} sql - The SQL text to type
+ */
+Cypress.Commands.add('typeSqlInEditor', (sql) => {
+    const selector = '[data-testid="import-sql-editor"] .cm-content';
+    cy.get(selector)
+        .scrollIntoView()
+        .should('be.visible')
+        .click()
+        .clear()
+        .type(sql, { parseSpecialCharSequences: false, force: true });
+    // Blur to flush CodeMirror state into React
+    cy.get(selector).blur();
+    cy.wait(100);
+});

@@ -66,7 +66,8 @@ export const VALID_FEATURES = [
     'scratchpadUpdate',    // Optional: databases that don't support UPDATE via scratchpad
     'multiConditionFilter', // Optional: databases that don't support multiple WHERE conditions
     'typeCasting',         // Optional: databases that support numeric type casting
-    'sslConnection'        // Optional: databases configured with SSL/TLS
+    'sslConnection',       // Optional: databases configured with SSL/TLS
+    'import'               // Optional: databases that support data import (CSV/Excel/SQL)
 ];
 
 /**

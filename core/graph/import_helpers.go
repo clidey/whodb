@@ -30,8 +30,6 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-// --- Types ---
-
 type importParseResult struct {
 	columns   []string
 	rows      [][]string
@@ -52,8 +50,6 @@ type importValidationError struct {
 func (err importValidationError) Error() string {
 	return err.key
 }
-
-// --- Validation errors ---
 
 func newImportValidationError(key string) error {
 	return importValidationError{key: key}
@@ -76,8 +72,6 @@ func validationKeyFromError(err error) string {
 	}
 	return importValidationGeneric
 }
-
-// --- File reading ---
 
 func readUploadBytes(upload graphql.Upload, maxBytes int64) ([]byte, error) {
 	if upload.File == nil {
@@ -103,8 +97,6 @@ func readUploadBytes(upload graphql.Upload, maxBytes int64) ([]byte, error) {
 
 	return data, nil
 }
-
-// --- File parsing ---
 
 func parseImportFile(data []byte, options *model.ImportFileOptions, maxRows int, enforceRowCap bool) (*importParseResult, error) {
 	if options == nil {
@@ -253,8 +245,6 @@ func parseExcelImport(data []byte, options *model.ImportFileOptions, maxRows int
 
 	return result, nil
 }
-
-// --- Row / header helpers ---
 
 func normalizeRow(row []string, columnCount int) ([]string, error) {
 	if len(row) > columnCount {
