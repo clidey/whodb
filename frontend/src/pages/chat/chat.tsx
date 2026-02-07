@@ -48,6 +48,7 @@ import {
 } from "../../components/heroicons";
 import classNames from "classnames";
 import {cloneElement, FC, KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import ReactMarkdown from 'react-markdown';
 import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
 import {CodeEditor} from "../../components/editor";
@@ -187,7 +188,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                     <CodeEditor value={text} />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
-                    ? <div className="h-[250px] w-full">
+                    ? <div className="w-full">
                         <StorageUnitTable
                             columns={data?.Columns?.map(c => c.Name) ?? []}
                             columnTypes={data?.Columns?.map(c => c.Type) ?? []}
@@ -195,6 +196,8 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             disableEdit={true}
                             limitContextMenu={true}
                             databaseType={current?.Type}
+                            height={250}
+                            totalCount={data?.Rows?.length ?? 0}
                         />
                     </div>
                     : (type.startsWith("sql:") && (type === "sql:insert" || type === "sql:update" || type === "sql:delete" || type === "sql:create" || type === "sql:alter" || type === "sql:drop"))
@@ -700,14 +703,41 @@ export const ChatPage: FC = () => {
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                         : <div className="pl-4" />}
-                                                    <p className={classNames("py-2 rounded-xl whitespace-pre-wrap", {
-                                                        "bg-neutral-600/5 dark:bg-[#2C2F33] px-4": chat.isUserInput,
-                                                        "-ml-2": !chat.isUserInput && chats[i-1]?.isUserInput,
-                                                        "animate-fade-in": chat.isStreaming,
-                                                    })} data-input-message={chat.isUserInput ? "user" : "system"}>
-                                                        {chat.Text}
-                                                        {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
-                                                    </p>
+                                                    {chat.isUserInput ? (
+                                                        <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
+                                                            "animate-fade-in": chat.isStreaming,
+                                                        })} data-input-message="user">
+                                                            {chat.Text}
+                                                            {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                        </p>
+                                                    ) : (
+                                                        <div className={classNames("py-2 rounded-xl markdown-content ml-12", {
+                                                            "animate-fade-in": chat.isStreaming,
+                                                        })} data-input-message="system">
+                                                            <ReactMarkdown
+                                                                components={{
+                                                                    p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                                                                    strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+                                                                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
+                                                                    ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
+                                                                    li: ({node, ...props}) => <li className="ml-2" {...props} />,
+                                                                    h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
+                                                                    h2: ({node, ...props}) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
+                                                                    h3: ({node, ...props}) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
+                                                                    code: ({node, ...props}) => {
+                                                                        const isInline = !String(props.className || '').includes('language-');
+                                                                        return isInline
+                                                                            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props} />
+                                                                            : <code className="block bg-neutral-100 dark:bg-neutral-800 p-2 rounded my-2 text-sm overflow-x-auto" {...props} />;
+                                                                    },
+                                                                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
+                                                                }}
+                                                            >
+                                                                {chat.Text}
+                                                            </ReactMarkdown>
+                                                            {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (

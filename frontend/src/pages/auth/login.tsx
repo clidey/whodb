@@ -519,7 +519,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (credentials.database) setDatabase(credentials.database);
 
                 if (credentials.port) {
-                    setAdvancedForm(prev => ({...prev, 'Port': credentials.port}));
+                    setAdvancedForm(prev => ({...prev, 'Port': String(credentials.port)}));
                     setShowAdvanced(true);
                 }
 
@@ -531,7 +531,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     }
                     // Add port if provided
                     if (credentials.port) {
-                        advancedFormData['Port'] = credentials.port;
+                        advancedFormData['Port'] = String(credentials.port);
                     }
                     setAdvancedForm(advancedFormData);
                     if (Object.keys(advancedFormData).length > 0) {

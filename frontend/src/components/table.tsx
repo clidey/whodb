@@ -1050,6 +1050,16 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [searchRef, rows, columns]);
 
+    // Calculate actual height needed for the table content
+    // Add small buffer to account for borders/padding to prevent unnecessary scrollbar
+    const actualTableHeight = useMemo(() => {
+        if (paginatedRows.length === 0) return 500; // Min height for empty state
+        const contentHeight = paginatedRows.length * rowHeight;
+        const maxHeight = Math.min(height, window.innerHeight * 0.5);
+        // Add 1px buffer to prevent scrollbar from appearing due to rounding issues
+        return Math.min(contentHeight + 1, maxHeight);
+    }, [paginatedRows.length, rowHeight, height]);
+
     const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
         const isFocused = focusedRowIndex === index;
         const isSelected = checked.includes(index);
@@ -1257,16 +1267,17 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported]);
 
     return (
-        <div ref={tableRef} className="h-full flex">
-            <div className="flex flex-col h-full space-y-4 w-0" style={{
-                width: `${containerWidth}px`,
-            }} data-testid="table-container">
-                <TableComponent
-                    role="grid"
-                    aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
-                    aria-rowcount={paginatedRows.length}
-                    aria-multiselectable={true}
-                >
+        <div ref={tableRef} className="flex min-w-0 w-full">
+            <div className="flex flex-col space-y-4 min-w-0 w-full" data-testid="table-container">
+                <div className="overflow-x-auto" style={{
+                    width: `${containerWidth}px`,
+                }}>
+                    <TableComponent
+                        role="grid"
+                        aria-label={storageUnit ? `${storageUnit} data table` : 'Data table'}
+                        aria-rowcount={paginatedRows.length}
+                        aria-multiselectable={true}
+                    >
                     <TableHeader>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
@@ -1409,8 +1420,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <VirtualizedTableBody
                             rowCount={paginatedRows.length}
                             rowHeight={rowHeight}
-                            height={Math.min(Math.min(height, window.innerHeight * 0.5), paginatedRows.length * rowHeight)}
+                            height={actualTableHeight}
                             overscan={10}
+                            style={{
+                                overflowY: 'scroll',
+                            }}
                         >
                             {(rowIdx: number, rowStyle: React.CSSProperties) => contextMenu(rowIdx, rowStyle)}
                         </VirtualizedTableBody>
@@ -1460,6 +1474,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         </ContextMenuContent>
                     </ContextMenu>
                 )}
+                </div>
                 <div className={cn("flex justify-between items-center", {
                     "justify-end": children == null,
                     "mt-4": children != null,
