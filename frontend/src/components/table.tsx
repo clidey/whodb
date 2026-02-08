@@ -1195,7 +1195,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </ContextMenuItem>
                 )}
                 {!limitContextMenu && (
-                    <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 0} data-testid="context-menu-edit-row">
+                    <ContextMenuItem onSelect={() => handleEdit(index)} disabled={checked.length > 1} data-testid="context-menu-edit-row">
                         <PencilSquareIcon className="w-4 h-4" />
                         {t('editRow')}
                         <ContextMenuShortcut>Enter</ContextMenuShortcut>

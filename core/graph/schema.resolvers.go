@@ -1076,7 +1076,9 @@ func (r *queryResolver) ColumnsBatch(ctx context.Context, schema string, storage
 					"database_type": config.Credentials.Type,
 					"error":         err.Error(),
 				}).Error("Failed to fetch columns")
-				return err
+				// Don't fail the entire batch - just skip this table
+				results[i] = nil
+				return nil
 			}
 			results[i] = &model.StorageUnitColumns{
 				StorageUnit: storageUnit,
@@ -1090,7 +1092,15 @@ func (r *queryResolver) ColumnsBatch(ctx context.Context, schema string, storage
 		return nil, err
 	}
 
-	return results, nil
+	// Filter out nil results (tables that failed to load)
+	successfulResults := make([]*model.StorageUnitColumns, 0, len(results))
+	for _, result := range results {
+		if result != nil {
+			successfulResults = append(successfulResults, result)
+		}
+	}
+
+	return successfulResults, nil
 }
 
 // RawExecute is the resolver for the RawExecute field.

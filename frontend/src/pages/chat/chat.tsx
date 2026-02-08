@@ -28,6 +28,10 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
     EmptyState,
     Input,
     Select,
@@ -43,6 +47,7 @@ import {
     CheckCircleIcon,
     CodeBracketIcon,
     CommandLineIcon,
+    EllipsisHorizontalIcon,
     SparklesIcon,
     TableCellsIcon
 } from "../../components/heroicons";
@@ -85,13 +90,14 @@ const THINKING_PHRASES_COUNT = 25;
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
-const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ type, data, text }) => {
+const TablePreview: FC<{ type: string, data: TableData, text: string, containerWidth?: number }> = ({ type, data, text, containerWidth }) => {
     const { t } = useTranslation('pages/chat');
     const dispatch = useAppDispatch();
     const [showSQL, setShowSQL] = useState(false);
     const [showScratchpadDialog, setShowScratchpadDialog] = useState(false);
     const [selectedPage, setSelectedPage] = useState<string>("new");
     const [newPageName, setNewPageName] = useState<string>("");
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const navigate = useNavigate();
     const current = useAppSelector(state => state.auth.current);
     const { pages, activePageId } = useAppSelector(state => state.scratchpad);
@@ -161,35 +167,50 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
         return databaseSupportsScratchpad(current?.Type) && type.startsWith("sql:");
     }, [current?.Type, type]);
 
-    return <div className="flex flex-col w-[calc(100%-50px)] group/table-preview">
-        <div className="opacity-0 group-hover/table-preview:opacity-100 focus-within:opacity-100 transition-all flex gap-1 -transalte-y-full absolute top-0 z-[10]">
-            <Button onClick={handleCodeToggle} data-testid="icon-button" variant="outline" aria-label={showSQL ? t('showTable') : t('showCode')}>
-                {cloneElement(showSQL ? <TableCellsIcon className="w-6 h-6" /> : <CodeBracketIcon className="w-6 h-6" />, {
-                    className: "w-6 h-6",
-                    "aria-hidden": true,
-                })}
-            </Button>
-            {canMoveToScratchpad && (
-                <Button
-                    variant="outline"
-                    onClick={handleMoveToScratchpad}
-                    data-testid="icon-button"
-                    title={t('moveToScratchpad')}
-                    aria-label={t('moveToScratchpad')}
-                >
-                    <CommandLineIcon className="w-6 h-6" aria-hidden="true" />
-                </Button>
-            )}
+    return <div className="flex gap-2 w-[calc(100%-50px)] max-w-full min-w-0 group/table-preview">
+        <div className={cn("transition-all shrink-0 pt-1", {
+            "opacity-0 group-hover/table-preview:opacity-100 focus-within:opacity-100": !dropdownOpen,
+            "opacity-100": dropdownOpen,
+        })}>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                <DropdownMenuTrigger>
+                    <Button variant="outline" size="sm" data-testid="icon-button" aria-label={t('actions')}>
+                        <EllipsisHorizontalIcon className="w-5 h-5" aria-hidden="true" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={handleCodeToggle} data-testid="toggle-view-option">
+                        {showSQL ? (
+                            <>
+                                <TableCellsIcon className="w-4 h-4 mr-2" />
+                                {t('showTable')}
+                            </>
+                        ) : (
+                            <>
+                                <CodeBracketIcon className="w-4 h-4 mr-2" />
+                                {t('showCode')}
+                            </>
+                        )}
+                    </DropdownMenuItem>
+                    {canMoveToScratchpad && (
+                        <DropdownMenuItem onClick={handleMoveToScratchpad} data-testid="move-to-scratchpad-option">
+                            <CommandLineIcon className="w-4 h-4 mr-2" />
+                            {t('moveToScratchpad')}
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
-        <div className="flex items-center gap-lg overflow-hidden break-all leading-6 shrink-0 h-full w-full">
+        <div className="flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
             {
                 showSQL
-                ? <div className="h-[150px] w-full">
-                    <CodeEditor value={text} />
+                ? <div className="h-[400px] w-full">
+                    <CodeEditor value={text} language="sql" />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
                     ? <div className="w-full">
                         <StorageUnitTable
+                            key={containerWidth}
                             columns={data?.Columns?.map(c => c.Name) ?? []}
                             columnTypes={data?.Columns?.map(c => c.Type) ?? []}
                             rows={data?.Rows ?? []}
@@ -306,6 +327,7 @@ export const ChatPage: FC = () => {
 
     const [loading, setLoading] = useState(false);
     const loadingPhraseRef = useRef<string>("");
+    const [containerWidth, setContainerWidth] = useState(0);
 
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
@@ -670,6 +692,22 @@ export const ChatPage: FC = () => {
         }
     }, [chats.length]);
 
+    // Track container width to force table re-renders on resize
+    useEffect(() => {
+        const updateWidth = () => {
+            if (scrollContainerRef.current) {
+                setContainerWidth(scrollContainerRef.current.offsetWidth);
+            }
+        };
+
+        // Set initial width
+        updateWidth();
+
+        // Listen for window resize
+        window.addEventListener('resize', updateWidth);
+        return () => window.removeEventListener('resize', updateWidth);
+    }, []);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
             <div className="flex flex-col w-full h-full gap-2">
@@ -698,8 +736,8 @@ export const ChatPage: FC = () => {
                             </div>
                         </div>
                         : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
-                            <div className="flex justify-center w-full h-full">
-                                <div className="flex w-full flex-col gap-2">
+                            <div className="flex justify-center w-full h-full max-w-full">
+                                <div className="flex w-full flex-col gap-2 max-w-full min-w-0">
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
@@ -748,7 +786,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start pt-6 relative" data-testid="error-message">
+                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start max-w-full min-w-0 pt-6 relative" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : <div className="pl-4" />}
@@ -756,7 +794,7 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
-                                                return <div key={`chat-${i}`} className="flex items-center self-start relative" data-testid="visual-message">
+                                                return <div key={`chat-${i}`} className="flex items-center self-start max-w-full min-w-0 relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
@@ -768,11 +806,11 @@ export const ChatPage: FC = () => {
                                                 const isExecuting = executingConfirmedId === chat.id;
                                                 const showQuery = showQueryForId === chat.id;
 
-                                                return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="confirmation-message">
+                                                return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="confirmation-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
                                                         ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                         : <div className="pl-4" />}
-                                                    <div className="flex flex-col gap-3 w-[calc(100%-50px)]">
+                                                    <div className="flex flex-col gap-3 w-[calc(100%-50px)] max-w-full min-w-0">
                                                         <Alert className="w-full">
                                                             <SparklesIcon className="w-4 h-4" />
                                                             <AlertTitle>{t('confirmExecutionTitle') || 'Confirm Execution'}</AlertTitle>
@@ -820,9 +858,9 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 </div>
                                             }
-                                            return <div key={`chat-${i}`} className="flex gap-lg w-full pt-4 relative" data-testid="table-message">
+                                            return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
                                                 {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
-                                                <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} />
+                                                <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
                                             </div>
                                         })
                                     }
