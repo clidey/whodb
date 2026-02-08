@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,28 +76,6 @@ type LLMClient struct {
 	ProfileId string
 }
 
-func (c *LLMClient) Complete(prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
-	// Normalize type for backward compatibility
-	normalizedType := NormalizeLLMType(string(c.Type))
-
-	// Get provider from registry
-	provider, err := providers.GetProvider(normalizedType)
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Provider not found for type: %s", normalizedType)
-		return nil, err
-	}
-
-	// Build provider config with endpoint from environment
-	config := &providers.ProviderConfig{
-		Type:     normalizedType,
-		APIKey:   c.APIKey,
-		Endpoint: getEndpointForProvider(normalizedType),
-	}
-
-	// Use provider to complete the request
-	return provider.Complete(config, prompt, model, receiverChan)
-}
-
 // getEndpointForProvider returns the appropriate endpoint for a provider type
 func getEndpointForProvider(providerType LLMType) string {
 	switch providerType {
@@ -140,4 +118,3 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	// Use provider to get supported models
 	return provider.GetSupportedModels(config)
 }
-

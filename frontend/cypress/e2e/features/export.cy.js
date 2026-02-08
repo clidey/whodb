@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,40 @@ describe('Data Export', () => {
                     expect(request.body.selectedRows.length).to.be.greaterThan(0);
                 });
 
+                cy.get('[role="dialog"]').should('not.exist');
+            });
+        });
+
+        describe('Export All Ignores Selection', () => {
+            it('shows "all data" message when "Export All" is chosen from context menu with rows selected', () => {
+                cy.data(tableName);
+
+                // Wait for table to stabilize
+                cy.get('table tbody tr').should('have.length.at.least', 1);
+                cy.wait(1000);
+
+                // Select a row via context menu
+                cy.get('table tbody tr').first().find('td').eq(1).as('targetCell');
+                cy.get('@targetCell').scrollIntoView();
+                cy.get('@targetCell').rightclick({position: 'left'});
+                cy.wait(500);
+                cy.contains('Select Row').should('be.visible').click({force: true});
+                cy.wait(300);
+
+                // Verify row is selected
+                cy.contains('button', 'Export 1 Selected').should('be.visible');
+
+                // Now right-click again and choose "Export All as CSV"
+                cy.get('table tbody tr').first().find('td').eq(1).rightclick({position: 'left'});
+                cy.wait(500);
+                cy.get('[role="menu"]').contains('Export').click();
+                cy.contains('Export All as CSV').should('be.visible').click();
+
+                // Verify dialog shows "all data" message, NOT "selected rows"
+                cy.contains('h2', 'Export Data').should('be.visible');
+                cy.contains('You are about to export all data from the table.').should('be.visible');
+
+                cy.get('body').type('{esc}');
                 cy.get('[role="dialog"]').should('not.exist');
             });
         });

@@ -2,6 +2,7 @@ en:
   title: Export Data
   selectedRows: You are about to export {{count}} selected rows.
   allData: You are about to export all data from the table. This may take some time for large tables.
+  allDataRawQuery: You are about to export the results of your query.
   format: Format
   delimiter: Delimiter
   delimiterHelp: Choose a delimiter that doesn't appear in your data

@@ -186,7 +186,14 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 		}
 		schemaNames := make([]string, len(schemas))
 		for i, schema := range schemas {
-			schemaNames[i] = schema.(string)
+			switch v := schema.(type) {
+			case string:
+				schemaNames[i] = v
+			case []byte:
+				schemaNames[i] = string(v)
+			default:
+				schemaNames[i] = fmt.Sprintf("%v", v)
+			}
 		}
 		return schemaNames, nil
 	})

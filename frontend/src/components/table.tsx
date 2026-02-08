@@ -117,6 +117,9 @@ const DynamicExport: FC<{
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
     databaseType?: string;
+    rawQuery?: string;
+    preselectedFormat?: 'csv' | 'excel' | 'ndjson';
+    forceExportAll?: boolean;
 }> = (props) => {
     // Use EE Export if available, otherwise fall back to CE Export
     const ExportComponent = EEExport || Export;
@@ -290,6 +293,7 @@ interface TableProps {
     databaseType?: string;
     // Mock data generation control - set to false for views/materialized views
     isMockDataGenerationAllowed?: boolean;
+    rawQuery?: string;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -322,6 +326,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     databaseType,
     // Mock data generation control
     isMockDataGenerationAllowed = true,
+    rawQuery,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -330,6 +335,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
+    const [preselectedFormat, setPreselectedFormat] = useState<'csv' | 'excel' | 'ndjson' | undefined>(undefined);
+    const [forceExportAll, setForceExportAll] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
     const [contextMenuCellIdx, setContextMenuCellIdx] = useState<number | null>(null);
 
@@ -408,7 +415,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const hasSelectedRows = checked.length > 0;
     const selectedRowsData = useMemo(() => {
         if (hasSelectedRows) {
-            // Convert array of arrays to array of objects with column names as keys
             return checked.map(idx => {
                 const row = rows[idx];
                 const rowObj: Record<string, any> = {};
@@ -418,8 +424,23 @@ export const StorageUnitTable: FC<TableProps> = ({
                 return rowObj;
             });
         }
+        if (rawQuery) {
+            return rows.map(row => {
+                const rowObj: Record<string, any> = {};
+                columns.forEach((col, colIdx) => {
+                    rowObj[col] = row[colIdx];
+                });
+                return rowObj;
+            });
+        }
         return undefined;
-    }, [hasSelectedRows, checked, rows, columns]);
+    }, [hasSelectedRows, checked, rows, columns, rawQuery]);
+
+    const openExport = useCallback((format?: 'csv' | 'excel' | 'ndjson', exportAll?: boolean) => {
+        setPreselectedFormat(format);
+        setForceExportAll(exportAll ?? false);
+        setShowExportConfirm(true);
+    }, []);
 
     // Delete logic, adapted from explore-storage-unit.tsx
     const handleDeleteRow = useCallback(async (rowIndex: number) => {
@@ -747,7 +768,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Listen for menu export trigger
     useEffect(() => {
         const handleExportTrigger = () => {
-            setShowExportConfirm(true);
+            openExport();
         };
 
         window.addEventListener('menu:trigger-export', handleExportTrigger);
@@ -899,7 +920,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         case 'e':
                             // Mod+Shift+E: Export (opens export dialog)
                             event.preventDefault();
-                            setShowExportConfirm(true);
+                            openExport();
                             break;
                     }
                     return;
@@ -959,7 +980,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages]);
+    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages, openExport]);
 
 
 
@@ -1210,33 +1231,37 @@ export const StorageUnitTable: FC<TableProps> = ({
                         collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                     >
                         <ContextMenuItem
-                            onSelect={() => setShowExportConfirm(true)}
+                            onSelect={() => openExport('csv', true)}
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportAllAsCsv')}
                             <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
-                            onSelect={() => setShowExportConfirm(true)}
+                            onSelect={() => openExport('excel', true)}
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportAllAsExcel')}
                         </ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem
-                            onSelect={() => setShowExportConfirm(true)}
-                            disabled={checked.length === 0}
-                        >
-                            <DocumentIcon className="w-4 h-4" />
-                            {t('exportSelectedAsCsv')}
-                        </ContextMenuItem>
-                        <ContextMenuItem
-                            onSelect={() => setShowExportConfirm(true)}
-                            disabled={checked.length === 0}
-                        >
-                            <DocumentIcon className="w-4 h-4" />
-                            {t('exportSelectedAsExcel')}
-                        </ContextMenuItem>
+                        {!disableEdit && (
+                            <>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem
+                                    onSelect={() => openExport('csv')}
+                                    disabled={checked.length === 0}
+                                >
+                                    <DocumentIcon className="w-4 h-4" />
+                                    {t('exportSelectedAsCsv')}
+                                </ContextMenuItem>
+                                <ContextMenuItem
+                                    onSelect={() => openExport('excel')}
+                                    disabled={checked.length === 0}
+                                >
+                                    <DocumentIcon className="w-4 h-4" />
+                                    {t('exportSelectedAsExcel')}
+                                </ContextMenuItem>
+                            </>
+                        )}
                     </ContextMenuSubContent>
                 </ContextMenuSub>
                 {!limitContextMenu && isMockDataSupported && (
@@ -1264,7 +1289,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported]);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported, openExport]);
 
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
@@ -1365,33 +1390,37 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                         >
                                             <ContextMenuItem
-                                                onSelect={() => setShowExportConfirm(true)}
+                                                onSelect={() => openExport('csv', true)}
                                             >
                                                 <DocumentIcon className="w-4 h-4" />
                                                 {t('exportAllAsCsv')}
                                                 <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                                             </ContextMenuItem>
                                             <ContextMenuItem
-                                                onSelect={() => setShowExportConfirm(true)}
+                                                onSelect={() => openExport('excel', true)}
                                             >
                                                 <DocumentIcon className="w-4 h-4" />
                                                 {t('exportAllAsExcel')}
                                             </ContextMenuItem>
-                                            <ContextMenuSeparator />
-                                            <ContextMenuItem
-                                                onSelect={() => setShowExportConfirm(true)}
-                                                disabled={checked.length === 0}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                {t('exportSelectedAsCsv')}
-                                            </ContextMenuItem>
-                                            <ContextMenuItem
-                                                onSelect={() => setShowExportConfirm(true)}
-                                                disabled={checked.length === 0}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                {t('exportSelectedAsExcel')}
-                                            </ContextMenuItem>
+                                            {!disableEdit && (
+                                                <>
+                                                    <ContextMenuSeparator />
+                                                    <ContextMenuItem
+                                                        onSelect={() => openExport('csv')}
+                                                        disabled={checked.length === 0}
+                                                    >
+                                                        <DocumentIcon className="w-4 h-4" />
+                                                        {t('exportSelectedAsCsv')}
+                                                    </ContextMenuItem>
+                                                    <ContextMenuItem
+                                                        onSelect={() => openExport('excel')}
+                                                        disabled={checked.length === 0}
+                                                    >
+                                                        <DocumentIcon className="w-4 h-4" />
+                                                        {t('exportSelectedAsExcel')}
+                                                    </ContextMenuItem>
+                                                </>
+                                            )}
                                         </ContextMenuSubContent>
                                     </ContextMenuSub>
                                     <ContextMenuSeparator />
@@ -1457,14 +1486,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                 >
                                     <ContextMenuItem
-                                        onSelect={() => setShowExportConfirm(true)}
+                                        onSelect={() => openExport('csv', true)}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportAllAsCsv')}
                                         <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
                                     </ContextMenuItem>
                                     <ContextMenuItem
-                                        onSelect={() => setShowExportConfirm(true)}
+                                        onSelect={() => openExport('excel', true)}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportAllAsExcel')}
@@ -1525,7 +1554,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
                     <Button
                         variant="secondary"
-                        onClick={() => setShowExportConfirm(true)}
+                        onClick={() => openExport()}
                         className="flex gap-sm"
                         data-testid="export-all-button"
                     >
@@ -1745,11 +1774,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     open={showExportConfirm}
                     onOpenChange={setShowExportConfirm}
                     schema={schema || ''}
-                    storageUnit={storageUnit || ''}
+                    storageUnit={rawQuery ? 'query_export' : (storageUnit || '')}
                     hasSelectedRows={hasSelectedRows}
                     selectedRowsData={selectedRowsData}
                     checkedRowsCount={checked.length}
                     databaseType={databaseType}
+                    rawQuery={rawQuery}
+                    preselectedFormat={preselectedFormat}
+                    forceExportAll={forceExportAll}
                 />
             </Suspense>
         </div>
