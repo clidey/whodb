@@ -151,12 +151,16 @@ export const LoginForm: FC<LoginFormProps> = ({
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
+    const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(() => {
+        // Detect auto-login on initial render to prevent flash of login form
+        return searchParams.has("resource") || searchParams.has("login");
+    });
 
     const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
 
     const loading = useMemo(() => {
-        return loginLoading || loginWithProfileLoading;
-    }, [loginLoading, loginWithProfileLoading]);
+        return loginLoading || loginWithProfileLoading || isAutoLoggingIn;
+    }, [loginLoading, loginWithProfileLoading, isAutoLoggingIn]);
 
     const markFirstLoginComplete = useCallback(() => {
         if (isFirstLogin) {
@@ -220,11 +224,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('loginSuccessful'));
+                    toast.success(t('loginSuccessful'));
+                    // Component will unmount after navigation, no need to clear state
+                    return;
                 }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -274,11 +282,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('loginSuccessful'));
+                    toast.success(t('loginSuccessful'));
+                    // Component will unmount after navigation, no need to clear state
+                    return;
                 }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -322,11 +334,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('welcomeToWhodb'));
+                    toast.success(t('welcomeToWhodb'));
+                    // Component will unmount after navigation, no need to clear state
+                    return;
                 }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -730,7 +746,9 @@ export const LoginForm: FC<LoginFormProps> = ({
         return selectedAvailableProfile != null;
     }, [selectedAvailableProfile]);
 
-    if (loading || profilesLoading)  {
+    // Always show loading during auto-login, regardless of mutation or profile loading state
+    // Only show form if auto-login fails (isAutoLoggingIn set to false in error handlers)
+    if (isAutoLoggingIn || loading || profilesLoading)  {
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
