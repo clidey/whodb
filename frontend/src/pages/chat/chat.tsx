@@ -663,6 +663,13 @@ export const ChatPage: FC = () => {
         return models.length === 0 || (!modelAvailable && !currentModel);
     }, [modelAvailable, models.length, currentModel]);
 
+    // Auto-scroll to bottom when chats change or component mounts
+    useEffect(() => {
+        if (scrollContainerRef.current != null && chats.length > 0) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+    }, [chats.length]);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
             <div className="flex flex-col w-full h-full gap-2">
@@ -787,10 +794,8 @@ export const ChatPage: FC = () => {
 
                                                         {/* SQL Query Display */}
                                                         {showQuery && (
-                                                            <div className="bg-neutral-100 dark:bg-neutral-800 p-4 rounded-lg">
-                                                                <code className="text-sm whitespace-pre-wrap break-words">
-                                                                    {chat.Text}
-                                                                </code>
+                                                            <div className="h-[200px] w-full rounded-lg overflow-hidden">
+                                                                <CodeEditor value={chat.Text} language="sql" />
                                                             </div>
                                                         )}
 
