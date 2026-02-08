@@ -159,6 +159,10 @@ export const ExploreStorageUnit: FC = () => {
     } | null>(null);
     const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
 
+    // Track table container height for responsive sizing
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const [tableHeight, setTableHeight] = useState<number>(500);
+
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
     // Keep whereConditionRef in sync with whereCondition state
@@ -459,6 +463,49 @@ export const ExploreStorageUnit: FC = () => {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
     }, [navigate, unit, currentTableName]);
+
+    // Dynamically adjust table height based on available viewport space
+    useEffect(() => {
+        const updateTableHeight = () => {
+            if (tableContainerRef.current) {
+                // Get the position of the table container relative to viewport
+                const rect = tableContainerRef.current.getBoundingClientRect();
+                // Calculate available height from current position to bottom of viewport
+                // Subtract bottom padding (40px for spacing)
+                const availableHeight = window.innerHeight - rect.top - 40;
+
+                // Reserve space for table controls:
+                // - Table header row: ~48px
+                // - Add Row button and children: ~60px
+                // - Pagination controls: ~48px
+                // - Export button: ~60px
+                // - Internal gaps and spacing: ~44px
+                const reservedSpace = 260;
+
+                // Calculate final height with minimum of 300px for usability
+                const calculatedHeight = Math.max(300, availableHeight - reservedSpace);
+                setTableHeight(calculatedHeight);
+            }
+        };
+
+        // Initial calculation with a small delay to ensure DOM is ready
+        const timeoutId = setTimeout(updateTableHeight, 0);
+
+        // Update on window resize
+        window.addEventListener('resize', updateTableHeight);
+
+        // Update when content changes (using ResizeObserver for container)
+        const resizeObserver = new ResizeObserver(updateTableHeight);
+        if (tableContainerRef.current) {
+            resizeObserver.observe(tableContainerRef.current);
+        }
+
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('resize', updateTableHeight);
+            resizeObserver.disconnect();
+        };
+    }, [rows]);
 
     const handleFilterChange = useCallback((filters: WhereCondition) => {
         // Update ref synchronously to avoid stale closure issues
@@ -874,7 +921,7 @@ export const ExploreStorageUnit: FC = () => {
                 </Sheet>
 
             </div>
-            <div className="grow">
+            <div className="grow" ref={tableContainerRef}>
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
                         <Loading />
@@ -894,6 +941,7 @@ export const ExploreStorageUnit: FC = () => {
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
                         pageSize={pageSize}
+                        height={tableHeight}
                         // Server-side pagination props
                         totalCount={Number.parseInt(totalCount, 10)}
                         currentPage={currentPage}
@@ -931,10 +979,10 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="flex flex-col gap-sm h-[150px] mb-4">
+                <div className="flex flex-col gap-sm h-[150px] mb-4" data-vaul-no-drag>
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto" data-vaul-no-drag>
                     <StorageUnitTable
                         columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
                         columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}

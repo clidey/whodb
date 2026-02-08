@@ -1074,11 +1074,11 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Calculate actual height needed for the table content
     // Add small buffer to account for borders/padding to prevent unnecessary scrollbar
     const actualTableHeight = useMemo(() => {
-        if (paginatedRows.length === 0) return 500; // Min height for empty state
+        if (paginatedRows.length === 0) return Math.min(500, height); // Min height for empty state, but respect passed height
         const contentHeight = paginatedRows.length * rowHeight;
-        const maxHeight = Math.min(height, window.innerHeight * 0.5);
+        // Use the passed height directly - let parent control sizing
         // Add 1px buffer to prevent scrollbar from appearing due to rounding issues
-        return Math.min(contentHeight + 1, maxHeight);
+        return Math.min(contentHeight + 1, height);
     }, [paginatedRows.length, rowHeight, height]);
 
     const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
