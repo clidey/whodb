@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ interface IExportProps {
     selectedRowsData?: Record<string, any>[];
     checkedRowsCount: number;
     databaseType?: string;
+    rawQuery?: string;
+    preselectedFormat?: 'csv' | 'excel' | 'ndjson';
+    forceExportAll?: boolean;
 }
 
 export const Export: FC<IExportProps> = ({
@@ -55,6 +58,9 @@ export const Export: FC<IExportProps> = ({
                                              selectedRowsData,
                                              checkedRowsCount,
                                              databaseType,
+                                             rawQuery,
+                                             preselectedFormat,
+                                             forceExportAll,
                                          }) => {
     const { t } = useTranslation('components/export');
     const [exportDelimiter, setExportDelimiter] = useState(',');
@@ -62,8 +68,8 @@ export const Export: FC<IExportProps> = ({
     const [exportFormat, setExportFormat] = useState<'csv' | 'excel' | 'ndjson'>(defaultFormat);
 
     useEffect(() => {
-        setExportFormat(defaultFormat);
-    }, [defaultFormat]);
+        setExportFormat(preselectedFormat ?? defaultFormat);
+    }, [defaultFormat, preselectedFormat]);
 
     // Export options as lists - CE version only has basic download
     const exportFormatOptions = useMemo(() => [
@@ -78,22 +84,21 @@ export const Export: FC<IExportProps> = ({
         {value: '|', label: t('delimiterPipe')},
     ] as const, [t]);
 
-    // Selected rows are already in the correct format for the hook.
-    const selectedRowsForExport = useMemo(() => {
-        if (!hasSelectedRows || !selectedRowsData) {
-            return undefined;
-        }
-        return selectedRowsData;
-    }, [hasSelectedRows, selectedRowsData]);
+    const effectiveHasSelectedRows = hasSelectedRows && !forceExportAll;
 
-    // Always call the hook, but use conditional logic inside
+    const selectedRowsForExport = useMemo(() => {
+        if (rawQuery && selectedRowsData) return selectedRowsData;
+        if (!effectiveHasSelectedRows || !selectedRowsData) return undefined;
+        return selectedRowsData;
+    }, [effectiveHasSelectedRows, selectedRowsData, rawQuery]);
+
     const backendExport = useExportToCSV(
         schema || '',
         storageUnit || '',
-        hasSelectedRows,
+        effectiveHasSelectedRows || !!rawQuery,
         exportDelimiter,
         selectedRowsForExport,
-        exportFormat
+        exportFormat,
     );
 
     const handleExportConfirm = useCallback(async () => {
@@ -116,9 +121,9 @@ export const Export: FC<IExportProps> = ({
                     <div className="flex flex-col gap-lg grow">
                         <div className="space-y-4 grow">
                             <p>
-                                {hasSelectedRows
+                                {effectiveHasSelectedRows
                                     ? t('selectedRows', { count: checkedRowsCount })
-                                    : t('allData')}
+                                    : rawQuery ? t('allDataRawQuery') : t('allData')}
                             </p>
                             <div className="mb-4 flex flex-col gap-2">
                                 <Label>

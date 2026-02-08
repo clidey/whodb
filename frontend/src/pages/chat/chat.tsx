@@ -196,6 +196,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string }> = ({ typ
                             disableEdit={true}
                             limitContextMenu={true}
                             databaseType={current?.Type}
+                            rawQuery={text}
                             height={250}
                             totalCount={data?.Rows?.length ?? 0}
                         />
