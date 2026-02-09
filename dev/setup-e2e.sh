@@ -21,7 +21,7 @@ set -e
 EDITION="${1:-ce}"
 TARGET_DB="${2:-all}"
 
-# Check if this is EE-only mode (passed from run-cypress.sh)
+# Check if this is EE-only mode (passed from run-e2e.sh)
 if [ "$EDITION" = "ee-only" ]; then
     SKIP_CE_DATABASES="true"
     EDITION="ee"  # Use ee for everything else

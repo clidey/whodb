@@ -51,3 +51,6 @@ cli/.gocache
 .serena
 docs/images/1440x900
 ee/dev/translation-tool/.venv
+frontend/.pnpm-store
+frontend/e2e/reports
+frontend/e2e/logs

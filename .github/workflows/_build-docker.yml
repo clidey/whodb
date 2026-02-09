@@ -105,7 +105,7 @@ jobs:
         # Always build frontend since cache is disabled
         working-directory: ./frontend
         env:
-          CYPRESS_INSTALL_BINARY: "0"
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
         run: |
           pnpm install
           pnpm run build:${{ inputs.edition }}

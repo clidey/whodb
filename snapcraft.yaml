@@ -87,7 +87,7 @@ parts:
       - gnupg
     build-environment:
       # Skip Cypress binary installation - not needed for production builds
-      - CYPRESS_INSTALL_BINARY: "0"
+      - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
     override-build: |
       # Install Node.js
       curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -

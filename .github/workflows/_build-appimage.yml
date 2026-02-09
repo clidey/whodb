@@ -99,7 +99,7 @@ jobs:
             echo "✅ Using cached frontend build"
           else
             echo "Building frontend..."
-            CYPRESS_INSTALL_BINARY=0 pnpm i
+            PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm i
             pnpm run build:${{ inputs.edition }}
             echo "✅ Frontend built successfully"
           fi
