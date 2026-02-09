@@ -221,52 +221,44 @@ if [ "$HEADLESS" = "true" ]; then
 
     echo ""
     echo "⏳ Waiting for all databases to complete..."
-    echo ""
 
     # Track which databases have finished
     declare -A DB_DONE
     DONE_COUNT=0
     TOTAL=${#DATABASES[@]}
 
-    # Poll loop: one line per database, updated in-place
     while [ $DONE_COUNT -lt $TOTAL ]; do
-        # Check for newly completed databases
         for db in "${DATABASES[@]}"; do
-            [ "${DB_DONE[$db]}" = "1" ] && continue
+            [ -n "${DB_DONE[$db]}" ] && continue
             if ! kill -0 "${DB_PIDS[$db]}" 2>/dev/null; then
                 wait "${DB_PIDS[$db]}" && DB_DONE[$db]="pass" || DB_DONE[$db]="fail"
                 DONE_COUNT=$((DONE_COUNT + 1))
                 [ "${DB_DONE[$db]}" = "fail" ] && FAILED_DBS+=("$db")
-            fi
-        done
 
-        # Print one line per database, then move cursor back up
-        for db in "${DATABASES[@]}"; do
-            if [ "${DB_DONE[$db]}" = "pass" ]; then
-                printf "\033[2K  ✅ %-15s passed\n" "$db"
-            elif [ "${DB_DONE[$db]}" = "fail" ]; then
-                printf "\033[2K  ❌ %-15s failed\n" "$db"
-            else
-                LOG="$PROJECT_ROOT/frontend/e2e/logs/$db.log"
-                # Get last Playwright test result line (✓ or ✘), extract spec + test name
-                LAST=$(grep -E '^\s+[✓✘]' "$LOG" 2>/dev/null | tail -1 \
-                    | sed 's/.*› //' \
-                    | sed 's/e2e\/tests\/features\///' \
-                    | sed 's/\.spec\.mjs:[0-9]*//' \
-                    | sed 's/^\s*//' \
-                    | cut -c1-80)
-                printf "\033[2K  ⏳ %-15s %s\n" "$db" "${LAST:-starting...}"
+                # Print result permanently
+                printf "\r\033[2K"
+                if [ "${DB_DONE[$db]}" = "pass" ]; then
+                    echo "✅ [$DONE_COUNT/$TOTAL] $db passed"
+                else
+                    echo "❌ [$DONE_COUNT/$TOTAL] $db failed (see e2e/logs/$db.log)"
+                fi
             fi
         done
 
         if [ $DONE_COUNT -lt $TOTAL ]; then
+            # Single-line status showing what each running db is on
+            RUNNING=""
+            for db in "${DATABASES[@]}"; do
+                [ -n "${DB_DONE[$db]}" ] && continue
+                LOG="$PROJECT_ROOT/frontend/e2e/logs/$db.log"
+                SPEC=$(grep -oP '› e2e/tests/features/\K[^:]+' "$LOG" 2>/dev/null | tail -1 | sed 's/\.spec\.mjs//')
+                RUNNING="$RUNNING $db(${SPEC:-…})"
+            done
+            printf "\r\033[2K⏳ %d/%d done |%s" "$DONE_COUNT" "$TOTAL" "$RUNNING"
             sleep 2
-            # Move cursor back up to overwrite all lines
-            printf "\033[%dA" "$TOTAL"
         fi
     done
     echo ""
-    echo "   $DONE_COUNT/$TOTAL complete"
 else
     # GUI mode: Single Playwright session with --headed
     echo "📋 Opening Playwright in headed mode..."
