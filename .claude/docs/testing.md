@@ -1,49 +1,58 @@
 # Testing Guide
 
-This document covers all testing infrastructure for WhoDB: frontend Cypress E2E tests, Go backend tests, and CLI tests.
+This document covers all testing infrastructure for WhoDB: frontend Playwright E2E tests, Go backend tests, and CLI tests.
 
 ## Quick Reference
 
 ```bash
-# Frontend Cypress (CE)
-cd frontend && pnpm cypress:ce:headless        # All CE databases, headless
-cd frontend && pnpm cypress:ce                  # Interactive mode
+# Frontend Playwright E2E (CE)
+cd frontend && pnpm e2e:ce:headless          # All CE databases, headless
+cd frontend && pnpm e2e:ce                   # Interactive mode (headed)
 
-# Frontend Cypress (EE) - requires ee/ submodule
-cd frontend && pnpm cypress:ee:headless        # EE databases only
-cd frontend && pnpm cypress:all:headless       # CE + EE combined
+# Frontend Playwright E2E (EE) - requires ee/ submodule
+cd frontend && pnpm e2e:ee:headless          # EE databases only
+cd frontend && pnpm e2e:all:headless         # CE + EE combined
 
 # Backend Go tests
-bash dev/run-backend-tests.sh all              # Unit + integration
-bash dev/run-backend-tests.sh unit             # Unit tests only
-bash dev/run-backend-tests.sh integration      # Integration tests only
+bash dev/run-backend-tests.sh all            # Unit + integration
+bash dev/run-backend-tests.sh unit           # Unit tests only
+bash dev/run-backend-tests.sh integration    # Integration tests only
 
 # CLI tests
-bash dev/run-cli-tests.sh                      # All CLI tests
-bash dev/run-cli-tests.sh --skip-postgres      # Skip PostgreSQL E2E
+bash dev/run-cli-tests.sh                    # All CLI tests
+bash dev/run-cli-tests.sh --skip-postgres    # Skip PostgreSQL E2E
 ```
 
 ---
 
-## Frontend Cypress Tests
+## Frontend Playwright E2E Tests
 
 ### Architecture
 
 ```
-frontend/cypress/
-├── e2e/features/           # 28 feature test files (.cy.js)
-├── fixtures/databases/     # Database configuration JSON files
+frontend/e2e/
+├── tests/
+│   ├── features/              # 29 feature test files (.spec.mjs)
+│   └── postgres-screenshots.spec.mjs  # Screenshot generation (run separately)
+├── fixtures/databases/        # Database configuration JSON files
 ├── support/
-│   ├── e2e.js              # Global setup (exceptions, animations, coverage)
-│   ├── commands.js         # Custom Cypress commands
-│   ├── test-runner.js      # Database iteration helper
-│   ├── fixture-validator.js
-│   └── categories/         # Database category helpers
-│       ├── sql.js          # SQL database helpers
-│       ├── document.js     # MongoDB/Elasticsearch helpers
-│       ├── keyvalue.js     # Redis helpers
-│       └── index.js
-└── logs/                   # Test execution logs
+│   ├── test-fixture.mjs       # Test fixture (whodb helper, forEachDatabase, coverage)
+│   ├── whodb.mjs              # WhoDB helper class (all page commands)
+│   ├── database-config.mjs    # Database config loader
+│   ├── global-setup.mjs       # Global setup (health checks)
+│   ├── helpers/
+│   │   ├── animation.mjs      # Browser state helpers
+│   │   └── fixture-validator.mjs  # Feature validation
+│   └── categories/            # Database category helpers
+│       ├── sql.mjs            # SQL database helpers
+│       ├── document.mjs       # MongoDB/Elasticsearch helpers
+│       ├── keyvalue.mjs       # Redis helpers
+│       └── index.mjs
+├── reports/
+│   ├── blobs/                 # Blob reports per database (merged after all runs)
+│   ├── html/                  # Merged HTML report (all databases combined)
+│   └── test-results/          # Test artifacts (screenshots, traces, videos)
+└── logs/                      # Per-database execution logs
 ```
 
 ### Test Categories
@@ -58,7 +67,7 @@ Tests are organized by database category:
 
 ### Database Fixtures
 
-Located in `frontend/cypress/fixtures/databases/`:
+Located in `frontend/e2e/fixtures/databases/`:
 - `postgres.json`, `mysql.json`, `mysql8.json`, `mariadb.json`, `sqlite.json`
 - `mongodb.json`, `elasticsearch.json`, `clickhouse.json`, `redis.json`
 
@@ -69,18 +78,18 @@ Each fixture defines: connection details, expected schemas, test data, and featu
 #### CE Tests (Community Edition)
 
 ```bash
-# Interactive mode (opens Cypress UI)
-pnpm cypress:ce                        # All CE databases
-pnpm cypress:db <database>             # Single database (e.g., postgres, mysql)
-pnpm cypress:feature <feature>         # Single feature file
+# Interactive mode (opens browser UI)
+pnpm e2e:ce                             # All CE databases
+pnpm e2e:db <database>                  # Single database (e.g., postgres, mysql)
+pnpm e2e:feature <feature>              # Single feature file
 
 # Headless mode (CI/automated)
-pnpm cypress:ce:headless               # All CE databases
-pnpm cypress:db:headless <database>    # Single database
-pnpm cypress:feature:headless <feature> # Single feature
+pnpm e2e:ce:headless                    # All CE databases
+pnpm e2e:db:headless <database>         # Single database
+pnpm e2e:feature:headless <feature>     # Single feature
 
 # Debug mode
-pnpm cypress:ce:headless:debug         # With debug logging
+pnpm e2e:ce:headless:debug              # With Playwright debug logging
 ```
 
 #### EE Tests (Enterprise Edition)
@@ -89,62 +98,96 @@ Requires the `ee/` submodule.
 
 ```bash
 # Interactive mode
-pnpm cypress:ee                        # EE databases only
-pnpm cypress:all                       # CE + EE combined
-pnpm cypress:ee:db <database>          # Single EE database
-pnpm cypress:ee:feature <feature>      # Single EE feature
+pnpm e2e:ee                             # EE databases only
+pnpm e2e:all                            # CE + EE combined
+pnpm e2e:ee:db <database>               # Single EE database
+pnpm e2e:ee:feature <feature>           # Single EE feature
 
 # Headless mode
-pnpm cypress:ee:headless               # EE databases only
-pnpm cypress:all:headless              # CE + EE combined
-pnpm cypress:ee:db:headless <database>
-pnpm cypress:ee:feature:headless <feature>
+pnpm e2e:ee:headless                    # EE databases only
+pnpm e2e:all:headless                   # CE + EE combined
+pnpm e2e:ee:db:headless <database>
+pnpm e2e:ee:feature:headless <feature>
 ```
 
 ### Feature Test Files
 
-Located in `frontend/cypress/e2e/features/`:
+Located in `frontend/e2e/tests/features/`:
 
 | File | Tests |
 |------|-------|
-| `login.cy.js` | Authentication flow |
-| `crud.cy.js` | Create, Read, Update, Delete operations |
-| `query-history.cy.js` | Query history tracking |
-| `scratchpad.cy.js` | SQL/query editor |
-| `explore.cy.js` | Database exploration |
-| `graph.cy.js` | Entity relationship graphs |
-| `export.cy.js` | Data export functionality |
-| `pagination.cy.js` | Pagination controls |
-| `sorting.cy.js` | Column sorting |
-| `search.cy.js` | Search functionality |
-| `where-conditions.cy.js` | SQL WHERE clause building |
-| `schema-management.cy.js` | Schema operations |
-| `data-types.cy.js` | Data type handling |
-| `type-casting.cy.js` | Data type conversion |
-| `mock-data.cy.js` | Mock data generation |
-| `error-handling.cy.js` | Error scenarios |
-| `loading-states.cy.js` | Loading state display |
-| `keyboard-shortcuts.cy.js` | Keyboard navigation |
-| `sidebar.cy.js` | Sidebar navigation |
-| `tables-list.cy.js` | Table listing |
-| `data-view.cy.js` | Data view UI |
-| `profiles.cy.js` | User profiles |
-| `settings.cy.js` | User settings |
-| `storage.cy.js` | Browser storage/persistence |
-| `tour.cy.js` | User onboarding tour |
-| `chat.cy.js` | AI chat functionality |
-| `key-types.cy.js` | Redis key types |
-| `postgres-screenshots.cy.js` | Screenshot generation |
+| `login.spec.mjs` | Authentication flow |
+| `crud.spec.mjs` | Create, Read, Update, Delete operations |
+| `query-history.spec.mjs` | Query history tracking |
+| `scratchpad.spec.mjs` | SQL/query editor |
+| `explore.spec.mjs` | Database exploration |
+| `graph.spec.mjs` | Entity relationship graphs |
+| `export.spec.mjs` | Data export functionality |
+| `pagination.spec.mjs` | Pagination controls |
+| `sorting.spec.mjs` | Column sorting |
+| `search.spec.mjs` | Search functionality |
+| `where-conditions.spec.mjs` | SQL WHERE clause building |
+| `schema-management.spec.mjs` | Schema operations |
+| `data-types.spec.mjs` | Data type handling |
+| `type-casting.spec.mjs` | Data type conversion |
+| `mock-data.spec.mjs` | Mock data generation |
+| `error-handling.spec.mjs` | Error scenarios |
+| `loading-states.spec.mjs` | Loading state display |
+| `keyboard-shortcuts.spec.mjs` | Keyboard navigation |
+| `sidebar.spec.mjs` | Sidebar navigation |
+| `tables-list.spec.mjs` | Table listing |
+| `data-view.spec.mjs` | Data view UI |
+| `profiles.spec.mjs` | User profiles |
+| `settings.spec.mjs` | User settings |
+| `storage.spec.mjs` | Browser storage/persistence |
+| `tour.spec.mjs` | User onboarding tour |
+| `chat.spec.mjs` | AI chat functionality |
+| `key-types.spec.mjs` | Redis key types |
+| `ssl-config.spec.mjs` | SSL configuration |
+| `ssl-modes.spec.mjs` | SSL modes |
 
-### Cypress Configuration
+### Screenshot Tests
 
-Key settings in `frontend/cypress.config.js`:
+`postgres-screenshots.spec.mjs` is excluded from the normal test suite (`testIgnore` in config). Run it separately:
+
+```bash
+cd frontend && DATABASE=postgres pnpm exec playwright test \
+  --config=e2e/playwright.config.mjs \
+  --project=standalone \
+  tests/postgres-screenshots.spec.mjs
+```
+
+### Playwright Configuration
+
+Key settings in `frontend/e2e/playwright.config.mjs`:
 - **Viewport**: 1920×1080
 - **Base URL**: `http://localhost:3000`
-- **Test Isolation**: Enabled
-- **Retries**: 2 in run mode, 0 in open mode
-- **Video**: Disabled (performance)
-- **Screenshots**: On failure only
+- **Workers**: 1 (sequential — databases share backend state)
+- **Retries**: 1 locally, 2 in CI
+- **Reporter**: Blob (merged into HTML after all database runs)
+- **Traces/Videos**: Retained on failure
+
+### Test Execution Model
+
+The run script (`dev/run-e2e.sh`) executes databases **sequentially**:
+1. Each database gets its own `playwright test` invocation with `DATABASE=<name>`
+2. Each invocation writes a blob report to `e2e/reports/blobs/`
+3. After all databases finish, blobs are merged into a single HTML report
+4. Output is piped through `tee` to both terminal and `e2e/logs/<database>.log`
+
+### Coverage
+
+Frontend code coverage is collected via Istanbul instrumentation:
+1. `vite-plugin-istanbul` instruments source code when `NODE_ENV=test`
+2. The test fixture collects `window.__coverage__` after each test
+3. Coverage data is written to `.nyc_output/coverage-<testId>.json`
+4. `nyc report` merges and generates reports
+
+```bash
+cd frontend && pnpm view:coverage           # Text summary
+cd frontend && pnpm view:coverage:frontend  # HTML report
+cd frontend && pnpm coverage:clean          # Clear coverage data
+```
 
 ---
 
@@ -184,16 +227,16 @@ Located in `dev/sample-data/`:
 
 ### E2E Orchestration Scripts
 
-#### Main Runner: `dev/run-cypress.sh`
+#### Main Runner: `dev/run-e2e.sh`
 
 ```bash
-./dev/run-cypress.sh [headless] [database] [spec]
+./dev/run-e2e.sh [headless] [database] [spec]
 
 # Examples:
-./dev/run-cypress.sh                    # Interactive, all databases
-./dev/run-cypress.sh headless           # Headless, all databases
-./dev/run-cypress.sh headless postgres  # Headless, PostgreSQL only
-./dev/run-cypress.sh headless postgres crud  # Specific spec file
+./dev/run-e2e.sh                          # Interactive, all databases
+./dev/run-e2e.sh true                     # Headless, all databases
+./dev/run-e2e.sh true postgres            # Headless, PostgreSQL only
+./dev/run-e2e.sh true postgres crud       # Specific spec file
 ```
 
 #### Environment Variables
@@ -202,10 +245,11 @@ Located in `dev/sample-data/`:
 |----------|-------------|
 | `WHODB_DATABASES` | Space-separated list of databases to test |
 | `WHODB_DB_CATEGORIES` | Colon-separated db:category pairs |
-| `WHODB_CYPRESS_DIRS` | Custom Cypress directories |
 | `WHODB_VITE_EDITION` | Build edition (empty=CE, 'ee'=EE) |
 | `WHODB_SETUP_MODE` | Setup mode ('ce' or 'ee') |
 | `WHODB_LOG_LEVEL` | Log level (default: 'error') |
+| `DATABASE` | Target database (set by run script per invocation) |
+| `CATEGORY` | Target category (set by run script per invocation) |
 
 #### Setup/Cleanup Scripts
 
@@ -367,12 +411,13 @@ bash dev/cleanup-cli-e2e.sh   # Cleanup container
 
 ### Frontend Coverage
 
-```bash
-# View frontend coverage report
-cd frontend && pnpm view:coverage:frontend
-```
+Coverage is collected via Istanbul instrumentation during Playwright E2E runs:
 
-Coverage is collected via `@cypress/code-coverage` during Cypress runs.
+```bash
+cd frontend && pnpm view:coverage           # Text summary
+cd frontend && pnpm view:coverage:frontend  # HTML report
+cd frontend && pnpm coverage:clean          # Clear coverage data
+```
 
 ### Backend Coverage
 
@@ -390,10 +435,14 @@ go tool cover -html=coverage.out
 
 ### Common Issues
 
-**Cypress tests fail to start:**
+**E2E tests fail to start:**
 - Ensure Docker services are running: `docker compose -f dev/docker-compose.yml ps`
 - Check frontend is built: `cd frontend && pnpm build`
 - Verify ports are free: 3000 (frontend), 8080 (backend)
+
+**Permission errors on test artifacts:**
+- Root-owned files from Docker/gateway runs: `sudo rm -rf frontend/e2e/reports/`
+- The run script attempts `sudo` cleanup automatically
 
 **Database connection errors:**
 - Wait for services to be healthy: `bash dev/wait-for-services.sh`
@@ -409,8 +458,8 @@ go tool cover -html=coverage.out
 ### Debug Mode
 
 ```bash
-# Cypress debug logging
-pnpm cypress:ce:headless:debug
+# Playwright debug logging
+pnpm e2e:ce:headless:debug
 
 # Go test verbose
 go test -v ./...

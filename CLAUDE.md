@@ -49,16 +49,16 @@ Additional docs: `.claude/docs/cli.md` (CLI), `.claude/docs/desktop.md` (desktop
 ## Testing
 
 See `.claude/docs/testing.md` for comprehensive testing documentation including:
-- Frontend Cypress E2E tests (CE and EE)
+- Frontend Playwright E2E tests (CE and EE)
 - Docker container setup for test databases
 - Go backend unit and integration tests
 - CLI tests
 
 Quick reference:
 ```bash
-# Frontend Cypress
-cd frontend && pnpm cypress:ce:headless     # CE headless
-cd frontend && pnpm cypress:ee:headless     # EE headless (requires ee/)
+# Frontend Playwright E2E
+cd frontend && pnpm e2e:ce:headless         # CE headless (all databases)
+cd frontend && pnpm e2e:ce                  # CE interactive (headed)
 
 # Backend Go tests
 bash dev/run-backend-tests.sh all           # Unit + integration
