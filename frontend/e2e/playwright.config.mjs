@@ -33,6 +33,7 @@
 import { defineConfig } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+const DATABASE = process.env.DATABASE || "default";
 
 export default defineConfig({
   globalSetup: "./support/global-setup.mjs",
@@ -41,13 +42,13 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
-  workers: 1, // sequential - databases share state, parallel causes connection exhaustion
+  workers: 1,
   retries: process.env.CI ? 2 : 1,
   reporter: [
     ["blob", { outputDir: "reports/blobs" }],
     ["list"],
   ],
-  outputDir: "reports/test-results",
+  outputDir: `reports/test-results/${DATABASE}`,
   use: {
     baseURL: BASE_URL,
     screenshot: "only-on-failure",
