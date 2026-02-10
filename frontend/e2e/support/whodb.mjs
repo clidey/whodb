@@ -698,10 +698,10 @@ export class WhoDB {
     async updateConditionValue(value) {
         const mode = await this.getWhereConditionMode();
         if (mode === "popover") {
-            await this.page.locator('[data-testid="field-value"]').clear();
+            // fill() already clears the input. Calling clear() separately causes
+            // Radix Popover to dismiss (it interprets clear events as outside interaction).
             await this.page.locator('[data-testid="field-value"]').fill(value);
         } else {
-            await this.page.locator('[data-testid="sheet-field-value-0"]').clear();
             await this.page.locator('[data-testid="sheet-field-value-0"]').fill(value);
         }
     }

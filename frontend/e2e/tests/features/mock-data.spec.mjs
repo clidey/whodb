@@ -45,8 +45,7 @@ test.describe('Mock Data Generation', () => {
 
             // Try to exceed max count (should clamp to 200)
             const rowsInput = page.locator('[data-testid="mock-data-rows-input"]');
-            await rowsInput.clear();
-            await rowsInput.type('300');
+            await rowsInput.fill('300');
             const val = await rowsInput.inputValue();
             expect(parseInt(val, 10)).toEqual(200);
 

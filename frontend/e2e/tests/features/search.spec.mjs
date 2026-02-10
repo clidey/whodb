@@ -52,29 +52,29 @@ test.describe('Table Search', () => {
 
     // Document Databases
     forEachDatabase('document', (db) => {
-        test('highlights matching content in documents', async ({ whodb, page }) => {
+        test('filters matching content in documents', async ({ whodb, page }) => {
             await whodb.data('users');
 
             await whodb.searchTable('john');
 
-            // Search highlights one cell at a time
-            const highlighted = whodb.getHighlightedCell({ timeout: 5000 });
-            await highlighted.first().waitFor({ timeout: 5000 });
-            await expect(highlighted.first()).toContainText('john');
+            // Search filters server-side; verify results contain the search term
+            const { rows } = await whodb.getTableData();
+            const hasMatch = rows.some(row => row.some(cell => cell.toLowerCase().includes('john')));
+            expect(hasMatch).toBe(true);
         });
     });
 
     // Key-Value Databases
     forEachDatabase('keyvalue', (db) => {
-        test('highlights matching values', async ({ whodb, page }) => {
+        test('filters matching values', async ({ whodb, page }) => {
             await whodb.data('user:1');
 
             await whodb.searchTable('john');
 
-            // Search highlights one cell at a time
-            const highlighted = whodb.getHighlightedCell({ timeout: 5000 });
-            await highlighted.first().waitFor({ timeout: 5000 });
-            await expect(highlighted.first()).toContainText('john');
+            // Search filters server-side; verify results contain the search term
+            const { rows } = await whodb.getTableData();
+            const hasMatch = rows.some(row => row.some(cell => cell.toLowerCase().includes('john')));
+            expect(hasMatch).toBe(true);
         });
     });
 

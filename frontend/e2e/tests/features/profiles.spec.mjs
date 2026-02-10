@@ -99,6 +99,13 @@ test.describe('Profile Management', () => {
                 db1.connection.advanced || {}
             );
 
+            // Ensure card view is set (clearBrowserState wipes localStorage settings)
+            await page.evaluate(() => {
+                const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
+                settings.storageUnitView = '"card"';
+                localStorage.setItem("persist:settings", JSON.stringify(settings));
+            });
+
             await whodb.goto('storage-unit');
             await page.locator('[data-testid="storage-unit-card"]', { timeout: 15000 }).first().waitFor();
 
