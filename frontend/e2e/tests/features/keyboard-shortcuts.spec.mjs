@@ -356,11 +356,19 @@ test.describe('Keyboard Shortcuts', () => {
             test('Cmd/Ctrl+R refreshes the table', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
-                // Press Cmd+R (Mac) or Ctrl+R (Win/Linux)
-                await whodb.typeCmdShortcut('r');
+                // Get initial row count
+                const initialCount = await page.locator('table tbody tr').count();
+
+                // Dispatch the keyboard event via JS to avoid triggering browser refresh
+                // (Control+R on Linux refreshes the page natively before the app can handle it)
+                await page.evaluate((mod) => {
+                    document.dispatchEvent(new KeyboardEvent('keydown', {
+                        key: 'r', code: 'KeyR', [mod]: true, bubbles: true
+                    }));
+                }, process.platform === 'darwin' ? 'metaKey' : 'ctrlKey');
 
                 // Table should still have rows after refresh
-                await expect(page.locator('table tbody tr')).toHaveCount(/./, { timeout: 5000 });
+                await page.waitForTimeout(2000);
                 const rowCount = await page.locator('table tbody tr').count();
                 expect(rowCount).toBeGreaterThanOrEqual(1);
             });

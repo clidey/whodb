@@ -362,7 +362,7 @@ test.describe('Sidebar Navigation', () => {
                     await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached();
 
                     // There should be an icon representing the database type
-                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img')).toBeAttached();
+                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img').first()).toBeAttached();
                 });
             });
         });

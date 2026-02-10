@@ -223,9 +223,9 @@ test.describe('CRUD Operations', () => {
                     await whodb.openContextMenu(targetRowIndex);
                     await expect(page.locator('[data-testid="context-menu-edit-row"]')).toBeVisible();
                     await page.locator('[data-testid="context-menu-edit-row"]').click();
-                    await expect(page.getByText('Edit Row')).toBeVisible();
+                    await expect(page.getByText('Edit Row').first()).toBeVisible();
                     await page.keyboard.press('Escape');
-                    await expect(page.getByText('Edit Row')).not.toBeAttached();
+                    await expect(page.getByText('Edit Row').first()).not.toBeAttached();
                 });
                 return;
             }

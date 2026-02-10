@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
+import fs from "fs";
+import path from "path";
 import { expect } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+
+// Session cache directory — stores login state per database to avoid re-authenticating
+const SESSION_CACHE_DIR = path.resolve(process.cwd(), "e2e", ".session-cache");
+
+/**
+ * Get the cached session file path for a database connection.
+ * Matches Cypress's cy.session() pattern with cacheAcrossSpecs.
+ */
+function getSessionPath(databaseType, hostname, database, schema) {
+    const key = [databaseType, hostname || "default", database || "default", schema || "default"].join("-");
+    return path.join(SESSION_CACHE_DIR, `${key}.json`);
+}
 
 // ============================================================================
 // Platform-Aware Keyboard Shortcuts
@@ -146,7 +160,47 @@ export class WhoDB {
      * @param {string} database
      * @param {Object} advanced
      */
-    async login(databaseType, hostname, username, password, database, advanced = {}) {
+    async login(databaseType, hostname, username, password, database, advanced = {}, schema = null) {
+        // Try to restore cached session first (matches Cypress cy.session() with cacheAcrossSpecs)
+        const sessionFile = getSessionPath(databaseType, hostname, database, schema);
+        if (fs.existsSync(sessionFile)) {
+            try {
+                const cached = JSON.parse(fs.readFileSync(sessionFile, "utf-8"));
+                // Restore localStorage and cookies
+                await this.page.goto(this.url("/login"));
+                await this.page.evaluate((storage) => {
+                    for (const [k, v] of Object.entries(storage)) {
+                        localStorage.setItem(k, v);
+                    }
+                }, cached.localStorage);
+                await this.page.context().addCookies(cached.cookies);
+
+                // Validate the session is still valid
+                await this.page.goto(this.url("/storage-unit"), { waitUntil: "domcontentloaded" });
+                const valid = await this.page.locator('[data-testid="sidebar-profile"]')
+                    .waitFor({ timeout: 5000 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (valid) {
+                    return; // Session restored successfully
+                }
+                // Session invalid — fall through to full login
+            } catch {
+                // Cache corrupted — fall through to full login
+            }
+        }
+
+        // Full login flow
+        await this.page.goto(this.url("/login"));
+
+        // Clear stale session state from prior test's logout
+        await this.page.evaluate(() => {
+            localStorage.clear();
+            localStorage.setItem("whodb.analytics.consent", "denied");
+            sessionStorage.clear();
+        });
+        await this.page.context().clearCookies();
         await this.page.goto(this.url("/login"));
 
         // Poll for telemetry modal and dismiss if it appears (handles async React rendering)
@@ -172,7 +226,6 @@ export class WhoDB {
             }
         }
 
-        // Only interact with username field if explicitly provided (not undefined)
         if (username !== undefined) {
             await this.page.locator('[data-testid="username"]').clear();
             if (username != null && username !== "") {
@@ -180,7 +233,6 @@ export class WhoDB {
             }
         }
 
-        // Only interact with password field if explicitly provided (not undefined)
         if (password !== undefined) {
             await this.page.locator('[data-testid="password"]').clear();
             if (password != null && password !== "") {
@@ -188,14 +240,10 @@ export class WhoDB {
             }
         }
 
-        // Handle database field based on type
         if (database !== undefined) {
             if (databaseType === "Sqlite3") {
-                // Wait for database dropdown to be enabled (not loading)
                 await expect(this.page.locator('[data-testid="database"]')).toBeEnabled({ timeout: 10000 });
-                // Click to open dropdown
                 await this.page.locator('[data-testid="database"]').click();
-                // Wait for at least one option to appear (backend needs time to fetch databases)
                 await this.page.locator('[role="option"]').first().waitFor({ timeout: 10000 });
                 await this.page.locator(`[data-value="${database}"]`).click();
             } else {
@@ -207,17 +255,15 @@ export class WhoDB {
         }
 
         // Handle advanced options (including SSL)
-        // ssl object: { mode: 'required', caCertContent: '...' }
         const ssl = advanced.ssl || {};
         const advancedFields = { ...advanced };
-        delete advancedFields.ssl; // Remove ssl from fields to avoid treating it as a text input
+        delete advancedFields.ssl;
 
         const hasAdvancedOptions = Object.keys(advancedFields).length > 0 || Object.keys(ssl).length > 0;
 
         if (hasAdvancedOptions) {
             await this.page.locator('[data-testid="advanced-button"]').click();
 
-            // Handle regular advanced fields (Port, etc.)
             for (const [key, value] of Object.entries(advancedFields)) {
                 await this.page.locator(`[data-testid="${key}-input"]`).clear();
                 if (value != null && value !== "") {
@@ -225,17 +271,13 @@ export class WhoDB {
                 }
             }
 
-            // Handle SSL mode selection
             if (ssl.mode) {
                 await this.page.locator('[data-testid="ssl-mode-select"]').click();
                 await this.page.locator(`[data-value="${ssl.mode}"]`).click();
             }
 
-            // Handle CA certificate content
             if (ssl.caCertContent) {
-                // Switch to paste mode
                 await this.page.getByRole("button", { name: "Paste PEM" }).first().click();
-                // Enter certificate content
                 await this.page.locator('[data-testid="ssl-ca-certificate-content"]').fill(ssl.caCertContent);
             }
         }
@@ -254,9 +296,27 @@ export class WhoDB {
             console.log("Login API returned errors:", JSON.stringify(body.errors));
         }
 
-        // Wait for successful login - sidebar profile exists for ALL database types
-        // (some like SQLite/Elasticsearch have neither database nor schema dropdowns)
+        // Wait for successful login
         await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 30000 });
+
+        // Cache the session for reuse across tests (matches Cypress cacheAcrossSpecs)
+        try {
+            if (!fs.existsSync(SESSION_CACHE_DIR)) {
+                fs.mkdirSync(SESSION_CACHE_DIR, { recursive: true });
+            }
+            const localStorage = await this.page.evaluate(() => {
+                const items = {};
+                for (let i = 0; i < window.localStorage.length; i++) {
+                    const key = window.localStorage.key(i);
+                    items[key] = window.localStorage.getItem(key);
+                }
+                return items;
+            });
+            const cookies = await this.page.context().cookies();
+            fs.writeFileSync(sessionFile, JSON.stringify({ localStorage, cookies }));
+        } catch {
+            // Non-critical — caching failure doesn't affect test
+        }
     }
 
     /**

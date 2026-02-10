@@ -222,7 +222,8 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
             conn.user ?? undefined,
             conn.password ?? undefined,
             conn.database ?? undefined,
-            conn.advanced || {}
+            conn.advanced || {},
+            dbConfig.schema ?? null
           );
           if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
             await whodb.selectSchema(dbConfig.schema);

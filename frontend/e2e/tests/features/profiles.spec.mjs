@@ -36,13 +36,13 @@ test.describe('Profile Management', () => {
                 test('shows database type icon in profile', async ({ whodb, page }) => {
                     await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached();
 
-                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img')).toBeAttached();
+                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img').first()).toBeAttached();
                 });
 
                 test('displays current connection information', async ({ whodb, page }) => {
                     await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached();
 
-                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img')).toBeAttached();
+                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img').first()).toBeAttached();
                 });
             });
         });
@@ -113,14 +113,10 @@ test.describe('Profile Management', () => {
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator(`[data-value="${db2.type}"]`).click();
 
-            await page.locator('[data-testid="hostname"]').clear();
-            await page.locator('[data-testid="hostname"]').type(db2.connection.host);
-            await page.locator('[data-testid="username"]').clear();
-            await page.locator('[data-testid="username"]').type(db2.connection.user);
-            await page.locator('[data-testid="password"]').clear();
-            await page.locator('[data-testid="password"]').type(db2.connection.password);
-            await page.locator('[data-testid="database"]').clear();
-            await page.locator('[data-testid="database"]').type(db2.connection.database);
+            await page.locator('[data-testid="hostname"]').fill(db2.connection.host);
+            await page.locator('[data-testid="username"]').fill(db2.connection.user);
+            await page.locator('[data-testid="password"]').fill(db2.connection.password);
+            await page.locator('[data-testid="database"]').fill(db2.connection.database);
 
             const queryPromise = page.waitForResponse(resp =>
                 resp.url().includes('/api/query') && resp.request().method() === 'POST'
@@ -209,13 +205,13 @@ test.describe('Profile Management', () => {
                 test('displays correct database type icon for profile', async ({ whodb, page }) => {
                     await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached();
 
-                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img')).toBeVisible();
+                    await expect(page.locator('[data-testid="sidebar-profile"]').locator('svg, img').first()).toBeVisible();
                 });
 
                 test('maintains icon visibility in profile dropdown', async ({ whodb, page }) => {
                     await page.locator('[data-testid="sidebar-profile"]').click();
 
-                    await expect(page.locator('[role="menuitem"], [role="option"]').first().locator('svg, img')).toBeAttached();
+                    await expect(page.locator('[role="menuitem"], [role="option"]').first().locator('svg, img').first()).toBeAttached();
 
                     await page.keyboard.press('Escape');
                 });

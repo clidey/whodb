@@ -68,7 +68,7 @@ test.describe('Loading States & Spinners', () => {
             await expect(page).toHaveURL(/\/storage-unit/);
 
             // Verify we see the logged-in state (storage units or loading indicator)
-            await expect(page.getByText('Tables')).toBeVisible();
+            await expect(page.getByText('Tables').first()).toBeVisible();
         });
     });
 
