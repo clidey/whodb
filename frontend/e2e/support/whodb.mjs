@@ -256,6 +256,13 @@ export class WhoDB {
 
         // Wait for successful login
         await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 30000 });
+
+        // Ensure card view is set for consistent test behavior
+        await this.page.evaluate(() => {
+            const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
+            settings.storageUnitView = '"card"';
+            localStorage.setItem("persist:settings", JSON.stringify(settings));
+        });
     }
 
     /**
@@ -356,8 +363,10 @@ export class WhoDB {
             localStorage.setItem("persist:settings", JSON.stringify(settings));
         });
 
-        // Visit the storage-unit page (will use card view)
-        await this.page.goto(this.url("/storage-unit"));
+        // Force a full page reload to pick up the localStorage change.
+        // page.goto() to the same URL may not trigger a reload, so we use evaluate.
+        await this.page.evaluate((url) => { window.location.href = url; }, this.url("/storage-unit"));
+        await this.page.waitForURL(/\/storage-unit/, { timeout: 15000 });
         // Wait for cards to load
         await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
 
@@ -462,17 +471,15 @@ export class WhoDB {
      * Submit the table (handles both dialog and standalone submit button)
      */
     async submitTable() {
-        const dialogVisible = await this.page.locator('[role="dialog"]').filter({ visible: true }).count();
-        if (dialogVisible > 0) {
-            await this.page.locator('[role="dialog"]').filter({ visible: true }).locator('[data-testid="add-conditions-button"]').click();
-            await this.page.waitForTimeout(300);
-        }
-        const submitBtn = this.page.locator('[data-testid="submit-button"]').filter({ visible: true });
-        const btnCount = await submitBtn.count();
-        if (btnCount > 0) {
-            await submitBtn.click({ force: true });
-            await this.page.waitForTimeout(200);
-        }
+        // Close any open popovers/dialogs first (e.g., where condition edit popover)
+        // Pressing Escape is safe — if nothing is open, it's a no-op
+        await this.page.keyboard.press("Escape");
+        await this.page.waitForTimeout(200);
+
+        const submitBtn = this.page.locator('[data-testid="submit-button"]');
+        await submitBtn.waitFor({ timeout: 5000 });
+        await submitBtn.click();
+        await this.page.waitForTimeout(200);
     }
 
     // ============================================================================
