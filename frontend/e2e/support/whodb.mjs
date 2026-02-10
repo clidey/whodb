@@ -546,7 +546,6 @@ export class WhoDB {
                 await this.page.locator('[data-testid="field-operator"]').first().click();
                 await this.page.locator(`[data-value="${operator}"]`).click();
 
-                await this.page.locator('[data-testid="field-value"]').first().clear();
                 await this.page.locator('[data-testid="field-value"]').first().fill(value);
 
                 // In popover mode, try multiple selectors for add button
@@ -902,13 +901,16 @@ export class WhoDB {
         await this.page.locator('[data-testid="add-row-button"]').click();
 
         if (isSingleInput) {
-            // Document database - single text box for JSON
+            // Document database - CodeMirror JSON editor (not a plain input/textarea)
             const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
-            const field = this.page
-                .locator('[data-testid="add-row-field-document"] input, [data-testid="add-row-field-document"] textarea')
-                .first();
-            await field.clear();
-            await field.fill(jsonString);
+            const editorContainer = this.page.locator('[data-testid="add-row-field-document"] .cm-editor');
+            await editorContainer.waitFor({ timeout: 5000 });
+
+            // Click to focus the CodeMirror editor, select all, then type the new content
+            const cmContent = editorContainer.locator('.cm-content');
+            await cmContent.click();
+            await this.page.keyboard.press(`${process.platform === 'darwin' ? 'Meta' : 'Control'}+a`);
+            await this.page.keyboard.type(jsonString);
         } else {
             // Traditional database - multiple fields
             for (const [key, value] of Object.entries(data)) {
@@ -2120,9 +2122,12 @@ export class WhoDB {
      * Toggles between SQL and table view in chat
      */
     async toggleChatSQLView() {
-        // Find the last table preview group and click its toggle button
+        // Find the last table preview group, open the actions dropdown, click toggle
         const group = this.page.locator(".group\\/table-preview").last();
-        await group.locator('[data-testid="icon-button"]').first().click({ force: true });
+        await group.hover();
+        await this.page.waitForTimeout(200);
+        await group.locator('[data-testid="icon-button"]').first().click();
+        await this.page.locator('[data-testid="toggle-view-option"]').click();
         await this.page.waitForTimeout(300);
     }
 
@@ -2148,8 +2153,11 @@ export class WhoDB {
      */
     async openMoveToScratchpad() {
         const group = this.page.locator(".group\\/table-preview").last();
-        // The button uses aria-label instead of title for accessibility
-        await group.locator('[aria-label="Move to Scratchpad"]').click({ force: true });
+        // Open the actions dropdown, then click Move to Scratchpad
+        await group.hover();
+        await this.page.waitForTimeout(200);
+        await group.locator('[data-testid="icon-button"]').first().click();
+        await this.page.locator('[data-testid="move-to-scratchpad-option"]').click();
         await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: 5000 });
     }
 

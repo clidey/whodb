@@ -99,14 +99,8 @@ test.describe('Profile Management', () => {
                 db1.connection.advanced || {}
             );
 
-            // Ensure card view is set (clearBrowserState wiped localStorage settings)
-            await page.evaluate(() => {
-                const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
-                settings.storageUnitView = '"card"';
-                localStorage.setItem("persist:settings", JSON.stringify(settings));
-            });
-            await page.reload();
-            await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
+            // Wait for the app to be fully loaded (sidebar profile visible)
+            await page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 15000 });
 
             await page.locator('[data-testid="sidebar-profile"]').click();
 

@@ -414,7 +414,7 @@ test.describe('Chat AI Integration', () => {
                 await page.getByText('Add a provider').click();
 
                 // Wait for the external model sheet to open
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*model/i })).toBeVisible({ timeout: 5000 });
+                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
 
                 // Verify model type dropdown exists
                 await expect(page.locator('[data-testid="external-model-type-select"]')).toBeVisible();
@@ -490,7 +490,7 @@ test.describe('Chat AI Integration', () => {
                 await page.getByText('Add a provider').click();
 
                 // Wait for the external model sheet to open
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*model/i })).toBeVisible({ timeout: 5000 });
+                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
 
                 // Select external provider type
                 await page.locator('[data-testid="external-model-type-select"]').click();

@@ -3,7 +3,7 @@
   "category": "sql",
   "dataTypesTable": "data_types",
   "mockData": {
-    "supportedTable": "users",
+    "supportedTable": "products",
     "tableWithFKs": null
   },
   "testTable": {
