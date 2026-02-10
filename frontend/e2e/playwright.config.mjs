@@ -17,11 +17,11 @@
 /**
  * Playwright config for WhoDB E2E tests.
  *
- * Two projects:
+ * Projects:
+ *   - "setup": Authenticates once per database, saves storageState.
+ *     Runs BEFORE test projects via `dependencies`.
  *   - "standalone": Launches its own Chromium, hits WhoDB directly.
- *     Use for local dev or Docker-network testing.
  *   - "gateway": Connects to an existing browser via CDP.
- *     Use for testing through an external browser (e.g., embedded in a container).
  *
  * Environment variables:
  *   BASE_URL        - WhoDB URL (default: http://localhost:3000 for local dev)
@@ -56,8 +56,26 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
+    // Setup project: logs in once per database, saves auth state.
+    // Runs before test projects via `dependencies`.
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.mjs/,
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1920, height: 1080 },
+        launchOptions: {
+          args: [
+            "--window-size=1920,1080",
+            "--force-device-scale-factor=1",
+          ],
+        },
+      },
+    },
     {
       name: "standalone",
+      dependencies: ["setup"],
+      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/],
       use: {
         browserName: "chromium",
         viewport: { width: 1920, height: 1080 },
@@ -71,6 +89,8 @@ export default defineConfig({
     },
     {
       name: "gateway",
+      dependencies: ["setup"],
+      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/],
       use: {
         browserName: "chromium",
         viewport: { width: 1920, height: 1080 },
