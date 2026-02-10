@@ -147,21 +147,18 @@ export class WhoDB {
      * @param {Object} advanced
      */
     async login(databaseType, hostname, username, password, database, advanced = {}, schema = null) {
-        // Clear stale state BEFORE navigating to /login.
-        // Without this, goto("/login") reads old persist:auth from localStorage,
-        // thinks we're logged in, and redirects to /storage-unit before we can clear.
-        await this.page.context().clearCookies();
-        // Navigate to any app page to access localStorage (can't on about:blank)
+        // If we're already on the app (not about:blank), clear stale state first
+        // to prevent the app from auto-redirecting away from /login.
+        // For fresh contexts (beforeAll), skip the clearing — no stale state.
         const currentUrl = this.page.url();
-        if (!currentUrl.startsWith(BASE_URL)) {
-            await this.page.goto(this.url("/login"), { waitUntil: "commit" });
+        if (currentUrl.startsWith(BASE_URL)) {
+            await this.page.context().clearCookies();
+            await this.page.evaluate(() => {
+                localStorage.clear();
+                localStorage.setItem("whodb.analytics.consent", "denied");
+                sessionStorage.clear();
+            });
         }
-        await this.page.evaluate(() => {
-            localStorage.clear();
-            localStorage.setItem("whodb.analytics.consent", "denied");
-            sessionStorage.clear();
-        });
-        // Now navigate to login — app will see empty auth and stay on /login
         await this.page.goto(this.url("/login"));
 
         // Poll for telemetry modal and dismiss if it appears (handles async React rendering)
@@ -489,8 +486,11 @@ export class WhoDB {
     async whereTable(fieldArray) {
         await this.page.locator('[data-testid="where-button"]').click();
 
-        // Wait for the dialog/sheet to be visible
-        await this.page.waitForTimeout(500);
+        // Wait for either popover or sheet to open
+        await Promise.race([
+            this.page.locator('[data-testid="field-key"]').waitFor({ timeout: 5000 }).catch(() => {}),
+            this.page.locator('[data-testid*="sheet-field"]').first().waitFor({ timeout: 5000 }).catch(() => {}),
+        ]);
 
         // Detect which mode we're in by checking what's visible
         const isSheetMode =
@@ -671,6 +671,8 @@ export class WhoDB {
         const mode = await this.getWhereConditionMode();
         if (mode === "popover") {
             await this.page.locator('[data-testid="where-condition-badge"]').nth(index).click();
+            // Wait for the edit popover to open (contains update-condition-button)
+            await this.page.locator('[data-testid="update-condition-button"]').waitFor({ timeout: 5000 });
         } else {
             console.log("Sheet mode: Cannot click individual conditions - need to open sheet");
         }
@@ -1135,7 +1137,7 @@ export class WhoDB {
             // Close the sheet by pressing Escape
             await this.page.keyboard.press("Escape");
             // Wait for the sheet to disappear
-            await this.page.getByText("Edit Row").waitFor({ state: "hidden" });
+            await this.page.getByText("Edit Row").first().waitFor({ state: "hidden" });
             // Ensure body no longer has scroll lock
             await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
         } else {
