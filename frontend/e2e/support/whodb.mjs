@@ -14,23 +14,9 @@
  * limitations under the License.
  */
 
-import fs from "fs";
-import path from "path";
 import { expect } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
-
-// Session cache directory — stores login state per database to avoid re-authenticating
-const SESSION_CACHE_DIR = path.resolve(process.cwd(), "e2e", ".session-cache");
-
-/**
- * Get the cached session file path for a database connection.
- * Matches Cypress's cy.session() pattern with cacheAcrossSpecs.
- */
-function getSessionPath(databaseType, hostname, database, schema) {
-    const key = [databaseType, hostname || "default", database || "default", schema || "default"].join("-");
-    return path.join(SESSION_CACHE_DIR, `${key}.json`);
-}
 
 // ============================================================================
 // Platform-Aware Keyboard Shortcuts
@@ -161,46 +147,21 @@ export class WhoDB {
      * @param {Object} advanced
      */
     async login(databaseType, hostname, username, password, database, advanced = {}, schema = null) {
-        // Try to restore cached session first (matches Cypress cy.session() with cacheAcrossSpecs)
-        const sessionFile = getSessionPath(databaseType, hostname, database, schema);
-        if (fs.existsSync(sessionFile)) {
-            try {
-                const cached = JSON.parse(fs.readFileSync(sessionFile, "utf-8"));
-                // Restore localStorage and cookies
-                await this.page.goto(this.url("/login"));
-                await this.page.evaluate((storage) => {
-                    for (const [k, v] of Object.entries(storage)) {
-                        localStorage.setItem(k, v);
-                    }
-                }, cached.localStorage);
-                await this.page.context().addCookies(cached.cookies);
-
-                // Validate the session is still valid
-                await this.page.goto(this.url("/storage-unit"), { waitUntil: "domcontentloaded" });
-                const valid = await this.page.locator('[data-testid="sidebar-profile"]')
-                    .waitFor({ timeout: 5000 })
-                    .then(() => true)
-                    .catch(() => false);
-
-                if (valid) {
-                    return; // Session restored successfully
-                }
-                // Session invalid — fall through to full login
-            } catch {
-                // Cache corrupted — fall through to full login
-            }
+        // Clear stale state BEFORE navigating to /login.
+        // Without this, goto("/login") reads old persist:auth from localStorage,
+        // thinks we're logged in, and redirects to /storage-unit before we can clear.
+        await this.page.context().clearCookies();
+        // Navigate to any app page to access localStorage (can't on about:blank)
+        const currentUrl = this.page.url();
+        if (!currentUrl.startsWith(BASE_URL)) {
+            await this.page.goto(this.url("/login"), { waitUntil: "commit" });
         }
-
-        // Full login flow
-        await this.page.goto(this.url("/login"));
-
-        // Clear stale session state from prior test's logout
         await this.page.evaluate(() => {
             localStorage.clear();
             localStorage.setItem("whodb.analytics.consent", "denied");
             sessionStorage.clear();
         });
-        await this.page.context().clearCookies();
+        // Now navigate to login — app will see empty auth and stay on /login
         await this.page.goto(this.url("/login"));
 
         // Poll for telemetry modal and dismiss if it appears (handles async React rendering)
@@ -298,25 +259,6 @@ export class WhoDB {
 
         // Wait for successful login
         await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 30000 });
-
-        // Cache the session for reuse across tests (matches Cypress cacheAcrossSpecs)
-        try {
-            if (!fs.existsSync(SESSION_CACHE_DIR)) {
-                fs.mkdirSync(SESSION_CACHE_DIR, { recursive: true });
-            }
-            const localStorage = await this.page.evaluate(() => {
-                const items = {};
-                for (let i = 0; i < window.localStorage.length; i++) {
-                    const key = window.localStorage.key(i);
-                    items[key] = window.localStorage.getItem(key);
-                }
-                return items;
-            });
-            const cookies = await this.page.context().cookies();
-            fs.writeFileSync(sessionFile, JSON.stringify({ localStorage, cookies }));
-        } catch {
-            // Non-critical — caching failure doesn't affect test
-        }
     }
 
     /**
@@ -1460,6 +1402,11 @@ export class WhoDB {
                 .first()
                 .click({ force: true });
         }
+
+        // Wait for the logout redirect to complete before returning.
+        // Without this, afterEach resolves while the page is still mid-redirect,
+        // and the next test's beforeEach login races with the pending navigation.
+        await this.page.waitForURL(/\/login/, { timeout: 10000 }).catch(() => {});
     }
 
     // ============================================================================

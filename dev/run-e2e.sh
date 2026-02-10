@@ -130,7 +130,7 @@ mkdir -p e2e/logs
 # Use sudo if needed - gateway/Docker runs may leave root-owned files
 rm -f e2e/logs/*.log 2>/dev/null || true
 rm -rf e2e/reports/* 2>/dev/null || sudo rm -rf e2e/reports/* 2>/dev/null || true
-rm -rf e2e/.session-cache 2>/dev/null || true
+rm -rf e2e/.auth 2>/dev/null || true
 mkdir -p e2e/reports/test-results e2e/reports/blobs e2e/reports/html
 
 # Start frontend dev server

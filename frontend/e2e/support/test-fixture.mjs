@@ -19,23 +19,20 @@
  *
  * Provides:
  *   - `whodb`: WhoDB helper instance with all page commands
- *   - `forEachDatabase()`: Iterates databases with auto-login/logout
+ *   - `forEachDatabase()`: Iterates databases with session persistence
+ *
+ * Session management:
+ *   Tests with `login: true` (default) use Playwright's storageState to persist
+ *   login sessions. A one-time beforeAll logs in and saves browser state to a file.
+ *   Each test gets a fresh browser context pre-loaded with that state — no login
+ *   form, no race conditions, no logout between tests.
+ *
+ *   Tests with `login: false` (login.spec, ssl-*.spec, error-handling.spec)
+ *   manage their own login flow and don't use storageState.
  *
  * Dual mode:
  *   - When CDP_ENDPOINT is set → connects to an existing browser via CDP
  *   - Otherwise → launches standalone Chromium (default)
- *
- * Usage:
- *   import { test, expect, forEachDatabase } from '../support/test-fixture.mjs';
- *
- *   test.describe('My Feature', () => {
- *     forEachDatabase('sql', (db) => {
- *       test('does something', async ({ whodb }) => {
- *         const tables = await whodb.getTables();
- *         expect(tables).toContain('users');
- *       });
- *     });
- *   });
  */
 
 import fs from "fs";
@@ -49,15 +46,14 @@ import {
 } from "./database-config.mjs";
 import { VALID_FEATURES } from "./helpers/fixture-validator.mjs";
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const NYC_OUTPUT_DIR = path.resolve(process.cwd(), ".nyc_output");
+const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
 
 const CDP_ENDPOINT = process.env.CDP_ENDPOINT;
 
 /**
  * Mock AI provider/model calls to prevent backend Ollama timeouts.
- * No Ollama is running in the test environment, so these calls would
- * spam timeout errors in the backend logs for ~5s each.
- *
  * Chat tests that call setupChatMock() override this with their own
  * mock data (Playwright routes are LIFO - last registered runs first).
  */
@@ -85,9 +81,6 @@ async function mockAIProviders(page) {
 
 /**
  * Collect Istanbul code coverage from the browser after each test.
- * vite-plugin-istanbul instruments the app when NODE_ENV=test,
- * exposing window.__coverage__. We grab it and write to .nyc_output/
- * so `nyc report` works exactly as it did with Cypress.
  */
 async function collectCoverage(page, testInfo) {
   try {
@@ -105,6 +98,14 @@ async function collectCoverage(page, testInfo) {
   } catch {
     // Page may have closed or navigated away — skip silently
   }
+}
+
+/**
+ * Get the storageState file path for a database config.
+ */
+function getAuthFile(dbConfig) {
+  const id = getDatabaseId(dbConfig);
+  return path.join(AUTH_DIR, `${id}.json`);
 }
 
 export const test = CDP_ENDPOINT
@@ -132,7 +133,6 @@ export const test = CDP_ENDPOINT
         }
 
         await use(whodbPage);
-        // Don't close - the CDP browser is managed externally.
       },
 
       whodb: async ({ page }, use, testInfo) => {
@@ -142,7 +142,6 @@ export const test = CDP_ENDPOINT
       },
     })
   : base.extend({
-      // Standalone mode: use Playwright's default browser lifecycle (fast, shared browser).
       whodb: async ({ page }, use, testInfo) => {
         await mockAIProviders(page);
         await use(new WhoDB(page));
@@ -154,14 +153,23 @@ export { expect };
 
 /**
  * Replacement for Cypress's forEachDatabase().
- * Same API - test authors don't need to change their test structure.
+ *
+ * When login=true (default), uses Playwright's storageState for session persistence:
+ *   - beforeAll: Logs in once, saves browser state to e2e/.auth/{db}.json
+ *   - test.use({ storageState }): Each test starts pre-authenticated
+ *   - No login form interaction per test, no logout between tests
+ *   This matches Cypress's cy.session({ cacheAcrossSpecs: true }).
+ *
+ * When login=false (login.spec, ssl-*.spec, error-handling.spec):
+ *   - No session persistence, no auto-login/logout
+ *   - Tests manage their own login flow
  *
  * @param {string} categoryFilter - 'sql', 'document', 'keyvalue', or 'all'
  * @param {Function} testFn - (db) => { test('...', async ({whodb}) => { ... }) }
  * @param {Object} options
- * @param {boolean} options.login - Auto-login before each test (default: true)
- * @param {boolean} options.logout - Auto-logout after each test (default: true)
- * @param {boolean} options.navigateToStorageUnit - Navigate to storage-unit after login (default: true)
+ * @param {boolean} options.login - Use storageState session persistence (default: true)
+ * @param {boolean} options.logout - Ignored when login=true (no logout needed with storageState)
+ * @param {boolean} options.navigateToStorageUnit - Navigate to storage-unit before each test (default: true)
  * @param {string[]} options.features - Required features; databases without them are skipped
  */
 export function forEachDatabase(categoryFilter, testFn, options = {}) {
@@ -212,42 +220,72 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
   if (databases.length === 0) return;
 
   for (const dbConfig of databases) {
+    const authFile = getAuthFile(dbConfig);
+
     test.describe(`[${dbConfig.type}]`, () => {
       if (login) {
-        test.beforeEach(async ({ whodb, page }) => {
+        // --- Session persistence mode (default) ---
+        // Log in once in beforeAll, save storageState.
+        // Each test gets a fresh browser context pre-loaded with auth.
+        // No login form, no logout, no race conditions.
+
+        test.use({ storageState: authFile });
+
+        test.beforeAll(async ({ browser }) => {
+          // Create a temporary context WITHOUT storageState to perform the one-time login.
+          // (test.use({ storageState }) would otherwise apply to this context too)
+          const context = await browser.newContext({ storageState: undefined });
+          const page = await context.newPage();
+
+          // Mock AI providers during login to avoid Ollama timeouts
+          await mockAIProviders(page);
+
+          const whodb = new WhoDB(page);
           const conn = dbConfig.connection;
+
           await whodb.login(
             dbConfig.uiType || dbConfig.type,
             conn.host ?? undefined,
             conn.user ?? undefined,
             conn.password ?? undefined,
             conn.database ?? undefined,
-            conn.advanced || {},
-            dbConfig.schema ?? null
+            conn.advanced || {}
           );
+
           if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
             await whodb.selectSchema(dbConfig.schema);
           }
+
+          // Save the authenticated state for all tests in this block
+          if (!fs.existsSync(AUTH_DIR)) {
+            fs.mkdirSync(AUTH_DIR, { recursive: true });
+          }
+          await context.storageState({ path: authFile });
+          await context.close();
+        });
+
+        test.beforeEach(async ({ whodb, page }) => {
           if (navigateToStorageUnit) {
-            // After login, the app navigates to /storage-unit automatically.
-            // If selectSchema was called, it already waited for storage-unit-cards.
-            // Only navigate if we're not already there.
-            const hasCards = await page.locator('[data-testid="storage-unit-card"]').count();
-            if (hasCards === 0) {
-              await page.goto(whodb.url("/storage-unit"));
-              await page
-                .locator('[data-testid="storage-unit-card"]')
-                .first()
-                .waitFor({ timeout: 15000 });
-            }
+            await page.goto(`${BASE_URL}/storage-unit`);
+            await page
+              .locator('[data-testid="storage-unit-card"]')
+              .first()
+              .waitFor({ timeout: 15000 });
           }
         });
-      }
 
-      if (logout) {
-        test.afterEach(async ({ whodb }) => {
-          await whodb.logout();
-        });
+        // No afterEach logout — storageState gives each test an isolated
+        // pre-authenticated context. Nothing to clean up.
+
+      } else {
+        // --- Manual login mode (login.spec, ssl-*.spec, error-handling.spec) ---
+        // Tests handle their own login/logout. No storageState.
+
+        if (logout) {
+          test.afterEach(async ({ whodb }) => {
+            await whodb.logout();
+          });
+        }
       }
 
       testFn(dbConfig);
@@ -257,11 +295,6 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
 
 /**
  * Login to database using WhoDB helper (standalone usage outside forEachDatabase).
- * Equivalent to Cypress's loginToDatabase() from test-runner.js.
- * @param {WhoDB} whodb - WhoDB helper instance
- * @param {Object} dbConfig - Database configuration
- * @param {Object} options
- * @param {boolean} options.visitStorageUnit - Navigate to storage-unit after login (default: true)
  */
 export async function loginToDatabase(whodb, dbConfig, options = {}) {
   const { visitStorageUnit = true } = options;
@@ -286,17 +319,10 @@ export async function loginToDatabase(whodb, dbConfig, options = {}) {
   }
 }
 
-/**
- * Skip test if feature is not supported.
- * @param {Object} dbConfig - Database configuration
- * @param {string} feature - Feature name
- * @returns {boolean} true if feature is missing (should skip)
- */
 export function skipIfNoFeature(dbConfig, feature) {
   return !hasFeature(dbConfig, feature);
 }
 
-/** Conditional test - only runs if condition is met */
 export function conditionalTest(condition, name, fn) {
   if (condition) {
     test(name, fn);
@@ -305,7 +331,6 @@ export function conditionalTest(condition, name, fn) {
   }
 }
 
-/** Conditional describe - only runs if condition is met */
 export function conditionalDescribe(condition, name, fn) {
   if (condition) {
     test.describe(name, fn);

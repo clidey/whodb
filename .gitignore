@@ -54,4 +54,4 @@ ee/dev/translation-tool/.venv
 frontend/.pnpm-store
 frontend/e2e/reports
 frontend/e2e/logs
-frontend/e2e/.session-cache
+frontend/e2e/.auth
