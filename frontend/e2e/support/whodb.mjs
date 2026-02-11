@@ -1553,6 +1553,120 @@ export class WhoDB {
     }
 
     // ============================================================================
+    // Import Dialog Commands
+    // ============================================================================
+
+    /**
+     * Navigate to a table and open the import dialog.
+     * @param {string} tableName - The table to import into
+     */
+    async openImport(tableName) {
+        await this.data(tableName);
+        const importBtn = this.page.locator('[data-testid="import-button"]');
+        await importBtn.waitFor({ state: "visible", timeout: 10000 });
+        await importBtn.click();
+        await this.page.locator('[data-testid="import-dialog"]').waitFor({ state: "visible", timeout: 10000 });
+    }
+
+    /**
+     * Select the import mode (data or sql).
+     * @param {'data' | 'sql'} mode - The import mode to select
+     */
+    async selectImportMode(mode) {
+        await this.page.locator('[data-testid="import-mode-select"]').click();
+        await this.page.locator(`[data-value="${mode}"]`).click();
+    }
+
+    /**
+     * Upload a data file (CSV/Excel) in the import dialog.
+     * @param {string} filePath - Absolute path to the file
+     */
+    async uploadDataFile(filePath) {
+        await this.page.locator('[data-testid="import-data-file-input"]').setInputFiles(filePath);
+    }
+
+    /**
+     * Upload a SQL file in the import dialog.
+     * @param {string} filePath - Absolute path to the SQL file
+     */
+    async uploadSqlFile(filePath) {
+        await this.page.locator('[data-testid="import-sql-file-input"]').setInputFiles(filePath);
+    }
+
+    /**
+     * Wait for the import preview to finish loading.
+     */
+    async waitForPreview() {
+        // Wait for loading indicator to disappear
+        const loading = this.page.locator('[data-testid="import-preview-loading"]');
+        if (await loading.count() > 0) {
+            await loading.waitFor({ state: "hidden", timeout: 3000 }).catch(() => {});
+        }
+        // Preview section should be visible
+        await this.page.locator('[data-testid="import-preview-section"]').waitFor({ timeout: 15000 });
+    }
+
+    /**
+     * Extract preview data (columns and rows) from the import preview table.
+     * @returns {Promise<{columns: string[], rows: string[][]}>}
+     */
+    async getPreviewData() {
+        await this.page.locator('[data-testid="import-preview-table"]').waitFor({ timeout: 10000 });
+
+        return await this.page.locator('[data-testid="import-preview-table"]').evaluate((table) => {
+            const columns = Array.from(table.querySelectorAll("thead th")).map((el) => el.innerText.trim());
+            const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+                return Array.from(row.querySelectorAll("td")).map((cell) => cell.innerText.trim());
+            });
+            return { columns, rows };
+        });
+    }
+
+    /**
+     * Click the import submit button for data mode.
+     */
+    async confirmImportData() {
+        const btn = this.page.locator('[data-testid="import-submit-button"]');
+        await expect(btn).toBeEnabled();
+        await btn.click();
+    }
+
+    /**
+     * Check the SQL confirm checkbox and click the import submit button.
+     */
+    async confirmSqlImport() {
+        await this.page.locator('[data-testid="import-sql-confirm-checkbox"]').click({ force: true });
+        const btn = this.page.locator('[data-testid="import-submit-button"]');
+        await expect(btn).toBeEnabled();
+        await btn.click();
+    }
+
+    /**
+     * Select the data import mode (Append or Overwrite).
+     * @param {'APPEND' | 'OVERWRITE'} mode - The data mode value
+     */
+    async selectImportDataMode(mode) {
+        await this.page.locator('[data-testid="import-data-mode-select"]').click();
+        await this.page.locator(`[data-value="${mode}"]`).click();
+    }
+
+    /**
+     * Type SQL into the CodeMirror editor in the import dialog.
+     * @param {string} sql - The SQL text to type
+     */
+    async typeSqlInEditor(sql) {
+        const selector = '[data-testid="import-sql-editor"] .cm-content';
+        const editor = this.page.locator(selector);
+        await editor.scrollIntoViewIfNeeded();
+        await editor.waitFor({ state: "visible" });
+        await editor.click();
+        await editor.clear();
+        await editor.fill(sql);
+        await editor.blur();
+        await this.page.waitForTimeout(100);
+    }
+
+    // ============================================================================
     // Mock Data Dialog Commands
     // ============================================================================
 
