@@ -368,7 +368,7 @@
     }
   },
   "mockData": {
-    "supportedTable": "users",
+    "supportedTable": "products",
     "tableWithFKs": "orders",
     "fkRelationships": {
       "orders": {

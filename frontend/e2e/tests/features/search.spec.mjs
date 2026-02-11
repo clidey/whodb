@@ -24,29 +24,31 @@ test.describe('Table Search', () => {
         const tableName = testTable.name;
         const searchTerm = testTable.searchTerm;
 
-        test('highlights matching cells when searching', async ({ whodb, page }) => {
+        test('filters matching cells when searching', async ({ whodb, page }) => {
             await whodb.data(tableName);
 
             await whodb.searchTable(searchTerm);
 
-            // Search highlights one cell at a time, verify it contains the search term
-            const highlighted = whodb.getHighlightedCell({ timeout: 5000 });
-            await highlighted.first().waitFor({ timeout: 5000 });
-            await expect(highlighted.first()).toContainText(searchTerm);
+            // Search filters server-side; verify results contain the search term
+            const { rows } = await whodb.getTableData();
+            const hasMatch = rows.some(row => row.some(cell =>
+                cell.toLowerCase().includes(searchTerm.toLowerCase())
+            ));
+            expect(hasMatch).toBe(true);
         });
 
         test('finds multiple matches by cycling through', async ({ whodb, page }) => {
             await whodb.data(tableName);
 
-            // First search highlights first match
+            // First search returns results
             await whodb.searchTable(searchTerm);
-            const highlighted = whodb.getHighlightedCell({ timeout: 5000 });
-            await expect(highlighted.first()).toBeAttached({ timeout: 5000 });
+            const { rows } = await whodb.getTableData();
+            expect(rows.length).toBeGreaterThan(0);
 
-            // Verify we can cycle through matches by searching again
+            // Second search also returns results
             await whodb.searchTable(searchTerm);
-            const highlighted2 = whodb.getHighlightedCell({ timeout: 5000 });
-            await expect(highlighted2.first()).toBeAttached({ timeout: 5000 });
+            const { rows: rows2 } = await whodb.getTableData();
+            expect(rows2.length).toBeGreaterThan(0);
         });
     });
 

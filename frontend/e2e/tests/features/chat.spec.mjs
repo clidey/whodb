@@ -507,7 +507,7 @@ test.describe('Chat AI Integration', () => {
                 await page.locator('[data-testid="external-model-submit"]').click();
 
                 // Dialog should still be visible (validation prevents submission)
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*model/i })).toBeVisible();
+                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible();
 
                 // Cancel dialog
                 await page.locator('[data-testid="external-model-cancel"]').click();

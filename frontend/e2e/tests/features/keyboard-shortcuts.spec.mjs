@@ -549,7 +549,7 @@ test.describe('Keyboard Shortcuts', () => {
                 await whodb.data(tableName);
 
                 // Get initial sidebar state
-                await expect(page.locator('[data-sidebar="sidebar"]')).toBeAttached();
+                await expect(page.locator('[data-sidebar="sidebar"]').first()).toBeAttached();
 
                 // Press Cmd/Ctrl+B to toggle sidebar
                 await whodb.typeCmdShortcut('b');
@@ -562,7 +562,7 @@ test.describe('Keyboard Shortcuts', () => {
 
                 // Sidebar should be visible again
                 await page.waitForTimeout(300);
-                await expect(page.locator('[data-sidebar="sidebar"]')).toBeAttached();
+                await expect(page.locator('[data-sidebar="sidebar"]').first()).toBeAttached();
             });
 
             test('navigates to first view with number shortcut', async ({ whodb, page }) => {

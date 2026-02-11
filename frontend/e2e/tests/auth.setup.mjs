@@ -94,6 +94,11 @@ for (const dbConfig of databases) {
       await whodb.selectSchema(dbConfig.schema);
     }
 
+    // Ensure analytics consent and card view are saved in the auth state
+    await page.evaluate(() => {
+      localStorage.setItem("whodb.analytics.consent", "denied");
+    });
+
     // Save authenticated state
     if (!fs.existsSync(AUTH_DIR)) {
       fs.mkdirSync(AUTH_DIR, { recursive: true });
