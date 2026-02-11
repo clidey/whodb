@@ -262,8 +262,8 @@ if [ "$HEADLESS" = "true" ]; then
     done
     echo ""
 else
-    # GUI mode: Single Playwright session with --headed
-    echo "📋 Opening Playwright in headed mode..."
+    # GUI mode: Open Playwright UI runner (test list + live browser preview)
+    echo "📋 Opening Playwright UI..."
 
     ENV_VARS=""
     if [ "$TARGET_DB" != "all" ]; then
@@ -272,7 +272,7 @@ else
 
     (
         cd "$PROJECT_ROOT/frontend"
-        env $ENV_VARS pnpm exec playwright test $PW_ARGS --headed
+        env $ENV_VARS pnpm exec playwright test $PW_ARGS --ui
         exit $?
     ) && RESULT=0 || RESULT=$?
 
