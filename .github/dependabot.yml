@@ -1,8 +1,3 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 
 multi-ecosystem-groups:
@@ -15,38 +10,38 @@ multi-ecosystem-groups:
       interval: "weekly"
 
 updates:
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/core" # Location of package manifests
+  - package-ecosystem: "gomod"
+    directory: "/core"
     multi-ecosystem-group: "all-go"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "daily"
 
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/ee-stub" # Location of package manifests
+  - package-ecosystem: "gomod"
+    directory: "/ee-stub"
     multi-ecosystem-group: "all-go"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "daily"
 
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/desktop-ce" # Location of package manifests
+  - package-ecosystem: "gomod"
+    directory: "/desktop-ce"
     multi-ecosystem-group: "all-go"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "daily"
 
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/desktop-common" # Location of package manifests
+  - package-ecosystem: "gomod"
+    directory: "/desktop-common"
     multi-ecosystem-group: "all-go"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "daily"
 
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/cli" # Location of package manifests
+  - package-ecosystem: "gomod"
+    directory: "/cli"
     multi-ecosystem-group: "all-go"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "daily"
 
@@ -54,18 +49,21 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "daily"
+    groups:
+      all-npm:
+        patterns: ["*"]
 
   - package-ecosystem: "docker"
     directory: "/core"
     multi-ecosystem-group: "all-docker"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "docker"
     directory: "/docs"
     multi-ecosystem-group: "all-docker"
-    patterns: [ "*" ]
+    patterns: ["*"]
     schedule:
       interval: "weekly"
 
@@ -73,3 +71,6 @@ updates:
     directory: "/.github"
     schedule:
       interval: "weekly"
+    groups:
+      all-actions:
+        patterns: ["*"]
