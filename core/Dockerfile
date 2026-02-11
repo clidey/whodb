@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:25.6.0-alpine3.22 AS build-stage
+FROM node:25.6.0-alpine3.23 AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
@@ -37,7 +37,7 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.26-alpine3.22 AS backend-stage
+FROM golang:1.26-alpine3.23 AS backend-stage
 RUN apk add --no-cache \
 	gcc \
 	musl-dev \
