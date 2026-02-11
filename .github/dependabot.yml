@@ -14,6 +14,7 @@ updates:
     directory: "/core"
     multi-ecosystem-group: "all-go"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
@@ -21,6 +22,7 @@ updates:
     directory: "/ee-stub"
     multi-ecosystem-group: "all-go"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
@@ -28,6 +30,7 @@ updates:
     directory: "/desktop-ce"
     multi-ecosystem-group: "all-go"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
@@ -35,6 +38,7 @@ updates:
     directory: "/desktop-common"
     multi-ecosystem-group: "all-go"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
@@ -42,11 +46,13 @@ updates:
     directory: "/cli"
     multi-ecosystem-group: "all-go"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
   - package-ecosystem: "npm"
     directory: "/frontend"
+    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
     groups:
@@ -57,6 +63,7 @@ updates:
     directory: "/core"
     multi-ecosystem-group: "all-docker"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
 
@@ -64,11 +71,13 @@ updates:
     directory: "/docs"
     multi-ecosystem-group: "all-docker"
     patterns: ["*"]
+    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "github-actions"
     directory: "/.github"
+    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
     groups:
