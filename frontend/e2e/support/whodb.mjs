@@ -1578,7 +1578,10 @@ export class WhoDB {
      * Generate mock data
      */
     async generateMockData() {
-        await this.page.locator('[data-testid="mock-data-generate-button"]').click();
+        const btn = this.page.locator('[data-testid="mock-data-generate-button"]');
+        await expect(btn).toBeEnabled({ timeout: 30000 });
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click({ force: true });
     }
 
     /**

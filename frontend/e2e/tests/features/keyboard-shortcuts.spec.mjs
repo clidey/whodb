@@ -451,7 +451,7 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination (2 is available in E2E mode)
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]')).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Focus a row
                 await page.keyboard.press('ArrowDown');
@@ -475,7 +475,7 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]')).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Check we're on page 1
                 await expect(page.locator('[data-testid="table-page-number"]').first()).toHaveAttribute('data-active', 'true');
@@ -493,7 +493,7 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]')).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Go to page 2 first
                 await page.locator('[data-testid="table-page-number"]').nth(1).click();
@@ -512,7 +512,7 @@ test.describe('Keyboard Shortcuts', () => {
                 // Set page size to a small value to see pagination
                 await whodb.setTablePageSize(2);
                 await page.locator('[data-testid="submit-button"]').click();
-                await expect(page.locator('[data-testid="table-page-number"]')).toBeAttached({ timeout: 10000 });
+                await expect(page.locator('[data-testid="table-page-number"]').first()).toBeAttached({ timeout: 10000 });
 
                 // Ensure we're on page 1
                 await expect(page.locator('[data-testid="table-page-number"]').first()).toHaveAttribute('data-active', 'true');

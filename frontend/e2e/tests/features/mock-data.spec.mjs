@@ -19,6 +19,9 @@ import { hasFeature } from '../../support/database-config.mjs';
 
 test.describe('Mock Data Generation', () => {
 
+    // Mock data generation can be slow under parallel load (especially ClickHouse)
+    test.setTimeout(120_000);
+
     // SQL Databases with mock data support
     forEachDatabase('sql', (db) => {
         const supportedTable = db.mockData.supportedTable;
@@ -86,8 +89,8 @@ test.describe('Mock Data Generation', () => {
             await whodb.setMockDataRows(5);
             await whodb.generateMockData();
 
-            // Wait for success toast
-            await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 30000 });
+            // Wait for success toast (ClickHouse can take 40s+ for mock data generation)
+            await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
 
             // Sheet should close after success
             await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
