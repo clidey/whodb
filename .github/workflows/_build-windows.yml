@@ -102,7 +102,7 @@ jobs:
         if: matrix.enabled != false
         working-directory: ./frontend
         env:
-          CYPRESS_INSTALL_BINARY: "0"
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
         run: pnpm i
 
       - name: Build frontend

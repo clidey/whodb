@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 # Screenshot Copy Script
-# This script copies all generated screenshots from the Cypress screenshots
+# This script copies all generated screenshots from the Playwright screenshots
 # directory to the docs/images directory for documentation purposes.
 
 set -e
@@ -25,7 +25,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Define source and destination paths
-SCREENSHOTS_SOURCE="$PROJECT_ROOT/frontend/cypress/screenshots/postgres-screenshots.cy.js/postgres"
+SCREENSHOTS_SOURCE="$PROJECT_ROOT/frontend/e2e/screenshots/postgres"
 DOCS_IMAGES_DEST="$PROJECT_ROOT/docs/images"
 
 echo "📸 WhoDB Screenshot Copy Utility"

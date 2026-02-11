@@ -182,20 +182,7 @@ func GetConfiguredChatProviders() []ChatProvider {
 }
 
 func GetOllamaEndpoint() string {
-	host := "localhost"
-	port := "11434"
-
-	if common.IsRunningInsideDocker() {
-		host = "host.docker.internal"
-	}
-
-	if OllamaHost != "" {
-		host = OllamaHost
-	}
-	if OllamaPort != "" {
-		port = OllamaPort
-	}
-
+	host, port := common.GetOllamaHost()
 	return fmt.Sprintf("http://%v:%v/api", host, port)
 }
 

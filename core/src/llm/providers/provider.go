@@ -41,7 +41,6 @@ type AIProvider interface {
 
 	// Core operations
 	GetSupportedModels(config *ProviderConfig) ([]string, error)
-	Complete(config *ProviderConfig, prompt string, model LLMModel, receiverChan *chan string) (*string, error)
 
 	// BAML integration methods
 	GetBAMLClientType() string

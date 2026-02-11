@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,6 +163,122 @@ describe('Scratchpad', () => {
                 cy.getScratchpadPages().then(pages => {
                     expect(pages.length).to.equal(1);
                 });
+            });
+        });
+
+        describe('Query Export', () => {
+            it('exports query results as CSV', () => {
+                cy.goto('scratchpad');
+                cy.intercept('POST', '/api/export').as('export');
+
+                const query = getSqlQuery(db, 'selectAllUsers');
+                cy.writeCode(0, query);
+                cy.runCode(0);
+
+                cy.getCellQueryOutput(0).then(({rows}) => {
+                    expect(rows.length).to.be.greaterThan(0);
+                });
+
+                // Click export button inside the query output
+                cy.get('[data-testid="cell-query-output"] [data-testid="export-all-button"]').click();
+                cy.contains('h2', 'Export Data').should('be.visible');
+
+                // Verify the raw query export message
+                cy.contains('You are about to export the results of your query.').should('be.visible');
+
+                // Verify CSV is selected by default
+                cy.get('[data-testid="export-format-select"]').should('contain.text', 'CSV');
+
+                cy.confirmExport();
+
+                cy.wait('@export').then(({request, response}) => {
+                    expect(response?.statusCode).to.equal(200);
+                    // Data is sent as selectedRows (frontend-only approach)
+                    expect(request.body.selectedRows).to.exist;
+                    expect(Array.isArray(request.body.selectedRows)).to.be.true;
+                    expect(request.body.selectedRows.length).to.be.greaterThan(0);
+                    expect(request.body.storageUnit).to.equal('query_export');
+                });
+            });
+
+            it('exports query results as Excel', () => {
+                cy.goto('scratchpad');
+                cy.intercept('POST', '/api/export').as('export');
+
+                const query = getSqlQuery(db, 'selectAllUsers');
+                cy.writeCode(0, query);
+                cy.runCode(0);
+
+                cy.getCellQueryOutput(0).then(({rows}) => {
+                    expect(rows.length).to.be.greaterThan(0);
+                });
+
+                cy.get('[data-testid="cell-query-output"] [data-testid="export-all-button"]').click();
+                cy.selectExportFormat('excel');
+
+                cy.confirmExport();
+
+                cy.wait('@export').then(({request, response}) => {
+                    expect(response?.statusCode).to.equal(200);
+                    expect(request.body.selectedRows).to.exist;
+                    expect(request.body.format).to.equal('excel');
+                    expect(request.body.storageUnit).to.equal('query_export');
+                });
+            });
+
+            it('preselects Excel when "Export All as Excel" is chosen from context menu', () => {
+                cy.goto('scratchpad');
+
+                const query = getSqlQuery(db, 'selectAllUsers');
+                cy.writeCode(0, query);
+                cy.runCode(0);
+
+                cy.getCellQueryOutput(0).then(({rows}) => {
+                    expect(rows.length).to.be.greaterThan(0);
+                });
+
+                // Right-click on a visible data cell (eq(1) skips the hidden checkbox td)
+                cy.get('[data-testid="cell-query-output"] table tbody tr').first().find('td').eq(1).rightclick();
+                cy.wait(300);
+
+                // Navigate to Export submenu and click "Export All as Excel"
+                cy.get('[role="menu"]').contains('Export').click();
+                cy.contains('Export All as Excel').should('be.visible').click();
+
+                // Verify the export dialog opens with Excel preselected
+                cy.contains('h2', 'Export Data').should('be.visible');
+                cy.get('[data-testid="export-format-select"]').should('contain.text', 'Excel');
+
+                cy.get('body').type('{esc}');
+            });
+
+            it('does not show "Export Selected" options in context menu', () => {
+                cy.goto('scratchpad');
+
+                const query = getSqlQuery(db, 'selectAllUsers');
+                cy.writeCode(0, query);
+                cy.runCode(0);
+
+                cy.getCellQueryOutput(0).then(({rows}) => {
+                    expect(rows.length).to.be.greaterThan(0);
+                });
+
+                // Right-click on a visible data cell (eq(1) skips the hidden checkbox td)
+                cy.get('[data-testid="cell-query-output"] table tbody tr').first().find('td').eq(1).rightclick();
+                cy.wait(300);
+
+                // Open the Export submenu (scope to context menu to avoid matching "Export All" button)
+                cy.get('[role="menu"]').contains('Export').click();
+
+                // "Export All" options should be visible
+                cy.contains('Export All as CSV').should('be.visible');
+                cy.contains('Export All as Excel').should('be.visible');
+
+                // "Export Selected" options should NOT exist
+                cy.contains('Export Selected as CSV').should('not.exist');
+                cy.contains('Export Selected as Excel').should('not.exist');
+
+                cy.get('body').type('{esc}');
             });
         });
 

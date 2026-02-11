@@ -76,10 +76,12 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	connectionURI.WriteString(queryParams)
 
 	clientOptions.ApplyURI(connectionURI.String())
-	clientOptions.SetAuth(options.Credential{
-		Username: url.QueryEscape(config.Credentials.Username),
-		Password: url.QueryEscape(config.Credentials.Password),
-	})
+	if config.Credentials.Username != "" || config.Credentials.Password != "" {
+		clientOptions.SetAuth(options.Credential{
+			Username: url.QueryEscape(config.Credentials.Username),
+			Password: url.QueryEscape(config.Credentials.Password),
+		})
+	}
 
 	// Configure SSL/TLS
 	sslMode := "disabled"

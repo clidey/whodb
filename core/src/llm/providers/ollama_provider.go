@@ -17,13 +17,13 @@
 package providers
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/log"
 )
 
@@ -54,10 +54,11 @@ func (p *OllamaProvider) RequiresAPIKey() bool {
 	return false
 }
 
-// GetDefaultEndpoint returns the default Ollama API endpoint.
-// This will be overridden by the endpoint from config which considers WHODB_OLLAMA_HOST/PORT.
+// GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
+// (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
 func (p *OllamaProvider) GetDefaultEndpoint() string {
-	return "http://localhost:11434/api"
+	host, port := common.GetOllamaHost()
+	return fmt.Sprintf("http://%s:%s/api", host, port)
 }
 
 // ValidateConfig validates the provider configuration.
@@ -104,81 +105,6 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		models = append(models, model.Name)
 	}
 	return models, nil
-}
-
-// Complete sends a completion request to Ollama.
-func (p *OllamaProvider) Complete(config *ProviderConfig, prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
-	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
-	}
-
-	requestBody, err := json.Marshal(map[string]any{
-		"model":  string(model),
-		"prompt": prompt,
-	})
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to marshal Ollama request body for model %s", model)
-		return nil, err
-	}
-
-	url := fmt.Sprintf("%s/generate", config.Endpoint)
-
-	resp, err := sendHTTPRequest("POST", url, requestBody, nil)
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to send HTTP request to Ollama at %s", url)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		log.Logger.Errorf("Ollama returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
-		return nil, fmt.Errorf("ollama error: %s", string(body))
-	}
-
-	return p.ParseResponse(resp.Body, receiverChan)
-}
-
-// ParseResponse parses the Ollama API response (always streaming).
-func (p *OllamaProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
-	responseBuilder := strings.Builder{}
-	reader := bufio.NewReader(body)
-
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			log.Logger.WithError(err).Error("Failed to read line from Ollama streaming response")
-			return nil, err
-		}
-
-		var completionResponse struct {
-			Response string `json:"response"`
-			Done     bool   `json:"done"`
-		}
-		if err := json.Unmarshal([]byte(line), &completionResponse); err != nil {
-			log.Logger.WithError(err).Errorf("Failed to unmarshal Ollama response line: %s", line)
-			return nil, err
-		}
-
-		if receiverChan != nil {
-			*receiverChan <- completionResponse.Response
-		}
-
-		if _, err := responseBuilder.WriteString(completionResponse.Response); err != nil {
-			log.Logger.WithError(err).Error("Failed to write to Ollama response builder")
-			return nil, err
-		}
-
-		if completionResponse.Done {
-			response := responseBuilder.String()
-			return &response, nil
-		}
-	}
-
-	return nil, nil
 }
 
 // GetBAMLClientType returns the BAML client type for Ollama.

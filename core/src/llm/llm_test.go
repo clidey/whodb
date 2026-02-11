@@ -49,13 +49,6 @@ func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
 	}
 }
 
-func TestCompleteReturnsErrorForUnsupportedType(t *testing.T) {
-	client := LLMClient{Type: LLMType("Unknown")}
-	if _, err := client.Complete("hi", "model", nil); err == nil {
-		t.Fatalf("expected error for unsupported type")
-	}
-}
-
 func TestGetSupportedModelsReturnsErrorForUnsupportedType(t *testing.T) {
 	client := LLMClient{Type: LLMType("Unknown")}
 	if _, err := client.GetSupportedModels(); err == nil {

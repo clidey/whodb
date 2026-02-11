@@ -21,7 +21,7 @@ set -e
 EDITION="${1:-ce}"
 TARGET_DB="${2:-all}"
 
-# Check if this is EE-only mode (passed from run-cypress.sh)
+# Check if this is EE-only mode (passed from run-e2e.sh)
 if [ "$EDITION" = "ee-only" ]; then
     SKIP_CE_DATABASES="true"
     EDITION="ee"  # Use ee for everything else
@@ -360,10 +360,14 @@ echo "🚀 Starting CE test server with coverage..."
 cd "$PROJECT_ROOT/core"
 # Let Go use all available CPU cores for better parallel test handling
 # WHODB_LOG_LEVEL defaults to "error" if not set (reduces noise during tests)
+mkdir -p "$PROJECT_ROOT/frontend/e2e/logs"
+# Use stdbuf to disable output buffering so logs are written immediately
+# (without this, logs are lost when the process is killed by cleanup)
 ENVIRONMENT=dev \
     WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}" \
     WHODB_DISABLE_MOCK_DATA_GENERATION='DEPARTMENTS' \
-    ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out &
+    stdbuf -oL -eL ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out \
+    > "$PROJECT_ROOT/frontend/e2e/logs/backend.log" 2>&1 &
 TEST_SERVER_PID=$!
 
 # Save PID for cleanup

@@ -62,6 +62,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const navigate = useNavigate();
     const current = useAppSelector(state => state.auth.current);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
+    const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
 
     // Listen for columns broadcast from storage unit page
@@ -178,15 +179,17 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             },
         });
 
-        tableActions.push({
-            id: "action-disconnect",
-            label: t('disconnect'),
-            icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
-            onSelect: () => {
-                navigate(InternalRoutes.Logout.path);
-                onOpenChange(false);
-            },
-        });
+        if (!isEmbedded) {
+            tableActions.push({
+                id: "action-disconnect",
+                label: t('disconnect'),
+                icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
+                onSelect: () => {
+                    navigate(InternalRoutes.Logout.path);
+                    onOpenChange(false);
+                },
+            });
+        }
 
         // Add sort actions for available columns
         availableColumns.forEach((column) => {

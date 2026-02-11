@@ -24,7 +24,6 @@ import {
     DrawerTitle,
     Input,
     Label,
-    SearchInput,
     Select,
     SelectContent,
     SelectItem,
@@ -83,6 +82,10 @@ import {usePageSize} from "../../hooks/use-page-size";
 import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-condition";
 import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 import {useTranslation} from "../../hooks/use-translation";
+import {whereConditionToSql} from "../../utils/where-condition-to-sql";
+import {parseSearchToWhereCondition, mergeSearchWithWhere} from "../../utils/search-parser";
+import {SearchIntellisense} from "../../components/search-intellisense";
+import {useSearchIntellisense} from "../../hooks/use-search-intellisense";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -134,6 +137,8 @@ export const ExploreStorageUnit: FC = () => {
     const [showAdd, setShowAdd] = useState(false);
     const searchRef = useRef<(search: string) => void>(() => {});
     const [search, setSearch] = useState("");
+    const [searchCursorPosition, setSearchCursorPosition] = useState(0);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Request counter to prevent race conditions - only the latest query's results should be used
     const latestRequestIdRef = useRef(0);
@@ -153,6 +158,10 @@ export const ExploreStorageUnit: FC = () => {
         targetTable: string;
     } | null>(null);
     const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
+
+    // Track table container height for responsive sizing
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const [tableHeight, setTableHeight] = useState<number>(500);
 
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
 
@@ -188,7 +197,80 @@ export const ExploreStorageUnit: FC = () => {
         return `SELECT * FROM ${qualified} LIMIT 5`;
     }, [schema, unitName, current?.Type, generateInitialQuery]);
 
+    const scratchpadQueryWithConditions = useMemo(() => {
+        if (generateInitialQuery && current?.Type) {
+            const baseQuery = generateInitialQuery(current?.Type, schema, unitName);
+            const whereClause = whereConditionToSql(whereCondition);
+
+            if (!whereClause) {
+                return baseQuery;
+            }
+
+            // Insert WHERE clause before LIMIT if present
+            const limitMatch = baseQuery.match(/\s+LIMIT\s+\d+/i);
+            if (limitMatch) {
+                const beforeLimit = baseQuery.substring(0, limitMatch.index);
+                const limitPart = baseQuery.substring(limitMatch.index!);
+                return `${beforeLimit} WHERE ${whereClause}${limitPart}`;
+            }
+
+            return `${baseQuery} WHERE ${whereClause}`;
+        }
+
+        const qualified = schema ? `${schema}.${unitName}` : unitName;
+        const whereClause = whereConditionToSql(whereCondition);
+
+        if (!whereClause) {
+            return `SELECT * FROM ${qualified} LIMIT 5`;
+        }
+
+        return `SELECT * FROM ${qualified} WHERE ${whereClause} LIMIT 5`;
+    }, [schema, unitName, current?.Type, generateInitialQuery, whereCondition]);
+
     const [code, setCode] = useState(initialScratchpadQuery);
+
+    // Compute columns and types from rows data
+    const {columns, columnTypes, columnIsPrimary, columnIsForeignKey} = useMemo(() => {
+        const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
+        return {
+            columns: dataColumns,
+            columnTypes: rows?.Columns.map(column => column.Type),
+            columnIsPrimary: rows?.Columns.map(column => column.IsPrimary),
+            columnIsForeignKey: rows?.Columns.map(column => column.IsForeignKey)
+        };
+    }, [rows?.Columns]);
+
+    // Compute valid operators for the current database
+    const validOperators = useMemo(() => {
+        if (!current?.Type) {
+            return [];
+        }
+        return getDatabaseOperators(current.Type);
+    }, [current?.Type]);
+
+    // Compute where columns (handles NoSQL document types)
+    const {whereColumns, whereColumnTypes} = useMemo(() => {
+        if (rows?.Columns == null || rows?.Columns.length === 0 || rows == null || rows.Rows.length === 0) {
+            return {whereColumns: [], whereColumnTypes: []};
+        }
+        if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
+            const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
+            const whereColumnTypes = whereColumns.map(() => "string");
+            return {whereColumns, whereColumnTypes}
+        }
+        return {whereColumns: columns, whereColumnTypes: columnTypes}
+    }, [rows?.Columns, rows?.Rows, current?.Type, columns, columnTypes]);
+
+    // Intellisense for search input
+    const intellisense = useSearchIntellisense({
+        columns: whereColumns,
+        operators: validOperators,
+        value: search,
+        cursorPosition: searchCursorPosition,
+        inputRef: searchInputRef,
+        onCursorPositionChange: setSearchCursorPosition,
+        onValueChange: setSearch,
+    });
 
     const handleSubmitRequest = useCallback((pageOffset: number | null = null) => {
         const tableNameToUse = unitName || currentTableName;
@@ -201,11 +283,19 @@ export const ExploreStorageUnit: FC = () => {
         // Use ref to always get the latest whereCondition (avoids stale closure issues)
         const currentWhereCondition = whereConditionRef.current;
 
+        // Parse search input and convert to where condition
+        const searchCondition = search.trim()
+            ? parseSearchToWhereCondition(search, whereColumns, whereColumnTypes, validOperators)
+            : undefined;
+
+        // Merge search condition with user-defined where condition
+        const mergedCondition = mergeSearchWithWhere(searchCondition, currentWhereCondition);
+
         getStorageUnitRows({
             variables: {
                 schema,
                 storageUnit: tableNameToUse,
-                where: currentWhereCondition,
+                where: mergedCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
                 pageSize,
                 pageOffset: pageOffset ?? currentPage - 1,
@@ -216,7 +306,7 @@ export const ExploreStorageUnit: FC = () => {
                 setRows(result.data.Row);
             }
         });
-    }, [getStorageUnitRows, schema, unitName, currentTableName, sortConditions, pageSize, currentPage]);
+    }, [getStorageUnitRows, schema, unitName, currentTableName, sortConditions, pageSize, currentPage, search, whereColumns, whereColumnTypes, validOperators]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -344,16 +434,6 @@ export const ExploreStorageUnit: FC = () => {
             InternalRoutes.Dashboard.ExploreStorageUnit,
         ];
     }, [current]);
-    
-    const {columns, columnTypes, columnIsPrimary, columnIsForeignKey} = useMemo(() => {
-        const dataColumns = rows?.Columns.map(c => c.Name) ?? [];
-        return {
-            columns: dataColumns,
-            columnTypes: rows?.Columns.map(column => column.Type),
-            columnIsPrimary: rows?.Columns.map(column => column.IsPrimary),
-            columnIsForeignKey: rows?.Columns.map(column => column.IsForeignKey)
-        };
-    }, [rows?.Columns, rows?.Rows]);
 
     // Broadcast available columns for Command Palette sorting
     useEffect(() => {
@@ -384,18 +464,54 @@ export const ExploreStorageUnit: FC = () => {
         }
     }, [navigate, unit, currentTableName]);
 
+    // Dynamically adjust table height based on available viewport space
+    useEffect(() => {
+        const updateTableHeight = () => {
+            if (tableContainerRef.current) {
+                // Get the position of the table container relative to viewport
+                const rect = tableContainerRef.current.getBoundingClientRect();
+                // Calculate available height from current position to bottom of viewport
+                // Subtract bottom padding (40px for spacing)
+                const availableHeight = window.innerHeight - rect.top - 40;
+
+                // Reserve space for table controls:
+                // - Table header row: ~48px
+                // - Add Row button and children: ~60px
+                // - Pagination controls: ~48px
+                // - Export button: ~60px
+                // - Internal gaps and spacing: ~44px
+                const reservedSpace = 260;
+
+                // Calculate final height with minimum of 300px for usability
+                const calculatedHeight = Math.max(300, availableHeight - reservedSpace);
+                setTableHeight(calculatedHeight);
+            }
+        };
+
+        // Initial calculation with a small delay to ensure DOM is ready
+        const timeoutId = setTimeout(updateTableHeight, 0);
+
+        // Update on window resize
+        window.addEventListener('resize', updateTableHeight);
+
+        // Update when content changes (using ResizeObserver for container)
+        const resizeObserver = new ResizeObserver(updateTableHeight);
+        if (tableContainerRef.current) {
+            resizeObserver.observe(tableContainerRef.current);
+        }
+
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('resize', updateTableHeight);
+            resizeObserver.disconnect();
+        };
+    }, [rows]);
+
     const handleFilterChange = useCallback((filters: WhereCondition) => {
         // Update ref synchronously to avoid stale closure issues
         whereConditionRef.current = filters;
         setWhereCondition(filters);
     }, []);
-
-    const validOperators = useMemo(() => {
-        if (!current?.Type) {
-            return [];
-        }
-        return getDatabaseOperators(current.Type);
-    }, [current?.Type]);
 
     const sortedColumnsMap = useMemo(() => {
         const map = new Map<string, 'asc' | 'desc'>();
@@ -497,27 +613,15 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleOpenScratchpad = useCallback(() => {
         setIsScratchpadOpen(true);
-        handleScratchpad();
-        setCode(initialScratchpadQuery);
-    }, [handleScratchpad, initialScratchpadQuery]);
+        setCode(scratchpadQueryWithConditions);
+        handleScratchpad(scratchpadQueryWithConditions);
+    }, [handleScratchpad, scratchpadQueryWithConditions]);
 
     const handleCloseScratchpad = useCallback(() => {
         setIsScratchpadOpen(false);
     }, []);
 
     const columnIcons = useMemo(() => getColumnIcons(columns, columnTypes, tTable), [columns, columnTypes, tTable]);
-
-    const {whereColumns, whereColumnTypes} = useMemo(() => {
-        if (rows?.Columns == null || rows?.Columns.length === 0 || rows == null || rows.Rows.length === 0) {
-            return {whereColumns: [], whereColumnTypes: []};
-        }
-        if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
-            const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
-            const whereColumnTypes = whereColumns.map(() => "string");
-            return {whereColumns, whereColumnTypes}
-        }
-        return {whereColumns: columns, whereColumnTypes: columnTypes}
-    }, [rows?.Columns, rows?.Rows, current?.Type])
 
     // Foreign key detection using actual column metadata
     const getColumnByName = useCallback((columnName: string) => {
@@ -628,15 +732,46 @@ export const ExploreStorageUnit: FC = () => {
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">
                     <div className="flex gap-2">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 relative">
                             <Label>{t('searchLabel')}</Label>
-                            <SearchInput placeholder={t('searchPlaceholder')} className="w-64" value={search} onChange={e => setSearch(e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === "Enter") {
-                                        searchRef.current?.(search);
-                                    }
-                                }} data-testid="table-search"
-                            />
+                            <div className="relative">
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <Input
+                                    ref={searchInputRef}
+                                    placeholder={t('searchPlaceholder')}
+                                    className="w-64 pl-10"
+                                    value={search}
+                                    onChange={e => {
+                                        setSearch(e.target.value);
+                                        setSearchCursorPosition(e.target.selectionStart || 0);
+                                    }}
+                                    onKeyDown={e => {
+                                        // Let intellisense handle its keys first
+                                        const handled = intellisense.handleKeyDown(e);
+                                        if (handled) return;
+
+                                        if (e.key === "Enter") {
+                                            handleQuery();
+                                        }
+                                    }}
+                                    onSelect={e => {
+                                        setSearchCursorPosition((e.target as HTMLInputElement).selectionStart || 0);
+                                    }}
+                                    onClick={e => {
+                                        setSearchCursorPosition((e.target as HTMLInputElement).selectionStart || 0);
+                                    }}
+                                    data-testid="table-search"
+                                />
+                                {intellisense.isOpen && (
+                                    <SearchIntellisense
+                                        suggestions={intellisense.suggestions}
+                                        selectedIndex={intellisense.selectedIndex}
+                                        onSelect={intellisense.acceptSuggestion}
+                                        onClose={intellisense.closeDropdown}
+                                        position={intellisense.dropdownPosition}
+                                    />
+                                )}
+                            </div>
                         </div>
                         <div className="flex flex-col gap-2">
                             <Label>{t('pageSizeLabel')}</Label>
@@ -786,7 +921,7 @@ export const ExploreStorageUnit: FC = () => {
                 </Sheet>
 
             </div>
-            <div className="grow">
+            <div className="grow" ref={tableContainerRef}>
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
                         <Loading />
@@ -806,6 +941,7 @@ export const ExploreStorageUnit: FC = () => {
                         sortedColumns={sortedColumnsMap}
                         searchRef={searchRef}
                         pageSize={pageSize}
+                        height={tableHeight}
                         // Server-side pagination props
                         totalCount={Number.parseInt(totalCount, 10)}
                         currentPage={currentPage}
@@ -843,10 +979,10 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="flex flex-col gap-sm h-[150px] mb-4">
+                <div className="flex flex-col gap-sm h-[150px] mb-4" data-vaul-no-drag>
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto" data-vaul-no-drag>
                     <StorageUnitTable
                         columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
                         columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
