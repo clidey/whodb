@@ -906,11 +906,9 @@ export class WhoDB {
             const editorContainer = this.page.locator('[data-testid="add-row-field-document"] .cm-editor');
             await editorContainer.waitFor({ timeout: 5000 });
 
-            // Click to focus the CodeMirror editor, select all, then type the new content
-            const cmContent = editorContainer.locator('.cm-content');
-            await cmContent.click();
-            await this.page.keyboard.press(`${process.platform === 'darwin' ? 'Meta' : 'Control'}+a`);
-            await this.page.keyboard.type(jsonString);
+            // Playwright sees CodeMirror's .cm-content as a textbox role.
+            // Use fill() which handles contenteditable elements correctly.
+            await editorContainer.locator('[role="textbox"]').fill(jsonString);
         } else {
             // Traditional database - multiple fields
             for (const [key, value] of Object.entries(data)) {

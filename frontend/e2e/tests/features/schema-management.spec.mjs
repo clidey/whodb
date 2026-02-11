@@ -45,9 +45,7 @@ test.describe('Schema Management', () => {
                 });
 
                 test('can open create storage unit form', async ({ whodb, page }) => {
-                    await page.goto(whodb.url('/storage-unit'));
-
-                    // Wait for storage unit cards to load
+                    // Already on /storage-unit from beforeEach (storageState has card view)
                     await expect(page.locator('[data-testid="storage-unit-card-list"]')).toBeVisible({ timeout: 15000 });
 
                     // Click create button to expand the form
@@ -61,7 +59,7 @@ test.describe('Schema Management', () => {
 
                     // Form fields should be visible (form elements are in a sibling container, not inside create-storage-unit-card)
                     // Name input should be visible
-                    await expect(page.locator('input[placeholder*="name" i]')).toBeVisible();
+                    await expect(page.locator('input[placeholder*="name" i]').first()).toBeVisible();
 
                     // Field cards should be visible
                     const fieldCards = page.locator('[data-testid="create-field-card"]');
