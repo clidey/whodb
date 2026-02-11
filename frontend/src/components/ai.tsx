@@ -360,7 +360,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             onValueChange={handleExternalModelChange}
                         >
                             <SelectTrigger className="w-full" data-testid="external-model-type-select">
-                                <SelectValue placeholder={t('selectModelType')} />
+                                <SelectValue placeholder={t('selectProvider')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {externalModelTypes.map(item => (

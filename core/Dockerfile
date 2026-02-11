@@ -16,8 +16,8 @@ FROM node:24.11.1-alpine3.22 AS build-stage
 RUN npm i -g pnpm
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
-# Skip Cypress binary installation - not needed for production builds
-ENV CYPRESS_INSTALL_BINARY=0
+# Skip test framework browser downloads - not needed for production builds
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN pnpm install
 COPY ./frontend/ ./
 

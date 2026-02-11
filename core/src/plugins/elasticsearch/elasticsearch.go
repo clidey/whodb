@@ -53,8 +53,53 @@ func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	return true
 }
 
+// GetDatabases lists all Elasticsearch indices (equivalent to databases).
+// System indices (those starting with .) are filtered out.
 func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
+	client, err := DB(config)
+	if err != nil {
+		log.Logger.WithError(err).Error("Failed to connect to ElasticSearch while listing indices")
+		return nil, err
+	}
+
+	// Use Cat Indices API for lightweight index listing
+	res, err := client.Cat.Indices(
+		client.Cat.Indices.WithFormat("json"),
+	)
+	if err != nil {
+		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices")
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		err := fmt.Errorf("error getting indices: %s", res.String())
+		log.Logger.WithError(err).Error("ElasticSearch Cat Indices API returned error")
+		return nil, err
+	}
+
+	var indices []map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&indices); err != nil {
+		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices response")
+		return nil, err
+	}
+
+	databases := make([]string, 0, len(indices))
+	for _, idx := range indices {
+		indexName, ok := idx["index"].(string)
+		if !ok {
+			continue
+		}
+
+		// Skip hidden/system indices (those starting with .)
+		if strings.HasPrefix(indexName, ".") {
+			continue
+		}
+
+		databases = append(databases, indexName)
+	}
+
+	return databases, nil
 }
 
 func (p *ElasticSearchPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {

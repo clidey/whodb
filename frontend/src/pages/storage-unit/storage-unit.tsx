@@ -346,7 +346,10 @@ export const StorageUnitPage: FC = () => {
             if (result.data?.ColumnsBatch) {
                 const columnsMap: Record<string, any[]> = {};
                 for (const item of result.data.ColumnsBatch) {
-                    columnsMap[item.StorageUnit] = item.Columns;
+                    // Only add to map if columns exist and are non-empty
+                    if (item.Columns && item.Columns.length > 0) {
+                        columnsMap[item.StorageUnit] = item.Columns;
+                    }
                 }
                 setTableColumns(columnsMap);
             }

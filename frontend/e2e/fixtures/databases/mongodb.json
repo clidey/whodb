@@ -1,0 +1,130 @@
+{
+  "type": "MongoDB",
+  "category": "document",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "firstName": "john_doe",
+    "identifierColIndex": 1,
+    "idField": "_id",
+    "testValues": {
+      "original": "jane_smith",
+      "modified": "jane_smith1",
+      "rowIndex": 1
+    },
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
+  },
+  "connection": {
+    "host": "localhost",
+    "port": 27017,
+    "user": "user",
+    "password": "password",
+    "database": "test_db",
+    "advanced": {}
+  },
+  "schema": null,
+  "mockData": {
+    "supportedTable": "users",
+    "tableWithFKs": "orders"
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": false
+  },
+  "features": {
+    "graph": true,
+    "export": true,
+    "scratchpad": false,
+    "mockData": true,
+    "chat": true,
+    "whereConditions": true,
+    "queryHistory": false
+  },
+  "featureNotes": {
+    "scratchpad": "Scratchpad requires SQL execution which MongoDB does not support natively",
+    "queryHistory": "Query history not supported for document databases"
+  },
+  "whereOperators": {
+    "equals": "eq",
+    "notEquals": "ne",
+    "greaterThan": "gt",
+    "lessThan": "lt",
+    "greaterOrEqual": "gte",
+    "lessOrEqual": "lte"
+  },
+  "expectedTables": [
+    "order_items",
+    "order_summary",
+    "orders",
+    "payments",
+    "products",
+    "users",
+    "validated_products"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "document": "object"
+      },
+      "expectedColumns": [
+        "",
+        "document"
+      ],
+      "testData": {
+        "initial": [
+          {
+            "username": "john_doe",
+            "email": "john@example.com",
+            "password": "securepassword1"
+          },
+          {
+            "username": "jane_smith",
+            "email": "jane@example.com",
+            "password": "securepassword2"
+          },
+          {
+            "username": "admin_user",
+            "email": "admin@example.com",
+            "password": "adminpass"
+          }
+        ]
+      },
+      "metadata": {
+        "type": "collection",
+        "hasStorageSize": true,
+        "hasCount": true
+      }
+    }
+  },
+  "graph": {
+    "expectedNodes": {
+      "users": [],
+      "orders": ["users"],
+      "order_items": ["orders", "products"],
+      "products": [],
+      "payments": ["orders"],
+      "order_summary": []
+    }
+  },
+  "ssl": {
+    "port": 27018,
+    "caCertPath": "/app/certs/ca/mongodb/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No TLS - server requires TLS" },
+      { "mode": "enabled", "shouldSucceed": true, "needsCert": true, "description": "TLS enabled with CA verification" },
+      { "mode": "insecure", "shouldSucceed": true, "needsCert": false, "description": "TLS without certificate verification" }
+    ],
+    "negativeTests": [
+      { "mode": "enabled", "withCert": false, "description": "enabled without CA cert should fail" }
+    ]
+  }
+}

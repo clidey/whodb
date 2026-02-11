@@ -1,0 +1,132 @@
+{
+  "type": "ElasticSearch",
+  "category": "document",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "firstName": "john_doe",
+    "identifierColIndex": 1,
+    "idField": "_id",
+    "testValues": {
+      "original": "jane_smith",
+      "modified": "jane_smith1",
+      "rowIndex": 1
+    },
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
+  },
+  "connection": {
+    "host": "localhost",
+    "port": 9200,
+    "user": "elastic",
+    "password": "pgmio430fe$$#@@",
+    "database": null,
+    "advanced": {}
+  },
+  "schema": null,
+  "mockData": {
+    "supportedTable": "users",
+    "tableWithFKs": "orders"
+  },
+  "indexRefreshDelay": 2500,
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": false
+  },
+  "features": {
+    "graph": false,
+    "export": true,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": true,
+    "whereConditions": true,
+    "queryHistory": false
+  },
+  "featureNotes": {
+    "graph": "Graph view not applicable for Elasticsearch indices - no foreign key relationships",
+    "scratchpad": "Scratchpad requires SQL execution which Elasticsearch does not support",
+    "mockData": "Mock data generation not implemented for document databases",
+    "queryHistory": "Query history not supported for document databases"
+  },
+  "whereOperators": {
+    "equals": "term",
+    "notEquals": "!=",
+    "greaterThan": ">",
+    "lessThan": "<",
+    "greaterOrEqual": ">=",
+    "lessOrEqual": "<=",
+    "match": "match",
+    "match_phrase": "match_phrase",
+    "regexp": "regexp",
+    "wildcard": "wildcard",
+    "fuzzy": "fuzzy"
+  },
+  "expectedIndices": [
+    "order_items",
+    "orders",
+    "payments",
+    "products",
+    "users"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "document": "object"
+      },
+      "expectedColumns": [
+        "",
+        "document"
+      ],
+      "testData": {
+        "initial": [
+          {
+            "username": "john_doe",
+            "email": "john@example.com",
+            "password": "securepassword1"
+          },
+          {
+            "username": "jane_smith",
+            "email": "jane@example.com",
+            "password": "securepassword2"
+          },
+          {
+            "username": "admin_user",
+            "email": "admin@example.com",
+            "password": "adminpass"
+          }
+        ],
+        "newDoc": {
+          "username": "test_user",
+          "email": "test@example.com",
+          "password": "testpass"
+        }
+      },
+      "metadata": {
+        "type": "index",
+        "hasCount": true
+      }
+    }
+  },
+  "ssl": {
+    "port": 9201,
+    "user": "elastic",
+    "password": "password",
+    "caCertPath": "/app/certs/ca/elasticsearch/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No TLS on TLS-only endpoint" },
+      { "mode": "enabled", "shouldSucceed": true, "needsCert": true, "description": "TLS enabled with CA verification" },
+      { "mode": "insecure", "shouldSucceed": true, "needsCert": false, "description": "TLS without certificate verification" }
+    ],
+    "negativeTests": [
+      { "mode": "enabled", "withCert": false, "description": "enabled without CA cert should fail" }
+    ]
+  }
+}

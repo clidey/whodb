@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@
 package common
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -48,6 +50,65 @@ func GetRecordValueOrDefault(records []engine.Record, key string, defaultValue s
 func IsRunningInsideDocker() bool {
 	_, err := os.Stat("/.dockerenv")
 	return !os.IsNotExist(err)
+}
+
+// IsRunningInsideWSL2 detects if the current process is running inside WSL2
+// by checking for "microsoft" or "WSL" in /proc/version.
+func IsRunningInsideWSL2() bool {
+	data, err := os.ReadFile("/proc/version")
+	if err != nil {
+		return false
+	}
+	version := strings.ToLower(string(data))
+	return strings.Contains(version, "microsoft") || strings.Contains(version, "wsl")
+}
+
+// GetWSL2WindowsHost returns the Windows host IP from inside WSL2
+// by reading the default gateway from /proc/net/route. In WSL2, the
+// default gateway is the Windows host. This is a file read only —
+// no command execution.
+func GetWSL2WindowsHost() string {
+	data, err := os.ReadFile("/proc/net/route")
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 3 || fields[1] != "00000000" {
+			continue
+		}
+		// Default route found — parse gateway from hex to IP
+		gw, err := strconv.ParseUint(fields[2], 16, 32)
+		if err != nil {
+			return ""
+		}
+		return fmt.Sprintf("%d.%d.%d.%d", gw&0xFF, (gw>>8)&0xFF, (gw>>16)&0xFF, (gw>>24)&0xFF)
+	}
+	return ""
+}
+
+// GetOllamaHost returns the resolved Ollama host, accounting for Docker and WSL2 environments.
+// Environment variables WHODB_OLLAMA_HOST and WHODB_OLLAMA_PORT take precedence.
+func GetOllamaHost() (host string, port string) {
+	host = "localhost"
+	port = "11434"
+
+	if IsRunningInsideDocker() {
+		host = "host.docker.internal"
+	} else if IsRunningInsideWSL2() {
+		if wslHost := GetWSL2WindowsHost(); wslHost != "" {
+			host = wslHost
+		}
+	}
+
+	if envHost := os.Getenv("WHODB_OLLAMA_HOST"); envHost != "" {
+		host = envHost
+	}
+	if envPort := os.Getenv("WHODB_OLLAMA_PORT"); envPort != "" {
+		port = envPort
+	}
+
+	return host, port
 }
 
 // FilterList returns a new slice containing only the elements for which the predicate returns true.

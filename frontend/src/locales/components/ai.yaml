@@ -3,8 +3,8 @@ en:
   generate: Generate
   clear: Clear
   placeholder: Ask AI...
-  addExternalModel: Add External Model
-  modelType: Model Type
+  addExternalModel: Add External Provider
+  modelType: Provider Type
   selectProvider: Select Provider
   name: Name (Optional)
   token: Token

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,6 +230,105 @@ describe('Chat AI Integration', () => {
 
                 // Verify no SQL results appeared (indicating error was handled)
                 cy.get('table').should('not.exist');
+            });
+        });
+
+        describe('Query Export', () => {
+            it('exports chat query results as CSV', () => {
+                cy.gotoChat();
+                cy.intercept('POST', '/api/export').as('export');
+
+                cy.mockChatResponse([{
+                    type: 'sql:get',
+                    text: `SELECT * FROM ${schemaPrefix}users ORDER BY id`,
+                    result: {
+                        Columns: [
+                            {Name: 'id', Type: 'integer', __typename: 'Column'},
+                            {Name: 'username', Type: 'character varying', __typename: 'Column'}
+                        ],
+                        Rows: [['1', 'john_doe'], ['2', 'jane_smith']],
+                        __typename: 'RowsResult'
+                    }
+                }]);
+                cy.sendChatMessage('Show me all users');
+                cy.waitForChatResponse();
+
+                // Click export button on the chat result table
+                cy.get('[data-testid="export-all-button"]').last().click();
+                cy.contains('h2', 'Export Data').should('be.visible');
+                cy.contains('You are about to export the results of your query.').should('be.visible');
+
+                cy.confirmExport();
+
+                cy.wait('@export').then(({request, response}) => {
+                    expect(response?.statusCode).to.equal(200);
+                    expect(request.body.selectedRows).to.exist;
+                    expect(Array.isArray(request.body.selectedRows)).to.be.true;
+                    expect(request.body.selectedRows.length).to.equal(2);
+                    expect(request.body.storageUnit).to.equal('query_export');
+                });
+            });
+
+            it('does not show "Export Selected" options in context menu', () => {
+                cy.gotoChat();
+
+                cy.mockChatResponse([{
+                    type: 'sql:get',
+                    text: `SELECT * FROM ${schemaPrefix}users`,
+                    result: {
+                        Columns: [{Name: 'id', Type: 'integer', __typename: 'Column'}],
+                        Rows: [['1']],
+                        __typename: 'RowsResult'
+                    }
+                }]);
+                cy.sendChatMessage('Show users');
+                cy.waitForChatResponse();
+
+                // Right-click on the result table cell
+                cy.get('table').last().find('tbody tr').first().find('td').eq(1).rightclick();
+                cy.wait(300);
+
+                // Open Export submenu (scope to context menu to avoid matching "Export All" button)
+                cy.get('[role="menu"]').contains('Export').click();
+
+                // "Export All" options should be visible
+                cy.contains('Export All as CSV').should('be.visible');
+                cy.contains('Export All as Excel').should('be.visible');
+
+                // "Export Selected" options should NOT exist
+                cy.contains('Export Selected as CSV').should('not.exist');
+                cy.contains('Export Selected as Excel').should('not.exist');
+
+                cy.get('body').type('{esc}');
+            });
+
+            it('preselects Excel when "Export All as Excel" is chosen from context menu', () => {
+                cy.gotoChat();
+
+                cy.mockChatResponse([{
+                    type: 'sql:get',
+                    text: `SELECT * FROM ${schemaPrefix}users`,
+                    result: {
+                        Columns: [{Name: 'id', Type: 'integer', __typename: 'Column'}],
+                        Rows: [['1']],
+                        __typename: 'RowsResult'
+                    }
+                }]);
+                cy.sendChatMessage('Show users');
+                cy.waitForChatResponse();
+
+                // Right-click on result table
+                cy.get('table').last().find('tbody tr').first().find('td').eq(1).rightclick();
+                cy.wait(300);
+
+                cy.get('[role="menu"]').contains('Export').click();
+                cy.contains('Export All as Excel').should('be.visible').click();
+
+                // Verify dialog opens with Excel preselected
+                cy.contains('h2', 'Export Data').should('be.visible');
+                cy.get('[data-testid="export-format-select"]').should('contain.text', 'Excel');
+
+                cy.get('body').type('{esc}');
             });
         });
 
