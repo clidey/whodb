@@ -56,6 +56,7 @@ en:
   # Export button
   exportSelected: "Export {count} Selected"
   exportAll: Export All
+  importData: Import
 
   # Edit row sheet
   editRowTitle: Edit Row

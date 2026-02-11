@@ -183,6 +183,12 @@ func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema st
 
 func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// ClickHouse's native TCP protocol only supports one statement per request.
+		// Multi-statement scripts silently execute only the first statement.
+		if config != nil && config.MultiStatement && isMultiStatement(query) {
+			return nil, engine.ErrMultiStatementUnsupported
+		}
+
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			// ClickHouse mutations (ALTER TABLE UPDATE/DELETE, INSERT, etc.) execute successfully

@@ -26,6 +26,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 const (
@@ -1009,12 +1010,7 @@ func (g *Generator) generateFKValue(
 	currentTable string,
 	selectedParentRows map[string]map[string]any,
 ) (any, error) {
-	isNullable := false
-	if constraints != nil {
-		if n, ok := constraints["nullable"].(bool); ok {
-			isNullable = n
-		}
-	}
+	isNullable := gorm_plugin.IsNullable(constraints)
 
 	log.Logger.WithFields(map[string]any{
 		"table":      currentTable,
@@ -1167,11 +1163,9 @@ func (g *Generator) trackGeneratedPK(table string, columns []engine.Column, row 
 // generateColumnValue generates a value for a regular column.
 func (g *Generator) generateColumnValue(col engine.Column, constraints map[string]any) any {
 	// Check for nullable with random NULL
-	if constraints != nil {
-		if n, ok := constraints["nullable"].(bool); ok && n {
-			if g.faker.Float64() < RegularNullProbability {
-				return nil
-			}
+	if gorm_plugin.IsNullable(constraints) {
+		if g.faker.Float64() < RegularNullProbability {
+			return nil
 		}
 	}
 

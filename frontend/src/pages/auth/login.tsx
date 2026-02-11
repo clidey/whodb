@@ -446,7 +446,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     useEffect(() => {
         if (searchParams.has("locale")) {
             const locale = searchParams.get("locale")?.toLowerCase();
-            if (locale === 'en' || locale === 'es') {
+            if (locale === 'en' || locale === 'es' || locale === 'de' || locale === 'fr') {
                 dispatch(SettingsActions.setLanguage(locale));
             }
         }

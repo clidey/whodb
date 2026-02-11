@@ -68,10 +68,12 @@ import {
 } from '@graphql';
 import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Export} from "./export";
+import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
+    ArrowUpCircleIcon,
     CalculatorIcon,
     CalendarIcon,
     CheckCircleIcon,
@@ -98,6 +100,7 @@ import {
 } from "./heroicons";
 import {Tip} from "./tip";
 import {formatShortcut, isModKeyPressed} from "@/utils/platform";
+import {isNoSQL} from "@/utils/functions";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -335,6 +338,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const [preselectedFormat, setPreselectedFormat] = useState<'csv' | 'excel' | 'ndjson' | undefined>(undefined);
     const [forceExportAll, setForceExportAll] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -354,6 +358,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
     const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch" && isMockDataGenerationAllowed;
     const isClickHouse = databaseType === "ClickHouse";
+    const isImportSupported = !isNoSQL(databaseType ?? "");
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
@@ -777,6 +782,20 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, []);
 
+    // Listen for menu import trigger
+    useEffect(() => {
+        const handleImportTrigger = () => {
+            if (isImportSupported) {
+                setShowImport(true);
+            }
+        };
+
+        window.addEventListener('menu:trigger-import', handleImportTrigger);
+        return () => {
+            window.removeEventListener('menu:trigger-import', handleImportTrigger);
+        };
+    }, [isImportSupported]);
+
     // Refresh page when it is resized and it settles
     useEffect(() => {
         let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -921,6 +940,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                             // Mod+Shift+E: Export (opens export dialog)
                             event.preventDefault();
                             openExport();
+                            break;
+                        case 'i':
+                            // Mod+Shift+I: Import (opens import dialog)
+                            if (isImportSupported) {
+                                event.preventDefault();
+                                setShowImport(true);
+                            }
                             break;
                     }
                     return;
@@ -1552,6 +1578,17 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
                     <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
+                    {isImportSupported && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowImport(true)}
+                            className="flex gap-sm"
+                            data-testid="import-button"
+                        >
+                            <ArrowUpCircleIcon className="w-4 h-4" />
+                            {t('importData')}
+                        </Button>
+                    )}
                     <Button
                         variant="secondary"
                         onClick={() => openExport()}
@@ -1784,6 +1821,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                     forceExportAll={forceExportAll}
                 />
             </Suspense>
+            {isImportSupported && (
+                <ImportData
+                    open={showImport}
+                    onOpenChange={setShowImport}
+                    schema={schema || ''}
+                    storageUnit={storageUnit || ''}
+                    columns={columns}
+                    onImportSuccess={onRefresh}
+                />
+            )}
         </div>
     );
 };

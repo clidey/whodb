@@ -71,6 +71,9 @@ SETUP_MODE="${WHODB_SETUP_MODE:-ce}"
 EDITION_LABEL="${WHODB_EDITION_LABEL:-CE}"
 EXTRA_WAIT="${WHODB_EXTRA_WAIT:-false}"
 
+# Export spec file so setup scripts can decide whether SSL is needed
+export WHODB_SPEC_FILE="${WHODB_SPEC_FILE:-$SPEC_FILE}"
+
 # Convert space-separated string to array
 read -ra DATABASES <<< "$DATABASES_STR"
 
