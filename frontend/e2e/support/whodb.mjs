@@ -147,21 +147,18 @@ export class WhoDB {
      * @param {Object} advanced
      */
     async login(databaseType, hostname, username, password, database, advanced = {}, schema = null) {
-        // Clear stale state BEFORE navigating to /login.
-        // Without this, goto("/login") reads old persist:auth from localStorage,
-        // thinks we're logged in, and redirects to /storage-unit before we can clear.
-        await this.page.context().clearCookies();
-        // Navigate to any app page to access localStorage (can't on about:blank)
+        // If we're already on the app (not about:blank), clear stale state first
+        // to prevent the app from auto-redirecting away from /login.
+        // For fresh contexts (beforeAll), skip the clearing — no stale state.
         const currentUrl = this.page.url();
-        if (!currentUrl.startsWith(BASE_URL)) {
-            await this.page.goto(this.url("/login"), { waitUntil: "commit" });
+        if (currentUrl.startsWith(BASE_URL)) {
+            await this.page.context().clearCookies();
+            await this.page.evaluate(() => {
+                localStorage.clear();
+                localStorage.setItem("whodb.analytics.consent", "denied");
+                sessionStorage.clear();
+            });
         }
-        await this.page.evaluate(() => {
-            localStorage.clear();
-            localStorage.setItem("whodb.analytics.consent", "denied");
-            sessionStorage.clear();
-        });
-        // Now navigate to login — app will see empty auth and stay on /login
         await this.page.goto(this.url("/login"));
 
         // Poll for telemetry modal and dismiss if it appears (handles async React rendering)
@@ -259,6 +256,13 @@ export class WhoDB {
 
         // Wait for successful login
         await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 30000 });
+
+        // Ensure card view is set for consistent test behavior
+        await this.page.evaluate(() => {
+            const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
+            settings.storageUnitView = '"card"';
+            localStorage.setItem("persist:settings", JSON.stringify(settings));
+        });
     }
 
     /**
@@ -359,8 +363,10 @@ export class WhoDB {
             localStorage.setItem("persist:settings", JSON.stringify(settings));
         });
 
-        // Visit the storage-unit page (will use card view)
-        await this.page.goto(this.url("/storage-unit"));
+        // Force a full page reload to pick up the localStorage change.
+        // page.goto() to the same URL may not trigger a reload, so we use evaluate.
+        await this.page.evaluate((url) => { window.location.href = url; }, this.url("/storage-unit"));
+        await this.page.waitForURL(/\/storage-unit/, { timeout: 15000 });
         // Wait for cards to load
         await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
 
@@ -465,17 +471,15 @@ export class WhoDB {
      * Submit the table (handles both dialog and standalone submit button)
      */
     async submitTable() {
-        const dialogVisible = await this.page.locator('[role="dialog"]').filter({ visible: true }).count();
-        if (dialogVisible > 0) {
-            await this.page.locator('[role="dialog"]').filter({ visible: true }).locator('[data-testid="add-conditions-button"]').click();
-            await this.page.waitForTimeout(300);
-        }
-        const submitBtn = this.page.locator('[data-testid="submit-button"]').filter({ visible: true });
-        const btnCount = await submitBtn.count();
-        if (btnCount > 0) {
-            await submitBtn.click({ force: true });
-            await this.page.waitForTimeout(200);
-        }
+        // Close any open popovers/dialogs first (e.g., where condition edit popover)
+        // Pressing Escape is safe — if nothing is open, it's a no-op
+        await this.page.keyboard.press("Escape");
+        await this.page.waitForTimeout(200);
+
+        const submitBtn = this.page.locator('[data-testid="submit-button"]');
+        await submitBtn.waitFor({ timeout: 5000 });
+        await submitBtn.click();
+        await this.page.waitForTimeout(200);
     }
 
     // ============================================================================
@@ -489,8 +493,11 @@ export class WhoDB {
     async whereTable(fieldArray) {
         await this.page.locator('[data-testid="where-button"]').click();
 
-        // Wait for the dialog/sheet to be visible
-        await this.page.waitForTimeout(500);
+        // Wait for either popover or sheet to open
+        await Promise.race([
+            this.page.locator('[data-testid="field-key"]').waitFor({ timeout: 5000 }).catch(() => {}),
+            this.page.locator('[data-testid*="sheet-field"]').first().waitFor({ timeout: 5000 }).catch(() => {}),
+        ]);
 
         // Detect which mode we're in by checking what's visible
         const isSheetMode =
@@ -539,7 +546,6 @@ export class WhoDB {
                 await this.page.locator('[data-testid="field-operator"]').first().click();
                 await this.page.locator(`[data-value="${operator}"]`).click();
 
-                await this.page.locator('[data-testid="field-value"]').first().clear();
                 await this.page.locator('[data-testid="field-value"]').first().fill(value);
 
                 // In popover mode, try multiple selectors for add button
@@ -671,6 +677,8 @@ export class WhoDB {
         const mode = await this.getWhereConditionMode();
         if (mode === "popover") {
             await this.page.locator('[data-testid="where-condition-badge"]').nth(index).click();
+            // Wait for the edit popover to open (contains update-condition-button)
+            await this.page.locator('[data-testid="update-condition-button"]').waitFor({ timeout: 5000 });
         } else {
             console.log("Sheet mode: Cannot click individual conditions - need to open sheet");
         }
@@ -696,10 +704,10 @@ export class WhoDB {
     async updateConditionValue(value) {
         const mode = await this.getWhereConditionMode();
         if (mode === "popover") {
-            await this.page.locator('[data-testid="field-value"]').clear();
+            // fill() already clears the input. Calling clear() separately causes
+            // Radix Popover to dismiss (it interprets clear events as outside interaction).
             await this.page.locator('[data-testid="field-value"]').fill(value);
         } else {
-            await this.page.locator('[data-testid="sheet-field-value-0"]').clear();
             await this.page.locator('[data-testid="sheet-field-value-0"]').fill(value);
         }
     }
@@ -893,13 +901,14 @@ export class WhoDB {
         await this.page.locator('[data-testid="add-row-button"]').click();
 
         if (isSingleInput) {
-            // Document database - single text box for JSON
+            // Document database - CodeMirror JSON editor (not a plain input/textarea)
             const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
-            const field = this.page
-                .locator('[data-testid="add-row-field-document"] input, [data-testid="add-row-field-document"] textarea')
-                .first();
-            await field.clear();
-            await field.fill(jsonString);
+            const editorContainer = this.page.locator('[data-testid="add-row-field-document"] .cm-editor');
+            await editorContainer.waitFor({ timeout: 5000 });
+
+            // Playwright sees CodeMirror's .cm-content as a textbox role.
+            // Use fill() which handles contenteditable elements correctly.
+            await editorContainer.locator('[role="textbox"]').fill(jsonString);
         } else {
             // Traditional database - multiple fields
             for (const [key, value] of Object.entries(data)) {
@@ -1135,7 +1144,7 @@ export class WhoDB {
             // Close the sheet by pressing Escape
             await this.page.keyboard.press("Escape");
             // Wait for the sheet to disappear
-            await this.page.getByText("Edit Row").waitFor({ state: "hidden" });
+            await this.page.getByText("Edit Row").first().waitFor({ state: "hidden" });
             // Ensure body no longer has scroll lock
             await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
         } else {
@@ -1191,8 +1200,16 @@ export class WhoDB {
         // Wait for the graph to be fully loaded - nodes should exist and be visible
         await this.page.locator(".react-flow__node").first().waitFor({ state: "visible", timeout: 10000 });
 
-        // Add a small wait to ensure layout has completed (React Flow layout takes time)
-        await this.page.waitForTimeout(400); // Slightly more than the 300ms layout timeout
+        // Wait for React Flow layout to complete. The layout fires 50ms after nodes
+        // render and adds a "laying-out" CSS class during the transition.
+        // We wait for that class to be gone, then add a buffer for edge SVG rendering.
+        await this.page.waitForFunction(() => {
+            const container = document.querySelector(".react-flow");
+            return container && !container.classList.contains("laying-out");
+        }, { timeout: 5000 }).catch(() => {});
+
+        // Buffer for edge path SVG rendering after layout settles
+        await this.page.waitForTimeout(600);
 
         return await this.page.evaluate(() => {
             const nodeEls = document.querySelectorAll(".react-flow__node");
@@ -1544,6 +1561,120 @@ export class WhoDB {
     }
 
     // ============================================================================
+    // Import Dialog Commands
+    // ============================================================================
+
+    /**
+     * Navigate to a table and open the import dialog.
+     * @param {string} tableName - The table to import into
+     */
+    async openImport(tableName) {
+        await this.data(tableName);
+        const importBtn = this.page.locator('[data-testid="import-button"]');
+        await importBtn.waitFor({ state: "visible", timeout: 10000 });
+        await importBtn.click();
+        await this.page.locator('[data-testid="import-dialog"]').waitFor({ state: "visible", timeout: 10000 });
+    }
+
+    /**
+     * Select the import mode (data or sql).
+     * @param {'data' | 'sql'} mode - The import mode to select
+     */
+    async selectImportMode(mode) {
+        await this.page.locator('[data-testid="import-mode-select"]').click();
+        await this.page.locator(`[data-value="${mode}"]`).click();
+    }
+
+    /**
+     * Upload a data file (CSV/Excel) in the import dialog.
+     * @param {string} filePath - Absolute path to the file
+     */
+    async uploadDataFile(filePath) {
+        await this.page.locator('[data-testid="import-data-file-input"]').setInputFiles(filePath);
+    }
+
+    /**
+     * Upload a SQL file in the import dialog.
+     * @param {string} filePath - Absolute path to the SQL file
+     */
+    async uploadSqlFile(filePath) {
+        await this.page.locator('[data-testid="import-sql-file-input"]').setInputFiles(filePath);
+    }
+
+    /**
+     * Wait for the import preview to finish loading.
+     */
+    async waitForPreview() {
+        // Wait for loading indicator to disappear
+        const loading = this.page.locator('[data-testid="import-preview-loading"]');
+        if (await loading.count() > 0) {
+            await loading.waitFor({ state: "hidden", timeout: 3000 }).catch(() => {});
+        }
+        // Preview section should be visible
+        await this.page.locator('[data-testid="import-preview-section"]').waitFor({ timeout: 15000 });
+    }
+
+    /**
+     * Extract preview data (columns and rows) from the import preview table.
+     * @returns {Promise<{columns: string[], rows: string[][]}>}
+     */
+    async getPreviewData() {
+        await this.page.locator('[data-testid="import-preview-table"]').waitFor({ timeout: 10000 });
+
+        return await this.page.locator('[data-testid="import-preview-table"]').evaluate((table) => {
+            const columns = Array.from(table.querySelectorAll("thead th")).map((el) => el.innerText.trim());
+            const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+                return Array.from(row.querySelectorAll("td")).map((cell) => cell.innerText.trim());
+            });
+            return { columns, rows };
+        });
+    }
+
+    /**
+     * Click the import submit button for data mode.
+     */
+    async confirmImportData() {
+        const btn = this.page.locator('[data-testid="import-submit-button"]');
+        await expect(btn).toBeEnabled();
+        await btn.click();
+    }
+
+    /**
+     * Check the SQL confirm checkbox and click the import submit button.
+     */
+    async confirmSqlImport() {
+        await this.page.locator('[data-testid="import-sql-confirm-checkbox"]').click({ force: true });
+        const btn = this.page.locator('[data-testid="import-submit-button"]');
+        await expect(btn).toBeEnabled();
+        await btn.click();
+    }
+
+    /**
+     * Select the data import mode (Append or Overwrite).
+     * @param {'APPEND' | 'OVERWRITE'} mode - The data mode value
+     */
+    async selectImportDataMode(mode) {
+        await this.page.locator('[data-testid="import-data-mode-select"]').click();
+        await this.page.locator(`[data-value="${mode}"]`).click();
+    }
+
+    /**
+     * Type SQL into the CodeMirror editor in the import dialog.
+     * @param {string} sql - The SQL text to type
+     */
+    async typeSqlInEditor(sql) {
+        const selector = '[data-testid="import-sql-editor"] .cm-content';
+        const editor = this.page.locator(selector);
+        await editor.scrollIntoViewIfNeeded();
+        await editor.waitFor({ state: "visible" });
+        await editor.click();
+        await editor.clear();
+        await editor.fill(sql);
+        await editor.blur();
+        await this.page.waitForTimeout(100);
+    }
+
+    // ============================================================================
     // Mock Data Dialog Commands
     // ============================================================================
 
@@ -1569,7 +1700,10 @@ export class WhoDB {
      * Generate mock data
      */
     async generateMockData() {
-        await this.page.locator('[data-testid="mock-data-generate-button"]').click();
+        const btn = this.page.locator('[data-testid="mock-data-generate-button"]');
+        await expect(btn).toBeEnabled({ timeout: 30000 });
+        await btn.scrollIntoViewIfNeeded();
+        await btn.click({ force: true });
     }
 
     /**
@@ -1746,7 +1880,12 @@ export class WhoDB {
     async mockVersion(version = "v1.1.1") {
         await this.page.route("**/api/query", async (route) => {
             const request = route.request();
-            const postData = request.postDataJSON();
+            let postData;
+            try {
+                postData = request.postDataJSON();
+            } catch {
+                return route.fallback();
+            }
             if (postData?.operationName === "GetVersion") {
                 await route.fulfill({
                     contentType: "application/json",
@@ -1777,7 +1916,13 @@ export class WhoDB {
         // Route handler for GraphQL operations for provider and model info
         await this.page.route("**/api/query", async (route) => {
             const request = route.request();
-            const postData = request.postDataJSON();
+            // postDataJSON() throws on multipart form data (file uploads)
+            let postData;
+            try {
+                postData = request.postDataJSON();
+            } catch {
+                return route.fallback();
+            }
             const operation = postData?.operationName;
             console.log("[PLAYWRIGHT] Intercepted GraphQL operation:", operation);
 
@@ -2111,9 +2256,12 @@ export class WhoDB {
      * Toggles between SQL and table view in chat
      */
     async toggleChatSQLView() {
-        // Find the last table preview group and click its toggle button
+        // Find the last table preview group, open the actions dropdown, click toggle
         const group = this.page.locator(".group\\/table-preview").last();
-        await group.locator('[data-testid="icon-button"]').first().click({ force: true });
+        await group.hover();
+        await this.page.waitForTimeout(200);
+        await group.locator('[data-testid="icon-button"]').first().click();
+        await this.page.locator('[data-testid="toggle-view-option"]').click();
         await this.page.waitForTimeout(300);
     }
 
@@ -2139,8 +2287,11 @@ export class WhoDB {
      */
     async openMoveToScratchpad() {
         const group = this.page.locator(".group\\/table-preview").last();
-        // The button uses aria-label instead of title for accessibility
-        await group.locator('[aria-label="Move to Scratchpad"]').click({ force: true });
+        // Open the actions dropdown, then click Move to Scratchpad
+        await group.hover();
+        await this.page.waitForTimeout(200);
+        await group.locator('[data-testid="icon-button"]').first().click();
+        await this.page.locator('[data-testid="move-to-scratchpad-option"]').click();
         await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: 5000 });
     }
 

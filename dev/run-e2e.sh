@@ -128,7 +128,8 @@ mkdir -p e2e/logs
 
 # Clean previous test artifacts (once at suite start, not per-database)
 # Use sudo if needed - gateway/Docker runs may leave root-owned files
-rm -f e2e/logs/*.log 2>/dev/null || true
+# Clean per-database logs (keep backend.log — created by setup-e2e.sh)
+find e2e/logs -name "*.log" ! -name "backend.log" -delete 2>/dev/null || true
 rm -rf e2e/reports/* 2>/dev/null || sudo rm -rf e2e/reports/* 2>/dev/null || true
 rm -rf e2e/.auth 2>/dev/null || true
 mkdir -p e2e/reports/test-results e2e/reports/blobs e2e/reports/html
@@ -261,8 +262,8 @@ if [ "$HEADLESS" = "true" ]; then
     done
     echo ""
 else
-    # GUI mode: Single Playwright session with --headed
-    echo "📋 Opening Playwright in headed mode..."
+    # GUI mode: Open Playwright UI runner (test list + live browser preview)
+    echo "📋 Opening Playwright UI..."
 
     ENV_VARS=""
     if [ "$TARGET_DB" != "all" ]; then
@@ -271,7 +272,7 @@ else
 
     (
         cd "$PROJECT_ROOT/frontend"
-        env $ENV_VARS pnpm exec playwright test $PW_ARGS --headed
+        env $ENV_VARS pnpm exec playwright test $PW_ARGS --ui
         exit $?
     ) && RESULT=0 || RESULT=$?
 

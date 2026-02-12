@@ -414,7 +414,7 @@ test.describe('Chat AI Integration', () => {
                 await page.getByText('Add a provider').click();
 
                 // Wait for the external model sheet to open
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*model/i })).toBeVisible({ timeout: 5000 });
+                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
 
                 // Verify model type dropdown exists
                 await expect(page.locator('[data-testid="external-model-type-select"]')).toBeVisible();
@@ -490,7 +490,7 @@ test.describe('Chat AI Integration', () => {
                 await page.getByText('Add a provider').click();
 
                 // Wait for the external model sheet to open
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*model/i })).toBeVisible({ timeout: 5000 });
+                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
 
                 // Select external provider type
                 await page.locator('[data-testid="external-model-type-select"]').click();
@@ -507,7 +507,7 @@ test.describe('Chat AI Integration', () => {
                 await page.locator('[data-testid="external-model-submit"]').click();
 
                 // Dialog should still be visible (validation prevents submission)
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*model/i })).toBeVisible();
+                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible();
 
                 // Cancel dialog
                 await page.locator('[data-testid="external-model-cancel"]').click();
@@ -523,7 +523,7 @@ test.describe('Chat AI Integration', () => {
                 await page.locator('[data-testid="chat-delete-provider"]').click();
 
                 // Wait for confirmation dialog
-                await expect(page.getByText(/delete.*provider/i)).toBeVisible({ timeout: 5000 });
+                await expect(page.getByText(/delete.*provider/i).first()).toBeVisible({ timeout: 5000 });
 
                 // Verify confirmation dialog has expected content (asking if sure about deletion)
                 await expect(page.getByText(/are you sure.*delete.*provider/i)).toBeVisible();

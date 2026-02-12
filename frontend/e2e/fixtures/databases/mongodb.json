@@ -67,7 +67,8 @@
     "orders",
     "payments",
     "products",
-    "users"
+    "users",
+    "validated_products"
   ],
   "tables": {
     "users": {

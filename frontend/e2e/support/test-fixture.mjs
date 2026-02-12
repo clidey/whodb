@@ -47,6 +47,8 @@ import {
 import { VALID_FEATURES } from "./helpers/fixture-validator.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+// Optional Wails bindings stub to exercise desktop-only code paths in Playwright.
+const DESKTOP_STUB = ["true", "1"].includes((process.env.E2E_DESKTOP_STUB || "").toLowerCase());
 const NYC_OUTPUT_DIR = path.resolve(process.cwd(), ".nyc_output");
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
 
@@ -59,7 +61,14 @@ const CDP_ENDPOINT = process.env.CDP_ENDPOINT;
  */
 async function mockAIProviders(page) {
   await page.route("**/api/query", async (route) => {
-    const postData = route.request().postDataJSON?.();
+    // postDataJSON() throws on multipart form data (file uploads).
+    // Skip non-JSON requests so they pass through to the server.
+    let postData;
+    try {
+      postData = route.request().postDataJSON();
+    } catch {
+      return route.fallback();
+    }
     const op = postData?.operationName;
 
     if (op === "GetAIProviders") {
@@ -136,6 +145,17 @@ export const test = CDP_ENDPOINT
       },
 
       whodb: async ({ page }, use, testInfo) => {
+        await page.addInitScript((enableDesktopStub) => {
+          window.__E2E_DISABLE_AUTOCOMPLETE = true;
+          if (enableDesktopStub) {
+            const go = window.go || {};
+            go.common = go.common || {};
+            go.main = go.main || {};
+            go.common.App = go.common.App || { OpenURL: () => Promise.resolve() };
+            go.main.App = go.main.App || { OpenURL: () => Promise.resolve() };
+            window.go = go;
+          }
+        }, DESKTOP_STUB);
         await mockAIProviders(page);
         await use(new WhoDB(page));
         await collectCoverage(page, testInfo);
@@ -143,6 +163,17 @@ export const test = CDP_ENDPOINT
     })
   : base.extend({
       whodb: async ({ page }, use, testInfo) => {
+        await page.addInitScript((enableDesktopStub) => {
+          window.__E2E_DISABLE_AUTOCOMPLETE = true;
+          if (enableDesktopStub) {
+            const go = window.go || {};
+            go.common = go.common || {};
+            go.main = go.main || {};
+            go.common.App = go.common.App || { OpenURL: () => Promise.resolve() };
+            go.main.App = go.main.App || { OpenURL: () => Promise.resolve() };
+            window.go = go;
+          }
+        }, DESKTOP_STUB);
         await mockAIProviders(page);
         await use(new WhoDB(page));
         await collectCoverage(page, testInfo);
@@ -225,44 +256,12 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
     test.describe(`[${dbConfig.type}]`, () => {
       if (login) {
         // --- Session persistence mode (default) ---
-        // Log in once in beforeAll, save storageState.
-        // Each test gets a fresh browser context pre-loaded with auth.
-        // No login form, no logout, no race conditions.
+        // Auth is handled by the "setup" project (auth.setup.mjs) which runs
+        // BEFORE this project via Playwright's `dependencies` config.
+        // The setup project saves storageState to e2e/.auth/{db}.json.
+        // Each test gets a fresh browser context pre-loaded with that state.
 
         test.use({ storageState: authFile });
-
-        test.beforeAll(async ({ browser }) => {
-          // Create a temporary context WITHOUT storageState to perform the one-time login.
-          // (test.use({ storageState }) would otherwise apply to this context too)
-          const context = await browser.newContext({ storageState: undefined });
-          const page = await context.newPage();
-
-          // Mock AI providers during login to avoid Ollama timeouts
-          await mockAIProviders(page);
-
-          const whodb = new WhoDB(page);
-          const conn = dbConfig.connection;
-
-          await whodb.login(
-            dbConfig.uiType || dbConfig.type,
-            conn.host ?? undefined,
-            conn.user ?? undefined,
-            conn.password ?? undefined,
-            conn.database ?? undefined,
-            conn.advanced || {}
-          );
-
-          if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
-            await whodb.selectSchema(dbConfig.schema);
-          }
-
-          // Save the authenticated state for all tests in this block
-          if (!fs.existsSync(AUTH_DIR)) {
-            fs.mkdirSync(AUTH_DIR, { recursive: true });
-          }
-          await context.storageState({ path: authFile });
-          await context.close();
-        });
 
         test.beforeEach(async ({ whodb, page }) => {
           if (navigateToStorageUnit) {
@@ -273,9 +272,6 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
               .waitFor({ timeout: 15000 });
           }
         });
-
-        // No afterEach logout — storageState gives each test an isolated
-        // pre-authenticated context. Nothing to clean up.
 
       } else {
         // --- Manual login mode (login.spec, ssl-*.spec, error-handling.spec) ---

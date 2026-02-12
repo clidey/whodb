@@ -1,16 +1,18 @@
-// Copyright 2025 Clidey, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package env
 
@@ -74,15 +76,9 @@ func TestGetLogLevel(t *testing.T) {
 }
 
 func TestGetOllamaEndpointRespectsOverrides(t *testing.T) {
-	originalHost := OllamaHost
-	originalPort := OllamaPort
-	t.Cleanup(func() {
-		OllamaHost = originalHost
-		OllamaPort = originalPort
-	})
-
-	OllamaHost = "ollama.example.com"
-	OllamaPort = "9999"
+	// GetOllamaEndpoint calls common.GetOllamaHost which reads env vars directly
+	t.Setenv("WHODB_OLLAMA_HOST", "ollama.example.com")
+	t.Setenv("WHODB_OLLAMA_PORT", "9999")
 
 	endpoint := GetOllamaEndpoint()
 	if endpoint != "http://ollama.example.com:9999/api" {
@@ -97,8 +93,6 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	originalOpenAICompatKey := OpenAICompatibleAPIKey
 	originalOpenAICompatEndpoint := OpenAICompatibleEndpoint
 	originalCustomModels := CustomModels
-	originalOllamaHost := OllamaHost
-	originalOllamaPort := OllamaPort
 
 	t.Cleanup(func() {
 		OpenAIAPIKey = originalOpenAI
@@ -107,8 +101,6 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 		OpenAICompatibleAPIKey = originalOpenAICompatKey
 		OpenAICompatibleEndpoint = originalOpenAICompatEndpoint
 		CustomModels = originalCustomModels
-		OllamaHost = originalOllamaHost
-		OllamaPort = originalOllamaPort
 	})
 
 	OpenAIAPIKey = "openai-key"
@@ -117,8 +109,9 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	OpenAICompatibleAPIKey = "compat-key"
 	OpenAICompatibleEndpoint = "https://compat.example.com"
 	CustomModels = []string{"mixtral"}
-	OllamaHost = "ollama.local"
-	OllamaPort = "1234"
+	// GetOllamaEndpoint calls common.GetOllamaHost which reads env vars directly
+	t.Setenv("WHODB_OLLAMA_HOST", "ollama.local")
+	t.Setenv("WHODB_OLLAMA_PORT", "1234")
 
 	providers := GetConfiguredChatProviders()
 	if len(providers) != 4 {

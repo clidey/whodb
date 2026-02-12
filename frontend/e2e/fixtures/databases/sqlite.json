@@ -55,7 +55,15 @@
     "chat": true,
     "whereConditions": true,
     "queryHistory": true,
-    "crud": true
+    "crud": true,
+    "import": true
+  },
+  "import": {
+    "sampleDataDir": "sqlite3",
+    "supportsMultiStatement": true,
+    "csvTable": "users",
+    "excelTable": "products",
+    "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]
   },
   "featureNotes": {},
   "expectedTables": [
@@ -240,7 +248,7 @@
     }
   },
   "mockData": {
-    "supportedTable": "users",
+    "supportedTable": "products",
     "tableWithFKs": "orders",
     "fkRelationships": {
       "orders": {

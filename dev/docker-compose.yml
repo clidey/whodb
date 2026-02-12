@@ -101,6 +101,18 @@ services:
     networks:
       - db
 
+  e2e_mongo_noauth:
+    image: mongo
+    environment:
+      MONGO_INITDB_DATABASE: test_db
+    volumes:
+      - e2e_mongo_noauth:/data/db
+      - ./sample-data/mongo/data.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27019:27017"
+    networks:
+      - db
+
   e2e_clickhouse:
     image: clickhouse/clickhouse-server
     user: clickhouse:clickhouse
@@ -444,6 +456,7 @@ volumes:
   e2e_mariadb:
   e2e_mariadb_ssl:
   e2e_mongo:
+  e2e_mongo_noauth:
   e2e_mongo_ssl:
   e2e_clickhouse:
   e2e_clickhouse_ssl:

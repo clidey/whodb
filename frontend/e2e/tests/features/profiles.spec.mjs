@@ -99,8 +99,8 @@ test.describe('Profile Management', () => {
                 db1.connection.advanced || {}
             );
 
-            await whodb.goto('storage-unit');
-            await page.locator('[data-testid="storage-unit-card"]', { timeout: 15000 }).first().waitFor();
+            // Wait for the app to be fully loaded (sidebar profile visible)
+            await page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 15000 });
 
             await page.locator('[data-testid="sidebar-profile"]').click();
 

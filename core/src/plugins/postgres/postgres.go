@@ -117,7 +117,33 @@ func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, er
 }
 
 func (p *PostgresPlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
-	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+	// Check if multi-statement mode is requested (e.g., for SQL script imports)
+	multiStatement := config != nil && config.MultiStatement
+	dbFunc := p.DB
+	if multiStatement {
+		dbFunc = func(cfg *engine.PluginConfig) (*gorm.DB, error) {
+			return p.openDB(cfg, true)
+		}
+	}
+
+	return plugins.WithConnection(config, dbFunc, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// For multi-statement scripts, use the underlying *sql.DB directly
+		// to bypass GORM's prepared statement handling
+		if multiStatement {
+			sqlDB, err := db.DB()
+			if err != nil {
+				return nil, err
+			}
+			_, err = sqlDB.Exec(query)
+			if err != nil {
+				return nil, err
+			}
+			return &engine.GetRowsResult{
+				Columns: []engine.Column{},
+				Rows:    [][]string{},
+			}, nil
+		}
+
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err

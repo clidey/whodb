@@ -47,6 +47,7 @@ export const VALID_FEATURES = [
   "multiConditionFilter",
   "typeCasting",
   "sslConnection",
+  "import",
 ];
 
 export function validateFixture(fixture, name) {

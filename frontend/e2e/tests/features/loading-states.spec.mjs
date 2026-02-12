@@ -85,7 +85,6 @@ test.describe('Loading States & Spinners', () => {
                     // Verify data is displayed after loading
                     await expect(page.locator('[data-testid="table-search"]')).toBeVisible({ timeout: 5000 });
                     const rows = page.locator('table tbody tr');
-                    await expect(rows).toHaveCount(/./, { timeout: 5000 });
                     expect(await rows.count()).toBeGreaterThanOrEqual(1);
                 });
 

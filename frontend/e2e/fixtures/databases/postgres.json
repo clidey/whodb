@@ -35,7 +35,7 @@
   },
   "schema": "test_schema",
   "mockData": {
-    "supportedTable": "users",
+    "supportedTable": "products",
     "tableWithFKs": "orders",
     "fkRelationships": {
       "orders": {
@@ -64,7 +64,15 @@
     "mockData": true,
     "chat": true,
     "whereConditions": true,
-    "queryHistory": true
+    "queryHistory": true,
+    "import": true
+  },
+  "import": {
+    "sampleDataDir": "postgres",
+    "supportsMultiStatement": true,
+    "csvTable": "users",
+    "excelTable": "products",
+    "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]
   },
   "featureNotes": {
     "chat": "Postgres supports all AI chat features including SQL generation"

@@ -400,6 +400,8 @@ describeOrSkip('Tour & Onboarding', () => {
         });
 
         test('persists onboarding completion across sessions', async ({ whodb, page }) => {
+            // Navigate to app first so localStorage is accessible
+            await page.goto(whodb.url('/login'));
             await clearBrowserState(page);
 
             // Manually set onboarding complete
@@ -482,16 +484,16 @@ describeOrSkip('Tour & Onboarding', () => {
 
         test('displays icons for each step', async ({ whodb, page }) => {
             // First step should have an icon (Sparkles icon for welcome)
-            await expect(getTourTooltip(page).locator('svg')).toBeAttached();
+            await expect(getTourTooltip(page).locator('svg').first()).toBeAttached();
 
             // Navigate and check other steps have icons
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
-            await expect(getTourTooltip(page).locator('svg')).toBeAttached(); // Chat icon
+            await expect(getTourTooltip(page).locator('svg').first()).toBeAttached(); // Chat icon
 
             await page.locator('[data-testid="tour-next-button"]').click();
             await page.waitForTimeout(500);
-            await expect(getTourTooltip(page).locator('svg')).toBeAttached(); // Graph icon
+            await expect(getTourTooltip(page).locator('svg').first()).toBeAttached(); // Graph icon
         });
 
         test('shows progress indicator with current step', async ({ whodb, page }) => {

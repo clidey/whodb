@@ -147,120 +147,156 @@ func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
 	return "?"
 }
 
-// GetColumnsForTable overrides the base implementation to properly detect SQLite auto-increment and generated columns.
-func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, storageUnit string) ([]engine.Column, error) {
-	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
+// getColumnsViaPragma retrieves column information using PRAGMA table_info directly.
+// This bypasses GORM's DDL parser which fails on Unicode table/column names because
+// its regex uses \w (ASCII-only in Go).
+func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]engine.Column, error) {
+	builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
+	if !ok {
+		return nil, fmt.Errorf("failed to create SQLite SQL builder")
+	}
+
+	tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
 	if err != nil {
 		return nil, err
 	}
 
-	// SQLite's INTEGER PRIMARY KEY is always auto-increment
-	// Also detect generated columns
-	_, err = plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
-		if !ok {
-			return false, fmt.Errorf("failed to create SQLite SQL builder")
+	rows, err := db.Raw(tableInfoQuery).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var columns []engine.Column
+	pkColTypes := make(map[string]string)
+
+	for rows.Next() {
+		var cid int
+		var name string
+		var dataType string
+		var notNull int
+		var dfltValue any
+		var pk int
+
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk); err != nil {
+			continue
 		}
 
-		tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
-		if err != nil {
-			return false, err
+		normalizedType := NormalizeType(strings.ToUpper(dataType))
+		col := engine.Column{
+			Name:      name,
+			Type:      normalizedType,
+			IsPrimary: pk > 0,
 		}
+		columns = append(columns, col)
 
-		rows, err := db.Raw(tableInfoQuery).Rows()
-		if err != nil {
-			return false, err
+		if pk > 0 {
+			pkColTypes[name] = strings.ToUpper(dataType)
 		}
-		defer rows.Close()
+	}
 
-		// Build a map of primary key columns with their types
-		pkColTypes := make(map[string]string)
-		for rows.Next() {
-			var cid int
-			var name string
-			var dataType string
-			var notNull int
-			var dfltValue any
-			var pk int
+	// Detect auto-increment: SQLite INTEGER PRIMARY KEY with a single PK column
+	if len(pkColTypes) == 1 {
+		for i := range columns {
+			if columns[i].IsPrimary {
+				pkType := pkColTypes[columns[i].Name]
+				colType := strings.ToUpper(columns[i].Type)
+				if pkType == "INTEGER" || colType == "INTEGER" {
+					columns[i].IsAutoIncrement = true
+				}
+			}
+		}
+	}
 
-			if err := rows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk); err != nil {
+	// Detect generated columns via table_xinfo
+	tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
+	if err == nil {
+		xrows, xerr := db.Raw(tableXInfoQuery).Rows()
+		if xerr == nil {
+			defer xrows.Close()
+			for xrows.Next() {
+				var cid int
+				var name string
+				var dataType string
+				var notNull int
+				var dfltValue any
+				var pk int
+				var hidden int
+
+				if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
+					continue
+				}
+
+				if hidden == 2 || hidden == 3 {
+					for i := range columns {
+						if columns[i].Name == name {
+							columns[i].IsComputed = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Enrich with foreign key relationships using the provided db connection directly
+	escapedTable := strings.ReplaceAll(storageUnit, "'", "''")
+	fkQuery := fmt.Sprintf("PRAGMA foreign_key_list('%s')", escapedTable)
+	fkRows, fkErr := db.Raw(fkQuery).Rows()
+	if fkErr == nil {
+		defer fkRows.Close()
+		for fkRows.Next() {
+			var id, seq int
+			var table, from, to, onUpdate, onDelete, match string
+			if err := fkRows.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); err != nil {
 				continue
 			}
-
-			// pk = 1 means this column is part of the PRIMARY KEY
-			if pk == 1 {
-				pkColTypes[name] = strings.ToUpper(dataType)
-			}
-		}
-
-		// Query generated columns using table_xinfo
-		// hidden = 2 means virtual generated, hidden = 3 means stored generated
-		generatedCols := make(map[string]bool)
-		tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
-		if err == nil {
-			xrows, xerr := db.Raw(tableXInfoQuery).Rows()
-			if xerr == nil {
-				defer xrows.Close()
-				for xrows.Next() {
-					var cid int
-					var name string
-					var dataType string
-					var notNull int
-					var dfltValue any
-					var pk int
-					var hidden int
-
-					if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
-						continue
-					}
-
-					// hidden = 2 (virtual generated) or hidden = 3 (stored generated)
-					if hidden == 2 || hidden == 3 {
-						generatedCols[name] = true
-					}
+			for i := range columns {
+				if columns[i].Name == from {
+					columns[i].IsForeignKey = true
+					columns[i].ReferencedTable = &table
+					columns[i].ReferencedColumn = &to
+					break
 				}
 			}
 		}
-
-		// Update IsAutoIncrement for INTEGER PRIMARY KEY columns
-		// Update IsComputed for generated columns
-		for i := range columns {
-			// Check for generated columns
-			if generatedCols[columns[i].Name] {
-				columns[i].IsComputed = true
-				log.Logger.WithFields(map[string]any{
-					"table":  storageUnit,
-					"column": columns[i].Name,
-				}).Debug("Detected SQLite generated column")
-			}
-
-			// Check for auto-increment
-			if columns[i].IsPrimary {
-				colType := strings.ToUpper(columns[i].Type)
-				pkType, isPK := pkColTypes[columns[i].Name]
-
-				// SQLite INTEGER PRIMARY KEY is auto-increment when it's the only PK column
-				// and the type is exactly INTEGER (not INT, not BIGINT)
-				if isPK && (pkType == "INTEGER" || colType == "INTEGER") && len(pkColTypes) == 1 {
-					if !columns[i].IsAutoIncrement {
-						log.Logger.WithFields(map[string]any{
-							"table":  storageUnit,
-							"column": columns[i].Name,
-						}).Debug("Detected SQLite INTEGER PRIMARY KEY as auto-increment")
-						columns[i].IsAutoIncrement = true
-					}
-				}
-			}
-		}
-
-		return true, nil
-	})
-
-	if err != nil {
-		log.Logger.WithError(err).Warn("Failed to detect SQLite auto-increment columns, using GORM defaults")
 	}
 
 	return columns, nil
+}
+
+// GetColumnsForTable uses PRAGMA table_info directly instead of GORM's DDL parser,
+// which fails on Unicode table/column names due to ASCII-only regex.
+func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, storageUnit string) ([]engine.Column, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
+		return p.getColumnsViaPragma(db, storageUnit)
+	})
+}
+
+// GetColumnTypes uses PRAGMA table_info directly instead of GORM's DDL parser.
+func (p *Sqlite3Plugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+	cols, err := p.getColumnsViaPragma(db, tableName)
+	if err != nil {
+		return nil, err
+	}
+	columnTypes := make(map[string]string, len(cols))
+	for _, col := range cols {
+		columnTypes[col.Name] = col.Type
+	}
+	return columnTypes, nil
+}
+
+// GetOrderedColumnsWithTypes uses PRAGMA table_info directly instead of GORM's DDL parser.
+func (p *Sqlite3Plugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName string) ([]engine.Column, map[string]string, error) {
+	cols, err := p.getColumnsViaPragma(db, tableName)
+	if err != nil {
+		return nil, nil, err
+	}
+	types := make(map[string]string, len(cols))
+	for _, col := range cols {
+		types[col.Name] = col.Type
+	}
+	return cols, types, nil
 }
 
 func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
@@ -420,6 +456,23 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// For multi-statement scripts, use the underlying *sql.DB directly
+		// SQLite's driver supports multi-statement with Exec()
+		if config != nil && config.MultiStatement {
+			sqlDB, err := db.DB()
+			if err != nil {
+				return nil, err
+			}
+			_, err = sqlDB.Exec(query)
+			if err != nil {
+				return nil, err
+			}
+			return &engine.GetRowsResult{
+				Columns: []engine.Column{},
+				Rows:    [][]string{},
+			}, nil
+		}
+
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			return nil, err

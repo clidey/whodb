@@ -53,7 +53,15 @@
     "mockData": true,
     "chat": true,
     "whereConditions": true,
-    "queryHistory": true
+    "queryHistory": true,
+    "import": true
+  },
+  "import": {
+    "sampleDataDir": "mysql",
+    "supportsMultiStatement": true,
+    "csvTable": "users",
+    "excelTable": "products",
+    "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]
   },
   "featureNotes": {},
   "expectedTables": [
@@ -368,7 +376,7 @@
     }
   },
   "mockData": {
-    "supportedTable": "users",
+    "supportedTable": "products",
     "tableWithFKs": "orders",
     "fkRelationships": {
       "orders": {

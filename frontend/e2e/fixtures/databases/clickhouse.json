@@ -3,7 +3,7 @@
   "category": "sql",
   "dataTypesTable": "data_types",
   "mockData": {
-    "supportedTable": "users",
+    "supportedTable": "products",
     "tableWithFKs": null
   },
   "testTable": {
@@ -61,7 +61,15 @@
     "multiConditionFilter": true,
     "queryHistory": true,
     "crud": true,
-    "typeCasting": true
+    "typeCasting": true,
+    "import": true
+  },
+  "import": {
+    "sampleDataDir": "clickhouse",
+    "supportsMultiStatement": false,
+    "csvTable": "users",
+    "excelTable": "products",
+    "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]
   },
   "mutationDelay": 2000,
   "featureNotes": {},

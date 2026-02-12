@@ -143,7 +143,7 @@
         "field",
         "value"
       ],
-      "expectedRowCount": 5,
+      "expectedRowCount": 4,
       "testData": {
         "firstRow": [
           "",

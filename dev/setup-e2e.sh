@@ -83,9 +83,26 @@ get_db_wait_time() {
     esac
 }
 
-# Build docker-compose command (always includes SSL profile)
+# Determine if SSL services are needed based on spec being run.
+# SSL is only needed for ssl-specific specs or when running all specs.
+needs_ssl() {
+    local spec="${WHODB_SPEC_FILE:-}"
+    # No spec = running everything, need SSL
+    [ -z "$spec" ] && return 0
+    # SSL-specific specs
+    case "$spec" in
+        ssl*|*ssl*) return 0 ;;
+    esac
+    return 1
+}
+
+# Build docker-compose command — include ssl profile only when needed
 docker_compose_cmd() {
-    echo "docker-compose -f docker-compose.yml --profile ssl"
+    if needs_ssl; then
+        echo "docker-compose -f docker-compose.yml --profile ssl"
+    else
+        echo "docker-compose -f docker-compose.yml"
+    fi
 }
 
 
@@ -273,24 +290,26 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
 
         ALL_PIDS="$PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES"
 
-        # SSL container wait_for_port calls
-        echo "🔒 Starting SSL container health checks..."
-        wait_for_port "PostgreSQL-SSL" 5433 90 &
-        PID_PG_SSL=$!
-        wait_for_port "MySQL-SSL" 3309 90 &
-        PID_MYSQL_SSL=$!
-        wait_for_port "MariaDB-SSL" 3310 90 &
-        PID_MARIA_SSL=$!
-        wait_for_port "MongoDB-SSL" 27018 30 &
-        PID_MONGO_SSL=$!
-        wait_for_port "Redis-SSL" 6380 30 &
-        PID_REDIS_SSL=$!
-        wait_for_port "ClickHouse-SSL" 9440 30 &
-        PID_CH_SSL=$!
-        wait_for_port "ElasticSearch-SSL" 9201 90 &
-        PID_ES_SSL=$!
+        # SSL container wait_for_port calls (only when running SSL tests)
+        if needs_ssl; then
+            echo "🔒 Starting SSL container health checks..."
+            wait_for_port "PostgreSQL-SSL" 5433 90 &
+            PID_PG_SSL=$!
+            wait_for_port "MySQL-SSL" 3309 90 &
+            PID_MYSQL_SSL=$!
+            wait_for_port "MariaDB-SSL" 3310 90 &
+            PID_MARIA_SSL=$!
+            wait_for_port "MongoDB-SSL" 27018 30 &
+            PID_MONGO_SSL=$!
+            wait_for_port "Redis-SSL" 6380 30 &
+            PID_REDIS_SSL=$!
+            wait_for_port "ClickHouse-SSL" 9440 30 &
+            PID_CH_SSL=$!
+            wait_for_port "ElasticSearch-SSL" 9201 90 &
+            PID_ES_SSL=$!
 
-        ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
+            ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
+        fi
 
         # Wait for all background processes
         echo "⏳ Waiting for all services to be ready in parallel..."
@@ -342,10 +361,12 @@ cd "$PROJECT_ROOT/core"
 # Let Go use all available CPU cores for better parallel test handling
 # WHODB_LOG_LEVEL defaults to "error" if not set (reduces noise during tests)
 mkdir -p "$PROJECT_ROOT/frontend/e2e/logs"
+# Use stdbuf to disable output buffering so logs are written immediately
+# (without this, logs are lost when the process is killed by cleanup)
 ENVIRONMENT=dev \
     WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}" \
     WHODB_DISABLE_MOCK_DATA_GENERATION='DEPARTMENTS' \
-    ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out \
+    stdbuf -oL -eL ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out \
     > "$PROJECT_ROOT/frontend/e2e/logs/backend.log" 2>&1 &
 TEST_SERVER_PID=$!
 

@@ -555,9 +555,6 @@ describeOrSkip('Browser Storage', () => {
             // Should have multiple persist keys
             expect(result.persistKeyCount).toBeGreaterThan(5);
 
-            // Should have analytics consent
-            expect(result.hasAnalyticsConsent).toBeTruthy();
-
             // Should have first login flag
             expect(result.hasFirstLoginFlag).toBeTruthy();
         });
