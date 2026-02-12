@@ -47,6 +47,8 @@ import {
 import { VALID_FEATURES } from "./helpers/fixture-validator.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+// Optional Wails bindings stub to exercise desktop-only code paths in Playwright.
+const DESKTOP_STUB = ["true", "1"].includes((process.env.E2E_DESKTOP_STUB || "").toLowerCase());
 const NYC_OUTPUT_DIR = path.resolve(process.cwd(), ".nyc_output");
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
 
@@ -59,7 +61,14 @@ const CDP_ENDPOINT = process.env.CDP_ENDPOINT;
  */
 async function mockAIProviders(page) {
   await page.route("**/api/query", async (route) => {
-    const postData = route.request().postDataJSON?.();
+    // postDataJSON() throws on multipart form data (file uploads).
+    // Skip non-JSON requests so they pass through to the server.
+    let postData;
+    try {
+      postData = route.request().postDataJSON();
+    } catch {
+      return route.fallback();
+    }
     const op = postData?.operationName;
 
     if (op === "GetAIProviders") {
@@ -136,6 +145,17 @@ export const test = CDP_ENDPOINT
       },
 
       whodb: async ({ page }, use, testInfo) => {
+        await page.addInitScript((enableDesktopStub) => {
+          window.__E2E_DISABLE_AUTOCOMPLETE = true;
+          if (enableDesktopStub) {
+            const go = window.go || {};
+            go.common = go.common || {};
+            go.main = go.main || {};
+            go.common.App = go.common.App || { OpenURL: () => Promise.resolve() };
+            go.main.App = go.main.App || { OpenURL: () => Promise.resolve() };
+            window.go = go;
+          }
+        }, DESKTOP_STUB);
         await mockAIProviders(page);
         await use(new WhoDB(page));
         await collectCoverage(page, testInfo);
@@ -143,6 +163,17 @@ export const test = CDP_ENDPOINT
     })
   : base.extend({
       whodb: async ({ page }, use, testInfo) => {
+        await page.addInitScript((enableDesktopStub) => {
+          window.__E2E_DISABLE_AUTOCOMPLETE = true;
+          if (enableDesktopStub) {
+            const go = window.go || {};
+            go.common = go.common || {};
+            go.main = go.main || {};
+            go.common.App = go.common.App || { OpenURL: () => Promise.resolve() };
+            go.main.App = go.main.App || { OpenURL: () => Promise.resolve() };
+            window.go = go;
+          }
+        }, DESKTOP_STUB);
         await mockAIProviders(page);
         await use(new WhoDB(page));
         await collectCoverage(page, testInfo);

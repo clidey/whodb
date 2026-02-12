@@ -1200,8 +1200,16 @@ export class WhoDB {
         // Wait for the graph to be fully loaded - nodes should exist and be visible
         await this.page.locator(".react-flow__node").first().waitFor({ state: "visible", timeout: 10000 });
 
-        // Add a small wait to ensure layout has completed (React Flow layout takes time)
-        await this.page.waitForTimeout(400); // Slightly more than the 300ms layout timeout
+        // Wait for React Flow layout to complete. The layout fires 50ms after nodes
+        // render and adds a "laying-out" CSS class during the transition.
+        // We wait for that class to be gone, then add a buffer for edge SVG rendering.
+        await this.page.waitForFunction(() => {
+            const container = document.querySelector(".react-flow");
+            return container && !container.classList.contains("laying-out");
+        }, { timeout: 5000 }).catch(() => {});
+
+        // Buffer for edge path SVG rendering after layout settles
+        await this.page.waitForTimeout(600);
 
         return await this.page.evaluate(() => {
             const nodeEls = document.querySelectorAll(".react-flow__node");
@@ -1872,7 +1880,12 @@ export class WhoDB {
     async mockVersion(version = "v1.1.1") {
         await this.page.route("**/api/query", async (route) => {
             const request = route.request();
-            const postData = request.postDataJSON();
+            let postData;
+            try {
+                postData = request.postDataJSON();
+            } catch {
+                return route.fallback();
+            }
             if (postData?.operationName === "GetVersion") {
                 await route.fulfill({
                     contentType: "application/json",
@@ -1903,7 +1916,13 @@ export class WhoDB {
         // Route handler for GraphQL operations for provider and model info
         await this.page.route("**/api/query", async (route) => {
             const request = route.request();
-            const postData = request.postDataJSON();
+            // postDataJSON() throws on multipart form data (file uploads)
+            let postData;
+            try {
+                postData = request.postDataJSON();
+            } catch {
+                return route.fallback();
+            }
             const operation = postData?.operationName;
             console.log("[PLAYWRIGHT] Intercepted GraphQL operation:", operation);
 
