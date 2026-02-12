@@ -45,6 +45,8 @@ en:
   sendMessage: Send message
   showTable: Show as table
   showCode: Show as code
+  showChart: Show Chart
+  actions: Actions
 
   # Thinking phrases - shown while AI is processing
   thinking0: Thinking

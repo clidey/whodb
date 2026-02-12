@@ -297,6 +297,8 @@ interface TableProps {
     // Mock data generation control - set to false for views/materialized views
     isMockDataGenerationAllowed?: boolean;
     rawQuery?: string;
+    // Enforce minimum height - when true, always uses passed height; when false, shrinks to content if smaller
+    enforceMinHeight?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -330,6 +332,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Mock data generation control
     isMockDataGenerationAllowed = true,
     rawQuery,
+    enforceMinHeight = false,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -1100,12 +1103,16 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Calculate actual height needed for the table content
     // Add small buffer to account for borders/padding to prevent unnecessary scrollbar
     const actualTableHeight = useMemo(() => {
-        if (paginatedRows.length === 0) return Math.min(500, height); // Min height for empty state, but respect passed height
+        if (enforceMinHeight) {
+            // Always use the passed height when enforceMinHeight is true
+            return height;
+        }
+
+        // Original behavior: shrink to content if content is smaller than height
+        if (paginatedRows.length === 0) return Math.min(500, height);
         const contentHeight = paginatedRows.length * rowHeight;
-        // Use the passed height directly - let parent control sizing
-        // Add 1px buffer to prevent scrollbar from appearing due to rounding issues
         return Math.min(contentHeight + 1, height);
-    }, [paginatedRows.length, rowHeight, height]);
+    }, [paginatedRows.length, rowHeight, height, enforceMinHeight]);
 
     const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
         const isFocused = focusedRowIndex === index;

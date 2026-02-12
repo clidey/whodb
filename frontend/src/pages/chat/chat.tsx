@@ -205,7 +205,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
         <div className="flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
             {
                 showSQL
-                ? <div className="h-[400px] w-full">
+                ? <div className="h-[300px] w-full">
                     <CodeEditor value={text} language="sql" />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
@@ -219,7 +219,8 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             limitContextMenu={true}
                             databaseType={current?.Type}
                             rawQuery={text}
-                            height={250}
+                            height={200}
+                            enforceMinHeight={true}
                             totalCount={data?.Rows?.length ?? 0}
                         />
                     </div>
@@ -877,12 +878,12 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
-                                                return <div key={`chat-${i}`} className="flex items-center self-start max-w-full min-w-0 relative" data-testid="visual-message">
+                                                return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                 </div>
                                             } else if (chat.RequiresConfirmation) {
                                                 // Show confirmation UI inline
@@ -915,7 +916,7 @@ export const ChatPage: FC = () => {
 
                                                         {/* SQL Query Display */}
                                                         {showQuery && (
-                                                            <div className="h-[200px] w-full rounded-lg overflow-hidden">
+                                                            <div className="h-[300px] w-full rounded-lg overflow-hidden">
                                                                 <CodeEditor value={chat.Text} language="sql" />
                                                             </div>
                                                         )}

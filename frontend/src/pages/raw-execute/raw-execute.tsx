@@ -922,7 +922,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void; isActiv
             onChange={handleChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-auto max-w-[40ch] border-b border-gray-400 transition-colors text-inherit"
+            className="w-auto max-w-[40ch] text-inherit"
           />
         ) : (
           <span className={cn("text-sm text-nowrap", {

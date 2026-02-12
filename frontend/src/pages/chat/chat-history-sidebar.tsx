@@ -196,7 +196,7 @@ export const ChatHistorySidebar: FC = () => {
                 <SidebarComponent variant="embed" className="w-64 h-full flex flex-col">
                     <SidebarHeader>
                         <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-semibold">{t('chatHistory')}</h2>
+                            <h1 className="text-lg font-semibold pt-8 px-4">{t('chatHistory')}</h1>
                             <Button
                                 variant="ghost"
                                 size="sm"
