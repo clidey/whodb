@@ -1,7 +1,7 @@
-//go:build ee
+//go:build arm || riscv64
 
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
  * limitations under the License.
  */
 
-package main
+package graph
 
 import (
-	// Import EE package to register EE plugins
-	// This import will only work when using the EE workspace (ee/go.work)
-	// which includes the ee module
-	_ "github.com/clidey/whodb/ee/core/graph"
-	_ "github.com/clidey/whodb/ee/core/src/plugins"
+	ctx "context"
+	"fmt"
+
+	"github.com/clidey/whodb/core/graph/model"
 )
+
+// generateChatTitleImpl is not supported on ARM/RISCV64 architectures
+func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*model.GenerateChatTitleResponse, error) {
+	return nil, fmt.Errorf("chat title generation not supported on this platform")
+}

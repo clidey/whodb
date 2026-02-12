@@ -450,6 +450,19 @@ type Query {
   AWSRegions: [AWSRegion!]!
 }
 
+input GenerateChatTitleInput {
+  Query: String!
+  ModelType: String!
+  ProviderId: String
+  Token: String
+  Model: String!
+  Endpoint: String
+}
+
+type GenerateChatTitleResponse {
+  Title: String!
+}
+
 type Mutation {
   Login(credentials: LoginCredentials!): StatusResponse!
   LoginWithProfile(profile: LoginProfileInput!): StatusResponse!
@@ -474,6 +487,7 @@ type Mutation {
 
   # AI Chat Mutations
   ExecuteConfirmedSQL(query: String!, operationType: String!): AIChatMessage!
+  GenerateChatTitle(input: GenerateChatTitleInput!): GenerateChatTitleResponse!
 
   # Cloud Provider Mutations
   # Provider-specific add/update (type-safe inputs)

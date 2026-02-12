@@ -164,6 +164,20 @@ export type DiscoveredConnection = {
   Status: ConnectionStatus;
 };
 
+export type GenerateChatTitleInput = {
+  Endpoint?: InputMaybe<Scalars['String']['input']>;
+  Model: Scalars['String']['input'];
+  ModelType: Scalars['String']['input'];
+  ProviderId?: InputMaybe<Scalars['String']['input']>;
+  Query: Scalars['String']['input'];
+  Token?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type GenerateChatTitleResponse = {
+  __typename?: 'GenerateChatTitleResponse';
+  Title: Scalars['String']['output'];
+};
+
 export type GraphUnit = {
   __typename?: 'GraphUnit';
   Relations: Array<GraphUnitRelationship>;
@@ -337,6 +351,7 @@ export type Mutation = {
   AddStorageUnit: StatusResponse;
   DeleteRow: StatusResponse;
   ExecuteConfirmedSQL: AiChatMessage;
+  GenerateChatTitle: GenerateChatTitleResponse;
   GenerateMockData: MockDataGenerationStatus;
   ImportPreview: ImportPreview;
   ImportSQL: ImportResult;
@@ -382,6 +397,11 @@ export type MutationDeleteRowArgs = {
 export type MutationExecuteConfirmedSqlArgs = {
   operationType: Scalars['String']['input'];
   query: Scalars['String']['input'];
+};
+
+
+export type MutationGenerateChatTitleArgs = {
+  input: GenerateChatTitleInput;
 };
 
 
@@ -687,6 +707,13 @@ export type ExecuteConfirmedSqlMutationVariables = Exact<{
 
 
 export type ExecuteConfirmedSqlMutation = { __typename?: 'Mutation', ExecuteConfirmedSQL: { __typename?: 'AIChatMessage', Type: string, Text: string, RequiresConfirmation: boolean, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, DisableUpdate: boolean, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string, IsPrimary: boolean, IsForeignKey: boolean, ReferencedTable?: string | null, ReferencedColumn?: string | null, Length?: number | null, Precision?: number | null, Scale?: number | null }> } | null } };
+
+export type GenerateChatTitleMutationVariables = Exact<{
+  input: GenerateChatTitleInput;
+}>;
+
+
+export type GenerateChatTitleMutation = { __typename?: 'Mutation', GenerateChatTitle: { __typename?: 'GenerateChatTitleResponse', Title: string } };
 
 export type GetHealthQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1200,6 +1227,39 @@ export function useExecuteConfirmedSqlMutation(baseOptions?: Apollo.MutationHook
 export type ExecuteConfirmedSqlMutationHookResult = ReturnType<typeof useExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationResult = Apollo.MutationResult<ExecuteConfirmedSqlMutation>;
 export type ExecuteConfirmedSqlMutationOptions = Apollo.BaseMutationOptions<ExecuteConfirmedSqlMutation, ExecuteConfirmedSqlMutationVariables>;
+export const GenerateChatTitleDocument = gql`
+    mutation GenerateChatTitle($input: GenerateChatTitleInput!) {
+  GenerateChatTitle(input: $input) {
+    Title
+  }
+}
+    `;
+export type GenerateChatTitleMutationFn = Apollo.MutationFunction<GenerateChatTitleMutation, GenerateChatTitleMutationVariables>;
+
+/**
+ * __useGenerateChatTitleMutation__
+ *
+ * To run a mutation, you first call `useGenerateChatTitleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateChatTitleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateChatTitleMutation, { data, loading, error }] = useGenerateChatTitleMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useGenerateChatTitleMutation(baseOptions?: Apollo.MutationHookOptions<GenerateChatTitleMutation, GenerateChatTitleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateChatTitleMutation, GenerateChatTitleMutationVariables>(GenerateChatTitleDocument, options);
+      }
+export type GenerateChatTitleMutationHookResult = ReturnType<typeof useGenerateChatTitleMutation>;
+export type GenerateChatTitleMutationResult = Apollo.MutationResult<GenerateChatTitleMutation>;
+export type GenerateChatTitleMutationOptions = Apollo.BaseMutationOptions<GenerateChatTitleMutation, GenerateChatTitleMutationVariables>;
 export const GetHealthDocument = gql`
     query GetHealth {
   Health {
