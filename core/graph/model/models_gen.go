@@ -127,6 +127,19 @@ type DiscoveredConnection struct {
 	Metadata     []*Record         `json:"Metadata"`
 }
 
+type GenerateChatTitleInput struct {
+	Query      string  `json:"Query"`
+	ModelType  string  `json:"ModelType"`
+	ProviderID *string `json:"ProviderId,omitempty"`
+	Token      *string `json:"Token,omitempty"`
+	Model      string  `json:"Model"`
+	Endpoint   *string `json:"Endpoint,omitempty"`
+}
+
+type GenerateChatTitleResponse struct {
+	Title string `json:"Title"`
+}
+
 type GraphUnit struct {
 	Unit      *StorageUnit             `json:"Unit"`
 	Relations []*GraphUnitRelationship `json:"Relations"`

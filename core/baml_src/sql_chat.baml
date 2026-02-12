@@ -265,3 +265,39 @@ test complex_query_with_join {
     user_query "Show me all orders with user names for orders over $100"
   }
 }
+
+// Function to generate a short chat title from the first user query
+function GenerateChatTitle(
+  user_query: string
+) -> string {
+  client DefaultClient
+  prompt #"
+    Generate a simple, natural title (maximum 4 words) for a chat that starts with: "{{ user_query }}"
+
+    Use casual, everyday language. Avoid formal words like "Request", "Query", "Generation", "Analysis".
+
+    IMPORTANT RULES:
+    1. If the query is unclear, too vague, or doesn't have enough context to create a meaningful title, return an EMPTY string (nothing at all).
+    2. If you can create a meaningful, specific title, return it.
+    3. Do NOT return generic titles like "General Chat", "New Chat", "Conversation", "Support", "Help" - instead return EMPTY.
+
+    Examples of when to return EMPTY:
+    - "Hi" → (empty)
+    - "Hello" → (empty)
+    - "Hey" → (empty)
+    - "Blah" → (empty)
+    - "Test" → (empty)
+    - "?" → (empty)
+
+    Examples of good titles:
+    - "Show me all users" → "All Users"
+    - "Give me all the users" → "All Users"
+    - "What are the total sales by region?" → "Sales by Region"
+    - "How many orders were placed last month?" → "Last Month Orders"
+    - "Create a table for products" → "Create Products Table"
+
+    Return ONLY the title or empty. No quotes, no explanations, no punctuation.
+
+    {{ ctx.output_format }}
+  "#
+}

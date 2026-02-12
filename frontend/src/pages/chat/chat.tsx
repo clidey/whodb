@@ -41,7 +41,8 @@ import {
     SelectValue,
     toast
 } from "@clidey/ux";
-import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGetAiChatLazyQuery} from '@graphql';
+import {ChatHistorySidebar} from "./chat-history-sidebar";
+import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGenerateChatTitleMutation, useGetAiChatLazyQuery} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
@@ -289,9 +290,17 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
 export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
-    const chats = useAppSelector(state => state.houdini.chats);
+    const { sessions, activeSessionId } = useAppSelector(state => state.houdini);
+    const chats = useMemo(() => {
+        if (sessions.length > 0 && activeSessionId) {
+            const activeSession = sessions.find(s => s.id === activeSessionId);
+            return activeSession?.messages || [];
+        }
+        return [];
+    }, [sessions, activeSessionId]);
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const [executeConfirmedSql] = useExecuteConfirmedSqlMutation();
+    const [generateChatTitleMutation] = useGenerateChatTitleMutation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
@@ -361,6 +370,14 @@ export const ChatPage: FC = () => {
         if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
+
+        // Check if we should try to generate a title:
+        // - Session still has default name (matches "Chat X" pattern)
+        // This will keep trying on each message until we get a meaningful title
+        const activeSession = sessions.find(s => s.id === activeSessionId);
+        const hasDefaultName = activeSession?.name?.match(/^Chat \d+$/);
+        const shouldTryTitle = hasDefaultName;
+        console.log('[Chat] shouldTryTitle:', shouldTryTitle, 'chats.length:', chats.length, 'sessionName:', activeSession?.name, 'hasDefaultName:', hasDefaultName);
 
         setLoading(true);
         loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
@@ -446,6 +463,12 @@ export const ChatPage: FC = () => {
                 }
 
                 setLoading(false);
+
+                // Try to generate title if session still has default name
+                if (shouldTryTitle) {
+                    console.log('[Chat] Calling generateChatTitle for non-streaming response');
+                    generateChatTitle(sanitizedQuery);
+                }
 
                 // Scroll to bottom
                 setTimeout(() => {
@@ -552,6 +575,12 @@ export const ChatPage: FC = () => {
                                     }));
                                 }
                                 setLoading(false);
+
+                                // Try to generate title if session still has default name
+                                if (shouldTryTitle) {
+                                    console.log('[Chat] Calling generateChatTitle for streaming response');
+                                    generateChatTitle(sanitizedQuery);
+                                }
                             } else if (currentEventType === 'error') {
                                 dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
                                 const errorMessage = typeof parsed.error === 'string'
@@ -576,7 +605,51 @@ export const ChatPage: FC = () => {
             toast.error(t('unableToQuery') + " " + errorMessage);
             setLoading(false);
         }
-    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef, getUniqueMessageId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSessionId, sessions]);
+
+    // Helper function to generate and update chat title
+    const generateChatTitle = useCallback(async (userQuery: string) => {
+        console.log('[Chat Title] Attempting to generate title for query:', userQuery);
+        console.log('[Chat Title] Model type:', modelType, 'Active session:', activeSessionId);
+        console.log('[Chat Title] Current model:', currentModel);
+
+        if (!modelType || !activeSessionId || !currentModel) {
+            console.log('[Chat Title] Skipping - missing modelType, activeSessionId, or currentModel');
+            return;
+        }
+
+        try {
+            const result = await generateChatTitleMutation({
+                variables: {
+                    input: {
+                        Query: userQuery,
+                        ModelType: modelType.modelType,
+                        ProviderId: modelType.id || undefined,
+                        Token: modelType.token || undefined,
+                        Model: currentModel,
+                        Endpoint: undefined,
+                    }
+                }
+            });
+
+            console.log('[Chat Title] Response data:', result.data);
+
+            const title = result.data?.GenerateChatTitle?.Title;
+            if (title && title.trim() !== '') {
+                console.log('[Chat Title] Updating session name to:', title);
+                dispatch(HoudiniActions.updateSessionName({
+                    sessionId: activeSessionId,
+                    name: title,
+                }));
+            } else {
+                console.log('[Chat Title] Title empty or unclear - keeping default name');
+            }
+        } catch (error) {
+            console.error('[Chat Title] Failed to generate chat title:', error);
+            // Non-critical error, don't show to user
+        }
+    }, [modelType, currentModel, activeSessionId, dispatch, generateChatTitleMutation]);
 
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
@@ -686,6 +759,15 @@ export const ChatPage: FC = () => {
         return models.length === 0 || (!modelAvailable && !currentModel);
     }, [modelAvailable, models.length, currentModel]);
 
+    // Initialize chat sessions on mount
+    const hasInitialized = useRef(false);
+    useEffect(() => {
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            dispatch(HoudiniActions.initializeChatSessions());
+        }
+    }, [dispatch]);
+
     // Auto-scroll to bottom when chats change or component mounts
     useEffect(() => {
         if (scrollContainerRef.current != null && chats.length > 0) {
@@ -710,7 +792,7 @@ export const ChatPage: FC = () => {
     }, []);
 
     return (
-        <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
+        <InternalPage routes={[InternalRoutes.Chat]} className="h-full" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2">
                 <AIProvider
                     {...aiState}
@@ -787,10 +869,10 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start max-w-full min-w-0 pt-6 relative" data-testid="error-message">
+                                                    <div key={`chat-${i}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
-                                                            : <div className="pl-4" />}
+                                                            : null}
                                                         <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
                                                     </div>
                                                 );

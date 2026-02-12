@@ -20,6 +20,17 @@ en:
   createNewPage: Create New Page
   cancel: Cancel
 
+  # Chat History Sidebar
+  chatHistory: Chat History
+  newChat: New Chat
+  deleteChat: Delete Chat
+  deleteChatTitle: Delete {chatName}?
+  deleteChatDescription: This will permanently delete this chat and all its messages. This action cannot be undone.
+  continue: Continue
+  doubleClickEdit: Double-click to edit
+  messageCount: "{count} messages"
+  noMessages: No messages yet
+
   # SQL Confirmation
   confirmExecutionTitle: Confirm Execution
   confirmExecutionDescription: This operation will modify your database. Review and confirm to proceed.
