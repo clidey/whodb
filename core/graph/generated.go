@@ -10082,7 +10082,11 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 		}
 		return ec._AWSProvider(ctx, sel, obj)
 	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
+		if typedObj, ok := obj.(graphql.Marshaler); ok {
+			return typedObj
+		} else {
+			panic(fmt.Errorf("unexpected type %T; non-generated variants of CloudProvider must implement graphql.Marshaler", obj))
+		}
 	}
 }
 
