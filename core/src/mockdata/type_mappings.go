@@ -191,7 +191,7 @@ func genUint(typeName string, c map[string]any, f *gofakeit.Faker) any {
 		minVal, maxVal = 0, 16777215
 	default:
 		// uint, uint32, uint64, uint128, uint256, int unsigned, bigint unsigned
-		minVal, maxVal = 0, 1000000
+		minVal, maxVal = 0, 1000
 	}
 
 	// Override with explicit constraints if provided
