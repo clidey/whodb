@@ -24,6 +24,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/go-chi/chi/v5"
 )
@@ -57,7 +58,10 @@ func fileServer(r chi.Router, staticFiles embed.FS) {
 		return
 	}
 
-	server := http.FileServer(http.FS(staticFS))
+	var server http.Handler = http.FileServer(http.FS(staticFS))
+	if env.BasePath != "" {
+		server = http.StripPrefix(env.BasePath, server)
+	}
 
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if hasExtension(r.URL.Path) {

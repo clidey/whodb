@@ -799,6 +799,63 @@ Combine multiple security layers for defense in depth
 </Tip>
 </Accordion>
 
+<Accordion title="How do I run WhoDB under a sub-path (e.g., /whodb)?">
+Set `WHODB_BASE_PATH` once — it configures both the backend and the frontend build.
+
+**Docker Compose (build your image with the base path):**
+```yaml
+version: "3.8"
+services:
+  whodb:
+    build:
+      context: .
+      dockerfile: core/Dockerfile
+      args:
+        WHODB_BASE_PATH: /whodb
+    expose:
+      - "8080"
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - whodb
+```
+
+**Nginx config:**
+```nginx
+server {
+    listen 80;
+    server_name abx.xyz;
+
+    location /whodb/ {
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_pass http://whodb:8080;
+    }
+
+    # Match /whodb without trailing slash
+    location = /whodb {
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://whodb:8080;
+    }
+}
+```
+
+<Note>
+The frontend bakes the base path at build time. If you change the sub-path, rebuild the image.
+</Note>
+</Accordion>
+
 <Accordion title="Does WhoDB log my queries?">
 WhoDB logging behavior:
 

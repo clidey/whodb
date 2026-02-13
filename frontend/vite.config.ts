@@ -23,6 +23,12 @@ import tailwindcss from '@tailwindcss/vite'
 // Check if EE directory exists
 const eeDir = path.resolve(__dirname, '../ee/frontend/src');
 const eeExists = fs.existsSync(eeDir);
+const rawBasePath = process.env.WHODB_BASE_PATH || process.env.VITE_BASE_PATH || '/';
+const trimmedBasePath = rawBasePath.trim() || '/';
+const basePathWithSlash = trimmedBasePath.startsWith('/') ? trimmedBasePath : `/${trimmedBasePath}`;
+const normalizedBasePath = basePathWithSlash === '/' ? '' : (basePathWithSlash.endsWith('/') ? basePathWithSlash.slice(0, -1) : basePathWithSlash);
+const viteBase = normalizedBasePath === '' ? '/' : `${normalizedBasePath}/`;
+const apiProxyPath = normalizedBasePath === '' ? '/api' : `${normalizedBasePath}/api`;
 
 // Plugin to handle missing EE modules
 const eeModulePlugin = () => ({
@@ -81,6 +87,7 @@ export default defineConfig(async () => {
   }
 
   return {
+    base: viteBase,
     plugins: [
       react(),
       tailwindcss(),
@@ -105,9 +112,10 @@ export default defineConfig(async () => {
     port: parseInt(process.env.VITE_PORT || '3000'),
     open: process.env.NODE_ENV !== 'test',
     proxy: {
-      '/api': {
+      [apiProxyPath]: {
         target: `http://localhost:${process.env.VITE_BACKEND_PORT || '8080'}`,
         changeOrigin: true,
+        ...(normalizedBasePath ? { rewrite: (path: string) => path.startsWith(normalizedBasePath) ? path.slice(normalizedBasePath.length) : path } : {}),
       },
     },
   },

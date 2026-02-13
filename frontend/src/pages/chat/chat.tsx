@@ -67,6 +67,7 @@ import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
 import {addAuthHeader, isDesktopScheme} from "../../utils/auth-headers";
+import {withBasePath} from '@/config/base-path';
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -362,7 +363,7 @@ export const ChatPage: FC = () => {
 
         try {
             const isDesktop = isDesktopScheme();
-            const endpoint = '/api/ai-chat/stream';
+            const endpoint = withBasePath('/api/ai-chat/stream');
 
             const requestBody = {
                 schema,

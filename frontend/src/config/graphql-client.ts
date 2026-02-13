@@ -31,11 +31,13 @@ import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
 import {isAwsHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslations} from '../utils/i18n';
+import {withBasePath} from './base-path';
 
-// Always use a relative URI so that:
+// Always use a relative URI (with base path) so that:
 // - Desktop/Wails uses the embedded router handler
 // - Dev server (vite) proxies to the backend via server.proxy in vite.config.ts
-const uri = "/api/query";
+const uri = withBasePath("/api/query");
+const loginPath = withBasePath("/login");
 const loginWithProfileQuery = print(LoginWithProfileDocument);
 const loginMutationQuery = print(LoginDocument);
 
@@ -62,7 +64,7 @@ const redirectToLoginWithMessage = async (
 ) => {
     const t = translator ?? await getTranslator();
     toast.error(t(key));
-    window.location.href = '/login';
+    window.location.href = loginPath;
 };
 
 const httpLink = createHttpLink({
@@ -100,7 +102,7 @@ const errorLink = onError(({networkError}) => {
             void handleAutoLogin(currentProfile);
         } else {
             // Don't redirect if already on login page to avoid infinite loop
-            if (!window.location.pathname.startsWith('/login')) {
+            if (!window.location.pathname.startsWith(loginPath)) {
                 void redirectToLoginWithMessage('sessionExpired');
             }
         }

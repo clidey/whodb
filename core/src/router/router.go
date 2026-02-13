@@ -96,7 +96,6 @@ func setupMiddlewares(router *chi.Mux) {
 	}
 
 	middlewares = append(middlewares,
-		middleware.RedirectSlashes,
 		middleware.Recoverer,
 		middleware.Timeout(90*time.Second), // Increased for LLM inference time
 		cors.Handler(cors.Options{

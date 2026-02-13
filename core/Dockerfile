@@ -19,6 +19,8 @@ COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
 # Skip Cypress binary installation - not needed for production builds
 ENV CYPRESS_INSTALL_BINARY=0
 RUN pnpm install
+ARG WHODB_BASE_PATH=/
+ENV WHODB_BASE_PATH=${WHODB_BASE_PATH}
 COPY ./frontend/ ./
 
 # Create empty EE modules for Vite to resolve during CE build
@@ -83,6 +85,8 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
 FROM alpine:3.22
+ARG WHODB_BASE_PATH=/
+ENV WHODB_BASE_PATH=${WHODB_BASE_PATH}
 RUN apk add --no-cache ca-certificates libgcc
 WORKDIR /app
 COPY --from=backend-stage /core /core
