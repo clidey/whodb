@@ -253,7 +253,7 @@ if [ "$HEADLESS" = "true" ]; then
             for db in "${DATABASES[@]}"; do
                 [ -n "${DB_DONE[$db]}" ] && continue
                 LOG="$PROJECT_ROOT/frontend/e2e/logs/$db.log"
-                SPEC=$(grep -oP '› e2e/tests/features/\K[^:]+' "$LOG" 2>/dev/null | tail -1 | sed 's/\.spec\.mjs//')
+                SPEC=$(grep -o '› e2e/tests/features/[^:]*' "$LOG" 2>/dev/null | tail -1 | sed 's/.*features\///;s/\.spec\.mjs//')
                 RUNNING="$RUNNING $db(${SPEC:-…})"
             done
             printf "\r\033[2K⏳ %d/%d done |%s" "$DONE_COUNT" "$TOTAL" "$RUNNING"
