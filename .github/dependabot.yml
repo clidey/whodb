@@ -1,85 +1,85 @@
 version: 2
 
-multi-ecosystem-groups:
-  all-go:
-    schedule:
-      interval: "daily"
-
-  all-docker:
-    schedule:
-      interval: "weekly"
+#multi-ecosystem-groups:
+#  all-go:
+#    schedule:
+#      interval: "daily"
+#
+#  all-docker:
+#    schedule:
+#      interval: "weekly"
 
 updates:
   - package-ecosystem: "gomod"
     directory: "/core"
-    multi-ecosystem-group: "all-go"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-go"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
   - package-ecosystem: "gomod"
     directory: "/ee-stub"
-    multi-ecosystem-group: "all-go"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-go"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
   - package-ecosystem: "gomod"
     directory: "/desktop-ce"
-    multi-ecosystem-group: "all-go"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-go"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
   - package-ecosystem: "gomod"
     directory: "/desktop-common"
-    multi-ecosystem-group: "all-go"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-go"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
   - package-ecosystem: "gomod"
     directory: "/cli"
-    multi-ecosystem-group: "all-go"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-go"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
 
   - package-ecosystem: "npm"
     directory: "/frontend"
-    open-pull-requests-limit: 20
+#    open-pull-requests-limit: 20
     schedule:
       interval: "daily"
-    groups:
-      all-npm:
-        patterns: ["*"]
+#    groups:
+#      all-npm:
+#        patterns: ["*"]
 
   - package-ecosystem: "docker"
     directory: "/core"
-    multi-ecosystem-group: "all-docker"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-docker"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "docker"
     directory: "/docs"
-    multi-ecosystem-group: "all-docker"
-    patterns: ["*"]
-    open-pull-requests-limit: 20
+#    multi-ecosystem-group: "all-docker"
+#    patterns: ["*"]
+#    open-pull-requests-limit: 20
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "github-actions"
     directory: "/.github"
-    open-pull-requests-limit: 20
-    schedule:
-      interval: "weekly"
-    groups:
-      all-actions:
-        patterns: ["*"]
+#    open-pull-requests-limit: 20
+#    schedule:
+#      interval: "weekly"
+#    groups:
+#      all-actions:
+#        patterns: ["*"]
