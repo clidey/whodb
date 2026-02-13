@@ -16,7 +16,6 @@
 #
 
 # Playwright E2E test runner for WhoDB
-# Replaces run-cypress.sh with the same interface
 #
 # Usage:
 #   ./run-e2e.sh [headless] [database] [spec]

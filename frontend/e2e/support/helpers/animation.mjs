@@ -16,7 +16,6 @@
 
 /**
  * Shared animation disabling helper for Playwright E2E tests.
- * Ported from cypress/support/helpers/animation.js
  */
 
 export const ANIMATION_DISABLE_CSS = `
