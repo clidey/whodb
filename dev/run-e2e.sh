@@ -183,17 +183,19 @@ else
     SPEC_PATTERN=""
 fi
 
-# Determine Playwright project
+# Determine Playwright projects (read-only + mutating)
 PW_PROJECT="standalone"
+PW_PROJECT_MUTATING="standalone-mutating"
 if [ -n "$CDP_ENDPOINT" ]; then
     PW_PROJECT="gateway"
+    PW_PROJECT_MUTATING="gateway-mutating"
 fi
 
 # Common Playwright args
 PW_CONFIG="$PROJECT_ROOT/frontend/e2e/playwright.config.mjs"
-PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT"
+PW_ARGS_COMMON="--config=$PW_CONFIG"
 if [ "$HEADLESS" = "false" ]; then
-    PW_ARGS="$PW_ARGS --headed"
+    PW_ARGS_COMMON="$PW_ARGS_COMMON --headed"
 fi
 
 if [ "$HEADLESS" = "true" ]; then
@@ -208,14 +210,30 @@ if [ "$HEADLESS" = "true" ]; then
         echo "🧪 Starting: $db ($(get_category "$db"))"
 
         (
+            set +e
             cd "$PROJECT_ROOT/frontend"
+
+            # Phase 1: Read-only tests
             DATABASE="$db" \
             CATEGORY="$(get_category "$db")" \
             pnpm exec playwright test \
-                $PW_ARGS \
+                $PW_ARGS_COMMON --project=$PW_PROJECT \
                 $SPEC_PATTERN \
                 > "$PROJECT_ROOT/frontend/e2e/logs/$db.log" 2>&1
-            exit $?
+            PHASE1=$?
+
+            # Phase 2: Mutating tests (always runs regardless of phase 1 results)
+            DATABASE="$db" \
+            CATEGORY="$(get_category "$db")" \
+            pnpm exec playwright test \
+                $PW_ARGS_COMMON --project=$PW_PROJECT_MUTATING \
+                $SPEC_PATTERN \
+                >> "$PROJECT_ROOT/frontend/e2e/logs/$db.log" 2>&1
+            PHASE2=$?
+
+            # Fail if either phase failed
+            if [ $PHASE1 -ne 0 ]; then exit $PHASE1; fi
+            exit $PHASE2
         ) &
         DB_PIDS["$db"]=$!
     done
@@ -271,7 +289,7 @@ else
 
     (
         cd "$PROJECT_ROOT/frontend"
-        env $ENV_VARS pnpm exec playwright test $PW_ARGS --ui
+        env $ENV_VARS pnpm exec playwright test $PW_ARGS_COMMON --project=$PW_PROJECT --project=$PW_PROJECT_MUTATING --ui
         exit $?
     ) && RESULT=0 || RESULT=$?
 
