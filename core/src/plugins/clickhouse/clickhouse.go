@@ -402,6 +402,13 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 	})
 }
 
+// WithTransaction executes the operation directly since ClickHouse doesn't support traditional ACID transactions.
+// The ClickHouse GORM driver's Begin() produces a connection where metadata queries like ColumnTypes() return
+// empty results, which breaks mock data generation and other operations that need column information.
+func (p *ClickHousePlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	return operation(nil)
+}
+
 func NewClickHousePlugin() *engine.Plugin {
 	clickhousePlugin := &ClickHousePlugin{}
 	clickhousePlugin.Type = engine.DatabaseType_ClickHouse
