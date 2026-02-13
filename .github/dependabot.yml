@@ -78,8 +78,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/.github"
 #    open-pull-requests-limit: 20
-#    schedule:
-#      interval: "weekly"
+    schedule:
+      interval: "weekly"
 #    groups:
 #      all-actions:
 #        patterns: ["*"]
