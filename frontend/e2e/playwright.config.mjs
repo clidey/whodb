@@ -21,9 +21,9 @@
  *   - "setup": Authenticates once per database, saves storageState.
  *     Runs BEFORE test projects via `dependencies`.
  *   - "standalone": Read-only tests (launches its own Chromium).
- *   - "standalone-mutating": Destructive tests (run-e2e.sh invokes AFTER standalone).
+ *   - "standalone-mutating": Destructive tests (depends on "standalone", runs after).
  *   - "gateway": Read-only tests (connects via CDP).
- *   - "gateway-mutating": Destructive tests (run-e2e.sh invokes AFTER gateway).
+ *   - "gateway-mutating": Destructive tests (depends on "gateway", runs after).
  *
  * Environment variables:
  *   BASE_URL        - WhoDB URL (default: http://localhost:3000 for local dev)
@@ -104,11 +104,10 @@ export default defineConfig({
       testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, ...MUTATING_TESTS],
       use: standaloneBrowser,
     },
-    // Destructive tests — run via a separate Playwright invocation in run-e2e.sh
-    // so they always execute regardless of read-only test results.
+    // Destructive tests — run after read-only tests complete via dependencies.
     {
       name: "standalone-mutating",
-      dependencies: ["setup"],
+      dependencies: ["standalone"],
       testMatch: MUTATING_TESTS,
       use: standaloneBrowser,
     },
@@ -122,7 +121,7 @@ export default defineConfig({
     },
     {
       name: "gateway-mutating",
-      dependencies: ["setup"],
+      dependencies: ["gateway"],
       testMatch: MUTATING_TESTS,
       use: gatewayBrowser,
     },
