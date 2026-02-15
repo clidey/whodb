@@ -118,6 +118,11 @@ type DatabaseMetadata struct {
 	AliasMap        []*Record         `json:"aliasMap"`
 }
 
+type DatabaseQuerySuggestion struct {
+	Description string `json:"description"`
+	Category    string `json:"category"`
+}
+
 type DiscoveredConnection struct {
 	ID           string            `json:"Id"`
 	ProviderType CloudProviderType `json:"ProviderType"`

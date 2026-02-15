@@ -296,6 +296,8 @@ interface TableProps {
     databaseType?: string;
     // Mock data generation control - set to false for views/materialized views
     isMockDataGenerationAllowed?: boolean;
+    // Import control - set to true to enable import functionality
+    allowImport?: boolean;
     rawQuery?: string;
     // Enforce minimum height - when true, always uses passed height; when false, shrinks to content if smaller
     enforceMinHeight?: boolean;
@@ -331,6 +333,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     databaseType,
     // Mock data generation control
     isMockDataGenerationAllowed = true,
+    // Import control
+    allowImport = false,
     rawQuery,
     enforceMinHeight = false,
 }) => {
@@ -788,7 +792,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Listen for menu import trigger
     useEffect(() => {
         const handleImportTrigger = () => {
-            if (isImportSupported) {
+            if (isImportSupported && allowImport) {
                 setShowImport(true);
             }
         };
@@ -797,7 +801,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         return () => {
             window.removeEventListener('menu:trigger-import', handleImportTrigger);
         };
-    }, [isImportSupported]);
+    }, [isImportSupported, allowImport]);
 
     // Refresh page when it is resized and it settles
     useEffect(() => {
@@ -946,7 +950,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             break;
                         case 'i':
                             // Mod+Shift+I: Import (opens import dialog)
-                            if (isImportSupported) {
+                            if (isImportSupported && allowImport) {
                                 event.preventDefault();
                                 setShowImport(true);
                             }
@@ -1584,8 +1588,12 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </Pagination>
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
-                    <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
-                    {isImportSupported && (
+                    {totalCount != null && totalCount > 0 && (
+                        <div className="text-sm" data-testid="total-count-bottom">
+                            <span className="font-semibold">{t('totalCount')}</span> {totalCount}
+                        </div>
+                    )}
+                    {isImportSupported && allowImport && (
                         <Button
                             variant="secondary"
                             onClick={() => setShowImport(true)}
@@ -1828,7 +1836,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     forceExportAll={forceExportAll}
                 />
             </Suspense>
-            {isImportSupported && (
+            {isImportSupported && allowImport && (
                 <ImportData
                     open={showImport}
                     onOpenChange={setShowImport}

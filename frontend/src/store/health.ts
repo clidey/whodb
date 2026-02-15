@@ -22,12 +22,16 @@ type IHealthState = {
     serverStatus: HealthStatus;
     databaseStatus: HealthStatus;
     lastChecked: number | null;
+    hasEverConnected: boolean;
+    checksPerformed: number;
 }
 
 const initialState: IHealthState = {
     serverStatus: 'unknown',
     databaseStatus: 'unknown',
     lastChecked: null,
+    hasEverConnected: false,
+    checksPerformed: 0,
 };
 
 export const healthSlice = createSlice({
@@ -46,11 +50,18 @@ export const healthSlice = createSlice({
             state.serverStatus = action.payload.server;
             state.databaseStatus = action.payload.database;
             state.lastChecked = Date.now();
+            state.checksPerformed += 1;
+            // Mark as connected if server is healthy
+            if (action.payload.server === 'healthy') {
+                state.hasEverConnected = true;
+            }
         },
         resetHealth: (state) => {
             state.serverStatus = 'unknown';
             state.databaseStatus = 'unknown';
             state.lastChecked = null;
+            state.hasEverConnected = false;
+            state.checksPerformed = 0;
         },
     },
 });

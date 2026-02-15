@@ -141,6 +141,12 @@ export type DatabaseMetadata = {
   typeDefinitions: Array<TypeDefinition>;
 };
 
+export type DatabaseQuerySuggestion = {
+  __typename?: 'DatabaseQuerySuggestion';
+  category: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+};
+
 export enum DatabaseType {
   ClickHouse = 'ClickHouse',
   ElasticSearch = 'ElasticSearch',
@@ -489,6 +495,7 @@ export type Query = {
   ColumnsBatch: Array<StorageUnitColumns>;
   Database: Array<Scalars['String']['output']>;
   DatabaseMetadata?: Maybe<DatabaseMetadata>;
+  DatabaseQuerySuggestions: Array<DatabaseQuerySuggestion>;
   DiscoveredConnections: Array<DiscoveredConnection>;
   Graph: Array<GraphUnit>;
   Health: HealthStatus;
@@ -549,6 +556,11 @@ export type QueryColumnsBatchArgs = {
 
 export type QueryDatabaseArgs = {
   type: Scalars['String']['input'];
+};
+
+
+export type QueryDatabaseQuerySuggestionsArgs = {
+  schema: Scalars['String']['input'];
 };
 
 
@@ -816,6 +828,13 @@ export type GetAiChatQueryVariables = Exact<{
 
 export type GetAiChatQuery = { __typename?: 'Query', AIChat: Array<{ __typename?: 'AIChatMessage', Type: string, Text: string, Result?: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } | null }> };
 
+export type GetDatabaseQuerySuggestionsQueryVariables = Exact<{
+  schema: Scalars['String']['input'];
+}>;
+
+
+export type GetDatabaseQuerySuggestionsQuery = { __typename?: 'Query', DatabaseQuerySuggestions: Array<{ __typename?: 'DatabaseQuerySuggestion', description: string, category: string }> };
+
 export type GetAiModelsQueryVariables = Exact<{
   providerId?: InputMaybe<Scalars['String']['input']>;
   modelType: Scalars['String']['input'];
@@ -853,7 +872,7 @@ export type RawExecuteQueryVariables = Exact<{
 }>;
 
 
-export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
+export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?: 'RowsResult', Rows: Array<Array<string>>, TotalCount: number, Columns: Array<{ __typename?: 'Column', Type: string, Name: string }> } };
 
 export type GetCloudProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1834,6 +1853,47 @@ export type GetAiChatQueryHookResult = ReturnType<typeof useGetAiChatQuery>;
 export type GetAiChatLazyQueryHookResult = ReturnType<typeof useGetAiChatLazyQuery>;
 export type GetAiChatSuspenseQueryHookResult = ReturnType<typeof useGetAiChatSuspenseQuery>;
 export type GetAiChatQueryResult = Apollo.QueryResult<GetAiChatQuery, GetAiChatQueryVariables>;
+export const GetDatabaseQuerySuggestionsDocument = gql`
+    query GetDatabaseQuerySuggestions($schema: String!) {
+  DatabaseQuerySuggestions(schema: $schema) {
+    description
+    category
+  }
+}
+    `;
+
+/**
+ * __useGetDatabaseQuerySuggestionsQuery__
+ *
+ * To run a query within a React component, call `useGetDatabaseQuerySuggestionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDatabaseQuerySuggestionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDatabaseQuerySuggestionsQuery({
+ *   variables: {
+ *      schema: // value for 'schema'
+ *   },
+ * });
+ */
+export function useGetDatabaseQuerySuggestionsQuery(baseOptions: Apollo.QueryHookOptions<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables> & ({ variables: GetDatabaseQuerySuggestionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables>(GetDatabaseQuerySuggestionsDocument, options);
+      }
+export function useGetDatabaseQuerySuggestionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables>(GetDatabaseQuerySuggestionsDocument, options);
+        }
+export function useGetDatabaseQuerySuggestionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables>(GetDatabaseQuerySuggestionsDocument, options);
+        }
+export type GetDatabaseQuerySuggestionsQueryHookResult = ReturnType<typeof useGetDatabaseQuerySuggestionsQuery>;
+export type GetDatabaseQuerySuggestionsLazyQueryHookResult = ReturnType<typeof useGetDatabaseQuerySuggestionsLazyQuery>;
+export type GetDatabaseQuerySuggestionsSuspenseQueryHookResult = ReturnType<typeof useGetDatabaseQuerySuggestionsSuspenseQuery>;
+export type GetDatabaseQuerySuggestionsQueryResult = Apollo.QueryResult<GetDatabaseQuerySuggestionsQuery, GetDatabaseQuerySuggestionsQueryVariables>;
 export const GetAiModelsDocument = gql`
     query GetAIModels($providerId: String, $modelType: String!, $token: String) {
   AIModel(providerId: $providerId, modelType: $modelType, token: $token)
@@ -2032,6 +2092,7 @@ export const RawExecuteDocument = gql`
       Name
     }
     Rows
+    TotalCount
   }
 }
     `;

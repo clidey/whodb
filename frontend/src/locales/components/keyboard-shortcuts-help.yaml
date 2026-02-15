@@ -37,3 +37,4 @@ en:
   export: Export data
   import: Import data
   executeQuery: Execute query
+  clearEditor: Clear editor/input

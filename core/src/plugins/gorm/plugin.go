@@ -645,6 +645,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		result.Rows = append(result.Rows, row)
 	}
 
+	result.TotalCount = int64(len(result.Rows))
 	return result, nil
 }
 

@@ -4,6 +4,9 @@ en:
   emptyStateTitle: What Can I Help You With?
   noModelTitle: No Model Available
   noModelDescription: Please choose an available model to start chatting with your data.
+  loadingSuggestions: Loading suggestions...
+  genericExamplesLabel: Example queries (not specific to your database)
+  databaseSpecificSuggestionsLabel: Suggested queries based on your database schema
   scratchpadNotSupported: Scratchpad Is Not Supported for This Database Type
   queryMoved: Query Moved to Scratchpad
   moveToScratchpad: Move to Scratchpad

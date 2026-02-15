@@ -135,6 +135,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
             title: t('categoryEditor'),
             shortcuts: [
                 { keys: ["Mod", "Enter"], description: t('executeQuery') },
+                { keys: ["Mod", "U"], description: t('clearEditor') },
             ],
         },
     ];

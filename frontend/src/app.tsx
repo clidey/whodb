@@ -109,6 +109,7 @@ export const App = () => {
 
   // Start health check service when user logs in, stop when they log out
   const authStatus = useAppSelector(state => state.auth.status);
+
   useEffect(() => {
     if (authStatus === 'logged-in') {
       healthCheckService.start();

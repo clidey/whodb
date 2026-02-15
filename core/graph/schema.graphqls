@@ -291,6 +291,11 @@ type DatabaseMetadata {
   aliasMap: [Record!]!
 }
 
+type DatabaseQuerySuggestion {
+  description: String!
+  category: String!
+}
+
 # =============================================================================
 # SSL/TLS Configuration Types
 # =============================================================================
@@ -438,6 +443,7 @@ type Query {
   AnalyzeMockDataDependencies(schema: String!, storageUnit: String!, rowCount: Int!, fkDensityRatio: Int): MockDataDependencyAnalysis!
   DatabaseMetadata: DatabaseMetadata
   SSLStatus: SSLStatus
+  DatabaseQuerySuggestions(schema: String!): [DatabaseQuerySuggestion!]!
 
   # Cloud Provider Queries (Generic)
   CloudProviders: [AWSProvider!]!

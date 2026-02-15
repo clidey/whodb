@@ -42,13 +42,15 @@ import {
     toast
 } from "@clidey/ux";
 import {ChatHistorySidebar} from "./chat-history-sidebar";
-import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGenerateChatTitleMutation, useGetAiChatLazyQuery} from '@graphql';
+import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGenerateChatTitleMutation, useGetAiChatLazyQuery, useGetDatabaseQuerySuggestionsLazyQuery} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
+    CircleStackIcon,
     CodeBracketIcon,
     CommandLineIcon,
     EllipsisHorizontalIcon,
+    PresentationChartLineIcon,
     SparklesIcon,
     TableCellsIcon
 } from "../../components/heroicons";
@@ -340,6 +342,15 @@ export const ChatPage: FC = () => {
     const loadingPhraseRef = useRef<string>("");
     const [containerWidth, setContainerWidth] = useState(0);
 
+    // Database-specific suggestions
+    const [getDatabaseSuggestions, { loading: suggestionsLoading }] = useGetDatabaseQuerySuggestionsLazyQuery({
+        fetchPolicy: 'network-only',
+        errorPolicy: 'all',
+    });
+    const [databaseSuggestions, setDatabaseSuggestions] = useState<Array<{ description: string; category: string }>>([]);
+    const [useDatabaseSuggestions, setUseDatabaseSuggestions] = useState(false);
+    const hasFetchedSuggestionsRef = useRef(false);
+
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
 
@@ -358,13 +369,33 @@ export const ChatPage: FC = () => {
         }
     }, [chatExamples.length]);
 
-    // Apply stable indices to current examples (allows localization changes to work)
+    // Map category to icon
+    const getCategoryIcon = useCallback((category: string) => {
+        switch (category) {
+            case 'SELECT':
+                return <CircleStackIcon className="w-4 h-4" />;
+            case 'AGGREGATE':
+                return <PresentationChartLineIcon className="w-4 h-4" />;
+            default:
+                return <SparklesIcon className="w-4 h-4" />;
+        }
+    }, []);
+
+    // Use database suggestions if available, otherwise fall back to generic examples
     const examples = useMemo(() => {
+        if (useDatabaseSuggestions && databaseSuggestions.length > 0) {
+            return databaseSuggestions.map(s => ({
+                icon: getCategoryIcon(s.category),
+                description: s.description,
+            }));
+        }
+
+        // Fallback to generic examples
         if (exampleIndicesRef.current === null) {
             return chatExamples.slice(0, 3);
         }
         return exampleIndicesRef.current.map(i => chatExamples[i]);
-    }, [chatExamples]);
+    }, [useDatabaseSuggestions, databaseSuggestions, chatExamples, getCategoryIcon]);
 
     const handleSubmitQuery = useCallback(async () => {
         const sanitizedQuery = query.trim();
@@ -378,7 +409,6 @@ export const ChatPage: FC = () => {
         const activeSession = sessions.find(s => s.id === activeSessionId);
         const hasDefaultName = activeSession?.name?.match(/^Chat \d+$/);
         const shouldTryTitle = hasDefaultName;
-        console.log('[Chat] shouldTryTitle:', shouldTryTitle, 'chats.length:', chats.length, 'sessionName:', activeSession?.name, 'hasDefaultName:', hasDefaultName);
 
         setLoading(true);
         loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
@@ -467,7 +497,6 @@ export const ChatPage: FC = () => {
 
                 // Try to generate title if session still has default name
                 if (shouldTryTitle) {
-                    console.log('[Chat] Calling generateChatTitle for non-streaming response');
                     generateChatTitle(sanitizedQuery);
                 }
 
@@ -579,7 +608,6 @@ export const ChatPage: FC = () => {
 
                                 // Try to generate title if session still has default name
                                 if (shouldTryTitle) {
-                                    console.log('[Chat] Calling generateChatTitle for streaming response');
                                     generateChatTitle(sanitizedQuery);
                                 }
                             } else if (currentEventType === 'error') {
@@ -611,12 +639,7 @@ export const ChatPage: FC = () => {
 
     // Helper function to generate and update chat title
     const generateChatTitle = useCallback(async (userQuery: string) => {
-        console.log('[Chat Title] Attempting to generate title for query:', userQuery);
-        console.log('[Chat Title] Model type:', modelType, 'Active session:', activeSessionId);
-        console.log('[Chat Title] Current model:', currentModel);
-
         if (!modelType || !activeSessionId || !currentModel) {
-            console.log('[Chat Title] Skipping - missing modelType, activeSessionId, or currentModel');
             return;
         }
 
@@ -634,17 +657,12 @@ export const ChatPage: FC = () => {
                 }
             });
 
-            console.log('[Chat Title] Response data:', result.data);
-
             const title = result.data?.GenerateChatTitle?.Title;
             if (title && title.trim() !== '') {
-                console.log('[Chat Title] Updating session name to:', title);
                 dispatch(HoudiniActions.updateSessionName({
                     sessionId: activeSessionId,
                     name: title,
                 }));
-            } else {
-                console.log('[Chat Title] Title empty or unclear - keeping default name');
             }
         } catch (error) {
             console.error('[Chat Title] Failed to generate chat title:', error);
@@ -655,6 +673,16 @@ export const ChatPage: FC = () => {
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
     }, [loading, modelAvailable, models.length, currentModel, query]);
+
+    const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
+        // Ctrl/Cmd+U to clear input
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+            e.preventDefault();
+            setQuery('');
+            setCurrentSearchIndex(undefined);
+            return;
+        }
+    }, []);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "Enter") {
@@ -674,6 +702,13 @@ export const ChatPage: FC = () => {
               return;
             }
             searchIndex--;
+          }
+
+          // If we've exhausted the history (searchIndex < 0), clear the input
+          if (searchIndex < 0) {
+            setCurrentSearchIndex(undefined);
+            setQuery('');
+            return;
           }
 
           if (currentSearchIndex !== chats.length - 1) {
@@ -698,6 +733,10 @@ export const ChatPage: FC = () => {
         dispatch(HoudiniActions.clear());
         setQuery("");
         setCurrentSearchIndex(undefined);
+        // Reset suggestions fetch flag to allow fetching again
+        hasFetchedSuggestionsRef.current = false;
+        setDatabaseSuggestions([]);
+        setUseDatabaseSuggestions(false);
     }, [dispatch]);
 
     const handleConfirmSQL = useCallback(async (messageId: number, sql: string, operationType: string) => {
@@ -792,6 +831,43 @@ export const ChatPage: FC = () => {
         return () => window.removeEventListener('resize', updateWidth);
     }, []);
 
+    // Fetch database-specific suggestions when AI is available and chat is empty
+    useEffect(() => {
+        // Only fetch if:
+        // 1. AI model is available
+        // 2. Chat is empty (showing examples)
+        // 3. Haven't already attempted to fetch
+        const shouldFetch =
+            modelAvailable &&
+            currentModel &&
+            chats.length === 0 &&
+            !hasFetchedSuggestionsRef.current;
+
+        if (shouldFetch) {
+            hasFetchedSuggestionsRef.current = true;
+            getDatabaseSuggestions({
+                variables: {
+                    schema,
+                },
+            }).then(({ data }) => {
+                if (data?.DatabaseQuerySuggestions && data.DatabaseQuerySuggestions.length > 0) {
+                    setDatabaseSuggestions(data.DatabaseQuerySuggestions.map(s => ({
+                        description: s.description,
+                        category: s.category,
+                    })));
+                    setUseDatabaseSuggestions(true);
+                } else {
+                    // Fallback to generic examples
+                    setUseDatabaseSuggestions(false);
+                }
+            }).catch((error) => {
+                console.error('[Database Suggestions] Error fetching suggestions:', error);
+                // On error, fallback to generic examples
+                setUseDatabaseSuggestions(false);
+            });
+        }
+    }, [modelAvailable, currentModel, chats.length, schema, getDatabaseSuggestions]);
+
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2">
@@ -807,17 +883,29 @@ export const ChatPage: FC = () => {
                         ? <div className="flex flex-col justify-center items-center w-full gap-8" data-testid="chat-empty-state-container">
                             {/* {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />} */}
                             <EmptyState title={t('emptyStateTitle')} description="" icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
-                            <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
-                                {
-                                    examples.map((example, i) => (
-                                        <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
-                                            onClick={() => handleSelectExample(example.description)}>
-                                            {example.icon}
-                                            {example.description}
-                                        </Card>
-                                    ))
-                                }
-                            </div>
+                            {suggestionsLoading ? (
+                                <Loading loadingText={t('loadingSuggestions')} size="sm" />
+                            ) : (
+                                <div className="flex flex-col gap-2 items-center">
+                                    {!useDatabaseSuggestions && examples.length > 0 && (
+                                        <p className="text-xs text-muted-foreground">{t('genericExamplesLabel')}</p>
+                                    )}
+                                    {useDatabaseSuggestions && databaseSuggestions.length > 0 && (
+                                        <p className="text-xs text-muted-foreground">{t('databaseSpecificSuggestionsLabel')}</p>
+                                    )}
+                                    <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
+                                        {
+                                            examples.map((example, i) => (
+                                                <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                                    onClick={() => handleSelectExample(example.description)}>
+                                                    {example.icon}
+                                                    {example.description}
+                                                </Card>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full h-full max-w-full">
@@ -840,7 +928,7 @@ export const ChatPage: FC = () => {
                                                             {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
                                                         </p>
                                                     ) : (
-                                                        <div className={classNames("py-2 rounded-xl markdown-content ml-12", {
+                                                        <div className={classNames("py-2 rounded-xl markdown-content", {
                                                             "animate-fade-in": chat.isStreaming,
                                                         })} data-input-message="system">
                                                             <ReactMarkdown
@@ -970,6 +1058,7 @@ export const ChatPage: FC = () => {
                         placeholder={t('placeholder')}
                         onSubmit={handleSubmitQuery}
                         disabled={disableAll}
+                        onKeyDown={handleKeyDown}
                         onKeyUp={handleKeyUp}
                         autoComplete="off"
                         data-testid="chat-input"

@@ -953,6 +953,8 @@ export const ExploreStorageUnit: FC = () => {
                         databaseType={current?.Type}
                         // Mock data control - disabled for views/materialized views
                         isMockDataGenerationAllowed={isMockDataGenerationAllowed}
+                        // Import control - enabled for explore view
+                        allowImport={true}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -994,6 +996,7 @@ export const ExploreStorageUnit: FC = () => {
                         onRefresh={handleSubmitRequest}
                         showPagination={false}
                         databaseType={current?.Type}
+                        totalCount={Number.parseInt(totalCount, 10)}
                     />
                 </div>
             </DrawerContent>

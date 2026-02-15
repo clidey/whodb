@@ -1314,8 +1314,10 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 		})
 	}
 	return &model.RowsResult{
-		Columns: columns,
-		Rows:    rowsResult.Rows,
+		Columns:       columns,
+		Rows:          rowsResult.Rows,
+		DisableUpdate: rowsResult.DisableUpdate,
+		TotalCount:    int(rowsResult.TotalCount),
 	}, nil
 }
 
@@ -1647,6 +1649,83 @@ func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 		IsEnabled: status.IsEnabled,
 		Mode:      status.Mode,
 	}, nil
+}
+
+// DatabaseQuerySuggestions is the resolver for the DatabaseQuerySuggestions field.
+func (r *queryResolver) DatabaseQuerySuggestions(ctx context.Context, schema string) ([]*model.DatabaseQuerySuggestion, error) {
+	plugin, config := GetPluginForContext(ctx)
+
+	log.LogFields(log.Fields{
+		"operation": "DatabaseQuerySuggestions",
+		"schema":    schema,
+	}).Info("Fetching database suggestions")
+
+	// Get storage units (tables) from the schema
+	units, err := plugin.GetStorageUnits(config, schema)
+	if err != nil {
+		log.LogFields(log.Fields{
+			"operation": "DatabaseQuerySuggestions",
+			"schema":    schema,
+		}).WithError(err).Error("Failed to get storage units for suggestions")
+		return nil, err
+	}
+
+	log.LogFields(log.Fields{
+		"operation":   "DatabaseQuerySuggestions",
+		"schema":      schema,
+		"units_count": len(units),
+	}).Info("Retrieved storage units for suggestions")
+
+	suggestions := []*model.DatabaseQuerySuggestion{}
+
+	// Generate suggestions based on actual tables in the database
+	// Limit to 3 suggestions
+	maxSuggestions := 3
+	if len(units) > maxSuggestions {
+		units = units[:maxSuggestions]
+	}
+
+	for i, unit := range units {
+		var description string
+		var category string
+
+		tableName := unit.Name
+
+		// Generate natural, conversational queries that someone would actually ask
+		switch i % 3 {
+		case 0:
+			description = fmt.Sprintf("What are the most recent records in %s?", tableName)
+			category = "SELECT"
+		case 1:
+			description = fmt.Sprintf("How many total entries are in %s?", tableName)
+			category = "AGGREGATE"
+		case 2:
+			description = fmt.Sprintf("Show me all the data in %s", tableName)
+			category = "SELECT"
+		}
+
+		suggestions = append(suggestions, &model.DatabaseQuerySuggestion{
+			Description: description,
+			Category:    category,
+		})
+	}
+
+	// If no tables found, return empty array
+	if len(suggestions) == 0 {
+		log.LogFields(log.Fields{
+			"operation": "DatabaseQuerySuggestions",
+			"schema":    schema,
+		}).Warn("No suggestions generated - no tables found")
+		return []*model.DatabaseQuerySuggestion{}, nil
+	}
+
+	log.LogFields(log.Fields{
+		"operation":         "DatabaseQuerySuggestions",
+		"schema":            schema,
+		"suggestions_count": len(suggestions),
+	}).Info("Successfully generated database suggestions")
+
+	return suggestions, nil
 }
 
 // CloudProviders is the resolver for the CloudProviders field.

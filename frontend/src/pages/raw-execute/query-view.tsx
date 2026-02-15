@@ -94,6 +94,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                             height={250}
                             databaseType={current?.Type}
                             rawQuery={code}
+                            totalCount={data.RawExecute.TotalCount}
                         />
                     )
                 }

@@ -104,6 +104,11 @@ type ComplexityRoot struct {
 		TypeDefinitions func(childComplexity int) int
 	}
 
+	DatabaseQuerySuggestion struct {
+		Category    func(childComplexity int) int
+		Description func(childComplexity int) int
+	}
+
 	DiscoveredConnection struct {
 		DatabaseType func(childComplexity int) int
 		ID           func(childComplexity int) int
@@ -236,6 +241,7 @@ type ComplexityRoot struct {
 		ColumnsBatch                func(childComplexity int, schema string, storageUnits []string) int
 		Database                    func(childComplexity int, typeArg string) int
 		DatabaseMetadata            func(childComplexity int) int
+		DatabaseQuerySuggestions    func(childComplexity int, schema string) int
 		DiscoveredConnections       func(childComplexity int) int
 		Graph                       func(childComplexity int, schema string) int
 		Health                      func(childComplexity int) int
@@ -342,6 +348,7 @@ type QueryResolver interface {
 	AnalyzeMockDataDependencies(ctx context.Context, schema string, storageUnit string, rowCount int, fkDensityRatio *int) (*model.MockDataDependencyAnalysis, error)
 	DatabaseMetadata(ctx context.Context) (*model.DatabaseMetadata, error)
 	SSLStatus(ctx context.Context) (*model.SSLStatus, error)
+	DatabaseQuerySuggestions(ctx context.Context, schema string) ([]*model.DatabaseQuerySuggestion, error)
 	CloudProviders(ctx context.Context) ([]*model.AWSProvider, error)
 	CloudProvider(ctx context.Context, id string) (*model.AWSProvider, error)
 	DiscoveredConnections(ctx context.Context) ([]*model.DiscoveredConnection, error)
@@ -608,6 +615,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DatabaseMetadata.TypeDefinitions(childComplexity), true
+
+	case "DatabaseQuerySuggestion.category":
+		if e.complexity.DatabaseQuerySuggestion.Category == nil {
+			break
+		}
+
+		return e.complexity.DatabaseQuerySuggestion.Category(childComplexity), true
+	case "DatabaseQuerySuggestion.description":
+		if e.complexity.DatabaseQuerySuggestion.Description == nil {
+			break
+		}
+
+		return e.complexity.DatabaseQuerySuggestion.Description(childComplexity), true
 
 	case "DiscoveredConnection.DatabaseType":
 		if e.complexity.DiscoveredConnection.DatabaseType == nil {
@@ -1265,6 +1285,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.DatabaseMetadata(childComplexity), true
+	case "Query.DatabaseQuerySuggestions":
+		if e.complexity.Query.DatabaseQuerySuggestions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_DatabaseQuerySuggestions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.DatabaseQuerySuggestions(childComplexity, args["schema"].(string)), true
 	case "Query.DiscoveredConnections":
 		if e.complexity.Query.DiscoveredConnections == nil {
 			break
@@ -2058,6 +2089,17 @@ func (ec *executionContext) field_Query_Columns_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["storageUnit"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_DatabaseQuerySuggestions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "schema", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["schema"] = arg0
 	return args, nil
 }
 
@@ -3373,6 +3415,64 @@ func (ec *executionContext) fieldContext_DatabaseMetadata_aliasMap(_ context.Con
 				return ec.fieldContext_Record_Value(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Record", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatabaseQuerySuggestion_description(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseQuerySuggestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DatabaseQuerySuggestion_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DatabaseQuerySuggestion_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatabaseQuerySuggestion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatabaseQuerySuggestion_category(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseQuerySuggestion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DatabaseQuerySuggestion_category,
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DatabaseQuerySuggestion_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatabaseQuerySuggestion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6812,6 +6912,53 @@ func (ec *executionContext) fieldContext_Query_SSLStatus(_ context.Context, fiel
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SSLStatus", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_DatabaseQuerySuggestions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_DatabaseQuerySuggestions,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().DatabaseQuerySuggestions(ctx, fc.Args["schema"].(string))
+		},
+		nil,
+		ec.marshalNDatabaseQuerySuggestion2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseQuerySuggestionᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_DatabaseQuerySuggestions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "description":
+				return ec.fieldContext_DatabaseQuerySuggestion_description(ctx, field)
+			case "category":
+				return ec.fieldContext_DatabaseQuerySuggestion_category(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatabaseQuerySuggestion", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_DatabaseQuerySuggestions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10619,6 +10766,50 @@ func (ec *executionContext) _DatabaseMetadata(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var databaseQuerySuggestionImplementors = []string{"DatabaseQuerySuggestion"}
+
+func (ec *executionContext) _DatabaseQuerySuggestion(ctx context.Context, sel ast.SelectionSet, obj *model.DatabaseQuerySuggestion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, databaseQuerySuggestionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DatabaseQuerySuggestion")
+		case "description":
+			out.Values[i] = ec._DatabaseQuerySuggestion_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "category":
+			out.Values[i] = ec._DatabaseQuerySuggestion_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var discoveredConnectionImplementors = []string{"DiscoveredConnection"}
 
 func (ec *executionContext) _DiscoveredConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DiscoveredConnection) graphql.Marshaler {
@@ -11942,6 +12133,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "DatabaseQuerySuggestions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_DatabaseQuerySuggestions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "CloudProviders":
 			field := field
 
@@ -13152,6 +13365,60 @@ func (ec *executionContext) unmarshalNConnectionStatus2githubᚗcomᚋclideyᚋw
 
 func (ec *executionContext) marshalNConnectionStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐConnectionStatus(ctx context.Context, sel ast.SelectionSet, v model.ConnectionStatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNDatabaseQuerySuggestion2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseQuerySuggestionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DatabaseQuerySuggestion) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDatabaseQuerySuggestion2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseQuerySuggestion(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDatabaseQuerySuggestion2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseQuerySuggestion(ctx context.Context, sel ast.SelectionSet, v *model.DatabaseQuerySuggestion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DatabaseQuerySuggestion(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDatabaseType2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDatabaseType(ctx context.Context, v any) (model.DatabaseType, error) {
