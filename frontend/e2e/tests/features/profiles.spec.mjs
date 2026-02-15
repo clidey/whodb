@@ -84,6 +84,11 @@ test.describe('Profile Management', () => {
     });
 
     test.describe('Multiple Profiles', () => {
+        // Requires both postgres and mysql — skip when targeting a single database
+        const targetDB = process.env.DATABASE;
+        test.skip(() => targetDB && targetDB !== 'default',
+            'Multiple profiles test requires postgres + mysql, skipped for single-DB runs');
+
         test('displays multiple profiles in dropdown when multiple connections exist', async ({ whodb, page }) => {
             await clearBrowserState(page);
 

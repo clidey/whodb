@@ -37,14 +37,10 @@
 
 import fs from "fs";
 import path from "path";
-import { test as base, expect, chromium } from "@playwright/test";
-import { WhoDB } from "./whodb.mjs";
-import {
-  getDatabasesByCategory,
-  getDatabaseId,
-  hasFeature,
-} from "./database-config.mjs";
-import { VALID_FEATURES } from "./helpers/fixture-validator.mjs";
+import {chromium, expect, test as base} from "@playwright/test";
+import {WhoDB} from "./whodb.mjs";
+import {getDatabaseId, getDatabasesByCategory, hasFeature,} from "./database-config.mjs";
+import {VALID_FEATURES} from "./helpers/fixture-validator.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 // Optional Wails bindings stub to exercise desktop-only code paths in Playwright.
@@ -183,13 +179,10 @@ export const test = CDP_ENDPOINT
 export { expect };
 
 /**
- * Replacement for Cypress's forEachDatabase().
- *
  * When login=true (default), uses Playwright's storageState for session persistence:
  *   - beforeAll: Logs in once, saves browser state to e2e/.auth/{db}.json
  *   - test.use({ storageState }): Each test starts pre-authenticated
  *   - No login form interaction per test, no logout between tests
- *   This matches Cypress's cy.session({ cacheAcrossSpecs: true }).
  *
  * When login=false (login.spec, ssl-*.spec, error-handling.spec):
  *   - No session persistence, no auto-login/logout

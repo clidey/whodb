@@ -384,8 +384,15 @@ test.describe('SSL Integration Tests', () => {
         elasticsearch: 'enabled'
     };
 
+    // When running a single database, only test that database's SSL connection
+    const allSSLDatabases = Object.keys(sslModeMap);
+    const targetDB = process.env.DATABASE;
+    const sslDatabases = (targetDB && targetDB !== 'default')
+        ? allSSLDatabases.filter(db => db === targetDB)
+        : allSSLDatabases;
+
     // Test SSL connections for each database type
-    ['postgres', 'mysql', 'mariadb', 'mongodb', 'redis', 'clickhouse', 'elasticsearch'].forEach((dbName) => {
+    sslDatabases.forEach((dbName) => {
         test.describe(`${dbName.charAt(0).toUpperCase() + dbName.slice(1)} SSL Connection`, () => {
             test(`connects to ${dbName} with SSL ${sslModeMap[dbName]} mode`, async ({ whodb, page }) => {
                 let db;
@@ -406,6 +413,10 @@ test.describe('SSL Integration Tests', () => {
     });
 
     test.describe('SSL Status Badge', () => {
+        // These tests use postgres — skip when targeting a different single database
+        test.skip(() => targetDB && targetDB !== 'default' && targetDB !== 'postgres',
+            'SSL badge tests use postgres, skipped for other single-DB runs');
+
         test('shows SSL badge in sidebar when connected with SSL', async ({ whodb, page }) => {
             let db;
             try {
@@ -465,6 +476,10 @@ test.describe('SSL Integration Tests', () => {
     });
 
     test.describe('SSL Connection Failure Cases', () => {
+        // These tests use postgres — skip when targeting a different single database
+        test.skip(() => targetDB && targetDB !== 'default' && targetDB !== 'postgres',
+            'SSL failure tests use postgres, skipped for other single-DB runs');
+
         test('fails to connect with wrong SSL mode', async ({ whodb, page }) => {
             let db;
             try {

@@ -17,12 +17,7 @@
 const ONBOARDING_STORAGE_KEY = '@clidey/whodb/onboarding-completed';
 
 export const hasCompletedOnboarding = (): boolean => {
-    try {
-        const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-        return completed === 'true';
-    } catch {
-        return false;
-    }
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true';
 };
 
 export const markOnboardingComplete = (): void => {

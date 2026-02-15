@@ -43,15 +43,15 @@ fi
 get_docker_services() {
     local db=$1
     case $db in
-        postgres)    echo "e2e_postgres" ;;
-        mysql)       echo "e2e_mysql" ;;
+        postgres)    echo "e2e_postgres e2e_postgres_ssl" ;;
+        mysql)       echo "e2e_mysql e2e_mysql_ssl" ;;
         mysql8)      echo "e2e_mysql_842" ;;
-        mariadb)     echo "e2e_mariadb" ;;
+        mariadb)     echo "e2e_mariadb e2e_mariadb_ssl" ;;
         sqlite)      echo "" ;;  # No Docker service needed
-        mongodb)     echo "e2e_mongo" ;;
-        redis)       echo "e2e_redis redis-init" ;;
-        elasticsearch) echo "e2e_elasticsearch elasticsearch-init" ;;
-        clickhouse)  echo "e2e_clickhouse" ;;
+        mongodb)     echo "e2e_mongo e2e_mongo_ssl" ;;
+        redis)       echo "e2e_redis redis-init e2e_redis_ssl" ;;
+        elasticsearch) echo "e2e_elasticsearch elasticsearch-init e2e_elasticsearch_ssl" ;;
+        clickhouse)  echo "e2e_clickhouse e2e_clickhouse_ssl" ;;
         all)         echo "" ;;  # Empty means start all
         *)           echo "" ;;
     esac
@@ -80,6 +80,20 @@ get_db_wait_time() {
         mongodb|clickhouse)             echo "30" ;;  # Light init
         redis)                          echo "20" ;;  # Very fast
         *)                              echo "30" ;;
+    esac
+}
+
+get_ssl_port() {
+    local db=$1
+    case $db in
+        postgres)      echo "5433" ;;
+        mysql)         echo "3309" ;;
+        mariadb)       echo "3310" ;;
+        mongodb)       echo "27018" ;;
+        redis)         echo "6380" ;;
+        clickhouse)    echo "9440" ;;
+        elasticsearch) echo "9201" ;;
+        *)             echo "" ;;
     esac
 }
 
@@ -256,6 +270,13 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         if [ -n "$DB_PORT" ]; then
             echo "⏳ Waiting for $TARGET_DB to be ready..."
             wait_for_port "$TARGET_DB" "$DB_PORT" "$DB_WAIT"
+        fi
+
+        # Wait for SSL container if applicable
+        SSL_PORT=$(get_ssl_port "$TARGET_DB")
+        if [ -n "$SSL_PORT" ]; then
+            echo "⏳ Waiting for $TARGET_DB SSL to be ready..."
+            wait_for_port "$TARGET_DB-SSL" "$SSL_PORT" "$DB_WAIT"
         fi
 
         echo "✅ $TARGET_DB service is ready!"

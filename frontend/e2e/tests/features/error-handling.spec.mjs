@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
-import { getErrorPattern, getSqlQuery } from '../../support/database-config.mjs';
-import { clearBrowserState } from '../../support/helpers/animation.mjs';
+import {expect, forEachDatabase, test} from '../../support/test-fixture.mjs';
+import {getErrorPattern, getSqlQuery} from '../../support/database-config.mjs';
+import {clearBrowserState} from '../../support/helpers/animation.mjs';
 
 /**
  * Error Handling Tests
@@ -33,7 +33,6 @@ test.describe('Error Handling', () => {
                 // to load in some environments. Needs investigation with the actual UI.
                 test.fixme('gracefully handles network failure during query', async ({ whodb, page }) => {
                     // Suppress uncaught page errors from network failures
-                    // (equivalent to Cypress cy.on('uncaught:exception'))
 
 
                     await clearBrowserState(page);

@@ -367,8 +367,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
             basicSetup,
             languageExtension != null ? languageExtension : [],
             // Add autocomplete for SQL, but allow disabling it during E2E tests to prevent flakiness.
-            // Detected via window.__E2E_DISABLE_AUTOCOMPLETE (set by test frameworks) or window.Cypress (legacy).
-            (language === "sql" && !((window as any).__E2E_DISABLE_AUTOCOMPLETE || ((window as any).Cypress && (window as any).Cypress.env('disableAutocomplete') !== false))) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
+            (language === "sql" && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },

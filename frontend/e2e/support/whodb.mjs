@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { expect } from "@playwright/test";
+import {expect} from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
@@ -271,7 +271,7 @@ export class WhoDB {
      * @param {string} value
      */
     async setAdvanced(type, value) {
-        // No-op - matches Cypress implementation
+        // No-op
     }
 
     /**
@@ -2416,7 +2416,7 @@ export class WhoDB {
                     overlay.style.boxShadow = `0 0 0 4px rgba(202, 111, 30, 0.1)`;
                 }
 
-                overlay.setAttribute("data-testid", "cypress-highlight-overlay");
+                overlay.setAttribute("data-testid", "e2e-highlight-overlay");
                 document.body.appendChild(overlay);
             },
             { sel: selector, borderColor, borderWidth, borderRadius, padding, shadow }
@@ -2428,7 +2428,7 @@ export class WhoDB {
      */
     async removeHighlights() {
         await this.page.evaluate(() => {
-            const overlays = document.querySelectorAll('[data-testid="cypress-highlight-overlay"]');
+            const overlays = document.querySelectorAll('[data-testid="e2e-highlight-overlay"]');
             overlays.forEach((overlay) => overlay.remove());
         });
     }
