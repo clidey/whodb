@@ -18,7 +18,6 @@
  * Database configuration loader.
  *
  * Loads fixture JSON files from the CE (and optionally EE) fixtures directories.
- * These are the SAME fixture files used by Cypress - no duplication.
  *
  * Environment variables:
  *   FIXTURES_DIR          - Override path to CE fixtures
@@ -26,8 +25,8 @@
  *   GATEWAY_FIXTURES_DIR  - Override path to gateway fixtures (Docker hostnames)
  */
 
-import { readFileSync, readdirSync, existsSync } from "fs";
-import { join, resolve } from "path";
+import {existsSync, readdirSync, readFileSync} from "fs";
+import {join, resolve} from "path";
 
 const thisDir = import.meta.dirname;
 

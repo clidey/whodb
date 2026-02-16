@@ -41,6 +41,7 @@ func NewSQLiteSQLBuilder(db *gorm.DB, plugin gorm_plugin.GormPluginFunctions) *S
 func (sb *SQLiteSQLBuilder) PragmaQuery(pragma, table string) (string, error) {
 	allowedPragmas := map[string]bool{
 		"table_info":       true,
+		"table_xinfo":      true,
 		"index_list":       true,
 		"index_info":       true,
 		"foreign_key_list": true,

@@ -347,3 +347,76 @@ func extractColumnFromFunction(funcArgs string) string {
 	// Extract column name
 	return columnNamePattern.FindString(funcArgs)
 }
+
+// =============================================================================
+// Constraint Map Reading Helpers
+// =============================================================================
+// These functions read values from the constraint map structure that plugins produce.
+// The constraint map uses string keys like "nullable", "primary", "auto_increment", etc.
+
+// IsNullable returns whether the column allows NULL values.
+// Defaults to true if the constraint is not set.
+func IsNullable(constraint map[string]any) bool {
+	if constraint == nil {
+		return true
+	}
+	if value, ok := constraint["nullable"].(bool); ok {
+		return value
+	}
+	return true
+}
+
+// IsPrimary returns whether the column is a primary key based on constraint data.
+func IsPrimary(constraint map[string]any) bool {
+	if constraint == nil {
+		return false
+	}
+	if value, ok := constraint["primary"].(bool); ok {
+		return value
+	}
+	return false
+}
+
+// IsAutoIncrement returns whether the column is auto-incremented.
+func IsAutoIncrement(constraint map[string]any) bool {
+	if constraint == nil {
+		return false
+	}
+	if value, ok := constraint["auto_increment"].(bool); ok && value {
+		return true
+	}
+	return false
+}
+
+// IsGenerated returns whether the column is a generated/computed column.
+func IsGenerated(constraint map[string]any) bool {
+	if constraint == nil {
+		return false
+	}
+	if value, ok := constraint["generated"].(bool); ok && value {
+		return true
+	}
+	return false
+}
+
+// HasDefault returns whether the column has a default value.
+func HasDefault(constraint map[string]any) bool {
+	if constraint == nil {
+		return false
+	}
+	if value, ok := constraint["default"].(string); ok && value != "" {
+		return true
+	}
+	return false
+}
+
+// GetDefault returns the default value for the column, or empty string if none.
+func GetDefault(constraint map[string]any) string {
+	if constraint == nil {
+		return ""
+	}
+	if value, ok := constraint["default"].(string); ok {
+		return value
+	}
+	return ""
+}

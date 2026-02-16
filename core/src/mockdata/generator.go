@@ -18,6 +18,7 @@ package mockdata
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 const (
@@ -1009,12 +1011,7 @@ func (g *Generator) generateFKValue(
 	currentTable string,
 	selectedParentRows map[string]map[string]any,
 ) (any, error) {
-	isNullable := false
-	if constraints != nil {
-		if n, ok := constraints["nullable"].(bool); ok {
-			isNullable = n
-		}
-	}
+	isNullable := gorm_plugin.IsNullable(constraints)
 
 	log.Logger.WithFields(map[string]any{
 		"table":      currentTable,
@@ -1167,11 +1164,9 @@ func (g *Generator) trackGeneratedPK(table string, columns []engine.Column, row 
 // generateColumnValue generates a value for a regular column.
 func (g *Generator) generateColumnValue(col engine.Column, constraints map[string]any) any {
 	// Check for nullable with random NULL
-	if constraints != nil {
-		if n, ok := constraints["nullable"].(bool); ok && n {
-			if g.faker.Float64() < RegularNullProbability {
-				return nil
-			}
+	if gorm_plugin.IsNullable(constraints) {
+		if g.faker.Float64() < RegularNullProbability {
+			return nil
 		}
 	}
 
@@ -1182,15 +1177,28 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 		}
 	}
 
-	// Merge column length into constraints if available
+	// Merge column metadata (length, precision, scale) into constraints if available
 	effectiveConstraints := constraints
-	if col.Length != nil && *col.Length > 0 {
-		if constraints == nil || constraints["length"] == nil {
-			effectiveConstraints = make(map[string]any)
-			for k, v := range constraints { // no-op if constraints is nil
-				effectiveConstraints[k] = v
-			}
+	needsCopy := false
+	if col.Length != nil && *col.Length > 0 && (constraints == nil || constraints["length"] == nil) {
+		needsCopy = true
+	}
+	if col.Precision != nil && *col.Precision > 0 && (constraints == nil || constraints["precision"] == nil) {
+		needsCopy = true
+	}
+	if needsCopy {
+		effectiveConstraints = make(map[string]any)
+		for k, v := range constraints { // no-op if constraints is nil
+			effectiveConstraints[k] = v
+		}
+		if col.Length != nil && *col.Length > 0 {
 			effectiveConstraints["length"] = *col.Length
+		}
+		if col.Precision != nil && *col.Precision > 0 {
+			effectiveConstraints["precision"] = *col.Precision
+		}
+		if col.Scale != nil && *col.Scale >= 0 {
+			effectiveConstraints["scale"] = *col.Scale
 		}
 	}
 
@@ -1235,6 +1243,10 @@ func valueToRecord(col engine.Column, value any, constraintType string) engine.R
 	if value == nil {
 		valueStr = ""
 		extra["IsNull"] = "true"
+	} else if f, ok := value.(float64); ok {
+		// Use fixed-point notation to avoid scientific notation (e.g., "1e+07")
+		// which can cause numeric overflow errors in databases like PostgreSQL
+		valueStr = strconv.FormatFloat(f, 'f', -1, 64)
 	} else {
 		valueStr = fmt.Sprintf("%v", value)
 	}

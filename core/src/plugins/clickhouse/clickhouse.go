@@ -183,6 +183,12 @@ func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema st
 
 func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		// ClickHouse's native TCP protocol only supports one statement per request.
+		// Multi-statement scripts silently execute only the first statement.
+		if config != nil && config.MultiStatement && isMultiStatement(query) {
+			return nil, engine.ErrMultiStatementUnsupported
+		}
+
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
 			// ClickHouse mutations (ALTER TABLE UPDATE/DELETE, INSERT, etc.) execute successfully
@@ -394,6 +400,13 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 
 		return columns, nil
 	})
+}
+
+// WithTransaction executes the operation directly since ClickHouse doesn't support traditional ACID transactions.
+// The ClickHouse GORM driver's Begin() produces a connection where metadata queries like ColumnTypes() return
+// empty results, which breaks mock data generation and other operations that need column information.
+func (p *ClickHousePlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
+	return operation(nil)
 }
 
 func NewClickHousePlugin() *engine.Plugin {

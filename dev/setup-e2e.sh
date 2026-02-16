@@ -43,15 +43,15 @@ fi
 get_docker_services() {
     local db=$1
     case $db in
-        postgres)    echo "e2e_postgres" ;;
-        mysql)       echo "e2e_mysql" ;;
+        postgres)    echo "e2e_postgres e2e_postgres_ssl" ;;
+        mysql)       echo "e2e_mysql e2e_mysql_ssl" ;;
         mysql8)      echo "e2e_mysql_842" ;;
-        mariadb)     echo "e2e_mariadb" ;;
+        mariadb)     echo "e2e_mariadb e2e_mariadb_ssl" ;;
         sqlite)      echo "" ;;  # No Docker service needed
-        mongodb)     echo "e2e_mongo" ;;
-        redis)       echo "e2e_redis redis-init" ;;
-        elasticsearch) echo "e2e_elasticsearch elasticsearch-init" ;;
-        clickhouse)  echo "e2e_clickhouse" ;;
+        mongodb)     echo "e2e_mongo e2e_mongo_ssl" ;;
+        redis)       echo "e2e_redis redis-init e2e_redis_ssl" ;;
+        elasticsearch) echo "e2e_elasticsearch elasticsearch-init e2e_elasticsearch_ssl" ;;
+        clickhouse)  echo "e2e_clickhouse e2e_clickhouse_ssl" ;;
         all)         echo "" ;;  # Empty means start all
         *)           echo "" ;;
     esac
@@ -83,9 +83,40 @@ get_db_wait_time() {
     esac
 }
 
-# Build docker-compose command (always includes SSL profile)
+get_ssl_port() {
+    local db=$1
+    case $db in
+        postgres)      echo "5433" ;;
+        mysql)         echo "3309" ;;
+        mariadb)       echo "3310" ;;
+        mongodb)       echo "27018" ;;
+        redis)         echo "6380" ;;
+        clickhouse)    echo "9440" ;;
+        elasticsearch) echo "9201" ;;
+        *)             echo "" ;;
+    esac
+}
+
+# Determine if SSL services are needed based on spec being run.
+# SSL is only needed for ssl-specific specs or when running all specs.
+needs_ssl() {
+    local spec="${WHODB_SPEC_FILE:-}"
+    # No spec = running everything, need SSL
+    [ -z "$spec" ] && return 0
+    # SSL-specific specs
+    case "$spec" in
+        ssl*|*ssl*) return 0 ;;
+    esac
+    return 1
+}
+
+# Build docker-compose command — include ssl profile only when needed
 docker_compose_cmd() {
-    echo "docker-compose -f docker-compose.yml --profile ssl"
+    if needs_ssl; then
+        echo "docker-compose -f docker-compose.yml --profile ssl"
+    else
+        echo "docker-compose -f docker-compose.yml"
+    fi
 }
 
 
@@ -241,6 +272,13 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
             wait_for_port "$TARGET_DB" "$DB_PORT" "$DB_WAIT"
         fi
 
+        # Wait for SSL container if applicable
+        SSL_PORT=$(get_ssl_port "$TARGET_DB")
+        if [ -n "$SSL_PORT" ]; then
+            echo "⏳ Waiting for $TARGET_DB SSL to be ready..."
+            wait_for_port "$TARGET_DB-SSL" "$SSL_PORT" "$DB_WAIT"
+        fi
+
         echo "✅ $TARGET_DB service is ready!"
     else
         # Start all services (TARGET_DB=all or unknown)
@@ -273,24 +311,26 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
 
         ALL_PIDS="$PID_PG $PID_MYSQL $PID_MYSQL8 $PID_MARIA $PID_MONGO $PID_CH $PID_REDIS $PID_ES"
 
-        # SSL container wait_for_port calls
-        echo "🔒 Starting SSL container health checks..."
-        wait_for_port "PostgreSQL-SSL" 5433 90 &
-        PID_PG_SSL=$!
-        wait_for_port "MySQL-SSL" 3309 90 &
-        PID_MYSQL_SSL=$!
-        wait_for_port "MariaDB-SSL" 3310 90 &
-        PID_MARIA_SSL=$!
-        wait_for_port "MongoDB-SSL" 27018 30 &
-        PID_MONGO_SSL=$!
-        wait_for_port "Redis-SSL" 6380 30 &
-        PID_REDIS_SSL=$!
-        wait_for_port "ClickHouse-SSL" 9440 30 &
-        PID_CH_SSL=$!
-        wait_for_port "ElasticSearch-SSL" 9201 90 &
-        PID_ES_SSL=$!
+        # SSL container wait_for_port calls (only when running SSL tests)
+        if needs_ssl; then
+            echo "🔒 Starting SSL container health checks..."
+            wait_for_port "PostgreSQL-SSL" 5433 90 &
+            PID_PG_SSL=$!
+            wait_for_port "MySQL-SSL" 3309 90 &
+            PID_MYSQL_SSL=$!
+            wait_for_port "MariaDB-SSL" 3310 90 &
+            PID_MARIA_SSL=$!
+            wait_for_port "MongoDB-SSL" 27018 30 &
+            PID_MONGO_SSL=$!
+            wait_for_port "Redis-SSL" 6380 30 &
+            PID_REDIS_SSL=$!
+            wait_for_port "ClickHouse-SSL" 9440 30 &
+            PID_CH_SSL=$!
+            wait_for_port "ElasticSearch-SSL" 9201 90 &
+            PID_ES_SSL=$!
 
-        ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
+            ALL_PIDS="$ALL_PIDS $PID_PG_SSL $PID_MYSQL_SSL $PID_MARIA_SSL $PID_MONGO_SSL $PID_REDIS_SSL $PID_CH_SSL $PID_ES_SSL"
+        fi
 
         # Wait for all background processes
         echo "⏳ Waiting for all services to be ready in parallel..."

@@ -18,7 +18,7 @@ en:
   deleteProvider: Delete Provider
   deleteProviderConfirm: Are you sure you want to delete this provider? This action cannot be undone.
   delete: Delete
-  newChat: New Chat
+  newChat: Clear Chat
   ollamaSetupText: Go to <0>Ollama</0> and follow the installation instructions.
   ollamaDownloadText: Once installed, install the desired model you would like to use. In this guide, we will use <0>Llama3.1 8b</0>. To install this model, run
   ollamaRunCommand: ollama run llama3.1

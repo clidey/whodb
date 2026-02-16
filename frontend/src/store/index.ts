@@ -23,6 +23,7 @@ import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
 import { aiModelsReducers } from './ai-models';
 import { scratchpadReducers, IScratchpadState } from './scratchpad';
+import { IChatState } from './chat';
 import { tourReducers } from './tour';
 import { databaseMetadataReducers } from './database-metadata';
 import { providersReducers } from './providers';
@@ -111,11 +112,54 @@ const scratchpadTransform = createTransform(
   { whitelist: ['scratchpad'] }
 );
 
+// Transform function to handle date serialization/deserialization for chat sessions
+const chatTransform = createTransform(
+  // Transform state on its way to being serialized and persisted
+  (inboundState: IChatState) => {
+    return inboundState;
+  },
+  // Transform state being rehydrated
+  (outboundState: any) => {
+    if (!outboundState || !outboundState.sessions) {
+      return outboundState;
+    }
+
+    // Convert date strings back to Date objects in chat sessions
+    const transformedSessions = outboundState.sessions.map((session: any) => {
+      let createdAt = session.createdAt;
+      // Handle various date formats
+      if (typeof createdAt === 'string') {
+        createdAt = new Date(createdAt);
+      } else if (!(createdAt instanceof Date)) {
+        createdAt = new Date();
+      }
+      // Ensure the date is valid
+      if (isNaN(createdAt.getTime())) {
+        createdAt = new Date();
+      }
+      return {
+        ...session,
+        createdAt
+      };
+    });
+
+    return {
+      ...outboundState,
+      sessions: transformedSessions
+    };
+  },
+  { whitelist: ['houdini'] }
+);
+
 const persistedReducer = combineReducers({
   auth: persistReducer({ key: "auth", storage, }, authReducers),
   database: persistReducer({ key: "database", storage, }, databaseReducers),
   settings: persistReducer({ key: "settings", storage }, settingsReducers),
-  houdini: persistReducer({ key: "houdini", storage }, houdiniReducers),
+  houdini: persistReducer({
+    key: "houdini",
+    storage,
+    transforms: [chatTransform]
+  }, houdiniReducers),
   aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
   scratchpad: persistReducer({
     key: "scratchpad",

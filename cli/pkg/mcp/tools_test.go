@@ -17,6 +17,7 @@
 package mcp
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -1161,4 +1162,88 @@ func TestPromptInjectionProtection_BoundaryUnpredictability(t *testing.T) {
 			t.Errorf("character %c appears %d times, suggesting bias", char, count)
 		}
 	}
+}
+
+// TestOutputMarshalJSON_NilSlicesSerializeAsEmptyArrays verifies that nil slices
+// in output types serialize as [] (not null), which the MCP SDK schema validator requires.
+func TestOutputMarshalJSON_NilSlicesSerializeAsEmptyArrays(t *testing.T) {
+	t.Run("QueryOutput with nil slices", func(t *testing.T) {
+		output := QueryOutput{Error: "some error", RequestID: "test-1"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		s := string(data)
+		if strings.Contains(s, `"columns":null`) {
+			t.Error("columns should be [] not null")
+		}
+		if strings.Contains(s, `"rows":null`) {
+			t.Error("rows should be [] not null")
+		}
+		if !strings.Contains(s, `"columns":[]`) {
+			t.Error("expected columns to be []")
+		}
+		if !strings.Contains(s, `"rows":[]`) {
+			t.Error("expected rows to be []")
+		}
+	})
+
+	t.Run("ConfirmOutput with nil slices", func(t *testing.T) {
+		output := ConfirmOutput{Error: "some error", RequestID: "test-2"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		s := string(data)
+		if strings.Contains(s, `"columns":null`) {
+			t.Error("columns should be [] not null")
+		}
+		if strings.Contains(s, `"rows":null`) {
+			t.Error("rows should be [] not null")
+		}
+	})
+
+	t.Run("SchemasOutput with nil slices", func(t *testing.T) {
+		output := SchemasOutput{Error: "some error"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if strings.Contains(string(data), `"schemas":null`) {
+			t.Error("schemas should be [] not null")
+		}
+	})
+
+	t.Run("TablesOutput with nil slices", func(t *testing.T) {
+		output := TablesOutput{Error: "some error"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if strings.Contains(string(data), `"tables":null`) {
+			t.Error("tables should be [] not null")
+		}
+	})
+
+	t.Run("ColumnsOutput with nil slices", func(t *testing.T) {
+		output := ColumnsOutput{Error: "some error"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if strings.Contains(string(data), `"columns":null`) {
+			t.Error("columns should be [] not null")
+		}
+	})
+
+	t.Run("ConnectionsOutput with nil slices", func(t *testing.T) {
+		output := ConnectionsOutput{Error: "some error"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if strings.Contains(string(data), `"connections":null`) {
+			t.Error("connections should be [] not null")
+		}
+	})
 }

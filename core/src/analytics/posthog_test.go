@@ -36,13 +36,18 @@ func (f *fakePosthogClient) Enqueue(message posthog.Message) error {
 	return nil
 }
 
-func (f *fakePosthogClient) Close() error { return nil }
+func (f *fakePosthogClient) Close() error                          { return nil }
+func (f *fakePosthogClient) CloseWithContext(context.Context) error { return nil }
 
 func (f *fakePosthogClient) IsFeatureEnabled(posthog.FeatureFlagPayload) (any, error) {
 	return nil, nil
 }
 
 func (f *fakePosthogClient) GetFeatureFlag(posthog.FeatureFlagPayload) (any, error) {
+	return nil, nil
+}
+
+func (f *fakePosthogClient) GetFeatureFlagResult(posthog.FeatureFlagPayload) (*posthog.FeatureFlagResult, error) {
 	return nil, nil
 }
 

@@ -166,8 +166,8 @@ describeOrSkip('Browser Storage', () => {
                 database: localStorage.getItem('persist:database')
             }));
 
-            expect(afterReload.auth).toEqual(beforeReload.auth);
-            expect(afterReload.database).toEqual(beforeReload.database);
+            expect(JSON.parse(afterReload.auth)).toEqual(JSON.parse(beforeReload.auth));
+            expect(JSON.parse(afterReload.database)).toEqual(JSON.parse(beforeReload.database));
         });
     });
 

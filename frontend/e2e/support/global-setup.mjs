@@ -16,10 +16,7 @@
 
 /**
  * Global setup for Playwright E2E tests.
- * Ported from cypress/support/e2e.js
  *
- * In Playwright, global setup/teardown and per-test hooks are handled
- * differently than in Cypress:
  * - Animation disabling: done via page.addInitScript() in test-fixture.mjs
  * - Browser state clearing: done in standardTestSetup()
  * - Uncaught exceptions: Playwright doesn't fail on page errors by default
@@ -27,8 +24,8 @@
  * This file is imported by the playwright config as a global setup module.
  */
 
-import { getDatabaseConfigs } from "./database-config.mjs";
-import { validateAllFixtures } from "./helpers/fixture-validator.mjs";
+import {getDatabaseConfigs} from "./database-config.mjs";
+import {validateAllFixtures} from "./helpers/fixture-validator.mjs";
 
 export default async function globalSetup() {
   // Validate fixtures on startup

@@ -15,7 +15,7 @@
  */
 
 import yaml from 'js-yaml';
-import { isEEMode } from '@/config/ee-imports';
+import {isEEMode} from '@/config/ee-imports';
 
 type TranslationCache = Record<string, Record<string, any>>;
 
@@ -38,7 +38,7 @@ const findModule = (modules: Record<string, string>, componentPath: string): str
 
 export const loadTranslations = async (
     componentPath: string,
-    language: 'en' | 'es'
+    language: 'en' | 'es' | 'de' | 'fr'
 ): Promise<Record<string, string>> => {
     const cacheKey = `${componentPath}-${language}`;
 
@@ -49,7 +49,7 @@ export const loadTranslations = async (
     try {
         let yamlContent: string | undefined;
 
-        if (isEEMode && language === 'es') {
+        if (isEEMode && language !== 'en') {
             // Try to load from EE modules
             yamlContent = findModule(eeModules, componentPath);
         }

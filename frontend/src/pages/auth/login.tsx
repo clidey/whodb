@@ -56,6 +56,7 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {SettingsActions} from "../../store/settings";
+import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
@@ -233,6 +234,19 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onError(error) {
                 setIsAutoLoggingIn(false);
+                // Check if this is a network error (server down)
+                const isNetworkError = error.message?.toLowerCase().includes('network') ||
+                                      error.message?.toLowerCase().includes('fetch') ||
+                                      error.message?.toLowerCase().includes('econnrefused') ||
+                                      error.networkError != null;
+
+                if (isNetworkError) {
+                    // Set server status to error to trigger overlay
+                    dispatch(HealthActions.setHealthStatus({
+                        server: 'error',
+                        database: 'unavailable',
+                    }));
+                }
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -291,6 +305,19 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onError(error) {
                 setIsAutoLoggingIn(false);
+                // Check if this is a network error (server down)
+                const isNetworkError = error.message?.toLowerCase().includes('network') ||
+                                      error.message?.toLowerCase().includes('fetch') ||
+                                      error.message?.toLowerCase().includes('econnrefused') ||
+                                      error.networkError != null;
+
+                if (isNetworkError) {
+                    // Set server status to error to trigger overlay
+                    dispatch(HealthActions.setHealthStatus({
+                        server: 'error',
+                        database: 'unavailable',
+                    }));
+                }
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -343,6 +370,19 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onError(error) {
                 setIsAutoLoggingIn(false);
+                // Check if this is a network error (server down)
+                const isNetworkError = error.message?.toLowerCase().includes('network') ||
+                                      error.message?.toLowerCase().includes('fetch') ||
+                                      error.message?.toLowerCase().includes('econnrefused') ||
+                                      error.networkError != null;
+
+                if (isNetworkError) {
+                    // Set server status to error to trigger overlay
+                    dispatch(HealthActions.setHealthStatus({
+                        server: 'error',
+                        database: 'unavailable',
+                    }));
+                }
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -446,7 +486,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     useEffect(() => {
         if (searchParams.has("locale")) {
             const locale = searchParams.get("locale")?.toLowerCase();
-            if (locale === 'en' || locale === 'es') {
+            if (locale === 'en' || locale === 'es' || locale === 'de' || locale === 'fr') {
                 dispatch(SettingsActions.setLanguage(locale));
             }
         }

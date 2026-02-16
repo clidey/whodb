@@ -26,43 +26,35 @@ import (
 )
 
 func TestMapColumnsToModelMergesMetadata(t *testing.T) {
+	refTable := "users"
+	refColumn := "id"
 	columns := []engine.Column{
 		{
-			Name: "id",
-			Type: "INT",
+			Name:      "id",
+			Type:      "INT",
+			IsPrimary: true,
 		},
 		{
-			Name: "user_id",
-			Type: "INT",
+			Name:             "user_id",
+			Type:             "INT",
+			IsForeignKey:     true,
+			ReferencedTable:  &refTable,
+			ReferencedColumn: &refColumn,
 		},
 	}
 
-	constraints := map[string]map[string]any{
-		"id": {
-			"primary": true,
-		},
-	}
-
-	foreignKeys := map[string]*engine.ForeignKeyRelationship{
-		"user_id": {
-			ColumnName:       "user_id",
-			ReferencedTable:  "users",
-			ReferencedColumn: "id",
-		},
-	}
-
-	result := MapColumnsToModel(columns, constraints, foreignKeys)
+	result := MapColumnsToModel(columns)
 
 	if len(result) != 2 {
 		t.Fatalf("expected 2 columns, got %d", len(result))
 	}
 
 	if !result[0].IsPrimary {
-		t.Fatalf("expected constraint to mark id as primary key")
+		t.Fatalf("expected id to be primary key")
 	}
 
 	if !result[1].IsForeignKey || result[1].ReferencedTable == nil || *result[1].ReferencedTable != "users" {
-		t.Fatalf("expected foreign key metadata to be merged")
+		t.Fatalf("expected foreign key metadata to be present")
 	}
 }
 
@@ -74,24 +66,13 @@ func TestFetchColumnsForStorageUnitValidatesAndEnriches(t *testing.T) {
 		}
 		return false, nil
 	}
+
+	refTable := "customers"
+	refColumn := "id"
 	mock.GetColumnsForTableFunc = func(_ *engine.PluginConfig, _ string, _ string) ([]engine.Column, error) {
 		return []engine.Column{
-			{Name: "id", Type: "INT"},
-			{Name: "customer_id", Type: "INT"},
-		}, nil
-	}
-	mock.GetColumnConstraintsFunc = func(_ *engine.PluginConfig, _ string, _ string) (map[string]map[string]any, error) {
-		return map[string]map[string]any{
-			"id": {"primary": true},
-		}, nil
-	}
-	mock.GetForeignKeysFunc = func(_ *engine.PluginConfig, _ string, _ string) (map[string]*engine.ForeignKeyRelationship, error) {
-		return map[string]*engine.ForeignKeyRelationship{
-			"customer_id": {
-				ColumnName:       "customer_id",
-				ReferencedTable:  "customers",
-				ReferencedColumn: "id",
-			},
+			{Name: "id", Type: "INT", IsPrimary: true},
+			{Name: "customer_id", Type: "INT", IsForeignKey: true, ReferencedTable: &refTable, ReferencedColumn: &refColumn},
 		}, nil
 	}
 
@@ -106,11 +87,11 @@ func TestFetchColumnsForStorageUnitValidatesAndEnriches(t *testing.T) {
 	}
 
 	if !result[0].IsPrimary {
-		t.Fatalf("expected primary key to be derived from constraints")
+		t.Fatalf("expected primary key from engine.Column")
 	}
 
 	if !result[1].IsForeignKey || result[1].ReferencedTable == nil || *result[1].ReferencedTable != "customers" {
-		t.Fatalf("expected foreign key metadata to be added to model")
+		t.Fatalf("expected foreign key metadata from engine.Column")
 	}
 }
 

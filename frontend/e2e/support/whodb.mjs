@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { expect } from "@playwright/test";
+import {expect} from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
@@ -271,7 +271,7 @@ export class WhoDB {
      * @param {string} value
      */
     async setAdvanced(type, value) {
-        // No-op - matches Cypress implementation
+        // No-op
     }
 
     /**
@@ -354,8 +354,9 @@ export class WhoDB {
     /**
      * Navigate to storage unit page and click data button for a specific table
      * @param {string} tableName
+     * @param {{ waitForRows?: boolean }} [options]
      */
-    async data(tableName) {
+    async data(tableName, { waitForRows = true } = {}) {
         // Ensure card view is set for consistent test behavior
         await this.page.evaluate(() => {
             const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
@@ -384,7 +385,9 @@ export class WhoDB {
         await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ state: "hidden", timeout: 5000 });
         // Wait for a VISIBLE table (not the hidden list view table)
         await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: 10000 });
-        await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 15000 });
+        if (waitForRows) {
+            await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 15000 });
+        }
     }
 
     /**
@@ -1200,8 +1203,16 @@ export class WhoDB {
         // Wait for the graph to be fully loaded - nodes should exist and be visible
         await this.page.locator(".react-flow__node").first().waitFor({ state: "visible", timeout: 10000 });
 
-        // Add a small wait to ensure layout has completed (React Flow layout takes time)
-        await this.page.waitForTimeout(400); // Slightly more than the 300ms layout timeout
+        // Wait for React Flow layout to complete. The layout fires 50ms after nodes
+        // render and adds a "laying-out" CSS class during the transition.
+        // We wait for that class to be gone, then add a buffer for edge SVG rendering.
+        await this.page.waitForFunction(() => {
+            const container = document.querySelector(".react-flow");
+            return container && !container.classList.contains("laying-out");
+        }, { timeout: 5000 }).catch(() => {});
+
+        // Buffer for edge path SVG rendering after layout settles
+        await this.page.waitForTimeout(600);
 
         return await this.page.evaluate(() => {
             const nodeEls = document.querySelectorAll(".react-flow__node");
@@ -1553,6 +1564,120 @@ export class WhoDB {
     }
 
     // ============================================================================
+    // Import Dialog Commands
+    // ============================================================================
+
+    /**
+     * Navigate to a table and open the import dialog.
+     * @param {string} tableName - The table to import into
+     */
+    async openImport(tableName) {
+        await this.data(tableName);
+        const importBtn = this.page.locator('[data-testid="import-button"]');
+        await importBtn.waitFor({ state: "visible", timeout: 10000 });
+        await importBtn.click();
+        await this.page.locator('[data-testid="import-dialog"]').waitFor({ state: "visible", timeout: 10000 });
+    }
+
+    /**
+     * Select the import mode (data or sql).
+     * @param {'data' | 'sql'} mode - The import mode to select
+     */
+    async selectImportMode(mode) {
+        await this.page.locator('[data-testid="import-mode-select"]').click();
+        await this.page.locator(`[data-value="${mode}"]`).click();
+    }
+
+    /**
+     * Upload a data file (CSV/Excel) in the import dialog.
+     * @param {string} filePath - Absolute path to the file
+     */
+    async uploadDataFile(filePath) {
+        await this.page.locator('[data-testid="import-data-file-input"]').setInputFiles(filePath);
+    }
+
+    /**
+     * Upload a SQL file in the import dialog.
+     * @param {string} filePath - Absolute path to the SQL file
+     */
+    async uploadSqlFile(filePath) {
+        await this.page.locator('[data-testid="import-sql-file-input"]').setInputFiles(filePath);
+    }
+
+    /**
+     * Wait for the import preview to finish loading.
+     */
+    async waitForPreview() {
+        // Wait for loading indicator to disappear
+        const loading = this.page.locator('[data-testid="import-preview-loading"]');
+        if (await loading.count() > 0) {
+            await loading.waitFor({ state: "hidden", timeout: 3000 }).catch(() => {});
+        }
+        // Preview section should be visible
+        await this.page.locator('[data-testid="import-preview-section"]').waitFor({ timeout: 15000 });
+    }
+
+    /**
+     * Extract preview data (columns and rows) from the import preview table.
+     * @returns {Promise<{columns: string[], rows: string[][]}>}
+     */
+    async getPreviewData() {
+        await this.page.locator('[data-testid="import-preview-table"]').waitFor({ timeout: 10000 });
+
+        return await this.page.locator('[data-testid="import-preview-table"]').evaluate((table) => {
+            const columns = Array.from(table.querySelectorAll("thead th")).map((el) => el.innerText.trim());
+            const rows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+                return Array.from(row.querySelectorAll("td")).map((cell) => cell.innerText.trim());
+            });
+            return { columns, rows };
+        });
+    }
+
+    /**
+     * Click the import submit button for data mode.
+     */
+    async confirmImportData() {
+        const btn = this.page.locator('[data-testid="import-submit-button"]');
+        await expect(btn).toBeEnabled();
+        await btn.click();
+    }
+
+    /**
+     * Check the SQL confirm checkbox and click the import submit button.
+     */
+    async confirmSqlImport() {
+        await this.page.locator('[data-testid="import-sql-confirm-checkbox"]').click({ force: true });
+        const btn = this.page.locator('[data-testid="import-submit-button"]');
+        await expect(btn).toBeEnabled();
+        await btn.click();
+    }
+
+    /**
+     * Select the data import mode (Append or Overwrite).
+     * @param {'APPEND' | 'OVERWRITE'} mode - The data mode value
+     */
+    async selectImportDataMode(mode) {
+        await this.page.locator('[data-testid="import-data-mode-select"]').click();
+        await this.page.locator(`[data-value="${mode}"]`).click();
+    }
+
+    /**
+     * Type SQL into the CodeMirror editor in the import dialog.
+     * @param {string} sql - The SQL text to type
+     */
+    async typeSqlInEditor(sql) {
+        const selector = '[data-testid="import-sql-editor"] .cm-content';
+        const editor = this.page.locator(selector);
+        await editor.scrollIntoViewIfNeeded();
+        await editor.waitFor({ state: "visible" });
+        await editor.click();
+        await editor.clear();
+        await editor.fill(sql);
+        await editor.blur();
+        await this.page.waitForTimeout(100);
+    }
+
+    // ============================================================================
     // Mock Data Dialog Commands
     // ============================================================================
 
@@ -1758,7 +1883,12 @@ export class WhoDB {
     async mockVersion(version = "v1.1.1") {
         await this.page.route("**/api/query", async (route) => {
             const request = route.request();
-            const postData = request.postDataJSON();
+            let postData;
+            try {
+                postData = request.postDataJSON();
+            } catch {
+                return route.fallback();
+            }
             if (postData?.operationName === "GetVersion") {
                 await route.fulfill({
                     contentType: "application/json",
@@ -1789,7 +1919,13 @@ export class WhoDB {
         // Route handler for GraphQL operations for provider and model info
         await this.page.route("**/api/query", async (route) => {
             const request = route.request();
-            const postData = request.postDataJSON();
+            // postDataJSON() throws on multipart form data (file uploads)
+            let postData;
+            try {
+                postData = request.postDataJSON();
+            } catch {
+                return route.fallback();
+            }
             const operation = postData?.operationName;
             console.log("[PLAYWRIGHT] Intercepted GraphQL operation:", operation);
 
@@ -2283,7 +2419,7 @@ export class WhoDB {
                     overlay.style.boxShadow = `0 0 0 4px rgba(202, 111, 30, 0.1)`;
                 }
 
-                overlay.setAttribute("data-testid", "cypress-highlight-overlay");
+                overlay.setAttribute("data-testid", "e2e-highlight-overlay");
                 document.body.appendChild(overlay);
             },
             { sel: selector, borderColor, borderWidth, borderRadius, padding, shadow }
@@ -2295,7 +2431,7 @@ export class WhoDB {
      */
     async removeHighlights() {
         await this.page.evaluate(() => {
-            const overlays = document.querySelectorAll('[data-testid="cypress-highlight-overlay"]');
+            const overlays = document.querySelectorAll('[data-testid="e2e-highlight-overlay"]');
             overlays.forEach((overlay) => overlay.remove());
         });
     }

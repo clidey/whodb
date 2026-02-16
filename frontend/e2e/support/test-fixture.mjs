@@ -37,16 +37,14 @@
 
 import fs from "fs";
 import path from "path";
-import { test as base, expect, chromium } from "@playwright/test";
-import { WhoDB } from "./whodb.mjs";
-import {
-  getDatabasesByCategory,
-  getDatabaseId,
-  hasFeature,
-} from "./database-config.mjs";
-import { VALID_FEATURES } from "./helpers/fixture-validator.mjs";
+import {chromium, expect, test as base} from "@playwright/test";
+import {WhoDB} from "./whodb.mjs";
+import {getDatabaseId, getDatabasesByCategory, hasFeature,} from "./database-config.mjs";
+import {VALID_FEATURES} from "./helpers/fixture-validator.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+// Optional Wails bindings stub to exercise desktop-only code paths in Playwright.
+const DESKTOP_STUB = ["true", "1"].includes((process.env.E2E_DESKTOP_STUB || "").toLowerCase());
 const NYC_OUTPUT_DIR = path.resolve(process.cwd(), ".nyc_output");
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
 
@@ -59,7 +57,14 @@ const CDP_ENDPOINT = process.env.CDP_ENDPOINT;
  */
 async function mockAIProviders(page) {
   await page.route("**/api/query", async (route) => {
-    const postData = route.request().postDataJSON?.();
+    // postDataJSON() throws on multipart form data (file uploads).
+    // Skip non-JSON requests so they pass through to the server.
+    let postData;
+    try {
+      postData = route.request().postDataJSON();
+    } catch {
+      return route.fallback();
+    }
     const op = postData?.operationName;
 
     if (op === "GetAIProviders") {
@@ -136,6 +141,17 @@ export const test = CDP_ENDPOINT
       },
 
       whodb: async ({ page }, use, testInfo) => {
+        await page.addInitScript((enableDesktopStub) => {
+          window.__E2E_DISABLE_AUTOCOMPLETE = true;
+          if (enableDesktopStub) {
+            const go = window.go || {};
+            go.common = go.common || {};
+            go.main = go.main || {};
+            go.common.App = go.common.App || { OpenURL: () => Promise.resolve() };
+            go.main.App = go.main.App || { OpenURL: () => Promise.resolve() };
+            window.go = go;
+          }
+        }, DESKTOP_STUB);
         await mockAIProviders(page);
         await use(new WhoDB(page));
         await collectCoverage(page, testInfo);
@@ -143,6 +159,17 @@ export const test = CDP_ENDPOINT
     })
   : base.extend({
       whodb: async ({ page }, use, testInfo) => {
+        await page.addInitScript((enableDesktopStub) => {
+          window.__E2E_DISABLE_AUTOCOMPLETE = true;
+          if (enableDesktopStub) {
+            const go = window.go || {};
+            go.common = go.common || {};
+            go.main = go.main || {};
+            go.common.App = go.common.App || { OpenURL: () => Promise.resolve() };
+            go.main.App = go.main.App || { OpenURL: () => Promise.resolve() };
+            window.go = go;
+          }
+        }, DESKTOP_STUB);
         await mockAIProviders(page);
         await use(new WhoDB(page));
         await collectCoverage(page, testInfo);
@@ -152,13 +179,10 @@ export const test = CDP_ENDPOINT
 export { expect };
 
 /**
- * Replacement for Cypress's forEachDatabase().
- *
  * When login=true (default), uses Playwright's storageState for session persistence:
  *   - beforeAll: Logs in once, saves browser state to e2e/.auth/{db}.json
  *   - test.use({ storageState }): Each test starts pre-authenticated
  *   - No login form interaction per test, no logout between tests
- *   This matches Cypress's cy.session({ cacheAcrossSpecs: true }).
  *
  * When login=false (login.spec, ssl-*.spec, error-handling.spec):
  *   - No session persistence, no auto-login/logout

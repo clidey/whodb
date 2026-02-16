@@ -242,14 +242,26 @@ export const GraphPage: FC = () => {
         // Create nodes for selected units with column data
         for (const node of graphData) {
             if (!selectedUnits.has(node.Unit.Name)) continue;
-            const columns = tableColumns[node.Unit.Name];
+            const columns = tableColumns[node.Unit.Name] || [];
+
+            // Calculate node height based on content
+            // Be generous with spacing to prevent any overlap
+            // Base height: title + button + padding = 200px
+            // Each item (metadata + columns): ~50px per item (includes row padding)
+            const metadataCount = node.Unit.Attributes?.length || 0;
+            const columnCount = columns.length;
+            const itemCount = metadataCount + columnCount;
+            const calculatedHeight = Math.max(250, 200 + (itemCount * 50));
+
             newNodes.push(createNode({
                 id: node.Unit.Name,
                 type: GraphElements.StorageUnit,
                 data: {
                     ...node.Unit,
-                    columns: columns || [],
+                    columns: columns,
                 },
+                width: 400,
+                height: calculatedHeight,
             }));
         }
         

@@ -158,6 +158,17 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         });
 
         tableActions.push({
+            id: "action-import",
+            label: t('importData'),
+            icon: <CircleStackIcon className="w-4 h-4" />,
+            shortcut: ["Mod", "Shift", "I"],
+            onSelect: () => {
+                window.dispatchEvent(new CustomEvent('menu:trigger-import'));
+                onOpenChange(false);
+            },
+        });
+
+        tableActions.push({
             id: "action-toggle-sidebar",
             label: t('toggleSidebar'),
             icon: <CogIcon className="w-4 h-4" />,

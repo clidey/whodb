@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:24.11.1-alpine3.22 AS build-stage
-RUN npm i -g pnpm
+FROM node:25.6.0-alpine3.23 AS build-stage
+RUN npm i -g pnpm@10.29.3
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
 # Skip test framework browser downloads - not needed for production builds
@@ -37,7 +37,7 @@ ARG VERSION=dev
 ARG TARGETARCH
 ARG PLATFORM=docker
 
-FROM golang:1.25-alpine3.22 AS backend-stage
+FROM golang:1.26-alpine3.23 AS backend-stage
 RUN apk add --no-cache \
 	gcc \
 	musl-dev \
@@ -82,7 +82,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
         https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
-FROM alpine:3.22
+FROM alpine:3.23
 RUN apk add --no-cache ca-certificates libgcc
 WORKDIR /app
 COPY --from=backend-stage /core /core

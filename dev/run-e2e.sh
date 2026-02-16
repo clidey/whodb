@@ -16,7 +16,6 @@
 #
 
 # Playwright E2E test runner for WhoDB
-# Replaces run-cypress.sh with the same interface
 #
 # Usage:
 #   ./run-e2e.sh [headless] [database] [spec]
@@ -184,15 +183,17 @@ else
     SPEC_PATTERN=""
 fi
 
-# Determine Playwright project
+# Determine Playwright projects (read-only + mutating)
 PW_PROJECT="standalone"
+PW_PROJECT_MUTATING="standalone-mutating"
 if [ -n "$CDP_ENDPOINT" ]; then
     PW_PROJECT="gateway"
+    PW_PROJECT_MUTATING="gateway-mutating"
 fi
 
 # Common Playwright args
 PW_CONFIG="$PROJECT_ROOT/frontend/e2e/playwright.config.mjs"
-PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT"
+PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT --project=$PW_PROJECT_MUTATING"
 if [ "$HEADLESS" = "false" ]; then
     PW_ARGS="$PW_ARGS --headed"
 fi
@@ -216,7 +217,6 @@ if [ "$HEADLESS" = "true" ]; then
                 $PW_ARGS \
                 $SPEC_PATTERN \
                 > "$PROJECT_ROOT/frontend/e2e/logs/$db.log" 2>&1
-            exit $?
         ) &
         DB_PIDS["$db"]=$!
     done
@@ -253,7 +253,7 @@ if [ "$HEADLESS" = "true" ]; then
             for db in "${DATABASES[@]}"; do
                 [ -n "${DB_DONE[$db]}" ] && continue
                 LOG="$PROJECT_ROOT/frontend/e2e/logs/$db.log"
-                SPEC=$(grep -oP '› e2e/tests/features/\K[^:]+' "$LOG" 2>/dev/null | tail -1 | sed 's/\.spec\.mjs//')
+                SPEC=$(grep -o '› e2e/tests/features/[^:]*' "$LOG" 2>/dev/null | tail -1 | sed 's/.*features\///;s/\.spec\.mjs//')
                 RUNNING="$RUNNING $db(${SPEC:-…})"
             done
             printf "\r\033[2K⏳ %d/%d done |%s" "$DONE_COUNT" "$TOTAL" "$RUNNING"
@@ -262,8 +262,8 @@ if [ "$HEADLESS" = "true" ]; then
     done
     echo ""
 else
-    # GUI mode: Single Playwright session with --headed
-    echo "📋 Opening Playwright in headed mode..."
+    # GUI mode: Open Playwright UI runner (test list + live browser preview)
+    echo "📋 Opening Playwright UI..."
 
     ENV_VARS=""
     if [ "$TARGET_DB" != "all" ]; then
@@ -272,7 +272,7 @@ else
 
     (
         cd "$PROJECT_ROOT/frontend"
-        env $ENV_VARS pnpm exec playwright test $PW_ARGS --headed
+        env $ENV_VARS pnpm exec playwright test $PW_ARGS --ui
         exit $?
     ) && RESULT=0 || RESULT=$?
 

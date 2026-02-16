@@ -17,7 +17,6 @@
 /**
  * Fixture Schema Validator for E2E Tests.
  * Validates that database fixtures conform to the expected schema.
- * Ported 1:1 from cypress/support/helpers/fixture-validator.js
  */
 
 const REQUIRED_FIELDS = ["type", "category", "connection", "features"];
@@ -47,6 +46,7 @@ export const VALID_FEATURES = [
   "multiConditionFilter",
   "typeCasting",
   "sslConnection",
+  "import",
 ];
 
 export function validateFixture(fixture, name) {

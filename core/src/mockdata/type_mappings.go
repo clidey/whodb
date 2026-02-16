@@ -155,7 +155,9 @@ func genInt(typeName string, c map[string]any, f *gofakeit.Faker) any {
 		minVal, maxVal = 1, 8388607
 	default:
 		// int, integer, int4, int8, bigint, serial, bigserial, int32, int64, int128, int256
-		minVal, maxVal = 1, 1000000
+		// Conservative max to avoid overflows in triggers/computed columns
+		// (e.g., SUM(price * quantity) stored in a NUMERIC(10,2) column)
+		minVal, maxVal = 1, 1000
 	}
 
 	// Override with explicit constraints if provided
@@ -189,7 +191,7 @@ func genUint(typeName string, c map[string]any, f *gofakeit.Faker) any {
 		minVal, maxVal = 0, 16777215
 	default:
 		// uint, uint32, uint64, uint128, uint256, int unsigned, bigint unsigned
-		minVal, maxVal = 0, 1000000
+		minVal, maxVal = 0, 1000
 	}
 
 	// Override with explicit constraints if provided
@@ -210,6 +212,9 @@ func genUint(typeName string, c map[string]any, f *gofakeit.Faker) any {
 }
 
 // genDecimal generates a decimal number respecting precision, scale, and check_min/check_max constraints.
+// Uses a conservative default max (1000) rather than precision-derived max to avoid overflows
+// from triggers, computed columns, or expressions like SUM(price * quantity) that can exceed
+// individual column limits.
 func genDecimal(c map[string]any, f *gofakeit.Faker) any {
 	minVal := 0.0
 	maxVal := 1000.0
@@ -219,16 +224,30 @@ func genDecimal(c map[string]any, f *gofakeit.Faker) any {
 		if s, ok := c["scale"].(int); ok && s >= 0 {
 			scale = s
 		}
-		// Calculate max from precision if available: decimal(5,2) → max 999.99
-		if p, ok := c["precision"].(int64); ok && p > 0 {
-			intDigits := int(p) - scale
+		// Use precision to TIGHTEN max when the column can't hold the default range.
+		// e.g., decimal(5,2) max is 999.99, which is below the default 1000 → cap to 999.99.
+		// But decimal(10,2) max is 99999999.99 — DON'T inflate to that, because triggers
+		// or computed columns (e.g., SUM(price * quantity)) can overflow other columns.
+		var precision int
+		if p, ok := c["precision"].(int); ok && p > 0 {
+			precision = p
+		} else if p, ok := c["precision"].(int64); ok && p > 0 {
+			precision = int(p)
+		}
+		if precision > 0 {
+			intDigits := precision - scale
+			var precisionMax float64
 			if intDigits > 0 {
-				maxVal = math.Pow(10, float64(intDigits)) - math.Pow(10, -float64(scale))
+				precisionMax = math.Pow(10, float64(intDigits)) - math.Pow(10, -float64(scale))
 			} else {
-				maxVal = 1 - math.Pow(10, -float64(scale)) // e.g., decimal(2,2) → 0.99
+				precisionMax = 1 - math.Pow(10, -float64(scale))
+			}
+			// Only tighten, never inflate
+			if precisionMax < maxVal {
+				maxVal = precisionMax
 			}
 		}
-		// Explicit constraints override precision-derived max
+		// Explicit constraints override
 		if v, ok := c["check_min"].(float64); ok {
 			minVal = v
 		}
@@ -243,7 +262,16 @@ func genDecimal(c map[string]any, f *gofakeit.Faker) any {
 
 	val := f.Float64Range(minVal, maxVal)
 	multiplier := math.Pow(10, float64(scale))
-	return math.Round(val*multiplier) / multiplier
+	rounded := math.Round(val*multiplier) / multiplier
+	// Clamp after rounding — rounding can push values just above the boundary
+	// (e.g., 99999999.995 rounds to 100000000.00 which overflows NUMERIC(10,2))
+	if rounded > maxVal {
+		rounded = maxVal
+	}
+	if rounded < minVal {
+		rounded = minVal
+	}
+	return rounded
 }
 
 // genDate generates a date within the last 10 years

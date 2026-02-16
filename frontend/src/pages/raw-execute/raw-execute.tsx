@@ -646,7 +646,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     "opacity-100": showTools,
                 })}>
                     <div className="flex gap-sm pointer-events-auto">
-                        {actionOptions.length > 1 && <Select
+                        {/* {actionOptions.length > 1 && <Select
                             value={mode}
                             onValueChange={(val) => setMode(val as string)}
                         >
@@ -674,7 +674,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                     </SelectItem>
                                 ))}
                             </SelectContent>
-                        </Select>}
+                        </Select>} */}
                         <Tip>
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input">
@@ -922,7 +922,7 @@ const EditableInput: FC<{ page: Page; setValue: (value: string) => void; isActiv
             onChange={handleChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-auto max-w-[40ch] border-b border-gray-400 transition-colors text-inherit"
+            className="w-auto max-w-[40ch] text-inherit"
           />
         ) : (
           <span className={cn("text-sm text-nowrap", {

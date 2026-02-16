@@ -68,10 +68,12 @@ import {
 } from '@graphql';
 import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Export} from "./export";
+import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
+    ArrowUpCircleIcon,
     CalculatorIcon,
     CalendarIcon,
     CheckCircleIcon,
@@ -98,6 +100,7 @@ import {
 } from "./heroicons";
 import {Tip} from "./tip";
 import {formatShortcut, isModKeyPressed} from "@/utils/platform";
+import {isNoSQL} from "@/utils/functions";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -293,7 +296,11 @@ interface TableProps {
     databaseType?: string;
     // Mock data generation control - set to false for views/materialized views
     isMockDataGenerationAllowed?: boolean;
+    // Import control - set to true to enable import functionality
+    allowImport?: boolean;
     rawQuery?: string;
+    // Enforce minimum height - when true, always uses passed height; when false, shrinks to content if smaller
+    enforceMinHeight?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -326,7 +333,10 @@ export const StorageUnitTable: FC<TableProps> = ({
     databaseType,
     // Mock data generation control
     isMockDataGenerationAllowed = true,
+    // Import control
+    allowImport = false,
     rawQuery,
+    enforceMinHeight = false,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -335,6 +345,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleting, setDeleting] = useState(false);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const [preselectedFormat, setPreselectedFormat] = useState<'csv' | 'excel' | 'ndjson' | undefined>(undefined);
     const [forceExportAll, setForceExportAll] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -354,6 +365,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
     const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch" && isMockDataGenerationAllowed;
     const isClickHouse = databaseType === "ClickHouse";
+    const isImportSupported = !isNoSQL(databaseType ?? "");
     const { data: maxRowData } = useMockDataMaxRowCountQuery();
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
@@ -777,6 +789,20 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, []);
 
+    // Listen for menu import trigger
+    useEffect(() => {
+        const handleImportTrigger = () => {
+            if (isImportSupported && allowImport) {
+                setShowImport(true);
+            }
+        };
+
+        window.addEventListener('menu:trigger-import', handleImportTrigger);
+        return () => {
+            window.removeEventListener('menu:trigger-import', handleImportTrigger);
+        };
+    }, [isImportSupported, allowImport]);
+
     // Refresh page when it is resized and it settles
     useEffect(() => {
         let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -921,6 +947,13 @@ export const StorageUnitTable: FC<TableProps> = ({
                             // Mod+Shift+E: Export (opens export dialog)
                             event.preventDefault();
                             openExport();
+                            break;
+                        case 'i':
+                            // Mod+Shift+I: Import (opens import dialog)
+                            if (isImportSupported && allowImport) {
+                                event.preventDefault();
+                                setShowImport(true);
+                            }
                             break;
                     }
                     return;
@@ -1074,12 +1107,16 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Calculate actual height needed for the table content
     // Add small buffer to account for borders/padding to prevent unnecessary scrollbar
     const actualTableHeight = useMemo(() => {
-        if (paginatedRows.length === 0) return Math.min(500, height); // Min height for empty state, but respect passed height
+        if (enforceMinHeight) {
+            // Always use the passed height when enforceMinHeight is true
+            return height;
+        }
+
+        // Original behavior: shrink to content if content is smaller than height
+        if (paginatedRows.length === 0) return Math.min(500, height);
         const contentHeight = paginatedRows.length * rowHeight;
-        // Use the passed height directly - let parent control sizing
-        // Add 1px buffer to prevent scrollbar from appearing due to rounding issues
         return Math.min(contentHeight + 1, height);
-    }, [paginatedRows.length, rowHeight, height]);
+    }, [paginatedRows.length, rowHeight, height, enforceMinHeight]);
 
     const contextMenu = useCallback((index: number, style: React.CSSProperties) => {
         const isFocused = focusedRowIndex === index;
@@ -1551,7 +1588,22 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </Pagination>
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
-                    <div className="text-sm hidden" data-testid="total-count-bottom"><span className="font-semibold">{t('totalCount')}</span> {totalCount}</div>
+                    {totalCount != null && totalCount > 0 && (
+                        <div className="text-sm" data-testid="total-count-bottom">
+                            <span className="font-semibold">{t('totalCount')}</span> {totalCount}
+                        </div>
+                    )}
+                    {isImportSupported && allowImport && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowImport(true)}
+                            className="flex gap-sm"
+                            data-testid="import-button"
+                        >
+                            <ArrowUpCircleIcon className="w-4 h-4" />
+                            {t('importData')}
+                        </Button>
+                    )}
                     <Button
                         variant="secondary"
                         onClick={() => openExport()}
@@ -1784,6 +1836,16 @@ export const StorageUnitTable: FC<TableProps> = ({
                     forceExportAll={forceExportAll}
                 />
             </Suspense>
+            {isImportSupported && allowImport && (
+                <ImportData
+                    open={showImport}
+                    onOpenChange={setShowImport}
+                    schema={schema || ''}
+                    storageUnit={storageUnit || ''}
+                    columns={columns}
+                    onImportSuccess={onRefresh}
+                />
+            )}
         </div>
     );
 };

@@ -28,7 +28,7 @@ type ISettingsState = {
     spacing: 'compact' | 'comfortable' | 'spacious';
     whereConditionMode: 'popover' | 'sheet';
     defaultPageSize: number;
-    language: 'en' | 'es';
+    language: 'en' | 'es' | 'de' | 'fr';
     databaseSchemaTerminology: 'database' | 'schema';
     disableAnimations: boolean;
 }

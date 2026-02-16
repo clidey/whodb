@@ -41,13 +41,16 @@ import {
     SelectValue,
     toast
 } from "@clidey/ux";
-import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGetAiChatLazyQuery} from '@graphql';
+import {ChatHistorySidebar} from "./chat-history-sidebar";
+import {GetAiChatQuery, useExecuteConfirmedSqlMutation, useGenerateChatTitleMutation, useGetAiChatLazyQuery, useGetDatabaseQuerySuggestionsLazyQuery} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
+    CircleStackIcon,
     CodeBracketIcon,
     CommandLineIcon,
     EllipsisHorizontalIcon,
+    PresentationChartLineIcon,
     SparklesIcon,
     TableCellsIcon
 } from "../../components/heroicons";
@@ -204,7 +207,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
         <div className="flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
             {
                 showSQL
-                ? <div className="h-[400px] w-full">
+                ? <div className="h-[300px] w-full">
                     <CodeEditor value={text} language="sql" />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
@@ -218,7 +221,8 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             limitContextMenu={true}
                             databaseType={current?.Type}
                             rawQuery={text}
-                            height={250}
+                            height={200}
+                            enforceMinHeight={true}
                             totalCount={data?.Rows?.length ?? 0}
                         />
                     </div>
@@ -289,9 +293,17 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
 export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
-    const chats = useAppSelector(state => state.houdini.chats);
+    const { sessions, activeSessionId } = useAppSelector(state => state.houdini);
+    const chats = useMemo(() => {
+        if (sessions.length > 0 && activeSessionId) {
+            const activeSession = sessions.find(s => s.id === activeSessionId);
+            return activeSession?.messages || [];
+        }
+        return [];
+    }, [sessions, activeSessionId]);
     const [getAIChat, { loading: getAIChatLoading }] = useGetAiChatLazyQuery();
     const [executeConfirmedSql] = useExecuteConfirmedSqlMutation();
+    const [generateChatTitleMutation] = useGenerateChatTitleMutation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
@@ -330,6 +342,15 @@ export const ChatPage: FC = () => {
     const loadingPhraseRef = useRef<string>("");
     const [containerWidth, setContainerWidth] = useState(0);
 
+    // Database-specific suggestions
+    const [getDatabaseSuggestions, { loading: suggestionsLoading }] = useGetDatabaseQuerySuggestionsLazyQuery({
+        fetchPolicy: 'network-only',
+        errorPolicy: 'all',
+    });
+    const [databaseSuggestions, setDatabaseSuggestions] = useState<Array<{ description: string; category: string }>>([]);
+    const [useDatabaseSuggestions, setUseDatabaseSuggestions] = useState(false);
+    const hasFetchedSuggestionsRef = useRef(false);
+
     // Store random indices in a ref so they remain stable across re-renders
     const exampleIndicesRef = useRef<number[] | null>(null);
 
@@ -348,19 +369,46 @@ export const ChatPage: FC = () => {
         }
     }, [chatExamples.length]);
 
-    // Apply stable indices to current examples (allows localization changes to work)
+    // Map category to icon
+    const getCategoryIcon = useCallback((category: string) => {
+        switch (category) {
+            case 'SELECT':
+                return <CircleStackIcon className="w-4 h-4" />;
+            case 'AGGREGATE':
+                return <PresentationChartLineIcon className="w-4 h-4" />;
+            default:
+                return <SparklesIcon className="w-4 h-4" />;
+        }
+    }, []);
+
+    // Use database suggestions if available, otherwise fall back to generic examples
     const examples = useMemo(() => {
+        if (useDatabaseSuggestions && databaseSuggestions.length > 0) {
+            return databaseSuggestions.map(s => ({
+                icon: getCategoryIcon(s.category),
+                description: s.description,
+            }));
+        }
+
+        // Fallback to generic examples
         if (exampleIndicesRef.current === null) {
             return chatExamples.slice(0, 3);
         }
         return exampleIndicesRef.current.map(i => chatExamples[i]);
-    }, [chatExamples]);
+    }, [useDatabaseSuggestions, databaseSuggestions, chatExamples, getCategoryIcon]);
 
     const handleSubmitQuery = useCallback(async () => {
         const sanitizedQuery = query.trim();
         if (modelType == null || sanitizedQuery.length === 0) {
             return;
         }
+
+        // Check if we should try to generate a title:
+        // - Session still has default name (matches "Chat X" pattern)
+        // This will keep trying on each message until we get a meaningful title
+        const activeSession = sessions.find(s => s.id === activeSessionId);
+        const hasDefaultName = activeSession?.name?.match(/^Chat \d+$/);
+        const shouldTryTitle = hasDefaultName;
 
         setLoading(true);
         loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
@@ -446,6 +494,11 @@ export const ChatPage: FC = () => {
                 }
 
                 setLoading(false);
+
+                // Try to generate title if session still has default name
+                if (shouldTryTitle) {
+                    generateChatTitle(sanitizedQuery);
+                }
 
                 // Scroll to bottom
                 setTimeout(() => {
@@ -552,6 +605,11 @@ export const ChatPage: FC = () => {
                                     }));
                                 }
                                 setLoading(false);
+
+                                // Try to generate title if session still has default name
+                                if (shouldTryTitle) {
+                                    generateChatTitle(sanitizedQuery);
+                                }
                             } else if (currentEventType === 'error') {
                                 dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
                                 const errorMessage = typeof parsed.error === 'string'
@@ -576,11 +634,55 @@ export const ChatPage: FC = () => {
             toast.error(t('unableToQuery') + " " + errorMessage);
             setLoading(false);
         }
-    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef, getUniqueMessageId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [chats, currentModel, modelType, query, schema, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSessionId, sessions]);
+
+    // Helper function to generate and update chat title
+    const generateChatTitle = useCallback(async (userQuery: string) => {
+        if (!modelType || !activeSessionId || !currentModel) {
+            return;
+        }
+
+        try {
+            const result = await generateChatTitleMutation({
+                variables: {
+                    input: {
+                        Query: userQuery,
+                        ModelType: modelType.modelType,
+                        ProviderId: modelType.id || undefined,
+                        Token: modelType.token || undefined,
+                        Model: currentModel,
+                        Endpoint: undefined,
+                    }
+                }
+            });
+
+            const title = result.data?.GenerateChatTitle?.Title;
+            if (title && title.trim() !== '') {
+                dispatch(HoudiniActions.updateSessionName({
+                    sessionId: activeSessionId,
+                    name: title,
+                }));
+            }
+        } catch (error) {
+            console.error('[Chat Title] Failed to generate chat title:', error);
+            // Non-critical error, don't show to user
+        }
+    }, [modelType, currentModel, activeSessionId, dispatch, generateChatTitleMutation]);
 
     const disableChat = useMemo(() => {
         return loading || models.length === 0 || (!modelAvailable && !currentModel) || query.trim().length === 0;
     }, [loading, modelAvailable, models.length, currentModel, query]);
+
+    const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
+        // Ctrl/Cmd+U to clear input
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+            e.preventDefault();
+            setQuery('');
+            setCurrentSearchIndex(undefined);
+            return;
+        }
+    }, []);
 
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "Enter") {
@@ -600,6 +702,13 @@ export const ChatPage: FC = () => {
               return;
             }
             searchIndex--;
+          }
+
+          // If we've exhausted the history (searchIndex < 0), clear the input
+          if (searchIndex < 0) {
+            setCurrentSearchIndex(undefined);
+            setQuery('');
+            return;
           }
 
           if (currentSearchIndex !== chats.length - 1) {
@@ -624,6 +733,10 @@ export const ChatPage: FC = () => {
         dispatch(HoudiniActions.clear());
         setQuery("");
         setCurrentSearchIndex(undefined);
+        // Reset suggestions fetch flag to allow fetching again
+        hasFetchedSuggestionsRef.current = false;
+        setDatabaseSuggestions([]);
+        setUseDatabaseSuggestions(false);
     }, [dispatch]);
 
     const handleConfirmSQL = useCallback(async (messageId: number, sql: string, operationType: string) => {
@@ -686,6 +799,15 @@ export const ChatPage: FC = () => {
         return models.length === 0 || (!modelAvailable && !currentModel);
     }, [modelAvailable, models.length, currentModel]);
 
+    // Initialize chat sessions on mount
+    const hasInitialized = useRef(false);
+    useEffect(() => {
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            dispatch(HoudiniActions.initializeChatSessions());
+        }
+    }, [dispatch]);
+
     // Auto-scroll to bottom when chats change or component mounts
     useEffect(() => {
         if (scrollContainerRef.current != null && chats.length > 0) {
@@ -709,8 +831,45 @@ export const ChatPage: FC = () => {
         return () => window.removeEventListener('resize', updateWidth);
     }, []);
 
+    // Fetch database-specific suggestions when AI is available and chat is empty
+    useEffect(() => {
+        // Only fetch if:
+        // 1. AI model is available
+        // 2. Chat is empty (showing examples)
+        // 3. Haven't already attempted to fetch
+        const shouldFetch =
+            modelAvailable &&
+            currentModel &&
+            chats.length === 0 &&
+            !hasFetchedSuggestionsRef.current;
+
+        if (shouldFetch) {
+            hasFetchedSuggestionsRef.current = true;
+            getDatabaseSuggestions({
+                variables: {
+                    schema,
+                },
+            }).then(({ data }) => {
+                if (data?.DatabaseQuerySuggestions && data.DatabaseQuerySuggestions.length > 0) {
+                    setDatabaseSuggestions(data.DatabaseQuerySuggestions.map(s => ({
+                        description: s.description,
+                        category: s.category,
+                    })));
+                    setUseDatabaseSuggestions(true);
+                } else {
+                    // Fallback to generic examples
+                    setUseDatabaseSuggestions(false);
+                }
+            }).catch((error) => {
+                console.error('[Database Suggestions] Error fetching suggestions:', error);
+                // On error, fallback to generic examples
+                setUseDatabaseSuggestions(false);
+            });
+        }
+    }, [modelAvailable, currentModel, chats.length, schema, getDatabaseSuggestions]);
+
     return (
-        <InternalPage routes={[InternalRoutes.Chat]} className="h-full">
+        <InternalPage routes={[InternalRoutes.Chat]} className="h-full" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2">
                 <AIProvider
                     {...aiState}
@@ -724,17 +883,29 @@ export const ChatPage: FC = () => {
                         ? <div className="flex flex-col justify-center items-center w-full gap-8" data-testid="chat-empty-state-container">
                             {/* {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-16" />} */}
                             <EmptyState title={t('emptyStateTitle')} description="" icon={<SparklesIcon className="w-16 h-16" data-testid="empty-state-sparkles-icon" />} />
-                            <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
-                                {
-                                    examples.map((example, i) => (
-                                        <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
-                                            onClick={() => handleSelectExample(example.description)}>
-                                            {example.icon}
-                                            {example.description}
-                                        </Card>
-                                    ))
-                                }
-                            </div>
+                            {suggestionsLoading ? (
+                                <Loading loadingText={t('loadingSuggestions')} size="sm" />
+                            ) : (
+                                <div className="flex flex-col gap-2 items-center">
+                                    {!useDatabaseSuggestions && examples.length > 0 && (
+                                        <p className="text-xs text-muted-foreground">{t('genericExamplesLabel')}</p>
+                                    )}
+                                    {useDatabaseSuggestions && databaseSuggestions.length > 0 && (
+                                        <p className="text-xs text-muted-foreground">{t('databaseSpecificSuggestionsLabel')}</p>
+                                    )}
+                                    <div className="flex flex-wrap justify-center items-center gap-4" data-testid="chat-examples-list">
+                                        {
+                                            examples.map((example, i) => (
+                                                <Card key={`chat-${i}`} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
+                                                    onClick={() => handleSelectExample(example.description)}>
+                                                    {example.icon}
+                                                    {example.description}
+                                                </Card>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         : <div className="h-full w-full py-8 max-h-[calc(75vh-25px)] overflow-y-auto" ref={scrollContainerRef}>
                             <div className="flex justify-center w-full h-full max-w-full">
@@ -757,7 +928,7 @@ export const ChatPage: FC = () => {
                                                             {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
                                                         </p>
                                                     ) : (
-                                                        <div className={classNames("py-2 rounded-xl markdown-content ml-12", {
+                                                        <div className={classNames("py-2 rounded-xl markdown-content", {
                                                             "animate-fade-in": chat.isStreaming,
                                                         })} data-input-message="system">
                                                             <ReactMarkdown
@@ -787,20 +958,20 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             } else if (chat.Type === "error") {
                                                 return (
-                                                    <div key={`chat-${i}`} className="flex gap-lg overflow-hidden break-words leading-6 shrink-0 self-start max-w-full min-w-0 pt-6 relative" data-testid="error-message">
+                                                    <div key={`chat-${i}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
                                                             ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
-                                                            : <div className="pl-4" />}
+                                                            : null}
                                                         <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
-                                                return <div key={`chat-${i}`} className="flex items-center self-start max-w-full min-w-0 relative" data-testid="visual-message">
+                                                return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                     {/* @ts-ignore */}
-                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} />}
+                                                    {chat.Type === "sql:line-chart" && LineChart && <LineChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                 </div>
                                             } else if (chat.RequiresConfirmation) {
                                                 // Show confirmation UI inline
@@ -833,7 +1004,7 @@ export const ChatPage: FC = () => {
 
                                                         {/* SQL Query Display */}
                                                         {showQuery && (
-                                                            <div className="h-[200px] w-full rounded-lg overflow-hidden">
+                                                            <div className="h-[300px] w-full rounded-lg overflow-hidden">
                                                                 <CodeEditor value={chat.Text} language="sql" />
                                                             </div>
                                                         )}
@@ -887,6 +1058,7 @@ export const ChatPage: FC = () => {
                         placeholder={t('placeholder')}
                         onSubmit={handleSubmitQuery}
                         disabled={disableAll}
+                        onKeyDown={handleKeyDown}
                         onKeyUp={handleKeyUp}
                         autoComplete="off"
                         data-testid="chat-input"

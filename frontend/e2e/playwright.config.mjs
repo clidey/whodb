@@ -20,8 +20,10 @@
  * Projects:
  *   - "setup": Authenticates once per database, saves storageState.
  *     Runs BEFORE test projects via `dependencies`.
- *   - "standalone": Launches its own Chromium, hits WhoDB directly.
- *   - "gateway": Connects to an existing browser via CDP.
+ *   - "standalone": Read-only tests (launches its own Chromium).
+ *   - "standalone-mutating": Destructive tests (depends on "standalone", runs after).
+ *   - "gateway": Read-only tests (connects via CDP).
+ *   - "gateway-mutating": Destructive tests (depends on "gateway", runs after).
  *
  * Environment variables:
  *   BASE_URL        - WhoDB URL (default: http://localhost:3000 for local dev)
@@ -34,6 +36,37 @@ import { defineConfig } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const DATABASE = process.env.DATABASE || "default";
+
+/** Test files that mutate data (INSERT, UPDATE, DELETE, DROP, etc.). */
+const MUTATING_TESTS = [
+  /crud\.spec/,
+  /mock-data\.spec/,
+  /import\.spec/,
+  /data-types\.spec/,
+  /key-types\.spec/,
+  /schema-management\.spec/,
+  /chat\.spec/,
+  /keyboard-shortcuts\.spec/,
+  /type-casting\.spec/,
+];
+
+/** Shared browser config for standalone projects (launches own Chromium). */
+const standaloneBrowser = {
+  browserName: "chromium",
+  viewport: { width: 1920, height: 1080 },
+  launchOptions: {
+    args: [
+      "--window-size=1920,1080",
+      "--force-device-scale-factor=1",
+    ],
+  },
+};
+
+/** Shared browser config for gateway projects (connects via CDP). */
+const gatewayBrowser = {
+  browserName: "chromium",
+  viewport: { width: 1920, height: 1080 },
+};
 
 export default defineConfig({
   globalSetup: "./support/global-setup.mjs",
@@ -61,40 +94,36 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: /auth\.setup\.mjs/,
-      use: {
-        browserName: "chromium",
-        viewport: { width: 1920, height: 1080 },
-        launchOptions: {
-          args: [
-            "--window-size=1920,1080",
-            "--force-device-scale-factor=1",
-          ],
-        },
-      },
+      use: standaloneBrowser,
     },
+
+    // Read-only tests run first — excludes mutating test files.
     {
       name: "standalone",
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/],
-      use: {
-        browserName: "chromium",
-        viewport: { width: 1920, height: 1080 },
-        launchOptions: {
-          args: [
-            "--window-size=1920,1080",
-            "--force-device-scale-factor=1",
-          ],
-        },
-      },
+      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, ...MUTATING_TESTS],
+      use: standaloneBrowser,
     },
+    // Destructive tests — run after read-only tests complete via dependencies.
+    {
+      name: "standalone-mutating",
+      dependencies: ["standalone"],
+      testMatch: MUTATING_TESTS,
+      use: standaloneBrowser,
+    },
+
+    // Gateway: same read-only → mutating split.
     {
       name: "gateway",
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/],
-      use: {
-        browserName: "chromium",
-        viewport: { width: 1920, height: 1080 },
-      },
+      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, ...MUTATING_TESTS],
+      use: gatewayBrowser,
+    },
+    {
+      name: "gateway-mutating",
+      dependencies: ["gateway"],
+      testMatch: MUTATING_TESTS,
+      use: gatewayBrowser,
     },
   ],
 });

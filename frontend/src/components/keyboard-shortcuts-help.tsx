@@ -128,12 +128,14 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                 { keys: ["Mod", "M"], description: t('mockData') },
                 { keys: ["Mod", "R"], description: t('refresh') },
                 { keys: ["Mod", "Shift", "E"], description: t('export') },
+                { keys: ["Mod", "Shift", "I"], description: t('import') },
             ],
         },
         {
             title: t('categoryEditor'),
             shortcuts: [
                 { keys: ["Mod", "Enter"], description: t('executeQuery') },
+                { keys: ["Mod", "U"], description: t('clearEditor') },
             ],
         },
     ];

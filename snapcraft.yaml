@@ -94,7 +94,7 @@ parts:
       apt-get install -y nodejs
 
       # Install pnpm
-      npm install -g pnpm
+      npm install -g pnpm@10.29.3
 
       # Build frontend (Cypress binary will be skipped)
       pnpm install
