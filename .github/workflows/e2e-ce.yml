@@ -59,6 +59,9 @@ jobs:
       - name: Verify Docker Compose
         run: docker compose version
 
+      - name: Create frontend build placeholder
+        run: mkdir -p core/build && echo '<!doctype html>' > core/build/index.html
+
       - name: Run E2E tests
         working-directory: frontend
         run: pnpm e2e:ce:headless
