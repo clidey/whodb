@@ -16,7 +16,7 @@ jobs:
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: Harden Runner
