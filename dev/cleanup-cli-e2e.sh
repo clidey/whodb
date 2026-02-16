@@ -23,6 +23,6 @@ echo "Cleaning up CLI E2E environment..."
 
 # Stop PostgreSQL container
 cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.yml stop e2e_postgres 2>/dev/null || true
+docker compose -f docker-compose.yml stop e2e_postgres 2>/dev/null || true
 
 echo "CLI E2E cleanup complete!"

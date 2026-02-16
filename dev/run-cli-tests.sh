@@ -124,7 +124,7 @@ if [ "$RUN_POSTGRES" = true ]; then
         echo "Starting PostgreSQL..."
         cd "$SCRIPT_DIR"
         bash cleanup-cli-e2e.sh 2>/dev/null || true
-        docker-compose -f docker-compose.yml up -d e2e_postgres
+        docker compose -f docker-compose.yml up -d e2e_postgres
 
         # Wait for PostgreSQL
         echo "Waiting for PostgreSQL..."

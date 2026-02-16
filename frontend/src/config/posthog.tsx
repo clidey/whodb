@@ -214,9 +214,9 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
             //@ts-ignore
             opt_out_capturing_by_default: consent === 'denied',
             loaded: (client) => {
-                activeClient = client;
-                registerContext(client);
-                registerGlobalHandlers(client);
+                activeClient = client as PostHog;
+                registerContext(client as PostHog);
+                registerGlobalHandlers(client as PostHog);
 
                 if (consent === 'granted') {
                     client.opt_in_capturing();

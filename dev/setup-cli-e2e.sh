@@ -31,7 +31,7 @@ bash "$SCRIPT_DIR/cleanup-cli-e2e.sh" 2>/dev/null || true
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
 cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.yml up -d e2e_postgres
+docker compose -f docker-compose.yml up -d e2e_postgres
 
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL..."

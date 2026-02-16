@@ -110,12 +110,12 @@ needs_ssl() {
     return 1
 }
 
-# Build docker-compose command — include ssl profile only when needed
+# Build docker compose command — include ssl profile only when needed
 docker_compose_cmd() {
     if needs_ssl; then
-        echo "docker-compose -f docker-compose.yml --profile ssl"
+        echo "docker compose -f docker-compose.yml --profile ssl"
     else
-        echo "docker-compose -f docker-compose.yml"
+        echo "docker compose -f docker-compose.yml"
     fi
 }
 

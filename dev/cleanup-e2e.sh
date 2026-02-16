@@ -78,13 +78,13 @@ cd "$SCRIPT_DIR"
 
 # First, force remove all containers (even if they're not running)
 # Include --profile ssl to ensure SSL containers are also removed
-docker-compose -f docker-compose.yml --profile ssl rm -f -s -v 2>/dev/null || true
+docker compose -f docker-compose.yml --profile ssl rm -f -s -v 2>/dev/null || true
 
 # Then do a full teardown with volumes
 # Use --volumes to ensure volumes are removed, and --remove-orphans for cleanup
 # The --timeout 0 forces immediate stop without graceful shutdown
 # Include --profile ssl to ensure SSL containers are also stopped
-docker-compose -f docker-compose.yml --profile ssl down --volumes --remove-orphans --timeout 0
+docker compose -f docker-compose.yml --profile ssl down --volumes --remove-orphans --timeout 0
 
 # Force prune any dangling volumes to ensure complete cleanup
 echo "🔄 Pruning any dangling volumes..."
