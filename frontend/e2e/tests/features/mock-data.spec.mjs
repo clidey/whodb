@@ -105,7 +105,7 @@ test.describe('Mock Data Generation', () => {
         // Skip FK dependency test for databases without FK support (e.g., ClickHouse)
         if (tableWithFKs) {
             test('shows dependency preview for tables with foreign keys', async ({ whodb, page }) => {
-                await whodb.data(tableWithFKs);
+                await whodb.data(tableWithFKs, { waitForRows: false });
 
                 await whodb.selectMockData();
 
@@ -123,7 +123,7 @@ test.describe('Mock Data Generation', () => {
             });
 
             test('generates mock data for FK table and populates parent tables', async ({ whodb, page }) => {
-                await whodb.data(tableWithFKs);
+                await whodb.data(tableWithFKs, { waitForRows: false });
 
                 // Get initial total count
                 const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
@@ -152,7 +152,7 @@ test.describe('Mock Data Generation', () => {
             // Edge case: Low row count with FK tables (bug fix verification)
             // Previously failed with FK constraint error when generating < 5 rows
             test('generates low row count (1-3 rows) for FK table successfully', async ({ whodb, page }) => {
-                await whodb.data(tableWithFKs);
+                await whodb.data(tableWithFKs, { waitForRows: false });
 
                 // Get initial total count
                 const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
@@ -192,12 +192,12 @@ test.describe('Mock Data Generation', () => {
                 const rowsToGenerate = 5;
 
                 // Step 1: Get initial parent table Total Count
-                await whodb.data(parentTable);
+                await whodb.data(parentTable, { waitForRows: false });
                 const parentTotalText = await page.locator('[data-testid="total-count-top"]').textContent();
                 const initialParentCount = parseInt(parentTotalText.replace(/[^0-9]/g, ''), 10) || 0;
 
                 // Step 2: Get initial FK table Total Count
-                await whodb.data(tableWithFKs);
+                await whodb.data(tableWithFKs, { waitForRows: false });
                 const fkTotalText = await page.locator('[data-testid="total-count-top"]').textContent();
                 const initialFkTableCount = parseInt(fkTotalText.replace(/[^0-9]/g, ''), 10) || 0;
 

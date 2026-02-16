@@ -354,8 +354,9 @@ export class WhoDB {
     /**
      * Navigate to storage unit page and click data button for a specific table
      * @param {string} tableName
+     * @param {{ waitForRows?: boolean }} [options]
      */
-    async data(tableName) {
+    async data(tableName, { waitForRows = true } = {}) {
         // Ensure card view is set for consistent test behavior
         await this.page.evaluate(() => {
             const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
@@ -384,7 +385,9 @@ export class WhoDB {
         await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ state: "hidden", timeout: 5000 });
         // Wait for a VISIBLE table (not the hidden list view table)
         await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: 10000 });
-        await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 15000 });
+        if (waitForRows) {
+            await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 15000 });
+        }
     }
 
     /**
