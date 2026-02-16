@@ -52,7 +52,7 @@ cleanup() {
     # Stop Docker services
     echo "   Stopping Docker services..."
     cd "$SCRIPT_DIR"
-    docker-compose -f docker-compose.screenshot.yaml down || true
+    docker compose -f docker-compose.screenshot.yaml down || true
 
     echo "✅ Cleanup complete"
 }
@@ -96,7 +96,7 @@ echo "   ✅ SQLite database ready"
 echo ""
 echo "🐳 Starting Docker services for screenshots..."
 cd "$SCRIPT_DIR"
-docker-compose -f docker-compose.screenshot.yaml up -d --remove-orphans
+docker compose -f docker-compose.screenshot.yaml up -d --remove-orphans
 
 # Wait for PostgreSQL to be ready
 echo "   Waiting for PostgreSQL to be ready..."

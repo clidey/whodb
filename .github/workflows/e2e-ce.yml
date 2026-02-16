@@ -56,6 +56,9 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y sqlite3 netcat-openbsd
 
+      - name: Verify Docker Compose
+        run: docker compose version
+
       - name: Run E2E tests
         working-directory: frontend
         run: pnpm e2e:ce:headless
