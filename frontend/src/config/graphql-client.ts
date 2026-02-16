@@ -41,7 +41,7 @@ const loginPath = withBasePath("/login");
 const loginWithProfileQuery = print(LoginWithProfileDocument);
 const loginMutationQuery = print(LoginDocument);
 
-type SupportedLanguage = 'en' | 'es';
+type SupportedLanguage = 'en' | 'es' | 'de' | 'fr';
 type GraphQLClientTranslationKey = 'sessionExpired' | 'autoLoginSuccess' | 'autoLoginFailed';
 type TranslatorFn = (key: GraphQLClientTranslationKey) => string;
 

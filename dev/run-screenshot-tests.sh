@@ -180,41 +180,31 @@ echo "📸 Running screenshot tests..."
 echo ""
 cd "$PROJECT_ROOT/frontend"
 
-# Detect available browser
-if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
-    BROWSER="chromium"
-elif command -v google-chrome >/dev/null 2>&1 || command -v google-chrome-stable >/dev/null 2>&1; then
-    BROWSER="chrome"
-else
-    BROWSER="chrome"  # Default to chrome
-fi
+echo "   Test spec: tests/postgres-screenshots.spec.mjs"
 
-echo "   Using browser: $BROWSER"
-echo "   Test spec: cypress/e2e/postgres-screenshots.cy.js"
+cd "$PROJECT_ROOT/frontend/e2e"
+NODE_ENV=test pnpm exec playwright test \
+    --project=standalone \
+    tests/postgres-screenshots.spec.mjs
 
-NODE_ENV=test npx cypress run \
-    --browser "$BROWSER" \
-    --spec "cypress/e2e/postgres-screenshots.cy.js" \
-    --config video=false
-
-CYPRESS_EXIT_CODE=$?
+PW_EXIT_CODE=$?
 
 # Step 7: Display results
 echo ""
 echo "=========================================="
-if [ $CYPRESS_EXIT_CODE -eq 0 ]; then
+if [ $PW_EXIT_CODE -eq 0 ]; then
     echo "✅ Screenshot generation completed successfully"
     echo ""
     echo "📁 Screenshots saved to:"
-    echo "   $PROJECT_ROOT/frontend/cypress/screenshots/postgres-screenshots.cy.js/postgres/"
+    echo "   $PROJECT_ROOT/frontend/e2e/screenshots/postgres/"
     echo ""
     echo "💡 Tip: You can find all screenshots organized by test number and name"
 else
-    echo "❌ Screenshot generation failed with exit code: $CYPRESS_EXIT_CODE"
+    echo "❌ Screenshot generation failed with exit code: $PW_EXIT_CODE"
     echo ""
-    echo "Check the Cypress output above for details"
+    echo "Check the Playwright output above for details"
 fi
 echo "=========================================="
 echo ""
 
-exit $CYPRESS_EXIT_CODE
+exit $PW_EXIT_CODE

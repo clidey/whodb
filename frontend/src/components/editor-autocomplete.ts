@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import {autocompletion, Completion, CompletionContext, CompletionResult} from "@codemirror/autocomplete";
+import {acceptCompletion, autocompletion, Completion, CompletionContext, CompletionResult} from "@codemirror/autocomplete";
 import {ApolloClient} from "@apollo/client";
 import {ColumnsDocument, GetSchemaDocument, GetStorageUnitsDocument} from "@graphql";
+import {keymap} from "@codemirror/view";
 
 /**
  * Advanced SQL Autocomplete for CodeMirror
@@ -581,11 +582,19 @@ function detectSchemaFromText(text: string, tableName: string): string | undefin
 }
 
 export function createSQLAutocomplete(options: AutocompleteOptions) {
-    return autocompletion({
-        override: [
-            (context: CompletionContext) => sqlAutocomplete(context, options),
-        ],
-        activateOnTyping: true,
-        defaultKeymap: true,
-    });
+    return [
+        autocompletion({
+            override: [
+                (context: CompletionContext) => sqlAutocomplete(context, options),
+            ],
+            activateOnTyping: true,
+            defaultKeymap: true,
+        }),
+        keymap.of([
+            {
+                key: "Tab",
+                run: acceptCompletion
+            }
+        ])
+    ];
 }

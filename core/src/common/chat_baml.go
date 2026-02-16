@@ -20,6 +20,8 @@ package common
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 	"github.com/clidey/whodb/core/baml_client"
@@ -227,14 +229,14 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 		// Ollama uses openai-generic provider with special options
 		endpoint := m.Endpoint
 		if endpoint == "" {
-			// Default Ollama endpoint - user should configure in provider settings
-			endpoint = "http://localhost:11434"
+			host, port := GetOllamaHost()
+			endpoint = fmt.Sprintf("http://%s:%s", host, port)
 		}
-		// Ensure endpoint ends with /v1 for OpenAI compatibility
-		if len(endpoint) > 0 && endpoint[len(endpoint)-1] == '/' {
-			endpoint = endpoint[:len(endpoint)-1]
-		}
-		if len(endpoint) < 3 || endpoint[len(endpoint)-3:] != "/v1" {
+		// Strip trailing slash and /api suffix (Ollama native API path).
+		// BAML needs the OpenAI-compatible /v1 path, not the native /api path.
+		endpoint = strings.TrimRight(endpoint, "/")
+		endpoint = strings.TrimSuffix(endpoint, "/api")
+		if !strings.HasSuffix(endpoint, "/v1") {
 			endpoint = endpoint + "/v1"
 		}
 		opts["base_url"] = endpoint

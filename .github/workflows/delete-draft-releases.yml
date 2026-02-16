@@ -1,0 +1,30 @@
+name: Delete Draft Releases
+
+# Manually delete draft GitHub releases
+#
+# Use this to clean up stale drafts left over from failed or aborted release runs.
+# Optionally set a threshold to only delete drafts older than a given duration.
+
+on:
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: 'Only delete drafts older than this (e.g. 5d, 1h, 30m). Leave empty to delete all.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  delete-drafts:
+    name: Delete Draft Releases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete draft releases
+        uses: hugo19941994/delete-draft-releases@v2.0.0
+        with:
+          threshold: ${{ inputs.threshold }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

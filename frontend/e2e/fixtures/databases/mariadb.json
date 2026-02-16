@@ -1,0 +1,401 @@
+{
+  "type": "MariaDB",
+  "category": "sql",
+  "dataTypesTable": "data_types",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "firstName": "john_doe",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    },
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
+  },
+  "connection": {
+    "host": "localhost",
+    "port": 3307,
+    "user": "user",
+    "password": "password",
+    "database": "test_db",
+    "advanced": {
+      "Port": "3307"
+    }
+  },
+  "schema": "test_db",
+  "whereOperators": {
+    "equals": "=",
+    "notEquals": "!=",
+    "greaterThan": ">",
+    "lessThan": "<",
+    "greaterOrEqual": ">=",
+    "lessOrEqual": "<="
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": true,
+    "showsSchemaDropdown": false
+  },
+  "features": {
+    "graph": true,
+    "export": true,
+    "scratchpad": true,
+    "mockData": true,
+    "chat": true,
+    "whereConditions": true,
+    "queryHistory": true,
+    "import": true
+  },
+  "import": {
+    "sampleDataDir": "mariadb",
+    "supportsMultiStatement": true,
+    "csvTable": "users",
+    "excelTable": "products",
+    "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]
+  },
+  "featureNotes": {},
+  "expectedTables": [
+    "data_types",
+    "order_items",
+    "order_summary",
+    "orders",
+    "payments",
+    "products",
+    "test_casting",
+    "users"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "id": "int",
+        "username": "varchar(50)",
+        "email": "varchar(100)",
+        "password": "varchar(100)",
+        "created_at": "timestamp"
+      },
+      "expectedColumns": [
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
+      ],
+      "testData": {
+        "initial": [
+          [
+            "",
+            "1",
+            "john_doe",
+            "john@example.com",
+            "securepassword1"
+          ],
+          [
+            "",
+            "2",
+            "jane_smith",
+            "jane@example.com",
+            "securepassword2"
+          ],
+          [
+            "",
+            "3",
+            "admin_user",
+            "admin@example.com",
+            "adminpass"
+          ]
+        ],
+        "newRow": {
+          "id": "9999",
+          "username": "alice_wonder",
+          "email": "alice@example.com",
+          "password": "securepassword2",
+          "created_at": "2022-02-02"
+        }
+      },
+      "metadata": {
+        "type": "base table",
+        "hasSize": true,
+        "hasCount": false
+      }
+    },
+    "test_casting": {
+      "columns": {
+        "id": "int",
+        "bigint_col": "bigint",
+        "integer_col": "int",
+        "smallint_col": "smallint",
+        "numeric_col": "decimal(10,2)",
+        "description": "varchar(100)"
+      },
+      "testData": {
+        "newRow": {
+          "bigint_col": "5000000000",
+          "integer_col": "42",
+          "smallint_col": "256",
+          "numeric_col": "9876.54",
+          "description": "Test casting from strings"
+        }
+      }
+    },
+    "data_types": {
+      "columns": {
+        "id": "int",
+        "col_tinyint": "tinyint",
+        "col_smallint": "smallint",
+        "col_mediumint": "mediumint",
+        "col_int": "int",
+        "col_bigint": "bigint",
+        "col_float": "float",
+        "col_double": "double",
+        "col_decimal": "decimal(10,2)",
+        "col_date": "date",
+        "col_datetime": "datetime",
+        "col_timestamp": "timestamp",
+        "col_time": "time",
+        "col_year": "year",
+        "col_char": "char(10)",
+        "col_varchar": "varchar(255)",
+        "col_tinytext": "tinytext",
+        "col_text": "text",
+        "col_mediumtext": "mediumtext",
+        "col_longtext": "longtext",
+        "col_json": "longtext",
+        "col_boolean": "tinyint(1)"
+      },
+      "testData": {
+        "typeTests": {
+          "col_tinyint": {
+            "type": "TINYINT",
+            "addValue": "100",
+            "deleteValue": "110",
+            "originalValue": "50",
+            "updateValue": "75"
+          },
+          "col_smallint": {
+            "type": "SMALLINT",
+            "addValue": "30000",
+            "deleteValue": "31000",
+            "originalValue": "1000",
+            "updateValue": "25000"
+          },
+          "col_mediumint": {
+            "type": "MEDIUMINT",
+            "addValue": "5000000",
+            "deleteValue": "5100000",
+            "originalValue": "100000",
+            "updateValue": "4000000"
+          },
+          "col_int": {
+            "type": "INT",
+            "addValue": "2000000000",
+            "deleteValue": "2100000000",
+            "originalValue": "1000000",
+            "updateValue": "1500000000"
+          },
+          "col_bigint": {
+            "type": "BIGINT",
+            "addValue": "9000000000000",
+            "deleteValue": "9100000000000",
+            "originalValue": "10000000000",
+            "updateValue": "8000000000000"
+          },
+          "col_float": {
+            "type": "FLOAT",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "1.5",
+            "updateValue": "2.5"
+          },
+          "col_double": {
+            "type": "DOUBLE",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "2.5",
+            "updateValue": "4.5"
+          },
+          "col_decimal": {
+            "type": "DECIMAL",
+            "addValue": "12345.67",
+            "deleteValue": "54321.89",
+            "originalValue": "123.45",
+            "updateValue": "98765.43"
+          },
+          "col_date": {
+            "type": "DATE",
+            "addValue": "2025-12-31",
+            "displayAddValue": "2025-12-31T00:00:00Z",
+            "deleteValue": "2025-11-15",
+            "displayDeleteValue": "2025-11-15T00:00:00Z",
+            "originalValue": "2025-01-01T00:00:00Z",
+            "inputOriginalValue": "2025-01-01",
+            "updateValue": "2025-06-15",
+            "displayUpdateValue": "2025-06-15T00:00:00Z"
+          },
+          "col_datetime": {
+            "type": "DATETIME",
+            "addValue": "2025-12-31 23:59:59",
+            "displayAddValue": "2025-12-31T23:59:59Z",
+            "deleteValue": "2025-11-15 10:30:00",
+            "displayDeleteValue": "2025-11-15T10:30:00Z",
+            "originalValue": "2025-01-01T12:00:00Z",
+            "inputOriginalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00",
+            "displayUpdateValue": "2025-06-15T12:30:00Z"
+          },
+          "col_timestamp": {
+            "type": "TIMESTAMP",
+            "addValue": "2025-12-31 23:59:59",
+            "displayAddValue": "2025-12-31T23:59:59Z",
+            "deleteValue": "2025-11-15 10:30:00",
+            "displayDeleteValue": "2025-11-15T10:30:00Z",
+            "originalValue": "2025-01-01T12:00:00Z",
+            "inputOriginalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00",
+            "displayUpdateValue": "2025-06-15T12:30:00Z"
+          },
+          "col_time": {
+            "type": "TIME",
+            "addValue": "23:59:59",
+            "deleteValue": "10:30:00",
+            "originalValue": "12:00:00",
+            "updateValue": "12:30:00"
+          },
+          "col_year": {
+            "type": "YEAR",
+            "addValue": "2030",
+            "deleteValue": "2029",
+            "originalValue": "2025",
+            "updateValue": "2028"
+          },
+          "col_char": {
+            "type": "CHAR",
+            "addValue": "X",
+            "deleteValue": "Z",
+            "originalValue": "test",
+            "updateValue": "Y"
+          },
+          "col_varchar": {
+            "type": "VARCHAR",
+            "addValue": "new_varchar",
+            "deleteValue": "delete_varchar",
+            "originalValue": "varchar_val",
+            "updateValue": "updated_varchar"
+          },
+          "col_tinytext": {
+            "type": "TINYTEXT",
+            "addValue": "new tinytext",
+            "deleteValue": "delete tinytext",
+            "originalValue": "tiny text",
+            "updateValue": "updated tinytext"
+          },
+          "col_text": {
+            "type": "TEXT",
+            "addValue": "new text content",
+            "deleteValue": "delete text content",
+            "originalValue": "text value",
+            "updateValue": "updated text content"
+          },
+          "col_mediumtext": {
+            "type": "MEDIUMTEXT",
+            "addValue": "new mediumtext",
+            "deleteValue": "delete mediumtext",
+            "originalValue": "medium text value",
+            "updateValue": "updated mediumtext"
+          },
+          "col_longtext": {
+            "type": "LONGTEXT",
+            "addValue": "new longtext",
+            "deleteValue": "delete longtext",
+            "originalValue": "long text value",
+            "updateValue": "updated longtext"
+          },
+          "col_json": {
+            "type": "JSON",
+            "addValue": "{\"test\":\"new\"}",
+            "deleteValue": "{\"delete\":\"test\"}",
+            "originalValue": "{\"key\":\"value\"}",
+            "updateValue": "{\"test\":\"updated\"}"
+          },
+          "col_boolean": {
+            "type": "BOOLEAN",
+            "addValue": "0",
+            "deleteValue": "0",
+            "originalValue": "1",
+            "updateValue": "0"
+          }
+        }
+      }
+    }
+  },
+  "graph": {
+    "expectedNodes": {
+      "users": [],
+      "orders": [
+        "users"
+      ],
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
+        "orders"
+      ],
+      "order_summary": []
+    }
+  },
+  "sql": {
+    "schemaPrefix": "test_db.",
+    "selectAllUsers": "SELECT * FROM test_db.users ORDER BY id;",
+    "selectUserById": "SELECT * FROM test_db.users WHERE id=1;",
+    "updateUser": "UPDATE test_db.users SET username='john_doe1' WHERE id=1",
+    "revertUser": "UPDATE test_db.users SET username='john_doe' WHERE id=1",
+    "countUsers": "SELECT COUNT(*) as user_count FROM test_db.users;",
+    "countColumn": "user_count",
+    "selectUsersFiltered": "SELECT username, email FROM test_db.users WHERE id > 1;",
+    "invalidQuery": "SELECT * FROM test_db.users1;",
+    "permissionDeniedQuery": "CREATE TABLE test_db.users (id INT)",
+    "emptyResultQuery": "SELECT * FROM test_db.users WHERE id = -99999",
+    "errorPatterns": {
+      "tableNotFound": "Table 'test_db.users1' doesn't exist"
+    }
+  },
+  "mockData": {
+    "supportedTable": "products",
+    "tableWithFKs": "orders",
+    "fkRelationships": {
+      "orders": {
+        "parentTable": "users",
+        "fkColumn": "user_id",
+        "parentPkColumn": "id"
+      }
+    }
+  },
+  "ssl": {
+    "port": 3310,
+    "caCertPath": "/app/certs/ca/mariadb/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": true, "needsCert": false, "description": "No SSL encryption" },
+      { "mode": "preferred", "shouldSucceed": true, "needsCert": false, "description": "Use SSL if available" },
+      { "mode": "required", "shouldSucceed": true, "needsCert": false, "description": "SSL without certificate verification" },
+      { "mode": "verify-ca", "shouldSucceed": true, "needsCert": true, "description": "Verify server certificate against CA" },
+      { "mode": "verify-identity", "shouldSucceed": true, "needsCert": true, "description": "Verify CA and hostname" }
+    ],
+    "negativeTests": [
+      { "mode": "verify-ca", "withCert": false, "description": "verify-ca without CA cert should fail" }
+    ]
+  }
+}

@@ -22,5 +22,6 @@ import (
 	// Import EE package to register EE plugins
 	// This import will only work when using the EE workspace (ee/go.work)
 	// which includes the ee module
+	_ "github.com/clidey/whodb/ee/core/graph"
 	_ "github.com/clidey/whodb/ee/core/src/plugins"
 )

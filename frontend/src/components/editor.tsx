@@ -185,10 +185,14 @@ class PlayButtonMarker extends GutterMarker {
     
     button.addEventListener("mouseenter", () => {
       button.style.opacity = "1";
+      button.style.cursor = "pointer";
+      button.style.backgroundColor = "rgba(0,0,0,0.05)";
     });
     
     button.addEventListener("mouseleave", () => {
       button.style.opacity = "0.6";
+      button.style.cursor = "default";
+      button.style.backgroundColor = "transparent";
     });
     
     button.addEventListener("click", (e) => {
@@ -331,11 +335,21 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         extensions: [
           EditorView.domEventHandlers({
               keydown(event) {
+                // Ctrl/Cmd+U to clear editor
+                if ((event.metaKey || event.ctrlKey) && event.key === "u" && setValue != null) {
+                  view.dispatch({
+                    changes: { from: 0, to: view.state.doc.length, insert: "" }
+                  });
+                  event.preventDefault();
+                  event.stopPropagation();
+                  return true;
+                }
+
                 if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && onRunReference.current != null) {
                       // Get the selected text if any, otherwise use the entire content
                       const selection = view.state.selection;
                       let textToExecute = '';
-                      
+
                       if (selection.main.empty) {
                         // No selection, execute entire content
                         textToExecute = view.state.doc.toString();
@@ -343,7 +357,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                         // Has selection, execute only the selected text
                         textToExecute = view.state.sliceDoc(selection.main.from, selection.main.to);
                       }
-                      
+
                       handleQueryExecution(textToExecute);
                       event.preventDefault();
                       event.stopPropagation();
@@ -352,9 +366,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
-            // Add autocomplete for SQL, but allow disabling it during Cypress tests to prevent flakiness.
-            // It is disabled by default in the test environment.
-            (language === "sql" && !((window as any).Cypress && (window as any).Cypress.env('disableAutocomplete') !== false)) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
+            // Add autocomplete for SQL, but allow disabling it during E2E tests to prevent flakiness.
+            (language === "sql" && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },

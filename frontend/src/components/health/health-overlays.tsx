@@ -48,18 +48,18 @@ function getProfileLabel(profile: LocalLoginProfile): string {
 /**
  * ServerDownOverlay displays when the backend server is unreachable.
  * Shows a reconnection message with a spinner.
- * Only shows when user is logged in.
+ * On login page: shows when login fails with network error
+ * When logged in: shows when health check detects server down
  */
 export const ServerDownOverlay = () => {
     const { t } = useTranslation('components/health-overlay');
-    const location = useLocation();
     const serverStatus = useAppSelector(state => state.health.serverStatus);
-    const authStatus = useAppSelector(state => state.auth.status);
 
-    // Only show overlay if user is logged in AND status is explicitly 'error'
-    // Don't show for 'unknown' status (haven't checked yet), when logged out, or on login page
-    const isOnLoginPage = location.pathname === PublicRoutes.Login.path;
-    const shouldShow = authStatus === 'logged-in' && serverStatus === 'error' && !isOnLoginPage;
+    // Show overlay whenever server status is explicitly 'error'
+    // This happens when:
+    // 1. Login fails with network error (login page)
+    // 2. Health check detects server down (when logged in)
+    const shouldShow = serverStatus === 'error';
 
     if (!shouldShow) {
         return null;

@@ -31,6 +31,10 @@ import (
 )
 
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
+	return p.openDB(config, false)
+}
+
+func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool) (*gorm.DB, error) {
 	connectionInput, err := p.ParseConnectionConfig(config)
 	if err != nil {
 		return nil, err
@@ -52,6 +56,11 @@ func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	pgxConfig.User = connectionInput.Username
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database
+
+	// Use simpler protocol for multi-statement SQL scripts
+	if multiStatement {
+		pgxConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
+	}
 
 	// Configure SSL/TLS
 	sslMode := "disabled"

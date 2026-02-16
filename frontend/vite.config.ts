@@ -60,7 +60,6 @@ export default defineConfig(async () => {
       const { default: istanbul } = await import('vite-plugin-istanbul');
       // @ts-ignore
       istanbulPlugin = istanbul({
-        cypress: true,
         requireEnv: false,
         include: [
           'src/**/*.{js,jsx,ts,tsx}',
@@ -71,7 +70,6 @@ export default defineConfig(async () => {
         ],
         exclude: [
           'node_modules',
-          'cypress',
           '**/*.d.ts',
           '**/*.test.{js,jsx,ts,tsx}',
           '**/*.spec.{js,jsx,ts,tsx}',

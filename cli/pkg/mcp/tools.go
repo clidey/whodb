@@ -67,6 +67,19 @@ type QueryOutput struct {
 	RequestID            string   `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
+// MarshalJSON ensures nil slices are serialized as [] instead of null,
+// which the MCP SDK's output schema validator requires.
+func (o QueryOutput) MarshalJSON() ([]byte, error) {
+	if o.Columns == nil {
+		o.Columns = []string{}
+	}
+	if o.Rows == nil {
+		o.Rows = [][]any{}
+	}
+	type Alias QueryOutput
+	return json.Marshal(Alias(o))
+}
+
 // SchemasInput is the input for the whodb_schemas tool.
 type SchemasInput struct {
 	// Connection is the name of a saved connection or environment profile.
@@ -78,6 +91,15 @@ type SchemasOutput struct {
 	Schemas   []string `json:"schemas"`
 	Error     string   `json:"error,omitempty"`
 	RequestID string   `json:"request_id,omitempty"` // Unique ID for request tracing
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o SchemasOutput) MarshalJSON() ([]byte, error) {
+	if o.Schemas == nil {
+		o.Schemas = []string{}
+	}
+	type Alias SchemasOutput
+	return json.Marshal(Alias(o))
 }
 
 // TablesInput is the input for the whodb_tables tool.
@@ -100,6 +122,15 @@ type TablesOutput struct {
 	Schema    string      `json:"schema"`
 	Error     string      `json:"error,omitempty"`
 	RequestID string      `json:"request_id,omitempty"` // Unique ID for request tracing
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o TablesOutput) MarshalJSON() ([]byte, error) {
+	if o.Tables == nil {
+		o.Tables = []TableInfo{}
+	}
+	type Alias TablesOutput
+	return json.Marshal(Alias(o))
 }
 
 // ColumnsInput is the input for the whodb_columns tool.
@@ -131,6 +162,15 @@ type ColumnsOutput struct {
 	RequestID string       `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o ColumnsOutput) MarshalJSON() ([]byte, error) {
+	if o.Columns == nil {
+		o.Columns = []ColumnInfo{}
+	}
+	type Alias ColumnsOutput
+	return json.Marshal(Alias(o))
+}
+
 // ConnectionsInput is the input for the whodb_connections tool.
 type ConnectionsInput struct{}
 
@@ -152,6 +192,15 @@ type ConnectionsOutput struct {
 	RequestID   string           `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o ConnectionsOutput) MarshalJSON() ([]byte, error) {
+	if o.Connections == nil {
+		o.Connections = []ConnectionInfo{}
+	}
+	type Alias ConnectionsOutput
+	return json.Marshal(Alias(o))
+}
+
 // ConfirmInput is the input for the whodb_confirm tool.
 type ConfirmInput struct {
 	// Token is the confirmation token from a previous query response
@@ -165,6 +214,19 @@ type ConfirmOutput struct {
 	Error     string   `json:"error,omitempty"`
 	Message   string   `json:"message,omitempty"`
 	RequestID string   `json:"request_id,omitempty"` // Unique ID for request tracing
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null,
+// which the MCP SDK's output schema validator requires.
+func (o ConfirmOutput) MarshalJSON() ([]byte, error) {
+	if o.Columns == nil {
+		o.Columns = []string{}
+	}
+	if o.Rows == nil {
+		o.Rows = [][]any{}
+	}
+	type Alias ConfirmOutput
+	return json.Marshal(Alias(o))
 }
 
 // PendingConfirmation stores a query awaiting user confirmation

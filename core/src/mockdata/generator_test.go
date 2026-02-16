@@ -1,6 +1,26 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package mockdata
 
 import (
+	"fmt"
+	"math"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -129,8 +149,11 @@ func TestGenerateRowDataWithConstraintsHandlesArrays(t *testing.T) {
 	columns := []engine.Column{
 		{Name: "tags", Type: "text[]"},
 	}
+	constraints := map[string]map[string]any{
+		"tags": {"nullable": false},
+	}
 
-	records, err := g.GenerateRowDataWithConstraints(columns, nil)
+	records, err := g.GenerateRowDataWithConstraints(columns, constraints)
 	if err != nil {
 		t.Fatalf("unexpected error generating array data: %v", err)
 	}
@@ -490,5 +513,773 @@ func TestMatchColumnNameLatLong(t *testing.T) {
 		if lng < -180 || lng > 180 {
 			t.Fatalf("expected longitude in range [-180, 180], got %f", lng)
 		}
+	}
+}
+
+func TestGenDecimalRespectsPrecisionAndScale(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	tests := []struct {
+		name      string
+		precision int
+		scale     int
+		maxVal    float64
+	}{
+		{"numeric(5,2)", 5, 2, 999.99},
+		{"numeric(3,2)", 3, 2, 9.99},
+		{"numeric(10,2)", 10, 2, 99999999.99},
+		{"numeric(2,2)", 2, 2, 0.99},
+		{"numeric(4,0)", 4, 0, 9999},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			constraints := map[string]any{
+				"precision": tt.precision,
+				"scale":     tt.scale,
+			}
+
+			for i := 0; i < 100; i++ {
+				val := genDecimal(constraints, faker)
+				f, ok := val.(float64)
+				if !ok {
+					t.Fatalf("expected float64, got %T", val)
+				}
+				if f < 0 || f > tt.maxVal {
+					t.Fatalf("iteration %d: value %f exceeds max %f for %s", i, f, tt.maxVal, tt.name)
+				}
+			}
+		})
+	}
+}
+
+func TestGenDecimalAcceptsPrecisionAsInt64(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	// precision as int64 (the original code path)
+	constraints := map[string]any{
+		"precision": int64(5),
+		"scale":     2,
+	}
+
+	for i := 0; i < 50; i++ {
+		val := genDecimal(constraints, faker)
+		f, ok := val.(float64)
+		if !ok {
+			t.Fatalf("expected float64, got %T", val)
+		}
+		if f > 999.99 {
+			t.Fatalf("value %f exceeds max 999.99 for numeric(5,2) with int64 precision", f)
+		}
+	}
+}
+
+func TestGenDecimalDefaultsWithoutPrecision(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	// No precision → default max 1000.0, scale 2
+	for i := 0; i < 50; i++ {
+		val := genDecimal(nil, faker)
+		f, ok := val.(float64)
+		if !ok {
+			t.Fatalf("expected float64, got %T", val)
+		}
+		if f < 0 || f > 1000.0 {
+			t.Fatalf("value %f outside default range [0, 1000]", f)
+		}
+		// Verify scale=2: at most 2 decimal places
+		str := strconv.FormatFloat(f, 'f', -1, 64)
+		if idx := strings.Index(str, "."); idx >= 0 {
+			decimals := len(str) - idx - 1
+			if decimals > 2 {
+				t.Fatalf("expected at most 2 decimal places, got %d in %s", decimals, str)
+			}
+		}
+	}
+}
+
+func TestGenDecimalRespectsCheckMinMax(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	constraints := map[string]any{
+		"check_min": 10.0,
+		"check_max": 20.0,
+	}
+
+	for i := 0; i < 100; i++ {
+		val := genDecimal(constraints, faker)
+		f, ok := val.(float64)
+		if !ok {
+			t.Fatalf("expected float64, got %T", val)
+		}
+		if f < 10.0 || f > 20.0 {
+			t.Fatalf("value %f outside constrained range [10, 20]", f)
+		}
+	}
+}
+
+func TestColumnPrecisionScaleFlowsToGenDecimal(t *testing.T) {
+	g := NewGenerator(0)
+	g.faker = gofakeit.New(1)
+
+	precision := 5
+	scale := 2
+	columns := []engine.Column{
+		{Name: "amount", Type: "numeric", Precision: &precision, Scale: &scale},
+	}
+	constraints := map[string]map[string]any{
+		"amount": {"nullable": false},
+	}
+
+	maxAllowed := math.Pow(10, float64(precision-scale)) - math.Pow(10, -float64(scale))
+
+	for i := 0; i < 100; i++ {
+		records, err := g.GenerateRowDataWithConstraints(columns, constraints)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		rec := findRecord(records, "amount")
+		if rec == nil {
+			t.Fatalf("iteration %d: expected amount record", i)
+		}
+		f, err := strconv.ParseFloat(rec.Value, 64)
+		if err != nil {
+			t.Fatalf("iteration %d: failed to parse %q as float: %v", i, rec.Value, err)
+		}
+		if f > maxAllowed {
+			t.Fatalf("iteration %d: value %f exceeds max %f for numeric(%d,%d)", i, f, maxAllowed, precision, scale)
+		}
+	}
+}
+
+func TestGenIntRespectsConstraints(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	tests := []struct {
+		name    string
+		typ     string
+		min     float64
+		max     float64
+		wantMin int
+		wantMax int
+	}{
+		{"check_min and check_max", "integer", 5, 10, 5, 10},
+		{"smallint default range", "smallint", 0, 0, 1, 32767},
+		{"tinyint default range", "tinyint", 0, 0, 1, 127},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var constraints map[string]any
+			if tt.min != 0 || tt.max != 0 {
+				constraints = map[string]any{}
+				if tt.min != 0 {
+					constraints["check_min"] = tt.min
+				}
+				if tt.max != 0 {
+					constraints["check_max"] = tt.max
+				}
+			}
+
+			wantMin := tt.wantMin
+			wantMax := tt.wantMax
+			if tt.min != 0 {
+				wantMin = int(tt.min)
+			}
+			if tt.max != 0 {
+				wantMax = int(tt.max)
+			}
+
+			for i := 0; i < 100; i++ {
+				val := genInt(tt.typ, constraints, faker)
+				n, ok := val.(int)
+				if !ok {
+					t.Fatalf("expected int, got %T", val)
+				}
+				if n < wantMin || n > wantMax {
+					t.Fatalf("iteration %d: value %d outside range [%d, %d]", i, n, wantMin, wantMax)
+				}
+			}
+		})
+	}
+}
+
+func TestComputedColumnsAreSkipped(t *testing.T) {
+	g := NewGenerator(0)
+	g.faker = gofakeit.New(1)
+
+	columns := []engine.Column{
+		{Name: "id", Type: "integer", IsPrimary: true, IsAutoIncrement: true},
+		{Name: "price", Type: "numeric"},
+		{Name: "tax", Type: "numeric", IsComputed: true},
+		{Name: "total", Type: "numeric", IsComputed: true},
+	}
+	constraints := map[string]map[string]any{
+		"price": {"nullable": false},
+	}
+
+	records, err := g.GenerateRowDataWithConstraints(columns, constraints)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, r := range records {
+		if r.Key == "id" || r.Key == "tax" || r.Key == "total" {
+			t.Fatalf("expected column %q to be skipped (auto-increment or computed)", r.Key)
+		}
+	}
+
+	if findRecord(records, "price") == nil {
+		t.Fatal("expected price column to be present")
+	}
+}
+
+func TestGenTextRespectsLength(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	lengths := []int{3, 10, 50, 255}
+	for _, maxLen := range lengths {
+		constraints := map[string]any{"length": maxLen}
+		for i := 0; i < 20; i++ {
+			val := genText(constraints, faker)
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if len(str) > maxLen {
+				t.Fatalf("length %d: text %q exceeds max length %d", len(str), str, maxLen)
+			}
+		}
+	}
+}
+
+func TestGenUintRespectsConstraints(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	constraints := map[string]any{
+		"check_min": float64(100),
+		"check_max": float64(200),
+	}
+
+	for i := 0; i < 100; i++ {
+		val := genUint("uint32", constraints, faker)
+		n, ok := val.(uint)
+		if !ok {
+			t.Fatalf("expected uint, got %T", val)
+		}
+		if n < 100 || n > 200 {
+			t.Fatalf("iteration %d: value %d outside range [100, 200]", i, n)
+		}
+	}
+}
+
+func TestGenDateFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genDate(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		parsed, err := time.Parse("2006-01-02", str)
+		if err != nil {
+			t.Fatalf("iteration %d: failed to parse date %q: %v", i, str, err)
+		}
+		if parsed.After(time.Now()) || parsed.Before(time.Now().AddDate(-10, 0, 0)) {
+			t.Fatalf("iteration %d: date %s outside expected 10-year range", i, str)
+		}
+	}
+}
+
+func TestGenDateTimeFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genDateTime(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		parsed, err := time.Parse("2006-01-02 15:04:05", str)
+		if err != nil {
+			t.Fatalf("iteration %d: failed to parse datetime %q: %v", i, str, err)
+		}
+		if parsed.After(time.Now()) || parsed.Before(time.Now().AddDate(-10, 0, 0)) {
+			t.Fatalf("iteration %d: datetime %s outside expected 10-year range", i, str)
+		}
+	}
+}
+
+func TestGenTimeFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genTime(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if _, err := time.Parse("15:04:05", str); err != nil {
+			t.Fatalf("iteration %d: failed to parse time %q: %v", i, str, err)
+		}
+	}
+}
+
+func TestGenYearRange(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genYear(faker)
+		n, ok := val.(int)
+		if !ok {
+			t.Fatalf("expected int, got %T", val)
+		}
+		if n < 1970 || n > time.Now().Year() {
+			t.Fatalf("iteration %d: year %d outside range [1970, %d]", i, n, time.Now().Year())
+		}
+	}
+}
+
+func TestGenIntervalFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+	validUnits := map[string]bool{
+		"seconds": true, "minutes": true, "hours": true,
+		"days": true, "weeks": true, "months": true, "years": true,
+	}
+
+	pattern := regexp.MustCompile(`^(\d+)\s+(\w+)$`)
+	for i := 0; i < 20; i++ {
+		val := genInterval(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		matches := pattern.FindStringSubmatch(str)
+		if matches == nil {
+			t.Fatalf("iteration %d: interval %q doesn't match expected format", i, str)
+		}
+		num, _ := strconv.Atoi(matches[1])
+		if num < 1 || num > 30 {
+			t.Fatalf("iteration %d: interval value %d outside range [1, 30]", i, num)
+		}
+		if !validUnits[matches[2]] {
+			t.Fatalf("iteration %d: invalid interval unit %q", i, matches[2])
+		}
+	}
+}
+
+func TestGenIPv4Format(t *testing.T) {
+	faker := gofakeit.New(1)
+	ipv4Pattern := regexp.MustCompile(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`)
+
+	for i := 0; i < 20; i++ {
+		val := genIPv4(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !ipv4Pattern.MatchString(str) {
+			t.Fatalf("iteration %d: %q is not a valid IPv4 format", i, str)
+		}
+	}
+}
+
+func TestGenIPv6Format(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genIPv6(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !strings.Contains(str, ":") {
+			t.Fatalf("iteration %d: %q doesn't look like an IPv6 address", i, str)
+		}
+	}
+}
+
+func TestGenMACAddrFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+	macPattern := regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)
+
+	for i := 0; i < 20; i++ {
+		val := genMACAddr(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !macPattern.MatchString(str) {
+			t.Fatalf("iteration %d: %q is not a valid MAC address format", i, str)
+		}
+	}
+}
+
+func TestGenPointFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genPoint(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !strings.HasPrefix(str, "(") || !strings.HasSuffix(str, ")") {
+			t.Fatalf("iteration %d: point %q not wrapped in parens", i, str)
+		}
+		if !strings.Contains(str, ",") {
+			t.Fatalf("iteration %d: point %q missing comma separator", i, str)
+		}
+	}
+}
+
+func TestGenGeometryFormats(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	tests := []struct {
+		typeName string
+		contains string
+	}{
+		{"line", "{"},
+		{"lseg", "[("},
+		{"box", "("},
+		{"path", "[("},
+		{"polygon", "(("},
+		{"circle", "<("},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.typeName, func(t *testing.T) {
+			val := genGeometry(tt.typeName, faker)
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.Contains(str, tt.contains) {
+				t.Fatalf("%s: expected output to contain %q, got %q", tt.typeName, tt.contains, str)
+			}
+		})
+	}
+}
+
+func TestGenSpatialFormats(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	tests := []struct {
+		typeName string
+		prefix   string
+	}{
+		{"geometry", "POINT("},
+		{"geography", "POINT("},
+		{"linestring", "LINESTRING("},
+		{"multipoint", "MULTIPOINT("},
+		{"multilinestring", "MULTILINESTRING("},
+		{"multipolygon", "MULTIPOLYGON("},
+		{"geometrycollection", "GEOMETRYCOLLECTION("},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.typeName, func(t *testing.T) {
+			val := genSpatial(tt.typeName, faker)
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, tt.prefix) {
+				t.Fatalf("%s: expected prefix %q, got %q", tt.typeName, tt.prefix, str)
+			}
+		})
+	}
+}
+
+func TestGenClickHouseDecimalFormats(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	types := []string{"decimal32", "decimal64", "decimal128", "decimal256"}
+	for _, typeName := range types {
+		t.Run(typeName, func(t *testing.T) {
+			for i := 0; i < 20; i++ {
+				val := genClickHouseDecimal(typeName, faker)
+				str, ok := val.(string)
+				if !ok {
+					t.Fatalf("expected string, got %T", val)
+				}
+				f, err := strconv.ParseFloat(str, 64)
+				if err != nil {
+					t.Fatalf("iteration %d: failed to parse %q as float: %v", i, str, err)
+				}
+				if f < 0 {
+					t.Fatalf("iteration %d: value %f should be non-negative", i, f)
+				}
+				if !strings.Contains(str, ".") {
+					t.Fatalf("iteration %d: expected decimal point in %q", i, str)
+				}
+			}
+		})
+	}
+}
+
+func TestGenXMLFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genXML(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !strings.HasPrefix(str, "<data>") || !strings.HasSuffix(str, "</data>") {
+			t.Fatalf("iteration %d: XML %q not wrapped in <data> tags", i, str)
+		}
+		if !strings.Contains(str, "<id>") || !strings.Contains(str, "<value>") {
+			t.Fatalf("iteration %d: XML %q missing expected child elements", i, str)
+		}
+	}
+}
+
+func TestGenJSONFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genJSON(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !strings.HasPrefix(str, "{") || !strings.HasSuffix(str, "}") {
+			t.Fatalf("iteration %d: JSON %q not a valid object", i, str)
+		}
+		for _, key := range []string{"id", "name", "email", "active"} {
+			if !strings.Contains(str, fmt.Sprintf("%q", key)) {
+				t.Fatalf("iteration %d: JSON missing key %q: %s", i, key, str)
+			}
+		}
+	}
+}
+
+func TestGenHstoreFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	for i := 0; i < 20; i++ {
+		val := genHstore(faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if !strings.Contains(str, "=>") {
+			t.Fatalf("iteration %d: hstore %q missing => separator", i, str)
+		}
+	}
+}
+
+func TestGenBinaryFormat(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	t.Run("default length", func(t *testing.T) {
+		for i := 0; i < 20; i++ {
+			val := genBinary(nil, faker)
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "0x") {
+				t.Fatalf("iteration %d: binary %q missing 0x prefix", i, str)
+			}
+		}
+	})
+
+	t.Run("custom length", func(t *testing.T) {
+		constraints := map[string]any{"length": 4}
+		for i := 0; i < 20; i++ {
+			val := genBinary(constraints, faker)
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "0x") {
+				t.Fatalf("iteration %d: binary %q missing 0x prefix", i, str)
+			}
+			// 0x prefix + 2 hex chars per byte = 2 + 4*2 = 10
+			hexPart := str[2:]
+			if len(hexPart) != 8 {
+				t.Fatalf("iteration %d: expected 8 hex chars for 4 bytes, got %d in %q", i, len(hexPart), str)
+			}
+		}
+	})
+}
+
+func TestGenArrayFormats(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	types := []string{"text[]", "int[]", "integer[]", "varchar[]"}
+	for _, dbType := range types {
+		t.Run(dbType, func(t *testing.T) {
+			for i := 0; i < 20; i++ {
+				val := genArray(dbType, faker)
+				str, ok := val.(string)
+				if !ok {
+					t.Fatalf("expected string, got %T", val)
+				}
+				if !strings.HasPrefix(str, "{") || !strings.HasSuffix(str, "}") {
+					t.Fatalf("iteration %d: array %q not wrapped in braces", i, str)
+				}
+			}
+		})
+	}
+}
+
+func TestGenerateByTypeRoutesToCorrectGenerator(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	tests := []struct {
+		dbType   string
+		validate func(t *testing.T, val any)
+	}{
+		{"integer", func(t *testing.T, val any) {
+			if _, ok := val.(int); !ok {
+				t.Fatalf("expected int, got %T", val)
+			}
+		}},
+		{"boolean", func(t *testing.T, val any) {
+			if _, ok := val.(bool); !ok {
+				t.Fatalf("expected bool, got %T", val)
+			}
+		}},
+		{"uuid", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if len(strings.Split(str, "-")) != 5 {
+				t.Fatalf("expected UUID format, got %q", str)
+			}
+		}},
+		{"date", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if _, err := time.Parse("2006-01-02", str); err != nil {
+				t.Fatalf("expected date format, got %q", str)
+			}
+		}},
+		{"json", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "{") {
+				t.Fatalf("expected JSON object, got %q", str)
+			}
+		}},
+		{"inet", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.Contains(str, ".") {
+				t.Fatalf("expected IPv4 format, got %q", str)
+			}
+		}},
+		{"macaddr", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.Contains(str, ":") {
+				t.Fatalf("expected MAC address format, got %q", str)
+			}
+		}},
+		{"numeric", func(t *testing.T, val any) {
+			f, ok := val.(float64)
+			if !ok {
+				t.Fatalf("expected float64, got %T", val)
+			}
+			if f < 0 || f > 1000 {
+				t.Fatalf("expected value in default range, got %f", f)
+			}
+		}},
+		{"money", func(t *testing.T, val any) {
+			if _, ok := val.(float64); !ok {
+				t.Fatalf("expected float64 for money, got %T", val)
+			}
+		}},
+		{"bytea", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "0x") {
+				t.Fatalf("expected hex prefix, got %q", str)
+			}
+		}},
+		{"xml", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "<") {
+				t.Fatalf("expected XML, got %q", str)
+			}
+		}},
+		{"hstore", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.Contains(str, "=>") {
+				t.Fatalf("expected hstore format, got %q", str)
+			}
+		}},
+		{"point", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "(") {
+				t.Fatalf("expected point format, got %q", str)
+			}
+		}},
+		{"text[]", func(t *testing.T, val any) {
+			str, ok := val.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", val)
+			}
+			if !strings.HasPrefix(str, "{") {
+				t.Fatalf("expected array format, got %q", str)
+			}
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.dbType, func(t *testing.T) {
+			val := GenerateByType(tt.dbType, "", nil, faker)
+			tt.validate(t, val)
+		})
+	}
+}
+
+func TestGenDecimalScaleRounding(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	scales := []int{0, 1, 3, 4}
+	for _, scale := range scales {
+		t.Run(fmt.Sprintf("scale_%d", scale), func(t *testing.T) {
+			constraints := map[string]any{"scale": scale}
+			for i := 0; i < 50; i++ {
+				val := genDecimal(constraints, faker)
+				f, ok := val.(float64)
+				if !ok {
+					t.Fatalf("expected float64, got %T", val)
+				}
+				// Verify rounding: multiply by 10^scale, result should be integer
+				multiplier := math.Pow(10, float64(scale))
+				rounded := math.Round(f * multiplier)
+				if math.Abs(f*multiplier-rounded) > 1e-9 {
+					t.Fatalf("iteration %d: value %f has more than %d decimal places", i, f, scale)
+				}
+			}
+		})
 	}
 }

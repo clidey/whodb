@@ -35,4 +35,6 @@ en:
   mockData: Generate mock data
   refresh: Refresh table
   export: Export data
+  import: Import data
   executeQuery: Execute query
+  clearEditor: Clear editor/input

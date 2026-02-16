@@ -4,6 +4,9 @@ en:
   emptyStateTitle: What Can I Help You With?
   noModelTitle: No Model Available
   noModelDescription: Please choose an available model to start chatting with your data.
+  loadingSuggestions: Loading suggestions...
+  genericExamplesLabel: Example queries (not specific to your database)
+  databaseSpecificSuggestionsLabel: Suggested queries based on your database schema
   scratchpadNotSupported: Scratchpad Is Not Supported for This Database Type
   queryMoved: Query Moved to Scratchpad
   moveToScratchpad: Move to Scratchpad
@@ -20,6 +23,17 @@ en:
   createNewPage: Create New Page
   cancel: Cancel
 
+  # Chat History Sidebar
+  chatHistory: Chat History
+  newChat: New Chat
+  deleteChat: Delete Chat
+  deleteChatTitle: Delete {chatName}?
+  deleteChatDescription: This will permanently delete this chat and all its messages. This action cannot be undone.
+  continue: Continue
+  doubleClickEdit: Double-click to edit
+  messageCount: "{count} messages"
+  noMessages: No messages yet
+
   # SQL Confirmation
   confirmExecutionTitle: Confirm Execution
   confirmExecutionDescription: This operation will modify your database. Review and confirm to proceed.
@@ -34,6 +48,8 @@ en:
   sendMessage: Send message
   showTable: Show as table
   showCode: Show as code
+  showChart: Show Chart
+  actions: Actions
 
   # Thinking phrases - shown while AI is processing
   thinking0: Thinking

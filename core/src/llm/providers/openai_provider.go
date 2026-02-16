@@ -17,7 +17,6 @@
 package providers
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -124,118 +123,6 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		models = append(models, name)
 	}
 	return models, nil
-}
-
-// Complete sends a completion request to OpenAI.
-func (p *OpenAIProvider) Complete(config *ProviderConfig, prompt string, model LLMModel, receiverChan *chan string) (*string, error) {
-	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
-	}
-
-	requestBody, err := json.Marshal(map[string]any{
-		"model":    string(model),
-		"messages": []map[string]string{{"role": "user", "content": prompt}},
-		"stream":   receiverChan != nil,
-	})
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to marshal OpenAI request body for model %s", model)
-		return nil, err
-	}
-
-	url := fmt.Sprintf("%s/chat/completions", config.Endpoint)
-	headers := map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", config.APIKey),
-		"Content-Type":  "application/json",
-	}
-
-	resp, err := sendHTTPRequest("POST", url, requestBody, headers)
-	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to send HTTP request to OpenAI at %s", url)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		log.Logger.Errorf("OpenAI returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
-		return nil, errors.New(string(body))
-	}
-
-	return p.ParseResponse(resp.Body, receiverChan)
-}
-
-// ParseResponse parses the OpenAI API response (streaming or non-streaming).
-// Exported for testing.
-func (p *OpenAIProvider) ParseResponse(body io.ReadCloser, receiverChan *chan string) (*string, error) {
-	responseBuilder := strings.Builder{}
-
-	if receiverChan != nil {
-		// Streaming response
-		reader := bufio.NewReader(body)
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				log.Logger.WithError(err).Error("Failed to read line from OpenAI streaming response")
-				return nil, err
-			}
-
-			if strings.TrimSpace(line) == "" {
-				continue
-			}
-
-			var completionResponse struct {
-				Choices []struct {
-					Delta struct {
-						Content string `json:"content"`
-					} `json:"delta"`
-				} `json:"choices"`
-				FinishReason string `json:"finish_reason"`
-			}
-
-			if err := json.Unmarshal([]byte(line), &completionResponse); err != nil {
-				log.Logger.WithError(err).Errorf("Failed to unmarshal OpenAI streaming response line: %s", line)
-				return nil, err
-			}
-
-			if len(completionResponse.Choices) > 0 {
-				content := completionResponse.Choices[0].Delta.Content
-				if content != "" {
-					*receiverChan <- content
-					responseBuilder.WriteString(content)
-				}
-				if completionResponse.FinishReason == "stop" {
-					response := responseBuilder.String()
-					return &response, nil
-				}
-			}
-		}
-	} else {
-		// Non-streaming response
-		var completionResponse struct {
-			Choices []struct {
-				Message struct {
-					Content string `json:"content"`
-				} `json:"message"`
-			} `json:"choices"`
-		}
-
-		if err := json.NewDecoder(body).Decode(&completionResponse); err != nil {
-			log.Logger.WithError(err).Error("Failed to decode OpenAI non-streaming response")
-			return nil, err
-		}
-
-		if len(completionResponse.Choices) > 0 {
-			response := completionResponse.Choices[0].Message.Content
-			return &response, nil
-		}
-
-		return nil, errors.New("no completion response received from OpenAI")
-	}
-
-	return nil, nil
 }
 
 // GetBAMLClientType returns the BAML client type for OpenAI.

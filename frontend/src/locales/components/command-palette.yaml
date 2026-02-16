@@ -10,6 +10,7 @@ en:
   goToScratchpad: Go to Scratchpad
   refreshData: Refresh Data
   exportData: Export Data
+  importData: Import Data
   toggleSidebar: Toggle Sidebar
   disconnect: Disconnect
   sortByColumn: Sort by {{column}}

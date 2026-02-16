@@ -46,6 +46,6 @@ fi
 echo "✨ All coverage data cleaned!"
 echo ""
 echo "Next steps:"
-echo "  - Run 'pnpm cypress:ce:headless' to generate fresh coverage"
+echo "  - Run 'pnpm e2e:ce:headless' to generate fresh coverage"
 echo "  - Run 'npm run view:coverage' to see frontend coverage"
 echo "  - Run 'npm run view:coverage:backend' to see backend coverage"

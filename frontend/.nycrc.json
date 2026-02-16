@@ -10,7 +10,6 @@
     "**/*.spec.{js,jsx,ts,tsx}",
     "**/generated/**",
     "**/node_modules/**",
-    "**/cypress/**",
     "**/coverage/**",
     "**/dist/**",
     "src/index.tsx",

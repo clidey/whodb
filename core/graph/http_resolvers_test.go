@@ -23,6 +23,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -94,6 +95,22 @@ func TestRESTHandlersHandleErrors(t *testing.T) {
 }
 
 func TestRESTHandlersAIModelsAndChat(t *testing.T) {
+	// Spin up a fake Ollama server so the test doesn't depend on a real network
+	fakeOllama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"models":[]}`))
+	}))
+	defer fakeOllama.Close()
+
+	// Point Ollama host/port at the fake server
+	// Parse host:port from fakeOllama.URL (format: http://127.0.0.1:PORT)
+	// GetOllamaEndpoint constructs http://host:port/api, and Ollama appends /tags for model listing.
+	// The fake server handles all paths, so we just need host and port.
+	fakeURL := fakeOllama.URL[len("http://"):]
+	colonIdx := strings.LastIndex(fakeURL, ":")
+	t.Setenv("WHODB_OLLAMA_HOST", fakeURL[:colonIdx])
+	t.Setenv("WHODB_OLLAMA_PORT", fakeURL[colonIdx+1:])
+
 	originalCustom := env.CustomModels
 	originalCompatKey := env.OpenAICompatibleAPIKey
 	originalCompatEndpoint := env.OpenAICompatibleEndpoint

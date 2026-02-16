@@ -104,7 +104,7 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
-    const handleLanguageChange = useCallback((lang: 'en' | 'es') => {
+    const handleLanguageChange = useCallback((lang: 'en' | 'es' | 'de' | 'fr') => {
         dispatch(SettingsActions.setLanguage(lang));
     }, [dispatch]);
 
@@ -292,6 +292,8 @@ export const SettingsPage: FC = () => {
                                     <SelectContent>
                                         <SelectItem value="en" data-value="en">English</SelectItem>
                                         <SelectItem value="es" data-value="es">Español</SelectItem>
+                                        <SelectItem value="de" data-value="de">Deutsch</SelectItem>
+                                        <SelectItem value="fr" data-value="fr">Français</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

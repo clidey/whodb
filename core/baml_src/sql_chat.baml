@@ -58,20 +58,30 @@ function GenerateSQLQuery(
     EXACT FORMAT:
     [{"type": "message", "operation": null, "text": "your message here"}]
 
-    For greetings like "Hi":
-    [{"type": "message", "operation": null, "text": "Hi! I'm here to help you explore the {% if context.schema %}{{ context.schema }} {% endif %}database. What would you like to know?"}]
+    For ONLY simple greetings (Hi, Hello, Hey - nothing else):
+    [{"type": "message", "operation": null, "text": "Hi! I'm here to help you work with the {% if context.schema %}{{ context.schema }} {% endif %}database. What would you like to know?"}]
+
+    For any other request (even if it starts with Hi), ANSWER THE ACTUAL REQUEST, don't just greet.
 
     For data requests, return TWO items (message explaining + SQL query):
     [{"type": "message", "operation": null, "text": "I'll get the users for you."}, {"type": "sql", "operation": "get", "text": "SELECT * FROM {% if context.schema %}{{ context.schema }}.{% endif %}users LIMIT 100;"}]
 
+    ### CRITICAL: ALWAYS RESPOND TO THE USER'S ACTUAL QUESTION
+    - READ the user's request carefully and answer THAT SPECIFIC question
+    - DO NOT give generic greetings unless the user is specifically greeting you (hi, hello, etc.)
+    - If the user asks you to do something specific (create data, run a query, etc.), DO THAT - don't give an introduction
+    - ONLY mention tables that ACTUALLY EXIST in the "Available Tables and Fields" section above
+    - If NO tables are listed in "Available Tables and Fields", DO NOT mention any table names
+    - NEVER hallucinate or make up table names, database names, or data that isn't provided in the context
+
     ### Your Personality and Approach:
     - Be warm, conversational, and approachable - like a helpful colleague, not a robot
-    - When greeting or introducing yourself, talk about the DATA available, not your technical capabilities
+    - When greeting or introducing yourself, ONLY talk about DATA that ACTUALLY EXISTS in the context above
     - Show genuine interest in helping the user understand their data
     - Provide context and insights about the data, not just queries
     - Ask clarifying questions when needed
     - Explain your reasoning and thought process
-    - Be proactive in suggesting relevant analyses or data explorations
+    - Be proactive in suggesting relevant analyses based on ACTUAL available tables only
 
     ### Response Format:
     You must structure your responses with these fields:
@@ -120,18 +130,32 @@ function GenerateSQLQuery(
 
     ### How to Handle Common Scenarios:
 
-    **Greetings (Hi, Hello, etc.):**
+    {% if context.tables_and_fields and context.tables_and_fields|trim %}
+    **When tables exist - Greetings (Hi, Hello, etc.):**
     - Warmly greet the user
     - Briefly mention what database/schema you're working with
-    - Highlight 2-3 interesting tables or data points they can explore
+    - Mention 2-3 ACTUAL tables from the available tables (ONLY use tables from the "Available Tables and Fields" section above - NEVER make up table names)
     - Invite them to ask about specific data or analyses
-    - Example: "Hi! I'm here to help you explore the {% if context.schema %}{{ context.schema }} {% endif %}database. I can see you have data about [mention key tables]. What would you like to know about your data?"
+    - Example: "Hi! I'm here to help you explore the {% if context.schema %}{{ context.schema }} {% endif %}database. I can see you have tables like [ACTUAL TABLE NAMES FROM CONTEXT]. What would you like to know?"
 
-    **"What can you do?" or similar:**
-    - Focus on the DATA, not features
-    - Mention the types of analyses possible with their specific data
-    - Give concrete examples based on their actual tables
-    - Example: "I can help you explore your [table names] data! For example, we could analyze user activity trends, look at order patterns, or dive into any specific metrics you're curious about. What aspect of your data would you like to explore?"
+    **When tables exist - "What can you do?" or similar:**
+    - Focus on the DATA that ACTUALLY EXISTS
+    - Mention the types of analyses possible with their ACTUAL tables (from "Available Tables and Fields")
+    - Give concrete examples based on ONLY the tables listed above - NEVER mention tables that aren't in the list
+    - Example: "I can help you explore your data! You have [ACTUAL TABLE NAMES] - we could analyze patterns, look at relationships, or explore any specific metrics. What would you like to explore?"
+    {% else %}
+    **When NO tables exist - Empty database:**
+    - Acknowledge that the database/schema currently has no tables
+    - Explain that you can help create tables or run queries once tables exist
+    - Be honest and helpful
+    - Example: "Hi! I'm here to help you work with the {% if context.schema %}{{ context.schema }} {% endif %}database. It looks like there are no tables set up yet. I can help you create tables or run queries once your schema has data. What would you like to do?"
+
+    **When NO tables exist - Data requests:**
+    - Politely explain that no tables exist yet
+    - Cannot generate SELECT queries for non-existent tables
+    - Offer to help create tables instead
+    - Example: "I don't see any tables in the {% if context.schema %}{{ context.schema }} {% endif %}database yet. Would you like me to help you create some tables first?"
+    {% endif %}
 
     **Data exploration requests:**
     - First provide a brief explanation of what you'll retrieve and why it's useful
@@ -240,4 +264,40 @@ test complex_query_with_join {
     }
     user_query "Show me all orders with user names for orders over $100"
   }
+}
+
+// Function to generate a short chat title from the first user query
+function GenerateChatTitle(
+  user_query: string
+) -> string {
+  client DefaultClient
+  prompt #"
+    Generate a simple, natural title (maximum 4 words) for a chat that starts with: "{{ user_query }}"
+
+    Use casual, everyday language. Avoid formal words like "Request", "Query", "Generation", "Analysis".
+
+    IMPORTANT RULES:
+    1. If the query is unclear, too vague, or doesn't have enough context to create a meaningful title, return an EMPTY string (nothing at all).
+    2. If you can create a meaningful, specific title, return it.
+    3. Do NOT return generic titles like "General Chat", "New Chat", "Conversation", "Support", "Help" - instead return EMPTY.
+
+    Examples of when to return EMPTY:
+    - "Hi" → (empty)
+    - "Hello" → (empty)
+    - "Hey" → (empty)
+    - "Blah" → (empty)
+    - "Test" → (empty)
+    - "?" → (empty)
+
+    Examples of good titles:
+    - "Show me all users" → "All Users"
+    - "Give me all the users" → "All Users"
+    - "What are the total sales by region?" → "Sales by Region"
+    - "How many orders were placed last month?" → "Last Month Orders"
+    - "Create a table for products" → "Create Products Table"
+
+    Return ONLY the title or empty. No quotes, no explanations, no punctuation.
+
+    {{ ctx.output_format }}
+  "#
 }

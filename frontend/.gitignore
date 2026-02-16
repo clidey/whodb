@@ -8,9 +8,6 @@
 # testing
 /coverage
 .nyc_output
-/cypress/logs
-/cypress/screenshots
-/cypress/videos
 
 # production
 /build

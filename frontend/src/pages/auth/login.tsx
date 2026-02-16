@@ -56,6 +56,7 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {SettingsActions} from "../../store/settings";
+import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
@@ -151,12 +152,16 @@ export const LoginForm: FC<LoginFormProps> = ({
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
+    const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(() => {
+        // Detect auto-login on initial render to prevent flash of login form
+        return searchParams.has("resource") || searchParams.has("login");
+    });
 
     const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
 
     const loading = useMemo(() => {
-        return loginLoading || loginWithProfileLoading;
-    }, [loginLoading, loginWithProfileLoading]);
+        return loginLoading || loginWithProfileLoading || isAutoLoggingIn;
+    }, [loginLoading, loginWithProfileLoading, isAutoLoggingIn]);
 
     const markFirstLoginComplete = useCallback(() => {
         if (isFirstLogin) {
@@ -220,11 +225,28 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('loginSuccessful'));
+                    toast.success(t('loginSuccessful'));
+                    // Component will unmount after navigation, no need to clear state
+                    return;
                 }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
+                setIsAutoLoggingIn(false);
+                // Check if this is a network error (server down)
+                const isNetworkError = error.message?.toLowerCase().includes('network') ||
+                                      error.message?.toLowerCase().includes('fetch') ||
+                                      error.message?.toLowerCase().includes('econnrefused') ||
+                                      error.networkError != null;
+
+                if (isNetworkError) {
+                    // Set server status to error to trigger overlay
+                    dispatch(HealthActions.setHealthStatus({
+                        server: 'error',
+                        database: 'unavailable',
+                    }));
+                }
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -274,11 +296,28 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('loginSuccessful'));
+                    toast.success(t('loginSuccessful'));
+                    // Component will unmount after navigation, no need to clear state
+                    return;
                 }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
+                setIsAutoLoggingIn(false);
+                // Check if this is a network error (server down)
+                const isNetworkError = error.message?.toLowerCase().includes('network') ||
+                                      error.message?.toLowerCase().includes('fetch') ||
+                                      error.message?.toLowerCase().includes('econnrefused') ||
+                                      error.networkError != null;
+
+                if (isNetworkError) {
+                    // Set server status to error to trigger overlay
+                    dispatch(HealthActions.setHealthStatus({
+                        server: 'error',
+                        database: 'unavailable',
+                    }));
+                }
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -322,11 +361,28 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    return toast.success(t('welcomeToWhodb'));
+                    toast.success(t('welcomeToWhodb'));
+                    // Component will unmount after navigation, no need to clear state
+                    return;
                 }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
+                setIsAutoLoggingIn(false);
+                // Check if this is a network error (server down)
+                const isNetworkError = error.message?.toLowerCase().includes('network') ||
+                                      error.message?.toLowerCase().includes('fetch') ||
+                                      error.message?.toLowerCase().includes('econnrefused') ||
+                                      error.networkError != null;
+
+                if (isNetworkError) {
+                    // Set server status to error to trigger overlay
+                    dispatch(HealthActions.setHealthStatus({
+                        server: 'error',
+                        database: 'unavailable',
+                    }));
+                }
                 return toast.error(t('loginFailedWithError', { error: error.message }));
             }
         });
@@ -430,7 +486,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     useEffect(() => {
         if (searchParams.has("locale")) {
             const locale = searchParams.get("locale")?.toLowerCase();
-            if (locale === 'en' || locale === 'es') {
+            if (locale === 'en' || locale === 'es' || locale === 'de' || locale === 'fr') {
                 dispatch(SettingsActions.setLanguage(locale));
             }
         }
@@ -519,7 +575,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (credentials.database) setDatabase(credentials.database);
 
                 if (credentials.port) {
-                    setAdvancedForm(prev => ({...prev, 'Port': credentials.port}));
+                    setAdvancedForm(prev => ({...prev, 'Port': String(credentials.port)}));
                     setShowAdvanced(true);
                 }
 
@@ -531,7 +587,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     }
                     // Add port if provided
                     if (credentials.port) {
-                        advancedFormData['Port'] = credentials.port;
+                        advancedFormData['Port'] = String(credentials.port);
                     }
                     setAdvancedForm(advancedFormData);
                     if (Object.keys(advancedFormData).length > 0) {
@@ -730,7 +786,9 @@ export const LoginForm: FC<LoginFormProps> = ({
         return selectedAvailableProfile != null;
     }, [selectedAvailableProfile]);
 
-    if (loading || profilesLoading)  {
+    // Always show loading during auto-login, regardless of mutation or profile loading state
+    // Only show form if auto-login fails (isAutoLoggingIn set to false in error handlers)
+    if (isAutoLoggingIn || loading || profilesLoading)  {
         return (
             <div className={classNames("flex flex-col justify-center items-center gap-lg w-full", className)}>
                 <div>
