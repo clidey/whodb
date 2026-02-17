@@ -33,6 +33,9 @@ jobs:
         with:
           go-version-file: core/go.mod
 
+      - name: Create frontend build placeholder
+        run: mkdir -p core/build && echo '<!doctype html>' > core/build/index.html
+
       - name: Build CE test binary
         working-directory: core
         run: go test -coverpkg=./... -c -o server.test
