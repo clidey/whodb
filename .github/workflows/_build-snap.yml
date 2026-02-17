@@ -34,7 +34,7 @@ jobs:
       SNAPCRAFT_PROJECT_VERSION: ${{ inputs.version }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -65,12 +65,12 @@ jobs:
             sum.golang.org:443
 
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: false
 
       - name: Setup Go cache for snap build
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: 'core/go.mod'
           cache: true
@@ -129,7 +129,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-wails-v2.11.0
 
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@bfa03e1de4d7f7c3e80ad9109feedd05c4f5a716 # v1.2.19
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2.20
         with:
           key: ${{ runner.os }}-${{ runner.arch }}-ccache-snap
           max-size: 500M
@@ -158,7 +158,7 @@ jobs:
       - name: Build Snap package
         id: build_snap
         run: |
-          echo "Building snap with version: ${{ inputs.version }}"
+          echo "Building snap with release-version: ${{ inputs.version }}"
 
           # Show ccache stats before build (if available)
           if command -v ccache &> /dev/null; then
@@ -192,7 +192,7 @@ jobs:
 
           echo "✅ Built snap: $SNAP_FILE"
           echo "File size: $(du -h "$SNAP_FILE" | cut -f1)"
-          echo "Expected version: ${{ inputs.version }}"
+          echo "Expected release-version: ${{ inputs.version }}"
 
           # Verify filename contains version (be flexible about format)
           SNAP_BASENAME=$(basename "$SNAP_FILE")
@@ -208,7 +208,7 @@ jobs:
 
       - name: Upload Snap artifact
         if: inputs.upload-artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: snap-package-${{ matrix.arch }}
           path: "*.snap"
