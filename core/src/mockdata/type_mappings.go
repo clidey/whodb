@@ -37,6 +37,29 @@ func RegisterEETypeGenerator(gen TypeGenerator) {
 	eeTypeGenerator = gen
 }
 
+// unwrapTypeModifiers strips ClickHouse wrapper types like Nullable(...) and
+// LowCardinality(...) to expose the inner type. Handles nested wrappers like
+// LowCardinality(Nullable(String)). The stripping is case-insensitive.
+func unwrapTypeModifiers(dbType string) string {
+	for {
+		lower := strings.ToLower(dbType)
+		trimmed := strings.TrimSpace(lower)
+		unwrapped := false
+		for _, prefix := range []string{"nullable(", "lowcardinality("} {
+			if strings.HasPrefix(trimmed, prefix) && strings.HasSuffix(trimmed, ")") {
+				// Extract inner type preserving original case from dbType
+				inner := strings.TrimSpace(dbType[len(prefix) : len(dbType)-1])
+				dbType = inner
+				unwrapped = true
+				break
+			}
+		}
+		if !unwrapped {
+			return dbType
+		}
+	}
+}
+
 // GenerateByType generates a value for a database type, respecting constraints.
 // The dbType parameter is the raw column type (e.g., "int", "text[]", "varchar(255)").
 // The constraints map contains check_min, check_max, length, scale, check_values, etc.
@@ -48,10 +71,24 @@ func GenerateByType(dbType string, databaseType string, constraints map[string]a
 		}
 	}
 
+	// Unwrap ClickHouse wrapper types (Nullable, LowCardinality) before normalization
+	dbType = unwrapTypeModifiers(dbType)
+
 	normalizedType := strings.ToLower(dbType)
 
 	if strings.HasSuffix(normalizedType, "[]") {
 		return genArray(dbType, faker)
+	}
+
+	// Handle ClickHouse compound types before stripping parentheses
+	if strings.HasPrefix(normalizedType, "array(") {
+		return genClickHouseArray(dbType, databaseType, constraints, faker)
+	}
+	if strings.HasPrefix(normalizedType, "map(") {
+		return genClickHouseMap(dbType, databaseType, faker)
+	}
+	if strings.HasPrefix(normalizedType, "tuple(") {
+		return genClickHouseTuple(dbType, databaseType, faker)
 	}
 
 	if idx := strings.Index(normalizedType, "("); idx > 0 {
@@ -134,7 +171,7 @@ func GenerateByType(dbType string, databaseType string, constraints map[string]a
 		return genSpatial(normalizedType, faker)
 
 	case "decimal32", "decimal64", "decimal128", "decimal256":
-		return genClickHouseDecimal(normalizedType, faker)
+		return genClickHouseDecimal(normalizedType, constraints, faker)
 
 	default:
 		return genText(constraints, faker)
@@ -368,20 +405,51 @@ func genSpatial(typeName string, f *gofakeit.Faker) any {
 	}
 }
 
-// genClickHouseDecimal generates ClickHouse decimal values as strings
-func genClickHouseDecimal(typeName string, f *gofakeit.Faker) any {
+// genClickHouseDecimal generates ClickHouse decimal values as strings.
+// Uses scale/precision from constraints when available (set by the ClickHouse plugin).
+// Decimal32(S) has max precision 9, Decimal64(S) has 18, Decimal128(S) has 38, Decimal256(S) has 76.
+func genClickHouseDecimal(typeName string, c map[string]any, f *gofakeit.Faker) any {
+	// Default max precisions per type
+	maxPrecision := 9
 	switch typeName {
-	case "decimal32":
-		return fmt.Sprintf("%.2f", f.Float64Range(0, 9999999))
 	case "decimal64":
-		return fmt.Sprintf("%.2f", f.Float64Range(0, 999999999999999))
+		maxPrecision = 18
 	case "decimal128":
-		return fmt.Sprintf("%.2f", f.Float64Range(0, 999999999999999))
+		maxPrecision = 38
 	case "decimal256":
-		return fmt.Sprintf("%.2f", f.Float64Range(0, 999999999999999))
-	default:
-		return "0.00"
+		maxPrecision = 76
 	}
+
+	scale := 2 // default
+	if c != nil {
+		if s, ok := c["scale"].(int); ok && s >= 0 {
+			scale = s
+		}
+		if p, ok := c["precision"].(int); ok && p > 0 {
+			maxPrecision = p
+		}
+	}
+
+	intDigits := maxPrecision - scale
+	if intDigits < 0 {
+		intDigits = 0
+	}
+	// Cap integer digits to avoid float64 overflow
+	if intDigits > 15 {
+		intDigits = 15
+	}
+
+	maxVal := math.Pow(10, float64(intDigits)) - math.Pow(10, -float64(scale))
+	if maxVal <= 0 {
+		maxVal = 1 - math.Pow(10, -float64(scale))
+	}
+	// Keep values conservative for mock data
+	if maxVal > 1000 {
+		maxVal = 1000
+	}
+
+	val := f.Float64Range(0, maxVal)
+	return fmt.Sprintf("%.*f", scale, val)
 }
 
 // genXML generates a simple XML element
@@ -446,6 +514,110 @@ func genArray(dbType string, f *gofakeit.Faker) any {
 	}
 
 	return "{" + strings.Join(elements, ",") + "}"
+}
+
+// genClickHouseArray generates a ClickHouse Array literal like [val1, val2, val3]
+func genClickHouseArray(dbType string, databaseType string, constraints map[string]any, faker *gofakeit.Faker) any {
+	innerType := extractInnerType(dbType)
+	count := faker.Number(1, 5)
+	elements := make([]string, count)
+	for i := range count {
+		val := GenerateByType(innerType, databaseType, constraints, faker)
+		elements[i] = fmt.Sprintf("%v", val)
+	}
+	return "[" + strings.Join(elements, ", ") + "]"
+}
+
+// genClickHouseMap generates a ClickHouse Map literal like {'k1': v1, 'k2': v2}
+func genClickHouseMap(dbType string, databaseType string, faker *gofakeit.Faker) any {
+	keyType, valueType := extractMapTypes(dbType)
+	count := faker.Number(1, 3)
+	pairs := make([]string, count)
+	for i := range count {
+		key := GenerateByType(keyType, databaseType, nil, faker)
+		val := GenerateByType(valueType, databaseType, nil, faker)
+		pairs[i] = fmt.Sprintf("'%v': '%v'", key, val)
+	}
+	return "{" + strings.Join(pairs, ", ") + "}"
+}
+
+// genClickHouseTuple generates a ClickHouse Tuple literal like ('text', 42, 3.14).
+// String-typed values are single-quoted as required by ClickHouse SQL literal syntax.
+func genClickHouseTuple(dbType string, databaseType string, faker *gofakeit.Faker) any {
+	innerTypes := extractTupleTypes(dbType)
+	elements := make([]string, len(innerTypes))
+	for i, t := range innerTypes {
+		val := GenerateByType(t, databaseType, nil, faker)
+		// Quote string values per ClickHouse tuple literal syntax
+		if _, isStr := val.(string); isStr {
+			elements[i] = fmt.Sprintf("'%v'", val)
+		} else {
+			elements[i] = fmt.Sprintf("%v", val)
+		}
+	}
+	return "(" + strings.Join(elements, ", ") + ")"
+}
+
+// extractInnerType extracts the inner type from a wrapper like "Array(Int32)" -> "Int32"
+func extractInnerType(dbType string) string {
+	start := strings.Index(dbType, "(")
+	if start == -1 {
+		return "String"
+	}
+	end := strings.LastIndex(dbType, ")")
+	if end == -1 || end <= start {
+		return "String"
+	}
+	return strings.TrimSpace(dbType[start+1 : end])
+}
+
+// extractMapTypes extracts key and value types from "Map(String, Int32)" -> ("String", "Int32")
+func extractMapTypes(dbType string) (string, string) {
+	inner := extractInnerType(dbType)
+	// Split on first comma that's not inside nested parentheses
+	depth := 0
+	for i, ch := range inner {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ',':
+			if depth == 0 {
+				return strings.TrimSpace(inner[:i]), strings.TrimSpace(inner[i+1:])
+			}
+		}
+	}
+	return "String", "String"
+}
+
+// extractTupleTypes extracts element types from "Tuple(String, Int32, Float64)"
+func extractTupleTypes(dbType string) []string {
+	inner := extractInnerType(dbType)
+	var types []string
+	depth := 0
+	start := 0
+	for i, ch := range inner {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ',':
+			if depth == 0 {
+				types = append(types, strings.TrimSpace(inner[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	// Add the last element
+	if remaining := strings.TrimSpace(inner[start:]); remaining != "" {
+		types = append(types, remaining)
+	}
+	if len(types) == 0 {
+		return []string{"String"}
+	}
+	return types
 }
 
 // genText generates text respecting length and check_values (ENUM) constraints

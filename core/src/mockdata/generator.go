@@ -1260,6 +1260,8 @@ func valueToRecord(col engine.Column, value any, constraintType string) engine.R
 
 // detectDatabaseType returns the simplified database type for a column.
 func detectDatabaseType(columnType string) string {
+	// Unwrap ClickHouse wrapper types (Nullable, LowCardinality) before classification
+	columnType = unwrapTypeModifiers(columnType)
 	upperType := strings.ToUpper(columnType)
 
 	// Handle PostgreSQL arrays first

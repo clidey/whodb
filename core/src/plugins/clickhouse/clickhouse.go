@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -79,6 +80,29 @@ func (p *ClickHousePlugin) FormTableName(schema string, storageUnit string) stri
 
 func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
+}
+
+// HandleCustomDataType handles ClickHouse compound types (Map, Tuple) that require
+// strongly-typed Go values. The clickhouse-go driver rejects interface maps/slices,
+// requiring concrete types like map[string]int32 that match the column definition.
+func (p *ClickHousePlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error) {
+	upper := strings.ToUpper(columnType)
+
+	var convert func(string, string) (any, error)
+	switch {
+	case strings.HasPrefix(upper, "MAP("):
+		convert = convertMapLiteral
+	case strings.HasPrefix(upper, "TUPLE("):
+		convert = convertTupleLiteral
+	default:
+		return nil, false, nil
+	}
+
+	if isNullable && (value == "" || strings.EqualFold(value, "NULL")) {
+		return nil, true, nil
+	}
+	result, err := convert(value, columnType)
+	return result, true, err
 }
 
 func (p *ClickHousePlugin) ConvertStringValue(value, columnType string) (any, error) {
@@ -215,7 +239,9 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
 	upper := strings.ToUpper(typeName)
 	// Handle all ClickHouse array and special types
-	return strings.HasPrefix(upper, "ARRAY(") ||
+	return strings.HasPrefix(upper, "NULLABLE(") ||
+		strings.HasPrefix(upper, "LOWCARDINALITY(") ||
+		strings.HasPrefix(upper, "ARRAY(") ||
 		strings.HasPrefix(upper, "TUPLE(") ||
 		strings.HasPrefix(upper, "MAP(") ||
 		strings.HasPrefix(upper, "NESTED(") ||
@@ -269,19 +295,19 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value any) (string
 			return v.String(), nil
 		case []string:
 			// Array of strings
-			return fmt.Sprintf("[%s]", strings.Join(v, ", ")), nil
+			quoted := make([]string, len(v))
+			for i, s := range v {
+				quoted[i] = "'" + s + "'"
+			}
+			return "[" + strings.Join(quoted, ", ") + "]", nil
 		case []any:
-			// Array of mixed types
-			parts := make([]string, len(v))
-			for i, item := range v {
-				parts[i] = fmt.Sprintf("%v", item)
+			// Tuple or mixed array
+			if strings.HasPrefix(upperType, "TUPLE") {
+				return formatTuple(v), nil
 			}
-			return fmt.Sprintf("[%s]", strings.Join(parts, ", ")), nil
+			return formatSlice(v), nil
 		case map[string]any:
-			if b, err := json.Marshal(v); err == nil {
-				return string(b), nil
-			}
-			return fmt.Sprintf("%v", v), nil
+			return formatMap(v), nil
 		case net.IP:
 			// IPv4 or IPv6 address
 			return v.String(), nil
@@ -324,6 +350,18 @@ func (p *ClickHousePlugin) FormatColumnValue(typeName string, value any) (string
 			}
 			return v, nil
 		default:
+			// Handle typed maps/slices from the driver (e.g., map[string]int32, []int32)
+			// using reflection so the display matches ClickHouse literal syntax
+			rv := reflect.ValueOf(actualValue)
+			if rv.Kind() == reflect.Map {
+				return formatReflectMap(rv, upperType), nil
+			}
+			if rv.Kind() == reflect.Slice {
+				if strings.HasPrefix(upperType, "TUPLE") {
+					return formatReflectTuple(rv), nil
+				}
+				return formatReflectSlice(rv, upperType), nil
+			}
 			if stringer, ok := actualValue.(fmt.Stringer); ok {
 				return stringer.String(), nil
 			}

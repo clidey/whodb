@@ -166,11 +166,23 @@
         "col_float32": "float32",
         "col_float64": "float64",
         "col_decimal": "decimal(10, 2)",
+        "col_decimal32": "decimal32(5)",
+        "col_decimal64": "decimal64(3)",
         "col_date": "date",
         "col_datetime": "datetime",
         "col_string": "string",
         "col_fixedstring": "fixedstring(10)",
-        "col_boolean": "uint8"
+        "col_boolean": "uint8",
+        "col_enum8": "enum8",
+        "col_enum16": "enum16",
+        "col_nullable_int": "nullable(int32)",
+        "col_nullable_string": "nullable(string)",
+        "col_lowcard": "lowcardinality(string)",
+        "col_lowcard_nullable": "lowcardinality(nullable(string))",
+        "col_array": "array(int32)",
+        "col_array_string": "array(string)",
+        "col_map": "map(string, int32)",
+        "col_tuple": "tuple(string, int32, float64)"
       },
       "testData": {
         "typeTests": {
@@ -223,6 +235,20 @@
             "originalValue": "123.45",
             "updateValue": "98765.43"
           },
+          "col_decimal32": {
+            "type": "decimal32",
+            "addValue": "999.12345",
+            "deleteValue": "888.11111",
+            "originalValue": "1234.56789",
+            "updateValue": "5678.12345"
+          },
+          "col_decimal64": {
+            "type": "decimal64",
+            "addValue": "999.999",
+            "deleteValue": "888.111",
+            "originalValue": "123456789012345.678",
+            "updateValue": "987654321.123"
+          },
           "col_date": {
             "type": "date",
             "addValue": "2025-12-31",
@@ -265,6 +291,62 @@
             "deleteValue": "0",
             "originalValue": "1",
             "updateValue": "0"
+          },
+          "col_enum8": {
+            "type": "enum8",
+            "addValue": "pending",
+            "deleteValue": "pending",
+            "originalValue": "active",
+            "updateValue": "inactive"
+          },
+          "col_enum16": {
+            "type": "enum16",
+            "addValue": "xlarge",
+            "deleteValue": "xlarge",
+            "originalValue": "medium",
+            "updateValue": "large"
+          },
+          "col_nullable_int": {
+            "type": "nullable(int32)",
+            "addValue": "100",
+            "deleteValue": "200",
+            "originalValue": "42",
+            "updateValue": "99"
+          },
+          "col_nullable_string": {
+            "type": "nullable(string)",
+            "addValue": "nullable_test",
+            "deleteValue": "nullable_del",
+            "originalValue": "hello",
+            "updateValue": "world"
+          },
+          "col_lowcard": {
+            "type": "lowcardinality(string)",
+            "addValue": "category_c",
+            "deleteValue": "category_d",
+            "originalValue": "category_a",
+            "updateValue": "category_b"
+          },
+          "col_array": {
+            "type": "array(int32)",
+            "addValue": "[100, 200]",
+            "deleteValue": "[300, 400]",
+            "originalValue": "[10, 20, 30]",
+            "updateValue": "[50, 60]"
+          },
+          "col_map": {
+            "type": "map(string, int32)",
+            "addValue": "{'a': 1, 'b': 2}",
+            "deleteValue": "{'x': 9}",
+            "originalValue": "{'key1': 1, 'key2': 2}",
+            "updateValue": "{'k': 99}"
+          },
+          "col_tuple": {
+            "type": "tuple(string, int32, float64)",
+            "addValue": "('test', 1, 1.1)",
+            "deleteValue": "('del', 2, 2.2)",
+            "originalValue": "('label', 99, 3.14)",
+            "updateValue": "('updated', 50, 9.99)"
           }
         }
       }
