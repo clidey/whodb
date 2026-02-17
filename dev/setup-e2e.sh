@@ -260,17 +260,37 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
     # Determine which services to start
     DOCKER_SERVICES=$(get_docker_services "$TARGET_DB")
 
+    # Always include Postgres — some tests (login, profiles, loading-states)
+    # use Postgres credentials regardless of which database is being tested.
+    POSTGRES_SERVICES=$(get_docker_services "postgres")
+    if [ "$TARGET_DB" != "all" ] && [ "$TARGET_DB" != "postgres" ]; then
+        DOCKER_SERVICES="$POSTGRES_SERVICES $DOCKER_SERVICES"
+    fi
+
     if [ "$TARGET_DB" = "sqlite" ]; then
-        echo "⏭️ SQLite uses local file, no Docker services needed"
+        echo "📦 Ensuring Docker images are available for: postgres (always needed)..."
+        $(docker_compose_cmd) pull --quiet $POSTGRES_SERVICES 2>/dev/null || true
+
+        echo "🚀 Starting Postgres service (needed by cross-database tests)..."
+        $(docker_compose_cmd) up -d --remove-orphans $POSTGRES_SERVICES
+
+        echo "⏳ Waiting for Postgres to be ready..."
+        wait_for_port "PostgreSQL" "$(get_db_port postgres)" "$(get_db_wait_time postgres)"
     elif [ -n "$DOCKER_SERVICES" ]; then
-        # Start only specific services
-        echo "📦 Ensuring Docker images are available for: $TARGET_DB..."
+        # Start target database + postgres
+        echo "📦 Ensuring Docker images are available for: $TARGET_DB (+ postgres)..."
         $(docker_compose_cmd) pull --quiet $DOCKER_SERVICES 2>/dev/null || true
 
-        echo "🚀 Starting $TARGET_DB database service(s)..."
+        echo "🚀 Starting $TARGET_DB database service(s) + Postgres..."
         $(docker_compose_cmd) up -d --remove-orphans $DOCKER_SERVICES
 
-        # Wait for the specific service
+        # Wait for Postgres if it's not already the target
+        if [ "$TARGET_DB" != "postgres" ]; then
+            echo "⏳ Waiting for Postgres to be ready..."
+            wait_for_port "PostgreSQL" "$(get_db_port postgres)" "$(get_db_wait_time postgres)" &
+        fi
+
+        # Wait for the target service
         DB_PORT=$(get_db_port "$TARGET_DB")
         DB_WAIT=$(get_db_wait_time "$TARGET_DB")
         if [ -n "$DB_PORT" ]; then
@@ -284,6 +304,9 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
             echo "⏳ Waiting for $TARGET_DB SSL to be ready..."
             wait_for_port "$TARGET_DB-SSL" "$SSL_PORT" "$DB_WAIT"
         fi
+
+        # Wait for background Postgres check
+        wait
 
         echo "✅ $TARGET_DB service is ready!"
     else
