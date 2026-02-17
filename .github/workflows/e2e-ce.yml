@@ -165,14 +165,23 @@ jobs:
         with:
           pattern: blob-report-*
           path: all-blobs
-          merge-multiple: true
+
+      - name: Flatten blob reports
+        run: |
+          mkdir -p merged-blobs
+          for dir in all-blobs/blob-report-*; do
+            db=$(basename "$dir" | sed 's/blob-report-//')
+            for f in "$dir"/*.zip; do
+              [ -f "$f" ] && cp "$f" "merged-blobs/${db}-$(basename "$f")"
+            done
+          done
 
       - name: Merge reports
         run: |
           PLAYWRIGHT_HTML_OPEN=never \
           PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report \
           pnpm --dir frontend exec playwright merge-reports \
-            ../all-blobs \
+            ../merged-blobs \
             --reporter=html
 
       - name: Upload merged HTML report
