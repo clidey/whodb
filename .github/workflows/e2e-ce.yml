@@ -6,7 +6,9 @@ name: E2E Tests (CE)
 # single HTML report.
 
 on:
-  workflow_dispatch: # Manual triggers only
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
