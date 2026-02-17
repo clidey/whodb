@@ -208,5 +208,11 @@
   "logo": {
     "light": "./logo/logo.svg",
     "dark": "./logo/logo.svg"
+  },
+  "analytics": {
+    "posthog": {
+      "token": "phc_hxwfcMiIgSXYKkbWl9zpQE0HaPPmlRaVXCWODricYu1",
+      "apiHost": "https://us.i.posthog.com"
+    }
   }
 }
