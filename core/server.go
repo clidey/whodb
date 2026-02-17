@@ -36,6 +36,8 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
 )
 
@@ -72,6 +74,15 @@ func main() {
 	}
 
 	r := router.InitializeRouter(staticFiles)
+	handler := http.Handler(r)
+	if env.BasePath != "" && !env.IsDevelopment {
+		root := chi.NewRouter()
+		root.Mount(env.BasePath, r)
+		handler = root
+	}
+	// Apply RedirectSlashes at the outermost level so redirects include
+	// the full path (including any base path prefix from chi.Mount).
+	handler = chiMiddleware.RedirectSlashes(handler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -80,7 +91,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
-		Handler:           r,
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      1 * time.Minute,

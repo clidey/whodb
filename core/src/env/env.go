@@ -84,6 +84,9 @@ var IsAWSProviderEnabled = os.Getenv("WHODB_ENABLE_AWS_PROVIDER") == "true"
 // DisableCredentialForm controls whether the credential form is disabled.
 var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
 
+// BasePath is the optional URL prefix (e.g., "/whodb") for sub-path deployments.
+var BasePath = normalizeBasePath(os.Getenv("WHODB_BASE_PATH"))
+
 type ChatProvider struct {
 	Type       string
 	Name       string // Display name/alias for the provider
@@ -92,6 +95,17 @@ type ChatProvider struct {
 	ProviderId string
 	ClientType string // BAML client type (openai-generic, anthropic, aws-bedrock) - only for generic providers
 	IsGeneric  bool   // True for generic/custom providers, false for built-in providers
+}
+
+func normalizeBasePath(pathValue string) string {
+	trimmed := strings.TrimSpace(pathValue)
+	if trimmed == "" || trimmed == "/" {
+		return ""
+	}
+	if !strings.HasPrefix(trimmed, "/") {
+		trimmed = "/" + trimmed
+	}
+	return strings.TrimSuffix(trimmed, "/")
 }
 
 // GenericProviderConfig holds configuration for a generic AI provider.

@@ -31,6 +31,7 @@ import {ThemeProvider} from '@clidey/ux'
 import {isEEMode} from './config/ee-imports';
 import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
+import {getBasePath} from './config/base-path';
 
 // Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
 try {
@@ -88,10 +89,11 @@ const AppWithProviders = () => {
 // Use HashRouter for desktop app (avoids full page reloads)
 // Use BrowserRouter for web version
 const Router = isDesktopApp() ? HashRouter : BrowserRouter;
+const routerBasePath = getBasePath() || '/';
 
 root.render(
   <React.StrictMode>
-    <Router>
+    <Router basename={routerBasePath}>
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
           <PersistGate loading={null} persistor={reduxStorePersistor}>

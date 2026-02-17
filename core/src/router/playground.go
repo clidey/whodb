@@ -26,7 +26,7 @@ import (
 func setupPlaygroundHandler(router chi.Router, server *handler.Server) {
 	var pathHandler http.HandlerFunc
 	if env.IsDevelopment {
-		pathHandler = playground.Handler("API Gateway", "/api/query")
+		pathHandler = playground.Handler("API Gateway", graphqlEndpointPath())
 	}
 	router.HandleFunc("/api/query", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" || r.Header.Get("Connection") == "upgrade" {
@@ -35,4 +35,11 @@ func setupPlaygroundHandler(router chi.Router, server *handler.Server) {
 			pathHandler.ServeHTTP(w, r)
 		}
 	})
+}
+
+func graphqlEndpointPath() string {
+	if env.BasePath == "" {
+		return "/api/query"
+	}
+	return env.BasePath + "/api/query"
 }

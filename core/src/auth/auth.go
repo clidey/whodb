@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/go-chi/chi/v5"
 )
 
 type AuthKey string
@@ -71,7 +72,11 @@ func isPublicRoute(r *http.Request) bool {
 		}
 	}
 
-	return !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api"
+	routePath := r.URL.Path
+	if rctx := chi.RouteContext(r.Context()); rctx != nil && rctx.RoutePath != "" {
+		routePath = rctx.RoutePath
+	}
+	return !strings.HasPrefix(routePath, "/api/") && routePath != "/api"
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
