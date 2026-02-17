@@ -133,66 +133,72 @@ BINARY_PATH="$PROJECT_ROOT/core/server.test"
 HASH_FILE="$PROJECT_ROOT/core/tmp/.test-binary-hash"
 mkdir -p "$PROJECT_ROOT/core/tmp"
 
-# Allow force rebuild via environment variable
-if [ "${FORCE_REBUILD:-false}" = "true" ]; then
-    echo "🔨 Force rebuild requested (FORCE_REBUILD=true)"
-    rm -f "$BINARY_PATH" "$HASH_FILE"
-fi
-
-# Calculate hash of source files
-calculate_source_hash() {
-    if [ "$EDITION" = "ee" ]; then
-        find "$PROJECT_ROOT/core" "$PROJECT_ROOT/ee" -name "*.go" -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1
-    else
-        find "$PROJECT_ROOT/core" -name "*.go" -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1
-    fi
-}
-
-CURRENT_HASH=$(calculate_source_hash)
-NEEDS_REBUILD=true
-
-# Check if we can skip rebuild
-if [ -f "$BINARY_PATH" ] && [ -f "$HASH_FILE" ]; then
-    STORED_HASH=$(cat "$HASH_FILE")
-    if [ "$CURRENT_HASH" = "$STORED_HASH" ]; then
-        echo "✅ Using cached test binary - NO REBUILD NEEDED"
-        echo "   Previous hash: ${STORED_HASH:0:8}..."
-        echo "   Current hash:  ${CURRENT_HASH:0:8}... (matches)"
-        echo "   Binary path:   $BINARY_PATH"
-        echo "   Last modified: $(date -r "$BINARY_PATH" '+%Y-%m-%d %H:%M:%S')"
-        NEEDS_REBUILD=false
-    else
-        echo "🔄 Source files changed - REBUILD REQUIRED"
-        echo "   Previous hash: ${STORED_HASH:0:8}..."
-        echo "   Current hash:  ${CURRENT_HASH:0:8}... (different)"
-    fi
+# Allow skipping build when binary is pre-built (e.g. CI artifact from a prior job)
+if [ "${WHODB_SKIP_BUILD:-false}" = "true" ] && [ -f "$BINARY_PATH" ]; then
+    echo "✅ Using pre-built test binary (WHODB_SKIP_BUILD=true)"
+    echo "   Binary path: $BINARY_PATH"
 else
-    if [ ! -f "$BINARY_PATH" ]; then
-        echo "🔨 Test binary not found - BUILD REQUIRED"
-    else
-        echo "🔨 Hash file missing - BUILD REQUIRED"
+    # Allow force rebuild via environment variable
+    if [ "${FORCE_REBUILD:-false}" = "true" ]; then
+        echo "🔨 Force rebuild requested (FORCE_REBUILD=true)"
+        rm -f "$BINARY_PATH" "$HASH_FILE"
     fi
-fi
 
-if [ "$NEEDS_REBUILD" = "true" ]; then
-    if [ "$EDITION" = "ee" ]; then
-        # Check if EE directory exists
-        if [ ! -d "$PROJECT_ROOT/ee" ]; then
-            echo "❌ EE directory not found. Cannot run EE tests."
-            exit 1
+    # Calculate hash of source files
+    calculate_source_hash() {
+        if [ "$EDITION" = "ee" ]; then
+            find "$PROJECT_ROOT/core" "$PROJECT_ROOT/ee" -name "*.go" -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1
+        else
+            find "$PROJECT_ROOT/core" -name "*.go" -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1
         fi
-        echo "🔧 Building EE test binary with coverage..."
-        cd "$PROJECT_ROOT/core"
-        GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
-        echo "✅ EE test binary built successfully"
+    }
+
+    CURRENT_HASH=$(calculate_source_hash)
+    NEEDS_REBUILD=true
+
+    # Check if we can skip rebuild
+    if [ -f "$BINARY_PATH" ] && [ -f "$HASH_FILE" ]; then
+        STORED_HASH=$(cat "$HASH_FILE")
+        if [ "$CURRENT_HASH" = "$STORED_HASH" ]; then
+            echo "✅ Using cached test binary - NO REBUILD NEEDED"
+            echo "   Previous hash: ${STORED_HASH:0:8}..."
+            echo "   Current hash:  ${CURRENT_HASH:0:8}... (matches)"
+            echo "   Binary path:   $BINARY_PATH"
+            echo "   Last modified: $(date -r "$BINARY_PATH" '+%Y-%m-%d %H:%M:%S')"
+            NEEDS_REBUILD=false
+        else
+            echo "🔄 Source files changed - REBUILD REQUIRED"
+            echo "   Previous hash: ${STORED_HASH:0:8}..."
+            echo "   Current hash:  ${CURRENT_HASH:0:8}... (different)"
+        fi
     else
-        echo "🔧 Building CE test binary with coverage..."
-        cd "$PROJECT_ROOT/core"
-        go test -coverpkg=./... -c -o server.test
-        echo "✅ CE test binary built successfully"
+        if [ ! -f "$BINARY_PATH" ]; then
+            echo "🔨 Test binary not found - BUILD REQUIRED"
+        else
+            echo "🔨 Hash file missing - BUILD REQUIRED"
+        fi
     fi
-    # Store hash for next run
-    echo "$CURRENT_HASH" > "$HASH_FILE"
+
+    if [ "$NEEDS_REBUILD" = "true" ]; then
+        if [ "$EDITION" = "ee" ]; then
+            # Check if EE directory exists
+            if [ ! -d "$PROJECT_ROOT/ee" ]; then
+                echo "❌ EE directory not found. Cannot run EE tests."
+                exit 1
+            fi
+            echo "🔧 Building EE test binary with coverage..."
+            cd "$PROJECT_ROOT/core"
+            GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
+            echo "✅ EE test binary built successfully"
+        else
+            echo "🔧 Building CE test binary with coverage..."
+            cd "$PROJECT_ROOT/core"
+            go test -coverpkg=./... -c -o server.test
+            echo "✅ CE test binary built successfully"
+        fi
+        # Store hash for next run
+        echo "$CURRENT_HASH" > "$HASH_FILE"
+    fi
 fi
 
 

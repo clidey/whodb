@@ -1,8 +1,9 @@
 name: E2E Tests (CE)
 
 # Runs Playwright E2E tests against all CE databases using a matrix strategy.
-# Each database gets its own runner for resource isolation.
-# A merge job combines all blob reports into a single HTML report.
+# A build job compiles the Go test binary once, then each database gets its own
+# runner for resource isolation. A merge job combines all blob reports into a
+# single HTML report.
 
 on:
   workflow_dispatch: # Manual triggers only
@@ -11,14 +12,10 @@ permissions:
   contents: read
 
 jobs:
-  e2e:
-    name: E2E - ${{ matrix.database }}
+  build:
+    name: Build Test Binary
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        database: [postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse]
+    timeout-minutes: 10
 
     steps:
       - name: Harden Runner
@@ -35,6 +32,47 @@ jobs:
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version-file: core/go.mod
+
+      - name: Build CE test binary
+        working-directory: core
+        run: go test -coverpkg=./... -c -o server.test
+
+      - name: Upload test binary
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: test-binary
+          path: core/server.test
+          retention-days: 1
+
+  e2e:
+    name: E2E - ${{ matrix.database }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse]
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: false
+
+      - name: Download test binary
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
+        with:
+          name: test-binary
+          path: core
+
+      - name: Make binary executable
+        run: chmod +x core/server.test
 
       - name: Setup PNPM
         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
@@ -66,6 +104,8 @@ jobs:
 
       - name: Run E2E tests (${{ matrix.database }})
         working-directory: frontend
+        env:
+          WHODB_SKIP_BUILD: "true"
         run: pnpm e2e:db:headless ${{ matrix.database }}
 
       - name: Upload blob report
@@ -129,7 +169,7 @@ jobs:
           PLAYWRIGHT_HTML_OPEN=never \
           PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report \
           pnpm --dir frontend exec playwright merge-reports \
-            all-blobs \
+            ../all-blobs \
             --reporter=html
 
       - name: Upload merged HTML report
