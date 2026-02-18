@@ -46,25 +46,27 @@ func generateRequestID(toolName string) string {
 // QueryInput is the input for the whodb_query tool.
 type QueryInput struct {
 	// Connection is the name of a saved connection or environment profile.
-	Connection string `json:"connection"`
+	Connection string `json:"connection" jsonschema:"Connection name (optional if only one exists)"`
 	// Query is the SQL query to execute
-	Query string `json:"query"`
+	Query string `json:"query" jsonschema:"SQL query to execute"`
 	// Parameters for parameterized queries (optional).
 	// Use placeholders in the query ($1, $2 for Postgres; ? for MySQL/SQLite).
 	// Example: query="SELECT * FROM users WHERE id = $1", parameters=[42]
-	Parameters []any `json:"parameters,omitempty"`
+	Parameters []any `json:"parameters,omitempty" jsonschema:"Parameterized query values ($1/$2 for Postgres or ? for MySQL/SQLite)"`
 }
 
 // QueryOutput is the output for the whodb_query tool.
 type QueryOutput struct {
 	Columns              []string `json:"columns"`
+	ColumnTypes          []string `json:"column_types,omitempty"`
 	Rows                 [][]any  `json:"rows"`
 	Error                string   `json:"error,omitempty"`
 	Warning              string   `json:"warning,omitempty"`
 	ConfirmationRequired bool     `json:"confirmation_required,omitempty"`
 	ConfirmationToken    string   `json:"confirmation_token,omitempty"`
 	ConfirmationQuery    string   `json:"confirmation_query,omitempty"`
-	RequestID            string   `json:"request_id,omitempty"` // Unique ID for request tracing
+	ConfirmationExpiry   string   `json:"confirmation_expiry,omitempty"` // ISO 8601 timestamp when the token expires
+	RequestID            string   `json:"request_id,omitempty"`          // Unique ID for request tracing
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null,
@@ -83,14 +85,24 @@ func (o QueryOutput) MarshalJSON() ([]byte, error) {
 // SchemasInput is the input for the whodb_schemas tool.
 type SchemasInput struct {
 	// Connection is the name of a saved connection or environment profile.
-	Connection string `json:"connection"`
+	Connection string `json:"connection" jsonschema:"Connection name (optional if only one exists)"`
+	// IncludeTables returns the tables within each schema in a single call.
+	// Reduces round-trips when you need both schemas and tables.
+	IncludeTables bool `json:"include_tables,omitempty" jsonschema:"Set true to also return tables within each schema in a single call"`
+}
+
+// SchemaDetail holds a schema name and optionally its tables.
+type SchemaDetail struct {
+	Name   string      `json:"name"`
+	Tables []TableInfo `json:"tables,omitempty"`
 }
 
 // SchemasOutput is the output for the whodb_schemas tool.
 type SchemasOutput struct {
-	Schemas   []string `json:"schemas"`
-	Error     string   `json:"error,omitempty"`
-	RequestID string   `json:"request_id,omitempty"` // Unique ID for request tracing
+	Schemas   []string       `json:"schemas"`
+	Details   []SchemaDetail `json:"details,omitempty"` // Populated when include_tables=true
+	Error     string         `json:"error,omitempty"`
+	RequestID string         `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null.
@@ -105,15 +117,19 @@ func (o SchemasOutput) MarshalJSON() ([]byte, error) {
 // TablesInput is the input for the whodb_tables tool.
 type TablesInput struct {
 	// Connection is the name of a saved connection or environment profile.
-	Connection string `json:"connection"`
+	Connection string `json:"connection" jsonschema:"Connection name (optional if only one exists)"`
 	// Schema to list tables from (uses default if not specified)
-	Schema string `json:"schema,omitempty"`
+	Schema string `json:"schema,omitempty" jsonschema:"Schema name (uses default if omitted)"`
+	// IncludeColumns returns column details for each table in a single call.
+	// Reduces round-trips when you need both tables and their columns.
+	IncludeColumns bool `json:"include_columns,omitempty" jsonschema:"Set true to also return column details for each table in a single call"`
 }
 
 // TableInfo represents information about a database table.
 type TableInfo struct {
 	Name       string            `json:"name"`
 	Attributes map[string]string `json:"attributes,omitempty"`
+	Columns    []ColumnInfo      `json:"columns,omitempty"` // Populated when include_columns=true
 }
 
 // TablesOutput is the output for the whodb_tables tool.
@@ -136,11 +152,11 @@ func (o TablesOutput) MarshalJSON() ([]byte, error) {
 // ColumnsInput is the input for the whodb_columns tool.
 type ColumnsInput struct {
 	// Connection is the name of a saved connection or environment profile.
-	Connection string `json:"connection"`
+	Connection string `json:"connection" jsonschema:"Connection name (optional if only one exists)"`
 	// Schema containing the table
-	Schema string `json:"schema,omitempty"`
+	Schema string `json:"schema,omitempty" jsonschema:"Schema name (uses default if omitted)"`
 	// Table name to describe
-	Table string `json:"table"`
+	Table string `json:"table" jsonschema:"Table name to describe"`
 }
 
 // ColumnInfo represents information about a database column.
@@ -204,16 +220,17 @@ func (o ConnectionsOutput) MarshalJSON() ([]byte, error) {
 // ConfirmInput is the input for the whodb_confirm tool.
 type ConfirmInput struct {
 	// Token is the confirmation token from a previous query response
-	Token string `json:"token"`
+	Token string `json:"token" jsonschema:"Confirmation token from a previous whodb_query response"`
 }
 
 // ConfirmOutput is the output for the whodb_confirm tool.
 type ConfirmOutput struct {
-	Columns   []string `json:"columns"`
-	Rows      [][]any  `json:"rows"`
-	Error     string   `json:"error,omitempty"`
-	Message   string   `json:"message,omitempty"`
-	RequestID string   `json:"request_id,omitempty"` // Unique ID for request tracing
+	Columns     []string `json:"columns"`
+	ColumnTypes []string `json:"column_types,omitempty"`
+	Rows        [][]any  `json:"rows"`
+	Error       string   `json:"error,omitempty"`
+	Message     string   `json:"message,omitempty"`
+	RequestID   string   `json:"request_id,omitempty"` // Unique ID for request tracing
 }
 
 // MarshalJSON ensures nil slices are serialized as [] instead of null,
@@ -226,6 +243,33 @@ func (o ConfirmOutput) MarshalJSON() ([]byte, error) {
 		o.Rows = [][]any{}
 	}
 	type Alias ConfirmOutput
+	return json.Marshal(Alias(o))
+}
+
+// PendingInput is the input for the whodb_pending tool (no parameters needed).
+type PendingInput struct{}
+
+// PendingInfo represents a pending confirmation visible to the LLM.
+type PendingInfo struct {
+	Token      string `json:"token"`
+	Query      string `json:"query"`
+	Connection string `json:"connection"`
+	ExpiresAt  string `json:"expires_at"` // ISO 8601
+}
+
+// PendingOutput is the output for the whodb_pending tool.
+type PendingOutput struct {
+	Pending   []PendingInfo `json:"pending"`
+	Error     string        `json:"error,omitempty"`
+	RequestID string        `json:"request_id,omitempty"`
+}
+
+// MarshalJSON ensures nil slices are serialized as [] instead of null.
+func (o PendingOutput) MarshalJSON() ([]byte, error) {
+	if o.Pending == nil {
+		o.Pending = []PendingInfo{}
+	}
+	type Alias PendingOutput
 	return json.Marshal(Alias(o))
 }
 
@@ -249,7 +293,7 @@ func generateConfirmationToken() string {
 }
 
 // storePendingConfirmation stores a query for later confirmation
-func storePendingConfirmation(query, connection string) string {
+func storePendingConfirmation(query, connection string) (string, time.Time) {
 	token := generateConfirmationToken()
 
 	pendingMutex.Lock()
@@ -263,14 +307,15 @@ func storePendingConfirmation(query, connection string) string {
 		}
 	}
 
+	expiresAt := now.Add(5 * time.Minute)
 	pendingConfirmations[token] = &PendingConfirmation{
 		Token:      token,
 		Query:      query,
 		Connection: connection,
-		ExpiresAt:  now.Add(60 * time.Second), // 60 second expiry
+		ExpiresAt:  expiresAt,
 	}
 
-	return token
+	return token, expiresAt
 }
 
 // getPendingConfirmation retrieves and removes a pending confirmation
@@ -288,9 +333,33 @@ func getPendingConfirmation(token string) (*PendingConfirmation, error) {
 		return nil, errors.New("confirmation token has expired")
 	}
 
-	// Remove after use (one-time use)
-	delete(pendingConfirmations, token)
+	// Token is NOT deleted here — it stays valid until consumed by
+	// consumePendingConfirmation after successful execution.
+	// This allows retrying whodb_confirm if the first attempt fails
+	// (e.g., connection error, timeout).
 	return pending, nil
+}
+
+// consumePendingConfirmation removes a token after successful execution.
+func consumePendingConfirmation(token string) {
+	pendingMutex.Lock()
+	defer pendingMutex.Unlock()
+	delete(pendingConfirmations, token)
+}
+
+// listPendingConfirmations returns all non-expired pending confirmations.
+func listPendingConfirmations() []*PendingConfirmation {
+	pendingMutex.RLock()
+	defer pendingMutex.RUnlock()
+
+	now := time.Now()
+	var result []*PendingConfirmation
+	for _, p := range pendingConfirmations {
+		if p.ExpiresAt.After(now) {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // countAvailableConnections returns the number of available database connections.
@@ -328,6 +397,62 @@ func convertColumns(result *engine.GetRowsResult) []string {
 		columns[i] = col.Name
 	}
 	return columns
+}
+
+// convertColumnTypes extracts the type of each column from the result.
+func convertColumnTypes(result *engine.GetRowsResult) []string {
+	types := make([]string, len(result.Columns))
+	for i, col := range result.Columns {
+		types[i] = col.Type
+	}
+	return types
+}
+
+// essentialTableAttributes defines which storage unit attributes to keep in MCP responses.
+// Size/count metrics don't help LLMs generate queries.
+var essentialTableAttributes = map[string]bool{
+	"Type":    true, // Distinguishes TABLE from VIEW
+	"View On": true, // MongoDB: which collection the view is based on
+}
+
+// convertStorageUnitsToTableInfos converts engine storage units to MCP table infos,
+// filtering attributes to essential ones only.
+func convertStorageUnitsToTableInfos(tables []engine.StorageUnit) []TableInfo {
+	infos := make([]TableInfo, len(tables))
+	for i, t := range tables {
+		attrs := make(map[string]string)
+		for _, attr := range t.Attributes {
+			if essentialTableAttributes[attr.Key] {
+				attrs[attr.Key] = attr.Value
+			}
+		}
+		infos[i] = TableInfo{
+			Name:       t.Name,
+			Attributes: attrs,
+		}
+	}
+	return infos
+}
+
+// convertEngineColumnsToColumnInfos converts engine columns to MCP column infos.
+func convertEngineColumnsToColumnInfos(columns []engine.Column) []ColumnInfo {
+	infos := make([]ColumnInfo, len(columns))
+	for i, col := range columns {
+		info := ColumnInfo{
+			Name:         col.Name,
+			Type:         col.Type,
+			IsPrimary:    col.IsPrimary,
+			IsForeignKey: col.IsForeignKey,
+		}
+		if col.ReferencedTable != nil {
+			info.ReferencedTable = *col.ReferencedTable
+		}
+		if col.ReferencedColumn != nil {
+			info.ReferencedColumn = *col.ReferencedColumn
+		}
+		infos[i] = info
+	}
+	return infos
 }
 
 // convertRows converts result rows to [][]any with optional row limit
@@ -447,14 +572,15 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 		}
 
 		// Create a pending confirmation for the write operation
-		token := storePendingConfirmation(input.Query, input.Connection)
+		token, expiresAt := storePendingConfirmation(input.Query, input.Connection)
 
 		TrackToolCall(ctx, "query", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"confirmation_required": true, "statement_type": stmtType})
 		return nil, QueryOutput{
 			ConfirmationRequired: true,
 			ConfirmationToken:    token,
 			ConfirmationQuery:    input.Query,
-			Warning:              fmt.Sprintf("This %s operation requires your approval before it runs. You have 60 seconds to confirm or cancel.", stmtType),
+			ConfirmationExpiry:   expiresAt.UTC().Format(time.RFC3339),
+			Warning:              fmt.Sprintf("This %s operation requires your approval before it runs. You have 5 minutes to confirm or cancel.", stmtType),
 			RequestID:            requestID,
 		}, nil
 	}
@@ -498,9 +624,10 @@ func HandleQuery(ctx context.Context, req *mcp.CallToolRequest, input QueryInput
 	}
 
 	columns := convertColumns(result)
+	columnTypes := convertColumnTypes(result)
 	rows, truncated := convertRows(result, secOpts.MaxRows)
 
-	output := QueryOutput{Columns: columns, Rows: rows, RequestID: requestID}
+	output := QueryOutput{Columns: columns, ColumnTypes: columnTypes, Rows: rows, RequestID: requestID}
 	if truncated {
 		output.Warning = fmt.Sprintf("Results truncated to %d rows. Use LIMIT in your query for more control.", secOpts.MaxRows)
 	}
@@ -576,7 +703,11 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, ConfirmOutput{Error: fmt.Sprintf("query failed: %v", err), RequestID: requestID}, nil
 	}
 
+	// Query executed successfully — consume the token so it can't be reused
+	consumePendingConfirmation(input.Token)
+
 	columns := convertColumns(result)
+	columnTypes := convertColumnTypes(result)
 	rows, _ := convertRows(result, 0) // No row limit for confirmed writes
 
 	stmtType := DetectStatementType(pending.Query)
@@ -586,10 +717,11 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 	})
 
 	output := ConfirmOutput{
-		Columns:   columns,
-		Rows:      rows,
-		Message:   fmt.Sprintf("%s operation completed successfully", stmtType),
-		RequestID: requestID,
+		Columns:     columns,
+		ColumnTypes: columnTypes,
+		Rows:        rows,
+		Message:     fmt.Sprintf("%s operation completed successfully", stmtType),
+		RequestID:   requestID,
 	}
 
 	// Wrap results with prompt injection protection
@@ -600,6 +732,27 @@ func HandleConfirm(ctx context.Context, req *mcp.CallToolRequest, input ConfirmI
 		return nil, output, nil
 	}
 	return wrappedResult, output, nil
+}
+
+// HandlePending lists all non-expired pending confirmations.
+func HandlePending(ctx context.Context, req *mcp.CallToolRequest, input PendingInput, secOpts *SecurityOptions) (*mcp.CallToolResult, PendingOutput, error) {
+	requestID := generateRequestID("pending")
+	startTime := time.Now()
+
+	pending := listPendingConfirmations()
+
+	infos := make([]PendingInfo, len(pending))
+	for i, p := range pending {
+		infos[i] = PendingInfo{
+			Token:      p.Token,
+			Query:      p.Query,
+			Connection: p.Connection,
+			ExpiresAt:  p.ExpiresAt.UTC().Format(time.RFC3339),
+		}
+	}
+
+	TrackToolCall(ctx, "pending", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"count": len(infos)})
+	return nil, PendingOutput{Pending: infos, RequestID: requestID}, nil
 }
 
 // HandleSchemas lists all schemas in the database.
@@ -638,8 +791,27 @@ func HandleSchemas(ctx context.Context, req *mcp.CallToolRequest, input SchemasI
 		return nil, SchemasOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err), RequestID: requestID}, nil
 	}
 
-	TrackToolCall(ctx, "schemas", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"schema_count": len(schemas), "db_type": conn.Type})
-	return nil, SchemasOutput{Schemas: schemas, RequestID: requestID}, nil
+	output := SchemasOutput{Schemas: schemas, RequestID: requestID}
+
+	if input.IncludeTables {
+		details := make([]SchemaDetail, len(schemas))
+		for i, schema := range schemas {
+			detail := SchemaDetail{Name: schema}
+			tables, err := mgr.GetStorageUnits(schema)
+			if err == nil {
+				detail.Tables = convertStorageUnitsToTableInfos(tables)
+			}
+			details[i] = detail
+		}
+		output.Details = details
+	}
+
+	TrackToolCall(ctx, "schemas", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{
+		"schema_count":   len(schemas),
+		"include_tables": input.IncludeTables,
+		"db_type":        conn.Type,
+	})
+	return nil, output, nil
 }
 
 // HandleTables lists all tables in a schema.
@@ -696,29 +868,22 @@ func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInp
 		return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch tables: %v", err), RequestID: requestID}, nil
 	}
 
-	// Convert to output format, filtering to essential attributes only.
-	// Keep "Type" (all databases) and "View On" (MongoDB views) to reduce token usage.
-	// Size/count metrics don't help LLMs generate queries.
-	essentialAttributes := map[string]bool{
-		"Type":    true, // Distinguishes TABLE from VIEW
-		"View On": true, // MongoDB: which collection the view is based on
-	}
+	tableInfos := convertStorageUnitsToTableInfos(tables)
 
-	tableInfos := make([]TableInfo, len(tables))
-	for i, t := range tables {
-		attrs := make(map[string]string)
-		for _, attr := range t.Attributes {
-			if essentialAttributes[attr.Key] {
-				attrs[attr.Key] = attr.Value
+	if input.IncludeColumns {
+		for i, t := range tableInfos {
+			cols, err := mgr.GetColumns(schema, t.Name)
+			if err == nil {
+				tableInfos[i].Columns = convertEngineColumnsToColumnInfos(cols)
 			}
 		}
-		tableInfos[i] = TableInfo{
-			Name:       t.Name,
-			Attributes: attrs,
-		}
 	}
 
-	TrackToolCall(ctx, "tables", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"table_count": len(tableInfos), "db_type": conn.Type})
+	TrackToolCall(ctx, "tables", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{
+		"table_count":     len(tableInfos),
+		"include_columns": input.IncludeColumns,
+		"db_type":         conn.Type,
+	})
 	return nil, TablesOutput{Tables: tableInfos, Schema: schema, RequestID: requestID}, nil
 }
 
@@ -776,23 +941,7 @@ func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsI
 		return nil, ColumnsOutput{Error: fmt.Sprintf("failed to fetch columns: %v", err), RequestID: requestID}, nil
 	}
 
-	// Convert to output format
-	columnInfos := make([]ColumnInfo, len(columns))
-	for i, col := range columns {
-		info := ColumnInfo{
-			Name:         col.Name,
-			Type:         col.Type,
-			IsPrimary:    col.IsPrimary,
-			IsForeignKey: col.IsForeignKey,
-		}
-		if col.ReferencedTable != nil {
-			info.ReferencedTable = *col.ReferencedTable
-		}
-		if col.ReferencedColumn != nil {
-			info.ReferencedColumn = *col.ReferencedColumn
-		}
-		columnInfos[i] = info
-	}
+	columnInfos := convertEngineColumnsToColumnInfos(columns)
 
 	TrackToolCall(ctx, "columns", requestID, true, time.Since(startTime).Milliseconds(), map[string]any{"column_count": len(columnInfos), "db_type": conn.Type})
 	return nil, ColumnsOutput{Columns: columnInfos, Table: input.Table, Schema: schema, RequestID: requestID}, nil

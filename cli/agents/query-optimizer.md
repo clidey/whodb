@@ -35,9 +35,9 @@ Get the problematic query and understand its purpose:
 
 ### Step 2: Examine Table Structure
 ```
-whodb_columns(table="table_name")
+whodb_tables(schema="...", include_columns=true)
 ```
-Check:
+This returns all tables with their column details in one call. Check:
 - Primary keys
 - Foreign keys
 - Column types

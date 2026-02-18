@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/clidey/whodb/core/src/engine"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -364,9 +365,15 @@ func TestPendingConfirmation(t *testing.T) {
 	connection := "test_conn"
 
 	// Store a pending confirmation
-	token := storePendingConfirmation(query, connection)
+	token, expiresAt := storePendingConfirmation(query, connection)
 	if token == "" {
 		t.Fatal("expected non-empty token")
+	}
+	if expiresAt.IsZero() {
+		t.Fatal("expected non-zero expiry time")
+	}
+	if time.Until(expiresAt) < 4*time.Minute || time.Until(expiresAt) > 6*time.Minute {
+		t.Errorf("expected expiry ~5 minutes from now, got %v", time.Until(expiresAt))
 	}
 
 	// Retrieve it
@@ -383,10 +390,22 @@ func TestPendingConfirmation(t *testing.T) {
 		t.Errorf("Connection mismatch: got %q, want %q", pending.Connection, connection)
 	}
 
-	// Second retrieval should fail (one-time use)
+	// Second retrieval should succeed (token not consumed on read)
+	pending2, err := getPendingConfirmation(token)
+	if err != nil {
+		t.Errorf("expected second retrieval to succeed (token stays valid until consumed), got: %v", err)
+	}
+	if pending2.Query != query {
+		t.Errorf("second retrieval query mismatch: got %q, want %q", pending2.Query, query)
+	}
+
+	// Consume the token
+	consumePendingConfirmation(token)
+
+	// After consumption, retrieval should fail
 	_, err = getPendingConfirmation(token)
 	if err == nil {
-		t.Error("expected error on second retrieval (token should be consumed)")
+		t.Error("expected error after token consumed")
 	}
 }
 
@@ -1246,4 +1265,352 @@ func TestOutputMarshalJSON_NilSlicesSerializeAsEmptyArrays(t *testing.T) {
 			t.Error("connections should be [] not null")
 		}
 	})
+
+	t.Run("PendingOutput with nil slices", func(t *testing.T) {
+		output := PendingOutput{Error: "some error"}
+		data, err := json.Marshal(output)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if strings.Contains(string(data), `"pending":null`) {
+			t.Error("pending should be [] not null")
+		}
+		if !strings.Contains(string(data), `"pending":[]`) {
+			t.Error("expected pending to be []")
+		}
+	})
+}
+
+// =============================================================================
+// Column Types in Query Output Tests
+// =============================================================================
+
+// TestConvertColumnTypes tests that column types are correctly extracted
+func TestConvertColumnTypes(t *testing.T) {
+	result := &engine.GetRowsResult{
+		Columns: []engine.Column{
+			{Name: "id", Type: "integer"},
+			{Name: "name", Type: "varchar"},
+			{Name: "created_at", Type: "timestamp"},
+		},
+		Rows: [][]string{},
+	}
+
+	types := convertColumnTypes(result)
+	if len(types) != 3 {
+		t.Fatalf("expected 3 types, got %d", len(types))
+	}
+	if types[0] != "integer" {
+		t.Errorf("expected 'integer', got %q", types[0])
+	}
+	if types[1] != "varchar" {
+		t.Errorf("expected 'varchar', got %q", types[1])
+	}
+	if types[2] != "timestamp" {
+		t.Errorf("expected 'timestamp', got %q", types[2])
+	}
+}
+
+// TestConvertColumnTypes_Empty tests empty columns
+func TestConvertColumnTypes_Empty(t *testing.T) {
+	result := &engine.GetRowsResult{
+		Columns: []engine.Column{},
+		Rows:    [][]string{},
+	}
+
+	types := convertColumnTypes(result)
+	if len(types) != 0 {
+		t.Fatalf("expected 0 types, got %d", len(types))
+	}
+}
+
+// TestQueryOutput_ColumnTypesInJSON tests that column_types appears in JSON output
+func TestQueryOutput_ColumnTypesInJSON(t *testing.T) {
+	output := QueryOutput{
+		Columns:     []string{"id", "name"},
+		ColumnTypes: []string{"integer", "varchar"},
+		Rows:        [][]any{{1, "test"}},
+		RequestID:   "test-1",
+	}
+
+	data, err := json.Marshal(output)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	s := string(data)
+	if !strings.Contains(s, `"column_types"`) {
+		t.Error("expected column_types in JSON output")
+	}
+	if !strings.Contains(s, `"integer"`) {
+		t.Error("expected 'integer' type in JSON output")
+	}
+}
+
+// TestQueryOutput_ColumnTypesOmittedWhenNil tests that column_types is omitted when nil
+func TestQueryOutput_ColumnTypesOmittedWhenNil(t *testing.T) {
+	output := QueryOutput{
+		Columns:   []string{"id"},
+		Rows:      [][]any{{1}},
+		RequestID: "test-1",
+	}
+
+	data, err := json.Marshal(output)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	if strings.Contains(string(data), `"column_types"`) {
+		t.Error("column_types should be omitted when nil")
+	}
+}
+
+// =============================================================================
+// Confirmation Expiry and Token Retry Tests
+// =============================================================================
+
+// TestConfirmation_ExpiryInResponse tests that confirmation response includes expiry timestamp
+func TestConfirmation_ExpiryInResponse(t *testing.T) {
+	ctx := t.Context()
+
+	secOpts := &SecurityOptions{
+		ReadOnly:            false,
+		ConfirmWrites:       true,
+		SecurityLevel:       SecurityLevelStandard,
+		QueryTimeout:        30 * time.Second,
+		MaxRows:             1000,
+		AllowMultiStatement: false,
+	}
+
+	input := QueryInput{
+		Query:      "INSERT INTO users VALUES (1, 'test')",
+		Connection: "test_conn",
+	}
+
+	_, output, err := HandleQuery(ctx, nil, input, secOpts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !output.ConfirmationRequired {
+		t.Fatal("expected ConfirmationRequired=true")
+	}
+
+	if output.ConfirmationExpiry == "" {
+		t.Error("expected ConfirmationExpiry to be set")
+	}
+
+	// Parse the expiry time
+	expiryTime, err := time.Parse(time.RFC3339, output.ConfirmationExpiry)
+	if err != nil {
+		t.Fatalf("failed to parse expiry time %q: %v", output.ConfirmationExpiry, err)
+	}
+
+	// Should be approximately 5 minutes from now
+	untilExpiry := time.Until(expiryTime)
+	if untilExpiry < 4*time.Minute || untilExpiry > 6*time.Minute {
+		t.Errorf("expected expiry ~5 minutes from now, got %v", untilExpiry)
+	}
+
+	if !strings.Contains(output.Warning, "5 minutes") {
+		t.Errorf("expected warning to mention '5 minutes', got: %s", output.Warning)
+	}
+}
+
+// TestConfirmation_TokenRetryable tests that a token can be retrieved multiple times
+func TestConfirmation_TokenRetryable(t *testing.T) {
+	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", "conn")
+
+	// First retrieval
+	p1, err := getPendingConfirmation(token)
+	if err != nil {
+		t.Fatalf("first retrieval failed: %v", err)
+	}
+
+	// Second retrieval should also succeed
+	p2, err := getPendingConfirmation(token)
+	if err != nil {
+		t.Fatalf("second retrieval failed: %v", err)
+	}
+
+	if p1.Query != p2.Query {
+		t.Error("expected same query from both retrievals")
+	}
+
+	// Consume
+	consumePendingConfirmation(token)
+
+	// Now should fail
+	_, err = getPendingConfirmation(token)
+	if err == nil {
+		t.Error("expected error after consumption")
+	}
+}
+
+// =============================================================================
+// Pending Confirmations List Tests
+// =============================================================================
+
+// TestListPendingConfirmations tests the listing of pending confirmations
+func TestListPendingConfirmations(t *testing.T) {
+	// Clean up any existing pending confirmations
+	pendingMutex.Lock()
+	for k := range pendingConfirmations {
+		delete(pendingConfirmations, k)
+	}
+	pendingMutex.Unlock()
+
+	// Store a few confirmations
+	token1, _ := storePendingConfirmation("INSERT INTO a VALUES (1)", "conn1")
+	token2, _ := storePendingConfirmation("UPDATE b SET x=1", "conn2")
+
+	pending := listPendingConfirmations()
+	if len(pending) != 2 {
+		t.Fatalf("expected 2 pending confirmations, got %d", len(pending))
+	}
+
+	// Consume one
+	consumePendingConfirmation(token1)
+
+	pending = listPendingConfirmations()
+	if len(pending) != 1 {
+		t.Fatalf("expected 1 pending confirmation after consuming one, got %d", len(pending))
+	}
+
+	if pending[0].Token != token2 {
+		t.Errorf("expected remaining token to be %q, got %q", token2, pending[0].Token)
+	}
+
+	// Clean up
+	consumePendingConfirmation(token2)
+}
+
+// TestHandlePending tests the HandlePending handler
+func TestHandlePending(t *testing.T) {
+	ctx := t.Context()
+
+	// Clean up
+	pendingMutex.Lock()
+	for k := range pendingConfirmations {
+		delete(pendingConfirmations, k)
+	}
+	pendingMutex.Unlock()
+
+	secOpts := &SecurityOptions{ConfirmWrites: true}
+
+	// Empty list
+	_, output, err := HandlePending(ctx, nil, PendingInput{}, secOpts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(output.Pending) != 0 {
+		t.Errorf("expected 0 pending, got %d", len(output.Pending))
+	}
+
+	// Add one
+	token, _ := storePendingConfirmation("INSERT INTO test VALUES (1)", "myconn")
+
+	_, output, err = HandlePending(ctx, nil, PendingInput{}, secOpts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(output.Pending) != 1 {
+		t.Fatalf("expected 1 pending, got %d", len(output.Pending))
+	}
+	if output.Pending[0].Token != token {
+		t.Errorf("token mismatch: got %q, want %q", output.Pending[0].Token, token)
+	}
+	if output.Pending[0].Query != "INSERT INTO test VALUES (1)" {
+		t.Errorf("query mismatch: got %q", output.Pending[0].Query)
+	}
+	if output.Pending[0].Connection != "myconn" {
+		t.Errorf("connection mismatch: got %q", output.Pending[0].Connection)
+	}
+	if output.Pending[0].ExpiresAt == "" {
+		t.Error("expected ExpiresAt to be set")
+	}
+
+	// Clean up
+	consumePendingConfirmation(token)
+}
+
+// =============================================================================
+// Conversion Helper Tests
+// =============================================================================
+
+// TestConvertStorageUnitsToTableInfos tests the table conversion helper
+func TestConvertStorageUnitsToTableInfos(t *testing.T) {
+	units := []engine.StorageUnit{
+		{
+			Name: "users",
+			Attributes: []engine.Record{
+				{Key: "Type", Value: "BASE TABLE"},
+				{Key: "Total Size", Value: "16 kB"},
+				{Key: "Data Size", Value: "8192"},
+			},
+		},
+		{
+			Name: "user_view",
+			Attributes: []engine.Record{
+				{Key: "Type", Value: "View"},
+				{Key: "View On", Value: "users"},
+				{Key: "Storage Size", Value: "0"},
+			},
+		},
+	}
+
+	infos := convertStorageUnitsToTableInfos(units)
+	if len(infos) != 2 {
+		t.Fatalf("expected 2 table infos, got %d", len(infos))
+	}
+
+	// First table: only Type should remain
+	if infos[0].Name != "users" {
+		t.Errorf("expected 'users', got %q", infos[0].Name)
+	}
+	if len(infos[0].Attributes) != 1 {
+		t.Errorf("expected 1 attribute (Type only), got %d", len(infos[0].Attributes))
+	}
+	if infos[0].Attributes["Type"] != "BASE TABLE" {
+		t.Errorf("expected 'BASE TABLE', got %q", infos[0].Attributes["Type"])
+	}
+
+	// Second table: Type and View On should remain
+	if len(infos[1].Attributes) != 2 {
+		t.Errorf("expected 2 attributes (Type + View On), got %d", len(infos[1].Attributes))
+	}
+	if infos[1].Attributes["View On"] != "users" {
+		t.Errorf("expected 'users', got %q", infos[1].Attributes["View On"])
+	}
+}
+
+// TestConvertEngineColumnsToColumnInfos tests the column conversion helper
+func TestConvertEngineColumnsToColumnInfos(t *testing.T) {
+	refTable := "orders"
+	refCol := "user_id"
+
+	columns := []engine.Column{
+		{Name: "id", Type: "integer", IsPrimary: true},
+		{Name: "name", Type: "varchar", IsForeignKey: false},
+		{Name: "order_ref", Type: "integer", IsForeignKey: true, ReferencedTable: &refTable, ReferencedColumn: &refCol},
+	}
+
+	infos := convertEngineColumnsToColumnInfos(columns)
+	if len(infos) != 3 {
+		t.Fatalf("expected 3 column infos, got %d", len(infos))
+	}
+
+	if !infos[0].IsPrimary {
+		t.Error("expected id to be primary")
+	}
+	if infos[0].Type != "integer" {
+		t.Errorf("expected 'integer', got %q", infos[0].Type)
+	}
+
+	if infos[2].ReferencedTable != "orders" {
+		t.Errorf("expected 'orders', got %q", infos[2].ReferencedTable)
+	}
+	if infos[2].ReferencedColumn != "user_id" {
+		t.Errorf("expected 'user_id', got %q", infos[2].ReferencedColumn)
+	}
 }

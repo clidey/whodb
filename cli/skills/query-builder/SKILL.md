@@ -18,11 +18,10 @@ Activate when user asks questions like:
 ## Workflow
 
 ### 1. Understand the Schema
-Before generating SQL, always check the table structure:
+Before generating SQL, get tables and columns in one call:
 
 ```
-whodb_tables(connection="...") → Get available tables
-whodb_columns(table="relevant_table") → Get column names and types
+whodb_tables(connection="...", include_columns=true) → Get all tables AND their column names, types, and keys
 ```
 
 ### 2. Identify Intent

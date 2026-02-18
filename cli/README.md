@@ -412,11 +412,12 @@ This starts an MCP server that exposes these tools:
 | Tool | Description |
 |------|-------------|
 | `whodb_connections` | List available database connections |
-| `whodb_schemas` | List schemas in a database |
-| `whodb_tables` | List tables in a schema |
+| `whodb_schemas` | List schemas in a database (set `include_tables` for tables too) |
+| `whodb_tables` | List tables in a schema (set `include_columns` for column details too) |
 | `whodb_columns` | Describe table columns |
-| `whodb_query` | Execute SQL queries |
+| `whodb_query` | Execute SQL queries (results include `column_types`) |
 | `whodb_confirm` | Confirm pending write operations (only when confirm-writes is enabled) |
+| `whodb_pending` | List pending write confirmations (only when confirm-writes is enabled) |
 
 Write operations require confirmation by default. Use `--allow-write` to disable confirmations, or `--read-only` to block writes entirely.
 

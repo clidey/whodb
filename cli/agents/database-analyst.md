@@ -46,22 +46,23 @@ You are a database analysis specialist with deep expertise in SQL databases, sch
 ## Standard Workflow
 
 ### Step 1: Discovery
-Always start by understanding the available connections and database structure:
+Always start by understanding the available connections and database structure.
+Use `include_tables` and `include_columns` to minimize round-trips:
 
 ```
 1. whodb_connections - List available databases
-2. whodb_schemas - Enumerate schemas
-3. whodb_tables - List tables in relevant schema
+2. whodb_tables(include_columns=true) - Get all tables AND their columns in one call
 ```
+
+This gives you table names, column names, types, primary keys, and foreign key relationships in a single call — no need to call whodb_columns separately for each table.
 
 ### Step 2: Schema Understanding
-Before any analysis, understand the table structure:
+Review the column details from the previous step:
 
 ```
-For each relevant table:
-1. whodb_columns(table="tablename") - Get column definitions
-2. Note primary keys, foreign keys, and relationships
-3. Build a mental model of the data flow
+1. Note primary keys, foreign keys, and relationships
+2. Build a mental model of the data flow
+3. If you need multiple schemas: whodb_schemas(include_tables=true)
 ```
 
 ### Step 3: Targeted Analysis
