@@ -67,9 +67,9 @@ func TestNewConnectionView_NoConnections(t *testing.T) {
 		t.Errorf("Expected mode 'form' with no connections, got '%s'", v.mode)
 	}
 
-	// First input should be focused
-	if v.focusIndex != 0 {
-		t.Errorf("Expected focusIndex 0, got %d", v.focusIndex)
+	// Database type selector should be focused first
+	if v.focusIndex != 7 {
+		t.Errorf("Expected focusIndex 7 (db type), got %d", v.focusIndex)
 	}
 }
 
@@ -235,14 +235,14 @@ func TestConnectionView_FormMode_NextInput(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 0
+	v.focusIndex = 0 // Name field
 
-	// Tab/Down moves to next input
+	// Tab/Down moves to next input (Postgres: 7→0→1→2→3→4→5→6→8)
 	msg := tea.KeyMsg{Type: tea.KeyTab}
 	v, _ = v.Update(msg)
 
 	if v.focusIndex != 1 {
-		t.Errorf("Expected focusIndex 1 after Tab, got %d", v.focusIndex)
+		t.Errorf("Expected focusIndex 1 after Tab from 0, got %d", v.focusIndex)
 	}
 }
 
@@ -269,14 +269,14 @@ func TestConnectionView_FormMode_WrapAround(t *testing.T) {
 	v.mode = "form"
 	v.focusIndex = 8 // Last position (Connect button)
 
-	// Tab from last wraps to first
+	// Tab from last wraps to first (db type selector)
 	v.nextInput()
 
-	if v.focusIndex != 0 {
-		t.Errorf("Expected focusIndex 0 after wrap, got %d", v.focusIndex)
+	if v.focusIndex != 7 {
+		t.Errorf("Expected focusIndex 7 (db type) after wrap, got %d", v.focusIndex)
 	}
 
-	// Tab from first backwards wraps to last
+	// Shift+Tab from db type wraps to last (connect button)
 	v.prevInput()
 
 	if v.focusIndex != 8 {
@@ -407,8 +407,8 @@ func TestConnectionView_ResetForm(t *testing.T) {
 		}
 	}
 
-	if v.focusIndex != 0 {
-		t.Errorf("Expected focusIndex 0 after reset, got %d", v.focusIndex)
+	if v.focusIndex != 7 {
+		t.Errorf("Expected focusIndex 7 (db type) after reset, got %d", v.focusIndex)
 	}
 
 	if v.dbTypeIndex != 0 {
@@ -497,9 +497,9 @@ func TestConnectionView_MouseScroll_Form(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 0
+	v.focusIndex = 0 // Name field (Postgres)
 
-	// Mouse wheel down
+	// Mouse wheel down moves to next
 	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
 	v, _ = v.Update(msg)
 
@@ -507,7 +507,7 @@ func TestConnectionView_MouseScroll_Form(t *testing.T) {
 		t.Errorf("Expected focusIndex 1 after wheel down, got %d", v.focusIndex)
 	}
 
-	// Mouse wheel up
+	// Mouse wheel up moves back
 	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
 	v, _ = v.Update(msg)
 
@@ -702,6 +702,274 @@ func TestConnectionView_ConnectionResultMsg_Error(t *testing.T) {
 	// Mode should stay in form
 	if v.mode != "form" {
 		t.Errorf("Expected mode 'form' after error, got '%s'", v.mode)
+	}
+}
+
+// ============================================================================
+// Smart Connection Form (Feature 5) Tests
+// ============================================================================
+
+func TestGetVisibleFields_AllTypes(t *testing.T) {
+	tests := []struct {
+		dbType   string
+		expected []int
+	}{
+		{"Postgres", []int{0, 1, 2, 3, 4, 5, 6}},
+		{"MySQL", []int{0, 1, 2, 3, 4, 5, 6}},
+		{"MariaDB", []int{0, 1, 2, 3, 4, 5, 6}},
+		{"ClickHouse", []int{0, 1, 2, 3, 4, 5, 6}},
+		{"SQLite", []int{0, 5}},
+		{"MongoDB", []int{0, 1, 2, 3, 4, 5}},
+		{"Redis", []int{0, 1, 2, 4, 5}},
+		{"ElasticSearch", []int{0, 1, 2, 3, 4}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.dbType, func(t *testing.T) {
+			result := getVisibleFields(tt.dbType)
+			if len(result) != len(tt.expected) {
+				t.Errorf("getVisibleFields(%s) returned %d fields, expected %d", tt.dbType, len(result), len(tt.expected))
+				return
+			}
+			for i, v := range result {
+				if v != tt.expected[i] {
+					t.Errorf("getVisibleFields(%s)[%d] = %d, expected %d", tt.dbType, i, v, tt.expected[i])
+				}
+			}
+		})
+	}
+}
+
+func TestConnectionView_IsFieldVisible(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	// Default type is Postgres - all fields visible
+	for i := 0; i < 7; i++ {
+		if !v.isFieldVisible(i) {
+			t.Errorf("Expected field %d to be visible for Postgres", i)
+		}
+	}
+
+	// Switch to SQLite
+	v.visibleFields = getVisibleFields("SQLite")
+	if !v.isFieldVisible(0) {
+		t.Error("Expected field 0 (name) to be visible for SQLite")
+	}
+	if v.isFieldVisible(1) {
+		t.Error("Expected field 1 (host) to be hidden for SQLite")
+	}
+	if v.isFieldVisible(2) {
+		t.Error("Expected field 2 (port) to be hidden for SQLite")
+	}
+	if v.isFieldVisible(3) {
+		t.Error("Expected field 3 (username) to be hidden for SQLite")
+	}
+	if v.isFieldVisible(4) {
+		t.Error("Expected field 4 (password) to be hidden for SQLite")
+	}
+	if !v.isFieldVisible(5) {
+		t.Error("Expected field 5 (database) to be visible for SQLite")
+	}
+	if v.isFieldVisible(6) {
+		t.Error("Expected field 6 (schema) to be hidden for SQLite")
+	}
+}
+
+func TestConnectionView_OnDbTypeChanged_UpdatesVisibility(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+
+	// Switch to SQLite (index 2 in the dbTypes list)
+	v.dbTypeIndex = 2 // SQLite
+	v.onDbTypeChanged()
+
+	if len(v.visibleFields) != 2 {
+		t.Errorf("Expected 2 visible fields for SQLite, got %d", len(v.visibleFields))
+	}
+
+	// Database placeholder should change
+	if v.inputs[5].Placeholder != "/path/to/database.db" {
+		t.Errorf("Expected SQLite database placeholder, got '%s'", v.inputs[5].Placeholder)
+	}
+
+	// Switch back to Postgres
+	v.dbTypeIndex = 0
+	v.onDbTypeChanged()
+
+	if len(v.visibleFields) != 7 {
+		t.Errorf("Expected 7 visible fields for Postgres, got %d", len(v.visibleFields))
+	}
+
+	if v.inputs[5].Placeholder != "mydb" {
+		t.Errorf("Expected 'mydb' database placeholder, got '%s'", v.inputs[5].Placeholder)
+	}
+}
+
+func TestConnectionView_NavigationSkipsHiddenFields_SQLite(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+	v.dbTypeIndex = 2 // SQLite
+	v.onDbTypeChanged()
+
+	// Focus order for SQLite: 7 (dbType) → 0 (name) → 5 (database) → 8 (connect) → wrap
+	v.focusIndex = 7 // Start at db type
+
+	// Next from dbType(7) goes to name(0)
+	v.nextInput()
+	if v.focusIndex != 0 {
+		t.Errorf("Expected focusIndex 0 (name) after Tab from dbType in SQLite, got %d", v.focusIndex)
+	}
+
+	// Next from name(0) should skip host(1), port(2), username(3), password(4) and go to database(5)
+	v.nextInput()
+	if v.focusIndex != 5 {
+		t.Errorf("Expected focusIndex 5 (database) after Tab from name in SQLite, got %d", v.focusIndex)
+	}
+
+	// Next from database(5) goes to connect(8)
+	v.nextInput()
+	if v.focusIndex != 8 {
+		t.Errorf("Expected focusIndex 8 (connect) after Tab from database in SQLite, got %d", v.focusIndex)
+	}
+
+	// Next from connect(8) wraps to dbType(7)
+	v.nextInput()
+	if v.focusIndex != 7 {
+		t.Errorf("Expected focusIndex 7 (dbType) after wrap, got %d", v.focusIndex)
+	}
+}
+
+func TestConnectionView_PrevNavigationSkipsHiddenFields_SQLite(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+	v.dbTypeIndex = 2 // SQLite
+	v.onDbTypeChanged()
+
+	// Focus order for SQLite: 7 → 0 → 5 → 8
+	// Reverse: 8 → 5 → 0 → 7
+	v.focusIndex = 5 // Start at database
+
+	// Prev from database(5) should go to name(0)
+	v.prevInput()
+	if v.focusIndex != 0 {
+		t.Errorf("Expected focusIndex 0 (name) after Shift+Tab from database in SQLite, got %d", v.focusIndex)
+	}
+
+	// Prev from name(0) goes to dbType(7)
+	v.prevInput()
+	if v.focusIndex != 7 {
+		t.Errorf("Expected focusIndex 7 (dbType) after Shift+Tab from name, got %d", v.focusIndex)
+	}
+
+	// Prev from dbType(7) wraps to connect(8)
+	v.prevInput()
+	if v.focusIndex != 8 {
+		t.Errorf("Expected focusIndex 8 (connect) after backward wrap, got %d", v.focusIndex)
+	}
+}
+
+func TestConnectionView_FormView_SQLiteHidesFields(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+	v.dbTypeIndex = 2 // SQLite
+	v.onDbTypeChanged()
+
+	view := v.View()
+
+	// Should show name and database
+	if !strings.Contains(view, "Connection Name") {
+		t.Error("Expected 'Connection Name' field for SQLite")
+	}
+	if !strings.Contains(view, "Database") {
+		t.Error("Expected 'Database' field for SQLite")
+	}
+
+	// Should NOT show host, port, username, password, schema
+	if strings.Contains(view, "Host:") {
+		t.Error("Expected 'Host' field to be hidden for SQLite")
+	}
+	if strings.Contains(view, "Port:") {
+		t.Error("Expected 'Port' field to be hidden for SQLite")
+	}
+	if strings.Contains(view, "Username:") {
+		t.Error("Expected 'Username' field to be hidden for SQLite")
+	}
+	if strings.Contains(view, "Password:") {
+		t.Error("Expected 'Password' field to be hidden for SQLite")
+	}
+	if strings.Contains(view, "Schema:") {
+		t.Error("Expected 'Schema' field to be hidden for SQLite")
+	}
+}
+
+func TestConnectionView_FormView_PostgresShowsAllFields(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+	v.dbTypeIndex = 0 // Postgres
+	v.onDbTypeChanged()
+
+	view := v.View()
+
+	for _, field := range []string{"Connection Name", "Host:", "Port:", "Username:", "Password:", "Database:", "Schema:"} {
+		if !strings.Contains(view, field) {
+			t.Errorf("Expected '%s' field to be visible for Postgres", field)
+		}
+	}
+}
+
+func TestConnectionView_PasswordPromptSkipped_SQLite(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+	v.dbTypeIndex = 2 // SQLite
+	v.onDbTypeChanged()
+	v.focusIndex = 8         // Connect button
+	v.inputs[4].SetValue("") // Password empty (but hidden)
+
+	// Press Enter - should NOT show password prompt since password field is hidden
+	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	v, _ = v.Update(msg)
+
+	if v.awaitingPassword {
+		t.Error("Expected awaitingPassword to be false for SQLite (password field hidden)")
+	}
+}
+
+func TestConnectionView_ResetFormUpdatesVisibility(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "form"
+	v.dbTypeIndex = 2 // SQLite
+	v.onDbTypeChanged()
+
+	// Reset should go back to Postgres defaults
+	v.resetForm()
+
+	if v.dbTypeIndex != 0 {
+		t.Errorf("Expected dbTypeIndex 0 after reset, got %d", v.dbTypeIndex)
+	}
+
+	// Focus should start on db type selector
+	if v.focusIndex != 7 {
+		t.Errorf("Expected focusIndex 7 (db type) after reset, got %d", v.focusIndex)
+	}
+
+	// Postgres shows all 7 fields
+	if len(v.visibleFields) != 7 {
+		t.Errorf("Expected 7 visible fields after reset (Postgres), got %d", len(v.visibleFields))
 	}
 }
 

@@ -76,6 +76,7 @@ type ChatView struct {
 	// Retry prompt state for timed out requests
 	retryPrompt   bool
 	timedOutQuery string
+	autoRetried   bool
 }
 
 const (
@@ -106,10 +107,26 @@ func NewChatView(parent *MainModel) *ChatView {
 	providers := parent.dbManager.GetAIProviders()
 	selectedProvider := 0
 
-	for i, p := range providers {
-		if p.Type == "Ollama" {
-			selectedProvider = i
-			break
+	// Try to restore last used provider
+	lastProvider := parent.config.GetLastAIProvider()
+	providerRestored := false
+	if lastProvider != "" {
+		for i, p := range providers {
+			if p.Type == lastProvider {
+				selectedProvider = i
+				providerRestored = true
+				break
+			}
+		}
+	}
+
+	// Fall back to Ollama if no saved provider
+	if !providerRestored {
+		for i, p := range providers {
+			if p.Type == "Ollama" {
+				selectedProvider = i
+				break
+			}
 		}
 	}
 
@@ -180,8 +197,13 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			if errors.Is(msg.err, context.Canceled) {
 				return v, nil
 			}
-			// Check for timeout - enable retry prompt
+			// Check for timeout - auto-retry with saved preference or show menu
 			if errors.Is(msg.err, context.DeadlineExceeded) {
+				preferred := v.parent.config.GetPreferredTimeout()
+				if preferred > 0 && !v.autoRetried {
+					v.autoRetried = true
+					return v, v.sendChatWithTimeout(msg.query, time.Duration(preferred)*time.Second)
+				}
 				v.err = fmt.Errorf("request timed out")
 				v.retryPrompt = true
 				v.timedOutQuery = msg.query
@@ -209,6 +231,15 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		}
 		v.err = nil
 
+		// Save last used provider+model on successful response
+		if v.selectedProvider < len(v.providers) {
+			v.parent.config.SetLastAIProvider(v.providers[v.selectedProvider].Type)
+		}
+		if v.selectedModel < len(v.models) {
+			v.parent.config.SetLastAIModel(v.models[v.selectedModel])
+		}
+		v.parent.config.Save()
+
 		// Auto-scroll to show latest messages
 		if len(v.messages) > maxVisibleMessages {
 			v.scrollOffset = len(v.messages) - maxVisibleMessages
@@ -234,6 +265,19 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		v.models = msg.models
 		if len(v.models) > 0 {
 			v.selectedModel = 0
+			// Try to restore last used model
+			lastModel := v.parent.config.GetLastAIModel()
+			if lastModel != "" {
+				for i, m := range v.models {
+					if m == lastModel {
+						v.selectedModel = i
+						// Auto-focus message field when both provider and model are restored
+						v.focusField = focusFieldMessage
+						v.input.Focus()
+						break
+					}
+				}
+			}
 		}
 		v.err = nil
 		return v, nil
@@ -276,18 +320,25 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			case "1":
 				v.retryPrompt = false
 				v.err = nil
+				v.parent.config.SetPreferredTimeout(60)
+				v.parent.config.Save()
 				return v, v.sendChatWithTimeout(v.timedOutQuery, 60*time.Second)
 			case "2":
 				v.retryPrompt = false
 				v.err = nil
+				v.parent.config.SetPreferredTimeout(120)
+				v.parent.config.Save()
 				return v, v.sendChatWithTimeout(v.timedOutQuery, 2*time.Minute)
 			case "3":
 				v.retryPrompt = false
 				v.err = nil
+				v.parent.config.SetPreferredTimeout(300)
+				v.parent.config.Save()
 				return v, v.sendChatWithTimeout(v.timedOutQuery, 5*time.Minute)
 			case "4":
 				v.retryPrompt = false
 				v.err = nil
+				// No limit applies once but doesn't save
 				return v, v.sendChatWithTimeout(v.timedOutQuery, 24*time.Hour)
 			case "esc":
 				v.retryPrompt = false
@@ -445,6 +496,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			} else if v.focusField == focusFieldMessage && !v.sending {
 				query := strings.TrimSpace(v.input.Value())
 				if query != "" {
+					v.autoRetried = false
 					v.messages = append(v.messages, chatMessage{
 						Role:    "user",
 						Content: query,

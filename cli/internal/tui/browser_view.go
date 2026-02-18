@@ -56,6 +56,7 @@ type BrowserView struct {
 	filteredTables      []engine.StorageUnit
 	// Retry prompt state for timed out requests
 	retryPrompt bool
+	autoRetried bool
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -84,8 +85,14 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 	case tablesLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
-			// Check for timeout - enable retry prompt
+			// Check for timeout - auto-retry with saved preference or show menu
 			if strings.Contains(msg.err.Error(), "timed out") {
+				preferred := v.parent.config.GetPreferredTimeout()
+				if preferred > 0 && !v.autoRetried {
+					v.autoRetried = true
+					v.loading = true
+					return v, v.loadTablesWithTimeout(time.Duration(preferred) * time.Second)
+				}
 				v.err = msg.err
 				v.retryPrompt = true
 				return v, nil
@@ -135,21 +142,28 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 				v.retryPrompt = false
 				v.err = nil
 				v.loading = true
+				v.parent.config.SetPreferredTimeout(60)
+				v.parent.config.Save()
 				return v, v.loadTablesWithTimeout(60 * time.Second)
 			case "2":
 				v.retryPrompt = false
 				v.err = nil
 				v.loading = true
+				v.parent.config.SetPreferredTimeout(120)
+				v.parent.config.Save()
 				return v, v.loadTablesWithTimeout(2 * time.Minute)
 			case "3":
 				v.retryPrompt = false
 				v.err = nil
 				v.loading = true
+				v.parent.config.SetPreferredTimeout(300)
+				v.parent.config.Save()
 				return v, v.loadTablesWithTimeout(5 * time.Minute)
 			case "4":
 				v.retryPrompt = false
 				v.err = nil
 				v.loading = true
+				// No limit applies once but doesn't save
 				return v, v.loadTablesWithTimeout(24 * time.Hour)
 			case "esc":
 				v.retryPrompt = false
@@ -582,6 +596,7 @@ func (v *BrowserView) loadTablesWithTimeout(timeout time.Duration) tea.Cmd {
 }
 
 func (v *BrowserView) Init() tea.Cmd {
+	v.autoRetried = false
 	return v.loadTables()
 }
 

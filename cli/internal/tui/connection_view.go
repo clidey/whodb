@@ -78,15 +78,16 @@ type escTimeoutTickMsg struct{}
 // It supports both a list view (selecting from saved connections) and
 // a form view (creating new connections).
 type ConnectionView struct {
-	parent      *MainModel
-	list        list.Model
-	mode        string // "list" or "form"
-	inputs      []textinput.Model
-	focusIndex  int
-	dbTypes     []string
-	dbTypeIndex int
-	connecting  bool
-	connError   error
+	parent        *MainModel
+	list          list.Model
+	mode          string // "list" or "form"
+	inputs        []textinput.Model
+	focusIndex    int
+	dbTypes       []string
+	dbTypeIndex   int
+	visibleFields []int // indices of visible input fields for current db type
+	connecting    bool
+	connError     error
 	// Deferred password prompt when connecting with empty password
 	awaitingPassword bool
 	passwordPrompt   textinput.Model
@@ -180,9 +181,9 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	inputs = append(inputs, schemaInput)
 
 	mode := "list"
+	focusIndex := 7 // Start on db type selector
 	if len(items) == 0 {
 		mode = "form"
-		inputs[0].Focus()
 	}
 
 	// Password prompt (shown after pressing Connect if password is empty)
@@ -196,14 +197,17 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	prompt.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
 	prompt.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
 
+	dbTypes := []string{"Postgres", "MySQL", "SQLite", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
+
 	return &ConnectionView{
 		parent:           parent,
 		list:             l,
 		mode:             mode,
 		inputs:           inputs,
-		focusIndex:       0,
-		dbTypes:          []string{"Postgres", "MySQL", "SQLite", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"},
+		focusIndex:       focusIndex,
+		dbTypes:          dbTypes,
 		dbTypeIndex:      0,
+		visibleFields:    getVisibleFields(dbTypes[0]),
 		connecting:       false,
 		awaitingPassword: false,
 		passwordPrompt:   prompt,
@@ -374,7 +378,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				if v.dbTypeIndex < 0 {
 					v.dbTypeIndex = len(v.dbTypes) - 1
 				}
-				v.updatePortPlaceholder()
+				v.onDbTypeChanged()
 			}
 			return v, nil
 
@@ -384,14 +388,14 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				if v.dbTypeIndex >= len(v.dbTypes) {
 					v.dbTypeIndex = 0
 				}
-				v.updatePortPlaceholder()
+				v.onDbTypeChanged()
 			}
 			return v, nil
 
 		case "enter":
 			if v.focusIndex == 8 {
-				// If password is empty, prompt securely before connecting
-				if v.inputs[4].Value() == "" {
+				// If password field is visible and empty, prompt securely before connecting
+				if v.isFieldVisible(4) && v.inputs[4].Value() == "" {
 					v.awaitingPassword = true
 					v.passwordPrompt.SetValue("")
 					v.passwordPrompt.Focus()
@@ -458,98 +462,14 @@ func (v *ConnectionView) renderForm() string {
 		b.WriteString("\n\n")
 	}
 
-	// Connection Name (index 0)
-	label := "Connection Name:"
-	if v.focusIndex == 0 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[0].View())
-	b.WriteString("\n\n")
-
-	// Host (index 1)
-	label = "Host:"
-	if v.focusIndex == 1 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[1].View())
-	b.WriteString("\n\n")
-
-	// Port (index 2)
-	label = "Port:"
-	if v.focusIndex == 2 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[2].View())
-	b.WriteString("\n\n")
-
-	// Username (index 3)
-	label = "Username:"
-	if v.focusIndex == 3 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[3].View())
-	b.WriteString("\n\n")
-
-	// Password (index 4)
-	label = "Password:"
-	if v.focusIndex == 4 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[4].View())
-	b.WriteString("\n\n")
-
-	// Database (index 5)
-	label = "Database:"
-	if v.focusIndex == 5 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[5].View())
-	b.WriteString("\n\n")
-
-	// Schema (index 6)
-	label = "Schema:"
-	if v.focusIndex == 6 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[6].View())
-	b.WriteString("\n\n")
-
-	// Database Type (index 7)
-	label = "Database Type:"
+	// Database Type (index 7) — rendered first so user picks type before filling fields
+	dbTypeLabel := "Database Type:"
 	if v.focusIndex == 7 {
-		label = styles.KeyStyle.Render("▶ " + label)
+		dbTypeLabel = styles.KeyStyle.Render("▶ " + dbTypeLabel)
 	} else {
-		label = "  " + label
+		dbTypeLabel = "  " + dbTypeLabel
 	}
-	b.WriteString(label)
+	b.WriteString(dbTypeLabel)
 	b.WriteString("\n  ")
 	for i, dbType := range v.dbTypes {
 		if i == v.dbTypeIndex {
@@ -564,6 +484,23 @@ func (v *ConnectionView) renderForm() string {
 		b.WriteString(" ")
 	}
 	b.WriteString("\n\n")
+
+	fieldLabels := []string{"Connection Name:", "Host:", "Port:", "Username:", "Password:", "Database:", "Schema:"}
+	for i, fieldLabel := range fieldLabels {
+		if !v.isFieldVisible(i) {
+			continue
+		}
+		label := fieldLabel
+		if v.focusIndex == i {
+			label = styles.KeyStyle.Render("▶ " + label)
+		} else {
+			label = "  " + label
+		}
+		b.WriteString(label)
+		b.WriteString("\n  ")
+		b.WriteString(v.inputs[i].View())
+		b.WriteString("\n\n")
+	}
 
 	// Connect button (index 8)
 	connectBtn := "[Connect]"
@@ -618,14 +555,28 @@ func (v *ConnectionView) refreshList() {
 	v.list.SetItems(items)
 }
 
+// getFocusOrder returns the ordered list of focusable indices: db type first, then visible fields, then connect.
+func (v *ConnectionView) getFocusOrder() []int {
+	order := []int{7} // db type selector first
+	order = append(order, v.visibleFields...)
+	order = append(order, 8) // connect button last
+	return order
+}
+
 func (v *ConnectionView) nextInput() {
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Blur()
 	}
-	v.focusIndex++
-	if v.focusIndex > 8 {
-		v.focusIndex = 0
+	order := v.getFocusOrder()
+	currentPos := -1
+	for i, idx := range order {
+		if idx == v.focusIndex {
+			currentPos = i
+			break
+		}
 	}
+	nextPos := (currentPos + 1) % len(order)
+	v.focusIndex = order[nextPos]
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Focus()
 	}
@@ -635,10 +586,16 @@ func (v *ConnectionView) prevInput() {
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Blur()
 	}
-	v.focusIndex--
-	if v.focusIndex < 0 {
-		v.focusIndex = 8
+	order := v.getFocusOrder()
+	currentPos := -1
+	for i, idx := range order {
+		if idx == v.focusIndex {
+			currentPos = i
+			break
+		}
 	}
+	prevPos := (currentPos - 1 + len(order)) % len(order)
+	v.focusIndex = order[prevPos]
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Focus()
 	}
@@ -649,11 +606,10 @@ func (v *ConnectionView) resetForm() {
 		v.inputs[i].SetValue("")
 		v.inputs[i].Blur()
 	}
-	v.focusIndex = 0
+	v.focusIndex = 7 // Start on db type selector
 	v.dbTypeIndex = 0
 	v.connError = nil
-	v.inputs[0].Focus()
-	v.updatePortPlaceholder()
+	v.onDbTypeChanged()
 }
 
 func (v *ConnectionView) updatePortPlaceholder() {
@@ -682,31 +638,94 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 	}
 }
 
+// Field indices: 0=name, 1=host, 2=port, 3=username, 4=password, 5=database, 6=schema
+func getVisibleFields(dbType string) []int {
+	switch dbType {
+	case "SQLite":
+		return []int{0, 5} // name, database
+	case "MongoDB":
+		return []int{0, 1, 2, 3, 4, 5} // all except schema
+	case "Redis":
+		return []int{0, 1, 2, 4, 5} // all except username, schema
+	case "ElasticSearch":
+		return []int{0, 1, 2, 3, 4} // all except database, schema
+	default:
+		// Postgres, MySQL, MariaDB, ClickHouse
+		return []int{0, 1, 2, 3, 4, 5, 6}
+	}
+}
+
+func (v *ConnectionView) isFieldVisible(index int) bool {
+	for _, vi := range v.visibleFields {
+		if vi == index {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *ConnectionView) onDbTypeChanged() {
+	v.updatePortPlaceholder()
+	v.visibleFields = getVisibleFields(v.dbTypes[v.dbTypeIndex])
+
+	// Update database placeholder for SQLite
+	if v.dbTypes[v.dbTypeIndex] == "SQLite" {
+		v.inputs[5].Placeholder = "/path/to/database.db"
+	} else {
+		v.inputs[5].Placeholder = "mydb"
+	}
+
+	// If current focus is on a hidden field, move to next visible
+	if v.focusIndex < len(v.inputs) && !v.isFieldVisible(v.focusIndex) {
+		v.nextInput()
+	}
+}
+
 func (v *ConnectionView) connect() tea.Cmd {
 	return func() tea.Msg {
 		name := v.inputs[0].Value()
-		host := v.inputs[1].Value()
+		dbType := v.dbTypes[v.dbTypeIndex]
+
+		host := ""
+		if v.isFieldVisible(1) {
+			host = v.inputs[1].Value()
+		}
 		if host == "" {
 			host = "localhost"
 		}
 
-		portStr := v.inputs[2].Value()
 		var port int
-		if portStr == "" {
-			port = v.getDefaultPort(v.dbTypes[v.dbTypeIndex])
-		} else {
-			portNum, err := strconv.Atoi(portStr)
-			if err != nil || portNum < 1024 || portNum > 65535 {
-				return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1024 and 65535 (ports below 1024 are system reserved)")}
+		if v.isFieldVisible(2) {
+			portStr := v.inputs[2].Value()
+			if portStr == "" {
+				port = v.getDefaultPort(dbType)
+			} else {
+				portNum, err := strconv.Atoi(portStr)
+				if err != nil || portNum < 1024 || portNum > 65535 {
+					return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1024 and 65535 (ports below 1024 are system reserved)")}
+				}
+				port = portNum
 			}
-			port = portNum
+		} else {
+			port = v.getDefaultPort(dbType)
 		}
 
-		username := v.inputs[3].Value()
-		password := v.inputs[4].Value()
-		database := v.inputs[5].Value()
-		schema := v.inputs[6].Value()
-		dbType := v.dbTypes[v.dbTypeIndex]
+		username := ""
+		if v.isFieldVisible(3) {
+			username = v.inputs[3].Value()
+		}
+		password := ""
+		if v.isFieldVisible(4) {
+			password = v.inputs[4].Value()
+		}
+		database := ""
+		if v.isFieldVisible(5) {
+			database = v.inputs[5].Value()
+		}
+		schema := ""
+		if v.isFieldVisible(6) {
+			schema = v.inputs[6].Value()
+		}
 
 		conn := config.Connection{
 			Name:     name,

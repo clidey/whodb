@@ -93,6 +93,7 @@ type EditorView struct {
 	// Retry prompt state for timed out queries
 	retryPrompt   bool
 	timedOutQuery string
+	autoRetried   bool
 	// Debounce autocomplete - sequence ID to detect stale debounce messages
 	autocompleteSeqID int
 }
@@ -145,8 +146,13 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	case QueryTimeoutMsg:
 		v.queryState = OperationIdle
 		v.queryCancel = nil
+		// Auto-retry with saved preference before showing menu
+		preferred := v.parent.config.GetPreferredTimeout()
+		if preferred > 0 && !v.autoRetried {
+			v.autoRetried = true
+			return v, v.executeQueryWithTimeout(msg.Query, time.Duration(preferred)*time.Second)
+		}
 		v.err = fmt.Errorf("query timed out after %s", msg.Timeout)
-		// Enable retry prompt
 		v.retryPrompt = true
 		v.timedOutQuery = msg.Query
 		return v, nil
@@ -190,19 +196,25 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			case "1":
 				v.retryPrompt = false
 				v.err = nil
+				v.parent.config.SetPreferredTimeout(60)
+				v.parent.config.Save()
 				return v, v.executeQueryWithTimeout(v.timedOutQuery, 60*time.Second)
 			case "2":
 				v.retryPrompt = false
 				v.err = nil
+				v.parent.config.SetPreferredTimeout(120)
+				v.parent.config.Save()
 				return v, v.executeQueryWithTimeout(v.timedOutQuery, 2*time.Minute)
 			case "3":
 				v.retryPrompt = false
 				v.err = nil
+				v.parent.config.SetPreferredTimeout(300)
+				v.parent.config.Save()
 				return v, v.executeQueryWithTimeout(v.timedOutQuery, 5*time.Minute)
 			case "4":
 				v.retryPrompt = false
 				v.err = nil
-				// 0 duration means no timeout (use a very long duration)
+				// No limit applies once but doesn't save
 				return v, v.executeQueryWithTimeout(v.timedOutQuery, 24*time.Hour)
 			case "esc":
 				v.retryPrompt = false
@@ -401,6 +413,9 @@ func (v *EditorView) executeQuery() tea.Cmd {
 	if v.queryState == OperationRunning {
 		return nil
 	}
+
+	// Reset auto-retry for new queries
+	v.autoRetried = false
 
 	// Set loading state
 	v.queryState = OperationRunning

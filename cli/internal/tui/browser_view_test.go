@@ -676,3 +676,128 @@ type timeoutError struct{}
 func (e *timeoutError) Error() string {
 	return "timed out fetching tables"
 }
+
+// ============================================================================
+// Timeout Memory (Feature 7) - Browser View Tests
+// ============================================================================
+
+func TestBrowserView_TimeoutAutoRetry_WithPreference(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	v.loading = true
+	v.autoRetried = false
+
+	// Set a preferred timeout
+	v.parent.config.SetPreferredTimeout(60)
+
+	// Simulate timeout
+	msg := tablesLoadedMsg{
+		tables:  []engine.StorageUnit{},
+		schemas: []string{},
+		schema:  "public",
+		err:     &timeoutError{},
+	}
+	v, cmd := v.Update(msg)
+
+	// Should auto-retry (not show prompt)
+	if v.retryPrompt {
+		t.Error("Expected retryPrompt to be false (auto-retry should happen)")
+	}
+	if !v.autoRetried {
+		t.Error("Expected autoRetried to be true")
+	}
+	if !v.loading {
+		t.Error("Expected loading to be true during auto-retry")
+	}
+	if cmd == nil {
+		t.Error("Expected a command for auto-retry")
+	}
+}
+
+func TestBrowserView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	v.loading = true
+	v.autoRetried = true // Already retried once
+
+	v.parent.config.SetPreferredTimeout(60)
+
+	msg := tablesLoadedMsg{
+		tables:  []engine.StorageUnit{},
+		schemas: []string{},
+		schema:  "public",
+		err:     &timeoutError{},
+	}
+	v, _ = v.Update(msg)
+
+	if !v.retryPrompt {
+		t.Error("Expected retryPrompt to be true after auto-retry failed")
+	}
+}
+
+func TestBrowserView_TimeoutShowsMenu_NoPreference(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	v.loading = true
+	v.autoRetried = false
+	v.parent.config.SetPreferredTimeout(0)
+
+	msg := tablesLoadedMsg{
+		tables:  []engine.StorageUnit{},
+		schemas: []string{},
+		schema:  "public",
+		err:     &timeoutError{},
+	}
+	v, _ = v.Update(msg)
+
+	if !v.retryPrompt {
+		t.Error("Expected retryPrompt to be true with no preferred timeout")
+	}
+}
+
+func TestBrowserView_RetryMenuSavesPreference(t *testing.T) {
+	tests := []struct {
+		name            string
+		key             string
+		expectedTimeout int
+	}{
+		{"option_1_saves_60", "1", 60},
+		{"option_2_saves_120", "2", 120},
+		{"option_3_saves_300", "3", 300},
+		{"option_4_no_save", "4", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, cleanup := setupBrowserViewTest(t)
+			defer cleanup()
+
+			v.retryPrompt = true
+			v.parent.config.SetPreferredTimeout(0)
+
+			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			v, _ = v.Update(msg)
+
+			saved := v.parent.config.GetPreferredTimeout()
+			if saved != tt.expectedTimeout {
+				t.Errorf("Expected preferred timeout %d after key '%s', got %d", tt.expectedTimeout, tt.key, saved)
+			}
+		})
+	}
+}
+
+func TestBrowserView_AutoRetriedResetOnInit(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	v.autoRetried = true // From previous timeout
+
+	_ = v.Init()
+
+	if v.autoRetried {
+		t.Error("Expected autoRetried to be reset on Init")
+	}
+}
