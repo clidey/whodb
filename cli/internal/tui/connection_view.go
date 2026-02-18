@@ -231,8 +231,7 @@ func (v *ConnectionView) Update(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		// Overhead: view indicator(2) + padding(2) + title(2) + subtitle(1) + spacing(2) + help(2)
-		v.list.SetSize(msg.Width-4, msg.Height-11)
+		// Store dimensions; actual list sizing happens in View() using lipgloss.Height() measurements
 		return v, nil
 
 	case tea.MouseMsg:
@@ -347,17 +346,12 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
-		// Overhead: view indicator(2) + padding(2) + title(2) + help(2)
-		vpHeight := clamp(msg.Height-8, 3, msg.Height)
-		vpWidth := msg.Width - 4
 		if !v.formReady {
-			v.formViewport = viewport.New(vpWidth, vpHeight)
+			v.formViewport = viewport.New(msg.Width-4, msg.Height-8)
 			v.formViewport.MouseWheelEnabled = true
 			v.formReady = true
-		} else {
-			v.formViewport.Width = vpWidth
-			v.formViewport.Height = vpHeight
 		}
+		// Actual sizing happens in renderForm using lipgloss.Height() measurements
 		return v, nil
 
 	case tea.MouseMsg:
@@ -448,15 +442,10 @@ func (v *ConnectionView) View() string {
 		return v.renderForm()
 	}
 
-	var b strings.Builder
-
-	b.WriteString(styles.RenderTitle("Welcome to WhoDB!"))
-	b.WriteString("\n")
-	b.WriteString(styles.MutedStyle.Render("Select an existing connection below, or create a new one with [n]"))
-	b.WriteString("\n\n")
-	b.WriteString(v.list.View())
-	b.WriteString("\n\n")
-	b.WriteString(styles.RenderHelp(
+	// Render chrome first, measure heights, give remainder to list
+	title := styles.RenderTitle("Welcome to WhoDB!")
+	subtitle := styles.MutedStyle.Render("Select an existing connection below, or create a new one with [n]")
+	helpText := styles.RenderHelp(
 		"↑/k/shift+tab", "up",
 		"↓/j/tab", "down",
 		"enter", "connect",
@@ -464,7 +453,24 @@ func (v *ConnectionView) View() string {
 		"[d]", "delete",
 		"esc", "quit",
 		"ctrl+c", "force quit",
-	))
+	)
+
+	// Measure chrome: title + subtitle + help + padding(2) + view indicator(2) + separators(2)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(subtitle) + lipgloss.Height(helpText) + 6
+	listHeight := v.parent.height - chromeHeight
+	if listHeight < 3 {
+		listHeight = 3
+	}
+	v.list.SetSize(v.parent.width-4, listHeight)
+
+	var b strings.Builder
+	b.WriteString(title)
+	b.WriteString("\n")
+	b.WriteString(subtitle)
+	b.WriteString("\n\n")
+	b.WriteString(v.list.View())
+	b.WriteString("\n\n")
+	b.WriteString(helpText)
 
 	content := lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 
@@ -556,20 +562,8 @@ func (v *ConnectionView) renderForm() string {
 	}
 	body.WriteString("  " + connectBtn)
 
-	// Assemble final output: title + viewport + help
-	var b strings.Builder
-
-	b.WriteString(styles.RenderTitle("New Database Connection"))
-
-	if v.formReady {
-		v.formViewport.SetContent(body.String())
-		b.WriteString(v.formViewport.View())
-	} else {
-		b.WriteString(body.String())
-	}
-
-	b.WriteString("\n")
-
+	// Render title and help first, measure them, give remaining height to viewport
+	title := styles.RenderTitle("New Database Connection")
 	helpText := ""
 	if len(v.parent.config.Connections) > 0 {
 		helpText = styles.RenderHelpWidth(v.width,
@@ -587,6 +581,29 @@ func (v *ConnectionView) renderForm() string {
 			"ctrl+c", "quit",
 		)
 	}
+
+	// Measure chrome height: title + help + padding(2) + view indicator(2) + separators(1)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(helpText) + 5
+
+	// Size viewport to fill remaining space
+	if v.formReady {
+		vpHeight := v.height - chromeHeight
+		if vpHeight < 3 {
+			vpHeight = 3
+		}
+		v.formViewport.Height = vpHeight
+		v.formViewport.Width = v.width - 4
+		v.formViewport.SetContent(body.String())
+	}
+
+	var b strings.Builder
+	b.WriteString(title)
+	if v.formReady {
+		b.WriteString(v.formViewport.View())
+	} else {
+		b.WriteString(body.String())
+	}
+	b.WriteString("\n")
 	b.WriteString(helpText)
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
