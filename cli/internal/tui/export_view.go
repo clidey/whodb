@@ -112,6 +112,10 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		v.filenameInput.Width = clamp(msg.Width-12, 20, 60)
+		return v, nil
+
 	case exportResultMsg:
 		v.exporting = false
 		if msg.success {

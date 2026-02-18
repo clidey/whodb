@@ -100,7 +100,15 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		v.table.SetHeight(msg.Height - 20)
+		overhead := 14
+		if v.query != "" {
+			overhead += 3
+		}
+		h := msg.Height - overhead
+		if h < 5 {
+			h = 5
+		}
+		v.table.SetHeight(h)
 		v.table.SetWidth(msg.Width - 8)
 		return v, nil
 

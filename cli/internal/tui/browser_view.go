@@ -118,6 +118,10 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
+		columnWidth := 25
+		available := msg.Width - 8
+		v.columnsPerRow = clamp(available/columnWidth, 1, 6)
+		v.filterInput.Width = clamp(msg.Width-20, 15, 50)
 		return v, nil
 
 	case tea.MouseMsg:

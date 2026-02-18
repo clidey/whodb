@@ -199,6 +199,11 @@ func RenderSuccess(message string) string {
 }
 
 func RenderHelp(keys ...string) string {
+	return RenderHelpWidth(80, keys...)
+}
+
+// RenderHelpWidth renders help key/value pairs, wrapping at the given maxWidth.
+func RenderHelpWidth(maxWidth int, keys ...string) string {
 	if len(keys) == 0 {
 		return ""
 	}
@@ -212,16 +217,21 @@ func RenderHelp(keys ...string) string {
 		}
 	}
 
-	return RenderHelpParts(parts)
+	return RenderHelpPartsWidth(parts, maxWidth)
 }
 
 func RenderHelpParts(parts []string) string {
+	return RenderHelpPartsWidth(parts, 80)
+}
+
+// RenderHelpPartsWidth renders help parts wrapping at the given maxWidth.
+func RenderHelpPartsWidth(parts []string, maxWidth int) string {
 	if len(parts) == 0 {
 		return ""
 	}
 
 	separator := MutedStyle.Render(" • ")
-	const maxLineWidth = 80
+	maxLineWidth := maxWidth
 
 	var lines []string
 	var currentLine string
@@ -308,11 +318,24 @@ func RenderHelpWithMaxItems(maxPerLine int, keys ...string) string {
 }
 
 func RenderErrorBox(message string) string {
+	return RenderErrorBoxWidth(message, 64)
+}
+
+// RenderErrorBoxWidth renders an error box clamped to the given maxWidth.
+func RenderErrorBoxWidth(message string, maxWidth int) string {
+	w := maxWidth - 4
+	if w > 80 {
+		w = 80
+	}
+	if w < 30 {
+		w = 30
+	}
+
 	errorBoxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(Error).
 		Padding(1, 2).
-		Width(60)
+		Width(w)
 
 	errorTitleStyle := lipgloss.NewStyle().
 		Foreground(Error).
@@ -327,11 +350,24 @@ func RenderErrorBox(message string) string {
 }
 
 func RenderInfoBox(message string) string {
+	return RenderInfoBoxWidth(message, 64)
+}
+
+// RenderInfoBoxWidth renders an info box clamped to the given maxWidth.
+func RenderInfoBoxWidth(message string, maxWidth int) string {
+	w := maxWidth - 4
+	if w > 80 {
+		w = 80
+	}
+	if w < 30 {
+		w = 30
+	}
+
 	infoBoxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(Info).
 		Padding(1, 2).
-		Width(60)
+		Width(w)
 
 	infoTitleStyle := lipgloss.NewStyle().
 		Foreground(Info).

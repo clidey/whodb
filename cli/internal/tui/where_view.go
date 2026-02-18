@@ -101,6 +101,10 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		v.valueInput.Width = clamp(msg.Width-16, 15, 50)
+		return v, nil
+
 	case tea.MouseMsg:
 		switch msg.Button {
 		case tea.MouseButtonWheelUp:

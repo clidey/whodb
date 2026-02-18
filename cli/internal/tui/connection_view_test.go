@@ -499,20 +499,27 @@ func TestConnectionView_MouseScroll_Form(t *testing.T) {
 	v.mode = "form"
 	v.focusIndex = 0 // Name field (Postgres)
 
-	// Mouse wheel down moves to next
+	// Initialize viewport with a WindowSizeMsg first
+	v, _ = v.Update(tea.WindowSizeMsg{Width: 80, Height: 40})
+
+	if !v.formReady {
+		t.Error("Expected formReady to be true after WindowSizeMsg")
+	}
+
+	// Mouse wheel now scrolls the viewport, not the input focus.
+	// Verify scroll doesn't change focusIndex (focus uses keyboard nav).
 	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
 	v, _ = v.Update(msg)
 
-	if v.focusIndex != 1 {
-		t.Errorf("Expected focusIndex 1 after wheel down, got %d", v.focusIndex)
+	if v.focusIndex != 0 {
+		t.Errorf("Expected focusIndex 0 after wheel down (viewport scroll), got %d", v.focusIndex)
 	}
 
-	// Mouse wheel up moves back
-	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
-	v, _ = v.Update(msg)
+	// Tab navigates input focus instead of mouse wheel
+	v, _ = v.Update(tea.KeyMsg{Type: tea.KeyTab})
 
-	if v.focusIndex != 0 {
-		t.Errorf("Expected focusIndex 0 after wheel up, got %d", v.focusIndex)
+	if v.focusIndex == 0 {
+		t.Error("Expected focusIndex to change after tab")
 	}
 }
 

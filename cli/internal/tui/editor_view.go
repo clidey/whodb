@@ -580,7 +580,17 @@ func (v *EditorView) applyWindowSize(width, height int) {
 
 	v.suggestionHeight = v.computeSuggestionHeight(height)
 
-	targetHeight := height - 20 - v.suggestionHeight
+	overhead := 14
+	if v.err != nil {
+		overhead += 4
+	}
+	if v.retryPrompt {
+		overhead += 4
+	}
+	if v.queryState == OperationRunning {
+		overhead += 2
+	}
+	targetHeight := height - overhead - v.suggestionHeight
 	if targetHeight < 5 {
 		targetHeight = 5
 	}

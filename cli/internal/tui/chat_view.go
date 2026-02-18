@@ -191,7 +191,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 	case chatResponseMsg:
 		v.sending = false
 		v.chatCancel = nil
-		maxVisibleMessages := 6 // Must match View()
+		maxVisibleMessages := v.maxVisibleMessages()
 		if msg.err != nil {
 			// Check for cancellation - don't show error
 			if errors.Is(msg.err, context.Canceled) {
@@ -617,8 +617,7 @@ func (v *ChatView) View() string {
 	b.WriteString("\n\n")
 
 	if len(v.messages) > 0 {
-		// Fixed max messages to display (keeps window size stable)
-		maxVisibleMessages := 6
+		maxVisibleMessages := v.maxVisibleMessages()
 		b.WriteString(styles.RenderSubtitle("Conversation"))
 		b.WriteString("\n")
 
@@ -723,6 +722,10 @@ func (v *ChatView) View() string {
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+}
+
+func (v *ChatView) maxVisibleMessages() int {
+	return clamp((v.height-18)/3, 2, 10)
 }
 
 // wrapText wraps text to fit within the available width and limits lines

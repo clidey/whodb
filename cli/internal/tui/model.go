@@ -166,6 +166,17 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		// Forward to all views so inactive views have correct dimensions when switched to
+		m.connectionView, _ = m.connectionView.Update(msg)
+		m.browserView, _ = m.browserView.Update(msg)
+		m.editorView, _ = m.editorView.Update(msg)
+		m.resultsView, _ = m.resultsView.Update(msg)
+		m.historyView, _ = m.historyView.Update(msg)
+		m.columnsView, _ = m.columnsView.Update(msg)
+		m.chatView, _ = m.chatView.Update(msg)
+		m.schemaView, _ = m.schemaView.Update(msg)
+		m.exportView, _ = m.exportView.Update(msg)
+		m.whereView, _ = m.whereView.Update(msg)
 		return m, nil
 
 	case tea.KeyMsg:

@@ -91,6 +91,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
+		v.filterInput.Width = clamp(msg.Width-20, 15, 50)
 		return v, nil
 
 	case tea.MouseMsg:

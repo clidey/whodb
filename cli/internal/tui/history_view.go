@@ -102,7 +102,12 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 		return v, nil
 
 	case tea.WindowSizeMsg:
-		v.list.SetSize(msg.Width-4, msg.Height-15)
+		overhead := 10
+		h := msg.Height - overhead
+		if h < 5 {
+			h = 5
+		}
+		v.list.SetSize(msg.Width-4, h)
 		return v, nil
 
 	case tea.MouseMsg:
