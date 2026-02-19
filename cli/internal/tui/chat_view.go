@@ -771,7 +771,8 @@ func (v *ChatView) sendChatWithTimeout(query string, timeout time.Duration) tea.
 		if currentSchema == "" {
 			schemas, err := v.parent.dbManager.GetSchemas()
 			if err != nil {
-				return chatResponseMsg{messages: nil, query: query, err: fmt.Errorf("failed to get schema: %w", err)}
+				// Schema-less databases (SQLite, Redis, etc.) don't support schemas.
+				schemas = []string{}
 			}
 			currentSchema = selectBestSchema(schemas)
 		}

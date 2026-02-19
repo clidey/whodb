@@ -404,10 +404,8 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 		if schema == "" {
 			schemas, err := v.parent.dbManager.GetSchemas()
 			if err != nil {
-				return schemaLoadedMsg{
-					tables: []tableWithColumns{},
-					err:    fmt.Errorf("failed to get schemas: %w", err),
-				}
+				// Schema-less databases (SQLite, Redis, etc.) don't support schemas.
+				schemas = []string{}
 			}
 
 			if len(schemas) == 0 {

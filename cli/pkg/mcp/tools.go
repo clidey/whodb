@@ -850,16 +850,14 @@ func HandleTables(ctx context.Context, req *mcp.CallToolRequest, input TablesInp
 		schema = conn.Schema
 	}
 	if schema == "" {
+		// Schema-less databases (SQLite, Redis, etc.) don't support schemas
 		schemas, err := mgr.GetSchemas()
 		if err != nil {
-			TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "schema_fetch", "db_type": conn.Type})
-			return nil, TablesOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err), RequestID: requestID}, nil
+			schemas = []string{}
 		}
-		if len(schemas) == 0 {
-			TrackToolCall(ctx, "tables", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "no_schemas", "db_type": conn.Type})
-			return nil, TablesOutput{Error: "no schemas found in database", RequestID: requestID}, nil
+		if len(schemas) > 0 {
+			schema = schemas[0]
 		}
-		schema = schemas[0]
 	}
 
 	tables, err := mgr.GetStorageUnits(schema)
@@ -923,16 +921,14 @@ func HandleColumns(ctx context.Context, req *mcp.CallToolRequest, input ColumnsI
 		schema = conn.Schema
 	}
 	if schema == "" {
+		// Schema-less databases (SQLite, Redis, etc.) don't support schemas
 		schemas, err := mgr.GetSchemas()
 		if err != nil {
-			TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "schema_fetch", "db_type": conn.Type})
-			return nil, ColumnsOutput{Error: fmt.Sprintf("failed to fetch schemas: %v", err), RequestID: requestID}, nil
+			schemas = []string{}
 		}
-		if len(schemas) == 0 {
-			TrackToolCall(ctx, "columns", requestID, false, time.Since(startTime).Milliseconds(), map[string]any{"error_type": "no_schemas", "db_type": conn.Type})
-			return nil, ColumnsOutput{Error: "no schemas found in database", RequestID: requestID}, nil
+		if len(schemas) > 0 {
+			schema = schemas[0]
 		}
-		schema = schemas[0]
 	}
 
 	columns, err := mgr.GetColumns(schema, input.Table)
