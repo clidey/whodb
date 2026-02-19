@@ -157,10 +157,13 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	// handle nullable type. clickhouse specific
 	isNullable := false
-	if strings.HasPrefix(columnType, "Nullable(") {
+	upperCheck := strings.ToUpper(columnType)
+	if strings.HasPrefix(upperCheck, "NULLABLE(") {
 		isNullable = true
-		columnType = strings.TrimPrefix(columnType, "Nullable(")
-		columnType = strings.TrimSuffix(columnType, ")")
+		columnType = columnType[9:] // strip "Nullable(" or "NULLABLE(" (9 chars)
+		if strings.HasSuffix(columnType, ")") {
+			columnType = columnType[:len(columnType)-1]
+		}
 	}
 
 	columnType = strings.ToUpper(columnType)
@@ -208,8 +211,12 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 
 	// Remove any LowCardinality() wrapper. clickhouse specific
 	if strings.HasPrefix(baseType, "LOWCARDINALITY") {
-		columnType = strings.TrimPrefix(columnType, "LowCardinality(")
-		columnType = strings.TrimSuffix(columnType, ")")
+		if strings.HasPrefix(strings.ToUpper(columnType), "LOWCARDINALITY(") {
+			columnType = columnType[15:] // strip "LOWCARDINALITY(" (15 chars)
+			if strings.HasSuffix(columnType, ")") {
+				columnType = columnType[:len(columnType)-1]
+			}
+		}
 		baseType = common.ParseTypeSpec(columnType).BaseType
 	}
 
@@ -455,9 +462,15 @@ func (p *GormPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
 }
 
 func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, error) {
-	// Extract the element type from Array(Type)
-	elementType := strings.TrimPrefix(columnType, "Array(")
-	elementType = strings.TrimSuffix(elementType, ")")
+	// Extract the element type from ARRAY(Type)
+	upperType := strings.ToUpper(columnType)
+	if strings.HasPrefix(upperType, "ARRAY(") {
+		columnType = columnType[6:] // strip "ARRAY(" (6 chars)
+	}
+	if strings.HasSuffix(columnType, ")") {
+		columnType = columnType[:len(columnType)-1]
+	}
+	elementType := columnType
 
 	// Remove brackets and split by comma
 	value = strings.Trim(value, "[]")
