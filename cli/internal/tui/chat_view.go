@@ -47,6 +47,7 @@ type ChatView struct {
 	models           []string
 	selectedModel    int
 	loadingModels    bool
+	modelsProvider   int // provider index models were loaded for
 	messages         []chatMessage
 	input            textarea.Model
 	sending          bool
@@ -248,6 +249,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			return v, nil
 		}
 		v.models = msg.models
+		v.modelsProvider = v.selectedProvider
 		if len(v.models) > 0 {
 			v.selectedModel = 0
 			// Try to restore last used model
@@ -274,25 +276,20 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		return v, nil
 
 	case tea.MouseMsg:
-		// todo: fix these deprecated Mouse up /down
 		switch msg.Type {
 		case tea.MouseWheelUp:
-			if v.focusField == focusFieldMessage {
-				if v.scrollOffset > 0 {
-					v.scrollOffset--
-				}
+			if v.scrollOffset > 0 {
+				v.scrollOffset--
 			}
 			return v, nil
 		case tea.MouseWheelDown:
-			if v.focusField == focusFieldMessage {
-				maxMsgHeight := v.height - 18
-				maxScroll := len(v.messages) - maxMsgHeight
-				if maxScroll < 0 {
-					maxScroll = 0
-				}
-				if v.scrollOffset < maxScroll {
-					v.scrollOffset++
-				}
+			maxVisible := v.maxVisibleMessages()
+			maxScroll := len(v.messages) - maxVisible
+			if maxScroll < 0 {
+				maxScroll = 0
+			}
+			if v.scrollOffset < maxScroll {
+				v.scrollOffset++
 			}
 			return v, nil
 		}
@@ -379,6 +376,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				} else if v.selectedMessage > 0 {
 					v.selectedMessage--
 				}
+				v.ensureMessageVisible()
 			}
 			return v, nil
 
@@ -390,6 +388,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				} else if v.selectedMessage < len(v.messages)-1 {
 					v.selectedMessage++
 				}
+				v.ensureMessageVisible()
 			}
 			return v, nil
 
@@ -680,6 +679,19 @@ func (v *ChatView) maxVisibleMessages() int {
 	return clamp((v.height-18)/3, 2, 10)
 }
 
+// ensureMessageVisible adjusts scrollOffset so the selected message is within the visible window.
+func (v *ChatView) ensureMessageVisible() {
+	if v.selectedMessage < 0 {
+		return
+	}
+	maxVisible := v.maxVisibleMessages()
+	if v.selectedMessage < v.scrollOffset {
+		v.scrollOffset = v.selectedMessage
+	} else if v.selectedMessage >= v.scrollOffset+maxVisible {
+		v.scrollOffset = v.selectedMessage - maxVisible + 1
+	}
+}
+
 // wrapText wraps text to fit within the available width and limits lines
 func (v *ChatView) wrapText(text string, indent int) string {
 	availableWidth := v.width - 8 - indent // 8 = padding (4) + margin (4)
@@ -813,7 +825,10 @@ func (v *ChatView) sendChatWithTimeout(query string, timeout time.Duration) tea.
 
 func (v *ChatView) Init() tea.Cmd {
 	if v.consented && len(v.providers) > 0 {
-		return v.loadModels()
+		// Only fetch if models haven't been loaded or provider changed
+		if len(v.models) == 0 || v.modelsProvider != v.selectedProvider {
+			return v.loadModels()
+		}
 	}
 	return nil
 }

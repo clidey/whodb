@@ -47,6 +47,8 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 				continue
 			}
 
+			tableDetails.WriteString(fmt.Sprintf("table: %v\n", tableName))
+
 			// Use GORM migrator to get column types with length info (preserves column order)
 			fullTableName := p.FormTableName(schema, tableName)
 			orderedColumns, err := helper.GetOrderedColumns(fullTableName)
@@ -55,7 +57,6 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 				continue
 			}
 
-			tableDetails.WriteString(fmt.Sprintf("table: %v\n", tableName))
 			for _, col := range orderedColumns {
 				tableDetails.WriteString(fmt.Sprintf("- %v (%v)\n", col.Name, col.Type))
 			}

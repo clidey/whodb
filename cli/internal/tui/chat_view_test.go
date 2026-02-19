@@ -409,8 +409,38 @@ func TestChatView_MouseScroll(t *testing.T) {
 	msg = tea.MouseMsg{Type: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
-	// Scroll offset may or may not change depending on max calculation
-	// Just ensure no panic
+	if v.scrollOffset != 5 {
+		t.Errorf("Expected scrollOffset 5 after wheel down, got %d", v.scrollOffset)
+	}
+}
+
+func TestChatView_MouseScroll_WorksFromAnyField(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.messages = make([]chatMessage, 20)
+	v.scrollOffset = 5
+	v.height = 30
+
+	// Scroll should work even when focused on provider field
+	v.focusField = focusFieldProvider
+
+	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
+	v, _ = v.Update(msg)
+
+	if v.scrollOffset != 4 {
+		t.Errorf("Expected scrollOffset 4 after wheel up from provider field, got %d", v.scrollOffset)
+	}
+
+	// And from model field
+	v.focusField = focusFieldModel
+
+	v, _ = v.Update(msg)
+
+	if v.scrollOffset != 3 {
+		t.Errorf("Expected scrollOffset 3 after wheel up from model field, got %d", v.scrollOffset)
+	}
 }
 
 func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
@@ -418,7 +448,6 @@ func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
 	defer cleanup()
 
 	v.consented = true
-	v.focusField = focusFieldMessage
 	v.scrollOffset = 0
 
 	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
@@ -426,6 +455,64 @@ func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
 
 	if v.scrollOffset != 0 {
 		t.Errorf("Expected scrollOffset to stay 0 at top, got %d", v.scrollOffset)
+	}
+}
+
+func TestChatView_EnsureMessageVisible(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.height = 30 // maxVisibleMessages will be ~4
+	v.messages = make([]chatMessage, 10)
+	v.scrollOffset = 0
+
+	maxVisible := v.maxVisibleMessages()
+
+	// Select a message beyond the visible window
+	v.selectedMessage = maxVisible + 2
+	v.ensureMessageVisible()
+
+	if v.scrollOffset == 0 {
+		t.Error("Expected scrollOffset to increase to show selected message")
+	}
+	if v.selectedMessage < v.scrollOffset || v.selectedMessage >= v.scrollOffset+maxVisible {
+		t.Errorf("Selected message %d not visible in window [%d, %d)",
+			v.selectedMessage, v.scrollOffset, v.scrollOffset+maxVisible)
+	}
+
+	// Now select a message above the window
+	v.selectedMessage = 0
+	v.ensureMessageVisible()
+
+	if v.scrollOffset != 0 {
+		t.Errorf("Expected scrollOffset 0 to show message 0, got %d", v.scrollOffset)
+	}
+}
+
+func TestChatView_CtrlP_AdjustsScroll(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.height = 30
+	v.messages = make([]chatMessage, 10)
+	maxVisible := v.maxVisibleMessages()
+
+	// Start at a message near the bottom with scroll offset showing later messages
+	v.scrollOffset = 5
+	v.selectedMessage = 5
+
+	// Keep pressing Ctrl+P to go above the visible window
+	msg := tea.KeyMsg{Type: tea.KeyCtrlP}
+	for i := 0; i < maxVisible+2; i++ {
+		v, _ = v.Update(msg)
+	}
+
+	// Selected message should still be visible
+	if v.selectedMessage < v.scrollOffset || v.selectedMessage >= v.scrollOffset+maxVisible {
+		t.Errorf("After Ctrl+P, selected message %d not in visible range [%d, %d)",
+			v.selectedMessage, v.scrollOffset, v.scrollOffset+maxVisible)
 	}
 }
 
