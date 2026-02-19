@@ -17,6 +17,8 @@
 package main
 
 import (
+	"os"
+
 	_ "github.com/clidey/whodb/cli/internal/baml"   // Must be first - downloads BAML library if needed
 	_ "github.com/clidey/whodb/core/src/bamlconfig" // Sets BAML_LOG before native library loads
 
@@ -27,6 +29,8 @@ import (
 )
 
 func init() {
+	os.Setenv("WHODB_CLI", "true")
+
 	// Disable all logging output to prevent logs from leaking into TUI
 	log.DisableOutput()
 	log.SetLogLevel("none")

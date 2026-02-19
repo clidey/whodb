@@ -506,21 +506,9 @@ func (v *BrowserView) loadTablesWithTimeout(timeout time.Duration) tea.Cmd {
 					err:     fmt.Errorf("timed out fetching schemas"),
 				}
 			}
-			return tablesLoadedMsg{
-				tables:  []engine.StorageUnit{},
-				schemas: []string{},
-				schema:  currentSchema,
-				err:     fmt.Errorf("failed to get schemas: %w", err),
-			}
-		}
-
-		if len(schemas) == 0 {
-			return tablesLoadedMsg{
-				tables:  []engine.StorageUnit{},
-				schemas: []string{},
-				schema:  "",
-				err:     nil,
-			}
+			// Schema-less databases (SQLite, Redis, etc.) don't support schemas.
+			// Treat the error as "no schemas" and proceed with an empty schema.
+			schemas = []string{}
 		}
 
 		// Use currentSchema if already set, otherwise check for preferred schema from connection

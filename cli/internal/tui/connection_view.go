@@ -199,7 +199,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	prompt.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
 	prompt.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
 
-	dbTypes := []string{"Postgres", "MySQL", "SQLite", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
+	dbTypes := []string{"Postgres", "MySQL", "Sqlite3", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
 
 	return &ConnectionView{
 		parent:           parent,
@@ -515,11 +515,6 @@ func (v *ConnectionView) renderForm() string {
 	// Build form body for the viewport
 	var body strings.Builder
 
-	if v.connError != nil {
-		body.WriteString(styles.RenderErrorBoxWidth(v.connError.Error(), v.width))
-		body.WriteString("\n")
-	}
-
 	// Database Type (index 7)
 	dbTypeLabel := "Database Type:"
 	if v.focusIndex == 7 {
@@ -589,8 +584,14 @@ func (v *ConnectionView) renderForm() string {
 		)
 	}
 
-	// Measure chrome height: title + help + padding(2) + view indicator(2) + separators(1)
-	chromeHeight := lipgloss.Height(title) + lipgloss.Height(helpText) + 5
+	// Render error outside viewport so it's always fully visible
+	errorBlock := ""
+	if v.connError != nil {
+		errorBlock = styles.RenderErrorBox(v.connError.Error()) + "\n"
+	}
+
+	// Measure chrome height: title + error + help + padding(2) + view indicator(2) + separators(1)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(errorBlock) + lipgloss.Height(helpText) + 5
 
 	// Size viewport to fill remaining space
 	if v.formReady {
@@ -605,6 +606,7 @@ func (v *ConnectionView) renderForm() string {
 
 	var b strings.Builder
 	b.WriteString(title)
+	b.WriteString(errorBlock)
 	if v.formReady {
 		b.WriteString(v.formViewport.View())
 	} else {
@@ -754,7 +756,7 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 		return 9000
 	case "ElasticSearch":
 		return 9200
-	case "SQLite":
+	case "Sqlite3":
 		return 0
 	default:
 		return 5432
@@ -764,7 +766,7 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 // Field indices: 0=name, 1=host, 2=port, 3=username, 4=password, 5=database, 6=schema
 func getVisibleFields(dbType string) []int {
 	switch dbType {
-	case "SQLite":
+	case "Sqlite3":
 		return []int{0, 5} // name, database
 	case "MongoDB":
 		return []int{0, 1, 2, 3, 4, 5} // all except schema
@@ -792,7 +794,7 @@ func (v *ConnectionView) onDbTypeChanged() {
 	v.visibleFields = getVisibleFields(v.dbTypes[v.dbTypeIndex])
 
 	// Update database placeholder for SQLite
-	if v.dbTypes[v.dbTypeIndex] == "SQLite" {
+	if v.dbTypes[v.dbTypeIndex] == "Sqlite3" {
 		v.inputs[5].Placeholder = "/path/to/database.db"
 	} else {
 		v.inputs[5].Placeholder = "mydb"

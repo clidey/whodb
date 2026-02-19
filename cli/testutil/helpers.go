@@ -53,9 +53,9 @@ func SetupTestEnvironment(t *testing.T) (string, func()) {
 	if err := os.Setenv("APPDATA", testHome); err != nil {
 		t.Fatalf("Failed to set APPDATA: %v", err)
 	}
-	// Enable desktop mode so SQLite plugin uses paths directly without /db/ prefix
-	if err := os.Setenv("WHODB_DESKTOP", "true"); err != nil {
-		t.Fatalf("Failed to set WHODB_DESKTOP: %v", err)
+	// Enable CLI mode so SQLite plugin uses paths directly without /db/ prefix
+	if err := os.Setenv("WHODB_CLI", "true"); err != nil {
+		t.Fatalf("Failed to set WHODB_CLI: %v", err)
 	}
 	cleanupConfigFiles(t)
 

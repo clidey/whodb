@@ -431,7 +431,7 @@ func TestConnectionView_GetDefaultPort(t *testing.T) {
 		{"Redis", 6379},
 		{"ClickHouse", 9000},
 		{"ElasticSearch", 9200},
-		{"SQLite", 0},
+		{"Sqlite3", 0},
 		{"Unknown", 5432},
 	}
 
@@ -725,7 +725,7 @@ func TestGetVisibleFields_AllTypes(t *testing.T) {
 		{"MySQL", []int{0, 1, 2, 3, 4, 5, 6}},
 		{"MariaDB", []int{0, 1, 2, 3, 4, 5, 6}},
 		{"ClickHouse", []int{0, 1, 2, 3, 4, 5, 6}},
-		{"SQLite", []int{0, 5}},
+		{"Sqlite3", []int{0, 5}},
 		{"MongoDB", []int{0, 1, 2, 3, 4, 5}},
 		{"Redis", []int{0, 1, 2, 4, 5}},
 		{"ElasticSearch", []int{0, 1, 2, 3, 4}},
@@ -759,7 +759,7 @@ func TestConnectionView_IsFieldVisible(t *testing.T) {
 	}
 
 	// Switch to SQLite
-	v.visibleFields = getVisibleFields("SQLite")
+	v.visibleFields = getVisibleFields("Sqlite3")
 	if !v.isFieldVisible(0) {
 		t.Error("Expected field 0 (name) to be visible for SQLite")
 	}

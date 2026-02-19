@@ -54,8 +54,8 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	var fileNameDatabase string
 
-	// Desktop mode: treat database field as full path
-	if env.GetIsDesktopMode() {
+	// Local mode (desktop/CLI): treat database field as full path
+	if env.GetIsLocalMode() {
 		// In desktop mode, the database field contains the full path
 		fileNameDatabase = database
 
