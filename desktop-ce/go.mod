@@ -6,7 +6,7 @@ require github.com/clidey/whodb/desktop-common v0.0.0
 
 require (
 	al.essio.dev/pkg/shellescape v1.5.1 // indirect
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/99designs/gqlgen v0.17.86 // indirect
 	github.com/ClickHouse/ch-go v0.71.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0 // indirect
