@@ -520,6 +520,8 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 		m.mode = tabOrder[(currentIndex+1)%len(tabOrder)]
 	}
 
+	m.onViewEnter(m.mode)
+
 	return m, nil
 }
 
@@ -650,6 +652,7 @@ func (m *MainModel) renderViewIndicator() string {
 func (m *MainModel) PushView(newView ViewMode) {
 	m.viewHistory = append(m.viewHistory, m.mode)
 	m.mode = newView
+	m.onViewEnter(newView)
 }
 
 // PopView restores the previous view from the history stack.
@@ -661,6 +664,14 @@ func (m *MainModel) PopView() bool {
 	m.mode = m.viewHistory[len(m.viewHistory)-1]
 	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
 	return true
+}
+
+// onViewEnter is called when a view becomes active, to refresh view-specific state.
+func (m *MainModel) onViewEnter(mode ViewMode) {
+	switch mode {
+	case ViewHistory:
+		m.historyView.refreshList()
+	}
 }
 
 // SpinnerView returns the current spinner frame for use in loading indicators.
