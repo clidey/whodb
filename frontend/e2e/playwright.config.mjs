@@ -71,7 +71,7 @@ const gatewayBrowser = {
 export default defineConfig({
   globalSetup: "./support/global-setup.mjs",
   testDir: "./tests",
-  testIgnore: ["**/postgres-screenshots*"],
+  testIgnore: ["**/postgres-screenshots*", "**/accessibility*"],
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

@@ -103,12 +103,14 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
     "@babel/core": "7.28.0",
-    "@playwright/test": "1.58.1",
     "@graphql-codegen/cli": "5.0.7",
     "@graphql-codegen/typescript": "4.1.6",
     "@graphql-codegen/typescript-operations": "4.6.1",
     "@graphql-codegen/typescript-react-apollo": "4.3.3",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.58.1",
     "@types/js-yaml": "4.0.9",
     "@types/lodash": "4.17.20",
     "@vitejs/plugin-react": "4.7.0",
