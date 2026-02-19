@@ -25,6 +25,53 @@ type parse struct{}
 
 var Parse = &parse{}
 
+// / Parse version of AgentStep (Takes in string and returns types.AgentAction)
+func (*parse) AgentStep(text string, opts ...CallOptionFunc) (types.AgentAction, error) {
+
+	var callOpts callOption
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	args := baml.BamlFunctionArguments{
+		Kwargs: map[string]any{"text": text, "stream": false},
+		Env:    getEnvVars(callOpts.env),
+	}
+
+	if callOpts.clientRegistry != nil {
+		args.ClientRegistry = callOpts.clientRegistry
+	}
+
+	if callOpts.collectors != nil {
+		args.Collectors = callOpts.collectors
+	}
+
+	if callOpts.typeBuilder != nil {
+		args.TypeBuilder = callOpts.typeBuilder
+	}
+
+	if callOpts.tags != nil {
+		args.Tags = callOpts.tags
+	}
+
+	encoded, err := args.Encode()
+	if err != nil {
+		// This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+		// and include the type of the args you're passing in.
+		wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: AgentStep: %w", err)
+		panic(wrapped_err)
+	}
+
+	result, err := bamlRuntime.CallFunctionParse(context.Background(), "AgentStep", encoded)
+	if err != nil {
+		return types.AgentAction{}, err
+	}
+
+	casted := (result).(types.AgentAction)
+
+	return casted, nil
+}
+
 // / Parse version of GenerateChatTitle (Takes in string and returns string)
 func (*parse) GenerateChatTitle(text string, opts ...CallOptionFunc) (string, error) {
 
@@ -115,6 +162,53 @@ func (*parse) GenerateSQLQuery(text string, opts ...CallOptionFunc) ([]types.Cha
 	}
 
 	casted := (result).([]types.ChatResponse)
+
+	return casted, nil
+}
+
+// / Parse version of SummarizeConversation (Takes in string and returns string)
+func (*parse) SummarizeConversation(text string, opts ...CallOptionFunc) (string, error) {
+
+	var callOpts callOption
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	args := baml.BamlFunctionArguments{
+		Kwargs: map[string]any{"text": text, "stream": false},
+		Env:    getEnvVars(callOpts.env),
+	}
+
+	if callOpts.clientRegistry != nil {
+		args.ClientRegistry = callOpts.clientRegistry
+	}
+
+	if callOpts.collectors != nil {
+		args.Collectors = callOpts.collectors
+	}
+
+	if callOpts.typeBuilder != nil {
+		args.TypeBuilder = callOpts.typeBuilder
+	}
+
+	if callOpts.tags != nil {
+		args.Tags = callOpts.tags
+	}
+
+	encoded, err := args.Encode()
+	if err != nil {
+		// This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+		// and include the type of the args you're passing in.
+		wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: SummarizeConversation: %w", err)
+		panic(wrapped_err)
+	}
+
+	result, err := bamlRuntime.CallFunctionParse(context.Background(), "SummarizeConversation", encoded)
+	if err != nil {
+		return "", err
+	}
+
+	casted := (result).(string)
 
 	return casted, nil
 }

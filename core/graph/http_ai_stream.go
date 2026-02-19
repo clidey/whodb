@@ -22,6 +22,7 @@ import (
 	ctx "context"
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/clidey/whodb/core/baml_client"
 	"github.com/clidey/whodb/core/baml_client/stream_types"
@@ -106,6 +107,20 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.DebugFileAlways("AI Chat Stream: Table details built, length=%d", len(tableDetails))
+
+	// Try agentic mode if enabled
+	if os.Getenv("WHODB_AGENTIC_CHAT") == "true" {
+		log.DebugFileAlways("AI Chat Stream: Agentic mode enabled, starting agent loop")
+		err := common.RunAgenticChat(
+			ctx.Background(), &sseEmitter{w, flusher}, plugin, config,
+			req.Schema, tableDetails, req.Input.PreviousConversation, req.Input.Query,
+		)
+		if err == nil {
+			log.DebugFileAlways("AI Chat Stream: Agentic mode completed successfully")
+			return
+		}
+		log.DebugFileAlways("AI Chat Stream: Agentic mode failed (%v), falling back to BAML streaming", err)
+	}
 
 	// Setup BAML context
 	dbContext := types.DatabaseContext{
@@ -321,6 +336,21 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 		return
 	}
 
+	// Try agentic mode if enabled
+	if os.Getenv("WHODB_AGENTIC_CHAT") == "true" {
+		collector := &sliceEmitter{}
+		err := common.RunAgenticChat(
+			ctx.Background(), collector, plugin, config,
+			req.Schema, tableDetails, req.Input.PreviousConversation, req.Input.Query,
+		)
+		if err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{"messages": collector.messages, "done": true})
+			return
+		}
+		// Agent failed — fall through to existing BAML path
+	}
+
 	// Setup BAML context
 	dbContext := types.DatabaseContext{
 		Database_type:         config.Credentials.Type,
@@ -355,6 +385,31 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 
 	}
 }
+
+// --- Emitter implementations for common.Emitter ---
+
+// sseEmitter streams agent output as SSE events (the normal HTTP path).
+type sseEmitter struct {
+	w       http.ResponseWriter
+	flusher http.Flusher
+}
+
+func (e *sseEmitter) SendChunk(chunk map[string]any)       { SendSSEChunk(e.w, e.flusher, chunk) }
+func (e *sseEmitter) SendMessage(msg *model.AIChatMessage) { SendSSEMessage(e.w, e.flusher, msg) }
+func (e *sseEmitter) SendDone()                            { SendSSEDone(e.w, e.flusher) }
+
+// sliceEmitter collects agent output into a slice (the Wails/desktop fallback path).
+type sliceEmitter struct {
+	messages []*model.AIChatMessage
+}
+
+func (e *sliceEmitter) SendChunk(chunk map[string]any) {
+	if text, ok := chunk["text"].(string); ok && text != "" {
+		e.messages = append(e.messages, &model.AIChatMessage{Type: "message", Text: text})
+	}
+}
+func (e *sliceEmitter) SendMessage(msg *model.AIChatMessage) { e.messages = append(e.messages, msg) }
+func (e *sliceEmitter) SendDone()                            {} // no-op for non-streaming
 
 // convertBamlResponseToMessage converts a BAML response to an AIChatMessage
 func convertBamlResponseToMessage(bamlResp *types.ChatResponse, plugin *engine.Plugin, config *engine.PluginConfig) *model.AIChatMessage {

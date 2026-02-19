@@ -15,6 +15,54 @@ package type_builder
 
 import baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 
+type AgentActionClassView struct {
+	inner baml.ClassBuilder
+}
+
+func (t *AgentActionClassView) ListProperties() ([]ClassPropertyView, error) {
+	result, err := t.inner.ListProperties()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]ClassPropertyView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *AgentActionClassView) PropertyAction() (ClassPropertyView, error) {
+	return t.inner.Property("action")
+}
+
+func (t *AgentActionClassView) PropertyArgument() (ClassPropertyView, error) {
+	return t.inner.Property("argument")
+}
+
+func (t *AgentActionClassView) PropertyMessage() (ClassPropertyView, error) {
+	return t.inner.Property("message")
+}
+
+func (t *AgentActionClassView) PropertySql() (ClassPropertyView, error) {
+	return t.inner.Property("sql")
+}
+
+func (t *AgentActionClassView) PropertyRequires_confirmation() (ClassPropertyView, error) {
+	return t.inner.Property("requires_confirmation")
+}
+
+func (t *TypeBuilder) AgentAction() (*AgentActionClassView, error) {
+	bld, err := t.inner.Class("AgentAction")
+	if err != nil {
+		return nil, err
+	}
+	return &AgentActionClassView{inner: bld}, nil
+}
+
+func (t *AgentActionClassView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type ChatResponseClassView struct {
 	inner baml.ClassBuilder
 }

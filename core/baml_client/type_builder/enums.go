@@ -15,6 +15,54 @@ package type_builder
 
 import baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 
+type AgentActionTypeEnumView struct {
+	inner baml.EnumBuilder
+}
+
+func (t *AgentActionTypeEnumView) ListValues() ([]EnumValueView, error) {
+	result, err := t.inner.ListValues()
+	if err != nil {
+		return nil, err
+	}
+	builders := make([]EnumValueView, len(result))
+	for i, p := range result {
+		builders[i] = p
+	}
+	return builders, nil
+}
+
+func (t *AgentActionTypeEnumView) ValueListTables() (EnumValueView, error) {
+	return t.inner.Value("ListTables")
+}
+
+func (t *AgentActionTypeEnumView) ValueDescribeTable() (EnumValueView, error) {
+	return t.inner.Value("DescribeTable")
+}
+
+func (t *AgentActionTypeEnumView) ValueShowRelationships() (EnumValueView, error) {
+	return t.inner.Value("ShowRelationships")
+}
+
+func (t *AgentActionTypeEnumView) ValueExecuteSQL() (EnumValueView, error) {
+	return t.inner.Value("ExecuteSQL")
+}
+
+func (t *AgentActionTypeEnumView) ValueFinalAnswer() (EnumValueView, error) {
+	return t.inner.Value("FinalAnswer")
+}
+
+func (t *TypeBuilder) AgentActionType() (*AgentActionTypeEnumView, error) {
+	bld, err := t.inner.Enum("AgentActionType")
+	if err != nil {
+		return nil, err
+	}
+	return &AgentActionTypeEnumView{inner: bld}, nil
+}
+
+func (t *AgentActionTypeEnumView) Type() (baml.Type, error) {
+	return t.inner.Type()
+}
+
 type ChatMessageTypeEnumView struct {
 	inner baml.EnumBuilder
 }

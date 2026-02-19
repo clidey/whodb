@@ -21,6 +21,77 @@ import (
 	"github.com/boundaryml/baml/engine/language_client_go/pkg/cffi"
 )
 
+type AgentActionType string
+
+const (
+	AgentActionTypeListTables        AgentActionType = "ListTables"
+	AgentActionTypeDescribeTable     AgentActionType = "DescribeTable"
+	AgentActionTypeShowRelationships AgentActionType = "ShowRelationships"
+	AgentActionTypeExecuteSQL        AgentActionType = "ExecuteSQL"
+	AgentActionTypeFinalAnswer       AgentActionType = "FinalAnswer"
+)
+
+// Values returns all allowed values for the AgentActionType type.
+func (AgentActionType) Values() []AgentActionType {
+	return []AgentActionType{
+		AgentActionTypeListTables,
+		AgentActionTypeDescribeTable,
+		AgentActionTypeShowRelationships,
+		AgentActionTypeExecuteSQL,
+		AgentActionTypeFinalAnswer,
+	}
+}
+
+// IsValid checks whether the given AgentActionType value is valid.
+func (e AgentActionType) IsValid() bool {
+
+	for _, v := range e.Values() {
+		if e == v {
+			return true
+		}
+	}
+	return false
+
+}
+
+// MarshalJSON customizes JSON marshaling for AgentActionType.
+func (e AgentActionType) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid AgentActionType: %q", e)
+	}
+	return json.Marshal(string(e))
+}
+
+// UnmarshalJSON customizes JSON unmarshaling for AgentActionType.
+func (e *AgentActionType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = AgentActionType(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid AgentActionType: %q", s)
+	}
+	return nil
+}
+
+func (e *AgentActionType) Decode(holder *cffi.CFFIValueEnum, typeMap baml.TypeMap) {
+	name := holder.Name
+	if name.Name != "AgentActionType" && name.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected types.AgentActionType, got %s.%s", string(name.Namespace.String()), string(name.Name)))
+	}
+	value := holder.Value
+	*e = AgentActionType(value)
+}
+
+func (e AgentActionType) Encode() (*cffi.HostValue, error) {
+	return baml.EncodeEnum("AgentActionType", string(e), false)
+}
+
+func (e AgentActionType) BamlTypeName() string {
+	return "AgentActionType"
+}
+
 type ChatMessageType string
 
 const (

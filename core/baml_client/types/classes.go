@@ -20,6 +20,72 @@ import (
 	"github.com/boundaryml/baml/engine/language_client_go/pkg/cffi"
 )
 
+type AgentAction struct {
+	Action                AgentActionType `json:"action"`
+	Argument              *string         `json:"argument"`
+	Message               *string         `json:"message"`
+	Sql                   *string         `json:"sql"`
+	Requires_confirmation bool            `json:"requires_confirmation"`
+}
+
+func (c *AgentAction) Decode(holder *cffi.CFFIValueClass, typeMap baml.TypeMap) {
+	typeName := holder.Name
+	if typeName.Namespace != cffi.CFFITypeNamespace_TYPES {
+		panic(fmt.Sprintf("expected cffi.CFFITypeNamespace_TYPES, got %s", string(typeName.Namespace.String())))
+	}
+	if typeName.Name != "AgentAction" {
+		panic(fmt.Sprintf("expected AgentAction, got %s", typeName.Name))
+	}
+
+	for _, field := range holder.Fields {
+		key := field.Key
+		valueHolder := field.Value
+		switch key {
+
+		case "action":
+			c.Action = baml.Decode(valueHolder).Interface().(AgentActionType)
+
+		case "argument":
+			c.Argument = baml.Decode(valueHolder).Interface().(*string)
+
+		case "message":
+			c.Message = baml.Decode(valueHolder).Interface().(*string)
+
+		case "sql":
+			c.Sql = baml.Decode(valueHolder).Interface().(*string)
+
+		case "requires_confirmation":
+			c.Requires_confirmation = baml.Decode(valueHolder).Bool()
+
+		default:
+
+			panic(fmt.Sprintf("unexpected field: %s in class AgentAction", key))
+
+		}
+	}
+
+}
+
+func (c AgentAction) Encode() (*cffi.HostValue, error) {
+	fields := map[string]any{}
+
+	fields["action"] = c.Action
+
+	fields["argument"] = c.Argument
+
+	fields["message"] = c.Message
+
+	fields["sql"] = c.Sql
+
+	fields["requires_confirmation"] = c.Requires_confirmation
+
+	return baml.EncodeClass("AgentAction", fields, nil)
+}
+
+func (c AgentAction) BamlTypeName() string {
+	return "AgentAction"
+}
+
 type ChatResponse struct {
 	Type      ChatMessageType `json:"type"`
 	Operation *OperationType  `json:"operation"`

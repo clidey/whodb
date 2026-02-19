@@ -21,11 +21,14 @@ import (
 )
 
 var typeMap = map[string]reflect.Type{
+	"TYPES.AgentAction":            reflect.TypeOf(types.AgentAction{}),
+	"STREAM_TYPES.AgentAction":     reflect.TypeOf(stream_types.AgentAction{}),
 	"TYPES.ChatResponse":           reflect.TypeOf(types.ChatResponse{}),
 	"STREAM_TYPES.ChatResponse":    reflect.TypeOf(stream_types.ChatResponse{}),
 	"TYPES.DatabaseContext":        reflect.TypeOf(types.DatabaseContext{}),
 	"STREAM_TYPES.DatabaseContext": reflect.TypeOf(stream_types.DatabaseContext{}),
 
+	"TYPES.AgentActionType": reflect.TypeOf(types.AgentActionType("")),
 	"TYPES.ChatMessageType": reflect.TypeOf(types.ChatMessageType("")),
 	"TYPES.OperationType":   reflect.TypeOf(types.OperationType("")),
 }
