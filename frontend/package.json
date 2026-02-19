@@ -67,6 +67,7 @@
     "# Available CE databases: postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse": "",
     "e2e:db": "VITE_E2E_TEST=true bash ../dev/run-e2e.sh false",
     "e2e:db:headless": "VITE_E2E_TEST=true bash ../dev/run-e2e.sh true",
+    "e2e:keyboard:postgres:headless": "VITE_E2E_TEST=true WHODB_PW_NO_DEPS=true bash ../dev/run-e2e.sh true postgres keyboard-shortcuts",
     "# EE database-specific commands - usage: pnpm e2e:ee:db [database]": "",
     "e2e:ee:db": "VITE_E2E_TEST=true bash ../ee/dev/run-e2e.sh ee-only false",
     "e2e:ee:db:headless": "VITE_E2E_TEST=true bash ../ee/dev/run-e2e.sh ee-only true",
@@ -103,12 +104,14 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
     "@babel/core": "7.28.0",
-    "@playwright/test": "1.58.1",
     "@graphql-codegen/cli": "5.0.7",
     "@graphql-codegen/typescript": "4.1.6",
     "@graphql-codegen/typescript-operations": "4.6.1",
     "@graphql-codegen/typescript-react-apollo": "4.3.3",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.58.1",
     "@types/js-yaml": "4.0.9",
     "@types/lodash": "4.17.20",
     "@vitejs/plugin-react": "4.7.0",

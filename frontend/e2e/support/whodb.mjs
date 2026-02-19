@@ -386,7 +386,8 @@ export class WhoDB {
         // Wait for a VISIBLE table (not the hidden list view table)
         await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: 10000 });
         if (waitForRows) {
-            await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 15000 });
+            // Increased timeout for databases with async mutations (e.g., ClickHouse)
+            await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 30000 });
         }
     }
 

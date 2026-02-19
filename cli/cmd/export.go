@@ -139,15 +139,15 @@ The output format is determined by:
 			schema = conn.Schema
 		}
 		if schema == "" && exportTable != "" {
+			// Schema-less databases (SQLite, Redis, etc.) don't support schemas
 			schemas, err := mgr.GetSchemas()
 			if err != nil {
-				return fmt.Errorf("failed to fetch schemas: %w", err)
+				schemas = []string{}
 			}
-			if len(schemas) == 0 {
-				return fmt.Errorf("no schemas found in database")
+			if len(schemas) > 0 {
+				schema = schemas[0]
+				out.Info("Using schema: %s", schema)
 			}
-			schema = schemas[0]
-			out.Info("Using schema: %s", schema)
 		}
 
 		if !exportQuiet {

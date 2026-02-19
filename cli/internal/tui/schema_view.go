@@ -20,22 +20,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
-	"github.com/clidey/whodb/core/src/engine"
+	"github.com/sahilm/fuzzy"
 )
-
-type tableWithColumns struct {
-	StorageUnit engine.StorageUnit
-	Columns     []engine.Column
-}
-
-type schemaLoadedMsg struct {
-	tables []tableWithColumns
-	err    error
-}
 
 type SchemaView struct {
 	parent         *MainModel
@@ -84,6 +75,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 			return v, nil
 		}
 		v.tables = msg.tables
+		v.currentSchema = msg.schema
 		v.applyFilter()
 		v.selectedIndex = 0
 		return v, nil
@@ -91,6 +83,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
 		v.height = msg.Height
+		v.filterInput.Width = clamp(msg.Width-20, 15, 50)
 		return v, nil
 
 	case tea.MouseMsg:
@@ -153,26 +146,28 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 			}
 		}
 
-		switch msg.String() {
-		case "esc":
-			v.parent.mode = ViewResults
+		switch {
+		case key.Matches(msg, Keys.Global.Back):
+			if !v.parent.PopView() {
+				v.parent.mode = ViewBrowser
+			}
 			return v, nil
 
-		case "up", "k":
+		case key.Matches(msg, Keys.Schema.Up):
 			if v.selectedIndex > 0 {
 				v.selectedIndex--
 				v.ensureSelectedVisible()
 			}
 			return v, nil
 
-		case "down", "j":
+		case key.Matches(msg, Keys.Schema.Down):
 			if v.selectedIndex < len(v.filteredTables)-1 {
 				v.selectedIndex++
 				v.ensureSelectedVisible()
 			}
 			return v, nil
 
-		case "enter", " ":
+		case key.Matches(msg, Keys.Schema.Toggle):
 			if v.selectedIndex >= 0 && v.selectedIndex < len(v.filteredTables) {
 				table := v.filteredTables[v.selectedIndex]
 				if v.expandedTables[table.StorageUnit.Name] {
@@ -183,21 +178,21 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "v":
+		case key.Matches(msg, Keys.Schema.ViewData):
 			if v.selectedIndex >= 0 && v.selectedIndex < len(v.filteredTables) {
 				table := v.filteredTables[v.selectedIndex]
-				v.parent.resultsView.LoadTable(v.currentSchema, table.StorageUnit.Name)
-				v.parent.mode = ViewResults
-				return v, nil
+				cmd := v.parent.resultsView.LoadTable(v.currentSchema, table.StorageUnit.Name)
+				v.parent.PushView(ViewResults)
+				return v, cmd
 			}
 			return v, nil
 
-		case "/", "f":
+		case key.Matches(msg, Keys.Schema.Filter):
 			v.filtering = true
 			v.filterInput.Focus()
 			return v, nil
 
-		case "r":
+		case key.Matches(msg, Keys.Schema.Refresh):
 			v.loading = true
 			v.err = nil
 			v.filterInput.SetValue("")
@@ -219,15 +214,15 @@ func (v *SchemaView) View() string {
 	if v.filtering || v.filterInput.Value() != "" {
 		filterLabel := "Filter: "
 		if v.filtering {
-			filterLabel = styles.KeyStyle.Render("Filter: ")
+			filterLabel = styles.RenderKey("Filter: ")
 		} else {
-			filterLabel = styles.MutedStyle.Render("Filter: ")
+			filterLabel = styles.RenderMuted("Filter: ")
 		}
 		b.WriteString(filterLabel)
 		b.WriteString(v.filterInput.View())
 		if !v.filtering && v.filterInput.Value() != "" {
 			b.WriteString(" ")
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("(%d/%d)", len(v.filteredTables), len(v.tables))))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("(%d/%d)", len(v.filteredTables), len(v.tables))))
 		}
 		b.WriteString("\n\n")
 	}
@@ -235,11 +230,11 @@ func (v *SchemaView) View() string {
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Press 'r' to retry"))
+		b.WriteString(styles.RenderMuted("Press 'r' to retry"))
 	} else if v.loading {
-		b.WriteString(styles.MutedStyle.Render("Loading schema..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading schema..."))
 	} else if len(v.filteredTables) == 0 {
-		b.WriteString(styles.MutedStyle.Render("No tables found."))
+		b.WriteString(styles.RenderMuted("No tables found."))
 	} else {
 		b.WriteString(v.renderTables())
 	}
@@ -247,20 +242,19 @@ func (v *SchemaView) View() string {
 	b.WriteString("\n\n")
 
 	if v.filtering {
-		b.WriteString(styles.RenderHelp(
-			"esc", "cancel",
-			"enter", "apply",
+		b.WriteString(RenderBindingHelp(
+			Keys.Filter.CancelFilter,
+			Keys.Filter.ApplyFilter,
 		))
 	} else {
-		b.WriteString(styles.RenderHelp(
-			"↑/k", "up",
-			"↓/j", "down",
-			"enter/space", "expand",
-			"[v]", "view data",
-			"[/]", "filter",
-			"scroll", "trackpad/mouse",
-			"[r]", "refresh",
-			"esc", "back",
+		b.WriteString(RenderBindingHelp(
+			Keys.Schema.Up,
+			Keys.Schema.Down,
+			Keys.Schema.Toggle,
+			Keys.Schema.ViewData,
+			Keys.Schema.Filter,
+			Keys.Schema.Refresh,
+			Keys.Global.Back,
 		))
 	}
 
@@ -355,10 +349,10 @@ func (v *SchemaView) renderTables() string {
 
 			prefix := "  "
 			if item.isSelected {
-				prefix = styles.KeyStyle.Render("▶ ")
+				prefix = styles.RenderKey("▶ ")
 			}
 
-			tableLine := fmt.Sprintf("%s %s %s", icon, table.StorageUnit.Name, styles.MutedStyle.Render(fmt.Sprintf("(%s)", tableType)))
+			tableLine := fmt.Sprintf("%s %s %s", icon, table.StorageUnit.Name, styles.RenderMuted(fmt.Sprintf("(%s)", tableType)))
 			if item.isSelected {
 				tableLine = styles.ActiveListItemStyle.Render(tableLine)
 			} else {
@@ -370,7 +364,7 @@ func (v *SchemaView) renderTables() string {
 			b.WriteString("\n")
 		} else {
 			// Column line
-			b.WriteString(styles.MutedStyle.Render(item.columnText))
+			b.WriteString(styles.RenderMuted(item.columnText))
 			b.WriteString("\n")
 		}
 	}
@@ -386,13 +380,16 @@ func (v *SchemaView) renderTables() string {
 			scrollInfo += " • ↓ scroll down"
 		}
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render(scrollInfo))
+		b.WriteString(styles.RenderMuted(scrollInfo))
 	}
 
 	return b.String()
 }
 
 func (v *SchemaView) loadSchema() tea.Cmd {
+	// Capture values before closure to avoid data races
+	browserSchema := v.parent.browserView.currentSchema
+
 	return func() tea.Msg {
 		conn := v.parent.dbManager.GetCurrentConnection()
 		if conn == nil {
@@ -403,14 +400,12 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 		}
 
 		// Use the schema selected in browser view if available
-		schema := v.parent.browserView.currentSchema
+		schema := browserSchema
 		if schema == "" {
 			schemas, err := v.parent.dbManager.GetSchemas()
 			if err != nil {
-				return schemaLoadedMsg{
-					tables: []tableWithColumns{},
-					err:    fmt.Errorf("failed to get schemas: %w", err),
-				}
+				// Schema-less databases (SQLite, Redis, etc.) don't support schemas.
+				schemas = []string{}
 			}
 
 			if len(schemas) == 0 {
@@ -422,8 +417,6 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 
 			schema = selectBestSchema(schemas)
 		}
-		v.currentSchema = schema
-
 		units, err := v.parent.dbManager.GetStorageUnits(schema)
 		if err != nil {
 			return schemaLoadedMsg{
@@ -447,6 +440,7 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 		return schemaLoadedMsg{
 			tables: tables,
 			err:    nil,
+			schema: schema,
 		}
 	}
 }
@@ -456,18 +450,22 @@ func (v *SchemaView) Init() tea.Cmd {
 }
 
 func (v *SchemaView) applyFilter() {
-	filterText := strings.ToLower(v.filterInput.Value())
+	filterText := v.filterInput.Value()
 
 	if filterText == "" {
 		v.filteredTables = v.tables
 		return
 	}
 
-	v.filteredTables = []tableWithColumns{}
-	for _, table := range v.tables {
-		if strings.Contains(strings.ToLower(table.StorageUnit.Name), filterText) {
-			v.filteredTables = append(v.filteredTables, table)
-		}
+	names := make([]string, len(v.tables))
+	for i, t := range v.tables {
+		names[i] = t.StorageUnit.Name
+	}
+
+	matches := fuzzy.Find(filterText, names)
+	v.filteredTables = make([]tableWithColumns, len(matches))
+	for i, m := range matches {
+		v.filteredTables[i] = v.tables[m.Index]
 	}
 
 	if v.selectedIndex >= len(v.filteredTables) {

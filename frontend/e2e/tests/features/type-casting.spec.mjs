@@ -61,6 +61,12 @@ test.describe('Type Casting', () => {
                 const descValue = getValue(newRow, 'description');
                 await whodb.addRow(newRow);
 
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    await page.waitForTimeout(mutationDelay);
+                    await whodb.data(typeCastingTable);
+                }
+
                 // Wait for row to appear using retry-able assertion
                 const rowIndex = await whodb.waitForRowContaining(descValue, { caseSensitive: true });
 
@@ -81,6 +87,11 @@ test.describe('Type Casting', () => {
                 const deleteIndex = rows.findIndex(r => r.includes(descValue));
                 if (deleteIndex >= 0) {
                     await whodb.deleteRow(deleteIndex);
+
+                    // Wait for async delete mutation
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                    }
                 }
             });
 
@@ -98,6 +109,12 @@ test.describe('Type Casting', () => {
 
                 await whodb.addRow(largeNumberRow);
 
+                // Wait for async mutations (e.g., ClickHouse)
+                if (mutationDelay > 0) {
+                    await page.waitForTimeout(mutationDelay);
+                    await whodb.data(typeCastingTable);
+                }
+
                 // Wait for row to appear using retry-able assertion
                 const rowIndex = await whodb.waitForRowContaining('Large bigint test', { caseSensitive: true });
 
@@ -108,6 +125,11 @@ test.describe('Type Casting', () => {
 
                 // Clean up
                 await whodb.deleteRow(rowIndex);
+
+                // Wait for async delete mutation
+                if (mutationDelay > 0) {
+                    await page.waitForTimeout(mutationDelay);
+                }
             });
         });
 

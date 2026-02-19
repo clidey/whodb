@@ -420,3 +420,18 @@ func TestColumnsView_ScrollWithNavigation(t *testing.T) {
 		t.Error("Expected scrollOffset to adjust when navigating above visible area")
 	}
 }
+
+func TestColumnsView_View_EmptyColumns(t *testing.T) {
+	v, cleanup := setupColumnsViewTest(t)
+	defer cleanup()
+
+	// Set empty columns - this previously caused a panic (startIdx = -1)
+	v.columns = []engine.Column{}
+	v.height = 30
+
+	view := v.View()
+
+	if !strings.Contains(view, "No columns") {
+		t.Error("Expected 'No columns' message for empty columns")
+	}
+}

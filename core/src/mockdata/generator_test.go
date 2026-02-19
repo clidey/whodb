@@ -1000,7 +1000,7 @@ func TestGenClickHouseDecimalFormats(t *testing.T) {
 	for _, typeName := range types {
 		t.Run(typeName, func(t *testing.T) {
 			for i := 0; i < 20; i++ {
-				val := genClickHouseDecimal(typeName, faker)
+				val := genClickHouseDecimal(typeName, nil, faker)
 				str, ok := val.(string)
 				if !ok {
 					t.Fatalf("expected string, got %T", val)
@@ -1257,6 +1257,236 @@ func TestGenerateByTypeRoutesToCorrectGenerator(t *testing.T) {
 			val := GenerateByType(tt.dbType, "", nil, faker)
 			tt.validate(t, val)
 		})
+	}
+}
+
+func TestUnwrapTypeModifiers(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Nullable(Int32)", "Int32"},
+		{"LowCardinality(String)", "String"},
+		{"LowCardinality(Nullable(String))", "String"},
+		{"Nullable(LowCardinality(FixedString(10)))", "FixedString(10)"},
+		{"Int32", "Int32"},
+		{"varchar(255)", "varchar(255)"},
+		{"NULLABLE(FLOAT64)", "FLOAT64"},
+		{"nullable(datetime64(3))", "datetime64(3)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := unwrapTypeModifiers(tt.input)
+			if result != tt.expected {
+				t.Errorf("unwrapTypeModifiers(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDetectDatabaseTypeHandlesWrappedTypes(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Nullable(Int32)", "int"},
+		{"LowCardinality(String)", "text"},
+		{"Nullable(Float64)", "float"},
+		{"LowCardinality(Nullable(String))", "text"},
+		{"Nullable(DateTime)", "datetime"},
+		{"Nullable(UUID)", "uuid"},
+		{"Nullable(Bool)", "bool"},
+		{"Nullable(Date)", "date"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := detectDatabaseType(tt.input)
+			if result != tt.expected {
+				t.Errorf("detectDatabaseType(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGenerateByTypeClickHouseEnum(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	// Enum with check_values constraint (as set by the ClickHouse plugin)
+	constraints := map[string]any{
+		"check_values": []string{"active", "inactive", "pending"},
+	}
+
+	for i := 0; i < 50; i++ {
+		val := GenerateByType("Enum8", "", constraints, faker)
+		str, ok := val.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", val)
+		}
+		if str != "active" && str != "inactive" && str != "pending" {
+			t.Fatalf("iteration %d: expected enum value, got %q", i, str)
+		}
+	}
+}
+
+func TestGenerateByTypeNullableInt(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	// Nullable(Int32) should generate an integer, not text
+	val := GenerateByType("Nullable(Int32)", "", nil, faker)
+	if _, ok := val.(int); !ok {
+		t.Fatalf("expected int for Nullable(Int32), got %T: %v", val, val)
+	}
+}
+
+func TestGenerateByTypeLowCardinalityString(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	// LowCardinality(String) should generate text
+	val := GenerateByType("LowCardinality(String)", "", nil, faker)
+	if _, ok := val.(string); !ok {
+		t.Fatalf("expected string for LowCardinality(String), got %T: %v", val, val)
+	}
+}
+
+func TestGenerateByTypeClickHouseArray(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	val := GenerateByType("Array(Int32)", "", nil, faker)
+	str, ok := val.(string)
+	if !ok {
+		t.Fatalf("expected string for Array(Int32), got %T", val)
+	}
+	if !strings.HasPrefix(str, "[") || !strings.HasSuffix(str, "]") {
+		t.Fatalf("expected array literal [..], got %q", str)
+	}
+}
+
+func TestGenerateByTypeClickHouseMap(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	val := GenerateByType("Map(String, Int32)", "", nil, faker)
+	str, ok := val.(string)
+	if !ok {
+		t.Fatalf("expected string for Map(String, Int32), got %T", val)
+	}
+	if !strings.HasPrefix(str, "{") || !strings.HasSuffix(str, "}") {
+		t.Fatalf("expected map literal {..}, got %q", str)
+	}
+}
+
+func TestGenerateByTypeClickHouseTuple(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	val := GenerateByType("Tuple(String, Int32, Float64)", "", nil, faker)
+	str, ok := val.(string)
+	if !ok {
+		t.Fatalf("expected string for Tuple(...), got %T", val)
+	}
+	if !strings.HasPrefix(str, "(") || !strings.HasSuffix(str, ")") {
+		t.Fatalf("expected tuple literal (..), got %q", str)
+	}
+	// Should have 3 elements separated by commas
+	inner := str[1 : len(str)-1]
+	parts := strings.Split(inner, ", ")
+	if len(parts) != 3 {
+		t.Fatalf("expected 3 tuple elements, got %d in %q", len(parts), str)
+	}
+}
+
+func TestGenClickHouseDecimalRespectsScale(t *testing.T) {
+	faker := gofakeit.New(1)
+
+	tests := []struct {
+		name      string
+		scale     int
+		precision int
+	}{
+		{"Decimal32(5)", 5, 9},
+		{"Decimal64(3)", 3, 18},
+		{"Decimal32(0)", 0, 9},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			constraints := map[string]any{
+				"scale":     tt.scale,
+				"precision": tt.precision,
+			}
+			for i := 0; i < 50; i++ {
+				val := genClickHouseDecimal("decimal32", constraints, faker)
+				str, ok := val.(string)
+				if !ok {
+					t.Fatalf("expected string, got %T", val)
+				}
+				// Check decimal places
+				if dotIdx := strings.Index(str, "."); dotIdx >= 0 {
+					decimals := len(str) - dotIdx - 1
+					if decimals != tt.scale {
+						t.Fatalf("iteration %d: expected %d decimal places, got %d in %q", i, tt.scale, decimals, str)
+					}
+				} else if tt.scale > 0 {
+					t.Fatalf("iteration %d: expected decimal point for scale %d, got %q", i, tt.scale, str)
+				}
+			}
+		})
+	}
+}
+
+func TestExtractInnerType(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Array(Int32)", "Int32"},
+		{"Array(String)", "String"},
+		{"Array(Nullable(String))", "Nullable(String)"},
+		{"Map(String, Int32)", "String, Int32"},
+		{"Tuple(String, Int32, Float64)", "String, Int32, Float64"},
+		{"NoParens", "String"}, // fallback
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := extractInnerType(tt.input)
+			if result != tt.expected {
+				t.Errorf("extractInnerType(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestExtractMapTypes(t *testing.T) {
+	tests := []struct {
+		input     string
+		expectedK string
+		expectedV string
+	}{
+		{"Map(String, Int32)", "String", "Int32"},
+		{"Map(String, Array(Int32))", "String", "Array(Int32)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			k, v := extractMapTypes(tt.input)
+			if k != tt.expectedK || v != tt.expectedV {
+				t.Errorf("extractMapTypes(%q) = (%q, %q), want (%q, %q)", tt.input, k, v, tt.expectedK, tt.expectedV)
+			}
+		})
+	}
+}
+
+func TestExtractTupleTypes(t *testing.T) {
+	types := extractTupleTypes("Tuple(String, Int32, Float64)")
+	if len(types) != 3 {
+		t.Fatalf("expected 3 types, got %d: %v", len(types), types)
+	}
+	expected := []string{"String", "Int32", "Float64"}
+	for i, e := range expected {
+		if types[i] != e {
+			t.Errorf("type[%d] = %q, want %q", i, types[i], e)
+		}
 	}
 }
 

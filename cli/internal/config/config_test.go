@@ -318,6 +318,95 @@ func TestLoadConfig_ReturnsDefaults(t *testing.T) {
 	}
 }
 
+func TestAIConfigAccessors(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// Initial state
+	if cfg.GetLastAIProvider() != "" {
+		t.Errorf("Expected empty LastProvider, got '%s'", cfg.GetLastAIProvider())
+	}
+	if cfg.GetLastAIModel() != "" {
+		t.Errorf("Expected empty LastModel, got '%s'", cfg.GetLastAIModel())
+	}
+
+	// Set and get provider
+	cfg.SetLastAIProvider("Ollama")
+	if cfg.GetLastAIProvider() != "Ollama" {
+		t.Errorf("Expected LastProvider 'Ollama', got '%s'", cfg.GetLastAIProvider())
+	}
+
+	// Set and get model
+	cfg.SetLastAIModel("llama3")
+	if cfg.GetLastAIModel() != "llama3" {
+		t.Errorf("Expected LastModel 'llama3', got '%s'", cfg.GetLastAIModel())
+	}
+
+	// Overwrite
+	cfg.SetLastAIProvider("OpenAI")
+	cfg.SetLastAIModel("gpt-4")
+	if cfg.GetLastAIProvider() != "OpenAI" {
+		t.Errorf("Expected LastProvider 'OpenAI', got '%s'", cfg.GetLastAIProvider())
+	}
+	if cfg.GetLastAIModel() != "gpt-4" {
+		t.Errorf("Expected LastModel 'gpt-4', got '%s'", cfg.GetLastAIModel())
+	}
+}
+
+func TestPreferredTimeoutAccessors(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// Initial state
+	if cfg.GetPreferredTimeout() != 0 {
+		t.Errorf("Expected PreferredTimeout 0, got %d", cfg.GetPreferredTimeout())
+	}
+
+	// Set and get
+	cfg.SetPreferredTimeout(60)
+	if cfg.GetPreferredTimeout() != 60 {
+		t.Errorf("Expected PreferredTimeout 60, got %d", cfg.GetPreferredTimeout())
+	}
+
+	// Overwrite
+	cfg.SetPreferredTimeout(300)
+	if cfg.GetPreferredTimeout() != 300 {
+		t.Errorf("Expected PreferredTimeout 300, got %d", cfg.GetPreferredTimeout())
+	}
+}
+
+func TestAIConfig_SaveAndLoad(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	resetConfigDir()
+	defer resetConfigDir()
+
+	cfg := DefaultConfig()
+	cfg.SetLastAIProvider("Ollama")
+	cfg.SetLastAIModel("llama3")
+	cfg.SetPreferredTimeout(120)
+
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	loaded, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	if loaded.GetLastAIProvider() != "Ollama" {
+		t.Errorf("Expected LastProvider 'Ollama' after reload, got '%s'", loaded.GetLastAIProvider())
+	}
+	if loaded.GetLastAIModel() != "llama3" {
+		t.Errorf("Expected LastModel 'llama3' after reload, got '%s'", loaded.GetLastAIModel())
+	}
+	if loaded.GetPreferredTimeout() != 120 {
+		t.Errorf("Expected PreferredTimeout 120 after reload, got %d", loaded.GetPreferredTimeout())
+	}
+}
+
 func TestGetConfigDir(t *testing.T) {
 	dir, err := GetConfigDir()
 	if err != nil {
@@ -345,5 +434,38 @@ func TestGetConfigPath(t *testing.T) {
 
 	if filepath.Ext(path) != ".json" {
 		t.Errorf("Expected .json extension, got '%s'", filepath.Ext(path))
+	}
+}
+
+func TestPageSizeAccessors(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// Default page size
+	if cfg.GetPageSize() != 50 {
+		t.Errorf("Expected default page size 50, got %d", cfg.GetPageSize())
+	}
+
+	// Set custom page size
+	cfg.SetPageSize(25)
+	if cfg.GetPageSize() != 25 {
+		t.Errorf("Expected page size 25, got %d", cfg.GetPageSize())
+	}
+
+	// Set another value
+	cfg.SetPageSize(100)
+	if cfg.GetPageSize() != 100 {
+		t.Errorf("Expected page size 100, got %d", cfg.GetPageSize())
+	}
+
+	// Zero falls back to default
+	cfg.SetPageSize(0)
+	if cfg.GetPageSize() != 50 {
+		t.Errorf("Expected default page size 50 for zero, got %d", cfg.GetPageSize())
+	}
+
+	// Negative falls back to default
+	cfg.SetPageSize(-1)
+	if cfg.GetPageSize() != 50 {
+		t.Errorf("Expected default page size 50 for negative, got %d", cfg.GetPageSize())
 	}
 }

@@ -23,8 +23,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/internal/config"
@@ -64,35 +66,35 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	} else {
 		str = "  " + i.Title()
 	}
-	str += "\n  " + styles.MutedStyle.Render(i.Description())
+	str += "\n  " + styles.RenderMuted(i.Description())
 	fmt.Fprint(w, str)
 }
-
-type connectionResultMsg struct {
-	err error
-}
-
-type escTimeoutTickMsg struct{}
 
 // ConnectionView provides the TUI for managing database connections.
 // It supports both a list view (selecting from saved connections) and
 // a form view (creating new connections).
 type ConnectionView struct {
-	parent      *MainModel
-	list        list.Model
-	mode        string // "list" or "form"
-	inputs      []textinput.Model
-	focusIndex  int
-	dbTypes     []string
-	dbTypeIndex int
-	connecting  bool
-	connError   error
+	parent        *MainModel
+	list          list.Model
+	mode          string // "list" or "form"
+	inputs        []textinput.Model
+	focusIndex    int
+	dbTypes       []string
+	dbTypeIndex   int
+	visibleFields []int // indices of visible input fields for current db type
+	connecting    bool
+	connError     error
 	// Deferred password prompt when connecting with empty password
 	awaitingPassword bool
 	passwordPrompt   textinput.Model
 	// ESC confirmation
 	escPressed     bool
 	escTimeoutSecs int
+	// Viewport for scrollable form
+	formViewport viewport.Model
+	formReady    bool
+	width        int
+	height       int
 }
 
 // NewConnectionView creates a connection view initialized with saved connections
@@ -105,6 +107,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 
 	l := list.New(items, connectionDelegate{}, 0, 0)
 	l.Title = ""
+	l.SetShowTitle(false)
 	l.SetShowStatusBar(true)
 	l.SetFilteringEnabled(true)
 	l.SetStatusBarItemName("connection available", "connections available")
@@ -180,9 +183,9 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	inputs = append(inputs, schemaInput)
 
 	mode := "list"
+	focusIndex := 7 // Start on db type selector
 	if len(items) == 0 {
 		mode = "form"
-		inputs[0].Focus()
 	}
 
 	// Password prompt (shown after pressing Connect if password is empty)
@@ -196,14 +199,17 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	prompt.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
 	prompt.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
 
+	dbTypes := []string{"Postgres", "MySQL", "Sqlite3", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
+
 	return &ConnectionView{
 		parent:           parent,
 		list:             l,
 		mode:             mode,
 		inputs:           inputs,
-		focusIndex:       0,
-		dbTypes:          []string{"Postgres", "MySQL", "SQLite", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"},
+		focusIndex:       focusIndex,
+		dbTypes:          dbTypes,
 		dbTypeIndex:      0,
+		visibleFields:    getVisibleFields(dbTypes[0]),
 		connecting:       false,
 		awaitingPassword: false,
 		passwordPrompt:   prompt,
@@ -219,8 +225,22 @@ func (v *ConnectionView) Update(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 
 func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case connectionResultMsg:
+		v.connecting = false
+		if msg.err != nil {
+			v.parent.err = msg.err
+			return v, nil
+		}
+		v.parent.mode = ViewBrowser
+		conn := v.parent.dbManager.GetCurrentConnection()
+		connDesc := ""
+		if conn != nil {
+			connDesc = fmt.Sprintf("Connected to %s@%s", conn.Type, conn.Host)
+		}
+		return v, tea.Batch(v.parent.browserView.Init(), v.parent.SetStatus(connDesc))
+
 	case tea.WindowSizeMsg:
-		v.list.SetSize(msg.Width, msg.Height-8)
+		// Store dimensions; actual list sizing happens in View() using lipgloss.Height() measurements
 		return v, nil
 
 	case tea.MouseMsg:
@@ -245,32 +265,35 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		return v, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "tab":
+		switch {
+		case key.Matches(msg, Keys.ConnectionList.Down):
 			v.list.CursorDown()
 			return v, nil
 
-		case "shift+tab":
+		case key.Matches(msg, Keys.ConnectionList.Up):
 			v.list.CursorUp()
 			return v, nil
 
-		case "enter":
+		case key.Matches(msg, Keys.ConnectionList.Connect):
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
-				if err := v.parent.dbManager.Connect(&item.conn); err != nil {
-					v.parent.err = err
-					return v, nil
+				v.connecting = true
+				v.connError = nil
+				conn := item.conn
+				return v, func() tea.Msg {
+					if err := v.parent.dbManager.Connect(&conn); err != nil {
+						return connectionResultMsg{err: err}
+					}
+					return connectionResultMsg{err: nil}
 				}
-				v.parent.mode = ViewBrowser
-				return v, v.parent.browserView.Init()
 			}
 
-		case "n":
+		case key.Matches(msg, Keys.ConnectionList.New):
 			v.mode = "form"
 			v.resetForm()
 			v.inputs[0].Focus()
 			return v, nil
 
-		case "d":
+		case key.Matches(msg, Keys.ConnectionList.DeleteConn):
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
 				v.parent.config.RemoveConnection(item.conn.Name)
 				v.parent.config.Save()
@@ -278,7 +301,7 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "esc":
+		case key.Matches(msg, Keys.ConnectionList.QuitEsc):
 			if v.escPressed {
 				// Second ESC press - confirm quit
 				return v, tea.Quit
@@ -290,14 +313,18 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		}
 	}
 
-	// Clear ESC confirmation on any other key press
-	if _, ok := msg.(tea.KeyMsg); ok && msg.(tea.KeyMsg).String() != "esc" && !v.escPressed {
-		// Not specifically checking escPressed here since it's already reset by timeout or second press
+	// Clear ESC confirmation on any non-ESC key press
+	if km, ok := msg.(tea.KeyMsg); ok && km.String() != "esc" {
+		v.escPressed = false
 	}
 
 	var cmd tea.Cmd
 	v.list, cmd = v.list.Update(msg)
 	return v, cmd
+}
+
+func (v *ConnectionView) inputWidth() int {
+	return clamp(v.width-8, 20, 60)
 }
 
 func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
@@ -328,22 +355,36 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.MouseMsg:
-		switch msg.Button {
-		case tea.MouseButtonWheelUp:
-			v.prevInput()
-			return v, nil
-		case tea.MouseButtonWheelDown:
-			v.nextInput()
-			return v, nil
+	case tea.WindowSizeMsg:
+		v.width = msg.Width
+		v.height = msg.Height
+		if !v.formReady {
+			v.formViewport = viewport.New(msg.Width-4, msg.Height-8)
+			v.formViewport.MouseWheelEnabled = true
+			v.formReady = true
 		}
+		// Actual sizing happens in renderForm using lipgloss.Height() measurements
+		return v, nil
+
+	case tea.MouseMsg:
+		// Forward mouse events to viewport for scroll handling
+		if v.formReady {
+			v.formViewport, cmd = v.formViewport.Update(msg)
+			return v, cmd
+		}
+
 	case connectionResultMsg:
 		if msg.err != nil {
 			v.connError = msg.err
 			v.connecting = false
 		} else {
 			v.parent.mode = ViewBrowser
-			return v, v.parent.browserView.Init()
+			conn := v.parent.dbManager.GetCurrentConnection()
+			connDesc := ""
+			if conn != nil {
+				connDesc = fmt.Sprintf("Connected to %s@%s", conn.Type, conn.Host)
+			}
+			return v, tea.Batch(v.parent.browserView.Init(), v.parent.SetStatus(connDesc))
 		}
 		return v, nil
 
@@ -374,7 +415,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				if v.dbTypeIndex < 0 {
 					v.dbTypeIndex = len(v.dbTypes) - 1
 				}
-				v.updatePortPlaceholder()
+				v.onDbTypeChanged()
 			}
 			return v, nil
 
@@ -384,14 +425,14 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				if v.dbTypeIndex >= len(v.dbTypes) {
 					v.dbTypeIndex = 0
 				}
-				v.updatePortPlaceholder()
+				v.onDbTypeChanged()
 			}
 			return v, nil
 
 		case "enter":
 			if v.focusIndex == 8 {
-				// If password is empty, prompt securely before connecting
-				if v.inputs[4].Value() == "" {
+				// If password field is visible and empty, prompt securely before connecting
+				if v.isFieldVisible(4) && v.inputs[4].Value() == "" {
 					v.awaitingPassword = true
 					v.passwordPrompt.SetValue("")
 					v.passwordPrompt.Focus()
@@ -418,23 +459,39 @@ func (v *ConnectionView) View() string {
 		return v.renderForm()
 	}
 
-	var b strings.Builder
+	// Render chrome first, measure heights, give remainder to list
+	title := styles.RenderTitle("Welcome to WhoDB!")
+	subtitle := styles.RenderMuted("Select an existing connection below, or create a new one with [n]")
+	helpText := RenderBindingHelp(
+		Keys.ConnectionList.Up,
+		Keys.ConnectionList.Down,
+		Keys.ConnectionList.Connect,
+		Keys.ConnectionList.New,
+		Keys.ConnectionList.DeleteConn,
+		Keys.ConnectionList.QuitEsc,
+		Keys.Global.Quit,
+	)
 
-	b.WriteString(styles.RenderTitle("Welcome to WhoDB!"))
+	// Measure chrome: title + subtitle + help + padding(2) + view indicator(2) + separators(2)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(subtitle) + lipgloss.Height(helpText) + 6
+	listHeight := v.parent.height - chromeHeight
+	if listHeight < 3 {
+		listHeight = 3
+	}
+	v.list.SetSize(v.parent.width-4, listHeight)
+
+	var b strings.Builder
+	b.WriteString(title)
 	b.WriteString("\n")
-	b.WriteString(styles.MutedStyle.Render("Select an existing connection below, or create a new one with [n]"))
+	b.WriteString(subtitle)
 	b.WriteString("\n\n")
-	b.WriteString(v.list.View())
+	if v.connecting {
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Connecting..."))
+	} else {
+		b.WriteString(v.list.View())
+	}
 	b.WriteString("\n\n")
-	b.WriteString(styles.RenderHelp(
-		"↑/k/shift+tab", "up",
-		"↓/j/tab", "down",
-		"enter", "connect",
-		"[n]", "new",
-		"[d]", "delete",
-		"esc", "quit",
-		"ctrl+c", "force quit",
-	))
+	b.WriteString(helpText)
 
 	content := lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 
@@ -448,135 +505,9 @@ func (v *ConnectionView) View() string {
 }
 
 func (v *ConnectionView) renderForm() string {
-	var b strings.Builder
-
-	b.WriteString(styles.RenderTitle("New Database Connection"))
-	b.WriteString("\n\n")
-
-	if v.connError != nil {
-		b.WriteString(styles.RenderErrorBox(v.connError.Error()))
-		b.WriteString("\n\n")
-	}
-
-	// Connection Name (index 0)
-	label := "Connection Name:"
-	if v.focusIndex == 0 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[0].View())
-	b.WriteString("\n\n")
-
-	// Host (index 1)
-	label = "Host:"
-	if v.focusIndex == 1 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[1].View())
-	b.WriteString("\n\n")
-
-	// Port (index 2)
-	label = "Port:"
-	if v.focusIndex == 2 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[2].View())
-	b.WriteString("\n\n")
-
-	// Username (index 3)
-	label = "Username:"
-	if v.focusIndex == 3 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[3].View())
-	b.WriteString("\n\n")
-
-	// Password (index 4)
-	label = "Password:"
-	if v.focusIndex == 4 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[4].View())
-	b.WriteString("\n\n")
-
-	// Database (index 5)
-	label = "Database:"
-	if v.focusIndex == 5 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[5].View())
-	b.WriteString("\n\n")
-
-	// Schema (index 6)
-	label = "Schema:"
-	if v.focusIndex == 6 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	b.WriteString(v.inputs[6].View())
-	b.WriteString("\n\n")
-
-	// Database Type (index 7)
-	label = "Database Type:"
-	if v.focusIndex == 7 {
-		label = styles.KeyStyle.Render("▶ " + label)
-	} else {
-		label = "  " + label
-	}
-	b.WriteString(label)
-	b.WriteString("\n  ")
-	for i, dbType := range v.dbTypes {
-		if i == v.dbTypeIndex {
-			if v.focusIndex == 7 {
-				b.WriteString(styles.ActiveListItemStyle.Render(" " + dbType + " "))
-			} else {
-				b.WriteString(styles.KeyStyle.Render("[" + dbType + "]"))
-			}
-		} else {
-			b.WriteString(styles.MutedStyle.Render(" " + dbType + " "))
-		}
-		b.WriteString(" ")
-	}
-	b.WriteString("\n\n")
-
-	// Connect button (index 8)
-	connectBtn := "[Connect]"
-	if v.focusIndex == 8 {
-		connectBtn = styles.ActiveListItemStyle.Render(" Connect ")
-	} else {
-		connectBtn = styles.KeyStyle.Render(connectBtn)
-	}
-	b.WriteString("  " + connectBtn)
-	b.WriteString("\n\n")
-
-	// If awaiting password, render overlay prompt
+	// If awaiting password, render overlay prompt (outside viewport)
 	if v.awaitingPassword {
+		var b strings.Builder
 		b.WriteString(styles.RenderTitle("Enter Password"))
 		b.WriteString("\n  ")
 		b.WriteString(v.passwordPrompt.View())
@@ -588,23 +519,121 @@ func (v *ConnectionView) renderForm() string {
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
+	if v.connecting {
+		var cb strings.Builder
+		cb.WriteString(styles.RenderTitle("New Database Connection"))
+		cb.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Connecting..."))
+		return lipgloss.NewStyle().Padding(1, 2).Render(cb.String())
+	}
+
+	// Set responsive input widths before rendering
+	iw := v.inputWidth()
+	for i := range v.inputs {
+		v.inputs[i].Width = iw
+	}
+	v.passwordPrompt.Width = iw
+
+	// Build form body for the viewport
+	var body strings.Builder
+
+	// Database Type (index 7)
+	dbTypeLabel := "Database Type:"
+	if v.focusIndex == 7 {
+		dbTypeLabel = styles.RenderKey("▶ " + dbTypeLabel)
+	} else {
+		dbTypeLabel = "  " + dbTypeLabel
+	}
+	body.WriteString(dbTypeLabel)
+	body.WriteString("\n  ")
+	for i, dbType := range v.dbTypes {
+		if i == v.dbTypeIndex {
+			if v.focusIndex == 7 {
+				body.WriteString(styles.ActiveListItemStyle.Render(" " + dbType + " "))
+			} else {
+				body.WriteString(styles.RenderKey("[" + dbType + "]"))
+			}
+		} else {
+			body.WriteString(styles.RenderMuted(" " + dbType + " "))
+		}
+		body.WriteString(" ")
+	}
+	body.WriteString("\n\n")
+
+	fieldLabels := []string{"Connection Name:", "Host:", "Port:", "Username:", "Password:", "Database:", "Schema:"}
+	for i, fieldLabel := range fieldLabels {
+		if !v.isFieldVisible(i) {
+			continue
+		}
+		label := fieldLabel
+		if v.focusIndex == i {
+			label = styles.RenderKey("▶ " + label)
+		} else {
+			label = "  " + label
+		}
+		body.WriteString(label)
+		body.WriteString("\n  ")
+		body.WriteString(v.inputs[i].View())
+		body.WriteString("\n\n")
+	}
+
+	// Connect button (index 8)
+	connectBtn := "[Connect]"
+	if v.focusIndex == 8 {
+		connectBtn = styles.ActiveListItemStyle.Render(" Connect ")
+	} else {
+		connectBtn = styles.RenderKey(connectBtn)
+	}
+	body.WriteString("  " + connectBtn)
+
+	// Render title and help first, measure them, give remaining height to viewport
+	title := styles.RenderTitle("New Database Connection")
 	helpText := ""
 	if len(v.parent.config.Connections) > 0 {
-		helpText = styles.RenderHelp(
-			"↑/↓/tab", "navigate",
-			"←/→", "change type",
-			"enter", "connect",
-			"esc", "back",
-			"ctrl+c", "quit",
+		helpText = styles.RenderHelpWidth(v.width,
+			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
+			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
+			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
+			Keys.Global.Back.Help().Key, Keys.Global.Back.Help().Desc,
+			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
 	} else {
-		helpText = styles.RenderHelp(
-			"↑/↓/tab", "navigate",
-			"←/→", "change type",
-			"enter", "connect",
-			"ctrl+c", "quit",
+		helpText = styles.RenderHelpWidth(v.width,
+			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
+			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
+			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
+			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
 	}
+
+	// Render error outside viewport so it's always fully visible
+	errorBlock := ""
+	if v.connError != nil {
+		errorBlock = styles.RenderErrorBox(v.connError.Error()) + "\n"
+	}
+
+	// Measure chrome height: title + error + help + padding(2) + view indicator(2) + separators(1)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(errorBlock) + lipgloss.Height(helpText) + 5
+
+	// Size viewport to fill remaining space
+	if v.formReady {
+		vpHeight := v.height - chromeHeight
+		if vpHeight < 3 {
+			vpHeight = 3
+		}
+		v.formViewport.Height = vpHeight
+		v.formViewport.Width = v.width - 4
+		v.formViewport.SetContent(body.String())
+	}
+
+	var b strings.Builder
+	b.WriteString(title)
+	b.WriteString(errorBlock)
+	if v.formReady {
+		b.WriteString(v.formViewport.View())
+	} else {
+		b.WriteString(body.String())
+	}
+	b.WriteString("\n")
 	b.WriteString(helpText)
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
@@ -618,29 +647,103 @@ func (v *ConnectionView) refreshList() {
 	v.list.SetItems(items)
 }
 
+// getFocusOrder returns the ordered list of focusable indices: db type first, then visible fields, then connect.
+func (v *ConnectionView) getFocusOrder() []int {
+	order := []int{7} // db type selector first
+	order = append(order, v.visibleFields...)
+	order = append(order, 8) // connect button last
+	return order
+}
+
 func (v *ConnectionView) nextInput() {
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Blur()
 	}
-	v.focusIndex++
-	if v.focusIndex > 8 {
-		v.focusIndex = 0
+	order := v.getFocusOrder()
+	currentPos := -1
+	for i, idx := range order {
+		if idx == v.focusIndex {
+			currentPos = i
+			break
+		}
 	}
+	nextPos := (currentPos + 1) % len(order)
+	v.focusIndex = order[nextPos]
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Focus()
 	}
+	v.scrollToFocused()
 }
 
 func (v *ConnectionView) prevInput() {
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Blur()
 	}
-	v.focusIndex--
-	if v.focusIndex < 0 {
-		v.focusIndex = 8
+	order := v.getFocusOrder()
+	currentPos := -1
+	for i, idx := range order {
+		if idx == v.focusIndex {
+			currentPos = i
+			break
+		}
 	}
+	prevPos := (currentPos - 1 + len(order)) % len(order)
+	v.focusIndex = order[prevPos]
 	if v.focusIndex < len(v.inputs) {
 		v.inputs[v.focusIndex].Focus()
+	}
+	v.scrollToFocused()
+}
+
+// scrollToFocused adjusts the viewport offset to keep the focused field visible.
+func (v *ConnectionView) scrollToFocused() {
+	if !v.formReady {
+		return
+	}
+
+	// Estimate the line position of the focused field in the form body.
+	// Each section: db type ~3 lines, each field ~3 lines (label + input + blank).
+	line := 0
+	if v.connError != nil {
+		line += 5
+	}
+
+	// DB type selector
+	if v.focusIndex == 7 {
+		v.formViewport.GotoTop()
+		return
+	}
+	line += 3 // db type label + options + blank
+
+	// Visible fields before the focused one
+	for _, idx := range v.visibleFields {
+		if idx == v.focusIndex {
+			break
+		}
+		line += 3
+	}
+
+	// Connect button — scroll to bottom
+	if v.focusIndex == 8 {
+		v.formViewport.GotoBottom()
+		return
+	}
+
+	vpHeight := v.formViewport.Height
+	offset := v.formViewport.YOffset
+
+	if line < offset+1 {
+		newOffset := line - 1
+		if newOffset < 0 {
+			newOffset = 0
+		}
+		v.formViewport.SetYOffset(newOffset)
+	} else if line+2 >= offset+vpHeight {
+		newOffset := line - vpHeight + 3
+		if newOffset < 0 {
+			newOffset = 0
+		}
+		v.formViewport.SetYOffset(newOffset)
 	}
 }
 
@@ -649,11 +752,10 @@ func (v *ConnectionView) resetForm() {
 		v.inputs[i].SetValue("")
 		v.inputs[i].Blur()
 	}
-	v.focusIndex = 0
+	v.focusIndex = 7 // Start on db type selector
 	v.dbTypeIndex = 0
 	v.connError = nil
-	v.inputs[0].Focus()
-	v.updatePortPlaceholder()
+	v.onDbTypeChanged()
 }
 
 func (v *ConnectionView) updatePortPlaceholder() {
@@ -675,59 +777,127 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 		return 9000
 	case "ElasticSearch":
 		return 9200
-	case "SQLite":
+	case "Sqlite3":
 		return 0
 	default:
 		return 5432
 	}
 }
 
-func (v *ConnectionView) connect() tea.Cmd {
-	return func() tea.Msg {
-		name := v.inputs[0].Value()
-		host := v.inputs[1].Value()
-		if host == "" {
-			host = "localhost"
-		}
+// Field indices: 0=name, 1=host, 2=port, 3=username, 4=password, 5=database, 6=schema
+func getVisibleFields(dbType string) []int {
+	switch dbType {
+	case "Sqlite3":
+		return []int{0, 5} // name, database
+	case "MongoDB":
+		return []int{0, 1, 2, 3, 4, 5} // all except schema
+	case "Redis":
+		return []int{0, 1, 2, 4, 5} // all except username, schema
+	case "ElasticSearch":
+		return []int{0, 1, 2, 3, 4} // all except database, schema
+	default:
+		// Postgres, MySQL, MariaDB, ClickHouse
+		return []int{0, 1, 2, 3, 4, 5, 6}
+	}
+}
 
+func (v *ConnectionView) isFieldVisible(index int) bool {
+	for _, vi := range v.visibleFields {
+		if vi == index {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *ConnectionView) onDbTypeChanged() {
+	v.updatePortPlaceholder()
+	v.visibleFields = getVisibleFields(v.dbTypes[v.dbTypeIndex])
+
+	// Update database placeholder for SQLite
+	if v.dbTypes[v.dbTypeIndex] == "Sqlite3" {
+		v.inputs[5].Placeholder = "/path/to/database.db"
+	} else {
+		v.inputs[5].Placeholder = "mydb"
+	}
+
+	// If current focus is on a hidden field, move to next visible
+	if v.focusIndex < len(v.inputs) && !v.isFieldVisible(v.focusIndex) {
+		v.nextInput()
+	}
+}
+
+func (v *ConnectionView) connect() tea.Cmd {
+	// Capture all form values before the closure to avoid data races
+	name := v.inputs[0].Value()
+	dbType := v.dbTypes[v.dbTypeIndex]
+
+	host := ""
+	if v.isFieldVisible(1) {
+		host = v.inputs[1].Value()
+	}
+	if host == "" {
+		host = "localhost"
+	}
+
+	var port int
+	if v.isFieldVisible(2) {
 		portStr := v.inputs[2].Value()
-		var port int
 		if portStr == "" {
-			port = v.getDefaultPort(v.dbTypes[v.dbTypeIndex])
+			port = v.getDefaultPort(dbType)
 		} else {
 			portNum, err := strconv.Atoi(portStr)
-			if err != nil || portNum < 1024 || portNum > 65535 {
-				return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1024 and 65535 (ports below 1024 are system reserved)")}
+			if err != nil || portNum < 1 || portNum > 65535 {
+				return func() tea.Msg {
+					return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1 and 65535")}
+				}
 			}
 			port = portNum
 		}
+	} else {
+		port = v.getDefaultPort(dbType)
+	}
 
-		username := v.inputs[3].Value()
-		password := v.inputs[4].Value()
-		database := v.inputs[5].Value()
-		schema := v.inputs[6].Value()
-		dbType := v.dbTypes[v.dbTypeIndex]
+	username := ""
+	if v.isFieldVisible(3) {
+		username = v.inputs[3].Value()
+	}
+	password := ""
+	if v.isFieldVisible(4) {
+		password = v.inputs[4].Value()
+	}
+	database := ""
+	if v.isFieldVisible(5) {
+		database = v.inputs[5].Value()
+	}
+	schema := ""
+	if v.isFieldVisible(6) {
+		schema = v.inputs[6].Value()
+	}
 
-		conn := config.Connection{
-			Name:     name,
-			Type:     dbType,
-			Host:     host,
-			Port:     port,
-			Username: username,
-			Password: password,
-			Database: database,
-			Schema:   schema,
-		}
+	conn := config.Connection{
+		Name:     name,
+		Type:     dbType,
+		Host:     host,
+		Port:     port,
+		Username: username,
+		Password: password,
+		Database: database,
+		Schema:   schema,
+	}
 
-		// Try to connect
-		if err := v.parent.dbManager.Connect(&conn); err != nil {
+	dbManager := v.parent.dbManager
+	cfg := v.parent.config
+
+	return func() tea.Msg {
+		if err := dbManager.Connect(&conn); err != nil {
 			return connectionResultMsg{err: err}
 		}
 
 		// Save connection if name is provided
 		if name != "" {
-			v.parent.config.AddConnection(conn)
-			v.parent.config.Save()
+			cfg.AddConnection(conn)
+			cfg.Save()
 		}
 
 		return connectionResultMsg{err: nil}

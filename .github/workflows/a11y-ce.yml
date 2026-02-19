@@ -1,0 +1,450 @@
+name: Accessibility (CE)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Test Binary
+    runs-on: ubuntu-latest
+    environment: a11y
+    timeout-minutes: 10
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+
+      - name: Setup Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: core/go.mod
+
+      - name: Create frontend build placeholder
+        run: mkdir -p core/build && echo '<!doctype html>' > core/build/index.html
+
+      - name: Build CE test binary
+        working-directory: core
+        run: go test -coverpkg=./... -c -o server.test
+
+      - name: Upload test binary
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: test-binary
+          path: core/server.test
+          retention-days: 1
+
+  playwright:
+    name: Playwright A11y (CE) - ${{ matrix.name }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    environment: a11y
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: sqlite
+            database: sqlite
+            spec_file: e2e/tests/features/accessibility.spec.mjs
+            project: standalone
+            setup_db: sqlite
+          - name: mongodb
+            database: mongodb
+            spec_file: e2e/tests/features/accessibility.spec.mjs
+            project: standalone
+            setup_db: mongodb
+          - name: redis
+            database: redis
+            spec_file: e2e/tests/features/accessibility.spec.mjs
+            project: standalone
+            setup_db: redis
+          - name: keyboard-postgres
+            database: postgres
+            spec_file: e2e/tests/features/keyboard-shortcuts.spec.mjs
+            project: standalone-mutating
+            setup_db: postgres
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+
+      - name: Download test binary
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: test-binary
+          path: core
+
+      - name: Make binary executable
+        run: chmod +x core/server.test
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: lts/*
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y sqlite3 netcat-openbsd
+
+      - name: Verify Docker Compose
+        run: docker compose version
+
+      - name: Create frontend build placeholder
+        run: mkdir -p core/build && echo '<!doctype html>' > core/build/index.html
+
+      - name: Setup backend + databases
+        if: ${{ matrix.name != 'keyboard-postgres' }}
+        env:
+          WHODB_SKIP_BUILD: "true"
+          WHODB_SPEC_FILE: "accessibility"
+        run: bash dev/setup-e2e.sh ce ${{ matrix.setup_db }}
+
+      - name: Start frontend dev server
+        if: ${{ matrix.name != 'keyboard-postgres' }}
+        working-directory: frontend
+        run: |
+          mkdir -p e2e/logs e2e/reports/test-results e2e/reports/blobs e2e/reports/html
+          rm -rf e2e/reports/* 2>/dev/null || true
+          VITE_BACKEND_PORT="8080" NODE_ENV=test pnpm exec vite --port 3000 --clearScreen false --logLevel error > e2e/logs/frontend.log 2>&1 &
+          echo $! > e2e/logs/frontend.pid
+
+      - name: Wait for frontend
+        if: ${{ matrix.name != 'keyboard-postgres' }}
+        run: |
+          COUNTER=0
+          while [ $COUNTER -lt 60 ]; do
+            if nc -z localhost 3000 2>/dev/null; then
+              exit 0
+            fi
+            sleep 0.5
+            COUNTER=$((COUNTER + 1))
+          done
+          echo "Frontend failed to start on port 3000"
+          exit 1
+
+      - name: Run Playwright
+        id: playwright_run
+        if: ${{ matrix.name != 'keyboard-postgres' }}
+        continue-on-error: true
+        working-directory: frontend
+        env:
+          DATABASE: ${{ matrix.database }}
+        run: pnpm exec playwright test --config=e2e/playwright.a11y.config.mjs --project=${{ matrix.project }} ${{ matrix.spec_file }}
+
+      - name: Run keyboard shortcuts (postgres)
+        if: ${{ matrix.name == 'keyboard-postgres' }}
+        continue-on-error: true
+        working-directory: frontend
+        env:
+          WHODB_SKIP_BUILD: "true"
+          WHODB_SPEC_FILE: "keyboard-shortcuts"
+        run: pnpm e2e:keyboard:postgres:headless
+
+      - name: Upload test logs
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: ${{ always() }}
+        with:
+          name: a11y-e2e-logs-${{ matrix.name }}
+          path: frontend/e2e/logs/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload blob report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: ${{ always() }}
+        with:
+          name: blob-report-a11y-${{ matrix.name }}
+          path: frontend/e2e/reports/blobs/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Cleanup E2E environment
+        if: ${{ always() }}
+        run: bash dev/cleanup-e2e.sh ce
+
+  merge-reports:
+    name: Merge Playwright Reports (CE)
+    needs: [playwright]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    environment: a11y
+    timeout-minutes: 15
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: lts/*
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Download all blob reports
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: blob-report-a11y-*
+          path: all-blobs
+
+      - name: Flatten blob reports
+        run: |
+          mkdir -p merged-blobs
+          for dir in all-blobs/blob-report-a11y-*; do
+            name=$(basename "$dir" | sed 's/blob-report-a11y-//')
+            for f in "$dir"/*.zip; do
+              [ -f "$f" ] && cp "$f" "merged-blobs/${name}-$(basename "$f")"
+            done
+          done
+
+      - name: Merge reports
+        working-directory: frontend
+        run: |
+          if ls ../merged-blobs/*.zip >/dev/null 2>&1; then
+            PLAYWRIGHT_HTML_OPEN=never \
+            PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report \
+            pnpm exec playwright merge-reports \
+              ../merged-blobs \
+              --reporter=html
+          else
+            echo "No Playwright blob reports found; creating placeholder report."
+            mkdir -p playwright-report
+            cat > playwright-report/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>Playwright Report</title>
+            </head>
+            <body>
+              <h1>Playwright report unavailable</h1>
+              <p>No blob reports were found for this run.</p>
+            </body>
+          </html>
+          EOF
+          fi
+
+      - name: Upload merged Playwright report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: ${{ always() }}
+        with:
+          name: playwright-a11y-report
+          path: frontend/playwright-report/
+          if-no-files-found: warn
+          retention-days: 30
+
+  lighthouse:
+    name: Lighthouse (CE)
+    runs-on: ubuntu-latest
+    environment: a11y
+    timeout-minutes: 30
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: lts/*
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Build frontend (CE)
+        working-directory: frontend
+        run: pnpm run build:ce
+
+      - name: Run Lighthouse CI (login page)
+        id: lhci
+        continue-on-error: true
+        working-directory: frontend
+        run: pnpm exec lhci autorun --config=lhci.ce.json
+
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: ${{ always() }}
+        with:
+          name: lhci-report
+          path: frontend/lhci/
+          if-no-files-found: warn
+          retention-days: 30
+
+  dockerhub-report:
+    name: Docker Hub Report Image - ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    environment: deploy-docker
+    timeout-minutes: 20
+    needs: [merge-reports, lighthouse]
+    if: ${{ always() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+
+      - name: Download Playwright report
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: playwright-a11y-report
+          path: frontend/playwright-report
+
+      - name: Download Lighthouse report
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: lhci-report
+          path: frontend/lhci
+
+      - name: Check Docker credentials
+        id: check_creds
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker credentials are configured"
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "::error::Docker credentials not configured"
+            exit 1
+          fi
+
+      - name: Login to Docker Hub
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Build and push report image
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: ./frontend/e2e/Dockerfile.a11y-report
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: clidey/whodb-a11y-report:latest-${{ matrix.arch }}
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            GITHUB_RUN_ID=${{ github.run_id }}
+
+  dockerhub-report-manifest:
+    name: Docker Hub Report Manifest
+    runs-on: ubuntu-latest
+    environment: deploy-docker
+    timeout-minutes: 10
+    needs: [dockerhub-report]
+    if: ${{ always() }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Check Docker credentials
+        id: check_creds
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker credentials are configured"
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "::error::Docker credentials not configured"
+            exit 1
+          fi
+
+      - name: Login to Docker Hub
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        if: steps.check_creds.outputs.has_creds == 'true'
+        run: |
+          docker manifest create clidey/whodb-a11y-report:latest \
+            clidey/whodb-a11y-report:latest-amd64 \
+            clidey/whodb-a11y-report:latest-arm64
+          docker manifest push clidey/whodb-a11y-report:latest

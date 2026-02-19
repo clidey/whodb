@@ -71,7 +71,7 @@ const gatewayBrowser = {
 export default defineConfig({
   globalSetup: "./support/global-setup.mjs",
   testDir: "./tests",
-  testIgnore: ["**/postgres-screenshots*"],
+  testIgnore: ["**/postgres-screenshots*", "**/accessibility*"],
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -101,7 +101,7 @@ export default defineConfig({
     {
       name: "standalone",
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, ...MUTATING_TESTS],
+      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, /accessibility/, ...MUTATING_TESTS],
       use: standaloneBrowser,
     },
     // Destructive tests — run after read-only tests complete via dependencies.
@@ -116,7 +116,7 @@ export default defineConfig({
     {
       name: "gateway",
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, ...MUTATING_TESTS],
+      testIgnore: [/auth\.setup\.mjs/, /postgres-screenshots/, /accessibility/, ...MUTATING_TESTS],
       use: gatewayBrowser,
     },
     {

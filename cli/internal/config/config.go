@@ -62,11 +62,14 @@ type DisplayConfig struct {
 }
 
 type AIConfig struct {
-	ConsentGiven bool `json:"consent_given"`
+	ConsentGiven bool   `json:"consent_given"`
+	LastProvider string `json:"last_provider,omitempty"`
+	LastModel    string `json:"last_model,omitempty"`
 }
 
 type QueryConfig struct {
-	TimeoutSeconds int `json:"timeout_seconds"`
+	TimeoutSeconds          int `json:"timeout_seconds"`
+	PreferredTimeoutSeconds int `json:"preferred_timeout_seconds,omitempty"`
 }
 
 // CLISection is the structure stored in the "cli" section of config.json.
@@ -280,6 +283,43 @@ func (c *Config) GetQueryTimeout() time.Duration {
 		return 30 * time.Second
 	}
 	return time.Duration(c.Query.TimeoutSeconds) * time.Second
+}
+
+func (c *Config) GetLastAIProvider() string {
+	return c.AI.LastProvider
+}
+
+func (c *Config) SetLastAIProvider(provider string) {
+	c.AI.LastProvider = provider
+}
+
+func (c *Config) GetLastAIModel() string {
+	return c.AI.LastModel
+}
+
+func (c *Config) SetLastAIModel(model string) {
+	c.AI.LastModel = model
+}
+
+func (c *Config) GetPreferredTimeout() int {
+	return c.Query.PreferredTimeoutSeconds
+}
+
+func (c *Config) SetPreferredTimeout(seconds int) {
+	c.Query.PreferredTimeoutSeconds = seconds
+}
+
+// GetPageSize returns the configured page size, defaulting to 50.
+func (c *Config) GetPageSize() int {
+	if c.Display.PageSize <= 0 {
+		return 50
+	}
+	return c.Display.PageSize
+}
+
+// SetPageSize updates the configured page size.
+func (c *Config) SetPageSize(size int) {
+	c.Display.PageSize = size
 }
 
 // ============================================================================

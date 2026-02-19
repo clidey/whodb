@@ -437,8 +437,8 @@ func TestSchemaView_Escape(t *testing.T) {
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
-	if v.parent.mode != ViewResults {
-		t.Errorf("Expected mode ViewResults after Esc, got %v", v.parent.mode)
+	if v.parent.mode != ViewBrowser {
+		t.Errorf("Expected mode ViewBrowser after Esc, got %v", v.parent.mode)
 	}
 }
 

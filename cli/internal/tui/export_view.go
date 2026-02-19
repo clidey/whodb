@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -112,15 +113,23 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		v.filenameInput.Width = clamp(msg.Width-12, 20, 60)
+		return v, nil
+
 	case exportResultMsg:
 		v.exporting = false
 		if msg.success {
 			v.exportSuccess = true
 			v.exportError = nil
-		} else {
-			v.exportSuccess = false
-			v.exportError = msg.err
+			v.savedFilePath = msg.savedFilePath
+			v.confirmOverwrite = false
+			v.confirmIndex = 0
+			v.pendingPath = ""
+			return v, v.parent.SetStatus("Export complete")
 		}
+		v.exportSuccess = false
+		v.exportError = msg.err
 		return v, nil
 
 	case tea.MouseMsg:
@@ -175,14 +184,16 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			return v, nil
 		}
-		switch msg.String() {
-		case "esc":
+		switch {
+		case key.Matches(msg, Keys.Global.Back):
 			if !v.exporting {
-				v.parent.mode = ViewResults
+				if !v.parent.PopView() {
+					v.parent.mode = ViewResults
+				}
 				return v, nil
 			}
 
-		case "enter":
+		case key.Matches(msg, Keys.Export.Export):
 			expIdx := v.exportButtonIndex()
 			cancelIdx := v.cancelButtonIndex()
 			owIdx := v.overwriteIndex()
@@ -204,14 +215,16 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 				return v, v.performExport()
 			} else if v.focusIndex == cancelIdx {
 				// Cancel button
-				v.parent.mode = ViewResults
+				if !v.parent.PopView() {
+					v.parent.mode = ViewResults
+				}
 				return v, nil
 			} else if v.focusIndex == owIdx {
 				v.overwrite = !v.overwrite
 				return v, nil
 			}
 
-		case "tab", "down", "j":
+		case key.Matches(msg, Keys.Export.Next):
 			v.focusIndex++
 			if v.focusIndex > v.maxIndex() {
 				v.focusIndex = 0
@@ -223,7 +236,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "shift+tab", "up", "k":
+		case key.Matches(msg, Keys.Export.Prev):
 			v.focusIndex--
 			if v.focusIndex < 0 {
 				v.focusIndex = v.maxIndex()
@@ -235,7 +248,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "left":
+		case key.Matches(msg, Keys.Export.OptionLeft):
 			// Only handle left arrow for options, not filename input
 			if v.focusIndex == 1 {
 				v.selectedFormat--
@@ -255,7 +268,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			// For filename input (focusIndex == 0), let it fall through to be handled by textinput
 
-		case "right":
+		case key.Matches(msg, Keys.Export.OptionRight):
 			// Only handle right arrow for options, not filename input
 			if v.focusIndex == 1 {
 				v.selectedFormat++
@@ -292,25 +305,25 @@ func (v *ExportView) View() string {
 	b.WriteString("\n\n")
 
 	if v.exporting {
-		b.WriteString(styles.MutedStyle.Render("Exporting..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Exporting..."))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
 	if v.exportSuccess {
-		b.WriteString(styles.SuccessStyle.Render("Export completed successfully!"))
+		b.WriteString(styles.RenderOk("Export completed successfully!"))
 		b.WriteString("\n\n")
 		if v.savedFilePath != "" {
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("File saved to: %s", v.savedFilePath)))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("File saved to: %s", v.savedFilePath)))
 			b.WriteString("\n\n")
 		}
-		b.WriteString(styles.MutedStyle.Render("Press ESC to go back"))
+		b.WriteString(styles.RenderMuted("Press ESC to go back"))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
 	if v.exportError != nil {
 		b.WriteString(styles.RenderErrorBox(fmt.Sprintf("Export failed: %s", v.exportError.Error())))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Press ESC to go back"))
+		b.WriteString(styles.RenderMuted("Press ESC to go back"))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -327,18 +340,18 @@ func (v *ExportView) View() string {
 				path = p
 			}
 		}
-		b.WriteString(styles.MutedStyle.Render("File exists:"))
+		b.WriteString(styles.RenderMuted("File exists:"))
 		b.WriteString("\n  ")
-		b.WriteString(styles.KeyStyle.Render(path))
+		b.WriteString(styles.RenderKey(path))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Overwrite this file?"))
+		b.WriteString(styles.RenderMuted("Overwrite this file?"))
 		b.WriteString("\n\n  ")
 		if v.confirmIndex == 0 {
 			b.WriteString(styles.ActiveListItemStyle.Render(" Yes "))
 			b.WriteString("  ")
-			b.WriteString(styles.MutedStyle.Render("[No]"))
+			b.WriteString(styles.RenderMuted("[No]"))
 		} else {
-			b.WriteString(styles.KeyStyle.Render("[Yes]"))
+			b.WriteString(styles.RenderKey("[Yes]"))
 			b.WriteString("  ")
 			b.WriteString(styles.ActiveListItemStyle.Render(" No "))
 		}
@@ -353,16 +366,16 @@ func (v *ExportView) View() string {
 
 	// Info text
 	if v.isQueryExport {
-		b.WriteString(styles.MutedStyle.Render("Exporting query results"))
+		b.WriteString(styles.RenderMuted("Exporting query results"))
 	} else {
-		b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Exporting table: %s.%s", v.schema, v.tableName)))
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("Exporting table: %s.%s", v.schema, v.tableName)))
 	}
 	b.WriteString("\n\n")
 
 	// Filename input
 	filenameLabel := "Filename:"
 	if v.focusIndex == 0 {
-		filenameLabel = styles.KeyStyle.Render("▶ " + filenameLabel)
+		filenameLabel = styles.RenderKey("▶ " + filenameLabel)
 	} else {
 		filenameLabel = "  " + filenameLabel
 	}
@@ -386,13 +399,13 @@ func (v *ExportView) View() string {
 		if _, origExists, _ := resolveExportPath(filename, format, true); true {
 			b.WriteString("  ")
 			if willOverwrite {
-				b.WriteString(styles.KeyStyle.Render(fmt.Sprintf("Will overwrite: %s", candidate)))
+				b.WriteString(styles.RenderKey(fmt.Sprintf("Will overwrite: %s", candidate)))
 			} else {
-				b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Will save to: %s", candidate)))
+				b.WriteString(styles.RenderMuted(fmt.Sprintf("Will save to: %s", candidate)))
 				// If overwrite disabled and original exists, hint about auto-suffix
 				if !v.overwrite && origExists {
 					b.WriteString("\n  ")
-					b.WriteString(styles.MutedStyle.Render("Existing file detected; using next available name."))
+					b.WriteString(styles.RenderMuted("Existing file detected; using next available name."))
 				}
 			}
 		}
@@ -402,7 +415,7 @@ func (v *ExportView) View() string {
 	// Format selector
 	formatLabel := "Format:"
 	if v.focusIndex == 1 {
-		formatLabel = styles.KeyStyle.Render("▶ " + formatLabel)
+		formatLabel = styles.RenderKey("▶ " + formatLabel)
 	} else {
 		formatLabel = "  " + formatLabel
 	}
@@ -414,10 +427,10 @@ func (v *ExportView) View() string {
 			if v.focusIndex == 1 {
 				b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", format)))
 			} else {
-				b.WriteString(styles.KeyStyle.Render(fmt.Sprintf("[%s]", format)))
+				b.WriteString(styles.RenderKey(fmt.Sprintf("[%s]", format)))
 			}
 		} else {
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", format)))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", format)))
 		}
 		if i < len(exportFormats)-1 {
 			b.WriteString("  ")
@@ -429,7 +442,7 @@ func (v *ExportView) View() string {
 	if v.hasDelimiter() {
 		delimLabel := "Delimiter:"
 		if v.focusIndex == 2 {
-			delimLabel = styles.KeyStyle.Render("▶ " + delimLabel)
+			delimLabel = styles.RenderKey("▶ " + delimLabel)
 		} else {
 			delimLabel = "  " + delimLabel
 		}
@@ -441,10 +454,10 @@ func (v *ExportView) View() string {
 				if v.focusIndex == 2 {
 					b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", label)))
 				} else {
-					b.WriteString(styles.KeyStyle.Render(fmt.Sprintf("[%s]", label)))
+					b.WriteString(styles.RenderKey(fmt.Sprintf("[%s]", label)))
 				}
 			} else {
-				b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", label)))
+				b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", label)))
 			}
 			if i < len(exportDelimiterLabels)-1 {
 				b.WriteString("  ")
@@ -458,7 +471,7 @@ func (v *ExportView) View() string {
 	// Overwrite toggle
 	owLabel := "Overwrite existing:"
 	if v.focusIndex == v.overwriteIndex() {
-		owLabel = styles.KeyStyle.Render("▶ " + owLabel)
+		owLabel = styles.RenderKey("▶ " + owLabel)
 	} else {
 		owLabel = "  " + owLabel
 	}
@@ -467,9 +480,9 @@ func (v *ExportView) View() string {
 	if v.overwrite {
 		b.WriteString(styles.ActiveListItemStyle.Render(" On "))
 		b.WriteString("  ")
-		b.WriteString(styles.MutedStyle.Render("[Off]"))
+		b.WriteString(styles.RenderMuted("[Off]"))
 	} else {
-		b.WriteString(styles.KeyStyle.Render("[On]"))
+		b.WriteString(styles.RenderKey("[On]"))
 		b.WriteString("  ")
 		b.WriteString(styles.ActiveListItemStyle.Render(" Off "))
 	}
@@ -480,51 +493,53 @@ func (v *ExportView) View() string {
 	if v.focusIndex == v.exportButtonIndex() {
 		b.WriteString(styles.ActiveListItemStyle.Render(" Export "))
 	} else {
-		b.WriteString(styles.KeyStyle.Render("[Export]"))
+		b.WriteString(styles.RenderKey("[Export]"))
 	}
 	b.WriteString("  ")
 	if v.focusIndex == v.cancelButtonIndex() {
 		b.WriteString(styles.ActiveListItemStyle.Render(" Cancel "))
 	} else {
-		b.WriteString(styles.MutedStyle.Render("[Cancel]"))
+		b.WriteString(styles.RenderMuted("[Cancel]"))
 	}
 	b.WriteString("\n\n")
 
 	// Help text
-	b.WriteString(styles.RenderHelp(
-		"↑/k", "prev",
-		"↓/j", "next",
-		"←", "prev option",
-		"→", "next option",
-		"enter", "select",
-		"esc", "cancel",
+	b.WriteString(RenderBindingHelp(
+		Keys.Export.Prev,
+		Keys.Export.Next,
+		Keys.Export.OptionLeft,
+		Keys.Export.OptionRight,
+		Keys.Export.Export,
+		Keys.Global.Back,
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }
 
-type exportResultMsg struct {
-	success bool
-	err     error
-}
-
 func (v *ExportView) performExport() tea.Cmd {
+	v.exporting = true
+
+	// Capture values for closure
+	filename := v.filenameInput.Value()
+	format := exportFormats[v.selectedFormat]
+	delimiter := exportDelimiters[v.selectedDelim]
+	pendingPath := v.pendingPath
+	overwrite := v.overwrite
+	isQueryExport := v.isQueryExport
+	queryResults := v.queryResults
+	schema := v.schema
+	tableName := v.tableName
+	dbManager := v.parent.dbManager
+
 	return func() tea.Msg {
-		v.exporting = true
-
-		filename := v.filenameInput.Value()
-		format := exportFormats[v.selectedFormat]
-		delimiter := exportDelimiters[v.selectedDelim]
-
 		// Resolve to an absolute path with appropriate extension
 		var fullFilename string
 		var err error
-		if v.pendingPath != "" {
-			fullFilename = v.pendingPath
+		if pendingPath != "" {
+			fullFilename = pendingPath
 		} else {
-			fullFilename, _, err = resolveExportPath(filename, format, v.overwrite)
+			fullFilename, _, err = resolveExportPath(filename, format, overwrite)
 			if err != nil {
-				v.exporting = false
 				return exportResultMsg{success: false, err: err}
 			}
 		}
@@ -533,43 +548,30 @@ func (v *ExportView) performExport() tea.Cmd {
 		dir := filepath.Dir(fullFilename)
 		if dir != "." && dir != "" {
 			if err := os.MkdirAll(dir, 0700); err != nil {
-				v.exporting = false
 				return exportResultMsg{success: false, err: fmt.Errorf("failed to create directory: %w", err)}
 			}
 		}
 
-		// Record absolute path for display
-		v.savedFilePath = fullFilename
-
 		// Perform the export
-		if v.isQueryExport {
-			// Export query results from memory
+		if isQueryExport {
 			if format == "CSV" {
-				err = v.parent.dbManager.ExportResultsToCSV(v.queryResults, fullFilename, delimiter)
+				err = dbManager.ExportResultsToCSV(queryResults, fullFilename, delimiter)
 			} else {
-				err = v.parent.dbManager.ExportResultsToExcel(v.queryResults, fullFilename)
+				err = dbManager.ExportResultsToExcel(queryResults, fullFilename)
 			}
 		} else {
-			// Export table data (fetch from database)
 			if format == "CSV" {
-				err = v.parent.dbManager.ExportToCSV(v.schema, v.tableName, fullFilename, delimiter)
+				err = dbManager.ExportToCSV(schema, tableName, fullFilename, delimiter)
 			} else {
-				err = v.parent.dbManager.ExportToExcel(v.schema, v.tableName, fullFilename)
+				err = dbManager.ExportToExcel(schema, tableName, fullFilename)
 			}
 		}
 
-		v.exporting = false
-
 		if err != nil {
-			v.exportError = err
 			return exportResultMsg{success: false, err: err}
 		}
 
-		v.exportSuccess = true
-		v.confirmOverwrite = false
-		v.confirmIndex = 0
-		v.pendingPath = ""
-		return exportResultMsg{success: true, err: nil}
+		return exportResultMsg{success: true, err: nil, savedFilePath: fullFilename}
 	}
 }
 

@@ -38,7 +38,7 @@ jobs:
             enabled: ${{ contains(inputs.platforms, 'darwin-universal') }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -61,13 +61,13 @@ jobs:
 
       - name: Checkout
         if: matrix.enabled != false
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: false
 
       - name: Setup Go
         if: matrix.enabled != false
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
           cache: true
@@ -79,14 +79,14 @@ jobs:
 
       - name: Setup Node.js and pnpm
         if: matrix.enabled != false
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: 'lts/*'
 
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
         if: matrix.enabled != false
         with:
-          version: 10.29.3
+          package_json_file: frontend/package.json
           run_install: false
 
       - name: Get pnpm store directory
@@ -112,12 +112,12 @@ jobs:
       # Only runs on DMG build to avoid duplicate uploads (both DMG and MAS use same frontend)
       - name: Upload source maps to PostHog
         if: matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: PostHog/upload-source-maps@9588f138ad57fa0471ddcbb0b564a7b584dc8a9a # v0.5.7.0
+        uses: PostHog/upload-source-maps@991172e085213c222c61d2ba6a0b9e57c81e5066 # v2.0.0
         with:
           directory: frontend/build
-          env-id: ${{ secrets.POSTHOG_ENV_ID }}
-          cli-token: ${{ secrets.POSTHOG_CLI_TOKEN }}
-          version: ${{ inputs.version }}
+          project-id: ${{ secrets.POSTHOG_PROJECT_ID }}
+          api-key: ${{ secrets.POSTHOG_API_KEY }}
+          release-version: ${{ inputs.version }}
           delete-after-upload: true
         continue-on-error: true
 
@@ -574,7 +574,7 @@ jobs:
       # Upload DMG artifacts (only for DMG builds)
       - name: Upload macOS DMG
         if: matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-dmg
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.dmg
@@ -582,7 +582,7 @@ jobs:
 
       - name: Upload macOS App Bundle (DMG)
         if: matrix.build-type == 'dmg' && matrix.enabled != false
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-app
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
@@ -591,7 +591,7 @@ jobs:
       # Upload MAS artifacts (only for MAS builds)
       - name: Upload macOS App Bundle (MAS)
         if: matrix.build-type == 'mas' && matrix.enabled != false
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-mas-app
           path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
@@ -599,7 +599,7 @@ jobs:
 
       - name: Upload macOS MAS Entitlements
         if: matrix.build-type == 'mas' && matrix.enabled != false
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-entitlements
           path: desktop-${{ inputs.edition }}/build/darwin/entitlements.plist

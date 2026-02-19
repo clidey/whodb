@@ -183,7 +183,17 @@ else
     SPEC_PATTERN=""
 fi
 
-# Determine Playwright projects (read-only + mutating)
+# When running a single mutating spec, Playwright project dependencies can cause
+# the full standalone suite to run (even if the spec is filtered on the CLI).
+# This opt-in mode runs the auth setup project, then runs the mutating project
+# with --no-deps to avoid triggering the full standalone project.
+PW_NO_DEPS="${WHODB_PW_NO_DEPS:-false}"
+KEYBOARD_ONLY=false
+if [ "$SPEC_FILE" = "keyboard-shortcuts" ] || [ "$SPEC_FILE" = "keyboard-shortcuts.spec.mjs" ]; then
+    KEYBOARD_ONLY=true
+fi
+
+# Determine Playwright config + projects (read-only + mutating)
 PW_PROJECT="standalone"
 PW_PROJECT_MUTATING="standalone-mutating"
 if [ -n "$CDP_ENDPOINT" ]; then
@@ -193,7 +203,14 @@ fi
 
 # Common Playwright args
 PW_CONFIG="$PROJECT_ROOT/frontend/e2e/playwright.config.mjs"
-PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT --project=$PW_PROJECT_MUTATING"
+if [ "$SPEC_FILE" = "accessibility" ] || [ "$SPEC_FILE" = "accessibility.spec.mjs" ]; then
+    # The main E2E config ignores accessibility specs; use the a11y config instead.
+    PW_CONFIG="$PROJECT_ROOT/frontend/e2e/playwright.a11y.config.mjs"
+    # Accessibility spec is read-only; keep this focused on the read-only project.
+    PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT"
+else
+    PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT --project=$PW_PROJECT_MUTATING"
+fi
 if [ "$HEADLESS" = "false" ]; then
     PW_ARGS="$PW_ARGS --headed"
 fi
@@ -211,12 +228,31 @@ if [ "$HEADLESS" = "true" ]; then
 
         (
             cd "$PROJECT_ROOT/frontend"
-            DATABASE="$db" \
-            CATEGORY="$(get_category "$db")" \
-            pnpm exec playwright test \
-                $PW_ARGS \
-                $SPEC_PATTERN \
-                > "$PROJECT_ROOT/frontend/e2e/logs/$db.log" 2>&1
+            LOG_FILE="$PROJECT_ROOT/frontend/e2e/logs/$db.log"
+            if [ "$PW_NO_DEPS" = "true" ] && [ "$KEYBOARD_ONLY" = "true" ]; then
+                DATABASE="$db" \
+                CATEGORY="$(get_category "$db")" \
+                pnpm exec playwright test \
+                    --config="$PW_CONFIG" \
+                    --project=setup \
+                    > "$LOG_FILE" 2>&1
+
+                DATABASE="$db" \
+                CATEGORY="$(get_category "$db")" \
+                pnpm exec playwright test \
+                    --no-deps \
+                    --config="$PW_CONFIG" \
+                    --project="$PW_PROJECT_MUTATING" \
+                    $SPEC_PATTERN \
+                    >> "$LOG_FILE" 2>&1
+            else
+                DATABASE="$db" \
+                CATEGORY="$(get_category "$db")" \
+                pnpm exec playwright test \
+                    $PW_ARGS \
+                    $SPEC_PATTERN \
+                    > "$LOG_FILE" 2>&1
+            fi
         ) &
         DB_PIDS["$db"]=$!
     done

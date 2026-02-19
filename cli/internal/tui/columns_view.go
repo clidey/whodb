@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
@@ -106,33 +107,37 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 		return v, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
-			v.parent.mode = ViewResults
+		switch {
+		case key.Matches(msg, Keys.Global.Back):
+			if !v.parent.PopView() {
+				v.parent.mode = ViewResults
+			}
 			return v, nil
 
-		case "enter":
+		case key.Matches(msg, Keys.Columns.Apply):
 			// Apply column selection and return to results
 			v.parent.resultsView.visibleColumns = v.getSelectedColumns()
-			v.parent.resultsView.loadWithWhere()
-			v.parent.mode = ViewResults
-			return v, nil
+			cmd := v.parent.resultsView.loadWithWhere()
+			if !v.parent.PopView() {
+				v.parent.mode = ViewResults
+			}
+			return v, cmd
 
-		case "a":
+		case key.Matches(msg, Keys.Columns.SelectAll):
 			// Select all
 			for i := range v.columns {
 				v.selected[v.columns[i].Name] = true
 			}
 			return v, nil
 
-		case "n":
+		case key.Matches(msg, Keys.Columns.SelectNone):
 			// Select none
 			for i := range v.columns {
 				v.selected[v.columns[i].Name] = false
 			}
 			return v, nil
 
-		case " ", "x":
+		case key.Matches(msg, Keys.Columns.Toggle):
 			// Toggle current selection
 			if v.selectedIndex >= 0 && v.selectedIndex < len(v.columns) {
 				col := v.columns[v.selectedIndex].Name
@@ -140,7 +145,7 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "up", "k":
+		case key.Matches(msg, Keys.Columns.Up):
 			if v.selectedIndex > 0 {
 				v.selectedIndex--
 				// Only scroll if selection goes above visible area
@@ -150,7 +155,7 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "down", "j":
+		case key.Matches(msg, Keys.Columns.Down):
 			if v.selectedIndex < len(v.columns)-1 {
 				v.selectedIndex++
 				// Only scroll if selection goes below visible area
@@ -175,7 +180,7 @@ func (v *ColumnsView) View() string {
 	// Fixed header
 	b.WriteString(styles.RenderTitle("Select Columns"))
 	b.WriteString("\n")
-	b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
+	b.WriteString(styles.RenderMuted(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
 	b.WriteString("\n\n")
 
 	selectedCount := 0
@@ -184,13 +189,20 @@ func (v *ColumnsView) View() string {
 			selectedCount++
 		}
 	}
-	b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("%d of %d columns selected", selectedCount, len(v.columns))))
+	b.WriteString(styles.RenderMuted(fmt.Sprintf("%d of %d columns selected", selectedCount, len(v.columns))))
 	b.WriteString("\n\n")
 
 	// Scrollable content area
 	maxVisible := v.height - 12
 	if maxVisible < 1 {
 		maxVisible = 10
+	}
+
+	if len(v.columns) == 0 {
+		b.WriteString(styles.RenderMuted("No columns"))
+		b.WriteString("\n\n")
+		b.WriteString(RenderBindingHelp(Keys.Global.Back))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
 	startIdx := v.scrollOffset
@@ -217,7 +229,7 @@ func (v *ColumnsView) View() string {
 		colDisplay := fmt.Sprintf("%s %s (%s)", checkbox, col.Name, col.Type)
 
 		if i == v.selectedIndex {
-			prefix = styles.KeyStyle.Render("▶ ")
+			prefix = styles.RenderKey("▶ ")
 			b.WriteString(prefix + styles.ActiveListItemStyle.Render(colDisplay))
 		} else {
 			b.WriteString(prefix + styles.ListItemStyle.Render(colDisplay))
@@ -235,20 +247,19 @@ func (v *ColumnsView) View() string {
 			scrollInfo += " • ↓ scroll down"
 		}
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render(scrollInfo))
+		b.WriteString(styles.RenderMuted(scrollInfo))
 	}
 
 	// Fixed footer
 	b.WriteString("\n\n")
-	b.WriteString(styles.RenderHelp(
-		"↑/k", "prev",
-		"↓/j", "next",
-		"space", "toggle",
-		"[a]", "all",
-		"[n]", "none",
-		"scroll", "trackpad/mouse",
-		"enter", "apply",
-		"esc", "cancel",
+	b.WriteString(RenderBindingHelp(
+		Keys.Columns.Up,
+		Keys.Columns.Down,
+		Keys.Columns.Toggle,
+		Keys.Columns.SelectAll,
+		Keys.Columns.SelectNone,
+		Keys.Columns.Apply,
+		Keys.Global.Back,
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())

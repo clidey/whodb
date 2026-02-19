@@ -102,6 +102,10 @@ describeOrSkip('Browser Storage', () => {
             // Reload the page
             await page.reload();
 
+            // Wait for page to fully load and Redux to rehydrate
+            await expect(page.locator('[data-testid="sidebar-profile"]')).toBeAttached({ timeout: 10000 });
+            await page.waitForTimeout(500);
+
             // Setting should persist
             const storageUnitView = await page.evaluate(() => {
                 const settingsData = localStorage.getItem('persist:settings');

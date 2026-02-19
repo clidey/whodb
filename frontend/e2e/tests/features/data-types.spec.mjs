@@ -90,12 +90,24 @@ test.describe('Data Types CRUD Operations', () => {
 
                     await whodb.addRow({[columnName]: testConfig.addValue});
 
+                    // Wait for async mutations (e.g., ClickHouse)
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
+
                     // Use retry-able assertion to wait for the new row to appear
                     // columnIndex + 1 accounts for the checkbox column
                     const rowIndex = await whodb.waitForRowValue(columnIndex + 1, expectedAddDisplay);
 
                     // Clean up - delete the row we just added
                     await whodb.deleteRow(rowIndex);
+
+                    // Wait for async delete mutation
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                    }
                 });
 
                 test('UPDATE - edits type value', async ({ whodb, page }) => {
@@ -128,9 +140,17 @@ test.describe('Data Types CRUD Operations', () => {
                             return cellValue === updateDisplayValue;
                         });
                         if (targetRowIndex !== -1) {
-                            // Revert - table will auto-refresh
+                            // Revert leftover data from failed test
                             await whodb.updateRow(targetRowIndex, columnIndex, revertValue, false);
-                            // Wait for auto-refresh to show original value
+
+                            // Wait for async mutations (e.g., ClickHouse)
+                            if (mutationDelay > 0) {
+                                await page.waitForTimeout(mutationDelay);
+                                await whodb.data(tableName);
+                                await whodb.sortBy(0);
+                            }
+
+                            // Wait for table to show original value
                             await whodb.waitForRowValue(columnIndex + 1, originalValue);
                         }
                     }
@@ -154,7 +174,14 @@ test.describe('Data Types CRUD Operations', () => {
 
                     await whodb.updateRow(finalTargetRowIndex, columnIndex, testConfig.updateValue, false);
 
-                    // Wait for auto-refresh to show updated value
+                    // Wait for async mutations (e.g., ClickHouse)
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
+
+                    // Wait for table to show updated value
                     await whodb.waitForRowValue(columnIndex + 1, updateDisplayValue);
 
                     // Verify the update succeeded by reading final state
@@ -165,6 +192,13 @@ test.describe('Data Types CRUD Operations', () => {
                     // Revert to original value
                     await whodb.updateRow(finalTargetRowIndex, columnIndex, revertValue, false);
 
+                    // Wait for async mutations (e.g., ClickHouse)
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
+
                     // Wait for revert to complete
                     await whodb.waitForRowValue(columnIndex + 1, originalValue);
                 });
@@ -174,6 +208,13 @@ test.describe('Data Types CRUD Operations', () => {
 
                     await whodb.addRow({[columnName]: deleteValue});
 
+                    // Wait for async mutations (e.g., ClickHouse)
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
+
                     // Use retry-able assertion to wait for the new row to appear
                     const rowIndex = await whodb.waitForRowValue(columnIndex + 1, expectedDeleteDisplay);
 
@@ -182,6 +223,13 @@ test.describe('Data Types CRUD Operations', () => {
                     const initialCount = rows.length;
 
                     await whodb.deleteRow(rowIndex);
+
+                    // Wait for async mutations (e.g., ClickHouse)
+                    if (mutationDelay > 0) {
+                        await page.waitForTimeout(mutationDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
 
                     // Verify row count decreased
                     const { rows: newRows } = await whodb.getTableData();

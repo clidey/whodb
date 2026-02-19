@@ -137,7 +137,9 @@ func TestResultsView_Escape_ToEditor(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()
 
-	// Set up as query results
+	// Simulate navigating from editor to results via PushView
+	v.parent.mode = ViewEditor
+	v.parent.PushView(ViewResults)
 	v.query = "SELECT 1"
 	v.schema = ""
 	v.tableName = ""
@@ -167,24 +169,25 @@ func TestResultsView_Escape_ToBrowser(t *testing.T) {
 	}
 }
 
-func TestResultsView_Escape_ToReturnTo(t *testing.T) {
+func TestResultsView_Escape_PopViewStack(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()
 
-	// Set explicit returnTo
-	v.returnTo = ViewChat
-	v.query = "SELECT 1" // Would normally go to editor
+	// Simulate navigating from chat to results via PushView
+	v.parent.mode = ViewChat
+	v.parent.PushView(ViewResults)
+	v.query = "SELECT 1"
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewChat {
-		t.Errorf("Expected mode ViewChat (returnTo), got %v", v.parent.mode)
+		t.Errorf("Expected mode ViewChat (from nav stack), got %v", v.parent.mode)
 	}
 
-	// returnTo should be reset
-	if v.returnTo != 0 {
-		t.Error("Expected returnTo to be reset")
+	// Stack should be empty now
+	if len(v.parent.viewHistory) != 0 {
+		t.Errorf("Expected empty view history, got %d entries", len(v.parent.viewHistory))
 	}
 }
 
@@ -781,24 +784,6 @@ func TestResultsView_PageLoadedMsgWithError(t *testing.T) {
 	}
 }
 
-func TestResultsView_MaxInt(t *testing.T) {
-	tests := []struct {
-		a, b, expected int
-	}{
-		{5, 3, 5},
-		{3, 5, 5},
-		{0, 0, 0},
-		{-1, 1, 1},
-	}
-
-	for _, tt := range tests {
-		result := maxInt(tt.a, tt.b)
-		if result != tt.expected {
-			t.Errorf("maxInt(%d, %d) = %d, expected %d", tt.a, tt.b, result, tt.expected)
-		}
-	}
-}
-
 func TestResultsView_ColumnOffsetBoundary(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()
@@ -856,4 +841,98 @@ func TestResultsView_UpdateTable_WithVisibleColumns(t *testing.T) {
 	v.updateTable()
 
 	// Should not panic, table should only show id and email columns
+}
+
+func TestResultsView_PageSizeCycling_CustomSize(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	// Set a custom page size not in pageSizes (10, 25, 50, 100)
+	v.pageSize = 75
+	v.results = &engine.GetRowsResult{
+		Columns: []engine.Column{{Name: "id"}},
+		Rows:    [][]string{{"1"}},
+	}
+
+	// Cycle page size - should go to first option (10), not skip to 25
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	v, _ = v.Update(msg)
+
+	if v.pageSize != pageSizes[0] {
+		t.Errorf("Expected pageSize %d after cycling from custom size, got %d", pageSizes[0], v.pageSize)
+	}
+}
+
+func TestResultsView_ColumnInfoDisplay_WithFilter(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	v.results = &engine.GetRowsResult{
+		Columns:    []engine.Column{{Name: "id"}, {Name: "name"}, {Name: "email"}},
+		Rows:       [][]string{{"1", "Alice", "a@b.com"}},
+		TotalCount: 1,
+	}
+	v.visibleColumns = []string{"id", "email"}
+	v.updateTable()
+
+	view := v.View()
+
+	// Should show "2" as total (filtered), not "3" (all columns)
+	if strings.Contains(view, "of 3") {
+		t.Error("Column info should reflect filtered column count, not total")
+	}
+}
+
+func TestResultsView_PaginationString(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	v.results = &engine.GetRowsResult{
+		Columns: make([]engine.Column, 25),
+		Rows:    make([][]string, 50),
+	}
+	v.totalRows = 250
+	v.pageSize = 50
+	v.currentPage = 0
+	v.columnOffset = 0
+	v.maxColumns = 10
+
+	// Wide terminal: full format
+	v.width = 120
+	full := v.paginationString(25, 10, 50)
+	if !strings.Contains(full, "Columns 1-10 of 25") {
+		t.Errorf("Full format should contain column info, got: %s", full)
+	}
+	if !strings.Contains(full, "Showing 50 rows") {
+		t.Errorf("Full format should contain row info, got: %s", full)
+	}
+
+	// Narrow terminal: should degrade
+	v.width = 40
+	narrow := v.paginationString(25, 10, 50)
+	if strings.Contains(narrow, "Columns") {
+		t.Errorf("Narrow format should not contain 'Columns', got: %s", narrow)
+	}
+	if !strings.Contains(narrow, "50 rows") {
+		t.Errorf("Narrow format should still contain row count, got: %s", narrow)
+	}
+}
+
+func TestResultsView_PaginationString_NoTotalPages(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	v.totalRows = 0
+	v.pageSize = 50
+	v.currentPage = 0
+	v.columnOffset = 0
+	v.width = 120
+
+	result := v.paginationString(5, 5, 10)
+	if !strings.Contains(result, "pg 1") || strings.Contains(result, "of 0") {
+		// When totalRows=0, should not show "Page X of 0"
+		if strings.Contains(result, "of 0") {
+			t.Errorf("Should not show 'of 0' when totalRows is unknown, got: %s", result)
+		}
+	}
 }

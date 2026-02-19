@@ -24,7 +24,7 @@ jobs:
     environment: deploy-microsoft
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: block
           allowed-endpoints: >-
@@ -34,7 +34,7 @@ jobs:
             github.com:443
 
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Windows SDK
         shell: pwsh
@@ -70,13 +70,13 @@ jobs:
           exit 0
 
       - name: Download Windows AMD64 executable
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: desktop-windows-amd64
           path: desktop-builds-amd64/
 
       - name: Download Windows ARM64 executable
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         continue-on-error: true
         id: download-arm64
         with:
@@ -327,7 +327,7 @@ jobs:
           Write-Host "Bundle contains: $($createdPackages.Count) architecture(s)"
 
       - name: Upload Windows package bundle
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: windows-msix
           path: "*.msixbundle"
@@ -341,7 +341,7 @@ jobs:
     continue-on-error: ${{ inputs.stage-only }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: block
           allowed-endpoints: >-
@@ -351,7 +351,7 @@ jobs:
             github.com:443
 
       - name: Checkout for scripts
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Check Microsoft Store credentials
         id: check_creds
@@ -383,7 +383,7 @@ jobs:
 
       - name: Download MSIX bundle
         if: steps.check_creds.outputs.has_creds == 'true'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: windows-msix
           path: .

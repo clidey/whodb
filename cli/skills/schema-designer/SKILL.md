@@ -26,8 +26,7 @@ Ask clarifying questions:
 
 ### 2. Check Existing Schema
 ```
-whodb_tables() → See what already exists
-whodb_columns(table="related_table") → Understand existing structure
+whodb_tables(include_columns=true) → See all tables and their columns in one call
 ```
 
 ### 3. Design the Schema

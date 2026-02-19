@@ -111,16 +111,15 @@ Output formats:
 			schema = conn.Schema
 		}
 		if schema == "" {
-			// Get first schema
+			// Get first schema; schema-less databases (SQLite, Redis, etc.) return an error here
 			schemas, err := mgr.GetSchemas()
 			if err != nil {
-				return fmt.Errorf("failed to fetch schemas: %w", err)
+				schemas = []string{}
 			}
-			if len(schemas) == 0 {
-				return fmt.Errorf("no schemas found in database")
+			if len(schemas) > 0 {
+				schema = schemas[0]
+				out.Info("Using schema: %s", schema)
 			}
-			schema = schemas[0]
-			out.Info("Using schema: %s", schema)
 		}
 
 		if !tablesQuiet {

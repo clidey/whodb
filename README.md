@@ -11,6 +11,7 @@
 ![docker pulls](https://img.shields.io/docker/pulls/clidey/whodb)
 ![release downloads](https://img.shields.io/github/downloads/clidey/whodb/total)
 ![docker size](https://img.shields.io/docker/image-size/clidey/whodb/latest)
+[![E2E Tests](https://github.com/clidey/whodb/actions/workflows/e2e-ce.yml/badge.svg)](https://github.com/clidey/whodb/actions/workflows/e2e-ce.yml)
 
 ![Commits per month](https://img.shields.io/github/commit-activity/m/clidey/whodb)
 ![last commit](https://img.shields.io/github/last-commit/clidey/whodb)

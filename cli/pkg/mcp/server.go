@@ -304,6 +304,21 @@ func registerTools(server *mcp.Server, secOpts *SecurityOptions, toolEnablement 
 			},
 		}, createConfirmHandler(secOpts))
 	}
+
+	// whodb_pending - List pending confirmations (only registered if confirm-writes is enabled)
+	// Hints: Read-only, idempotent, closed world
+	if secOpts.ConfirmWrites && toolEnablement.isToolEnabled("pending") {
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "whodb_pending",
+			Description: descPending,
+			Annotations: &mcp.ToolAnnotations{
+				Title:          "List Pending Confirmations",
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+				OpenWorldHint:  boolPtr(false),
+			},
+		}, createPendingHandler(secOpts))
+	}
 }
 
 // buildQueryDescription creates the tool description based on security settings
@@ -378,6 +393,13 @@ func createQueryHandler(secOpts *SecurityOptions) func(ctx context.Context, req 
 func createConfirmHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, input ConfirmInput) (*mcp.CallToolResult, ConfirmOutput, error) {
 		return HandleConfirm(ctx, req, input, secOpts)
+	}
+}
+
+// createPendingHandler creates a handler for listing pending confirmations
+func createPendingHandler(secOpts *SecurityOptions) func(ctx context.Context, req *mcp.CallToolRequest, input PendingInput) (*mcp.CallToolResult, PendingOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input PendingInput) (*mcp.CallToolResult, PendingOutput, error) {
+		return HandlePending(ctx, req, input, secOpts)
 	}
 }
 
@@ -548,15 +570,16 @@ func handleSchemaExplorationHelpPrompt(ctx context.Context, req *mcp.GetPromptRe
 ## Recommended Exploration Workflow
 
 1. **Start with connections** - Use whodb_connections to see available databases
-2. **List schemas** - Use whodb_schemas to discover namespaces (public, analytics, etc.)
-3. **Explore tables** - Use whodb_tables to see tables in a schema with metadata
-4. **Understand structure** - Use whodb_columns to see columns, types, and relationships
-5. **Query data** - Use whodb_query for actual data exploration
+2. **Get tables with columns** - Use whodb_tables(include_columns=true) to get all tables AND their column details in one call
+3. **Query data** - Use whodb_query for actual data exploration (results include column_types)
+
+For multi-schema databases, use whodb_schemas(include_tables=true) first to see all schemas and their tables.
 
 ## Tips for Effective Exploration
 
-- Always check foreign key relationships in whodb_columns output
-- Use row counts from whodb_tables to identify large tables before querying
+- Use include_columns=true and include_tables=true to minimize round-trips
+- Query results include column_types alongside column names — no separate whodb_columns call needed
+- Always check foreign key relationships in column details
 - Look for naming patterns (e.g., *_id columns often indicate relationships)
 - Check for audit columns (created_at, updated_at) to understand data lifecycle
 
@@ -566,17 +589,15 @@ func handleSchemaExplorationHelpPrompt(ctx context.Context, req *mcp.GetPromptRe
 # Step 1: What databases are available?
 whodb_connections → [{name: "mydb", type: "postgres", ...}]
 
-# Step 2: What schemas exist?
-whodb_schemas(connection="mydb") → ["public", "analytics"]
+# Step 2: Get all tables and their columns in one call
+whodb_tables(connection="mydb", include_columns=true) → [
+  {name: "users", columns: [{name: "id", type: "integer", is_primary: true}, ...]},
+  {name: "orders", columns: [{name: "user_id", type: "integer", is_foreign_key: true, referenced_table: "users"}, ...]}
+]
 
-# Step 3: What tables are in public schema?
-whodb_tables(connection="mydb", schema="public") → [{name: "users", ...}, {name: "orders", ...}]
-
-# Step 4: What's the structure of the users table?
-whodb_columns(connection="mydb", table="users") → [{name: "id", is_primary: true}, ...]
-
-# Step 5: Sample some data
+# Step 3: Query with full type awareness
 whodb_query(connection="mydb", query="SELECT * FROM users LIMIT 5")
+→ {columns: ["id", "name"], column_types: ["integer", "varchar"], rows: [...]}
 ` + "```" + `
 
 Please help me explore my database using this workflow.`
@@ -795,7 +816,8 @@ Please help me map out the relationships in my database.`
 ## General Best Practices
 
 - Always start with whodb_connections to see available databases
-- Use whodb_schemas → whodb_tables → whodb_columns before querying
+- Use whodb_tables(include_columns=true) to get tables and columns in one call
+- Query results include column_types — no separate whodb_columns call needed
 - Always use LIMIT for exploratory queries
 - Check column types and relationships before writing JOINs
 
@@ -900,7 +922,9 @@ const descSchemas = `List all schemas (namespaces) in a database.
 ` + "```" + `
 
 **Returns:** Array of schema names (e.g., ["public", "analytics", "audit"]).
-**Typical workflow:** whodb_schemas → whodb_tables → whodb_columns → whodb_query`
+**Typical workflow:** whodb_schemas → whodb_tables(include_columns=true) → whodb_query
+
+**Optional parameter:** Set "include_tables": true to also return all tables within each schema in a single call. This populates a "details" array with schema names and their tables, saving you a separate whodb_tables call per schema.`
 
 const descTables = `List all tables in a database schema.
 
@@ -920,7 +944,9 @@ const descTables = `List all tables in a database schema.
 ` + "```" + `
 
 **Returns:** Array of table objects with name and attributes (row count, size, etc.).
-**Note:** If schema is omitted, uses the connection's default schema or the first available schema.`
+**Note:** If schema is omitted, uses the connection's default schema or the first available schema.
+
+**Optional parameter:** Set "include_columns": true to also return column details (name, type, primary key, foreign keys) for each table. This saves you separate whodb_columns calls and gives you everything needed to write queries in a single round-trip.`
 
 const descColumns = `Describe the columns in a database table.
 
@@ -975,7 +1001,7 @@ const descConfirm = `Confirm and execute a pending write operation.
 
 **Best for:** Executing write queries after user approval in confirm-writes mode.
 **Not recommended for:** Read queries (they execute immediately without confirmation).
-**Common mistakes:** Using an expired token (tokens expire after 60 seconds); not explaining the query to the user before confirming.
+**Common mistakes:** Using an expired token (tokens expire after 5 minutes); not explaining the query to the user before confirming.
 
 **Usage Example:**
 ` + "```json" + `
@@ -989,10 +1015,27 @@ const descConfirm = `Confirm and execute a pending write operation.
 
 **Workflow:**
 1. Call whodb_query with a write operation (INSERT, UPDATE, DELETE, etc.)
-2. Receive confirmation_required=true and a confirmation_token
+2. Receive confirmation_required=true, a confirmation_token, and confirmation_expiry
 3. Explain to the user what the query will do in plain language
 4. After user approves, call whodb_confirm with the token
 5. Query executes and returns results
+
+**Token behavior:** Tokens are valid for 5 minutes (expiry time is in the response). If confirmation fails due to a connection error or timeout, you can retry with the same token — it is only consumed after successful execution. Use whodb_pending to list active tokens if you lose track.`
+
+const descPending = `List all pending write confirmations that are waiting for approval.
+
+**Best for:** Recovering lost confirmation tokens; checking what operations are pending.
+**Not recommended for:** Anything else — this is a utility tool for the confirm-writes workflow.
+
+**Usage Example:**
+` + "```json" + `
+{
+  "name": "whodb_pending",
+  "arguments": {}
+}
+` + "```" + `
+
+**Returns:** Array of pending confirmations with token, query, connection, and expiry time.
 
 **Important:** Tokens are single-use and expire after 60 seconds. If expired, re-submit the original query to get a new token.`
 
@@ -1005,6 +1048,7 @@ Available tools:
 - whodb_columns: Describe columns in a table
 - whodb_connections: List available database connections
 - whodb_confirm: Confirm pending write operations (enabled by default)
+- whodb_pending: List pending write confirmations awaiting approval
 
 Available prompts (for guidance):
 - query_help: Get SQL query writing guidance (supports database_type and query_type args)
@@ -1034,11 +1078,11 @@ Saved connections take precedence when names collide.
 
 Example workflow:
 1. List connections: whodb_connections
-2. Explore schema: whodb_schemas(connection="mydb")
-3. List tables: whodb_tables(connection="mydb", schema="public")
-4. Describe table: whodb_columns(connection="mydb", table="users")
-5. Query data: whodb_query(connection="mydb", query="SELECT * FROM users LIMIT 10")
-6. Write data: whodb_query(connection="mydb", query="INSERT INTO...") -> user confirms -> whodb_confirm(token="...")
+2. Get tables with columns: whodb_tables(connection="mydb", include_columns=true)
+3. Query data: whodb_query(connection="mydb", query="SELECT * FROM users LIMIT 10")
+   → Results include column_types alongside column names
+4. Write data: whodb_query(connection="mydb", query="INSERT INTO...") -> user confirms -> whodb_confirm(token="...")
+   → Tokens are valid for 5 minutes and retryable. Use whodb_pending to recover lost tokens.
 
 Best practices:
 - Send ONE query at a time (multi-statement queries are blocked for security)

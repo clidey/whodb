@@ -68,7 +68,7 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 }
 
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
-	if env.GetIsDesktopMode() {
+	if env.GetIsLocalMode() {
 		return []string{}, nil
 	}
 

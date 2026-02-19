@@ -180,6 +180,8 @@ CREATE TABLE IF NOT EXISTS test_db.data_types (
     col_float32 Float32,
     col_float64 Float64,
     col_decimal Decimal(10,2),
+    col_decimal32 Decimal32(5),
+    col_decimal64 Decimal64(3),
     -- Date/Time types
     col_date Date,
     col_datetime DateTime,
@@ -187,9 +189,25 @@ CREATE TABLE IF NOT EXISTS test_db.data_types (
     col_string String,
     col_fixedstring FixedString(10),
     -- Boolean (UInt8)
-    col_boolean UInt8
+    col_boolean UInt8,
+    -- Enum types
+    col_enum8 Enum8('active' = 1, 'inactive' = 2, 'pending' = 3),
+    col_enum16 Enum16('small' = 1, 'medium' = 2, 'large' = 3, 'xlarge' = 4),
+    -- Nullable types
+    col_nullable_int Nullable(Int32),
+    col_nullable_string Nullable(String),
+    -- LowCardinality types
+    col_lowcard LowCardinality(String),
+    col_lowcard_nullable LowCardinality(Nullable(String)),
+    -- Compound types
+    col_array Array(Int32),
+    col_array_string Array(String),
+    col_map Map(String, Int32),
+    col_tuple Tuple(String, Int32, Float64)
 ) ENGINE = MergeTree()
 ORDER BY id;
 
 -- Insert seed data for data_types
-INSERT INTO test_db.data_types (id, col_int8, col_int16, col_int32, col_int64, col_float32, col_float64, col_decimal, col_date, col_datetime, col_string, col_fixedstring, col_boolean) VALUES (1, 50, 1000, 100000, 10000000000, 1.5, 2.5, 123.45, '2025-01-01', '2025-01-01 12:00:00', 'string_val', 'fixed', 1);
+INSERT INTO test_db.data_types (id, col_int8, col_int16, col_int32, col_int64, col_float32, col_float64, col_decimal, col_decimal32, col_decimal64, col_date, col_datetime, col_string, col_fixedstring, col_boolean, col_enum8, col_enum16, col_nullable_int, col_nullable_string, col_lowcard, col_lowcard_nullable, col_array, col_array_string, col_map, col_tuple) VALUES (1, 50, 1000, 100000, 10000000000, 1.5, 2.5, 123.45, 1234.56789, 123456789012345.678, '2025-01-01', '2025-01-01 12:00:00', 'string_val', 'fixed', 1, 'active', 'medium', 42, 'hello', 'category_a', 'tag_1', [10, 20, 30], ['foo', 'bar'], {'key1': 1, 'key2': 2}, ('label', 99, 3.14));
+
+INSERT INTO test_db.data_types (id, col_int8, col_int16, col_int32, col_int64, col_float32, col_float64, col_decimal, col_decimal32, col_decimal64, col_date, col_datetime, col_string, col_fixedstring, col_boolean, col_enum8, col_enum16, col_nullable_int, col_nullable_string, col_lowcard, col_lowcard_nullable, col_array, col_array_string, col_map, col_tuple) VALUES (2, -10, -500, -50000, -5000000000, -0.5, -1.5, -67.89, -999.12345, -999.999, '2024-06-15', '2024-06-15 08:30:00', 'another_val', 'test', 0, 'inactive', 'large', NULL, NULL, 'category_b', NULL, [1, 2], ['baz'], {'only': 5}, ('other', -1, 0.0));

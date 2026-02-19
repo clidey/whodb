@@ -17,11 +17,14 @@
 package tui
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/clidey/whodb/cli/internal/config"
+	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -149,33 +152,12 @@ func TestChatView_Escape_GoesBack(t *testing.T) {
 	defer cleanup()
 
 	v.consented = true
-	v.viewingResult = false
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
 		t.Errorf("Expected mode ViewBrowser after Esc, got %v", v.parent.mode)
-	}
-}
-
-func TestChatView_Escape_ExitViewingResult(t *testing.T) {
-	v, cleanup := setupChatViewTest(t)
-	defer cleanup()
-
-	v.consented = true
-	v.viewingResult = true
-
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
-	v, _ = v.Update(msg)
-
-	if v.viewingResult {
-		t.Error("Expected viewingResult to be false after Esc")
-	}
-
-	// Mode should not change yet
-	if v.parent.mode != ViewConnection {
-		// Note: mode depends on initial state
 	}
 }
 
@@ -427,8 +409,38 @@ func TestChatView_MouseScroll(t *testing.T) {
 	msg = tea.MouseMsg{Type: tea.MouseWheelDown}
 	v, _ = v.Update(msg)
 
-	// Scroll offset may or may not change depending on max calculation
-	// Just ensure no panic
+	if v.scrollOffset != 5 {
+		t.Errorf("Expected scrollOffset 5 after wheel down, got %d", v.scrollOffset)
+	}
+}
+
+func TestChatView_MouseScroll_WorksFromAnyField(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.messages = make([]chatMessage, 20)
+	v.scrollOffset = 5
+	v.height = 30
+
+	// Scroll should work even when focused on provider field
+	v.focusField = focusFieldProvider
+
+	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
+	v, _ = v.Update(msg)
+
+	if v.scrollOffset != 4 {
+		t.Errorf("Expected scrollOffset 4 after wheel up from provider field, got %d", v.scrollOffset)
+	}
+
+	// And from model field
+	v.focusField = focusFieldModel
+
+	v, _ = v.Update(msg)
+
+	if v.scrollOffset != 3 {
+		t.Errorf("Expected scrollOffset 3 after wheel up from model field, got %d", v.scrollOffset)
+	}
 }
 
 func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
@@ -436,7 +448,6 @@ func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
 	defer cleanup()
 
 	v.consented = true
-	v.focusField = focusFieldMessage
 	v.scrollOffset = 0
 
 	msg := tea.MouseMsg{Type: tea.MouseWheelUp}
@@ -444,6 +455,64 @@ func TestChatView_MouseScrollUp_AtTop(t *testing.T) {
 
 	if v.scrollOffset != 0 {
 		t.Errorf("Expected scrollOffset to stay 0 at top, got %d", v.scrollOffset)
+	}
+}
+
+func TestChatView_EnsureMessageVisible(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.height = 30 // maxVisibleMessages will be ~4
+	v.messages = make([]chatMessage, 10)
+	v.scrollOffset = 0
+
+	maxVisible := v.maxVisibleMessages()
+
+	// Select a message beyond the visible window
+	v.selectedMessage = maxVisible + 2
+	v.ensureMessageVisible()
+
+	if v.scrollOffset == 0 {
+		t.Error("Expected scrollOffset to increase to show selected message")
+	}
+	if v.selectedMessage < v.scrollOffset || v.selectedMessage >= v.scrollOffset+maxVisible {
+		t.Errorf("Selected message %d not visible in window [%d, %d)",
+			v.selectedMessage, v.scrollOffset, v.scrollOffset+maxVisible)
+	}
+
+	// Now select a message above the window
+	v.selectedMessage = 0
+	v.ensureMessageVisible()
+
+	if v.scrollOffset != 0 {
+		t.Errorf("Expected scrollOffset 0 to show message 0, got %d", v.scrollOffset)
+	}
+}
+
+func TestChatView_CtrlP_AdjustsScroll(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.height = 30
+	v.messages = make([]chatMessage, 10)
+	maxVisible := v.maxVisibleMessages()
+
+	// Start at a message near the bottom with scroll offset showing later messages
+	v.scrollOffset = 5
+	v.selectedMessage = 5
+
+	// Keep pressing Ctrl+P to go above the visible window
+	msg := tea.KeyMsg{Type: tea.KeyCtrlP}
+	for i := 0; i < maxVisible+2; i++ {
+		v, _ = v.Update(msg)
+	}
+
+	// Selected message should still be visible
+	if v.selectedMessage < v.scrollOffset || v.selectedMessage >= v.scrollOffset+maxVisible {
+		t.Errorf("After Ctrl+P, selected message %d not in visible range [%d, %d)",
+			v.selectedMessage, v.scrollOffset, v.scrollOffset+maxVisible)
 	}
 }
 
@@ -755,34 +824,6 @@ func TestChatView_RenderTableSummary(t *testing.T) {
 	}
 }
 
-func TestChatView_RenderTable(t *testing.T) {
-	v, cleanup := setupChatViewTest(t)
-	defer cleanup()
-
-	// Nil result
-	result := v.renderTable(nil)
-	if result != "" {
-		t.Error("Expected empty string for nil result")
-	}
-
-	// Empty columns
-	result = v.renderTable(&engine.GetRowsResult{
-		Columns: []engine.Column{},
-	})
-	if result != "" {
-		t.Error("Expected empty string for empty columns")
-	}
-
-	// Valid result
-	result = v.renderTable(&engine.GetRowsResult{
-		Columns: []engine.Column{{Name: "id"}, {Name: "name"}},
-		Rows:    [][]string{{"1", "Alice"}, {"2", "Bob"}},
-	})
-	if result == "" {
-		t.Error("Expected non-empty table render")
-	}
-}
-
 func TestChatView_Init_WithConsent(t *testing.T) {
 	v, cleanup := setupChatViewTest(t)
 	defer cleanup()
@@ -847,8 +888,7 @@ func TestChatView_RetryPrompt_EscCancels(t *testing.T) {
 
 	// Set up retry prompt state
 	v.consented = true
-	v.retryPrompt = true
-	v.timedOutQuery = "tell me about the users table"
+	v.retryPrompt.Show("tell me about the users table")
 	v.err = errors.New("request timed out")
 
 	// Send ESC key
@@ -856,13 +896,13 @@ func TestChatView_RetryPrompt_EscCancels(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false after ESC")
 	}
 
 	// Verify timed out query was cleared
-	if v.timedOutQuery != "" {
-		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.timedOutQuery)
+	if v.retryPrompt.TimedOutQuery() != "" {
+		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.retryPrompt.TimedOutQuery())
 	}
 }
 
@@ -884,8 +924,7 @@ func TestChatView_RetryPrompt_KeyHandling(t *testing.T) {
 
 			// Set up retry prompt state
 			v.consented = true
-			v.retryPrompt = true
-			v.timedOutQuery = "tell me about the users table"
+			v.retryPrompt.Show("tell me about the users table")
 			v.err = errors.New("request timed out")
 			// Need to have providers and models for sendChatWithTimeout to work
 			v.models = []string{"test-model"}
@@ -895,7 +934,7 @@ func TestChatView_RetryPrompt_KeyHandling(t *testing.T) {
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
-			if v.retryPrompt {
+			if v.retryPrompt.IsActive() {
 				t.Error("Expected retryPrompt to be false after selecting retry option")
 			}
 
@@ -918,21 +957,276 @@ func TestChatView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 
 	// Set up retry prompt state
 	v.consented = true
-	v.retryPrompt = true
-	v.timedOutQuery = "tell me about the users table"
+	v.retryPrompt.Show("tell me about the users table")
 
 	// Send an unrelated key (like 'a')
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to still be true after unrecognized key")
 	}
 
 	// Verify query wasn't cleared
-	if v.timedOutQuery == "" {
+	if v.retryPrompt.TimedOutQuery() == "" {
 		t.Error("Expected timedOutQuery to still be set")
+	}
+}
+
+// ============================================================================
+// Chat Quick-Ask (Feature 6) Tests
+// ============================================================================
+
+func TestChatView_RestoreProvider(t *testing.T) {
+	setupTestEnv(t)
+
+	// Save a provider to config
+	cfg, _ := config.LoadConfig()
+	cfg.SetLastAIProvider("OpenAI")
+	cfg.Save()
+
+	parent := NewMainModel()
+	if parent.err != nil {
+		t.Fatalf("Failed to create MainModel: %v", parent.err)
+	}
+	v := parent.chatView
+
+	// Check if the saved provider was found and selected
+	if len(v.providers) > 0 {
+		found := false
+		for i, p := range v.providers {
+			if p.Type == "OpenAI" && v.selectedProvider == i {
+				found = true
+				break
+			}
+		}
+		// If OpenAI is in the list, it should be selected
+		// If not (test env may not have it), it falls back to Ollama/first
+		if !found {
+			// Verify it fell back gracefully (didn't crash)
+			if v.selectedProvider < 0 || v.selectedProvider >= len(v.providers) {
+				t.Errorf("selectedProvider out of range: %d", v.selectedProvider)
+			}
+		}
+	}
+}
+
+func TestChatView_RestoreModel_AutoFocusMessage(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	// Save a model preference
+	v.parent.config.SetLastAIModel("test-model")
+	v.parent.config.Save()
+
+	v.consented = true
+	v.loadingModels = true
+	v.focusField = focusFieldProvider // Start at provider field
+
+	// Simulate models loaded with matching model
+	msg := modelsLoadedMsg{models: []string{"other-model", "test-model", "third-model"}, err: nil}
+	v, _ = v.Update(msg)
+
+	// Model should be restored to index 1 (test-model)
+	if v.selectedModel != 1 {
+		t.Errorf("Expected selectedModel 1 (test-model), got %d", v.selectedModel)
+	}
+
+	// Focus should auto-move to message field
+	if v.focusField != focusFieldMessage {
+		t.Errorf("Expected focusField focusFieldMessage after model restore, got %d", v.focusField)
+	}
+}
+
+func TestChatView_RestoreModel_NotFound_FallsBack(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	// Save a model that won't be in the list
+	v.parent.config.SetLastAIModel("nonexistent-model")
+	v.parent.config.Save()
+
+	v.consented = true
+	v.loadingModels = true
+
+	// Simulate models loaded without matching model
+	msg := modelsLoadedMsg{models: []string{"model-a", "model-b"}, err: nil}
+	v, _ = v.Update(msg)
+
+	// Should fall back to first model
+	if v.selectedModel != 0 {
+		t.Errorf("Expected selectedModel 0 (fallback), got %d", v.selectedModel)
+	}
+}
+
+func TestChatView_SavesProviderModelOnSuccess(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.sending = true
+	v.providers = v.parent.dbManager.GetAIProviders()
+	if len(v.providers) == 0 {
+		t.Skip("No providers available")
+	}
+	v.selectedProvider = 0
+	v.models = []string{"test-model-a", "test-model-b"}
+	v.selectedModel = 1
+
+	// Simulate successful chat response
+	msg := chatResponseMsg{
+		messages: []*database.ChatMessage{{Text: "Hello!", Type: "message"}},
+		err:      nil,
+	}
+	v, _ = v.Update(msg)
+
+	// Verify provider+model were saved
+	if v.parent.config.GetLastAIProvider() != v.providers[0].Type {
+		t.Errorf("Expected saved provider '%s', got '%s'", v.providers[0].Type, v.parent.config.GetLastAIProvider())
+	}
+	if v.parent.config.GetLastAIModel() != "test-model-b" {
+		t.Errorf("Expected saved model 'test-model-b', got '%s'", v.parent.config.GetLastAIModel())
+	}
+}
+
+// ============================================================================
+// Timeout Memory (Feature 7) - Chat View Tests
+// ============================================================================
+
+func TestChatView_TimeoutAutoRetry_WithPreference(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.sending = true
+	v.models = []string{"test-model"}
+	v.retryPrompt.SetAutoRetried(false)
+
+	// Set a preferred timeout
+	v.parent.config.SetPreferredTimeout(60)
+
+	// Simulate timeout
+	msg := chatResponseMsg{
+		messages: nil,
+		query:    "test query",
+		err:      context.DeadlineExceeded,
+	}
+	v, cmd := v.Update(msg)
+
+	// Should auto-retry (not show prompt)
+	if v.retryPrompt.IsActive() {
+		t.Error("Expected retryPrompt to be false (auto-retry should happen)")
+	}
+	if !v.retryPrompt.AutoRetried() {
+		t.Error("Expected autoRetried to be true")
+	}
+	if cmd == nil {
+		t.Error("Expected a command to be returned for auto-retry")
+	}
+}
+
+func TestChatView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.sending = true
+	v.retryPrompt.SetAutoRetried(true) // Already auto-retried once
+
+	// Set a preferred timeout
+	v.parent.config.SetPreferredTimeout(60)
+
+	// Simulate timeout again
+	msg := chatResponseMsg{
+		messages: nil,
+		query:    "test query",
+		err:      context.DeadlineExceeded,
+	}
+	v, _ = v.Update(msg)
+
+	// Should show retry prompt since auto-retry already happened
+	if !v.retryPrompt.IsActive() {
+		t.Error("Expected retryPrompt to be true after auto-retry failed")
+	}
+}
+
+func TestChatView_TimeoutShowsMenu_NoPreference(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.sending = true
+	v.retryPrompt.SetAutoRetried(false)
+
+	// No preferred timeout set (0)
+	v.parent.config.SetPreferredTimeout(0)
+
+	// Simulate timeout
+	msg := chatResponseMsg{
+		messages: nil,
+		query:    "test query",
+		err:      context.DeadlineExceeded,
+	}
+	v, _ = v.Update(msg)
+
+	// Should show retry prompt immediately (no preference to auto-retry with)
+	if !v.retryPrompt.IsActive() {
+		t.Error("Expected retryPrompt to be true with no preferred timeout")
+	}
+}
+
+func TestChatView_RetryMenuSavesPreference(t *testing.T) {
+	tests := []struct {
+		name            string
+		key             string
+		expectedTimeout int
+	}{
+		{"option_1_saves_60", "1", 60},
+		{"option_2_saves_120", "2", 120},
+		{"option_3_saves_300", "3", 300},
+		{"option_4_no_save", "4", 0}, // "No limit" doesn't save
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, cleanup := setupChatViewTest(t)
+			defer cleanup()
+
+			v.consented = true
+			v.retryPrompt.Show("test query")
+			v.models = []string{"test-model"}
+
+			// Clear any previous preference
+			v.parent.config.SetPreferredTimeout(0)
+
+			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+			v, _ = v.Update(msg)
+
+			saved := v.parent.config.GetPreferredTimeout()
+			if saved != tt.expectedTimeout {
+				t.Errorf("Expected preferred timeout %d after key '%s', got %d", tt.expectedTimeout, tt.key, saved)
+			}
+		})
+	}
+}
+
+func TestChatView_AutoRetriedResetOnNewMessage(t *testing.T) {
+	v, cleanup := setupChatViewTest(t)
+	defer cleanup()
+
+	v.consented = true
+	v.retryPrompt.SetAutoRetried(true) // From previous timeout
+	v.focusField = focusFieldMessage
+	v.models = []string{"test-model"}
+	v.input.SetValue("new question")
+
+	// Send message via Enter
+	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	v, _ = v.Update(msg)
+
+	if v.retryPrompt.AutoRetried() {
+		t.Error("Expected autoRetried to be reset on new message")
 	}
 }
 
@@ -942,8 +1236,7 @@ func TestChatView_RetryPrompt_View(t *testing.T) {
 
 	// Set up retry prompt state
 	v.consented = true
-	v.retryPrompt = true
-	v.timedOutQuery = "tell me about the users table"
+	v.retryPrompt.Show("tell me about the users table")
 
 	view := v.View()
 
