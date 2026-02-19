@@ -159,7 +159,7 @@ jobs:
         working-directory: frontend
         env:
           DATABASE: ${{ matrix.database }}
-        run: pnpm exec playwright test --config=e2e/playwright.config.mjs --project=${{ matrix.project }} ${{ matrix.spec_file }}
+        run: pnpm exec playwright test --config=e2e/playwright.a11y.config.mjs --project=${{ matrix.project }} ${{ matrix.spec_file }}
 
       - name: Run keyboard shortcuts (postgres)
         if: ${{ matrix.name == 'keyboard-postgres' }}

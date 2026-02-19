@@ -193,7 +193,7 @@ if [ "$SPEC_FILE" = "keyboard-shortcuts" ] || [ "$SPEC_FILE" = "keyboard-shortcu
     KEYBOARD_ONLY=true
 fi
 
-# Determine Playwright projects (read-only + mutating)
+# Determine Playwright config + projects (read-only + mutating)
 PW_PROJECT="standalone"
 PW_PROJECT_MUTATING="standalone-mutating"
 if [ -n "$CDP_ENDPOINT" ]; then
@@ -203,7 +203,14 @@ fi
 
 # Common Playwright args
 PW_CONFIG="$PROJECT_ROOT/frontend/e2e/playwright.config.mjs"
-PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT --project=$PW_PROJECT_MUTATING"
+if [ "$SPEC_FILE" = "accessibility" ] || [ "$SPEC_FILE" = "accessibility.spec.mjs" ]; then
+    # The main E2E config ignores accessibility specs; use the a11y config instead.
+    PW_CONFIG="$PROJECT_ROOT/frontend/e2e/playwright.a11y.config.mjs"
+    # Accessibility spec is read-only; keep this focused on the read-only project.
+    PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT"
+else
+    PW_ARGS="--config=$PW_CONFIG --project=$PW_PROJECT --project=$PW_PROJECT_MUTATING"
+fi
 if [ "$HEADLESS" = "false" ]; then
     PW_ARGS="$PW_ARGS --headed"
 fi
