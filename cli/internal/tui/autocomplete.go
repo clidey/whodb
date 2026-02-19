@@ -69,76 +69,36 @@ const (
 // This prevents excessive database calls during fast typing.
 const autocompleteDebounceDelay = 100 * time.Millisecond
 
-// updateCursorPosition infers cursor position by comparing text changes
+// updateCursorPosition computes the absolute byte offset of the cursor
+// in the textarea's text using the textarea's own row/column state.
 func (v *EditorView) updateCursorPosition() {
 	text := v.textarea.Value()
+	row := v.textarea.Line()
+	li := v.textarea.LineInfo()
+	col := li.ColumnOffset
 
-	// If text is empty, cursor is at start
-	if len(text) == 0 {
-		v.cursorPos = 0
-		v.lastText = text
-		return
+	// Split text into lines and sum lengths of lines before the cursor row,
+	// adding 1 per line for the newline character.
+	lines := strings.Split(text, "\n")
+	pos := 0
+	for i := 0; i < row && i < len(lines); i++ {
+		pos += len(lines[i]) + 1 // +1 for newline
 	}
-
-	// If this is the first time or text was cleared, assume cursor at end
-	if v.lastText == "" {
-		v.cursorPos = len(text)
-		v.lastText = text
-		return
-	}
-
-	// Find where the text changed by comparing with last known text
-	oldLen := len(v.lastText)
-	newLen := len(text)
-
-	if newLen > oldLen {
-		// Text was inserted - find insertion point
-		insertPos := findDiffPosition(v.lastText, text)
-		v.cursorPos = insertPos + (newLen - oldLen)
-	} else if newLen < oldLen {
-		// Text was deleted - find deletion point
-		deletePos := findDiffPosition(text, v.lastText)
-		v.cursorPos = deletePos
-	} else {
-		// Same length - text might have been replaced or cursor just moved
-		// Try to find the change position
-		diffPos := findDiffPosition(v.lastText, text)
-		if diffPos < len(text) {
-			v.cursorPos = diffPos + 1
-		} else {
-			// No change detected, cursor likely moved - keep current position
-			// but clamp to text length
-			if v.cursorPos > len(text) {
-				v.cursorPos = len(text)
-			}
+	// Add column offset within the current line (convert rune offset to byte offset)
+	if row < len(lines) {
+		runes := []rune(lines[row])
+		if col > len(runes) {
+			col = len(runes)
 		}
+		pos += len(string(runes[:col]))
 	}
 
-	// Clamp cursor position to valid range
-	if v.cursorPos < 0 {
-		v.cursorPos = 0
-	}
-	if v.cursorPos > len(text) {
-		v.cursorPos = len(text)
+	if pos > len(text) {
+		pos = len(text)
 	}
 
+	v.cursorPos = pos
 	v.lastText = text
-}
-
-// findDiffPosition finds the first position where two strings differ
-func findDiffPosition(s1, s2 string) int {
-	minLen := len(s1)
-	if len(s2) < minLen {
-		minLen = len(s2)
-	}
-
-	for i := 0; i < minLen; i++ {
-		if s1[i] != s2[i] {
-			return i
-		}
-	}
-
-	return minLen
 }
 
 // triggerAutocomplete manually triggers autocomplete at current cursor position
@@ -650,10 +610,22 @@ func (v *EditorView) acceptSuggestion() {
 		var newText string
 		var newCursorPos int
 		if tokenMatch != "" {
-			// Replace the token
-			startPos := v.cursorPos - len(tokenMatch)
-			newText = text[:startPos] + sug.apply + afterCursor
-			newCursorPos = startPos + len(sug.apply)
+			// If the suggestion doesn't contain a dot but the token does (e.g. token is
+			// "test_schema." and suggestion is "products"), only replace the part after the
+			// last dot to preserve the qualifier prefix.
+			if strings.Contains(tokenMatch, ".") && !strings.Contains(sug.apply, ".") {
+				lastDot := strings.LastIndex(tokenMatch, ".")
+				// Keep everything up to and including the dot
+				prefixToKeep := tokenMatch[:lastDot+1]
+				startPos := v.cursorPos - len(tokenMatch)
+				newText = text[:startPos] + prefixToKeep + sug.apply + afterCursor
+				newCursorPos = startPos + len(prefixToKeep) + len(sug.apply)
+			} else {
+				// Replace the entire token
+				startPos := v.cursorPos - len(tokenMatch)
+				newText = text[:startPos] + sug.apply + afterCursor
+				newCursorPos = startPos + len(sug.apply)
+			}
 		} else {
 			// Insert at cursor position
 			newText = beforeCursor + sug.apply + afterCursor

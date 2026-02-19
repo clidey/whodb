@@ -424,29 +424,6 @@ func TestEditorView_FilterSuggestions_QualifiedNames(t *testing.T) {
 	}
 }
 
-func TestFindDiffPosition(t *testing.T) {
-	tests := []struct {
-		s1, s2   string
-		expected int
-	}{
-		{"hello", "hello", 5}, // identical
-		{"hello", "hella", 4}, // differ at position 4
-		{"abc", "abcd", 3},    // s2 is longer
-		{"abcd", "abc", 3},    // s1 is longer
-		{"", "a", 0},          // s1 is empty
-		{"a", "", 0},          // s2 is empty
-		{"", "", 0},           // both empty
-		{"xyz", "abc", 0},     // completely different
-	}
-
-	for _, tt := range tests {
-		result := findDiffPosition(tt.s1, tt.s2)
-		if result != tt.expected {
-			t.Errorf("findDiffPosition(%q, %q) = %d, expected %d", tt.s1, tt.s2, result, tt.expected)
-		}
-	}
-}
-
 func TestGetLastWord(t *testing.T) {
 	tests := []struct {
 		text     string
