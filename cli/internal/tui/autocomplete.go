@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
@@ -799,7 +800,7 @@ func getLastWord(text string) string {
 	}
 
 	// If text ends with a delimiter, there's no partial word to filter by
-	lastChar := rune(text[len(text)-1])
+	lastChar, _ := utf8.DecodeLastRuneInString(text)
 	if lastChar == ' ' || lastChar == '\n' || lastChar == '\t' || lastChar == ',' || lastChar == '(' || lastChar == ')' {
 		return ""
 	}

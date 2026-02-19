@@ -149,16 +149,6 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch m.mode {
 				case ViewWhere:
 					m.mode = ViewResults
-				case ViewConnection:
-					m.mode = ViewConnection
-				case ViewBrowser:
-					m.mode = ViewBrowser
-				case ViewEditor:
-					m.mode = ViewEditor
-				case ViewResults:
-					m.mode = ViewResults
-				case ViewHistory:
-					m.mode = ViewHistory
 				case ViewExport, ViewColumns, ViewChat, ViewSchema:
 					m.mode = ViewBrowser
 				}

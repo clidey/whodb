@@ -198,6 +198,13 @@ func (v *ColumnsView) View() string {
 		maxVisible = 10
 	}
 
+	if len(v.columns) == 0 {
+		b.WriteString(styles.MutedStyle.Render("No columns"))
+		b.WriteString("\n\n")
+		b.WriteString(RenderBindingHelp(Keys.Global.Back))
+		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
 	startIdx := v.scrollOffset
 	if startIdx < 0 {
 		startIdx = 0

@@ -437,6 +437,14 @@ func TestGetLastWord(t *testing.T) {
 		{"schema.table.column", "column"},
 		{"func(arg1, arg2", "arg2"},
 		{"`quoted`", "quoted"},
+		// Multi-byte: trailing space after multi-byte chars
+		{"SELECT * FROM tëst ", ""},
+		// Multi-byte: partial word with multi-byte chars
+		{"SELECT tëst", "tëst"},
+		// Trailing comma
+		{"col1,", ""},
+		// Trailing paren
+		{"COUNT(", ""},
 	}
 
 	for _, tt := range tests {

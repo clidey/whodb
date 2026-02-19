@@ -842,3 +842,43 @@ func TestResultsView_UpdateTable_WithVisibleColumns(t *testing.T) {
 
 	// Should not panic, table should only show id and email columns
 }
+
+func TestResultsView_PageSizeCycling_CustomSize(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	// Set a custom page size not in pageSizes (10, 25, 50, 100)
+	v.pageSize = 75
+	v.results = &engine.GetRowsResult{
+		Columns: []engine.Column{{Name: "id"}},
+		Rows:    [][]string{{"1"}},
+	}
+
+	// Cycle page size - should go to first option (10), not skip to 25
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	v, _ = v.Update(msg)
+
+	if v.pageSize != pageSizes[0] {
+		t.Errorf("Expected pageSize %d after cycling from custom size, got %d", pageSizes[0], v.pageSize)
+	}
+}
+
+func TestResultsView_ColumnInfoDisplay_WithFilter(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	v.results = &engine.GetRowsResult{
+		Columns:    []engine.Column{{Name: "id"}, {Name: "name"}, {Name: "email"}},
+		Rows:       [][]string{{"1", "Alice", "a@b.com"}},
+		TotalCount: 1,
+	}
+	v.visibleColumns = []string{"id", "email"}
+	v.updateTable()
+
+	view := v.View()
+
+	// Should show "2" as total (filtered), not "3" (all columns)
+	if strings.Contains(view, "of 3") {
+		t.Error("Column info should reflect filtered column count, not total")
+	}
+}

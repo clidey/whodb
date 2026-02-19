@@ -386,6 +386,9 @@ func (v *SchemaView) renderTables() string {
 }
 
 func (v *SchemaView) loadSchema() tea.Cmd {
+	// Capture values before closure to avoid data races
+	browserSchema := v.parent.browserView.currentSchema
+
 	return func() tea.Msg {
 		conn := v.parent.dbManager.GetCurrentConnection()
 		if conn == nil {
@@ -396,7 +399,7 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 		}
 
 		// Use the schema selected in browser view if available
-		schema := v.parent.browserView.currentSchema
+		schema := browserSchema
 		if schema == "" {
 			schemas, err := v.parent.dbManager.GetSchemas()
 			if err != nil {

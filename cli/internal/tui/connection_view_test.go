@@ -17,6 +17,7 @@
 package tui
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -992,5 +993,78 @@ func TestConnectionView_RefreshList(t *testing.T) {
 	items := v.list.Items()
 	if len(items) != 1 {
 		t.Errorf("Expected 1 item after refresh, got %d", len(items))
+	}
+}
+
+func TestConnectionView_ListConnect_IsAsync(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	// Add a saved connection and switch to list mode
+	conn := config.Connection{
+		Name:     "test-async",
+		Type:     "Postgres",
+		Host:     "localhost",
+		Port:     5432,
+		Username: "user",
+		Database: "testdb",
+	}
+	v.parent.config.AddConnection(conn)
+	_ = v.parent.config.Save()
+	v.refreshList()
+	v.mode = "list"
+
+	// Verify item is in the list and selected
+	items := v.list.Items()
+	if len(items) == 0 {
+		t.Skip("No items in list after refresh")
+	}
+	if _, ok := v.list.SelectedItem().(connectionItem); !ok {
+		t.Skip("No selected connection item")
+	}
+
+	// Press Enter to connect
+	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	v, cmd := v.Update(msg)
+
+	// Should be in connecting state with a command (async)
+	if !v.connecting {
+		t.Error("Expected connecting to be true after Enter on saved connection")
+	}
+	if cmd == nil {
+		t.Error("Expected a tea.Cmd to be returned for async connection")
+	}
+}
+
+func TestConnectionView_ListConnect_ShowsSpinner(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "list"
+	v.connecting = true
+
+	view := v.View()
+
+	if !strings.Contains(view, "Connecting...") {
+		t.Error("Expected 'Connecting...' spinner when connecting from list")
+	}
+}
+
+func TestConnectionView_ListConnect_ConnectionResult_Error(t *testing.T) {
+	v, cleanup := setupConnectionViewTest(t)
+	defer cleanup()
+
+	v.mode = "list"
+	v.connecting = true
+
+	// Simulate connection error
+	msg := connectionResultMsg{err: fmt.Errorf("connection refused")}
+	v, _ = v.Update(msg)
+
+	if v.connecting {
+		t.Error("Expected connecting to be false after error")
+	}
+	if v.parent.err == nil {
+		t.Error("Expected parent.err to be set on connection failure")
 	}
 }

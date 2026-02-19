@@ -225,6 +225,20 @@ func (v *ConnectionView) Update(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 
 func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case connectionResultMsg:
+		v.connecting = false
+		if msg.err != nil {
+			v.parent.err = msg.err
+			return v, nil
+		}
+		v.parent.mode = ViewBrowser
+		conn := v.parent.dbManager.GetCurrentConnection()
+		connDesc := ""
+		if conn != nil {
+			connDesc = fmt.Sprintf("Connected to %s@%s", conn.Type, conn.Host)
+		}
+		return v, tea.Batch(v.parent.browserView.Init(), v.parent.SetStatus(connDesc))
+
 	case tea.WindowSizeMsg:
 		// Store dimensions; actual list sizing happens in View() using lipgloss.Height() measurements
 		return v, nil
@@ -262,12 +276,15 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.ConnectionList.Connect):
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
-				if err := v.parent.dbManager.Connect(&item.conn); err != nil {
-					v.parent.err = err
-					return v, nil
+				v.connecting = true
+				v.connError = nil
+				conn := item.conn
+				return v, func() tea.Msg {
+					if err := v.parent.dbManager.Connect(&conn); err != nil {
+						return connectionResultMsg{err: err}
+					}
+					return connectionResultMsg{err: nil}
 				}
-				v.parent.mode = ViewBrowser
-				return v, v.parent.browserView.Init()
 			}
 
 		case key.Matches(msg, Keys.ConnectionList.New):
@@ -468,7 +485,11 @@ func (v *ConnectionView) View() string {
 	b.WriteString("\n")
 	b.WriteString(subtitle)
 	b.WriteString("\n\n")
-	b.WriteString(v.list.View())
+	if v.connecting {
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Connecting..."))
+	} else {
+		b.WriteString(v.list.View())
+	}
 	b.WriteString("\n\n")
 	b.WriteString(helpText)
 
@@ -807,71 +828,76 @@ func (v *ConnectionView) onDbTypeChanged() {
 }
 
 func (v *ConnectionView) connect() tea.Cmd {
-	return func() tea.Msg {
-		name := v.inputs[0].Value()
-		dbType := v.dbTypes[v.dbTypeIndex]
+	// Capture all form values before the closure to avoid data races
+	name := v.inputs[0].Value()
+	dbType := v.dbTypes[v.dbTypeIndex]
 
-		host := ""
-		if v.isFieldVisible(1) {
-			host = v.inputs[1].Value()
-		}
-		if host == "" {
-			host = "localhost"
-		}
+	host := ""
+	if v.isFieldVisible(1) {
+		host = v.inputs[1].Value()
+	}
+	if host == "" {
+		host = "localhost"
+	}
 
-		var port int
-		if v.isFieldVisible(2) {
-			portStr := v.inputs[2].Value()
-			if portStr == "" {
-				port = v.getDefaultPort(dbType)
-			} else {
-				portNum, err := strconv.Atoi(portStr)
-				if err != nil || portNum < 1 || portNum > 65535 {
+	var port int
+	if v.isFieldVisible(2) {
+		portStr := v.inputs[2].Value()
+		if portStr == "" {
+			port = v.getDefaultPort(dbType)
+		} else {
+			portNum, err := strconv.Atoi(portStr)
+			if err != nil || portNum < 1 || portNum > 65535 {
+				return func() tea.Msg {
 					return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1 and 65535")}
 				}
-				port = portNum
 			}
-		} else {
-			port = v.getDefaultPort(dbType)
+			port = portNum
 		}
+	} else {
+		port = v.getDefaultPort(dbType)
+	}
 
-		username := ""
-		if v.isFieldVisible(3) {
-			username = v.inputs[3].Value()
-		}
-		password := ""
-		if v.isFieldVisible(4) {
-			password = v.inputs[4].Value()
-		}
-		database := ""
-		if v.isFieldVisible(5) {
-			database = v.inputs[5].Value()
-		}
-		schema := ""
-		if v.isFieldVisible(6) {
-			schema = v.inputs[6].Value()
-		}
+	username := ""
+	if v.isFieldVisible(3) {
+		username = v.inputs[3].Value()
+	}
+	password := ""
+	if v.isFieldVisible(4) {
+		password = v.inputs[4].Value()
+	}
+	database := ""
+	if v.isFieldVisible(5) {
+		database = v.inputs[5].Value()
+	}
+	schema := ""
+	if v.isFieldVisible(6) {
+		schema = v.inputs[6].Value()
+	}
 
-		conn := config.Connection{
-			Name:     name,
-			Type:     dbType,
-			Host:     host,
-			Port:     port,
-			Username: username,
-			Password: password,
-			Database: database,
-			Schema:   schema,
-		}
+	conn := config.Connection{
+		Name:     name,
+		Type:     dbType,
+		Host:     host,
+		Port:     port,
+		Username: username,
+		Password: password,
+		Database: database,
+		Schema:   schema,
+	}
 
-		// Try to connect
-		if err := v.parent.dbManager.Connect(&conn); err != nil {
+	dbManager := v.parent.dbManager
+	cfg := v.parent.config
+
+	return func() tea.Msg {
+		if err := dbManager.Connect(&conn); err != nil {
 			return connectionResultMsg{err: err}
 		}
 
 		// Save connection if name is provided
 		if name != "" {
-			v.parent.config.AddConnection(conn)
-			v.parent.config.Save()
+			cfg.AddConnection(conn)
+			cfg.Save()
 		}
 
 		return connectionResultMsg{err: nil}

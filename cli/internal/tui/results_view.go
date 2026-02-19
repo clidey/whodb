@@ -258,8 +258,8 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			}
 
 		case key.Matches(msg, Keys.Results.PageSize):
-			// Cycle through page sizes
-			currentIndex := 0
+			// Cycle through page sizes; if current size is custom, start from the beginning
+			currentIndex := -1
 			for i, size := range pageSizes {
 				if size == v.pageSize {
 					currentIndex = i
@@ -342,6 +342,9 @@ func (v *ResultsView) View() string {
 
 		// Show column and row information
 		totalCols := len(v.results.Columns)
+		if len(v.visibleColumns) > 0 {
+			totalCols = len(v.visibleColumns)
+		}
 		visibleCols := v.maxColumns
 		if v.columnOffset+v.maxColumns > totalCols {
 			visibleCols = totalCols - v.columnOffset
