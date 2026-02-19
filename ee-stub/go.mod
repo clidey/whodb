@@ -3,12 +3,13 @@ module github.com/clidey/whodb/ee
 go 1.25.4
 
 require (
-	github.com/99designs/gqlgen v0.17.86
+	github.com/99designs/gqlgen v0.17.87
 	github.com/clidey/whodb/core v0.0.0-20250812120033-ae27c05241d1
 )
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.31 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.32 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 )
