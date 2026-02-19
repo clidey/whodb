@@ -536,7 +536,9 @@ func genClickHouseMap(dbType string, databaseType string, faker *gofakeit.Faker)
 	for i := range count {
 		key := GenerateByType(keyType, databaseType, nil, faker)
 		val := GenerateByType(valueType, databaseType, nil, faker)
-		pairs[i] = fmt.Sprintf("'%v': '%v'", key, val)
+		keyStr := strings.ReplaceAll(fmt.Sprintf("%v", key), "'", "''")
+		valStr := strings.ReplaceAll(fmt.Sprintf("%v", val), "'", "''")
+		pairs[i] = "'" + keyStr + "': '" + valStr + "'"
 	}
 	return "{" + strings.Join(pairs, ", ") + "}"
 }
@@ -549,8 +551,8 @@ func genClickHouseTuple(dbType string, databaseType string, faker *gofakeit.Fake
 	for i, t := range innerTypes {
 		val := GenerateByType(t, databaseType, nil, faker)
 		// Quote string values per ClickHouse tuple literal syntax
-		if _, isStr := val.(string); isStr {
-			elements[i] = fmt.Sprintf("'%v'", val)
+		if s, isStr := val.(string); isStr {
+			elements[i] = "'" + strings.ReplaceAll(s, "'", "''") + "'"
 		} else {
 			elements[i] = fmt.Sprintf("%v", val)
 		}
