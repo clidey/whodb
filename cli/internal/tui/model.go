@@ -284,11 +284,24 @@ func (m *MainModel) View() string {
 
 	// Add status bar between view indicator and content (only when connected)
 	statusBar := m.renderStatusBar()
+	var output string
 	if statusBar != "" {
-		return viewIndicator + "\n" + statusBar + "\n" + content
+		output = viewIndicator + "\n" + statusBar + "\n" + content
+	} else {
+		output = viewIndicator + "\n" + content
 	}
 
-	return viewIndicator + "\n" + content
+	// Constrain output to terminal height so the top bar never scrolls off screen.
+	// Truncate from the bottom — the header stays, content gets clipped.
+	if m.height > 0 {
+		lines := strings.Split(output, "\n")
+		if len(lines) > m.height {
+			lines = lines[:m.height]
+			output = strings.Join(lines, "\n")
+		}
+	}
+
+	return output
 }
 
 // SetStatus sets a transient status message that auto-dismisses after 3 seconds.
