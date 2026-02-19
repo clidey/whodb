@@ -687,3 +687,42 @@ func TestMainModel_SpinnerView(t *testing.T) {
 		t.Error("Expected SpinnerView to return non-empty string")
 	}
 }
+
+func TestMainModel_RenderStatusBar_Truncation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
+	setupTestEnv(t)
+	tempDir := t.TempDir()
+
+	dbPath := tempDir + "/test.db"
+	conn := &config.Connection{
+		Name:     "test-sqlite",
+		Type:     "Sqlite",
+		Host:     dbPath,
+		Database: dbPath,
+	}
+
+	m := NewMainModelWithConnection(conn)
+	if m.err != nil {
+		t.Skipf("Skipping test - database plugin not available: %v", m.err)
+	}
+
+	m.browserView.currentSchema = "very_long_schema_name_that_takes_space"
+	m.statusMessage = "Some status message here"
+
+	// Very narrow width should still produce output without panic
+	m.width = 20
+	bar := m.renderStatusBar()
+	if bar == "" {
+		t.Error("Expected non-empty status bar even at narrow width")
+	}
+
+	// Wide width should include all parts
+	m.width = 200
+	bar = m.renderStatusBar()
+	if bar == "" {
+		t.Error("Expected non-empty status bar at wide width")
+	}
+}

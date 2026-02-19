@@ -227,3 +227,28 @@ func TestColorConstants(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderShorthands(t *testing.T) {
+	tests := []struct {
+		name   string
+		render func(string) string
+		input  string
+	}{
+		{"RenderMuted", RenderMuted, "muted text"},
+		{"RenderKey", RenderKey, "key text"},
+		{"RenderErr", RenderErr, "error text"},
+		{"RenderOk", RenderOk, "success text"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.render(tt.input)
+			if result == "" {
+				t.Errorf("%s returned empty string", tt.name)
+			}
+			if !strings.Contains(result, tt.input) {
+				t.Errorf("%s result should contain %q", tt.name, tt.input)
+			}
+		})
+	}
+}

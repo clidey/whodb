@@ -513,7 +513,7 @@ func (v *ChatView) View() string {
 
 	providerLabel := "Provider:"
 	if v.focusField == focusFieldProvider {
-		providerLabel = styles.KeyStyle.Render("▶ Provider:")
+		providerLabel = styles.RenderKey("▶ Provider:")
 	} else {
 		providerLabel = "  Provider:"
 	}
@@ -523,7 +523,7 @@ func (v *ChatView) View() string {
 		if i == v.selectedProvider {
 			b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", provider.Type)))
 		} else {
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", provider.Type)))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", provider.Type)))
 		}
 		if i < len(v.providers)-1 {
 			b.WriteString(" ")
@@ -533,16 +533,16 @@ func (v *ChatView) View() string {
 
 	modelLabel := "Model:"
 	if v.focusField == focusFieldModel {
-		modelLabel = styles.KeyStyle.Render("▶ Model:")
+		modelLabel = styles.RenderKey("▶ Model:")
 	} else {
 		modelLabel = "  Model:"
 	}
 	b.WriteString(modelLabel)
 	b.WriteString(" ")
 	if v.loadingModels {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading models... Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading models... Press ESC to cancel"))
 	} else if len(v.models) == 0 {
-		b.WriteString(styles.MutedStyle.Render("Press Ctrl+L to load models"))
+		b.WriteString(styles.RenderMuted("Press Ctrl+L to load models"))
 	} else {
 		for i, model := range v.models {
 			displayName := model
@@ -552,7 +552,7 @@ func (v *ChatView) View() string {
 			if i == v.selectedModel {
 				b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", displayName)))
 			} else {
-				b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", displayName)))
+				b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", displayName)))
 			}
 			if i < len(v.models)-1 && i < 3 {
 				b.WriteString(" ")
@@ -562,7 +562,7 @@ func (v *ChatView) View() string {
 			}
 		}
 		if len(v.models) > 4 {
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" +%d more", len(v.models)-4)))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf(" +%d more", len(v.models)-4)))
 		}
 	}
 	b.WriteString("\n\n")
@@ -594,10 +594,10 @@ func (v *ChatView) View() string {
 			if msg.Role == "user" {
 				prefix := "  "
 				if isSelected {
-					prefix = styles.KeyStyle.Render("▶ ")
+					prefix = styles.RenderKey("▶ ")
 				}
 				b.WriteString(prefix)
-				b.WriteString(styles.KeyStyle.Render("You: "))
+				b.WriteString(styles.RenderKey("You: "))
 
 				content := v.wrapText(msg.Content, 7) // 2 (prefix) + 5 ("You: ")
 				if isSelected {
@@ -608,16 +608,16 @@ func (v *ChatView) View() string {
 			} else {
 				prefix := "  "
 				if isSelected {
-					prefix = styles.KeyStyle.Render("▶ ")
+					prefix = styles.RenderKey("▶ ")
 				}
 				b.WriteString(prefix)
 
 				if msg.Type == "error" {
-					b.WriteString(styles.ErrorStyle.Render("Error: "))
+					b.WriteString(styles.RenderErr("Error: "))
 					b.WriteString(v.wrapText(msg.Content, 9)) // 2 (prefix) + 7 ("Error: ")
 					b.WriteString("\n\n")
 				} else if strings.HasPrefix(msg.Type, "sql") {
-					b.WriteString(styles.SuccessStyle.Render("Assistant: "))
+					b.WriteString(styles.RenderOk("Assistant: "))
 					if msg.Content != "" {
 						b.WriteString(v.wrapText(msg.Content, 14)) // 2 (prefix) + 12 ("Assistant: ")
 						b.WriteString("\n")
@@ -627,12 +627,12 @@ func (v *ChatView) View() string {
 						b.WriteString(v.renderTableSummary(msg.Result))
 						if isSelected {
 							b.WriteString("\n  ")
-							b.WriteString(styles.MutedStyle.Render("Press Enter to view full table"))
+							b.WriteString(styles.RenderMuted("Press Enter to view full table"))
 						}
 					}
 					b.WriteString("\n")
 				} else {
-					b.WriteString(styles.SuccessStyle.Render("Assistant: "))
+					b.WriteString(styles.RenderOk("Assistant: "))
 					b.WriteString(v.wrapText(msg.Content, 14)) // 2 (prefix) + 12 ("Assistant: ")
 					b.WriteString("\n\n")
 				}
@@ -648,17 +648,17 @@ func (v *ChatView) View() string {
 				scrollInfo += " • ↓ scroll down"
 			}
 			b.WriteString("\n")
-			b.WriteString(styles.MutedStyle.Render(scrollInfo))
+			b.WriteString(styles.RenderMuted(scrollInfo))
 			b.WriteString("\n")
 		}
 	}
 
 	if v.sending {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Thinking... Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Thinking... Press ESC to cancel"))
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString(styles.KeyStyle.Render("Message:"))
+	b.WriteString(styles.RenderKey("Message:"))
 	b.WriteString("\n")
 	b.WriteString(v.input.View())
 	b.WriteString("\n\n")
@@ -701,10 +701,10 @@ func (v *ChatView) wrapText(text string, indent int) string {
 
 func (v *ChatView) renderTableSummary(result *engine.GetRowsResult) string {
 	if result == nil || len(result.Columns) == 0 {
-		return styles.MutedStyle.Render("No results")
+		return styles.RenderMuted("No results")
 	}
 
-	return styles.MutedStyle.Render(fmt.Sprintf("📊 Table: %d rows × %d columns", len(result.Rows), len(result.Columns)))
+	return styles.RenderMuted(fmt.Sprintf("📊 Table: %d rows × %d columns", len(result.Rows), len(result.Columns)))
 }
 
 func (v *ChatView) loadModels() tea.Cmd {

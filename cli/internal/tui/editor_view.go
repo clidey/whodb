@@ -285,7 +285,7 @@ func (v *EditorView) View() string {
 
 	// Show loading indicator when query is running
 	if v.queryState == OperationRunning {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Executing query... Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Executing query... Press ESC to cancel"))
 		b.WriteString("\n\n")
 	}
 
@@ -300,7 +300,7 @@ func (v *EditorView) View() string {
 	// Show retry prompt for timed out queries
 	if v.retryPrompt.IsActive() {
 		b.WriteString("\n\n")
-		b.WriteString(styles.KeyStyle.Render("Retry with longer timeout?"))
+		b.WriteString(styles.RenderKey("Retry with longer timeout?"))
 		b.WriteString("\n")
 		b.WriteString(styles.RenderHelp(
 			"[1]", "60s",

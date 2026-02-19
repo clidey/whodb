@@ -66,18 +66,18 @@ func ColorEnabled() bool {
 }
 
 var (
-	Primary   = lipgloss.Color("#fafafa")
-	Secondary = lipgloss.Color("#a1a1aa")
-	Success   = lipgloss.Color("#22c55e")
-	Error     = lipgloss.Color("#ef4444")
-	Warning   = lipgloss.Color("#f59e0b")
-	Info      = lipgloss.Color("#3b82f6")
-	Muted     = lipgloss.Color("#71717a")
+	Primary   = lipgloss.AdaptiveColor{Light: "#1a1a1a", Dark: "#fafafa"}
+	Secondary = lipgloss.AdaptiveColor{Light: "#6b6b73", Dark: "#a1a1aa"}
+	Success   = lipgloss.AdaptiveColor{Light: "#16a34a", Dark: "#22c55e"}
+	Error     = lipgloss.AdaptiveColor{Light: "#dc2626", Dark: "#ef4444"}
+	Warning   = lipgloss.AdaptiveColor{Light: "#d97706", Dark: "#f59e0b"}
+	Info      = lipgloss.AdaptiveColor{Light: "#2563eb", Dark: "#3b82f6"}
+	Muted     = lipgloss.AdaptiveColor{Light: "#a1a1aa", Dark: "#71717a"}
 
-	Background = lipgloss.Color("#09090b")
-	Foreground = lipgloss.Color("#fafafa")
-	Border     = lipgloss.Color("#27272a")
-	Accent     = lipgloss.Color("#18181b")
+	Background = lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#09090b"}
+	Foreground = lipgloss.AdaptiveColor{Light: "#09090b", Dark: "#fafafa"}
+	Border     = lipgloss.AdaptiveColor{Light: "#d4d4d8", Dark: "#27272a"}
+	Accent     = lipgloss.AdaptiveColor{Light: "#f4f4f5", Dark: "#18181b"}
 )
 
 var (
@@ -161,17 +161,17 @@ var (
 			MarginBottom(1)
 
 	KeywordStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#d4d4d8"))
+			Foreground(lipgloss.AdaptiveColor{Light: "#3f3f46", Dark: "#d4d4d8"})
 
 	StringStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#a1a1aa"))
+			Foreground(lipgloss.AdaptiveColor{Light: "#6b6b73", Dark: "#a1a1aa"})
 
 	CommentStyle = lipgloss.NewStyle().
 			Foreground(Muted).
 			Italic(true)
 
 	NumberStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#d4d4d8"))
+			Foreground(lipgloss.AdaptiveColor{Light: "#3f3f46", Dark: "#d4d4d8"})
 )
 
 func RenderTitle(title string) string {
@@ -380,3 +380,16 @@ func RenderInfoBoxWidth(message string, maxWidth int) string {
 	content := infoTitleStyle.Render("Info") + "\n" + infoDescStyle.Render(message)
 	return infoBoxStyle.Render(content)
 }
+
+// RenderMuted renders text in muted style.
+func RenderMuted(s string) string { return MutedStyle.Render(s) }
+
+// RenderKey renders text in key/bold style.
+func RenderKey(s string) string { return KeyStyle.Render(s) }
+
+// RenderErr renders text in error style.
+func RenderErr(s string) string { return ErrorStyle.Render(s) }
+
+// RenderOk renders text in success style.
+func RenderOk(s string) string { return SuccessStyle.Render(s) }
+

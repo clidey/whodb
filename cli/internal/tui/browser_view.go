@@ -29,6 +29,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/sahilm/fuzzy"
 )
 
 type BrowserView struct {
@@ -49,6 +50,7 @@ type BrowserView struct {
 	filtering           bool
 	filteredTables      []engine.StorageUnit
 	retryPrompt         RetryPrompt
+	lastRefreshed       time.Time
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -95,6 +97,7 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		v.tables = msg.tables
 		v.schemas = msg.schemas
 		v.currentSchema = msg.schema
+		v.lastRefreshed = time.Now()
 		v.applyFilter()
 		v.selectedIndex = 0
 
@@ -321,7 +324,7 @@ func (v *BrowserView) View() string {
 	if len(v.schemas) > 0 {
 		schemaLabel := "Schema: "
 		if v.schemaSelecting {
-			schemaLabel = styles.KeyStyle.Render("▶ Schema: ")
+			schemaLabel = styles.RenderKey("▶ Schema: ")
 		} else {
 			schemaLabel = "  Schema: "
 		}
@@ -333,7 +336,7 @@ func (v *BrowserView) View() string {
 				if i == v.selectedSchemaIndex {
 					b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", schema)))
 				} else {
-					b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", schema)))
+					b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", schema)))
 				}
 				if i < len(v.schemas)-1 {
 					b.WriteString(" ")
@@ -343,7 +346,7 @@ func (v *BrowserView) View() string {
 			// Show only current schema when not selecting
 			b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", v.currentSchema)))
 			if len(v.schemas) > 1 {
-				b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" +%d more", len(v.schemas)-1)))
+				b.WriteString(styles.RenderMuted(fmt.Sprintf(" +%d more", len(v.schemas)-1)))
 			}
 		}
 		b.WriteString("\n")
@@ -353,15 +356,15 @@ func (v *BrowserView) View() string {
 	if v.filtering || v.filterInput.Value() != "" {
 		filterLabel := "Filter: "
 		if v.filtering {
-			filterLabel = styles.KeyStyle.Render("Filter: ")
+			filterLabel = styles.RenderKey("Filter: ")
 		} else {
-			filterLabel = styles.MutedStyle.Render("Filter: ")
+			filterLabel = styles.RenderMuted("Filter: ")
 		}
 		b.WriteString(filterLabel)
 		b.WriteString(v.filterInput.View())
 		if !v.filtering && v.filterInput.Value() != "" {
 			b.WriteString(" ")
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("(%d/%d)", len(v.filteredTables), len(v.tables))))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("(%d/%d)", len(v.filteredTables), len(v.tables))))
 		}
 		b.WriteString("\n")
 	}
@@ -376,13 +379,13 @@ func (v *BrowserView) View() string {
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Press " + Keys.Browser.Refresh.Help().Key + " to retry"))
+		b.WriteString(styles.RenderMuted("Press " + Keys.Browser.Refresh.Help().Key + " to retry"))
 	} else if v.loading {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading tables..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading tables..."))
 	} else if len(v.filteredTables) == 0 {
-		b.WriteString(styles.MutedStyle.Render("No tables found in this database."))
+		b.WriteString(styles.RenderMuted("No tables found in this database."))
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render("Press " + Keys.Browser.Refresh.Help().Key + " to refresh or " + Keys.Browser.Editor.Help().Key + " to run SQL queries."))
+		b.WriteString(styles.RenderMuted("Press " + Keys.Browser.Refresh.Help().Key + " to refresh or " + Keys.Browser.Editor.Help().Key + " to run SQL queries."))
 	} else {
 		b.WriteString(v.renderTablesGrid())
 	}
@@ -466,9 +469,18 @@ func (v *BrowserView) renderTablesGrid() string {
 		}
 	}
 
-	// Show total count
+	// Show total count and last-refreshed timestamp
 	b.WriteString("\n\n")
-	b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Total: %d tables", len(tables))))
+	footer := fmt.Sprintf("Total: %d tables", len(tables))
+	if !v.lastRefreshed.IsZero() {
+		ago := time.Since(v.lastRefreshed)
+		if ago < 5*time.Minute {
+			footer += fmt.Sprintf(" • Refreshed: %ds ago", int(ago.Seconds()))
+		} else {
+			footer += fmt.Sprintf(" • Refreshed: %dm ago", int(ago.Minutes()))
+		}
+	}
+	b.WriteString(styles.RenderMuted(footer))
 
 	return b.String()
 }
@@ -579,21 +591,24 @@ func (v *BrowserView) Init() tea.Cmd {
 }
 
 func (v *BrowserView) applyFilter() {
-	filterText := strings.ToLower(v.filterInput.Value())
+	filterText := v.filterInput.Value()
 
 	if filterText == "" {
 		v.filteredTables = v.tables
 		return
 	}
 
-	v.filteredTables = []engine.StorageUnit{}
-	for _, table := range v.tables {
-		if strings.Contains(strings.ToLower(table.Name), filterText) {
-			v.filteredTables = append(v.filteredTables, table)
-		}
+	names := make([]string, len(v.tables))
+	for i, t := range v.tables {
+		names[i] = t.Name
 	}
 
-	// Reset selected index if it's out of bounds
+	matches := fuzzy.Find(filterText, names)
+	v.filteredTables = make([]engine.StorageUnit, len(matches))
+	for i, m := range matches {
+		v.filteredTables[i] = v.tables[m.Index]
+	}
+
 	if v.selectedIndex >= len(v.filteredTables) {
 		v.selectedIndex = 0
 	}

@@ -23,6 +23,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/internal/history"
@@ -323,13 +325,13 @@ func (m *MainModel) renderStatusBar() string {
 
 	var parts []string
 
-	// Connection info
+	// Connection info (always kept)
 	connInfo := fmt.Sprintf("%s@%s/%s", conn.Type, conn.Host, conn.Database)
-	parts = append(parts, styles.MutedStyle.Render(connInfo))
+	parts = append(parts, styles.RenderMuted(connInfo))
 
 	// Current schema
 	if m.browserView.currentSchema != "" {
-		parts = append(parts, styles.MutedStyle.Render("schema:"+m.browserView.currentSchema))
+		parts = append(parts, styles.RenderMuted("schema:"+m.browserView.currentSchema))
 	}
 
 	// Spinner when loading
@@ -339,10 +341,24 @@ func (m *MainModel) renderStatusBar() string {
 
 	// Transient status message
 	if m.statusMessage != "" {
-		parts = append(parts, styles.SuccessStyle.Render(m.statusMessage))
+		parts = append(parts, styles.RenderOk(m.statusMessage))
 	}
 
-	return " " + strings.Join(parts, styles.MutedStyle.Render(" • "))
+	sep := styles.RenderMuted(" • ")
+	result := " " + strings.Join(parts, sep)
+
+	// Truncate to terminal width, dropping right-most parts first
+	if m.width > 0 {
+		for lipgloss.Width(result) > m.width && len(parts) > 1 {
+			parts = parts[:len(parts)-1]
+			result = " " + strings.Join(parts, sep)
+		}
+		if lipgloss.Width(result) > m.width {
+			result = ansi.Truncate(result, m.width, "…")
+		}
+	}
+
+	return result
 }
 
 // isHelpSafe returns true if it's safe to show help (no active text input)
@@ -382,7 +398,7 @@ func (m *MainModel) renderHelpOverlay() string {
 
 	switch m.mode {
 	case ViewBrowser:
-		b.WriteString(styles.KeyStyle.Render("Browser View\n\n"))
+		b.WriteString(styles.RenderKey("Browser View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.Browser.Schema,
 			Keys.Browser.Refresh,
@@ -395,7 +411,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewResults:
-		b.WriteString(styles.KeyStyle.Render("Results View\n\n"))
+		b.WriteString(styles.RenderKey("Results View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.Results.NextPage,
 			Keys.Results.ColLeft,
@@ -408,7 +424,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewHistory:
-		b.WriteString(styles.KeyStyle.Render("History View\n\n"))
+		b.WriteString(styles.RenderKey("History View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.History.Edit,
 			Keys.History.Rerun,
@@ -417,7 +433,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewChat:
-		b.WriteString(styles.KeyStyle.Render("AI Chat View\n\n"))
+		b.WriteString(styles.RenderKey("AI Chat View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.Chat.CycleFieldUp,
 			Keys.Chat.ChangeLeft,
@@ -429,7 +445,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewSchema:
-		b.WriteString(styles.KeyStyle.Render("Schema View\n\n"))
+		b.WriteString(styles.RenderKey("Schema View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.Schema.Toggle,
 			Keys.Schema.ViewData,
@@ -439,7 +455,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewColumns:
-		b.WriteString(styles.KeyStyle.Render("Column Selection\n\n"))
+		b.WriteString(styles.RenderKey("Column Selection\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.Columns.Toggle,
 			Keys.Columns.SelectAll,
@@ -449,7 +465,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewWhere:
-		b.WriteString(styles.KeyStyle.Render("WHERE Conditions\n\n"))
+		b.WriteString(styles.RenderKey("WHERE Conditions\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.WhereList.Add,
 			Keys.WhereList.EditCond,
@@ -459,7 +475,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewExport:
-		b.WriteString(styles.KeyStyle.Render("Export View\n\n"))
+		b.WriteString(styles.RenderKey("Export View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.Export.Next,
 			Keys.Export.OptionLeft,
@@ -468,7 +484,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		))
 
 	case ViewConnection:
-		b.WriteString(styles.KeyStyle.Render("Connection View\n\n"))
+		b.WriteString(styles.RenderKey("Connection View\n\n"))
 		b.WriteString(RenderBindingHelp(
 			Keys.ConnectionList.New,
 			Keys.ConnectionList.DeleteConn,
@@ -481,7 +497,7 @@ func (m *MainModel) renderHelpOverlay() string {
 	}
 
 	b.WriteString("\n")
-	b.WriteString(styles.MutedStyle.Render("Press any key to close"))
+	b.WriteString(styles.RenderMuted("Press any key to close"))
 
 	return styles.BaseStyle.Padding(1, 2).Render(b.String())
 }

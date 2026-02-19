@@ -45,6 +45,7 @@ type ResultsView struct {
 	maxColumns      int
 	whereCondition  *model.WhereCondition
 	visibleColumns  []string
+	width           int
 	editingPageSize bool
 	pageSizeInput   textinput.Model
 	loading         bool
@@ -100,6 +101,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		v.width = msg.Width
 		overhead := 14
 		if v.query != "" {
 			overhead += 3
@@ -325,7 +327,7 @@ func (v *ResultsView) View() string {
 	if v.query != "" {
 		b.WriteString(styles.RenderTitle("Query Results"))
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render(v.query))
+		b.WriteString(styles.RenderMuted(v.query))
 		b.WriteString("\n\n")
 	} else {
 		b.WriteString(styles.RenderTitle("Table Data"))
@@ -333,9 +335,9 @@ func (v *ResultsView) View() string {
 	}
 
 	if v.loading {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading..."))
 	} else if v.results == nil {
-		b.WriteString(styles.MutedStyle.Render("No results"))
+		b.WriteString(styles.RenderMuted("No results"))
 	} else {
 		b.WriteString(v.table.View())
 		b.WriteString("\n\n")
@@ -350,25 +352,14 @@ func (v *ResultsView) View() string {
 			visibleCols = totalCols - v.columnOffset
 		}
 
-		columnInfo := fmt.Sprintf("Columns %d-%d of %d", v.columnOffset+1, v.columnOffset+visibleCols, totalCols)
-
-		var rowInfo string
-		totalRows := v.effectiveTotalRows()
-		if totalRows > 0 {
-			totalPages := (totalRows + v.pageSize - 1) / v.pageSize
-			rowInfo = fmt.Sprintf("Showing %d rows (Page %d of %d, size: %d)", len(pageRows), v.currentPage+1, totalPages, v.pageSize)
-		} else {
-			rowInfo = fmt.Sprintf("Showing %d rows (Page %d, size: %d)", len(pageRows), v.currentPage+1, v.pageSize)
-		}
-
-		b.WriteString(styles.MutedStyle.Render(columnInfo + " • " + rowInfo))
+		b.WriteString(styles.RenderMuted(v.paginationString(totalCols, visibleCols, len(pageRows))))
 
 		// Show page size input if editing
 		if v.editingPageSize {
 			b.WriteString("\n\n")
-			b.WriteString(styles.KeyStyle.Render("Page size: "))
+			b.WriteString(styles.RenderKey("Page size: "))
 			b.WriteString(v.pageSizeInput.View())
-			b.WriteString(styles.MutedStyle.Render(" (enter to confirm, esc to cancel)"))
+			b.WriteString(styles.RenderMuted(" (enter to confirm, esc to cancel)"))
 		}
 	}
 
@@ -686,4 +677,47 @@ func (v *ResultsView) countWhereConditions() int {
 		return len(v.whereCondition.And.Children)
 	}
 	return 0
+}
+
+// paginationString returns a width-adaptive pagination summary.
+func (v *ResultsView) paginationString(totalCols, visibleCols, rowCount int) string {
+	totalRows := v.effectiveTotalRows()
+	page := v.currentPage + 1
+	totalPages := 0
+	if totalRows > 0 {
+		totalPages = (totalRows + v.pageSize - 1) / v.pageSize
+	}
+
+	colStart := v.columnOffset + 1
+	colEnd := v.columnOffset + visibleCols
+
+	// Full format
+	full := fmt.Sprintf("Columns %d-%d of %d", colStart, colEnd, totalCols)
+	if totalPages > 0 {
+		full += fmt.Sprintf(" • Showing %d rows (Page %d of %d, size: %d)", rowCount, page, totalPages, v.pageSize)
+	} else {
+		full += fmt.Sprintf(" • Showing %d rows (Page %d, size: %d)", rowCount, page, v.pageSize)
+	}
+
+	avail := v.width - 8
+	if avail <= 0 || lipgloss.Width(full) <= avail {
+		return full
+	}
+
+	// Medium format
+	medium := fmt.Sprintf("Cols %d-%d/%d", colStart, colEnd, totalCols)
+	if totalPages > 0 {
+		medium += fmt.Sprintf(" • %d rows (%d/%d)", rowCount, page, totalPages)
+	} else {
+		medium += fmt.Sprintf(" • %d rows (pg %d)", rowCount, page)
+	}
+	if lipgloss.Width(medium) <= avail {
+		return medium
+	}
+
+	// Narrow format
+	if totalPages > 0 {
+		return fmt.Sprintf("%d rows (%d/%d)", rowCount, page, totalPages)
+	}
+	return fmt.Sprintf("%d rows (pg %d)", rowCount, page)
 }

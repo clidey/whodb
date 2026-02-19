@@ -801,3 +801,47 @@ func TestBrowserView_AutoRetriedResetOnInit(t *testing.T) {
 		t.Error("Expected autoRetried to be reset on Init")
 	}
 }
+
+func TestBrowserView_FuzzyFilter(t *testing.T) {
+	v, cleanup := setupBrowserViewTest(t)
+	defer cleanup()
+
+	v.tables = []engine.StorageUnit{
+		{Name: "user_accounts"},
+		{Name: "user_roles"},
+		{Name: "orders"},
+		{Name: "order_items"},
+		{Name: "products"},
+	}
+
+	// Fuzzy match: "usacc" should match "user_accounts" (u-s-a-c-c)
+	v.filterInput.SetValue("usacc")
+	v.applyFilter()
+
+	found := false
+	for _, t := range v.filteredTables {
+		if t.Name == "user_accounts" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Fuzzy filter 'usacc' should match 'user_accounts'")
+	}
+
+	// "xyz" should match nothing
+	v.filterInput.SetValue("xyz")
+	v.applyFilter()
+
+	if len(v.filteredTables) != 0 {
+		t.Errorf("Expected 0 fuzzy matches for 'xyz', got %d", len(v.filteredTables))
+	}
+
+	// Empty filter shows all
+	v.filterInput.SetValue("")
+	v.applyFilter()
+
+	if len(v.filteredTables) != 5 {
+		t.Errorf("Expected 5 tables with empty filter, got %d", len(v.filteredTables))
+	}
+}

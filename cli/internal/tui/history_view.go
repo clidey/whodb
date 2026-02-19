@@ -215,7 +215,7 @@ func (v *HistoryView) View() string {
 
 	// Show executing state
 	if v.executing {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Executing query... Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Executing query... Press ESC to cancel"))
 		b.WriteString("\n\n")
 	}
 
@@ -227,9 +227,9 @@ func (v *HistoryView) View() string {
 
 	// Show confirmation dialog if clearing
 	if v.confirmingClear {
-		b.WriteString(styles.ErrorStyle.Render("⚠ Clear all history?"))
+		b.WriteString(styles.RenderErr("⚠ Clear all history?"))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("This will delete all query history entries."))
+		b.WriteString(styles.RenderMuted("This will delete all query history entries."))
 		b.WriteString("\n\n")
 		b.WriteString(styles.RenderHelp(
 			"[y]", "confirm",
@@ -240,7 +240,7 @@ func (v *HistoryView) View() string {
 
 	entries := v.parent.histMgr.GetAll()
 	if len(entries) == 0 {
-		b.WriteString(styles.MutedStyle.Render("No history entries"))
+		b.WriteString(styles.RenderMuted("No history entries"))
 	} else {
 		b.WriteString(v.list.View())
 	}

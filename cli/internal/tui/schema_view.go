@@ -25,6 +25,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
+	"github.com/sahilm/fuzzy"
 )
 
 type SchemaView struct {
@@ -213,15 +214,15 @@ func (v *SchemaView) View() string {
 	if v.filtering || v.filterInput.Value() != "" {
 		filterLabel := "Filter: "
 		if v.filtering {
-			filterLabel = styles.KeyStyle.Render("Filter: ")
+			filterLabel = styles.RenderKey("Filter: ")
 		} else {
-			filterLabel = styles.MutedStyle.Render("Filter: ")
+			filterLabel = styles.RenderMuted("Filter: ")
 		}
 		b.WriteString(filterLabel)
 		b.WriteString(v.filterInput.View())
 		if !v.filtering && v.filterInput.Value() != "" {
 			b.WriteString(" ")
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("(%d/%d)", len(v.filteredTables), len(v.tables))))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("(%d/%d)", len(v.filteredTables), len(v.tables))))
 		}
 		b.WriteString("\n\n")
 	}
@@ -229,11 +230,11 @@ func (v *SchemaView) View() string {
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Press 'r' to retry"))
+		b.WriteString(styles.RenderMuted("Press 'r' to retry"))
 	} else if v.loading {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading schema..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Loading schema..."))
 	} else if len(v.filteredTables) == 0 {
-		b.WriteString(styles.MutedStyle.Render("No tables found."))
+		b.WriteString(styles.RenderMuted("No tables found."))
 	} else {
 		b.WriteString(v.renderTables())
 	}
@@ -348,10 +349,10 @@ func (v *SchemaView) renderTables() string {
 
 			prefix := "  "
 			if item.isSelected {
-				prefix = styles.KeyStyle.Render("▶ ")
+				prefix = styles.RenderKey("▶ ")
 			}
 
-			tableLine := fmt.Sprintf("%s %s %s", icon, table.StorageUnit.Name, styles.MutedStyle.Render(fmt.Sprintf("(%s)", tableType)))
+			tableLine := fmt.Sprintf("%s %s %s", icon, table.StorageUnit.Name, styles.RenderMuted(fmt.Sprintf("(%s)", tableType)))
 			if item.isSelected {
 				tableLine = styles.ActiveListItemStyle.Render(tableLine)
 			} else {
@@ -363,7 +364,7 @@ func (v *SchemaView) renderTables() string {
 			b.WriteString("\n")
 		} else {
 			// Column line
-			b.WriteString(styles.MutedStyle.Render(item.columnText))
+			b.WriteString(styles.RenderMuted(item.columnText))
 			b.WriteString("\n")
 		}
 	}
@@ -379,7 +380,7 @@ func (v *SchemaView) renderTables() string {
 			scrollInfo += " • ↓ scroll down"
 		}
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render(scrollInfo))
+		b.WriteString(styles.RenderMuted(scrollInfo))
 	}
 
 	return b.String()
@@ -451,18 +452,22 @@ func (v *SchemaView) Init() tea.Cmd {
 }
 
 func (v *SchemaView) applyFilter() {
-	filterText := strings.ToLower(v.filterInput.Value())
+	filterText := v.filterInput.Value()
 
 	if filterText == "" {
 		v.filteredTables = v.tables
 		return
 	}
 
-	v.filteredTables = []tableWithColumns{}
-	for _, table := range v.tables {
-		if strings.Contains(strings.ToLower(table.StorageUnit.Name), filterText) {
-			v.filteredTables = append(v.filteredTables, table)
-		}
+	names := make([]string, len(v.tables))
+	for i, t := range v.tables {
+		names[i] = t.StorageUnit.Name
+	}
+
+	matches := fuzzy.Find(filterText, names)
+	v.filteredTables = make([]tableWithColumns, len(matches))
+	for i, m := range matches {
+		v.filteredTables[i] = v.tables[m.Index]
 	}
 
 	if v.selectedIndex >= len(v.filteredTables) {

@@ -538,7 +538,7 @@ func (v *EditorView) renderAutocompletePanel() string {
 	var panel strings.Builder
 
 	count := len(v.filteredSuggestions)
-	header := styles.MutedStyle.Render(fmt.Sprintf("Suggestions (%d)", count))
+	header := styles.RenderMuted(fmt.Sprintf("Suggestions (%d)", count))
 	panel.WriteString(header)
 	panel.WriteString("\n\n")
 
@@ -559,22 +559,22 @@ func (v *EditorView) renderAutocompletePanel() string {
 		if i == v.selectedSuggestion {
 			panel.WriteString(styles.ActiveListItemStyle.Render("> " + line))
 		} else {
-			panel.WriteString(styles.MutedStyle.Render("  " + line))
+			panel.WriteString(styles.RenderMuted("  " + line))
 		}
 		panel.WriteString("\n")
 	}
 
 	if len(v.filteredSuggestions) > startIdx+maxDisplay {
-		panel.WriteString(styles.MutedStyle.Render(fmt.Sprintf("  ... and %d more", len(v.filteredSuggestions)-startIdx-maxDisplay)))
+		panel.WriteString(styles.RenderMuted(fmt.Sprintf("  ... and %d more", len(v.filteredSuggestions)-startIdx-maxDisplay)))
 		panel.WriteString("\n")
 	}
 
 	panel.WriteString("\n")
 	controlPanel := styles.HelpStyle.Render(
-		styles.KeyStyle.Render("↑↓") + " " + styles.MutedStyle.Render("navigate") + " " +
-			styles.KeyStyle.Render("tab") + " " + styles.MutedStyle.Render("cycle") + " " +
-			styles.KeyStyle.Render("↵") + " " + styles.MutedStyle.Render("accept") + " " +
-			styles.KeyStyle.Render("esc") + " " + styles.MutedStyle.Render("dismiss"),
+		styles.RenderKey("↑↓") + " " + styles.RenderMuted("navigate") + " " +
+			styles.RenderKey("tab") + " " + styles.RenderMuted("cycle") + " " +
+			styles.RenderKey("↵") + " " + styles.RenderMuted("accept") + " " +
+			styles.RenderKey("esc") + " " + styles.RenderMuted("dismiss"),
 	)
 	panel.WriteString(controlPanel)
 

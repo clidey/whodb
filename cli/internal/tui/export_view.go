@@ -305,25 +305,25 @@ func (v *ExportView) View() string {
 	b.WriteString("\n\n")
 
 	if v.exporting {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Exporting..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Exporting..."))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
 	if v.exportSuccess {
-		b.WriteString(styles.SuccessStyle.Render("Export completed successfully!"))
+		b.WriteString(styles.RenderOk("Export completed successfully!"))
 		b.WriteString("\n\n")
 		if v.savedFilePath != "" {
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("File saved to: %s", v.savedFilePath)))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf("File saved to: %s", v.savedFilePath)))
 			b.WriteString("\n\n")
 		}
-		b.WriteString(styles.MutedStyle.Render("Press ESC to go back"))
+		b.WriteString(styles.RenderMuted("Press ESC to go back"))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
 	if v.exportError != nil {
 		b.WriteString(styles.RenderErrorBox(fmt.Sprintf("Export failed: %s", v.exportError.Error())))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Press ESC to go back"))
+		b.WriteString(styles.RenderMuted("Press ESC to go back"))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -340,18 +340,18 @@ func (v *ExportView) View() string {
 				path = p
 			}
 		}
-		b.WriteString(styles.MutedStyle.Render("File exists:"))
+		b.WriteString(styles.RenderMuted("File exists:"))
 		b.WriteString("\n  ")
-		b.WriteString(styles.KeyStyle.Render(path))
+		b.WriteString(styles.RenderKey(path))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Overwrite this file?"))
+		b.WriteString(styles.RenderMuted("Overwrite this file?"))
 		b.WriteString("\n\n  ")
 		if v.confirmIndex == 0 {
 			b.WriteString(styles.ActiveListItemStyle.Render(" Yes "))
 			b.WriteString("  ")
-			b.WriteString(styles.MutedStyle.Render("[No]"))
+			b.WriteString(styles.RenderMuted("[No]"))
 		} else {
-			b.WriteString(styles.KeyStyle.Render("[Yes]"))
+			b.WriteString(styles.RenderKey("[Yes]"))
 			b.WriteString("  ")
 			b.WriteString(styles.ActiveListItemStyle.Render(" No "))
 		}
@@ -366,16 +366,16 @@ func (v *ExportView) View() string {
 
 	// Info text
 	if v.isQueryExport {
-		b.WriteString(styles.MutedStyle.Render("Exporting query results"))
+		b.WriteString(styles.RenderMuted("Exporting query results"))
 	} else {
-		b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Exporting table: %s.%s", v.schema, v.tableName)))
+		b.WriteString(styles.RenderMuted(fmt.Sprintf("Exporting table: %s.%s", v.schema, v.tableName)))
 	}
 	b.WriteString("\n\n")
 
 	// Filename input
 	filenameLabel := "Filename:"
 	if v.focusIndex == 0 {
-		filenameLabel = styles.KeyStyle.Render("▶ " + filenameLabel)
+		filenameLabel = styles.RenderKey("▶ " + filenameLabel)
 	} else {
 		filenameLabel = "  " + filenameLabel
 	}
@@ -399,13 +399,13 @@ func (v *ExportView) View() string {
 		if _, origExists, _ := resolveExportPath(filename, format, true); true {
 			b.WriteString("  ")
 			if willOverwrite {
-				b.WriteString(styles.KeyStyle.Render(fmt.Sprintf("Will overwrite: %s", candidate)))
+				b.WriteString(styles.RenderKey(fmt.Sprintf("Will overwrite: %s", candidate)))
 			} else {
-				b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Will save to: %s", candidate)))
+				b.WriteString(styles.RenderMuted(fmt.Sprintf("Will save to: %s", candidate)))
 				// If overwrite disabled and original exists, hint about auto-suffix
 				if !v.overwrite && origExists {
 					b.WriteString("\n  ")
-					b.WriteString(styles.MutedStyle.Render("Existing file detected; using next available name."))
+					b.WriteString(styles.RenderMuted("Existing file detected; using next available name."))
 				}
 			}
 		}
@@ -415,7 +415,7 @@ func (v *ExportView) View() string {
 	// Format selector
 	formatLabel := "Format:"
 	if v.focusIndex == 1 {
-		formatLabel = styles.KeyStyle.Render("▶ " + formatLabel)
+		formatLabel = styles.RenderKey("▶ " + formatLabel)
 	} else {
 		formatLabel = "  " + formatLabel
 	}
@@ -427,10 +427,10 @@ func (v *ExportView) View() string {
 			if v.focusIndex == 1 {
 				b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", format)))
 			} else {
-				b.WriteString(styles.KeyStyle.Render(fmt.Sprintf("[%s]", format)))
+				b.WriteString(styles.RenderKey(fmt.Sprintf("[%s]", format)))
 			}
 		} else {
-			b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", format)))
+			b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", format)))
 		}
 		if i < len(exportFormats)-1 {
 			b.WriteString("  ")
@@ -442,7 +442,7 @@ func (v *ExportView) View() string {
 	if v.hasDelimiter() {
 		delimLabel := "Delimiter:"
 		if v.focusIndex == 2 {
-			delimLabel = styles.KeyStyle.Render("▶ " + delimLabel)
+			delimLabel = styles.RenderKey("▶ " + delimLabel)
 		} else {
 			delimLabel = "  " + delimLabel
 		}
@@ -454,10 +454,10 @@ func (v *ExportView) View() string {
 				if v.focusIndex == 2 {
 					b.WriteString(styles.ActiveListItemStyle.Render(fmt.Sprintf(" %s ", label)))
 				} else {
-					b.WriteString(styles.KeyStyle.Render(fmt.Sprintf("[%s]", label)))
+					b.WriteString(styles.RenderKey(fmt.Sprintf("[%s]", label)))
 				}
 			} else {
-				b.WriteString(styles.MutedStyle.Render(fmt.Sprintf(" %s ", label)))
+				b.WriteString(styles.RenderMuted(fmt.Sprintf(" %s ", label)))
 			}
 			if i < len(exportDelimiterLabels)-1 {
 				b.WriteString("  ")
@@ -471,7 +471,7 @@ func (v *ExportView) View() string {
 	// Overwrite toggle
 	owLabel := "Overwrite existing:"
 	if v.focusIndex == v.overwriteIndex() {
-		owLabel = styles.KeyStyle.Render("▶ " + owLabel)
+		owLabel = styles.RenderKey("▶ " + owLabel)
 	} else {
 		owLabel = "  " + owLabel
 	}
@@ -480,9 +480,9 @@ func (v *ExportView) View() string {
 	if v.overwrite {
 		b.WriteString(styles.ActiveListItemStyle.Render(" On "))
 		b.WriteString("  ")
-		b.WriteString(styles.MutedStyle.Render("[Off]"))
+		b.WriteString(styles.RenderMuted("[Off]"))
 	} else {
-		b.WriteString(styles.KeyStyle.Render("[On]"))
+		b.WriteString(styles.RenderKey("[On]"))
 		b.WriteString("  ")
 		b.WriteString(styles.ActiveListItemStyle.Render(" Off "))
 	}
@@ -493,13 +493,13 @@ func (v *ExportView) View() string {
 	if v.focusIndex == v.exportButtonIndex() {
 		b.WriteString(styles.ActiveListItemStyle.Render(" Export "))
 	} else {
-		b.WriteString(styles.KeyStyle.Render("[Export]"))
+		b.WriteString(styles.RenderKey("[Export]"))
 	}
 	b.WriteString("  ")
 	if v.focusIndex == v.cancelButtonIndex() {
 		b.WriteString(styles.ActiveListItemStyle.Render(" Cancel "))
 	} else {
-		b.WriteString(styles.MutedStyle.Render("[Cancel]"))
+		b.WriteString(styles.RenderMuted("[Cancel]"))
 	}
 	b.WriteString("\n\n")
 

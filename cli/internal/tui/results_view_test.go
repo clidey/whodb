@@ -882,3 +882,57 @@ func TestResultsView_ColumnInfoDisplay_WithFilter(t *testing.T) {
 		t.Error("Column info should reflect filtered column count, not total")
 	}
 }
+
+func TestResultsView_PaginationString(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	v.results = &engine.GetRowsResult{
+		Columns: make([]engine.Column, 25),
+		Rows:    make([][]string, 50),
+	}
+	v.totalRows = 250
+	v.pageSize = 50
+	v.currentPage = 0
+	v.columnOffset = 0
+	v.maxColumns = 10
+
+	// Wide terminal: full format
+	v.width = 120
+	full := v.paginationString(25, 10, 50)
+	if !strings.Contains(full, "Columns 1-10 of 25") {
+		t.Errorf("Full format should contain column info, got: %s", full)
+	}
+	if !strings.Contains(full, "Showing 50 rows") {
+		t.Errorf("Full format should contain row info, got: %s", full)
+	}
+
+	// Narrow terminal: should degrade
+	v.width = 40
+	narrow := v.paginationString(25, 10, 50)
+	if strings.Contains(narrow, "Columns") {
+		t.Errorf("Narrow format should not contain 'Columns', got: %s", narrow)
+	}
+	if !strings.Contains(narrow, "50 rows") {
+		t.Errorf("Narrow format should still contain row count, got: %s", narrow)
+	}
+}
+
+func TestResultsView_PaginationString_NoTotalPages(t *testing.T) {
+	v, cleanup := setupResultsViewTest(t)
+	defer cleanup()
+
+	v.totalRows = 0
+	v.pageSize = 50
+	v.currentPage = 0
+	v.columnOffset = 0
+	v.width = 120
+
+	result := v.paginationString(5, 5, 10)
+	if !strings.Contains(result, "pg 1") || strings.Contains(result, "of 0") {
+		// When totalRows=0, should not show "Page X of 0"
+		if strings.Contains(result, "of 0") {
+			t.Errorf("Should not show 'of 0' when totalRows is unknown, got: %s", result)
+		}
+	}
+}

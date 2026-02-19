@@ -66,7 +66,7 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	} else {
 		str = "  " + i.Title()
 	}
-	str += "\n  " + styles.MutedStyle.Render(i.Description())
+	str += "\n  " + styles.RenderMuted(i.Description())
 	fmt.Fprint(w, str)
 }
 
@@ -461,7 +461,7 @@ func (v *ConnectionView) View() string {
 
 	// Render chrome first, measure heights, give remainder to list
 	title := styles.RenderTitle("Welcome to WhoDB!")
-	subtitle := styles.MutedStyle.Render("Select an existing connection below, or create a new one with [n]")
+	subtitle := styles.RenderMuted("Select an existing connection below, or create a new one with [n]")
 	helpText := RenderBindingHelp(
 		Keys.ConnectionList.Up,
 		Keys.ConnectionList.Down,
@@ -486,7 +486,7 @@ func (v *ConnectionView) View() string {
 	b.WriteString(subtitle)
 	b.WriteString("\n\n")
 	if v.connecting {
-		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Connecting..."))
+		b.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Connecting..."))
 	} else {
 		b.WriteString(v.list.View())
 	}
@@ -522,7 +522,7 @@ func (v *ConnectionView) renderForm() string {
 	if v.connecting {
 		var cb strings.Builder
 		cb.WriteString(styles.RenderTitle("New Database Connection"))
-		cb.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Connecting..."))
+		cb.WriteString(v.parent.SpinnerView() + styles.RenderMuted(" Connecting..."))
 		return lipgloss.NewStyle().Padding(1, 2).Render(cb.String())
 	}
 
@@ -539,7 +539,7 @@ func (v *ConnectionView) renderForm() string {
 	// Database Type (index 7)
 	dbTypeLabel := "Database Type:"
 	if v.focusIndex == 7 {
-		dbTypeLabel = styles.KeyStyle.Render("▶ " + dbTypeLabel)
+		dbTypeLabel = styles.RenderKey("▶ " + dbTypeLabel)
 	} else {
 		dbTypeLabel = "  " + dbTypeLabel
 	}
@@ -550,10 +550,10 @@ func (v *ConnectionView) renderForm() string {
 			if v.focusIndex == 7 {
 				body.WriteString(styles.ActiveListItemStyle.Render(" " + dbType + " "))
 			} else {
-				body.WriteString(styles.KeyStyle.Render("[" + dbType + "]"))
+				body.WriteString(styles.RenderKey("[" + dbType + "]"))
 			}
 		} else {
-			body.WriteString(styles.MutedStyle.Render(" " + dbType + " "))
+			body.WriteString(styles.RenderMuted(" " + dbType + " "))
 		}
 		body.WriteString(" ")
 	}
@@ -566,7 +566,7 @@ func (v *ConnectionView) renderForm() string {
 		}
 		label := fieldLabel
 		if v.focusIndex == i {
-			label = styles.KeyStyle.Render("▶ " + label)
+			label = styles.RenderKey("▶ " + label)
 		} else {
 			label = "  " + label
 		}
@@ -581,7 +581,7 @@ func (v *ConnectionView) renderForm() string {
 	if v.focusIndex == 8 {
 		connectBtn = styles.ActiveListItemStyle.Render(" Connect ")
 	} else {
-		connectBtn = styles.KeyStyle.Render(connectBtn)
+		connectBtn = styles.RenderKey(connectBtn)
 	}
 	body.WriteString("  " + connectBtn)
 

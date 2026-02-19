@@ -317,18 +317,18 @@ func (v *WhereView) View() string {
 
 	b.WriteString(styles.RenderTitle("WHERE Conditions"))
 	b.WriteString("\n")
-	b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
+	b.WriteString(styles.RenderMuted(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
 	b.WriteString("\n\n")
 
 	if len(v.conditions) == 0 {
-		b.WriteString(styles.MutedStyle.Render("No conditions added yet"))
+		b.WriteString(styles.RenderMuted("No conditions added yet"))
 	} else {
-		b.WriteString(styles.KeyStyle.Render("Current Conditions:"))
+		b.WriteString(styles.RenderKey("Current Conditions:"))
 		b.WriteString("\n\n")
 		for i, cond := range v.conditions {
 			prefix := "  "
 			if i == v.selectedIndex {
-				prefix = styles.KeyStyle.Render("▶ ")
+				prefix = styles.RenderKey("▶ ")
 			}
 			condStr := fmt.Sprintf("%s %s %s", cond.Field, cond.Operator, cond.Value)
 			if i == v.selectedIndex {
@@ -343,12 +343,12 @@ func (v *WhereView) View() string {
 	b.WriteString("\n")
 
 	if v.addingNew {
-		b.WriteString(styles.KeyStyle.Render("Add New Condition:"))
+		b.WriteString(styles.RenderKey("Add New Condition:"))
 		b.WriteString("\n\n")
 
 		fieldLabel := "Field:"
 		if v.focusIndex == 0 {
-			fieldLabel = styles.KeyStyle.Render("▶ Field:")
+			fieldLabel = styles.RenderKey("▶ Field:")
 		} else {
 			fieldLabel = "  Field:"
 		}
@@ -364,13 +364,13 @@ func (v *WhereView) View() string {
 				b.WriteString(style.Render(displayText))
 			}
 		} else {
-			b.WriteString(styles.MutedStyle.Render("(use ← → to select)"))
+			b.WriteString(styles.RenderMuted("(use ← → to select)"))
 		}
 		b.WriteString("\n\n")
 
 		opLabel := "Operator:"
 		if v.focusIndex == 1 {
-			opLabel = styles.KeyStyle.Render("▶ Operator:")
+			opLabel = styles.RenderKey("▶ Operator:")
 		} else {
 			opLabel = "  Operator:"
 		}
@@ -380,16 +380,16 @@ func (v *WhereView) View() string {
 			if v.focusIndex == 1 {
 				b.WriteString(styles.ActiveListItemStyle.Render(v.currentOp))
 			} else {
-				b.WriteString(styles.KeyStyle.Render(v.currentOp))
+				b.WriteString(styles.RenderKey(v.currentOp))
 			}
 		} else {
-			b.WriteString(styles.MutedStyle.Render("(use ← → to select)"))
+			b.WriteString(styles.RenderMuted("(use ← → to select)"))
 		}
 		b.WriteString("\n\n")
 
 		valueLabel := "Value:"
 		if v.focusIndex == 2 {
-			valueLabel = styles.KeyStyle.Render("▶ Value:")
+			valueLabel = styles.RenderKey("▶ Value:")
 		} else {
 			valueLabel = "  Value:"
 		}
@@ -402,7 +402,7 @@ func (v *WhereView) View() string {
 		if v.focusIndex == 3 {
 			addLabel = styles.ActiveListItemStyle.Render("[" + addLabel + "]")
 		} else {
-			addLabel = styles.KeyStyle.Render("[" + addLabel + "]")
+			addLabel = styles.RenderKey("[" + addLabel + "]")
 		}
 		b.WriteString("  " + addLabel)
 		b.WriteString("\n\n")

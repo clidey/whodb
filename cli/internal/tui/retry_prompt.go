@@ -97,18 +97,18 @@ func (r *RetryPrompt) HandleKeyMsg(keyStr string) (*RetryPromptResult, bool) {
 // View renders the retry prompt UI.
 func (r *RetryPrompt) View() string {
 	var b string
-	b += styles.ErrorStyle.Render("Request timed out")
+	b += styles.RenderErr("Request timed out")
 	b += "\n\n"
-	b += styles.MutedStyle.Render("Retry with longer timeout:")
+	b += styles.RenderMuted("Retry with longer timeout:")
 	b += "\n"
-	b += styles.KeyStyle.Render("[1]")
-	b += styles.MutedStyle.Render(" 60 seconds  ")
-	b += styles.KeyStyle.Render("[2]")
-	b += styles.MutedStyle.Render(" 2 minutes  ")
-	b += styles.KeyStyle.Render("[3]")
-	b += styles.MutedStyle.Render(" 5 minutes  ")
-	b += styles.KeyStyle.Render("[4]")
-	b += styles.MutedStyle.Render(" No limit")
+	b += styles.RenderKey("[1]")
+	b += styles.RenderMuted(" 60 seconds  ")
+	b += styles.RenderKey("[2]")
+	b += styles.RenderMuted(" 2 minutes  ")
+	b += styles.RenderKey("[3]")
+	b += styles.RenderMuted(" 5 minutes  ")
+	b += styles.RenderKey("[4]")
+	b += styles.RenderMuted(" No limit")
 	b += "\n\n"
 	b += styles.RenderHelp("esc", "cancel")
 	return b

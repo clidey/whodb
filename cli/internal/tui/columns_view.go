@@ -180,7 +180,7 @@ func (v *ColumnsView) View() string {
 	// Fixed header
 	b.WriteString(styles.RenderTitle("Select Columns"))
 	b.WriteString("\n")
-	b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
+	b.WriteString(styles.RenderMuted(fmt.Sprintf("Table: %s.%s", v.schema, v.tableName)))
 	b.WriteString("\n\n")
 
 	selectedCount := 0
@@ -189,7 +189,7 @@ func (v *ColumnsView) View() string {
 			selectedCount++
 		}
 	}
-	b.WriteString(styles.MutedStyle.Render(fmt.Sprintf("%d of %d columns selected", selectedCount, len(v.columns))))
+	b.WriteString(styles.RenderMuted(fmt.Sprintf("%d of %d columns selected", selectedCount, len(v.columns))))
 	b.WriteString("\n\n")
 
 	// Scrollable content area
@@ -199,7 +199,7 @@ func (v *ColumnsView) View() string {
 	}
 
 	if len(v.columns) == 0 {
-		b.WriteString(styles.MutedStyle.Render("No columns"))
+		b.WriteString(styles.RenderMuted("No columns"))
 		b.WriteString("\n\n")
 		b.WriteString(RenderBindingHelp(Keys.Global.Back))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
@@ -229,7 +229,7 @@ func (v *ColumnsView) View() string {
 		colDisplay := fmt.Sprintf("%s %s (%s)", checkbox, col.Name, col.Type)
 
 		if i == v.selectedIndex {
-			prefix = styles.KeyStyle.Render("▶ ")
+			prefix = styles.RenderKey("▶ ")
 			b.WriteString(prefix + styles.ActiveListItemStyle.Render(colDisplay))
 		} else {
 			b.WriteString(prefix + styles.ListItemStyle.Render(colDisplay))
@@ -247,7 +247,7 @@ func (v *ColumnsView) View() string {
 			scrollInfo += " • ↓ scroll down"
 		}
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render(scrollInfo))
+		b.WriteString(styles.RenderMuted(scrollInfo))
 	}
 
 	// Fixed footer
