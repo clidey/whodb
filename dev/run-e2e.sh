@@ -183,6 +183,16 @@ else
     SPEC_PATTERN=""
 fi
 
+# When running a single mutating spec, Playwright project dependencies can cause
+# the full standalone suite to run (even if the spec is filtered on the CLI).
+# This opt-in mode runs the auth setup project, then runs the mutating project
+# with --no-deps to avoid triggering the full standalone project.
+PW_NO_DEPS="${WHODB_PW_NO_DEPS:-false}"
+KEYBOARD_ONLY=false
+if [ "$SPEC_FILE" = "keyboard-shortcuts" ] || [ "$SPEC_FILE" = "keyboard-shortcuts.spec.mjs" ]; then
+    KEYBOARD_ONLY=true
+fi
+
 # Determine Playwright projects (read-only + mutating)
 PW_PROJECT="standalone"
 PW_PROJECT_MUTATING="standalone-mutating"
@@ -211,12 +221,31 @@ if [ "$HEADLESS" = "true" ]; then
 
         (
             cd "$PROJECT_ROOT/frontend"
-            DATABASE="$db" \
-            CATEGORY="$(get_category "$db")" \
-            pnpm exec playwright test \
-                $PW_ARGS \
-                $SPEC_PATTERN \
-                > "$PROJECT_ROOT/frontend/e2e/logs/$db.log" 2>&1
+            LOG_FILE="$PROJECT_ROOT/frontend/e2e/logs/$db.log"
+            if [ "$PW_NO_DEPS" = "true" ] && [ "$KEYBOARD_ONLY" = "true" ]; then
+                DATABASE="$db" \
+                CATEGORY="$(get_category "$db")" \
+                pnpm exec playwright test \
+                    --config="$PW_CONFIG" \
+                    --project=setup \
+                    > "$LOG_FILE" 2>&1
+
+                DATABASE="$db" \
+                CATEGORY="$(get_category "$db")" \
+                pnpm exec playwright test \
+                    --no-deps \
+                    --config="$PW_CONFIG" \
+                    --project="$PW_PROJECT_MUTATING" \
+                    $SPEC_PATTERN \
+                    >> "$LOG_FILE" 2>&1
+            else
+                DATABASE="$db" \
+                CATEGORY="$(get_category "$db")" \
+                pnpm exec playwright test \
+                    $PW_ARGS \
+                    $SPEC_PATTERN \
+                    > "$LOG_FILE" 2>&1
+            fi
         ) &
         DB_PIDS["$db"]=$!
     done

@@ -123,12 +123,14 @@ jobs:
         run: mkdir -p core/build && echo '<!doctype html>' > core/build/index.html
 
       - name: Setup backend + databases
+        if: ${{ matrix.name != 'keyboard-postgres' }}
         env:
           WHODB_SKIP_BUILD: "true"
           WHODB_SPEC_FILE: "accessibility"
         run: bash dev/setup-e2e.sh ce ${{ matrix.setup_db }}
 
       - name: Start frontend dev server
+        if: ${{ matrix.name != 'keyboard-postgres' }}
         working-directory: frontend
         run: |
           mkdir -p e2e/logs e2e/reports/test-results e2e/reports/blobs e2e/reports/html
@@ -137,6 +139,7 @@ jobs:
           echo $! > e2e/logs/frontend.pid
 
       - name: Wait for frontend
+        if: ${{ matrix.name != 'keyboard-postgres' }}
         run: |
           COUNTER=0
           while [ $COUNTER -lt 60 ]; do
@@ -151,11 +154,21 @@ jobs:
 
       - name: Run Playwright
         id: playwright_run
+        if: ${{ matrix.name != 'keyboard-postgres' }}
         continue-on-error: true
         working-directory: frontend
         env:
           DATABASE: ${{ matrix.database }}
         run: pnpm exec playwright test --config=e2e/playwright.config.mjs --project=${{ matrix.project }} ${{ matrix.spec_file }}
+
+      - name: Run keyboard shortcuts (postgres)
+        if: ${{ matrix.name == 'keyboard-postgres' }}
+        continue-on-error: true
+        working-directory: frontend
+        env:
+          WHODB_SKIP_BUILD: "true"
+          WHODB_SPEC_FILE: "keyboard-shortcuts"
+        run: pnpm e2e:keyboard:postgres:headless
 
       - name: Upload test logs
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
