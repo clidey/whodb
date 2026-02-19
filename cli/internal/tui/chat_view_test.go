@@ -152,33 +152,12 @@ func TestChatView_Escape_GoesBack(t *testing.T) {
 	defer cleanup()
 
 	v.consented = true
-	v.viewingResult = false
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewBrowser {
 		t.Errorf("Expected mode ViewBrowser after Esc, got %v", v.parent.mode)
-	}
-}
-
-func TestChatView_Escape_ExitViewingResult(t *testing.T) {
-	v, cleanup := setupChatViewTest(t)
-	defer cleanup()
-
-	v.consented = true
-	v.viewingResult = true
-
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
-	v, _ = v.Update(msg)
-
-	if v.viewingResult {
-		t.Error("Expected viewingResult to be false after Esc")
-	}
-
-	// Mode should not change yet
-	if v.parent.mode != ViewConnection {
-		// Note: mode depends on initial state
 	}
 }
 
@@ -755,34 +734,6 @@ func TestChatView_RenderTableSummary(t *testing.T) {
 	}
 	if !strings.Contains(result, "2 columns") {
 		t.Error("Expected column count in summary")
-	}
-}
-
-func TestChatView_RenderTable(t *testing.T) {
-	v, cleanup := setupChatViewTest(t)
-	defer cleanup()
-
-	// Nil result
-	result := v.renderTable(nil)
-	if result != "" {
-		t.Error("Expected empty string for nil result")
-	}
-
-	// Empty columns
-	result = v.renderTable(&engine.GetRowsResult{
-		Columns: []engine.Column{},
-	})
-	if result != "" {
-		t.Error("Expected empty string for empty columns")
-	}
-
-	// Valid result
-	result = v.renderTable(&engine.GetRowsResult{
-		Columns: []engine.Column{{Name: "id"}, {Name: "name"}},
-		Rows:    [][]string{{"1", "Alice"}, {"2", "Bob"}},
-	})
-	if result == "" {
-		t.Error("Expected non-empty table render")
 	}
 }
 

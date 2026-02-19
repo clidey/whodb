@@ -127,6 +127,9 @@ func NewMainModelWithConnection(conn *config.Connection) *MainModel {
 }
 
 func (m *MainModel) Init() tea.Cmd {
+	if m.err != nil {
+		return nil
+	}
 	cmds := []tea.Cmd{m.spinner.Tick}
 	if m.mode == ViewBrowser && m.dbManager.GetCurrentConnection() != nil {
 		cmds = append(cmds, m.browserView.loadTables())
@@ -156,9 +159,8 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.mode = ViewResults
 				case ViewHistory:
 					m.mode = ViewHistory
-				default:
-					// todo: need a better default
-					panic("oops. how did this happen? please open a ticket at https://github.com/clidey/whodb/issues and tell us how you got here :)")
+				case ViewExport, ViewColumns, ViewChat, ViewSchema:
+					m.mode = ViewBrowser
 				}
 				return m, nil
 			}
@@ -314,7 +316,8 @@ func (m *MainModel) isLoading() bool {
 		m.exportView.exporting ||
 		m.schemaView.loading ||
 		m.historyView.executing ||
-		m.connectionView.connecting
+		m.connectionView.connecting ||
+		m.resultsView.loading
 }
 
 // renderStatusBar renders the persistent status bar shown when connected.

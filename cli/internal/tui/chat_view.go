@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -56,7 +55,6 @@ type ChatView struct {
 	height           int
 	scrollOffset     int
 	selectedMessage  int
-	viewingResult    bool
 	focusField       int
 	// Consent gate for data governance
 	consented bool
@@ -135,7 +133,6 @@ func NewChatView(parent *MainModel) *ChatView {
 		height:           24,
 		scrollOffset:     0,
 		selectedMessage:  -1,
-		viewingResult:    false,
 		focusField:       focusFieldMessage,
 		consented:        consentGiven,
 	}
@@ -337,10 +334,6 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			if v.loadingModels && v.modelsCancel != nil {
 				v.modelsCancel()
-				return v, nil
-			}
-			if v.viewingResult {
-				v.viewingResult = false
 				return v, nil
 			}
 			if !v.parent.PopView() {
@@ -634,7 +627,7 @@ func (v *ChatView) View() string {
 						b.WriteString(v.renderTableSummary(msg.Result))
 						if isSelected {
 							b.WriteString("\n  ")
-							b.WriteString(styles.MutedStyle.Render("Press 'v' to view full table"))
+							b.WriteString(styles.MutedStyle.Render("Press Enter to view full table"))
 						}
 					}
 					b.WriteString("\n")
@@ -714,84 +707,6 @@ func (v *ChatView) renderTableSummary(result *engine.GetRowsResult) string {
 	return styles.MutedStyle.Render(fmt.Sprintf("📊 Table: %d rows × %d columns", len(result.Rows), len(result.Columns)))
 }
 
-func (v *ChatView) renderTable(result *engine.GetRowsResult) string {
-	if result == nil || len(result.Columns) == 0 {
-		return ""
-	}
-
-	maxCols := 5
-	cols := result.Columns
-	if len(cols) > maxCols {
-		cols = cols[:maxCols]
-	}
-
-	columns := make([]table.Column, len(cols))
-	for i, col := range cols {
-		columns[i] = table.Column{
-			Title: col.Name,
-			Width: 15,
-		}
-	}
-
-	maxRows := 5
-	rows := result.Rows
-	if len(rows) > maxRows {
-		rows = rows[:maxRows]
-	}
-
-	tableRows := make([]table.Row, len(rows))
-	for i, row := range rows {
-		tableRow := make([]string, len(cols))
-		for j := range cols {
-			if j < len(row) {
-				val := row[j]
-				if len(val) > 15 {
-					val = val[:12] + "..."
-				}
-				tableRow[j] = val
-			} else {
-				tableRow[j] = ""
-			}
-		}
-		tableRows[i] = table.Row(tableRow)
-	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(tableRows),
-		table.WithHeight(len(tableRows)),
-	)
-
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(styles.Border).
-		BorderBottom(true).
-		Bold(true).
-		Foreground(styles.Primary)
-	s.Selected = s.Selected.
-		Foreground(styles.Background).
-		Background(styles.Primary).
-		Bold(false)
-	t.SetStyles(s)
-
-	info := ""
-	if len(result.Rows) > maxRows {
-		info = styles.MutedStyle.Render(fmt.Sprintf("Showing %d of %d rows", maxRows, len(result.Rows)))
-	}
-	if len(result.Columns) > maxCols {
-		if info != "" {
-			info += " • "
-		}
-		info += styles.MutedStyle.Render(fmt.Sprintf("Showing %d of %d columns", maxCols, len(result.Columns)))
-	}
-
-	if info != "" {
-		return t.View() + "\n" + info
-	}
-	return t.View()
-}
-
 func (v *ChatView) loadModels() tea.Cmd {
 	if v.selectedProvider >= len(v.providers) {
 		return func() tea.Msg {
@@ -840,7 +755,8 @@ func (v *ChatView) sendChatWithTimeout(query string, timeout time.Duration) tea.
 	modelType := provider.Type
 	model := v.models[v.selectedModel]
 	schema := v.parent.browserView.currentSchema
-	messages := v.messages
+	msgs := make([]chatMessage, len(v.messages))
+	copy(msgs, v.messages)
 
 	// Set sending state and create context
 	v.sending = true
@@ -861,9 +777,9 @@ func (v *ChatView) sendChatWithTimeout(query string, timeout time.Duration) tea.
 		}
 
 		previousConversation := ""
-		if len(messages) > 1 {
+		if len(msgs) > 1 {
 			var convMessages []map[string]string
-			for _, msg := range messages {
+			for _, msg := range msgs {
 				if msg.Type != "error" {
 					convMessages = append(convMessages, map[string]string{
 						"role":    msg.Role,

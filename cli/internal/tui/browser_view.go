@@ -228,9 +228,9 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			if v.selectedIndex >= 0 && v.selectedIndex < len(v.filteredTables) {
 				table := v.filteredTables[v.selectedIndex]
 				v.selectedTable = table.Name
-				v.parent.resultsView.LoadTable(v.currentSchema, table.Name)
+				cmd := v.parent.resultsView.LoadTable(v.currentSchema, table.Name)
 				v.parent.PushView(ViewResults)
-				return v, nil
+				return v, cmd
 			}
 
 		case key.Matches(msg, Keys.Browser.Up):
@@ -376,13 +376,13 @@ func (v *BrowserView) View() string {
 	if v.err != nil {
 		b.WriteString(styles.RenderErrorBox(v.err.Error()))
 		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Press 'r' to retry"))
+		b.WriteString(styles.MutedStyle.Render("Press " + Keys.Browser.Refresh.Help().Key + " to retry"))
 	} else if v.loading {
 		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading tables..."))
 	} else if len(v.filteredTables) == 0 {
 		b.WriteString(styles.MutedStyle.Render("No tables found in this database."))
 		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render("Press 'r' to refresh or 'e' to run SQL queries."))
+		b.WriteString(styles.MutedStyle.Render("Press " + Keys.Browser.Refresh.Help().Key + " to refresh or " + Keys.Browser.Editor.Help().Key + " to run SQL queries."))
 	} else {
 		b.WriteString(v.renderTablesGrid())
 	}

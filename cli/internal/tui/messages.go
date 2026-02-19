@@ -59,8 +59,10 @@ type HistoryQueryMsg struct {
 
 // PageLoadedMsg is sent when a page of data is loaded in results view
 type PageLoadedMsg struct {
-	Results *engine.GetRowsResult
-	Err     error
+	Results   *engine.GetRowsResult
+	Err       error
+	Schema    string
+	TableName string
 }
 
 // AutocompleteDebounceMsg is sent after a debounce delay to trigger autocomplete.
@@ -102,14 +104,16 @@ type escTimeoutTickMsg struct{}
 
 // exportResultMsg is sent when an export operation completes
 type exportResultMsg struct {
-	success bool
-	err     error
+	success       bool
+	err           error
+	savedFilePath string
 }
 
 // schemaLoadedMsg is sent when the database schema is loaded
 type schemaLoadedMsg struct {
 	tables []tableWithColumns
 	err    error
+	schema string
 }
 
 // statusMessageTimeoutMsg is sent to auto-dismiss transient status messages

@@ -201,11 +201,16 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 		case key.Matches(msg, Keys.WhereList.Apply):
 			if v.addingNew {
 				if v.focusIndex == 3 {
-					if v.currentField != "" && v.currentOp != "" && v.valueInput.Value() != "" {
+					isNullOp := v.currentOp == "IS NULL" || v.currentOp == "IS NOT NULL"
+					if v.currentField != "" && v.currentOp != "" && (v.valueInput.Value() != "" || isNullOp) {
+						value := v.valueInput.Value()
+						if isNullOp {
+							value = ""
+						}
 						v.conditions = append(v.conditions, WhereCondition{
 							Field:    v.currentField,
 							Operator: v.currentOp,
-							Value:    v.valueInput.Value(),
+							Value:    value,
 						})
 						v.addingNew = false
 						v.currentField = ""
@@ -217,11 +222,11 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				}
 			} else {
 				v.parent.resultsView.whereCondition = v.buildWhereCondition()
-				v.parent.resultsView.loadWithWhere()
+				cmd := v.parent.resultsView.loadWithWhere()
 				if !v.parent.PopView() {
 					v.parent.mode = ViewResults
 				}
-				return v, nil
+				return v, cmd
 			}
 
 		case key.Matches(msg, Keys.WhereList.Up):
@@ -460,13 +465,20 @@ func (v *WhereView) buildWhereCondition() *model.WhereCondition {
 
 	children := make([]*model.WhereCondition, len(v.conditions))
 	for i, cond := range v.conditions {
+		colType := "string"
+		for _, col := range v.columns {
+			if cond.Field == col.Name {
+				colType = col.Type
+				break
+			}
+		}
 		children[i] = &model.WhereCondition{
 			Type: model.WhereConditionTypeAtomic,
 			Atomic: &model.AtomicWhereCondition{
 				Key:        cond.Field,
 				Operator:   cond.Operator,
 				Value:      cond.Value,
-				ColumnType: "string",
+				ColumnType: colType,
 			},
 		}
 	}

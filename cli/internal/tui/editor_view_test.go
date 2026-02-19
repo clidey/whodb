@@ -430,7 +430,7 @@ func TestGetLastWord(t *testing.T) {
 		expected string
 	}{
 		{"SELECT * FROM users", "users"},
-		{"SELECT * FROM ", "FROM"},
+		{"SELECT * FROM ", ""},
 		{"", ""},
 		{"word", "word"},
 		{"users.id", "id"},

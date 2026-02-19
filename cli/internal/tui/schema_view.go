@@ -74,6 +74,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 			return v, nil
 		}
 		v.tables = msg.tables
+		v.currentSchema = msg.schema
 		v.applyFilter()
 		v.selectedIndex = 0
 		return v, nil
@@ -147,7 +148,7 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 		switch {
 		case key.Matches(msg, Keys.Global.Back):
 			if !v.parent.PopView() {
-				v.parent.mode = ViewResults
+				v.parent.mode = ViewBrowser
 			}
 			return v, nil
 
@@ -179,9 +180,9 @@ func (v *SchemaView) Update(msg tea.Msg) (*SchemaView, tea.Cmd) {
 		case key.Matches(msg, Keys.Schema.ViewData):
 			if v.selectedIndex >= 0 && v.selectedIndex < len(v.filteredTables) {
 				table := v.filteredTables[v.selectedIndex]
-				v.parent.resultsView.LoadTable(v.currentSchema, table.StorageUnit.Name)
-				v.parent.mode = ViewResults
-				return v, nil
+				cmd := v.parent.resultsView.LoadTable(v.currentSchema, table.StorageUnit.Name)
+				v.parent.PushView(ViewResults)
+				return v, cmd
 			}
 			return v, nil
 
@@ -414,8 +415,6 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 
 			schema = selectBestSchema(schemas)
 		}
-		v.currentSchema = schema
-
 		units, err := v.parent.dbManager.GetStorageUnits(schema)
 		if err != nil {
 			return schemaLoadedMsg{
@@ -439,6 +438,7 @@ func (v *SchemaView) loadSchema() tea.Cmd {
 		return schemaLoadedMsg{
 			tables: tables,
 			err:    nil,
+			schema: schema,
 		}
 	}
 }

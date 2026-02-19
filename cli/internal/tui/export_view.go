@@ -122,6 +122,10 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 		if msg.success {
 			v.exportSuccess = true
 			v.exportError = nil
+			v.savedFilePath = msg.savedFilePath
+			v.confirmOverwrite = false
+			v.confirmIndex = 0
+			v.pendingPath = ""
 			return v, v.parent.SetStatus("Export complete")
 		}
 		v.exportSuccess = false
@@ -513,22 +517,29 @@ func (v *ExportView) View() string {
 }
 
 func (v *ExportView) performExport() tea.Cmd {
+	v.exporting = true
+
+	// Capture values for closure
+	filename := v.filenameInput.Value()
+	format := exportFormats[v.selectedFormat]
+	delimiter := exportDelimiters[v.selectedDelim]
+	pendingPath := v.pendingPath
+	overwrite := v.overwrite
+	isQueryExport := v.isQueryExport
+	queryResults := v.queryResults
+	schema := v.schema
+	tableName := v.tableName
+	dbManager := v.parent.dbManager
+
 	return func() tea.Msg {
-		v.exporting = true
-
-		filename := v.filenameInput.Value()
-		format := exportFormats[v.selectedFormat]
-		delimiter := exportDelimiters[v.selectedDelim]
-
 		// Resolve to an absolute path with appropriate extension
 		var fullFilename string
 		var err error
-		if v.pendingPath != "" {
-			fullFilename = v.pendingPath
+		if pendingPath != "" {
+			fullFilename = pendingPath
 		} else {
-			fullFilename, _, err = resolveExportPath(filename, format, v.overwrite)
+			fullFilename, _, err = resolveExportPath(filename, format, overwrite)
 			if err != nil {
-				v.exporting = false
 				return exportResultMsg{success: false, err: err}
 			}
 		}
@@ -537,43 +548,30 @@ func (v *ExportView) performExport() tea.Cmd {
 		dir := filepath.Dir(fullFilename)
 		if dir != "." && dir != "" {
 			if err := os.MkdirAll(dir, 0700); err != nil {
-				v.exporting = false
 				return exportResultMsg{success: false, err: fmt.Errorf("failed to create directory: %w", err)}
 			}
 		}
 
-		// Record absolute path for display
-		v.savedFilePath = fullFilename
-
 		// Perform the export
-		if v.isQueryExport {
-			// Export query results from memory
+		if isQueryExport {
 			if format == "CSV" {
-				err = v.parent.dbManager.ExportResultsToCSV(v.queryResults, fullFilename, delimiter)
+				err = dbManager.ExportResultsToCSV(queryResults, fullFilename, delimiter)
 			} else {
-				err = v.parent.dbManager.ExportResultsToExcel(v.queryResults, fullFilename)
+				err = dbManager.ExportResultsToExcel(queryResults, fullFilename)
 			}
 		} else {
-			// Export table data (fetch from database)
 			if format == "CSV" {
-				err = v.parent.dbManager.ExportToCSV(v.schema, v.tableName, fullFilename, delimiter)
+				err = dbManager.ExportToCSV(schema, tableName, fullFilename, delimiter)
 			} else {
-				err = v.parent.dbManager.ExportToExcel(v.schema, v.tableName, fullFilename)
+				err = dbManager.ExportToExcel(schema, tableName, fullFilename)
 			}
 		}
 
-		v.exporting = false
-
 		if err != nil {
-			v.exportError = err
 			return exportResultMsg{success: false, err: err}
 		}
 
-		v.exportSuccess = true
-		v.confirmOverwrite = false
-		v.confirmIndex = 0
-		v.pendingPath = ""
-		return exportResultMsg{success: true, err: nil}
+		return exportResultMsg{success: true, err: nil, savedFilePath: fullFilename}
 	}
 }
 

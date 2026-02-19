@@ -132,6 +132,14 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			v.whereCondition = nil
 			return v, nil
 		}
+		// Handle initial table load (Schema/TableName provided)
+		if msg.Schema != "" && msg.TableName != "" {
+			v.schema = msg.Schema
+			v.tableName = msg.TableName
+			v.query = ""
+			v.columnOffset = 0
+			v.currentPage = 0
+		}
 		if msg.Results != nil {
 			v.results = msg.Results
 			v.totalRows = int(msg.Results.TotalCount)
@@ -324,7 +332,9 @@ func (v *ResultsView) View() string {
 		b.WriteString("\n\n")
 	}
 
-	if v.results == nil {
+	if v.loading {
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading..."))
+	} else if v.results == nil {
 		b.WriteString(styles.MutedStyle.Render("No results"))
 	} else {
 		b.WriteString(v.table.View())
@@ -431,10 +441,10 @@ func (v *ResultsView) SetResults(results *engine.GetRowsResult, query string) {
 	v.updateTable()
 }
 
-func (v *ResultsView) LoadTable(schema string, tableName string) {
+func (v *ResultsView) LoadTable(schema string, tableName string) tea.Cmd {
 	conn := v.parent.dbManager.GetCurrentConnection()
 	if conn == nil {
-		return
+		return nil
 	}
 
 	// Only reset WHERE condition if we're switching to a different table
@@ -443,46 +453,40 @@ func (v *ResultsView) LoadTable(schema string, tableName string) {
 		v.visibleColumns = nil
 	}
 
-	results, err := v.parent.dbManager.GetRows(schema, tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
-	if err != nil {
-		v.parent.err = err
-		v.whereCondition = nil
-		return
-	}
+	v.loading = true
 
-	v.results = results
-	v.query = ""
-	v.currentPage = 0
-	v.columnOffset = 0
-	v.schema = schema
-	v.tableName = tableName
-	v.totalRows = int(results.TotalCount)
-	v.updateTable()
+	// Capture values for closure
+	where := v.whereCondition
+	pageSize := v.pageSize
+
+	return func() tea.Msg {
+		results, err := v.parent.dbManager.GetRows(schema, tableName, where, pageSize, 0)
+		return PageLoadedMsg{Results: results, Err: err, Schema: schema, TableName: tableName}
+	}
 }
 
-func (v *ResultsView) loadWithWhere() {
+func (v *ResultsView) loadWithWhere() tea.Cmd {
 	conn := v.parent.dbManager.GetCurrentConnection()
 	if conn == nil {
-		return
+		return nil
 	}
 
 	if v.schema == "" || v.tableName == "" {
-		return
+		return nil
 	}
 
-	results, err := v.parent.dbManager.GetRows(v.schema, v.tableName, v.whereCondition, v.pageSize, v.currentPage*v.pageSize)
-	if err != nil {
-		v.parent.err = err
-		v.whereCondition = nil
-		return
-	}
+	v.loading = true
 
-	v.results = results
-	v.query = ""
-	v.currentPage = 0
-	v.columnOffset = 0
-	v.totalRows = int(results.TotalCount)
-	v.updateTable()
+	// Capture values for closure
+	schema := v.schema
+	tableName := v.tableName
+	where := v.whereCondition
+	pageSize := v.pageSize
+
+	return func() tea.Msg {
+		results, err := v.parent.dbManager.GetRows(schema, tableName, where, pageSize, 0)
+		return PageLoadedMsg{Results: results, Err: err}
+	}
 }
 
 func (v *ResultsView) isTableData() bool {
@@ -516,7 +520,7 @@ func (v *ResultsView) currentPageRows() [][]string {
 
 	start := v.currentPage * v.pageSize
 	if start >= total {
-		start = maxInt(total-v.pageSize, 0)
+		start = max(total-v.pageSize, 0)
 	}
 	end := start + v.pageSize
 	if end > total {
@@ -679,11 +683,4 @@ func (v *ResultsView) countWhereConditions() int {
 		return len(v.whereCondition.And.Children)
 	}
 	return 0
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

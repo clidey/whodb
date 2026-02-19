@@ -784,24 +784,6 @@ func TestResultsView_PageLoadedMsgWithError(t *testing.T) {
 	}
 }
 
-func TestResultsView_MaxInt(t *testing.T) {
-	tests := []struct {
-		a, b, expected int
-	}{
-		{5, 3, 5},
-		{3, 5, 5},
-		{0, 0, 0},
-		{-1, 1, 1},
-	}
-
-	for _, tt := range tests {
-		result := maxInt(tt.a, tt.b)
-		if result != tt.expected {
-			t.Errorf("maxInt(%d, %d) = %d, expected %d", tt.a, tt.b, result, tt.expected)
-		}
-	}
-}
-
 func TestResultsView_ColumnOffsetBoundary(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()

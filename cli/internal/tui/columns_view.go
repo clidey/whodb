@@ -117,11 +117,11 @@ func (v *ColumnsView) Update(msg tea.Msg) (*ColumnsView, tea.Cmd) {
 		case key.Matches(msg, Keys.Columns.Apply):
 			// Apply column selection and return to results
 			v.parent.resultsView.visibleColumns = v.getSelectedColumns()
-			v.parent.resultsView.loadWithWhere()
+			cmd := v.parent.resultsView.loadWithWhere()
 			if !v.parent.PopView() {
 				v.parent.mode = ViewResults
 			}
-			return v, nil
+			return v, cmd
 
 		case key.Matches(msg, Keys.Columns.SelectAll):
 			// Select all

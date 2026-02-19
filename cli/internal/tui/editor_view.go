@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -38,7 +37,6 @@ type EditorView struct {
 	filteredSuggestions []suggestion
 	showSuggestions     bool
 	selectedSuggestion  int
-	currentSchema       string
 	cursorPos           int
 	lastText            string
 	lastWidth           int
@@ -246,19 +244,12 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			}
 			return v, nil
 
-		case tea.KeyCtrlS:
-			return v, v.saveQuery()
 		}
 
-		// Handle "e" key for export (when not in autocomplete mode)
-		if key.Matches(msg, Keys.Editor.Export) && !v.showSuggestions {
-			if v.parent.resultsView.results != nil && v.parent.resultsView.query != "" {
-				v.parent.exportView.SetExportDataFromQuery(v.parent.resultsView.results)
-				v.parent.PushView(ViewExport)
-				return v, nil
-			}
-		}
 	}
+
+	// Only schedule debounce for actual key events, not spinner ticks etc.
+	_, isKeyMsg := msg.(tea.KeyMsg)
 
 	// Pass to textarea
 	v.textarea, cmd = v.textarea.Update(msg)
@@ -266,9 +257,9 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 	// Calculate cursor position based on current line and column
 	v.updateCursorPosition()
 
-	// Schedule debounced autocomplete when user types
-	text := v.textarea.Value()
-	if v.textarea.Focused() {
+	// Schedule debounced autocomplete only when user types
+	if isKeyMsg && v.textarea.Focused() {
+		text := v.textarea.Value()
 		// Increment sequence ID to invalidate any pending debounce
 		v.autocompleteSeqID++
 		seqID := v.autocompleteSeqID
@@ -328,7 +319,6 @@ func (v *EditorView) View() string {
 	b.WriteString(RenderBindingHelp(
 		Keys.Editor.Execute,
 		Keys.Editor.Autocomplete,
-		Keys.Editor.Export,
 		Keys.Editor.Clear,
 		Keys.Global.NextView,
 		Keys.Global.Back,
@@ -418,12 +408,6 @@ func (v *EditorView) executeQueryWithTimeout(query string, timeout time.Duration
 		}
 
 		return QueryExecutedMsg{Result: result, Query: query}
-	}
-}
-
-func (v *EditorView) saveQuery() tea.Cmd {
-	return func() tea.Msg {
-		return nil
 	}
 }
 

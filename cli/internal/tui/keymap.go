@@ -48,7 +48,6 @@ type EditorKeys struct {
 	Execute      key.Binding
 	Autocomplete key.Binding
 	Clear        key.Binding
-	Export       key.Binding
 }
 
 // ResultsKeys contains keybindings for the results view
@@ -266,10 +265,6 @@ var Keys = Keymap{
 		Clear: key.NewBinding(
 			key.WithKeys("ctrl+l"),
 			key.WithHelp("ctrl+l", "clear"),
-		),
-		Export: key.NewBinding(
-			key.WithKeys("e"),
-			key.WithHelp("[e]", "export results"),
 		),
 	},
 	Results: ResultsKeys{

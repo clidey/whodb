@@ -146,6 +146,7 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			}
 			if item, ok := v.list.SelectedItem().(historyItem); ok {
 				v.executing = true
+				v.retryPrompt.SetAutoRetried(false)
 				query := item.entry.Query
 
 				// Get timeout from config

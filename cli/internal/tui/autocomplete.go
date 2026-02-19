@@ -493,14 +493,9 @@ func (v *EditorView) addSnippetSuggestions() {
 }
 
 func (v *EditorView) getCurrentSchema() string {
-	if v.currentSchema != "" {
-		return v.currentSchema
-	}
-
 	// Use the schema selected in browser view if available
 	if v.parent.browserView.currentSchema != "" {
-		v.currentSchema = v.parent.browserView.currentSchema
-		return v.currentSchema
+		return v.parent.browserView.currentSchema
 	}
 
 	schemas, err := v.parent.dbManager.GetSchemas()
@@ -508,8 +503,7 @@ func (v *EditorView) getCurrentSchema() string {
 		return ""
 	}
 
-	v.currentSchema = selectBestSchema(schemas)
-	return v.currentSchema
+	return selectBestSchema(schemas)
 }
 
 func (v *EditorView) filterSuggestions(prefix string) {
@@ -552,7 +546,12 @@ func (v *EditorView) renderAutocompletePanel() string {
 		maxDisplay = len(v.filteredSuggestions)
 	}
 
-	for i := 0; i < maxDisplay; i++ {
+	startIdx := 0
+	if v.selectedSuggestion >= maxDisplay {
+		startIdx = v.selectedSuggestion - maxDisplay + 1
+	}
+
+	for i := startIdx; i < startIdx+maxDisplay && i < len(v.filteredSuggestions); i++ {
 		sug := v.filteredSuggestions[i]
 		line := fmt.Sprintf("%s (%s)", sug.label, sug.detail)
 
@@ -564,8 +563,8 @@ func (v *EditorView) renderAutocompletePanel() string {
 		panel.WriteString("\n")
 	}
 
-	if len(v.filteredSuggestions) > maxDisplay {
-		panel.WriteString(styles.MutedStyle.Render(fmt.Sprintf("  ... and %d more", len(v.filteredSuggestions)-maxDisplay)))
+	if len(v.filteredSuggestions) > startIdx+maxDisplay {
+		panel.WriteString(styles.MutedStyle.Render(fmt.Sprintf("  ... and %d more", len(v.filteredSuggestions)-startIdx-maxDisplay)))
 		panel.WriteString("\n")
 	}
 
@@ -795,6 +794,16 @@ func (v *EditorView) isKeyword(word string) bool {
 }
 
 func getLastWord(text string) string {
+	if len(text) == 0 {
+		return ""
+	}
+
+	// If text ends with a delimiter, there's no partial word to filter by
+	lastChar := rune(text[len(text)-1])
+	if lastChar == ' ' || lastChar == '\n' || lastChar == '\t' || lastChar == ',' || lastChar == '(' || lastChar == ')' {
+		return ""
+	}
+
 	words := strings.FieldsFunc(text, func(r rune) bool {
 		return r == ' ' || r == '\n' || r == '\t' || r == ',' || r == '(' || r == ')'
 	})

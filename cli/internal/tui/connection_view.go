@@ -296,9 +296,9 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		}
 	}
 
-	// Clear ESC confirmation on any other key press
-	if _, ok := msg.(tea.KeyMsg); ok && msg.(tea.KeyMsg).String() != "esc" && !v.escPressed {
-		// Not specifically checking escPressed here since it's already reset by timeout or second press
+	// Clear ESC confirmation on any non-ESC key press
+	if km, ok := msg.(tea.KeyMsg); ok && km.String() != "esc" {
+		v.escPressed = false
 	}
 
 	var cmd tea.Cmd
@@ -826,8 +826,8 @@ func (v *ConnectionView) connect() tea.Cmd {
 				port = v.getDefaultPort(dbType)
 			} else {
 				portNum, err := strconv.Atoi(portStr)
-				if err != nil || portNum < 1024 || portNum > 65535 {
-					return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1024 and 65535 (ports below 1024 are system reserved)")}
+				if err != nil || portNum < 1 || portNum > 65535 {
+					return connectionResultMsg{err: fmt.Errorf("invalid port number: must be between 1 and 65535")}
 				}
 				port = portNum
 			}
