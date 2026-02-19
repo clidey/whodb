@@ -37,6 +37,17 @@ func GetIsDesktopMode() bool {
 	return os.Getenv("WHODB_DESKTOP") == "true"
 }
 
+// GetIsCLIMode returns true if running as the CLI/TUI application.
+func GetIsCLIMode() bool {
+	return os.Getenv("WHODB_CLI") == "true"
+}
+
+// GetIsLocalMode returns true if running locally (desktop or CLI) where
+// full filesystem access is expected, as opposed to server mode.
+func GetIsLocalMode() bool {
+	return GetIsDesktopMode() || GetIsCLIMode()
+}
+
 var Tokens = common.FilterList(strings.Split(os.Getenv("WHODB_TOKENS"), ","), func(item string) bool {
 	return item != ""
 })
