@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -38,17 +39,6 @@ type chatMessage struct {
 	Content string
 	Type    string
 	Result  *engine.GetRowsResult
-}
-
-type chatResponseMsg struct {
-	messages []*database.ChatMessage
-	query    string
-	err      error
-}
-
-type modelsLoadedMsg struct {
-	models []string
-	err    error
 }
 
 type ChatView struct {
@@ -73,10 +63,7 @@ type ChatView struct {
 	// Cancellation support
 	chatCancel   context.CancelFunc
 	modelsCancel context.CancelFunc
-	// Retry prompt state for timed out requests
-	retryPrompt   bool
-	timedOutQuery string
-	autoRetried   bool
+	retryPrompt  RetryPrompt
 }
 
 const (
@@ -175,7 +162,9 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				}
 				return v, nil
 			case "esc", "q", "d":
-				v.parent.mode = ViewBrowser
+				if !v.parent.PopView() {
+					v.parent.mode = ViewBrowser
+				}
 				return v, nil
 			}
 		case tea.WindowSizeMsg:
@@ -200,13 +189,12 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			// Check for timeout - auto-retry with saved preference or show menu
 			if errors.Is(msg.err, context.DeadlineExceeded) {
 				preferred := v.parent.config.GetPreferredTimeout()
-				if preferred > 0 && !v.autoRetried {
-					v.autoRetried = true
+				if preferred > 0 && !v.retryPrompt.AutoRetried() {
+					v.retryPrompt.SetAutoRetried(true)
 					return v, v.sendChatWithTimeout(msg.query, time.Duration(preferred)*time.Second)
 				}
 				v.err = fmt.Errorf("request timed out")
-				v.retryPrompt = true
-				v.timedOutQuery = msg.query
+				v.retryPrompt.Show(msg.query)
 				return v, nil
 			}
 			v.err = msg.err
@@ -244,7 +232,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		if len(v.messages) > maxVisibleMessages {
 			v.scrollOffset = len(v.messages) - maxVisibleMessages
 		}
-		return v, nil
+		return v, v.parent.SetStatus("Response received")
 
 	case modelsLoadedMsg:
 		v.loadingModels = false
@@ -315,42 +303,24 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// Handle retry prompt for timed out requests
-		if v.retryPrompt {
-			switch msg.String() {
-			case "1":
-				v.retryPrompt = false
-				v.err = nil
-				v.parent.config.SetPreferredTimeout(60)
-				v.parent.config.Save()
-				return v, v.sendChatWithTimeout(v.timedOutQuery, 60*time.Second)
-			case "2":
-				v.retryPrompt = false
-				v.err = nil
-				v.parent.config.SetPreferredTimeout(120)
-				v.parent.config.Save()
-				return v, v.sendChatWithTimeout(v.timedOutQuery, 2*time.Minute)
-			case "3":
-				v.retryPrompt = false
-				v.err = nil
-				v.parent.config.SetPreferredTimeout(300)
-				v.parent.config.Save()
-				return v, v.sendChatWithTimeout(v.timedOutQuery, 5*time.Minute)
-			case "4":
-				v.retryPrompt = false
-				v.err = nil
-				// No limit applies once but doesn't save
-				return v, v.sendChatWithTimeout(v.timedOutQuery, 24*time.Hour)
-			case "esc":
-				v.retryPrompt = false
-				v.timedOutQuery = ""
+		if v.retryPrompt.IsActive() {
+			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
+			if handled {
+				if result != nil {
+					v.err = nil
+					if result.Save {
+						v.parent.config.SetPreferredTimeout(int(result.Timeout.Seconds()))
+						v.parent.config.Save()
+					}
+					return v, v.sendChatWithTimeout(v.retryPrompt.TimedOutQuery(), result.Timeout)
+				}
 				return v, nil
 			}
-			// Ignore other keys while in retry prompt
 			return v, nil
 		}
 
-		switch msg.String() {
-		case "ctrl+r":
+		switch {
+		case key.Matches(msg, Keys.Chat.RevokeConsent):
 			// Revoke consent
 			v.consented = false
 			v.parent.config.SetAIConsent(false)
@@ -359,7 +329,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "esc":
+		case key.Matches(msg, Keys.Global.Back):
 			// First priority: cancel ongoing operations
 			if v.sending && v.chatCancel != nil {
 				v.chatCancel()
@@ -373,16 +343,18 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				v.viewingResult = false
 				return v, nil
 			}
-			v.parent.mode = ViewBrowser
+			if !v.parent.PopView() {
+				v.parent.mode = ViewBrowser
+			}
 			return v, nil
 
-		case "ctrl+i", "/":
+		case key.Matches(msg, Keys.Chat.FocusInput):
 			// Focus chat input
 			v.focusField = focusFieldMessage
 			v.input.Focus()
 			return v, nil
 
-		case "up":
+		case key.Matches(msg, Keys.Chat.CycleFieldUp):
 			// Cycle backward through fields: message -> model -> provider
 			if v.focusField > focusFieldProvider {
 				v.focusField--
@@ -394,7 +366,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "down":
+		case key.Matches(msg, Keys.Chat.CycleFieldDown):
 			// Cycle forward through fields: provider -> model -> message
 			if v.focusField < focusFieldMessage {
 				v.focusField++
@@ -406,7 +378,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "ctrl+p":
+		case key.Matches(msg, Keys.Chat.SelectPrevMsg):
 			// Select previous message in conversation
 			if len(v.messages) > 0 {
 				if v.selectedMessage < 0 {
@@ -417,7 +389,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "ctrl+n":
+		case key.Matches(msg, Keys.Chat.SelectNextMsg):
 			// Select next message in conversation
 			if len(v.messages) > 0 {
 				if v.selectedMessage < 0 {
@@ -428,7 +400,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "left":
+		case key.Matches(msg, Keys.Chat.ChangeLeft):
 			if v.focusField == focusFieldProvider {
 				if v.selectedProvider > 0 {
 					v.selectedProvider--
@@ -445,7 +417,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "right":
+		case key.Matches(msg, Keys.Chat.ChangeRight):
 			if v.focusField == focusFieldProvider {
 				if v.selectedProvider < len(v.providers)-1 {
 					v.selectedProvider++
@@ -462,21 +434,20 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "ctrl+l":
+		case key.Matches(msg, Keys.Chat.LoadModels):
 			if !v.loadingModels {
 				v.loadingModels = true
 				return v, v.loadModels()
 			}
 			return v, nil
 
-		case "enter":
+		case key.Matches(msg, Keys.Chat.Send):
 			// View table if a message with result is selected
 			if v.selectedMessage >= 0 && v.selectedMessage < len(v.messages) {
-				msg := v.messages[v.selectedMessage]
-				if msg.Result != nil && strings.HasPrefix(msg.Type, "sql") {
-					v.parent.resultsView.SetResults(msg.Result, "")
-					v.parent.resultsView.returnTo = ViewChat
-					v.parent.mode = ViewResults
+				chatMsg := v.messages[v.selectedMessage]
+				if chatMsg.Result != nil && strings.HasPrefix(chatMsg.Type, "sql") {
+					v.parent.resultsView.SetResults(chatMsg.Result, "")
+					v.parent.PushView(ViewResults)
 					return v, nil
 				}
 			}
@@ -496,7 +467,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 			} else if v.focusField == focusFieldMessage && !v.sending {
 				query := strings.TrimSpace(v.input.Value())
 				if query != "" {
-					v.autoRetried = false
+					v.retryPrompt.SetAutoRetried(false)
 					v.messages = append(v.messages, chatMessage{
 						Role:    "user",
 						Content: query,
@@ -537,21 +508,8 @@ func (v *ChatView) View() string {
 	}
 
 	// Show retry prompt for timed out requests
-	if v.retryPrompt {
-		b.WriteString(styles.ErrorStyle.Render("Request timed out"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
-		b.WriteString("\n")
-		b.WriteString(styles.KeyStyle.Render("[1]"))
-		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
-		b.WriteString(styles.KeyStyle.Render("[2]"))
-		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
-		b.WriteString(styles.KeyStyle.Render("[3]"))
-		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
-		b.WriteString(styles.KeyStyle.Render("[4]"))
-		b.WriteString(styles.MutedStyle.Render(" No limit"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderHelp("esc", "cancel"))
+	if v.retryPrompt.IsActive() {
+		b.WriteString(v.retryPrompt.View())
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -589,7 +547,7 @@ func (v *ChatView) View() string {
 	b.WriteString(modelLabel)
 	b.WriteString(" ")
 	if v.loadingModels {
-		b.WriteString(styles.MutedStyle.Render("Loading models... Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading models... Press ESC to cancel"))
 	} else if len(v.models) == 0 {
 		b.WriteString(styles.MutedStyle.Render("Press Ctrl+L to load models"))
 	} else {
@@ -703,7 +661,7 @@ func (v *ChatView) View() string {
 	}
 
 	if v.sending {
-		b.WriteString(styles.MutedStyle.Render("Thinking... Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Thinking... Press ESC to cancel"))
 		b.WriteString("\n\n")
 	}
 
@@ -712,13 +670,14 @@ func (v *ChatView) View() string {
 	b.WriteString(v.input.View())
 	b.WriteString("\n\n")
 
-	b.WriteString(styles.RenderHelp(
-		"↑/↓", "cycle fields",
-		"←/→", "change selection",
-		"enter", "confirm/send/view",
-		"ctrl+p/n", "select message",
-		"ctrl+r", "revoke consent",
-		"esc", "back",
+	b.WriteString(RenderBindingHelp(
+		Keys.Chat.CycleFieldUp,
+		Keys.Chat.ChangeLeft,
+		Keys.Chat.Send,
+		Keys.Chat.SelectPrevMsg,
+		Keys.Chat.FocusInput,
+		Keys.Chat.RevokeConsent,
+		Keys.Global.Back,
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())

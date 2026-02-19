@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -68,12 +69,6 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	str += "\n  " + styles.MutedStyle.Render(i.Description())
 	fmt.Fprint(w, str)
 }
-
-type connectionResultMsg struct {
-	err error
-}
-
-type escTimeoutTickMsg struct{}
 
 // ConnectionView provides the TUI for managing database connections.
 // It supports both a list view (selecting from saved connections) and
@@ -256,16 +251,16 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		return v, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "tab":
+		switch {
+		case key.Matches(msg, Keys.ConnectionList.Down):
 			v.list.CursorDown()
 			return v, nil
 
-		case "shift+tab":
+		case key.Matches(msg, Keys.ConnectionList.Up):
 			v.list.CursorUp()
 			return v, nil
 
-		case "enter":
+		case key.Matches(msg, Keys.ConnectionList.Connect):
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
 				if err := v.parent.dbManager.Connect(&item.conn); err != nil {
 					v.parent.err = err
@@ -275,13 +270,13 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				return v, v.parent.browserView.Init()
 			}
 
-		case "n":
+		case key.Matches(msg, Keys.ConnectionList.New):
 			v.mode = "form"
 			v.resetForm()
 			v.inputs[0].Focus()
 			return v, nil
 
-		case "d":
+		case key.Matches(msg, Keys.ConnectionList.DeleteConn):
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
 				v.parent.config.RemoveConnection(item.conn.Name)
 				v.parent.config.Save()
@@ -289,7 +284,7 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "esc":
+		case key.Matches(msg, Keys.ConnectionList.QuitEsc):
 			if v.escPressed {
 				// Second ESC press - confirm quit
 				return v, tea.Quit
@@ -367,7 +362,12 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			v.connecting = false
 		} else {
 			v.parent.mode = ViewBrowser
-			return v, v.parent.browserView.Init()
+			conn := v.parent.dbManager.GetCurrentConnection()
+			connDesc := ""
+			if conn != nil {
+				connDesc = fmt.Sprintf("Connected to %s@%s", conn.Type, conn.Host)
+			}
+			return v, tea.Batch(v.parent.browserView.Init(), v.parent.SetStatus(connDesc))
 		}
 		return v, nil
 
@@ -445,14 +445,14 @@ func (v *ConnectionView) View() string {
 	// Render chrome first, measure heights, give remainder to list
 	title := styles.RenderTitle("Welcome to WhoDB!")
 	subtitle := styles.MutedStyle.Render("Select an existing connection below, or create a new one with [n]")
-	helpText := styles.RenderHelp(
-		"↑/k/shift+tab", "up",
-		"↓/j/tab", "down",
-		"enter", "connect",
-		"[n]", "new",
-		"[d]", "delete",
-		"esc", "quit",
-		"ctrl+c", "force quit",
+	helpText := RenderBindingHelp(
+		Keys.ConnectionList.Up,
+		Keys.ConnectionList.Down,
+		Keys.ConnectionList.Connect,
+		Keys.ConnectionList.New,
+		Keys.ConnectionList.DeleteConn,
+		Keys.ConnectionList.QuitEsc,
+		Keys.Global.Quit,
 	)
 
 	// Measure chrome: title + subtitle + help + padding(2) + view indicator(2) + separators(2)
@@ -496,6 +496,13 @@ func (v *ConnectionView) renderForm() string {
 			"esc", "cancel",
 		))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	}
+
+	if v.connecting {
+		var cb strings.Builder
+		cb.WriteString(styles.RenderTitle("New Database Connection"))
+		cb.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Connecting..."))
+		return lipgloss.NewStyle().Padding(1, 2).Render(cb.String())
 	}
 
 	// Set responsive input widths before rendering
@@ -567,18 +574,18 @@ func (v *ConnectionView) renderForm() string {
 	helpText := ""
 	if len(v.parent.config.Connections) > 0 {
 		helpText = styles.RenderHelpWidth(v.width,
-			"↑/↓/tab", "navigate",
-			"←/→", "change type",
-			"enter", "connect",
-			"esc", "back",
-			"ctrl+c", "quit",
+			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
+			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
+			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
+			Keys.Global.Back.Help().Key, Keys.Global.Back.Help().Desc,
+			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
 	} else {
 		helpText = styles.RenderHelpWidth(v.width,
-			"↑/↓/tab", "navigate",
-			"←/→", "change type",
-			"enter", "connect",
-			"ctrl+c", "quit",
+			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
+			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
+			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
+			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
 	}
 

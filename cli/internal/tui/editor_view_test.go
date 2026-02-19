@@ -900,13 +900,13 @@ func TestEditorView_RetryPrompt_OnTimeout(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was enabled
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true after timeout")
 	}
 
 	// Verify timed out query was stored
-	if v.timedOutQuery != testQuery {
-		t.Errorf("Expected timedOutQuery '%s', got '%s'", testQuery, v.timedOutQuery)
+	if v.retryPrompt.TimedOutQuery() != testQuery {
+		t.Errorf("Expected timedOutQuery '%s', got '%s'", testQuery, v.retryPrompt.TimedOutQuery())
 	}
 }
 
@@ -915,8 +915,7 @@ func TestEditorView_RetryPrompt_EscCancels(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
-	v.timedOutQuery = "SELECT * FROM test"
+	v.retryPrompt.Show("SELECT * FROM test")
 	v.err = fmt.Errorf("query timed out")
 
 	// Send ESC key
@@ -924,13 +923,13 @@ func TestEditorView_RetryPrompt_EscCancels(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false after ESC")
 	}
 
 	// Verify timed out query was cleared
-	if v.timedOutQuery != "" {
-		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.timedOutQuery)
+	if v.retryPrompt.TimedOutQuery() != "" {
+		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.retryPrompt.TimedOutQuery())
 	}
 }
 
@@ -952,8 +951,7 @@ func TestEditorView_RetryPrompt_KeyHandling(t *testing.T) {
 			defer cleanup()
 
 			// Set up retry prompt state
-			v.retryPrompt = true
-			v.timedOutQuery = "SELECT * FROM test"
+			v.retryPrompt.Show("SELECT * FROM test")
 			v.err = fmt.Errorf("query timed out")
 
 			// Send number key
@@ -964,7 +962,7 @@ func TestEditorView_RetryPrompt_KeyHandling(t *testing.T) {
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
-			if v.retryPrompt {
+			if v.retryPrompt.IsActive() {
 				t.Error("Expected retryPrompt to be false after selecting retry option")
 			}
 
@@ -986,8 +984,7 @@ func TestEditorView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
-	v.timedOutQuery = "SELECT * FROM test"
+	v.retryPrompt.Show("SELECT * FROM test")
 	v.err = fmt.Errorf("query timed out")
 
 	// Send an unrelated key (like 'a')
@@ -995,12 +992,12 @@ func TestEditorView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to still be true after unrecognized key")
 	}
 
 	// Verify query wasn't cleared
-	if v.timedOutQuery == "" {
+	if v.retryPrompt.TimedOutQuery() == "" {
 		t.Error("Expected timedOutQuery to still be set")
 	}
 }
@@ -1010,8 +1007,7 @@ func TestEditorView_RetryPrompt_View(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
-	v.timedOutQuery = "SELECT * FROM test"
+	v.retryPrompt.Show("SELECT * FROM test")
 	v.err = fmt.Errorf("query timed out")
 
 	view := v.View()
@@ -1147,7 +1143,7 @@ func TestEditorView_TimeoutAutoRetry_WithPreference(t *testing.T) {
 	defer cleanup()
 
 	v.queryState = OperationRunning
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 
 	// Set a preferred timeout
 	v.parent.config.SetPreferredTimeout(60)
@@ -1157,10 +1153,10 @@ func TestEditorView_TimeoutAutoRetry_WithPreference(t *testing.T) {
 	v, cmd := v.Update(msg)
 
 	// Should auto-retry (not show prompt)
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false (auto-retry should happen)")
 	}
-	if !v.autoRetried {
+	if !v.retryPrompt.AutoRetried() {
 		t.Error("Expected autoRetried to be true")
 	}
 	if cmd == nil {
@@ -1173,14 +1169,14 @@ func TestEditorView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
 	defer cleanup()
 
 	v.queryState = OperationRunning
-	v.autoRetried = true // Already retried once
+	v.retryPrompt.SetAutoRetried(true) // Already retried once
 
 	v.parent.config.SetPreferredTimeout(60)
 
 	msg := QueryTimeoutMsg{Query: "SELECT * FROM slow", Timeout: 60 * time.Second}
 	v, _ = v.Update(msg)
 
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true after auto-retry failed")
 	}
 }
@@ -1190,13 +1186,13 @@ func TestEditorView_TimeoutShowsMenu_NoPreference(t *testing.T) {
 	defer cleanup()
 
 	v.queryState = OperationRunning
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 	v.parent.config.SetPreferredTimeout(0)
 
 	msg := QueryTimeoutMsg{Query: "SELECT * FROM slow", Timeout: 30 * time.Second}
 	v, _ = v.Update(msg)
 
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true with no preferred timeout")
 	}
 }
@@ -1218,8 +1214,7 @@ func TestEditorView_RetryMenuSavesPreference(t *testing.T) {
 			v, cleanup := setupEditorViewTest(t)
 			defer cleanup()
 
-			v.retryPrompt = true
-			v.timedOutQuery = "SELECT 1"
+			v.retryPrompt.Show("SELECT 1")
 			v.parent.config.SetPreferredTimeout(0)
 
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
@@ -1237,12 +1232,12 @@ func TestEditorView_AutoRetriedResetOnNewQuery(t *testing.T) {
 	v, cleanup := setupEditorViewTest(t)
 	defer cleanup()
 
-	v.autoRetried = true // From previous timeout
+	v.retryPrompt.SetAutoRetried(true) // From previous timeout
 	v.textarea.SetValue("SELECT 1")
 
 	cmd := v.executeQuery()
 
-	if v.autoRetried {
+	if v.retryPrompt.AutoRetried() {
 		t.Error("Expected autoRetried to be reset on new query execution")
 	}
 	if cmd == nil {

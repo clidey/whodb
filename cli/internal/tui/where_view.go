@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -146,8 +147,8 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
+		switch {
+		case key.Matches(msg, Keys.Global.Back):
 			if v.addingNew {
 				v.addingNew = false
 				v.currentField = ""
@@ -157,10 +158,12 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				v.selectedIndex = -1
 				return v, nil
 			}
-			v.parent.mode = ViewResults
+			if !v.parent.PopView() {
+				v.parent.mode = ViewResults
+			}
 			return v, nil
 
-		case "ctrl+a":
+		case key.Matches(msg, Keys.WhereList.Add):
 			if !v.addingNew {
 				v.addingNew = true
 				v.selectedIndex = -1
@@ -171,7 +174,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "ctrl+d":
+		case key.Matches(msg, Keys.WhereList.Delete):
 			if !v.addingNew && v.selectedIndex >= 0 && v.selectedIndex < len(v.conditions) {
 				v.conditions = append(v.conditions[:v.selectedIndex], v.conditions[v.selectedIndex+1:]...)
 				if v.selectedIndex >= len(v.conditions) && v.selectedIndex > 0 {
@@ -180,7 +183,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "ctrl+e":
+		case key.Matches(msg, Keys.WhereList.EditCond):
 			if !v.addingNew && v.selectedIndex >= 0 && v.selectedIndex < len(v.conditions) {
 				// Load the selected condition into edit mode
 				cond := v.conditions[v.selectedIndex]
@@ -195,7 +198,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "enter":
+		case key.Matches(msg, Keys.WhereList.Apply):
 			if v.addingNew {
 				if v.focusIndex == 3 {
 					if v.currentField != "" && v.currentOp != "" && v.valueInput.Value() != "" {
@@ -215,11 +218,13 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 			} else {
 				v.parent.resultsView.whereCondition = v.buildWhereCondition()
 				v.parent.resultsView.loadWithWhere()
-				v.parent.mode = ViewResults
+				if !v.parent.PopView() {
+					v.parent.mode = ViewResults
+				}
 				return v, nil
 			}
 
-		case "up":
+		case key.Matches(msg, Keys.WhereList.Up):
 			if v.addingNew {
 				v.focusIndex--
 				if v.focusIndex < 0 {
@@ -237,7 +242,7 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "down":
+		case key.Matches(msg, Keys.WhereList.Down):
 			if v.addingNew {
 				v.focusIndex++
 				if v.focusIndex > 3 {
@@ -257,39 +262,37 @@ func (v *WhereView) Update(msg tea.Msg) (*WhereView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "left":
+		case key.Matches(msg, Keys.WhereAdd.Change):
 			if v.addingNew {
-				switch v.focusIndex {
-				case 0:
-					idx := v.findColumnIndex(v.currentField)
-					if idx > 0 {
-						v.currentField = v.columns[idx-1].Name
+				if msg.String() == "left" {
+					switch v.focusIndex {
+					case 0:
+						idx := v.findColumnIndex(v.currentField)
+						if idx > 0 {
+							v.currentField = v.columns[idx-1].Name
+						}
+					case 1:
+						idx := v.findOperatorIndex(v.currentOp)
+						if idx > 0 {
+							v.currentOp = v.operators[idx-1]
+						}
 					}
-				case 1:
-					idx := v.findOperatorIndex(v.currentOp)
-					if idx > 0 {
-						v.currentOp = v.operators[idx-1]
-					}
-				}
-			}
-			return v, nil
-
-		case "right":
-			if v.addingNew {
-				switch v.focusIndex {
-				case 0:
-					idx := v.findColumnIndex(v.currentField)
-					if idx < len(v.columns)-1 {
-						v.currentField = v.columns[idx+1].Name
-					} else if v.currentField == "" && len(v.columns) > 0 {
-						v.currentField = v.columns[0].Name
-					}
-				case 1:
-					idx := v.findOperatorIndex(v.currentOp)
-					if idx < len(v.operators)-1 {
-						v.currentOp = v.operators[idx+1]
-					} else if v.currentOp == "" && len(v.operators) > 0 {
-						v.currentOp = v.operators[0]
+				} else {
+					switch v.focusIndex {
+					case 0:
+						idx := v.findColumnIndex(v.currentField)
+						if idx < len(v.columns)-1 {
+							v.currentField = v.columns[idx+1].Name
+						} else if v.currentField == "" && len(v.columns) > 0 {
+							v.currentField = v.columns[0].Name
+						}
+					case 1:
+						idx := v.findOperatorIndex(v.currentOp)
+						if idx < len(v.operators)-1 {
+							v.currentOp = v.operators[idx+1]
+						} else if v.currentOp == "" && len(v.operators) > 0 {
+							v.currentOp = v.operators[0]
+						}
 					}
 				}
 			}
@@ -399,24 +402,24 @@ func (v *WhereView) View() string {
 		b.WriteString("  " + addLabel)
 		b.WriteString("\n\n")
 
-		b.WriteString(styles.RenderHelp(
-			"↑", "prev",
-			"↓", "next",
-			"← →", "change",
-			"enter", "add",
-			"esc", "cancel",
+		b.WriteString(RenderBindingHelp(
+			Keys.WhereAdd.Prev,
+			Keys.WhereAdd.Next,
+			Keys.WhereAdd.Change,
+			Keys.WhereAdd.Confirm,
+			Keys.Global.Back,
 		))
 	} else {
 		b.WriteString("\n")
-		b.WriteString(styles.RenderHelp(
-			"↑", "prev",
-			"↓", "next",
-			"ctrl+a", "add new",
-			"ctrl+e", "edit",
-			"ctrl+d", "delete",
-			"enter", "apply",
-			"esc", "back",
-			"ctrl+c", "quit",
+		b.WriteString(RenderBindingHelp(
+			Keys.WhereList.Up,
+			Keys.WhereList.Down,
+			Keys.WhereList.Add,
+			Keys.WhereList.EditCond,
+			Keys.WhereList.Delete,
+			Keys.WhereList.Apply,
+			Keys.Global.Back,
+			Keys.Global.Quit,
 		))
 	}
 

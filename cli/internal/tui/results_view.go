@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -46,7 +47,6 @@ type ResultsView struct {
 	visibleColumns  []string
 	editingPageSize bool
 	pageSizeInput   textinput.Model
-	returnTo        ViewMode // Which view to return to on esc
 	loading         bool
 	goToBottom      bool // Flag to set cursor at bottom after loading
 }
@@ -88,7 +88,7 @@ func NewResultsView(parent *MainModel) *ResultsView {
 		parent:        parent,
 		table:         t,
 		currentPage:   0,
-		pageSize:      50,
+		pageSize:      parent.config.GetPageSize(),
 		columnOffset:  0,
 		maxColumns:    10,
 		pageSizeInput: ti,
@@ -156,6 +156,8 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 					v.currentPage = 0
 					v.editingPageSize = false
 					v.pageSizeInput.Blur()
+					v.parent.config.SetPageSize(v.pageSize)
+					v.parent.config.Save()
 					return v, v.loadPage()
 				}
 				// Invalid input, just exit edit mode
@@ -172,20 +174,14 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			}
 		}
 
-		switch msg.String() {
-		case "esc":
-			// Use explicit returnTo if set, otherwise infer from context
-			if v.returnTo != 0 {
-				v.parent.mode = v.returnTo
-				v.returnTo = 0 // Reset for next time
-			} else if v.query != "" {
-				v.parent.mode = ViewEditor
-			} else {
+		switch {
+		case key.Matches(msg, Keys.Global.Back):
+			if !v.parent.PopView() {
 				v.parent.mode = ViewBrowser
 			}
 			return v, nil
 
-		case "n":
+		case key.Matches(msg, Keys.Results.NextPage):
 			// Check if we can go to next page
 			if v.hasNextPage() {
 				v.currentPage++
@@ -193,28 +189,28 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "p":
+		case key.Matches(msg, Keys.Results.PrevPage):
 			if v.hasPreviousPage() {
 				v.currentPage--
 				return v, v.loadPage()
 			}
 			return v, nil
 
-		case "left", "h":
+		case key.Matches(msg, Keys.Results.ColLeft):
 			if v.columnOffset > 0 {
 				v.columnOffset--
 				v.updateTable()
 			}
 			return v, nil
 
-		case "right", "l":
+		case key.Matches(msg, Keys.Results.ColRight):
 			if v.results != nil && v.columnOffset+v.maxColumns < len(v.results.Columns) {
 				v.columnOffset++
 				v.updateTable()
 			}
 			return v, nil
 
-		case "w":
+		case key.Matches(msg, Keys.Results.Where):
 			// WHERE conditions are only available when viewing table data
 			if v.schema != "" && v.tableName != "" {
 				columns, err := v.parent.dbManager.GetColumns(v.schema, v.tableName)
@@ -223,11 +219,11 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 					return v, nil
 				}
 				v.parent.whereView.SetTableContext(v.schema, v.tableName, columns, v.whereCondition)
-				v.parent.mode = ViewWhere
+				v.parent.PushView(ViewWhere)
 				return v, nil
 			}
 
-		case "c":
+		case key.Matches(msg, Keys.Results.Columns):
 			// Column selection is only available when viewing table data
 			if v.schema != "" && v.tableName != "" {
 				columns, err := v.parent.dbManager.GetColumns(v.schema, v.tableName)
@@ -236,24 +232,24 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 					return v, nil
 				}
 				v.parent.columnsView.SetTableContext(v.schema, v.tableName, columns)
-				v.parent.mode = ViewColumns
+				v.parent.PushView(ViewColumns)
 				return v, nil
 			}
 
-		case "e":
+		case key.Matches(msg, Keys.Results.Export):
 			if v.schema != "" && v.tableName != "" {
 				// Export table data
 				v.parent.exportView.SetExportData(v.schema, v.tableName)
-				v.parent.mode = ViewExport
+				v.parent.PushView(ViewExport)
 				return v, nil
 			} else if v.results != nil && v.query != "" {
 				// Export query results
 				v.parent.exportView.SetExportDataFromQuery(v.results)
-				v.parent.mode = ViewExport
+				v.parent.PushView(ViewExport)
 				return v, nil
 			}
 
-		case "s":
+		case key.Matches(msg, Keys.Results.PageSize):
 			// Cycle through page sizes
 			currentIndex := 0
 			for i, size := range pageSizes {
@@ -264,16 +260,18 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			}
 			v.pageSize = pageSizes[(currentIndex+1)%len(pageSizes)]
 			v.currentPage = 0
+			v.parent.config.SetPageSize(v.pageSize)
+			v.parent.config.Save()
 			return v, v.loadPage()
 
-		case "S":
+		case key.Matches(msg, Keys.Results.CustomSize):
 			// Enter custom page size mode
 			v.editingPageSize = true
 			v.pageSizeInput.SetValue("")
 			v.pageSizeInput.Focus()
 			return v, nil
 
-		case "down", "j":
+		case key.Matches(msg, Keys.Results.Down):
 			// Check if at bottom of current page - auto-paginate to next
 			if v.results != nil {
 				pageRows := v.currentPageRows()
@@ -291,7 +289,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 				}
 			}
 
-		case "up", "k":
+		case key.Matches(msg, Keys.Results.Up):
 			// Check if at top of current page - auto-paginate to previous
 			if v.results != nil {
 				pageRows := v.currentPageRows()
@@ -386,32 +384,33 @@ func (v *ResultsView) View() string {
 			columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
 		}
 
+		// Use static bindings for most items, but dynamic labels for where/columns/back
 		b.WriteString(styles.RenderHelp(
-			"↑/k", "up",
-			"↓/j", "down",
-			"←/h", "col left",
-			"→/l", "col right",
+			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
 			"scroll", "trackpad/mouse",
-			"w", whereLabel,
-			"c", columnsLabel,
-			"e", "export",
-			"n/p", "page",
-			"s", "page size",
-			"shift+s", "custom size",
-			"esc", backTarget,
+			Keys.Results.Where.Help().Key, whereLabel,
+			Keys.Results.Columns.Help().Key, columnsLabel,
+			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+			Keys.Global.Back.Help().Key, backTarget,
 		))
 	} else {
 		b.WriteString(styles.RenderHelp(
-			"↑/k", "up",
-			"↓/j", "down",
-			"←/h", "col left",
-			"→/l", "col right",
+			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
 			"scroll", "trackpad/mouse",
-			"e", "export",
-			"n/p", "page",
-			"s", "page size",
-			"shift+s", "custom size",
-			"esc", backTarget,
+			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+			Keys.Global.Back.Help().Key, backTarget,
 		))
 	}
 

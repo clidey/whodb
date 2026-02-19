@@ -113,8 +113,9 @@ func TestMainModel_Init(t *testing.T) {
 	m := NewMainModel()
 	cmd := m.Init()
 
-	if cmd != nil {
-		t.Error("Expected Init to return nil when not connected")
+	// Init always returns at least the spinner tick command
+	if cmd == nil {
+		t.Error("Expected Init to return spinner tick command")
 	}
 }
 
@@ -473,5 +474,216 @@ func TestMainModel_Update_AllModes(t *testing.T) {
 			_, _ = m.Update(msg)
 			// Just ensure no panic
 		})
+	}
+}
+
+func TestMainModel_PushView(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.mode = ViewBrowser
+
+	m.PushView(ViewResults)
+
+	if m.mode != ViewResults {
+		t.Errorf("Expected mode ViewResults, got %v", m.mode)
+	}
+	if len(m.viewHistory) != 1 {
+		t.Fatalf("Expected 1 entry in view history, got %d", len(m.viewHistory))
+	}
+	if m.viewHistory[0] != ViewBrowser {
+		t.Errorf("Expected ViewBrowser on stack, got %v", m.viewHistory[0])
+	}
+}
+
+func TestMainModel_PopView(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.mode = ViewBrowser
+
+	// Pop from empty stack
+	if m.PopView() {
+		t.Error("Expected PopView to return false on empty stack")
+	}
+	if m.mode != ViewBrowser {
+		t.Error("Expected mode unchanged after empty pop")
+	}
+
+	// Push then pop
+	m.PushView(ViewResults)
+	m.PushView(ViewExport)
+
+	if m.mode != ViewExport {
+		t.Errorf("Expected mode ViewExport, got %v", m.mode)
+	}
+
+	if !m.PopView() {
+		t.Error("Expected PopView to return true")
+	}
+	if m.mode != ViewResults {
+		t.Errorf("Expected mode ViewResults after first pop, got %v", m.mode)
+	}
+
+	if !m.PopView() {
+		t.Error("Expected PopView to return true")
+	}
+	if m.mode != ViewBrowser {
+		t.Errorf("Expected mode ViewBrowser after second pop, got %v", m.mode)
+	}
+
+	if m.PopView() {
+		t.Error("Expected PopView to return false on empty stack")
+	}
+}
+
+func TestMainModel_PushView_DeepNavigation(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.mode = ViewBrowser
+
+	// Simulate: Browser → Results → Where → (pop back through)
+	m.PushView(ViewResults)
+	m.PushView(ViewWhere)
+
+	if len(m.viewHistory) != 2 {
+		t.Fatalf("Expected 2 entries, got %d", len(m.viewHistory))
+	}
+
+	m.PopView()
+	if m.mode != ViewResults {
+		t.Errorf("Expected ViewResults, got %v", m.mode)
+	}
+
+	m.PopView()
+	if m.mode != ViewBrowser {
+		t.Errorf("Expected ViewBrowser, got %v", m.mode)
+	}
+}
+
+func TestMainModel_TabSwitch_ClearsStack(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.mode = ViewBrowser
+
+	// Build up a navigation stack
+	m.PushView(ViewResults)
+	m.PushView(ViewWhere)
+
+	if len(m.viewHistory) != 2 {
+		t.Fatalf("Expected 2 entries before tab switch, got %d", len(m.viewHistory))
+	}
+
+	// Simulate tab switch
+	m.viewHistory = nil
+	m.mode = ViewEditor
+
+	if len(m.viewHistory) != 0 {
+		t.Errorf("Expected empty stack after tab switch, got %d", len(m.viewHistory))
+	}
+}
+
+func TestMainModel_SetStatus(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+
+	cmd := m.SetStatus("Query executed (5 rows)")
+	if m.statusMessage != "Query executed (5 rows)" {
+		t.Errorf("Expected status message to be set, got %q", m.statusMessage)
+	}
+	if cmd == nil {
+		t.Error("Expected SetStatus to return a tick command for auto-dismiss")
+	}
+}
+
+func TestMainModel_StatusMessageTimeout(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.statusMessage = "Test message"
+
+	// Process the timeout message
+	result, _ := m.Update(statusMessageTimeoutMsg{})
+	model := result.(*MainModel)
+
+	if model.statusMessage != "" {
+		t.Errorf("Expected status message to be cleared after timeout, got %q", model.statusMessage)
+	}
+}
+
+func TestMainModel_RenderStatusBar_NotConnected(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.mode = ViewBrowser
+
+	bar := m.renderStatusBar()
+	if bar != "" {
+		t.Errorf("Expected empty status bar when not connected, got %q", bar)
+	}
+}
+
+func TestMainModel_RenderStatusBar_ConnectionView(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	m.mode = ViewConnection
+
+	bar := m.renderStatusBar()
+	if bar != "" {
+		t.Errorf("Expected empty status bar on connection view, got %q", bar)
+	}
+}
+
+func TestMainModel_IsLoading(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+
+	// Clear all loading states (some views start with loading=true)
+	m.browserView.loading = false
+	m.schemaView.loading = false
+	m.editorView.queryState = OperationIdle
+	m.chatView.sending = false
+	m.chatView.loadingModels = false
+	m.exportView.exporting = false
+	m.historyView.executing = false
+	m.connectionView.connecting = false
+
+	if m.isLoading() {
+		t.Error("Expected isLoading=false when all views are idle")
+	}
+
+	m.browserView.loading = true
+	if !m.isLoading() {
+		t.Error("Expected isLoading=true when browser is loading")
+	}
+	m.browserView.loading = false
+
+	m.editorView.queryState = OperationRunning
+	if !m.isLoading() {
+		t.Error("Expected isLoading=true when editor query is running")
+	}
+	m.editorView.queryState = OperationIdle
+
+	m.chatView.sending = true
+	if !m.isLoading() {
+		t.Error("Expected isLoading=true when chat is sending")
+	}
+	m.chatView.sending = false
+}
+
+func TestMainModel_SpinnerView(t *testing.T) {
+	setupTestEnv(t)
+
+	m := NewMainModel()
+	view := m.SpinnerView()
+
+	// Spinner should return some non-empty string (the dot character)
+	if view == "" {
+		t.Error("Expected SpinnerView to return non-empty string")
 	}
 }

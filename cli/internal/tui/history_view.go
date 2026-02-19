@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -60,9 +61,7 @@ type HistoryView struct {
 	confirmingClear bool
 	executing       bool
 	queryCancel     context.CancelFunc
-	// Retry prompt state for timed out queries
-	retryPrompt   bool
-	timedOutQuery string
+	retryPrompt     RetryPrompt
 }
 
 func NewHistoryView(parent *MainModel) *HistoryView {
@@ -87,8 +86,7 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			if errors.Is(msg.Err, context.DeadlineExceeded) {
 				v.parent.err = fmt.Errorf("query timed out")
 				// Enable retry prompt
-				v.retryPrompt = true
-				v.timedOutQuery = msg.Query
+				v.retryPrompt.Show(msg.Query)
 			} else if errors.Is(msg.Err, context.Canceled) {
 				// User cancelled, don't show error
 				return v, nil
@@ -98,7 +96,7 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 			return v, nil
 		}
 		v.parent.resultsView.SetResults(msg.Result, msg.Query)
-		v.parent.mode = ViewResults
+		v.parent.PushView(ViewResults)
 		return v, nil
 
 	case tea.WindowSizeMsg:
@@ -122,42 +120,27 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// Handle retry prompt for timed out queries
-		if v.retryPrompt {
-			switch msg.String() {
-			case "1":
-				v.retryPrompt = false
-				v.parent.err = nil
-				return v, v.executeQueryWithTimeout(v.timedOutQuery, 60*time.Second)
-			case "2":
-				v.retryPrompt = false
-				v.parent.err = nil
-				return v, v.executeQueryWithTimeout(v.timedOutQuery, 2*time.Minute)
-			case "3":
-				v.retryPrompt = false
-				v.parent.err = nil
-				return v, v.executeQueryWithTimeout(v.timedOutQuery, 5*time.Minute)
-			case "4":
-				v.retryPrompt = false
-				v.parent.err = nil
-				return v, v.executeQueryWithTimeout(v.timedOutQuery, 24*time.Hour)
-			case "esc":
-				v.retryPrompt = false
-				v.timedOutQuery = ""
+		if v.retryPrompt.IsActive() {
+			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
+			if handled {
+				if result != nil {
+					v.parent.err = nil
+					return v, v.executeQueryWithTimeout(v.retryPrompt.TimedOutQuery(), result.Timeout)
+				}
 				return v, nil
 			}
-			// Ignore other keys while in retry prompt
 			return v, nil
 		}
 
-		switch msg.String() {
-		case "enter":
+		switch {
+		case key.Matches(msg, Keys.History.Edit):
 			if item, ok := v.list.SelectedItem().(historyItem); ok {
 				v.parent.editorView.textarea.SetValue(item.entry.Query)
-				v.parent.mode = ViewEditor
+				v.parent.PushView(ViewEditor)
 				return v, nil
 			}
 
-		case "r":
+		case key.Matches(msg, Keys.History.Rerun):
 			if v.executing {
 				return v, nil // Already executing
 			}
@@ -177,14 +160,14 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 				}
 			}
 
-		case "D":
+		case key.Matches(msg, Keys.History.ClearAll):
 			// Show confirmation prompt
 			if !v.confirmingClear {
 				v.confirmingClear = true
 				return v, nil
 			}
 
-		case "y", "Y":
+		case msg.String() == "y" || msg.String() == "Y":
 			// Confirm clear if in confirmation mode
 			if v.confirmingClear {
 				v.parent.histMgr.Clear()
@@ -193,14 +176,14 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 				return v, nil
 			}
 
-		case "n", "N":
+		case msg.String() == "n" || msg.String() == "N":
 			// Cancel clear confirmation
 			if v.confirmingClear {
 				v.confirmingClear = false
 				return v, nil
 			}
 
-		case "esc":
+		case key.Matches(msg, Keys.Global.Back):
 			// Cancel executing query first
 			if v.executing && v.queryCancel != nil {
 				v.queryCancel()
@@ -211,7 +194,9 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 				v.confirmingClear = false
 				return v, nil
 			}
-			v.parent.mode = ViewBrowser
+			if !v.parent.PopView() {
+				v.parent.mode = ViewBrowser
+			}
 			return v, nil
 		}
 	}
@@ -229,28 +214,13 @@ func (v *HistoryView) View() string {
 
 	// Show executing state
 	if v.executing {
-		b.WriteString(styles.MutedStyle.Render("Executing query..."))
-		b.WriteString("\n")
-		b.WriteString(styles.MutedStyle.Render("Press ESC to cancel"))
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Executing query... Press ESC to cancel"))
 		b.WriteString("\n\n")
 	}
 
 	// Show retry prompt for timed out queries
-	if v.retryPrompt {
-		b.WriteString(styles.ErrorStyle.Render("Query timed out"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
-		b.WriteString("\n")
-		b.WriteString(styles.KeyStyle.Render("[1]"))
-		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
-		b.WriteString(styles.KeyStyle.Render("[2]"))
-		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
-		b.WriteString(styles.KeyStyle.Render("[3]"))
-		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
-		b.WriteString(styles.KeyStyle.Render("[4]"))
-		b.WriteString(styles.MutedStyle.Render(" No limit"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderHelp("esc", "cancel"))
+	if v.retryPrompt.IsActive() {
+		b.WriteString(v.retryPrompt.View())
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -275,15 +245,15 @@ func (v *HistoryView) View() string {
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(styles.RenderHelp(
-		"↑/k", "up",
-		"↓/j", "down",
-		"enter", "edit",
-		"r", "re-run",
-		"shift+d", "clear all",
-		"tab", "next view",
-		"esc", "back",
-		"ctrl+c", "quit",
+	b.WriteString(RenderBindingHelp(
+		Keys.Browser.Up,
+		Keys.Browser.Down,
+		Keys.History.Edit,
+		Keys.History.Rerun,
+		Keys.History.ClearAll,
+		Keys.Global.NextView,
+		Keys.Global.Back,
+		Keys.Global.Quit,
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())

@@ -137,7 +137,9 @@ func TestResultsView_Escape_ToEditor(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()
 
-	// Set up as query results
+	// Simulate navigating from editor to results via PushView
+	v.parent.mode = ViewEditor
+	v.parent.PushView(ViewResults)
 	v.query = "SELECT 1"
 	v.schema = ""
 	v.tableName = ""
@@ -167,24 +169,25 @@ func TestResultsView_Escape_ToBrowser(t *testing.T) {
 	}
 }
 
-func TestResultsView_Escape_ToReturnTo(t *testing.T) {
+func TestResultsView_Escape_PopViewStack(t *testing.T) {
 	v, cleanup := setupResultsViewTest(t)
 	defer cleanup()
 
-	// Set explicit returnTo
-	v.returnTo = ViewChat
-	v.query = "SELECT 1" // Would normally go to editor
+	// Simulate navigating from chat to results via PushView
+	v.parent.mode = ViewChat
+	v.parent.PushView(ViewResults)
+	v.query = "SELECT 1"
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	v, _ = v.Update(msg)
 
 	if v.parent.mode != ViewChat {
-		t.Errorf("Expected mode ViewChat (returnTo), got %v", v.parent.mode)
+		t.Errorf("Expected mode ViewChat (from nav stack), got %v", v.parent.mode)
 	}
 
-	// returnTo should be reset
-	if v.returnTo != 0 {
-		t.Error("Expected returnTo to be reset")
+	// Stack should be empty now
+	if len(v.parent.viewHistory) != 0 {
+		t.Errorf("Expected empty view history, got %d entries", len(v.parent.viewHistory))
 	}
 }
 

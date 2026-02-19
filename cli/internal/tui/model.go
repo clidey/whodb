@@ -17,8 +17,11 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
@@ -42,14 +45,17 @@ const (
 )
 
 type MainModel struct {
-	mode        ViewMode
-	width       int
-	height      int
-	dbManager   *database.Manager
-	histMgr     *history.Manager
-	config      *config.Config
-	err         error
-	showingHelp bool
+	mode          ViewMode
+	width         int
+	height        int
+	dbManager     *database.Manager
+	histMgr       *history.Manager
+	config        *config.Config
+	err           error
+	showingHelp   bool
+	spinner       spinner.Model
+	statusMessage string
+	viewHistory   []ViewMode
 
 	connectionView *ConnectionView
 	browserView    *BrowserView
@@ -79,11 +85,16 @@ func NewMainModel() *MainModel {
 		return &MainModel{err: err}
 	}
 
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = styles.MutedStyle
+
 	m := &MainModel{
 		mode:      ViewConnection,
 		dbManager: dbMgr,
 		histMgr:   histMgr,
 		config:    cfg,
+		spinner:   s,
 	}
 
 	m.connectionView = NewConnectionView(m)
@@ -116,10 +127,11 @@ func NewMainModelWithConnection(conn *config.Connection) *MainModel {
 }
 
 func (m *MainModel) Init() tea.Cmd {
+	cmds := []tea.Cmd{m.spinner.Tick}
 	if m.mode == ViewBrowser && m.dbManager.GetCurrentConnection() != nil {
-		return m.browserView.loadTables()
+		cmds = append(cmds, m.browserView.loadTables())
 	}
-	return nil
+	return tea.Batch(cmds...)
 }
 
 func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -163,6 +175,15 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
+
+	case statusMessageTimeoutMsg:
+		m.statusMessage = ""
+		return m, nil
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -267,7 +288,68 @@ func (m *MainModel) View() string {
 		content = m.schemaView.View()
 	}
 
+	// Add status bar between view indicator and content (only when connected)
+	statusBar := m.renderStatusBar()
+	if statusBar != "" {
+		return viewIndicator + "\n" + statusBar + "\n" + content
+	}
+
 	return viewIndicator + "\n" + content
+}
+
+// SetStatus sets a transient status message that auto-dismisses after 3 seconds.
+func (m *MainModel) SetStatus(msg string) tea.Cmd {
+	m.statusMessage = msg
+	return tea.Tick(3*time.Second, func(time.Time) tea.Msg {
+		return statusMessageTimeoutMsg{}
+	})
+}
+
+// isLoading returns true if any view is currently performing an async operation.
+func (m *MainModel) isLoading() bool {
+	return m.browserView.loading ||
+		m.editorView.queryState == OperationRunning ||
+		m.chatView.sending ||
+		m.chatView.loadingModels ||
+		m.exportView.exporting ||
+		m.schemaView.loading ||
+		m.historyView.executing ||
+		m.connectionView.connecting
+}
+
+// renderStatusBar renders the persistent status bar shown when connected.
+func (m *MainModel) renderStatusBar() string {
+	if m.mode == ViewConnection {
+		return ""
+	}
+
+	conn := m.dbManager.GetCurrentConnection()
+	if conn == nil {
+		return ""
+	}
+
+	var parts []string
+
+	// Connection info
+	connInfo := fmt.Sprintf("%s@%s/%s", conn.Type, conn.Host, conn.Database)
+	parts = append(parts, styles.MutedStyle.Render(connInfo))
+
+	// Current schema
+	if m.browserView.currentSchema != "" {
+		parts = append(parts, styles.MutedStyle.Render("schema:"+m.browserView.currentSchema))
+	}
+
+	// Spinner when loading
+	if m.isLoading() {
+		parts = append(parts, m.spinner.View())
+	}
+
+	// Transient status message
+	if m.statusMessage != "" {
+		parts = append(parts, styles.SuccessStyle.Render(m.statusMessage))
+	}
+
+	return " " + strings.Join(parts, styles.MutedStyle.Render(" • "))
 }
 
 // isHelpSafe returns true if it's safe to show help (no active text input)
@@ -308,81 +390,98 @@ func (m *MainModel) renderHelpOverlay() string {
 	switch m.mode {
 	case ViewBrowser:
 		b.WriteString(styles.KeyStyle.Render("Browser View\n\n"))
-		b.WriteString("  ctrl+s     Select schema\n")
-		b.WriteString("  ctrl+r     Refresh tables\n")
-		b.WriteString("  ctrl+e     Open editor\n")
-		b.WriteString("  ctrl+a     Open AI chat\n")
-		b.WriteString("  ctrl+h     Open history\n")
-		b.WriteString("  /          Filter tables\n")
-		b.WriteString("  enter      View table data\n")
-		b.WriteString("  esc        Disconnect\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Browser.Schema,
+			Keys.Browser.Refresh,
+			Keys.Browser.Editor,
+			Keys.Browser.AIChat,
+			Keys.Browser.History,
+			Keys.Browser.Filter,
+			Keys.Browser.Select,
+			Keys.Browser.Disconnect,
+		))
 
 	case ViewResults:
 		b.WriteString(styles.KeyStyle.Render("Results View\n\n"))
-		b.WriteString("  n          Next page\n")
-		b.WriteString("  p          Previous page\n")
-		b.WriteString("  h/l        Scroll columns\n")
-		b.WriteString("  w          WHERE conditions\n")
-		b.WriteString("  c          Column selection\n")
-		b.WriteString("  e          Export data\n")
-		b.WriteString("  s          Cycle page size\n")
-		b.WriteString("  shift+s    Custom page size\n")
-		b.WriteString("  esc        Back\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Results.NextPage,
+			Keys.Results.ColLeft,
+			Keys.Results.Where,
+			Keys.Results.Columns,
+			Keys.Results.Export,
+			Keys.Results.PageSize,
+			Keys.Results.CustomSize,
+			Keys.Global.Back,
+		))
 
 	case ViewHistory:
 		b.WriteString(styles.KeyStyle.Render("History View\n\n"))
-		b.WriteString("  enter      Edit query\n")
-		b.WriteString("  r          Re-run query\n")
-		b.WriteString("  shift+d    Clear all history\n")
-		b.WriteString("  esc        Back\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.History.Edit,
+			Keys.History.Rerun,
+			Keys.History.ClearAll,
+			Keys.Global.Back,
+		))
 
 	case ViewChat:
 		b.WriteString(styles.KeyStyle.Render("AI Chat View\n\n"))
-		b.WriteString("  up/down    Cycle fields\n")
-		b.WriteString("  left/right Change selection\n")
-		b.WriteString("  enter      Send/view table\n")
-		b.WriteString("  ctrl+p/n   Select message\n")
-		b.WriteString("  ctrl+i     Focus input\n")
-		b.WriteString("  ctrl+r     Revoke consent\n")
-		b.WriteString("  esc        Back\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Chat.CycleFieldUp,
+			Keys.Chat.ChangeLeft,
+			Keys.Chat.Send,
+			Keys.Chat.SelectPrevMsg,
+			Keys.Chat.FocusInput,
+			Keys.Chat.RevokeConsent,
+			Keys.Global.Back,
+		))
 
 	case ViewSchema:
 		b.WriteString(styles.KeyStyle.Render("Schema View\n\n"))
-		b.WriteString("  enter      Expand/collapse\n")
-		b.WriteString("  v          View table data\n")
-		b.WriteString("  /          Filter tables\n")
-		b.WriteString("  r          Refresh\n")
-		b.WriteString("  esc        Back\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Schema.Toggle,
+			Keys.Schema.ViewData,
+			Keys.Schema.Filter,
+			Keys.Schema.Refresh,
+			Keys.Global.Back,
+		))
 
 	case ViewColumns:
 		b.WriteString(styles.KeyStyle.Render("Column Selection\n\n"))
-		b.WriteString("  space/x    Toggle column\n")
-		b.WriteString("  a          Select all\n")
-		b.WriteString("  n          Select none\n")
-		b.WriteString("  enter      Apply\n")
-		b.WriteString("  esc        Cancel\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Columns.Toggle,
+			Keys.Columns.SelectAll,
+			Keys.Columns.SelectNone,
+			Keys.Columns.Apply,
+			Keys.Global.Back,
+		))
 
 	case ViewWhere:
 		b.WriteString(styles.KeyStyle.Render("WHERE Conditions\n\n"))
-		b.WriteString("  ctrl+a     Add condition\n")
-		b.WriteString("  ctrl+e     Edit condition\n")
-		b.WriteString("  ctrl+d     Delete condition\n")
-		b.WriteString("  enter      Apply\n")
-		b.WriteString("  esc        Cancel\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.WhereList.Add,
+			Keys.WhereList.EditCond,
+			Keys.WhereList.Delete,
+			Keys.WhereList.Apply,
+			Keys.Global.Back,
+		))
 
 	case ViewExport:
 		b.WriteString(styles.KeyStyle.Render("Export View\n\n"))
-		b.WriteString("  tab        Next field\n")
-		b.WriteString("  left/right Change option\n")
-		b.WriteString("  enter      Export\n")
-		b.WriteString("  esc        Cancel\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Export.Next,
+			Keys.Export.OptionLeft,
+			Keys.Export.Export,
+			Keys.Global.Back,
+		))
 
 	case ViewConnection:
 		b.WriteString(styles.KeyStyle.Render("Connection View\n\n"))
-		b.WriteString("  n          New connection\n")
-		b.WriteString("  d          Delete connection\n")
-		b.WriteString("  enter      Connect\n")
-		b.WriteString("  esc        Quit\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.ConnectionList.New,
+			Keys.ConnectionList.DeleteConn,
+			Keys.ConnectionList.Connect,
+			Keys.ConnectionList.QuitEsc,
+		))
 
 	default:
 		b.WriteString("No help available for this view\n")
@@ -410,6 +509,9 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 			break
 		}
 	}
+
+	// Tab switching clears the navigation stack
+	m.viewHistory = nil
 
 	// Move to next view in tab order (or start at beginning if not in tabbable view)
 	if currentIndex == -1 {
@@ -542,6 +644,28 @@ func (m *MainModel) renderViewIndicator() string {
 	}
 
 	return result
+}
+
+// PushView saves the current mode on the view history stack and switches to newView.
+func (m *MainModel) PushView(newView ViewMode) {
+	m.viewHistory = append(m.viewHistory, m.mode)
+	m.mode = newView
+}
+
+// PopView restores the previous view from the history stack.
+// Returns false if the stack is empty.
+func (m *MainModel) PopView() bool {
+	if len(m.viewHistory) == 0 {
+		return false
+	}
+	m.mode = m.viewHistory[len(m.viewHistory)-1]
+	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
+	return true
+}
+
+// SpinnerView returns the current spinner frame for use in loading indicators.
+func (m *MainModel) SpinnerView() string {
+	return m.spinner.View()
 }
 
 func renderError(message string) string {

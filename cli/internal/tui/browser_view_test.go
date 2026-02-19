@@ -526,7 +526,7 @@ func TestBrowserView_RetryPrompt_EscCancels(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
+	v.retryPrompt.Show("")
 	v.err = nil
 
 	// Send ESC key
@@ -534,7 +534,7 @@ func TestBrowserView_RetryPrompt_EscCancels(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false after ESC")
 	}
 }
@@ -556,7 +556,7 @@ func TestBrowserView_RetryPrompt_KeyHandling(t *testing.T) {
 			defer cleanup()
 
 			// Set up retry prompt state
-			v.retryPrompt = true
+			v.retryPrompt.Show("")
 			v.err = nil
 
 			// Send number key
@@ -564,7 +564,7 @@ func TestBrowserView_RetryPrompt_KeyHandling(t *testing.T) {
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
-			if v.retryPrompt {
+			if v.retryPrompt.IsActive() {
 				t.Error("Expected retryPrompt to be false after selecting retry option")
 			}
 
@@ -591,14 +591,14 @@ func TestBrowserView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
+	v.retryPrompt.Show("")
 
 	// Send an unrelated key (like 'a')
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to still be true after unrecognized key")
 	}
 }
@@ -618,7 +618,7 @@ func TestBrowserView_RetryPrompt_View(t *testing.T) {
 		t.Skipf("Skipping test - database plugin not available: %v", err)
 	}
 
-	v.retryPrompt = true
+	v.retryPrompt.Show("")
 
 	view := v.View()
 
@@ -656,7 +656,7 @@ func TestBrowserView_TablesLoadedMsg_Timeout_SetsRetryPrompt(t *testing.T) {
 
 	// First test normal success - no retry prompt
 	v, _ = v.Update(msg)
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false on success")
 	}
 
@@ -665,7 +665,7 @@ func TestBrowserView_TablesLoadedMsg_Timeout_SetsRetryPrompt(t *testing.T) {
 	msg.err = &timeoutError{}
 	v, _ = v.Update(msg)
 
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true after timeout")
 	}
 }
@@ -686,7 +686,7 @@ func TestBrowserView_TimeoutAutoRetry_WithPreference(t *testing.T) {
 	defer cleanup()
 
 	v.loading = true
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 
 	// Set a preferred timeout
 	v.parent.config.SetPreferredTimeout(60)
@@ -701,10 +701,10 @@ func TestBrowserView_TimeoutAutoRetry_WithPreference(t *testing.T) {
 	v, cmd := v.Update(msg)
 
 	// Should auto-retry (not show prompt)
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false (auto-retry should happen)")
 	}
-	if !v.autoRetried {
+	if !v.retryPrompt.AutoRetried() {
 		t.Error("Expected autoRetried to be true")
 	}
 	if !v.loading {
@@ -720,7 +720,7 @@ func TestBrowserView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
 	defer cleanup()
 
 	v.loading = true
-	v.autoRetried = true // Already retried once
+	v.retryPrompt.SetAutoRetried(true) // Already retried once
 
 	v.parent.config.SetPreferredTimeout(60)
 
@@ -732,7 +732,7 @@ func TestBrowserView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
 	}
 	v, _ = v.Update(msg)
 
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true after auto-retry failed")
 	}
 }
@@ -742,7 +742,7 @@ func TestBrowserView_TimeoutShowsMenu_NoPreference(t *testing.T) {
 	defer cleanup()
 
 	v.loading = true
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 	v.parent.config.SetPreferredTimeout(0)
 
 	msg := tablesLoadedMsg{
@@ -753,7 +753,7 @@ func TestBrowserView_TimeoutShowsMenu_NoPreference(t *testing.T) {
 	}
 	v, _ = v.Update(msg)
 
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true with no preferred timeout")
 	}
 }
@@ -775,7 +775,7 @@ func TestBrowserView_RetryMenuSavesPreference(t *testing.T) {
 			v, cleanup := setupBrowserViewTest(t)
 			defer cleanup()
 
-			v.retryPrompt = true
+			v.retryPrompt.Show("")
 			v.parent.config.SetPreferredTimeout(0)
 
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
@@ -793,11 +793,11 @@ func TestBrowserView_AutoRetriedResetOnInit(t *testing.T) {
 	v, cleanup := setupBrowserViewTest(t)
 	defer cleanup()
 
-	v.autoRetried = true // From previous timeout
+	v.retryPrompt.SetAutoRetried(true) // From previous timeout
 
 	_ = v.Init()
 
-	if v.autoRetried {
+	if v.retryPrompt.AutoRetried() {
 		t.Error("Expected autoRetried to be reset on Init")
 	}
 }

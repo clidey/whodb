@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -121,10 +122,10 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 		if msg.success {
 			v.exportSuccess = true
 			v.exportError = nil
-		} else {
-			v.exportSuccess = false
-			v.exportError = msg.err
+			return v, v.parent.SetStatus("Export complete")
 		}
+		v.exportSuccess = false
+		v.exportError = msg.err
 		return v, nil
 
 	case tea.MouseMsg:
@@ -179,14 +180,16 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			return v, nil
 		}
-		switch msg.String() {
-		case "esc":
+		switch {
+		case key.Matches(msg, Keys.Global.Back):
 			if !v.exporting {
-				v.parent.mode = ViewResults
+				if !v.parent.PopView() {
+					v.parent.mode = ViewResults
+				}
 				return v, nil
 			}
 
-		case "enter":
+		case key.Matches(msg, Keys.Export.Export):
 			expIdx := v.exportButtonIndex()
 			cancelIdx := v.cancelButtonIndex()
 			owIdx := v.overwriteIndex()
@@ -208,14 +211,16 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 				return v, v.performExport()
 			} else if v.focusIndex == cancelIdx {
 				// Cancel button
-				v.parent.mode = ViewResults
+				if !v.parent.PopView() {
+					v.parent.mode = ViewResults
+				}
 				return v, nil
 			} else if v.focusIndex == owIdx {
 				v.overwrite = !v.overwrite
 				return v, nil
 			}
 
-		case "tab", "down", "j":
+		case key.Matches(msg, Keys.Export.Next):
 			v.focusIndex++
 			if v.focusIndex > v.maxIndex() {
 				v.focusIndex = 0
@@ -227,7 +232,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "shift+tab", "up", "k":
+		case key.Matches(msg, Keys.Export.Prev):
 			v.focusIndex--
 			if v.focusIndex < 0 {
 				v.focusIndex = v.maxIndex()
@@ -239,7 +244,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			return v, nil
 
-		case "left":
+		case key.Matches(msg, Keys.Export.OptionLeft):
 			// Only handle left arrow for options, not filename input
 			if v.focusIndex == 1 {
 				v.selectedFormat--
@@ -259,7 +264,7 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			}
 			// For filename input (focusIndex == 0), let it fall through to be handled by textinput
 
-		case "right":
+		case key.Matches(msg, Keys.Export.OptionRight):
 			// Only handle right arrow for options, not filename input
 			if v.focusIndex == 1 {
 				v.selectedFormat++
@@ -296,7 +301,7 @@ func (v *ExportView) View() string {
 	b.WriteString("\n\n")
 
 	if v.exporting {
-		b.WriteString(styles.MutedStyle.Render("Exporting..."))
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Exporting..."))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -495,21 +500,16 @@ func (v *ExportView) View() string {
 	b.WriteString("\n\n")
 
 	// Help text
-	b.WriteString(styles.RenderHelp(
-		"↑/k", "prev",
-		"↓/j", "next",
-		"←", "prev option",
-		"→", "next option",
-		"enter", "select",
-		"esc", "cancel",
+	b.WriteString(RenderBindingHelp(
+		Keys.Export.Prev,
+		Keys.Export.Next,
+		Keys.Export.OptionLeft,
+		Keys.Export.OptionRight,
+		Keys.Export.Export,
+		Keys.Global.Back,
 	))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
-}
-
-type exportResultMsg struct {
-	success bool
-	err     error
 }
 
 func (v *ExportView) performExport() tea.Cmd {

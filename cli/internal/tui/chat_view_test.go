@@ -850,8 +850,7 @@ func TestChatView_RetryPrompt_EscCancels(t *testing.T) {
 
 	// Set up retry prompt state
 	v.consented = true
-	v.retryPrompt = true
-	v.timedOutQuery = "tell me about the users table"
+	v.retryPrompt.Show("tell me about the users table")
 	v.err = errors.New("request timed out")
 
 	// Send ESC key
@@ -859,13 +858,13 @@ func TestChatView_RetryPrompt_EscCancels(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false after ESC")
 	}
 
 	// Verify timed out query was cleared
-	if v.timedOutQuery != "" {
-		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.timedOutQuery)
+	if v.retryPrompt.TimedOutQuery() != "" {
+		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.retryPrompt.TimedOutQuery())
 	}
 }
 
@@ -887,8 +886,7 @@ func TestChatView_RetryPrompt_KeyHandling(t *testing.T) {
 
 			// Set up retry prompt state
 			v.consented = true
-			v.retryPrompt = true
-			v.timedOutQuery = "tell me about the users table"
+			v.retryPrompt.Show("tell me about the users table")
 			v.err = errors.New("request timed out")
 			// Need to have providers and models for sendChatWithTimeout to work
 			v.models = []string{"test-model"}
@@ -898,7 +896,7 @@ func TestChatView_RetryPrompt_KeyHandling(t *testing.T) {
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
-			if v.retryPrompt {
+			if v.retryPrompt.IsActive() {
 				t.Error("Expected retryPrompt to be false after selecting retry option")
 			}
 
@@ -921,20 +919,19 @@ func TestChatView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 
 	// Set up retry prompt state
 	v.consented = true
-	v.retryPrompt = true
-	v.timedOutQuery = "tell me about the users table"
+	v.retryPrompt.Show("tell me about the users table")
 
 	// Send an unrelated key (like 'a')
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to still be true after unrecognized key")
 	}
 
 	// Verify query wasn't cleared
-	if v.timedOutQuery == "" {
+	if v.retryPrompt.TimedOutQuery() == "" {
 		t.Error("Expected timedOutQuery to still be set")
 	}
 }
@@ -1066,7 +1063,7 @@ func TestChatView_TimeoutAutoRetry_WithPreference(t *testing.T) {
 	v.consented = true
 	v.sending = true
 	v.models = []string{"test-model"}
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 
 	// Set a preferred timeout
 	v.parent.config.SetPreferredTimeout(60)
@@ -1080,10 +1077,10 @@ func TestChatView_TimeoutAutoRetry_WithPreference(t *testing.T) {
 	v, cmd := v.Update(msg)
 
 	// Should auto-retry (not show prompt)
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false (auto-retry should happen)")
 	}
-	if !v.autoRetried {
+	if !v.retryPrompt.AutoRetried() {
 		t.Error("Expected autoRetried to be true")
 	}
 	if cmd == nil {
@@ -1097,7 +1094,7 @@ func TestChatView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
 
 	v.consented = true
 	v.sending = true
-	v.autoRetried = true // Already auto-retried once
+	v.retryPrompt.SetAutoRetried(true) // Already auto-retried once
 
 	// Set a preferred timeout
 	v.parent.config.SetPreferredTimeout(60)
@@ -1111,7 +1108,7 @@ func TestChatView_TimeoutShowsMenu_AfterAutoRetry(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Should show retry prompt since auto-retry already happened
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true after auto-retry failed")
 	}
 }
@@ -1122,7 +1119,7 @@ func TestChatView_TimeoutShowsMenu_NoPreference(t *testing.T) {
 
 	v.consented = true
 	v.sending = true
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 
 	// No preferred timeout set (0)
 	v.parent.config.SetPreferredTimeout(0)
@@ -1136,7 +1133,7 @@ func TestChatView_TimeoutShowsMenu_NoPreference(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Should show retry prompt immediately (no preference to auto-retry with)
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be true with no preferred timeout")
 	}
 }
@@ -1159,8 +1156,7 @@ func TestChatView_RetryMenuSavesPreference(t *testing.T) {
 			defer cleanup()
 
 			v.consented = true
-			v.retryPrompt = true
-			v.timedOutQuery = "test query"
+			v.retryPrompt.Show("test query")
 			v.models = []string{"test-model"}
 
 			// Clear any previous preference
@@ -1182,7 +1178,7 @@ func TestChatView_AutoRetriedResetOnNewMessage(t *testing.T) {
 	defer cleanup()
 
 	v.consented = true
-	v.autoRetried = true // From previous timeout
+	v.retryPrompt.SetAutoRetried(true) // From previous timeout
 	v.focusField = focusFieldMessage
 	v.models = []string{"test-model"}
 	v.input.SetValue("new question")
@@ -1191,7 +1187,7 @@ func TestChatView_AutoRetriedResetOnNewMessage(t *testing.T) {
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
 	v, _ = v.Update(msg)
 
-	if v.autoRetried {
+	if v.retryPrompt.AutoRetried() {
 		t.Error("Expected autoRetried to be reset on new message")
 	}
 }
@@ -1202,8 +1198,7 @@ func TestChatView_RetryPrompt_View(t *testing.T) {
 
 	// Set up retry prompt state
 	v.consented = true
-	v.retryPrompt = true
-	v.timedOutQuery = "tell me about the users table"
+	v.retryPrompt.Show("tell me about the users table")
 
 	view := v.View()
 

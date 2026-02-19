@@ -383,8 +383,7 @@ func TestHistoryView_RetryPrompt_EscCancels(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
-	v.timedOutQuery = "SELECT * FROM test"
+	v.retryPrompt.Show("SELECT * FROM test")
 	v.parent.err = nil
 
 	// Send ESC key
@@ -392,13 +391,13 @@ func TestHistoryView_RetryPrompt_EscCancels(t *testing.T) {
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt was dismissed
-	if v.retryPrompt {
+	if v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to be false after ESC")
 	}
 
 	// Verify timed out query was cleared
-	if v.timedOutQuery != "" {
-		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.timedOutQuery)
+	if v.retryPrompt.TimedOutQuery() != "" {
+		t.Errorf("Expected timedOutQuery to be empty, got '%s'", v.retryPrompt.TimedOutQuery())
 	}
 }
 
@@ -419,8 +418,7 @@ func TestHistoryView_RetryPrompt_KeyHandling(t *testing.T) {
 			defer cleanup()
 
 			// Set up retry prompt state
-			v.retryPrompt = true
-			v.timedOutQuery = "SELECT * FROM test"
+			v.retryPrompt.Show("SELECT * FROM test")
 			v.parent.err = nil
 
 			// Send number key
@@ -428,7 +426,7 @@ func TestHistoryView_RetryPrompt_KeyHandling(t *testing.T) {
 			v, cmd := v.Update(msg)
 
 			// Verify retry prompt was dismissed
-			if v.retryPrompt {
+			if v.retryPrompt.IsActive() {
 				t.Error("Expected retryPrompt to be false after selecting retry option")
 			}
 
@@ -450,20 +448,19 @@ func TestHistoryView_RetryPrompt_IgnoresOtherKeys(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
-	v.timedOutQuery = "SELECT * FROM test"
+	v.retryPrompt.Show("SELECT * FROM test")
 
 	// Send an unrelated key (like 'a')
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")}
 	v, _ = v.Update(msg)
 
 	// Verify retry prompt is still active
-	if !v.retryPrompt {
+	if !v.retryPrompt.IsActive() {
 		t.Error("Expected retryPrompt to still be true after unrecognized key")
 	}
 
 	// Verify query wasn't cleared
-	if v.timedOutQuery == "" {
+	if v.retryPrompt.TimedOutQuery() == "" {
 		t.Error("Expected timedOutQuery to still be set")
 	}
 }
@@ -473,8 +470,7 @@ func TestHistoryView_RetryPrompt_View(t *testing.T) {
 	defer cleanup()
 
 	// Set up retry prompt state
-	v.retryPrompt = true
-	v.timedOutQuery = "SELECT * FROM test"
+	v.retryPrompt.Show("SELECT * FROM test")
 
 	view := v.View()
 

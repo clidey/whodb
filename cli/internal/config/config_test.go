@@ -436,3 +436,36 @@ func TestGetConfigPath(t *testing.T) {
 		t.Errorf("Expected .json extension, got '%s'", filepath.Ext(path))
 	}
 }
+
+func TestPageSizeAccessors(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// Default page size
+	if cfg.GetPageSize() != 50 {
+		t.Errorf("Expected default page size 50, got %d", cfg.GetPageSize())
+	}
+
+	// Set custom page size
+	cfg.SetPageSize(25)
+	if cfg.GetPageSize() != 25 {
+		t.Errorf("Expected page size 25, got %d", cfg.GetPageSize())
+	}
+
+	// Set another value
+	cfg.SetPageSize(100)
+	if cfg.GetPageSize() != 100 {
+		t.Errorf("Expected page size 100, got %d", cfg.GetPageSize())
+	}
+
+	// Zero falls back to default
+	cfg.SetPageSize(0)
+	if cfg.GetPageSize() != 50 {
+		t.Errorf("Expected default page size 50 for zero, got %d", cfg.GetPageSize())
+	}
+
+	// Negative falls back to default
+	cfg.SetPageSize(-1)
+	if cfg.GetPageSize() != 50 {
+		t.Errorf("Expected default page size 50 for negative, got %d", cfg.GetPageSize())
+	}
+}

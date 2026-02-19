@@ -23,19 +23,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/core/src/engine"
 )
-
-type tablesLoadedMsg struct {
-	tables  []engine.StorageUnit
-	schemas []string
-	schema  string // The selected schema
-	err     error
-}
 
 type BrowserView struct {
 	parent              *MainModel
@@ -54,9 +48,7 @@ type BrowserView struct {
 	filterInput         textinput.Model
 	filtering           bool
 	filteredTables      []engine.StorageUnit
-	// Retry prompt state for timed out requests
-	retryPrompt bool
-	autoRetried bool
+	retryPrompt         RetryPrompt
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -88,13 +80,13 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 			// Check for timeout - auto-retry with saved preference or show menu
 			if strings.Contains(msg.err.Error(), "timed out") {
 				preferred := v.parent.config.GetPreferredTimeout()
-				if preferred > 0 && !v.autoRetried {
-					v.autoRetried = true
+				if preferred > 0 && !v.retryPrompt.AutoRetried() {
+					v.retryPrompt.SetAutoRetried(true)
 					v.loading = true
 					return v, v.loadTablesWithTimeout(time.Duration(preferred) * time.Second)
 				}
 				v.err = msg.err
-				v.retryPrompt = true
+				v.retryPrompt.Show("")
 				return v, nil
 			}
 			v.err = msg.err
@@ -136,45 +128,44 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 				v.selectedIndex += v.columnsPerRow
 			}
 			return v, nil
+		case tea.MouseButtonLeft:
+			if !v.loading && !v.retryPrompt.IsActive() && len(v.filteredTables) > 0 {
+				// Calculate header lines to determine where the grid starts
+				headerLines := 4 // title + schema + filter area + blank
+				if len(v.schemas) > 0 {
+					headerLines++
+				}
+				if v.filtering || v.filterInput.Value() != "" {
+					headerLines++
+				}
+				gridRow := msg.Y - headerLines
+				gridCol := msg.X / 25 // columnWidth = 25
+				if gridRow >= 0 && gridCol >= 0 && gridCol < v.columnsPerRow {
+					idx := gridRow*v.columnsPerRow + gridCol
+					if idx >= 0 && idx < len(v.filteredTables) {
+						v.selectedIndex = idx
+					}
+				}
+			}
+			return v, nil
 		}
 
 	case tea.KeyMsg:
 		// Handle retry prompt for timed out requests
-		if v.retryPrompt {
-			switch msg.String() {
-			case "1":
-				v.retryPrompt = false
-				v.err = nil
-				v.loading = true
-				v.parent.config.SetPreferredTimeout(60)
-				v.parent.config.Save()
-				return v, v.loadTablesWithTimeout(60 * time.Second)
-			case "2":
-				v.retryPrompt = false
-				v.err = nil
-				v.loading = true
-				v.parent.config.SetPreferredTimeout(120)
-				v.parent.config.Save()
-				return v, v.loadTablesWithTimeout(2 * time.Minute)
-			case "3":
-				v.retryPrompt = false
-				v.err = nil
-				v.loading = true
-				v.parent.config.SetPreferredTimeout(300)
-				v.parent.config.Save()
-				return v, v.loadTablesWithTimeout(5 * time.Minute)
-			case "4":
-				v.retryPrompt = false
-				v.err = nil
-				v.loading = true
-				// No limit applies once but doesn't save
-				return v, v.loadTablesWithTimeout(24 * time.Hour)
-			case "esc":
-				v.retryPrompt = false
+		if v.retryPrompt.IsActive() {
+			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
+			if handled {
+				if result != nil {
+					v.err = nil
+					v.loading = true
+					if result.Save {
+						v.parent.config.SetPreferredTimeout(int(result.Timeout.Seconds()))
+						v.parent.config.Save()
+					}
+					return v, v.loadTablesWithTimeout(result.Timeout)
+				}
 				return v, nil
 			}
-			// Ignore other keys while in retry prompt
-			return v, nil
 		}
 
 		// If in filtering mode, handle filter input
@@ -232,76 +223,77 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		}
 
 		// Normal navigation mode
-		switch msg.String() {
-		case "enter":
+		switch {
+		case key.Matches(msg, Keys.Browser.Select):
 			if v.selectedIndex >= 0 && v.selectedIndex < len(v.filteredTables) {
 				table := v.filteredTables[v.selectedIndex]
 				v.selectedTable = table.Name
 				v.parent.resultsView.LoadTable(v.currentSchema, table.Name)
-				v.parent.mode = ViewResults
+				v.parent.PushView(ViewResults)
 				return v, nil
 			}
 
-		case "up", "k":
+		case key.Matches(msg, Keys.Browser.Up):
 			if v.selectedIndex >= v.columnsPerRow {
 				v.selectedIndex -= v.columnsPerRow
 			}
 			return v, nil
 
-		case "down", "j":
+		case key.Matches(msg, Keys.Browser.Down):
 			if v.selectedIndex+v.columnsPerRow < len(v.filteredTables) {
 				v.selectedIndex += v.columnsPerRow
 			}
 			return v, nil
 
-		case "left", "h":
+		case key.Matches(msg, Keys.Browser.Left):
 			if v.selectedIndex > 0 {
 				v.selectedIndex--
 			}
 			return v, nil
 
-		case "right", "l":
+		case key.Matches(msg, Keys.Browser.Right):
 			if v.selectedIndex < len(v.filteredTables)-1 {
 				v.selectedIndex++
 			}
 			return v, nil
 
-		case "/", "f":
+		case key.Matches(msg, Keys.Browser.Filter):
 			// Enter filter mode
 			v.filtering = true
 			v.filterInput.Focus()
 			return v, nil
 
-		case "ctrl+s":
+		case key.Matches(msg, Keys.Browser.Schema):
 			// Enter schema selection mode
 			if len(v.schemas) > 1 {
 				v.schemaSelecting = true
 			}
 			return v, nil
 
-		case "ctrl+r":
+		case key.Matches(msg, Keys.Browser.Refresh):
 			v.loading = true
 			v.err = nil
 			v.filterInput.SetValue("")
 			v.filtering = false
 			return v, v.loadTables()
 
-		case "ctrl+e":
-			v.parent.mode = ViewEditor
+		case key.Matches(msg, Keys.Browser.Editor):
+			v.parent.PushView(ViewEditor)
 			return v, nil
 
-		case "ctrl+h":
-			v.parent.mode = ViewHistory
+		case key.Matches(msg, Keys.Browser.History):
+			v.parent.PushView(ViewHistory)
 			return v, nil
 
-		case "ctrl+a":
-			v.parent.mode = ViewChat
+		case key.Matches(msg, Keys.Browser.AIChat):
+			v.parent.PushView(ViewChat)
 			return v, v.parent.chatView.Init()
 
-		case "esc":
+		case key.Matches(msg, Keys.Browser.Disconnect):
 			if v.parent.dbManager.GetCurrentConnection() != nil {
 				v.parent.mode = ViewConnection
 				v.parent.dbManager.Disconnect()
+				v.parent.viewHistory = nil
 			}
 			return v, nil
 		}
@@ -376,21 +368,8 @@ func (v *BrowserView) View() string {
 	b.WriteString("\n")
 
 	// Show retry prompt for timed out requests
-	if v.retryPrompt {
-		b.WriteString(styles.ErrorStyle.Render("Request timed out"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.MutedStyle.Render("Retry with longer timeout:"))
-		b.WriteString("\n")
-		b.WriteString(styles.KeyStyle.Render("[1]"))
-		b.WriteString(styles.MutedStyle.Render(" 60 seconds  "))
-		b.WriteString(styles.KeyStyle.Render("[2]"))
-		b.WriteString(styles.MutedStyle.Render(" 2 minutes  "))
-		b.WriteString(styles.KeyStyle.Render("[3]"))
-		b.WriteString(styles.MutedStyle.Render(" 5 minutes  "))
-		b.WriteString(styles.KeyStyle.Render("[4]"))
-		b.WriteString(styles.MutedStyle.Render(" No limit"))
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderHelp("esc", "cancel"))
+	if v.retryPrompt.IsActive() {
+		b.WriteString(v.retryPrompt.View())
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -399,7 +378,7 @@ func (v *BrowserView) View() string {
 		b.WriteString("\n\n")
 		b.WriteString(styles.MutedStyle.Render("Press 'r' to retry"))
 	} else if v.loading {
-		b.WriteString(styles.MutedStyle.Render("Loading tables..."))
+		b.WriteString(v.parent.SpinnerView() + styles.MutedStyle.Render(" Loading tables..."))
 	} else if len(v.filteredTables) == 0 {
 		b.WriteString(styles.MutedStyle.Render("No tables found in this database."))
 		b.WriteString("\n")
@@ -411,38 +390,38 @@ func (v *BrowserView) View() string {
 	b.WriteString("\n\n")
 
 	if v.schemaSelecting {
-		b.WriteString(styles.RenderHelp(
-			"←/→", "navigate",
-			"enter", "select schema",
-			"esc", "cancel",
+		b.WriteString(RenderBindingHelp(
+			Keys.SchemaSelect.NavLeft,
+			Keys.SchemaSelect.SelectSchema,
+			Keys.Global.Back,
 		))
 	} else if v.filtering {
-		b.WriteString(styles.RenderHelp(
-			"esc", "cancel filter",
-			"enter", "apply filter",
+		b.WriteString(RenderBindingHelp(
+			Keys.Filter.CancelFilter,
+			Keys.Filter.ApplyFilter,
 		))
 	} else {
-		helpItems := []string{
-			"↑/k", "up",
-			"↓/j", "down",
-			"←/h", "left",
-			"→/l", "right",
-			"enter", "view data",
-			"[/]", "filter",
+		bindings := []key.Binding{
+			Keys.Browser.Up,
+			Keys.Browser.Down,
+			Keys.Browser.Left,
+			Keys.Browser.Right,
+			Keys.Browser.Select,
+			Keys.Browser.Filter,
 		}
 		if len(v.schemas) > 1 {
-			helpItems = append(helpItems, "ctrl+s", "schema")
+			bindings = append(bindings, Keys.Browser.Schema)
 		}
-		helpItems = append(helpItems,
-			"ctrl+e", "editor",
-			"ctrl+a", "ai chat",
-			"ctrl+h", "history",
-			"ctrl+r", "refresh",
-			"tab", "next view",
-			"esc", "disconnect",
-			"ctrl+c", "quit",
+		bindings = append(bindings,
+			Keys.Browser.Editor,
+			Keys.Browser.AIChat,
+			Keys.Browser.History,
+			Keys.Browser.Refresh,
+			Keys.Global.NextView,
+			Keys.Browser.Disconnect,
+			Keys.Global.Quit,
 		)
-		b.WriteString(styles.RenderHelp(helpItems...))
+		b.WriteString(RenderBindingHelp(bindings...))
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
@@ -463,12 +442,19 @@ func (v *BrowserView) renderTablesGrid() string {
 
 		table := tables[i]
 		tableName := table.Name
-		if len(tableName) > columnWidth-3 {
-			tableName = tableName[:columnWidth-6] + "..."
+		if lipgloss.Width(tableName) > columnWidth-3 {
+			runes := []rune(tableName)
+			for lipgloss.Width(string(runes)) > columnWidth-6 {
+				runes = runes[:len(runes)-1]
+			}
+			tableName = string(runes) + "..."
 		}
 
 		// Pad to column width
-		padding := columnWidth - len(tableName)
+		padding := columnWidth - lipgloss.Width(tableName)
+		if padding < 0 {
+			padding = 0
+		}
 		content := tableName + strings.Repeat(" ", padding)
 
 		if i == v.selectedIndex {
@@ -600,7 +586,7 @@ func (v *BrowserView) loadTablesWithTimeout(timeout time.Duration) tea.Cmd {
 }
 
 func (v *BrowserView) Init() tea.Cmd {
-	v.autoRetried = false
+	v.retryPrompt.SetAutoRetried(false)
 	return v.loadTables()
 }
 
