@@ -82,14 +82,14 @@ func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
 
-// HandleCustomDataType handles ClickHouse compound types (Map, Tuple) that require
-// strongly-typed Go values. The clickhouse-go driver rejects interface maps/slices,
-// requiring concrete types like map[string]int32 that match the column definition.
+// HandleCustomDataType handles ClickHouse compound types (Array, Map, Tuple).
 func (p *ClickHousePlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error) {
 	upper := strings.ToUpper(columnType)
 
 	var convert func(string, string) (any, error)
 	switch {
+	case strings.HasPrefix(upper, "ARRAY("):
+		convert = convertArrayLiteral
 	case strings.HasPrefix(upper, "MAP("):
 		convert = convertMapLiteral
 	case strings.HasPrefix(upper, "TUPLE("):
@@ -201,6 +201,87 @@ func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema st
 		}
 
 		log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE executed")
+		return true, nil
+	})
+}
+
+// UpdateStorageUnit handles two ClickHouse-specific issues with ALTER TABLE UPDATE:
+// the driver hangs when binding typed slices (Array columns) as parameters, and
+// mutations may return "driver: bad connection" on success.
+func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+		if err != nil {
+			return false, err
+		}
+
+		arrayColumns := map[string]bool{}
+		for _, col := range updatedColumns {
+			if ct, ok := columnTypes[col]; ok && strings.HasPrefix(strings.ToUpper(ct), "ARRAY(") {
+				arrayColumns[col] = true
+			}
+		}
+
+		if len(arrayColumns) == 0 {
+			result, err := p.GormPlugin.UpdateStorageUnit(config, schema, storageUnit, values, updatedColumns)
+			if err != nil && err.Error() == "driver: bad connection" {
+				var check int
+				if db.Raw("SELECT 1").Scan(&check).Error == nil {
+					return true, nil
+				}
+			}
+			return result, err
+		}
+
+		pkColumns, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
+		if err != nil {
+			pkColumns = []string{}
+		}
+
+		conditions := make(map[string]any)
+		convertedValues := make(map[string]any)
+
+		for column, strValue := range values {
+			isPK := common.ContainsString(pkColumns, column)
+			isUpdated := common.ContainsString(updatedColumns, column)
+			if !isPK && !isUpdated && len(pkColumns) > 0 {
+				continue
+			}
+
+			columnType := columnTypes[column]
+			converted, convErr := p.ConvertStringValue(strValue, columnType)
+			if convErr != nil {
+				converted = strValue
+			}
+
+			if isUpdated && arrayColumns[column] && reflect.ValueOf(converted).Kind() == reflect.Slice {
+				converted = arrayToExpr(converted)
+			}
+
+			if isPK {
+				conditions[column] = converted
+			} else if isUpdated {
+				convertedValues[column] = converted
+			} else if len(pkColumns) == 0 {
+				conditions[column] = converted
+			}
+		}
+
+		if len(convertedValues) == 0 {
+			return true, nil
+		}
+
+		result := p.CreateSQLBuilder(db).UpdateQuery(schema, storageUnit, convertedValues, conditions)
+		if result.Error != nil {
+			if result.Error.Error() == "driver: bad connection" {
+				var check int
+				if db.Raw("SELECT 1").Scan(&check).Error == nil {
+					return true, nil
+				}
+			}
+			return false, result.Error
+		}
+
 		return true, nil
 	})
 }
