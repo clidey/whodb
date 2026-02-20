@@ -19,13 +19,12 @@ package clickhouse
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
-)
 
-// --- Display formatting (FormatColumnValue helpers) ---
-// These format Go values from the driver into ClickHouse literal syntax
-// so that display matches what the user can type back for edits.
+	"gorm.io/gorm"
+)
 
 // formatLiteral formats a single value in ClickHouse literal syntax.
 func formatLiteral(v any) string {
@@ -39,9 +38,14 @@ func formatLiteral(v any) string {
 
 // formatMap formats map[string]any in ClickHouse literal syntax: {'k1': v1, 'k2': v2}
 func formatMap(m map[string]any) string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 	parts := make([]string, 0, len(m))
-	for k, v := range m {
-		parts = append(parts, "'"+k+"': "+formatLiteral(v))
+	for _, k := range keys {
+		parts = append(parts, "'"+k+"': "+formatLiteral(m[k]))
 	}
 	return "{" + strings.Join(parts, ", ") + "}"
 }
@@ -66,8 +70,12 @@ func formatSlice(items []any) string {
 
 // formatReflectMap formats a typed map (e.g., map[string]int32) using reflection.
 func formatReflectMap(rv reflect.Value, upperType string) string {
+	keys := rv.MapKeys()
+	sort.Slice(keys, func(i, j int) bool {
+		return fmt.Sprint(keys[i].Interface()) < fmt.Sprint(keys[j].Interface())
+	})
 	parts := make([]string, 0, rv.Len())
-	for _, key := range rv.MapKeys() {
+	for _, key := range keys {
 		k := formatLiteral(key.Interface())
 		v := formatLiteral(rv.MapIndex(key).Interface())
 		parts = append(parts, k+": "+v)
@@ -93,9 +101,44 @@ func formatReflectSlice(rv reflect.Value, upperType string) string {
 	return "[" + strings.Join(parts, ", ") + "]"
 }
 
+// convertArrayLiteral parses [50, 60] into a strongly-typed Go slice (e.g., []int32).
+func convertArrayLiteral(value string, columnType string) (any, error) {
+	elemType := extractInner(columnType)
+	if elemType == "" {
+		elemType = "String"
+	}
+	goType := chTypeToReflect(elemType)
+	sliceType := reflect.SliceOf(goType)
+	result := reflect.MakeSlice(sliceType, 0, 0)
+
+	inner := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(value), "["), "]"))
+	if inner == "" {
+		return result.Interface(), nil
+	}
+
+	for _, elem := range splitTopLevel(inner, ',') {
+		elem = strings.Trim(strings.TrimSpace(elem), "'")
+		v, err := parseValue(elem, elemType)
+		if err != nil {
+			return nil, fmt.Errorf("array element: %w", err)
+		}
+		result = reflect.Append(result, reflect.ValueOf(v))
+	}
+
+	return result.Interface(), nil
+}
+
+// arrayToExpr wraps a typed array slice as a gorm.Expr SQL literal for UPDATE statements.
+func arrayToExpr(v any) any {
+	rv := reflect.ValueOf(v)
+	parts := make([]string, rv.Len())
+	for i := range rv.Len() {
+		parts[i] = formatLiteral(rv.Index(i).Interface())
+	}
+	return gorm.Expr("[" + strings.Join(parts, ", ") + "]")
+}
+
 // convertMapLiteral parses {'key1': 10, 'key2': 20} into a strongly-typed Go map.
-// The clickhouse-go driver rejects map[string]any — it requires the concrete value type
-// (e.g., map[string]int32) matching the column definition. We use reflect.MapOf for this.
 func convertMapLiteral(value string, columnType string) (any, error) {
 	keyType, valType := extractTypeParams2(columnType)
 	keyGoType := chTypeToReflect(keyType)
@@ -130,7 +173,6 @@ func convertMapLiteral(value string, columnType string) (any, error) {
 }
 
 // convertTupleLiteral parses ('hello', 42, 3.14) into []any.
-// The clickhouse-go driver accepts []any for tuples.
 func convertTupleLiteral(value string, columnType string) (any, error) {
 	elemTypes := splitTopLevel(extractInner(columnType), ',')
 
@@ -196,8 +238,7 @@ func parseValue(s string, chType string) (any, error) {
 	}
 }
 
-// chTypeToReflect maps a ClickHouse type to reflect.Type. Only needed for Map keys/values
-// where reflect.MapOf requires concrete types.
+// chTypeToReflect maps a ClickHouse type name to its Go reflect.Type.
 func chTypeToReflect(chType string) reflect.Type {
 	switch strings.ToUpper(strings.TrimSpace(chType)) {
 	case "INT8":
@@ -226,8 +267,6 @@ func chTypeToReflect(chType string) reflect.Type {
 		return reflect.TypeOf("")
 	}
 }
-
-// --- string utilities ---
 
 // splitTopLevel splits by separator, respecting nested ()[]{}  and quotes.
 func splitTopLevel(s string, sep byte) []string {
