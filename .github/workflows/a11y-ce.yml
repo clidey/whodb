@@ -6,6 +6,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # Simple monotonic versioning for the report image, per this workflow's run number:
+  # 1 -> 0.1.0, 2 -> 0.2.0, ...
+  A11Y_REPORT_VERSION: 0.${{ github.run_number }}.0
+
 jobs:
   build:
     name: Build Test Binary
@@ -403,7 +408,9 @@ jobs:
           file: ./frontend/e2e/Dockerfile.a11y-report
           platforms: ${{ matrix.platform }}
           push: true
-          tags: clidey/whodb-a11y-report:latest-${{ matrix.arch }}
+          tags: |
+            clidey/whodb-a11y-report:latest-${{ matrix.arch }}
+            clidey/whodb-a11y-report:${{ env.A11Y_REPORT_VERSION }}-${{ matrix.arch }}
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GITHUB_RUN_ID=${{ github.run_id }}
@@ -444,6 +451,11 @@ jobs:
       - name: Create and push multi-arch manifest
         if: steps.check_creds.outputs.has_creds == 'true'
         run: |
+          docker manifest create clidey/whodb-a11y-report:${{ env.A11Y_REPORT_VERSION }} \
+            clidey/whodb-a11y-report:${{ env.A11Y_REPORT_VERSION }}-amd64 \
+            clidey/whodb-a11y-report:${{ env.A11Y_REPORT_VERSION }}-arm64
+          docker manifest push clidey/whodb-a11y-report:${{ env.A11Y_REPORT_VERSION }}
+
           docker manifest create clidey/whodb-a11y-report:latest \
             clidey/whodb-a11y-report:latest-amd64 \
             clidey/whodb-a11y-report:latest-arm64
