@@ -408,8 +408,14 @@ export const StorageUnitPage: FC = () => {
                 }
                 <Tabs value={view} onValueChange={value => dispatch(SettingsActions.setStorageUnitView(value as 'list' | 'card'))}>
                     <TabsList>
-                        <TabsTrigger value="card" data-testid="icon-button"><Squares2X2Icon className="w-4 h-4" /></TabsTrigger>
-                        <TabsTrigger value="list" data-testid="icon-button"><Bars3Icon className="w-4 h-4" /></TabsTrigger>
+                        <Tip className="w-fit">
+                            <TabsTrigger value="card" data-testid="icon-button" aria-label={t('cardView')}><Squares2X2Icon className="w-4 h-4" /></TabsTrigger>
+                            <p>{t('cardView')}</p>
+                        </Tip>
+                        <Tip className="w-fit">
+                            <TabsTrigger value="list" data-testid="icon-button" aria-label={t('listView')}><Bars3Icon className="w-4 h-4" /></TabsTrigger>
+                            <p>{t('listView')}</p>
+                        </Tip>
                     </TabsList>
                 </Tabs>
             </div>

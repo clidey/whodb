@@ -278,17 +278,20 @@ const CopyButton: FC<{ text: string }> = ({text}) => {
     }, [text]);
 
     return (
-        <Button
-            size="icon"
-            variant="secondary"
-            className="border border-input"
-            onClick={handleCopyToClipboard}
-            title={copied ? t('copied') : t('copyToClipboard')}
-            type="button"
-            data-testid="copy-to-clipboard-button"
-        >
-            {copied ? <CheckCircleIcon className="w-4 h-4"/> : <ClipboardDocumentIcon className="w-4 h-4"/>}
-        </Button>
+        <Tip className="w-fit">
+            <Button
+                size="icon"
+                variant="secondary"
+                className="border border-input"
+                onClick={handleCopyToClipboard}
+                aria-label={copied ? t('copied') : t('copyToClipboard')}
+                type="button"
+                data-testid="copy-to-clipboard-button"
+            >
+                {copied ? <CheckCircleIcon className="w-4 h-4"/> : <ClipboardDocumentIcon className="w-4 h-4"/>}
+            </Button>
+            <p>{copied ? t('copied') : t('copyToClipboard')}</p>
+        </Tip>
     );
 }
 
@@ -618,7 +621,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             <Button
                                 variant="ghost"
                                 className="flex justify-center items-center"
-                                data-testid="icon-button">
+                                data-testid="icon-button"
+                                aria-label={t('options')}>
                                 <EllipsisVerticalIcon className="w-4 h-4"/>
                             </Button>
                         </DropdownMenuTrigger>
@@ -677,14 +681,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </Select>} */}
                         <Tip>
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
-                                    className="border border-input">
+                                    className="border border-input" aria-label={t('addCell')}>
                                 <PlusCircleIcon className="w-4 h-4 text-primary" />
                             </Button>
                                 <p>{t('addCell')}</p>
                         </Tip>
                         <Tip>
                             <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary"
-                                    className="border border-input">
+                                    className="border border-input" aria-label={t('clearEditor')}>
                                 <ArrowPathIcon className="w-4 h-4" />
                             </Button>
                             <p>{t('clearEditor')}</p>
@@ -693,7 +697,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                             onDelete != null &&
                             <Tip>
                                 <Button variant="secondary" onClick={handleDelete} data-testid="delete-cell-button"
-                                        className="border border-input">
+                                        className="border border-input" aria-label={t('deleteCell')}>
                                     <XCircleIcon className="w-4 h-4 text-destructive"/>
                                 </Button>
                                 <p>{t('deleteCell')}</p>
@@ -701,23 +705,30 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         }
                     </div>
                     <div className="flex gap-sm items-center">
-                        <Button
-                            onClick={() => setHistoryOpen(true)}
-                            data-testid="history-button"
-                            className={cn("pointer-events-auto border border-input", {
-                                "hidden": history.length === 0,
-                            })}
-                            variant="secondary"
-                            disabled={history.length === 0}
-                        >
-                            <ClockIcon className="w-4 h-4" />
-                        </Button>
-                        <Button onClick={() => handleRawExecute()} data-testid="query-cell-button"
-                                className={cn("pointer-events-auto", {
-                            "hidden": code.length === 0,
-                        })} disabled={code.length === 0}>
-                            {<CheckCircleIcon className="w-4 h-4" />}
-                        </Button>
+                        <Tip className="w-fit">
+                            <Button
+                                onClick={() => setHistoryOpen(true)}
+                                data-testid="history-button"
+                                className={cn("pointer-events-auto border border-input", {
+                                    "hidden": history.length === 0,
+                                })}
+                                variant="secondary"
+                                disabled={history.length === 0}
+                                aria-label={t('queryHistory')}
+                            >
+                                <ClockIcon className="w-4 h-4" />
+                            </Button>
+                            <p>{t('queryHistory')}</p>
+                        </Tip>
+                        <Tip className="w-fit">
+                            <Button onClick={() => handleRawExecute()} data-testid="query-cell-button"
+                                    className={cn("pointer-events-auto", {
+                                "hidden": code.length === 0,
+                            })} disabled={code.length === 0} aria-label={t('executeQuery')}>
+                                <CheckCircleIcon className="w-4 h-4" />
+                            </Button>
+                            <p>{t('executeQuery')}</p>
+                        </Tip>
                     </div>
                 </div>
             </div>
@@ -769,29 +780,35 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                                     </div>
                                                     <div className="flex gap-sm items-center">
                                                         <CopyButton text={item} />
-                                                        <Button
-                                                            size="icon"
-                                                            variant="secondary"
-                                                            className="border border-input"
-                                                            onClick={() => {
-                                                                setHistoryOpen(false);
-                                                                setCode(item);
-                                                            }}
-                                                            title={t('cloneToEditor')}
-                                                            data-testid="clone-to-editor-button"
-                                                        >
-                                                            <PencilIcon className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button
-                                                            size="icon"
-                                                            variant="secondary"
-                                                            className="border border-input"
-                                                            onClick={() => handleRawExecute(item)}
-                                                            title={t('run')}
-                                                            data-testid="run-history-button"
-                                                        >
-                                                            <PlayIcon className="w-4 h-4" />
-                                                        </Button>
+                                                        <Tip className="w-fit">
+                                                            <Button
+                                                                size="icon"
+                                                                variant="secondary"
+                                                                className="border border-input"
+                                                                onClick={() => {
+                                                                    setHistoryOpen(false);
+                                                                    setCode(item);
+                                                                }}
+                                                                aria-label={t('cloneToEditor')}
+                                                                data-testid="clone-to-editor-button"
+                                                            >
+                                                                <PencilIcon className="w-4 h-4" />
+                                                            </Button>
+                                                            <p>{t('cloneToEditor')}</p>
+                                                        </Tip>
+                                                        <Tip className="w-fit">
+                                                            <Button
+                                                                size="icon"
+                                                                variant="secondary"
+                                                                className="border border-input"
+                                                                onClick={() => handleRawExecute(item)}
+                                                                aria-label={t('run')}
+                                                                data-testid="run-history-button"
+                                                            >
+                                                                <PlayIcon className="w-4 h-4" />
+                                                            </Button>
+                                                            <p>{t('run')}</p>
+                                                        </Tip>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1074,9 +1091,12 @@ export const RawExecutePage: FC = () => {
                                                     </TabsTrigger>
                                             ))
                                         }
-                                        <TabsTrigger value="add" onClick={handleAdd} data-testid="add-page-button">
-                                            <PlusCircleIcon className="w-4 h-4" />
-                                        </TabsTrigger>
+                                        <Tip className="w-fit">
+                                            <TabsTrigger value="add" onClick={handleAdd} data-testid="add-page-button" aria-label={t('addPage')}>
+                                                <PlusCircleIcon className="w-4 h-4" />
+                                            </TabsTrigger>
+                                            <p>{t('addPage')}</p>
+                                        </Tip>
                                     </TabsList>
                                 </div>
                                 <TabsContent value={activePageId || ""} className="h-full w-full mt-4">

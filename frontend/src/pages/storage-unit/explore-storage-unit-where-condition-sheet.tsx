@@ -30,6 +30,7 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { AdjustmentsHorizontalIcon, ChevronDownIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
+import { useTranslation } from "@/hooks/use-translation";
 
 type IExploreStorageUnitWhereConditionSheetProps = {
     defaultWhere?: WhereCondition;
@@ -48,6 +49,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
 }) => {
     const dispatch = useAppDispatch();
     const { pages, activePageId } = useAppSelector(state => state.scratchpad);
+    const { t } = useTranslation('pages/where-condition');
     const [filters, setFilters] = useState<WhereCondition>(defaultWhere ?? {
         Type: WhereConditionType.And,
         And: { Children: [] }
@@ -390,31 +392,33 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                     {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <Button 
-                                                        className="size-6 h-full ml-1" 
+                                                    <Button
+                                                        className="size-6 h-full ml-1"
                                                         onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleEditExistingFilter(i);
-                                                        }} 
-                                                        data-testid={`edit-existing-filter-${i}`} 
-                                                        variant="ghost" 
+                                                        }}
+                                                        data-testid={`edit-existing-filter-${i}`}
+                                                        variant="ghost"
                                                         size="icon"
+                                                        aria-label={t('editCondition')}
                                                     >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                         </svg>
                                                     </Button>
-                                                    <Button 
-                                                        className="size-6 h-full" 
+                                                    <Button
+                                                        className="size-6 h-full"
                                                         onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleDeleteExistingFilter(i);
-                                                        }} 
-                                                        data-testid={`delete-existing-filter-${i}`} 
-                                                        variant="ghost" 
+                                                        }}
+                                                        data-testid={`delete-existing-filter-${i}`}
+                                                        variant="ghost"
                                                         size="icon"
+                                                        aria-label={t('deleteCondition')}
                                                     >
-                                                        <XCircleIcon className="w-3 h-3" />
+                                                        <XCircleIcon className="w-3 h-3" aria-hidden="true" />
                                                     </Button>
                                                 </div>
                                             </div>

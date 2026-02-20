@@ -21,6 +21,7 @@ import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, PanOnScrollMode, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
 import { Tip } from '../tip';
+import { useTranslation } from '@/hooks/use-translation';
 import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
@@ -51,6 +52,7 @@ export type IGraphProps<NodeData extends unknown = any, EdgeData extends unknown
 } & Partial<ReactFlowProps>;
 
 export const Graph: FC<IGraphProps> = (props) => {
+    const { t } = useTranslation('components/graph');
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { fitView } = useReactFlow();
     const [isLayingOut, setIsLayingOut] = useState(true);
@@ -215,10 +217,11 @@ export const Graph: FC<IGraphProps> = (props) => {
                                     data-testid="graph-download-button"
                                     variant="ghost"
                                     onClick={handleDownloadImage}
+                                    aria-label={t('download')}
                                 >
                                     <ArrowDownTrayIcon className="w-4 h-4 dark:text-white" />
                                 </Button>
-                                Download
+                                {t('download')}
                             </Tip>
                         </TabsTrigger>
                         <TabsTrigger value="layout" asChild>
@@ -227,10 +230,11 @@ export const Graph: FC<IGraphProps> = (props) => {
                                     data-testid="graph-layout-button"
                                     variant="ghost"
                                     onClick={() => onLayout("dagre")}
+                                    aria-label={t('layout')}
                                 >
                                     <RectangleGroupIcon className="w-4 h-4 dark:text-white" />
                                 </Button>
-                                Layout
+                                {t('layout')}
                             </Tip>
                         </TabsTrigger>
                     </TabsList>

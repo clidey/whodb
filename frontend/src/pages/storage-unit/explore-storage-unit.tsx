@@ -967,9 +967,12 @@ export const ExploreStorageUnit: FC = () => {
         </div>
         <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>
             <DrawerContent className="px-8 min-h-[65vh] max-h-[80vh] overflow-hidden flex flex-col" data-testid="scratchpad-drawer">
-                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
-                    <XMarkIcon className="w-4 h-4" />
-                </Button>
+                <Tip className="w-fit absolute top-0 right-0">
+                    <Button variant="ghost" onClick={handleCloseScratchpad} data-testid="icon-button" aria-label={t('close')}>
+                        <XMarkIcon className="w-4 h-4" />
+                    </Button>
+                    <p>{t('close')}</p>
+                </Tip>
                 <DrawerHeader className="px-0">
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">{t('scratchpadTitle')}</h2>

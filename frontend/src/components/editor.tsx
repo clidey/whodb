@@ -42,6 +42,7 @@ import {useApolloClient} from "@apollo/client";
 import {createSQLAutocomplete} from "./editor-autocomplete";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
+import { Tip } from "./tip";
 
 const isValidSQLQuery = (text: string): boolean => {
   const trimmed = text.trim();
@@ -155,13 +156,16 @@ type ICodeEditorProps = {
 };
 
 class PlayButtonMarker extends GutterMarker {
-  constructor(private onRun: (lineText?: string) => void, private queryText: string) {
+  constructor(private onRun: (lineText?: string) => void, private queryText: string, private label: string) {
     super();
   }
 
   toDOM() {
     const button = document.createElement("div");
     button.className = "cm-play-button";
+    button.setAttribute("role", "button");
+    button.setAttribute("aria-label", this.label);
+    button.setAttribute("title", this.label);
 
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
@@ -318,7 +322,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                   if (lineText) {
                     handleQueryExecution(lineText);
                   }
-                }, query);
+                }, query, t('runQuery'));
                 
                 ranges.push({ from: startLineObj.from, to: startLineObj.from, value: playMarker });
               }
@@ -462,17 +466,22 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   }, [darkModeEnabled, showPreview, value, language]);
 
   const actionButtons = useMemo(() => {
+    const label = showPreview ? t('hidePreview') : t('showPreview');
     return (
-      <button
-        className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1"
-        onClick={handlePreviewToggle}
-      >
-        {React.cloneElement(showPreview ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />, {
-          className: "stroke-teal-500 w-8 h-8",
-        })}
-      </button>
+      <Tip className="w-fit">
+        <button
+          className="transition-all cursor-pointer hover:scale-110 hover:bg-gray-100/50 rounded-full p-1"
+          onClick={handlePreviewToggle}
+          aria-label={label}
+        >
+          {React.cloneElement(showPreview ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />, {
+            className: "stroke-teal-500 w-8 h-8",
+          })}
+        </button>
+        <p>{label}</p>
+      </Tip>
     );
-  }, [handlePreviewToggle, showPreview]);
+  }, [handlePreviewToggle, showPreview, t]);
 
   return (
     <div className={classNames("relative h-full w-full", {

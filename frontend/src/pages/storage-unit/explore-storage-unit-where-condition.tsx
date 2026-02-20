@@ -415,8 +415,8 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         >
                             <div className="flex items-center gap-xs h-full">
                                 {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
-                                <Button className="size-8 h-full" onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon">
-                                    <XCircleIcon />
+                                <Button className="size-8 h-full" onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
+                                    <XCircleIcon aria-hidden="true" />
                                 </Button>
                             </div>
                         </Badge>
@@ -483,8 +483,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                         size="icon"
                                         onClick={() => handleSheetRemoveFilter(index)}
                                         data-testid={`remove-sheet-filter-${index}`}
+                                        aria-label={t('removeCondition')}
                                     >
-                                        <XMarkIcon className="w-4 h-4"/>
+                                        <XMarkIcon className="w-4 h-4" aria-hidden="true" />
                                     </Button>
                                 </div>
                                 <div className="flex flex-col gap-2">

@@ -26,6 +26,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { AwsProviderModal } from "./aws-provider-modal";
+import { Tip } from "../tip";
 import {
     ArrowPathIcon,
     CloudIcon,
@@ -133,15 +134,18 @@ export const AwsProvidersSection: FC = () => {
                     <h3 className="text-lg font-bold">{t('title')}</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRefetchProviders}
-                        disabled={isLoading}
-                        title={t('refresh')}
-                    >
-                        <ArrowPathIcon className={cn("w-4 h-4", { "animate-spin": loading })} />
-                    </Button>
+                    <Tip className="w-fit">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRefetchProviders}
+                            disabled={isLoading}
+                            aria-label={t('refresh')}
+                        >
+                            <ArrowPathIcon className={cn("w-4 h-4", { "animate-spin": loading })} />
+                        </Button>
+                        <p>{t('refresh')}</p>
+                    </Tip>
                     <Button
                         variant="outline"
                         size="sm"
@@ -207,38 +211,47 @@ export const AwsProvidersSection: FC = () => {
                                 )}
                             </div>
                             <div className="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRefreshProvider(provider.Id)}
-                                    disabled={isLoading || provider.Status === CloudProviderStatus.Discovering}
-                                    title={t('refreshResources')}
-                                    data-testid={`refresh-${provider.Id}`}
-                                >
-                                    <ArrowPathIcon className={cn("w-4 h-4", {
-                                        "animate-spin": provider.Status === CloudProviderStatus.Discovering
-                                    })} />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditProvider(provider.Id)}
-                                    disabled={isLoading}
-                                    title={t('edit')}
-                                    data-testid={`edit-${provider.Id}`}
-                                >
-                                    <PencilIcon className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveProvider(provider.Id, provider.Name)}
-                                    disabled={isLoading || provider.IsEnvironmentDefined}
-                                    title={provider.IsEnvironmentDefined ? t('cannotRemoveEnv') : t('remove')}
-                                    data-testid={`remove-${provider.Id}`}
-                                >
-                                    <TrashIcon className="w-4 h-4" />
-                                </Button>
+                                <Tip className="w-fit">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRefreshProvider(provider.Id)}
+                                        disabled={isLoading || provider.Status === CloudProviderStatus.Discovering}
+                                        aria-label={t('refreshResources')}
+                                        data-testid={`refresh-${provider.Id}`}
+                                    >
+                                        <ArrowPathIcon className={cn("w-4 h-4", {
+                                            "animate-spin": provider.Status === CloudProviderStatus.Discovering
+                                        })} />
+                                    </Button>
+                                    <p>{t('refreshResources')}</p>
+                                </Tip>
+                                <Tip className="w-fit">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditProvider(provider.Id)}
+                                        disabled={isLoading}
+                                        aria-label={t('edit')}
+                                        data-testid={`edit-${provider.Id}`}
+                                    >
+                                        <PencilIcon className="w-4 h-4" />
+                                    </Button>
+                                    <p>{t('edit')}</p>
+                                </Tip>
+                                <Tip className="w-fit">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveProvider(provider.Id, provider.Name)}
+                                        disabled={isLoading || provider.IsEnvironmentDefined}
+                                        aria-label={provider.IsEnvironmentDefined ? t('cannotRemoveEnv') : t('remove')}
+                                        data-testid={`remove-${provider.Id}`}
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                    </Button>
+                                    <p>{provider.IsEnvironmentDefined ? t('cannotRemoveEnv') : t('remove')}</p>
+                                </Tip>
                             </div>
                         </div>
                     ))}
