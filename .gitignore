@@ -58,3 +58,4 @@ frontend/e2e/.auth
 tools/docs-agent/.venv
 tools/docs-agent/runs/
 tools/
+.playwright-mcp
