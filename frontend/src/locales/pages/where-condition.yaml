@@ -20,5 +20,12 @@ en:
 
   # Sheet
   manageWhereConditions: Manage Where Conditions
+  conditionsTitle: Conditions
+  editingCondition: Editing Condition
   conditionNumber: "Condition {index}"
+  conditionCountSingular: "{count} Condition"
+  conditionCountPlural: "{count} Conditions"
+  tenPlusConditions: "10+ Conditions"
   moreConditions: "+{count} more"
+  addAnother: Add Condition
+  addToPage: Add to Page

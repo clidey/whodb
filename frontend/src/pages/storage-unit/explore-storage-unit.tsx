@@ -987,7 +987,7 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="flex flex-col gap-sm h-[150px] mb-4" data-vaul-no-drag>
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <div className="flex-1 overflow-y-auto" data-vaul-no-drag>
+                <div className="overflow-y-auto" data-vaul-no-drag>
                     <StorageUnitTable
                         columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
                         columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
