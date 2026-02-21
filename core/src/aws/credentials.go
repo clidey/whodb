@@ -69,8 +69,13 @@ func ParseFromWhoDB(creds *engine.Credentials) (*AWSCredentialConfig, error) {
 		return nil, errors.New("credentials cannot be nil")
 	}
 
+	region := strings.TrimSpace(creds.Hostname)
+	if region == "" {
+		region = common.GetRecordValueOrDefault(creds.Advanced, "Region", "")
+	}
+
 	config := &AWSCredentialConfig{
-		Region:          strings.TrimSpace(creds.Hostname),
+		Region:          region,
 		AccessKeyID:     strings.TrimSpace(creds.Username),
 		SecretAccessKey: strings.TrimSpace(creds.Password),
 	}

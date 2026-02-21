@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,19 +47,29 @@ export const loadTranslations = async (
     }
 
     try {
-        let yamlContent: string | undefined;
+        let translations: Record<string, string> | undefined;
 
-        if (isEEMode && language !== 'en') {
-            // Try to load from EE modules
-            yamlContent = findModule(eeModules, componentPath);
+        // In EE mode, check EE locale files first
+        if (isEEMode) {
+            const eeContent = findModule(eeModules, componentPath);
+            if (eeContent) {
+                const parsed = yaml.load(eeContent) as Record<string, Record<string, string>>;
+                if (parsed[language]) {
+                    translations = parsed[language];
+                }
+            }
         }
 
-        // Fallback to CE modules for English or if EE module not found
-        if (!yamlContent) {
-            yamlContent = findModule(ceModules, componentPath);
+        // Fallback to CE locale files
+        if (!translations) {
+            const ceContent = findModule(ceModules, componentPath);
+            if (ceContent) {
+                const parsed = yaml.load(ceContent) as Record<string, Record<string, string>>;
+                translations = parsed[language] || parsed['en'];
+            }
         }
 
-        if (!yamlContent) {
+        if (!translations) {
             console.error(`Translation file not found for ${componentPath}`, {
                 availableCE: Object.keys(ceModules),
                 availableEE: Object.keys(eeModules),
@@ -68,9 +78,6 @@ export const loadTranslations = async (
             });
             return {};
         }
-
-        const parsed = yaml.load(yamlContent) as Record<string, Record<string, string>>;
-        const translations = parsed[language] || parsed['en'] || {};
 
         translationCache[cacheKey] = translations;
         return translations;

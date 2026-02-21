@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ReactElement} from "react";
+import {ComponentType, ReactElement} from "react";
 import {Icons} from "../components/icons";
 
 /**
@@ -54,6 +54,21 @@ export interface TypeDefinition {
     category: TypeCategory;
 }
 
+/**
+ * Props passed to a custom login form renderer.
+ * Allows EE database types to fully control the login form fields.
+ */
+export interface CustomLoginFormProps {
+    hostName: string;
+    setHostName: (value: string) => void;
+    username: string;
+    setUsername: (value: string) => void;
+    password: string;
+    setPassword: (value: string) => void;
+    advancedForm: Record<string, string>;
+    setAdvancedForm: (value: Record<string, string>) => void;
+}
+
 // Extended dropdown item type with UI field configuration
 export interface IDatabaseDropdownItem {
     id: string;
@@ -87,6 +102,8 @@ export interface IDatabaseDropdownItem {
     isAwsManaged?: boolean;
     // SSL modes supported by this database (undefined = no SSL support, e.g., SQLite)
     sslModes?: SSLModeOption[];
+    // Custom login form renderer (replaces default hostname/username/password fields)
+    customFormRenderer?: ComponentType<CustomLoginFormProps>;
 }
 
 // Common SSL mode sets matching backend ssl.go definitions
@@ -300,11 +317,17 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
     eeLoadPromise = Promise.all([
         import('@ee/config.tsx'),
         import('@ee/icons')
-    ]).then(([eeConfig, eeIcons]) => {
+    ]).then(async ([eeConfig, eeIcons]) => {
         if (eeConfig?.eeDatabaseTypes && eeIcons?.EEIcons?.Logos) {
             // First merge the icons
             Object.assign(Icons.Logos, eeIcons.EEIcons.Logos);
-            
+
+            // Load custom form renderers via EE's lazy loader to avoid circular imports
+            const formRenderers: Record<string, ComponentType<CustomLoginFormProps>> =
+                (typeof eeConfig.loadFormRenderers === 'function')
+                    ? await eeConfig.loadFormRenderers()
+                    : {};
+
             // Then map EE database types to the correct format with resolved icons
             // @ts-ignore - TODO: fix this
             eeDatabaseTypes = eeConfig.eeDatabaseTypes.map(dbType => ({
@@ -319,8 +342,9 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                 supportsDatabaseSwitching: dbType.supportsDatabaseSwitching,
                 usesSchemaForGraph: dbType.usesSchemaForGraph,
                 sslModes: dbType.sslModes,
+                customFormRenderer: formRenderers[dbType.id],
             }));
-            
+
         } else {
             console.warn('EE modules loaded but missing expected exports');
         }

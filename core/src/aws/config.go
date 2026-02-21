@@ -38,7 +38,6 @@ import (
 //	if err != nil {
 //	    return nil, err
 //	}
-//	client := dynamodb.NewFromConfig(cfg)
 func LoadAWSConfig(ctx context.Context, creds *engine.Credentials) (aws.Config, error) {
 	awsCreds, err := ParseFromWhoDB(creds)
 	if err != nil {
