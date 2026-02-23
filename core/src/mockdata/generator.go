@@ -102,7 +102,7 @@ type Generator struct {
 	generatedPKs   map[string][]map[string]any // Cache of generated PK rows per table (supports composite PKs)
 	existingPKs    map[string][]map[string]any // Cache of existing PK rows for blocked tables
 	usedPKValues   map[string]map[string]bool  // Track used PK values: table -> pkValueString -> true
-	databaseType   string                      // Database type for type-specific generation (e.g., "MSSQL", "PostgreSQL")
+	databaseType   string                      // Database type for type-specific generation (e.g., "PostgreSQL")
 }
 
 // NewGenerator creates a new mock data generator with the specified FK density ratio.

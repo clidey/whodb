@@ -264,11 +264,16 @@ export const extrasMethods = {
     },
 
     async closeQueryHistory() {
-        await this.page.keyboard.press("Escape");
+        const closeBtn = this.page.locator('[role="dialog"] button').filter({ hasText: "Close" });
+        if (await closeBtn.count() > 0) {
+            await closeBtn.click();
+        } else {
+            await this.page.keyboard.press("Escape");
+        }
 
         const dialogCount = await this.page.locator('[role="dialog"]').count();
         if (dialogCount > 0) {
-            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden" });
+            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
         }
 
         await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });

@@ -64,7 +64,9 @@ for (const dbConfig of databases) {
       conn.user ?? undefined,
       conn.password ?? undefined,
       conn.database ?? undefined,
-      conn.advanced || {}
+      conn.advanced || {},
+      null,
+      dbConfig.loginForm || null
     );
 
     if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {

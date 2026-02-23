@@ -858,8 +858,6 @@ func (p *GormPlugin) NormalizeType(typeName string) string {
 }
 
 // GetMaxBulkInsertParameters returns the default limit of 65535 parameters.
-// PostgreSQL and MySQL both support this limit. Override for databases with
-// lower limits (e.g., SQLite: 999, MSSQL: 2100, Oracle: 1000).
 func (p *GormPlugin) GetMaxBulkInsertParameters() int {
 	return 65535
 }

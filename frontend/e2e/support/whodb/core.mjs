@@ -88,7 +88,7 @@ export const coreMethods = {
     /**
      * Login to the application
      */
-    async login(databaseType, hostname, username, password, database, advanced = {}, schema = null) {
+    async login(databaseType, hostname, username, password, database, advanced = {}, schema = null, loginForm = null) {
         const currentUrl = this.page.url();
         if (currentUrl.startsWith(BASE_URL)) {
             await this.page.context().clearCookies();
@@ -115,65 +115,78 @@ export const coreMethods = {
             await this.page.locator(`[data-value="${databaseType}"]`).click();
         }
 
-        if (hostname !== undefined && hostname !== null) {
-            await this.page.locator('[data-testid="hostname"]').clear();
-            if (hostname !== "") {
-                await this.page.locator('[data-testid="hostname"]').fill(hostname);
+        // Custom login form (databases with non-standard login UI)
+        if (loginForm) {
+            for (const testid of loginForm.clicks || []) {
+                await this.page.locator(`[data-testid="${testid}"]`).click();
             }
-        }
-
-        if (username !== undefined) {
-            await this.page.locator('[data-testid="username"]').clear();
-            if (username != null && username !== "") {
-                await this.page.locator('[data-testid="username"]').fill(username);
+            for (const [testid, value] of Object.entries(loginForm.fields || {})) {
+                await this.page.locator(`[data-testid="${testid}"]`).clear();
+                await this.page.locator(`[data-testid="${testid}"]`).fill(value);
             }
-        }
-
-        if (password !== undefined) {
-            await this.page.locator('[data-testid="password"]').clear();
-            if (password != null && password !== "") {
-                await this.page.locator('[data-testid="password"]').fill(password);
-            }
-        }
-
-        if (database !== undefined) {
-            if (databaseType === "Sqlite3") {
-                await expect(this.page.locator('[data-testid="database"]')).toBeEnabled({ timeout: TIMEOUT.ACTION });
-                await this.page.locator('[data-testid="database"]').click();
-                await this.page.locator('[role="option"]').first().waitFor({ timeout: TIMEOUT.ACTION });
-                await this.page.locator(`[data-value="${database}"]`).click();
-            } else {
-                await this.page.locator('[data-testid="database"]').clear();
-                if (database !== null && database !== "") {
-                    await this.page.locator('[data-testid="database"]').fill(database);
-                }
-            }
-        }
-
-        const ssl = advanced.ssl || {};
-        const advancedFields = { ...advanced };
-        delete advancedFields.ssl;
-
-        const hasAdvancedOptions = Object.keys(advancedFields).length > 0 || Object.keys(ssl).length > 0;
-
-        if (hasAdvancedOptions) {
-            await this.page.locator('[data-testid="advanced-button"]').click();
-
-            for (const [key, value] of Object.entries(advancedFields)) {
-                await this.page.locator(`[data-testid="${key}-input"]`).clear();
-                if (value != null && value !== "") {
-                    await this.page.locator(`[data-testid="${key}-input"]`).fill(value);
+        } else {
+            if (hostname !== undefined && hostname !== null) {
+                await this.page.locator('[data-testid="hostname"]').clear();
+                if (hostname !== "") {
+                    await this.page.locator('[data-testid="hostname"]').fill(hostname);
                 }
             }
 
-            if (ssl.mode) {
-                await this.page.locator('[data-testid="ssl-mode-select"]').click();
-                await this.page.locator(`[data-value="${ssl.mode}"]`).click();
+            if (username !== undefined) {
+                await this.page.locator('[data-testid="username"]').clear();
+                if (username != null && username !== "") {
+                    await this.page.locator('[data-testid="username"]').fill(username);
+                }
             }
 
-            if (ssl.caCertContent) {
-                await this.page.getByRole("button", { name: "Paste PEM" }).first().click();
-                await this.page.locator('[data-testid="ssl-ca-certificate-content"]').fill(ssl.caCertContent);
+            if (password !== undefined) {
+                await this.page.locator('[data-testid="password"]').clear();
+                if (password != null && password !== "") {
+                    await this.page.locator('[data-testid="password"]').fill(password);
+                }
+            }
+
+            if (database !== undefined) {
+                if (databaseType === "Sqlite3") {
+                    await expect(this.page.locator('[data-testid="database"]')).toBeEnabled({ timeout: TIMEOUT.ACTION });
+                    await this.page.locator('[data-testid="database"]').click();
+                    await this.page.locator('[role="option"]').first().waitFor({ timeout: TIMEOUT.ACTION });
+                    await this.page.locator(`[data-value="${database}"]`).click();
+                } else {
+                    await this.page.locator('[data-testid="database"]').clear();
+                    if (database !== null && database !== "") {
+                        await this.page.locator('[data-testid="database"]').fill(database);
+                    }
+                }
+            }
+
+            const ssl = advanced.ssl || {};
+            const advancedFields = { ...advanced };
+            delete advancedFields.ssl;
+
+            const hasAdvancedOptions = Object.keys(advancedFields).length > 0 || Object.keys(ssl).length > 0;
+
+            if (hasAdvancedOptions) {
+                await this.page.locator('[data-testid="advanced-button"]').click();
+
+                // Set SSL mode first — mode changes can trigger re-renders that
+                // reset other field values, so we set it before filling fields.
+                if (ssl.mode) {
+                    await this.page.locator('[data-testid="ssl-mode-select"]').click();
+                    await this.page.locator(`[data-value="${ssl.mode}"]`).click();
+                }
+
+                if (ssl.caCertContent) {
+                    await this.page.getByRole("button", { name: "Paste PEM" }).first().click();
+                    await this.page.locator('[data-testid="ssl-ca-certificate-content"]').fill(ssl.caCertContent);
+                }
+
+                for (const [key, value] of Object.entries(advancedFields)) {
+                    await this.page.locator(`[data-testid="${key}-input"]`).clear();
+                    if (value != null && value !== "") {
+                        await this.page.locator(`[data-testid="${key}-input"]`).fill(value);
+                    }
+                }
             }
         }
 

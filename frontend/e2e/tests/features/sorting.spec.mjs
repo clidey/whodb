@@ -22,6 +22,9 @@ test.describe('Sorting', () => {
     forEachDatabase('sql', (db) => {
         const testTable = db.testTable;
         const tableName = testTable.name;
+        const idCol = testTable.idField;
+        const nameCol = testTable.identifierField;
+        const thirdCol = testTable.whereConditions.thirdColumn;
 
         test.describe('Column Header Sorting', () => {
             test('sorts ascending on first click', async ({ whodb, page }) => {
@@ -31,11 +34,11 @@ test.describe('Sorting', () => {
                 const { rows: initialRows } = await whodb.getTableData();
 
                 // Click first sortable column
-                await whodb.sortBy('id');
+                await whodb.sortBy(idCol);
 
                 // Verify ascending indicator appears
-                await expect(page.locator('[data-column-name="id"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="id"]')).toHaveAttribute('data-sort-direction', 'asc');
+                await expect(page.locator(`[data-column-name="${idCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${idCol}"]`)).toHaveAttribute('data-sort-direction', 'asc');
 
                 // Verify data is sorted
                 const { rows: sortedRows } = await whodb.getTableData();
@@ -58,12 +61,12 @@ test.describe('Sorting', () => {
                 await whodb.data(tableName);
 
                 // Click twice to sort descending
-                await whodb.sortBy('id');
-                await whodb.sortBy('id');
+                await whodb.sortBy(idCol);
+                await whodb.sortBy(idCol);
 
                 // Verify descending indicator appears
-                await expect(page.locator('[data-column-name="id"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="id"]')).toHaveAttribute('data-sort-direction', 'desc');
+                await expect(page.locator(`[data-column-name="${idCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${idCol}"]`)).toHaveAttribute('data-sort-direction', 'desc');
 
                 // Verify data is sorted descending
                 const { rows } = await whodb.getTableData();
@@ -83,37 +86,37 @@ test.describe('Sorting', () => {
                 await whodb.data(tableName);
 
                 // Click once - should show ascending indicator
-                await whodb.sortBy('id');
-                await expect(page.locator('[data-column-name="id"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="id"]')).toHaveAttribute('data-sort-direction', 'asc');
+                await whodb.sortBy(idCol);
+                await expect(page.locator(`[data-column-name="${idCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${idCol}"]`)).toHaveAttribute('data-sort-direction', 'asc');
 
                 // Click twice - should show descending indicator
-                await whodb.sortBy('id');
-                await expect(page.locator('[data-column-name="id"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="id"]')).toHaveAttribute('data-sort-direction', 'desc');
+                await whodb.sortBy(idCol);
+                await expect(page.locator(`[data-column-name="${idCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${idCol}"]`)).toHaveAttribute('data-sort-direction', 'desc');
 
                 // Click three times - should remove sort indicator
-                await whodb.sortBy('id');
-                await expect(page.locator('[data-column-name="id"] [data-testid="sort-indicator"]')).not.toBeAttached();
-                await expect(page.locator('[data-column-name="id"]')).not.toHaveAttribute('data-sort-direction');
+                await whodb.sortBy(idCol);
+                await expect(page.locator(`[data-column-name="${idCol}"] [data-testid="sort-indicator"]`)).not.toBeAttached();
+                await expect(page.locator(`[data-column-name="${idCol}"]`)).not.toHaveAttribute('data-sort-direction');
             });
 
             test('can sort by different columns', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
-                // Sort by username column
-                await whodb.sortBy('username');
+                // Sort by identifier column
+                await whodb.sortBy(nameCol);
 
-                // Verify indicator on username column
-                await expect(page.locator('[data-column-name="username"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="username"]')).toHaveAttribute('data-sort-direction', 'asc');
+                // Verify indicator on identifier column
+                await expect(page.locator(`[data-column-name="${nameCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${nameCol}"]`)).toHaveAttribute('data-sort-direction', 'asc');
 
-                // Sort by email column (should clear username, add email)
-                await whodb.sortBy('email');
+                // Sort by third column (should clear first, add second)
+                await whodb.sortBy(thirdCol);
 
                 // Both columns may have sort indicators (multi-column sort)
-                await expect(page.locator('[data-column-name="email"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="email"]')).toHaveAttribute('data-sort-direction', 'asc');
+                await expect(page.locator(`[data-column-name="${thirdCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${thirdCol}"]`)).toHaveAttribute('data-sort-direction', 'asc');
             });
         });
 
@@ -122,7 +125,7 @@ test.describe('Sorting', () => {
                 await whodb.data(tableName);
 
                 // Sort ascending
-                await whodb.sortBy('id');
+                await whodb.sortBy(idCol);
 
                 // Get sorted data
                 const { rows: sortedRows } = await whodb.getTableData();
@@ -132,8 +135,8 @@ test.describe('Sorting', () => {
                 await whodb.searchTable(firstValue.substring(0, 2));
 
                 // Verify sort indicator still present
-                await expect(page.locator('[data-column-name="id"] [data-testid="sort-indicator"]')).toBeAttached();
-                await expect(page.locator('[data-column-name="id"]')).toHaveAttribute('data-sort-direction', 'asc');
+                await expect(page.locator(`[data-column-name="${idCol}"] [data-testid="sort-indicator"]`)).toBeAttached();
+                await expect(page.locator(`[data-column-name="${idCol}"]`)).toHaveAttribute('data-sort-direction', 'asc');
             });
         });
     });
