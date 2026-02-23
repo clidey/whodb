@@ -15,6 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 /**
  * Extract text from an element, converting HTML to plain text
@@ -82,7 +83,7 @@ export const scratchpadMethods = {
         await cellLocator
             .locator('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]')
             .first()
-            .waitFor({ timeout: 5000 });
+            .waitFor({ timeout: TIMEOUT.ELEMENT });
     },
 
     /**
@@ -94,7 +95,7 @@ export const scratchpadMethods = {
         const tableLocator = this.page.locator(
             `[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="cell-query-output"] table`
         );
-        await tableLocator.waitFor({ timeout: 10000 });
+        await tableLocator.waitFor({ timeout: TIMEOUT.ACTION });
 
         return await tableLocator.evaluate((table) => {
             const columns = Array.from(table.querySelectorAll("th")).map((el) => el.innerText.trim());
@@ -114,7 +115,7 @@ export const scratchpadMethods = {
         const el = this.page.locator(
             `[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="cell-action-output"]`
         );
-        await el.waitFor({ timeout: 10000 });
+        await el.waitFor({ timeout: TIMEOUT.ACTION });
         return await extractText(el);
     },
 
@@ -127,7 +128,7 @@ export const scratchpadMethods = {
         const el = this.page.locator(
             `[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="cell-error"]`
         );
-        await el.waitFor({ timeout: 10000 });
+        await el.waitFor({ timeout: TIMEOUT.ACTION });
         await el.waitFor({ state: "visible" });
         const text = await el.innerText();
         return text.replace(/^Error\s*/i, "").trim();

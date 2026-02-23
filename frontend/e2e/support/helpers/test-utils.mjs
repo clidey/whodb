@@ -17,6 +17,25 @@
 import {expect} from "@playwright/test";
 
 /**
+ * Named timeouts for Playwright locator waits.
+ * Use these instead of raw numbers so values are tunable from one place.
+ */
+export const TIMEOUT = Object.freeze({
+    /** Short wait — animations, preview loads (3s) */
+    SHORT:      3_000,
+    /** Element interaction — buttons, dialogs, menus, popovers (5s) */
+    ELEMENT:    5_000,
+    /** Default action — data load, table render, API response (10s) */
+    ACTION:    10_000,
+    /** Navigation — page load, storage-unit cards after route change (15s) */
+    NAVIGATION:15_000,
+    /** Slow operation — login completion, async DB mutations, mock data gen (30s) */
+    SLOW:      30_000,
+    /** Login API — full auth flow including potential retries (60s) */
+    LOGIN:     60_000,
+});
+
+/**
  * Generates a unique test identifier for this test run.
  * Uses timestamp to avoid conflicts within and across test runs.
  */

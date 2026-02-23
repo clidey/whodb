@@ -15,6 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 /** Methods for where-condition management */
 export const whereMethods = {
@@ -26,8 +27,8 @@ export const whereMethods = {
         await this.page.locator('[data-testid="where-button"]').click();
 
         await Promise.race([
-            this.page.locator('[data-testid="field-key"]').waitFor({ timeout: 5000 }).catch(() => {}),
-            this.page.locator('[data-testid*="sheet-field"]').first().waitFor({ timeout: 5000 }).catch(() => {}),
+            this.page.locator('[data-testid="field-key"]').waitFor({ timeout: TIMEOUT.ELEMENT }).catch(() => {}),
+            this.page.locator('[data-testid*="sheet-field"]').first().waitFor({ timeout: TIMEOUT.ELEMENT }).catch(() => {}),
         ]);
 
         const isSheetMode =
@@ -92,8 +93,8 @@ export const whereMethods = {
                 await this.page.keyboard.press("Escape");
             }
             await this.page.waitForTimeout(100);
-            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: 5000 });
-            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
+            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
+            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
             await this.page.waitForTimeout(300);
         } else {
             if ((await this.page.locator('[data-testid="cancel-button"]').count()) > 0) {
@@ -183,7 +184,7 @@ export const whereMethods = {
         const mode = await this.getWhereConditionMode();
         if (mode === "popover") {
             await this.page.locator('[data-testid="where-condition-badge"]').nth(index).click();
-            await this.page.locator('[data-testid="update-condition-button"]').waitFor({ timeout: 5000 });
+            await this.page.locator('[data-testid="update-condition-button"]').waitFor({ timeout: TIMEOUT.ELEMENT });
         } else {
             console.log("Sheet mode: Cannot click individual conditions - need to open sheet");
         }
@@ -314,8 +315,8 @@ export const whereMethods = {
 
             await this.page.keyboard.press("Escape");
             await this.page.waitForTimeout(100);
-            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: 5000 });
-            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
+            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
+            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
             await this.page.waitForTimeout(300);
         }
     },

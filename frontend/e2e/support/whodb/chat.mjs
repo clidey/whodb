@@ -15,6 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 /** Methods for AI chat: mocking, navigation, message verification */
 export const chatMethods = {
@@ -164,26 +165,26 @@ export const chatMethods = {
      */
     async gotoChat() {
         await this.page.goto(this.url("/chat"));
-        await this.page.locator('[data-testid="ai-provider"]').waitFor({ timeout: 10000 });
+        await this.page.locator('[data-testid="ai-provider"]').waitFor({ timeout: TIMEOUT.ACTION });
         await this.page.waitForTimeout(1000);
-        await this.page.locator('[data-testid="ai-provider-select"]').waitFor({ state: "visible", timeout: 10000 });
+        await this.page.locator('[data-testid="ai-provider-select"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
 
         const buttonText = await this.page.locator('[data-testid="ai-provider-select"]').innerText();
 
         if (buttonText.includes("Select Model Type") || buttonText.trim() === "") {
             console.log("Selecting AI provider from dropdown");
             await this.page.locator('[data-testid="ai-provider-select"]').click();
-            await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: 5000 });
+            await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await this.page.locator('[role="option"]').first().click();
             await this.page.waitForTimeout(1500);
             await expect(this.page.locator('[data-testid="ai-provider-select"]')).not.toContainText("Select Model Type", {
-                timeout: 5000,
+                timeout: TIMEOUT.ELEMENT,
             });
         } else {
             console.log("AI provider already selected: " + buttonText);
         }
 
-        await this.page.locator('[data-testid="ai-model-select"]').waitFor({ state: "visible", timeout: 10000 });
+        await this.page.locator('[data-testid="ai-model-select"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         await expect(this.page.locator('[data-testid="ai-model-select"]')).toBeEnabled();
 
         const modelButtonText = await this.page.locator('[data-testid="ai-model-select"]').innerText();
@@ -191,17 +192,17 @@ export const chatMethods = {
         if (modelButtonText.includes("Select Model") || modelButtonText.trim() === "") {
             console.log("Selecting AI model from dropdown");
             await this.page.locator('[data-testid="ai-model-select"]').click();
-            await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: 5000 });
+            await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await this.page.locator('[role="option"]').first().click();
             await this.page.waitForTimeout(1000);
             await expect(this.page.locator('[data-testid="ai-model-select"]')).not.toContainText("Select Model", {
-                timeout: 5000,
+                timeout: TIMEOUT.ELEMENT,
             });
         } else {
             console.log("AI model already selected: " + modelButtonText);
         }
 
-        await this.page.locator('[data-testid="chat-input"]').waitFor({ state: "visible", timeout: 10000 });
+        await this.page.locator('[data-testid="chat-input"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         await expect(this.page.locator('[data-testid="chat-input"]')).toBeEnabled();
         await expect(this.page.locator('[data-testid="chat-input"]')).toHaveValue("");
         await this.page.waitForTimeout(1000);
@@ -221,7 +222,7 @@ export const chatMethods = {
 
         const sendBtn = this.page.locator('[data-testid="icon-button"]').last();
         await sendBtn.waitFor({ state: "visible" });
-        await expect(sendBtn).toBeEnabled({ timeout: 5000 });
+        await expect(sendBtn).toBeEnabled({ timeout: TIMEOUT.ELEMENT });
         await sendBtn.click();
         await this.page.waitForTimeout(200);
     },
@@ -236,7 +237,7 @@ export const chatMethods = {
 
     async verifyChatSQLResult({ columns, rowCount }) {
         const table = this.page.locator("table").last();
-        await table.waitFor({ state: "visible", timeout: 10000 });
+        await table.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
 
         if (columns) {
             for (const column of columns) {
@@ -251,13 +252,13 @@ export const chatMethods = {
 
     async verifyChatError(errorText) {
         const errorState = this.page.locator('[data-testid="error-state"]');
-        await errorState.waitFor({ state: "visible", timeout: 10000 });
+        await errorState.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         const text = await errorState.innerText();
         expect(text.toLowerCase()).toContain(errorText.toLowerCase());
     },
 
     async verifyChatActionExecuted() {
-        await expect(this.page.getByText("Action Executed")).toBeVisible({ timeout: 10000 });
+        await expect(this.page.getByText("Action Executed")).toBeVisible({ timeout: TIMEOUT.ACTION });
     },
 
     async getChatMessages() {
@@ -310,7 +311,7 @@ export const chatMethods = {
         await this.page.waitForTimeout(200);
         await group.locator('[data-testid="icon-button"]').first().click();
         await this.page.locator('[data-testid="move-to-scratchpad-option"]').click();
-        await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: 5000 });
+        await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: TIMEOUT.ELEMENT });
     },
 
     async confirmMoveToScratchpad({ pageOption = "new", newPageName = "" } = {}) {
@@ -323,7 +324,7 @@ export const chatMethods = {
         }
 
         await this.page.locator('[role="dialog"]').getByRole("button", { name: "Move to Scratchpad" }).click();
-        await this.page.waitForURL(/\/scratchpad/, { timeout: 10000 });
+        await this.page.waitForURL(/\/scratchpad/, { timeout: TIMEOUT.ACTION });
     },
 
     async navigateChatHistory(direction = "up") {
@@ -342,11 +343,11 @@ export const chatMethods = {
     },
 
     async waitForChatResponse() {
-        await this.page.locator('[data-input-message="user"]').first().waitFor({ timeout: 5000 });
+        await this.page.locator('[data-input-message="user"]').first().waitFor({ timeout: TIMEOUT.ELEMENT });
 
         const loadingCount = await this.page.locator('[data-testid="loading"]').count();
         if (loadingCount > 0) {
-            await this.page.locator('[data-testid="loading"]').waitFor({ state: "hidden", timeout: 10000 });
+            await this.page.locator('[data-testid="loading"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
         }
 
         await expect(async () => {
@@ -356,7 +357,7 @@ export const chatMethods = {
                 (await this.page.locator('[data-testid="chat-sql-result"] table, [data-testid="sql-result-table"]').count()) > 0;
             const hasAnyResultTable = (await this.page.locator("table").count()) > 0;
             expect(hasSystemMessage || hasErrorState || hasSQLResult || hasAnyResultTable).toBe(true);
-        }).toPass({ timeout: 10000 });
+        }).toPass({ timeout: TIMEOUT.ACTION });
 
         await this.page.waitForTimeout(500);
     },

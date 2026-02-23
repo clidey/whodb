@@ -15,6 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
@@ -137,9 +138,9 @@ export const coreMethods = {
 
         if (database !== undefined) {
             if (databaseType === "Sqlite3") {
-                await expect(this.page.locator('[data-testid="database"]')).toBeEnabled({ timeout: 10000 });
+                await expect(this.page.locator('[data-testid="database"]')).toBeEnabled({ timeout: TIMEOUT.ACTION });
                 await this.page.locator('[data-testid="database"]').click();
-                await this.page.locator('[role="option"]').first().waitFor({ timeout: 10000 });
+                await this.page.locator('[role="option"]').first().waitFor({ timeout: TIMEOUT.ACTION });
                 await this.page.locator(`[data-value="${database}"]`).click();
             } else {
                 await this.page.locator('[data-testid="database"]').clear();
@@ -178,7 +179,7 @@ export const coreMethods = {
 
         const loginResponsePromise = this.page.waitForResponse(
             (response) => response.url().includes("/api/query") && response.request().method() === "POST",
-            { timeout: 60000 }
+            { timeout: TIMEOUT.LOGIN }
         );
 
         await this.page.locator('[data-testid="login-button"]').click();
@@ -189,7 +190,7 @@ export const coreMethods = {
             console.log("Login API returned errors:", JSON.stringify(body.errors));
         }
 
-        await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: 30000 });
+        await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: TIMEOUT.SLOW });
 
         await this.page.evaluate(() => {
             const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
@@ -221,7 +222,7 @@ export const coreMethods = {
     async selectSchema(value) {
         await this.page.locator('[data-testid="sidebar-schema"]').click();
         await this.page.locator(`[data-value="${value}"]`).click();
-        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ state: "visible", timeout: 15000 });
+        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ state: "visible", timeout: TIMEOUT.NAVIGATION });
     },
 
     /**
@@ -258,6 +259,6 @@ export const coreMethods = {
                 .click({ force: true });
         }
 
-        await this.page.waitForURL(/\/login/, { timeout: 10000 }).catch(() => {});
+        await this.page.waitForURL(/\/login/, { timeout: TIMEOUT.ACTION }).catch(() => {});
     },
 };

@@ -15,18 +15,19 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 /** Methods for graph, export, import, mock data, query history, context menu, screenshots */
 export const extrasMethods = {
     // ── Graph ─────────────────────────────────────────────────────────────
 
     async getGraph() {
-        await this.page.locator(".react-flow__node").first().waitFor({ state: "visible", timeout: 10000 });
+        await this.page.locator(".react-flow__node").first().waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
 
         await this.page.waitForFunction(() => {
             const container = document.querySelector(".react-flow");
             return container && !container.classList.contains("laying-out");
-        }, { timeout: 5000 }).catch(() => {});
+        }, { timeout: TIMEOUT.ELEMENT }).catch(() => {});
 
         await this.page.waitForTimeout(600);
 
@@ -85,7 +86,7 @@ export const extrasMethods = {
         await this.page.waitForTimeout(200);
         const mockDataItem = this.page.locator('[data-testid="context-menu-mock-data"]');
         await mockDataItem.scrollIntoViewIfNeeded();
-        await mockDataItem.waitFor({ timeout: 5000 });
+        await mockDataItem.waitFor({ timeout: TIMEOUT.ELEMENT });
         await mockDataItem.click({ force: true });
     },
 
@@ -110,9 +111,9 @@ export const extrasMethods = {
     async openImport(tableName) {
         await this.data(tableName);
         const importBtn = this.page.locator('[data-testid="import-button"]');
-        await importBtn.waitFor({ state: "visible", timeout: 10000 });
+        await importBtn.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         await importBtn.click();
-        await this.page.locator('[data-testid="import-dialog"]').waitFor({ state: "visible", timeout: 10000 });
+        await this.page.locator('[data-testid="import-dialog"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
     },
 
     async selectImportMode(mode) {
@@ -131,13 +132,13 @@ export const extrasMethods = {
     async waitForPreview() {
         const loading = this.page.locator('[data-testid="import-preview-loading"]');
         if (await loading.count() > 0) {
-            await loading.waitFor({ state: "hidden", timeout: 3000 }).catch(() => {});
+            await loading.waitFor({ state: "hidden", timeout: TIMEOUT.SHORT }).catch(() => {});
         }
-        await this.page.locator('[data-testid="import-preview-section"]').waitFor({ timeout: 15000 });
+        await this.page.locator('[data-testid="import-preview-section"]').waitFor({ timeout: TIMEOUT.NAVIGATION });
     },
 
     async getPreviewData() {
-        await this.page.locator('[data-testid="import-preview-table"]').waitFor({ timeout: 10000 });
+        await this.page.locator('[data-testid="import-preview-table"]').waitFor({ timeout: TIMEOUT.ACTION });
 
         return await this.page.locator('[data-testid="import-preview-table"]').evaluate((table) => {
             const columns = Array.from(table.querySelectorAll("thead th")).map((el) => el.innerText.trim());
@@ -192,7 +193,7 @@ export const extrasMethods = {
 
     async generateMockData() {
         const btn = this.page.locator('[data-testid="mock-data-generate-button"]');
-        await expect(btn).toBeEnabled({ timeout: 30000 });
+        await expect(btn).toBeEnabled({ timeout: TIMEOUT.SLOW });
         await btn.scrollIntoViewIfNeeded();
         await btn.click({ force: true });
     },
@@ -220,7 +221,7 @@ export const extrasMethods = {
     },
 
     async getQueryHistoryItems() {
-        await this.page.locator('[role="dialog"] [data-slot="card"]').first().waitFor({ timeout: 10000 });
+        await this.page.locator('[role="dialog"] [data-slot="card"]').first().waitFor({ timeout: TIMEOUT.ACTION });
         const items = this.page.locator('[role="dialog"] [data-slot="card"]');
         const count = await items.count();
         const result = [];
@@ -253,11 +254,11 @@ export const extrasMethods = {
 
         const dialogCount = await this.page.locator('[role="dialog"]').filter({ visible: true }).count();
         if (dialogCount > 0) {
-            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: 10000 });
+            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
         }
 
         const editorSelector = `[role="tabpanel"][data-state="active"] [data-testid="cell-${targetCellIndex}"] [data-testid="code-editor"] .cm-content`;
-        await expect(this.page.locator(editorSelector)).toContainText(expectedText, { timeout: 10000 });
+        await expect(this.page.locator(editorSelector)).toContainText(expectedText, { timeout: TIMEOUT.ACTION });
 
         await this.page.waitForTimeout(500);
     },
@@ -278,7 +279,7 @@ export const extrasMethods = {
             await this.page.locator('[role="dialog"]').waitFor({ state: "hidden" });
         }
 
-        await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
+        await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
         await this.page.waitForTimeout(300);
     },
 

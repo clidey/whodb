@@ -39,6 +39,7 @@ import fs from "fs";
 import path from "path";
 import {chromium, expect, test as base} from "@playwright/test";
 import {WhoDB} from "./whodb.mjs";
+import {TIMEOUT} from "./helpers/test-utils.mjs";
 import {getDatabaseId, getDatabasesByCategory, hasFeature,} from "./database-config.mjs";
 import {VALID_FEATURES} from "./helpers/fixture-validator.mjs";
 import {mockAIProviders} from "./helpers/mock-providers.mjs";
@@ -229,7 +230,7 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
             await page
               .locator('[data-testid="storage-unit-card"]')
               .first()
-              .waitFor({ timeout: 15000 });
+              .waitFor({ timeout: TIMEOUT.NAVIGATION });
           }
         });
 
@@ -271,7 +272,7 @@ export async function loginToDatabase(whodb, dbConfig, options = {}) {
     await whodb.page
       .locator('[data-testid="storage-unit-card"]')
       .first()
-      .waitFor({ timeout: 15000 });
+      .waitFor({ timeout: TIMEOUT.NAVIGATION });
   }
 }
 

@@ -15,6 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 /** Methods for row-level operations: add, delete, update, context menu */
 export const rowsMethods = {
@@ -29,7 +30,7 @@ export const rowsMethods = {
         if (isSingleInput) {
             const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
             const editorContainer = this.page.locator('[data-testid="add-row-field-document"] .cm-editor');
-            await editorContainer.waitFor({ timeout: 5000 });
+            await editorContainer.waitFor({ timeout: TIMEOUT.ELEMENT });
             await editorContainer.locator('[role="textbox"]').fill(jsonString);
         } else {
             for (const [key, value] of Object.entries(data)) {
@@ -39,8 +40,8 @@ export const rowsMethods = {
         }
 
         await this.page.locator('[data-testid="submit-add-row-button"]').click();
-        await this.page.locator('[data-testid="submit-add-row-button"]').waitFor({ state: "hidden", timeout: 10000 });
-        await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
+        await this.page.locator('[data-testid="submit-add-row-button"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
+        await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
         await this.page.waitForTimeout(500);
         await this.page.locator("table tbody").waitFor({ state: "visible" });
     },
@@ -141,7 +142,7 @@ export const rowsMethods = {
             } else {
                 await this.page
                     .locator('[data-testid="context-menu-edit-row"], [data-testid="context-menu-more-actions"]')
-                    .waitFor({ timeout: 5000 });
+                    .waitFor({ timeout: TIMEOUT.ELEMENT });
             }
         }
     },
@@ -158,10 +159,10 @@ export const rowsMethods = {
 
         const deleteBtn = this.page.locator('[data-testid="context-menu-delete-row"]');
         await deleteBtn.scrollIntoViewIfNeeded();
-        await deleteBtn.waitFor({ timeout: 5000 });
+        await deleteBtn.waitFor({ timeout: TIMEOUT.ELEMENT });
         await deleteBtn.click({ force: true });
 
-        await expect(this.page.locator("table tbody tr")).toHaveCount(initialRowCount - 1, { timeout: 10000 });
+        await expect(this.page.locator("table tbody tr")).toHaveCount(initialRowCount - 1, { timeout: TIMEOUT.ACTION });
     },
 
     /**
@@ -177,7 +178,7 @@ export const rowsMethods = {
 
         const editBtn = this.page.locator('[data-testid="context-menu-edit-row"]');
         await editBtn.scrollIntoViewIfNeeded();
-        await editBtn.waitFor({ timeout: 5000 });
+        await editBtn.waitFor({ timeout: TIMEOUT.ELEMENT });
         await editBtn.click({ force: true });
 
         const standardField = this.page.locator(`[data-testid="editable-field-${columnIndex}"]`);
@@ -223,11 +224,11 @@ export const rowsMethods = {
         if (cancel) {
             await this.page.keyboard.press("Escape");
             await this.page.getByText("Edit Row").first().waitFor({ state: "hidden" });
-            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
+            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
         } else {
             await this.page.locator('[data-testid="update-button"]').click();
             await this.page.locator('[data-testid="update-button"]').waitFor({ state: "hidden" });
-            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: 5000 });
+            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
         }
     },
 };

@@ -15,6 +15,7 @@
  */
 
 import {expect} from "@playwright/test";
+import {TIMEOUT} from "../helpers/test-utils.mjs";
 
 /** Methods for table/storage-unit navigation, data extraction, sorting, pagination */
 export const tableMethods = {
@@ -30,12 +31,12 @@ export const tableMethods = {
         });
 
         await this.page.goto(this.url("/storage-unit"));
-        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
+        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: TIMEOUT.NAVIGATION });
 
         const card = this.page.locator(`[data-testid="storage-unit-card"][data-table-name="${tableName}"]`).first();
         const exploreBtn = card.locator('[data-testid="explore-button"]');
         await exploreBtn.scrollIntoViewIfNeeded();
-        await exploreBtn.waitFor({ state: "visible", timeout: 10000 });
+        await exploreBtn.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         await exploreBtn.click({ force: true });
     },
 
@@ -44,8 +45,8 @@ export const tableMethods = {
      * @returns {Promise<Array<[string, string]>>}
      */
     async getExploreFields() {
-        await this.page.locator('[data-testid="explore-fields"]').waitFor({ state: "visible", timeout: 10000 });
-        await this.page.locator('[data-testid="explore-fields"] h3').waitFor({ timeout: 10000 });
+        await this.page.locator('[data-testid="explore-fields"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
+        await this.page.locator('[data-testid="explore-fields"] h3').waitFor({ timeout: TIMEOUT.ACTION });
 
         return await this.page.evaluate(() => {
             const result = [];
@@ -74,20 +75,20 @@ export const tableMethods = {
         });
 
         await this.page.evaluate((url) => { window.location.href = url; }, this.url("/storage-unit"));
-        await this.page.waitForURL(/\/storage-unit/, { timeout: 15000 });
-        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
+        await this.page.waitForURL(/\/storage-unit/, { timeout: TIMEOUT.NAVIGATION });
+        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: TIMEOUT.NAVIGATION });
 
         const card = this.page.locator(`[data-testid="storage-unit-card"][data-table-name="${tableName}"]`).first();
         const dataBtn = card.locator('[data-testid="data-button"]').first();
         await dataBtn.scrollIntoViewIfNeeded();
-        await dataBtn.waitFor({ state: "visible", timeout: 10000 });
+        await dataBtn.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         await dataBtn.click({ force: true });
 
-        await this.page.waitForURL(/\/storage-unit\/explore/, { timeout: 10000 });
-        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ state: "hidden", timeout: 5000 });
-        await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: 10000 });
+        await this.page.waitForURL(/\/storage-unit\/explore/, { timeout: TIMEOUT.ACTION });
+        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
+        await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: TIMEOUT.ACTION });
         if (waitForRows) {
-            await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 30000 });
+            await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: TIMEOUT.SLOW });
         }
     },
 
@@ -124,7 +125,7 @@ export const tableMethods = {
      * Assert that "No data available" text is visible
      */
     async assertNoDataAvailable() {
-        await expect(this.page.getByText(/No data available/i)).toBeVisible({ timeout: 10000 });
+        await expect(this.page.getByText(/No data available/i)).toBeVisible({ timeout: TIMEOUT.ACTION });
     },
 
     /**
@@ -132,8 +133,8 @@ export const tableMethods = {
      * @returns {Promise<{columns: string[], rows: string[][]}>}
      */
     async getTableData() {
-        await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: 10000 });
-        await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: 10000 });
+        await this.page.locator("table").filter({ visible: true }).waitFor({ timeout: TIMEOUT.ACTION });
+        await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: TIMEOUT.ACTION });
 
         return await this.page.evaluate(() => {
             const table = document.querySelector("table");
@@ -173,7 +174,7 @@ export const tableMethods = {
         await this.page.waitForTimeout(200);
 
         const submitBtn = this.page.locator('[data-testid="submit-button"]');
-        await submitBtn.waitFor({ timeout: 5000 });
+        await submitBtn.waitFor({ timeout: TIMEOUT.ELEMENT });
         await submitBtn.click();
         await this.page.waitForTimeout(200);
     },
@@ -239,7 +240,7 @@ export const tableMethods = {
         });
 
         await this.page.goto(this.url("/storage-unit"));
-        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
+        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: TIMEOUT.NAVIGATION });
 
         const elements = this.page.locator('[data-testid="storage-unit-name"]');
         const count = await elements.count();
