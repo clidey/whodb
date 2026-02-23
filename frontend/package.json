@@ -88,7 +88,6 @@
     "coverage:clean:all": "bash ../dev/clean-coverage.sh",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
     "generate": "graphql-codegen --config codegen.ce.yml",
-    "generate:ce": "graphql-codegen --config codegen.ce.yml",
     "generate:ee": "graphql-codegen --config codegen.ee.yml"
   },
   "browserslist": {
