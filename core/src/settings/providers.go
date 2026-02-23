@@ -25,6 +25,7 @@ import (
 
 	awsinfra "github.com/clidey/whodb/core/src/aws"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
 	awsprovider "github.com/clidey/whodb/core/src/providers/aws"
@@ -324,7 +325,7 @@ func InitAWSProvidersFromEnv() error {
 		return nil
 	}
 
-	envConfigs, err := env.GetAWSProvidersFromEnv()
+	envConfigs, err := envconfig.GetAWSProvidersFromEnv()
 	if err != nil {
 		return err
 	}

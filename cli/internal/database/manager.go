@@ -32,6 +32,7 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/types"
 	"github.com/xuri/excelize/v2"
@@ -360,7 +361,7 @@ func (m *Manager) getEnvConnections() []Connection {
 
 	for _, plugin := range m.engine.Plugins {
 		dbType := string(plugin.Type)
-		profiles := env.GetDefaultDatabaseCredentials(dbType)
+		profiles := envconfig.GetDefaultDatabaseCredentials(dbType)
 		for _, profile := range profiles {
 			typeCounts[dbType]++
 			conn := envProfileToConnection(profile, dbType, typeCounts[dbType])
