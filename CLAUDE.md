@@ -28,6 +28,8 @@ core/                   # CE backend (Go)
   server.go             # Entry point (func main)
   src/src.go            # Engine initialization, plugin registration
   src/engine/plugin.go  # PluginFunctions interface
+  src/env/              # Environment variable declarations (pure, no log dependency)
+  src/envconfig/        # Config-loading functions that need both env and log
   src/plugins/          # Database connectors (each implements PluginFunctions)
   graph/schema.graphqls # GraphQL schema
   graph/*.resolvers.go  # GraphQL resolvers
@@ -75,6 +77,7 @@ bash dev/run-cli-tests.sh                   # All CLI tests
 - When adding plugin functionality: add to `PluginFunctions` interface, implement in each plugin
 - Use `ErrorHandler` (`core/src/plugins/gorm/errors.go`) for user-friendly error messages
 - Never log sensitive data (passwords, API keys, tokens, connection strings)
+- `env` package is for pure env var declarations only (no `log` import). Functions that parse env vars and need `log` for error reporting go in `envconfig`
 - Delete build binaries after testing (`go build` artifacts)
 
 ## When Working on Frontend (TypeScript)
