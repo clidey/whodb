@@ -73,7 +73,7 @@ func setupServer(router *chi.Mux, staticFiles embed.FS) {
 // debugRequestMiddleware logs all incoming requests to the debug file
 func debugRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.DebugFileAlways("HTTP Request: %s %s (Host: %s, RemoteAddr: %s)", r.Method, r.URL.Path, r.Host, r.RemoteAddr)
+		log.DebugFile("HTTP Request: %s %s (Host: %s, RemoteAddr: %s)", r.Method, r.URL.Path, r.Host, r.RemoteAddr)
 		next.ServeHTTP(w, r)
 	})
 }

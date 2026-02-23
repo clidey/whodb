@@ -98,22 +98,6 @@ func DebugFile(format string, args ...any) {
 	debugFile.Sync() // Flush immediately for debugging
 }
 
-// DebugFileAlways writes to debug file regardless of WHODB_DEBUG_FILE setting.
-// Use sparingly - mainly for critical debugging paths.
-func DebugFileAlways(format string, args ...any) {
-	debugFileMu.Lock()
-	defer debugFileMu.Unlock()
-
-	if err := initDebugFile(); err != nil {
-		return
-	}
-
-	timestamp := time.Now().Format("15:04:05.000")
-	msg := fmt.Sprintf(format, args...)
-	fmt.Fprintf(debugFile, "[%s] %s\n", timestamp, msg)
-	debugFile.Sync()
-}
-
 // GetDebugLogPath returns the path where debug logs are written
 func GetDebugLogPath() string {
 	return getDebugLogPath()

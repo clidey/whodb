@@ -55,15 +55,3 @@ func TestGetSupportedModelsReturnsErrorForUnsupportedType(t *testing.T) {
 		t.Fatalf("expected error for unsupported type")
 	}
 }
-
-func TestNormalizeLLMTypeHandlesChatGPT(t *testing.T) {
-	result := NormalizeLLMType("ChatGPT")
-	if result != OpenAI_LLMType {
-		t.Fatalf("expected ChatGPT to normalize to OpenAI, got %s", result)
-	}
-
-	result = NormalizeLLMType("OpenAI")
-	if result != OpenAI_LLMType {
-		t.Fatalf("expected OpenAI to stay as OpenAI, got %s", result)
-	}
-}

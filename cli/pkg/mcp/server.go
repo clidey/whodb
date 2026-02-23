@@ -26,11 +26,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
-
-// Version is set at build time.
-var Version = "dev"
 
 // ServerOptions configures the MCP server.
 type ServerOptions struct {
@@ -114,7 +112,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    "whodb",
-		Version: Version,
+		Version: version.Version,
 	}, &mcp.ServerOptions{
 		Instructions: opts.Instructions,
 		Logger:       opts.Logger,

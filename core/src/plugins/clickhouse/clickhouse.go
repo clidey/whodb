@@ -71,13 +71,6 @@ func (p *ClickHousePlugin) GetDatabases(config *engine.PluginConfig) ([]string, 
 	})
 }
 
-func (p *ClickHousePlugin) FormTableName(schema string, storageUnit string) string {
-	if schema == "" {
-		return storageUnit
-	}
-	return schema + "." + storageUnit
-}
-
 func (p *ClickHousePlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }

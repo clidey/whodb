@@ -24,6 +24,7 @@ import (
 	"time"
 
 	whodbmcp "github.com/clidey/whodb/cli/pkg/mcp"
+	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -214,7 +215,7 @@ Connection Resolution:
 		// Initialize analytics (enabled by default)
 		if err := whodbmcp.InitializeAnalytics(&whodbmcp.AnalyticsConfig{
 			Enabled:    !mcpNoAnalytics,
-			AppVersion: whodbmcp.Version,
+			AppVersion: version.Version,
 		}); err != nil {
 			// Analytics initialization failure is non-fatal
 			// Continue without analytics

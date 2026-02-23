@@ -90,7 +90,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 		sslMode = string(sslConfig.Mode)
 		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
+			log.Logger.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"sslMode":  sslConfig.Mode,
 			}).Error("Failed to build TLS configuration for MongoDB")

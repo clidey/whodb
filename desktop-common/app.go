@@ -18,10 +18,8 @@ package common
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	goruntime "runtime"
 	"strings"
 
@@ -80,19 +78,7 @@ func (a *App) Startup(ctx context.Context) {
 
 // Shutdown is called when the app is closing
 func (a *App) Shutdown(ctx context.Context) {
-	// DEBUG: Write to file to confirm shutdown is called
-	opts := a.getConfigOptions()
-	if dir, err := datadir.Get(opts); err == nil {
-		debugPath := filepath.Join(dir, "shutdown-debug.txt")
-		os.WriteFile(debugPath, []byte("shutdown called"), 0644)
-	}
-
 	if err := a.SaveWindowState(); err != nil {
-		// Write error to debug file
-		if dir, err2 := datadir.Get(opts); err2 == nil {
-			debugPath := filepath.Join(dir, "save-error.txt")
-			os.WriteFile(debugPath, []byte(err.Error()), 0644)
-		}
 		log.Logger.Warnf("Failed to save window state: %v", err)
 	}
 
@@ -290,14 +276,6 @@ func (a *App) SaveWindowState() error {
 func (a *App) RestoreWindowState() error {
 	opts := a.getConfigOptions()
 
-	// ====================================================================
-	// MIGRATION CODE - CAN BE REMOVED AFTER
-	// ====================================================================
-	a.migrateFromWindowSettingsJSON(opts)
-	// ====================================================================
-	// END MIGRATION CODE
-	// ====================================================================
-
 	// Read from unified config.json
 	if err := config.ReadSection(config.SectionDesktop, &a.windowSettings, opts); err != nil {
 		return err
@@ -316,54 +294,6 @@ func (a *App) RestoreWindowState() error {
 
 	return nil
 }
-
-// ============================================================================
-// MIGRATION CODE - can be removed a couple versions in
-// ============================================================================
-
-var migrationDone bool
-
-// migrateFromWindowSettingsJSON migrates from the old window-settings.json
-// to the unified config.json (same directory, just different file).
-func (a *App) migrateFromWindowSettingsJSON(opts datadir.Options) {
-	if migrationDone {
-		return
-	}
-	migrationDone = true
-
-	// Check if unified config already has desktop section
-	var existing WindowSettings
-	if err := config.ReadSection(config.SectionDesktop, &existing, opts); err == nil {
-		if existing.Width > 0 || existing.Height > 0 {
-			return // Already has data
-		}
-	}
-
-	// Check for old window-settings.json in the same data directory
-	dir, err := datadir.Get(opts)
-	if err != nil {
-		return
-	}
-
-	oldPath := filepath.Join(dir, "window-settings.json")
-	data, err := os.ReadFile(oldPath)
-	if err != nil {
-		return // No old file
-	}
-
-	var settings WindowSettings
-	if err := json.Unmarshal(data, &settings); err != nil {
-		return
-	}
-
-	if err := config.WriteSection(config.SectionDesktop, settings, opts); err == nil {
-		log.Logger.Infof("Migrated window settings to unified config.json")
-	}
-}
-
-// ============================================================================
-// END MIGRATION CODE
-// ============================================================================
 
 // MinimizeWindow minimizes the window
 func (a *App) MinimizeWindow() {

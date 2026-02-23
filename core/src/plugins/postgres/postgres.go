@@ -19,6 +19,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -45,12 +46,16 @@ func (p *PostgresPlugin) GetSupportedOperators() map[string]string {
 	return supportedOperators
 }
 
-func (p *PostgresPlugin) FormTableName(schema string, storageUnit string) string {
-	// Keep raw concatenation; actual SQL builders will quote via GORM Dialector
-	if schema == "" {
-		return storageUnit
+// GetLastInsertID returns the most recently auto-generated ID using PostgreSQL's lastval().
+func (p *PostgresPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
+	var id int64
+	if err := db.Raw("SELECT lastval()").Scan(&id).Error; err != nil {
+		if strings.Contains(err.Error(), "lastval is not yet defined") {
+			return 0, nil
+		}
+		return 0, err
 	}
-	return schema + "." + storageUnit
+	return id, nil
 }
 
 func (p *PostgresPlugin) GetAllSchemasQuery() string {

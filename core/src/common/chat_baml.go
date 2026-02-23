@@ -205,7 +205,7 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 	}
 
 	switch m.Type {
-	case "OpenAI", "ChatGPT":
+	case "OpenAI":
 		if m.Token != "" {
 			opts["api_key"] = m.Token
 		}

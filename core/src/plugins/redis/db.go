@@ -60,7 +60,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 		sslMode = string(sslConfig.Mode)
 		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]interface{}{
+			log.Logger.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"sslMode":  sslConfig.Mode,
 			}).Error("Failed to build TLS configuration for Redis")
@@ -71,7 +71,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 
 	client := redis.NewClient(opts)
 	if _, err := client.Ping(ctx).Result(); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 			"sslMode":  sslMode,

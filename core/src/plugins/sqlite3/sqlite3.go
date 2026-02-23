@@ -67,6 +67,15 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 	return storageUnit
 }
 
+// GetLastInsertID returns the most recently auto-generated ID using SQLite's last_insert_rowid().
+func (p *Sqlite3Plugin) GetLastInsertID(db *gorm.DB) (int64, error) {
+	var id int64
+	if err := db.Raw("SELECT last_insert_rowid()").Scan(&id).Error; err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	if env.GetIsLocalMode() {
 		return []string{}, nil

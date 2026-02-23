@@ -310,7 +310,9 @@ func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, colle
 	if err != nil {
 		return 0, err
 	}
-	defer client.Disconnect(context.TODO())
+	ctx, cancel := opCtx()
+	defer cancel()
+	defer client.Disconnect(ctx)
 
 	db := client.Database(database)
 	coll := db.Collection(collection)
@@ -321,7 +323,7 @@ func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, colle
 	}
 
 	// codeql[go/nosql-injection]: collection name validated by StorageUnitExists before reaching this code
-	count, err := coll.CountDocuments(context.TODO(), bsonFilter)
+	count, err := coll.CountDocuments(ctx, bsonFilter)
 	if err != nil {
 		return 0, err
 	}

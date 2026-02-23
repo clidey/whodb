@@ -38,42 +38,42 @@ func init() {
 }
 
 func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
-	log.DebugFileAlways("AI Chat Stream: Handler started")
+	log.DebugFile("AI Chat Stream: Handler started")
 
 	// Parse request
 	req, err := ParseStreamRequest(r)
 	if err != nil {
-		log.DebugFileAlways("AI Chat Stream: ParseStreamRequest failed: %v", err)
+		log.DebugFile("AI Chat Stream: ParseStreamRequest failed: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.DebugFileAlways("AI Chat Stream: Request parsed - model=%s, schema=%s, query=%s", req.ModelType, req.Schema, req.Input.Query)
+	log.DebugFile("AI Chat Stream: Request parsed - model=%s, schema=%s, query=%s", req.ModelType, req.Schema, req.Input.Query)
 
 	// Setup SSE - check if streaming is supported
 	flusher := SetupSSEHeaders(w)
 	streamingSupported := flusher != nil
-	log.DebugFileAlways("AI Chat Stream: Streaming supported: %v", streamingSupported)
+	log.DebugFile("AI Chat Stream: Streaming supported: %v", streamingSupported)
 
 	// If streaming not supported (e.g., Wails), fall back to non-streaming mode
 	if !streamingSupported {
 		handleNonStreamingAIChat(w, r, req)
 		return
 	}
-	log.DebugFileAlways("AI Chat Stream: SSE headers set, flusher available")
+	log.DebugFile("AI Chat Stream: SSE headers set, flusher available")
 
 	// Get plugin and config
 	plugin, config := GetPluginForContext(r.Context())
 	if plugin == nil {
-		log.DebugFileAlways("AI Chat Stream: Plugin is nil")
+		log.DebugFile("AI Chat Stream: Plugin is nil")
 		SendSSEError(w, flusher, "No database plugin available")
 		return
 	}
 	if config == nil || config.Credentials == nil {
-		log.DebugFileAlways("AI Chat Stream: Config or credentials is nil")
+		log.DebugFile("AI Chat Stream: Config or credentials is nil")
 		SendSSEError(w, flusher, "No credentials available")
 		return
 	}
-	log.DebugFileAlways("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
+	log.DebugFile("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
 
 	// Build ExternalModel, looking up token from environment if providerId is set
 	token := req.Token
@@ -98,14 +98,14 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build table details
-	log.DebugFileAlways("AI Chat Stream: Building table details for schema=%s", req.Schema)
+	log.DebugFile("AI Chat Stream: Building table details for schema=%s", req.Schema)
 	tableDetails, err := BuildTableDetails(plugin, config, req.Schema)
 	if err != nil {
-		log.DebugFileAlways("AI Chat Stream: BuildTableDetails failed: %v", err)
+		log.DebugFile("AI Chat Stream: BuildTableDetails failed: %v", err)
 		SendSSEError(w, flusher, "Failed to get table info: "+err.Error())
 		return
 	}
-	log.DebugFileAlways("AI Chat Stream: Table details built, length=%d", len(tableDetails))
+	log.DebugFile("AI Chat Stream: Table details built, length=%d", len(tableDetails))
 
 	// Setup BAML context
 	dbContext := types.DatabaseContext{
@@ -114,24 +114,24 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		Tables_and_fields:     tableDetails,
 		Previous_conversation: req.Input.PreviousConversation,
 	}
-	log.DebugFileAlways("AI Chat Stream: BAML context created")
+	log.DebugFile("AI Chat Stream: BAML context created")
 
 	// Create BAML stream
-	log.DebugFileAlways("AI Chat Stream: Setting up AI client...")
+	log.DebugFile("AI Chat Stream: Setting up AI client...")
 	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
-	log.DebugFileAlways("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
+	log.DebugFile("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
 	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
-		log.DebugFileAlways("AI Chat Stream: GenerateSQLQuery failed: %v", err)
+		log.DebugFile("AI Chat Stream: GenerateSQLQuery failed: %v", err)
 		SendSSEError(w, flusher, "Failed to start stream: "+err.Error())
 		return
 	}
-	log.DebugFileAlways("AI Chat Stream: BAML stream created successfully")
+	log.DebugFile("AI Chat Stream: BAML stream created successfully")
 
 	// Process stream
-	log.DebugFileAlways("AI Chat Stream: Starting to process stream...")
+	log.DebugFile("AI Chat Stream: Starting to process stream...")
 	processStream(w, flusher, stream, plugin, config)
-	log.DebugFileAlways("AI Chat Stream: Stream processing completed")
+	log.DebugFile("AI Chat Stream: Stream processing completed")
 }
 
 func processStream(

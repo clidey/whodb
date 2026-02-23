@@ -52,6 +52,14 @@ func (p *GormPlugin) CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface {
 	return NewSQLBuilder(db, p)
 }
 
+// FormTableName returns the qualified table name for a given schema and storage unit.
+func (p *GormPlugin) FormTableName(schema string, storageUnit string) string {
+	if schema == "" {
+		return storageUnit
+	}
+	return schema + "." + storageUnit
+}
+
 type GormPluginFunctions interface {
 	// these below are meant to be generic-ish implementations by the base gorm plugin
 	ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error)

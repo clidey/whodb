@@ -433,32 +433,10 @@ func (p *GormPlugin) parseDate(value string) (time.Time, error) {
 }
 
 // GetLastInsertID returns the most recently auto-generated ID.
-// This default implementation handles MySQL, PostgreSQL, and SQLite.
-// Other databases may need to override this method.
+// The default implementation returns 0 (unsupported).
+// Database plugins that support this should override it.
 func (p *GormPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
-	var id int64
-	var query string
-
-	switch p.Type {
-	case engine.DatabaseType_MySQL, engine.DatabaseType_MariaDB:
-		query = "SELECT LAST_INSERT_ID()"
-	case engine.DatabaseType_Postgres:
-		query = "SELECT lastval()"
-	case engine.DatabaseType_Sqlite3:
-		query = "SELECT last_insert_rowid()"
-	default:
-		log.Logger.WithField("dbType", p.Type).Debug("GetLastInsertID not supported for this database type")
-		return 0, nil
-	}
-
-	if err := db.Raw(query).Scan(&id).Error; err != nil {
-		if p.Type == engine.DatabaseType_Postgres && strings.Contains(err.Error(), "lastval is not yet defined") {
-			return 0, nil
-		}
-		return 0, err
-	}
-
-	return id, nil
+	return 0, nil
 }
 
 func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, error) {

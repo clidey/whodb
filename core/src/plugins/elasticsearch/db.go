@@ -126,7 +126,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 	log.Logger.Debug("[ES DB] Creating Elasticsearch client instance")
 	client, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"port":     port,
 			"sslMode":  sslMode,
@@ -145,7 +145,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 		if res != nil {
 			resStatus = res.Status()
 		}
-		log.Logger.WithError(err).WithFields(map[string]interface{}{
+		log.Logger.WithError(err).WithFields(map[string]any{
 			"hostname":  config.Credentials.Hostname,
 			"port":      port,
 			"sslMode":   sslMode,
