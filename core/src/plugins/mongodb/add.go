@@ -32,7 +32,7 @@ import (
 func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -45,7 +45,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 
 	err = createCollectionIfNotExists(database, storageUnit, fields)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -59,7 +59,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -89,7 +89,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 
 	_, err = collection.InsertOne(context.Background(), document)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"schema":         schema,
 			"storageUnit":    storageUnit,
@@ -145,7 +145,7 @@ func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, 
 
 	_, err = collection.InsertMany(context.Background(), documents)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"schema":      schema,
 			"storageUnit": storageUnit,
 			"rowCount":    len(rows),
@@ -159,7 +159,7 @@ func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, 
 func createCollectionIfNotExists(database *mongo.Database, collectionName string, fields []engine.Record) error {
 	collections, err := database.ListCollectionNames(context.Background(), bson.D{})
 	if err != nil {
-		log.Logger.WithError(err).WithField("collectionName", collectionName).Error("Failed to list MongoDB collection names")
+		log.WithError(err).WithField("collectionName", collectionName).Error("Failed to list MongoDB collection names")
 		return err
 	}
 
@@ -176,7 +176,7 @@ func createCollectionIfNotExists(database *mongo.Database, collectionName string
 
 	err = database.CreateCollection(context.Background(), collectionName, opts)
 	if err != nil {
-		log.Logger.WithError(err).WithField("collectionName", collectionName).Error("Failed to create MongoDB collection")
+		log.WithError(err).WithField("collectionName", collectionName).Error("Failed to create MongoDB collection")
 		return err
 	}
 

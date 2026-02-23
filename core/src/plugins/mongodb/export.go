@@ -78,7 +78,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	}
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -92,7 +92,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	// First, get all field names from a sample of documents
 	fieldNames, err := p.getCollectionFields(collection)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -106,7 +106,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 		headers[i] = common.FormatCSVHeader(field, "BSON")
 	}
 	if err := writer(headers); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -118,7 +118,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	// Export all documents
 	cursor, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
 			"storageUnit": storageUnit,
@@ -131,7 +131,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	for cursor.Next(context.Background()) {
 		var doc bson.M
 		if err := cursor.Decode(&doc); err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname":    config.Credentials.Hostname,
 				"schema":      schema,
 				"storageUnit": storageUnit,
@@ -150,7 +150,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 		}
 
 		if err := writer(row); err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname":    config.Credentials.Hostname,
 				"schema":      schema,
 				"storageUnit": storageUnit,
@@ -217,7 +217,7 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 	opts := options.Find().SetLimit(100)
 	cursor, err := collection.Find(context.Background(), bson.D{}, opts)
 	if err != nil {
-		log.Logger.WithError(err).WithField("collectionName", collection.Name()).Error("Failed to sample MongoDB collection documents for field extraction")
+		log.WithError(err).WithField("collectionName", collection.Name()).Error("Failed to sample MongoDB collection documents for field extraction")
 		return nil, err
 	}
 	defer cursor.Close(context.Background())
@@ -302,7 +302,7 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 		// Convert arrays to JSON
 		data, err := json.Marshal(v)
 		if err != nil {
-			log.Logger.WithError(err).WithField("valueType", "array").Warn("Failed to marshal array value to JSON during MongoDB export, using string representation")
+			log.WithError(err).WithField("valueType", "array").Warn("Failed to marshal array value to JSON during MongoDB export, using string representation")
 			strVal = fmt.Sprintf("%v", v)
 		} else {
 			strVal = string(data)
@@ -311,7 +311,7 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 		// Convert documents to JSON
 		data, err := json.Marshal(v)
 		if err != nil {
-			log.Logger.WithError(err).WithField("valueType", "document").Warn("Failed to marshal document value to JSON during MongoDB export, using string representation")
+			log.WithError(err).WithField("valueType", "document").Warn("Failed to marshal document value to JSON during MongoDB export, using string representation")
 			strVal = fmt.Sprintf("%v", v)
 		} else {
 			strVal = string(data)

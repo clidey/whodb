@@ -75,11 +75,11 @@ func saveProvidersToFile() error {
 	opts := getConfigOptions()
 
 	if err := config.WriteSection(config.SectionAWS, section, opts); err != nil {
-		log.Logger.Warnf("Failed to save AWS providers: %v", err)
+		log.Warnf("Failed to save AWS providers: %v", err)
 		return err
 	}
 
-	log.Logger.Debugf("Saved %d AWS provider(s) to config", len(providers))
+	log.Debugf("Saved %d AWS provider(s) to config", len(providers))
 	return nil
 }
 
@@ -95,7 +95,7 @@ func LoadProvidersFromFile() error {
 
 	var section awsSection
 	if err := config.ReadSection(config.SectionAWS, &section, opts); err != nil {
-		log.Logger.Warnf("Failed to read AWS providers from config: %v", err)
+		log.Warnf("Failed to read AWS providers from config: %v", err)
 		return err
 	}
 
@@ -128,14 +128,14 @@ func LoadProvidersFromFile() error {
 		awsProvidersMu.RUnlock()
 
 		if exists {
-			log.Logger.Debugf("Skipping persisted provider %s - already registered", cfg.ID)
+			log.Debugf("Skipping persisted provider %s - already registered", cfg.ID)
 			continue
 		}
 
 		// Add the provider
 		state, err := AddAWSProvider(providerCfg)
 		if err != nil {
-			log.Logger.Warnf("Failed to load persisted provider %s: %v", cfg.Name, err)
+			log.Warnf("Failed to load persisted provider %s: %v", cfg.Name, err)
 			continue
 		}
 
@@ -149,7 +149,7 @@ func LoadProvidersFromFile() error {
 	}
 
 	if loadedCount > 0 {
-		log.Logger.Infof("Loaded %d AWS provider(s) from config", loadedCount)
+		log.Infof("Loaded %d AWS provider(s) from config", loadedCount)
 	}
 
 	return nil

@@ -84,7 +84,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		sslMode = string(connectionInput.SSLConfig.Mode)
 		tlsConfig, err := ssl.BuildTLSConfig(connectionInput.SSLConfig, connectionInput.Hostname)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname": connectionInput.Hostname,
 				"sslMode":  connectionInput.SSLConfig.Mode,
 			}).Error("Failed to build TLS configuration for ClickHouse")
@@ -95,7 +95,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 	conn := clickhouse.OpenDB(options)
 
-	l := log.Logger.WithFields(map[string]any{
+	l := log.WithFields(map[string]any{
 		"hostname": connectionInput.Hostname,
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,

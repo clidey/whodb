@@ -137,7 +137,7 @@ func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []
 	var totalSize *string
 
 	if err := rows.Scan(&tableName, &tableType, &totalRows, &totalSize); err != nil {
-		log.Logger.WithError(err).Error("Failed to scan table name and attributes from ClickHouse system.tables query")
+		log.WithError(err).Error("Failed to scan table name and attributes from ClickHouse system.tables query")
 		return "", nil
 	}
 
@@ -186,14 +186,14 @@ func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema st
 				var result int
 				if db.Raw("SELECT 1").Scan(&result).Error == nil {
 					// Connection is healthy, mutation was accepted
-					log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE mutation accepted")
+					log.WithField("table", tableName).Debug("ClickHouse DELETE mutation accepted")
 					return true, nil
 				}
 			}
 			return false, err
 		}
 
-		log.Logger.WithField("table", tableName).Debug("ClickHouse DELETE executed")
+		log.WithField("table", tableName).Debug("ClickHouse DELETE executed")
 		return true, nil
 	})
 }
@@ -472,14 +472,14 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 		// Pass just table name - ClickHouse GORM driver handles database context
 		columns, err := migrator.GetOrderedColumns(storageUnit)
 		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
+			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
 			return nil, err
 		}
 
 		// Get primary keys
 		primaryKeys, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
-			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
+			log.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
 			primaryKeys = []string{}
 		}
 

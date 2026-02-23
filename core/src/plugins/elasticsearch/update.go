@@ -42,27 +42,27 @@ for (key in ctx._source.keySet().toArray()) {
 func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while updating storage unit")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while updating storage unit")
 		return false, err
 	}
 
 	documentJSON, ok := values["document"]
 	if !ok {
 		err := errors.New("missing 'document' key in values map")
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Missing document key in update request values")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Missing document key in update request values")
 		return false, err
 	}
 
 	var jsonValues map[string]any
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for update")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for update")
 		return false, err
 	}
 
 	id, ok := jsonValues["_id"]
 	if !ok {
 		err := errors.New("missing '_id' field in the document")
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Missing _id field in document for update")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Missing _id field in document for update")
 		return false, err
 	}
 
@@ -82,7 +82,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		},
 		"upsert": jsonValues,
 	}); err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to encode ElasticSearch update request")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to encode ElasticSearch update request")
 		return false, err
 	}
 
@@ -94,26 +94,26 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 		client.Update.WithRefresh("true"),
 	)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch update operation")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch update operation")
 		return false, fmt.Errorf("failed to execute update: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		err := fmt.Errorf("error updating document: %s", formatElasticError(res))
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("ElasticSearch update API returned error")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("ElasticSearch update API returned error")
 		return false, err
 	}
 
 	var updateResponse map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&updateResponse); err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch update response")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch update response")
 		return false, err
 	}
 
 	if result, ok := updateResponse["result"].(string); ok && result == "noop" {
 		err := errors.New("no documents were updated")
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).WithField("result", result).Error("ElasticSearch update operation did not update any documents")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).WithField("result", result).Error("ElasticSearch update operation did not update any documents")
 		return false, err
 	}
 

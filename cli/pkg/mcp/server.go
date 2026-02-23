@@ -24,6 +24,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/clidey/whodb/cli/pkg/version"
@@ -88,6 +89,23 @@ type SecurityOptions struct {
 	AllowedConnections  []string // If set, only these connections are accessible
 }
 
+// mapWhoDBLogLevel maps WHODB_LOG_LEVEL to slog.Level for the MCP server's default logger.
+func mapWhoDBLogLevel() slog.Level {
+	switch strings.ToLower(os.Getenv("WHODB_LOG_LEVEL")) {
+	case "debug":
+		return slog.LevelDebug
+	case "warning", "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	case "none", "off", "disabled":
+		// slog doesn't have "off" — use a level higher than any real level
+		return slog.Level(12)
+	default:
+		return slog.LevelInfo
+	}
+}
+
 // NewServer creates a new WhoDB MCP server with all tools registered.
 func NewServer(opts *ServerOptions) *mcp.Server {
 	if opts == nil {
@@ -97,7 +115,7 @@ func NewServer(opts *ServerOptions) *mcp.Server {
 	// Fill in zero-value defaults
 	if opts.Logger == nil {
 		opts.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
+			Level: mapWhoDBLogLevel(),
 		}))
 	}
 	if opts.Instructions == "" {

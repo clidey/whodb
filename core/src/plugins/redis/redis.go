@@ -51,7 +51,7 @@ func (p *RedisPlugin) IsAvailable(config *engine.PluginConfig) bool {
 	ctx := context.Background()
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to connect to Redis for availability check")
+		log.WithError(err).Error("Failed to connect to Redis for availability check")
 		return false
 	}
 	defer client.Close()
@@ -74,7 +74,7 @@ func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 
 	if len(availableDatabases) == 0 {
 		err := errors.New("no available databases found")
-		log.Logger.WithError(err).Error("No Redis databases found during discovery")
+		log.WithError(err).Error("No Redis databases found during discovery")
 		return nil, err
 	}
 
@@ -90,7 +90,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to connect to Redis for storage units retrieval")
+		log.WithError(err).Error("Failed to connect to Redis for storage units retrieval")
 		return nil, err
 	}
 	defer client.Close()
@@ -102,7 +102,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		var scanKeys []string
 		scanKeys, cursor, err = client.Scan(ctx, cursor, "*", 0).Result() // count = 0 will use the redis default of 10
 		if err != nil {
-			log.Logger.WithError(err).Error("Failed to scan Redis keys")
+			log.WithError(err).Error("Failed to scan Redis keys")
 			return nil, err
 		}
 
@@ -123,7 +123,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to execute Redis pipeline for key types")
+		log.WithError(err).Error("Failed to execute Redis pipeline for key types")
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 	for _, key := range keys {
 		keyType, err := cmds[key].Result()
 		if err != nil {
-			log.Logger.WithError(err).WithField("key", key).Error("Failed to get Redis key type")
+			log.WithError(err).WithField("key", key).Error("Failed to get Redis key type")
 			return nil, err
 		}
 
@@ -140,12 +140,12 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		case "string":
 			sizeCmd := pipe.StrLen(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to execute pipeline for string key size")
+				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for string key size")
 				return nil, err
 			}
 			size, err := sizeCmd.Result()
 			if err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to get string key size")
+				log.WithError(err).WithField("key", key).Error("Failed to get string key size")
 				return nil, err
 			}
 			attributes = []engine.Record{
@@ -155,12 +155,12 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		case "hash":
 			sizeCmd := pipe.HLen(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to execute pipeline for hash key size")
+				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for hash key size")
 				return nil, err
 			}
 			size, err := sizeCmd.Result()
 			if err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to get hash key size")
+				log.WithError(err).WithField("key", key).Error("Failed to get hash key size")
 				return nil, err
 			}
 			attributes = []engine.Record{
@@ -170,12 +170,12 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		case "list":
 			sizeCmd := pipe.LLen(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to execute pipeline for list key size")
+				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for list key size")
 				return nil, err
 			}
 			size, err := sizeCmd.Result()
 			if err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to get list key size")
+				log.WithError(err).WithField("key", key).Error("Failed to get list key size")
 				return nil, err
 			}
 			attributes = []engine.Record{
@@ -185,12 +185,12 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		case "set":
 			sizeCmd := pipe.SCard(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to execute pipeline for set key size")
+				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for set key size")
 				return nil, err
 			}
 			size, err := sizeCmd.Result()
 			if err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to get set key size")
+				log.WithError(err).WithField("key", key).Error("Failed to get set key size")
 				return nil, err
 			}
 			attributes = []engine.Record{
@@ -200,12 +200,12 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		case "zset":
 			sizeCmd := pipe.ZCard(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to execute pipeline for zset key size")
+				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for zset key size")
 				return nil, err
 			}
 			size, err := sizeCmd.Result()
 			if err != nil {
-				log.Logger.WithError(err).WithField("key", key).Error("Failed to get zset key size")
+				log.WithError(err).WithField("key", key).Error("Failed to get zset key size")
 				return nil, err
 			}
 			attributes = []engine.Record{
@@ -253,7 +253,7 @@ func (p *RedisPlugin) GetRows(
 
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for rows retrieval")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for rows retrieval")
 		return nil, err
 	}
 	defer client.Close()
@@ -262,7 +262,7 @@ func (p *RedisPlugin) GetRows(
 
 	keyType, err := client.Type(ctx, storageUnit).Result()
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis key type for rows retrieval")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis key type for rows retrieval")
 		return nil, err
 	}
 
@@ -270,7 +270,7 @@ func (p *RedisPlugin) GetRows(
 	case "string":
 		val, err := client.Get(ctx, storageUnit).Result()
 		if err != nil {
-			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis string value")
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis string value")
 			return nil, err
 		}
 		result = &engine.GetRowsResult{
@@ -280,7 +280,7 @@ func (p *RedisPlugin) GetRows(
 	case "hash":
 		hashValues, err := client.HGetAll(ctx, storageUnit).Result()
 		if err != nil {
-			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis hash values")
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis hash values")
 			return nil, err
 		}
 		var rows [][]string
@@ -300,7 +300,7 @@ func (p *RedisPlugin) GetRows(
 	case "list":
 		listValues, err := client.LRange(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
-			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis list values")
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis list values")
 			return nil, err
 		}
 		var rows [][]string
@@ -316,7 +316,7 @@ func (p *RedisPlugin) GetRows(
 	case "set":
 		setValues, err := client.SMembers(ctx, storageUnit).Result()
 		if err != nil {
-			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis set values")
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis set values")
 			return nil, err
 		}
 		var rows [][]string
@@ -333,7 +333,7 @@ func (p *RedisPlugin) GetRows(
 	case "zset":
 		zsetValues, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
-			log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis zset values")
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis zset values")
 			return nil, err
 		}
 		var rows [][]string
@@ -410,14 +410,14 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for columns retrieval")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for columns retrieval")
 		return nil, err
 	}
 	defer client.Close()
 
 	keyType, err := client.Type(ctx, storageUnit).Result()
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis key type for columns retrieval")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis key type for columns retrieval")
 		return nil, err
 	}
 

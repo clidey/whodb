@@ -89,7 +89,7 @@ func (p *PostgresPlugin) GetPlaceholder(index int) string {
 func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType, totalSize, dataSize string
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
-		log.Logger.WithError(err).Error("Failed to scan table info row data")
+		log.WithError(err).Error("Failed to scan table info row data")
 		return "", nil
 	}
 
@@ -204,7 +204,7 @@ func (p *PostgresPlugin) GetColumnsForTable(config *engine.PluginConfig, schema 
 		WHERE table_schema = ? AND table_name = ? AND is_generated = 'ALWAYS'
 	`, schema, storageUnit)
 	if err != nil {
-		log.Logger.WithError(err).Warn("Failed to get generated columns for PostgreSQL table")
+		log.WithError(err).Warn("Failed to get generated columns for PostgreSQL table")
 	}
 
 	for i := range columns {

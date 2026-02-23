@@ -58,7 +58,7 @@ func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
 func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to connect to ElasticSearch while listing indices")
+		log.WithError(err).Error("Failed to connect to ElasticSearch while listing indices")
 		return nil, err
 	}
 
@@ -67,20 +67,20 @@ func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]strin
 		client.Cat.Indices.WithFormat("json"),
 	)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices")
+		log.WithError(err).Error("Failed to get ElasticSearch indices")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		err := fmt.Errorf("error getting indices: %s", res.String())
-		log.Logger.WithError(err).Error("ElasticSearch Cat Indices API returned error")
+		log.WithError(err).Error("ElasticSearch Cat Indices API returned error")
 		return nil, err
 	}
 
 	var indices []map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&indices); err != nil {
-		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices response")
+		log.WithError(err).Error("Failed to decode ElasticSearch indices response")
 		return nil, err
 	}
 
@@ -109,32 +109,32 @@ func (p *ElasticSearchPlugin) GetAllSchemas(config *engine.PluginConfig) ([]stri
 func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, database string) ([]engine.StorageUnit, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to connect to ElasticSearch while getting storage units")
+		log.WithError(err).Error("Failed to connect to ElasticSearch while getting storage units")
 		return nil, err
 	}
 
 	res, err := client.Indices.Stats()
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices stats")
+		log.WithError(err).Error("Failed to get ElasticSearch indices stats")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		err := fmt.Errorf("error getting stats for indices: %s", res.String())
-		log.Logger.WithError(err).Error("ElasticSearch indices stats API returned error")
+		log.WithError(err).Error("ElasticSearch indices stats API returned error")
 		return nil, err
 	}
 
 	var stats map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&stats); err != nil {
-		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats response")
+		log.WithError(err).Error("Failed to decode ElasticSearch indices stats response")
 		return nil, err
 	}
 
 	indicesStats, ok := stats["indices"].(map[string]any)
 	if !ok {
-		log.Logger.WithField("stats", stats).Error("Unexpected indices stats format from ElasticSearch")
+		log.WithField("stats", stats).Error("Unexpected indices stats format from ElasticSearch")
 		return nil, fmt.Errorf("unexpected indices stats format")
 	}
 
@@ -148,25 +148,25 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 
 		indexStats, ok := indexStatsInterface.(map[string]any)
 		if !ok {
-			log.Logger.Warnf("Skipping index %s: unexpected stats format", indexName)
+			log.Warnf("Skipping index %s: unexpected stats format", indexName)
 			continue
 		}
 
 		primaries, ok := indexStats["primaries"].(map[string]any)
 		if !ok {
-			log.Logger.Warnf("Skipping index %s: missing primaries data", indexName)
+			log.Warnf("Skipping index %s: missing primaries data", indexName)
 			continue
 		}
 
 		docs, ok := primaries["docs"].(map[string]any)
 		if !ok {
-			log.Logger.Warnf("Skipping index %s: missing docs data", indexName)
+			log.Warnf("Skipping index %s: missing docs data", indexName)
 			continue
 		}
 
 		store, ok := primaries["store"].(map[string]any)
 		if !ok {
-			log.Logger.Warnf("Skipping index %s: missing store data", indexName)
+			log.Warnf("Skipping index %s: missing store data", indexName)
 			continue
 		}
 
@@ -202,14 +202,14 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to connect to ElasticSearch while getting rows")
+		log.WithError(err).WithField("collection", collection).Error("Failed to connect to ElasticSearch while getting rows")
 		return nil, err
 	}
 
 	// Convert the where condition to an Elasticsearch filter
 	elasticSearchConditions, err := convertWhereConditionToES(where)
 	if err != nil {
-		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to convert where condition to ElasticSearch query")
+		log.WithError(err).WithField("collection", collection).Error("Failed to convert where condition to ElasticSearch query")
 		return nil, fmt.Errorf("error converting where condition: %v", err)
 	}
 
@@ -246,7 +246,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to encode ElasticSearch query to JSON")
+		log.WithError(err).WithField("collection", collection).Error("Failed to encode ElasticSearch query to JSON")
 		return nil, err
 	}
 
@@ -257,27 +257,27 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		client.Search.WithTrackTotalHits(true),
 	)
 	if err != nil {
-		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to execute ElasticSearch search query")
+		log.WithError(err).WithField("collection", collection).Error("Failed to execute ElasticSearch search query")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		err := fmt.Errorf("error searching documents: %s", res.String())
-		log.Logger.WithError(err).WithField("collection", collection).Error("ElasticSearch search API returned error")
+		log.WithError(err).WithField("collection", collection).Error("ElasticSearch search API returned error")
 		return nil, err
 	}
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		log.Logger.WithError(err).WithField("collection", collection).Error("Failed to decode ElasticSearch search response")
+		log.WithError(err).WithField("collection", collection).Error("Failed to decode ElasticSearch search response")
 		return nil, err
 	}
 
 	hits, ok := searchResult["hits"].(map[string]any)["hits"].([]any)
 	if !ok {
 		err := fmt.Errorf("invalid response structure")
-		log.Logger.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
+		log.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
 		return nil, err
 	}
 
@@ -304,7 +304,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 		source["_id"] = id
 		jsonBytes, err := json.Marshal(source)
 		if err != nil {
-			log.Logger.WithError(err).WithField("collection", collection).Error("Failed to marshal ElasticSearch document source to JSON")
+			log.WithError(err).WithField("collection", collection).Error("Failed to marshal ElasticSearch document source to JSON")
 			return nil, err
 		}
 		result.Rows = append(result.Rows, []string{string(jsonBytes)})
@@ -365,7 +365,7 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"index": storageUnit,
 		}).Error("Failed to connect to ElasticSearch for column inference")
 		return nil, err
@@ -379,7 +379,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		},
 	}
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to encode query for column inference")
+		log.WithError(err).WithField("index", storageUnit).Error("Failed to encode query for column inference")
 		return nil, err
 	}
 
@@ -389,19 +389,19 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		client.Search.WithBody(&buf),
 	)
 	if err != nil {
-		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to search for sample document")
+		log.WithError(err).WithField("index", storageUnit).Error("Failed to search for sample document")
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Logger.WithField("index", storageUnit).Warn("No documents found, returning empty schema")
+		log.WithField("index", storageUnit).Warn("No documents found, returning empty schema")
 		return []engine.Column{}, nil
 	}
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		log.Logger.WithError(err).WithField("index", storageUnit).Error("Failed to decode search result")
+		log.WithError(err).WithField("index", storageUnit).Error("Failed to decode search result")
 		return nil, err
 	}
 
@@ -428,19 +428,19 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 	indicesRes, err := client.Indices.Stats()
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to get ElasticSearch indices for FK detection")
+		log.WithError(err).Error("Failed to get ElasticSearch indices for FK detection")
 		return nil, err
 	}
 	defer indicesRes.Body.Close()
 
 	if indicesRes.IsError() {
-		log.Logger.Error("ElasticSearch indices stats API returned error for FK detection")
+		log.Error("ElasticSearch indices stats API returned error for FK detection")
 		return nil, fmt.Errorf("error getting indices: %s", indicesRes.String())
 	}
 
 	var stats map[string]any
 	if err := json.NewDecoder(indicesRes.Body).Decode(&stats); err != nil {
-		log.Logger.WithError(err).Error("Failed to decode ElasticSearch indices stats")
+		log.WithError(err).Error("Failed to decode ElasticSearch indices stats")
 		return nil, err
 	}
 
@@ -737,7 +737,7 @@ func convertAtomicConditionToES(atomic *model.AtomicWhereCondition) (map[string]
 
 	default:
 		// Default to match query for unknown operators
-		log.Logger.WithField("operator", atomic.Operator).Warn("Unknown operator, defaulting to match query")
+		log.WithField("operator", atomic.Operator).Warn("Unknown operator, defaulting to match query")
 		return map[string]any{
 			"match": map[string]any{
 				atomic.Key: atomic.Value,
@@ -766,7 +766,7 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 	case model.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
 			err := fmt.Errorf("atomic condition must have an atomicwherecondition")
-			log.Logger.WithError(err).Error("Invalid atomic where condition: missing atomic condition")
+			log.WithError(err).Error("Invalid atomic where condition: missing atomic condition")
 			return nil, err
 		}
 
@@ -791,7 +791,7 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 				// For atomic children, convert based on operator
 				clause, err := convertAtomicConditionToES(child.Atomic)
 				if err != nil {
-					log.Logger.WithError(err).Error("Failed to convert atomic condition in AND clause to ElasticSearch query")
+					log.WithError(err).Error("Failed to convert atomic condition in AND clause to ElasticSearch query")
 					return nil, err
 				}
 				mustClauses = append(mustClauses, clause)
@@ -799,7 +799,7 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 				// For nested AND/OR, we need to wrap them in a bool query
 				childCondition, err := convertWhereConditionToES(child)
 				if err != nil {
-					log.Logger.WithError(err).Error("Failed to convert child condition in AND clause to ElasticSearch query")
+					log.WithError(err).Error("Failed to convert child condition in AND clause to ElasticSearch query")
 					return nil, err
 				}
 				// Wrap the child condition in a bool query
@@ -821,7 +821,7 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 				// For atomic children, convert based on operator
 				clause, err := convertAtomicConditionToES(child.Atomic)
 				if err != nil {
-					log.Logger.WithError(err).Error("Failed to convert atomic condition in OR clause to ElasticSearch query")
+					log.WithError(err).Error("Failed to convert atomic condition in OR clause to ElasticSearch query")
 					return nil, err
 				}
 				shouldClauses = append(shouldClauses, clause)
@@ -829,7 +829,7 @@ func convertWhereConditionToES(where *model.WhereCondition) (map[string]any, err
 				// For nested AND/OR, we need to wrap them in a bool query
 				childCondition, err := convertWhereConditionToES(child)
 				if err != nil {
-					log.Logger.WithError(err).Error("Failed to convert child condition in OR clause to ElasticSearch query")
+					log.WithError(err).Error("Failed to convert child condition in OR clause to ElasticSearch query")
 					return nil, err
 				}
 				// Wrap the child condition in a bool query

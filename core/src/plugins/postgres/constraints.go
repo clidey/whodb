@@ -164,7 +164,7 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	// - CHECK ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text]))
 	// - CHECK (status IN ('pending', 'completed', 'canceled'))
 
-	log.Logger.WithField("checkClause", checkClause).Debug("Parsing CHECK constraint")
+	log.WithField("checkClause", checkClause).Debug("Parsing CHECK constraint")
 
 	// Remove CHECK keyword and outer parentheses
 	clause := strings.TrimPrefix(checkClause, "CHECK ")
@@ -188,16 +188,16 @@ func (p *PostgresPlugin) parseCheckConstraint(checkClause string, constraints ma
 	// This handles any PostgreSQL format: ANY(ARRAY[...]), ANY((ARRAY[...])::text[]), etc.
 	if values := extractArrayValues(clause); len(values) > 0 {
 		colConstraints["check_values"] = values
-		log.Logger.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via ARRAY pattern")
+		log.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via ARRAY pattern")
 		return
 	}
 
 	// Fallback to IN clause parsing
 	if values := gorm_plugin.ParseINClauseValues(clause); len(values) > 0 {
 		colConstraints["check_values"] = values
-		log.Logger.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via IN clause pattern")
+		log.WithField("column", columnName).WithField("values", values).Debug("Extracted check_values via IN clause pattern")
 	} else {
-		log.Logger.WithField("column", columnName).WithField("clause", clause).Debug("No check_values extracted from clause")
+		log.WithField("column", columnName).WithField("clause", clause).Debug("No check_values extracted from clause")
 	}
 }
 

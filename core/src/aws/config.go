@@ -62,14 +62,14 @@ func loadConfigFromAWSCredentials(ctx context.Context, awsCreds *AWSCredentialCo
 
 	cfg, err := awsconfig.LoadDefaultConfig(ctx, options...)
 	if err != nil {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"region":     awsCreds.Region,
 			"authMethod": awsCreds.AuthMethod,
 		}).WithError(err).Error("Failed to load AWS configuration")
 		return aws.Config{}, HandleAWSError(err)
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"region":         awsCreds.Region,
 		"authMethod":     awsCreds.AuthMethod,
 		"hasProfileName": awsCreds.ProfileName != "",

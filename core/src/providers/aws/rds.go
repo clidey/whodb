@@ -35,7 +35,7 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 	var connections []providers.DiscoveredConnection
 	var nextToken *string
 
-	log.Logger.Debugf("RDS discoverRDS: starting discovery for provider %s", p.config.ID)
+	log.Debugf("RDS discoverRDS: starting discovery for provider %s", p.config.ID)
 
 	for {
 		input := &rds.DescribeDBInstancesInput{
@@ -43,27 +43,27 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 			MaxRecords: aws.Int32(50),
 		}
 
-		log.Logger.Debugf("RDS discoverRDS: calling DescribeDBInstances")
+		log.Debugf("RDS discoverRDS: calling DescribeDBInstances")
 		output, err := p.rdsClient.DescribeDBInstances(ctx, input)
 		if err != nil {
-			log.Logger.Errorf("RDS discoverRDS: DescribeDBInstances failed: %v", err)
+			log.Errorf("RDS discoverRDS: DescribeDBInstances failed: %v", err)
 			return nil, awsinfra.HandleAWSError(err)
 		}
-		log.Logger.Debugf("RDS discoverRDS: DescribeDBInstances returned %d instances", len(output.DBInstances))
+		log.Debugf("RDS discoverRDS: DescribeDBInstances returned %d instances", len(output.DBInstances))
 
 		for _, instance := range output.DBInstances {
 			instanceID := aws.ToString(instance.DBInstanceIdentifier)
 			engineName := aws.ToString(instance.Engine)
-			log.Logger.Debugf("RDS discoverRDS: processing instance %s (engine=%s)", instanceID, engineName)
+			log.Debugf("RDS discoverRDS: processing instance %s (engine=%s)", instanceID, engineName)
 
 			conn := p.rdsInstanceToConnection(&instance)
 			if conn != nil {
-				log.Logger.Debugf("RDS discoverRDS: instance %s converted to connection (type=%s)", instanceID, conn.DatabaseType)
+				log.Debugf("RDS discoverRDS: instance %s converted to connection (type=%s)", instanceID, conn.DatabaseType)
 				connections = append(connections, *conn)
 			} else if isEngineHandledByDedicatedDiscovery(engineName) {
-				log.Logger.Debugf("RDS discoverRDS: skipping instance %s (engine=%s handled by dedicated discovery)", instanceID, engineName)
+				log.Debugf("RDS discoverRDS: skipping instance %s (engine=%s handled by dedicated discovery)", instanceID, engineName)
 			} else {
-				log.Logger.Warnf("RDS discoverRDS: instance %s could not be converted (engine=%s not supported)", instanceID, engineName)
+				log.Warnf("RDS discoverRDS: instance %s could not be converted (engine=%s not supported)", instanceID, engineName)
 			}
 		}
 
@@ -73,7 +73,7 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 		nextToken = output.Marker
 	}
 
-	log.Logger.Debugf("RDS discoverRDS: completed, found %d connections", len(connections))
+	log.Debugf("RDS discoverRDS: completed, found %d connections", len(connections))
 	return connections, nil
 }
 

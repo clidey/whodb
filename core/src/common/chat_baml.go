@@ -174,7 +174,7 @@ func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []baml_client
 	if externalModel.Endpoint != "" {
 		fields["endpoint"] = externalModel.Endpoint
 	}
-	log.LogFields(fields).Info("AI chat request")
+	log.WithFields(fields).Info("AI chat request")
 
 	return callOpts
 }

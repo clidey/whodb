@@ -218,12 +218,12 @@ func (c *SSLConfig) IsEnabled() bool {
 //   - hostname: default server name for certificate verification
 //   - isProfile: if true, allows path-based certificate loading (admin-controlled)
 func ParseSSLConfig(dbType engine.DatabaseType, advanced []engine.Record, hostname string, isProfile bool) *SSLConfig {
-	log.Logger.Debugf("[SSL] ParseSSLConfig: received %d advanced records", len(advanced))
+	log.Debugf("[SSL] ParseSSLConfig: received %d advanced records", len(advanced))
 	for _, rec := range advanced {
-		log.Logger.Debugf("[SSL] ParseSSLConfig: key=%q value=%q", rec.Key, rec.Value)
+		log.Debugf("[SSL] ParseSSLConfig: key=%q value=%q", rec.Key, rec.Value)
 	}
 	modeStr := common.GetRecordValueOrDefault(advanced, KeySSLMode, string(SSLModeDisabled))
-	log.Logger.Debugf("[SSL] ParseSSLConfig: modeStr=%q (looking for key=%q)", modeStr, KeySSLMode)
+	log.Debugf("[SSL] ParseSSLConfig: modeStr=%q (looking for key=%q)", modeStr, KeySSLMode)
 
 	// Normalize database-native mode names
 	mode := NormalizeSSLMode(dbType, modeStr)

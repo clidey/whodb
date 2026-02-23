@@ -32,7 +32,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 	ctx := context.Background()
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "6379"))
 	if err != nil {
-		log.Logger.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to parse Redis port number")
+		log.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to parse Redis port number")
 		return nil, err
 	}
 	database := 0
@@ -40,7 +40,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 		var err error
 		database, err = strconv.Atoi(config.Credentials.Database)
 		if err != nil {
-			log.Logger.WithError(err).WithField("database", config.Credentials.Database).WithField("hostname", config.Credentials.Hostname).Error("Failed to parse Redis database number")
+			log.WithError(err).WithField("database", config.Credentials.Database).WithField("hostname", config.Credentials.Hostname).Error("Failed to parse Redis database number")
 			return nil, err
 		}
 	}
@@ -60,7 +60,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 		sslMode = string(sslConfig.Mode)
 		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"sslMode":  sslConfig.Mode,
 			}).Error("Failed to build TLS configuration for Redis")
@@ -71,7 +71,7 @@ func DB(config *engine.PluginConfig) (*redis.Client, error) {
 
 	client := redis.NewClient(opts)
 	if _, err := client.Ping(ctx).Result(); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 			"sslMode":  sslMode,

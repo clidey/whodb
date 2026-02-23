@@ -38,7 +38,7 @@ import (
 // debugLogFile writes debug info to a file for troubleshooting production builds.
 // This is self-contained to avoid import dependencies (bamlconfig must be imported first).
 func debugLogFile(format string, args ...any) {
-	if os.Getenv("WHODB_DEBUG_FILE") != "true" {
+	if os.Getenv("WHODB_LOG_FILE") == "" {
 		return
 	}
 

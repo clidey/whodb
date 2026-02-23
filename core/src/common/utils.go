@@ -137,7 +137,7 @@ func OpenBrowser(url string) {
 		// Unsupported platform - silently continue
 	}
 	if err != nil {
-		log.Logger.Warnf("Failed to open browser: %v\n", err)
+		log.Warnf("Failed to open browser: %v\n", err)
 	}
 }
 

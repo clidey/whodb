@@ -136,7 +136,7 @@ func AddAWSProvider(cfg *AWSProviderConfig) (*AWSProviderState, error) {
 	if !skipPersist {
 		go func() {
 			if err := saveProvidersToFile(); err != nil {
-				log.Logger.Warnf("Failed to persist provider after add: %v", err)
+				log.Warnf("Failed to persist provider after add: %v", err)
 			}
 		}()
 	}
@@ -158,7 +158,7 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 
 	registry := providers.GetDefaultRegistry()
 	if err := registry.Unregister(id); err != nil {
-		log.Logger.Warnf("Failed to unregister provider %s during update: %v", id, err)
+		log.Warnf("Failed to unregister provider %s during update: %v", id, err)
 	}
 
 	cfg.ID = id
@@ -183,7 +183,7 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 
 	go func() {
 		if err := saveProvidersToFile(); err != nil {
-			log.Logger.Warnf("Failed to persist provider after update: %v", err)
+			log.Warnf("Failed to persist provider after update: %v", err)
 		}
 	}()
 
@@ -202,14 +202,14 @@ func RemoveAWSProvider(id string) error {
 
 	registry := providers.GetDefaultRegistry()
 	if err := registry.Unregister(id); err != nil {
-		log.Logger.Warnf("Failed to unregister provider %s during removal: %v", id, err)
+		log.Warnf("Failed to unregister provider %s during removal: %v", id, err)
 	}
 
 	delete(awsProviders, id)
 
 	go func() {
 		if err := saveProvidersToFile(); err != nil {
-			log.Logger.Warnf("Failed to persist provider after remove: %v", err)
+			log.Warnf("Failed to persist provider after remove: %v", err)
 		}
 	}()
 
@@ -244,17 +244,17 @@ func TestAWSProvider(id string) (string, error) {
 // RefreshAWSProvider triggers a re-discovery of connections for the specified provider.
 // Updates the provider's status, discovered count, and last discovery time.
 func RefreshAWSProvider(id string) (*AWSProviderState, error) {
-	log.Logger.Infof("RefreshAWSProvider called for id=%s", id)
+	log.Infof("RefreshAWSProvider called for id=%s", id)
 
 	awsProvidersMu.Lock()
 	state, exists := awsProviders[id]
 	if !exists {
 		awsProvidersMu.Unlock()
-		log.Logger.Warnf("RefreshAWSProvider: provider not found id=%s", id)
+		log.Warnf("RefreshAWSProvider: provider not found id=%s", id)
 		return nil, ErrProviderNotFound
 	}
 	state.Status = "Discovering"
-	log.Logger.Infof("RefreshAWSProvider: provider found, id=%s, region=%s, authMethod=%s",
+	log.Infof("RefreshAWSProvider: provider found, id=%s, region=%s, authMethod=%s",
 		state.Config.ID, state.Config.Region, state.Config.AuthMethod)
 	awsProvidersMu.Unlock()
 
@@ -262,9 +262,9 @@ func RefreshAWSProvider(id string) (*AWSProviderState, error) {
 	defer cancel()
 
 	registry := providers.GetDefaultRegistry()
-	log.Logger.Infof("RefreshAWSProvider: calling registry.RefreshDiscovery for id=%s", id)
+	log.Infof("RefreshAWSProvider: calling registry.RefreshDiscovery for id=%s", id)
 	conns, err := registry.RefreshDiscovery(ctx, id)
-	log.Logger.Infof("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
+	log.Infof("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
 
 	awsProvidersMu.Lock()
 	defer awsProvidersMu.Unlock()
@@ -376,9 +376,9 @@ func InitAWSProvidersFromEnv() error {
 		}
 
 		if _, err := AddAWSProvider(cfg); err != nil {
-			log.Logger.Warnf("Failed to initialize AWS provider %s: %v", name, err)
+			log.Warnf("Failed to initialize AWS provider %s: %v", name, err)
 		} else {
-			log.Logger.Infof("Initialized AWS provider: %s (%s)", name, envCfg.Region)
+			log.Infof("Initialized AWS provider: %s (%s)", name, envCfg.Region)
 		}
 	}
 

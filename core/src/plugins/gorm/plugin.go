@@ -154,7 +154,7 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 		var storageUnits []engine.StorageUnit
 		rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
 		if err != nil {
-			log.Logger.WithError(err).Error("Failed to execute table info query for schema: " + schema)
+			log.WithError(err).Error("Failed to execute table info query for schema: " + schema)
 			return nil, err
 		}
 		defer rows.Close()
@@ -254,23 +254,23 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 
 		columns, err := migrator.GetOrderedColumns(fullTableName)
 		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
+			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
 			return nil, err
 		}
 
 		fkRelationships, err := p.GormPluginFunctions.GetForeignKeyRelationships(config, schema, storageUnit)
 		if err != nil {
-			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get foreign key relationships for table %s.%s", schema, storageUnit))
+			log.WithError(err).Warn(fmt.Sprintf("Failed to get foreign key relationships for table %s.%s", schema, storageUnit))
 			fkRelationships = make(map[string]*engine.ForeignKeyRelationship)
 		}
 
 		primaryKeys, err := p.GetPrimaryKeyColumns(db, schema, storageUnit)
 		if err != nil {
-			log.Logger.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
+			log.WithError(err).Warn(fmt.Sprintf("Failed to get primary keys for table %s.%s", schema, storageUnit))
 			primaryKeys = []string{}
 		}
 
-		log.Logger.Debugf("[FK DEBUG] GetColumns for %s.%s: fkCount=%d, pkCount=%d, pks=%v", schema, storageUnit, len(fkRelationships), len(primaryKeys), primaryKeys)
+		log.Debugf("[FK DEBUG] GetColumns for %s.%s: fkCount=%d, pkCount=%d, pks=%v", schema, storageUnit, len(fkRelationships), len(primaryKeys), primaryKeys)
 
 		// Enrich columns with primary key and foreign key information
 		// Note: IsAutoIncrement is already set by GORM's native detection in GetOrderedColumns
@@ -319,7 +319,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	query := db.Table(fullTable)
 	query, err := p.ApplyWhereConditions(query, where, columnTypes)
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
+		log.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 
@@ -352,14 +352,14 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 
 	rows, err := query.Rows()
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute generic rows query for table %s.%s", schema, storageUnit))
+		log.WithError(err).Error(fmt.Sprintf("Failed to execute generic rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 	defer rows.Close()
 
 	result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert raw rows for table %s.%s", schema, storageUnit))
+		log.WithError(err).Error(fmt.Sprintf("Failed to convert raw rows for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
 
@@ -372,7 +372,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 
 	// Wait for count query to complete and set TotalCount
 	if countErr := <-countDone; countErr != nil {
-		log.Logger.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s.%s", schema, storageUnit))
+		log.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s.%s", schema, storageUnit))
 		// Don't fail the whole operation if count fails
 	} else {
 		result.TotalCount = totalCount
@@ -429,7 +429,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 					v := strings.TrimSpace(part)
 					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType)
 					if err != nil {
-						log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
+						log.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
 						return nil, err
 					}
 					vals = append(vals, cv)
@@ -446,12 +446,12 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 				}
 				v1, err1 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType)
 				if err1 != nil {
-					log.Logger.WithError(err1).Error("Failed to convert BETWEEN min value")
+					log.WithError(err1).Error("Failed to convert BETWEEN min value")
 					return nil, err1
 				}
 				v2, err2 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType)
 				if err2 != nil {
-					log.Logger.WithError(err2).Error("Failed to convert BETWEEN max value")
+					log.WithError(err2).Error("Failed to convert BETWEEN max value")
 					return nil, err2
 				}
 				if operator == "BETWEEN" {
@@ -464,7 +464,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 				// Single value operators (=, <, >, LIKE, etc.)
 				value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
 				if err != nil {
-					log.Logger.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
+					log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
 					return nil, err
 				}
 				query = query.Where(col+" "+operator+" ?", value)
@@ -477,7 +477,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 				var err error
 				query, err = p.ApplyWhereConditions(query, child, columnTypes)
 				if err != nil {
-					log.Logger.WithError(err).Error("Failed to apply AND where condition")
+					log.WithError(err).Error("Failed to apply AND where condition")
 					return nil, err
 				}
 			}
@@ -489,7 +489,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 			for _, child := range condition.Or.Children {
 				childQuery, err := p.ApplyWhereConditions(query, child, columnTypes)
 				if err != nil {
-					log.Logger.WithError(err).Error("Failed to apply OR where condition")
+					log.WithError(err).Error("Failed to apply OR where condition")
 					return nil, err
 				}
 				orQueries = orQueries.Or(childQuery)
@@ -504,13 +504,13 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {
 	columns, err := rows.Columns()
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to get column names from result set")
+		log.WithError(err).Error("Failed to get column names from result set")
 		return nil, err
 	}
 
 	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to get column types from result set")
+		log.WithError(err).Error("Failed to get column types from result set")
 		return nil, err
 	}
 
@@ -595,7 +595,7 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 		}
 
 		if err := rows.Scan(columnPointers...); err != nil {
-			log.Logger.WithError(err).Error("Failed to scan row data")
+			log.WithError(err).Error("Failed to scan row data")
 			return nil, err
 		}
 
@@ -665,7 +665,7 @@ func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string 
 			Select("typname").
 			Where("oid = ?", columnType).
 			Scan(&typname).Error; err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to find PostgreSQL type name for OID: %s", columnType))
+			log.WithError(err).Error(fmt.Sprintf("Failed to find PostgreSQL type name for OID: %s", columnType))
 			typname = columnType
 		}
 		return strings.ToUpper(typname)
@@ -799,11 +799,11 @@ func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, sch
 // This is a helper for SQL plugins that query system catalogs for FK information.
 // The query must return exactly 3 columns: column_name, referenced_table, referenced_column.
 func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, query string, params ...any) (map[string]*engine.ForeignKeyRelationship, error) {
-	log.Logger.Debugf("[FK DEBUG] QueryForeignKeyRelationships called with params: %v", params)
+	log.Debugf("[FK DEBUG] QueryForeignKeyRelationships called with params: %v", params)
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]*engine.ForeignKeyRelationship, error) {
 		rows, err := db.Raw(query, params...).Rows()
 		if err != nil {
-			log.Logger.Debugf("[FK DEBUG] ERROR: Raw query error: %v", err)
+			log.Debugf("[FK DEBUG] ERROR: Raw query error: %v", err)
 			return nil, err
 		}
 		defer rows.Close()
@@ -812,7 +812,7 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 		for rows.Next() {
 			var columnName, referencedTable, referencedColumn string
 			if err := rows.Scan(&columnName, &referencedTable, &referencedColumn); err != nil {
-				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
+				log.WithError(err).Error("Failed to scan foreign key relationship")
 				continue
 			}
 			relationships[columnName] = &engine.ForeignKeyRelationship{
@@ -821,7 +821,7 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 				ReferencedColumn: referencedColumn,
 			}
 		}
-		log.Logger.Debugf("[FK DEBUG] Found %d FK relationships for params %v", len(relationships), params)
+		log.Debugf("[FK DEBUG] Found %d FK relationships for params %v", len(relationships), params)
 		return relationships, nil
 	})
 }

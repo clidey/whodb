@@ -31,7 +31,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 	defer cancel()
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"database":    database,
 			"storageUnit": storageUnit,
@@ -45,7 +45,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 
 	documentJSON, ok := values["document"]
 	if !ok {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":      config.Credentials.Hostname,
 			"database":      database,
 			"storageUnit":   storageUnit,
@@ -56,7 +56,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 
 	var jsonValues bson.M
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":     config.Credentials.Hostname,
 			"database":     database,
 			"storageUnit":  storageUnit,
@@ -67,7 +67,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 
 	id, ok := jsonValues["_id"]
 	if !ok {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"database":       database,
 			"storageUnit":    storageUnit,
@@ -87,7 +87,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 
 	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"database":    database,
 			"storageUnit": storageUnit,
@@ -97,7 +97,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 	}
 
 	if result.DeletedCount == 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"database":    database,
 			"storageUnit": storageUnit,

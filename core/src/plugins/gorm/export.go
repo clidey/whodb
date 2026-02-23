@@ -38,7 +38,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 
 		// Write header row
 		if err := writer(columns); err != nil {
-			log.Logger.WithError(err).Error("Failed to write CSV headers for selected rows export")
+			log.WithError(err).Error("Failed to write CSV headers for selected rows export")
 			return fmt.Errorf("failed to write headers: %v", err)
 		}
 
@@ -53,7 +53,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 				}
 			}
 			if err := writer(rowData); err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write selected row %d during export", i+1))
+				log.WithError(err).Error(fmt.Sprintf("Failed to write selected row %d during export", i+1))
 				return fmt.Errorf("failed to write row %d: %v", i+1, err)
 			}
 		}
@@ -64,7 +64,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	// Export all rows from the database
 	db, err := p.DB(config)
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to connect to database for export of table %s.%s", schema, storageUnit))
+		log.WithError(err).Error(fmt.Sprintf("Failed to connect to database for export of table %s.%s", schema, storageUnit))
 		return err
 	}
 
@@ -73,7 +73,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 	fullTableName := p.FormTableName(schema, storageUnit)
 	orderedColumns, err := helper.GetOrderedColumns(fullTableName)
 	if err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get columns for export of table %s.%s", schema, storageUnit))
+		log.WithError(err).Error(fmt.Sprintf("Failed to get columns for export of table %s.%s", schema, storageUnit))
 		return fmt.Errorf("failed to get columns: %v", err)
 	}
 
@@ -95,7 +95,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		headers[i] = common.FormatCSVHeader(col, columnTypes[i])
 	}
 	if err := writer(headers); err != nil {
-		log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write CSV headers for table %s.%s export", schema, storageUnit))
+		log.WithError(err).Error(fmt.Sprintf("Failed to write CSV headers for table %s.%s export", schema, storageUnit))
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
@@ -120,7 +120,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 			}
 
 			if err := writer(row); err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to write row %d during export of table %s.%s", totalRows+1, schema, storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to write row %d during export of table %s.%s", totalRows+1, schema, storageUnit))
 				return fmt.Errorf("failed to write row %d: %v", totalRows+1, err)
 			}
 			totalRows++
@@ -132,7 +132,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 		return fmt.Errorf("export failed after %d rows: %v", totalRows, err)
 	}
 
-	log.Logger.WithField("totalRows", totalRows).
+	log.WithField("totalRows", totalRows).
 		WithField("table", fmt.Sprintf("%s.%s", schema, storageUnit)).
 		Info("Export completed successfully")
 

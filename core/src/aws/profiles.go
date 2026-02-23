@@ -59,7 +59,7 @@ func DiscoverLocalProfiles() ([]LocalProfile, error) {
 	credProfiles, err := parseINIFile(credentialsPath, "credentials", false)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Logger.Warnf("Failed to parse AWS credentials file %s: %v", credentialsPath, err)
+			log.Warnf("Failed to parse AWS credentials file %s: %v", credentialsPath, err)
 		}
 	} else {
 		for name, profile := range credProfiles {
@@ -71,7 +71,7 @@ func DiscoverLocalProfiles() ([]LocalProfile, error) {
 	configProfiles, err := parseINIFile(configPath, "config", true)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Logger.Warnf("Failed to parse AWS config file %s: %v", configPath, err)
+			log.Warnf("Failed to parse AWS config file %s: %v", configPath, err)
 		}
 	} else {
 		for name, profile := range configProfiles {
@@ -108,7 +108,7 @@ func getAWSConfigDir() string {
 	}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Logger.Warnf("Unable to determine home directory for AWS config: %v", err)
+		log.Warnf("Unable to determine home directory for AWS config: %v", err)
 		return ""
 	}
 	return filepath.Join(homeDir, ".aws")

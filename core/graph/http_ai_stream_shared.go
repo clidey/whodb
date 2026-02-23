@@ -78,7 +78,7 @@ func BuildTableDetails(plugin *engine.Plugin, config *engine.PluginConfig, schem
 	for _, unit := range storageUnits {
 		columns, err := plugin.GetColumnsForTable(config, schema, unit.Name)
 		if err != nil {
-			log.Logger.WithError(err).Warnf("Failed to get columns for table %s in streaming chat", unit.Name)
+			log.WithError(err).Warnf("Failed to get columns for table %s in streaming chat", unit.Name)
 			continue
 		}
 
@@ -94,7 +94,7 @@ func BuildTableDetails(plugin *engine.Plugin, config *engine.PluginConfig, schem
 func SendSSEMessage(w http.ResponseWriter, flusher http.Flusher, message *model.AIChatMessage) {
 	data, err := json.Marshal(message)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to marshal SSE message")
+		log.WithError(err).Error("Failed to marshal SSE message")
 		return
 	}
 	fmt.Fprintf(w, "event: message\ndata: %s\n\n", data)
@@ -105,7 +105,7 @@ func SendSSEMessage(w http.ResponseWriter, flusher http.Flusher, message *model.
 func SendSSEChunk(w http.ResponseWriter, flusher http.Flusher, chunk map[string]any) {
 	data, err := json.Marshal(chunk)
 	if err != nil {
-		log.Logger.WithError(err).Error("Failed to marshal SSE chunk")
+		log.WithError(err).Error("Failed to marshal SSE chunk")
 		return
 	}
 	fmt.Fprintf(w, "event: chunk\ndata: %s\n\n", data)

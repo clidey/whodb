@@ -61,7 +61,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 
 		// Verify file exists
 		if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"database": database,
 				"path":     fileNameDatabase,
 			}).Error("SQLite database file does not exist")
@@ -72,14 +72,14 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		fileNameDatabase = filepath.Join(getDefaultDirectory(), database)
 		fileNameDatabase, err = filepath.EvalSymlinks(fileNameDatabase)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"database": database,
 				"path":     fileNameDatabase,
 			}).Error("Failed to evaluate SQLite database symlinks")
 			return nil, err
 		}
 		if !strings.HasPrefix(fileNameDatabase, getDefaultDirectory()) {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"database":         database,
 				"path":             fileNameDatabase,
 				"defaultDirectory": getDefaultDirectory(),
@@ -87,7 +87,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 			return nil, errDoesNotExist
 		}
 		if _, err := os.Stat(fileNameDatabase); errors.Is(err, os.ErrNotExist) {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"database": database,
 				"path":     fileNameDatabase,
 			}).Error("SQLite database file does not exist")
@@ -95,7 +95,7 @@ func (p *Sqlite3Plugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 		}
 	}
 
-	l := log.Logger.WithFields(map[string]any{
+	l := log.WithFields(map[string]any{
 		"database": database,
 		"path":     fileNameDatabase,
 	})

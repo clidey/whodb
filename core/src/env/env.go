@@ -230,7 +230,7 @@ func GetDefaultDatabaseCredentials(databaseType string) []types.DatabaseCredenti
 	var creds []types.DatabaseCredentials
 	err := json.Unmarshal([]byte(credEnvValue), &creds)
 	if err != nil {
-		log.Logger.Error("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
+		log.Error("🔴 [Database Error] Failed to parse database credentials from environment variable! Error: ", err)
 		return nil
 	}
 
@@ -251,7 +251,7 @@ func findAllDatabaseCredentials(databaseType string) []types.DatabaseCredentials
 		var creds types.DatabaseCredentials
 		err := json.Unmarshal([]byte(databaseProfile), &creds)
 		if err != nil {
-			log.Logger.Error("Unable to parse database credential: ", err)
+			log.Error("Unable to parse database credential: ", err)
 			break
 		}
 
@@ -265,14 +265,18 @@ func findAllDatabaseCredentials(databaseType string) []types.DatabaseCredentials
 func getLogLevel() string {
 	level := os.Getenv("WHODB_LOG_LEVEL")
 	switch level {
+	case "debug", "DEBUG", "Debug":
+		return "debug"
 	case "info", "INFO", "Info":
 		return "info"
 	case "warning", "WARNING", "Warning", "warn", "WARN", "Warn":
 		return "warning"
 	case "error", "ERROR", "Error":
 		return "error"
+	case "none", "NONE", "None", "off", "OFF", "Off", "disabled", "DISABLED", "Disabled":
+		return "none"
 	default:
-		return "info" // Default to info level
+		return "info"
 	}
 }
 
@@ -308,7 +312,7 @@ func GetAWSProvidersFromEnv() ([]AWSProviderEnvConfig, error) {
 
 	var configs []AWSProviderEnvConfig
 	if err := json.Unmarshal([]byte(val), &configs); err != nil {
-		log.Logger.Error("[AWS Provider] Failed to parse WHODB_AWS_PROVIDER: ", err)
+		log.Error("[AWS Provider] Failed to parse WHODB_AWS_PROVIDER: ", err)
 		return nil, err
 	}
 
@@ -378,7 +382,7 @@ func parseGenericProviders() []GenericProviderConfig {
 
 		// Validate required fields
 		if baseURL == "" || modelsStr == "" {
-			log.Logger.Warnf("Incomplete generic provider config for %s, skipping (missing base_url or models)", providerID)
+			log.Warnf("Incomplete generic provider config for %s, skipping (missing base_url or models)", providerID)
 			continue
 		}
 
@@ -388,7 +392,7 @@ func parseGenericProviders() []GenericProviderConfig {
 		})
 
 		if len(models) == 0 {
-			log.Logger.Warnf("No models specified for generic provider %s, skipping", providerID)
+			log.Warnf("No models specified for generic provider %s, skipping", providerID)
 			continue
 		}
 
@@ -413,9 +417,9 @@ func parseGenericProviders() []GenericProviderConfig {
 	}
 
 	if len(providers) > 0 {
-		log.Logger.Infof("Discovered %d generic AI provider(s)", len(providers))
+		log.Infof("Discovered %d generic AI provider(s)", len(providers))
 		for _, provider := range providers {
-			log.Logger.Infof("  - %s (%s) with %d model(s)", provider.Name, provider.ProviderId, len(provider.Models))
+			log.Infof("  - %s (%s) with %d model(s)", provider.Name, provider.ProviderId, len(provider.Models))
 		}
 	}
 

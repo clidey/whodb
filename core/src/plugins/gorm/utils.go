@@ -92,7 +92,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 
 	if err != nil {
 		// Primary keys might not exist, which is ok - return empty array
-		log.Logger.Debug(fmt.Sprintf("No primary keys found for table %s.%s: %v", schema, tableName, err))
+		log.Debug(fmt.Sprintf("No primary keys found for table %s.%s: %v", schema, tableName, err))
 		return primaryKeys, nil
 	}
 	defer rows.Close()
@@ -100,7 +100,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 	for rows.Next() {
 		var columnName string
 		if err := rows.Scan(&columnName); err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to scan primary key column name for table %s.%s", schema, tableName))
+			log.WithError(err).Error(fmt.Sprintf("Failed to scan primary key column name for table %s.%s", schema, tableName))
 			continue
 		}
 		primaryKeys = append(primaryKeys, columnName)
@@ -231,7 +231,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	case intTypes.Contains(baseType):
 		parsedValue, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse integer value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse integer value")
 			return nil, err
 		}
 		if isNullable {
@@ -248,7 +248,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		}
 		parsedValue, err := strconv.ParseUint(value, 10, bitSize)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse unsigned integer value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse unsigned integer value")
 			return nil, err
 		}
 		if isNullable {
@@ -260,7 +260,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		parsedValue := new(big.Int)
 		_, ok := parsedValue.SetString(value, 10)
 		if !ok {
-			log.Logger.WithField("value", value).WithField("columnType", columnType).Error("Failed to parse big integer value")
+			log.WithField("value", value).WithField("columnType", columnType).Error("Failed to parse big integer value")
 			return nil, fmt.Errorf("invalid big integer value: %s", value)
 		}
 		if isNullable {
@@ -272,7 +272,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		// This preserves full precision unlike float64 which only has ~15-17 significant digits
 		parsedValue, err := decimal.NewFromString(value)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse decimal value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse decimal value")
 			return nil, err
 		}
 		if isNullable {
@@ -282,7 +282,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	case floatTypes.Contains(baseType):
 		parsedValue, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse float value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse float value")
 			return nil, err
 		}
 		if isNullable {
@@ -292,7 +292,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	case boolTypes.Contains(baseType):
 		parsedValue, err := strconv.ParseBool(value)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse boolean value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse boolean value")
 			return nil, err
 		}
 		if isNullable {
@@ -303,7 +303,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		// todo: need to figure out how to handle date/time functions across db like now(), curdate(), etc
 		date, err := p.parseDate(value)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse date value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse date value")
 			return nil, fmt.Errorf("invalid date format: %v", err)
 		}
 		if isNullable {
@@ -320,7 +320,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		}
 		datetime, err := p.parseDateTime(value)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse datetime value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse datetime value")
 			return nil, fmt.Errorf("invalid datetime format: %v", err)
 		}
 		if isNullable {
@@ -329,7 +329,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		return datetime, nil
 	case binaryTypes.Contains(baseType):
 		// Handle hex-encoded binary data (0x prefix from mock data generator)
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"baseType":     baseType,
 			"columnType":   columnType,
 			"valueLen":     len(value),
@@ -340,7 +340,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 			var err error
 			blobData, err = hex.DecodeString(value[2:])
 			if err != nil {
-				log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to decode hex binary value")
+				log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to decode hex binary value")
 				return nil, fmt.Errorf("invalid hex binary format: %v", err)
 			}
 		} else {
@@ -353,7 +353,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 	case uuidTypes.Contains(baseType):
 		_, err := uuid.Parse(value)
 		if err != nil {
-			log.Logger.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse UUID value")
+			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse UUID value")
 			return nil, fmt.Errorf("invalid UUID format: %v", err)
 		}
 		if isNullable {
@@ -362,7 +362,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 		return value, nil
 	case jsonTypes.Contains(baseType):
 		if !json.Valid([]byte(value)) {
-			log.Logger.WithField("value", value).WithField("columnType", columnType).Error("Invalid JSON value")
+			log.WithField("value", value).WithField("columnType", columnType).Error("Invalid JSON value")
 			return nil, fmt.Errorf("invalid JSON format")
 		}
 		// Return as string, not json.RawMessage ([]byte), because:
@@ -380,7 +380,7 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
 			}
 			ip := net.ParseIP(ipStr)
 			if ip == nil {
-				log.Logger.WithField("value", value).WithField("columnType", columnType).Error("Invalid IP address")
+				log.WithField("value", value).WithField("columnType", columnType).Error("Invalid IP address")
 				return nil, fmt.Errorf("invalid IP address format: %s", value)
 			}
 			if isNullable {
@@ -467,7 +467,7 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, er
 
 		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType)
 		if err != nil {
-			log.Logger.WithError(err).WithField("element", element).WithField("elementType", elementType).Error("Failed to convert array element")
+			log.WithError(err).WithField("element", element).WithField("elementType", elementType).Error("Failed to convert array element")
 			return nil, fmt.Errorf("converting array element: %w", err)
 		}
 		result = append(result, converted)

@@ -33,7 +33,7 @@ import (
 
 // generateChatTitleImpl generates a chat title using BAML
 func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*model.GenerateChatTitleResponse, error) {
-	log.DebugFile("Generate Chat Title: Started with query=%s, model=%s", input.Query, input.Model)
+	log.Debugf("Generate Chat Title: Started with query=%s, model=%s", input.Query, input.Model)
 
 	// Handle very short or unclear inputs - return empty to keep default name
 	query := strings.TrimSpace(input.Query)
@@ -92,13 +92,13 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		input.Query,
 	)
 
-	log.DebugFile("Generate Chat Title: Calling BAML GenerateChatTitle")
+	log.Debugf("Generate Chat Title: Calling BAML GenerateChatTitle")
 
 	// Setup BAML context and call
 	callOpts := common.SetupAIClientWithLogging(externalModel)
 	stream, err := baml_client.Stream.GenerateChatTitle(c, titlePrompt, callOpts...)
 	if err != nil {
-		log.DebugFile("Generate Chat Title: BAML call failed: %v", err)
+		log.Debugf("Generate Chat Title: BAML call failed: %v", err)
 		return nil, fmt.Errorf("failed to generate title: %w", err)
 	}
 
@@ -106,7 +106,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	var title string
 	for chunk := range stream {
 		if chunk.IsError {
-			log.DebugFile("Generate Chat Title: Stream error: %v", chunk.Error)
+			log.Debugf("Generate Chat Title: Stream error: %v", chunk.Error)
 			return nil, fmt.Errorf("failed to generate title: %w", chunk.Error)
 		}
 		if chunk.IsFinal {
@@ -125,7 +125,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		title = title[:50]
 	}
 
-	log.DebugFile("Generate Chat Title: Generated title=%s", title)
+	log.Debugf("Generate Chat Title: Generated title=%s", title)
 
 	return &model.GenerateChatTitleResponse{
 		Title: title,

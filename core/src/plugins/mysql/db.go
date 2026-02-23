@@ -67,7 +67,7 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 			// Build and register TLS config for other modes
 			tlsConfig, err := ssl.BuildTLSConfig(connectionInput.SSLConfig, connectionInput.Hostname)
 			if err != nil {
-				log.Logger.WithError(err).WithFields(map[string]any{
+				log.WithError(err).WithFields(map[string]any{
 					"hostname": connectionInput.Hostname,
 					"sslMode":  connectionInput.SSLConfig.Mode,
 				}).Error("Failed to build TLS configuration for MySQL")
@@ -77,14 +77,14 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 			// Register TLS config with unique name
 			configName := fmt.Sprintf("whodb_%s_%d", connectionInput.Database, time.Now().UnixNano())
 			if err := mysqldriver.RegisterTLSConfig(configName, tlsConfig); err != nil {
-				log.Logger.WithError(err).WithField("configName", configName).Error("Failed to register TLS config for MySQL")
+				log.WithError(err).WithField("configName", configName).Error("Failed to register TLS config for MySQL")
 				return nil, err
 			}
 			mysqlConfig.TLSConfig = configName
 		}
 	}
 
-	l := log.Logger.WithFields(map[string]any{
+	l := log.WithFields(map[string]any{
 		"hostname": connectionInput.Hostname,
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,

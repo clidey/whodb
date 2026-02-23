@@ -45,7 +45,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	defer cancel()
 	port, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"))
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":  config.Credentials.Hostname,
 			"portValue": common.GetRecordValueOrDefault(config.Credentials.Advanced, "Port", "27017"),
 		}).Error("Failed to parse MongoDB port number")
@@ -54,7 +54,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	queryParams := common.GetRecordValueOrDefault(config.Credentials.Advanced, "URL Params", "")
 	dnsEnabled, err := strconv.ParseBool(common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"))
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":        config.Credentials.Hostname,
 			"dnsEnabledValue": common.GetRecordValueOrDefault(config.Credentials.Advanced, "DNS Enabled", "false"),
 		}).Error("Failed to parse MongoDB DNS enabled flag")
@@ -90,7 +90,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 		sslMode = string(sslConfig.Mode)
 		tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"sslMode":  sslConfig.Mode,
 			}).Error("Failed to build TLS configuration for MongoDB")
@@ -103,7 +103,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":   config.Credentials.Hostname,
 			"database":   config.Credentials.Database,
 			"username":   config.Credentials.Username,
@@ -115,7 +115,7 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	}
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": config.Credentials.Database,
 			"username": config.Credentials.Username,

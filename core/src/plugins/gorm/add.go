@@ -56,12 +56,12 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 			fieldName := fieldType.Key
 			primaryKey, err := strconv.ParseBool(fieldType.Extra["Primary"])
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Primary key flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to parse Primary key flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
 				primaryKey = false
 			}
 			nullable, err := strconv.ParseBool(fieldType.Extra["Nullable"])
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to parse Nullable flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to parse Nullable flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
 				nullable = false
 			}
 
@@ -83,7 +83,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		createTableQuery := p.GetCreateTableQuery(db, schema, storageUnit, columns)
 
 		if err := db.Exec(createTableQuery).Error; err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
+			log.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
 			return false, err
 		}
 		return true, nil
@@ -103,7 +103,7 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 	// Fetch column types to ensure proper type conversion
 	columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
-		log.Logger.WithError(err).WithField("schema", schema).WithField("storageUnit", storageUnit).
+		log.WithError(err).WithField("schema", schema).WithField("storageUnit", storageUnit).
 			Warn("Failed to fetch column types, continuing without type information")
 		columnTypes = make(map[string]string)
 	}
@@ -135,7 +135,7 @@ func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageU
 	}
 
 	if storageUnit == "" {
-		log.Logger.Error("AddRow called with empty storageUnit name")
+		log.Error("AddRow called with empty storageUnit name")
 		return false, fmt.Errorf("storage unit name cannot be empty")
 	}
 
@@ -160,7 +160,7 @@ func (p *GormPlugin) AddRowReturningID(config *engine.PluginConfig, schema strin
 	}
 
 	if storageUnit == "" {
-		log.Logger.Error("AddRowReturningID called with empty storageUnit name")
+		log.Error("AddRowReturningID called with empty storageUnit name")
 		return 0, fmt.Errorf("storage unit name cannot be empty")
 	}
 
@@ -177,7 +177,7 @@ func (p *GormPlugin) AddRowReturningID(config *engine.PluginConfig, schema strin
 			var err error
 			lastID, err = p.GormPluginFunctions.GetLastInsertID(tx)
 			if err != nil {
-				log.Logger.WithError(err).Warn("Failed to get last insert ID")
+				log.WithError(err).Warn("Failed to get last insert ID")
 				return nil
 			}
 

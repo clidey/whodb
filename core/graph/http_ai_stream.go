@@ -38,42 +38,42 @@ func init() {
 }
 
 func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
-	log.DebugFile("AI Chat Stream: Handler started")
+	log.Debugf("AI Chat Stream: Handler started")
 
 	// Parse request
 	req, err := ParseStreamRequest(r)
 	if err != nil {
-		log.DebugFile("AI Chat Stream: ParseStreamRequest failed: %v", err)
+		log.Debugf("AI Chat Stream: ParseStreamRequest failed: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.DebugFile("AI Chat Stream: Request parsed - model=%s, schema=%s, query=%s", req.ModelType, req.Schema, req.Input.Query)
+	log.Debugf("AI Chat Stream: Request parsed - model=%s, schema=%s, query=%s", req.ModelType, req.Schema, req.Input.Query)
 
 	// Setup SSE - check if streaming is supported
 	flusher := SetupSSEHeaders(w)
 	streamingSupported := flusher != nil
-	log.DebugFile("AI Chat Stream: Streaming supported: %v", streamingSupported)
+	log.Debugf("AI Chat Stream: Streaming supported: %v", streamingSupported)
 
 	// If streaming not supported (e.g., Wails), fall back to non-streaming mode
 	if !streamingSupported {
 		handleNonStreamingAIChat(w, r, req)
 		return
 	}
-	log.DebugFile("AI Chat Stream: SSE headers set, flusher available")
+	log.Debugf("AI Chat Stream: SSE headers set, flusher available")
 
 	// Get plugin and config
 	plugin, config := GetPluginForContext(r.Context())
 	if plugin == nil {
-		log.DebugFile("AI Chat Stream: Plugin is nil")
+		log.Debugf("AI Chat Stream: Plugin is nil")
 		SendSSEError(w, flusher, "No database plugin available")
 		return
 	}
 	if config == nil || config.Credentials == nil {
-		log.DebugFile("AI Chat Stream: Config or credentials is nil")
+		log.Debugf("AI Chat Stream: Config or credentials is nil")
 		SendSSEError(w, flusher, "No credentials available")
 		return
 	}
-	log.DebugFile("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
+	log.Debugf("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
 
 	// Build ExternalModel, looking up token from environment if providerId is set
 	token := req.Token
@@ -98,14 +98,14 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build table details
-	log.DebugFile("AI Chat Stream: Building table details for schema=%s", req.Schema)
+	log.Debugf("AI Chat Stream: Building table details for schema=%s", req.Schema)
 	tableDetails, err := BuildTableDetails(plugin, config, req.Schema)
 	if err != nil {
-		log.DebugFile("AI Chat Stream: BuildTableDetails failed: %v", err)
+		log.Debugf("AI Chat Stream: BuildTableDetails failed: %v", err)
 		SendSSEError(w, flusher, "Failed to get table info: "+err.Error())
 		return
 	}
-	log.DebugFile("AI Chat Stream: Table details built, length=%d", len(tableDetails))
+	log.Debugf("AI Chat Stream: Table details built, length=%d", len(tableDetails))
 
 	// Setup BAML context
 	dbContext := types.DatabaseContext{
@@ -114,24 +114,24 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		Tables_and_fields:     tableDetails,
 		Previous_conversation: req.Input.PreviousConversation,
 	}
-	log.DebugFile("AI Chat Stream: BAML context created")
+	log.Debugf("AI Chat Stream: BAML context created")
 
 	// Create BAML stream
-	log.DebugFile("AI Chat Stream: Setting up AI client...")
+	log.Debugf("AI Chat Stream: Setting up AI client...")
 	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
-	log.DebugFile("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
+	log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
 	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
-		log.DebugFile("AI Chat Stream: GenerateSQLQuery failed: %v", err)
+		log.Debugf("AI Chat Stream: GenerateSQLQuery failed: %v", err)
 		SendSSEError(w, flusher, "Failed to start stream: "+err.Error())
 		return
 	}
-	log.DebugFile("AI Chat Stream: BAML stream created successfully")
+	log.Debugf("AI Chat Stream: BAML stream created successfully")
 
 	// Process stream
-	log.DebugFile("AI Chat Stream: Starting to process stream...")
+	log.Debugf("AI Chat Stream: Starting to process stream...")
 	processStream(w, flusher, stream, plugin, config)
-	log.DebugFile("AI Chat Stream: Stream processing completed")
+	log.Debugf("AI Chat Stream: Stream processing completed")
 }
 
 func processStream(

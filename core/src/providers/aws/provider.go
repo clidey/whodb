@@ -192,7 +192,7 @@ func (p *Provider) initialize(ctx context.Context) error {
 		creds := p.buildInternalCredentials()
 
 		if p.config.AuthMethod == awsinfra.AuthMethodStatic {
-			log.Logger.WithField("provider_id", p.config.ID).Warn("Using static AWS access keys; prefer IAM roles or shared profiles")
+			log.WithField("provider_id", p.config.ID).Warn("Using static AWS access keys; prefer IAM roles or shared profiles")
 		}
 
 		cfg, err := awsinfra.LoadAWSConfig(ctx, creds)
@@ -254,14 +254,14 @@ type discoveryResult struct {
 // DiscoverConnections implements providers.ConnectionProvider.
 // Discovery runs in parallel across all enabled services for faster results.
 func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.DiscoveredConnection, error) {
-	log.Logger.Infof("AWS Provider DiscoverConnections called for id=%s, region=%s, authMethod=%s, profileName=%s",
+	log.Infof("AWS Provider DiscoverConnections called for id=%s, region=%s, authMethod=%s, profileName=%s",
 		p.config.ID, p.config.Region, p.config.AuthMethod, p.config.ProfileName)
 
 	if err := p.initialize(ctx); err != nil {
-		log.Logger.Errorf("AWS Provider initialize failed: %v", err)
+		log.Errorf("AWS Provider initialize failed: %v", err)
 		return nil, err
 	}
-	log.Logger.Infof("AWS Provider initialized successfully, rdsClient=%v", p.rdsClient != nil)
+	log.Infof("AWS Provider initialized successfully, rdsClient=%v", p.rdsClient != nil)
 
 	// Count how many discovery tasks we'll run
 	taskCount := len(discoveryExtensions)
@@ -322,10 +322,10 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 	var allErrs []error
 	for r := range results {
 		if r.err != nil {
-			log.Logger.Errorf("AWS Provider: %s discovery failed: %v", r.name, r.err)
+			log.Errorf("AWS Provider: %s discovery failed: %v", r.name, r.err)
 			allErrs = append(allErrs, fmt.Errorf("%s: %w", r.name, r.err))
 		} else {
-			log.Logger.Infof("AWS Provider: %s discovery found %d resources", r.name, len(r.conns))
+			log.Infof("AWS Provider: %s discovery found %d resources", r.name, len(r.conns))
 			allConns = append(allConns, r.conns...)
 		}
 	}

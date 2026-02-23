@@ -79,7 +79,7 @@ func (a *App) Startup(ctx context.Context) {
 // Shutdown is called when the app is closing
 func (a *App) Shutdown(ctx context.Context) {
 	if err := a.SaveWindowState(); err != nil {
-		log.Logger.Warnf("Failed to save window state: %v", err)
+		log.Warnf("Failed to save window state: %v", err)
 	}
 
 	// Track desktop app shutdown

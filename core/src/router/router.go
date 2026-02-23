@@ -70,11 +70,24 @@ func setupServer(router *chi.Mux, staticFiles embed.FS) {
 	setupPlaygroundHandler(router, server)
 }
 
-// debugRequestMiddleware logs all incoming requests to the debug file
-func debugRequestMiddleware(next http.Handler) http.Handler {
+// statusResponseWriter wraps http.ResponseWriter to capture the status code.
+type statusResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *statusResponseWriter) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+// accessLogMiddleware logs HTTP requests with method, path, status, duration, host, and remote address.
+func accessLogMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.DebugFile("HTTP Request: %s %s (Host: %s, RemoteAddr: %s)", r.Method, r.URL.Path, r.Host, r.RemoteAddr)
-		next.ServeHTTP(w, r)
+		start := time.Now()
+		sw := &statusResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(sw, r)
+		log.LogAccess(r.Method, r.URL.Path, sw.statusCode, time.Since(start), r.Host, r.RemoteAddr)
 	})
 }
 
@@ -85,20 +98,13 @@ func setupMiddlewares(router *chi.Mux) {
 	}
 
 	middlewares := []func(http.Handler) http.Handler{
-		debugRequestMiddleware, // Log all requests to debug file
+		accessLogMiddleware,
 		middleware.ThrottleBacklog(100, 50, time.Second*5),
 		middleware.RequestID,
 		middleware.RealIP,
-	}
-
-	if env.LogLevel == "debug" {
-		middlewares = append(middlewares, middleware.Logger)
-	}
-
-	middlewares = append(middlewares,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
-		middleware.Timeout(90*time.Second), // Increased for LLM inference time
+		middleware.Timeout(90 * time.Second), // Increased for LLM inference time
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -109,7 +115,7 @@ func setupMiddlewares(router *chi.Mux) {
 		}),
 		contextMiddleware,
 		auth.AuthMiddleware,
-	)
+	}
 
 	router.Use(middlewares...)
 }

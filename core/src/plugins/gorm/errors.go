@@ -42,7 +42,7 @@ func (h *ErrorHandler) HandleError(err error, operation string, details map[stri
 	}
 
 	// Log the original error with context
-	logger := log.Logger.WithError(err).WithField("operation", operation)
+	logger := log.WithError(err).WithField("operation", operation)
 	for k, v := range details {
 		logger = logger.WithField(k, v)
 	}

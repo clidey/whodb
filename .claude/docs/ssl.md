@@ -211,7 +211,7 @@ func parseSSLConfig(advanced []engine.Record, hostname string, isProfile bool) *
 
     // Validate the mode
     if !ssl.ValidateSSLMode(engine.DatabaseType_NewDB, mode) {
-        log.Logger.Warnf("Invalid SSL mode '%s' for NewDB", modeStr)
+        log.Warnf("Invalid SSL mode '%s' for NewDB", modeStr)
         return nil
     }
 
@@ -258,7 +258,7 @@ func (p *NewDBPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
     if sslConfig != nil && sslConfig.IsEnabled() {
         tlsConfig, err := ssl.BuildTLSConfig(sslConfig, config.Credentials.Hostname)
         if err != nil {
-            log.Logger.WithError(err).Error("Failed to build TLS configuration")
+            log.WithError(err).Error("Failed to build TLS configuration")
             return nil, err
         }
 
@@ -286,7 +286,7 @@ import (
 )
 
 func (p *NewDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLStatus, error) {
-    log.Logger.Debug("[SSL] NewDBPlugin.GetSSLStatus: checking SSL mode")
+    log.Debug("[SSL] NewDBPlugin.GetSSLStatus: checking SSL mode")
 
     sslConfig := parseSSLConfig(config.Credentials.Advanced,
         config.Credentials.Hostname, config.Credentials.IsProfile)

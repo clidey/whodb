@@ -25,13 +25,13 @@ import (
 )
 
 func Login(ctx context.Context, input *model.LoginCredentials) (*model.StatusResponse, error) {
-	log.Logger.Debugf("[Login] type=%s, hostname=%s, username=%s, database=%s, advanced=%d",
+	log.Debugf("[Login] type=%s, hostname=%s, username=%s, database=%s, advanced=%d",
 		input.Type, input.Hostname, input.Username, input.Database, len(input.Advanced))
 
 	// Note: We no longer set cookies for authentication.
 	// Credentials are sent via Authorization header on each request. This avoids the ~4KB cookie size
 	// limit which can be exceeded when SSL certificates are included.
-	log.Logger.Debugf("[Login] Login successful for %s at %s", input.Type, input.Hostname)
+	log.Debugf("[Login] Login successful for %s at %s", input.Type, input.Hostname)
 
 	// Persist credentials in OS keychain when an Id is provided (for future use)
 	if input.ID != nil && *input.ID != "" {

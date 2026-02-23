@@ -24,6 +24,6 @@ import (
 // GetSSLStatus returns nil for SQLite as it's a local file-based database
 // that doesn't use network connections or SSL/TLS.
 func (p *Sqlite3Plugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLStatus, error) {
-	log.Logger.Debug("[SSL] Sqlite3Plugin.GetSSLStatus: SQLite does not support SSL (local file-based)")
+	log.Debug("[SSL] Sqlite3Plugin.GetSSLStatus: SQLite does not support SSL (local file-based)")
 	return nil, nil
 }

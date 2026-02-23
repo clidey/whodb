@@ -80,7 +80,7 @@ func getEndpointForProvider(providerType LLMType) string {
 				return provider.BaseURL
 			}
 		}
-		log.Logger.Warnf("No endpoint found for provider type: %s", providerType)
+		log.Warnf("No endpoint found for provider type: %s", providerType)
 		return ""
 	}
 }
@@ -89,7 +89,7 @@ func (c *LLMClient) GetSupportedModels() ([]string, error) {
 	// Get provider from registry
 	provider, err := providers.GetProvider(c.Type)
 	if err != nil {
-		log.Logger.WithError(err).Errorf("Provider not found for type: %s", c.Type)
+		log.WithError(err).Errorf("Provider not found for type: %s", c.Type)
 		return nil, err
 	}
 

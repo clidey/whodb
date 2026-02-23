@@ -98,7 +98,7 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engin
 	var tableName, tableType string
 	var totalSize, dataSize float64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
-		log.Logger.WithError(err).Error("Failed to scan MySQL table information")
+		log.WithError(err).Error("Failed to scan MySQL table information")
 		return "", []engine.Record{}
 	}
 
@@ -192,7 +192,7 @@ func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND GENERATION_EXPRESSION IS NOT NULL AND GENERATION_EXPRESSION != ''
 	`, schema, storageUnit)
 	if err != nil {
-		log.Logger.WithError(err).Warn("Failed to get generated columns for MySQL table")
+		log.WithError(err).Warn("Failed to get generated columns for MySQL table")
 	}
 
 	for i := range columns {

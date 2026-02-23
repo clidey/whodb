@@ -18,8 +18,11 @@ package log
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -30,231 +33,128 @@ const (
 	ISO8601Format = time.RFC3339
 )
 
+// Fields is an alias for logrus.Fields used in structured logging.
 type Fields logrus.Fields
 
-var Logger *ConditionalLogger
-var logLevel string
-var logFormat string
+var logger *logrus.Logger
 
-type ConditionalLogger struct {
-	*logrus.Logger
-}
+// logFile holds the opened log file when WHODB_LOG_FILE is set.
+var logFile *os.File
 
+// accessLogger is a separate logrus instance for HTTP access logs.
+// nil unless WHODB_ACCESS_LOG_FILE is set.
+var accessLogger *logrus.Logger
+var accessLogFile *os.File
+
+// ConditionalEntry wraps logrus.Entry to downgrade unsupported-operation errors
+// from Error to Debug level. All other methods are promoted from *logrus.Entry.
 type ConditionalEntry struct {
 	*logrus.Entry
 }
 
-// Error method that respects log levels.
-// If the entry contains an unsupported operation error (from WithError), logs at Debug instead.
+func Debugf(format string, args ...any) { logger.Debugf(format, args...) }
+func Debug(args ...any)                 { logger.Debug(args...) }
+func Infof(format string, args ...any)  { logger.Infof(format, args...) }
+func Info(args ...any)                  { logger.Info(args...) }
+func Warnf(format string, args ...any)  { logger.Warnf(format, args...) }
+func Warn(args ...any)                  { logger.Warn(args...) }
+func Errorf(format string, args ...any) { logger.Errorf(format, args...) }
+func Error(args ...any)                 { logger.Error(args...) }
+func Fatalf(format string, args ...any) { logger.Fatalf(format, args...) }
+func Fatal(args ...any)                 { logger.Fatal(args...) }
+
+// Alwaysf logs a formatted message at Info level regardless of the configured log level.
+func Alwaysf(format string, args ...any) {
+	prev := logger.GetLevel()
+	logger.SetLevel(logrus.InfoLevel)
+	logger.Infof(format, args...)
+	logger.SetLevel(prev)
+}
+
+// Always logs a message at Info level regardless of the configured log level.
+func Always(args ...any) {
+	prev := logger.GetLevel()
+	logger.SetLevel(logrus.InfoLevel)
+	logger.Info(args...)
+	logger.SetLevel(prev)
+}
+
+// WithError creates a ConditionalEntry with an error field.
+func WithError(err error) *ConditionalEntry {
+	return &ConditionalEntry{Entry: logger.WithError(err)}
+}
+
+// WithField creates a ConditionalEntry with a single field.
+func WithField(key string, value any) *ConditionalEntry {
+	return &ConditionalEntry{Entry: logger.WithField(key, value)}
+}
+
+// WithFields creates a ConditionalEntry with multiple fields.
+func WithFields(fields Fields) *ConditionalEntry {
+	return &ConditionalEntry{Entry: logger.WithFields(logrus.Fields(fields))}
+}
+
+// Error downgrades to Debug when the attached error is errors.ErrUnsupported.
 func (e *ConditionalEntry) Error(args ...any) {
 	if isUnsupportedOperation(e.Entry.Data["error"]) {
-		e.Debug(args...)
-		return
-	}
-	if !isLevelEnabled("error") {
+		e.Entry.Debug(args...)
 		return
 	}
 	e.Entry.Error(args...)
 }
 
-// Errorf method that respects log levels
+// Errorf downgrades to Debug when the attached error is errors.ErrUnsupported.
 func (e *ConditionalEntry) Errorf(format string, args ...any) {
 	if isUnsupportedOperation(e.Entry.Data["error"]) {
-		e.Debug(args...)
-		return
-	}
-	if !isLevelEnabled("error") {
+		e.Entry.Debug(args...)
 		return
 	}
 	e.Entry.Errorf(format, args...)
 }
 
-// Debug method that respects log levels
-func (e *ConditionalEntry) Debug(args ...any) {
-	if !isLevelEnabled("debug") {
-		return
-	}
-	e.Entry.Debug(args...)
-}
-
-// Debugf method that respects log levels
-func (e *ConditionalEntry) Debugf(format string, args ...any) {
-	if !isLevelEnabled("debug") {
-		return
-	}
-	e.Entry.Debugf(format, args...)
-}
-
-// Info method that respects log levels
-func (e *ConditionalEntry) Info(args ...any) {
-	if !isLevelEnabled("info") {
-		return
-	}
-	e.Entry.Info(args...)
-}
-
-// Infof method that respects log levels
-func (e *ConditionalEntry) Infof(format string, args ...any) {
-	if !isLevelEnabled("info") {
-		return
-	}
-	e.Entry.Infof(format, args...)
-}
-
-// Warn method that respects log levels
-func (e *ConditionalEntry) Warn(args ...any) {
-	if !isLevelEnabled("warning") {
-		return
-	}
-	e.Entry.Warn(args...)
-}
-
-// Warnf method that respects log levels
-func (e *ConditionalEntry) Warnf(format string, args ...any) {
-	if !isLevelEnabled("warning") {
-		return
-	}
-	e.Entry.Warnf(format, args...)
-}
-
-// WithField method for chaining
+// Chaining methods return *ConditionalEntry to preserve the Error override.
 func (e *ConditionalEntry) WithField(key string, value any) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithField(key, value)}
 }
 
-// WithFields method for chaining
 func (e *ConditionalEntry) WithFields(fields map[string]any) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithFields(fields)}
 }
 
-// WithError method for chaining
 func (e *ConditionalEntry) WithError(err error) *ConditionalEntry {
 	return &ConditionalEntry{Entry: e.Entry.WithError(err)}
 }
 
-// isUnsupportedOperation checks if an error indicates an unsupported operation.
 func isUnsupportedOperation(err any) bool {
 	if err == nil {
 		return false
 	}
 	if e, ok := err.(error); ok {
-		// Check for standard library's ErrUnsupported
 		return errors.Is(e, errors.ErrUnsupported)
 	}
 	return false
 }
 
-// levelPriority maps log levels to numeric priorities.
-//
-//	When you set a threshold, you see messages at that level and above (more severe).
-//
-// Setting debug (lowest) shows everything; setting error (highest) shows only errors
-var levelPriority = map[string]int{
-	"debug":   0,
-	"info":    1,
-	"warning": 2,
-	"error":   3,
-	"none":    4,
-}
-
-// isLevelEnabled checks if the given level should be logged based on current log level.
-// A message is logged if its priority >= the configured level's priority.
-func isLevelEnabled(level string) bool {
-	configPriority, ok := levelPriority[logLevel]
-	if !ok {
-		configPriority = levelPriority["info"] // default to info
+// parseLevel parses a log level string using logrus.ParseLevel,
+// with added support for "none"/"off"/"disabled" to silence all output.
+func parseLevel(level string) logrus.Level {
+	switch strings.ToLower(level) {
+	case "":
+		return logrus.InfoLevel
+	case "none", "off", "disabled":
+		return logrus.PanicLevel
+	default:
+		parsed, err := logrus.ParseLevel(level)
+		if err != nil {
+			return logrus.InfoLevel
+		}
+		return parsed
 	}
-	msgPriority, ok := levelPriority[level]
-	if !ok {
-		return false
-	}
-	return msgPriority >= configPriority
 }
 
-func (c *ConditionalLogger) WithError(err error) *ConditionalEntry {
-	return &ConditionalEntry{Entry: c.Logger.WithError(err)}
-}
-
-func (c *ConditionalLogger) WithField(key string, value any) *ConditionalEntry {
-	return &ConditionalEntry{Entry: c.Logger.WithField(key, value)}
-}
-
-func (c *ConditionalLogger) WithFields(fields map[string]any) *ConditionalEntry {
-	return &ConditionalEntry{Entry: c.Logger.WithFields(fields)}
-}
-
-func (c *ConditionalLogger) Error(args ...any) {
-	if !isLevelEnabled("error") {
-		return
-	}
-	c.Logger.Error(args...)
-}
-
-func (c *ConditionalLogger) Errorf(format string, args ...any) {
-	if !isLevelEnabled("error") {
-		return
-	}
-	c.Logger.Errorf(format, args...)
-}
-
-func (c *ConditionalLogger) Warn(args ...any) {
-	if !isLevelEnabled("warning") {
-		return
-	}
-	c.Logger.Warn(args...)
-}
-
-func (c *ConditionalLogger) Warnf(format string, args ...any) {
-	if !isLevelEnabled("warning") {
-		return
-	}
-	c.Logger.Warnf(format, args...)
-}
-
-func (c *ConditionalLogger) Info(args ...any) {
-	if !isLevelEnabled("info") {
-		return
-	}
-	c.Logger.Info(args...)
-}
-
-func (c *ConditionalLogger) Infof(format string, args ...any) {
-	if !isLevelEnabled("info") {
-		return
-	}
-	c.Logger.Infof(format, args...)
-}
-
-func (c *ConditionalLogger) Debug(args ...any) {
-	if !isLevelEnabled("debug") {
-		return
-	}
-	c.Logger.Debug(args...)
-}
-
-func (c *ConditionalLogger) Debugf(format string, args ...any) {
-	if !isLevelEnabled("debug") {
-		return
-	}
-	c.Logger.Debugf(format, args...)
-}
-
-func (c *ConditionalLogger) Fatal(args ...any) {
-	// Fatal should always execute regardless of logging flag as it terminates the program
-	c.Logger.Fatal(args...)
-}
-
-func (c *ConditionalLogger) Fatalf(format string, args ...any) {
-	// Fatal should always execute regardless of logging flag as it terminates the program
-	c.Logger.Fatalf(format, args...)
-}
-
-// serviceHook adds service name to all log entries
 type serviceHook struct{}
 
-func (h *serviceHook) Levels() []logrus.Level {
-	return logrus.AllLevels
-}
+func (h *serviceHook) Levels() []logrus.Level { return logrus.AllLevels }
 
 func (h *serviceHook) Fire(entry *logrus.Entry) error {
 	entry.Data["service"] = ServiceName
@@ -262,20 +162,44 @@ func (h *serviceHook) Fire(entry *logrus.Entry) error {
 }
 
 func init() {
-	Logger = &ConditionalLogger{Logger: logrus.New()}
-	// Set logrus to debug level - our wrapper handles filtering
-	Logger.Logger.SetLevel(logrus.DebugLevel)
-	logLevel = getLogLevel()
-	logFormat = getLogFormat()
+	logger = logrus.New()
+	logger.SetLevel(parseLevel(os.Getenv("WHODB_LOG_LEVEL")))
 	configureFormatter()
-	// Add service name to all log entries
-	Logger.AddHook(&serviceHook{})
+	logger.AddHook(&serviceHook{})
+
+	if logFilePath := os.Getenv("WHODB_LOG_FILE"); logFilePath != "" {
+		dir := filepath.Dir(logFilePath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "whodb: failed to create log directory %s: %v\n", dir, err)
+		} else if f, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "whodb: failed to open log file %s: %v\n", logFilePath, err)
+		} else {
+			logFile = f
+			logger.SetOutput(f)
+		}
+	}
+
+	if accessLogPath := os.Getenv("WHODB_ACCESS_LOG_FILE"); accessLogPath != "" {
+		dir := filepath.Dir(accessLogPath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "whodb: failed to create access log directory %s: %v\n", dir, err)
+		} else if f, err := os.OpenFile(accessLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "whodb: failed to open access log file %s: %v\n", accessLogPath, err)
+		} else {
+			accessLogFile = f
+			accessLogger = logrus.New()
+			accessLogger.SetOutput(f)
+			accessLogger.SetFormatter(&logrus.TextFormatter{
+				TimestampFormat: ISO8601Format,
+				FullTimestamp:   true,
+			})
+		}
+	}
 }
 
-// configureFormatter sets up JSON or text formatter based on WHODB_LOG_FORMAT
 func configureFormatter() {
-	if logFormat == "json" {
-		Logger.SetFormatter(&logrus.JSONFormatter{
+	if getLogFormat() == "json" {
+		logger.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: ISO8601Format,
 			FieldMap: logrus.FieldMap{
 				logrus.FieldKeyTime:  "timestamp",
@@ -284,7 +208,7 @@ func configureFormatter() {
 			},
 		})
 	} else {
-		Logger.SetFormatter(&logrus.TextFormatter{
+		logger.SetFormatter(&logrus.TextFormatter{
 			TimestampFormat: ISO8601Format,
 			FullTimestamp:   true,
 		})
@@ -292,45 +216,55 @@ func configureFormatter() {
 }
 
 func getLogFormat() string {
-	format := os.Getenv("WHODB_LOG_FORMAT")
-	switch format {
-	case "json", "JSON", "Json":
+	if strings.ToLower(os.Getenv("WHODB_LOG_FORMAT")) == "json" {
 		return "json"
-	default:
-		return "text"
 	}
+	return "text"
 }
 
-func getLogLevel() string {
-	level := os.Getenv("WHODB_LOG_LEVEL")
-	switch level {
-	case "debug", "DEBUG", "Debug":
-		return "debug"
-	case "info", "INFO", "Info":
-		return "info"
-	case "warning", "WARNING", "Warning", "warn", "WARN", "Warn":
-		return "warning"
-	case "error", "ERROR", "Error":
-		return "error"
-	case "none", "NONE", "None", "off", "OFF", "Off", "disabled", "DISABLED", "Disabled":
-		return "none"
-	default:
-		return "info" // Default to info level
-	}
+// GetLevel returns the current log level as a string.
+func GetLevel() string {
+	return logger.GetLevel().String()
 }
 
-func LogFields(fields Fields) *ConditionalEntry {
-	return Logger.WithFields(fields)
-}
-
+// SetLogLevel changes the active log level at runtime.
 func SetLogLevel(level string) {
-	logLevel = level
+	logger.SetLevel(parseLevel(level))
 }
 
-// DisableOutput redirects all log output to io.Discard, preventing any logs from appearing in stdout/stderr.
-// This is useful for TUI applications where stdout is used for terminal rendering.
+// DisableOutput redirects all log output to io.Discard.
+// Used by the TUI where stdout is reserved for terminal rendering.
 func DisableOutput() {
-	if Logger != nil {
-		Logger.SetOutput(io.Discard)
+	if logger != nil {
+		logger.SetOutput(io.Discard)
 	}
+}
+
+// CloseLogFile closes the log file and access log file if they were opened.
+func CloseLogFile() {
+	if logFile != nil {
+		logFile.Close()
+		logFile = nil
+	}
+	if accessLogFile != nil {
+		accessLogFile.Close()
+		accessLogFile = nil
+		accessLogger = nil
+	}
+}
+
+// LogAccess writes an HTTP access log entry to the dedicated access log file.
+// This is a no-op unless WHODB_ACCESS_LOG_FILE is set.
+func LogAccess(method, path string, status int, duration time.Duration, host, remoteAddr string) {
+	if accessLogger == nil {
+		return
+	}
+	accessLogger.WithFields(logrus.Fields{
+		"method":      method,
+		"path":        path,
+		"status":      status,
+		"duration":    duration,
+		"host":        host,
+		"remote_addr": remoteAddr,
+	}).Info("access")
 }
