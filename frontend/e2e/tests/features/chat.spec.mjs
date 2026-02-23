@@ -84,21 +84,25 @@ test.describe('Chat AI Integration', () => {
             test('toggles between table and SQL view', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                await whodb.mockChatResponse([{
-                    type: 'sql:get',
-                    text: `SELECT * FROM ${schemaPrefix}users`,
-                    result: {
-                        Columns: [{ Name: 'id', Type: 'integer', __typename: 'Column' }],
-                        Rows: [['1']],
-                        __typename: 'RowsResult'
-                    }
-                }]);
-                await whodb.sendChatMessage('Show users');
-                await whodb.waitForChatResponse();
+                await test.step('generate query results', async () => {
+                    await whodb.mockChatResponse([{
+                        type: 'sql:get',
+                        text: `SELECT * FROM ${schemaPrefix}users`,
+                        result: {
+                            Columns: [{ Name: 'id', Type: 'integer', __typename: 'Column' }],
+                            Rows: [['1']],
+                            __typename: 'RowsResult'
+                        }
+                    }]);
+                    await whodb.sendChatMessage('Show users');
+                    await whodb.waitForChatResponse();
+                });
 
-                await whodb.toggleChatSQLView();
-                await whodb.verifyChatSQL(`SELECT * FROM ${schemaPrefix}users`);
-                await whodb.toggleChatSQLView();
+                await test.step('toggle to SQL view and back', async () => {
+                    await whodb.toggleChatSQLView();
+                    await whodb.verifyChatSQL(`SELECT * FROM ${schemaPrefix}users`);
+                    await whodb.toggleChatSQLView();
+                });
             });
 
             test('generates filtered query', async ({ whodb, page }) => {
@@ -190,24 +194,28 @@ test.describe('Chat AI Integration', () => {
             test('executes DELETE operation with confirmation', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                await whodb.mockChatResponse([{
-                    type: 'text',
-                    text: 'Are you sure you want to delete this user? This action cannot be undone.'
-                }]);
-                await whodb.sendChatMessage('Delete test_user from the database');
-                await whodb.waitForChatResponse();
-                await whodb.verifyChatSystemMessage('Are you sure you want to delete this user?');
+                await test.step('request deletion and verify confirmation prompt', async () => {
+                    await whodb.mockChatResponse([{
+                        type: 'text',
+                        text: 'Are you sure you want to delete this user? This action cannot be undone.'
+                    }]);
+                    await whodb.sendChatMessage('Delete test_user from the database');
+                    await whodb.waitForChatResponse();
+                    await whodb.verifyChatSystemMessage('Are you sure you want to delete this user?');
+                });
 
-                await whodb.mockChatResponse([{
-                    type: 'sql:delete',
-                    text: `DELETE
-                           FROM ${schemaPrefix}users
-                           WHERE username = 'test_user'`,
-                    result: { Columns: [], Rows: [], __typename: 'RowsResult' }
-                }]);
-                await whodb.sendChatMessage('Yes, delete it');
-                await whodb.waitForChatResponse();
-                await whodb.verifyChatActionExecuted();
+                await test.step('confirm deletion and verify execution', async () => {
+                    await whodb.mockChatResponse([{
+                        type: 'sql:delete',
+                        text: `DELETE
+                               FROM ${schemaPrefix}users
+                               WHERE username = 'test_user'`,
+                        result: { Columns: [], Rows: [], __typename: 'RowsResult' }
+                    }]);
+                    await whodb.sendChatMessage('Yes, delete it');
+                    await whodb.waitForChatResponse();
+                    await whodb.verifyChatActionExecuted();
+                });
             });
         });
 
@@ -236,41 +244,48 @@ test.describe('Chat AI Integration', () => {
         test.describe('Query Export', () => {
             test('exports chat query results as CSV', async ({ whodb, page }) => {
                 await whodb.gotoChat();
-                const exportResponsePromise = page.waitForResponse(
-                    (response) => response.url().includes('/api/export'),
-                    { timeout: 15000 }
-                );
+                let exportResponsePromise;
 
-                await whodb.mockChatResponse([{
-                    type: 'sql:get',
-                    text: `SELECT * FROM ${schemaPrefix}users ORDER BY id`,
-                    result: {
-                        Columns: [
-                            { Name: 'id', Type: 'integer', __typename: 'Column' },
-                            { Name: 'username', Type: 'character varying', __typename: 'Column' }
-                        ],
-                        Rows: [['1', 'john_doe'], ['2', 'jane_smith']],
-                        __typename: 'RowsResult'
-                    }
-                }]);
-                await whodb.sendChatMessage('Show me all users');
-                await whodb.waitForChatResponse();
+                await test.step('set up export listener and generate query results', async () => {
+                    exportResponsePromise = page.waitForResponse(
+                        (response) => response.url().includes('/api/export'),
+                        { timeout: 15000 }
+                    );
 
-                // Click export button on the chat result table
-                await page.locator('[data-testid="export-all-button"]').last().click();
-                await expect(page.locator('h2').filter({ hasText: 'Export Data' }).first()).toBeVisible();
-                await expect(page.getByText('You are about to export the results of your query.')).toBeVisible();
+                    await whodb.mockChatResponse([{
+                        type: 'sql:get',
+                        text: `SELECT * FROM ${schemaPrefix}users ORDER BY id`,
+                        result: {
+                            Columns: [
+                                { Name: 'id', Type: 'integer', __typename: 'Column' },
+                                { Name: 'username', Type: 'character varying', __typename: 'Column' }
+                            ],
+                            Rows: [['1', 'john_doe'], ['2', 'jane_smith']],
+                            __typename: 'RowsResult'
+                        }
+                    }]);
+                    await whodb.sendChatMessage('Show me all users');
+                    await whodb.waitForChatResponse();
+                });
 
-                await whodb.confirmExport();
+                await test.step('open export dialog and confirm', async () => {
+                    await page.locator('[data-testid="export-all-button"]').last().click();
+                    await expect(page.locator('h2').filter({ hasText: 'Export Data' }).first()).toBeVisible();
+                    await expect(page.getByText('You are about to export the results of your query.')).toBeVisible();
 
-                const exportResponse = await exportResponsePromise;
-                const request = exportResponse.request();
-                const requestBody = request.postDataJSON();
-                expect(exportResponse.status()).toEqual(200);
-                expect(requestBody.selectedRows).toBeTruthy();
-                expect(Array.isArray(requestBody.selectedRows)).toBeTruthy();
-                expect(requestBody.selectedRows.length).toEqual(2);
-                expect(requestBody.storageUnit).toEqual('query_export');
+                    await whodb.confirmExport();
+                });
+
+                await test.step('verify export response', async () => {
+                    const exportResponse = await exportResponsePromise;
+                    const request = exportResponse.request();
+                    const requestBody = request.postDataJSON();
+                    expect(exportResponse.status()).toEqual(200);
+                    expect(requestBody.selectedRows).toBeTruthy();
+                    expect(Array.isArray(requestBody.selectedRows)).toBeTruthy();
+                    expect(requestBody.selectedRows.length).toEqual(2);
+                    expect(requestBody.storageUnit).toEqual('query_export');
+                });
             });
 
             test('does not show "Export Selected" options in context menu', async ({ whodb, page }) => {
@@ -340,23 +355,27 @@ test.describe('Chat AI Integration', () => {
             test('moves query to scratchpad', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                await whodb.mockChatResponse([{
-                    type: 'sql:get',
-                    text: `SELECT *
-                           FROM ${schemaPrefix}users`,
-                    result: {
-                        Columns: [{ Name: 'id', Type: 'integer', __typename: 'Column' }],
-                        Rows: [['1']],
-                        __typename: 'RowsResult'
-                    }
-                }]);
-                await whodb.sendChatMessage('Show users');
-                await whodb.waitForChatResponse();
+                await test.step('generate query results', async () => {
+                    await whodb.mockChatResponse([{
+                        type: 'sql:get',
+                        text: `SELECT *
+                               FROM ${schemaPrefix}users`,
+                        result: {
+                            Columns: [{ Name: 'id', Type: 'integer', __typename: 'Column' }],
+                            Rows: [['1']],
+                            __typename: 'RowsResult'
+                        }
+                    }]);
+                    await whodb.sendChatMessage('Show users');
+                    await whodb.waitForChatResponse();
+                });
 
-                await whodb.openMoveToScratchpad();
-                await whodb.confirmMoveToScratchpad({ pageOption: 'new', newPageName: 'Chat Queries' });
+                await test.step('move to scratchpad and verify navigation', async () => {
+                    await whodb.openMoveToScratchpad();
+                    await whodb.confirmMoveToScratchpad({ pageOption: 'new', newPageName: 'Chat Queries' });
 
-                await expect(page).toHaveURL(/\/scratchpad/, { timeout: 10000 });
+                    await expect(page).toHaveURL(/\/scratchpad/, { timeout: 10000 });
+                });
             });
         });
 
@@ -407,110 +426,98 @@ test.describe('Chat AI Integration', () => {
             test('shows token input dialog for external cloud providers', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                // Click provider dropdown
-                await page.locator('[data-testid="ai-provider-select"]').click();
+                await test.step('open add provider dialog', async () => {
+                    await page.locator('[data-testid="ai-provider-select"]').click();
+                    await page.getByText('Add a provider').click();
+                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
+                });
 
-                // Click "Add a provider" option
-                await page.getByText('Add a provider').click();
+                await test.step('verify available external providers', async () => {
+                    await expect(page.locator('[data-testid="external-model-type-select"]')).toBeVisible();
+                    await page.locator('[data-testid="external-model-type-select"]').click();
 
-                // Wait for the external model sheet to open
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
+                    await expect(page.locator('[role="option"]')).toContainText(['OpenAI']);
+                    await expect(page.locator('[role="option"]')).toContainText(['Anthropic']);
 
-                // Verify model type dropdown exists
-                await expect(page.locator('[data-testid="external-model-type-select"]')).toBeVisible();
-
-                // Click to open external model type dropdown
-                await page.locator('[data-testid="external-model-type-select"]').click();
-
-                // Verify external providers are available (OpenAI, Anthropic)
-                await expect(page.locator('[role="option"]')).toContainText(['OpenAI']);
-                await expect(page.locator('[role="option"]')).toContainText(['Anthropic']);
-
-                // Close the dialog
-                await page.locator('[data-testid="external-model-cancel"]').click();
+                    await page.locator('[data-testid="external-model-cancel"]').click();
+                });
             });
 
             test('persists provider selection in session', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                // Verify the initial provider is Ollama (from our mock)
-                await expect(page.locator('[data-testid="ai-provider-select"]')).toContainText('Ollama');
+                await test.step('verify initial provider and model selection', async () => {
+                    await expect(page.locator('[data-testid="ai-provider-select"]')).toContainText('Ollama');
+                    await expect(page.locator('[data-testid="ai-model-select"]')).toContainText('llama3.1');
+                });
 
-                // Verify the model is also persisted
-                await expect(page.locator('[data-testid="ai-model-select"]')).toContainText('llama3.1');
+                await test.step('navigate away and back', async () => {
+                    await page.goto('http://localhost:3000/storage-unit');
+                    await page.waitForTimeout(500);
+                    await page.goto('http://localhost:3000/chat');
+                    await page.locator('[data-testid="ai-provider"]').waitFor({ timeout: 10000 });
+                });
 
-                // Navigate away and back
-                await page.goto('http://localhost:3000/storage-unit');
-                await page.waitForTimeout(500);
-                await page.goto('http://localhost:3000/chat');
-
-                // Wait for chat to load
-                await page.locator('[data-testid="ai-provider"]').waitFor({ timeout: 10000 });
-
-                // Verify provider is still selected (persistence)
-                await expect(page.locator('[data-testid="ai-provider-select"]')).toContainText('Ollama', { timeout: 5000 });
+                await test.step('verify provider persisted after navigation', async () => {
+                    await expect(page.locator('[data-testid="ai-provider-select"]')).toContainText('Ollama', { timeout: 5000 });
+                });
             });
 
             test('uses correct model lists for different providers', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                // For Ollama (internal provider)
-                await expect(page.locator('[data-testid="ai-provider-select"]')).toContainText('Ollama');
-                await page.locator('[data-testid="ai-model-select"]').click();
-                await page.locator('[role="option"]').first().waitFor({ state: 'visible', timeout: 5000 });
-                await expect(page.locator('[role="option"]')).toContainText(['llama3.1']);
-                await page.keyboard.press('Escape');
+                await test.step('verify internal provider model list', async () => {
+                    await expect(page.locator('[data-testid="ai-provider-select"]')).toContainText('Ollama');
+                    await page.locator('[data-testid="ai-model-select"]').click();
+                    await page.locator('[role="option"]').first().waitFor({ state: 'visible', timeout: 5000 });
+                    await expect(page.locator('[role="option"]')).toContainText(['llama3.1']);
+                    await page.keyboard.press('Escape');
+                });
 
-                // Open Add Provider dialog to verify external providers have different structure
-                await page.locator('[data-testid="ai-provider-select"]').click();
-                await page.getByText('Add a provider').click();
+                await test.step('verify external provider requires token', async () => {
+                    await page.locator('[data-testid="ai-provider-select"]').click();
+                    await page.getByText('Add a provider').click();
 
-                // Verify external model setup requires token input
-                await expect(page.locator('label').filter({ hasText: /token/i })).toBeVisible();
-                await expect(page.locator('input[type="password"]')).toBeVisible();
+                    await expect(page.locator('label').filter({ hasText: /token/i })).toBeVisible();
+                    await expect(page.locator('input[type="password"]')).toBeVisible();
+                });
 
-                // Select an external provider type
-                await page.locator('[data-testid="external-model-type-select"]').click();
-                await page.locator('[role="option"]').filter({ hasText: 'OpenAI' }).click();
+                await test.step('select external provider and verify token field', async () => {
+                    await page.locator('[data-testid="external-model-type-select"]').click();
+                    await page.locator('[role="option"]').filter({ hasText: 'OpenAI' }).click();
 
-                // Verify token input is required for external providers
-                await expect(page.locator('input[type="password"]')).toBeVisible();
-                await expect(page.locator('input[type="password"]')).toHaveValue('');
+                    await expect(page.locator('input[type="password"]')).toBeVisible();
+                    await expect(page.locator('input[type="password"]')).toHaveValue('');
 
-                // Cancel dialog
-                await page.locator('[data-testid="external-model-cancel"]').click();
+                    await page.locator('[data-testid="external-model-cancel"]').click();
+                });
             });
 
             test('requires token for external providers before model selection', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                // Open Add Provider dialog
-                await page.locator('[data-testid="ai-provider-select"]').click();
-                await page.waitForTimeout(500); // Wait for dropdown to fully open
-                await page.getByText('Add a provider').click();
+                await test.step('open external provider dialog', async () => {
+                    await page.locator('[data-testid="ai-provider-select"]').click();
+                    await page.waitForTimeout(500); // Wait for dropdown to fully open
+                    await page.getByText('Add a provider').click();
+                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
+                });
 
-                // Wait for the external model sheet to open
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible({ timeout: 5000 });
+                await test.step('select provider and verify token input', async () => {
+                    await page.locator('[data-testid="external-model-type-select"]').click();
+                    await page.locator('[role="option"]').filter({ hasText: 'Anthropic' }).click();
 
-                // Select external provider type
-                await page.locator('[data-testid="external-model-type-select"]').click();
-                await page.locator('[role="option"]').filter({ hasText: 'Anthropic' }).click();
+                    await expect(page.locator('label').filter({ hasText: /token/i })).toBeVisible();
+                    await expect(page.locator('input[type="password"]')).toBeVisible();
+                    await expect(page.locator('[data-testid="external-model-submit"]')).toBeVisible();
+                });
 
-                // Verify token input is shown
-                await expect(page.locator('label').filter({ hasText: /token/i })).toBeVisible();
-                await expect(page.locator('input[type="password"]')).toBeVisible();
+                await test.step('submit without token and verify validation', async () => {
+                    await page.locator('[data-testid="external-model-submit"]').click();
+                    await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible();
 
-                // Verify submit button exists but would require token to proceed
-                await expect(page.locator('[data-testid="external-model-submit"]')).toBeVisible();
-
-                // Try to submit without token (should stay on dialog)
-                await page.locator('[data-testid="external-model-submit"]').click();
-
-                // Dialog should still be visible (validation prevents submission)
-                await expect(page.locator('h2, .text-lg').filter({ hasText: /add.*external.*(model|provider)/i })).toBeVisible();
-
-                // Cancel dialog
-                await page.locator('[data-testid="external-model-cancel"]').click();
+                    await page.locator('[data-testid="external-model-cancel"]').click();
+                });
             });
 
             test('allows deleting custom providers', async ({ whodb, page }) => {
@@ -540,21 +547,25 @@ test.describe('Chat AI Integration', () => {
             test('navigates chat history with arrow keys', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                await whodb.mockChatResponse([{ type: 'text', text: 'Response 1' }]);
-                await whodb.sendChatMessage('First message');
-                await whodb.waitForChatResponse();
+                await test.step('send two messages', async () => {
+                    await whodb.mockChatResponse([{ type: 'text', text: 'Response 1' }]);
+                    await whodb.sendChatMessage('First message');
+                    await whodb.waitForChatResponse();
 
-                await whodb.mockChatResponse([{ type: 'text', text: 'Response 2' }]);
-                await whodb.sendChatMessage('Second message');
-                await whodb.waitForChatResponse();
+                    await whodb.mockChatResponse([{ type: 'text', text: 'Response 2' }]);
+                    await whodb.sendChatMessage('Second message');
+                    await whodb.waitForChatResponse();
+                });
 
-                await whodb.navigateChatHistory('up');
-                const val1 = await whodb.getChatInputValue();
-                expect(val1).toEqual('Second message');
+                await test.step('navigate history and verify order', async () => {
+                    await whodb.navigateChatHistory('up');
+                    const val1 = await whodb.getChatInputValue();
+                    expect(val1).toEqual('Second message');
 
-                await whodb.navigateChatHistory('up');
-                const val2 = await whodb.getChatInputValue();
-                expect(val2).toEqual('First message');
+                    await whodb.navigateChatHistory('up');
+                    const val2 = await whodb.getChatInputValue();
+                    expect(val2).toEqual('First message');
+                });
             });
 
             test('clears chat history', async ({ whodb, page }) => {
@@ -566,6 +577,51 @@ test.describe('Chat AI Integration', () => {
 
                 await whodb.clearChat();
                 await whodb.verifyChatEmpty();
+            });
+        });
+        test.describe('Chat Title Generation', () => {
+            test('generates title after first message', async ({ whodb, page }) => {
+                await whodb.gotoChat();
+
+                // Mock the GenerateChatTitle mutation response via route interception
+                await page.route('**/api/query', async (route) => {
+                    let postData;
+                    try {
+                        postData = route.request().postDataJSON();
+                    } catch {
+                        return route.fallback();
+                    }
+
+                    if (postData?.operationName === 'GenerateChatTitle') {
+                        return route.fulfill({
+                            contentType: 'application/json',
+                            body: JSON.stringify({
+                                data: {
+                                    GenerateChatTitle: {
+                                        Title: 'Test Query Summary',
+                                        __typename: 'GenerateChatTitleResponse',
+                                    },
+                                },
+                            }),
+                        });
+                    }
+
+                    await route.fallback();
+                });
+
+                // Send first message to trigger title generation
+                await whodb.mockChatResponse([{
+                    type: 'text',
+                    text: 'Here are your users.',
+                }]);
+                await whodb.sendChatMessage('Show me all users');
+                await whodb.waitForChatResponse();
+
+                // The title mutation fires asynchronously after the first message.
+                // The sidebar session name should update with the generated title.
+                // The chat-session-name element uses a typewriter effect, so wait for it.
+                const sessionName = page.locator('[data-testid^="chat-session-name-"]').first();
+                await expect(sessionName).toContainText('Test Query Summary', { timeout: 10000 });
             });
         });
     }, { features: ['chat'] });

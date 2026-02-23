@@ -21,6 +21,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,6 +35,10 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/go-chi/chi/v5"
 )
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
 func TestRESTHandlersAddRowAndGetRows(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
@@ -95,21 +101,25 @@ func TestRESTHandlersHandleErrors(t *testing.T) {
 }
 
 func TestRESTHandlersAIModelsAndChat(t *testing.T) {
-	// Spin up a fake Ollama server so the test doesn't depend on a real network
-	fakeOllama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"models":[]}`))
-	}))
-	defer fakeOllama.Close()
+	// Avoid httptest.NewServer() to keep this test hermetic in environments where
+	// binding a local TCP port is not permitted.
+	previousTransport := http.DefaultTransport
+	t.Cleanup(func() { http.DefaultTransport = previousTransport })
+	http.DefaultTransport = roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		if r.Method == http.MethodGet && r.URL.Scheme == "http" && r.URL.Host == "ollama.test:11434" && r.URL.Path == "/api/tags" {
+			body := io.NopCloser(strings.NewReader(`{"models":[]}`))
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+				Body:       body,
+				Request:    r,
+			}, nil
+		}
+		return nil, fmt.Errorf("unexpected http request: %s %s", r.Method, r.URL.String())
+	})
 
-	// Point Ollama host/port at the fake server
-	// Parse host:port from fakeOllama.URL (format: http://127.0.0.1:PORT)
-	// GetOllamaEndpoint constructs http://host:port/api, and Ollama appends /tags for model listing.
-	// The fake server handles all paths, so we just need host and port.
-	fakeURL := fakeOllama.URL[len("http://"):]
-	colonIdx := strings.LastIndex(fakeURL, ":")
-	t.Setenv("WHODB_OLLAMA_HOST", fakeURL[:colonIdx])
-	t.Setenv("WHODB_OLLAMA_PORT", fakeURL[colonIdx+1:])
+	t.Setenv("WHODB_OLLAMA_HOST", "ollama.test")
+	t.Setenv("WHODB_OLLAMA_PORT", "11434")
 
 	originalCustom := env.CustomModels
 	originalCompatKey := env.OpenAICompatibleAPIKey

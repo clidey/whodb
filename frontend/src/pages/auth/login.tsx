@@ -133,10 +133,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { data: settingsData } = useSettingsConfigQuery();
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
     const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
+    const maxPageSize = settingsData?.SettingsConfig?.MaxPageSize ?? 10000;
 
     useEffect(() => {
         dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
-    }, [cloudProvidersEnabled, dispatch]);
+        dispatch(SettingsActions.setMaxPageSize(maxPageSize));
+    }, [cloudProvidersEnabled, maxPageSize, dispatch]);
 
     const [searchParams, setSearchParams] = useSearchParams();
 

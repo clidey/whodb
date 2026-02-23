@@ -70,40 +70,39 @@ test.describe('Data Import', () => {
             test('previews and imports CSV data', async ({ whodb, page }) => {
                 await whodb.openImport(csvTable);
 
-                // Upload CSV
-                await whodb.uploadDataFile(samplePath(db, db.import.csvFile || 'users.csv'));
+                await test.step('upload CSV', async () => {
+                    await whodb.uploadDataFile(samplePath(db, db.import.csvFile || 'users.csv'));
+                    await whodb.waitForPreview();
+                });
 
-                // Wait for preview
-                await whodb.waitForPreview();
+                await test.step('verify preview', async () => {
+                    const { columns } = await whodb.getPreviewData();
+                    for (const col of expectedColumns) {
+                        expect(columns).toContain(col);
+                    }
+                });
 
-                // Verify preview columns match expected
-                const { columns } = await whodb.getPreviewData();
-                for (const col of expectedColumns) {
-                    expect(columns).toContain(col);
-                }
+                await test.step('configure auto-generated', async () => {
+                    const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
+                    if (await autoCheckbox.count() > 0) {
+                        await autoCheckbox.scrollIntoViewIfNeeded();
+                        await expect(autoCheckbox).toBeVisible();
+                        await autoCheckbox.click();
+                    }
+                });
 
-                // Handle auto-generated column toggle (users.csv has id column)
-                const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
-                if (await autoCheckbox.count() > 0) {
-                    await autoCheckbox.scrollIntoViewIfNeeded();
-                    await expect(autoCheckbox).toBeVisible();
-                    await autoCheckbox.click();
-                }
+                await test.step('submit import', async () => {
+                    await whodb.confirmImportData();
+                    await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
+                });
 
-                // Submit import
-                await whodb.confirmImportData();
-
-                // Verify success — dialog closes on successful import
-                await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
-
-                // ClickHouse eventual consistency
-                if (db.mutationDelay) {
-                    await page.waitForTimeout(db.mutationDelay);
-                }
-
-                // Verify imported data appears in table
-                const verifyValue = db.import.csvVerifyValue || 'csv_alex';
-                await whodb.waitForRowContaining(verifyValue, { timeout: 15000 });
+                await test.step('verify imported data', async () => {
+                    if (db.mutationDelay) {
+                        await page.waitForTimeout(db.mutationDelay);
+                    }
+                    const verifyValue = db.import.csvVerifyValue || 'csv_alex';
+                    await whodb.waitForRowContaining(verifyValue, { timeout: 15000 });
+                });
             });
 
             test('shows validation error for wrong columns', async ({ whodb, page }) => {
@@ -137,28 +136,28 @@ test.describe('Data Import', () => {
             test('previews and imports Excel data', async ({ whodb, page }) => {
                 await whodb.openImport(excelTable);
 
-                // Upload Excel file
-                await whodb.uploadDataFile(samplePath(db, db.import.excelFile || 'products.xlsx'));
+                await test.step('upload Excel', async () => {
+                    await whodb.uploadDataFile(samplePath(db, db.import.excelFile || 'products.xlsx'));
+                    await whodb.waitForPreview();
+                });
 
-                // Wait for preview
-                await whodb.waitForPreview();
+                await test.step('verify preview', async () => {
+                    await expect(page.locator('[data-testid="import-preview-table"]')).toBeVisible({ timeout: 10000 });
+                });
 
-                // Verify preview table is visible
-                await expect(page.locator('[data-testid="import-preview-table"]')).toBeVisible({ timeout: 10000 });
+                await test.step('configure auto-generated', async () => {
+                    const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
+                    if (await autoCheckbox.count() > 0) {
+                        await autoCheckbox.scrollIntoViewIfNeeded();
+                        await expect(autoCheckbox).toBeVisible();
+                        await autoCheckbox.click();
+                    }
+                });
 
-                // Handle auto-generated column toggle if present
-                const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
-                if (await autoCheckbox.count() > 0) {
-                    await autoCheckbox.scrollIntoViewIfNeeded();
-                    await expect(autoCheckbox).toBeVisible();
-                    await autoCheckbox.click();
-                }
-
-                // Submit import
-                await whodb.confirmImportData();
-
-                // Verify success — dialog closes on successful import
-                await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
+                await test.step('submit import', async () => {
+                    await whodb.confirmImportData();
+                    await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
+                });
             });
         });
     }, { features: ['import'] });
@@ -191,25 +190,25 @@ test.describe('Data Import', () => {
 
                 test('handles multi-statement SQL file', async ({ whodb, page }) => {
                     await whodb.openImport(db.import.csvTable);
-
-                    // Switch to SQL mode
                     await whodb.selectImportMode('sql');
 
-                    // Upload multi-statement SQL
-                    await whodb.uploadSqlFile(samplePath(db, 'import.sql'));
+                    await test.step('upload SQL file', async () => {
+                        await whodb.uploadSqlFile(samplePath(db, 'import.sql'));
+                    });
 
-                    // Confirm and submit
-                    await whodb.confirmSqlImport();
+                    await test.step('submit import', async () => {
+                        await whodb.confirmSqlImport();
+                    });
 
-                    if (db.import.supportsMultiStatement) {
-                        // Should succeed — dialog closes on success
-                        await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
-                    } else {
-                        // ClickHouse: multi-statement rejected — dialog stays open
-                        await page.waitForTimeout(3000);
-                        await expect(page.locator('[data-testid="import-dialog"]')).toBeVisible();
-                        await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled();
-                    }
+                    await test.step('verify result', async () => {
+                        if (db.import.supportsMultiStatement) {
+                            await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
+                        } else {
+                            await page.waitForTimeout(3000);
+                            await expect(page.locator('[data-testid="import-dialog"]')).toBeVisible();
+                            await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled();
+                        }
+                    });
                 });
             }
 
@@ -317,50 +316,54 @@ test.describe('Data Import', () => {
 
         test.describe('Data Integrity', () => {
             test('shows error when importing duplicate primary keys', async ({ whodb, page }) => {
-                // Import same CSV data that was already imported in CSV test above
-                await whodb.openImport(csvTable);
-                await whodb.uploadDataFile(samplePath(db, 'users.csv'));
-                await whodb.waitForPreview();
+                await test.step('upload and preview', async () => {
+                    await whodb.openImport(csvTable);
+                    await whodb.uploadDataFile(samplePath(db, 'users.csv'));
+                    await whodb.waitForPreview();
+                });
 
-                // Must check the auto-generated checkbox — users.csv includes id column
-                const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
-                await autoCheckbox.scrollIntoViewIfNeeded();
-                await expect(autoCheckbox).toBeVisible({ timeout: 5000 });
-                await autoCheckbox.click();
-                // Wait for React state to propagate and button to enable
-                await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled({ timeout: 5000 });
+                await test.step('configure auto-generated', async () => {
+                    const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
+                    await autoCheckbox.scrollIntoViewIfNeeded();
+                    await expect(autoCheckbox).toBeVisible({ timeout: 5000 });
+                    await autoCheckbox.click();
+                    await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled({ timeout: 5000 });
+                });
 
-                await whodb.confirmImportData();
+                await test.step('attempt import', async () => {
+                    await whodb.confirmImportData();
+                });
 
-                // The import should fail due to duplicate primary keys.
-                // On failure: dialog stays open and button returns to "Import" (not loading).
-                await page.waitForTimeout(3000);
-                // Dialog should still be open (success would close it)
-                await expect(page.locator('[data-testid="import-dialog"]')).toBeVisible();
-                // Button should not be in loading state
-                await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled();
+                await test.step('verify failure', async () => {
+                    await page.waitForTimeout(3000);
+                    await expect(page.locator('[data-testid="import-dialog"]')).toBeVisible();
+                    await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled();
+                });
             });
 
             test('imports with Overwrite mode successfully', async ({ whodb, page }) => {
-                await whodb.openImport(csvTable);
-                await whodb.uploadDataFile(samplePath(db, 'users.csv'));
-                await whodb.waitForPreview();
+                await test.step('upload and preview', async () => {
+                    await whodb.openImport(csvTable);
+                    await whodb.uploadDataFile(samplePath(db, 'users.csv'));
+                    await whodb.waitForPreview();
+                });
 
-                // Must check the auto-generated checkbox
-                const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
-                await autoCheckbox.scrollIntoViewIfNeeded();
-                await expect(autoCheckbox).toBeVisible({ timeout: 5000 });
-                await autoCheckbox.click();
-                // Wait for React state to propagate and button to enable
-                await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled({ timeout: 5000 });
+                await test.step('configure auto-generated', async () => {
+                    const autoCheckbox = page.locator('[data-testid="import-auto-generated-checkbox"]');
+                    await autoCheckbox.scrollIntoViewIfNeeded();
+                    await expect(autoCheckbox).toBeVisible({ timeout: 5000 });
+                    await autoCheckbox.click();
+                    await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled({ timeout: 5000 });
+                });
 
-                // Switch to Overwrite mode
-                await whodb.selectImportDataMode('OVERWRITE');
+                await test.step('select overwrite mode', async () => {
+                    await whodb.selectImportDataMode('OVERWRITE');
+                });
 
-                await whodb.confirmImportData();
-
-                // Should succeed with overwrite — dialog closes on success
-                await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
+                await test.step('submit import', async () => {
+                    await whodb.confirmImportData();
+                    await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
+                });
             });
         });
     }, { features: ['import'] });

@@ -682,6 +682,41 @@ test.describe('Keyboard Shortcuts', () => {
                 await expect(page).toHaveURL(/\/chat/);
             });
 
+            test('Command palette navigates to Scratchpad when selected', async ({ whodb, page }) => {
+                await whodb.data(tableName);
+
+                // Open command palette
+                await whodb.typeCmdShortcut('k');
+
+                // Click on Scratchpad navigation
+                await page.locator('[data-testid="command-nav-scratchpad"]').click();
+
+                // Should navigate to scratchpad
+                await expect(page).toHaveURL(/\/scratchpad/);
+            });
+
+            test('Command palette executes refresh action', async ({ whodb, page }) => {
+                await whodb.data(tableName);
+
+                // Get initial row count to verify table is loaded
+                const initialCount = await page.locator('table tbody tr').count();
+                expect(initialCount).toBeGreaterThanOrEqual(1);
+
+                // Open command palette
+                await whodb.typeCmdShortcut('k');
+
+                // Click refresh action
+                await page.locator('[data-testid="command-action-refresh"]').click();
+
+                // Palette should close after executing action
+                await expect(page.locator('[data-testid="command-palette"]')).not.toBeAttached();
+
+                // Table should still have rows after refresh
+                await page.waitForTimeout(2000);
+                const rowCount = await page.locator('table tbody tr').count();
+                expect(rowCount).toBeGreaterThanOrEqual(1);
+            });
+
             test('Command palette search filters results', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 

@@ -19,6 +19,7 @@ package env
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -91,6 +92,10 @@ var IsAWSProviderEnabled = os.Getenv("WHODB_ENABLE_AWS_PROVIDER") == "true"
 
 // DisableCredentialForm controls whether the credential form is disabled.
 var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
+
+// MaxPageSize is the maximum number of rows that can be requested in a single
+// page via the Row resolver. Configurable via WHODB_MAX_PAGE_SIZE (default 10000).
+var MaxPageSize = getMaxPageSize()
 
 type ChatProvider struct {
 	Type       string
@@ -237,6 +242,18 @@ func GetOpenAICompatibleEndpoint() string {
 		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
+}
+
+func getMaxPageSize() int {
+	val := os.Getenv("WHODB_MAX_PAGE_SIZE")
+	if val == "" {
+		return 10000
+	}
+	n, err := strconv.Atoi(val)
+	if err != nil || n <= 0 {
+		return 10000
+	}
+	return n
 }
 
 func getLogLevel() string {

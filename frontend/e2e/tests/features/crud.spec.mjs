@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
+import { test, expect, forEachDatabase, skipIfNoFeature } from '../../support/test-fixture.mjs';
 import { getTableConfig, hasFeature } from '../../support/database-config.mjs';
 import { createUpdatedDocument, parseDocument } from '../../support/categories/document.mjs';
 import { getUniqueTestId, waitForMutation } from '../../support/helpers/test-utils.mjs';
@@ -213,8 +213,8 @@ test.describe('CRUD Operations', () => {
         });
 
         test.describe('Edit Document', () => {
-            // Skip full edit test for Elasticsearch due to truncated JSON display
-            if (db.type === 'ElasticSearch') {
+            // Skip full edit test for databases that don't support document editing
+            if (skipIfNoFeature(db, 'documentEdit')) {
                 test('cancels edit without saving', async ({ whodb, page }) => {
                     await whodb.data(tableName);
 

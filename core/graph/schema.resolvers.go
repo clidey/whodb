@@ -1151,6 +1151,16 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 
 // Row is the resolver for the Row field.
 func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
+	if pageSize <= 0 {
+		return nil, fmt.Errorf("pageSize must be greater than 0")
+	}
+	if pageSize > env.MaxPageSize {
+		return nil, fmt.Errorf("pageSize must not exceed %d", env.MaxPageSize)
+	}
+	if pageOffset < 0 {
+		return nil, fmt.Errorf("pageOffset must not be negative")
+	}
+
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
 
@@ -1510,6 +1520,7 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 		MetricsEnabled:        &currentSettings.MetricsEnabled,
 		CloudProvidersEnabled: env.IsAWSProviderEnabled,
 		DisableCredentialForm: env.DisableCredentialForm,
+		MaxPageSize:           env.MaxPageSize,
 	}, nil
 }
 

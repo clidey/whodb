@@ -623,6 +623,7 @@ export type SettingsConfig = {
   __typename?: 'SettingsConfig';
   CloudProvidersEnabled: Scalars['Boolean']['output'];
   DisableCredentialForm: Scalars['Boolean']['output'];
+  MaxPageSize: Scalars['Int']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -947,7 +948,7 @@ export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshClo
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean } };
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean, MaxPageSize: number } };
 
 export type UpdateSettingsMutationVariables = Exact<{
   newSettings: SettingsConfigInput;
@@ -2624,6 +2625,7 @@ export const SettingsConfigDocument = gql`
     MetricsEnabled
     CloudProvidersEnabled
     DisableCredentialForm
+    MaxPageSize
   }
 }
     `;

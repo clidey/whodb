@@ -48,6 +48,7 @@ export const SettingsPage: FC = () => {
     const spacing = useAppSelector(state => state.settings.spacing);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+    const maxPageSize = useAppSelector(state => state.settings.maxPageSize);
     const language = useAppSelector(state => state.settings.language);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
@@ -58,7 +59,8 @@ export const SettingsPage: FC = () => {
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
-    }), [dispatch]);
+        maxPageSize,
+    }), [dispatch, maxPageSize]);
 
     const {
         pageSizeString,

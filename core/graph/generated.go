@@ -278,6 +278,7 @@ type ComplexityRoot struct {
 	SettingsConfig struct {
 		CloudProvidersEnabled func(childComplexity int) int
 		DisableCredentialForm func(childComplexity int) int
+		MaxPageSize           func(childComplexity int) int
 		MetricsEnabled        func(childComplexity int) int
 	}
 
@@ -1469,6 +1470,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SettingsConfig.DisableCredentialForm(childComplexity), true
+	case "SettingsConfig.MaxPageSize":
+		if e.complexity.SettingsConfig.MaxPageSize == nil {
+			break
+		}
+
+		return e.complexity.SettingsConfig.MaxPageSize(childComplexity), true
 	case "SettingsConfig.MetricsEnabled":
 		if e.complexity.SettingsConfig.MetricsEnabled == nil {
 			break
@@ -6753,6 +6760,8 @@ func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context,
 				return ec.fieldContext_SettingsConfig_CloudProvidersEnabled(ctx, field)
 			case "DisableCredentialForm":
 				return ec.fieldContext_SettingsConfig_DisableCredentialForm(ctx, field)
+			case "MaxPageSize":
+				return ec.fieldContext_SettingsConfig_MaxPageSize(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SettingsConfig", field.Name)
 		},
@@ -7719,6 +7728,35 @@ func (ec *executionContext) fieldContext_SettingsConfig_DisableCredentialForm(_ 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_MaxPageSize(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SettingsConfig_MaxPageSize,
+		func(ctx context.Context) (any, error) {
+			return obj.MaxPageSize, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_MaxPageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12477,6 +12515,11 @@ func (ec *executionContext) _SettingsConfig(ctx context.Context, sel ast.Selecti
 			}
 		case "DisableCredentialForm":
 			out.Values[i] = ec._SettingsConfig_DisableCredentialForm(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "MaxPageSize":
+			out.Values[i] = ec._SettingsConfig_MaxPageSize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

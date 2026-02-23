@@ -102,6 +102,8 @@ if (BUILD_EDITION === 'ee') {
 
 export const ExploreStorageUnit: FC = () => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+    const maxPageSize = useAppSelector(state => state.settings.maxPageSize);
+    const pageSizeOptions = useMemo(() => ({ maxPageSize }), [maxPageSize]);
     const {
         pageSize,
         pageSizeString,
@@ -110,7 +112,7 @@ export const ExploreStorageUnit: FC = () => {
         setCustomInput: setCustomPageSizeInput,
         handleSelectChange: handlePageSizeChange,
         handleCustomApply: handleCustomPageSizeApply,
-    } = usePageSize(defaultPageSize);
+    } = usePageSize(defaultPageSize, pageSizeOptions);
     const { t } = useTranslation('pages/explore-storage-unit');
     const { t: tTable } = useTranslation('components/table');
 

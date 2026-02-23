@@ -73,14 +73,6 @@ export const extrasMethods = {
 
     // ── Context Menu ──────────────────────────────────────────────────────
 
-    async dismissContextMenu() {
-        const contextMenus = await this.page.locator('[role="menu"]').filter({ visible: true }).count();
-        if (contextMenus > 0) {
-            await this.page.mouse.click(0, 0);
-            await this.page.waitForTimeout(100);
-        }
-    },
-
     async selectMockData() {
         await this.page.locator("table thead tr.cursor-context-menu").first().click({ button: "right", force: true });
         await this.page.waitForTimeout(200);

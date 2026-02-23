@@ -200,13 +200,6 @@ export const coreMethods = {
     },
 
     /**
-     * Set advanced options (no-op placeholder)
-     */
-    async setAdvanced(type, value) {
-        // No-op
-    },
-
-    /**
      * Select a database from sidebar dropdown
      * @param {string} value
      */

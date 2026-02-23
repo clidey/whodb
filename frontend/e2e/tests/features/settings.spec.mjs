@@ -350,6 +350,70 @@ test.describe('Settings', () => {
         });
     });
 
+    // Schema terminology tests - run for Postgres only
+    forEachDatabase('sql', (db) => {
+        if (db.type !== 'Postgres') {
+            return;
+        }
+
+        test.describe('Schema Terminology', () => {
+            test.beforeEach(async ({ whodb }) => {
+                await whodb.goto('settings');
+            });
+
+            test('can change terminology to schema', async ({ whodb, page }) => {
+                // Set to schema
+                await page.locator('#database-schema-terminology').click();
+                await page.locator('[data-value="schema"]').click();
+                await expect(page.locator('#database-schema-terminology')).toContainText('Schema');
+                await assertPersistedSetting(page, 'databaseSchemaTerminology', 'schema');
+
+                // Navigate to storage-unit and verify sidebar dropdown reflects the change
+                await whodb.goto('storage-unit');
+                await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 10000 });
+
+                const sidebarText = await page.locator('[data-testid="sidebar-database"]').textContent();
+                expect(sidebarText.toLowerCase()).toContain('schema');
+            });
+
+            test('can change terminology to database', async ({ whodb, page }) => {
+                // Set to database
+                await page.locator('#database-schema-terminology').click();
+                await page.locator('[data-value="database"]').click();
+                await expect(page.locator('#database-schema-terminology')).toContainText('Database');
+                await assertPersistedSetting(page, 'databaseSchemaTerminology', 'database');
+
+                // Navigate to storage-unit and verify sidebar dropdown reflects the change
+                await whodb.goto('storage-unit');
+                await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 10000 });
+
+                const sidebarText = await page.locator('[data-testid="sidebar-database"]').textContent();
+                expect(sidebarText.toLowerCase()).toContain('database');
+            });
+
+            test('terminology persists after navigation', async ({ whodb, page }) => {
+                // Set to schema
+                await page.locator('#database-schema-terminology').click();
+                await page.locator('[data-value="schema"]').click();
+                await assertPersistedSetting(page, 'databaseSchemaTerminology', 'schema');
+
+                // Navigate away
+                await whodb.goto('storage-unit');
+                await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 10000 });
+
+                // Come back to settings
+                await whodb.goto('settings');
+
+                // Verify the select still shows "schema"
+                await expect(page.locator('#database-schema-terminology')).toContainText('Schema');
+
+                // Reset to database for other tests
+                await page.locator('#database-schema-terminology').click();
+                await page.locator('[data-value="database"]').click();
+            });
+        });
+    });
+
     // Theme toggle tests - run for any database since it's global
     forEachDatabase('sql', (db) => {
         // Only run for first SQL database to avoid redundant tests

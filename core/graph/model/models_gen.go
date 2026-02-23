@@ -320,6 +320,7 @@ type SettingsConfig struct {
 	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
 	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
 	DisableCredentialForm bool  `json:"DisableCredentialForm"`
+	MaxPageSize           int   `json:"MaxPageSize"`
 }
 
 type SettingsConfigInput struct {

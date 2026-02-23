@@ -64,7 +64,9 @@ func TestGenerateMockDataSucceedsForNoSQLPlugin(t *testing.T) {
 		return []engine.Column{{Name: "name", Type: "text"}}, nil
 	}
 	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
-		return map[string]map[string]any{}, nil
+		return map[string]map[string]any{
+			"name": {"nullable": false},
+		}, nil
 	}
 
 	bulkCalled := false
