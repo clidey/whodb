@@ -56,8 +56,15 @@ test.describe('CRUD Operations', () => {
                 await whodb.data(tableName);
                 await whodb.sortBy(0);
 
-                // Edit row
+                // Edit row with network verification
+                const updateResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
+                );
                 await whodb.updateRow(testValues.rowIndex, colIndex, testValues.modified, false);
+                const updateResponse = await updateResponsePromise;
+                const updateResult = await updateResponse.json();
+                expect(updateResult.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
 
                 // Wait for async mutations (e.g., ClickHouse)
                 if (mutationDelay > 0) {
@@ -117,7 +124,14 @@ test.describe('CRUD Operations', () => {
                     newRowData.email = `${uniqueId}@example.com`;
                 }
 
+                const addResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'AddRow'
+                );
                 await whodb.addRow(newRowData);
+                const addResponse = await addResponsePromise;
+                const addResult = await addResponse.json();
+                expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
 
                 const identifierValue = newRowData[testTable.identifierField];
 
@@ -125,7 +139,14 @@ test.describe('CRUD Operations', () => {
                 const rowIndex = await whodb.waitForRowValue(colIndex + 1, identifierValue);
 
                 // Clean up - delete the added row
+                const deleteResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
+                );
                 await whodb.deleteRow(rowIndex);
+                const deleteResponse = await deleteResponsePromise;
+                const deleteResult = await deleteResponse.json();
+                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
             });
         });
 
@@ -149,7 +170,14 @@ test.describe('CRUD Operations', () => {
                     newRowData.email = `${uniqueId}@example.com`;
                 }
 
+                const addResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'AddRow'
+                );
                 await whodb.addRow(newRowData);
+                const addResponse = await addResponsePromise;
+                const addResult = await addResponse.json();
+                expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
 
                 const identifierValue = newRowData[testTable.identifierField];
 
@@ -159,7 +187,14 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
+                const deleteResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
+                );
                 await whodb.deleteRow(rowIndex);
+                const deleteResponse = await deleteResponsePromise;
+                const deleteResult = await deleteResponse.json();
+                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
 
                 // Verify row count decreased
                 const { rows: newRows } = await whodb.getTableData();
@@ -195,13 +230,27 @@ test.describe('CRUD Operations', () => {
 
                 await whodb.addRow(newDoc, true);
 
+                const addResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'AddRow'
+                );
                 await whodb.submitTable();
+                const addResponse = await addResponsePromise;
+                const addResult = await addResponse.json();
+                expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
 
                 // Wait for row to appear using retry-able assertion
                 const rowIndex = await whodb.waitForRowContaining(uniqueId);
 
                 // Clean up
+                const deleteResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
+                );
                 await whodb.deleteRow(rowIndex);
+                const deleteResponse = await deleteResponsePromise;
+                const deleteResult = await deleteResponse.json();
+                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
             });
         });
 
@@ -231,59 +280,74 @@ test.describe('CRUD Operations', () => {
             }
 
             test('edits a document and saves changes', async ({ whodb, page }) => {
-                await whodb.data(tableName);
-                await whodb.sortBy(0);
+                await test.step('navigate to table', async () => {
+                    await whodb.data(tableName);
+                    await whodb.sortBy(0);
+                });
 
-                let { rows } = await whodb.getTableData();
-                const doc = parseDocument(rows[testValues.rowIndex]);
-                const currentValue = doc[testTable.identifierField];
+                await test.step('check and revert leftover data', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    const currentValue = doc[testTable.identifierField];
 
-                // If data was left from previous failed test, revert first
-                if (currentValue === testValues.modified) {
-                    const revertDoc = createUpdatedDocument(rows[testValues.rowIndex], {
-                        [testTable.identifierField]: testValues.original
+                    if (currentValue === testValues.modified) {
+                        const revertDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                            [testTable.identifierField]: testValues.original
+                        });
+                        await whodb.updateRow(testValues.rowIndex, 1, revertDoc, false);
+                        if (refreshDelay > 0) {
+                            await page.waitForTimeout(refreshDelay);
+                            await whodb.data(tableName);
+                            await whodb.sortBy(0);
+                        }
+                    }
+                });
+
+                await test.step('perform edit with network verification', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: testValues.modified
                     });
-                    await whodb.updateRow(testValues.rowIndex, 1, revertDoc, false);
+
+                    const responsePromise = page.waitForResponse(resp =>
+                        resp.url().includes('/api/query') &&
+                        resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
+                    );
+                    await whodb.updateRow(testValues.rowIndex, 1, updatedDoc, false);
+                    const response = await responsePromise;
+                    const result = await response.json();
+                    expect(result.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
+
                     if (refreshDelay > 0) {
                         await page.waitForTimeout(refreshDelay);
                         await whodb.data(tableName);
                         await whodb.sortBy(0);
                     }
-                }
-
-                // Now perform the actual edit test
-                ({ rows } = await whodb.getTableData());
-                const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
-                    [testTable.identifierField]: testValues.modified
                 });
 
-                await whodb.updateRow(testValues.rowIndex, 1, updatedDoc, false);
-
-                if (refreshDelay > 0) {
-                    await page.waitForTimeout(refreshDelay);
-                    await whodb.data(tableName);
-                    await whodb.sortBy(0);
-                }
-
-                ({ rows } = await whodb.getTableData());
-                const editedDoc = parseDocument(rows[testValues.rowIndex]);
-                expect(editedDoc[testTable.identifierField]).toEqual(testValues.modified);
-
-                // Revert
-                const revertedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
-                    [testTable.identifierField]: testValues.original
+                await test.step('verify edit', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const editedDoc = parseDocument(rows[testValues.rowIndex]);
+                    expect(editedDoc[testTable.identifierField]).toEqual(testValues.modified);
                 });
-                await whodb.updateRow(testValues.rowIndex, 1, revertedDoc, false);
 
-                if (refreshDelay > 0) {
-                    await page.waitForTimeout(refreshDelay);
-                    await whodb.data(tableName);
-                    await whodb.sortBy(0);
-                }
+                await test.step('revert to original', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const revertedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: testValues.original
+                    });
+                    await whodb.updateRow(testValues.rowIndex, 1, revertedDoc, false);
 
-                ({ rows } = await whodb.getTableData());
-                const revertedParsedDoc = parseDocument(rows[testValues.rowIndex]);
-                expect(revertedParsedDoc[testTable.identifierField]).toEqual(testValues.original);
+                    if (refreshDelay > 0) {
+                        await page.waitForTimeout(refreshDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
+
+                    const { rows: revertedRows } = await whodb.getTableData();
+                    const revertedParsedDoc = parseDocument(revertedRows[testValues.rowIndex]);
+                    expect(revertedParsedDoc[testTable.identifierField]).toEqual(testValues.original);
+                });
             });
 
             test('cancels edit without saving', async ({ whodb, page }) => {
@@ -327,7 +391,14 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
+                const deleteResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
+                );
                 await whodb.deleteRow(rowIndex);
+                const deleteResponse = await deleteResponsePromise;
+                const deleteResult = await deleteResponse.json();
+                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
 
                 // Verify row count decreased
                 const { rows: newRows } = await whodb.getTableData();
@@ -351,24 +422,37 @@ test.describe('CRUD Operations', () => {
 
         test.describe('Edit Hash Field', () => {
             test('edits a hash field value and saves', async ({ whodb, page }) => {
-                await whodb.data(keyName);
+                await test.step('navigate to key', async () => {
+                    await whodb.data(keyName);
+                });
 
-                // Check if data was left from a previous failed test and revert first
-                let { rows } = await whodb.getTableData();
-                if (rows[rowIndex][2] === testValues.modified) {
+                await test.step('check and revert leftover data', async () => {
+                    const { rows } = await whodb.getTableData();
+                    if (rows[rowIndex][2] === testValues.modified) {
+                        await whodb.updateRow(rowIndex, 1, testValues.original, false);
+                    }
+                });
+
+                await test.step('update field with network verification', async () => {
+                    const responsePromise = page.waitForResponse(resp =>
+                        resp.url().includes('/api/query') &&
+                        resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
+                    );
+                    await whodb.updateRow(rowIndex, 1, testValues.modified, false);
+                    const response = await responsePromise;
+                    const result = await response.json();
+                    expect(result.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
+
+                    const { rows } = await whodb.getTableData();
+                    expect(rows[rowIndex][2]).toEqual(testValues.modified);
+                });
+
+                await test.step('revert to original', async () => {
                     await whodb.updateRow(rowIndex, 1, testValues.original, false);
-                }
 
-                await whodb.updateRow(rowIndex, 1, testValues.modified, false);
-
-                ({ rows } = await whodb.getTableData());
-                expect(rows[rowIndex][2]).toEqual(testValues.modified);
-
-                // Revert
-                await whodb.updateRow(rowIndex, 1, testValues.original, false);
-
-                ({ rows } = await whodb.getTableData());
-                expect(rows[rowIndex][2]).toEqual(testValues.original);
+                    const { rows } = await whodb.getTableData();
+                    expect(rows[rowIndex][2]).toEqual(testValues.original);
+                });
             });
 
             test('cancels edit without saving', async ({ whodb, page }) => {
@@ -393,7 +477,14 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
+                const deleteResponsePromise = page.waitForResponse(resp =>
+                    resp.url().includes('/api/query') &&
+                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
+                );
                 await whodb.deleteRow(2);
+                const deleteResponse = await deleteResponsePromise;
+                const deleteResult = await deleteResponse.json();
+                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
 
                 const { rows: newRows } = await whodb.getTableData();
                 expect(newRows.length).toEqual(initialCount - 1);

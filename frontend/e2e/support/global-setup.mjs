@@ -18,22 +18,17 @@
  * Global setup for Playwright E2E tests.
  *
  * - Animation disabling: done via page.addInitScript() in test-fixture.mjs
- * - Browser state clearing: done in standardTestSetup()
+ * - Browser state clearing: done via clearBrowserState() in animation.mjs
  * - Uncaught exceptions: Playwright doesn't fail on page errors by default
  *
  * This file is imported by the playwright config as a global setup module.
  */
 
 import {getDatabaseConfigs} from "./database-config.mjs";
-import {validateAllFixtures} from "./helpers/fixture-validator.mjs";
+import {assertFixturesValid} from "./helpers/fixture-validator.mjs";
 
 export default async function globalSetup() {
-  // Validate fixtures on startup
+  // Validate fixtures on startup — aborts the run if any fixture is invalid
   const configs = getDatabaseConfigs();
-  const { allValid } = validateAllFixtures(configs);
-  if (!allValid) {
-    console.error(
-      "Fixture validation failed - some tests may not work correctly"
-    );
-  }
+  assertFixturesValid(configs);
 }

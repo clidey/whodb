@@ -34,30 +34,10 @@ import {
   getDatabasesByCategory,
   getDatabaseId,
 } from "../support/database-config.mjs";
+import { mockAIProviders } from "../support/helpers/mock-providers.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
-
-// Mock AI providers during login to avoid backend Ollama timeouts
-async function mockAIProviders(page) {
-  await page.route("**/api/query", async (route) => {
-    const postData = route.request().postDataJSON?.();
-    const op = postData?.operationName;
-    if (op === "GetAIProviders") {
-      return route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ data: { AIProviders: [] } }),
-      });
-    }
-    if (op === "GetAIModels") {
-      return route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ data: { AIModel: [] } }),
-      });
-    }
-    await route.fallback();
-  });
-}
 
 // Get the target database from env (set by run-e2e.sh per database)
 const targetDb = process.env.DATABASE;

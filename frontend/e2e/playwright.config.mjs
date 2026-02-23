@@ -105,9 +105,11 @@ export default defineConfig({
       use: standaloneBrowser,
     },
     // Destructive tests — run after read-only tests complete via dependencies.
+    // retries: 0 prevents re-running partially-completed mutations.
     {
       name: "standalone-mutating",
       dependencies: ["standalone"],
+      retries: 0,
       testMatch: MUTATING_TESTS,
       use: standaloneBrowser,
     },
@@ -122,6 +124,7 @@ export default defineConfig({
     {
       name: "gateway-mutating",
       dependencies: ["gateway"],
+      retries: 0,
       testMatch: MUTATING_TESTS,
       use: gatewayBrowser,
     },

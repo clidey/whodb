@@ -59,13 +59,19 @@ function loadFixturesFromDir(dir) {
 // EE database registrations (populated by ee/frontend/e2e/support/test-runner.mjs)
 let additionalConfigs = {};
 
+// Module-level cache to avoid redundant disk reads
+let _configsCache = null;
+
 /** Register additional database configurations (used by EE) */
 export function registerDatabases(configs) {
   additionalConfigs = { ...additionalConfigs, ...configs };
+  _configsCache = null;
 }
 
 /** All database configs (CE + EE), with env-based host overrides applied */
 export function getDatabaseConfigs() {
+  if (_configsCache) return _configsCache;
+
   const ce = loadFixturesFromDir(FIXTURES_DIR);
   const ee = loadFixturesFromDir(EE_FIXTURES_DIR);
   const all = { ...ce, ...ee, ...additionalConfigs };
@@ -81,6 +87,7 @@ export function getDatabaseConfigs() {
     }
   }
 
+  _configsCache = all;
   return all;
 }
 
