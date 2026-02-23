@@ -373,7 +373,7 @@ export const Sidebar: FC = () => {
                                     <div className={cn("flex flex-col gap-sm w-full", {
                                         "opacity-0 pointer-events-none": !open,
                                     })}>
-                                        <h2 className="text-sm">{databaseDropdownLabel}</h2>
+                                        <h2 className="text-sm" data-testid="sidebar-database-label">{databaseDropdownLabel}</h2>
                                         <SearchSelect
                                             label={databaseDropdownLabel}
                                             options={databaseOptions}

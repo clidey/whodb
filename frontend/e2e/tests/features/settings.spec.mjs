@@ -350,9 +350,10 @@ test.describe('Settings', () => {
         });
     });
 
-    // Schema terminology tests - run for Postgres only
-    forEachDatabase('sql', (db) => {
-        if (db.type !== 'Postgres') {
+    // Schema terminology tests - run for databases where the setting is relevant
+    // (databases that use "database" instead of "schema", e.g., MySQL, MariaDB, ClickHouse)
+    forEachDatabase('all', (db) => {
+        if (!db.sidebar?.showsDatabaseDropdown || db.sidebar?.showsSchemaDropdown !== false) {
             return;
         }
 
@@ -372,7 +373,7 @@ test.describe('Settings', () => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 10000 });
 
-                const sidebarText = await page.locator('[data-testid="sidebar-database"]').textContent();
+                const sidebarText = await page.locator('[data-testid="sidebar-database-label"]').textContent();
                 expect(sidebarText.toLowerCase()).toContain('schema');
             });
 
@@ -387,7 +388,7 @@ test.describe('Settings', () => {
                 await whodb.goto('storage-unit');
                 await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 10000 });
 
-                const sidebarText = await page.locator('[data-testid="sidebar-database"]').textContent();
+                const sidebarText = await page.locator('[data-testid="sidebar-database-label"]').textContent();
                 expect(sidebarText.toLowerCase()).toContain('database');
             });
 

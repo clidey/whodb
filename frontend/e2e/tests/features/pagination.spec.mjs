@@ -83,25 +83,19 @@ test.describe('Pagination', () => {
         const tableName = db.testTable.name;
 
         test('respects custom page size from settings', async ({ whodb, page }) => {
-            // Set custom page size to 2 via localStorage before navigating
-            await page.evaluate(() => {
-                const settings = JSON.parse(localStorage.getItem('persist:settings') || '{}');
-                settings.defaultPageSize = '2';
-                localStorage.setItem('persist:settings', JSON.stringify(settings));
-            });
+            // Set custom page size to 2 via the settings page UI
+            await whodb.goto('settings');
+            await page.locator('#default-page-size').click();
+            await page.locator('[data-value="custom"]').click();
+            await page.locator('input[type="number"]').clear();
+            await page.locator('input[type="number"]').fill('2');
+            await page.locator('input[type="number"]').press('Enter');
 
+            // Navigate to data view and verify the setting is applied
             await whodb.data(tableName);
 
-            // Table should show exactly 2 rows
             const tableData = await whodb.getTableData();
             expect(tableData.rows.length).toEqual(2);
-
-            // Reset to default
-            await page.evaluate(() => {
-                const settings = JSON.parse(localStorage.getItem('persist:settings') || '{}');
-                settings.defaultPageSize = '10';
-                localStorage.setItem('persist:settings', JSON.stringify(settings));
-            });
         });
     });
 

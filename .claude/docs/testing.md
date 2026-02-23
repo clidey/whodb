@@ -431,6 +431,92 @@ go tool cover -html=coverage.out
 
 ---
 
+## E2E Test Authoring Rules
+
+### Database-Specific vs Global Features
+
+Not all features apply to all databases. Before writing a test, check whether the feature is database-specific:
+
+- **Sidebar terminology** (`databaseSchemaTerminology` setting): Only affects databases where `sidebar.showsDatabaseDropdown: true` AND `sidebar.showsSchemaDropdown: false` (MySQL, MariaDB, ClickHouse, MongoDB, Redis). Has NO effect on Postgres (which always shows "Database" + "Schema" as separate dropdowns). Filter with: `if (!db.sidebar?.showsDatabaseDropdown || db.sidebar?.showsSchemaDropdown !== false) return;`
+- **Schema dropdown** (`sidebar-schema`): Only exists for databases where `sidebar.showsSchemaDropdown: true` (Postgres). Other databases don't have it.
+- **Database dropdown** (`sidebar-database`): Only for databases where `sidebar.showsDatabaseDropdown: true`.
+
+General rule: check the fixture's `sidebar` config to determine which UI elements exist for that database type.
+
+### Sidebar Test IDs
+
+The sidebar has distinct test IDs for **labels** (headings) vs **values** (selected items):
+
+| Test ID | Element | Contains |
+|---------|---------|----------|
+| `sidebar-database-label` | `<h2>` heading | Label text: "Database" or "Schema" (based on terminology setting) |
+| `sidebar-database` | `SearchSelect` button | Selected value: e.g., "test_db" |
+| `sidebar-schema` | `SearchSelect` button | Selected value: e.g., "test_schema" |
+| `sidebar-profile` | Profile section | Connection info |
+
+### Redux State: Never Write to localStorage Directly
+
+Redux-persist rehydrates from localStorage **asynchronously** on page load. Writing directly to `localStorage` and then navigating creates a race condition — the component may mount before rehydration completes, using default values instead.
+
+**Wrong** (flaky):
+```js
+await page.evaluate(() => {
+    const settings = JSON.parse(localStorage.getItem('persist:settings') || '{}');
+    settings.defaultPageSize = '2';
+    localStorage.setItem('persist:settings', JSON.stringify(settings));
+});
+await whodb.data(tableName); // May use default pageSize=100 instead of 2
+```
+
+**Right** — use the settings page UI (dispatches Redux action, immediately updates in-memory store):
+```js
+await whodb.goto('settings');
+await page.locator('#default-page-size').click();
+await page.locator('[data-value="custom"]').click();
+await page.locator('input[type="number"]').clear();
+await page.locator('input[type="number"]').fill('2');
+await page.locator('input[type="number"]').press('Enter');
+await whodb.data(tableName); // Reliably uses pageSize=2
+```
+
+**Exception**: The `whodb.login()` and `whodb.data()` helpers write `storageUnitView` to localStorage. This works because they immediately trigger a full page navigation afterward, and the value is non-critical (just controls card vs list view).
+
+### forEachDatabase Filtering Patterns
+
+Use fixture config properties to filter, not hardcoded type names:
+
+```js
+// Good: condition-based, works for any database with the right config
+forEachDatabase('all', (db) => {
+    if (!db.sidebar?.showsDatabaseDropdown || db.sidebar?.showsSchemaDropdown !== false) return;
+    // Tests for databases where terminology setting is relevant
+});
+
+// Good: feature-based filtering via options
+forEachDatabase('sql', (db) => { ... }, { features: ['pagination'] });
+
+// Acceptable: type-based when testing truly database-specific behavior
+forEachDatabase('sql', (db) => {
+    if (db.type !== 'Postgres') return;
+    // Postgres-specific tests
+});
+```
+
+### WhoDB Helper Methods
+
+Always prefer existing helper methods over raw page interactions:
+
+| Task | Helper | Don't Do |
+|------|--------|----------|
+| Navigate to table data | `whodb.data(tableName)` | Manual card click |
+| Change page size in table | `whodb.setTablePageSize(n)` | Direct combobox interaction |
+| Submit table query | `whodb.submitTable()` | Click query button manually |
+| Get table contents | `whodb.getTableData()` | Manual DOM scraping |
+| Select schema | `whodb.selectSchema(v)` | Click sidebar-schema manually |
+| Navigate to route | `whodb.goto('settings')` | `page.goto(url)` |
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
