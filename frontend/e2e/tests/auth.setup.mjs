@@ -28,13 +28,10 @@
 
 import fs from "fs";
 import path from "path";
-import { test as setup } from "@playwright/test";
-import { WhoDB } from "../support/whodb.mjs";
-import {
-  getDatabasesByCategory,
-  getDatabaseId,
-} from "../support/database-config.mjs";
-import { mockAIProviders } from "../support/helpers/mock-providers.mjs";
+import {test as setup} from "@playwright/test";
+import {WhoDB} from "../support/whodb.mjs";
+import {getDatabaseId, getDatabasesByCategory,} from "../support/database-config.mjs";
+import {mockAIProviders} from "../support/helpers/mock-providers.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
@@ -71,6 +68,11 @@ for (const dbConfig of databases) {
     );
 
     if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
+      // Wait for any health overlay to clear before interacting with sidebar
+      const overlay = page.getByText('Database Connection Lost');
+      if (await overlay.isVisible().catch(() => false)) {
+        await overlay.waitFor({ state: 'hidden', timeout: 60_000 });
+      }
       await whodb.selectSchema(dbConfig.schema);
     }
 

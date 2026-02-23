@@ -1020,8 +1020,7 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 					done <- true
 				}()
 
-				_, err := plugin.GetDatabases(config)
-				if err == nil {
+				if plugin.IsAvailable(config) {
 					status.Database = "healthy"
 				} else {
 					status.Database = "error"

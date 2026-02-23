@@ -90,7 +90,7 @@ func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 		return nil, err
 	}
 
-	databases := []string{}
+	var databases []string
 	for _, e := range entries {
 		databases = append(databases, e.Name())
 	}
