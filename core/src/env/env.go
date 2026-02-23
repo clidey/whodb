@@ -190,8 +190,32 @@ func GetConfiguredChatProviders() []ChatProvider {
 }
 
 func GetOllamaEndpoint() string {
-	host, port := common.GetOllamaHost()
-	return fmt.Sprintf("http://%v:%v/api", host, port)
+	host, port := GetOllamaHost()
+	return fmt.Sprintf("http://%s:%s/api", host, port)
+}
+
+// GetOllamaHost returns the resolved Ollama host and port, accounting for
+// Docker/WSL2 environments and WHODB_OLLAMA_HOST/PORT overrides.
+func GetOllamaHost() (string, string) {
+	host := "localhost"
+	port := "11434"
+
+	if common.IsRunningInsideDocker() {
+		host = "host.docker.internal"
+	} else if common.IsRunningInsideWSL2() {
+		if wslHost := common.GetWSL2WindowsHost(); wslHost != "" {
+			host = wslHost
+		}
+	}
+
+	if OllamaHost != "" {
+		host = OllamaHost
+	}
+	if OllamaPort != "" {
+		port = OllamaPort
+	}
+
+	return host, port
 }
 
 func GetAnthropicEndpoint() string {

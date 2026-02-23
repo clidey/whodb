@@ -87,30 +87,6 @@ func GetWSL2WindowsHost() string {
 	return ""
 }
 
-// GetOllamaHost returns the resolved Ollama host, accounting for Docker and WSL2 environments.
-// Environment variables WHODB_OLLAMA_HOST and WHODB_OLLAMA_PORT take precedence.
-func GetOllamaHost() (host string, port string) {
-	host = "localhost"
-	port = "11434"
-
-	if IsRunningInsideDocker() {
-		host = "host.docker.internal"
-	} else if IsRunningInsideWSL2() {
-		if wslHost := GetWSL2WindowsHost(); wslHost != "" {
-			host = wslHost
-		}
-	}
-
-	if envHost := os.Getenv("WHODB_OLLAMA_HOST"); envHost != "" {
-		host = envHost
-	}
-	if envPort := os.Getenv("WHODB_OLLAMA_PORT"); envPort != "" {
-		port = envPort
-	}
-
-	return host, port
-}
-
 // FilterList returns a new slice containing only the elements for which the predicate returns true.
 func FilterList[T any](items []T, by func(input T) bool) []T {
 	filteredItems := []T{}

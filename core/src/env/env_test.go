@@ -76,9 +76,11 @@ func TestGetLogLevel(t *testing.T) {
 }
 
 func TestGetOllamaEndpointRespectsOverrides(t *testing.T) {
-	// GetOllamaEndpoint calls common.GetOllamaHost which reads env vars directly
-	t.Setenv("WHODB_OLLAMA_HOST", "ollama.example.com")
-	t.Setenv("WHODB_OLLAMA_PORT", "9999")
+	origHost, origPort := OllamaHost, OllamaPort
+	t.Cleanup(func() { OllamaHost, OllamaPort = origHost, origPort })
+
+	OllamaHost = "ollama.example.com"
+	OllamaPort = "9999"
 
 	endpoint := GetOllamaEndpoint()
 	if endpoint != "http://ollama.example.com:9999/api" {
@@ -93,6 +95,7 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	originalOpenAICompatKey := OpenAICompatibleAPIKey
 	originalOpenAICompatEndpoint := OpenAICompatibleEndpoint
 	originalCustomModels := CustomModels
+	origHost, origPort := OllamaHost, OllamaPort
 
 	t.Cleanup(func() {
 		OpenAIAPIKey = originalOpenAI
@@ -101,6 +104,7 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 		OpenAICompatibleAPIKey = originalOpenAICompatKey
 		OpenAICompatibleEndpoint = originalOpenAICompatEndpoint
 		CustomModels = originalCustomModels
+		OllamaHost, OllamaPort = origHost, origPort
 	})
 
 	OpenAIAPIKey = "openai-key"
@@ -109,9 +113,8 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	OpenAICompatibleAPIKey = "compat-key"
 	OpenAICompatibleEndpoint = "https://compat.example.com"
 	CustomModels = []string{"mixtral"}
-	// GetOllamaEndpoint calls common.GetOllamaHost which reads env vars directly
-	t.Setenv("WHODB_OLLAMA_HOST", "ollama.local")
-	t.Setenv("WHODB_OLLAMA_PORT", "1234")
+	OllamaHost = "ollama.local"
+	OllamaPort = "1234"
 
 	providers := GetConfiguredChatProviders()
 	if len(providers) != 4 {

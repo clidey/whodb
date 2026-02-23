@@ -19,6 +19,7 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/log"
@@ -182,22 +183,36 @@ func (h *ErrorHandler) isPermissionError(err error) bool {
 		strings.Contains(errStr, "42501") // PostgreSQL error code
 }
 
+// sanitizePattern pairs a pre-compiled regex with its replacement string.
+type sanitizePattern struct {
+	re          *regexp.Regexp
+	replacement string
+}
+
+// sanitizePatterns are pre-compiled patterns for removing sensitive information
+// from error messages. These patterns are intentionally broad to avoid leaking
+// credentials from driver/SDK error strings (DSNs, query params, etc.).
+var sanitizePatterns = []sanitizePattern{
+	{regexp.MustCompile(`(?i)\bpassword=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bpasswd=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bpwd=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\btoken=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bapi_key=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\baccess_key_id=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bsecret_access_key=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bsession_token=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bkey=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bsecret=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)://[^/\s]+@`), "://[REDACTED]@"},
+	{regexp.MustCompile(`@[\w.\-]+:\d+`), "[REDACTED]"},
+}
+
 // sanitizeErrorMessage removes sensitive information from error messages
 func (h *ErrorHandler) sanitizeErrorMessage(err error) string {
 	msg := err.Error()
 
-	// Remove potential sensitive data patterns
-	patterns := []string{
-		`password=\S+`,
-		`pwd=\S+`,
-		`token=\S+`,
-		`key=\S+`,
-		`secret=\S+`,
-		`@[\w\.\-]+:[\d]+`, // host:port combinations
-	}
-
-	for _, pattern := range patterns {
-		msg = strings.ReplaceAll(msg, pattern, "[REDACTED]")
+	for _, p := range sanitizePatterns {
+		msg = p.re.ReplaceAllString(msg, p.replacement)
 	}
 
 	// Truncate very long error messages

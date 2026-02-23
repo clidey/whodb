@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 )
 
@@ -57,7 +57,7 @@ func (p *OllamaProvider) RequiresAPIKey() bool {
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
 func (p *OllamaProvider) GetDefaultEndpoint() string {
-	host, port := common.GetOllamaHost()
+	host, port := env.GetOllamaHost()
 	return fmt.Sprintf("http://%s:%s/api", host, port)
 }
 
