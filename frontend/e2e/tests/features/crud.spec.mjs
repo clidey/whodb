@@ -17,14 +17,7 @@
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 import { getTableConfig, hasFeature } from '../../support/database-config.mjs';
 import { createUpdatedDocument, parseDocument } from '../../support/categories/document.mjs';
-
-/**
- * Generates a unique test identifier for this test run.
- * Uses timestamp to avoid conflicts within and across test runs.
- */
-function getUniqueTestId() {
-    return `test_${Date.now()}`;
-}
+import { getUniqueTestId, waitForMutation } from '../../support/helpers/test-utils.mjs';
 
 test.describe('CRUD Operations', () => {
 
@@ -57,14 +50,9 @@ test.describe('CRUD Operations', () => {
                 await whodb.sortBy(0);
 
                 // Edit row with network verification
-                const updateResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
-                );
+                const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
                 await whodb.updateRow(testValues.rowIndex, colIndex, testValues.modified, false);
-                const updateResponse = await updateResponsePromise;
-                const updateResult = await updateResponse.json();
-                expect(updateResult.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
+                await verifyUpdate();
 
                 // Wait for async mutations (e.g., ClickHouse)
                 if (mutationDelay > 0) {
@@ -124,14 +112,9 @@ test.describe('CRUD Operations', () => {
                     newRowData.email = `${uniqueId}@example.com`;
                 }
 
-                const addResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'AddRow'
-                );
+                const verifyAdd = waitForMutation(page, 'AddRow');
                 await whodb.addRow(newRowData);
-                const addResponse = await addResponsePromise;
-                const addResult = await addResponse.json();
-                expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
+                await verifyAdd();
 
                 const identifierValue = newRowData[testTable.identifierField];
 
@@ -139,14 +122,9 @@ test.describe('CRUD Operations', () => {
                 const rowIndex = await whodb.waitForRowValue(colIndex + 1, identifierValue);
 
                 // Clean up - delete the added row
-                const deleteResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                );
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
-                const deleteResponse = await deleteResponsePromise;
-                const deleteResult = await deleteResponse.json();
-                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                await verifyDelete();
             });
         });
 
@@ -170,14 +148,9 @@ test.describe('CRUD Operations', () => {
                     newRowData.email = `${uniqueId}@example.com`;
                 }
 
-                const addResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'AddRow'
-                );
+                const verifyAdd = waitForMutation(page, 'AddRow');
                 await whodb.addRow(newRowData);
-                const addResponse = await addResponsePromise;
-                const addResult = await addResponse.json();
-                expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
+                await verifyAdd();
 
                 const identifierValue = newRowData[testTable.identifierField];
 
@@ -187,14 +160,9 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
-                const deleteResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                );
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
-                const deleteResponse = await deleteResponsePromise;
-                const deleteResult = await deleteResponse.json();
-                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                await verifyDelete();
 
                 // Verify row count decreased
                 const { rows: newRows } = await whodb.getTableData();
@@ -230,27 +198,17 @@ test.describe('CRUD Operations', () => {
 
                 await whodb.addRow(newDoc, true);
 
-                const addResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'AddRow'
-                );
+                const verifyAdd = waitForMutation(page, 'AddRow');
                 await whodb.submitTable();
-                const addResponse = await addResponsePromise;
-                const addResult = await addResponse.json();
-                expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
+                await verifyAdd();
 
                 // Wait for row to appear using retry-able assertion
                 const rowIndex = await whodb.waitForRowContaining(uniqueId);
 
                 // Clean up
-                const deleteResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                );
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
-                const deleteResponse = await deleteResponsePromise;
-                const deleteResult = await deleteResponse.json();
-                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                await verifyDelete();
             });
         });
 
@@ -309,14 +267,9 @@ test.describe('CRUD Operations', () => {
                         [testTable.identifierField]: testValues.modified
                     });
 
-                    const responsePromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') &&
-                        resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
-                    );
+                    const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
                     await whodb.updateRow(testValues.rowIndex, 1, updatedDoc, false);
-                    const response = await responsePromise;
-                    const result = await response.json();
-                    expect(result.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
+                    await verifyUpdate();
 
                     if (refreshDelay > 0) {
                         await page.waitForTimeout(refreshDelay);
@@ -391,14 +344,9 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
-                const deleteResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                );
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
-                const deleteResponse = await deleteResponsePromise;
-                const deleteResult = await deleteResponse.json();
-                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                await verifyDelete();
 
                 // Verify row count decreased
                 const { rows: newRows } = await whodb.getTableData();
@@ -434,14 +382,9 @@ test.describe('CRUD Operations', () => {
                 });
 
                 await test.step('update field with network verification', async () => {
-                    const responsePromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') &&
-                        resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
-                    );
+                    const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
                     await whodb.updateRow(rowIndex, 1, testValues.modified, false);
-                    const response = await responsePromise;
-                    const result = await response.json();
-                    expect(result.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
+                    await verifyUpdate();
 
                     const { rows } = await whodb.getTableData();
                     expect(rows[rowIndex][2]).toEqual(testValues.modified);
@@ -477,14 +420,9 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
-                const deleteResponsePromise = page.waitForResponse(resp =>
-                    resp.url().includes('/api/query') &&
-                    resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                );
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(2);
-                const deleteResponse = await deleteResponsePromise;
-                const deleteResult = await deleteResponse.json();
-                expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                await verifyDelete();
 
                 const { rows: newRows } = await whodb.getTableData();
                 expect(newRows.length).toEqual(initialCount - 1);

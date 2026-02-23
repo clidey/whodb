@@ -16,6 +16,7 @@
 
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 import { getTableConfig } from '../../support/database-config.mjs';
+import { waitForMutation } from '../../support/helpers/test-utils.mjs';
 
 /**
  * Data Types CRUD Operations Test Suite
@@ -88,14 +89,9 @@ test.describe('Data Types CRUD Operations', () => {
                 test('ADD - creates row with type value', async ({ whodb, page }) => {
                     await whodb.data(tableName);
 
-                    const addResponsePromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') &&
-                        resp.request().postDataJSON?.()?.operationName === 'AddRow'
-                    );
+                    const verifyAdd = waitForMutation(page, 'AddRow');
                     await whodb.addRow({[columnName]: testConfig.addValue});
-                    const addResponse = await addResponsePromise;
-                    const addResult = await addResponse.json();
-                    expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
+                    await verifyAdd();
 
                     // Wait for async mutations (e.g., ClickHouse)
                     if (mutationDelay > 0) {
@@ -109,14 +105,9 @@ test.describe('Data Types CRUD Operations', () => {
                     const rowIndex = await whodb.waitForRowValue(columnIndex + 1, expectedAddDisplay);
 
                     // Clean up - delete the row we just added
-                    const deleteResponsePromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') &&
-                        resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                    );
+                    const verifyDelete = waitForMutation(page, 'DeleteRow');
                     await whodb.deleteRow(rowIndex);
-                    const deleteResponse = await deleteResponsePromise;
-                    const deleteResult = await deleteResponse.json();
-                    expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                    await verifyDelete();
 
                     // Wait for async delete mutation
                     if (mutationDelay > 0) {
@@ -184,14 +175,9 @@ test.describe('Data Types CRUD Operations', () => {
                             throw new Error(`Row with original value "${originalValue}" not found. Actual values: ${JSON.stringify(finalColumnValues)}`);
                         }
 
-                        const responsePromise = page.waitForResponse(resp =>
-                            resp.url().includes('/api/query') &&
-                            resp.request().postDataJSON?.()?.operationName === 'UpdateStorageUnit'
-                        );
+                        const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
                         await whodb.updateRow(finalTargetRowIndex, columnIndex, testConfig.updateValue, false);
-                        const response = await responsePromise;
-                        const result = await response.json();
-                        expect(result.errors, 'UpdateStorageUnit mutation should succeed').toBeUndefined();
+                        await verifyUpdate();
 
                         if (mutationDelay > 0) {
                             await page.waitForTimeout(mutationDelay);
@@ -234,14 +220,9 @@ test.describe('Data Types CRUD Operations', () => {
                 test('DELETE - removes row with type value', async ({ whodb, page }) => {
                     await whodb.data(tableName);
 
-                    const addResponsePromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') &&
-                        resp.request().postDataJSON?.()?.operationName === 'AddRow'
-                    );
+                    const verifyAdd = waitForMutation(page, 'AddRow');
                     await whodb.addRow({[columnName]: deleteValue});
-                    const addResponse = await addResponsePromise;
-                    const addResult = await addResponse.json();
-                    expect(addResult.errors, 'AddRow mutation should succeed').toBeUndefined();
+                    await verifyAdd();
 
                     // Wait for async mutations (e.g., ClickHouse)
                     if (mutationDelay > 0) {
@@ -257,14 +238,9 @@ test.describe('Data Types CRUD Operations', () => {
                     const { rows } = await whodb.getTableData();
                     const initialCount = rows.length;
 
-                    const deleteResponsePromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') &&
-                        resp.request().postDataJSON?.()?.operationName === 'DeleteRow'
-                    );
+                    const verifyDelete = waitForMutation(page, 'DeleteRow');
                     await whodb.deleteRow(rowIndex);
-                    const deleteResponse = await deleteResponsePromise;
-                    const deleteResult = await deleteResponse.json();
-                    expect(deleteResult.errors, 'DeleteRow mutation should succeed').toBeUndefined();
+                    await verifyDelete();
 
                     // Wait for async mutations (e.g., ClickHouse)
                     if (mutationDelay > 0) {
