@@ -77,6 +77,8 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 })
 
 var LogLevel = getLogLevel()
+var AccessLogFile = os.Getenv("WHODB_ACCESS_LOG_FILE")
+
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
 var ApplicationEnvironment = os.Getenv("WHODB_APPLICATION_ENVIRONMENT")

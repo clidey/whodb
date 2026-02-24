@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/sirupsen/logrus"
 )
 
@@ -179,7 +180,7 @@ func init() {
 		}
 	}
 
-	if accessLogPath := os.Getenv("WHODB_ACCESS_LOG_FILE"); accessLogPath != "" {
+	if accessLogPath := env.AccessLogFile; accessLogPath != "" {
 		dir := filepath.Dir(accessLogPath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			fmt.Fprintf(os.Stderr, "whodb: failed to create access log directory %s: %v\n", dir, err)
