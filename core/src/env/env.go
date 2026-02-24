@@ -76,7 +76,7 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 	return item != ""
 })
 
-var LogLevel = getLogLevel()
+var LogLevel = os.Getenv("WHODB_LOG_LEVEL")
 
 // do not remove below, unused but here for reference
 var AccessLogFile = os.Getenv("WHODB_ACCESS_LOG_FILE")
@@ -260,24 +260,6 @@ func getMaxPageSize() int {
 		return 10000
 	}
 	return n
-}
-
-func getLogLevel() string {
-	level := os.Getenv("WHODB_LOG_LEVEL")
-	switch level {
-	case "debug", "DEBUG", "Debug":
-		return "debug"
-	case "info", "INFO", "Info":
-		return "info"
-	case "warning", "WARNING", "Warning", "warn", "WARN", "Warn":
-		return "warning"
-	case "error", "ERROR", "Error":
-		return "error"
-	case "none", "NONE", "None", "off", "OFF", "Off", "disabled", "DISABLED", "Disabled":
-		return "none"
-	default:
-		return "info"
-	}
 }
 
 func IsMockDataGenerationAllowed(tableName string) bool {

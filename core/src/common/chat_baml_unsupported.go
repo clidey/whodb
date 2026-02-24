@@ -51,8 +51,8 @@ func SQLChatBAML(
 	return nil, ErrBAMLNotSupported
 }
 
-// SetupAIClientWithLogging returns nil on unsupported platforms
-func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []any {
+// SetupAIClient returns nil on unsupported platforms
+func SetupAIClient(externalModel *engine.ExternalModel) []any {
 	return nil
 }
 

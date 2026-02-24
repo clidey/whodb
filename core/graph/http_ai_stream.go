@@ -118,7 +118,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create BAML stream
 	log.Debugf("AI Chat Stream: Setting up AI client...")
-	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
+	callOpts := common.SetupAIClient(config.ExternalModel)
 	log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
 	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
@@ -330,7 +330,7 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 	}
 
 	// Use non-streaming BAML client
-	callOpts := common.SetupAIClientWithLogging(config.ExternalModel)
+	callOpts := common.SetupAIClient(config.ExternalModel)
 	responses, err := baml_client.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
 		http.Error(w, "AI query failed: "+err.Error(), http.StatusInternalServerError)

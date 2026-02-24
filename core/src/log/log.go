@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/sirupsen/logrus"
 )
 
@@ -135,11 +136,12 @@ func isUnsupportedOperation(err any) bool {
 	return false
 }
 
-// parseLevel parses a log level string using logrus.ParseLevel,
-// with added support for "none"/"off"/"disabled" to silence all output.
-func parseLevel(level string) logrus.Level {
+// toLogrusLevel converts a log level string to a logrus.Level.
+// Accepts everything logrus accepts (debug, info, warn/warning, error, fatal, panic)
+// plus "none"/"off"/"disabled" to silence all output.
+func toLogrusLevel(level string) logrus.Level {
 	switch strings.ToLower(level) {
-	case "":
+	case "", "info":
 		return logrus.InfoLevel
 	case "none", "off", "disabled":
 		return logrus.PanicLevel
@@ -163,11 +165,11 @@ func (h *serviceHook) Fire(entry *logrus.Entry) error {
 
 func init() {
 	logger = logrus.New()
-	logger.SetLevel(parseLevel(os.Getenv("WHODB_LOG_LEVEL")))
+	logger.SetLevel(toLogrusLevel(env.LogLevel))
 	configureFormatter()
 	logger.AddHook(&serviceHook{})
 
-	if logFilePath := os.Getenv("WHODB_LOG_FILE"); logFilePath != "" {
+	if logFilePath := env.LogFile; logFilePath != "" {
 		dir := filepath.Dir(logFilePath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			fmt.Fprintf(os.Stderr, "whodb: failed to create log directory %s: %v\n", dir, err)
@@ -179,7 +181,7 @@ func init() {
 		}
 	}
 
-	if accessLogPath := os.Getenv("WHODB_ACCESS_LOG_FILE"); accessLogPath != "" {
+	if accessLogPath := env.AccessLogFile; accessLogPath != "" {
 		dir := filepath.Dir(accessLogPath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			fmt.Fprintf(os.Stderr, "whodb: failed to create access log directory %s: %v\n", dir, err)
@@ -216,7 +218,7 @@ func configureFormatter() {
 }
 
 func getLogFormat() string {
-	if strings.ToLower(os.Getenv("WHODB_LOG_FORMAT")) == "json" {
+	if strings.EqualFold(env.LogFormat, "json") {
 		return "json"
 	}
 	return "text"
@@ -229,7 +231,7 @@ func GetLevel() string {
 
 // SetLogLevel changes the active log level at runtime.
 func SetLogLevel(level string) {
-	logger.SetLevel(parseLevel(level))
+	logger.SetLevel(toLogrusLevel(level))
 }
 
 // DisableOutput redirects all log output to io.Discard.

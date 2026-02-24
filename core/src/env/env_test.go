@@ -43,38 +43,6 @@ func TestIsMockDataGenerationAllowed(t *testing.T) {
 	}
 }
 
-func TestGetLogLevel(t *testing.T) {
-	original := LogLevel
-	t.Cleanup(func() {
-		LogLevel = original
-	})
-
-	cases := []struct {
-		name     string
-		envValue string
-		expected string
-	}{
-		{name: "info", envValue: "INFO", expected: "info"},
-		{name: "warning", envValue: "warn", expected: "warning"},
-		{name: "error", envValue: "Error", expected: "error"},
-		{name: "default", envValue: "", expected: "info"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.envValue != "" {
-				t.Setenv("WHODB_LOG_LEVEL", tc.envValue)
-			} else {
-				t.Setenv("WHODB_LOG_LEVEL", "")
-			}
-
-			if level := getLogLevel(); level != tc.expected {
-				t.Fatalf("getLogLevel(%s) = %s, expected %s", tc.envValue, level, tc.expected)
-			}
-		})
-	}
-}
-
 func TestGetOllamaEndpointRespectsOverrides(t *testing.T) {
 	origHost, origPort := OllamaHost, OllamaPort
 	t.Cleanup(func() { OllamaHost, OllamaPort = origHost, origPort })

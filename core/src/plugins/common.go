@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -358,7 +357,7 @@ func ConfigureConnectionPool(db *gorm.DB) error {
 
 // GetGormLogConfig returns the GORM logger level based on the environment log level setting.
 func GetGormLogConfig() logger.LogLevel {
-	switch env.LogLevel {
+	switch log.GetLevel() {
 	case "warning":
 		return logger.Warn
 	case "error":

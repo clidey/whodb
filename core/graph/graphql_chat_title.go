@@ -95,7 +95,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	log.Debugf("Generate Chat Title: Calling BAML GenerateChatTitle")
 
 	// Setup BAML context and call
-	callOpts := common.SetupAIClientWithLogging(externalModel)
+	callOpts := common.SetupAIClient(externalModel)
 	stream, err := baml_client.Stream.GenerateChatTitle(c, titlePrompt, callOpts...)
 	if err != nil {
 		log.Debugf("Generate Chat Title: BAML call failed: %v", err)
