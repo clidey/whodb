@@ -541,6 +541,10 @@ WhoDB applies restrictive permissions to log files and directories:
 - **Files** are created with `0600` (owner rw only) — logs may contain query content or connection info
 - **Symlink protection** — WhoDB refuses to open a log file path that is a symlink, preventing symlink-based attacks where a malicious link redirects log writes to a sensitive file
 
+<Note>
+The `default` log paths write to `/var/log/whodb/`, which requires root access. Docker containers run as root by default, so this works out of the box. If running WhoDB as a non-root user, specify a custom path instead (e.g., `WHODB_LOG_FILE=/home/appuser/logs/whodb.log`).
+</Note>
+
 ### Read-Only Root Filesystem
 
 Mount the root filesystem as read-only:
