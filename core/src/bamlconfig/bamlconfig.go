@@ -50,16 +50,12 @@ func init() {
 	switch level {
 	case "debug":
 		bamlLevel = "debug"
-	case "info":
-		bamlLevel = "info"
-	case "warning", "warn":
-		bamlLevel = "warn"
-	case "error":
-		bamlLevel = "error"
 	case "none", "off", "disabled":
 		bamlLevel = "off"
 	default:
-		// Default: only show errors (quieter output)
+		// BAML's info/warn output is library startup chatter (download progress,
+		// cache paths) that isn't useful to WhoDB users. Only show BAML errors
+		// unless the user explicitly requests debug.
 		bamlLevel = "error"
 	}
 
