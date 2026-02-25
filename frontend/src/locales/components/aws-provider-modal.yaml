@@ -15,8 +15,6 @@ en:
 
   authStatic: Access Key
   authProfile: AWS Profile
-  authIam: IAM Role
-  authEnv: Environment Variables
   staticWarning: Static access keys are long-lived; prefer IAM roles or shared profiles and rotate keys regularly.
 
   displayName: Display Name
@@ -30,8 +28,6 @@ en:
   authDefaultDesc: Uses AWS SDK credential chain (env vars → ~/.aws/credentials → IAM role)
   authStaticDesc: Enter AWS access key and secret directly
   authProfileDesc: Use a named profile from ~/.aws/credentials
-  authIamDesc: Use IAM role attached to EC2/ECS/Lambda
-  authEnvDesc: Use AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
 
   accessKeyId: Access Key ID
   accessKeyPlaceholder: AKIAIOSFODNN7EXAMPLE

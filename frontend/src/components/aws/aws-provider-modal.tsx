@@ -51,8 +51,6 @@ const AUTH_METHOD_KEYS = [
     { value: "default", labelKey: "authDefault" },
     { value: "static", labelKey: "authStatic" },
     { value: "profile", labelKey: "authProfile" },
-    { value: "iam", labelKey: "authIam" },
-    { value: "env", labelKey: "authEnv" },
 ];
 
 export interface AwsProviderModalProps {
@@ -178,7 +176,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
 
         // Set auth method based on source
         if (profile.Source === "environment") {
-            setAuthMethod("env");
+            setAuthMethod("default");
         } else {
             // For credentials/config file profiles, use profile auth
             setAuthMethod("profile");
@@ -412,8 +410,6 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                             {authMethod === "default" && t('authDefaultDesc')}
                             {authMethod === "static" && t('authStaticDesc')}
                             {authMethod === "profile" && t('authProfileDesc')}
-                            {authMethod === "iam" && t('authIamDesc')}
-                            {authMethod === "env" && t('authEnvDesc')}
                         </p>
                     </div>
 

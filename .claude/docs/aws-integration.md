@@ -99,7 +99,7 @@ config := &aws.Config{
     ID:                  "aws-us-west-2",
     Name:                "Production AWS",
     Region:              "us-west-2",
-    AuthMethod:          awsinfra.AuthMethodDefault, // or static, profile, iam, env
+    AuthMethod:          awsinfra.AuthMethodDefault, // or static, profile
     DiscoverRDS:         true,
     DiscoverElastiCache: true,
     DiscoverDocumentDB:  true,
@@ -115,8 +115,6 @@ provider, err := aws.New(config)
 | `default` | AWS SDK credential chain | Recommended for most cases |
 | `static` | Explicit access key + secret | Local dev, CI/CD |
 | `profile` | Named AWS profile | Multiple AWS accounts |
-| `iam` | EC2/ECS/Lambda instance roles | Production on AWS |
-| `env` | Environment variables | Docker, Kubernetes |
 
 ## Usage Example
 

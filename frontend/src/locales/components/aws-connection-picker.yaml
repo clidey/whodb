@@ -19,8 +19,6 @@ en:
   helpAuthProfileDesc: uses a named profile from ~/.aws/credentials
   helpAuthStatic: Access Key
   helpAuthStaticDesc: enter AWS access key and secret directly
-  helpAuthIam: IAM Role
-  helpAuthIamDesc: for EC2/ECS/Lambda with attached role
   helpServices: "Supported Services:"
   helpRdsDesc: PostgreSQL, MySQL, MariaDB
   helpElasticacheDesc: Redis clusters

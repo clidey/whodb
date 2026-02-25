@@ -35,12 +35,6 @@ const (
 	// AuthMethodProfile uses a named profile from the AWS shared credentials file.
 	AuthMethodProfile AuthMethod = "profile"
 
-	// AuthMethodIAM uses EC2/ECS/Lambda instance role credentials.
-	AuthMethodIAM AuthMethod = "iam"
-
-	// AuthMethodEnv uses AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.
-	AuthMethodEnv AuthMethod = "env"
-
 	// AuthMethodDefault uses the AWS SDK's default credential chain.
 	// This is the recommended method as it automatically handles:
 	// environment variables, shared credentials file, IAM roles, etc.
@@ -110,7 +104,7 @@ func (c *AWSCredentialConfig) Validate() error {
 		if c.ProfileName == "" {
 			return ErrProfileNameRequired
 		}
-	case AuthMethodIAM, AuthMethodEnv, AuthMethodDefault:
+	case AuthMethodDefault:
 	default:
 		return ErrInvalidAuthMethod
 	}
@@ -120,7 +114,7 @@ func (c *AWSCredentialConfig) Validate() error {
 
 // BuildCredentialsProvider creates an AWS credentials provider based on the auth method.
 // Returns nil for auth methods that should use the SDK's default credential chain
-// (iam, env, default), as those are handled by config.LoadDefaultConfig.
+// (profile, default), as those are handled by config.LoadDefaultConfig.
 func (c *AWSCredentialConfig) BuildCredentialsProvider() aws.CredentialsProvider {
 	switch c.AuthMethod {
 	case AuthMethodStatic:
@@ -129,7 +123,7 @@ func (c *AWSCredentialConfig) BuildCredentialsProvider() aws.CredentialsProvider
 			c.SecretAccessKey,
 			c.SessionToken,
 		)
-	case AuthMethodProfile, AuthMethodIAM, AuthMethodEnv, AuthMethodDefault:
+	case AuthMethodProfile, AuthMethodDefault:
 		return nil
 	default:
 		return nil

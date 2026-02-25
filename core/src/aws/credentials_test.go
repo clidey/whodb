@@ -88,42 +88,6 @@ func TestParseFromWhoDB_DefaultAuth(t *testing.T) {
 	}
 }
 
-func TestParseFromWhoDB_IAMAuth(t *testing.T) {
-	creds := &engine.Credentials{
-		Hostname: "us-east-1",
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "iam"},
-		},
-	}
-
-	config, err := ParseFromWhoDB(creds)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if config.AuthMethod != AuthMethodIAM {
-		t.Errorf("expected auth method iam, got %s", config.AuthMethod)
-	}
-}
-
-func TestParseFromWhoDB_EnvAuth(t *testing.T) {
-	creds := &engine.Credentials{
-		Hostname: "us-east-1",
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "env"},
-		},
-	}
-
-	config, err := ParseFromWhoDB(creds)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if config.AuthMethod != AuthMethodEnv {
-		t.Errorf("expected auth method env, got %s", config.AuthMethod)
-	}
-}
-
 func TestParseFromWhoDB_SessionToken(t *testing.T) {
 	sessionToken := "FwoGZXIvYXdzE..."
 	creds := &engine.Credentials{
@@ -235,10 +199,6 @@ func TestParseFromWhoDB_AuthMethodCaseInsensitive(t *testing.T) {
 		{"Static", AuthMethodStatic},
 		{"PROFILE", AuthMethodProfile},
 		{"Profile", AuthMethodProfile},
-		{"IAM", AuthMethodIAM},
-		{"Iam", AuthMethodIAM},
-		{"ENV", AuthMethodEnv},
-		{"Env", AuthMethodEnv},
 		{"DEFAULT", AuthMethodDefault},
 		{"Default", AuthMethodDefault},
 	}
@@ -282,8 +242,6 @@ func TestBuildCredentialsProvider_Static(t *testing.T) {
 func TestBuildCredentialsProvider_NonStatic(t *testing.T) {
 	testCases := []AuthMethod{
 		AuthMethodProfile,
-		AuthMethodIAM,
-		AuthMethodEnv,
 		AuthMethodDefault,
 	}
 

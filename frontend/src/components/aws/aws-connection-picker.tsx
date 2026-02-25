@@ -193,7 +193,6 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                                             <li><span className="font-medium">{t('helpAuthDefault')}</span> – {t('helpAuthDefaultDesc')}</li>
                                             <li><span className="font-medium">{t('helpAuthProfile')}</span> – {t('helpAuthProfileDesc')}</li>
                                             <li><span className="font-medium">{t('helpAuthStatic')}</span> – {t('helpAuthStaticDesc')}</li>
-                                            <li><span className="font-medium">{t('helpAuthIam')}</span> – {t('helpAuthIamDesc')}</li>
                                         </ul>
                                     </div>
                                     <div className="space-y-1">

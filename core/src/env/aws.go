@@ -31,7 +31,7 @@ type AWSProviderEnvConfig struct {
 	// Region is the AWS region to discover resources in.
 	Region string `json:"region"`
 
-	// Auth is the authentication method: "default", "static", "profile", "iam", "env".
+	// Auth is the authentication method: "default", "static", "profile".
 	Auth string `json:"auth"`
 
 	// AccessKeyID for static auth.
