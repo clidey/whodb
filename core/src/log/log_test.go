@@ -22,6 +22,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func TestResolveLogPath(t *testing.T) {
+	const fallback = "/var/log/whodb/whodb.log"
+
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "empty returns empty", input: "", expected: ""},
+		{name: "default returns default path", input: "default", expected: fallback},
+		{name: "Default case-insensitive", input: "Default", expected: fallback},
+		{name: "DEFAULT all caps", input: "DEFAULT", expected: fallback},
+		{name: "custom path returned as-is", input: "/tmp/my.log", expected: "/tmp/my.log"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := resolveLogPath(tc.input, fallback); got != tc.expected {
+				t.Fatalf("resolveLogPath(%q, %q) = %q, expected %q", tc.input, fallback, got, tc.expected)
+			}
+		})
+	}
+}
+
 func TestToLogrusLevel(t *testing.T) {
 	cases := []struct {
 		name     string

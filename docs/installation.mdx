@@ -205,9 +205,9 @@ WhoDB can be configured using environment variables or command-line flags:
 | `WHODB_PORT` | Port to run WhoDB on | `8080` |
 | `WHODB_HOST` | Host address to bind to | `0.0.0.0` |
 | `WHODB_LOG_LEVEL` | Logging level (case-insensitive): `debug`, `info`, `warn`, `error`, `none` | `info` |
-| `WHODB_LOG_FORMAT` | Log output format: `text`, `json` | `text` |
-| `WHODB_LOG_FILE` | Redirect all logs to this file instead of stdout | unset (stdout) |
-| `WHODB_ACCESS_LOG_FILE` | Write HTTP access logs to a dedicated file | unset (disabled) |
+| `WHODB_LOG_FORMAT` | Log output format: `json` | `text` |
+| `WHODB_LOG_FILE` | Redirect all non-HTTP logs to a file instead of stdout. Use `default` for `/var/log/whodb/whodb.log`, or specify a custom path | unset (stdout) |
+| `WHODB_ACCESS_LOG_FILE` | Redirect all HTTP access logs to a dedicated file. Use `default` for `/var/log/whodb/whodb.access.log`, or specify a custom path | unset (disabled) |
 | `WHODB_DISABLE_CREDENTIAL_FORM` | Disable manual DB credential form on the login page; allow login only via preconfigured connections (environment profiles, cloud providers, etc.) | `false` |
 
 ### Example with Custom Port

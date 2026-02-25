@@ -169,34 +169,51 @@ func init() {
 	configureFormatter()
 	logger.AddHook(&serviceHook{})
 
-	if logFilePath := env.LogFile; logFilePath != "" {
-		dir := filepath.Dir(logFilePath)
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			fmt.Fprintf(os.Stderr, "whodb: failed to create log directory %s: %v\n", dir, err)
-		} else if f, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "whodb: failed to open log file %s: %v\n", logFilePath, err)
-		} else {
-			logFile = f
-			logger.SetOutput(f)
-		}
+	if logFilePath := resolveLogPath(env.LogFile, env.DefaultLogFile); logFilePath != "" {
+		logFile = openLogFile(logFilePath)
+		logger.SetOutput(logFile)
 	}
 
-	if accessLogPath := env.AccessLogFile; accessLogPath != "" {
-		dir := filepath.Dir(accessLogPath)
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			fmt.Fprintf(os.Stderr, "whodb: failed to create access log directory %s: %v\n", dir, err)
-		} else if f, err := os.OpenFile(accessLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "whodb: failed to open access log file %s: %v\n", accessLogPath, err)
-		} else {
-			accessLogFile = f
-			accessLogger = logrus.New()
-			accessLogger.SetOutput(f)
-			accessLogger.SetFormatter(&logrus.TextFormatter{
-				TimestampFormat: ISO8601Format,
-				FullTimestamp:   true,
-			})
-		}
+	if accessLogPath := resolveLogPath(env.AccessLogFile, env.DefaultAccessLogFile); accessLogPath != "" {
+		accessLogFile = openLogFile(accessLogPath)
+		accessLogger = logrus.New()
+		accessLogger.SetOutput(accessLogFile)
+		accessLogger.SetFormatter(&logrus.TextFormatter{
+			TimestampFormat: ISO8601Format,
+			FullTimestamp:   true,
+		})
 	}
+}
+
+// resolveLogPath maps the env var value to an actual file path.
+// "default" (case-insensitive) returns the provided default path;
+// empty stays empty (no file logging); anything else is used as-is.
+func resolveLogPath(value string, defaultPath string) string {
+	if strings.EqualFold(value, "default") {
+		return defaultPath
+	}
+	return value
+}
+
+// openLogFile creates the parent directory and opens the file for appending.
+// Exits the process if the directory or file cannot be opened — if file logging
+// was explicitly configured, running without it is a misconfiguration.
+func openLogFile(path string) *os.File {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		fmt.Fprintf(os.Stderr, "whodb: failed to create log directory %s: %v\n", dir, err)
+		os.Exit(1)
+	}
+	if info, err := os.Lstat(path); err == nil && info.Mode()&os.ModeSymlink != 0 {
+		fmt.Fprintf(os.Stderr, "whodb: refusing to open log file %s: path is a symlink\n", path)
+		os.Exit(1)
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "whodb: failed to open log file %s: %v\n", path, err)
+		os.Exit(1)
+	}
+	return f
 }
 
 func configureFormatter() {

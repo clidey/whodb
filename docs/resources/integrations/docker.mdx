@@ -80,8 +80,8 @@ services:
       - WHODB_PORT=8080
       - WHODB_HOST=0.0.0.0
       - WHODB_LOG_LEVEL=warn
-      - WHODB_LOG_FILE=/var/log/whodb/whodb.log
-      - WHODB_ACCESS_LOG_FILE=/var/log/whodb/access.log
+      - WHODB_LOG_FILE=default
+      - WHODB_ACCESS_LOG_FILE=default
       # AI Integration
       - WHODB_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - WHODB_OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -307,8 +307,8 @@ Configure WhoDB behavior through environment variables:
 | `WHODB_HOST` | Bind address | `0.0.0.0` | `127.0.0.1` |
 | `WHODB_LOG_LEVEL` | Logging verbosity (case-insensitive) | `info` | `debug`, `warn`, `error`, `none` |
 | `WHODB_LOG_FORMAT` | Log output format | `text` | `json` |
-| `WHODB_LOG_FILE` | Redirect all logs to a file | unset (stdout) | `/var/log/whodb/whodb.log` |
-| `WHODB_ACCESS_LOG_FILE` | Write HTTP access logs to a dedicated file | unset (disabled) | `/var/log/whodb/access.log` |
+| `WHODB_LOG_FILE` | Redirect all non-HTTP logs to a file. Use `default` for `/var/log/whodb/whodb.log`, or specify a custom path | unset (stdout) | `default`, `/var/log/whodb/whodb.log` |
+| `WHODB_ACCESS_LOG_FILE` | Write HTTP access logs to a dedicated file. Use `default` for `/var/log/whodb/whodb.access.log`, or specify a custom path | unset (disabled) | `default`, `/var/log/whodb/access.log` |
 | `WHODB_DISABLE_CREDENTIAL_FORM` | Disable manual DB credential form on the login page; allow login only via preconfigured connections (environment profiles, cloud providers, etc.) | `false` | `true` |
 | `WHODB_OLLAMA_HOST` | Ollama AI host | `localhost` | `ollama-server` |
 | `WHODB_OLLAMA_PORT` | Ollama AI port | `11434` | `11434` |
@@ -533,6 +533,14 @@ FROM clidey/whodb:latest
 USER 1000:1000
 ```
 
+### Log File Security
+
+WhoDB applies restrictive permissions to log files and directories:
+
+- **Directories** are created with `0750` (owner rwx, group rx, others none)
+- **Files** are created with `0600` (owner rw only) — logs may contain query content or connection info
+- **Symlink protection** — WhoDB refuses to open a log file path that is a symlink, preventing symlink-based attacks where a malicious link redirects log writes to a sensitive file
+
 ### Read-Only Root Filesystem
 
 Mount the root filesystem as read-only:
@@ -581,8 +589,8 @@ services:
     environment:
       - WHODB_PORT=8080
       - WHODB_LOG_LEVEL=warn
-      - WHODB_LOG_FILE=/var/log/whodb/whodb.log
-      - WHODB_ACCESS_LOG_FILE=/var/log/whodb/access.log
+      - WHODB_LOG_FILE=default
+      - WHODB_ACCESS_LOG_FILE=default
     env_file:
       - .env.production
     volumes:

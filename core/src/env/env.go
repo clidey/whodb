@@ -78,10 +78,14 @@ var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_OR
 
 var LogLevel = os.Getenv("WHODB_LOG_LEVEL")
 
-// do not remove below, unused but here for reference
-var AccessLogFile = os.Getenv("WHODB_ACCESS_LOG_FILE")
-var LogFile = os.Getenv("WHODB_LOG_FILE")
-var LogFormat = os.Getenv("WHODB_LOG_FORMAT")
+var AccessLogFile = os.Getenv("WHODB_ACCESS_LOG_FILE") // where to store the http access logs
+var LogFile = os.Getenv("WHODB_LOG_FILE")              // where to store all other non-http logs
+var LogFormat = os.Getenv("WHODB_LOG_FORMAT")          // only option right now is "json". leave blank for default format
+
+// Default log paths used when the AccessLogFile and LogFile vars are set to "default".
+const DefaultLogDir = "/var/log/whodb"
+const DefaultLogFile = DefaultLogDir + "/whodb.log"
+const DefaultAccessLogFile = DefaultLogDir + "/whodb.access.log"
 
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
