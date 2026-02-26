@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,3 @@ export const markOnboardingComplete = (): void => {
     }
 };
 
-export const resetOnboarding = (): void => {
-    try {
-        localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-    } catch (error) {
-        console.error('Failed to reset onboarding state:', error);
-    }
-};
-
-export const shouldShowOnboarding = (isSampleDatabase: boolean): boolean => {
-    return isSampleDatabase && !hasCompletedOnboarding();
-};

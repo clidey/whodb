@@ -64,7 +64,6 @@ import {
     useState
 } from "react";
 import { useLocation } from "react-router-dom";
-import { v4 } from "uuid";
 import { AIProvider, useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
 import {useTranslation} from '@/hooks/use-translation';
@@ -412,7 +411,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const historyItem = {id: v4(), item: currentCode, status: false, date: new Date()};
+        const historyItem = {id: crypto.randomUUID(), item: currentCode, status: false, date: new Date()};
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);

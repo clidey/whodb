@@ -40,9 +40,7 @@ import {
     toast
 } from "@clidey/ux";
 import { SearchSelect } from "./ux";
-import map from "lodash/map";
 import { FC, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
-import { v4 } from "uuid";
 import { useGetAiModelsLazyQuery, useGetAiProvidersLazyQuery } from "../generated/graphql";
 import { reduxStore } from "../store";
 import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models";
@@ -63,7 +61,7 @@ import {
 } from "./heroicons";
 import { Icons } from "./icons";
 
-export const externalModelTypes = map(availableExternalModelTypes, (model) => ({
+export const externalModelTypes = availableExternalModelTypes.map((model) => ({
     id: model,
     label: model,
     icon: (Icons.Logos as Record<string, ReactElement>)[model],
@@ -309,7 +307,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             },
             onCompleted(data) {
                 dispatch(AIModelsActions.setModels(data.AIModel));
-                const id = v4();
+                const id = crypto.randomUUID();
                 dispatch(AIModelsActions.addAIModelType({
                     id,
                     modelType: externalModelType,

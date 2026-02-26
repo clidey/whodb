@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback} from "react";
 import * as desktopService from "../services/desktop";
 import {isDesktopApp} from "../utils/external-links";
 import {addAuthHeader} from "../utils/auth-headers";
@@ -107,56 +107,3 @@ export const useExportToCSV = (schema: string, storageUnit: string, selectedOnly
     }, [schema, storageUnit, selectedOnly, delimiter, selectedRows, format]);
 };
 
-type ILongPressProps = {
-  onLongPress: () => (() => void | void);
-  onClick?: () => void;
-  ms?: number;
-}
-  
-export const useLongPress = ({
-  onLongPress,
-  onClick = () => {},
-  ms = 300,
-}: ILongPressProps) => {
-  const [startLongPress, setStartLongPress] = useState(false);
-  const cleanUpFunction = useRef<() => void | void>();
-
-  useEffect(() => {
-    let timerId: ReturnType<typeof setTimeout> | undefined;
-    if (startLongPress) {
-      timerId = setTimeout(() => {
-        cleanUpFunction.current = onLongPress();
-        setStartLongPress(false);
-      }, ms);
-    } else {
-      if (timerId != null) {
-        clearTimeout(timerId);
-      }
-    }
-
-    return () => {
-      if (timerId != null) {
-        clearTimeout(timerId);
-      }
-    };
-  }, [onLongPress, ms, startLongPress]);
-
-  const start = useCallback(() => {
-    setStartLongPress(true);
-  }, []);
-
-  const stop = useCallback(() => {
-    if (startLongPress) {
-      onClick?.();
-    }
-    cleanUpFunction.current?.();
-    setStartLongPress(false);
-  }, [onClick, startLongPress]);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: stop,
-    onTouchStart: start,
-    onTouchEnd: stop,
-  };
-};

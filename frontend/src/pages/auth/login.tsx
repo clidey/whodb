@@ -27,10 +27,8 @@ import {
     useSettingsConfigQuery
 } from '@graphql';
 import classNames from "classnames";
-import entries from "lodash/entries";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
-import {v4} from 'uuid';
 import logoImage from "../../../public/images/logo.svg";
 import {
     AdjustmentsHorizontalIcon,
@@ -72,7 +70,7 @@ import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 function generateCredentialId(type: string, hostname: string, username: string, database: string): string | undefined {
     // browser environment just uses a random ID
     if (!isDesktopApp()) {
-        return v4();
+        return crypto.randomUUID();
     }
 
     // desktop environment uses a deterministic ID based on connection details
@@ -89,7 +87,7 @@ function generateCredentialId(type: string, hostname: string, username: string, 
         const encoded = btoa(combined).replace(/[+/=]/g, '');
         return encoded.substring(0, 16).toLowerCase();
     } catch {
-        return v4();
+        return crypto.randomUUID();
     }
 }
 
@@ -192,7 +190,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             Database: database,
             Username: username,
             Password: password,
-            Advanced: entries(advancedForm).map(([Key, Value]) => ({ Key, Value })),
+            Advanced: Object.entries(advancedForm).map(([Key, Value]) => ({ Key, Value })),
         };
 
         login({
@@ -907,7 +905,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
-                            {entries(advancedForm)
+                            {Object.entries(advancedForm)
                                 .filter(([key]) => !Object.values(SSL_KEYS).includes(key as any))
                                 .map(([key, value]) => (
                                 <div className="flex flex-col gap-sm" key={key}>

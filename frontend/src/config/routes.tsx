@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import values from "lodash/values";
 import { FC, lazy, ReactNode, Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { LoginPage } from "../pages/auth/login";
@@ -113,7 +112,7 @@ export const PrivateRoute: FC = () => {
 
 export const getRoutes = (): IInternalRoute[] => {
     const allRoutes: IInternalRoute[] = [];
-    const currentRoutes = values(InternalRoutes);
+    const currentRoutes = Object.values(InternalRoutes);
     while (currentRoutes.length > 0) {
         const currentRoute = currentRoutes.shift();
         if (currentRoute == null) {
@@ -123,7 +122,7 @@ export const getRoutes = (): IInternalRoute[] => {
             allRoutes.push(currentRoute);
             continue;
         }
-        currentRoutes.push(...values((currentRoute)));
+        currentRoutes.push(...Object.values((currentRoute)));
     }
     return allRoutes;
 }

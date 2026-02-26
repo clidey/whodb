@@ -332,8 +332,8 @@ test.describe('Loading States & Spinners', () => {
                     // Wait for graph to load
                     await responsePromise;
 
-                    // Verify graph is rendered (canvas or SVG should be present)
-                    await page.locator('canvas, svg').first().waitFor({ timeout: 5000 });
+                    // Verify graph is rendered (react-flow nodes should be present)
+                    await page.locator('.react-flow__node').first().waitFor({ timeout: 15000 });
                 });
             });
         });

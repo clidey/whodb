@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { AiChatMessage } from '@graphql';
-import { v4 } from 'uuid';
 
 
 export type IChatMessage = AiChatMessage & {
@@ -129,7 +128,7 @@ export const houdiniSlice = createSlice({
     // New session management actions
     initializeChatSessions: (state) => {
         if (state.sessions.length === 0) {
-            const newId = v4();
+            const newId = crypto.randomUUID();
             const newSession: ChatSession = {
                 id: newId,
                 name: "Chat 1",
@@ -146,7 +145,7 @@ export const houdiniSlice = createSlice({
         }
     },
     addChatSession: (state, action: PayloadAction<{ name?: string }>) => {
-        const newId = v4();
+        const newId = crypto.randomUUID();
         const newSession: ChatSession = {
             id: newId,
             name: action.payload.name || `Chat ${state.sessions.length + 1}`,

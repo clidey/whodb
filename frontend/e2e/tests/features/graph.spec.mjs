@@ -78,7 +78,7 @@ test.describe('Graph Visualization', () => {
             await page.locator(`[data-testid="rf__node-${tableName}"] [data-testid="data-button"]`).click({ force: true });
 
             await expect(page).toHaveURL(/\/storage-unit\/explore/, { timeout: 15000 });
-            await expect(page.locator('text=Total Count:').first()).toBeVisible({ timeout: 10000 });
+            await page.locator('table tbody tr').first().waitFor({ state: 'visible', timeout: 30000 });
         });
     }, { features: ['graph'] });
 

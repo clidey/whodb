@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 import {Toaster} from "@clidey/ux";
 import {useUpdateSettingsMutation} from '@graphql';
-import map from "lodash/map";
 import {useCallback, useEffect} from "react";
 import {Route, Routes} from "react-router-dom";
 import {getStoredConsentState, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
@@ -134,7 +133,7 @@ export const App = () => {
         <DatabaseDownOverlay />
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
-            {map(getRoutes(), route => (
+            {getRoutes().map(route => (
               <Route key={route.path} path={route.path} element={route.component} />
             ))}
             <Route path="/" element={<NavigateToDefault />} />

@@ -15,7 +15,6 @@
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { v4 } from 'uuid';
 import { WhereCondition } from '@graphql';
 
 export type ScratchpadPage = {
@@ -55,8 +54,8 @@ export const scratchpadSlice = createSlice({
   reducers: {
     initializeScratchpad: (state) => {
       if (state.pages.length === 0) {
-        const newId = v4();
-        const cellId = v4();
+        const newId = crypto.randomUUID();
+        const cellId = crypto.randomUUID();
         const firstPage: ScratchpadPage = { id: newId, name: "Page 1", cellIds: [cellId] };
         const firstCell: ScratchpadCell = {
           id: cellId,
@@ -70,8 +69,8 @@ export const scratchpadSlice = createSlice({
       }
     },
     addPage: (state, action: PayloadAction<{ name?: string; initialQuery?: string }>) => {
-      const newId = v4();
-      const cellId = v4();
+      const newId = crypto.randomUUID();
+      const cellId = crypto.randomUUID();
       const newPage: ScratchpadPage = {
         id: newId,
         name: action.payload.name || `Page ${state.pages.length + 1}`,
@@ -120,7 +119,7 @@ export const scratchpadSlice = createSlice({
       }
     },
     addCell: (state, action: PayloadAction<{ pageId: string; afterCellId?: string; initialQuery?: string }>) => {
-      const newCellId = v4();
+      const newCellId = crypto.randomUUID();
       const newCell: ScratchpadCell = {
         id: newCellId,
         code: action.payload.initialQuery || "",
@@ -167,7 +166,7 @@ export const scratchpadSlice = createSlice({
       const cell = state.cells[action.payload.cellId];
       if (cell) {
         cell.history.unshift({
-          id: v4(),
+          id: crypto.randomUUID(),
           item: action.payload.item,
           status: action.payload.status,
           date: new Date()
@@ -190,7 +189,7 @@ export const scratchpadSlice = createSlice({
       state.pages.forEach(page => {
         // Handle case where cellIds might be undefined or null
         if (!page.cellIds || page.cellIds.length === 0) {
-          const cellId = v4();
+          const cellId = crypto.randomUUID();
           const newCell: ScratchpadCell = {
             id: cellId,
             code: "",
@@ -205,8 +204,8 @@ export const scratchpadSlice = createSlice({
       
       // If no pages exist, initialize with a default page
       if (state.pages.length === 0) {
-        const newId = v4();
-        const cellId = v4();
+        const newId = crypto.randomUUID();
+        const cellId = crypto.randomUUID();
         const firstPage: ScratchpadPage = { id: newId, name: "Page 1", cellIds: [cellId] };
         const firstCell: ScratchpadCell = {
           id: cellId,
@@ -237,7 +236,7 @@ export const scratchpadSlice = createSlice({
       }
     },
     addCellToPageAndActivate: (state, action: PayloadAction<{ pageId: string; initialQuery?: string }>) => {
-      const newCellId = v4();
+      const newCellId = crypto.randomUUID();
       const newCell: ScratchpadCell = {
         id: newCellId,
         code: action.payload.initialQuery || "",

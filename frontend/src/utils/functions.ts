@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import isNaN from "lodash/isNaN";
 import sampleSize from "lodash/sampleSize";
 import {DatabaseType} from '@graphql';
 
@@ -25,47 +24,6 @@ import {DatabaseType} from '@graphql';
  */
 export function isNumeric(str: string) {
     return !isNaN(Number(str));
-}
-
-/**
- * Converts a name to a URL-friendly slug.
- * @param name - The name to convert
- * @returns Lowercase hyphenated string (e.g., "My Name" -> "my-name")
- */
-export function createStub(name: string) {
-    return name.split(" ").map(word => word.toLowerCase()).join("-");
-}
-
-/**
- * Detects if a string contains markdown formatting.
- * @param text - The text to check
- * @returns True if the text contains common markdown patterns
- */
-export function isMarkdown(text: string): boolean {
-    const markdownPatterns = [
-        /^#{1,6}\s+/,
-        /^\s*[-*+]\s+/,
-        /^\d+\.\s+/,
-        /\*\*[^*]+\*\*/,
-        /_[^_]+_/,
-        /!\[.*?\]\(.*?\)/,
-        /\[.*?\]\(.*?\)/,
-        /^>\s+/,
-        /`{1,3}[^`]*`{1,3}/,
-        /-{3,}/,
-    ];
-
-    return markdownPatterns.some(pattern => pattern.test(text));
-}
-
-/**
- * Checks if a string could be valid JSON by checking for opening brace.
- * Used for early intellisense triggering before full JSON validation.
- * @param str - The string to check
- * @returns True if the string starts with "{"
- */
-export function isValidJSON(str: string): boolean {
-    return str.startsWith("{");
 }
 
 // Initialize EE NoSQL check function

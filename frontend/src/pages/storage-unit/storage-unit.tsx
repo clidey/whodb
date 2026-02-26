@@ -62,9 +62,6 @@ import {
     XMarkIcon
 } from '../../components/heroicons';
 import classNames from "classnames";
-import clone from "lodash/clone";
-import cloneDeep from "lodash/cloneDeep";
-import filter from "lodash/filter";
 import {FC, useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
@@ -304,7 +301,7 @@ export const StorageUnitPage: FC = () => {
 
     const handleFieldValueChange = useCallback((type: string, index: number, value: string | boolean) => {
         setFields(f => {
-            const newF = cloneDeep(f);
+            const newF = structuredClone(f);
             if (type === "Key" || type === "Value") {
                 newF[index][type] = value as string;
             } else {
@@ -327,7 +324,7 @@ export const StorageUnitPage: FC = () => {
             return;
         }
         setFields(f => {
-            const newF = clone(f);
+            const newF = [...f];
             newF.splice(index, 1);
             return newF;
         })
@@ -361,7 +358,7 @@ export const StorageUnitPage: FC = () => {
 
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
-        return filter(data?.StorageUnit ?? [], unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue))
+        return (data?.StorageUnit ?? []).filter(unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue))
             .sort((a, b) => a.Name.localeCompare(b.Name));
     }, [data?.StorageUnit, filterValue]);
 
