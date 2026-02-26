@@ -69,7 +69,7 @@ dev: prepare
 build: prepare
 	@echo "Building WhoDB Desktop for current platform..."
 	$(eval PLATFORM_ENV := unknown)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean $(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath $(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 
 # Build for all platforms
 build-all: build-windows build-mac build-linux
@@ -79,13 +79,13 @@ build-windows: prepare
 	@echo "Building WhoDB for Windows AMD64..."
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform windows/amd64 \
 		$(BUILD_TAGS) $(WINDOWS_TAGS) $(WINDOWS_DEVTOOLS_FLAG) $(WINDOWS_DEBUG_FLAG) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
 	@echo "Building WhoDB for Windows ARM64..."
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform windows/arm64 \
 		$(BUILD_TAGS) $(WINDOWS_TAGS) $(WINDOWS_DEVTOOLS_FLAG) $(WINDOWS_DEBUG_FLAG) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
 
@@ -94,7 +94,7 @@ build-mac: prepare
 	@echo "Building WhoDB for macOS Universal..."
 	@mkdir -p build/darwin/universal
 	$(eval PLATFORM_ENV := mac-universal)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/universal \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/universal \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv "build/bin/$(APP_NAME)" build/darwin/universal/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/universal/
 	@if [ -f "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -107,7 +107,7 @@ build-mac-arm64: prepare
 	@echo "Building WhoDB for macOS ARM64..."
 	@mkdir -p build/darwin/arm64
 	$(eval PLATFORM_ENV := mac-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/arm64 \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv "build/bin/$(APP_NAME)" build/darwin/arm64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/arm64/
 	@if [ -f "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -120,7 +120,7 @@ build-mac-amd64: prepare
 	@echo "Building WhoDB for macOS AMD64..."
 	@mkdir -p build/darwin/amd64
 	$(eval PLATFORM_ENV := mac-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/amd64 \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv "build/bin/$(APP_NAME)" build/darwin/amd64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/amd64/
 	@if [ -f "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -133,7 +133,7 @@ build-linux: prepare
 	@echo "Building WhoDB for Linux (native architecture)..."
 	@mkdir -p build/linux/$$(uname -m)
 	$(eval PLATFORM_ENV := linux-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath \
 		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
 	@echo "Note: Cross-compilation for other architectures requires proper toolchain setup"
@@ -143,7 +143,7 @@ build-linux-amd64: prepare
 	@echo "Building WhoDB for Linux AMD64..."
 	@mkdir -p build/linux/amd64
 	$(eval PLATFORM_ENV := linux-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform linux/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform linux/amd64 \
 		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/amd64/
 
@@ -152,7 +152,7 @@ build-linux-arm64: prepare
 	@echo "Building WhoDB for Linux ARM64..."
 	@mkdir -p build/linux/arm64
 	$(eval PLATFORM_ENV := linux-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform linux/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform linux/arm64 \
 		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/arm64/
 
@@ -165,7 +165,7 @@ build-prod-windows-amd64: prepare
 	@echo "Building WhoDB Windows executable for AMD64..."
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform windows/amd64 \
 		$(BUILD_TAGS) $(WINDOWS_TAGS) $(WINDOWS_DEVTOOLS_FLAG) $(WINDOWS_DEBUG_FLAG) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) $(WINDOWS_GUI_LDFLAG)" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
@@ -187,7 +187,7 @@ ci-build-prod-windows-amd64:
 	cp -r ../frontend/build/* frontend/dist/
 	@mkdir -p build/windows/amd64
 	$(eval PLATFORM_ENV := windows-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform windows/amd64 \
 		$(BUILD_TAGS) $(WINDOWS_TAGS) $(WINDOWS_DEVTOOLS_FLAG) $(WINDOWS_DEBUG_FLAG) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) $(WINDOWS_GUI_LDFLAG)" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/amd64/
@@ -197,7 +197,7 @@ build-prod-windows-arm64: prepare
 	@echo "Building WhoDB Windows executable for ARM64..."
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform windows/arm64 \
 		$(BUILD_TAGS) $(WINDOWS_TAGS) $(WINDOWS_DEVTOOLS_FLAG) $(WINDOWS_DEBUG_FLAG) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) $(WINDOWS_GUI_LDFLAG)" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
@@ -219,7 +219,7 @@ ci-build-prod-windows-arm64:
 	cp -r ../frontend/build/* frontend/dist/
 	@mkdir -p build/windows/arm64
 	$(eval PLATFORM_ENV := windows-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform windows/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform windows/arm64 \
 		$(BUILD_TAGS) $(WINDOWS_TAGS) $(WINDOWS_DEVTOOLS_FLAG) $(WINDOWS_DEBUG_FLAG) -windowsconsole=$(WINDOWS_CONSOLE) -ldflags="$(LDFLAGS) $(WINDOWS_GUI_LDFLAG)" \
 		-o $(OUTPUT_PREFIX).exe
 	@mv build/bin/$(OUTPUT_PREFIX).exe build/windows/arm64/
@@ -228,7 +228,7 @@ build-prod-mac: prepare
 	@echo "Building WhoDB macOS app (no pkg flag)..."
 	@mkdir -p build/darwin/universal
 	$(eval PLATFORM_ENV := mac-universal)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/universal \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/universal \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX).pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/$(APP_NAME)" build/darwin/universal/
 	@if [ -f "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -253,7 +253,7 @@ ci-build-prod-mac:
 	cp -r ../frontend/build/* frontend/dist/
 	@mkdir -p build/darwin/universal
 	$(eval PLATFORM_ENV := mac-universal)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/universal \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/universal \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX).pkg build/darwin/universal/ 2>/dev/null || mv "build/bin/$(APP_NAME)" build/darwin/universal/
 	@if [ -f "build/darwin/universal/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -266,7 +266,7 @@ build-prod-mac-arm64: prepare
 	@echo "Building WhoDB macOS app for ARM64 (optimized)..."
 	@mkdir -p build/darwin/arm64
 	$(eval PLATFORM_ENV := mac-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/arm64 \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv "build/bin/$(APP_NAME)" build/darwin/arm64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/arm64/
 	@if [ -f "build/darwin/arm64/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -279,7 +279,7 @@ build-prod-mac-amd64: prepare
 	@echo "Building WhoDB macOS app for AMD64 (optimized)..."
 	@mkdir -p build/darwin/amd64
 	$(eval PLATFORM_ENV := mac-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform darwin/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform darwin/amd64 \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv "build/bin/$(APP_NAME)" build/darwin/amd64/ 2>/dev/null || mv build/bin/$(OUTPUT_PREFIX) build/darwin/amd64/
 	@if [ -f "build/darwin/amd64/$(APP_NAME)/Contents/Info.plist" ]; then \
@@ -421,7 +421,7 @@ build-prod-linux: prepare
 	@echo "Building WhoDB Linux binary for native architecture ($$(uname -m))..."
 	@mkdir -p build/linux/$$(uname -m)
 	$(eval PLATFORM_ENV := linux-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath \
 		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/$$(uname -m)/
 
@@ -450,7 +450,7 @@ ci-build-prod-linux:
 	if [ -n "$$GOARCH_VALUE" ]; then export GOARCH=$$GOARCH_VALUE; else unset GOARCH; fi; \
 	CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
 	CGO_LDFLAGS="-s -w -Wl,--gc-sections -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -flto" \
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath \
 		$(BUILD_TAGS) $(LINUX_TAGS) -ldflags="-X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=$$PLATFORM_ENV -s -w -extldflags '-static-libgcc -static-libstdc++ -Wl,--gc-sections -Wl,--as-needed'" -o $(OUTPUT_PREFIX); \
 	mv build/bin/$(OUTPUT_PREFIX) build/linux/$$ARCH_DIR/
 
@@ -459,7 +459,7 @@ build-prod-linux-amd64: prepare
 	@echo "Building WhoDB Linux binary for AMD64..."
 	@mkdir -p build/linux/amd64
 	$(eval PLATFORM_ENV := linux-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform linux/amd64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform linux/amd64 \
 		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/amd64/
 
@@ -468,7 +468,7 @@ build-prod-linux-arm64: prepare
 	@echo "Building WhoDB Linux binary for ARM64..."
 	@mkdir -p build/linux/arm64
 	$(eval PLATFORM_ENV := linux-arm64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -platform linux/arm64 \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath -platform linux/arm64 \
 		$(BUILD_TAGS) $(LINUX_TAGS)  -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)
 	@mv build/bin/$(OUTPUT_PREFIX) build/linux/arm64/
 
@@ -477,7 +477,7 @@ build-linux-compat: prepare
 	@echo "Building WhoDB for Linux (native architecture, compatibility mode)..."
 	@mkdir -p build/linux/$$(uname -m)-compat
 	$(eval PLATFORM_ENV := linux-amd64)
-	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean \
+	GOWORK=$$PWD/../$(GOWORK) $(WAILS) build -clean -trimpath \
 		$(BUILD_TAGS) -ldflags="$(LDFLAGS)" -o $(OUTPUT_PREFIX)-compat
 	@mv build/bin/$(OUTPUT_PREFIX)-compat build/linux/$$(uname -m)-compat/
 
@@ -504,7 +504,7 @@ $(SERVER_BUILD_DIR):
 # Build server for amd64
 server-amd64: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux AMD64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags prod \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags prod -trimpath \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-amd64" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-amd64 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-amd64"
@@ -512,7 +512,7 @@ server-amd64: | $(SERVER_BUILD_DIR)
 # Build server for arm64
 server-arm64: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux ARM64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build -tags prod \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build -tags prod -trimpath \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-arm64" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-arm64 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-arm64"
@@ -520,7 +520,7 @@ server-arm64: | $(SERVER_BUILD_DIR)
 # Build server for riscv64
 server-riscv64: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux RISC-V64..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 CC=riscv64-linux-gnu-gcc go build -tags prod \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 CC=riscv64-linux-gnu-gcc go build -tags prod -trimpath \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-riscv64" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-riscv64 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-riscv64"
@@ -528,7 +528,7 @@ server-riscv64: | $(SERVER_BUILD_DIR)
 # Build server for armv6
 server-armv6: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux ARMv6..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=6 CC=arm-linux-gnueabihf-gcc go build -tags prod \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=6 CC=arm-linux-gnueabihf-gcc go build -tags prod -trimpath \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv6" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv6 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv6"
@@ -536,7 +536,7 @@ server-armv6: | $(SERVER_BUILD_DIR)
 # Build server for armv7
 server-armv7: | $(SERVER_BUILD_DIR)
 	@echo "Building WhoDB server for Linux ARMv7..."
-	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC=arm-linux-gnueabihf-gcc go build -tags prod \
+	@cd ../core && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC=arm-linux-gnueabihf-gcc go build -tags prod -trimpath \
 		-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=$(VERSION) -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=linux-armv7" \
 		-o ../desktop-common/$(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv7 .
 	@echo "✅ Built: $(SERVER_BUILD_DIR)/$(SERVER_BINARY_NAME)-$(VERSION)-linux-armv7"

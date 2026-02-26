@@ -44,7 +44,7 @@ COPY cli/ ./cli/
 # Build CLI binary with version injection
 WORKDIR /app/cli
 ARG TARGETARCH
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build \
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath \
     -ldflags "-s -w -X github.com/clidey/whodb/cli/pkg/version.Version=${VERSION}" \
     -o /whodb-cli .
 
