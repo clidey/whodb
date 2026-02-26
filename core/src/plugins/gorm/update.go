@@ -120,10 +120,3 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 	})
 }
 
-// GetErrorHandler returns the error handler (initializing if needed)
-func (p *GormPlugin) GetErrorHandler() *ErrorHandler {
-	if p.errorHandler == nil {
-		p.InitPlugin()
-	}
-	return p.errorHandler
-}

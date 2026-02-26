@@ -769,27 +769,6 @@ func (p *GormPlugin) WithTransaction(config *engine.PluginConfig, operation func
 	return err
 }
 
-// ExecuteInTransaction wraps common database operations in a transaction
-func (p *GormPlugin) ExecuteInTransaction(config *engine.PluginConfig, operations func(tx *gorm.DB) error) error {
-	return p.WithTransaction(config, func(txInterface any) error {
-		tx, ok := txInterface.(*gorm.DB)
-		if !ok {
-			return fmt.Errorf("invalid transaction type")
-		}
-		return operations(tx)
-	})
-}
-
-// AddRowInTx adds a row using an existing transaction
-func (p *GormPlugin) AddRowInTx(tx *gorm.DB, schema string, storageUnit string, values []engine.Record) error {
-	return p.addRowWithDB(tx, schema, storageUnit, values)
-}
-
-// ClearTableDataInTx clears table data using an existing transaction
-func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit string) error {
-	return p.clearTableDataWithDB(tx, schema, storageUnit)
-}
-
 // GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)
 func (p *GormPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
 	return make(map[string]*engine.ForeignKeyRelationship), nil

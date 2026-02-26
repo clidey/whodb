@@ -264,7 +264,14 @@ export const extrasMethods = {
     },
 
     async closeQueryHistory() {
+        // Press Escape twice: first to dismiss any open autocomplete/popover in the
+        // editor behind the dialog, second to close the sheet itself.
         await this.page.keyboard.press("Escape");
+        await this.page.waitForTimeout(200);
+        const stillOpen = await this.page.locator('[role="dialog"]').count();
+        if (stillOpen > 0) {
+            await this.page.keyboard.press("Escape");
+        }
 
         const dialogCount = await this.page.locator('[role="dialog"]').count();
         if (dialogCount > 0) {

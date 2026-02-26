@@ -111,33 +111,6 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 }
 
 // GetColumnTypes uses GORM's Migrator when possible, falls back to raw SQL
-// GetOrderedColumnsWithTypes returns columns in definition order with their types
-func (p *GormPlugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName string) ([]engine.Column, map[string]string, error) {
-	migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-
-	// Build full table name for Migrator
-	var fullTableName string
-	if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
-		fullTableName = schema + "." + tableName
-	} else {
-		fullTableName = tableName
-	}
-
-	// Get ordered columns
-	columns, err := migrator.GetOrderedColumns(fullTableName)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Build column types map for backward compatibility
-	columnTypes := make(map[string]string, len(columns))
-	for _, col := range columns {
-		columnTypes[col.Name] = col.Type
-	}
-
-	return columns, columnTypes, nil
-}
-
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
 	migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 
