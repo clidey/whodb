@@ -38,7 +38,6 @@ type persistedProviderConfig struct {
 	DiscoverRDS         bool   `json:"discoverRDS"`
 	DiscoverElastiCache bool   `json:"discoverElastiCache"`
 	DiscoverDocumentDB  bool   `json:"discoverDocumentDB"`
-	DBUsername          string `json:"dbUsername,omitempty"`
 }
 
 // getConfigOptions returns the datadir options for this environment.
@@ -52,7 +51,6 @@ func getConfigOptions() datadir.Options {
 
 // saveProvidersToFile persists the current provider configs to the unified config file.
 // This is called automatically after add/update/remove operations.
-// Credentials are NOT saved (static auth users must re-enter on restart).
 func saveProvidersToFile() error {
 	awsProvidersMu.RLock()
 	providers := make([]persistedProviderConfig, 0, len(awsProviders))
@@ -66,7 +64,6 @@ func saveProvidersToFile() error {
 			DiscoverRDS:         state.Config.DiscoverRDS,
 			DiscoverElastiCache: state.Config.DiscoverElastiCache,
 			DiscoverDocumentDB:  state.Config.DiscoverDocumentDB,
-			DBUsername:          state.Config.DBUsername,
 		})
 	}
 	awsProvidersMu.RUnlock()
@@ -85,8 +82,6 @@ func saveProvidersToFile() error {
 
 // LoadProvidersFromFile loads persisted provider configs from the unified config file.
 // This should be called during server startup.
-// For static auth providers, credentials will be empty and status will indicate
-// that credentials need to be re-entered.
 func LoadProvidersFromFile() error {
 	if !env.IsAWSProviderEnabled {
 		return nil
@@ -119,7 +114,6 @@ func LoadProvidersFromFile() error {
 			DiscoverRDS:         cfg.DiscoverRDS,
 			DiscoverElastiCache: cfg.DiscoverElastiCache,
 			DiscoverDocumentDB:  cfg.DiscoverDocumentDB,
-			DBUsername:          cfg.DBUsername,
 		}
 
 		// Check if this provider already exists (e.g., from env var)
@@ -133,16 +127,10 @@ func LoadProvidersFromFile() error {
 		}
 
 		// Add the provider
-		state, err := AddAWSProvider(providerCfg)
+		_, err := AddAWSProvider(providerCfg)
 		if err != nil {
 			log.Warnf("Failed to load persisted provider %s: %v", cfg.Name, err)
 			continue
-		}
-
-		// For static auth without credentials, mark as needing credentials
-		if cfg.AuthMethod == "static" {
-			state.Status = "CredentialsRequired"
-			state.Error = "Static credentials must be re-entered after restart"
 		}
 
 		loadedCount++

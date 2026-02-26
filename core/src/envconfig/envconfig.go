@@ -94,9 +94,6 @@ func GetAWSProvidersFromEnv() ([]env.AWSProviderEnvConfig, error) {
 
 	// Apply defaults
 	for i := range configs {
-		if configs[i].Auth == "" {
-			configs[i].Auth = "default"
-		}
 		if configs[i].DiscoverRDS == nil {
 			t := true
 			configs[i].DiscoverRDS = &t

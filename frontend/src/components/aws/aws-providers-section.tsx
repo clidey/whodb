@@ -45,7 +45,6 @@ function getStatusVariant(status: CloudProviderStatus): "default" | "secondary" 
         case CloudProviderStatus.Discovering:
             return "secondary";
         case CloudProviderStatus.Error:
-        case CloudProviderStatus.CredentialsRequired:
             return "destructive";
         case CloudProviderStatus.Disconnected:
         default:
@@ -199,7 +198,9 @@ export const AwsProvidersSection: FC = () => {
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <span>{provider.Region}</span>
-                                    <span>{provider.AuthMethod}</span>
+                                    {provider.ProfileName && (
+                                        <span>{provider.ProfileName}</span>
+                                    )}
                                     {provider.DiscoveredCount > 0 && (
                                         <span>{t('resourcesDiscovered', { count: provider.DiscoveredCount })}</span>
                                     )}

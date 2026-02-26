@@ -22,35 +22,6 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func TestParseFromWhoDB_StaticAuth(t *testing.T) {
-	creds := &engine.Credentials{
-		Hostname: "us-west-2",
-		Username: "AKIAIOSFODNN7EXAMPLE",
-		Password: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "static"},
-		},
-	}
-
-	config, err := ParseFromWhoDB(creds)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if config.Region != "us-west-2" {
-		t.Errorf("expected region us-west-2, got %s", config.Region)
-	}
-	if config.AuthMethod != AuthMethodStatic {
-		t.Errorf("expected auth method static, got %s", config.AuthMethod)
-	}
-	if config.AccessKeyID != "AKIAIOSFODNN7EXAMPLE" {
-		t.Errorf("expected access key ID AKIAIOSFODNN7EXAMPLE, got %s", config.AccessKeyID)
-	}
-	if config.SecretAccessKey != "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" {
-		t.Errorf("expected secret access key, got %s", config.SecretAccessKey)
-	}
-}
-
 func TestParseFromWhoDB_ProfileAuth(t *testing.T) {
 	creds := &engine.Credentials{
 		Hostname: "eu-west-1",
@@ -88,28 +59,6 @@ func TestParseFromWhoDB_DefaultAuth(t *testing.T) {
 	}
 }
 
-func TestParseFromWhoDB_SessionToken(t *testing.T) {
-	sessionToken := "FwoGZXIvYXdzE..."
-	creds := &engine.Credentials{
-		Hostname:    "us-west-2",
-		Username:    "AKIAIOSFODNN7EXAMPLE",
-		Password:    "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-		AccessToken: &sessionToken,
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "static"},
-		},
-	}
-
-	config, err := ParseFromWhoDB(creds)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if config.SessionToken != sessionToken {
-		t.Errorf("expected session token %s, got %s", sessionToken, config.SessionToken)
-	}
-}
-
 func TestParseFromWhoDB_NilCredentials(t *testing.T) {
 	_, err := ParseFromWhoDB(nil)
 	if err == nil {
@@ -119,46 +68,14 @@ func TestParseFromWhoDB_NilCredentials(t *testing.T) {
 
 func TestParseFromWhoDB_MissingRegion(t *testing.T) {
 	creds := &engine.Credentials{
-		Username: "AKIAIOSFODNN7EXAMPLE",
-		Password: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
 		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "static"},
+			{Key: AdvancedKeyAuthMethod, Value: "default"},
 		},
 	}
 
 	_, err := ParseFromWhoDB(creds)
 	if err != ErrRegionRequired {
 		t.Errorf("expected ErrRegionRequired, got %v", err)
-	}
-}
-
-func TestParseFromWhoDB_StaticAuthMissingCredentials(t *testing.T) {
-	// Missing access key
-	creds := &engine.Credentials{
-		Hostname: "us-west-2",
-		Password: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "static"},
-		},
-	}
-
-	_, err := ParseFromWhoDB(creds)
-	if err != ErrStaticCredentialsRequired {
-		t.Errorf("expected ErrStaticCredentialsRequired, got %v", err)
-	}
-
-	// Missing secret key
-	creds = &engine.Credentials{
-		Hostname: "us-west-2",
-		Username: "AKIAIOSFODNN7EXAMPLE",
-		Advanced: []engine.Record{
-			{Key: AdvancedKeyAuthMethod, Value: "static"},
-		},
-	}
-
-	_, err = ParseFromWhoDB(creds)
-	if err != ErrStaticCredentialsRequired {
-		t.Errorf("expected ErrStaticCredentialsRequired, got %v", err)
 	}
 }
 
@@ -195,8 +112,6 @@ func TestParseFromWhoDB_AuthMethodCaseInsensitive(t *testing.T) {
 		input    string
 		expected AuthMethod
 	}{
-		{"STATIC", AuthMethodStatic},
-		{"Static", AuthMethodStatic},
 		{"PROFILE", AuthMethodProfile},
 		{"Profile", AuthMethodProfile},
 		{"DEFAULT", AuthMethodDefault},
@@ -206,8 +121,6 @@ func TestParseFromWhoDB_AuthMethodCaseInsensitive(t *testing.T) {
 	for _, tc := range testCases {
 		creds := &engine.Credentials{
 			Hostname: "us-west-2",
-			Username: "AKIAIOSFODNN7EXAMPLE",
-			Password: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
 			Advanced: []engine.Record{
 				{Key: AdvancedKeyAuthMethod, Value: tc.input},
 				{Key: AdvancedKeyProfileName, Value: "test"}, // For profile auth
@@ -225,48 +138,14 @@ func TestParseFromWhoDB_AuthMethodCaseInsensitive(t *testing.T) {
 	}
 }
 
-func TestBuildCredentialsProvider_Static(t *testing.T) {
-	config := &AWSCredentialConfig{
-		Region:          "us-west-2",
-		AuthMethod:      AuthMethodStatic,
-		AccessKeyID:     "AKIAIOSFODNN7EXAMPLE",
-		SecretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-	}
-
-	provider := config.BuildCredentialsProvider()
-	if provider == nil {
-		t.Error("expected non-nil credentials provider for static auth")
-	}
-}
-
-func TestBuildCredentialsProvider_NonStatic(t *testing.T) {
-	testCases := []AuthMethod{
-		AuthMethodProfile,
-		AuthMethodDefault,
-	}
-
-	for _, authMethod := range testCases {
-		config := &AWSCredentialConfig{
-			Region:      "us-west-2",
-			AuthMethod:  authMethod,
-			ProfileName: "test", // For profile auth
-		}
-
-		provider := config.BuildCredentialsProvider()
-		if provider != nil {
-			t.Errorf("expected nil credentials provider for auth method %s", authMethod)
-		}
-	}
-}
-
 func TestAWSCredentialConfig_IsProfileAuth(t *testing.T) {
 	config := &AWSCredentialConfig{
 		Region:     "us-west-2",
-		AuthMethod: AuthMethodStatic,
+		AuthMethod: AuthMethodDefault,
 	}
 
 	if config.IsProfileAuth() {
-		t.Error("expected IsProfileAuth to return false for static auth")
+		t.Error("expected IsProfileAuth to return false for default auth")
 	}
 
 	config.AuthMethod = AuthMethodProfile

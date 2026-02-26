@@ -13,31 +13,16 @@ en:
   sourceConfig: "~/.aws/config"
   sourceEnvironment: Environment vars
 
-  authStatic: Access Key
-  authProfile: AWS Profile
-  staticWarning: Static access keys are long-lived; prefer IAM roles or shared profiles and rotate keys regularly.
-
   displayName: Display Name
   namePlaceholder: e.g., Production AWS
   awsRegion: AWS Region
   selectRegion: Select region
   customRegion: Custom region...
   customRegionPlaceholder: e.g., us-gov-west-1
-  authMethod: Authentication Method
-  authDefault: Default (Recommended)
-  authDefaultDesc: Uses AWS SDK credential chain (env vars → ~/.aws/credentials → IAM role)
-  authStaticDesc: Enter AWS access key and secret directly
-  authProfileDesc: Use a named profile from ~/.aws/credentials
-
-  accessKeyId: Access Key ID
-  accessKeyPlaceholder: AKIAIOSFODNN7EXAMPLE
-  secretAccessKey: Secret Access Key
-  secretKeyPlaceholder: Enter secret access key
-  sessionTokenOptional: Session Token (Optional)
-  sessionTokenPlaceholder: For temporary credentials
 
   profileName: Profile Name
   profilePlaceholder: e.g., production
+  profileDesc: Leave empty to use the default credential chain (env vars, ~/.aws/credentials, IAM role)
 
   resourceDiscovery: Resource Discovery
   rdsLabel: RDS Databases
@@ -64,5 +49,4 @@ en:
 
   nameRequired: Display name is required
   regionRequired: Region is required
-  credentialsRequired: Access key ID and secret access key are required
   profileRequired: Profile name is required

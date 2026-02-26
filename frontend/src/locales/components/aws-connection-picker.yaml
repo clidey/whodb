@@ -17,8 +17,6 @@ en:
   helpAuthDefaultDesc: uses ~/.aws/credentials, env vars, or IAM role
   helpAuthProfile: Profile
   helpAuthProfileDesc: uses a named profile from ~/.aws/credentials
-  helpAuthStatic: Access Key
-  helpAuthStaticDesc: enter AWS access key and secret directly
   helpServices: "Supported Services:"
   helpRdsDesc: PostgreSQL, MySQL, MariaDB
   helpElasticacheDesc: Redis clusters

@@ -16,7 +16,6 @@ en:
   status.discovering: Discovering
   status.error: Error
   status.disconnected: Disconnected
-  status.credentialsrequired: Credentials Required
 
   envDefined: Environment
   resourcesDiscovered: "{{count}} resources"

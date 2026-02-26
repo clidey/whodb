@@ -4,9 +4,7 @@ query GetCloudProviders {
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -23,9 +21,7 @@ query GetCloudProvider($id: ID!) {
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -90,9 +86,7 @@ mutation AddAWSProvider($input: AWSProviderInput!) {
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -109,9 +103,7 @@ mutation UpdateAWSProvider($id: ID!, $input: AWSProviderInput!) {
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -138,9 +130,7 @@ mutation RefreshCloudProvider($id: ID!) {
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB

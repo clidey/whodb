@@ -199,7 +199,22 @@ export const whereMethods = {
         if (mode === "popover") {
             await this.page.locator('[data-testid="remove-where-condition-button"]').nth(index).click();
         } else {
-            console.log("Sheet mode: Need to open sheet to remove specific conditions");
+            await this.page.locator('[data-testid="where-button"]').click();
+            await this.page.waitForTimeout(300);
+
+            const deleteBtn = this.page.locator(`[data-testid="delete-existing-filter-${index}"]`);
+            await deleteBtn.waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
+            await deleteBtn.click();
+            await this.page.waitForTimeout(200);
+
+            await this.page.keyboard.press("Escape");
+            await this.page.waitForTimeout(100);
+            const dialog = this.page.locator('[role="dialog"]');
+            if (await dialog.count() > 0) {
+                await dialog.waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
+            }
+            await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
+            await this.page.waitForTimeout(300);
         }
     },
 

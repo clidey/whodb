@@ -99,7 +99,7 @@ config := &aws.Config{
     ID:                  "aws-us-west-2",
     Name:                "Production AWS",
     Region:              "us-west-2",
-    AuthMethod:          awsinfra.AuthMethodDefault, // or static, profile
+    AuthMethod:          awsinfra.AuthMethodDefault, // or profile
     DiscoverRDS:         true,
     DiscoverElastiCache: true,
     DiscoverDocumentDB:  true,
@@ -113,8 +113,9 @@ provider, err := aws.New(config)
 | Method | Description | Use Case |
 |--------|-------------|----------|
 | `default` | AWS SDK credential chain | Recommended for most cases |
-| `static` | Explicit access key + secret | Local dev, CI/CD |
 | `profile` | Named AWS profile | Multiple AWS accounts |
+
+No credentials are stored in config.json. For explicit access keys, set `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` env vars (picked up by the `default` chain).
 
 ## Usage Example
 
@@ -211,10 +212,9 @@ go test ./src/providers/...
 
 ## Security Considerations
 
-1. **Never log credentials** - Access keys, secrets, and session tokens are sensitive
+1. **No credentials stored** - config.json contains only region, profile name, and discovery flags
 2. **Use IAM roles** in production - Avoid static credentials on AWS infrastructure
-3. **Session tokens** - Properly handled for temporary credentials
-4. **TLS required** - DocumentDB and optionally ElastiCache require TLS
+3. **TLS required** - DocumentDB and optionally ElastiCache require TLS
 
 ## Environment Variables
 
@@ -224,14 +224,13 @@ Configure AWS providers via environment:
 # Single provider with default auth
 WHODB_AWS_PROVIDER='[{
   "name": "Production",
-  "region": "us-west-2",
-  "auth": "default"
+  "region": "us-west-2"
 }]'
 
-# Multiple regions
+# Multiple regions with a named profile
 WHODB_AWS_PROVIDER='[
   {"name": "US", "region": "us-west-2"},
-  {"name": "EU", "region": "eu-west-1"}
+  {"name": "EU", "region": "eu-west-1", "profileName": "eu-account"}
 ]'
 ```
 

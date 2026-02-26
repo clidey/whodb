@@ -46,13 +46,6 @@ import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 
-/** AWS authentication methods - labels are localized in the component. */
-const AUTH_METHOD_KEYS = [
-    { value: "default", labelKey: "authDefault" },
-    { value: "static", labelKey: "authStatic" },
-    { value: "profile", labelKey: "authProfile" },
-];
-
 export interface AwsProviderModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -89,10 +82,6 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const [name, setName] = useState("");
     const [region, setRegion] = useState("us-east-1");
     const [customRegion, setCustomRegion] = useState("");
-    const [authMethod, setAuthMethod] = useState("default");
-    const [accessKeyId, setAccessKeyId] = useState("");
-    const [secretAccessKey, setSecretAccessKey] = useState("");
-    const [sessionToken, setSessionToken] = useState("");
     const [profileName, setProfileName] = useState("");
     const [discoverRDS, setDiscoverRDS] = useState(true);
     const [discoverElastiCache, setDiscoverElastiCache] = useState(true);
@@ -123,24 +112,15 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                     setRegion(editingProvider.Region);
                     setCustomRegion("");
                 }
-                setAuthMethod(editingProvider.AuthMethod);
                 setProfileName(editingProvider.ProfileName ?? "");
                 setDiscoverRDS(editingProvider.DiscoverRDS);
                 setDiscoverElastiCache(editingProvider.DiscoverElastiCache);
                 setDiscoverDocumentDB(editingProvider.DiscoverDocumentDB);
-                // Don't restore credentials for security
-                setAccessKeyId("");
-                setSecretAccessKey("");
-                setSessionToken("");
             } else {
                 // Reset to defaults for add mode
                 setName("");
                 setRegion("us-east-1");
                 setCustomRegion("");
-                setAuthMethod("default");
-                setAccessKeyId("");
-                setSecretAccessKey("");
-                setSessionToken("");
                 setProfileName("");
                 setDiscoverRDS(true);
                 setDiscoverElastiCache(true);
@@ -174,15 +154,13 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
             }
         }
 
-        // Set auth method based on source
+        // Set profile name (env source uses default chain, file-based uses profile)
         if (profile.Source === "environment") {
-            setAuthMethod("default");
+            setProfileName("");
         } else {
-            // For credentials/config file profiles, use profile auth
-            setAuthMethod("profile");
-            setProfileName(profile.Name); // Always use the actual profile name, including "default"
+            setProfileName(profile.Name);
         }
-    }, [t]);
+    }, [t, awsRegions]);
 
     const getEffectiveRegion = useCallback(() => {
         return region === "custom" ? customRegion : region;
@@ -192,23 +170,17 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
         const input: AwsProviderInput = {
             Name: name,
             Region: getEffectiveRegion(),
-            AuthMethod: authMethod,
             DiscoverRDS: discoverRDS,
             DiscoverElastiCache: discoverElastiCache,
             DiscoverDocumentDB: discoverDocumentDB,
         };
 
-        if (authMethod === "static") {
-            if (accessKeyId) input.AccessKeyId = accessKeyId;
-            if (secretAccessKey) input.SecretAccessKey = secretAccessKey;
-            if (sessionToken) input.SessionToken = sessionToken;
-        } else if (authMethod === "profile") {
-            if (profileName) input.ProfileName = profileName;
+        if (profileName) {
+            input.ProfileName = profileName;
         }
 
-
         return input;
-    }, [name, getEffectiveRegion, authMethod, accessKeyId, secretAccessKey, sessionToken, profileName, discoverRDS, discoverElastiCache, discoverDocumentDB]);
+    }, [name, getEffectiveRegion, profileName, discoverRDS, discoverElastiCache, discoverDocumentDB]);
 
     const handleSubmit = useCallback(async () => {
         if (!name.trim()) {
@@ -219,16 +191,6 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
         const effectiveRegion = getEffectiveRegion();
         if (!effectiveRegion.trim()) {
             toast.error(t('regionRequired'));
-            return;
-        }
-
-        if (authMethod === "static" && (!accessKeyId || !secretAccessKey)) {
-            toast.error(t('credentialsRequired'));
-            return;
-        }
-
-        if (authMethod === "profile" && !profileName) {
-            toast.error(t('profileRequired'));
             return;
         }
 
@@ -258,7 +220,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('operationFailed', { error: errorMessage }));
         }
-    }, [name, getEffectiveRegion, authMethod, accessKeyId, secretAccessKey, profileName, buildInput, isEditMode, editingProviderId, updateProvider, addProvider, dispatch, handleClose, t]);
+    }, [name, getEffectiveRegion, buildInput, isEditMode, editingProviderId, updateProvider, addProvider, dispatch, handleClose, t]);
 
     const handleTest = useCallback(async () => {
         if (!editingProviderId) {
@@ -293,13 +255,6 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
         ...awsRegions.map(r => ({ value: r.Id, label: `${r.Id} - ${r.Description}` })),
         { value: "custom", label: t('customRegion') },
     ], [awsRegions, t]);
-
-    const authMethodOptions = useMemo(() =>
-        AUTH_METHOD_KEYS.map(m => ({
-            value: m.value,
-            label: t(m.labelKey)
-        })),
-    [t]);
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -396,78 +351,20 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         )}
                     </div>
 
-                    {/* Auth Method */}
+                    {/* Profile name */}
                     <div className="flex flex-col gap-2">
-                        <Label>{t('authMethod')}</Label>
-                        <SearchSelect
-                            value={authMethod}
-                            onChange={setAuthMethod}
-                            options={authMethodOptions}
-                            contentClassName="w-[var(--radix-popover-trigger-width)]"
-                            rightIcon={<ChevronDownIcon className="w-4 h-4" />}
+                        <Label htmlFor="profile-name">{t('profileName')}</Label>
+                        <Input
+                            id="profile-name"
+                            value={profileName}
+                            onChange={(e) => setProfileName(e.target.value)}
+                            placeholder={t('profilePlaceholder')}
+                            data-testid="profile-name"
                         />
                         <p className="text-xs text-muted-foreground">
-                            {authMethod === "default" && t('authDefaultDesc')}
-                            {authMethod === "static" && t('authStaticDesc')}
-                            {authMethod === "profile" && t('authProfileDesc')}
+                            {t('profileDesc')}
                         </p>
                     </div>
-
-                    {/* Static credentials */}
-                    {authMethod === "static" && (
-                        <>
-                            <div className="rounded border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2 text-sm">
-                                {t('staticWarning')}
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="access-key-id">{t('accessKeyId')}</Label>
-                                <Input
-                                    id="access-key-id"
-                                    value={accessKeyId}
-                                    onChange={(e) => setAccessKeyId(e.target.value)}
-                                    placeholder={t('accessKeyPlaceholder')}
-                                    data-testid="access-key-id"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="secret-access-key">{t('secretAccessKey')}</Label>
-                                <Input
-                                    id="secret-access-key"
-                                    type="password"
-                                    value={secretAccessKey}
-                                    onChange={(e) => setSecretAccessKey(e.target.value)}
-                                    placeholder={t('secretKeyPlaceholder')}
-                                    data-testid="secret-access-key"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="session-token">{t('sessionTokenOptional')}</Label>
-                                <Input
-                                    id="session-token"
-                                    type="password"
-                                    value={sessionToken}
-                                    onChange={(e) => setSessionToken(e.target.value)}
-                                    placeholder={t('sessionTokenPlaceholder')}
-                                    data-testid="session-token"
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    {/* Profile name */}
-                    {authMethod === "profile" && (
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="profile-name">{t('profileName')}</Label>
-                            <Input
-                                id="profile-name"
-                                value={profileName}
-                                onChange={(e) => setProfileName(e.target.value)}
-                                placeholder={t('profilePlaceholder')}
-                                data-testid="profile-name"
-                            />
-                        </div>
-                    )}
-
 
                     {/* Discovery toggles */}
                     <div className="flex flex-col gap-3 pt-4 border-t">

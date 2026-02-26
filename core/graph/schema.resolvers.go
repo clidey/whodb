@@ -799,9 +799,12 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 
 	id := settings.GenerateProviderID(input.Name, input.Region)
 
+	// Derive auth method: if a profile name is provided, use "profile"; otherwise "default"
 	authMethod := "default"
-	if input.AuthMethod != nil && *input.AuthMethod != "" {
-		authMethod = *input.AuthMethod
+	profileName := ""
+	if input.ProfileName != nil && *input.ProfileName != "" {
+		authMethod = "profile"
+		profileName = *input.ProfileName
 	}
 
 	discoverRDS := true
@@ -824,25 +827,10 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 		Name:                input.Name,
 		Region:              input.Region,
 		AuthMethod:          authMethod,
+		ProfileName:         profileName,
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
-	}
-
-	if input.AccessKeyID != nil {
-		cfg.AccessKeyID = *input.AccessKeyID
-	}
-	if input.SecretAccessKey != nil {
-		cfg.SecretAccessKey = *input.SecretAccessKey
-	}
-	if input.SessionToken != nil {
-		cfg.SessionToken = *input.SessionToken
-	}
-	if input.ProfileName != nil {
-		cfg.ProfileName = *input.ProfileName
-	}
-	if input.DBUsername != nil {
-		cfg.DBUsername = *input.DBUsername
 	}
 
 	state, err := settings.AddAWSProvider(cfg)
@@ -864,9 +852,14 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		return nil, err
 	}
 
-	authMethod := existing.Config.AuthMethod
-	if input.AuthMethod != nil && *input.AuthMethod != "" {
-		authMethod = *input.AuthMethod
+	// Derive auth method from profile name presence
+	authMethod := "default"
+	profileName := existing.Config.ProfileName
+	if input.ProfileName != nil {
+		profileName = *input.ProfileName
+	}
+	if profileName != "" {
+		authMethod = "profile"
 	}
 
 	discoverRDS := existing.Config.DiscoverRDS
@@ -889,65 +882,10 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		Name:                input.Name,
 		Region:              input.Region,
 		AuthMethod:          authMethod,
+		ProfileName:         profileName,
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
-	}
-
-	// Clear credentials that don't apply to the new auth method to prevent stale data
-	authMethodChanged := authMethod != existing.Config.AuthMethod
-	switch authMethod {
-	case "static":
-		// Static auth uses AccessKeyID/SecretAccessKey
-		if input.AccessKeyID != nil {
-			cfg.AccessKeyID = *input.AccessKeyID
-		} else {
-			cfg.AccessKeyID = existing.Config.AccessKeyID
-		}
-		if input.SecretAccessKey != nil {
-			cfg.SecretAccessKey = *input.SecretAccessKey
-		} else {
-			cfg.SecretAccessKey = existing.Config.SecretAccessKey
-		}
-		if input.SessionToken != nil {
-			cfg.SessionToken = *input.SessionToken
-		} else {
-			cfg.SessionToken = existing.Config.SessionToken
-		}
-		// Clear profile if switching to static
-		if authMethodChanged {
-			cfg.ProfileName = ""
-		} else if input.ProfileName != nil {
-			cfg.ProfileName = *input.ProfileName
-		}
-	case "profile":
-		// Profile auth uses ProfileName - clear static credentials
-		if input.ProfileName != nil {
-			cfg.ProfileName = *input.ProfileName
-		} else {
-			cfg.ProfileName = existing.Config.ProfileName
-		}
-		if authMethodChanged {
-			// Clear static credentials when switching to profile
-			cfg.AccessKeyID = ""
-			cfg.SecretAccessKey = ""
-			cfg.SessionToken = ""
-		}
-	default:
-		// "default" doesn't need stored credentials
-		if authMethodChanged {
-			cfg.AccessKeyID = ""
-			cfg.SecretAccessKey = ""
-			cfg.SessionToken = ""
-			cfg.ProfileName = ""
-		}
-	}
-
-	// Handle DBUsername (used for IAM auth)
-	if input.DBUsername != nil {
-		cfg.DBUsername = *input.DBUsername
-	} else {
-		cfg.DBUsername = existing.Config.DBUsername
 	}
 
 	state, err := settings.UpdateAWSProvider(id, cfg)

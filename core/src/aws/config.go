@@ -52,10 +52,6 @@ func loadConfigFromAWSCredentials(ctx context.Context, awsCreds *AWSCredentialCo
 		awsconfig.WithRegion(awsCreds.Region),
 	}
 
-	if provider := awsCreds.BuildCredentialsProvider(); provider != nil {
-		options = append(options, awsconfig.WithCredentialsProvider(provider))
-	}
-
 	if awsCreds.IsProfileAuth() && awsCreds.ProfileName != "" {
 		options = append(options, awsconfig.WithSharedConfigProfile(awsCreds.ProfileName))
 	}

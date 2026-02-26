@@ -29,10 +29,7 @@
 //
 // Authentication methods:
 //   - default: AWS SDK default credential chain (env → shared config → IAM role)
-//   - static: Explicit access key and secret
 //   - profile: Named AWS profile from ~/.aws/credentials
-//   - iam: EC2/ECS/Lambda instance roles
-//   - env: Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 //
 // # Extension Points for EE
 //
@@ -94,21 +91,8 @@ type Config struct {
 	// AuthMethod determines how to authenticate with AWS.
 	AuthMethod awsinfra.AuthMethod
 
-	// AccessKeyID for static auth.
-	AccessKeyID string
-
-	// SecretAccessKey for static auth.
-	SecretAccessKey string
-
-	// SessionToken for temporary credentials.
-	SessionToken string
-
 	// ProfileName for profile auth.
 	ProfileName string
-
-	// DBUsername is the database username for IAM auth connections.
-	// Required for RDS IAM authentication.
-	DBUsername string
 
 	// DiscoverRDS enables RDS instance discovery.
 	DiscoverRDS bool
@@ -191,10 +175,6 @@ func (p *Provider) initialize(ctx context.Context) error {
 	p.initOnce.Do(func() {
 		creds := p.buildInternalCredentials()
 
-		if p.config.AuthMethod == awsinfra.AuthMethodStatic {
-			log.WithField("provider_id", p.config.ID).Warn("Using static AWS access keys; prefer IAM roles or shared profiles")
-		}
-
 		cfg, err := awsinfra.LoadAWSConfig(ctx, creds)
 		if err != nil {
 			p.initErr = fmt.Errorf("failed to load AWS config: %w", err)
@@ -219,12 +199,6 @@ func (p *Provider) initialize(ctx context.Context) error {
 func (p *Provider) buildInternalCredentials() *engine.Credentials {
 	creds := &engine.Credentials{
 		Hostname: p.config.Region,
-		Username: p.config.AccessKeyID,
-		Password: p.config.SecretAccessKey,
-	}
-
-	if p.config.SessionToken != "" {
-		creds.AccessToken = &p.config.SessionToken
 	}
 
 	var advanced []engine.Record

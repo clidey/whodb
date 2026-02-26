@@ -100,8 +100,6 @@ func FetchColumnsForStorageUnit(
 
 // stateToAWSProvider converts settings.AWSProviderState to the GraphQL model.
 func stateToAWSProvider(state *settings.AWSProviderState) *model.AWSProvider {
-	hasCredentials := state.Config.AccessKeyID != "" && state.Config.SecretAccessKey != ""
-
 	var profileName *string
 	if state.Config.ProfileName != "" {
 		profileName = &state.Config.ProfileName
@@ -118,23 +116,15 @@ func stateToAWSProvider(state *settings.AWSProviderState) *model.AWSProvider {
 		errorStr = &state.Error
 	}
 
-	var dbUsername *string
-	if state.Config.DBUsername != "" {
-		dbUsername = &state.Config.DBUsername
-	}
-
 	return &model.AWSProvider{
 		ID:                  state.Config.ID,
 		ProviderType:        model.CloudProviderTypeAWS,
 		Name:                state.Config.Name,
 		Region:              state.Config.Region,
-		AuthMethod:          state.Config.AuthMethod,
 		ProfileName:         profileName,
-		HasCredentials:      hasCredentials,
 		DiscoverRds:         state.Config.DiscoverRDS,
 		DiscoverElastiCache: state.Config.DiscoverElastiCache,
 		DiscoverDocumentDb:  state.Config.DiscoverDocumentDB,
-		DBUsername:          dbUsername,
 		Status:              mapCloudProviderStatus(state.Status),
 		LastDiscoveryAt:     lastDiscoveryAt,
 		DiscoveredCount:     state.DiscoveredCount,
@@ -151,8 +141,6 @@ func mapCloudProviderStatus(status string) model.CloudProviderStatus {
 		return model.CloudProviderStatusDiscovering
 	case "Error":
 		return model.CloudProviderStatusError
-	case "CredentialsRequired":
-		return model.CloudProviderStatusCredentialsRequired
 	default:
 		return model.CloudProviderStatusDisconnected
 	}

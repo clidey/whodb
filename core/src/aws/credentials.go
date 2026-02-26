@@ -20,8 +20,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 )
@@ -29,9 +27,6 @@ import (
 type AuthMethod string
 
 const (
-	// AuthMethodStatic uses explicit access key and secret key credentials.
-	AuthMethodStatic AuthMethod = "static"
-
 	// AuthMethodProfile uses a named profile from the AWS shared credentials file.
 	AuthMethodProfile AuthMethod = "profile"
 
@@ -48,12 +43,9 @@ const (
 
 // AWSCredentialConfig holds parsed AWS configuration extracted from WhoDB credentials.
 type AWSCredentialConfig struct {
-	Region          string
-	AuthMethod      AuthMethod
-	AccessKeyID     string
-	SecretAccessKey string
-	SessionToken    string
-	ProfileName     string
+	Region      string
+	AuthMethod  AuthMethod
+	ProfileName string
 }
 
 // ParseFromWhoDB extracts AWS configuration from WhoDB credentials.
@@ -68,19 +60,14 @@ func ParseFromWhoDB(creds *engine.Credentials) (*AWSCredentialConfig, error) {
 		region = common.GetRecordValueOrDefault(creds.Advanced, "Region", "")
 	}
 
-	config := &AWSCredentialConfig{
-		Region:          region,
-		AccessKeyID:     strings.TrimSpace(creds.Username),
-		SecretAccessKey: strings.TrimSpace(creds.Password),
-	}
-
-	if creds.AccessToken != nil {
-		config.SessionToken = strings.TrimSpace(*creds.AccessToken)
-	}
-
 	authMethodStr := common.GetRecordValueOrDefault(creds.Advanced, AdvancedKeyAuthMethod, string(AuthMethodDefault))
-	config.AuthMethod = AuthMethod(strings.ToLower(strings.TrimSpace(authMethodStr)))
-	config.ProfileName = common.GetRecordValueOrDefault(creds.Advanced, AdvancedKeyProfileName, "")
+	profileName := common.GetRecordValueOrDefault(creds.Advanced, AdvancedKeyProfileName, "")
+
+	config := &AWSCredentialConfig{
+		Region:      region,
+		AuthMethod:  AuthMethod(strings.ToLower(strings.TrimSpace(authMethodStr))),
+		ProfileName: profileName,
+	}
 
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -96,10 +83,6 @@ func (c *AWSCredentialConfig) Validate() error {
 	}
 
 	switch c.AuthMethod {
-	case AuthMethodStatic:
-		if c.AccessKeyID == "" || c.SecretAccessKey == "" {
-			return ErrStaticCredentialsRequired
-		}
 	case AuthMethodProfile:
 		if c.ProfileName == "" {
 			return ErrProfileNameRequired
@@ -110,24 +93,6 @@ func (c *AWSCredentialConfig) Validate() error {
 	}
 
 	return nil
-}
-
-// BuildCredentialsProvider creates an AWS credentials provider based on the auth method.
-// Returns nil for auth methods that should use the SDK's default credential chain
-// (profile, default), as those are handled by config.LoadDefaultConfig.
-func (c *AWSCredentialConfig) BuildCredentialsProvider() aws.CredentialsProvider {
-	switch c.AuthMethod {
-	case AuthMethodStatic:
-		return credentials.NewStaticCredentialsProvider(
-			c.AccessKeyID,
-			c.SecretAccessKey,
-			c.SessionToken,
-		)
-	case AuthMethodProfile, AuthMethodDefault:
-		return nil
-	default:
-		return nil
-	}
 }
 
 func (c *AWSCredentialConfig) IsProfileAuth() bool {

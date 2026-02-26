@@ -40,27 +40,16 @@ var (
 )
 
 // AWSProviderConfig holds the configuration for an AWS provider.
-// This struct is used for persistence and management.
-// SECURITY: Sensitive fields use json:"-" to prevent accidental serialization.
-// The String() method is implemented to prevent accidental logging of credentials.
+// All fields are non-sensitive — no credentials are stored.
 type AWSProviderConfig struct {
 	ID                  string `json:"id"`
 	Name                string `json:"name"`
 	Region              string `json:"region"`
 	AuthMethod          string `json:"authMethod"`
-	AccessKeyID         string `json:"-"`
-	SecretAccessKey     string `json:"-"`
-	SessionToken        string `json:"-"`
 	ProfileName         string `json:"profileName,omitempty"`
 	DiscoverRDS         bool   `json:"discoverRDS"`
 	DiscoverElastiCache bool   `json:"discoverElastiCache"`
 	DiscoverDocumentDB  bool   `json:"discoverDocumentDB"`
-	DBUsername          string `json:"dbUsername,omitempty"`
-}
-
-func (c *AWSProviderConfig) String() string {
-	return fmt.Sprintf("AWSProviderConfig{ID:%s, Name:%s, Region:%s, AuthMethod:%s, ProfileName:%s, DiscoverRDS:%t, DiscoverElastiCache:%t, DiscoverDocumentDB:%t}",
-		c.ID, c.Name, c.Region, c.AuthMethod, c.ProfileName, c.DiscoverRDS, c.DiscoverElastiCache, c.DiscoverDocumentDB)
 }
 
 // AWSProviderState holds the runtime state of an AWS provider including
@@ -301,14 +290,10 @@ func configToProviderConfig(cfg *AWSProviderConfig) *awsprovider.Config {
 		Name:                cfg.Name,
 		Region:              cfg.Region,
 		AuthMethod:          awsinfra.AuthMethod(cfg.AuthMethod),
-		AccessKeyID:         cfg.AccessKeyID,
-		SecretAccessKey:     cfg.SecretAccessKey,
-		SessionToken:        cfg.SessionToken,
 		ProfileName:         cfg.ProfileName,
 		DiscoverRDS:         cfg.DiscoverRDS,
 		DiscoverElastiCache: cfg.DiscoverElastiCache,
 		DiscoverDocumentDB:  cfg.DiscoverDocumentDB,
-		DBUsername:          cfg.DBUsername,
 	}
 }
 
@@ -341,9 +326,9 @@ func InitAWSProvidersFromEnv() error {
 		}
 		id := GenerateProviderID(name, envCfg.Region)
 
-		authMethod := envCfg.Auth
-		if authMethod == "" {
-			authMethod = "default"
+		authMethod := "default"
+		if envCfg.ProfileName != "" {
+			authMethod = "profile"
 		}
 
 		discoverRDS := true
@@ -366,14 +351,10 @@ func InitAWSProvidersFromEnv() error {
 			Name:                name,
 			Region:              envCfg.Region,
 			AuthMethod:          authMethod,
-			AccessKeyID:         envCfg.AccessKeyID,
-			SecretAccessKey:     envCfg.SecretAccessKey,
-			SessionToken:        envCfg.SessionToken,
 			ProfileName:         envCfg.ProfileName,
 			DiscoverRDS:         discoverRDS,
 			DiscoverElastiCache: discoverElastiCache,
 			DiscoverDocumentDB:  discoverDocumentDB,
-			DBUsername:          envCfg.DBUsername,
 		}
 
 		if _, err := AddAWSProvider(cfg); err != nil {
