@@ -18,7 +18,7 @@ FROM golang:1.26-alpine3.23 AS builder
 
 ARG VERSION=dev
 
-RUN apk update && apk add --no-cache gcc musl-dev git bash curl
+RUN apk add --no-cache gcc musl-dev git bash curl
 
 WORKDIR /app
 
@@ -66,7 +66,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' /app/core/go.mod | awk '{p
 # Final stage
 FROM alpine:3.23
 
-RUN apk update && apk add --no-cache ca-certificates libgcc
+RUN apk add --no-cache ca-certificates libgcc
 
 WORKDIR /app
 

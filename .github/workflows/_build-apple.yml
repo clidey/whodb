@@ -242,7 +242,7 @@ jobs:
         run: |
           APP_PATH="build/darwin/universal/WhoDB.app"
           FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
-          BAML_VERSION="0.217.0"
+          BAML_VERSION=$(grep 'github.com/boundaryml/baml ' core/go.mod | awk '{print $2}' | sed 's/^v//')
 
           echo "📦 Bundling BAML native library..."
           mkdir -p "$FRAMEWORKS_DIR"
