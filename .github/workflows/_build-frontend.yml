@@ -1,0 +1,75 @@
+# Copyright 2025 Clidey, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Shared frontend build workflow.
+# Builds the frontend once and uploads it as an artifact for other jobs to download.
+
+name: Build Frontend
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      edition:
+        required: false
+        type: string
+        default: 'ce'
+
+jobs:
+  build:
+    name: Build Frontend (${{ inputs.edition }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '25.6.0'
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          package_json_file: frontend/package.json
+          run_install: false
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: |
+          pnpm install
+          pnpm run build:${{ inputs.edition }}
+
+      # Upload source maps to PostHog for production error tracking
+      - name: Upload source maps to PostHog
+        uses: PostHog/upload-source-maps@991172e085213c222c61d2ba6a0b9e57c81e5066 # v2.0.0
+        with:
+          directory: frontend/build
+          project-id: ${{ secrets.POSTHOG_PROJECT_ID }}
+          api-key: ${{ secrets.POSTHOG_API_KEY }}
+          release-version: ${{ inputs.version }}
+          delete-after-upload: true
+        continue-on-error: true
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-build-${{ inputs.edition }}
+          path: frontend/build
+          retention-days: 1

@@ -56,62 +56,16 @@ jobs:
             fuse \
             file
 
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          node-version: 'lts/*'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-        with:
-          package_json_file: frontend/package.json
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
-      # - name: Setup pnpm cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pnpm-store-
-
-      # - name: Cache frontend build
-      #   id: frontend-cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: frontend/build
-      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-      #     restore-keys: |
-      #       frontend-build-${{ inputs.edition }}-
-
-      - name: Build frontend
-        working-directory: ./frontend
-        run: |
-          # Check if frontend is already built from cache
-          if [ -f "build/index.html" ]; then
-            echo "✅ Using cached frontend build"
-          else
-            echo "Building frontend..."
-            PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm i
-            pnpm run build:${{ inputs.edition }}
-            echo "✅ Frontend built successfully"
-          fi
+          name: frontend-build-${{ inputs.edition }}
+          path: frontend/build
 
       - name: Copy frontend to desktop directory
         run: |
-          echo "Copying frontend build to desktop directory..."
           mkdir -p desktop-${{ inputs.edition }}/frontend/dist
           cp -r frontend/build/* desktop-${{ inputs.edition }}/frontend/dist/
-
-          echo "✅ Frontend files copied successfully"
-          ls -la desktop-${{ inputs.edition }}/frontend/dist
 
       # - name: Cache Wails binary
       #   id: cache-wails

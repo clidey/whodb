@@ -217,11 +217,20 @@ jobs:
             echo "| Apple App Store | ${{ steps.calc.outputs.deploy-apple }} | TestFlight |" >> $GITHUB_STEP_SUMMARY
           fi
 
-  # Step 2: Build artifacts in parallel (only what's selected)
-  # Note: Source maps are uploaded to PostHog during Docker build (see _build-docker.yml)
+  # Step 2a: Build frontend once (shared by all platform builds)
+  build-frontend:
+    name: Build Frontend
+    needs: [ calculate-version ]
+    uses: ./.github/workflows/_build-frontend.yml
+    with:
+      version: ${{ needs.calculate-version.outputs.version }}
+      edition: 'ce'
+    secrets: inherit
+
+  # Step 2b: Build platform artifacts in parallel (only what's selected)
   build-docker:
     name: Build Docker
-    needs: [ calculate-version ]
+    needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-docker == 'true'
     uses: ./.github/workflows/_build-docker.yml
     with:
@@ -231,7 +240,7 @@ jobs:
 
   build-windows:
     name: Build Windows
-    needs: [ calculate-version ]
+    needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-microsoft == 'true'
     uses: ./.github/workflows/_build-windows.yml
     with:
@@ -242,7 +251,7 @@ jobs:
 
   build-apple:
     name: Build Apple
-    needs: [ calculate-version ]
+    needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-apple == 'true'
     uses: ./.github/workflows/_build-apple.yml
     with:
@@ -272,7 +281,7 @@ jobs:
 
   build-linux-terminal:
     name: Build Linux Terminal
-    needs: [ calculate-version ]
+    needs: [ calculate-version, build-frontend ]
     if: needs.calculate-version.outputs.deploy-linux-terminal == 'true'
     uses: ./.github/workflows/_build-linux-terminal.yml
     with:

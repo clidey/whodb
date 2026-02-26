@@ -67,62 +67,8 @@ jobs:
         with:
           submodules: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with:
-          node-version: 'lts/*'
-
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-        with:
-          package_json_file: frontend/package.json
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
-      # - name: Setup pnpm cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pnpm-store-
-
-      # - name: Cache frontend build
-      #   id: frontend-cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: frontend/build
-      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-      #     restore-keys: |
-      #       frontend-build-${{ inputs.edition }}-
-
-      - name: Build frontend
-        # Always build frontend since cache is disabled
-        working-directory: ./frontend
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
-        run: |
-          pnpm install
-          pnpm run build:${{ inputs.edition }}
-
-      # Upload source maps to PostHog for production error tracking
-      # This injects metadata into JS files and uploads .map files
-      # Only runs on amd64 to avoid duplicate uploads (frontend is identical across architectures)
-      - name: Upload source maps to PostHog
-        if: matrix.arch == 'amd64'
-        uses: PostHog/upload-source-maps@991172e085213c222c61d2ba6a0b9e57c81e5066 # v2.0.0
-        with:
-          directory: frontend/build
-          project-id: ${{ secrets.POSTHOG_PROJECT_ID }}
-          api-key: ${{ secrets.POSTHOG_API_KEY }}
-          release-version: ${{ inputs.version }}
-          delete-after-upload: true
-        continue-on-error: true  # Don't fail build if source map upload fails
+      # Frontend is built by the shared _build-frontend.yml workflow.
+      # The Dockerfile builds the frontend internally for embedding.
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
