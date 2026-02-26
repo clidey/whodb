@@ -26,6 +26,7 @@ import (
 
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/analytics"
+	"github.com/clidey/whodb/cli/pkg/mcp"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
 )
@@ -170,7 +171,7 @@ Output formats:
 		}
 
 		// Track successful query execution
-		analytics.TrackQueryExecute(ctx, conn.Type, detectStatementType(sql), true,
+		analytics.TrackQueryExecute(ctx, conn.Type, string(mcp.DetectStatementType(sql)), true,
 			time.Since(queryStart).Milliseconds(), len(rows), map[string]any{
 				"format": string(format),
 			})
@@ -182,37 +183,6 @@ Output formats:
 
 		return out.WriteQueryResult(queryResult)
 	},
-}
-
-// detectStatementType returns the SQL statement type (SELECT, INSERT, etc.)
-func detectStatementType(sql string) string {
-	sql = strings.TrimSpace(strings.ToUpper(sql))
-	switch {
-	case strings.HasPrefix(sql, "SELECT"), strings.HasPrefix(sql, "WITH"):
-		return "SELECT"
-	case strings.HasPrefix(sql, "INSERT"):
-		return "INSERT"
-	case strings.HasPrefix(sql, "UPDATE"):
-		return "UPDATE"
-	case strings.HasPrefix(sql, "DELETE"):
-		return "DELETE"
-	case strings.HasPrefix(sql, "CREATE"):
-		return "CREATE"
-	case strings.HasPrefix(sql, "ALTER"):
-		return "ALTER"
-	case strings.HasPrefix(sql, "DROP"):
-		return "DROP"
-	case strings.HasPrefix(sql, "TRUNCATE"):
-		return "TRUNCATE"
-	case strings.HasPrefix(sql, "SHOW"):
-		return "SHOW"
-	case strings.HasPrefix(sql, "DESCRIBE"), strings.HasPrefix(sql, "DESC"):
-		return "DESCRIBE"
-	case strings.HasPrefix(sql, "EXPLAIN"):
-		return "EXPLAIN"
-	default:
-		return "OTHER"
-	}
 }
 
 func init() {

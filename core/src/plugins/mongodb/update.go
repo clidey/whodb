@@ -32,7 +32,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 	defer cancel()
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"database":    database,
 			"storageUnit": storageUnit,
@@ -46,7 +46,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 
 	documentJSON, ok := values["document"]
 	if !ok {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"database":       database,
 			"storageUnit":    storageUnit,
@@ -58,7 +58,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 
 	var jsonValues bson.M
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":     config.Credentials.Hostname,
 			"database":     database,
 			"storageUnit":  storageUnit,
@@ -69,7 +69,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 
 	id, ok := jsonValues["_id"]
 	if !ok {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"database":       database,
 			"storageUnit":    storageUnit,
@@ -98,7 +98,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 
 	result, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname":       config.Credentials.Hostname,
 			"database":       database,
 			"storageUnit":    storageUnit,
@@ -109,7 +109,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 	}
 
 	if result.MatchedCount == 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"database":    database,
 			"storageUnit": storageUnit,
@@ -118,7 +118,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 		return false, errors.New("no documents matched the filter")
 	}
 	if result.ModifiedCount == 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"hostname":     config.Credentials.Hostname,
 			"database":     database,
 			"storageUnit":  storageUnit,

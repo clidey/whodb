@@ -67,6 +67,15 @@ func (p *Sqlite3Plugin) FormTableName(schema string, storageUnit string) string 
 	return storageUnit
 }
 
+// GetLastInsertID returns the most recently auto-generated ID using SQLite's last_insert_rowid().
+func (p *Sqlite3Plugin) GetLastInsertID(db *gorm.DB) (int64, error) {
+	var id int64
+	if err := db.Raw("SELECT last_insert_rowid()").Scan(&id).Error; err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
 func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	if env.GetIsLocalMode() {
 		return []string{}, nil
@@ -81,7 +90,7 @@ func (p *Sqlite3Plugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 		return nil, err
 	}
 
-	databases := []string{}
+	var databases []string
 	for _, e := range entries {
 		databases = append(databases, e.Name())
 	}
@@ -302,7 +311,7 @@ func (p *Sqlite3Plugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableNam
 func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
 	if err := rows.Scan(&tableName, &tableType); err != nil {
-		log.Logger.WithError(err).Error("Failed to scan SQLite table information from rows")
+		log.WithError(err).Error("Failed to scan SQLite table information from rows")
 		return "", nil
 	}
 
@@ -350,7 +359,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 			query, err := p.ApplyWhereConditions(query, where, columnTypes)
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for STRICT table %s", storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for STRICT table %s", storageUnit))
 				return nil, err
 			}
 
@@ -374,7 +383,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 			rows, err := query.Rows()
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for STRICT table %s", storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for STRICT table %s", storageUnit))
 				return nil, err
 			}
 			defer rows.Close()
@@ -388,7 +397,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 			// For non-STRICT tables, use custom handling with CAST for date/time types
 			orderedColumns, columnTypes, err := p.GetOrderedColumnsWithTypes(db, schema, storageUnit)
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s", schema, storageUnit))
 				return nil, err
 			}
 
@@ -408,7 +417,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 			query, err = p.ApplyWhereConditions(query, where, columnTypes)
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for table %s.%s", schema, storageUnit))
 				return nil, err
 			}
 
@@ -432,7 +441,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 			rows, err := query.Rows()
 			if err != nil {
-				log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
+				log.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 				return nil, err
 			}
 			defer rows.Close()
@@ -445,7 +454,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, stor
 
 		// Wait for count query to complete and set TotalCount
 		if countErr := <-countDone; countErr != nil {
-			log.Logger.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s", storageUnit))
+			log.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s", storageUnit))
 		} else {
 			result.TotalCount = totalCount
 		}
@@ -611,7 +620,7 @@ func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, 
 			var id, seq int
 			var table, from, to, onUpdate, onDelete, match string
 			if err := rows.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); err != nil {
-				log.Logger.WithError(err).Error("Failed to scan foreign key relationship")
+				log.WithError(err).Error("Failed to scan foreign key relationship")
 				continue
 			}
 			relationships[from] = &engine.ForeignKeyRelationship{

@@ -25,12 +25,10 @@ import (
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/styles"
+	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-// Version is set at build time via ldflags
-var Version = "dev"
 
 var cfgFile string
 
@@ -89,7 +87,7 @@ func initAnalytics() {
 	}
 
 	// Initialize analytics (errors are silently ignored - analytics should never block CLI)
-	_ = analytics.Initialize(Version)
+	_ = analytics.Initialize(version.Version)
 
 	// Track CLI startup with the command being run
 	if len(os.Args) > 1 {

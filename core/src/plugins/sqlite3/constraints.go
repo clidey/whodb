@@ -215,7 +215,7 @@ func (p *Sqlite3Plugin) parseCheckConstraints(createSQL string, constraints map[
 func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constraints map[string]map[string]any) {
 	columnName := gorm_plugin.ExtractColumnNameFromClause(checkClause)
 	if columnName == "" {
-		log.Logger.WithField("checkClause", checkClause).Debug("Could not extract column name from CHECK clause")
+		log.WithField("checkClause", checkClause).Debug("Could not extract column name from CHECK clause")
 		return
 	}
 
@@ -241,7 +241,7 @@ func (p *Sqlite3Plugin) parseSingleCheckConstraint(checkClause string, constrain
 
 	if values := gorm_plugin.ParseINClauseValues(checkClause); len(values) > 0 {
 		colConstraints["check_values"] = values
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"column":      columnName,
 			"checkValues": values,
 		}).Debug("Parsed CHECK IN constraint")

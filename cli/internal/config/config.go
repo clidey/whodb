@@ -20,14 +20,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/clidey/whodb/core/src/common/config"
 	"github.com/clidey/whodb/core/src/common/datadir"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
 )
 
@@ -131,13 +129,6 @@ func GetConfigDir() (string, error) {
 			return
 		}
 
-		// ====================================================================
-		// MIGRATION CODE - CAN BE REMOVED AFTER
-		// ====================================================================
-		migrateLegacyConfig()
-		// ====================================================================
-		// END MIGRATION CODE
-		// ====================================================================
 	})
 
 	return configDir, configDirErr
@@ -321,76 +312,3 @@ func (c *Config) GetPageSize() int {
 func (c *Config) SetPageSize(size int) {
 	c.Display.PageSize = size
 }
-
-// ============================================================================
-// MIGRATION CODE - CAN BE REMOVED AFTER
-// ============================================================================
-
-var legacyMigrationDone bool
-
-// legacyConfigDir returns the old ~/.whodb-cli directory path.
-func legacyConfigDir() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	return filepath.Join(home, ".whodb-cli")
-}
-
-// migrateLegacyConfig migrates from the old ~/.whodb-cli/config.yaml format.
-func migrateLegacyConfig() {
-	if legacyMigrationDone {
-		return
-	}
-	legacyMigrationDone = true
-
-	opts := getConfigOptions()
-
-	// Check if unified config already has CLI section
-	var existing CLISection
-	if err := config.ReadSection(config.SectionCLI, &existing, opts); err == nil && len(existing.Connections) > 0 {
-		return // Already has data, don't overwrite
-	}
-
-	// Check for legacy config
-	legacyDir := legacyConfigDir()
-	if legacyDir == "" {
-		return
-	}
-
-	legacyPath := filepath.Join(legacyDir, "config.yaml")
-	if _, err := os.Stat(legacyPath); os.IsNotExist(err) {
-		return // No legacy config
-	}
-
-	// Read legacy config using Viper
-	v := viper.New()
-	v.SetConfigFile(legacyPath)
-	if err := v.ReadInConfig(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to read legacy config %s: %v\n", legacyPath, err)
-		return
-	}
-
-	var section CLISection
-	if err := v.Unmarshal(&section); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to parse legacy config: %v\n", err)
-		return
-	}
-
-	if len(section.Connections) == 0 && section.History.MaxEntries == 0 {
-		return // Empty config, nothing to migrate
-	}
-
-	// Write to unified config
-	if err := config.WriteSection(config.SectionCLI, section, opts); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to migrate config: %v\n", err)
-		return
-	}
-
-	fmt.Fprintf(os.Stderr, "✓ Migrated config from %s to unified config.json\n", legacyPath)
-	fmt.Fprintf(os.Stderr, "  You can safely remove the old directory: %s\n\n", legacyDir)
-}
-
-// ============================================================================
-// END MIGRATION CODE
-// ============================================================================

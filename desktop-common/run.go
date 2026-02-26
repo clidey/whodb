@@ -39,6 +39,7 @@ import (
 
 // RunApp starts the Wails application with the given configuration
 func RunApp(edition string, title string, assets embed.FS) error {
+	defer log.CloseLogFile()
 	os.Setenv("WHODB_DESKTOP", "true")
 	settingsCfg := settings.Get()
 	if err := analytics.Initialize(analytics.Config{
@@ -47,14 +48,14 @@ func RunApp(edition string, title string, assets embed.FS) error {
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
 	}); err != nil {
-		log.Logger.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
+		log.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
 	} else {
 		defer analytics.Shutdown()
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
 	src.InitializeEngine()
-	log.Logger.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(edition))
+	log.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(edition))
 
 	r := router.InitializeRouter(assets)
 	app := NewApp(edition)

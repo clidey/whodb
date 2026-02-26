@@ -102,7 +102,7 @@ type Generator struct {
 	generatedPKs   map[string][]map[string]any // Cache of generated PK rows per table (supports composite PKs)
 	existingPKs    map[string][]map[string]any // Cache of existing PK rows for blocked tables
 	usedPKValues   map[string]map[string]bool  // Track used PK values: table -> pkValueString -> true
-	databaseType   string                      // Database type for type-specific generation (e.g., "MSSQL", "PostgreSQL")
+	databaseType   string                      // Database type for type-specific generation (e.g., "PostgreSQL")
 }
 
 // NewGenerator creates a new mock data generator with the specified FK density ratio.
@@ -163,7 +163,7 @@ func (g *Generator) clearTableWithDependencies(
 	}
 
 	// Now safe to clear this table
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":    table,
 		"children": children,
 	}).Debug("Clearing table data (children already cleared)")
@@ -233,12 +233,12 @@ func (g *Generator) collectDependencies(
 	adjacency map[string][]string,
 ) error {
 	if visited[table] {
-		log.Logger.WithField("table", table).Debug("Table already visited, skipping")
+		log.WithField("table", table).Debug("Table already visited, skipping")
 		return nil
 	}
 	visited[table] = true
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":    table,
 		"rowCount": rowCount,
 	}).Debug("Collecting dependencies for table")
@@ -246,7 +246,7 @@ func (g *Generator) collectDependencies(
 	// Get FK relationships for this table
 	fks, err := plugin.GetForeignKeyRelationships(config, schema, table)
 	if err != nil {
-		log.Logger.WithError(err).WithField("table", table).Warn("Failed to get FK relationships")
+		log.WithError(err).WithField("table", table).Warn("Failed to get FK relationships")
 		fks = make(map[string]*engine.ForeignKeyRelationship)
 	}
 
@@ -255,7 +255,7 @@ func (g *Generator) collectDependencies(
 		for col := range fks {
 			fkColumns = append(fkColumns, col)
 		}
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":     table,
 			"fkColumns": fkColumns,
 			"fkCount":   len(fks),
@@ -265,7 +265,7 @@ func (g *Generator) collectDependencies(
 	// Check if mock data generation is allowed using env function
 	isBlocked := !env.IsMockDataGenerationAllowed(table)
 	if isBlocked {
-		log.Logger.WithField("table", table).Debug("Mock data generation blocked for table")
+		log.WithField("table", table).Debug("Mock data generation blocked for table")
 	}
 
 	// Create table info
@@ -287,7 +287,7 @@ func (g *Generator) collectDependencies(
 	for colName, fk := range fks {
 		// Skip self-references
 		if fk.ReferencedTable == table {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":  table,
 				"column": colName,
 			}).Debug("Skipping self-referencing FK")
@@ -303,7 +303,7 @@ func (g *Generator) collectDependencies(
 		// Ensure at least 1 parent row exists
 		parentRowCount := max(1, rowCount/g.fkDensityRatio)
 
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"childTable":     table,
 			"parentTable":    fk.ReferencedTable,
 			"column":         colName,
@@ -344,7 +344,7 @@ func topoSort(adjacency map[string][]string) ([]string, error) {
 		}
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"inDegree": inDegree,
 	}).Debug("Topological sort in-degree calculated")
 
@@ -356,7 +356,7 @@ func topoSort(adjacency map[string][]string) ([]string, error) {
 		}
 	}
 
-	log.Logger.WithField("initialQueue", queue).Debug("Topological sort starting with root tables")
+	log.WithField("initialQueue", queue).Debug("Topological sort starting with root tables")
 
 	var result []string
 	for len(queue) > 0 {
@@ -384,7 +384,7 @@ func topoSort(adjacency map[string][]string) ([]string, error) {
 		return nil, fmt.Errorf("circular dependency detected involving tables: %s", strings.Join(cycleNodes, " → "))
 	}
 
-	log.Logger.WithField("order", result).Debug("Topological sort complete")
+	log.WithField("order", result).Debug("Topological sort complete")
 	return result, nil
 }
 
@@ -398,7 +398,7 @@ func (g *Generator) Generate(
 	rowCount int,
 	overwrite bool,
 ) (*GenerationResult, error) {
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"schema":    schema,
 		"table":     table,
 		"rowCount":  rowCount,
@@ -421,18 +421,18 @@ func (g *Generator) Generate(
 	}
 
 	// Analyze dependencies (read-only, outside transaction)
-	log.Logger.Debug("Analyzing table dependencies")
+	log.Debug("Analyzing table dependencies")
 	analysis, err := g.AnalyzeDependencies(plugin, config, schema, table, rowCount)
 	if err != nil {
 		return nil, err
 	}
 
 	if analysis.Error != "" {
-		log.Logger.WithField("error", analysis.Error).Error("Dependency analysis failed")
+		log.WithField("error", analysis.Error).Error("Dependency analysis failed")
 		return nil, fmt.Errorf("%s", analysis.Error)
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"generationOrder": analysis.GenerationOrder,
 		"totalTables":     len(analysis.Tables),
 		"totalRows":       analysis.TotalRows,
@@ -442,10 +442,10 @@ func (g *Generator) Generate(
 
 	// If overwrite mode, clear target table and all child tables first (in FK-safe order)
 	if overwrite {
-		log.Logger.Debug("Overwrite mode: clearing target table and child tables")
+		log.Debug("Overwrite mode: clearing target table and child tables")
 		graph, err := plugin.GetGraph(config, schema)
 		if err != nil {
-			log.Logger.WithError(err).Warn("Failed to get graph for FK-safe clearing, attempting direct clear")
+			log.WithError(err).Warn("Failed to get graph for FK-safe clearing, attempting direct clear")
 			// Fall back to direct clear (may fail with FK constraints)
 			if _, err := plugin.ClearTableData(config, schema, table); err != nil {
 				return nil, fmt.Errorf("failed to clear table %s: %w", table, err)
@@ -455,7 +455,7 @@ func (g *Generator) Generate(
 			if err := g.clearTableWithDependencies(plugin, config, schema, table, graph, cleared); err != nil {
 				return nil, fmt.Errorf("failed to clear tables for overwrite: %w", err)
 			}
-			log.Logger.WithField("clearedTables", len(cleared)).Info("Cleared tables for overwrite")
+			log.WithField("clearedTables", len(cleared)).Info("Cleared tables for overwrite")
 		}
 	}
 
@@ -471,7 +471,7 @@ func (g *Generator) Generate(
 
 		// Generate data for each table in order
 		for i, tblDep := range analysis.Tables {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"step":      fmt.Sprintf("%d/%d", i+1, len(analysis.Tables)),
 				"table":     tblDep.Table,
 				"rowCount":  tblDep.RowCount,
@@ -480,7 +480,7 @@ func (g *Generator) Generate(
 
 			// Load existing PKs for blocked tables
 			if tblDep.UsesExistingData {
-				log.Logger.WithField("table", tblDep.Table).Debug("Table uses existing data, loading PKs")
+				log.WithField("table", tblDep.Table).Debug("Table uses existing data, loading PKs")
 				if err := g.loadExistingPKs(plugin, txConfig, schema, tblDep.Table); err != nil {
 					return fmt.Errorf("failed to load existing PKs for %s: %w", tblDep.Table, err)
 				}
@@ -511,11 +511,11 @@ func (g *Generator) Generate(
 	})
 
 	if err != nil {
-		log.Logger.WithError(err).Error("Mock data generation failed, transaction rolled back")
+		log.WithError(err).Error("Mock data generation failed, transaction rolled back")
 		return nil, err
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"totalGenerated": result.TotalGenerated,
 		"tablesCount":    len(result.Details),
 	}).Info("Mock data generation complete")
@@ -530,7 +530,7 @@ func (g *Generator) loadExistingPKs(
 	config *engine.PluginConfig,
 	schema, table string,
 ) error {
-	log.Logger.WithField("table", table).Debug("Loading existing PKs from table")
+	log.WithField("table", table).Debug("Loading existing PKs from table")
 
 	// Get columns to find all PK columns
 	columns, err := plugin.GetColumnsForTable(config, schema, table)
@@ -550,7 +550,7 @@ func (g *Generator) loadExistingPKs(
 		// No PK found, try to use first column
 		if len(columns) > 0 {
 			pkColNames = []string{columns[0].Name}
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":  table,
 				"column": columns[0].Name,
 			}).Debug("No PK column found, using first column")
@@ -558,7 +558,7 @@ func (g *Generator) loadExistingPKs(
 			return fmt.Errorf("table %s has no columns", table)
 		}
 	} else {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":     table,
 			"pkColumns": pkColNames,
 		}).Debug("Found PK columns")
@@ -591,7 +591,7 @@ func (g *Generator) loadExistingPKs(
 	}
 
 	g.existingPKs[table] = pks
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":     table,
 		"pkCount":   len(pks),
 		"pkColumns": pkColNames,
@@ -614,7 +614,7 @@ func (g *Generator) generateTableRows(
 	if isTargetTable {
 		insertMode = "bulk"
 	}
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":      table,
 		"rowCount":   rowCount,
 		"overwrite":  overwrite,
@@ -640,7 +640,7 @@ func (g *Generator) generateTableRows(
 			})
 		}
 	}
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":          table,
 		"columnCount":    len(columns),
 		"specialColumns": columnDetails,
@@ -648,7 +648,7 @@ func (g *Generator) generateTableRows(
 
 	constraints, err := plugin.GetColumnConstraints(config, schema, table)
 	if err != nil {
-		log.Logger.WithError(err).WithField("table", table).Warn("Failed to get constraints, using defaults")
+		log.WithError(err).WithField("table", table).Warn("Failed to get constraints, using defaults")
 		constraints = make(map[string]map[string]any)
 	} else {
 		// Log constraint details for debugging
@@ -668,7 +668,7 @@ func (g *Generator) generateTableRows(
 				constraintDetails[col] = details
 			}
 		}
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":            table,
 			"constraintCount":  len(constraints),
 			"checkConstraints": constraintDetails,
@@ -678,10 +678,10 @@ func (g *Generator) generateTableRows(
 	// Get FK relationships
 	fks, err := plugin.GetForeignKeyRelationships(config, schema, table)
 	if err != nil {
-		log.Logger.WithError(err).WithField("table", table).Warn("Failed to get FK relationships")
+		log.WithError(err).WithField("table", table).Warn("Failed to get FK relationships")
 		fks = make(map[string]*engine.ForeignKeyRelationship)
 	} else if len(fks) > 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":   table,
 			"fkCount": len(fks),
 		}).Debug("Retrieved FK relationships")
@@ -691,7 +691,7 @@ func (g *Generator) generateTableRows(
 	// When overwriting, tables are already cleared at the top level in Generate()
 	if !overwrite {
 		if err := g.loadExistingPKsForUniqueness(plugin, config, schema, table, columns); err != nil {
-			log.Logger.WithError(err).WithField("table", table).Warn("Failed to load existing PKs for uniqueness check")
+			log.WithError(err).WithField("table", table).Warn("Failed to load existing PKs for uniqueness check")
 			// Continue anyway - worst case we get unique constraint errors
 		}
 	}
@@ -715,7 +715,7 @@ func (g *Generator) generateRowsBulk(
 	fks map[string]*engine.ForeignKeyRelationship,
 	rowCount int,
 ) (int, error) {
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":    table,
 		"rowCount": rowCount,
 	}).Debug("Starting bulk row generation")
@@ -750,7 +750,7 @@ func (g *Generator) generateRowsBulk(
 		}
 
 		if err != nil {
-			log.Logger.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to generate row")
+			log.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to generate row")
 			failedCount++
 			continue
 		}
@@ -758,7 +758,7 @@ func (g *Generator) generateRowsBulk(
 	}
 
 	if failedCount > 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":        table,
 			"failedCount":  failedCount,
 			"pkCollisions": pkCollisions,
@@ -766,22 +766,22 @@ func (g *Generator) generateRowsBulk(
 	}
 
 	if len(rows) == 0 {
-		log.Logger.WithField("table", table).Warn("No rows generated")
+		log.WithField("table", table).Warn("No rows generated")
 		return 0, nil
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":    table,
 		"rowCount": len(rows),
 	}).Debug("Generated rows, starting bulk insert")
 
 	// Bulk insert all rows
 	if _, err := plugin.BulkAddRows(config, schema, table, rows); err != nil {
-		log.Logger.WithError(err).WithField("table", table).WithField("rowCount", len(rows)).Error("Failed to bulk insert rows")
+		log.WithError(err).WithField("table", table).WithField("rowCount", len(rows)).Error("Failed to bulk insert rows")
 		return 0, fmt.Errorf("failed to bulk insert rows: %w", err)
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":     table,
 		"generated": len(rows),
 	}).Info("Completed bulk mock data generation")
@@ -799,7 +799,7 @@ func (g *Generator) generateRowsSingle(
 	fks map[string]*engine.ForeignKeyRelationship,
 	rowCount int,
 ) (int, error) {
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":    table,
 		"rowCount": rowCount,
 	}).Debug("Starting single-row generation (PK tracking enabled)")
@@ -809,7 +809,7 @@ func (g *Generator) generateRowsSingle(
 	for i := range columns {
 		if columns[i].IsPrimary && columns[i].IsAutoIncrement {
 			autoIncrementPKCol = &columns[i]
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":  table,
 				"column": columns[i].Name,
 			}).Debug("Found auto-increment PK column for tracking")
@@ -851,7 +851,7 @@ func (g *Generator) generateRowsSingle(
 		}
 
 		if err != nil {
-			log.Logger.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to generate row")
+			log.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to generate row")
 			failedGenerate++
 			continue
 		}
@@ -859,7 +859,7 @@ func (g *Generator) generateRowsSingle(
 		// Insert row and get auto-generated ID (if any)
 		generatedID, err := plugin.AddRowReturningID(config, schema, table, row)
 		if err != nil {
-			log.Logger.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to insert row")
+			log.WithError(err).WithField("table", table).WithField("row", i).Error("Failed to insert row")
 			// Return error immediately to trigger transaction rollback
 			// This ensures atomicity - either all tables are populated or none are
 			return 0, fmt.Errorf("failed to insert row %d into %s: %w", i, table, err)
@@ -873,7 +873,7 @@ func (g *Generator) generateRowsSingle(
 			} else {
 				// Failed to get the auto-generated ID - this is a problem
 				// because FK references won't work
-				log.Logger.WithFields(map[string]any{
+				log.WithFields(map[string]any{
 					"table":  table,
 					"column": autoIncrementPKCol.Name,
 					"row":    i,
@@ -887,7 +887,7 @@ func (g *Generator) generateRowsSingle(
 
 		// Log progress every 100 rows for larger batches
 		if rowCount >= 100 && generated%100 == 0 {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":    table,
 				"progress": fmt.Sprintf("%d/%d", generated, rowCount),
 			}).Debug("Row generation progress")
@@ -895,7 +895,7 @@ func (g *Generator) generateRowsSingle(
 	}
 
 	if failedGenerate > 0 || failedInsert > 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":          table,
 			"failedGenerate": failedGenerate,
 			"failedInsert":   failedInsert,
@@ -903,7 +903,7 @@ func (g *Generator) generateRowsSingle(
 		}).Warn("Some rows failed during generation")
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":      table,
 		"generated":  generated,
 		"trackedPKs": len(g.generatedPKs[table]),
@@ -933,7 +933,7 @@ func (g *Generator) generateRow(
 	for _, col := range columns {
 		// Skip auto-increment columns - database will generate these values
 		if col.IsAutoIncrement {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":  table,
 				"column": col.Name,
 			}).Debug("Skipping auto-increment column")
@@ -943,7 +943,7 @@ func (g *Generator) generateRow(
 
 		// Skip computed/database-managed columns
 		if col.IsComputed {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":  table,
 				"column": col.Name,
 				"type":   col.Type,
@@ -988,7 +988,7 @@ func (g *Generator) generateRow(
 
 	// Log summary if no records were generated (indicates a bug)
 	if len(records) == 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":           table,
 			"totalColumns":    len(columns),
 			"skippedAutoIncr": skippedAutoIncr,
@@ -1013,7 +1013,7 @@ func (g *Generator) generateFKValue(
 ) (any, error) {
 	isNullable := gorm_plugin.IsNullable(constraints)
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":      currentTable,
 		"column":     col.Name,
 		"isNullable": isNullable,
@@ -1023,7 +1023,7 @@ func (g *Generator) generateFKValue(
 	// Self-reference: return NULL if nullable, otherwise error
 	if fk.ReferencedTable == currentTable {
 		if isNullable {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"table":  currentTable,
 				"column": col.Name,
 			}).Debug("Self-referencing FK set to NULL")
@@ -1042,7 +1042,7 @@ func (g *Generator) generateFKValue(
 			return nil, nil
 		}
 		value := selectedRow[fk.ReferencedColumn]
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":            currentTable,
 			"column":           col.Name,
 			"parentTable":      fk.ReferencedTable,
@@ -1054,7 +1054,7 @@ func (g *Generator) generateFKValue(
 
 	// First FK column for this parent table - decide NULL or select a row
 	if isNullable && g.faker.Float64() < NullableFKProbability {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":  currentTable,
 			"column": col.Name,
 		}).Debug("Nullable FK set to NULL (random)")
@@ -1064,7 +1064,7 @@ func (g *Generator) generateFKValue(
 
 	// Get parent PK rows
 	parentRows := g.getPKRowsForTable(fk.ReferencedTable)
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"column":          col.Name,
 		"referencedTable": fk.ReferencedTable,
 		"parentRowCount":  len(parentRows),
@@ -1073,7 +1073,7 @@ func (g *Generator) generateFKValue(
 	if len(parentRows) == 0 {
 		// No parent PKs available - this is an error for non-nullable FK columns
 		if isNullable {
-			log.Logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"column":          col.Name,
 				"referencedTable": fk.ReferencedTable,
 			}).Debug("No parent PKs available, using NULL for nullable FK")
@@ -1091,7 +1091,7 @@ func (g *Generator) generateFKValue(
 	// Get the specific column value
 	value := selectedRow[fk.ReferencedColumn]
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":            currentTable,
 		"column":           col.Name,
 		"parentTable":      fk.ReferencedTable,
@@ -1124,7 +1124,7 @@ func (g *Generator) trackAutoGeneratedPK(table string, pkColumnName string, gene
 		pkColumnName: generatedID,
 	}
 	g.generatedPKs[table] = append(g.generatedPKs[table], pkRow)
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":     table,
 		"pkColumn":  pkColumnName,
 		"pkValue":   generatedID,
@@ -1153,7 +1153,7 @@ func (g *Generator) trackGeneratedPK(table string, columns []engine.Column, row 
 
 	if len(pkRow) > 0 {
 		g.generatedPKs[table] = append(g.generatedPKs[table], pkRow)
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":     table,
 			"pkColumns": pkRow,
 			"totalRows": len(g.generatedPKs[table]),
@@ -1368,7 +1368,7 @@ func (g *Generator) loadExistingPKsForUniqueness(
 		return nil
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":     table,
 		"pkColumns": len(pkColumns),
 	}).Debug("Loading existing PK values for uniqueness check")
@@ -1405,7 +1405,7 @@ func (g *Generator) loadExistingPKsForUniqueness(
 		}
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"table":          table,
 		"existingPKs":    len(g.usedPKValues[table]),
 		"totalRowsFound": len(rows.Rows),

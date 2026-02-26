@@ -28,6 +28,7 @@ type ISettingsState = {
     spacing: 'compact' | 'comfortable' | 'spacious';
     whereConditionMode: 'popover' | 'sheet';
     defaultPageSize: number;
+    maxPageSize: number;
     language: 'en' | 'es' | 'de' | 'fr';
     databaseSchemaTerminology: 'database' | 'schema';
     disableAnimations: boolean;
@@ -56,6 +57,7 @@ const getInitialState = (): ISettingsState => {
         // Use EE default if available, otherwise default to 'popover'
         whereConditionMode: eeSettingsDefaults.whereConditionMode ?? 'popover',
         defaultPageSize: 100,
+        maxPageSize: 10000,
         language: 'en',
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
         // Use EE default if available, otherwise default to false (animations enabled)
@@ -93,6 +95,9 @@ export const settingsSlice = createSlice({
         },
         setDefaultPageSize: (state, action: PayloadAction<ISettingsState["defaultPageSize"]>) => {
             state.defaultPageSize = action.payload;
+        },
+        setMaxPageSize: (state, action: PayloadAction<ISettingsState["maxPageSize"]>) => {
+            state.maxPageSize = action.payload;
         },
         setLanguage: (state, action: PayloadAction<ISettingsState["language"]>) => {
             state.language = action.payload;

@@ -33,7 +33,7 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 		// Get table names from table info query
 		rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
 		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get tables for chat operation in schema: %s", schema))
+			log.WithError(err).Error(fmt.Sprintf("Failed to get tables for chat operation in schema: %s", schema))
 			return nil, err
 		}
 		defer rows.Close()
@@ -53,7 +53,7 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 			fullTableName := p.FormTableName(schema, tableName)
 			orderedColumns, err := helper.GetOrderedColumns(fullTableName)
 			if err != nil {
-				log.Logger.WithError(err).Warnf("Failed to get column types for table %s in chat", fullTableName)
+				log.WithError(err).Warnf("Failed to get column types for table %s in chat", fullTableName)
 				continue
 			}
 

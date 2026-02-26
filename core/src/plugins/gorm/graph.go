@@ -40,23 +40,23 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 			schema = config.Credentials.Database
 		}
 		if err := p.GetGraphQueryDB(db, schema).Scan(&tableRelations).Error; err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to execute graph query for schema: %s", schema))
+			log.WithError(err).Error(fmt.Sprintf("Failed to execute graph query for schema: %s", schema))
 			return nil, err
 		}
 
 		tableMap := make(map[string][]engine.GraphUnitRelationship)
 		for _, tr := range tableRelations {
 			tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
-			Name:             tr.Table2,
-			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
-			SourceColumn:     tr.SourceColumn,
-			TargetColumn:     tr.TargetColumn,
-		})
+				Name:             tr.Table2,
+				RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
+				SourceColumn:     tr.SourceColumn,
+				TargetColumn:     tr.TargetColumn,
+			})
 		}
 
 		storageUnits, err := p.GetStorageUnits(config, schema)
 		if err != nil {
-			log.Logger.WithError(err).Error(fmt.Sprintf("Failed to get storage units for graph generation in schema: %s", schema))
+			log.WithError(err).Error(fmt.Sprintf("Failed to get storage units for graph generation in schema: %s", schema))
 			return nil, err
 		}
 

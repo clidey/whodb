@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
+import { test, expect, forEachDatabase, skipIfNoFeature } from '../../support/test-fixture.mjs';
 
 test.describe('Pagination', () => {
 
@@ -74,13 +74,35 @@ test.describe('Pagination', () => {
         });
     });
 
+    // Custom page size from settings
+    forEachDatabase('sql', (db) => {
+        if (db.type !== 'Postgres') {
+            return;
+        }
+
+        const tableName = db.testTable.name;
+
+        test('respects custom page size from settings', async ({ whodb, page }) => {
+            // Set custom page size to 2 via the settings page UI
+            await whodb.goto('settings');
+            await page.locator('#default-page-size').click();
+            await page.locator('[data-value="custom"]').click();
+            await page.locator('input[type="number"]').clear();
+            await page.locator('input[type="number"]').fill('2');
+            await page.locator('input[type="number"]').press('Enter');
+
+            // Navigate to data view and verify the setting is applied
+            await whodb.data(tableName);
+
+            const tableData = await whodb.getTableData();
+            expect(tableData.rows.length).toEqual(2);
+        });
+    });
+
     // Key-Value Databases
     forEachDatabase('keyvalue', (db) => {
-        // Redis hashes are fetched as a complete unit (HGETALL), so server-side
-        // pagination doesn't apply to hash fields
-        if (db.type === 'Redis') {
-            test.skip('respects page size setting (Redis hashes do not support field pagination)', async ({ whodb, page }) => {
-            });
+        if (skipIfNoFeature(db, 'pagination')) {
+            test.skip('respects page size setting', async ({ whodb, page }) => {});
             return;
         }
 

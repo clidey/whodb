@@ -27,9 +27,10 @@ import {
 import { SearchSelect } from "../../components/ux";
 import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
 import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { AdjustmentsHorizontalIcon, ChevronDownIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
+import { AdjustmentsHorizontalIcon, ChevronDownIcon, PencilIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
+import { useTranslation } from "@/hooks/use-translation";
 
 type IExploreStorageUnitWhereConditionSheetProps = {
     defaultWhere?: WhereCondition;
@@ -48,6 +49,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
 }) => {
     const dispatch = useAppDispatch();
     const { pages, activePageId } = useAppSelector(state => state.scratchpad);
+    const { t } = useTranslation('pages/where-condition');
     const [filters, setFilters] = useState<WhereCondition>(defaultWhere ?? {
         Type: WhereConditionType.And,
         And: { Children: [] }
@@ -267,17 +269,17 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
     const totalConditions = filters.And?.Children?.length ?? 0;
     const getConditionButtonText = () => {
         if (totalConditions === 0) {
-            return "Add Condition";
+            return t('addCondition');
         } else if (totalConditions > 10) {
-            return "10+ Conditions";
+            return t('tenPlusConditions');
         } else {
-            return `${totalConditions} Condition${totalConditions === 1 ? '' : 's'}`;
+            return t(totalConditions === 1 ? 'conditionCountSingular' : 'conditionCountPlural', { count: totalConditions });
         }
     };
 
     return (
         <div className="flex flex-col" data-condition-count={totalConditions} data-condition-mode="and">
-            <Label className="mb-2">Where condition</Label>
+            <Label className="mb-2">{t('whereCondition')}</Label>
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 <Button onClick={handleOpenSheet} data-testid="where-button" variant="secondary">
                     <PlusCircleIcon className="w-4 h-4" /> {getConditionButtonText()}
@@ -286,7 +288,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={handleCloseSheet}>
                 <SheetContent side="right" className="w-[500px] max-w-full p-8 h-full">
-                    <SheetTitle className="flex items-center gap-2"><AdjustmentsHorizontalIcon className="w-5 h-5" /> Conditions</SheetTitle>
+                    <SheetTitle className="flex items-center gap-2"><AdjustmentsHorizontalIcon className="w-5 h-5" /> {t('conditionsTitle')}</SheetTitle>
                     {/* Display existing conditions as editable cards */}
                     {existingFilters.length > 0 && (
                         <div className="flex flex-col gap-sm mt-4">
@@ -295,17 +297,17 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                 return (
                                     <div
                                         key={`existing-condition-card-${i}`}
-                                        className="flex flex-col gap-2 p-4 border rounded-lg"
+                                        className="flex gap-2 p-4 border rounded-lg"
                                         data-testid={`existing-condition-card-${i}`}
                                     >
                                         {isEditing ? (
                                             // Editing mode - show form fields
                                             <div className="flex flex-col gap-2">
                                                 <div className="flex items-center justify-between">
-                                                    <Label className="text-sm font-medium">Editing Condition</Label>
+                                                    <Label className="text-sm font-medium">{t('editingCondition')}</Label>
                                                 </div>
                                                 <div className="flex flex-col gap-2">
-                                                    <Label className="text-xs">Field</Label>
+                                                    <Label className="text-xs">{t('field')}</Label>
                                                     <SearchSelect
                                                         value={editingExistingFilter?.Key || ""}
                                                         options={fieldsDropdownItems}
@@ -317,7 +319,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                     />
                                                 </div>
                                                 <div className="flex flex-col gap-2">
-                                                    <Label className="text-xs">Operator</Label>
+                                                    <Label className="text-xs">{t('operator')}</Label>
                                                     <SearchSelect
                                                         value={editingExistingFilter?.Operator || ""}
                                                         options={validOperators}
@@ -328,11 +330,11 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                     />
                                                 </div>
                                                 <div className="flex flex-col gap-2">
-                                                    <Label className="text-xs">Value</Label>
+                                                    <Label className="text-xs">{t('value')}</Label>
                                                     <Input
                                                         value={editingExistingFilter?.Value || ""}
                                                         onChange={(e) => handleEditExistingFilterChange('Value', e.target.value)}
-                                                        placeholder="Enter filter value"
+                                                        placeholder={t('enterFilterValue')}
                                                         data-testid={`edit-existing-field-value-${i}`}
                                                     />
                                                 </div>
@@ -347,7 +349,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                         size="sm"
                                                         className="flex-1"
                                                     >
-                                                        Cancel
+                                                        {t('cancel')}
                                                     </Button>
                                                     <Button
                                                         className="flex-1"
@@ -379,42 +381,42 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                         data-testid={`update-existing-filter-${i}`}
                                                         size="sm"
                                                     >
-                                                        Update
+                                                        {t('update')}
                                                     </Button>
                                                 </div>
                                             </div>
                                         ) : (
                                             // View mode - show condition and action buttons
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between w-full">
                                                 <div className="text-sm">
                                                     {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <Button 
-                                                        className="size-6 h-full ml-1" 
+                                                    <Button
+                                                        className="size-6 h-full ml-1"
                                                         onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleEditExistingFilter(i);
-                                                        }} 
-                                                        data-testid={`edit-existing-filter-${i}`} 
-                                                        variant="ghost" 
+                                                        }}
+                                                        data-testid={`edit-existing-filter-${i}`}
+                                                        variant="ghost"
                                                         size="icon"
+                                                        aria-label={t('editCondition')}
                                                     >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
+                                                        <PencilIcon className="w-3 h-3" aria-hidden="true" />
                                                     </Button>
-                                                    <Button 
-                                                        className="size-6 h-full" 
+                                                    <Button
+                                                        className="size-6 h-full"
                                                         onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleDeleteExistingFilter(i);
-                                                        }} 
-                                                        data-testid={`delete-existing-filter-${i}`} 
-                                                        variant="ghost" 
+                                                        }}
+                                                        data-testid={`delete-existing-filter-${i}`}
+                                                        variant="ghost"
                                                         size="icon"
+                                                        aria-label={t('deleteCondition')}
                                                     >
-                                                        <XCircleIcon className="w-3 h-3" />
+                                                        <XCircleIcon className="w-3 h-3" aria-hidden="true" />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -462,7 +464,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             >
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-medium">
-                                        Condition {index + 1}
+                                        {t('conditionNumber', { index: index + 1 })}
                                     </Label>
                                     {sheetFilters.length > 1 && (
                                         <Button
@@ -481,7 +483,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     )}
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Field</Label>
+                                    <Label className="text-xs">{t('field')}</Label>
                                     <SearchSelect
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
@@ -492,7 +494,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Operator</Label>
+                                    <Label className="text-xs">{t('operator')}</Label>
                                     <SearchSelect
                                         value={filter.Operator}
                                         options={validOperators}
@@ -503,11 +505,11 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Label className="text-xs">Value</Label>
+                                    <Label className="text-xs">{t('value')}</Label>
                                     <Input
                                         value={filter.Value}
                                         onChange={(e) => handleSheetFieldChange(index, 'Value', e.target.value)}
-                                        placeholder="Enter filter value"
+                                        placeholder={t('enterFilterValue')}
                                         data-testid={`sheet-field-value-${index}`}
                                     />
                                 </div>
@@ -521,7 +523,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                 data-testid="add-new-condition-button"
                             >
                                 <PlusCircleIcon className="w-4 h-4" />
-                                Add Another
+                                {t('addAnother')}
                             </Button>
                         </div>
                     </div>
@@ -532,14 +534,14 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             onClick={handleCloseSheet}
                             data-testid="cancel-add-conditions"
                         >
-                            Cancel
+                            {t('cancel')}
                         </Button>
-                        <Button 
+                        <Button
                             className="flex-1"
                             onClick={handleSheetSave}
                             data-testid="add-conditions-button"
                         >
-                            {selectedPageId ? 'Add to Page' : 'Add Condition'}
+                            {selectedPageId ? t('addToPage') : t('addCondition')}
                         </Button>
                     </SheetFooter>
                 </SheetContent>

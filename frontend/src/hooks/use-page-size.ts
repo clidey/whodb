@@ -22,6 +22,7 @@ export const PRESET_PAGE_SIZES = ["10", "25", "50", "100", "250", "500", "1000"]
 
 interface UsePageSizeOptions {
     onPageSizeChange?: (size: number) => void;
+    maxPageSize?: number;
 }
 
 export function usePageSize(initialSize: number, options?: UsePageSizeOptions) {
@@ -48,8 +49,11 @@ export function usePageSize(initialSize: number, options?: UsePageSizeOptions) {
             setCustomInput(pageSize);
             return false;
         }
-        if (parsed > 20000) {
-            toast.warning(t('largePageSizeWarning'));
+        const limit = options?.maxPageSize ?? 10000;
+        if (parsed > limit) {
+            toast.error(t('exceedsMaxPageSize', { max: limit }));
+            setCustomInput(pageSize);
+            return false;
         }
         setPageSize(String(parsed));
         options?.onPageSizeChange?.(parsed);

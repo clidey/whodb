@@ -84,7 +84,7 @@ func (b *BatchProcessor) calculateBatchSize(columnCount int) int {
 
 	// Use the smaller of configured batch size and calculated max
 	if maxRowsForDB < b.config.BatchSize {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"configuredBatchSize": b.config.BatchSize,
 			"calculatedMaxRows":   maxRowsForDB,
 			"columnCount":         columnCount,
@@ -109,7 +109,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 	}
 
 	if columnCount == 0 {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"table":       tableName,
 			"recordCount": len(records),
 		}).Error("All records are empty - no columns to insert")
@@ -129,7 +129,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 	if b.config.UseBulkInsert {
 		result := db.Table(fullTableName).CreateInBatches(records, effectiveBatchSize)
 		if result.Error != nil {
-			log.Logger.WithError(result.Error).
+			log.WithError(result.Error).
 				WithField("table", fullTableName).
 				WithField("recordCount", len(records)).
 				Error("Batch insert failed")
@@ -137,7 +137,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 		}
 
 		if b.config.LogProgress {
-			log.Logger.WithField("table", fullTableName).
+			log.WithField("table", fullTableName).
 				WithField("recordsInserted", result.RowsAffected).
 				Info("Batch insert completed")
 		}
@@ -163,7 +163,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 						return err
 					}
 					// Log error but continue
-					log.Logger.WithError(err).
+					log.WithError(err).
 						WithField("table", fullTableName).
 						Warn("Failed to insert record, continuing")
 				}
@@ -176,7 +176,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 		}
 
 		if b.config.LogProgress {
-			log.Logger.WithField("progress", fmt.Sprintf("%d/%d", end, totalRecords)).
+			log.WithField("progress", fmt.Sprintf("%d/%d", end, totalRecords)).
 				WithField("table", fullTableName).
 				Debug("Batch progress")
 		}
@@ -236,7 +236,7 @@ func (b *BatchProcessor) UpdateBatch(db *gorm.DB, schema, tableName string, upda
 					if b.config.FailOnError {
 						return result.Error
 					}
-					log.Logger.WithError(result.Error).
+					log.WithError(result.Error).
 						WithField("table", fullTableName).
 						WithField(keyColumn, keyValue).
 						Warn("Failed to update record, continuing")
@@ -252,14 +252,14 @@ func (b *BatchProcessor) UpdateBatch(db *gorm.DB, schema, tableName string, upda
 		}
 
 		if b.config.LogProgress {
-			log.Logger.WithField("progress", fmt.Sprintf("%d/%d", end, totalRecords)).
+			log.WithField("progress", fmt.Sprintf("%d/%d", end, totalRecords)).
 				WithField("table", fullTableName).
 				Debug("Update batch progress")
 		}
 	}
 
 	if b.config.LogProgress {
-		log.Logger.WithField("table", fullTableName).
+		log.WithField("table", fullTableName).
 			WithField("recordsUpdated", successCount).
 			Info("Batch update completed")
 	}
@@ -300,7 +300,7 @@ func (b *BatchProcessor) DeleteBatch(db *gorm.DB, schema, tableName string, cond
 					if b.config.FailOnError {
 						return result.Error
 					}
-					log.Logger.WithError(result.Error).
+					log.WithError(result.Error).
 						WithField("table", fullTableName).
 						Warn("Failed to delete records, continuing")
 				} else {
@@ -315,14 +315,14 @@ func (b *BatchProcessor) DeleteBatch(db *gorm.DB, schema, tableName string, cond
 		}
 
 		if b.config.LogProgress {
-			log.Logger.WithField("progress", fmt.Sprintf("%d/%d", end, totalConditions)).
+			log.WithField("progress", fmt.Sprintf("%d/%d", end, totalConditions)).
 				WithField("table", fullTableName).
 				Debug("Delete batch progress")
 		}
 	}
 
 	if b.config.LogProgress {
-		log.Logger.WithField("table", fullTableName).
+		log.WithField("table", fullTableName).
 			WithField("recordsDeleted", deletedCount).
 			Info("Batch delete completed")
 	}
@@ -370,7 +370,7 @@ func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, 
 		offset += b.config.BatchSize
 
 		if b.config.LogProgress {
-			log.Logger.WithField("recordsExported", totalExported).
+			log.WithField("recordsExported", totalExported).
 				WithField("table", fullTableName).
 				Debug("Export progress")
 		}
@@ -382,7 +382,7 @@ func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, 
 	}
 
 	if b.config.LogProgress {
-		log.Logger.WithField("table", fullTableName).
+		log.WithField("table", fullTableName).
 			WithField("totalRecordsExported", totalExported).
 			Info("Export completed")
 	}
@@ -421,7 +421,7 @@ func (b *BatchProcessor) ProcessInBatches(db *gorm.DB, schema, tableName string,
 			if b.config.FailOnError {
 				return fmt.Errorf("failed to process batch at offset %d: %w", offset, err)
 			}
-			log.Logger.WithError(err).
+			log.WithError(err).
 				WithField("offset", offset).
 				Warn("Failed to process batch, continuing")
 		}
@@ -430,7 +430,7 @@ func (b *BatchProcessor) ProcessInBatches(db *gorm.DB, schema, tableName string,
 		offset += b.config.BatchSize
 
 		if b.config.LogProgress {
-			log.Logger.WithField("recordsProcessed", totalProcessed).
+			log.WithField("recordsProcessed", totalProcessed).
 				WithField("table", fullTableName).
 				Debug("Process progress")
 		}
@@ -442,7 +442,7 @@ func (b *BatchProcessor) ProcessInBatches(db *gorm.DB, schema, tableName string,
 	}
 
 	if b.config.LogProgress {
-		log.Logger.WithField("table", fullTableName).
+		log.WithField("table", fullTableName).
 			WithField("totalRecordsProcessed", totalProcessed).
 			Info("Processing completed")
 	}

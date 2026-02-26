@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -37,14 +53,11 @@ export type AiProvider = {
 
 export type AwsProvider = CloudProvider & {
   __typename?: 'AWSProvider';
-  AuthMethod: Scalars['String']['output'];
-  DBUsername?: Maybe<Scalars['String']['output']>;
   DiscoverDocumentDB: Scalars['Boolean']['output'];
   DiscoverElastiCache: Scalars['Boolean']['output'];
   DiscoverRDS: Scalars['Boolean']['output'];
   DiscoveredCount: Scalars['Int']['output'];
   Error?: Maybe<Scalars['String']['output']>;
-  HasCredentials: Scalars['Boolean']['output'];
   Id: Scalars['ID']['output'];
   LastDiscoveryAt?: Maybe<Scalars['String']['output']>;
   Name: Scalars['String']['output'];
@@ -55,17 +68,12 @@ export type AwsProvider = CloudProvider & {
 };
 
 export type AwsProviderInput = {
-  AccessKeyId?: InputMaybe<Scalars['String']['input']>;
-  AuthMethod?: InputMaybe<Scalars['String']['input']>;
-  DBUsername?: InputMaybe<Scalars['String']['input']>;
   DiscoverDocumentDB?: InputMaybe<Scalars['Boolean']['input']>;
   DiscoverElastiCache?: InputMaybe<Scalars['Boolean']['input']>;
   DiscoverRDS?: InputMaybe<Scalars['Boolean']['input']>;
   Name: Scalars['String']['input'];
   ProfileName?: InputMaybe<Scalars['String']['input']>;
   Region: Scalars['String']['input'];
-  SecretAccessKey?: InputMaybe<Scalars['String']['input']>;
-  SessionToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AwsRegion = {
@@ -101,7 +109,6 @@ export type CloudProvider = {
 
 export enum CloudProviderStatus {
   Connected = 'Connected',
-  CredentialsRequired = 'CredentialsRequired',
   Disconnected = 'Disconnected',
   Discovering = 'Discovering',
   Error = 'Error'
@@ -623,6 +630,7 @@ export type SettingsConfig = {
   __typename?: 'SettingsConfig';
   CloudProvidersEnabled: Scalars['Boolean']['output'];
   DisableCredentialForm: Scalars['Boolean']['output'];
+  MaxPageSize: Scalars['Int']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -877,14 +885,14 @@ export type RawExecuteQuery = { __typename?: 'Query', RawExecute: { __typename?:
 export type GetCloudProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCloudProvidersQuery = { __typename?: 'Query', CloudProviders: Array<{ __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null }> };
+export type GetCloudProvidersQuery = { __typename?: 'Query', CloudProviders: Array<{ __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null }> };
 
 export type GetCloudProviderQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCloudProviderQuery = { __typename?: 'Query', CloudProvider?: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } | null };
+export type GetCloudProviderQuery = { __typename?: 'Query', CloudProvider?: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } | null };
 
 export type GetDiscoveredConnectionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -913,7 +921,7 @@ export type AddAwsProviderMutationVariables = Exact<{
 }>;
 
 
-export type AddAwsProviderMutation = { __typename?: 'Mutation', AddAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+export type AddAwsProviderMutation = { __typename?: 'Mutation', AddAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
 
 export type UpdateAwsProviderMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -921,7 +929,7 @@ export type UpdateAwsProviderMutationVariables = Exact<{
 }>;
 
 
-export type UpdateAwsProviderMutation = { __typename?: 'Mutation', UpdateAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+export type UpdateAwsProviderMutation = { __typename?: 'Mutation', UpdateAWSProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
 
 export type RemoveCloudProviderMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -942,12 +950,12 @@ export type RefreshCloudProviderMutationVariables = Exact<{
 }>;
 
 
-export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshCloudProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, AuthMethod: string, ProfileName?: string | null, HasCredentials: boolean, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
+export type RefreshCloudProviderMutation = { __typename?: 'Mutation', RefreshCloudProvider: { __typename?: 'AWSProvider', Id: string, ProviderType: CloudProviderType, Name: string, Region: string, ProfileName?: string | null, DiscoverRDS: boolean, DiscoverElastiCache: boolean, DiscoverDocumentDB: boolean, Status: CloudProviderStatus, LastDiscoveryAt?: string | null, DiscoveredCount: number, Error?: string | null } };
 
 export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean } };
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', MetricsEnabled?: boolean | null, CloudProvidersEnabled: boolean, DisableCredentialForm: boolean, MaxPageSize: number } };
 
 export type UpdateSettingsMutationVariables = Exact<{
   newSettings: SettingsConfigInput;
@@ -2136,9 +2144,7 @@ export const GetCloudProvidersDocument = gql`
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -2188,9 +2194,7 @@ export const GetCloudProviderDocument = gql`
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -2422,9 +2426,7 @@ export const AddAwsProviderDocument = gql`
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -2468,9 +2470,7 @@ export const UpdateAwsProviderDocument = gql`
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -2579,9 +2579,7 @@ export const RefreshCloudProviderDocument = gql`
     ProviderType
     Name
     Region
-    AuthMethod
     ProfileName
-    HasCredentials
     DiscoverRDS
     DiscoverElastiCache
     DiscoverDocumentDB
@@ -2624,6 +2622,7 @@ export const SettingsConfigDocument = gql`
     MetricsEnabled
     CloudProvidersEnabled
     DisableCredentialForm
+    MaxPageSize
   }
 }
     `;

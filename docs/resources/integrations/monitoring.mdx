@@ -430,7 +430,7 @@ output {
 
 ### Structured Logging
 
-Configure WhoDB for structured JSON logging:
+Configure WhoDB for structured JSON logging with file output:
 
 ```yaml
 services:
@@ -439,9 +439,22 @@ services:
     environment:
       - WHODB_LOG_FORMAT=json
       - WHODB_LOG_LEVEL=info
+      - WHODB_LOG_FILE=default
+      - WHODB_ACCESS_LOG_FILE=default
     volumes:
       - ./logs:/var/log/whodb
 ```
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WHODB_LOG_LEVEL` | Logging verbosity (case-insensitive): `debug`, `info`, `warn`, `error`, `none` | `info` |
+| `WHODB_LOG_FORMAT` | Output format (text, json) | `text` |
+| `WHODB_LOG_FILE` | Redirect all non-HTTP logs to a file instead of stdout. Use `default` for `/var/log/whodb/whodb.log`, or specify a custom path | unset (stdout) |
+| `WHODB_ACCESS_LOG_FILE` | Write HTTP access logs to a dedicated file. Use `default` for `/var/log/whodb/whodb.access.log`, or specify a custom path | unset (disabled) |
+
+<Note>
+Log files are created with `0600` permissions (owner-only read/write) and directories with `0750`. WhoDB refuses to write to a path that is a symlink.
+</Note>
 
 ## Loki and Promtail Integration
 

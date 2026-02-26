@@ -21,6 +21,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/clidey/whodb/cli/pkg/version"
 )
 
 func TestNewServer_DefaultOptions(t *testing.T) {
@@ -65,7 +67,7 @@ func TestNewServer_RegistersAllTools(t *testing.T) {
 
 func TestVersion_IsSet(t *testing.T) {
 	// Version should be "dev" by default or set by build flags
-	if Version == "" {
+	if version.Version == "" {
 		t.Error("Version should not be empty")
 	}
 }

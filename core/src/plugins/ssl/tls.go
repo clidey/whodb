@@ -35,18 +35,18 @@ func (c *CertificateInput) Load() ([]byte, error) {
 	}
 
 	if c.Content != "" {
-		log.Logger.Debug("[SSL] CertificateInput.Load: using Content")
+		log.Debug("[SSL] CertificateInput.Load: using Content")
 		return []byte(c.Content), nil
 	}
 
 	if c.Path != "" {
-		log.Logger.Debugf("[SSL] CertificateInput.Load: reading from path %s", c.Path)
+		log.Debugf("[SSL] CertificateInput.Load: reading from path %s", c.Path)
 		data, err := os.ReadFile(c.Path)
 		if err != nil {
-			log.Logger.Warnf("[SSL] CertificateInput.Load: failed to read file %s: %v", c.Path, err)
+			log.Warnf("[SSL] CertificateInput.Load: failed to read file %s: %v", c.Path, err)
 			return nil, fmt.Errorf("failed to read certificate file %s: %w", c.Path, err)
 		}
-		log.Logger.Debugf("[SSL] CertificateInput.Load: read %d bytes from %s", len(data), c.Path)
+		log.Debugf("[SSL] CertificateInput.Load: read %d bytes from %s", len(data), c.Path)
 		return data, nil
 	}
 
@@ -125,7 +125,7 @@ func BuildTLSConfig(cfg *SSLConfig, serverHostname string) (*tls.Config, error) 
 				}
 				_, err := cs.PeerCertificates[0].Verify(opts)
 				if err != nil {
-					log.Logger.Warnf("[SSL] verify-ca: certificate chain verification failed: %v", err)
+					log.Warnf("[SSL] verify-ca: certificate chain verification failed: %v", err)
 				}
 				return err
 			}
@@ -163,31 +163,31 @@ func loadRootCAs(tlsConfig *tls.Config, caCert *CertificateInput) error {
 // loadClientCerts loads client certificate and key for mutual TLS.
 func loadClientCerts(tlsConfig *tls.Config, clientCert, clientKey *CertificateInput) error {
 	if clientCert.IsEmpty() || clientKey.IsEmpty() {
-		log.Logger.Debug("[SSL] loadClientCerts: no client cert/key provided, skipping")
+		log.Debug("[SSL] loadClientCerts: no client cert/key provided, skipping")
 		return nil
 	}
 
-	log.Logger.Debug("[SSL] loadClientCerts: loading client certificate")
+	log.Debug("[SSL] loadClientCerts: loading client certificate")
 	certPEM, err := clientCert.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load client certificate: %w", err)
 	}
-	log.Logger.Debugf("[SSL] loadClientCerts: cert PEM loaded, %d bytes, starts with: %.50s", len(certPEM), string(certPEM))
+	log.Debugf("[SSL] loadClientCerts: cert PEM loaded, %d bytes, starts with: %.50s", len(certPEM), string(certPEM))
 
-	log.Logger.Debug("[SSL] loadClientCerts: loading client key")
+	log.Debug("[SSL] loadClientCerts: loading client key")
 	keyPEM, err := clientKey.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load client key: %w", err)
 	}
-	log.Logger.Debugf("[SSL] loadClientCerts: key PEM loaded, %d bytes, starts with: %.50s", len(keyPEM), string(keyPEM))
+	log.Debugf("[SSL] loadClientCerts: key PEM loaded, %d bytes, starts with: %.50s", len(keyPEM), string(keyPEM))
 
 	cert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
-		log.Logger.Warnf("[SSL] loadClientCerts: X509KeyPair failed: %v", err)
+		log.Warnf("[SSL] loadClientCerts: X509KeyPair failed: %v", err)
 		return fmt.Errorf("failed to load client key pair: %w", err)
 	}
 
-	log.Logger.Debug("[SSL] loadClientCerts: client certificate loaded successfully")
+	log.Debug("[SSL] loadClientCerts: client certificate loaded successfully")
 	tlsConfig.Certificates = []tls.Certificate{cert}
 	return nil
 }

@@ -62,7 +62,9 @@
     "queryHistory": true,
     "crud": true,
     "typeCasting": true,
-    "import": true
+    "import": true,
+    "pagination": true,
+    "documentEdit": true
   },
   "import": {
     "sampleDataDir": "clickhouse",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ declare module '@ee/config.tsx' {
     whereConditionMode: 'sheet' | 'popover';
     disableAnimations: boolean;
   };
+  export const loadFormRenderers: (() => Promise<Record<string, any>>) | undefined;
   export const isEEDatabase: any;
   export const isEENoSQLDatabase: any;
   export const getEEDatabaseStorageUnitLabel: any;

@@ -72,6 +72,21 @@ func TestGetStorageUnitModel(t *testing.T) {
 	}
 }
 
+func TestChooseResolvesDisplayTypesToUnderlyingPlugins(t *testing.T) {
+	engine := &Engine{}
+	mongo := &Plugin{Type: DatabaseType_MongoDB}
+	redis := &Plugin{Type: DatabaseType_Redis}
+	engine.RegistryPlugin(mongo)
+	engine.RegistryPlugin(redis)
+
+	if got := engine.Choose(DatabaseType_DocumentDB); got != mongo {
+		t.Fatalf("expected DocumentDB to resolve to MongoDB plugin")
+	}
+	if got := engine.Choose(DatabaseType_ElastiCache); got != redis {
+		t.Fatalf("expected ElastiCache to resolve to Redis plugin")
+	}
+}
+
 func typesDatabaseCredentials(username string) types.DatabaseCredentials {
 	return types.DatabaseCredentials{Username: username}
 }

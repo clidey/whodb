@@ -60,11 +60,13 @@ func (p *MySQLPlugin) GetAllSchemasQuery() string {
 	return "SELECT SCHEMA_NAME AS schemaname FROM INFORMATION_SCHEMA.SCHEMATA"
 }
 
-func (p *MySQLPlugin) FormTableName(schema string, storageUnit string) string {
-	if schema == "" {
-		return storageUnit
+// GetLastInsertID returns the most recently auto-generated ID using MySQL's LAST_INSERT_ID().
+func (p *MySQLPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
+	var id int64
+	if err := db.Raw("SELECT LAST_INSERT_ID()").Scan(&id).Error; err != nil {
+		return 0, err
 	}
-	return schema + "." + storageUnit
+	return id, nil
 }
 
 func (p *MySQLPlugin) GetSupportedOperators() map[string]string {
@@ -96,7 +98,7 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engin
 	var tableName, tableType string
 	var totalSize, dataSize float64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
-		log.Logger.WithError(err).Error("Failed to scan MySQL table information")
+		log.WithError(err).Error("Failed to scan MySQL table information")
 		return "", []engine.Record{}
 	}
 
@@ -190,7 +192,7 @@ func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND GENERATION_EXPRESSION IS NOT NULL AND GENERATION_EXPRESSION != ''
 	`, schema, storageUnit)
 	if err != nil {
-		log.Logger.WithError(err).Warn("Failed to get generated columns for MySQL table")
+		log.WithError(err).Warn("Failed to get generated columns for MySQL table")
 	}
 
 	for i := range columns {

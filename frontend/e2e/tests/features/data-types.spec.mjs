@@ -16,6 +16,7 @@
 
 import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
 import { getTableConfig } from '../../support/database-config.mjs';
+import { waitForMutation } from '../../support/helpers/test-utils.mjs';
 
 /**
  * Data Types CRUD Operations Test Suite
@@ -88,7 +89,9 @@ test.describe('Data Types CRUD Operations', () => {
                 test('ADD - creates row with type value', async ({ whodb, page }) => {
                     await whodb.data(tableName);
 
+                    const verifyAdd = waitForMutation(page, 'AddRow');
                     await whodb.addRow({[columnName]: testConfig.addValue});
+                    await verifyAdd();
 
                     // Wait for async mutations (e.g., ClickHouse)
                     if (mutationDelay > 0) {
@@ -102,7 +105,9 @@ test.describe('Data Types CRUD Operations', () => {
                     const rowIndex = await whodb.waitForRowValue(columnIndex + 1, expectedAddDisplay);
 
                     // Clean up - delete the row we just added
+                    const verifyDelete = waitForMutation(page, 'DeleteRow');
                     await whodb.deleteRow(rowIndex);
+                    await verifyDelete();
 
                     // Wait for async delete mutation
                     if (mutationDelay > 0) {
@@ -115,98 +120,109 @@ test.describe('Data Types CRUD Operations', () => {
                     const updateDisplayValue = String(expectedUpdateDisplay).trim();
                     const revertValue = testConfig.inputOriginalValue || testConfig.originalValue;
 
-                    await whodb.data(tableName);
-                    await whodb.sortBy(0);
-
-                    // First pass: check if we need to revert leftover data from failed tests
-                    let tableData = await whodb.getTableData();
-                    let rows = tableData.rows;
-                    if (rows.length === 0) {
-                        throw new Error('No rows in data_types table');
-                    }
-
-                    const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
-
-                    // Find row with either original OR update value
-                    let targetRowIndex = rows.findIndex(r => {
-                        const cellValue = String(r[columnIndex + 1] || '').trim();
-                        return cellValue === originalValue;
+                    await test.step('navigate to table', async () => {
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
                     });
 
-                    // If not found with original, try finding with update value (leftover from failed test)
-                    if (targetRowIndex === -1) {
-                        targetRowIndex = rows.findIndex(r => {
+                    await test.step('check and revert leftover data', async () => {
+                        let tableData = await whodb.getTableData();
+                        let rows = tableData.rows;
+                        if (rows.length === 0) {
+                            throw new Error('No rows in data_types table');
+                        }
+
+                        const columnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
+
+                        let targetRowIndex = rows.findIndex(r => {
+                            const cellValue = String(r[columnIndex + 1] || '').trim();
+                            return cellValue === originalValue;
+                        });
+
+                        if (targetRowIndex === -1) {
+                            targetRowIndex = rows.findIndex(r => {
+                                const cellValue = String(r[columnIndex + 1] || '').trim();
+                                return cellValue === updateDisplayValue;
+                            });
+                            if (targetRowIndex !== -1) {
+                                await whodb.updateRow(targetRowIndex, columnIndex, revertValue, false);
+
+                                if (mutationDelay > 0) {
+                                    await page.waitForTimeout(mutationDelay);
+                                    await whodb.data(tableName);
+                                    await whodb.sortBy(0);
+                                }
+
+                                await whodb.waitForRowValue(columnIndex + 1, originalValue);
+                            }
+                        }
+
+                        if (targetRowIndex === -1) {
+                            throw new Error(`Row with value "${originalValue}" or "${updateDisplayValue}" not found in column ${columnName}. Actual values: ${JSON.stringify(columnValues)}`);
+                        }
+                    });
+
+                    await test.step('perform update with network verification', async () => {
+                        const tableData = await whodb.getTableData();
+                        const rows = tableData.rows;
+                        const finalTargetRowIndex = rows.findIndex(r => {
+                            const cellValue = String(r[columnIndex + 1] || '').trim();
+                            return cellValue === originalValue;
+                        });
+
+                        if (finalTargetRowIndex === -1) {
+                            const finalColumnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
+                            throw new Error(`Row with original value "${originalValue}" not found. Actual values: ${JSON.stringify(finalColumnValues)}`);
+                        }
+
+                        const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
+                        await whodb.updateRow(finalTargetRowIndex, columnIndex, testConfig.updateValue, false);
+                        await verifyUpdate();
+
+                        if (mutationDelay > 0) {
+                            await page.waitForTimeout(mutationDelay);
+                            await whodb.data(tableName);
+                            await whodb.sortBy(0);
+                        }
+                    });
+
+                    await test.step('verify update', async () => {
+                        await whodb.waitForRowValue(columnIndex + 1, updateDisplayValue);
+
+                        const { rows: updatedRows } = await whodb.getTableData();
+                        const targetIdx = updatedRows.findIndex(r => {
                             const cellValue = String(r[columnIndex + 1] || '').trim();
                             return cellValue === updateDisplayValue;
                         });
-                        if (targetRowIndex !== -1) {
-                            // Revert leftover data from failed test
-                            await whodb.updateRow(targetRowIndex, columnIndex, revertValue, false);
-
-                            // Wait for async mutations (e.g., ClickHouse)
-                            if (mutationDelay > 0) {
-                                await page.waitForTimeout(mutationDelay);
-                                await whodb.data(tableName);
-                                await whodb.sortBy(0);
-                            }
-
-                            // Wait for table to show original value
-                            await whodb.waitForRowValue(columnIndex + 1, originalValue);
-                        }
-                    }
-
-                    if (targetRowIndex === -1) {
-                        throw new Error(`Row with value "${originalValue}" or "${updateDisplayValue}" not found in column ${columnName}. Actual values: ${JSON.stringify(columnValues)}`);
-                    }
-
-                    // Second pass: perform the actual UPDATE test with clean data
-                    tableData = await whodb.getTableData();
-                    rows = tableData.rows;
-                    const finalTargetRowIndex = rows.findIndex(r => {
-                        const cellValue = String(r[columnIndex + 1] || '').trim();
-                        return cellValue === originalValue;
+                        expect(targetIdx, 'Updated row should exist').not.toEqual(-1);
+                        const cellValue = String(updatedRows[targetIdx][columnIndex + 1] || '').trim();
+                        expect(cellValue).toEqual(updateDisplayValue);
                     });
 
-                    if (finalTargetRowIndex === -1) {
-                        const finalColumnValues = rows.map(r => String(r[columnIndex + 1] || '').trim());
-                        throw new Error(`Row with original value "${originalValue}" not found. Actual values: ${JSON.stringify(finalColumnValues)}`);
-                    }
+                    await test.step('revert to original', async () => {
+                        const { rows } = await whodb.getTableData();
+                        const revertIdx = rows.findIndex(r => {
+                            const cellValue = String(r[columnIndex + 1] || '').trim();
+                            return cellValue === updateDisplayValue;
+                        });
+                        await whodb.updateRow(revertIdx, columnIndex, revertValue, false);
 
-                    await whodb.updateRow(finalTargetRowIndex, columnIndex, testConfig.updateValue, false);
+                        if (mutationDelay > 0) {
+                            await page.waitForTimeout(mutationDelay);
+                            await whodb.data(tableName);
+                            await whodb.sortBy(0);
+                        }
 
-                    // Wait for async mutations (e.g., ClickHouse)
-                    if (mutationDelay > 0) {
-                        await page.waitForTimeout(mutationDelay);
-                        await whodb.data(tableName);
-                        await whodb.sortBy(0);
-                    }
-
-                    // Wait for table to show updated value
-                    await whodb.waitForRowValue(columnIndex + 1, updateDisplayValue);
-
-                    // Verify the update succeeded by reading final state
-                    const { rows: updatedRows } = await whodb.getTableData();
-                    const cellValue = String(updatedRows[finalTargetRowIndex][columnIndex + 1] || '').trim();
-                    expect(cellValue).toEqual(updateDisplayValue);
-
-                    // Revert to original value
-                    await whodb.updateRow(finalTargetRowIndex, columnIndex, revertValue, false);
-
-                    // Wait for async mutations (e.g., ClickHouse)
-                    if (mutationDelay > 0) {
-                        await page.waitForTimeout(mutationDelay);
-                        await whodb.data(tableName);
-                        await whodb.sortBy(0);
-                    }
-
-                    // Wait for revert to complete
-                    await whodb.waitForRowValue(columnIndex + 1, originalValue);
+                        await whodb.waitForRowValue(columnIndex + 1, originalValue);
+                    });
                 });
 
                 test('DELETE - removes row with type value', async ({ whodb, page }) => {
                     await whodb.data(tableName);
 
+                    const verifyAdd = waitForMutation(page, 'AddRow');
                     await whodb.addRow({[columnName]: deleteValue});
+                    await verifyAdd();
 
                     // Wait for async mutations (e.g., ClickHouse)
                     if (mutationDelay > 0) {
@@ -222,7 +238,9 @@ test.describe('Data Types CRUD Operations', () => {
                     const { rows } = await whodb.getTableData();
                     const initialCount = rows.length;
 
+                    const verifyDelete = waitForMutation(page, 'DeleteRow');
                     await whodb.deleteRow(rowIndex);
+                    await verifyDelete();
 
                     // Wait for async mutations (e.g., ClickHouse)
                     if (mutationDelay > 0) {

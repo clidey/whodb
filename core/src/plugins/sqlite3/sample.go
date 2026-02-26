@@ -61,13 +61,13 @@ func GetSampleDatabase() (*gorm.DB, error) {
 			Logger: logger.Default.LogMode(plugins.GetGormLogConfig()),
 		})
 		if err != nil {
-			log.Logger.WithError(err).Error("Failed to create sample in-memory database")
+			log.WithError(err).Error("Failed to create sample in-memory database")
 			sampleDBErr = err
 			return
 		}
 
 		if err := db.Exec(sampleSQL).Error; err != nil {
-			log.Logger.WithError(err).Error("Failed to initialize sample database schema")
+			log.WithError(err).Error("Failed to initialize sample database schema")
 			sampleDBErr = err
 			return
 		}

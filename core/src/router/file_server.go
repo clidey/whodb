@@ -53,7 +53,7 @@ func fileServer(r chi.Router, staticFiles embed.FS) {
 	}
 	if !found {
 		// In dev mode (no embedded frontend), skip file serving - frontend is served separately
-		log.Logger.Warn("No embedded frontend assets found - running in API-only mode (use pnpm start for frontend)")
+		log.Warn("No embedded frontend assets found - running in API-only mode (use pnpm start for frontend)")
 		return
 	}
 
@@ -66,20 +66,20 @@ func fileServer(r chi.Router, staticFiles embed.FS) {
 			file, err := staticFS.Open("index.html")
 			if err != nil {
 				http.Error(w, "index.html not found", http.StatusNotFound)
-				log.Logger.Error("Failed to open index.html:", err)
+				log.Error("Failed to open index.html:", err)
 				return
 			}
 			defer func(file fs.File) {
 				err := file.Close()
 				if err != nil {
-					log.Logger.Error("Failed to close file:", err)
+					log.Error("Failed to close file:", err)
 				}
 			}(file)
 
 			data, err := io.ReadAll(file)
 			if err != nil {
 				http.Error(w, "Failed to read index.html", http.StatusInternalServerError)
-				log.Logger.Error("Failed to read index.html:", err)
+				log.Error("Failed to read index.html:", err)
 				return
 			}
 

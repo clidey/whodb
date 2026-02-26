@@ -42,10 +42,12 @@ test.describe('Explore Metadata', () => {
 
     // Document Databases
     forEachDatabase('document', (db) => {
+        const tableName = db.testTable.name;
+
         test('shows collection/index metadata', async ({ whodb, page }) => {
-            await whodb.explore('users');
+            await whodb.explore(tableName);
             const fields = await whodb.getExploreFields();
-            const tableConfig = getTableConfig(db, 'users');
+            const tableConfig = getTableConfig(db, tableName);
             if (tableConfig && tableConfig.metadata) {
                 verifyDocMetadata(fields, tableConfig.metadata);
             }
@@ -54,10 +56,12 @@ test.describe('Explore Metadata', () => {
 
     // Key-Value Databases
     forEachDatabase('keyvalue', (db) => {
+        const tableName = db.testTable.name;
+
         test('shows key metadata', async ({ whodb, page }) => {
-            await whodb.explore('user:1');
+            await whodb.explore(tableName);
             const fields = await whodb.getExploreFields();
-            const keyConfig = db.keyTypes['user:1'];
+            const keyConfig = db.keyTypes[tableName];
             if (keyConfig) {
                 verifyKeyMetadata(fields, keyConfig.type);
             }

@@ -56,19 +56,7 @@ const (
 	Ollama_LLMType    = providers.Ollama_LLMType
 	OpenAI_LLMType    = providers.OpenAI_LLMType
 	Anthropic_LLMType = providers.Anthropic_LLMType
-	// Deprecated: Use OpenAI_LLMType instead
-	ChatGPT_LLMType LLMType = "ChatGPT"
 )
-
-// NormalizeLLMType normalizes LLM type strings for backward compatibility.
-// Maps deprecated "ChatGPT" to "OpenAI".
-func NormalizeLLMType(typeStr string) LLMType {
-	if typeStr == "ChatGPT" {
-		log.Logger.Warn("'ChatGPT' provider name is deprecated, use 'OpenAI' instead")
-		return OpenAI_LLMType
-	}
-	return LLMType(typeStr)
-}
 
 type LLMClient struct {
 	Type      LLMType
@@ -92,27 +80,24 @@ func getEndpointForProvider(providerType LLMType) string {
 				return provider.BaseURL
 			}
 		}
-		log.Logger.Warnf("No endpoint found for provider type: %s", providerType)
+		log.Warnf("No endpoint found for provider type: %s", providerType)
 		return ""
 	}
 }
 
 func (c *LLMClient) GetSupportedModels() ([]string, error) {
-	// Normalize type for backward compatibility
-	normalizedType := NormalizeLLMType(string(c.Type))
-
 	// Get provider from registry
-	provider, err := providers.GetProvider(normalizedType)
+	provider, err := providers.GetProvider(c.Type)
 	if err != nil {
-		log.Logger.WithError(err).Errorf("Provider not found for type: %s", normalizedType)
+		log.WithError(err).Errorf("Provider not found for type: %s", c.Type)
 		return nil, err
 	}
 
 	// Build provider config with endpoint from environment
 	config := &providers.ProviderConfig{
-		Type:     normalizedType,
+		Type:     c.Type,
 		APIKey:   c.APIKey,
-		Endpoint: getEndpointForProvider(normalizedType),
+		Endpoint: getEndpointForProvider(c.Type),
 	}
 
 	// Use provider to get supported models

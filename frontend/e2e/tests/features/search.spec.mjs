@@ -54,28 +54,36 @@ test.describe('Table Search', () => {
 
     // Document Databases
     forEachDatabase('document', (db) => {
-        test('filters matching content in documents', async ({ whodb, page }) => {
-            await whodb.data('users');
+        const testTable = db.testTable;
+        const tableName = testTable.name;
+        const searchTerm = testTable.searchTerm;
 
-            await whodb.searchTable('john');
+        test('filters matching content in documents', async ({ whodb, page }) => {
+            await whodb.data(tableName);
+
+            await whodb.searchTable(searchTerm);
 
             // Search filters server-side; verify results contain the search term
             const { rows } = await whodb.getTableData();
-            const hasMatch = rows.some(row => row.some(cell => cell.toLowerCase().includes('john')));
+            const hasMatch = rows.some(row => row.some(cell => cell.toLowerCase().includes(searchTerm.toLowerCase())));
             expect(hasMatch).toBe(true);
         });
     });
 
     // Key-Value Databases
     forEachDatabase('keyvalue', (db) => {
-        test('filters matching values', async ({ whodb, page }) => {
-            await whodb.data('user:1');
+        const testTable = db.testTable;
+        const tableName = testTable.name;
+        const searchTerm = testTable.searchTerm;
 
-            await whodb.searchTable('john');
+        test('filters matching values', async ({ whodb, page }) => {
+            await whodb.data(tableName);
+
+            await whodb.searchTable(searchTerm);
 
             // Search filters server-side; verify results contain the search term
             const { rows } = await whodb.getTableData();
-            const hasMatch = rows.some(row => row.some(cell => cell.toLowerCase().includes('john')));
+            const hasMatch = rows.some(row => row.some(cell => cell.toLowerCase().includes(searchTerm.toLowerCase())));
             expect(hasMatch).toBe(true);
         });
     });

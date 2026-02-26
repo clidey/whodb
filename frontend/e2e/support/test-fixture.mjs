@@ -39,8 +39,10 @@ import fs from "fs";
 import path from "path";
 import {chromium, expect, test as base} from "@playwright/test";
 import {WhoDB} from "./whodb.mjs";
+import {TIMEOUT} from "./helpers/test-utils.mjs";
 import {getDatabaseId, getDatabasesByCategory, hasFeature,} from "./database-config.mjs";
 import {VALID_FEATURES} from "./helpers/fixture-validator.mjs";
+import {mockAIProviders} from "./helpers/mock-providers.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 // Optional Wails bindings stub to exercise desktop-only code paths in Playwright.
@@ -49,40 +51,6 @@ const NYC_OUTPUT_DIR = path.resolve(process.cwd(), ".nyc_output");
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
 
 const CDP_ENDPOINT = process.env.CDP_ENDPOINT;
-
-/**
- * Mock AI provider/model calls to prevent backend Ollama timeouts.
- * Chat tests that call setupChatMock() override this with their own
- * mock data (Playwright routes are LIFO - last registered runs first).
- */
-async function mockAIProviders(page) {
-  await page.route("**/api/query", async (route) => {
-    // postDataJSON() throws on multipart form data (file uploads).
-    // Skip non-JSON requests so they pass through to the server.
-    let postData;
-    try {
-      postData = route.request().postDataJSON();
-    } catch {
-      return route.fallback();
-    }
-    const op = postData?.operationName;
-
-    if (op === "GetAIProviders") {
-      return route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ data: { AIProviders: [] } }),
-      });
-    }
-    if (op === "GetAIModels") {
-      return route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ data: { AIModel: [] } }),
-      });
-    }
-
-    await route.fallback();
-  });
-}
 
 /**
  * Collect Istanbul code coverage from the browser after each test.
@@ -262,7 +230,7 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
             await page
               .locator('[data-testid="storage-unit-card"]')
               .first()
-              .waitFor({ timeout: 15000 });
+              .waitFor({ timeout: TIMEOUT.NAVIGATION });
           }
         });
 
@@ -294,7 +262,9 @@ export async function loginToDatabase(whodb, dbConfig, options = {}) {
     conn.user ?? undefined,
     conn.password ?? undefined,
     conn.database ?? undefined,
-    conn.advanced || {}
+    conn.advanced || {},
+    null,
+    dbConfig.loginForm || null
   );
   if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
     await whodb.selectSchema(dbConfig.schema);
@@ -304,7 +274,7 @@ export async function loginToDatabase(whodb, dbConfig, options = {}) {
     await whodb.page
       .locator('[data-testid="storage-unit-card"]')
       .first()
-      .waitFor({ timeout: 15000 });
+      .waitFor({ timeout: TIMEOUT.NAVIGATION });
   }
 }
 

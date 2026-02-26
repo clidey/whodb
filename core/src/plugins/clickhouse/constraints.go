@@ -73,6 +73,15 @@ func (p *ClickHousePlugin) GetColumnConstraints(config *engine.PluginConfig, sch
 // enrichConstraintsFromType parses a ClickHouse type string and injects relevant
 // constraints (check_values for enums, scale/precision for decimals).
 func enrichConstraintsFromType(constraints map[string]map[string]any, columnName string, fullType string) {
+	// ClickHouse's system.columns always wraps nullable types in Nullable(...),
+	// so its absence is authoritative. Without this, complex types (Tuple, Array, Map)
+	// default to nullable and mock data generation may produce nil for non-nullable columns.
+	upperFull := strings.ToUpper(fullType)
+	if !strings.Contains(upperFull, "NULLABLE(") {
+		colConstraints := gorm_plugin.EnsureConstraintEntry(constraints, columnName)
+		colConstraints["nullable"] = false
+	}
+
 	// Unwrap Nullable/LowCardinality to find the inner type
 	innerType := unwrapClickHouseModifiers(fullType)
 	upperInner := strings.ToUpper(innerType)

@@ -30,7 +30,7 @@ import (
 func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database string, storageUnit string, values map[string]string) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while deleting row")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while deleting row")
 		return false, err
 	}
 
@@ -38,21 +38,21 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 	documentJSON, ok := values["document"]
 	if !ok {
 		err := errors.New("missing 'document' key in values map")
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Missing document key in delete request values")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Missing document key in delete request values")
 		return false, err
 	}
 
 	// Unmarshal the JSON to extract the _id field
 	var jsonValues map[string]any
 	if err := json.Unmarshal([]byte(documentJSON), &jsonValues); err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for deletion")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to unmarshal document JSON for deletion")
 		return false, err
 	}
 
 	id, ok := jsonValues["_id"]
 	if !ok {
 		err := errors.New("missing '_id' field in the document")
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).Error("Missing _id field in document for deletion")
+		log.WithError(err).WithField("storageUnit", storageUnit).Error("Missing _id field in document for deletion")
 		return false, err
 	}
 
@@ -69,7 +69,7 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 		client.Delete.WithRefresh("true"), // Ensure the deletion is immediately visible
 	)
 	if err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch delete operation")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch delete operation")
 		return false, fmt.Errorf("failed to execute delete: %w", err)
 	}
 	defer res.Body.Close()
@@ -77,21 +77,21 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 	// Check if the response indicates an error
 	if res.IsError() {
 		err := fmt.Errorf("error deleting document: %s", formatElasticError(res))
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("ElasticSearch delete API returned error")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("ElasticSearch delete API returned error")
 		return false, err
 	}
 
 	// Decode the response to check the result
 	var deleteResponse map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&deleteResponse); err != nil {
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch delete response")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).Error("Failed to decode ElasticSearch delete response")
 		return false, err
 	}
 
 	// Check if the deletion was successful
 	if result, ok := deleteResponse["result"].(string); ok && result != "deleted" {
 		err := errors.New("no documents were deleted")
-		log.Logger.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).WithField("result", result).Error("ElasticSearch delete operation did not delete any documents")
+		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", id).WithField("result", result).Error("ElasticSearch delete operation did not delete any documents")
 		return false, err
 	}
 

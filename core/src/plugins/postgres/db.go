@@ -42,7 +42,7 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 
 	pgxConfig, err := pgx.ParseConfig("")
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname": connectionInput.Hostname,
 			"port":     connectionInput.Port,
 			"database": connectionInput.Database,
@@ -68,7 +68,7 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 		sslMode = string(connectionInput.SSLConfig.Mode)
 		tlsConfig, err := ssl.BuildTLSConfig(connectionInput.SSLConfig, connectionInput.Hostname)
 		if err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname": connectionInput.Hostname,
 				"sslMode":  connectionInput.SSLConfig.Mode,
 			}).Error("Failed to build TLS configuration for PostgreSQL")
@@ -84,7 +84,7 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 		maps.Copy(pgxConfig.RuntimeParams, connectionInput.ExtraOptions)
 	}
 
-	l := log.Logger.WithFields(map[string]any{
+	l := log.WithFields(map[string]any{
 		"hostname": connectionInput.Hostname,
 		"port":     connectionInput.Port,
 		"database": connectionInput.Database,

@@ -28,36 +28,13 @@
 
 import fs from "fs";
 import path from "path";
-import { test as setup } from "@playwright/test";
-import { WhoDB } from "../support/whodb.mjs";
-import {
-  getDatabasesByCategory,
-  getDatabaseId,
-} from "../support/database-config.mjs";
+import {test as setup} from "@playwright/test";
+import {WhoDB} from "../support/whodb.mjs";
+import {getDatabaseId, getDatabasesByCategory,} from "../support/database-config.mjs";
+import {mockAIProviders} from "../support/helpers/mock-providers.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const AUTH_DIR = path.resolve(process.cwd(), "e2e", ".auth");
-
-// Mock AI providers during login to avoid backend Ollama timeouts
-async function mockAIProviders(page) {
-  await page.route("**/api/query", async (route) => {
-    const postData = route.request().postDataJSON?.();
-    const op = postData?.operationName;
-    if (op === "GetAIProviders") {
-      return route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ data: { AIProviders: [] } }),
-      });
-    }
-    if (op === "GetAIModels") {
-      return route.fulfill({
-        contentType: "application/json",
-        body: JSON.stringify({ data: { AIModel: [] } }),
-      });
-    }
-    await route.fallback();
-  });
-}
 
 // Get the target database from env (set by run-e2e.sh per database)
 const targetDb = process.env.DATABASE;
@@ -87,10 +64,17 @@ for (const dbConfig of databases) {
       conn.user ?? undefined,
       conn.password ?? undefined,
       conn.database ?? undefined,
-      conn.advanced || {}
+      conn.advanced || {},
+      null,
+      dbConfig.loginForm || null
     );
 
     if (dbConfig.schema && dbConfig.sidebar?.showsSchemaDropdown) {
+      // Wait for any health overlay to clear before interacting with sidebar
+      const overlay = page.getByText('Database Connection Lost');
+      if (await overlay.isVisible().catch(() => false)) {
+        await overlay.waitFor({ state: 'hidden', timeout: 60_000 });
+      }
       await whodb.selectSchema(dbConfig.schema);
     }
 

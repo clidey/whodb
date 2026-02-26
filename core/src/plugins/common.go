@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -75,7 +74,7 @@ func startConnectionCleanup() {
 
 // cleanupStaleConnections removes connections that haven't been used within the TTL.
 func cleanupStaleConnections() {
-	log.Logger.Debug("cleaning up stale connections")
+	log.Debug("cleaning up stale connections")
 	staleThreshold := time.Now().Add(-connectionCacheTTL)
 
 	connectionCacheMu.Lock()
@@ -85,7 +84,7 @@ func cleanupStaleConnections() {
 		if cached.lastUsed.Before(staleThreshold) {
 			delete(connectionCache, key)
 			closeGormDB(cached.db)
-			log.Logger.Debug("Closed stale database connection")
+			log.Debug("Closed stale database connection")
 		}
 	}
 }
@@ -97,7 +96,7 @@ func closeGormDB(db *gorm.DB) {
 	}
 	if sqlDB, err := db.DB(); err == nil {
 		if err := sqlDB.Close(); err != nil {
-			log.Logger.WithError(err).Error("failed to close db connection")
+			log.WithError(err).Error("failed to close db connection")
 		}
 	}
 }
@@ -142,7 +141,7 @@ func getConnectionCacheKey(config *engine.PluginConfig) string {
 func RemoveConnection(config *engine.PluginConfig) {
 	connID := connIdentifier(config)
 	key := getConnectionCacheKey(config)
-	l := log.Logger.WithFields(map[string]any{"conn_id": connID, "cache_key": shortKey(key)})
+	l := log.WithFields(map[string]any{"conn_id": connID, "cache_key": shortKey(key)})
 	l.Debug("RemoveConnection called")
 
 	connectionCacheMu.Lock()
@@ -160,7 +159,7 @@ func RemoveConnection(config *engine.PluginConfig) {
 
 // CloseAllConnections closes all cached connections (call on shutdown).
 func CloseAllConnections(_ context.Context) {
-	l := log.Logger.WithField("phase", "shutdown")
+	l := log.WithField("phase", "shutdown")
 	l.Info("CloseAllConnections called, stopping cleanup goroutine")
 
 	// Stop the background cleanup goroutine
@@ -185,7 +184,7 @@ func CloseAllConnections(_ context.Context) {
 func getOrCreateConnection(config *engine.PluginConfig, createDB DBCreationFunc) (*gorm.DB, error) {
 	connID := connIdentifier(config)
 	key := getConnectionCacheKey(config)
-	l := log.Logger.WithFields(map[string]any{"conn_id": connID, "cache_key": shortKey(key)})
+	l := log.WithFields(map[string]any{"conn_id": connID, "cache_key": shortKey(key)})
 
 	// First, check cache (with lock)
 	connectionCacheMu.Lock()
@@ -277,7 +276,7 @@ func evictOldestConnection(excludeKey string) {
 		cached := connectionCache[oldestKey]
 		delete(connectionCache, oldestKey)
 		closeGormDB(cached.db)
-		log.Logger.WithField("cache_key", shortKey(oldestKey)).Debug("Evicted oldest connection to stay under limit")
+		log.WithField("cache_key", shortKey(oldestKey)).Debug("Evicted oldest connection to stay under limit")
 	}
 }
 
@@ -358,7 +357,7 @@ func ConfigureConnectionPool(db *gorm.DB) error {
 
 // GetGormLogConfig returns the GORM logger level based on the environment log level setting.
 func GetGormLogConfig() logger.LogLevel {
-	switch env.LogLevel {
+	switch log.GetLevel() {
 	case "warning":
 		return logger.Warn
 	case "error":
@@ -395,7 +394,7 @@ func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, opera
 
 	db, err := getOrCreateConnection(config, DB)
 	if err != nil {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"conn_id": connIdentifier(config),
 			"error":   err.Error(),
 		}).Error("WithConnection FAILED to get connection")

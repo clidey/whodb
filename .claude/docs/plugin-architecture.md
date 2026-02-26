@@ -57,10 +57,11 @@ GormPlugin base class (`core/src/plugins/gorm/`) provides:
 // Most SQL plugins override these:
 GetAllSchemasQuery() string           // information_schema query for schemas
 GetSchemaTableQuery() string          // Query for columns in a table
-FormTableName(schema, table) string   // "schema"."table" vs `schema`.`table`
+FormTableName(schema, table) string   // Default: "schema.table" (override for different behavior, e.g. SQLite ignores schema)
 GetPlaceholder(index int) string      // $1 for Postgres, ? for MySQL
 DB(config) (*gorm.DB, error)          // Connection with driver-specific config
 GetDatabaseMetadata() *DatabaseMetadata // Operators, types, aliases for frontend
+GetLastInsertID(db *gorm.DB) (int64, error) // Default: returns 0 (override for MySQL, Postgres, SQLite)
 ```
 
 ## Database Metadata (types.go)

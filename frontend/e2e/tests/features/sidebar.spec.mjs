@@ -337,11 +337,11 @@ test.describe('Sidebar Navigation', () => {
                     // Click profile dropdown
                     await page.locator('[data-testid="sidebar-profile"]').click();
 
-                    // Look for add profile option
-                    const addButton = page.locator('[data-testid="add-profile-button"], button:has-text("Add"), a:has-text("Add")');
-                    const addButtonCount = await addButton.count();
-                    if (addButtonCount > 0) {
-                        await addButton.first().click();
+                    // Look for add profile option (rendered as CommandItem with role="option")
+                    const addOption = page.getByRole('option', { name: /Add Another Profile/i });
+                    const addOptionCount = await addOption.count();
+                    if (addOptionCount > 0) {
+                        await addOption.first().click();
 
                         // Should show login form in sheet/dialog
                         await expect(page.locator('[role="dialog"], [data-testid="login-form"]')).toBeVisible({ timeout: 5000 });

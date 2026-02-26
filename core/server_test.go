@@ -41,7 +41,7 @@ const defaultPortTest = "8080"
 var srv *http.Server
 
 func TestMain(m *testing.M) {
-	log.Logger.Info("Starting WhoDB in test mode (Ctrl+C to exit)...")
+	log.Info("Starting WhoDB in test mode (Ctrl+C to exit)...")
 
 	src.InitializeEngine()
 	r := router.InitializeRouter(staticFilesTest)
@@ -61,27 +61,27 @@ func TestMain(m *testing.M) {
 	}
 
 	go func() {
-		log.Logger.Info("Server starting...")
+		log.Info("Server starting...")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Logger.Fatalf("listen: %s", err)
+			log.Fatalf("listen: %s", err)
 			os.Exit(1)
 		}
 	}()
 
-	log.Logger.Infof("🎉 WhoDB test server running at http://localhost:%s 🎉", port)
+	log.Infof("🎉 WhoDB test server running at http://localhost:%s 🎉", port)
 
 	// Wait for SIGINT (Ctrl+C) or SIGTERM
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Logger.Info("Received shutdown signal (Ctrl+C). Shutting down...")
+	log.Info("Received shutdown signal (Ctrl+C). Shutting down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Logger.Errorf("Graceful shutdown failed: %v", err)
+		log.Errorf("Graceful shutdown failed: %v", err)
 	}
 
-	log.Logger.Info("Test server shut down. Exiting and writing coverage.")
+	log.Info("Test server shut down. Exiting and writing coverage.")
 	os.Exit(m.Run())
 }

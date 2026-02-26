@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 )
 
@@ -57,7 +57,7 @@ func (p *OllamaProvider) RequiresAPIKey() bool {
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
 func (p *OllamaProvider) GetDefaultEndpoint() string {
-	host, port := common.GetOllamaHost()
+	host, port := env.GetOllamaHost()
 	return fmt.Sprintf("http://%s:%s/api", host, port)
 }
 
@@ -79,14 +79,14 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 
 	resp, err := sendHTTPRequest("GET", url, nil, nil)
 	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to fetch models from Ollama at %s", url)
+		log.WithError(err).Errorf("Failed to fetch models from Ollama at %s", url)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		log.Logger.Errorf("Ollama models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
+		log.Errorf("Ollama models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("failed to fetch models: %s", string(body))
 	}
 
@@ -96,7 +96,7 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		} `json:"models"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
-		log.Logger.WithError(err).Error("Failed to decode Ollama models response")
+		log.WithError(err).Error("Failed to decode Ollama models response")
 		return nil, err
 	}
 

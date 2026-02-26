@@ -33,11 +33,10 @@ var (
 	ErrThrottling                = errors.New("request throttled: too many requests, try again later")
 	ErrConnectionFailed          = errors.New("connection failed: check network connectivity and endpoint")
 	ErrInvalidRegion             = errors.New("invalid or inaccessible region: check the region name")
-	ErrRegionRequired            = errors.New("AWS region is required (set via Hostname field)")
-	ErrStaticCredentialsRequired = errors.New("static auth requires access key (Username) and secret key (Password)")
-	ErrProfileNameRequired       = errors.New("profile auth requires a profile name (set via 'Profile Name' advanced option)")
-	ErrInvalidAuthMethod         = errors.New("invalid auth method: must be one of: static, profile, iam, env, default")
-	ErrAWSProviderDisabled       = errors.New("AWS provider is disabled")
+	ErrRegionRequired      = errors.New("AWS region is required (set via Hostname field)")
+	ErrProfileNameRequired = errors.New("profile auth requires a profile name (set via 'Profile Name' advanced option)")
+	ErrInvalidAuthMethod   = errors.New("invalid auth method: must be one of: default, profile")
+	ErrAWSProviderDisabled = errors.New("AWS provider is disabled")
 )
 
 func HandleAWSError(err error) error {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 // This file will be automatically regenerated based on the schema, any resolver
@@ -32,7 +48,7 @@ import (
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
 	if env.DisableCredentialForm {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"type":     credentials.Type,
 			"hostname": credentials.Hostname,
 			"username": credentials.Username,
@@ -70,7 +86,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 			Advanced: advanced,
 		},
 	}) {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"type":     credentials.Type,
 			"hostname": credentials.Hostname,
 			"username": credentials.Username,
@@ -159,7 +175,7 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
 				Credentials: resolved,
 			}) {
-				log.LogFields(log.Fields{
+				log.WithFields(log.Fields{
 					"profile_id": profile.ID,
 					"type":       loginProfile.Type,
 				}).Error("Database connection failed for login profile - credentials unauthorized")
@@ -206,7 +222,7 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 			return resp, nil
 		}
 	}
-	log.LogFields(log.Fields{
+	log.WithFields(log.Fields{
 		"profile_id": profile.ID,
 	}).Error("Login profile not found or not authorized")
 	return nil, errors.New("login profile does not exist or is not authorized")
@@ -289,7 +305,7 @@ func (r *mutationResolver) AddStorageUnit(ctx context.Context, schema string, st
 	}
 	status, err := plugin.AddStorageUnit(config, schema, storageUnit, fieldsMap)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "AddStorageUnit",
 			"schema":        schema,
 			"storage_unit":  storageUnit,
@@ -330,7 +346,7 @@ func (r *mutationResolver) UpdateStorageUnit(ctx context.Context, schema string,
 	}
 	status, err := plugin.UpdateStorageUnit(config, schema, storageUnit, valuesMap, updatedColumns)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":       "UpdateStorageUnit",
 			"schema":          schema,
 			"storage_unit":    storageUnit,
@@ -369,7 +385,7 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 		return nil, err
 	}
 
-	log.LogFields(log.Fields{
+	log.WithFields(log.Fields{
 		"operation":     "AddRow-Resolver",
 		"schema":        schema,
 		"storage_unit":  storageUnit,
@@ -392,7 +408,7 @@ func (r *mutationResolver) AddRow(ctx context.Context, schema string, storageUni
 
 	status, err := plugin.AddRow(config, schema, storageUnit, valuesRecords)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "AddRow",
 			"schema":        schema,
 			"storage_unit":  storageUnit,
@@ -434,7 +450,7 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 	}
 	status, err := plugin.DeleteRow(config, schema, storageUnit, valuesMap)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "DeleteRow",
 			"schema":        schema,
 			"storage_unit":  storageUnit,
@@ -463,16 +479,16 @@ func (r *mutationResolver) DeleteRow(ctx context.Context, schema string, storage
 
 // GenerateMockData is the resolver for the GenerateMockData field.
 func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.MockDataGenerationInput) (*model.MockDataGenerationStatus, error) {
-	log.Logger.WithField("schema", input.Schema).WithField("table", input.StorageUnit).WithField("rowCount", input.RowCount).WithField("overwrite", input.OverwriteExisting).Info("Starting mock data generation")
+	log.WithField("schema", input.Schema).WithField("table", input.StorageUnit).WithField("rowCount", input.RowCount).WithField("overwrite", input.OverwriteExisting).Info("Starting mock data generation")
 
 	maxRowLimit := env.GetMockDataGenerationMaxRowCount()
 	if input.RowCount > maxRowLimit {
-		log.Logger.WithField("requested", input.RowCount).WithField("max", maxRowLimit).Error("Row count exceeds maximum limit")
+		log.WithField("requested", input.RowCount).WithField("max", maxRowLimit).Error("Row count exceeds maximum limit")
 		return nil, fmt.Errorf("row count exceeds maximum limit of %d", maxRowLimit)
 	}
 
 	if !env.IsMockDataGenerationAllowed(input.StorageUnit) {
-		log.Logger.WithField("table", input.StorageUnit).Error("Mock data generation not allowed for table")
+		log.WithField("table", input.StorageUnit).Error("Mock data generation not allowed for table")
 		return nil, errors.New("mock data generation is not allowed for this table")
 	}
 
@@ -485,7 +501,7 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 	generator := src.NewMockDataGenerator(fkRatio)
 	result, err := generator.Generate(plugin, config, input.Schema, input.StorageUnit, input.RowCount, input.OverwriteExisting)
 	if err != nil {
-		log.Logger.WithError(err).Error("Mock data generation failed")
+		log.WithError(err).Error("Mock data generation failed")
 		return nil, fmt.Errorf("mock data generation failed: %w", err)
 	}
 
@@ -501,7 +517,7 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 		}
 	}
 
-	log.Logger.WithField("generatedRows", result.TotalGenerated).Info("Mock data generation completed successfully")
+	log.WithField("generatedRows", result.TotalGenerated).Info("Mock data generation completed successfully")
 	return &model.MockDataGenerationStatus{
 		AmountGenerated: result.TotalGenerated,
 		Details:         details,
@@ -544,7 +560,7 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 		if errors.Is(err, engine.ErrMultiStatementUnsupported) {
 			return importResult(false, importErrorSQLMultiStatementUnsupported), nil
 		}
-		log.Logger.WithError(err).Error("SQL import failed")
+		log.WithError(err).Error("SQL import failed")
 		return importResult(false, importErrorSQLFailed), nil
 	}
 
@@ -728,7 +744,7 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 		return nil
 	})
 	if err != nil {
-		log.Logger.WithError(err).Error("Import failed")
+		log.WithError(err).Error("Import failed")
 		return importResult(false, importErrorImportFailed), nil
 	}
 
@@ -783,9 +799,12 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 
 	id := settings.GenerateProviderID(input.Name, input.Region)
 
+	// Derive auth method: if a profile name is provided, use "profile"; otherwise "default"
 	authMethod := "default"
-	if input.AuthMethod != nil && *input.AuthMethod != "" {
-		authMethod = *input.AuthMethod
+	profileName := ""
+	if input.ProfileName != nil && *input.ProfileName != "" {
+		authMethod = "profile"
+		profileName = *input.ProfileName
 	}
 
 	discoverRDS := true
@@ -808,25 +827,10 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 		Name:                input.Name,
 		Region:              input.Region,
 		AuthMethod:          authMethod,
+		ProfileName:         profileName,
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
-	}
-
-	if input.AccessKeyID != nil {
-		cfg.AccessKeyID = *input.AccessKeyID
-	}
-	if input.SecretAccessKey != nil {
-		cfg.SecretAccessKey = *input.SecretAccessKey
-	}
-	if input.SessionToken != nil {
-		cfg.SessionToken = *input.SessionToken
-	}
-	if input.ProfileName != nil {
-		cfg.ProfileName = *input.ProfileName
-	}
-	if input.DBUsername != nil {
-		cfg.DBUsername = *input.DBUsername
 	}
 
 	state, err := settings.AddAWSProvider(cfg)
@@ -848,9 +852,14 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		return nil, err
 	}
 
-	authMethod := existing.Config.AuthMethod
-	if input.AuthMethod != nil && *input.AuthMethod != "" {
-		authMethod = *input.AuthMethod
+	// Derive auth method from profile name presence
+	authMethod := "default"
+	profileName := existing.Config.ProfileName
+	if input.ProfileName != nil {
+		profileName = *input.ProfileName
+	}
+	if profileName != "" {
+		authMethod = "profile"
 	}
 
 	discoverRDS := existing.Config.DiscoverRDS
@@ -873,65 +882,10 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		Name:                input.Name,
 		Region:              input.Region,
 		AuthMethod:          authMethod,
+		ProfileName:         profileName,
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
-	}
-
-	// Clear credentials that don't apply to the new auth method to prevent stale data
-	authMethodChanged := authMethod != existing.Config.AuthMethod
-	switch authMethod {
-	case "static":
-		// Static auth uses AccessKeyID/SecretAccessKey
-		if input.AccessKeyID != nil {
-			cfg.AccessKeyID = *input.AccessKeyID
-		} else {
-			cfg.AccessKeyID = existing.Config.AccessKeyID
-		}
-		if input.SecretAccessKey != nil {
-			cfg.SecretAccessKey = *input.SecretAccessKey
-		} else {
-			cfg.SecretAccessKey = existing.Config.SecretAccessKey
-		}
-		if input.SessionToken != nil {
-			cfg.SessionToken = *input.SessionToken
-		} else {
-			cfg.SessionToken = existing.Config.SessionToken
-		}
-		// Clear profile if switching to static
-		if authMethodChanged {
-			cfg.ProfileName = ""
-		} else if input.ProfileName != nil {
-			cfg.ProfileName = *input.ProfileName
-		}
-	case "profile":
-		// Profile auth uses ProfileName - clear static credentials
-		if input.ProfileName != nil {
-			cfg.ProfileName = *input.ProfileName
-		} else {
-			cfg.ProfileName = existing.Config.ProfileName
-		}
-		if authMethodChanged {
-			// Clear static credentials when switching to profile
-			cfg.AccessKeyID = ""
-			cfg.SecretAccessKey = ""
-			cfg.SessionToken = ""
-		}
-	default:
-		// "default", "env", "iam" don't need stored credentials
-		if authMethodChanged {
-			cfg.AccessKeyID = ""
-			cfg.SecretAccessKey = ""
-			cfg.SessionToken = ""
-			cfg.ProfileName = ""
-		}
-	}
-
-	// Handle DBUsername (used for IAM auth)
-	if input.DBUsername != nil {
-		cfg.DBUsername = *input.DBUsername
-	} else {
-		cfg.DBUsername = existing.Config.DBUsername
 	}
 
 	state, err := settings.UpdateAWSProvider(id, cfg)
@@ -1020,8 +974,7 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 					done <- true
 				}()
 
-				_, err := plugin.GetDatabases(config)
-				if err == nil {
+				if plugin.IsAvailable(config) {
 					status.Database = "healthy"
 				} else {
 					status.Database = "error"
@@ -1103,7 +1056,7 @@ func (r *queryResolver) Database(ctx context.Context, typeArg string) ([]string,
 
 	databases, err := plugin.GetDatabases(config)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "GetDatabases",
 			"database_type": typeArg,
 		}).WithError(err).Error("Database operation failed")
@@ -1118,7 +1071,7 @@ func (r *queryResolver) Schema(ctx context.Context) ([]string, error) {
 	typeArg := config.Credentials.Type
 	schemas, err := plugin.GetAllSchemas(config)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "GetAllSchemas",
 			"database_type": typeArg,
 		}).WithError(err).Error("Database operation failed")
@@ -1133,7 +1086,7 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 	typeArg := config.Credentials.Type
 	units, err := plugin.GetStorageUnits(config, schema)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "GetStorageUnits",
 			"schema":        schema,
 			"database_type": typeArg,
@@ -1151,6 +1104,16 @@ func (r *queryResolver) StorageUnit(ctx context.Context, schema string) ([]*mode
 
 // Row is the resolver for the Row field.
 func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
+	if pageSize <= 0 {
+		return nil, fmt.Errorf("pageSize must be greater than 0")
+	}
+	if pageSize > env.MaxPageSize {
+		return nil, fmt.Errorf("pageSize must not exceed %d", env.MaxPageSize)
+	}
+	if pageOffset < 0 {
+		return nil, fmt.Errorf("pageOffset must not be negative")
+	}
+
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
 
@@ -1168,7 +1131,7 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 		var err error
 		rowsResult, err = plugin.GetRows(config, schema, storageUnit, where, sort, pageSize, pageOffset)
 		if err != nil {
-			log.LogFields(log.Fields{
+			log.WithFields(log.Fields{
 				"operation":     "GetRows",
 				"schema":        schema,
 				"storage_unit":  storageUnit,
@@ -1185,7 +1148,7 @@ func (r *queryResolver) Row(ctx context.Context, schema string, storageUnit stri
 		var err error
 		tableColumns, err = plugin.GetColumnsForTable(config, schema, storageUnit)
 		if err != nil {
-			log.LogFields(log.Fields{
+			log.WithFields(log.Fields{
 				"operation":    "GetColumnsForTable",
 				"schema":       schema,
 				"storage_unit": storageUnit,
@@ -1233,7 +1196,7 @@ func (r *queryResolver) Columns(ctx context.Context, schema string, storageUnit 
 	plugin, config := GetPluginForContext(ctx)
 	columns, err := FetchColumnsForStorageUnit(plugin, config, schema, storageUnit)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "Columns",
 			"schema":        schema,
 			"storage_unit":  storageUnit,
@@ -1257,7 +1220,7 @@ func (r *queryResolver) ColumnsBatch(ctx context.Context, schema string, storage
 		g.Go(func() error {
 			columns, err := FetchColumnsForStorageUnit(plugin, config, schema, storageUnit)
 			if err != nil {
-				log.LogFields(log.Fields{
+				log.WithFields(log.Fields{
 					"operation":     "ColumnsBatch",
 					"schema":        schema,
 					"storage_unit":  storageUnit,
@@ -1297,7 +1260,7 @@ func (r *queryResolver) RawExecute(ctx context.Context, query string) (*model.Ro
 	typeArg := config.Credentials.Type
 	rowsResult, err := plugin.RawExecute(config, query)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "RawExecute",
 			"database_type": typeArg,
 			"query":         query,
@@ -1327,7 +1290,7 @@ func (r *queryResolver) Graph(ctx context.Context, schema string) ([]*model.Grap
 	typeArg := config.Credentials.Type
 	graphUnits, err := plugin.GetGraph(config, schema)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "GetGraph",
 			"schema":        schema,
 			"database_type": typeArg,
@@ -1408,7 +1371,7 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 	}
 	models, err := llm.Instance(config).GetSupportedModels()
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":   "GetSupportedModels",
 			"model_type":  modelType,
 			"provider_id": providerID,
@@ -1462,7 +1425,7 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 	messages, err := plugin.Chat(config, schema, input.PreviousConversation, input.Query)
 
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation":     "Chat",
 			"schema":        schema,
 			"database_type": typeArg,
@@ -1510,6 +1473,7 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 		MetricsEnabled:        &currentSettings.MetricsEnabled,
 		CloudProvidersEnabled: env.IsAWSProviderEnabled,
 		DisableCredentialForm: env.DisableCredentialForm,
+		MaxPageSize:           env.MaxPageSize,
 	}, nil
 }
 
@@ -1625,24 +1589,24 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error) {
 	plugin, config := GetPluginForContext(ctx)
 	if plugin == nil {
-		log.Logger.Debug("[SSL] SSLStatus resolver: no plugin context")
+		log.Debug("[SSL] SSLStatus resolver: no plugin context")
 		return nil, nil
 	}
 
-	log.Logger.Debugf("[SSL] SSLStatus resolver: querying SSL status for %s", config.Credentials.Type)
+	log.Debugf("[SSL] SSLStatus resolver: querying SSL status for %s", config.Credentials.Type)
 	status, err := plugin.GetSSLStatus(config)
 	if err != nil {
-		log.Logger.Warnf("[SSL] SSLStatus resolver: error getting SSL status: %v", err)
+		log.Warnf("[SSL] SSLStatus resolver: error getting SSL status: %v", err)
 		return nil, err
 	}
 
 	// Return nil if SSL status is not applicable (e.g., SQLite)
 	if status == nil {
-		log.Logger.Debugf("[SSL] SSLStatus resolver: SSL not applicable for %s", config.Credentials.Type)
+		log.Debugf("[SSL] SSLStatus resolver: SSL not applicable for %s", config.Credentials.Type)
 		return nil, nil
 	}
 
-	log.Logger.Infof("[SSL] SSLStatus resolver: %s connection SSL enabled=%t, mode=%s",
+	log.Infof("[SSL] SSLStatus resolver: %s connection SSL enabled=%t, mode=%s",
 		config.Credentials.Type, status.IsEnabled, status.Mode)
 
 	return &model.SSLStatus{
@@ -1655,7 +1619,7 @@ func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 func (r *queryResolver) DatabaseQuerySuggestions(ctx context.Context, schema string) ([]*model.DatabaseQuerySuggestion, error) {
 	plugin, config := GetPluginForContext(ctx)
 
-	log.LogFields(log.Fields{
+	log.WithFields(log.Fields{
 		"operation": "DatabaseQuerySuggestions",
 		"schema":    schema,
 	}).Info("Fetching database suggestions")
@@ -1663,14 +1627,14 @@ func (r *queryResolver) DatabaseQuerySuggestions(ctx context.Context, schema str
 	// Get storage units (tables) from the schema
 	units, err := plugin.GetStorageUnits(config, schema)
 	if err != nil {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation": "DatabaseQuerySuggestions",
 			"schema":    schema,
 		}).WithError(err).Error("Failed to get storage units for suggestions")
 		return nil, err
 	}
 
-	log.LogFields(log.Fields{
+	log.WithFields(log.Fields{
 		"operation":   "DatabaseQuerySuggestions",
 		"schema":      schema,
 		"units_count": len(units),
@@ -1712,14 +1676,14 @@ func (r *queryResolver) DatabaseQuerySuggestions(ctx context.Context, schema str
 
 	// If no tables found, return empty array
 	if len(suggestions) == 0 {
-		log.LogFields(log.Fields{
+		log.WithFields(log.Fields{
 			"operation": "DatabaseQuerySuggestions",
 			"schema":    schema,
 		}).Warn("No suggestions generated - no tables found")
 		return []*model.DatabaseQuerySuggestion{}, nil
 	}
 
-	log.LogFields(log.Fields{
+	log.WithFields(log.Fields{
 		"operation":         "DatabaseQuerySuggestions",
 		"schema":            schema,
 		"suggestions_count": len(suggestions),
@@ -1773,7 +1737,7 @@ func (r *queryResolver) DiscoveredConnections(ctx context.Context) ([]*model.Dis
 
 	// Return partial results with error so UI can show a warning
 	if err != nil {
-		log.Logger.Warn("Error discovering connections: ", err)
+		log.Warn("Error discovering connections: ", err)
 		return result, err
 	}
 	return result, nil

@@ -17,12 +17,13 @@
 package env
 
 // AWSProviderEnvConfig represents AWS provider configuration from environment variables.
+// Authentication is handled by the AWS SDK default credential chain or named profiles.
 // Example:
 //
 //	WHODB_AWS_PROVIDER='[{
 //	  "name": "Production AWS",
 //	  "region": "us-west-2",
-//	  "auth": "default"
+//	  "profileName": "production"
 //	}]'
 type AWSProviderEnvConfig struct {
 	// Name is a human-readable name for this provider.
@@ -31,19 +32,8 @@ type AWSProviderEnvConfig struct {
 	// Region is the AWS region to discover resources in.
 	Region string `json:"region"`
 
-	// Auth is the authentication method: "default", "static", "profile", "iam", "env".
-	Auth string `json:"auth"`
-
-	// AccessKeyID for static auth.
-	AccessKeyID string `json:"accessKeyId,omitempty"`
-
-	// SecretAccessKey for static auth.
-	SecretAccessKey string `json:"secretAccessKey,omitempty"`
-
-	// SessionToken for temporary credentials.
-	SessionToken string `json:"sessionToken,omitempty"`
-
-	// ProfileName for profile auth.
+	// ProfileName for profile auth. If set, uses the named AWS profile.
+	// If empty, uses the default credential chain.
 	ProfileName string `json:"profileName,omitempty"`
 
 	// DiscoverRDS enables RDS database discovery (defaults to true if omitted).
@@ -54,7 +44,4 @@ type AWSProviderEnvConfig struct {
 
 	// DiscoverDocumentDB enables DocumentDB discovery (defaults to true if omitted).
 	DiscoverDocumentDB *bool `json:"discoverDocumentDB,omitempty"`
-
-	// DBUsername is the database username for IAM auth connections.
-	DBUsername string `json:"dbUsername,omitempty"`
 }

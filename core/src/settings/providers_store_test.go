@@ -31,12 +31,11 @@ func TestPersistedProviderConfig_DoesNotContainCredentials(t *testing.T) {
 		ID:                  "test-id",
 		Name:                "Test",
 		Region:              "us-west-2",
-		AuthMethod:          "static",
+		AuthMethod:          "default",
 		ProfileName:         "default",
 		DiscoverRDS:         true,
 		DiscoverElastiCache: true,
 		DiscoverDocumentDB:  true,
-		DBUsername:          "admin",
 	}
 
 	data, err := json.Marshal(cfg)

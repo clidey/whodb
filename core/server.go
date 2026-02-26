@@ -30,7 +30,6 @@ import (
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
-	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -42,7 +41,8 @@ import (
 const defaultPort = "8080"
 
 func main() {
-	log.Logger.Info("Starting WhoDB...")
+	defer log.CloseLogFile()
+	log.Alwaysf("Starting WhoDB... (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", log.GetLevel())
 
 	settingsCfg := settings.Get()
 
@@ -52,23 +52,23 @@ func main() {
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
 	}); err != nil {
-		log.Logger.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
+		//log.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
 	} else {
 		defer analytics.Shutdown()
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
 	src.InitializeEngine()
-	log.Logger.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
+	//log.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
 
 	// Load persisted AWS providers from disk (if any)
 	if err := settings.LoadProvidersFromFile(); err != nil {
-		log.Logger.Warnf("Failed to load persisted AWS providers: %v", err)
+		log.Warnf("Failed to load persisted AWS providers: %v", err)
 	}
 
 	// Initialize AWS providers from environment variables (may add or override persisted)
 	if err := settings.InitAWSProvidersFromEnv(); err != nil {
-		log.Logger.Warnf("Failed to initialize AWS providers from environment: %v", err)
+		log.Warnf("Failed to initialize AWS providers from environment: %v", err)
 	}
 
 	r := router.InitializeRouter(staticFiles)
@@ -90,9 +90,9 @@ func main() {
 	serverStarted := make(chan bool, 1)
 
 	go func() {
-		log.Logger.Info("Almost there...")
+		log.Info("Almost there...")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Logger.Fatalf("listen: %s\n", err)
+			log.Fatalf("server error: %s\n", err)
 			serverStarted <- false
 		}
 	}()
@@ -100,24 +100,24 @@ func main() {
 	select {
 	case success := <-serverStarted:
 		if !success {
-			log.Logger.Error("Server failed to start. Exiting...")
+			log.Error("Server failed to start. Exiting...")
 			os.Exit(1)
 		}
 	case <-time.After(2 * time.Second):
 		if env.IsEnterpriseEdition {
-			log.Logger.Info("🎉 Welcome to WhoDB Enterprise! 🎉")
+			log.Always("🎉 Welcome to WhoDB Enterprise! 🎉")
 		} else {
-			log.Logger.Info("🎉 Welcome to WhoDB! 🎉")
+			log.Always("🎉 Welcome to WhoDB! 🎉")
 		}
-		log.Logger.Info("Get started by visiting:")
-		log.Logger.Infof("http://0.0.0.0:%s", port)
-		log.Logger.Info("Explore and enjoy working with your databases!")
+		log.Always("Get started by visiting:")
+		log.Alwaysf("http://0.0.0.0:%s", port)
+		log.Always("Explore and enjoy working with your databases!")
 	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Logger.Info("Shutting down server...")
+	log.Info("Shutting down server...")
 
 	// Create a deadline for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -130,7 +130,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Logger.Errorf("HTTP server shutdown error: %v", err)
+			log.Errorf("HTTP server shutdown error: %v", err)
 		}
 	}()
 
@@ -144,5 +144,5 @@ func main() {
 	close(serverStarted)
 	close(quit)
 
-	log.Logger.Info("Server exiting")
+	log.Info("Server exiting")
 }

@@ -3,3 +3,6 @@ en:
   confirmOperationDescription: This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone.
   cancel: Cancel
   executeQuery: Execute Query
+  showPreview: Show Preview
+  hidePreview: Hide Preview
+  runQuery: Run query

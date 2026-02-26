@@ -119,13 +119,10 @@ func TestProvider_ConnectionID(t *testing.T) {
 
 func TestProvider_BuildInternalCredentials(t *testing.T) {
 	p, _ := New(&Config{
-		ID:              "aws-us-west-2",
-		Name:            "Test AWS",
-		Region:          "us-west-2",
-		AuthMethod:      awsinfra.AuthMethodStatic,
-		AccessKeyID:     "AKIAIOSFODNN7EXAMPLE",
-		SecretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-		SessionToken:    "session-token",
+		ID:         "aws-us-west-2",
+		Name:       "Test AWS",
+		Region:     "us-west-2",
+		AuthMethod: awsinfra.AuthMethodDefault,
 	})
 
 	creds := p.buildInternalCredentials()
@@ -133,20 +130,11 @@ func TestProvider_BuildInternalCredentials(t *testing.T) {
 	if creds.Hostname != "us-west-2" {
 		t.Errorf("expected Hostname us-west-2, got %s", creds.Hostname)
 	}
-	if creds.Username != "AKIAIOSFODNN7EXAMPLE" {
-		t.Errorf("expected Username AKIAIOSFODNN7EXAMPLE, got %s", creds.Username)
-	}
-	if creds.Password != "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" {
-		t.Errorf("unexpected password")
-	}
-	if creds.AccessToken == nil || *creds.AccessToken != "session-token" {
-		t.Errorf("expected AccessToken session-token")
-	}
 
 	// Check advanced records
 	authMethodFound := false
 	for _, r := range creds.Advanced {
-		if r.Key == awsinfra.AdvancedKeyAuthMethod && r.Value == "static" {
+		if r.Key == awsinfra.AdvancedKeyAuthMethod && r.Value == "default" {
 			authMethodFound = true
 		}
 	}

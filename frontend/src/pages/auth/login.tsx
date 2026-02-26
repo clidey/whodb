@@ -133,10 +133,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { data: settingsData } = useSettingsConfigQuery();
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
     const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
+    const maxPageSize = settingsData?.SettingsConfig?.MaxPageSize ?? 10000;
 
     useEffect(() => {
         dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
-    }, [cloudProvidersEnabled, dispatch]);
+        dispatch(SettingsActions.setMaxPageSize(maxPageSize));
+    }, [cloudProvidersEnabled, maxPageSize, dispatch]);
 
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -151,6 +153,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         databaseType.extra ?? {}
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
+    const [formResetKey, setFormResetKey] = useState(0);
     const [selectedAvailableProfile, setSelectedAvailableProfile] = useState<string>();
     const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(() => {
         // Detect auto-login on initial render to prevent flash of login form
@@ -402,6 +405,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         setDatabase("");
         setDatabaseType(item);
         setAdvancedForm(item.extra ?? {});
+        setFormResetKey(k => k + 1);
     }, [getDatabases]);
 
     const handleAdvancedToggle = useCallback(() => {
@@ -437,7 +441,9 @@ export const LoginForm: FC<LoginFormProps> = ({
 
             // Set hostname and advanced settings after type change completes
             setTimeout(() => {
-                setHostName(data.hostname);
+                if (data.hostname) {
+                    setHostName(data.hostname);
+                }
 
                 // Merge advanced settings
                 if (data.advanced && Object.keys(data.advanced).length > 0) {
@@ -688,6 +694,20 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [databaseType.id, t]);
 
     const fields = useMemo(() => {
+        if (databaseType.customFormRenderer) {
+            const CustomForm = databaseType.customFormRenderer;
+            return <CustomForm
+                key={formResetKey}
+                hostName={hostName}
+                setHostName={setHostName}
+                username={username}
+                setUsername={setUsername}
+                password={password}
+                setPassword={setPassword}
+                advancedForm={advancedForm}
+                setAdvancedForm={setAdvancedForm}
+            />;
+        }
         if (databaseType.id === DatabaseType.Sqlite3) {
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
@@ -766,9 +786,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                 </div>
             )}
         </div>
-    }, [database, databaseType.id, databaseType.fields, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, t, error]);
+    }, [database, databaseType.id, databaseType.fields, databaseType.customFormRenderer, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, advancedForm, formResetKey, t, error]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
+        if (databaseType.customFormRenderer) {
+            return hostName.length > 0 || Object.keys(advancedForm).length > 0;
+        }
         if (databaseType.id === DatabaseType.Sqlite3) {
             return database.length > 0;
         }
@@ -780,7 +803,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
 
         return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
-    }, [databaseType.id, hostName, username, password, database]);
+    }, [databaseType.id, databaseType.customFormRenderer, hostName, username, password, database]);
 
     const loginWithProfileEnabled = useMemo(() => {
         return selectedAvailableProfile != null;
@@ -820,7 +843,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt="" className="w-auto h-8 mr-1"/>}
+                            {extensions.Logo ?? <img src={logoImage} alt={extensions.AppName ?? "WhoDB"} className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
                             <span>{t('title')}</span>
                         </h1>
@@ -879,7 +902,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     </div>
                     {
-                        (showAdvanced && advancedForm != null) &&
+                        (showAdvanced && advancedForm != null && !databaseType.customFormRenderer) &&
                         <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
                             "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
@@ -912,7 +935,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 })}>
                     {!disableCredentialForm && <>
                     <Button className={classNames({
-                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3,
+                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3 || databaseType.customFormRenderer != null,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>

@@ -377,7 +377,34 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         fi
     fi
 else
+    # EE-only mode: skip CE databases but still start Postgres — some tests
+    # (login, profiles, loading-states) use hardcoded Postgres credentials.
     echo "⏭️ Skipping CE database services (EE-only mode)"
+    echo "🐳 Starting Postgres (needed by cross-database tests)..."
+    cd "$SCRIPT_DIR"
+
+    wait_for_port() {
+        local service=$1
+        local port=$2
+        local max_wait=${3:-60}
+        local counter=0
+
+        while [ $counter -lt $max_wait ]; do
+            if nc -z localhost $port 2>/dev/null; then
+                echo "✅ $service is ready (port $port)"
+                return 0
+            fi
+            sleep 1
+            counter=$((counter + 1))
+        done
+        echo "⚠️ $service timeout after ${max_wait}s (port $port)"
+        return 1
+    }
+
+    POSTGRES_SERVICES=$(get_docker_services "postgres")
+    $(docker_compose_cmd) pull --quiet $POSTGRES_SERVICES 2>/dev/null || true
+    $(docker_compose_cmd) up -d --remove-orphans $POSTGRES_SERVICES
+    wait_for_port "PostgreSQL" "$(get_db_port postgres)" "$(get_db_wait_time postgres)"
 fi
 
 # If EE mode, run EE-specific setup (if it exists)

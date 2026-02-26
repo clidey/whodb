@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
+import { test, expect, forEachDatabase, skipIfNoFeature } from '../../support/test-fixture.mjs';
 import { getTableConfig } from '../../support/database-config.mjs';
 import { parseDocument, verifyDocumentRows } from '../../support/categories/document.mjs';
 import { verifyColumnsForType, verifyMembers, verifyStringValue } from '../../support/categories/keyvalue.mjs';
@@ -168,11 +168,8 @@ test.describe('Data View', () => {
             }
         });
 
-        // Redis hashes are fetched as a complete unit (HGETALL), so server-side
-        // pagination doesn't apply to hash fields
-        if (db.type === 'Redis') {
-            test.skip('respects page size pagination (Redis hashes do not support field pagination)', async ({ whodb, page }) => {
-            });
+        if (skipIfNoFeature(db, 'pagination')) {
+            test.skip('respects page size pagination', async ({ whodb, page }) => {});
             return;
         }
 

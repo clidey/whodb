@@ -373,7 +373,7 @@ export const Sidebar: FC = () => {
                                     <div className={cn("flex flex-col gap-sm w-full", {
                                         "opacity-0 pointer-events-none": !open,
                                     })}>
-                                        <h2 className="text-sm">{databaseDropdownLabel}</h2>
+                                        <h2 className="text-sm" data-testid="sidebar-database-label">{databaseDropdownLabel}</h2>
                                         <SearchSelect
                                             label={databaseDropdownLabel}
                                             options={databaseOptions}
@@ -413,7 +413,7 @@ export const Sidebar: FC = () => {
                             <SidebarMenu className="grow mt-8 gap-4">
                                 {sidebarRoutes.map(route => (
                                     <SidebarMenuItem key={route.title}>
-                                        <SidebarMenuButton asChild>
+                                        <SidebarMenuButton asChild tooltip={route.title}>
                                             <Link
                                                 to={route.path}
                                                 className={classNames("flex items-center gap-2", {
@@ -433,7 +433,7 @@ export const Sidebar: FC = () => {
 
                                 {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
-                                        <SidebarMenuButton asChild>
+                                        <SidebarMenuButton asChild tooltip={t('contactUs')}>
                                             <Link
                                                 to={InternalRoutes.ContactUs.path}
                                                 className={classNames("flex items-center gap-2", {
@@ -448,7 +448,7 @@ export const Sidebar: FC = () => {
                                 )}
                                 {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
                                     <SidebarMenuItem>
-                                        <SidebarMenuButton asChild>
+                                        <SidebarMenuButton asChild tooltip={t('settings')}>
                                             <Link
                                                 to={InternalRoutes.Settings.path}
                                                 className={classNames("flex items-center gap-2", {
@@ -465,7 +465,7 @@ export const Sidebar: FC = () => {
                                 {!isEmbedded && (
                                     <SidebarMenuItem className="flex justify-between items-center w-full">
                                         {/* Logout Profile button */}
-                                        <SidebarMenuButton asChild>
+                                        <SidebarMenuButton asChild tooltip={t('logOutProfile')}>
                                             <div className="flex items-center gap-sm text-nowrap w-fit cursor-pointer" onClick={handleLogout}>
                                                 <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />
                                                 {open && <span>{t('logOutProfile')}</span>}

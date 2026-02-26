@@ -102,6 +102,8 @@ if (BUILD_EDITION === 'ee') {
 
 export const ExploreStorageUnit: FC = () => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
+    const maxPageSize = useAppSelector(state => state.settings.maxPageSize);
+    const pageSizeOptions = useMemo(() => ({ maxPageSize }), [maxPageSize]);
     const {
         pageSize,
         pageSizeString,
@@ -110,7 +112,7 @@ export const ExploreStorageUnit: FC = () => {
         setCustomInput: setCustomPageSizeInput,
         handleSelectChange: handlePageSizeChange,
         handleCustomApply: handleCustomPageSizeApply,
-    } = usePageSize(defaultPageSize);
+    } = usePageSize(defaultPageSize, pageSizeOptions);
     const { t } = useTranslation('pages/explore-storage-unit');
     const { t: tTable } = useTranslation('components/table');
 
@@ -967,9 +969,12 @@ export const ExploreStorageUnit: FC = () => {
         </div>
         <Drawer open={isScratchpadOpen} onOpenChange={setIsScratchpadOpen} modal>
             <DrawerContent className="px-8 min-h-[65vh] max-h-[80vh] overflow-hidden flex flex-col" data-testid="scratchpad-drawer">
-                <Button variant="ghost" className="absolute top-0 right-0" onClick={handleCloseScratchpad} data-testid="icon-button">
-                    <XMarkIcon className="w-4 h-4" />
-                </Button>
+                <Tip className="w-fit absolute top-0 right-0">
+                    <Button variant="ghost" onClick={handleCloseScratchpad} data-testid="icon-button" aria-label={t('close')}>
+                        <XMarkIcon className="w-4 h-4" />
+                    </Button>
+                    <p>{t('close')}</p>
+                </Tip>
                 <DrawerHeader className="px-0">
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">{t('scratchpadTitle')}</h2>
@@ -984,7 +989,7 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="flex flex-col gap-sm h-[150px] mb-4" data-vaul-no-drag>
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <div className="flex-1 overflow-y-auto" data-vaul-no-drag>
+                <div className="overflow-y-auto" data-vaul-no-drag>
                     <StorageUnitTable
                         columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
                         columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}

@@ -19,14 +19,11 @@ package common
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
 )
 
 // ContainsString checks if a string slice contains a specific element.
@@ -87,30 +84,6 @@ func GetWSL2WindowsHost() string {
 	return ""
 }
 
-// GetOllamaHost returns the resolved Ollama host, accounting for Docker and WSL2 environments.
-// Environment variables WHODB_OLLAMA_HOST and WHODB_OLLAMA_PORT take precedence.
-func GetOllamaHost() (host string, port string) {
-	host = "localhost"
-	port = "11434"
-
-	if IsRunningInsideDocker() {
-		host = "host.docker.internal"
-	} else if IsRunningInsideWSL2() {
-		if wslHost := GetWSL2WindowsHost(); wslHost != "" {
-			host = wslHost
-		}
-	}
-
-	if envHost := os.Getenv("WHODB_OLLAMA_HOST"); envHost != "" {
-		host = envHost
-	}
-	if envPort := os.Getenv("WHODB_OLLAMA_PORT"); envPort != "" {
-		port = envPort
-	}
-
-	return host, port
-}
-
 // FilterList returns a new slice containing only the elements for which the predicate returns true.
 func FilterList[T any](items []T, by func(input T) bool) []T {
 	filteredItems := []T{}
@@ -122,24 +95,25 @@ func FilterList[T any](items []T, by func(input T) bool) []T {
 	return filteredItems
 }
 
-// OpenBrowser opens the specified URL in the system's default browser.
-// Supports Windows, macOS, and Linux. Logs a warning if the browser cannot be opened.
-func OpenBrowser(url string) {
-	var err error
-	switch runtime.GOOS {
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	default:
-		// Unsupported platform - silently continue
-	}
-	if err != nil {
-		log.Logger.Warnf("Failed to open browser: %v\n", err)
-	}
-}
+// if you want to use the below, remove the logging call as it has a cyclical dependency. unused code but might be later on
+//// OpenBrowser opens the specified URL in the system's default browser.
+//// Supports Windows, macOS, and Linux. Logs a warning if the browser cannot be opened.
+//func OpenBrowser(url string) {
+//	var err error
+//	switch runtime.GOOS {
+//	case "windows":
+//		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+//	case "darwin":
+//		err = exec.Command("open", url).Start()
+//	case "linux":
+//		err = exec.Command("xdg-open", url).Start()
+//	default:
+//		// Unsupported platform - silently continue
+//	}
+//	if err != nil {
+//		log.Warnf("Failed to open browser: %v\n", err)
+//	}
+//}
 
 // StrPtrToBool converts a string pointer to a boolean.
 // Returns true if the string value is "true" (case-insensitive), false otherwise or if nil.

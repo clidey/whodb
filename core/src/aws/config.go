@@ -38,7 +38,6 @@ import (
 //	if err != nil {
 //	    return nil, err
 //	}
-//	client := dynamodb.NewFromConfig(cfg)
 func LoadAWSConfig(ctx context.Context, creds *engine.Credentials) (aws.Config, error) {
 	awsCreds, err := ParseFromWhoDB(creds)
 	if err != nil {
@@ -53,24 +52,20 @@ func loadConfigFromAWSCredentials(ctx context.Context, awsCreds *AWSCredentialCo
 		awsconfig.WithRegion(awsCreds.Region),
 	}
 
-	if provider := awsCreds.BuildCredentialsProvider(); provider != nil {
-		options = append(options, awsconfig.WithCredentialsProvider(provider))
-	}
-
 	if awsCreds.IsProfileAuth() && awsCreds.ProfileName != "" {
 		options = append(options, awsconfig.WithSharedConfigProfile(awsCreds.ProfileName))
 	}
 
 	cfg, err := awsconfig.LoadDefaultConfig(ctx, options...)
 	if err != nil {
-		log.Logger.WithFields(map[string]any{
+		log.WithFields(map[string]any{
 			"region":     awsCreds.Region,
 			"authMethod": awsCreds.AuthMethod,
 		}).WithError(err).Error("Failed to load AWS configuration")
 		return aws.Config{}, HandleAWSError(err)
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"region":         awsCreds.Region,
 		"authMethod":     awsCreds.AuthMethod,
 		"hasProfileName": awsCreds.ProfileName != "",

@@ -29,6 +29,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/mockdata"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
@@ -62,7 +63,8 @@ func InitializeEngine() *engine.Engine {
 
 	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
 
-	// Register generic AI providers from environment configuration
+	// Parse and register generic AI providers from environment configuration
+	env.GenericProviders = envconfig.ParseGenericProviders()
 	for _, provider := range env.GenericProviders {
 		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType, provider.BaseURL, provider.APIKey)
 	}
@@ -89,7 +91,7 @@ func GetLoginProfiles() []types.DatabaseCredentials {
 	}
 
 	for _, plugin := range MainEngine.Plugins {
-		databaseProfiles := env.GetDefaultDatabaseCredentials(string(plugin.Type))
+		databaseProfiles := envconfig.GetDefaultDatabaseCredentials(string(plugin.Type))
 		for _, databaseProfile := range databaseProfiles {
 			databaseProfile.Type = string(plugin.Type)
 			databaseProfile.IsProfile = true

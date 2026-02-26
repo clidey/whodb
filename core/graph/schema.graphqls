@@ -158,6 +158,7 @@ type SettingsConfig {
   MetricsEnabled: Boolean
   CloudProvidersEnabled: Boolean!
   DisableCredentialForm: Boolean!
+  MaxPageSize: Int!
 }
 
 input SettingsConfigInput {
@@ -322,7 +323,6 @@ enum CloudProviderStatus {
   Discovering
   Error
   Disconnected
-  CredentialsRequired
 }
 
 # Connection status for discovered resources
@@ -362,27 +362,19 @@ type AWSProvider implements CloudProvider {
   DiscoveredCount: Int!
   Error: String
   # AWS-specific fields
-  AuthMethod: String!
   ProfileName: String
-  HasCredentials: Boolean!
   DiscoverRDS: Boolean!
   DiscoverElastiCache: Boolean!
   DiscoverDocumentDB: Boolean!
-  DBUsername: String
 }
 
 input AWSProviderInput {
   Name: String!
   Region: String!
-  AuthMethod: String
-  AccessKeyId: String
-  SecretAccessKey: String
-  SessionToken: String
   ProfileName: String
   DiscoverRDS: Boolean
   DiscoverElastiCache: Boolean
   DiscoverDocumentDB: Boolean
-  DBUsername: String
 }
 
 # Local AWS profile discovered from ~/.aws/credentials and ~/.aws/config

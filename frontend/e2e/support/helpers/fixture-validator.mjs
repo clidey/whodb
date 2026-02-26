@@ -42,6 +42,8 @@ const REQUIRED_FEATURES = [
 export const VALID_FEATURES = [
   ...REQUIRED_FEATURES,
   "crud",
+  "pagination",
+  "documentEdit",
   "scratchpadUpdate",
   "multiConditionFilter",
   "typeCasting",

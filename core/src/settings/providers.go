@@ -25,6 +25,7 @@ import (
 
 	awsinfra "github.com/clidey/whodb/core/src/aws"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
 	awsprovider "github.com/clidey/whodb/core/src/providers/aws"
@@ -39,27 +40,16 @@ var (
 )
 
 // AWSProviderConfig holds the configuration for an AWS provider.
-// This struct is used for persistence and management.
-// SECURITY: Sensitive fields use json:"-" to prevent accidental serialization.
-// The String() method is implemented to prevent accidental logging of credentials.
+// All fields are non-sensitive — no credentials are stored.
 type AWSProviderConfig struct {
 	ID                  string `json:"id"`
 	Name                string `json:"name"`
 	Region              string `json:"region"`
 	AuthMethod          string `json:"authMethod"`
-	AccessKeyID         string `json:"-"`
-	SecretAccessKey     string `json:"-"`
-	SessionToken        string `json:"-"`
 	ProfileName         string `json:"profileName,omitempty"`
 	DiscoverRDS         bool   `json:"discoverRDS"`
 	DiscoverElastiCache bool   `json:"discoverElastiCache"`
 	DiscoverDocumentDB  bool   `json:"discoverDocumentDB"`
-	DBUsername          string `json:"dbUsername,omitempty"`
-}
-
-func (c *AWSProviderConfig) String() string {
-	return fmt.Sprintf("AWSProviderConfig{ID:%s, Name:%s, Region:%s, AuthMethod:%s, ProfileName:%s, DiscoverRDS:%t, DiscoverElastiCache:%t, DiscoverDocumentDB:%t}",
-		c.ID, c.Name, c.Region, c.AuthMethod, c.ProfileName, c.DiscoverRDS, c.DiscoverElastiCache, c.DiscoverDocumentDB)
 }
 
 // AWSProviderState holds the runtime state of an AWS provider including
@@ -136,7 +126,7 @@ func AddAWSProvider(cfg *AWSProviderConfig) (*AWSProviderState, error) {
 	if !skipPersist {
 		go func() {
 			if err := saveProvidersToFile(); err != nil {
-				log.Logger.Warnf("Failed to persist provider after add: %v", err)
+				log.Warnf("Failed to persist provider after add: %v", err)
 			}
 		}()
 	}
@@ -158,7 +148,7 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 
 	registry := providers.GetDefaultRegistry()
 	if err := registry.Unregister(id); err != nil {
-		log.Logger.Warnf("Failed to unregister provider %s during update: %v", id, err)
+		log.Warnf("Failed to unregister provider %s during update: %v", id, err)
 	}
 
 	cfg.ID = id
@@ -183,7 +173,7 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 
 	go func() {
 		if err := saveProvidersToFile(); err != nil {
-			log.Logger.Warnf("Failed to persist provider after update: %v", err)
+			log.Warnf("Failed to persist provider after update: %v", err)
 		}
 	}()
 
@@ -202,14 +192,14 @@ func RemoveAWSProvider(id string) error {
 
 	registry := providers.GetDefaultRegistry()
 	if err := registry.Unregister(id); err != nil {
-		log.Logger.Warnf("Failed to unregister provider %s during removal: %v", id, err)
+		log.Warnf("Failed to unregister provider %s during removal: %v", id, err)
 	}
 
 	delete(awsProviders, id)
 
 	go func() {
 		if err := saveProvidersToFile(); err != nil {
-			log.Logger.Warnf("Failed to persist provider after remove: %v", err)
+			log.Warnf("Failed to persist provider after remove: %v", err)
 		}
 	}()
 
@@ -244,17 +234,17 @@ func TestAWSProvider(id string) (string, error) {
 // RefreshAWSProvider triggers a re-discovery of connections for the specified provider.
 // Updates the provider's status, discovered count, and last discovery time.
 func RefreshAWSProvider(id string) (*AWSProviderState, error) {
-	log.Logger.Infof("RefreshAWSProvider called for id=%s", id)
+	log.Infof("RefreshAWSProvider called for id=%s", id)
 
 	awsProvidersMu.Lock()
 	state, exists := awsProviders[id]
 	if !exists {
 		awsProvidersMu.Unlock()
-		log.Logger.Warnf("RefreshAWSProvider: provider not found id=%s", id)
+		log.Warnf("RefreshAWSProvider: provider not found id=%s", id)
 		return nil, ErrProviderNotFound
 	}
 	state.Status = "Discovering"
-	log.Logger.Infof("RefreshAWSProvider: provider found, id=%s, region=%s, authMethod=%s",
+	log.Infof("RefreshAWSProvider: provider found, id=%s, region=%s, authMethod=%s",
 		state.Config.ID, state.Config.Region, state.Config.AuthMethod)
 	awsProvidersMu.Unlock()
 
@@ -262,9 +252,9 @@ func RefreshAWSProvider(id string) (*AWSProviderState, error) {
 	defer cancel()
 
 	registry := providers.GetDefaultRegistry()
-	log.Logger.Infof("RefreshAWSProvider: calling registry.RefreshDiscovery for id=%s", id)
+	log.Infof("RefreshAWSProvider: calling registry.RefreshDiscovery for id=%s", id)
 	conns, err := registry.RefreshDiscovery(ctx, id)
-	log.Logger.Infof("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
+	log.Infof("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
 
 	awsProvidersMu.Lock()
 	defer awsProvidersMu.Unlock()
@@ -300,14 +290,10 @@ func configToProviderConfig(cfg *AWSProviderConfig) *awsprovider.Config {
 		Name:                cfg.Name,
 		Region:              cfg.Region,
 		AuthMethod:          awsinfra.AuthMethod(cfg.AuthMethod),
-		AccessKeyID:         cfg.AccessKeyID,
-		SecretAccessKey:     cfg.SecretAccessKey,
-		SessionToken:        cfg.SessionToken,
 		ProfileName:         cfg.ProfileName,
 		DiscoverRDS:         cfg.DiscoverRDS,
 		DiscoverElastiCache: cfg.DiscoverElastiCache,
 		DiscoverDocumentDB:  cfg.DiscoverDocumentDB,
-		DBUsername:          cfg.DBUsername,
 	}
 }
 
@@ -324,7 +310,7 @@ func InitAWSProvidersFromEnv() error {
 		return nil
 	}
 
-	envConfigs, err := env.GetAWSProvidersFromEnv()
+	envConfigs, err := envconfig.GetAWSProvidersFromEnv()
 	if err != nil {
 		return err
 	}
@@ -340,9 +326,9 @@ func InitAWSProvidersFromEnv() error {
 		}
 		id := GenerateProviderID(name, envCfg.Region)
 
-		authMethod := envCfg.Auth
-		if authMethod == "" {
-			authMethod = "default"
+		authMethod := "default"
+		if envCfg.ProfileName != "" {
+			authMethod = "profile"
 		}
 
 		discoverRDS := true
@@ -365,20 +351,16 @@ func InitAWSProvidersFromEnv() error {
 			Name:                name,
 			Region:              envCfg.Region,
 			AuthMethod:          authMethod,
-			AccessKeyID:         envCfg.AccessKeyID,
-			SecretAccessKey:     envCfg.SecretAccessKey,
-			SessionToken:        envCfg.SessionToken,
 			ProfileName:         envCfg.ProfileName,
 			DiscoverRDS:         discoverRDS,
 			DiscoverElastiCache: discoverElastiCache,
 			DiscoverDocumentDB:  discoverDocumentDB,
-			DBUsername:          envCfg.DBUsername,
 		}
 
 		if _, err := AddAWSProvider(cfg); err != nil {
-			log.Logger.Warnf("Failed to initialize AWS provider %s: %v", name, err)
+			log.Warnf("Failed to initialize AWS provider %s: %v", name, err)
 		} else {
-			log.Logger.Infof("Initialized AWS provider: %s (%s)", name, envCfg.Region)
+			log.Infof("Initialized AWS provider: %s (%s)", name, envCfg.Region)
 		}
 	}
 

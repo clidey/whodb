@@ -17,16 +17,15 @@
 package auth
 
 import (
-    "sync"
+	"sync"
 
-    "github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 var keyringWarnOnce sync.Once
 
 func warnKeyringUnavailableOnce(err error) {
-    keyringWarnOnce.Do(func() {
-        log.Logger.Warn("Keyring not available or failed; continuing without secure storage. Error: ", err)
-    })
+	keyringWarnOnce.Do(func() {
+		log.Warn("Keyring not available or failed; continuing without secure storage. Error: ", err)
+	})
 }
-

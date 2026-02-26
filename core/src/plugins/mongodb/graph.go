@@ -38,7 +38,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	defer cancel()
 	client, err := DB(config)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to connect to MongoDB for graph generation")
@@ -49,7 +49,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	db := client.Database(database)
 	cursor, err := db.ListCollections(ctx, bson.M{})
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to list MongoDB collections for graph generation")
@@ -63,7 +63,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	for cursor.Next(ctx) {
 		var collectionInfo bson.M
 		if err := cursor.Decode(&collectionInfo); err != nil {
-			log.Logger.WithError(err).WithFields(map[string]any{
+			log.WithError(err).WithFields(map[string]any{
 				"hostname": config.Credentials.Hostname,
 				"database": database,
 			}).Error("Failed to decode MongoDB collection info for graph generation")
@@ -80,7 +80,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	uniqueRelations := make(map[string]bool)
 	relations := []tableRelation{}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"database":    database,
 		"collections": collections,
 	}).Info("MongoDB Graph: Starting relationship detection")
@@ -89,7 +89,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		collectionType := collectionTypes[collectionName]
 
 		if collectionType == "view" {
-			log.Logger.WithField("collection", collectionName).Info("MongoDB Graph: Skipping view")
+			log.WithField("collection", collectionName).Info("MongoDB Graph: Skipping view")
 			continue
 		}
 
@@ -97,7 +97,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 
 		cursorSample, err := collection.Find(ctx, bson.M{}, options.Find().SetLimit(100))
 		if err != nil {
-			log.Logger.WithError(err).WithField("collection", collectionName).Warn("MongoDB Graph: Unable to sample documents")
+			log.WithError(err).WithField("collection", collectionName).Warn("MongoDB Graph: Unable to sample documents")
 			continue
 		}
 		defer cursorSample.Close(ctx)
@@ -120,7 +120,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		}
 
 		if len(fieldFrequency) == 0 {
-			log.Logger.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")
+			log.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")
 			continue
 		}
 
@@ -164,7 +164,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 					lowerField == strings.ToLower(pluralName)+"_id" ||
 					lowerField == strings.ToLower(pluralName)+"id" {
 					foreignKeys[otherCollection] = fieldName
-					log.Logger.WithFields(map[string]any{
+					log.WithFields(map[string]any{
 						"collection": collectionName,
 						"field":      fieldName,
 						"references": otherCollection,
@@ -186,7 +186,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 					SourceColumn: fieldName,
 					TargetColumn: "_id",
 				})
-				log.Logger.WithFields(map[string]any{
+				log.WithFields(map[string]any{
 					"from":         collectionName,
 					"to":           fk,
 					"sourceColumn": fieldName,
@@ -196,7 +196,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		}
 	}
 
-	log.Logger.WithFields(map[string]any{
+	log.WithFields(map[string]any{
 		"database":       database,
 		"relationsCount": len(relations),
 	}).Info("MongoDB Graph: Finished relationship detection")
@@ -215,7 +215,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 
 	storageUnits, err := p.GetStorageUnits(config, database)
 	if err != nil {
-		log.Logger.WithError(err).WithFields(map[string]any{
+		log.WithError(err).WithFields(map[string]any{
 			"hostname": config.Credentials.Hostname,
 			"database": database,
 		}).Error("Failed to get MongoDB storage units for graph generation")

@@ -59,6 +59,7 @@ import {cloneElement, FC, KeyboardEventHandler, useCallback, useEffect, useMemo,
 import ReactMarkdown from 'react-markdown';
 import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
+import {Tip} from "../../components/tip";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
 import {Loading} from "../../components/loading";
@@ -1063,11 +1064,14 @@ export const ChatPage: FC = () => {
                         autoComplete="off"
                         data-testid="chat-input"
                     />
-                    <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
-                        "opacity-50": loading,
-                    })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button" aria-label={t('sendMessage')}>
-                        <ArrowUpCircleIcon className="w-8 h-8" aria-hidden="true" />
-                    </Button>
+                    <Tip className="w-fit">
+                        <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
+                            "opacity-50": loading,
+                        })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button" aria-label={t('sendMessage')}>
+                            <ArrowUpCircleIcon className="w-8 h-8" aria-hidden="true" />
+                        </Button>
+                        <p>{t('sendMessage')}</p>
+                    </Tip>
                 </div>
             </div>
         </InternalPage>

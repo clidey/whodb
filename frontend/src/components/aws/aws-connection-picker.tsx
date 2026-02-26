@@ -35,6 +35,7 @@ import { ProvidersActions, LocalCloudProvider, LocalDiscoveredConnection } from 
 import { useTranslation } from "@/hooks/use-translation";
 import { Icons } from "../icons";
 import { AwsProviderModal } from "./aws-provider-modal";
+import { Tip } from "../tip";
 import {
     ArrowPathIcon,
     CloudIcon,
@@ -191,8 +192,6 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                                         <ul className="list-disc list-inside space-y-1 pl-1">
                                             <li><span className="font-medium">{t('helpAuthDefault')}</span> – {t('helpAuthDefaultDesc')}</li>
                                             <li><span className="font-medium">{t('helpAuthProfile')}</span> – {t('helpAuthProfileDesc')}</li>
-                                            <li><span className="font-medium">{t('helpAuthStatic')}</span> – {t('helpAuthStaticDesc')}</li>
-                                            <li><span className="font-medium">{t('helpAuthIam')}</span> – {t('helpAuthIamDesc')}</li>
                                         </ul>
                                     </div>
                                     <div className="space-y-1">
@@ -210,23 +209,29 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                     </Popover>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRefresh}
-                        disabled={loading}
-                        title={t('refresh')}
-                    >
-                        <ArrowPathIcon className={cn("w-4 h-4", { "animate-spin": loading })} />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleAddProvider}
-                        title={t('addProvider')}
-                    >
-                        <PlusIcon className="w-4 h-4" />
-                    </Button>
+                    <Tip className="w-fit">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRefresh}
+                            disabled={loading}
+                            aria-label={t('refresh')}
+                        >
+                            <ArrowPathIcon className={cn("w-4 h-4", { "animate-spin": loading })} />
+                        </Button>
+                        <p>{t('refresh')}</p>
+                    </Tip>
+                    <Tip className="w-fit">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleAddProvider}
+                            aria-label={t('addProvider')}
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                        </Button>
+                        <p>{t('addProvider')}</p>
+                    </Tip>
                 </div>
             </div>
 

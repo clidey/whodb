@@ -257,39 +257,3 @@ func TestGenerateProviderID(t *testing.T) {
 	}
 }
 
-func TestAWSProviderConfig_String(t *testing.T) {
-	cfg := &AWSProviderConfig{
-		ID:              "test-id",
-		Name:            "Test",
-		Region:          "us-west-2",
-		AuthMethod:      "static",
-		AccessKeyID:     "AKIAEXAMPLE",
-		SecretAccessKey: "secret123",
-		SessionToken:    "token456",
-	}
-
-	str := cfg.String()
-
-	// Should NOT contain credentials
-	if contains(str, "AKIAEXAMPLE") {
-		t.Error("String() should not contain AccessKeyID")
-	}
-	if contains(str, "secret123") {
-		t.Error("String() should not contain SecretAccessKey")
-	}
-	if contains(str, "token456") {
-		t.Error("String() should not contain SessionToken")
-	}
-
-	// Should contain non-sensitive info
-	if !contains(str, "test-id") {
-		t.Error("String() should contain ID")
-	}
-	if !contains(str, "us-west-2") {
-		t.Error("String() should contain Region")
-	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
-}

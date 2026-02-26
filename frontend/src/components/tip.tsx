@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ export const Tip: FC<{
 }> = ({children, className}) => {
     return (
         <Tooltip>
-            <TooltipTrigger className={cn("w-full", className)}>
+            <TooltipTrigger asChild className={cn("w-full", className)}>
                 {children[0]}
             </TooltipTrigger>
             <TooltipContent>

@@ -56,7 +56,9 @@
     "chat": true,
     "whereConditions": true,
     "queryHistory": true,
-    "import": true
+    "import": true,
+    "pagination": true,
+    "documentEdit": true
   },
   "import": {
     "sampleDataDir": "mariadb",

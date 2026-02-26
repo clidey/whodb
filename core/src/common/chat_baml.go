@@ -20,14 +20,12 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 	"github.com/clidey/whodb/core/baml_client"
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
 )
 
 // RawExecutePlugin defines the interface for executing raw SQL queries
@@ -57,7 +55,7 @@ func SQLChatBAML(
 	}
 
 	// Create dynamic BAML client and log request
-	callOpts := SetupAIClientWithLogging(config.ExternalModel)
+	callOpts := SetupAIClient(config.ExternalModel)
 
 	// Call BAML function to generate SQL
 	responses, err := baml_client.GenerateSQLQuery(ctx, dbContext, userQuery, callOpts...)
@@ -151,9 +149,8 @@ func convertOperationType(operation types.OperationType) string {
 	}
 }
 
-// SetupAIClientWithLogging creates the BAML client options and logs the AI request configuration.
-// This should be used by all AI request paths to ensure consistent logging.
-func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []baml_client.CallOptionFunc {
+// SetupAIClient creates the BAML client options for the given external model.
+func SetupAIClient(externalModel *engine.ExternalModel) []baml_client.CallOptionFunc {
 	var callOpts []baml_client.CallOptionFunc
 	if externalModel == nil {
 		return callOpts
@@ -165,16 +162,6 @@ func SetupAIClientWithLogging(externalModel *engine.ExternalModel) []baml_client
 	if registry := CreateDynamicBAMLClient(externalModel); registry != nil {
 		callOpts = append(callOpts, baml_client.WithClientRegistry(registry))
 	}
-
-	// Log AI model configuration
-	fields := log.Fields{
-		"provider": externalModel.Type,
-		"model":    externalModel.Model,
-	}
-	if externalModel.Endpoint != "" {
-		fields["endpoint"] = externalModel.Endpoint
-	}
-	log.LogFields(fields).Info("AI chat request")
 
 	return callOpts
 }
@@ -205,7 +192,7 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 	}
 
 	switch m.Type {
-	case "OpenAI", "ChatGPT":
+	case "OpenAI":
 		if m.Token != "" {
 			opts["api_key"] = m.Token
 		}
@@ -228,10 +215,6 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 	case "Ollama":
 		// Ollama uses openai-generic provider with special options
 		endpoint := m.Endpoint
-		if endpoint == "" {
-			host, port := GetOllamaHost()
-			endpoint = fmt.Sprintf("http://%s:%s", host, port)
-		}
 		// Strip trailing slash and /api suffix (Ollama native API path).
 		// BAML needs the OpenAI-compatible /v1 path, not the native /api path.
 		endpoint = strings.TrimRight(endpoint, "/")

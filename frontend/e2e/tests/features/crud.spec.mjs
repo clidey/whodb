@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
+import { test, expect, forEachDatabase, skipIfNoFeature } from '../../support/test-fixture.mjs';
 import { getTableConfig, hasFeature } from '../../support/database-config.mjs';
 import { createUpdatedDocument, parseDocument } from '../../support/categories/document.mjs';
-
-/**
- * Generates a unique test identifier for this test run.
- * Uses timestamp to avoid conflicts within and across test runs.
- */
-function getUniqueTestId() {
-    return `test_${Date.now()}`;
-}
+import { getUniqueTestId, waitForMutation } from '../../support/helpers/test-utils.mjs';
 
 test.describe('CRUD Operations', () => {
 
@@ -56,8 +49,10 @@ test.describe('CRUD Operations', () => {
                 await whodb.data(tableName);
                 await whodb.sortBy(0);
 
-                // Edit row
+                // Edit row with network verification
+                const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
                 await whodb.updateRow(testValues.rowIndex, colIndex, testValues.modified, false);
+                await verifyUpdate();
 
                 // Wait for async mutations (e.g., ClickHouse)
                 if (mutationDelay > 0) {
@@ -117,7 +112,9 @@ test.describe('CRUD Operations', () => {
                     newRowData.email = `${uniqueId}@example.com`;
                 }
 
+                const verifyAdd = waitForMutation(page, 'AddRow');
                 await whodb.addRow(newRowData);
+                await verifyAdd();
 
                 const identifierValue = newRowData[testTable.identifierField];
 
@@ -125,7 +122,9 @@ test.describe('CRUD Operations', () => {
                 const rowIndex = await whodb.waitForRowValue(colIndex + 1, identifierValue);
 
                 // Clean up - delete the added row
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
+                await verifyDelete();
             });
         });
 
@@ -149,7 +148,9 @@ test.describe('CRUD Operations', () => {
                     newRowData.email = `${uniqueId}@example.com`;
                 }
 
+                const verifyAdd = waitForMutation(page, 'AddRow');
                 await whodb.addRow(newRowData);
+                await verifyAdd();
 
                 const identifierValue = newRowData[testTable.identifierField];
 
@@ -159,7 +160,9 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
+                await verifyDelete();
 
                 // Verify row count decreased
                 const { rows: newRows } = await whodb.getTableData();
@@ -195,19 +198,19 @@ test.describe('CRUD Operations', () => {
 
                 await whodb.addRow(newDoc, true);
 
-                await whodb.submitTable();
-
                 // Wait for row to appear using retry-able assertion
                 const rowIndex = await whodb.waitForRowContaining(uniqueId);
 
                 // Clean up
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
+                await verifyDelete();
             });
         });
 
         test.describe('Edit Document', () => {
-            // Skip full edit test for Elasticsearch due to truncated JSON display
-            if (db.type === 'ElasticSearch') {
+            // Skip full edit test for databases that don't support document editing
+            if (skipIfNoFeature(db, 'documentEdit')) {
                 test('cancels edit without saving', async ({ whodb, page }) => {
                     await whodb.data(tableName);
 
@@ -231,59 +234,69 @@ test.describe('CRUD Operations', () => {
             }
 
             test('edits a document and saves changes', async ({ whodb, page }) => {
-                await whodb.data(tableName);
-                await whodb.sortBy(0);
+                await test.step('navigate to table', async () => {
+                    await whodb.data(tableName);
+                    await whodb.sortBy(0);
+                });
 
-                let { rows } = await whodb.getTableData();
-                const doc = parseDocument(rows[testValues.rowIndex]);
-                const currentValue = doc[testTable.identifierField];
+                await test.step('check and revert leftover data', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const doc = parseDocument(rows[testValues.rowIndex]);
+                    const currentValue = doc[testTable.identifierField];
 
-                // If data was left from previous failed test, revert first
-                if (currentValue === testValues.modified) {
-                    const revertDoc = createUpdatedDocument(rows[testValues.rowIndex], {
-                        [testTable.identifierField]: testValues.original
+                    if (currentValue === testValues.modified) {
+                        const revertDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                            [testTable.identifierField]: testValues.original
+                        });
+                        await whodb.updateRow(testValues.rowIndex, 1, revertDoc, false);
+                        if (refreshDelay > 0) {
+                            await page.waitForTimeout(refreshDelay);
+                            await whodb.data(tableName);
+                            await whodb.sortBy(0);
+                        }
+                    }
+                });
+
+                await test.step('perform edit with network verification', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: testValues.modified
                     });
-                    await whodb.updateRow(testValues.rowIndex, 1, revertDoc, false);
+
+                    const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
+                    await whodb.updateRow(testValues.rowIndex, 1, updatedDoc, false);
+                    await verifyUpdate();
+
                     if (refreshDelay > 0) {
                         await page.waitForTimeout(refreshDelay);
                         await whodb.data(tableName);
                         await whodb.sortBy(0);
                     }
-                }
-
-                // Now perform the actual edit test
-                ({ rows } = await whodb.getTableData());
-                const updatedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
-                    [testTable.identifierField]: testValues.modified
                 });
 
-                await whodb.updateRow(testValues.rowIndex, 1, updatedDoc, false);
-
-                if (refreshDelay > 0) {
-                    await page.waitForTimeout(refreshDelay);
-                    await whodb.data(tableName);
-                    await whodb.sortBy(0);
-                }
-
-                ({ rows } = await whodb.getTableData());
-                const editedDoc = parseDocument(rows[testValues.rowIndex]);
-                expect(editedDoc[testTable.identifierField]).toEqual(testValues.modified);
-
-                // Revert
-                const revertedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
-                    [testTable.identifierField]: testValues.original
+                await test.step('verify edit', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const editedDoc = parseDocument(rows[testValues.rowIndex]);
+                    expect(editedDoc[testTable.identifierField]).toEqual(testValues.modified);
                 });
-                await whodb.updateRow(testValues.rowIndex, 1, revertedDoc, false);
 
-                if (refreshDelay > 0) {
-                    await page.waitForTimeout(refreshDelay);
-                    await whodb.data(tableName);
-                    await whodb.sortBy(0);
-                }
+                await test.step('revert to original', async () => {
+                    const { rows } = await whodb.getTableData();
+                    const revertedDoc = createUpdatedDocument(rows[testValues.rowIndex], {
+                        [testTable.identifierField]: testValues.original
+                    });
+                    await whodb.updateRow(testValues.rowIndex, 1, revertedDoc, false);
 
-                ({ rows } = await whodb.getTableData());
-                const revertedParsedDoc = parseDocument(rows[testValues.rowIndex]);
-                expect(revertedParsedDoc[testTable.identifierField]).toEqual(testValues.original);
+                    if (refreshDelay > 0) {
+                        await page.waitForTimeout(refreshDelay);
+                        await whodb.data(tableName);
+                        await whodb.sortBy(0);
+                    }
+
+                    const { rows: revertedRows } = await whodb.getTableData();
+                    const revertedParsedDoc = parseDocument(revertedRows[testValues.rowIndex]);
+                    expect(revertedParsedDoc[testTable.identifierField]).toEqual(testValues.original);
+                });
             });
 
             test('cancels edit without saving', async ({ whodb, page }) => {
@@ -327,7 +340,9 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(rowIndex);
+                await verifyDelete();
 
                 // Verify row count decreased
                 const { rows: newRows } = await whodb.getTableData();
@@ -351,24 +366,32 @@ test.describe('CRUD Operations', () => {
 
         test.describe('Edit Hash Field', () => {
             test('edits a hash field value and saves', async ({ whodb, page }) => {
-                await whodb.data(keyName);
+                await test.step('navigate to key', async () => {
+                    await whodb.data(keyName);
+                });
 
-                // Check if data was left from a previous failed test and revert first
-                let { rows } = await whodb.getTableData();
-                if (rows[rowIndex][2] === testValues.modified) {
+                await test.step('check and revert leftover data', async () => {
+                    const { rows } = await whodb.getTableData();
+                    if (rows[rowIndex][2] === testValues.modified) {
+                        await whodb.updateRow(rowIndex, 1, testValues.original, false);
+                    }
+                });
+
+                await test.step('update field with network verification', async () => {
+                    const verifyUpdate = waitForMutation(page, 'UpdateStorageUnit');
+                    await whodb.updateRow(rowIndex, 1, testValues.modified, false);
+                    await verifyUpdate();
+
+                    const { rows } = await whodb.getTableData();
+                    expect(rows[rowIndex][2]).toEqual(testValues.modified);
+                });
+
+                await test.step('revert to original', async () => {
                     await whodb.updateRow(rowIndex, 1, testValues.original, false);
-                }
 
-                await whodb.updateRow(rowIndex, 1, testValues.modified, false);
-
-                ({ rows } = await whodb.getTableData());
-                expect(rows[rowIndex][2]).toEqual(testValues.modified);
-
-                // Revert
-                await whodb.updateRow(rowIndex, 1, testValues.original, false);
-
-                ({ rows } = await whodb.getTableData());
-                expect(rows[rowIndex][2]).toEqual(testValues.original);
+                    const { rows } = await whodb.getTableData();
+                    expect(rows[rowIndex][2]).toEqual(testValues.original);
+                });
             });
 
             test('cancels edit without saving', async ({ whodb, page }) => {
@@ -393,7 +416,9 @@ test.describe('CRUD Operations', () => {
                 const { rows } = await whodb.getTableData();
                 const initialCount = rows.length;
 
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
                 await whodb.deleteRow(2);
+                await verifyDelete();
 
                 const { rows: newRows } = await whodb.getTableData();
                 expect(newRows.length).toEqual(initialCount - 1);

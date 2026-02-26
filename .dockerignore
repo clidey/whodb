@@ -1,0 +1,21 @@
+# Ignore everything by default
+*
+
+# Core Dockerfile needs: frontend/, core/, ee-stub/
+# CLI Dockerfile needs: core/, cli/, ee-stub/
+!frontend/
+!core/
+!cli/
+!ee/
+!ee-stub/
+
+# Exclude test/dev artifacts within allowed directories
+**/node_modules
+frontend/coverage
+frontend/.nyc_output
+frontend/.pnpm-store
+frontend/e2e
+core/tmp
+cli/build
+cli/.gocache
+cli/whodb-cli

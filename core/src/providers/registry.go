@@ -83,7 +83,7 @@ func (r *Registry) Unregister(providerID string) error {
 	}
 
 	if err := provider.Close(context.Background()); err != nil {
-		log.Logger.Warnf("Provider %s close failed during unregister: %v", providerID, err)
+		log.Warnf("Provider %s close failed during unregister: %v", providerID, err)
 	}
 
 	delete(r.providers, providerID)
@@ -143,7 +143,7 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 	}
 	r.mu.RUnlock()
 
-	log.Logger.Infof("DiscoverAll: found %d registered providers", len(providers))
+	log.Infof("DiscoverAll: found %d registered providers", len(providers))
 
 	var allConns []DiscoveredConnection
 	var errs []error
@@ -156,17 +156,17 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 		r.cacheMu.RUnlock()
 
 		if hasCached {
-			log.Logger.Infof("DiscoverAll: using %d cached connections for provider %s", len(cached), providerID)
+			log.Infof("DiscoverAll: using %d cached connections for provider %s", len(cached), providerID)
 			allConns = append(allConns, cached...)
 			continue
 		}
 
-		log.Logger.Infof("DiscoverAll: no cache for provider %s, calling DiscoverConnections", providerID)
+		log.Infof("DiscoverAll: no cache for provider %s, calling DiscoverConnections", providerID)
 
 		conns, err := p.DiscoverConnections(ctx)
 
 		if len(conns) > 0 {
-			log.Logger.Infof("DiscoverAll: got %d connections from provider %s", len(conns), providerID)
+			log.Infof("DiscoverAll: got %d connections from provider %s", len(conns), providerID)
 			r.cacheMu.Lock()
 			r.connCache[providerID] = conns
 			r.cacheMu.Unlock()
@@ -174,12 +174,12 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 		}
 
 		if err != nil {
-			log.Logger.Warnf("DiscoverAll: error from provider %s: %v", providerID, err)
+			log.Warnf("DiscoverAll: error from provider %s: %v", providerID, err)
 			errs = append(errs, err)
 		}
 	}
 
-	log.Logger.Infof("DiscoverAll: returning %d total connections", len(allConns))
+	log.Infof("DiscoverAll: returning %d total connections", len(allConns))
 
 	if len(errs) > 0 {
 		return allConns, errors.Join(errs...)

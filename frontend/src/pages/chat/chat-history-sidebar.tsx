@@ -32,6 +32,7 @@ import {
     SidebarHeader
 } from "@clidey/ux";
 import { ChatBubbleLeftRightIcon, PlusCircleIcon, TrashIcon } from "../../components/heroicons";
+import { Tip } from "../../components/tip";
 import { ChangeEvent, FC, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "../../hooks/use-translation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -197,15 +198,18 @@ export const ChatHistorySidebar: FC = () => {
                     <SidebarHeader>
                         <div className="flex items-center justify-between">
                             <h1 className="text-lg font-semibold pt-8 px-4">{t('chatHistory')}</h1>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleAddSession}
-                                data-testid="add-chat-session-button"
-                                aria-label={t('newChat')}
-                            >
-                                <PlusCircleIcon className="w-4 h-4" />
-                            </Button>
+                            <Tip className="w-fit">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleAddSession}
+                                    data-testid="add-chat-session-button"
+                                    aria-label={t('newChat')}
+                                >
+                                    <PlusCircleIcon className="w-4 h-4" />
+                                </Button>
+                                <p>{t('newChat')}</p>
+                            </Tip>
                         </div>
                     </SidebarHeader>
                     <SidebarContent>

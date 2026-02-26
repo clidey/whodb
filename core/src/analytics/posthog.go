@@ -87,11 +87,11 @@ func Initialize(config Config) error {
 		})
 		if err != nil {
 			initErr = err
-			log.Logger.WithError(err).Error("Analytics: failed to initialize PostHog client")
+			//log.WithError(err).Error("Analytics: failed to initialize PostHog client")
 			return
 		}
 		storeClient(c)
-		log.Logger.Info("Analytics: PostHog backend client ready")
+		//log.Info("Analytics: PostHog backend client ready")
 	})
 
 	if initErr != nil {
@@ -109,7 +109,7 @@ func Shutdown() {
 	}
 
 	if err := old.Close(); err != nil {
-		log.Logger.WithError(err).Warn("Analytics: unable to flush PostHog queue during shutdown")
+		log.WithError(err).Warn("Analytics: unable to flush PostHog queue during shutdown")
 	}
 
 	enabled.Store(false)
@@ -355,7 +355,7 @@ func enqueue(message posthog.Message) {
 	}
 
 	if err := c.Enqueue(message); err != nil && !errors.Is(err, posthog.ErrTooManyRequests) {
-		log.Logger.WithError(err).Warn("Analytics: failed to enqueue message")
+		log.WithError(err).Warn("Analytics: failed to enqueue message")
 	}
 }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, forEachDatabase } from '../../support/test-fixture.mjs';
+import { test, expect, forEachDatabase, skipIfNoFeature } from '../../support/test-fixture.mjs';
 import { hasFeature } from '../../support/database-config.mjs';
 
 test.describe('Mock Data Generation', () => {
@@ -77,29 +77,37 @@ test.describe('Mock Data Generation', () => {
         });
 
         test('generates mock data and adds rows to table', async ({ whodb, page }) => {
-            await whodb.data(supportedTable);
+            let initialCount;
 
-            // Get initial total count from UI
-            const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
-            const initialCount = parseInt(totalText.replace(/[^0-9]/g, ''), 10) || 0;
+            await test.step('get initial count', async () => {
+                await whodb.data(supportedTable);
 
-            await whodb.selectMockData();
+                // Get initial total count from UI
+                const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
+                initialCount = parseInt(totalText.replace(/[^0-9]/g, ''), 10) || 0;
+            });
 
-            // Generate 5 rows (append mode - default)
-            await whodb.setMockDataRows(5);
-            await whodb.generateMockData();
+            await test.step('generate mock data', async () => {
+                await whodb.selectMockData();
 
-            // Wait for success toast (ClickHouse can take 40s+ for mock data generation)
-            await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
+                // Generate 5 rows (append mode - default)
+                await whodb.setMockDataRows(5);
+                await whodb.generateMockData();
 
-            // Sheet should close after success
-            await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                // Wait for success toast (ClickHouse can take 40s+ for mock data generation)
+                await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
 
-            // Verify Total Count increased by exactly 5
-            await expect(page.locator('[data-testid="total-count-top"]')).toHaveText(
-                new RegExp(String(initialCount + 5)),
-                { timeout: 5000 }
-            );
+                // Sheet should close after success
+                await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+            });
+
+            await test.step('verify count increased', async () => {
+                // Verify Total Count increased by exactly 5
+                await expect(page.locator('[data-testid="total-count-top"]')).toHaveText(
+                    new RegExp(String(initialCount + 5)),
+                    { timeout: 5000 }
+                );
+            });
         });
 
         // Skip FK dependency test for databases without FK support (e.g., ClickHouse)
@@ -123,59 +131,75 @@ test.describe('Mock Data Generation', () => {
             });
 
             test('generates mock data for FK table and populates parent tables', async ({ whodb, page }) => {
-                await whodb.data(tableWithFKs, { waitForRows: false });
+                let initialCount;
 
-                // Get initial total count
-                const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
-                const initialCount = parseInt(totalText.replace(/[^0-9]/g, ''), 10) || 0;
+                await test.step('get initial count', async () => {
+                    await whodb.data(tableWithFKs, { waitForRows: false });
 
-                await whodb.selectMockData();
+                    // Get initial total count
+                    const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
+                    initialCount = parseInt(totalText.replace(/[^0-9]/g, ''), 10) || 0;
+                });
 
-                // Generate rows for FK table
-                await whodb.setMockDataRows(5);
-                await whodb.generateMockData();
+                await test.step('generate mock data', async () => {
+                    await whodb.selectMockData();
 
-                // Wait for success toast - FK generation may take longer
-                await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
+                    // Generate rows for FK table
+                    await whodb.setMockDataRows(5);
+                    await whodb.generateMockData();
 
-                // Sheet should close after success
-                await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                    // Wait for success toast - FK generation may take longer
+                    await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
 
-                // Verify Total Count increased by at least 5
-                await expect(async () => {
-                    const newText = await page.locator('[data-testid="total-count-top"]').textContent();
-                    const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
-                    expect(newCount).toBeGreaterThanOrEqual(initialCount + 5);
-                }).toPass({ timeout: 5000 });
+                    // Sheet should close after success
+                    await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                });
+
+                await test.step('verify count increased', async () => {
+                    // Verify Total Count increased by at least 5
+                    await expect(async () => {
+                        const newText = await page.locator('[data-testid="total-count-top"]').textContent();
+                        const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
+                        expect(newCount).toBeGreaterThanOrEqual(initialCount + 5);
+                    }).toPass({ timeout: 5000 });
+                });
             });
 
             // Edge case: Low row count with FK tables (bug fix verification)
             // Previously failed with FK constraint error when generating < 5 rows
             test('generates low row count (1-3 rows) for FK table successfully', async ({ whodb, page }) => {
-                await whodb.data(tableWithFKs, { waitForRows: false });
+                let initialCount;
 
-                // Get initial total count
-                const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
-                const initialCount = parseInt(totalText.replace(/[^0-9]/g, ''), 10) || 0;
+                await test.step('get initial count', async () => {
+                    await whodb.data(tableWithFKs, { waitForRows: false });
 
-                await whodb.selectMockData();
+                    // Get initial total count
+                    const totalText = await page.locator('[data-testid="total-count-top"]').textContent();
+                    initialCount = parseInt(totalText.replace(/[^0-9]/g, ''), 10) || 0;
+                });
 
-                // Generate only 2 rows - previously this would fail with FK constraint error
-                await whodb.setMockDataRows(2);
-                await whodb.generateMockData();
+                await test.step('generate mock data', async () => {
+                    await whodb.selectMockData();
 
-                // Should succeed without FK constraint errors
-                await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
+                    // Generate only 2 rows - previously this would fail with FK constraint error
+                    await whodb.setMockDataRows(2);
+                    await whodb.generateMockData();
 
-                // Sheet should close
-                await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                    // Should succeed without FK constraint errors
+                    await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
 
-                // Verify Total Count increased by at least 2
-                await expect(async () => {
-                    const newText = await page.locator('[data-testid="total-count-top"]').textContent();
-                    const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
-                    expect(newCount).toBeGreaterThanOrEqual(initialCount + 2);
-                }).toPass({ timeout: 5000 });
+                    // Sheet should close
+                    await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                });
+
+                await test.step('verify count increased', async () => {
+                    // Verify Total Count increased by at least 2
+                    await expect(async () => {
+                        const newText = await page.locator('[data-testid="total-count-top"]').textContent();
+                        const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
+                        expect(newCount).toBeGreaterThanOrEqual(initialCount + 2);
+                    }).toPass({ timeout: 5000 });
+                });
             });
 
             // Comprehensive FK verification: checks row counts and FK->PK relationships
@@ -190,93 +214,103 @@ test.describe('Mock Data Generation', () => {
 
                 const { parentTable, fkColumn, parentPkColumn } = fkRelationship;
                 const rowsToGenerate = 5;
-
-                // Step 1: Get initial parent table Total Count
-                await whodb.data(parentTable, { waitForRows: false });
-                const parentTotalText = await page.locator('[data-testid="total-count-top"]').textContent();
-                const initialParentCount = parseInt(parentTotalText.replace(/[^0-9]/g, ''), 10) || 0;
-
-                // Step 2: Get initial FK table Total Count
-                await whodb.data(tableWithFKs, { waitForRows: false });
-                const fkTotalText = await page.locator('[data-testid="total-count-top"]').textContent();
-                const initialFkTableCount = parseInt(fkTotalText.replace(/[^0-9]/g, ''), 10) || 0;
-
-                // Step 3: Open mock data dialog and set row count
-                await whodb.selectMockData();
-                await whodb.setMockDataRows(rowsToGenerate);
-
-                // Step 4: Parse the dependency preview to get expected parent row count
-                await expect(page.locator('text=Tables to populate')).toBeVisible();
+                let initialParentCount;
+                let initialFkTableCount;
                 let expectedParentRows = 0;
-                const sheetEl = page.locator('[data-testid="mock-data-sheet"]');
-                const parentRow = sheetEl.locator(`text=${parentTable}`).locator('..');
-                const rowText = await parentRow.textContent();
-                const match = rowText.match(/(\d+)\s*rows?/);
-                if (match) {
-                    expectedParentRows = parseInt(match[1], 10);
-                }
-
-                // Step 5: Generate mock data (append mode - default)
-                await whodb.generateMockData();
-                await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
-
-                // Step 6: Verify parent table Total Count increased
-                await whodb.data(parentTable);
-                await expect(async () => {
-                    const newText = await page.locator('[data-testid="total-count-top"]').textContent();
-                    const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
-                    expect(newCount).toBeGreaterThanOrEqual(initialParentCount + expectedParentRows);
-                }).toPass({ timeout: 5000 });
-
-                // Step 7: Collect parent PKs
                 const parentPKs = new Set();
-                const headers = await page.locator('table thead th').allTextContents();
-                let pkColIndex = -1;
-                headers.forEach((text, i) => {
-                    if (text.trim().toLowerCase() === parentPkColumn.toLowerCase()) {
-                        pkColIndex = i;
-                    }
+
+                await test.step('get initial counts', async () => {
+                    // Step 1: Get initial parent table Total Count
+                    await whodb.data(parentTable, { waitForRows: false });
+                    const parentTotalText = await page.locator('[data-testid="total-count-top"]').textContent();
+                    initialParentCount = parseInt(parentTotalText.replace(/[^0-9]/g, ''), 10) || 0;
+
+                    // Step 2: Get initial FK table Total Count
+                    await whodb.data(tableWithFKs, { waitForRows: false });
+                    const fkTotalText = await page.locator('[data-testid="total-count-top"]').textContent();
+                    initialFkTableCount = parseInt(fkTotalText.replace(/[^0-9]/g, ''), 10) || 0;
                 });
 
-                if (pkColIndex !== -1) {
-                    const rows = await page.locator('table tbody tr').all();
-                    for (const row of rows) {
-                        const pkValue = await row.locator('td').nth(pkColIndex).textContent();
-                        if (pkValue && pkValue.trim()) {
-                            parentPKs.add(pkValue.trim());
-                        }
+                await test.step('generate mock data', async () => {
+                    // Step 3: Open mock data dialog and set row count
+                    await whodb.selectMockData();
+                    await whodb.setMockDataRows(rowsToGenerate);
+
+                    // Step 4: Parse the dependency preview to get expected parent row count
+                    await expect(page.locator('text=Tables to populate')).toBeVisible();
+                    const sheetEl = page.locator('[data-testid="mock-data-sheet"]');
+                    const parentRow = sheetEl.locator(`text=${parentTable}`).locator('..');
+                    const rowText = await parentRow.textContent();
+                    const match = rowText.match(/(\d+)\s*rows?/);
+                    if (match) {
+                        expectedParentRows = parseInt(match[1], 10);
                     }
-                }
 
-                // Step 8: Navigate to FK table and verify Total Count increased
-                await whodb.data(tableWithFKs);
-                await expect(async () => {
-                    const newText = await page.locator('[data-testid="total-count-top"]').textContent();
-                    const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
-                    expect(newCount).toBeGreaterThanOrEqual(initialFkTableCount + rowsToGenerate);
-                }).toPass({ timeout: 5000 });
+                    // Step 5: Generate mock data (append mode - default)
+                    await whodb.generateMockData();
+                    await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
+                });
 
-                // Step 9: Verify FK values exist in parent PKs
-                if (parentPKs.size > 0) {
-                    const fkHeaders = await page.locator('table thead th').allTextContents();
-                    let fkColIndex = -1;
-                    fkHeaders.forEach((text, i) => {
-                        if (text.trim().toLowerCase() === fkColumn.toLowerCase()) {
-                            fkColIndex = i;
+                await test.step('verify parent table', async () => {
+                    // Step 6: Verify parent table Total Count increased
+                    await whodb.data(parentTable);
+                    await expect(async () => {
+                        const newText = await page.locator('[data-testid="total-count-top"]').textContent();
+                        const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
+                        expect(newCount).toBeGreaterThanOrEqual(initialParentCount + expectedParentRows);
+                    }).toPass({ timeout: 5000 });
+
+                    // Step 7: Collect parent PKs
+                    const headers = await page.locator('table thead th').allTextContents();
+                    let pkColIndex = -1;
+                    headers.forEach((text, i) => {
+                        if (text.trim().toLowerCase() === parentPkColumn.toLowerCase()) {
+                            pkColIndex = i;
                         }
                     });
 
-                    if (fkColIndex !== -1) {
-                        const fkRows = await page.locator('table tbody tr').all();
-                        for (const row of fkRows) {
-                            const fkValue = await row.locator('td').nth(fkColIndex).textContent();
-                            if (fkValue && fkValue.trim() !== 'NULL' && fkValue.trim() !== '') {
-                                expect(parentPKs.has(fkValue.trim()),
-                                    `FK value ${fkValue.trim()} should exist in parent PKs`).toBe(true);
+                    if (pkColIndex !== -1) {
+                        const rows = await page.locator('table tbody tr').all();
+                        for (const row of rows) {
+                            const pkValue = await row.locator('td').nth(pkColIndex).textContent();
+                            if (pkValue && pkValue.trim()) {
+                                parentPKs.add(pkValue.trim());
                             }
                         }
                     }
-                }
+                });
+
+                await test.step('verify FK references', async () => {
+                    // Step 8: Navigate to FK table and verify Total Count increased
+                    await whodb.data(tableWithFKs);
+                    await expect(async () => {
+                        const newText = await page.locator('[data-testid="total-count-top"]').textContent();
+                        const newCount = parseInt(newText.replace(/[^0-9]/g, ''), 10);
+                        expect(newCount).toBeGreaterThanOrEqual(initialFkTableCount + rowsToGenerate);
+                    }).toPass({ timeout: 5000 });
+
+                    // Step 9: Verify FK values exist in parent PKs
+                    if (parentPKs.size > 0) {
+                        const fkHeaders = await page.locator('table thead th').allTextContents();
+                        let fkColIndex = -1;
+                        fkHeaders.forEach((text, i) => {
+                            if (text.trim().toLowerCase() === fkColumn.toLowerCase()) {
+                                fkColIndex = i;
+                            }
+                        });
+
+                        if (fkColIndex !== -1) {
+                            const fkRows = await page.locator('table tbody tr').all();
+                            for (const row of fkRows) {
+                                const fkValue = await row.locator('td').nth(fkColIndex).textContent();
+                                if (fkValue && fkValue.trim() !== 'NULL' && fkValue.trim() !== '') {
+                                    expect(parentPKs.has(fkValue.trim()),
+                                        `FK value ${fkValue.trim()} should exist in parent PKs`).toBe(true);
+                                }
+                            }
+                        }
+                    }
+                });
             });
         }
 
@@ -288,35 +322,41 @@ test.describe('Mock Data Generation', () => {
             : 'executes overwrite mode for single table (no FK support)';
 
         test(testName, async ({ whodb, page }) => {
-            await whodb.data(supportedTable);
+            await test.step('setup mock data dialog', async () => {
+                await whodb.data(supportedTable);
 
-            await whodb.selectMockData();
+                await whodb.selectMockData();
 
-            // Set row count
-            await whodb.setMockDataRows(5);
+                // Set row count
+                await whodb.setMockDataRows(5);
 
-            // Switch to Overwrite mode
-            await whodb.setMockDataHandling('overwrite');
+                // Switch to Overwrite mode
+                await whodb.setMockDataHandling('overwrite');
+            });
 
-            // Click Generate - shows confirmation
-            await whodb.generateMockData();
+            await test.step('generate with overwrite', async () => {
+                // Click Generate - shows confirmation
+                await whodb.generateMockData();
 
-            // Confirm overwrite
-            await expect(page.locator('[data-testid="mock-data-overwrite-button"]')).toBeVisible();
-            await page.locator('[data-testid="mock-data-overwrite-button"]').click();
+                // Confirm overwrite
+                await expect(page.locator('[data-testid="mock-data-overwrite-button"]')).toBeVisible();
+                await page.locator('[data-testid="mock-data-overwrite-button"]').click();
 
-            // Wait for success toast - FK-safe clearing may take longer
-            await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
+                // Wait for success toast - FK-safe clearing may take longer
+                await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
 
-            // Sheet should close after success
-            await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                // Sheet should close after success
+                await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+            });
 
-            // Verify Total Count is exactly 5 (overwrite replaces all)
-            await expect(async () => {
-                const text = await page.locator('[data-testid="total-count-top"]').textContent();
-                const count = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                expect(count).toEqual(5);
-            }).toPass({ timeout: 5000 });
+            await test.step('verify count', async () => {
+                // Verify Total Count is exactly 5 (overwrite replaces all)
+                await expect(async () => {
+                    const text = await page.locator('[data-testid="total-count-top"]').textContent();
+                    const count = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                    expect(count).toEqual(5);
+                }).toPass({ timeout: 5000 });
+            });
         });
 
         // Test mock data generation for data_types table (covers all column types)
@@ -328,31 +368,37 @@ test.describe('Mock Data Generation', () => {
                 return;
             }
 
-            await whodb.data(dataTypesTable);
+            await test.step('setup', async () => {
+                await whodb.data(dataTypesTable);
 
-            await whodb.selectMockData();
+                await whodb.selectMockData();
 
-            await whodb.setMockDataRows(100);
-            await whodb.setMockDataHandling('overwrite');
+                await whodb.setMockDataRows(100);
+                await whodb.setMockDataHandling('overwrite');
+            });
 
-            await whodb.generateMockData();
+            await test.step('generate with overwrite', async () => {
+                await whodb.generateMockData();
 
-            // Confirm overwrite
-            await expect(page.locator('[data-testid="mock-data-overwrite-button"]')).toBeVisible();
-            await page.locator('[data-testid="mock-data-overwrite-button"]').click();
+                // Confirm overwrite
+                await expect(page.locator('[data-testid="mock-data-overwrite-button"]')).toBeVisible();
+                await page.locator('[data-testid="mock-data-overwrite-button"]').click();
 
-            // Wait for success - type generation may require more time
-            await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
+                // Wait for success - type generation may require more time
+                await expect(page.locator('text=Successfully Generated')).toBeVisible({ timeout: 60000 });
 
-            // Sheet should close
-            await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+                // Sheet should close
+                await expect(page.locator('[data-testid="mock-data-sheet"]')).not.toBeAttached();
+            });
 
-            // Verify Total Count is exactly 100
-            await expect(async () => {
-                const text = await page.locator('[data-testid="total-count-top"]').textContent();
-                const count = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                expect(count).toEqual(100);
-            }).toPass({ timeout: 5000 });
+            await test.step('verify count', async () => {
+                // Verify Total Count is exactly 100
+                await expect(async () => {
+                    const text = await page.locator('[data-testid="total-count-top"]').textContent();
+                    const count = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                    expect(count).toEqual(100);
+                }).toPass({ timeout: 5000 });
+            });
         });
     }, { features: ['mockData'] });
 
@@ -362,8 +408,8 @@ test.describe('Mock Data Generation', () => {
         if (hasFeature(db, 'mockData')) {
             return; // Only run if mock data is NOT supported
         }
-        if (db.type === 'ElasticSearch') {
-            return; // Skip ElasticSearch - mock data not supported
+        if (skipIfNoFeature(db, 'mockData')) {
+            return;
         }
 
         test('shows not allowed message for document databases', async ({ whodb, page }) => {

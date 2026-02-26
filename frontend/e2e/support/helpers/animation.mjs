@@ -15,31 +15,8 @@
  */
 
 /**
- * Shared animation disabling helper for Playwright E2E tests.
+ * Browser state helper for Playwright E2E tests.
  */
-
-export const ANIMATION_DISABLE_CSS = `
-*, *::before, *::after {
-  -moz-animation: none !important;
-  -moz-transition: none !important;
-  -webkit-animation: none !important;
-  -webkit-transition: none !important;
-  animation: none !important;
-  transition: none !important;
-  animation-duration: 0ms !important;
-  animation-delay: 0ms !important;
-  transition-duration: 0ms !important;
-  transition-delay: 0ms !important;
-}
-`;
-
-/**
- * Injects CSS to disable all animations on the page.
- * @param {import('@playwright/test').Page} page
- */
-export async function disableAnimations(page) {
-  await page.addStyleTag({ content: ANIMATION_DISABLE_CSS });
-}
 
 /**
  * Clears browser state for test isolation.
@@ -63,28 +40,4 @@ export async function clearBrowserState(page) {
       }
     });
   }
-}
-
-/**
- * Standard test setup that should run before each test.
- * @param {import('@playwright/test').Page} page
- */
-export async function standardTestSetup(page) {
-  await clearBrowserState(page);
-  // Playwright's addInitScript runs before every navigation, equivalent to window:before:load
-  await page.addInitScript(() => {
-    const style = document.createElement("style");
-    style.setAttribute("data-pw-animation-disable", "true");
-    style.textContent = `
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-        animation-duration: 0ms !important;
-        animation-delay: 0ms !important;
-        transition-duration: 0ms !important;
-        transition-delay: 0ms !important;
-      }
-    `;
-    document.head.appendChild(style);
-  });
 }

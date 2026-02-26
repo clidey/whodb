@@ -43,42 +43,12 @@ func TestIsMockDataGenerationAllowed(t *testing.T) {
 	}
 }
 
-func TestGetLogLevel(t *testing.T) {
-	original := LogLevel
-	t.Cleanup(func() {
-		LogLevel = original
-	})
-
-	cases := []struct {
-		name     string
-		envValue string
-		expected string
-	}{
-		{name: "info", envValue: "INFO", expected: "info"},
-		{name: "warning", envValue: "warn", expected: "warning"},
-		{name: "error", envValue: "Error", expected: "error"},
-		{name: "default", envValue: "", expected: "info"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.envValue != "" {
-				t.Setenv("WHODB_LOG_LEVEL", tc.envValue)
-			} else {
-				t.Setenv("WHODB_LOG_LEVEL", "")
-			}
-
-			if level := getLogLevel(); level != tc.expected {
-				t.Fatalf("getLogLevel(%s) = %s, expected %s", tc.envValue, level, tc.expected)
-			}
-		})
-	}
-}
-
 func TestGetOllamaEndpointRespectsOverrides(t *testing.T) {
-	// GetOllamaEndpoint calls common.GetOllamaHost which reads env vars directly
-	t.Setenv("WHODB_OLLAMA_HOST", "ollama.example.com")
-	t.Setenv("WHODB_OLLAMA_PORT", "9999")
+	origHost, origPort := OllamaHost, OllamaPort
+	t.Cleanup(func() { OllamaHost, OllamaPort = origHost, origPort })
+
+	OllamaHost = "ollama.example.com"
+	OllamaPort = "9999"
 
 	endpoint := GetOllamaEndpoint()
 	if endpoint != "http://ollama.example.com:9999/api" {
@@ -93,6 +63,7 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	originalOpenAICompatKey := OpenAICompatibleAPIKey
 	originalOpenAICompatEndpoint := OpenAICompatibleEndpoint
 	originalCustomModels := CustomModels
+	origHost, origPort := OllamaHost, OllamaPort
 
 	t.Cleanup(func() {
 		OpenAIAPIKey = originalOpenAI
@@ -101,6 +72,7 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 		OpenAICompatibleAPIKey = originalOpenAICompatKey
 		OpenAICompatibleEndpoint = originalOpenAICompatEndpoint
 		CustomModels = originalCustomModels
+		OllamaHost, OllamaPort = origHost, origPort
 	})
 
 	OpenAIAPIKey = "openai-key"
@@ -109,9 +81,8 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	OpenAICompatibleAPIKey = "compat-key"
 	OpenAICompatibleEndpoint = "https://compat.example.com"
 	CustomModels = []string{"mixtral"}
-	// GetOllamaEndpoint calls common.GetOllamaHost which reads env vars directly
-	t.Setenv("WHODB_OLLAMA_HOST", "ollama.local")
-	t.Setenv("WHODB_OLLAMA_PORT", "1234")
+	OllamaHost = "ollama.local"
+	OllamaPort = "1234"
 
 	providers := GetConfiguredChatProviders()
 	if len(providers) != 4 {
@@ -129,31 +100,5 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	}
 	if providers[3].Type != "Ollama" || providers[3].Endpoint != "http://ollama.local:1234/api" {
 		t.Fatalf("expected Ollama provider to use overridden host/port, got %+v", providers[3])
-	}
-}
-
-func TestGetDefaultDatabaseCredentialsParsesEnv(t *testing.T) {
-	t.Setenv("WHODB_POSTGRES", `[{"host":"db.local","user":"alice","password":"secret","database":"app"}]`)
-
-	creds := GetDefaultDatabaseCredentials("postgres")
-	if len(creds) != 1 {
-		t.Fatalf("expected one credential parsed from env, got %d", len(creds))
-	}
-
-	if creds[0].Hostname != "db.local" || creds[0].Username != "alice" || creds[0].Database != "app" {
-		t.Fatalf("unexpected credentials parsed: %+v", creds[0])
-	}
-}
-
-func TestFindAllDatabaseCredentialsFallback(t *testing.T) {
-	t.Setenv("WHODB_MYSQL", "")
-	t.Setenv("WHODB_MYSQL_1", `{"host":"mysql.local","user":"bob","password":"pw","database":"northwind"}`)
-
-	creds := GetDefaultDatabaseCredentials("mysql")
-	if len(creds) != 1 {
-		t.Fatalf("expected fallback credentials to be discovered, got %d", len(creds))
-	}
-	if creds[0].Hostname != "mysql.local" || creds[0].Username != "bob" {
-		t.Fatalf("unexpected fallback credential: %+v", creds[0])
 	}
 }

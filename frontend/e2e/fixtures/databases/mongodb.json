@@ -47,7 +47,9 @@
     "mockData": true,
     "chat": true,
     "whereConditions": true,
-    "queryHistory": false
+    "queryHistory": false,
+    "pagination": true,
+    "documentEdit": true
   },
   "featureNotes": {
     "scratchpad": "Scratchpad requires SQL execution which MongoDB does not support natively",

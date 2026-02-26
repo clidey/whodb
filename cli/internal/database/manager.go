@@ -32,6 +32,7 @@ import (
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/types"
 	"github.com/xuri/excelize/v2"
@@ -360,7 +361,7 @@ func (m *Manager) getEnvConnections() []Connection {
 
 	for _, plugin := range m.engine.Plugins {
 		dbType := string(plugin.Type)
-		profiles := env.GetDefaultDatabaseCredentials(dbType)
+		profiles := envconfig.GetDefaultDatabaseCredentials(dbType)
 		for _, profile := range profiles {
 			typeCounts[dbType]++
 			conn := envProfileToConnection(profile, dbType, typeCounts[dbType])
@@ -511,6 +512,30 @@ func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereConditio
 	return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
 }
 
+// runWithContext runs fn in a goroutine and returns its result, or ctx.Err() if the
+// context is cancelled/times out first. The goroutine is not terminated on context
+// cancellation — only the wait is cancelled.
+func runWithContext[T any](ctx context.Context, fn func() (T, error)) (T, error) {
+	type result struct {
+		data T
+		err  error
+	}
+	ch := make(chan result, 1)
+
+	go func() {
+		data, err := fn()
+		ch <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		var zero T
+		return zero, ctx.Err()
+	case res := <-ch:
+		return res.data, res.err
+	}
+}
+
 // ExecuteQueryWithContext executes a query with context support for cancellation and timeout.
 // If the context is cancelled or times out, the function returns immediately with ctx.Err().
 // Note: The underlying database operation may continue running; only the wait is cancelled.
@@ -528,24 +553,9 @@ func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*e
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	// Use channels to receive result from goroutine
-	type result struct {
-		data *engine.GetRowsResult
-		err  error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		data, err := plugin.RawExecute(pluginConfig, query)
-		resultCh <- result{data: data, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.data, res.err
-	}
+	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
+		return plugin.RawExecute(pluginConfig, query)
+	})
 }
 
 // ExecuteQueryWithParams executes a parameterized query against the current database.
@@ -583,24 +593,9 @@ func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query st
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	// Use channels to receive result from goroutine
-	type result struct {
-		data *engine.GetRowsResult
-		err  error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		data, err := plugin.RawExecuteWithParams(pluginConfig, query, params)
-		resultCh <- result{data: data, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.data, res.err
-	}
+	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
+		return plugin.RawExecuteWithParams(pluginConfig, query, params)
+	})
 }
 
 // GetRowsWithContext fetches rows with context support for cancellation and timeout.
@@ -620,24 +615,9 @@ func (m *Manager) GetRowsWithContext(ctx context.Context, schema, storageUnit st
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	// Use channels to receive result from goroutine
-	type result struct {
-		data *engine.GetRowsResult
-		err  error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		data, err := plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
-		resultCh <- result{data: data, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.data, res.err
-	}
+	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
+		return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+	})
 }
 
 // GetSchemasWithContext fetches schemas with context support for cancellation and timeout.
@@ -655,23 +635,9 @@ func (m *Manager) GetSchemasWithContext(ctx context.Context) ([]string, error) {
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	type result struct {
-		data []string
-		err  error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		data, err := plugin.GetAllSchemas(pluginConfig)
-		resultCh <- result{data: data, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.data, res.err
-	}
+	return runWithContext(ctx, func() ([]string, error) {
+		return plugin.GetAllSchemas(pluginConfig)
+	})
 }
 
 // GetStorageUnitsWithContext fetches storage units with context support for cancellation and timeout.
@@ -689,23 +655,9 @@ func (m *Manager) GetStorageUnitsWithContext(ctx context.Context, schema string)
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	type result struct {
-		data []engine.StorageUnit
-		err  error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		data, err := plugin.GetStorageUnits(pluginConfig, schema)
-		resultCh <- result{data: data, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.data, res.err
-	}
+	return runWithContext(ctx, func() ([]engine.StorageUnit, error) {
+		return plugin.GetStorageUnits(pluginConfig, schema)
+	})
 }
 
 // GetConfig returns the manager's configuration
@@ -1067,23 +1019,9 @@ func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, er
 
 // GetAIModelsWithContext fetches AI models with context support for timeout/cancellation
 func (m *Manager) GetAIModelsWithContext(ctx context.Context, providerID, modelType, token string) ([]string, error) {
-	type result struct {
-		models []string
-		err    error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		models, err := m.GetAIModels(providerID, modelType, token)
-		resultCh <- result{models: models, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.models, res.err
-	}
+	return runWithContext(ctx, func() ([]string, error) {
+		return m.GetAIModels(providerID, modelType, token)
+	})
 }
 
 type ChatMessage struct {
@@ -1147,21 +1085,7 @@ func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previo
 
 // SendAIChatWithContext sends AI chat with context support for timeout/cancellation
 func (m *Manager) SendAIChatWithContext(ctx context.Context, providerID, modelType, token, schema, model, previousConversation, query string) ([]*ChatMessage, error) {
-	type result struct {
-		messages []*ChatMessage
-		err      error
-	}
-	resultCh := make(chan result, 1)
-
-	go func() {
-		messages, err := m.SendAIChat(providerID, modelType, token, schema, model, previousConversation, query)
-		resultCh <- result{messages: messages, err: err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-resultCh:
-		return res.messages, res.err
-	}
+	return runWithContext(ctx, func() ([]*ChatMessage, error) {
+		return m.SendAIChat(providerID, modelType, token, schema, model, previousConversation, query)
+	})
 }

@@ -113,27 +113,27 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				http.Error(w, "Bad Request", http.StatusBadRequest)
 				return
 			}
-			onceHeader.Do(func() { log.Logger.Info("Auth: using Authorization header") })
+			onceHeader.Do(func() { log.Info("Auth: using Authorization header") })
 		}
 		// Fallback to cookie when header is not provided
 		if token == "" {
 			if dbCookie, err := r.Cookie(string(AuthKey_Token)); err == nil {
 				token = dbCookie.Value
-				onceCookie.Do(func() { log.Logger.Info("Auth: using cookie-based auth") })
+				onceCookie.Do(func() { log.Info("Auth: using cookie-based auth") })
 			} else {
-				log.Logger.Debugf("[Auth] Cookie not found: %v", err)
+				log.Debugf("[Auth] Cookie not found: %v", err)
 			}
 		}
 
 		if token == "" {
-			log.Logger.Debug("[Auth] No token found (no cookie or header), returning 401")
+			log.Debug("[Auth] No token found (no cookie or header), returning 401")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		decodedValue, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
-			log.Logger.Debugf("[Auth] Failed to decode base64 token: %v (token len=%d)", err, len(token))
+			log.Debugf("[Auth] Failed to decode base64 token: %v (token len=%d)", err, len(token))
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -141,7 +141,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		credentials := &engine.Credentials{}
 		err = json.Unmarshal(decodedValue, credentials)
 		if err != nil {
-			log.Logger.Debugf("[Auth] Failed to unmarshal credentials JSON: %v", err)
+			log.Debugf("[Auth] Failed to unmarshal credentials JSON: %v", err)
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
@@ -169,7 +169,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 					credentials = &profile
 					matched = true
 					inline = false
-					onceProfile.Do(func() { log.Logger.Info("Auth: credentials resolved via saved profile") })
+					onceProfile.Do(func() { log.Info("Auth: credentials resolved via saved profile") })
 					break
 				}
 			}
@@ -181,7 +181,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 					stored.Id = credentials.Id
 					credentials = stored
 					inline = false
-					onceKeyring.Do(func() { log.Logger.Info("Auth: credentials resolved via OS keyring") })
+					onceKeyring.Do(func() { log.Info("Auth: credentials resolved via OS keyring") })
 				} else {
 					// ID-only request but no stored credentials found
 					http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -191,11 +191,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		} else if credentials.Id != nil && !isIdOnly {
 			// Client sent full credentials with ID - validate or store for future use
 			// This is the initial login case for desktop apps
-			onceInline.Do(func() { log.Logger.Info("Auth: credentials supplied inline with ID") })
+			onceInline.Do(func() { log.Info("Auth: credentials supplied inline with ID") })
 		}
 
 		if inline {
-			onceInline.Do(func() { log.Logger.Info("Auth: credentials supplied inline") })
+			onceInline.Do(func() { log.Info("Auth: credentials supplied inline") })
 		}
 
 		ctx := r.Context()
@@ -229,7 +229,7 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	if query.OperationName == "GetDatabase" {
-		return query.Variables["type"] == string(engine.DatabaseType_Sqlite3)
+		return query.Variables["type"] == engine.DatabaseType_Sqlite3
 	}
 
 	switch query.OperationName {

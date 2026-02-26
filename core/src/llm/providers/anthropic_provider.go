@@ -85,14 +85,14 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)
 	if err != nil {
-		log.Logger.WithError(err).Errorf("Failed to fetch models from Anthropic at %s", url)
+		log.WithError(err).Errorf("Failed to fetch models from Anthropic at %s", url)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		log.Logger.Errorf("Anthropic models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
+		log.Errorf("Anthropic models endpoint returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("failed to fetch models: %s", string(body))
 	}
 
@@ -102,7 +102,7 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
-		log.Logger.WithError(err).Error("Failed to decode Anthropic models response")
+		log.WithError(err).Error("Failed to decode Anthropic models response")
 		return nil, err
 	}
 
