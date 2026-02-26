@@ -35,7 +35,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 const defaultPort = "8080"
@@ -52,14 +52,13 @@ func main() {
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
 	}); err != nil {
-		//log.WithError(err).Warn("Analytics: PostHog initialization failed, metrics disabled")
+		// analytics init failure is non-fatal
 	} else {
 		defer analytics.Shutdown()
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)
 
 	src.InitializeEngine()
-	//log.Infof("Auth configured: sources=[Authorization header, Cookie]; keyring service=%s", auth.GetKeyringServiceName())
 
 	// Load persisted AWS providers from disk (if any)
 	if err := settings.LoadProvidersFromFile(); err != nil {
@@ -93,7 +92,6 @@ func main() {
 		log.Info("Almost there...")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %s\n", err)
-			serverStarted <- false
 		}
 	}()
 

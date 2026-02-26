@@ -871,11 +871,7 @@ func parseRangeBounds(raw string) (string, string) {
 	return minBound, maxBound
 }
 
-func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *ElasticSearchPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
 

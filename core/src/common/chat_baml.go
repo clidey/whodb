@@ -30,7 +30,7 @@ import (
 
 // RawExecutePlugin defines the interface for executing raw SQL queries
 type RawExecutePlugin interface {
-	RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error)
+	RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error)
 }
 
 // SQLChatBAML generates SQL queries using BAML for structured prompt engineering

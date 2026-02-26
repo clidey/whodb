@@ -25,6 +25,7 @@ import (
 	"net"
 	"reflect"
 	"strconv"
+	"slices"
 	"strings"
 	"time"
 
@@ -160,11 +161,7 @@ func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []
 	return tableName, attributes
 }
 
-func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return p.executeRawSQL(config, query)
-}
-
-func (p *ClickHousePlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return p.executeRawSQL(config, query, params...)
 }
 
@@ -235,8 +232,8 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 		convertedValues := make(map[string]any)
 
 		for column, strValue := range values {
-			isPK := common.ContainsString(pkColumns, column)
-			isUpdated := common.ContainsString(updatedColumns, column)
+			isPK := slices.Contains(pkColumns, column)
+			isUpdated := slices.Contains(updatedColumns, column)
 			if !isPK && !isUpdated && len(pkColumns) > 0 {
 				continue
 			}

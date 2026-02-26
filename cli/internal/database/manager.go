@@ -573,7 +573,7 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.RawExecuteWithParams(pluginConfig, query, params)
+	return plugin.RawExecute(pluginConfig, query, params...)
 }
 
 // ExecuteQueryWithContextAndParams executes a parameterized query with context support.
@@ -594,7 +594,7 @@ func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query st
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
-		return plugin.RawExecuteWithParams(pluginConfig, query, params)
+		return plugin.RawExecute(pluginConfig, query, params...)
 	})
 }
 

@@ -590,11 +590,7 @@ func (p *RedisPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]en
 	return nil, errors.ErrUnsupported
 }
 
-func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *RedisPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
 

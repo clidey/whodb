@@ -147,11 +147,7 @@ type PluginFunctions interface {
 	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
-	RawExecute(config *PluginConfig, query string) (*GetRowsResult, error)
-	// RawExecuteWithParams executes a raw SQL query with parameterized arguments.
-	// Parameters are passed safely to the database driver, preventing SQL injection.
-	// For NoSQL databases, this returns an error indicating params are not supported.
-	RawExecuteWithParams(config *PluginConfig, query string, params []any) (*GetRowsResult, error)
+	RawExecute(config *PluginConfig, query string, params ...any) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, previousConversation string, query string) ([]*ChatMessage, error)
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string

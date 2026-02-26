@@ -646,11 +646,7 @@ func parseCommaSeparatedValues(key string, raw string) []any {
 	return values
 }
 
-func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *MongoDBPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
 

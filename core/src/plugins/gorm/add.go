@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,7 @@ func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		}
 
 		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		var fullTableName string
-		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
-			fullTableName = schema + "." + storageUnit
-		} else {
-			fullTableName = storageUnit
-		}
-
+		fullTableName := p.FormTableName(schema, storageUnit)
 		if migrator.TableExists(fullTableName) {
 			return false, fmt.Errorf("table %s already exists", fullTableName)
 		}

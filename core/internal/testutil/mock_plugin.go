@@ -43,8 +43,7 @@ type PluginMock struct {
 	GetRowsFunc              func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error)
 	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
 	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
-	RawExecuteFunc           func(*engine.PluginConfig, string) (*engine.GetRowsResult, error)
-	RawExecuteWithParamsFunc func(*engine.PluginConfig, string, []any) (*engine.GetRowsResult, error)
+	RawExecuteFunc func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
 	ChatFunc                 func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
 	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
 	FormatValueFunc          func(any) string
@@ -174,16 +173,9 @@ func (m *PluginMock) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 	return nil, nil
 }
 
-func (m *PluginMock) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
+func (m *PluginMock) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	if m.RawExecuteFunc != nil {
-		return m.RawExecuteFunc(config, query)
-	}
-	return nil, nil
-}
-
-func (m *PluginMock) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
-	if m.RawExecuteWithParamsFunc != nil {
-		return m.RawExecuteWithParamsFunc(config, query, params)
+		return m.RawExecuteFunc(config, query, params...)
 	}
 	return nil, nil
 }

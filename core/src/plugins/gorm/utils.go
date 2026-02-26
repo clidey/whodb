@@ -114,14 +114,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
 	migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 
-	// Build full table name for Migrator
-	var fullTableName string
-	if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
-		fullTableName = schema + "." + tableName
-	} else {
-		fullTableName = tableName
-	}
-
+	fullTableName := p.FormTableName(schema, tableName)
 	return migrator.GetColumnTypes(fullTableName)
 }
 

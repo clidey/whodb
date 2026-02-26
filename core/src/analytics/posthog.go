@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,11 +87,9 @@ func Initialize(config Config) error {
 		})
 		if err != nil {
 			initErr = err
-			//log.WithError(err).Error("Analytics: failed to initialize PostHog client")
 			return
 		}
 		storeClient(c)
-		//log.Info("Analytics: PostHog backend client ready")
 	})
 
 	if initErr != nil {

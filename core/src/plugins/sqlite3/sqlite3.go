@@ -494,11 +494,7 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 	})
 }
 
-func (p *Sqlite3Plugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return p.executeRawSQL(config, query)
-}
-
-func (p *Sqlite3Plugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *Sqlite3Plugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return p.executeRawSQL(config, query, params...)
 }
 

@@ -118,12 +118,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	effectiveBatchSize := b.calculateBatchSize(columnCount)
 
-	var fullTableName string
-	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
-		fullTableName = schema + "." + tableName
-	} else {
-		fullTableName = tableName
-	}
+	fullTableName := b.plugin.FormTableName(schema, tableName)
 
 	// Use GORM's CreateInBatches for efficient bulk insert
 	if b.config.UseBulkInsert {
@@ -187,13 +182,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 // ExportInBatches exports data in batches to avoid memory issues
 func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, columns []string, writer func([]map[string]any) error) error {
-	var fullTableName string
-	if schema != "" && b.dbType != engine.DatabaseType_Sqlite3 {
-		fullTableName = schema + "." + tableName
-	} else {
-		fullTableName = tableName
-	}
-
+	fullTableName := b.plugin.FormTableName(schema, tableName)
 	query := db.Table(fullTableName)
 	if len(columns) > 0 {
 		query = query.Select(columns)

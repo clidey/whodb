@@ -66,8 +66,6 @@ var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 var OpenAICompatibleEndpoint = os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT")
 var OpenAICompatibleAPIKey = os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY")
 
-// var OpenAICompatibleLabel = os.Getenv("WHODB_OPENAI_COMPATIBLE_LABEL")
-
 var CustomModels = common.FilterList(strings.Split(os.Getenv("WHODB_CUSTOM_MODELS"), ","), func(item string) bool {
 	return strings.TrimSpace(item) != ""
 })

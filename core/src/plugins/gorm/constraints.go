@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,7 @@ import (
 // GetColumnConstraints gets column constraints using GORM's Migrator
 func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (map[string]map[string]any, error) {
-		var fullTableName string
-		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
-			fullTableName = schema + "." + storageUnit
-		} else {
-			fullTableName = storageUnit
-		}
-
+		fullTableName := p.FormTableName(schema, storageUnit)
 		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 		migratorConstraints, err := migrator.GetConstraints(fullTableName)
 		if err != nil {

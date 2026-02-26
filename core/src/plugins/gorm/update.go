@@ -19,8 +19,7 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
-
-	"github.com/clidey/whodb/core/src/common"
+	"slices"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -46,8 +45,8 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 		unchangedValues := make(map[string]any)
 
 		for column, strValue := range values {
-			isPK := common.ContainsString(pkColumns, column)
-			isUpdated := common.ContainsString(updatedColumns, column)
+			isPK := slices.Contains(pkColumns, column)
+			isUpdated := slices.Contains(updatedColumns, column)
 
 			// Only convert columns we actually need:
 			// - PK columns (for WHERE clause)
