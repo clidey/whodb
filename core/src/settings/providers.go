@@ -98,20 +98,22 @@ func GetAWSProvider(id string) (*AWSProviderState, error) {
 // Returns ErrProviderAlreadyExists if a provider with the same ID already exists.
 func AddAWSProvider(cfg *AWSProviderConfig) (*AWSProviderState, error) {
 	awsProvidersMu.Lock()
-	defer awsProvidersMu.Unlock()
 
 	if _, exists := awsProviders[cfg.ID]; exists {
+		awsProvidersMu.Unlock()
 		return nil, ErrProviderAlreadyExists
 	}
 
 	providerCfg := configToProviderConfig(cfg)
 	provider, err := awsprovider.New(providerCfg)
 	if err != nil {
+		awsProvidersMu.Unlock()
 		return nil, err
 	}
 
 	registry := providers.GetDefaultRegistry()
 	if err := registry.Register(provider); err != nil {
+		awsProvidersMu.Unlock()
 		return nil, err
 	}
 
@@ -122,27 +124,31 @@ func AddAWSProvider(cfg *AWSProviderConfig) (*AWSProviderState, error) {
 	}
 
 	awsProviders[cfg.ID] = state
+	awsProvidersMu.Unlock()
 
 	if !skipPersist {
-		go func() {
-			if err := saveProvidersToFile(); err != nil {
-				log.Warnf("Failed to persist provider after add: %v", err)
-			}
-		}()
+		if err := saveProvidersToFile(); err != nil {
+			log.Warnf("Failed to persist provider after add: %v", err)
+		}
 	}
 
 	return state, nil
 }
 
 // UpdateAWSProvider updates an existing AWS provider with new configuration.
-// The provider is unregistered and re-created with the new settings.
+// The new provider is created first — if creation fails, the old provider is untouched.
 // Returns ErrProviderNotFound if the provider doesn't exist.
 func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, error) {
-	awsProvidersMu.Lock()
-	defer awsProvidersMu.Unlock()
+	cfg.ID = id
+	providerCfg := configToProviderConfig(cfg)
+	provider, err := awsprovider.New(providerCfg)
+	if err != nil {
+		return nil, err
+	}
 
-	oldState, exists := awsProviders[id]
-	if !exists {
+	awsProvidersMu.Lock()
+	if _, exists := awsProviders[id]; !exists {
+		awsProvidersMu.Unlock()
 		return nil, ErrProviderNotFound
 	}
 
@@ -151,15 +157,8 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 		log.Warnf("Failed to unregister provider %s during update: %v", id, err)
 	}
 
-	cfg.ID = id
-	providerCfg := configToProviderConfig(cfg)
-	provider, err := awsprovider.New(providerCfg)
-	if err != nil {
-		_ = registry.Register(oldState.Provider)
-		return nil, err
-	}
-
 	if err := registry.Register(provider); err != nil {
+		awsProvidersMu.Unlock()
 		return nil, err
 	}
 
@@ -170,12 +169,13 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 	}
 
 	awsProviders[id] = state
+	awsProvidersMu.Unlock()
 
-	go func() {
+	if !skipPersist {
 		if err := saveProvidersToFile(); err != nil {
 			log.Warnf("Failed to persist provider after update: %v", err)
 		}
-	}()
+	}
 
 	return state, nil
 }
@@ -184,9 +184,9 @@ func UpdateAWSProvider(id string, cfg *AWSProviderConfig) (*AWSProviderState, er
 // Returns ErrProviderNotFound if the provider doesn't exist.
 func RemoveAWSProvider(id string) error {
 	awsProvidersMu.Lock()
-	defer awsProvidersMu.Unlock()
 
 	if _, exists := awsProviders[id]; !exists {
+		awsProvidersMu.Unlock()
 		return ErrProviderNotFound
 	}
 
@@ -196,12 +196,13 @@ func RemoveAWSProvider(id string) error {
 	}
 
 	delete(awsProviders, id)
+	awsProvidersMu.Unlock()
 
-	go func() {
+	if !skipPersist {
 		if err := saveProvidersToFile(); err != nil {
 			log.Warnf("Failed to persist provider after remove: %v", err)
 		}
-	}()
+	}
 
 	return nil
 }
@@ -209,25 +210,37 @@ func RemoveAWSProvider(id string) error {
 // TestAWSProvider tests the AWS connection for a provider and updates its status.
 // Returns the new status ("Connected" or "Error") and any error encountered.
 func TestAWSProvider(id string) (string, error) {
-	awsProvidersMu.Lock()
-	defer awsProvidersMu.Unlock()
-
+	awsProvidersMu.RLock()
 	state, exists := awsProviders[id]
 	if !exists {
+		awsProvidersMu.RUnlock()
 		return "Disconnected", ErrProviderNotFound
 	}
+	provider := state.Provider
+	awsProvidersMu.RUnlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := state.Provider.TestConnection(ctx); err != nil {
+	testErr := provider.TestConnection(ctx)
+
+	awsProvidersMu.Lock()
+	state, exists = awsProviders[id]
+	if !exists {
+		awsProvidersMu.Unlock()
+		return "Disconnected", ErrProviderNotFound
+	}
+
+	if testErr != nil {
 		state.Status = "Error"
-		state.Error = err.Error()
-		return "Error", err
+		state.Error = testErr.Error()
+		awsProvidersMu.Unlock()
+		return "Error", testErr
 	}
 
 	state.Status = "Connected"
 	state.Error = ""
+	awsProvidersMu.Unlock()
 	return "Connected", nil
 }
 

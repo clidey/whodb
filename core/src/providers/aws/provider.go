@@ -44,7 +44,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -135,8 +134,6 @@ type Provider struct {
 
 	initOnce sync.Once
 	initErr  error
-
-	cache atomic.Pointer[[]providers.DiscoveredConnection]
 }
 
 // New creates a new AWS provider with the given configuration.
@@ -304,8 +301,6 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 		}
 	}
 
-	p.cache.Store(&allConns)
-
 	if len(allErrs) > 0 {
 		return allConns, errors.Join(allErrs...)
 	}
@@ -330,15 +325,15 @@ func (p *Provider) TestConnection(ctx context.Context) error {
 }
 
 // RefreshConnection implements providers.ConnectionProvider.
+// This is intentionally a no-op — the AWS SDK handles credential refresh internally
+// through the configured credential chain (env, shared config, IAM role).
 func (p *Provider) RefreshConnection(ctx context.Context, connectionID string) (bool, error) {
 	return false, nil
 }
 
 // Close implements providers.ConnectionProvider.
-// Since each Provider instance is used exactly once (updates create new instances),
-// Close only clears the cache. AWS SDK clients don't require explicit cleanup.
+// AWS SDK clients don't require explicit cleanup.
 func (p *Provider) Close(ctx context.Context) error {
-	p.cache.Store(nil)
 	return nil
 }
 

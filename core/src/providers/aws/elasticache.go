@@ -226,10 +226,13 @@ func (p *Provider) replicationGroupToConnection(rg *ectypes.ReplicationGroup) *p
 		port = aws.ToInt32(rg.NodeGroups[0].PrimaryEndpoint.Port)
 	}
 
-	if endpoint != "" {
-		metadata["endpoint"] = endpoint
-		metadata["port"] = strconv.Itoa(int(port))
+	if endpoint == "" {
+		log.Warnf("ElastiCache: replication group %s has no endpoint, skipping", *rg.ReplicationGroupId)
+		return nil
 	}
+
+	metadata["endpoint"] = endpoint
+	metadata["port"] = strconv.Itoa(int(port))
 
 	return &providers.DiscoveredConnection{
 		ID:           p.connectionID(*rg.ReplicationGroupId),
@@ -252,10 +255,13 @@ func (p *Provider) cacheClusterToConnection(cluster *ectypes.CacheCluster) *prov
 	metadata["transitEncryption"] = strconv.FormatBool(aws.ToBool(cluster.TransitEncryptionEnabled))
 	metadata["authTokenEnabled"] = strconv.FormatBool(aws.ToBool(cluster.AuthTokenEnabled))
 
-	if len(cluster.CacheNodes) > 0 && cluster.CacheNodes[0].Endpoint != nil {
-		metadata["endpoint"] = aws.ToString(cluster.CacheNodes[0].Endpoint.Address)
-		metadata["port"] = strconv.Itoa(int(aws.ToInt32(cluster.CacheNodes[0].Endpoint.Port)))
+	if len(cluster.CacheNodes) == 0 || cluster.CacheNodes[0].Endpoint == nil {
+		log.Warnf("ElastiCache: cluster %s has no endpoint, skipping", *cluster.CacheClusterId)
+		return nil
 	}
+
+	metadata["endpoint"] = aws.ToString(cluster.CacheNodes[0].Endpoint.Address)
+	metadata["port"] = strconv.Itoa(int(aws.ToInt32(cluster.CacheNodes[0].Endpoint.Port)))
 
 	return &providers.DiscoveredConnection{
 		ID:           p.connectionID(*cluster.CacheClusterId),
@@ -280,10 +286,13 @@ func (p *Provider) serverlessCacheToConnection(cache *ectypes.ServerlessCache) *
 	// Serverless caches always have TLS enabled
 	metadata["transitEncryption"] = "true"
 
-	if cache.Endpoint != nil {
-		metadata["endpoint"] = aws.ToString(cache.Endpoint.Address)
-		metadata["port"] = strconv.Itoa(int(aws.ToInt32(cache.Endpoint.Port)))
+	if cache.Endpoint == nil {
+		log.Warnf("ElastiCache: serverless cache %s has no endpoint, skipping", *cache.ServerlessCacheName)
+		return nil
 	}
+
+	metadata["endpoint"] = aws.ToString(cache.Endpoint.Address)
+	metadata["port"] = strconv.Itoa(int(aws.ToInt32(cache.Endpoint.Port)))
 
 	return &providers.DiscoveredConnection{
 		ID:           p.connectionID(*cache.ServerlessCacheName),
@@ -305,7 +314,7 @@ func mapServerlessCacheStatus(status string) providers.ConnectionStatus {
 		return providers.ConnectionStatusStarting
 	case "deleting":
 		return providers.ConnectionStatusDeleting
-	case "create-failed":
+	case "create-failed", "update-failed", "delete-failed":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

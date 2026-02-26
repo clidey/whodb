@@ -18,6 +18,8 @@ package settings
 
 import (
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/providers"
@@ -254,6 +256,42 @@ func TestGenerateProviderID(t *testing.T) {
 				t.Errorf("expected %s, got %s", tt.expected, result)
 			}
 		})
+	}
+}
+
+// TestConcurrentAddRemove verifies no panics under concurrent Add/Remove.
+// Run with -race to detect data races.
+func TestConcurrentAddRemove(t *testing.T) {
+	resetProviders()
+	skipPersist = true
+	defer func() { skipPersist = false }()
+
+	const numGoroutines = 10
+	var wg sync.WaitGroup
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			id := fmt.Sprintf("concurrent-%d", i)
+			cfg := &AWSProviderConfig{
+				ID:         id,
+				Name:       fmt.Sprintf("Concurrent %d", i),
+				Region:     "us-west-2",
+				AuthMethod: "default",
+			}
+
+			_, _ = AddAWSProvider(cfg)
+			_ = RemoveAWSProvider(id)
+		}(i)
+	}
+
+	wg.Wait()
+
+	// Verify clean state
+	remaining := GetAWSProviders()
+	if len(remaining) != 0 {
+		t.Errorf("expected 0 providers after concurrent add/remove, got %d", len(remaining))
 	}
 }
 
