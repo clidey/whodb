@@ -171,12 +171,10 @@ export const tableMethods = {
      */
     async submitTable() {
         await this.page.keyboard.press("Escape");
-        await this.page.waitForTimeout(200);
 
         const submitBtn = this.page.locator('[data-testid="submit-button"]');
         await submitBtn.waitFor({ timeout: TIMEOUT.ELEMENT });
         await submitBtn.click();
-        await this.page.waitForTimeout(200);
     },
 
     /**

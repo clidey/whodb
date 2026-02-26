@@ -166,6 +166,7 @@ export const chatMethods = {
     async gotoChat() {
         await this.page.goto(this.url("/chat"));
         await this.page.locator('[data-testid="ai-provider"]').waitFor({ timeout: TIMEOUT.ACTION });
+        // Required: provider component initialization after route load
         await this.page.waitForTimeout(1000);
         await this.page.locator('[data-testid="ai-provider-select"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
 
@@ -176,6 +177,7 @@ export const chatMethods = {
             await this.page.locator('[data-testid="ai-provider-select"]').click();
             await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await this.page.locator('[role="option"]').first().click();
+            // Required: dropdown state propagation after provider selection
             await this.page.waitForTimeout(1500);
             await expect(this.page.locator('[data-testid="ai-provider-select"]')).not.toContainText("Select Model Type", {
                 timeout: TIMEOUT.ELEMENT,
@@ -194,6 +196,7 @@ export const chatMethods = {
             await this.page.locator('[data-testid="ai-model-select"]').click();
             await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await this.page.locator('[role="option"]').first().click();
+            // Required: dropdown state propagation after model selection
             await this.page.waitForTimeout(1000);
             await expect(this.page.locator('[data-testid="ai-model-select"]')).not.toContainText("Select Model", {
                 timeout: TIMEOUT.ELEMENT,
@@ -205,7 +208,6 @@ export const chatMethods = {
         await this.page.locator('[data-testid="chat-input"]').waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
         await expect(this.page.locator('[data-testid="chat-input"]')).toBeEnabled();
         await expect(this.page.locator('[data-testid="chat-input"]')).toHaveValue("");
-        await this.page.waitForTimeout(1000);
     },
 
     /**
@@ -218,13 +220,12 @@ export const chatMethods = {
         await this.page.locator('[data-testid="chat-input"]').clear({ force: true });
         await expect(this.page.locator('[data-testid="chat-input"]')).toHaveValue("");
         await this.page.locator('[data-testid="chat-input"]').fill(message);
-        await this.page.waitForTimeout(300);
+        await expect(this.page.locator('[data-testid="chat-input"]')).toHaveValue(message);
 
         const sendBtn = this.page.locator('[data-testid="icon-button"]').last();
         await sendBtn.waitFor({ state: "visible" });
         await expect(sendBtn).toBeEnabled({ timeout: TIMEOUT.ELEMENT });
         await sendBtn.click();
-        await this.page.waitForTimeout(200);
     },
 
     async verifyChatUserMessage(expectedMessage) {
@@ -281,16 +282,15 @@ export const chatMethods = {
         await this.page.locator('[data-testid="chat-input"]').waitFor({ state: "visible" });
         await expect(this.page.locator('[data-testid="chat-input"]')).toBeEnabled();
         await expect(this.page.locator('[data-testid="chat-input"]')).toHaveValue("");
-        await this.page.waitForTimeout(300);
     },
 
     async toggleChatSQLView() {
         const group = this.page.locator(".group\\/table-preview").last();
         await group.hover();
-        await this.page.waitForTimeout(200);
-        await group.locator('[data-testid="icon-button"]').first().click();
+        const iconBtn = group.locator('[data-testid="icon-button"]').first();
+        await iconBtn.waitFor({ state: "visible" });
+        await iconBtn.click();
         await this.page.locator('[data-testid="toggle-view-option"]').click();
-        await this.page.waitForTimeout(300);
     },
 
     async verifyChatSQL(expectedSQL) {
@@ -308,8 +308,9 @@ export const chatMethods = {
     async openMoveToScratchpad() {
         const group = this.page.locator(".group\\/table-preview").last();
         await group.hover();
-        await this.page.waitForTimeout(200);
-        await group.locator('[data-testid="icon-button"]').first().click();
+        const iconBtn = group.locator('[data-testid="icon-button"]').first();
+        await iconBtn.waitFor({ state: "visible" });
+        await iconBtn.click();
         await this.page.locator('[data-testid="move-to-scratchpad-option"]').click();
         await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: TIMEOUT.ELEMENT });
     },
@@ -331,7 +332,6 @@ export const chatMethods = {
         const key = direction === "up" ? "ArrowUp" : "ArrowDown";
         await this.page.locator('[data-testid="chat-input"]').focus();
         await this.page.keyboard.press(key);
-        await this.page.waitForTimeout(200);
     },
 
     async getChatInputValue() {
@@ -359,6 +359,7 @@ export const chatMethods = {
             expect(hasSystemMessage || hasErrorState || hasSQLResult || hasAnyResultTable).toBe(true);
         }).toPass({ timeout: TIMEOUT.ACTION });
 
+        // Required: SSE streaming responses render asynchronously via a queue
         await this.page.waitForTimeout(500);
     },
 };

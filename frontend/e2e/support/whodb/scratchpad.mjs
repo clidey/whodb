@@ -67,8 +67,8 @@ export const scratchpadMethods = {
         await editor.click();
         await editor.clear();
         await editor.fill(text);
+        await expect(editor).toContainText(text);
         await editor.blur();
-        await this.page.waitForTimeout(100);
     },
 
     /**

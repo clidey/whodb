@@ -107,6 +107,7 @@ export const coreMethods = {
                 await btn.click();
                 break;
             }
+            // Required: retry loop polling for telemetry dialog
             await this.page.waitForTimeout(300);
         }
 
@@ -248,7 +249,7 @@ export const coreMethods = {
         const bodyText = await this.page.locator("body").innerText();
         if (sidebarTriggerVisible > 0 && !bodyText.includes("Logout Profile")) {
             await this.page.locator('[data-sidebar="trigger"]').first().click({ force: true });
-            await this.page.waitForTimeout(300);
+            await this.page.getByText("Logout Profile").waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT }).catch(() => {});
         }
 
         const updatedBodyText = await this.page.locator("body").innerText();

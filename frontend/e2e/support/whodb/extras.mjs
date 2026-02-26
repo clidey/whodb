@@ -29,6 +29,7 @@ export const extrasMethods = {
             return container && !container.classList.contains("laying-out");
         }, { timeout: TIMEOUT.ELEMENT }).catch(() => {});
 
+        // Required: react-flow layout animation settling
         await this.page.waitForTimeout(600);
 
         return await this.page.evaluate(() => {
@@ -75,7 +76,6 @@ export const extrasMethods = {
 
     async selectMockData() {
         await this.page.locator("table thead tr.cursor-context-menu").first().click({ button: "right", force: true });
-        await this.page.waitForTimeout(200);
         const mockDataItem = this.page.locator('[data-testid="context-menu-mock-data"]');
         await mockDataItem.scrollIntoViewIfNeeded();
         await mockDataItem.waitFor({ timeout: TIMEOUT.ELEMENT });
@@ -167,8 +167,8 @@ export const extrasMethods = {
         await editor.click();
         await editor.clear();
         await editor.fill(sql);
+        await expect(editor).toContainText(sql);
         await editor.blur();
-        await this.page.waitForTimeout(100);
     },
 
     // ── Mock Data ─────────────────────────────────────────────────────────
@@ -206,8 +206,6 @@ export const extrasMethods = {
         await menu.waitFor({ state: "visible" });
         await menu.locator('[role="menuitem"]').filter({ hasText: "Query History" }).click();
 
-        await this.page.waitForTimeout(500);
-
         await this.page.locator('[role="dialog"], .bg-background[data-state="open"]').waitFor({ state: "visible" });
         await expect(this.page.getByText("Query History")).toBeVisible();
     },
@@ -242,6 +240,7 @@ export const extrasMethods = {
         const expectedText = (await card.locator("pre code").innerText()).trim();
         await card.locator('[data-testid="clone-to-editor-button"]').click();
 
+        // Required: dialog close animation after clone action
         await this.page.waitForTimeout(500);
 
         const dialogCount = await this.page.locator('[role="dialog"]').filter({ visible: true }).count();
@@ -251,8 +250,6 @@ export const extrasMethods = {
 
         const editorSelector = `[role="tabpanel"][data-state="active"] [data-testid="cell-${targetCellIndex}"] [data-testid="code-editor"] .cm-content`;
         await expect(this.page.locator(editorSelector)).toContainText(expectedText, { timeout: TIMEOUT.ACTION });
-
-        await this.page.waitForTimeout(500);
     },
 
     async executeQueryFromHistory(index = 0) {
@@ -267,7 +264,6 @@ export const extrasMethods = {
         // Press Escape twice: first to dismiss any open autocomplete/popover in the
         // editor behind the dialog, second to close the sheet itself.
         await this.page.keyboard.press("Escape");
-        await this.page.waitForTimeout(200);
         const stillOpen = await this.page.locator('[role="dialog"]').count();
         if (stillOpen > 0) {
             await this.page.keyboard.press("Escape");
@@ -279,6 +275,7 @@ export const extrasMethods = {
         }
 
         await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
+        // Required: scroll-lock release animation
         await this.page.waitForTimeout(300);
     },
 
@@ -347,6 +344,7 @@ export const extrasMethods = {
 
     async screenshotWithHighlight(selector, screenshotName, highlightOptions = {}, screenshotOptions = {}) {
         await this.highlightElement(selector, highlightOptions);
+        // Required: highlight overlay rendering
         await this.page.waitForTimeout(300);
         await this.page.screenshot({ path: `${screenshotName}.png`, ...screenshotOptions });
         await this.removeHighlights();
