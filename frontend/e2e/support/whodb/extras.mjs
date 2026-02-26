@@ -264,12 +264,7 @@ export const extrasMethods = {
     },
 
     async closeQueryHistory() {
-        const closeBtn = this.page.locator('[role="dialog"] button').filter({ hasText: "Close" });
-        if (await closeBtn.count() > 0) {
-            await closeBtn.click();
-        } else {
-            await this.page.keyboard.press("Escape");
-        }
+        await this.page.keyboard.press("Escape");
 
         const dialogCount = await this.page.locator('[role="dialog"]').count();
         if (dialogCount > 0) {

@@ -198,10 +198,6 @@ test.describe('CRUD Operations', () => {
 
                 await whodb.addRow(newDoc, true);
 
-                const verifyAdd = waitForMutation(page, 'AddRow');
-                await whodb.submitTable();
-                await verifyAdd();
-
                 // Wait for row to appear using retry-able assertion
                 const rowIndex = await whodb.waitForRowContaining(uniqueId);
 
