@@ -151,6 +151,7 @@ func (g *Generator) clearTableWithDependencies(
 	if cleared[table] {
 		return nil
 	}
+	cleared[table] = true
 
 	// Find tables that reference this table (children)
 	children := findChildTables(graph, table)
@@ -172,7 +173,6 @@ func (g *Generator) clearTableWithDependencies(
 		return fmt.Errorf("failed to clear table %s: %w", table, err)
 	}
 
-	cleared[table] = true
 	g.usedPKValues[table] = make(map[string]bool)
 	return nil
 }
