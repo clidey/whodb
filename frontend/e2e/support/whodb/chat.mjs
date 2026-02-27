@@ -287,9 +287,9 @@ export const chatMethods = {
     async toggleChatSQLView() {
         const group = this.page.locator(".group\\/table-preview").last();
         await group.hover();
-        const iconBtn = group.locator('[data-testid="icon-button"]').first();
-        await iconBtn.waitFor({ state: "visible" });
-        await iconBtn.click();
+        // Required: CSS opacity transition on group-hover reveal
+        await this.page.waitForTimeout(200);
+        await group.locator('[data-testid="icon-button"]').first().click();
         await this.page.locator('[data-testid="toggle-view-option"]').click();
     },
 
@@ -308,9 +308,9 @@ export const chatMethods = {
     async openMoveToScratchpad() {
         const group = this.page.locator(".group\\/table-preview").last();
         await group.hover();
-        const iconBtn = group.locator('[data-testid="icon-button"]').first();
-        await iconBtn.waitFor({ state: "visible" });
-        await iconBtn.click();
+        // Required: CSS opacity transition on group-hover reveal
+        await this.page.waitForTimeout(200);
+        await group.locator('[data-testid="icon-button"]').first().click();
         await this.page.locator('[data-testid="move-to-scratchpad-option"]').click();
         await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: TIMEOUT.ELEMENT });
     },
