@@ -124,6 +124,7 @@ func DefaultConfig(id, name, region string) *Config {
 }
 
 // Provider implements providers.ConnectionProvider for AWS.
+// Provider implements providers.ConnectionProvider for AWS.
 type Provider struct {
 	config    *Config
 	awsConfig aws.Config
@@ -132,8 +133,8 @@ type Provider struct {
 	elasticacheClient *elasticache.Client
 	docdbClient       *docdb.Client
 
-	initOnce sync.Once
-	initErr  error
+	initMu      sync.Mutex
+	initialized bool
 }
 
 // New creates a new AWS provider with the given configuration.
@@ -169,28 +170,34 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) initialize(ctx context.Context) error {
-	p.initOnce.Do(func() {
-		creds := p.buildInternalCredentials()
+	p.initMu.Lock()
+	defer p.initMu.Unlock()
 
-		cfg, err := awsinfra.LoadAWSConfig(ctx, creds)
-		if err != nil {
-			p.initErr = fmt.Errorf("failed to load AWS config: %w", err)
-			return
-		}
+	if p.initialized {
+		return nil
+	}
 
-		p.awsConfig = cfg
+	creds := p.buildInternalCredentials()
 
-		if p.config.DiscoverRDS {
-			p.rdsClient = rds.NewFromConfig(cfg)
-		}
-		if p.config.DiscoverElastiCache {
-			p.elasticacheClient = elasticache.NewFromConfig(cfg)
-		}
-		if p.config.DiscoverDocumentDB {
-			p.docdbClient = docdb.NewFromConfig(cfg)
-		}
-	})
-	return p.initErr
+	cfg, err := awsinfra.LoadAWSConfig(ctx, creds)
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	p.awsConfig = cfg
+
+	if p.config.DiscoverRDS {
+		p.rdsClient = rds.NewFromConfig(cfg)
+	}
+	if p.config.DiscoverElastiCache {
+		p.elasticacheClient = elasticache.NewFromConfig(cfg)
+	}
+	if p.config.DiscoverDocumentDB {
+		p.docdbClient = docdb.NewFromConfig(cfg)
+	}
+
+	p.initialized = true
+	return nil
 }
 
 func (p *Provider) buildInternalCredentials() *engine.Credentials {
