@@ -206,8 +206,9 @@ export const extrasMethods = {
         await menu.waitFor({ state: "visible" });
         await menu.locator('[role="menuitem"]').filter({ hasText: "Query History" }).click();
 
-        await this.page.locator('[role="dialog"], .bg-background[data-state="open"]').waitFor({ state: "visible" });
-        await expect(this.page.getByText("Query History")).toBeVisible();
+        const dialog = this.page.locator('[role="dialog"], .bg-background[data-state="open"]');
+        await dialog.waitFor({ state: "visible" });
+        await expect(dialog.getByText("Query History")).toBeVisible();
     },
 
     async getQueryHistoryItems() {
@@ -229,7 +230,7 @@ export const extrasMethods = {
         const card = this.page.locator('[role="dialog"] [data-slot="card"]').nth(index);
         const textToCopy = (await card.locator("pre code").innerText()).trim();
 
-        await card.locator('[data-testid="copy-to-clipboard-button"]').click({ force: true });
+        await card.locator('[data-testid="copy-to-clipboard-button"]').click();
 
         const clipboardText = await this.page.evaluate(() => navigator.clipboard.readText());
         expect(clipboardText).toBe(textToCopy);
@@ -257,7 +258,7 @@ export const extrasMethods = {
             .locator('[role="dialog"] [data-slot="card"]')
             .nth(index)
             .locator('[data-testid="run-history-button"]')
-            .click({ force: true });
+            .click();
     },
 
     async closeQueryHistory() {
