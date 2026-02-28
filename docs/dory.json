@@ -187,6 +187,7 @@
             "group": "Integrations",
             "pages": [
               "resources/integrations/docker",
+              "resources/integrations/aws-deployment",
               "resources/integrations/ci-cd",
               "resources/integrations/monitoring",
               "resources/integrations/backup-tools"

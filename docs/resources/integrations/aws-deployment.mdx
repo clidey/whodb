@@ -1,0 +1,364 @@
+---
+title: "AWS Deployment"
+description: "Deploy WhoDB on AWS with CloudFormation — from a single command to full demo stacks with databases"
+---
+
+# AWS Deployment
+
+WhoDB provides CloudFormation templates for deploying on AWS. They're ordered from simplest to most fully-featured:
+
+<CardGroup cols={3}>
+<Card title="Production" icon="rocket">
+Bare minimum — HTTPS, Fargate, AWS discovery. One command to deploy.
+</Card>
+<Card title="Self-Hosted" icon="server">
+Flexible — bring your own VPC, choose HTTP or HTTPS, toggle AWS discovery
+</Card>
+<Card title="Demo" icon="flask">
+Full stack with RDS, ElastiCache, DocumentDB, auto-scaling, alarms, and access logs
+</Card>
+</CardGroup>
+
+## Prerequisites
+
+- AWS CLI configured with credentials (`aws configure`)
+- An AWS account with permissions to create VPC, ECS, and IAM resources
+- An ACM certificate in the same region as your stack (required for the production stack, optional for self-hosted)
+
+<Info>
+All templates create IAM roles, so you must pass `--capabilities CAPABILITY_IAM` when deploying.
+</Info>
+
+---
+
+## Production Stack
+
+The fastest way to get WhoDB running on AWS. No options to think about — HTTPS, private Fargate tasks, and AWS database discovery are baked in.
+
+### What's included
+
+| Resource | Configuration |
+|----------|--------------|
+| **VPC** | 2 public + 2 private subnets, NAT gateway |
+| **ALB** | HTTPS on 443, HTTP-to-HTTPS redirect, invalid header dropping |
+| **Fargate** | Private subnets, 512 CPU / 1024 MB, ECS Exec disabled |
+| **AWS discovery** | Auto-discovers RDS, ElastiCache, and DocumentDB in the same region |
+
+### Deploy
+
+<Steps>
+<Step title="Deploy the stack">
+```bash
+aws cloudformation create-stack \
+  --stack-name whodb-prod \
+  --template-body file://dev/aws-prod-stack.yml \
+  --capabilities CAPABILITY_IAM \
+  --parameters \
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+```
+</Step>
+<Step title="Wait for completion (~5 minutes)">
+```bash
+aws cloudformation wait stack-create-complete --stack-name whodb-prod
+```
+</Step>
+<Step title="Get the URL">
+```bash
+aws cloudformation describe-stacks \
+  --stack-name whodb-prod \
+  --query 'Stacks[0].Outputs[?OutputKey==`WhoDBURL`].OutputValue' \
+  --output text
+```
+</Step>
+</Steps>
+
+### Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `CertificateArn` | Yes | — | ACM certificate ARN for HTTPS |
+| `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
+| `WhoDBImage` | No | `clidey/whodb:latest` | Docker image for WhoDB |
+
+<Tip>
+Restrict `AllowedCIDR` to your office or VPN IP range for better security (e.g., `203.0.113.50/32`)
+</Tip>
+
+### Tear down
+
+No deletion protection — just delete:
+
+```bash
+aws cloudformation delete-stack --stack-name whodb-prod
+```
+
+---
+
+## Self-Hosted Stack
+
+More flexibility than the production stack. Supports using an existing VPC, HTTP-only mode, internal ALBs, and toggling AWS discovery. Use this when the production stack's baked-in defaults don't fit your environment.
+
+### Deployment modes
+
+| Mode | Parameters | What you get |
+|------|-----------|--------------|
+| **Minimal** | None (all defaults) | New VPC + HTTP on 8080 + AWS discovery |
+| **HTTPS** | `CertificateArn` | New VPC + HTTPS on 443 + redirect |
+| **Existing VPC** | `VpcId`, `PublicSubnetIds`, `PrivateSubnetIds` | Uses your VPC |
+| **Internal** | `ALBScheme=internal` | Private ALB (no internet access) |
+| **No AWS discovery** | `EnableAWSProvider=false` | Just WhoDB, no IAM role |
+
+### Deploy
+
+<AccordionGroup>
+<Accordion title="Minimal (new VPC, HTTP)">
+```bash
+aws cloudformation create-stack \
+  --stack-name whodb \
+  --template-body file://dev/aws-selfhosted-stack.yml \
+  --capabilities CAPABILITY_IAM
+```
+</Accordion>
+<Accordion title="With HTTPS">
+```bash
+aws cloudformation create-stack \
+  --stack-name whodb \
+  --template-body file://dev/aws-selfhosted-stack.yml \
+  --capabilities CAPABILITY_IAM \
+  --parameters \
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+```
+</Accordion>
+<Accordion title="Into an existing VPC (private ALB)">
+```bash
+aws cloudformation create-stack \
+  --stack-name whodb \
+  --template-body file://dev/aws-selfhosted-stack.yml \
+  --capabilities CAPABILITY_IAM \
+  --parameters \
+    ParameterKey=VpcId,ParameterValue=vpc-0abc123def456 \
+    ParameterKey=PublicSubnetIds,ParameterValue="subnet-aaa\,subnet-bbb" \
+    ParameterKey=PrivateSubnetIds,ParameterValue="subnet-ccc\,subnet-ddd" \
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id \
+    ParameterKey=ALBScheme,ParameterValue=internal
+```
+</Accordion>
+<Accordion title="Without AWS discovery">
+```bash
+aws cloudformation create-stack \
+  --stack-name whodb \
+  --template-body file://dev/aws-selfhosted-stack.yml \
+  --capabilities CAPABILITY_IAM \
+  --parameters \
+    ParameterKey=EnableAWSProvider,ParameterValue=false
+```
+</Accordion>
+</AccordionGroup>
+
+### Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `WhoDBImage` | No | `clidey/whodb:latest` | Docker image for WhoDB |
+| `CertificateArn` | No | *(empty)* | ACM cert for HTTPS (empty = HTTP on 8080) |
+| `VpcId` | No | *(empty)* | Existing VPC (empty = create new) |
+| `PublicSubnetIds` | No | *(empty)* | Existing public subnets (2+, required if VpcId set) |
+| `PrivateSubnetIds` | No | *(empty)* | Existing private subnets (2+, required if VpcId set) |
+| `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
+| `ALBScheme` | No | `internet-facing` | `internet-facing` or `internal` |
+| `EnableAWSProvider` | No | `true` | Enable auto-discovery of AWS databases |
+| `AWSProviderRegion` | No | *(stack region)* | Region for AWS discovery |
+| `TaskCpu` | No | `512` | Fargate CPU units (256-4096) |
+| `TaskMemory` | No | `1024` | Fargate memory in MB (512-16384) |
+| `AlarmSNSTopicArn` | No | *(empty)* | SNS topic for CloudWatch alarm notifications |
+
+---
+
+## Demo Stack
+
+The demo stack deploys WhoDB alongside RDS PostgreSQL, ElastiCache Redis, and DocumentDB, with production hardening enabled by default. Use this for demos, evaluations, and showcasing.
+
+### What's included
+
+| Resource | Configuration |
+|----------|--------------|
+| **VPC** | 2 public + 2 private subnets, NAT gateway, flow logs |
+| **ALB** | HTTPS on 443, HTTP-to-HTTPS redirect, access logs to S3 |
+| **Fargate** | Private subnets, 512 CPU / 1024 MB, auto-scaling 1-4 tasks |
+| **RDS PostgreSQL** | Encrypted storage, enhanced monitoring |
+| **ElastiCache Redis** | Encryption at rest + in transit, auth token |
+| **DocumentDB** | Encrypted storage |
+| **Credentials** | Auto-generated via Secrets Manager (no passwords to manage) |
+| **Monitoring** | CPU and memory CloudWatch alarms |
+| **Protection** | Deletion protection on databases (configurable) |
+
+### Deploy
+
+<Steps>
+<Step title="Deploy the stack">
+```bash
+aws cloudformation create-stack \
+  --stack-name whodb-demo \
+  --template-body file://dev/aws-demo-stack.yml \
+  --capabilities CAPABILITY_IAM \
+  --parameters \
+    ParameterKey=CertificateArn,ParameterValue=arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+```
+</Step>
+<Step title="Wait for completion (15-20 minutes)">
+```bash
+aws cloudformation wait stack-create-complete --stack-name whodb-demo
+```
+</Step>
+<Step title="Get the URL">
+```bash
+aws cloudformation describe-stacks \
+  --stack-name whodb-demo \
+  --query 'Stacks[0].Outputs[?OutputKey==`WhoDBURL`].OutputValue' \
+  --output text
+```
+</Step>
+</Steps>
+
+### Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `CertificateArn` | Yes | — | ACM certificate ARN for HTTPS |
+| `WhoDBImage` | No | `clidey/whodb:latest` | Docker image for WhoDB |
+| `AllowedCIDR` | No | `0.0.0.0/0` | CIDR range allowed to access the ALB |
+| `DeletionProtection` | No | `true` | Database deletion protection |
+| `AlarmSNSTopicArn` | No | *(empty)* | SNS topic for CloudWatch alarm notifications |
+
+### Retrieve generated credentials
+
+Credentials are stored in Secrets Manager and used automatically by WhoDB's AWS provider for discovery. To retrieve them manually:
+
+<CodeGroup>
+```bash RDS / DocumentDB
+aws secretsmanager get-secret-value \
+  --secret-id $(aws cloudformation describe-stacks --stack-name whodb-demo \
+    --query 'Stacks[0].Outputs[?OutputKey==`DBSecretArn`].OutputValue' --output text) \
+  --query 'SecretString' --output text | jq .
+```
+```bash Redis Auth Token
+aws secretsmanager get-secret-value \
+  --secret-id $(aws cloudformation describe-stacks --stack-name whodb-demo \
+    --query 'Stacks[0].Outputs[?OutputKey==`RedisAuthSecretArn`].OutputValue' --output text) \
+  --query 'SecretString' --output text | jq .
+```
+</CodeGroup>
+
+### Tear down
+
+Deletion protection is enabled by default. Disable it before deleting:
+
+```bash
+# Disable deletion protection
+aws cloudformation update-stack \
+  --stack-name whodb-demo \
+  --use-previous-template \
+  --capabilities CAPABILITY_IAM \
+  --parameters \
+    ParameterKey=CertificateArn,UsePreviousValue=true \
+    ParameterKey=DeletionProtection,ParameterValue=false
+
+# Wait for update, then delete
+aws cloudformation wait stack-update-complete --stack-name whodb-demo
+aws cloudformation delete-stack --stack-name whodb-demo
+```
+
+<Warning>
+The ALB access log S3 bucket has `DeletionPolicy: Retain` and will not be deleted with the stack. Delete it manually from S3 if you no longer need the logs.
+</Warning>
+
+---
+
+## AWS auto-discovery
+
+When AWS discovery is enabled (production and self-hosted stacks), WhoDB automatically discovers:
+
+- **RDS** instances (PostgreSQL, MySQL, MariaDB)
+- **ElastiCache** clusters (Redis)
+- **DocumentDB** clusters (MongoDB-compatible)
+
+Discovered databases appear on WhoDB's login page. You still need to provide credentials to connect — discovery only finds the endpoints.
+
+<Info>
+The task role includes read-only permissions for `rds:Describe*`, `elasticache:Describe*`, and `docdb:Describe*`. It cannot modify your databases.
+</Info>
+
+## Alarm notifications
+
+The demo and self-hosted stacks include CloudWatch alarms. By default, alarms change state but don't notify anyone. To receive alerts, create an SNS topic and pass it:
+
+```bash
+# Create an SNS topic and subscribe your email
+SNS_ARN=$(aws sns create-topic --name whodb-alarms --query TopicArn --output text)
+aws sns subscribe --topic-arn $SNS_ARN --protocol email --notification-endpoint you@example.com
+
+# Pass it during stack creation
+--parameters ParameterKey=AlarmSNSTopicArn,ParameterValue=$SNS_ARN
+```
+
+## Security considerations
+
+WhoDB uses base64-encoded database credentials as Bearer tokens for authentication. Production security comes from network controls:
+
+- **HTTPS** — encrypts all traffic between users and the ALB
+- **AllowedCIDR** — restricts who can reach the ALB by IP range
+- **Private subnets** — Fargate tasks run in private subnets, not directly accessible from the internet
+- **Internal ALB** — optionally make the ALB accessible only within the VPC (self-hosted stack)
+- **Security groups** — databases only accept connections from WhoDB's security group
+- **Invalid header dropping** — ALBs drop malformed HTTP headers to prevent header injection
+- **ECS Exec disabled** — container shell access is blocked, preventing unauthorized access via IAM
+
+<Warning>
+WhoDB does not have built-in SSO or OIDC. Restrict access to trusted networks using `AllowedCIDR` and/or `ALBScheme=internal`.
+</Warning>
+
+<Warning>
+The self-hosted stack defaults to HTTP when no certificate is provided. Database credentials will be sent in cleartext. Always use HTTPS in production by providing a `CertificateArn`, or deploy behind a VPN.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Stack creation fails with 'Requires capabilities: [CAPABILITY_IAM]'">
+Add `--capabilities CAPABILITY_IAM` to your `create-stack` command. All templates create IAM roles.
+</Accordion>
+
+<Accordion title="WhoDB is unreachable after deployment">
+Check that:
+- The Fargate task is running: `aws ecs describe-services --cluster CLUSTER_NAME --services SERVICE_NAME`
+- The target group has healthy targets: `aws elbv2 describe-target-health --target-group-arn TARGET_GROUP_ARN`
+- Your IP is within the `AllowedCIDR` range
+- For HTTPS: the ACM certificate is issued (not pending validation)
+</Accordion>
+
+<Accordion title="Databases not appearing in AWS discovery">
+Verify:
+- AWS discovery is enabled (always on for production stack, configurable for self-hosted)
+- The databases are in the same region as the stack (or `AWSProviderRegion` matches)
+- The task role has the correct permissions (check CloudTrail for AccessDenied errors)
+</Accordion>
+
+<Accordion title="Cannot delete stack (deletion protection)">
+For the demo stack, update `DeletionProtection` to `false` first, then delete. See the demo stack teardown section above.
+</Accordion>
+</AccordionGroup>
+
+## Template files
+
+All templates are in the [`dev/`](https://github.com/clidey/whodb/tree/main/dev) directory:
+
+| File | Use case | Parameters | Complexity |
+|------|----------|------------|------------|
+| `dev/aws-prod-stack.yml` | Production — deploy in one command | 3 (1 required) | Minimal |
+| `dev/aws-selfhosted-stack.yml` | Flexible — bring your own VPC, HTTP or HTTPS | 12 | Moderate |
+| `dev/aws-demo-stack.yml` | Demo — full stack with databases and hardening | 5 | Full |
+| `dev/aws-test-stack.yml` | Development testing (no hardening) | — | — |
+
+<Check>
+You're ready to deploy WhoDB on AWS
+</Check>
