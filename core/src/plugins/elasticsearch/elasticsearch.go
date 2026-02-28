@@ -891,6 +891,8 @@ func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, 
 	return make(map[string]map[string]any), nil
 }
 
+func (p *ElasticSearchPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
+
 // ClearTableData - not supported for ElasticSearch
 func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return false, errors.ErrUnsupported

@@ -832,6 +832,8 @@ func toFloat64(v any) *float64 {
 }
 
 // ClearTableData deletes all documents from a MongoDB collection.
+func (p *MongoDBPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
+
 // This is used by the mock data generator when overwrite mode is enabled.
 func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	client, err := DB(config)

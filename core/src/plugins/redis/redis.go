@@ -610,6 +610,8 @@ func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 	return make(map[string]map[string]any), nil
 }
 
+func (p *RedisPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
+
 // ClearTableData - not supported for Redis
 func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return false, errors.ErrUnsupported

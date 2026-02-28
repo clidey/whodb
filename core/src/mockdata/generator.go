@@ -140,6 +140,8 @@ func findChildTables(graph []engine.GraphUnit, targetTable string) []string {
 
 // clearTableWithDependencies clears a table and all tables that reference it (children first).
 // This ensures FK constraints are respected by deleting in the correct order.
+// Circular FK references (e.g., employees ↔ departments) are handled by NULLing out
+// the FK column that forms the cycle before any rows are deleted.
 func (g *Generator) clearTableWithDependencies(
 	plugin engine.PluginFunctions,
 	config *engine.PluginConfig,
@@ -157,7 +159,29 @@ func (g *Generator) clearTableWithDependencies(
 	children := findChildTables(graph, table)
 
 	// Clear children first (recursive)
+	log.WithFields(map[string]any{
+		"table":    table,
+		"children": children,
+		"cleared":  cleared,
+	}).Error("[MOCK-DATA-DEBUG] Processing table children")
+
 	for _, child := range children {
+		if cleared[child] {
+			// Cycle detected: child was already visited, so it references this table
+			// in a circular FK. NULL out the FK column in child that points to this
+			// table so the subsequent DELETE won't violate the constraint.
+			log.WithFields(map[string]any{
+				"child":  child,
+				"parent": table,
+			}).Error("[MOCK-DATA-DEBUG] Cycle detected, nullifying FK")
+			if err := nullifyFKColumn(plugin, config, schema, child, table, graph); err != nil {
+				log.WithFields(map[string]any{
+					"child":  child,
+					"parent": table,
+				}).WithError(err).Error("Failed to nullify FK column for cycle breaking")
+			}
+			continue
+		}
 		if err := g.clearTableWithDependencies(plugin, config, schema, child, graph, cleared); err != nil {
 			return err
 		}
@@ -174,6 +198,33 @@ func (g *Generator) clearTableWithDependencies(
 	}
 
 	g.usedPKValues[table] = make(map[string]bool)
+	return nil
+}
+
+// nullifyFKColumn sets the FK column in childTable that references parentTable to NULL.
+// Used to break circular FK constraints before deleting rows.
+func nullifyFKColumn(
+	plugin engine.PluginFunctions,
+	config *engine.PluginConfig,
+	schema, childTable, parentTable string,
+	graph []engine.GraphUnit,
+) error {
+	// The graph stores parent → child relationships. Find the entry for parentTable
+	// that has childTable as a relation — the SourceColumn is the FK column in childTable.
+	for _, unit := range graph {
+		if unit.Unit.Name == parentTable {
+			for _, rel := range unit.Relations {
+				if rel.Name == childTable && rel.SourceColumn != nil {
+					log.WithFields(map[string]any{
+						"child":    childTable,
+						"parent":   parentTable,
+						"fkColumn": *rel.SourceColumn,
+					}).Info("Breaking circular FK by nullifying column")
+					return plugin.NullifyFKColumn(config, schema, childTable, *rel.SourceColumn)
+				}
+			}
+		}
+	}
 	return nil
 }
 

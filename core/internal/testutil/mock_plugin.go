@@ -222,6 +222,8 @@ func (m *PluginMock) ClearTableData(config *engine.PluginConfig, schema string, 
 	return false, nil
 }
 
+func (m *PluginMock) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
+
 func (m *PluginMock) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
 	if m.GetForeignKeysFunc != nil {
 		return m.GetForeignKeysFunc(config, schema, storageUnit)

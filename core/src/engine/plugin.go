@@ -156,6 +156,7 @@ type PluginFunctions interface {
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
+	NullifyFKColumn(config *PluginConfig, schema string, storageUnit string, column string) error
 
 	// Foreign key detection
 	GetForeignKeyRelationships(config *PluginConfig, schema string, storageUnit string) (map[string]*ForeignKeyRelationship, error)
