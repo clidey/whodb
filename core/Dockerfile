@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:25.6.0-alpine3.23 AS build-stage
+FROM node:25.7.0-alpine3.23 AS build-stage
 RUN npm i -g pnpm@10.29.3
 WORKDIR /app
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
