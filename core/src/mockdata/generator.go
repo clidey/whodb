@@ -159,21 +159,11 @@ func (g *Generator) clearTableWithDependencies(
 	children := findChildTables(graph, table)
 
 	// Clear children first (recursive)
-	log.WithFields(map[string]any{
-		"table":    table,
-		"children": children,
-		"cleared":  cleared,
-	}).Error("[MOCK-DATA-DEBUG] Processing table children")
-
 	for _, child := range children {
 		if cleared[child] {
 			// Cycle detected: child was already visited, so it references this table
 			// in a circular FK. NULL out the FK column in child that points to this
 			// table so the subsequent DELETE won't violate the constraint.
-			log.WithFields(map[string]any{
-				"child":  child,
-				"parent": table,
-			}).Error("[MOCK-DATA-DEBUG] Cycle detected, nullifying FK")
 			if err := nullifyFKColumn(plugin, config, schema, child, table, graph); err != nil {
 				log.WithFields(map[string]any{
 					"child":  child,
@@ -215,14 +205,10 @@ func nullifyFKColumn(
 		if unit.Unit.Name == parentTable {
 			for _, rel := range unit.Relations {
 				if rel.Name == childTable && rel.SourceColumn != nil {
-					log.WithFields(map[string]any{
-						"child":    childTable,
-						"parent":   parentTable,
-						"fkColumn": *rel.SourceColumn,
-					}).Info("Breaking circular FK by nullifying column")
 					return plugin.NullifyFKColumn(config, schema, childTable, *rel.SourceColumn)
 				}
 			}
+			return nil
 		}
 	}
 	return nil
