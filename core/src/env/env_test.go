@@ -60,33 +60,24 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	originalOpenAI := OpenAIAPIKey
 	originalOpenAIEndpoint := OpenAIEndpoint
 	originalAnthropic := AnthropicAPIKey
-	originalOpenAICompatKey := OpenAICompatibleAPIKey
-	originalOpenAICompatEndpoint := OpenAICompatibleEndpoint
-	originalCustomModels := CustomModels
 	origHost, origPort := OllamaHost, OllamaPort
 
 	t.Cleanup(func() {
 		OpenAIAPIKey = originalOpenAI
 		OpenAIEndpoint = originalOpenAIEndpoint
 		AnthropicAPIKey = originalAnthropic
-		OpenAICompatibleAPIKey = originalOpenAICompatKey
-		OpenAICompatibleEndpoint = originalOpenAICompatEndpoint
-		CustomModels = originalCustomModels
 		OllamaHost, OllamaPort = origHost, origPort
 	})
 
 	OpenAIAPIKey = "openai-key"
 	OpenAIEndpoint = "https://custom.openai/api"
 	AnthropicAPIKey = "anthropic-key"
-	OpenAICompatibleAPIKey = "compat-key"
-	OpenAICompatibleEndpoint = "https://compat.example.com"
-	CustomModels = []string{"mixtral"}
 	OllamaHost = "ollama.local"
 	OllamaPort = "1234"
 
 	providers := GetConfiguredChatProviders()
-	if len(providers) != 4 {
-		t.Fatalf("expected four providers (OpenAI, Anthropic, OpenAI-Compatible, Ollama), got %d", len(providers))
+	if len(providers) != 3 {
+		t.Fatalf("expected three providers (OpenAI, Anthropic, Ollama), got %d", len(providers))
 	}
 
 	if providers[0].Type != "OpenAI" || providers[0].Endpoint != OpenAIEndpoint {
@@ -95,10 +86,7 @@ func TestGetConfiguredChatProviders(t *testing.T) {
 	if providers[1].Type != "Anthropic" {
 		t.Fatalf("expected Anthropic provider present, got %+v", providers[1])
 	}
-	if providers[2].Type != "OpenAI-Compatible" || providers[2].Endpoint != OpenAICompatibleEndpoint {
-		t.Fatalf("expected OpenAI-Compatible provider to use configured endpoint, got %+v", providers[2])
-	}
-	if providers[3].Type != "Ollama" || providers[3].Endpoint != "http://ollama.local:1234/api" {
-		t.Fatalf("expected Ollama provider to use overridden host/port, got %+v", providers[3])
+	if providers[2].Type != "Ollama" || providers[2].Endpoint != "http://ollama.local:1234/api" {
+		t.Fatalf("expected Ollama provider to use overridden host/port, got %+v", providers[2])
 	}
 }

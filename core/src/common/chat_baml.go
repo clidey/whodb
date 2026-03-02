@@ -227,16 +227,6 @@ func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any)
 		opts["request_timeout_ms"] = int(60000) // 60 seconds for local inference
 		return "openai-generic", opts
 
-	case "OpenAI-Compatible":
-		// Generic OpenAI-compatible endpoint
-		if m.Endpoint != "" {
-			opts["base_url"] = m.Endpoint
-		}
-		if m.Token != "" {
-			opts["api_key"] = m.Token
-		}
-		return "openai-generic", opts
-
 	default:
 		// Standard generic provider (OpenAI-compatible)
 		if m.Endpoint != "" {

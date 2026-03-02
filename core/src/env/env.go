@@ -63,13 +63,6 @@ var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
 
 var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
-var OpenAICompatibleEndpoint = os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT")
-var OpenAICompatibleAPIKey = os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY")
-
-var CustomModels = common.FilterList(strings.Split(os.Getenv("WHODB_CUSTOM_MODELS"), ","), func(item string) bool {
-	return strings.TrimSpace(item) != ""
-})
-
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -164,14 +157,9 @@ func GetConfiguredChatProviders() []ChatProvider {
 		})
 	}
 
-	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 && len(CustomModels) > 0 {
-		providers = append(providers, ChatProvider{
-			Type:       "OpenAI-Compatible",
-			Name:       "OpenAI-Compatible",
-			APIKey:     OpenAICompatibleAPIKey,
-			Endpoint:   GetOpenAICompatibleEndpoint(),
-			ProviderId: "openai-compatible-1",
-		})
+	// Warn if legacy OpenAI-Compatible env vars are still set
+	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
+		fmt.Fprintln(os.Stderr, "[DEPRECATED] WHODB_OPENAI_COMPATIBLE_ENDPOINT, WHODB_OPENAI_COMPATIBLE_API_KEY, and WHODB_CUSTOM_MODELS are deprecated and no longer have any effect. Use WHODB_AI_GENERIC_<ID>_* environment variables instead. See documentation for details.")
 	}
 
 	// Add all generic providers
@@ -180,7 +168,7 @@ func GetConfiguredChatProviders() []ChatProvider {
 			Type:       genericProvider.ProviderId, // Use provider ID as type
 			Name:       genericProvider.Name,       // Display name
 			APIKey:     genericProvider.APIKey,
-			Endpoint:   genericProvider.BaseURL,
+			Endpoint:   common.ResolveLocalURL(genericProvider.BaseURL),
 			ProviderId: genericProvider.ProviderId,
 			ClientType: genericProvider.ClientType, // BAML client type
 			IsGeneric:  true,                       // Mark as generic provider
@@ -241,13 +229,6 @@ func GetAnthropicEndpoint() string {
 func GetOpenAIEndpoint() string {
 	if OpenAIEndpoint != "" {
 		return OpenAIEndpoint
-	}
-	return "https://api.openai.com/v1"
-}
-
-func GetOpenAICompatibleEndpoint() string {
-	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" && len(CustomModels) > 0 {
-		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
 }
