@@ -219,6 +219,11 @@ if [ "$HEADLESS" = "true" ]; then
     # Headless mode: Run all databases in parallel (1 Playwright process per database).
     # Each process gets its own browser, outputDir, and blob report — no file collisions.
     # The backend handles concurrent connections fine (9 cached connections, well under the 50 limit).
+
+    # Warm Playwright's transform cache so parallel workers don't race on .mjs compilation.
+    DATABASE="${DATABASES[0]}" CATEGORY="$(get_category "${DATABASES[0]}")" \
+        pnpm exec playwright test --config="$PW_CONFIG" --list > /dev/null 2>&1 || true
+
     echo "📋 Running ${#DATABASES[@]} database tests in parallel..."
 
     declare -A DB_PIDS
