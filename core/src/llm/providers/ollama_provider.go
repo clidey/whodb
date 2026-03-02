@@ -44,16 +44,6 @@ func (p *OllamaProvider) GetType() LLMType {
 	return Ollama_LLMType
 }
 
-// GetName returns the provider name.
-func (p *OllamaProvider) GetName() string {
-	return "Ollama"
-}
-
-// RequiresAPIKey returns false as Ollama doesn't require an API key.
-func (p *OllamaProvider) RequiresAPIKey() bool {
-	return false
-}
-
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
 func (p *OllamaProvider) GetDefaultEndpoint() string {

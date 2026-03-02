@@ -75,26 +75,13 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debugf("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
 
-	// Build ExternalModel, looking up token from environment if providerId is set
-	token := req.Token
-	endpoint := req.Endpoint
-	if req.ProviderId != "" && token == "" {
-		for _, provider := range env.GetConfiguredChatProviders() {
-			if provider.ProviderId == req.ProviderId {
-				token = provider.APIKey
-				if endpoint == "" {
-					endpoint = provider.Endpoint
-				}
-				break
-			}
-		}
-	}
-
+	// Build ExternalModel, resolving credentials from environment if providerId is set
+	creds := env.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
 	config.ExternalModel = &engine.ExternalModel{
-		Type:     req.ModelType,
-		Token:    token,
+		Type:     creds.ModelType,
+		Token:    creds.Token,
 		Model:    req.Model,
-		Endpoint: endpoint,
+		Endpoint: creds.Endpoint,
 	}
 
 	// Build table details
@@ -291,27 +278,13 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 		return
 	}
 
-	// Build ExternalModel, looking up token from environment if providerId is set
-	token := req.Token
-	endpoint := req.Endpoint
-	if req.ProviderId != "" && token == "" {
-		// Look up token from environment-defined providers
-		for _, provider := range env.GetConfiguredChatProviders() {
-			if provider.ProviderId == req.ProviderId {
-				token = provider.APIKey
-				if endpoint == "" {
-					endpoint = provider.Endpoint
-				}
-				break
-			}
-		}
-	}
-
+	// Build ExternalModel, resolving credentials from environment if providerId is set
+	creds := env.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
 	config.ExternalModel = &engine.ExternalModel{
-		Type:     req.ModelType,
-		Token:    token,
+		Type:     creds.ModelType,
+		Token:    creds.Token,
 		Model:    req.Model,
-		Endpoint: endpoint,
+		Endpoint: creds.Endpoint,
 	}
 
 	// Build table details

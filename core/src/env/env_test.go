@@ -56,6 +56,64 @@ func TestGetOllamaEndpointRespectsOverrides(t *testing.T) {
 	}
 }
 
+func TestResolveProviderCredentials_PreservesModelType(t *testing.T) {
+	// Save and restore global state
+	origProviders := GenericProviders
+	t.Cleanup(func() { GenericProviders = origProviders })
+
+	// Register a generic provider with ClientType "openai-generic"
+	GenericProviders = []GenericProviderConfig{
+		{
+			ProviderId: "lmstudio",
+			Name:       "LM Studio",
+			ClientType: "openai-generic",
+			BaseURL:    "http://localhost:1234/v1",
+			APIKey:     "lms-key",
+		},
+	}
+
+	// Frontend sends modelType = provider ID ("lmstudio"), NOT the ClientType
+	result := ResolveProviderCredentials("lmstudio", "", "", "lmstudio")
+
+	// The regression: ModelType was being overridden to "openai-generic" (the ClientType),
+	// which broke provider registry lookups keyed by ProviderId.
+	// After the fix, ModelType stays as the frontend sent it.
+	if result.ModelType != "lmstudio" {
+		t.Fatalf("expected ModelType to stay 'lmstudio' (ProviderId), got %q — ClientType override regression", result.ModelType)
+	}
+	if result.Token != "lms-key" {
+		t.Fatalf("expected Token to be filled from provider config, got %q", result.Token)
+	}
+	if result.Endpoint == "" {
+		t.Fatalf("expected Endpoint to be filled from provider config, got empty string")
+	}
+}
+
+func TestResolveProviderCredentials_RequestValuesOverrideConfig(t *testing.T) {
+	origProviders := GenericProviders
+	t.Cleanup(func() { GenericProviders = origProviders })
+
+	GenericProviders = []GenericProviderConfig{
+		{
+			ProviderId: "test-provider",
+			Name:       "Test",
+			ClientType: "openai-generic",
+			BaseURL:    "http://config-url",
+			APIKey:     "config-key",
+		},
+	}
+
+	// Request-level values take precedence
+	result := ResolveProviderCredentials("test-provider", "request-key", "http://request-url", "test-provider")
+
+	if result.Token != "request-key" {
+		t.Fatalf("expected request-level token to take precedence, got %q", result.Token)
+	}
+	if result.Endpoint != "http://request-url" {
+		t.Fatalf("expected request-level endpoint to take precedence, got %q", result.Endpoint)
+	}
+}
+
 func TestGetConfiguredChatProviders(t *testing.T) {
 	originalOpenAI := OpenAIAPIKey
 	originalOpenAIEndpoint := OpenAIEndpoint

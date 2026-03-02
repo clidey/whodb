@@ -32,8 +32,6 @@ type LLMModel string
 type AIProvider interface {
 	// Metadata methods
 	GetType() LLMType
-	GetName() string
-	RequiresAPIKey() bool
 
 	// Configuration methods
 	GetDefaultEndpoint() string
@@ -139,4 +137,23 @@ func ListProviders() []LLMType {
 		return []LLMType{}
 	}
 	return providerRegistry.List()
+}
+
+// GetBAMLConfig resolves BAML provider string + options for the given provider type.
+// This is the single source of truth for mapping a provider type to BAML configuration.
+func GetBAMLConfig(providerType string, apiKey, endpoint, model string) (string, map[string]any, error) {
+	provider, err := GetProvider(LLMType(providerType))
+	if err != nil {
+		return "", nil, err
+	}
+	config := &ProviderConfig{
+		Type:     LLMType(providerType),
+		APIKey:   apiKey,
+		Endpoint: endpoint,
+	}
+	opts, err := provider.CreateBAMLClientOptions(config, model)
+	if err != nil {
+		return "", nil, err
+	}
+	return provider.GetBAMLClientType(), opts, nil
 }

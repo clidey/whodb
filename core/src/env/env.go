@@ -190,6 +190,39 @@ func GetConfiguredChatProviders() []ChatProvider {
 	return providers
 }
 
+// ResolvedCredentials holds provider credentials resolved from environment config.
+type ResolvedCredentials struct {
+	ModelType string // Provider type as sent by the frontend (ProviderId)
+	Token     string // API key
+	Endpoint  string // Base URL
+}
+
+// ResolveProviderCredentials looks up a provider by ID and resolves credentials.
+// Request-level values take precedence over environment-configured values.
+func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, requestModelType string) ResolvedCredentials {
+	result := ResolvedCredentials{
+		ModelType: requestModelType,
+		Token:     requestToken,
+		Endpoint:  requestEndpoint,
+	}
+	if providerId == "" {
+		return result
+	}
+	for _, provider := range GetConfiguredChatProviders() {
+		if provider.ProviderId != providerId {
+			continue
+		}
+		if result.Token == "" {
+			result.Token = provider.APIKey
+		}
+		if result.Endpoint == "" {
+			result.Endpoint = provider.Endpoint
+		}
+		break
+	}
+	return result
+}
+
 func GetOllamaEndpoint() string {
 	host, port := GetOllamaHost()
 	return fmt.Sprintf("http://%s:%s/api", host, port)

@@ -44,16 +44,6 @@ func (p *OpenAIProvider) GetType() LLMType {
 	return OpenAI_LLMType
 }
 
-// GetName returns the provider name.
-func (p *OpenAIProvider) GetName() string {
-	return "OpenAI"
-}
-
-// RequiresAPIKey returns true as OpenAI requires an API key.
-func (p *OpenAIProvider) RequiresAPIKey() bool {
-	return true
-}
-
 // GetDefaultEndpoint returns the default OpenAI API endpoint.
 func (p *OpenAIProvider) GetDefaultEndpoint() string {
 	return "https://api.openai.com/v1"
@@ -132,14 +122,14 @@ func (p *OpenAIProvider) GetBAMLClientType() string {
 
 // CreateBAMLClientOptions creates BAML client options for OpenAI.
 func (p *OpenAIProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
-	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
+	opts := map[string]any{"model": model}
+	if config.APIKey != "" {
+		opts["api_key"] = config.APIKey
 	}
-
-	return map[string]any{
-		"model":   model,
-		"api_key": config.APIKey,
-	}, nil
+	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
+		opts["base_url"] = config.Endpoint
+	}
+	return opts, nil
 }
 
 // sendHTTPRequest is a helper function to send HTTP requests.
