@@ -56,15 +56,13 @@ export const whereMethods = {
                 }
                 await this.page.locator(`[data-value="${operator}"]`).click();
 
-                if ((await this.page.locator('[data-testid="sheet-field-value-0"]').count()) > 0) {
-                    await this.page.locator('[data-testid="sheet-field-value-0"]').clear();
-                    await this.page.locator('[data-testid="sheet-field-value-0"]').fill(value);
-                } else if ((await this.page.locator('[data-testid="sheet-field-value"]').count()) > 0) {
-                    await this.page.locator('[data-testid="sheet-field-value"]').clear();
-                    await this.page.locator('[data-testid="sheet-field-value"]').fill(value);
-                }
+                const sheetValueLocator = (await this.page.locator('[data-testid="sheet-field-value-0"]').count()) > 0
+                    ? this.page.locator('[data-testid="sheet-field-value-0"]')
+                    : this.page.locator('[data-testid="sheet-field-value"]');
+                await sheetValueLocator.clear();
+                await sheetValueLocator.fill(value);
+                await expect(sheetValueLocator).toHaveValue(value);
 
-                await this.page.waitForTimeout(100);
                 await this.page.locator('[role="dialog"] [data-testid="add-conditions-button"]').click();
             } else {
                 await this.page.locator('[data-testid="field-key"]').first().click();
@@ -74,8 +72,8 @@ export const whereMethods = {
                 await this.page.locator(`[data-value="${operator}"]`).click();
 
                 await this.page.locator('[data-testid="field-value"]').first().fill(value);
+                await expect(this.page.locator('[data-testid="field-value"]').first()).toHaveValue(value);
 
-                await this.page.waitForTimeout(100);
                 if ((await this.page.locator('[data-testid="add-condition-button"]').count()) > 0) {
                     await this.page.locator('[data-testid="add-condition-button"]').click();
                 } else {
@@ -83,6 +81,7 @@ export const whereMethods = {
                 }
             }
 
+            // Required: stabilization between adding successive conditions
             await this.page.waitForTimeout(200);
         }
 
@@ -92,9 +91,11 @@ export const whereMethods = {
             } else {
                 await this.page.keyboard.press("Escape");
             }
+            // Required: dialog close animation
             await this.page.waitForTimeout(100);
             await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
             await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
+            // Required: scroll-lock release animation
             await this.page.waitForTimeout(300);
         } else {
             if ((await this.page.locator('[data-testid="cancel-button"]').count()) > 0) {
@@ -103,6 +104,7 @@ export const whereMethods = {
                 await this.page.mouse.click(0, 0);
             }
         }
+        // Required: popover/sheet close animation
         await this.page.waitForTimeout(500);
     },
 
@@ -200,20 +202,22 @@ export const whereMethods = {
             await this.page.locator('[data-testid="remove-where-condition-button"]').nth(index).click();
         } else {
             await this.page.locator('[data-testid="where-button"]').click();
-            await this.page.waitForTimeout(300);
 
             const deleteBtn = this.page.locator(`[data-testid="delete-existing-filter-${index}"]`);
             await deleteBtn.waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await deleteBtn.click();
+            // Required: filter removal animation
             await this.page.waitForTimeout(200);
 
             await this.page.keyboard.press("Escape");
+            // Required: dialog close animation
             await this.page.waitForTimeout(100);
             const dialog = this.page.locator('[role="dialog"]');
             if (await dialog.count() > 0) {
                 await dialog.waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
             }
             await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
+            // Required: scroll-lock release animation
             await this.page.waitForTimeout(300);
         }
     },
@@ -254,7 +258,7 @@ export const whereMethods = {
             const moreButtonCount = await this.page.locator('[data-testid="more-conditions-button"]').count();
             if (moreButtonCount > 0) {
                 await this.page.locator('[data-testid="more-conditions-button"]').click();
-                await this.page.waitForTimeout(500);
+                await this.page.locator('[role="dialog"]').waitFor({ timeout: 2000 }).catch(() => {});
 
                 const hasDialog = (await this.page.locator('[role="dialog"]').count()) > 0;
                 if (!hasDialog) {
@@ -310,6 +314,7 @@ export const whereMethods = {
                 const remaining = await this.page.locator('[data-testid="remove-where-condition-button"]').count();
                 if (remaining === 0) break;
                 await this.page.locator('[data-testid="remove-where-condition-button"]').first().click({ force: true });
+                // Required: badge removal animation
                 await this.page.waitForTimeout(100);
             }
         } else {
@@ -319,19 +324,22 @@ export const whereMethods = {
             }
 
             await this.page.locator('[data-testid="where-button"]').click();
-            await this.page.waitForTimeout(500);
+            await this.page.locator('[data-testid="delete-existing-filter-0"]').waitFor({ timeout: TIMEOUT.ELEMENT }).catch(() => {});
 
             while (true) {
                 const remaining = await this.page.locator('[data-testid^="delete-existing-filter-"]').count();
                 if (remaining === 0) break;
                 await this.page.locator('[data-testid="delete-existing-filter-0"]').click();
+                // Required: filter removal animation
                 await this.page.waitForTimeout(100);
             }
 
             await this.page.keyboard.press("Escape");
+            // Required: dialog close animation
             await this.page.waitForTimeout(100);
             await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ELEMENT });
             await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
+            // Required: scroll-lock release animation
             await this.page.waitForTimeout(300);
         }
     },

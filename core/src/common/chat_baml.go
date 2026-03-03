@@ -20,7 +20,6 @@ package common
 
 import (
 	"context"
-	"strings"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 	"github.com/clidey/whodb/core/baml_client"
@@ -30,7 +29,7 @@ import (
 
 // RawExecutePlugin defines the interface for executing raw SQL queries
 type RawExecutePlugin interface {
-	RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error)
+	RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error)
 }
 
 // SQLChatBAML generates SQL queries using BAML for structured prompt engineering
@@ -149,6 +148,17 @@ func convertOperationType(operation types.OperationType) string {
 	}
 }
 
+// BAMLConfigResolver resolves BAML provider string + options for a given provider type.
+// Injected by the llm package at init time to use the provider registry.
+type BAMLConfigResolver func(providerType, apiKey, endpoint, model string) (string, map[string]any, error)
+
+var bamlConfigResolver BAMLConfigResolver
+
+// RegisterBAMLConfigResolver sets the function used to resolve BAML config from the provider registry.
+func RegisterBAMLConfigResolver(resolver BAMLConfigResolver) {
+	bamlConfigResolver = resolver
+}
+
 // SetupAIClient creates the BAML client options for the given external model.
 func SetupAIClient(externalModel *engine.ExternalModel) []baml_client.CallOptionFunc {
 	var callOpts []baml_client.CallOptionFunc
@@ -185,66 +195,22 @@ func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) *baml.ClientRe
 	return registry
 }
 
-// getBAMLProviderAndOptions maps WhoDB ExternalModel to BAML provider string and options
+// getBAMLProviderAndOptions maps WhoDB ExternalModel to BAML provider string and options.
+// Delegates to the provider registry when available, falling back to openai-generic for unknown types.
 func getBAMLProviderAndOptions(m *engine.ExternalModel) (string, map[string]any) {
-	opts := map[string]any{
-		"model": m.Model,
+	if bamlConfigResolver != nil {
+		provider, opts, err := bamlConfigResolver(m.Type, m.Token, m.Endpoint, m.Model)
+		if err == nil {
+			return provider, opts
+		}
 	}
-
-	switch m.Type {
-	case "OpenAI":
-		if m.Token != "" {
-			opts["api_key"] = m.Token
-		}
-		// Use custom endpoint if provided, otherwise use default
-		if m.Endpoint != "" {
-			opts["base_url"] = m.Endpoint
-		}
-		return "openai", opts
-
-	case "Anthropic":
-		if m.Token != "" {
-			opts["api_key"] = m.Token
-		}
-		// Use custom endpoint if provided, otherwise use default
-		if m.Endpoint != "" {
-			opts["base_url"] = m.Endpoint
-		}
-		return "anthropic", opts
-
-	case "Ollama":
-		// Ollama uses openai-generic provider with special options
-		endpoint := m.Endpoint
-		// Strip trailing slash and /api suffix (Ollama native API path).
-		// BAML needs the OpenAI-compatible /v1 path, not the native /api path.
-		endpoint = strings.TrimRight(endpoint, "/")
-		endpoint = strings.TrimSuffix(endpoint, "/api")
-		if !strings.HasSuffix(endpoint, "/v1") {
-			endpoint = endpoint + "/v1"
-		}
-		opts["base_url"] = endpoint
-		opts["default_role"] = "user"           // Ollama prefers user role
-		opts["request_timeout_ms"] = int(60000) // 60 seconds for local inference
-		return "openai-generic", opts
-
-	case "OpenAI-Compatible":
-		// Generic OpenAI-compatible endpoint
-		if m.Endpoint != "" {
-			opts["base_url"] = m.Endpoint
-		}
-		if m.Token != "" {
-			opts["api_key"] = m.Token
-		}
-		return "openai-generic", opts
-
-	default:
-		// Standard generic provider (OpenAI-compatible)
-		if m.Endpoint != "" {
-			opts["base_url"] = m.Endpoint
-		}
-		if m.Token != "" {
-			opts["api_key"] = m.Token
-		}
-		return "openai-generic", opts
+	// Fallback for unregistered provider types
+	opts := map[string]any{"model": m.Model}
+	if m.Endpoint != "" {
+		opts["base_url"] = m.Endpoint
 	}
+	if m.Token != "" {
+		opts["api_key"] = m.Token
+	}
+	return "openai-generic", opts
 }

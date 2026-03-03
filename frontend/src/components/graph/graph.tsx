@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 import { Button, Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
-import { toPng } from 'html-to-image';
 import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, PanOnScrollMode, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
 import { Tip } from '../tip';
@@ -28,12 +27,6 @@ import { getDagreLayoutedElements } from './layouts';
 
 
 export type IGraphCardProps<T extends unknown = any> = NodeProps<(T & {}) | undefined>;
-
-export const createRedirectState = (nodes: {id: string, type: GraphElements}[]) => {
-    return {
-        nodes,
-    };
-}
 
 export type IGraphInstance = {
     layout: (type?: "dagre", padding?: number) => void;
@@ -150,9 +143,9 @@ export const Graph: FC<IGraphProps> = (props) => {
           }
 
           setDownloading(true);
-          toPng(reactFlowWrapper.current, {
+          import('html-to-image').then(({ toPng }) => toPng(reactFlowWrapper.current!, {
             pixelRatio: 5,
-          })
+          }))
             .then((dataUrl) => {
               const link = document.createElement('a');
               link.download = 'clidey-whodb-diagram.png';

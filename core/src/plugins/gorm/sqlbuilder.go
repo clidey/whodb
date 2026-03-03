@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,9 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 			primaryKeys = append(primaryKeys, sb.QuoteIdentifier(col.Name))
 		}
 
-		if !col.Nullable && !col.Primary {
+		if col.Extra != "" {
+			def += " " + col.Extra
+		} else if col.NotNull || (!col.Nullable && !col.Primary) {
 			def += " NOT NULL"
 		}
 

@@ -871,11 +871,7 @@ func parseRangeBounds(raw string) (string, string) {
 	return minBound, maxBound
 }
 
-func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *ElasticSearchPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
 
@@ -894,6 +890,8 @@ func (p *ElasticSearchPlugin) FormatValue(val any) string {
 func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return make(map[string]map[string]any), nil
 }
+
+func (p *ElasticSearchPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
 
 // ClearTableData - not supported for ElasticSearch
 func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {

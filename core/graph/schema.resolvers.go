@@ -1002,7 +1002,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 
 		// Check if SSL is configured (mode is set and not "disabled")
 		sslConfigured := false
-		if mode, ok := profile.Config[ssl.KeySSLMode]; ok && mode != "" && mode != string(ssl.SSLModeDisabled) {
+		if mode, ok := profile.Advanced[ssl.KeySSLMode]; ok && mode != "" && mode != string(ssl.SSLModeDisabled) {
 			sslConfigured = true
 		}
 
@@ -1386,41 +1386,20 @@ func (r *queryResolver) AIModel(ctx context.Context, providerID *string, modelTy
 func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelType string, token *string, schema string, input model.ChatInput) ([]*model.AIChatMessage, error) {
 	plugin, config := GetPluginForContext(ctx)
 	typeArg := config.Credentials.Type
+	providerId := ""
 	if providerID != nil {
-		// Try to find provider in environment-defined providers first
-		chatProviders := env.GetConfiguredChatProviders()
-		found := false
-		for _, provider := range chatProviders {
-			if provider.ProviderId == *providerID {
-				config.ExternalModel = &engine.ExternalModel{
-					Type:     modelType,
-					Token:    provider.APIKey,
-					Model:    input.Model,
-					Endpoint: provider.Endpoint,
-				}
-				found = true
-				break
-			}
-		}
-		// If provider not found in environment but token is provided, use the token
-		// This handles user-added providers that aren't in environment
-		if !found {
-			config.ExternalModel = &engine.ExternalModel{
-				Type:  modelType,
-				Model: input.Model,
-			}
-			if token != nil {
-				config.ExternalModel.Token = *token
-			}
-		}
-	} else {
-		config.ExternalModel = &engine.ExternalModel{
-			Type:  modelType,
-			Model: input.Model,
-		}
-		if token != nil {
-			config.ExternalModel.Token = *token
-		}
+		providerId = *providerID
+	}
+	requestToken := ""
+	if token != nil {
+		requestToken = *token
+	}
+	creds := env.ResolveProviderCredentials(providerId, requestToken, "", modelType)
+	config.ExternalModel = &engine.ExternalModel{
+		Type:     creds.ModelType,
+		Token:    creds.Token,
+		Model:    input.Model,
+		Endpoint: creds.Endpoint,
 	}
 	messages, err := plugin.Chat(config, schema, input.PreviousConversation, input.Query)
 

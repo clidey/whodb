@@ -376,9 +376,9 @@ func envProfileToConnection(profile types.DatabaseCredentials, dbType string, in
 	name := envProfileName(profile, dbType, index)
 
 	var advanced map[string]string
-	if profile.Port != "" || len(profile.Config) > 0 {
-		advanced = make(map[string]string, len(profile.Config)+1)
-		for key, value := range profile.Config {
+	if profile.Port != "" || len(profile.Advanced) > 0 {
+		advanced = make(map[string]string, len(profile.Advanced)+1)
+		for key, value := range profile.Advanced {
 			advanced[key] = value
 		}
 		if profile.Port != "" {
@@ -573,7 +573,7 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.RawExecuteWithParams(pluginConfig, query, params)
+	return plugin.RawExecute(pluginConfig, query, params...)
 }
 
 // ExecuteQueryWithContextAndParams executes a parameterized query with context support.
@@ -594,7 +594,7 @@ func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query st
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
-		return plugin.RawExecuteWithParams(pluginConfig, query, params)
+		return plugin.RawExecute(pluginConfig, query, params...)
 	})
 }
 

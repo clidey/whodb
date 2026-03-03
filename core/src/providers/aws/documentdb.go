@@ -21,11 +21,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/docdb"
 	docdbTypes "github.com/aws/aws-sdk-go-v2/service/docdb/types"
 
 	awsinfra "github.com/clidey/whodb/core/src/aws"
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
 )
 
@@ -33,24 +35,37 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 	var connections []providers.DiscoveredConnection
 	var nextToken *string
 
+	log.Debugf("DocumentDB: starting discovery for provider %s", p.config.ID)
+
 	for {
 		input := &docdb.DescribeDBClustersInput{
-			Marker: nextToken,
+			Marker:     nextToken,
+			MaxRecords: aws.Int32(50),
 		}
 
 		output, err := p.docdbClient.DescribeDBClusters(ctx, input)
 		if err != nil {
+			log.Errorf("DocumentDB: DescribeDBClusters failed: %v", err)
 			return nil, awsinfra.HandleAWSError(err)
 		}
 
+		log.Debugf("DocumentDB: DescribeDBClusters returned %d clusters", len(output.DBClusters))
+
 		for _, cluster := range output.DBClusters {
+			clusterID := aws.ToString(cluster.DBClusterIdentifier)
+			clusterEngine := aws.ToString(cluster.Engine)
+
 			if cluster.Engine != nil && !strings.Contains(strings.ToLower(*cluster.Engine), "docdb") {
+				log.Debugf("DocumentDB: skipping cluster %s (engine=%s)", clusterID, clusterEngine)
 				continue
 			}
 
 			conn := p.docdbClusterToConnection(&cluster)
 			if conn != nil {
+				log.Debugf("DocumentDB: cluster %s converted to connection (endpoint=%s)", clusterID, conn.Metadata["endpoint"])
 				connections = append(connections, *conn)
+			} else {
+				log.Warnf("DocumentDB: cluster %s returned nil connection", clusterID)
 			}
 		}
 
@@ -60,6 +75,7 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 		nextToken = output.Marker
 	}
 
+	log.Debugf("DocumentDB: completed, found %d connections", len(connections))
 	return connections, nil
 }
 
@@ -68,11 +84,14 @@ func (p *Provider) docdbClusterToConnection(cluster *docdbTypes.DBCluster) *prov
 		return nil
 	}
 
-	metadata := make(map[string]string)
-
-	if cluster.Endpoint != nil {
-		metadata["endpoint"] = *cluster.Endpoint
+	if cluster.Endpoint == nil {
+		log.Warnf("DocumentDB: cluster %s has no endpoint, skipping", *cluster.DBClusterIdentifier)
+		return nil
 	}
+
+	metadata := make(map[string]string)
+	metadata["endpoint"] = *cluster.Endpoint
+
 	if cluster.Port != nil {
 		metadata["port"] = strconv.Itoa(int(*cluster.Port))
 	}

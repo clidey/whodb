@@ -48,17 +48,6 @@ func (p *GenericProvider) GetType() LLMType {
 	return LLMType(p.providerId)
 }
 
-// GetName returns the provider name.
-func (p *GenericProvider) GetName() string {
-	return p.name
-}
-
-// RequiresAPIKey returns true as most generic providers require an API key.
-// Providers that don't need keys can leave APIKey empty in config.
-func (p *GenericProvider) RequiresAPIKey() bool {
-	return false // Allow optional API key for flexibility
-}
-
 // GetDefaultEndpoint returns an empty string as generic providers must specify their endpoint.
 func (p *GenericProvider) GetDefaultEndpoint() string {
 	return "" // No default - must be configured

@@ -18,18 +18,13 @@ package common
 
 import (
 	"fmt"
+	"net/url"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 )
-
-// ContainsString checks if a string slice contains a specific element.
-func ContainsString(slice []string, element string) bool {
-	return slices.Contains(slice, element)
-}
 
 // GetRecordValueOrDefault searches for a key in a slice of Records and returns its value,
 // or the provided default if the key is not found or has an empty value.
@@ -84,6 +79,38 @@ func GetWSL2WindowsHost() string {
 	return ""
 }
 
+// replaceHost replaces the hostname portion of a host string (which may include a port)
+// while preserving the port. For example, replaceHost("localhost:1234", "localhost", "172.1.2.3")
+// returns "172.1.2.3:1234".
+func replaceHost(hostWithPort, oldHost, newHost string) string {
+	return strings.Replace(hostWithPort, oldHost, newHost, 1)
+}
+
+// ResolveLocalURL rewrites a URL targeting localhost or 127.0.0.1 so it reaches
+// the host machine when running inside Docker or WSL2. Non-localhost URLs are
+// returned unchanged.
+func ResolveLocalURL(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	hostname := parsed.Hostname()
+	if hostname != "localhost" && hostname != "127.0.0.1" {
+		return rawURL
+	}
+	if IsRunningInsideDocker() {
+		parsed.Host = replaceHost(parsed.Host, hostname, "host.docker.internal")
+		return parsed.String()
+	}
+	if IsRunningInsideWSL2() {
+		if wslHost := GetWSL2WindowsHost(); wslHost != "" {
+			parsed.Host = replaceHost(parsed.Host, hostname, wslHost)
+			return parsed.String()
+		}
+	}
+	return rawURL
+}
+
 // FilterList returns a new slice containing only the elements for which the predicate returns true.
 func FilterList[T any](items []T, by func(input T) bool) []T {
 	filteredItems := []T{}
@@ -94,26 +121,6 @@ func FilterList[T any](items []T, by func(input T) bool) []T {
 	}
 	return filteredItems
 }
-
-// if you want to use the below, remove the logging call as it has a cyclical dependency. unused code but might be later on
-//// OpenBrowser opens the specified URL in the system's default browser.
-//// Supports Windows, macOS, and Linux. Logs a warning if the browser cannot be opened.
-//func OpenBrowser(url string) {
-//	var err error
-//	switch runtime.GOOS {
-//	case "windows":
-//		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-//	case "darwin":
-//		err = exec.Command("open", url).Start()
-//	case "linux":
-//		err = exec.Command("xdg-open", url).Start()
-//	default:
-//		// Unsupported platform - silently continue
-//	}
-//	if err != nil {
-//		log.Warnf("Failed to open browser: %v\n", err)
-//	}
-//}
 
 // StrPtrToBool converts a string pointer to a boolean.
 // Returns true if the string value is "true" (case-insensitive), false otherwise or if nil.

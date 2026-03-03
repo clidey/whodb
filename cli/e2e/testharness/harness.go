@@ -188,7 +188,7 @@ func SetupCleanEnv(t *testing.T) func() {
 	// Database prefixes to clear (including numbered variants like WHODB_POSTGRES_1)
 	dbPrefixes := []string{
 		"WHODB_POSTGRES", "WHODB_MYSQL", "WHODB_MARIADB", "WHODB_MONGODB",
-		"WHODB_REDIS", "WHODB_CLICKHOUSE", "WHODB_ELASTICSEARCH", "WHODB_SQLITE",
+		"WHODB_REDIS", "WHODB_CLICKHOUSE", "WHODB_ELASTICSEARCH", "WHODB_SQLITE3",
 	}
 
 	// Collect all matching env vars (including numbered ones)

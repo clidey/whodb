@@ -111,6 +111,8 @@ export default defineConfig({
   outputDir: `reports/test-results/${DATABASE}`,
   use: {
     baseURL: BASE_URL,
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000,
     screenshot: "only-on-failure",
     video: "retain-on-failure",
     trace: "retain-on-failure",

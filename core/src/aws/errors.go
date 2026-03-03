@@ -98,8 +98,12 @@ func handleAPIError(apiErr smithy.APIError) error {
 	// Throttling and rate limiting
 	case "ThrottlingException", "Throttling", "ProvisionedThroughputExceededException":
 		return ErrThrottling
-	case "RequestLimitExceeded", "TooManyRequestsException":
+	case "RequestLimitExceeded", "TooManyRequestsException", "LimitExceededException":
 		return ErrThrottling
+
+	// Connection/timeout
+	case "RequestTimeoutException":
+		return ErrConnectionFailed
 
 	// Service availability
 	case "ServiceUnavailable", "InternalServerError", "InternalError":
@@ -135,7 +139,7 @@ func isConnectionError(err error) bool {
 	if err == nil {
 		return false
 	}
-	errMsg := err.Error()
+	errMsg := strings.ToLower(err.Error())
 	connectionPatterns := []string{
 		"connection refused",
 		"no such host",
@@ -143,7 +147,9 @@ func isConnectionError(err error) bool {
 		"i/o timeout",
 		"network is unreachable",
 		"connection reset",
-		"EOF",
+		"eof",
+		"tls handshake timeout",
+		"context deadline exceeded",
 	}
 	for _, pattern := range connectionPatterns {
 		if strings.Contains(errMsg, pattern) {

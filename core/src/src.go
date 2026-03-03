@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import (
 	"github.com/clidey/whodb/core/src/types"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/migrate"
 	"github.com/clidey/whodb/core/src/mockdata"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 )
@@ -63,15 +64,20 @@ func InitializeEngine() *engine.Engine {
 
 	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
 
-	// Parse and register generic AI providers from environment configuration
-	env.GenericProviders = envconfig.ParseGenericProviders()
-	for _, provider := range env.GenericProviders {
+	// Parse and register generic AI providers from environment configuration.
+	// RegisterGenericProviders calls env.AddGenericProvider internally,
+	// so we iterate directly without pre-assigning env.GenericProviders.
+	for _, provider := range envconfig.ParseGenericProviders() {
 		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType, provider.BaseURL, provider.APIKey)
 	}
 
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {
 		initEE(MainEngine)
+	}
+
+	for _, warning := range migrate.Warnings() {
+		log.Warn(warning)
 	}
 
 	return MainEngine
@@ -119,7 +125,7 @@ func GetLoginCredentials(profile types.DatabaseCredentials) *engine.Credentials 
 		},
 	}
 
-	for key, value := range profile.Config {
+	for key, value := range profile.Advanced {
 		advanced = append(advanced, engine.Record{
 			Key:   key,
 			Value: value,

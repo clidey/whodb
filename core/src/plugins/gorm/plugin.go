@@ -245,13 +245,7 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
 		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		var fullTableName string
-		if schema != "" && p.Type != engine.DatabaseType_Sqlite3 {
-			fullTableName = schema + "." + storageUnit
-		} else {
-			fullTableName = storageUnit
-		}
-
+		fullTableName := p.FormTableName(schema, storageUnit)
 		columns, err := migrator.GetOrderedColumns(fullTableName)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
@@ -769,25 +763,40 @@ func (p *GormPlugin) WithTransaction(config *engine.PluginConfig, operation func
 	return err
 }
 
-// ExecuteInTransaction wraps common database operations in a transaction
-func (p *GormPlugin) ExecuteInTransaction(config *engine.PluginConfig, operations func(tx *gorm.DB) error) error {
-	return p.WithTransaction(config, func(txInterface any) error {
-		tx, ok := txInterface.(*gorm.DB)
-		if !ok {
-			return fmt.Errorf("invalid transaction type")
+// ExecuteRawSQL handles raw SQL execution with optional multi-statement support.
+// openMultiStatementDB is called when config.MultiStatement is true to get a DB connection
+// that supports multiple statements. Pass nil if multi-statement is not supported.
+func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStatementDB func(*engine.PluginConfig) (*gorm.DB, error), query string, params ...any) (*engine.GetRowsResult, error) {
+	multiStatement := config != nil && config.MultiStatement
+	dbFunc := p.DB
+	if multiStatement && openMultiStatementDB != nil {
+		dbFunc = openMultiStatementDB
+	}
+
+	return plugins.WithConnection(config, dbFunc, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		if multiStatement {
+			sqlDB, err := db.DB()
+			if err != nil {
+				return nil, err
+			}
+			_, err = sqlDB.Exec(query)
+			if err != nil {
+				return nil, err
+			}
+			return &engine.GetRowsResult{
+				Columns: []engine.Column{},
+				Rows:    [][]string{},
+			}, nil
 		}
-		return operations(tx)
+
+		rows, err := db.Raw(query, params...).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		return p.ConvertRawToRows(rows)
 	})
-}
-
-// AddRowInTx adds a row using an existing transaction
-func (p *GormPlugin) AddRowInTx(tx *gorm.DB, schema string, storageUnit string, values []engine.Record) error {
-	return p.addRowWithDB(tx, schema, storageUnit, values)
-}
-
-// ClearTableDataInTx clears table data using an existing transaction
-func (p *GormPlugin) ClearTableDataInTx(tx *gorm.DB, schema string, storageUnit string) error {
-	return p.clearTableDataWithDB(tx, schema, storageUnit)
 }
 
 // GetForeignKeyRelationships returns foreign key relationships for a table (default empty implementation)

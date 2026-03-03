@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,20 +137,3 @@ export const applyUICustomization = (settings: RootState['settings']) => {
   
 };
 
-/**
- * Resets all UI customization CSS variables to defaults
- */
-export const resetUICustomization = () => {
-  const root = document.documentElement;
-  
-  // Reset all custom properties
-  const allProperties = [
-    ...Object.keys(fontSizeMap.medium),
-    ...Object.keys(borderRadiusMap.medium),
-    ...Object.keys(spacingMap.comfortable),
-  ];
-  
-  allProperties.forEach(property => {
-    root.style.removeProperty(property);
-  });
-};

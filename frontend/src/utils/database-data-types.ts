@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,16 +113,6 @@ export function findTypeDefinition(typeId: string, databaseType: DatabaseType | 
     }
 
     return typeDef;
-}
-
-/**
- * Get valid data types for a database (config-driven)
- * @param databaseType The database type (can be CE or EE type)
- * @returns Array of valid data type IDs for the database
- */
-export function getDatabaseDataTypes(databaseType: DatabaseType | string): string[] {
-    const typeDefs = getDatabaseTypeDefinitions(databaseType);
-    return typeDefs.map(t => t.id);
 }
 
 /**

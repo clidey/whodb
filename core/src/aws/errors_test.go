@@ -207,3 +207,52 @@ func TestHandleAWSError_ConnectionPatterns(t *testing.T) {
 		}
 	}
 }
+
+func TestHandleAWSError_RequestTimeout(t *testing.T) {
+	err := &mockAPIError{code: "RequestTimeoutException", message: "timed out"}
+	result := HandleAWSError(err)
+	if !errors.Is(result, ErrConnectionFailed) {
+		t.Errorf("expected ErrConnectionFailed for RequestTimeoutException, got %v", result)
+	}
+}
+
+func TestHandleAWSError_LimitExceeded(t *testing.T) {
+	err := &mockAPIError{code: "LimitExceededException", message: "limit exceeded"}
+	result := HandleAWSError(err)
+	if !errors.Is(result, ErrThrottling) {
+		t.Errorf("expected ErrThrottling for LimitExceededException, got %v", result)
+	}
+}
+
+func TestIsConnectionError(t *testing.T) {
+	testCases := []struct {
+		msg      string
+		expected bool
+	}{
+		{"connection refused", true},
+		{"no such host", true},
+		{"dial tcp 1.2.3.4:443", true},
+		{"i/o timeout", true},
+		{"network is unreachable", true},
+		{"connection reset by peer", true},
+		{"EOF", true},
+		{"tls handshake timeout", true},
+		{"context deadline exceeded", true},
+		{"TLS Handshake Timeout", true}, // case-insensitive
+		{"Context Deadline Exceeded", true},
+		{"something else entirely", false},
+		{"", false},
+	}
+
+	for _, tc := range testCases {
+		result := isConnectionError(errors.New(tc.msg))
+		if result != tc.expected {
+			t.Errorf("isConnectionError(%q): expected %v, got %v", tc.msg, tc.expected, result)
+		}
+	}
+
+	// nil error
+	if isConnectionError(nil) {
+		t.Error("isConnectionError(nil): expected false")
+	}
+}

@@ -53,7 +53,6 @@ import {
     WhereCondition,
     WhereConditionType
 } from '@graphql';
-import keys from "lodash/keys";
 import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Navigate, useLocation, useNavigate} from "react-router-dom";
 import {CodeEditor} from "../../components/editor";
@@ -256,7 +255,7 @@ export const ExploreStorageUnit: FC = () => {
             return {whereColumns: [], whereColumnTypes: []};
         }
         if (rows?.Columns.length === 1 && rows?.Columns[0].Type === "Document" && isNoSQL(current?.Type as DatabaseType)) {
-            const whereColumns = keys(JSON.parse(rows?.Rows[0][0]));
+            const whereColumns = Object.keys(JSON.parse(rows?.Rows[0][0]));
             const whereColumnTypes = whereColumns.map(() => "string");
             return {whereColumns, whereColumnTypes}
         }
@@ -551,7 +550,7 @@ export const ExploreStorageUnit: FC = () => {
         if (isNoSQL(current?.Type as DatabaseType) && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
             try {
                 const json = JSON.parse(addRowData.document);
-                for (const key of keys(json)) {
+                for (const key of Object.keys(json)) {
                     const val = json[key];
                     // Convert non-string values to string for GraphQL
                     const stringValue = typeof val === 'object' && val !== null

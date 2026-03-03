@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,62 +221,4 @@ func (h *ErrorHandler) sanitizeErrorMessage(err error) string {
 	}
 
 	return msg
-}
-
-// WrapWithContext wraps an error with additional context
-func (h *ErrorHandler) WrapWithContext(err error, context string) error {
-	if err == nil {
-		return nil
-	}
-	return fmt.Errorf("%s: %w", context, err)
-}
-
-// IsRetryable determines if an error is retryable
-func (h *ErrorHandler) IsRetryable(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	// Connection and timeout errors are typically retryable
-	if h.isConnectionError(err) || h.isTimeoutError(err) {
-		return true
-	}
-
-	// Transaction errors might be retryable
-	if errors.Is(err, gorm.ErrInvalidTransaction) {
-		return true
-	}
-
-	errStr := strings.ToLower(err.Error())
-	return strings.Contains(errStr, "deadlock") ||
-		strings.Contains(errStr, "lock timeout") ||
-		strings.Contains(errStr, "serialization failure")
-}
-
-// GetErrorCode attempts to extract database-specific error codes
-func (h *ErrorHandler) GetErrorCode(err error) string {
-	if err == nil {
-		return ""
-	}
-
-	errStr := err.Error()
-
-	// PostgreSQL error codes (5 characters, like 23505)
-	if idx := strings.Index(errStr, "SQLSTATE "); idx != -1 {
-		if len(errStr) > idx+14 {
-			return errStr[idx+9 : idx+14]
-		}
-	}
-
-	// MySQL error codes (4 digits, like 1062)
-	if idx := strings.Index(errStr, "Error "); idx != -1 {
-		if len(errStr) > idx+9 {
-			code := errStr[idx+6 : idx+10]
-			if _, err := fmt.Sscanf(code, "%d", new(int)); err == nil {
-				return code
-			}
-		}
-	}
-
-	return ""
 }

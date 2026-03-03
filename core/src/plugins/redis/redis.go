@@ -590,11 +590,7 @@ func (p *RedisPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]en
 	return nil, errors.ErrUnsupported
 }
 
-func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *RedisPlugin) RawExecuteWithParams(config *engine.PluginConfig, query string, params []any) (*engine.GetRowsResult, error) {
+func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
 	return nil, errors.ErrUnsupported
 }
 
@@ -613,6 +609,8 @@ func (p *RedisPlugin) FormatValue(val any) string {
 func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return make(map[string]map[string]any), nil
 }
+
+func (p *RedisPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
 
 // ClearTableData - not supported for Redis
 func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {

@@ -60,7 +60,7 @@ help:
 build:
 	@echo "Building $(BINARY_NAME) $(VERSION)..."
 	@mkdir -p $(BUILD_DIR)
-	@go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
+	@go build -trimpath $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 clean:

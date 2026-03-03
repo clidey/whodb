@@ -31,7 +31,7 @@ import (
 
 // RawExecutePlugin defines the interface for executing raw SQL queries
 type RawExecutePlugin interface {
-	RawExecute(config *engine.PluginConfig, query string) (*engine.GetRowsResult, error)
+	RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error)
 }
 
 // ErrBAMLNotSupported is returned when AI features are used on unsupported platforms
@@ -60,3 +60,9 @@ func SetupAIClient(externalModel *engine.ExternalModel) []any {
 func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) any {
 	return nil
 }
+
+// BAMLConfigResolver resolves BAML provider string + options for a given provider type.
+type BAMLConfigResolver func(providerType, apiKey, endpoint, model string) (string, map[string]any, error)
+
+// RegisterBAMLConfigResolver is a no-op on unsupported platforms.
+func RegisterBAMLConfigResolver(resolver BAMLConfigResolver) {}

@@ -19,6 +19,9 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	rdstypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/providers"
 )
@@ -75,6 +78,7 @@ func TestMapRDSStatus(t *testing.T) {
 		{"restore-error", providers.ConnectionStatusFailed},
 		{"incompatible-credentials", providers.ConnectionStatusFailed},
 		{"incompatible-parameters", providers.ConnectionStatusFailed},
+		{"incompatible-options", providers.ConnectionStatusFailed},
 		{"unknown-status", providers.ConnectionStatusUnknown},
 		{"", providers.ConnectionStatusUnknown},
 	}
@@ -141,5 +145,103 @@ func TestMapRDSEngine_AuroraVariants(t *testing.T) {
 		if dbType != engine.DatabaseType_Postgres {
 			t.Errorf("mapRDSEngine(%s): expected Postgres, got %s", eng, dbType)
 		}
+	}
+}
+
+func newTestRDSProvider() *Provider {
+	p, _ := New(&Config{
+		ID:          "test-rds",
+		Name:        "Test RDS",
+		Region:      "us-west-2",
+		DiscoverRDS: true,
+	})
+	return p
+}
+
+func TestRDSInstanceToConnection_HappyPath(t *testing.T) {
+	p := newTestRDSProvider()
+	status := "available"
+	instance := &rdstypes.DBInstance{
+		DBInstanceIdentifier: aws.String("my-postgres"),
+		Engine:               aws.String("postgres"),
+		DBInstanceStatus:     &status,
+		Endpoint: &rdstypes.Endpoint{
+			Address: aws.String("my-postgres.abc.us-west-2.rds.amazonaws.com"),
+			Port:    aws.Int32(5432),
+		},
+		DBName: aws.String("mydb"),
+	}
+
+	conn := p.rdsInstanceToConnection(instance)
+	if conn == nil {
+		t.Fatal("expected non-nil connection")
+	}
+	if conn.DatabaseType != engine.DatabaseType_Postgres {
+		t.Errorf("expected Postgres, got %s", conn.DatabaseType)
+	}
+	if conn.Metadata["endpoint"] != "my-postgres.abc.us-west-2.rds.amazonaws.com" {
+		t.Errorf("unexpected endpoint: %s", conn.Metadata["endpoint"])
+	}
+	if conn.Metadata["port"] != "5432" {
+		t.Errorf("unexpected port: %s", conn.Metadata["port"])
+	}
+	if conn.Metadata["databaseName"] != "mydb" {
+		t.Errorf("unexpected databaseName: %s", conn.Metadata["databaseName"])
+	}
+	if conn.Status != providers.ConnectionStatusAvailable {
+		t.Errorf("expected Available status, got %s", conn.Status)
+	}
+}
+
+func TestRDSInstanceToConnection_NilEngine(t *testing.T) {
+	p := newTestRDSProvider()
+	instance := &rdstypes.DBInstance{
+		DBInstanceIdentifier: aws.String("my-instance"),
+		Engine:               nil,
+	}
+
+	conn := p.rdsInstanceToConnection(instance)
+	if conn != nil {
+		t.Error("expected nil for nil engine")
+	}
+}
+
+func TestRDSInstanceToConnection_NilID(t *testing.T) {
+	p := newTestRDSProvider()
+	instance := &rdstypes.DBInstance{
+		DBInstanceIdentifier: nil,
+		Engine:               aws.String("postgres"),
+	}
+
+	conn := p.rdsInstanceToConnection(instance)
+	if conn != nil {
+		t.Error("expected nil for nil ID")
+	}
+}
+
+func TestRDSInstanceToConnection_UnsupportedEngine(t *testing.T) {
+	p := newTestRDSProvider()
+	instance := &rdstypes.DBInstance{
+		DBInstanceIdentifier: aws.String("my-oracle"),
+		Engine:               aws.String("oracle-ee"),
+	}
+
+	conn := p.rdsInstanceToConnection(instance)
+	if conn != nil {
+		t.Error("expected nil for unsupported engine")
+	}
+}
+
+func TestRDSInstanceToConnection_NilEndpoint(t *testing.T) {
+	p := newTestRDSProvider()
+	instance := &rdstypes.DBInstance{
+		DBInstanceIdentifier: aws.String("my-postgres"),
+		Engine:               aws.String("postgres"),
+		Endpoint:             nil,
+	}
+
+	conn := p.rdsInstanceToConnection(instance)
+	if conn != nil {
+		t.Error("expected nil for nil endpoint")
 	}
 }

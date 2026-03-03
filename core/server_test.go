@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import (
 	"testing"
 	"time"
 
+	"errors"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
-	"github.com/pkg/errors"
 )
 
 //go:embed build/*

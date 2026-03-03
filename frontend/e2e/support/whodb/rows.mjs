@@ -42,7 +42,6 @@ export const rowsMethods = {
         await this.page.locator('[data-testid="submit-add-row-button"]').click();
         await this.page.locator('[data-testid="submit-add-row-button"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
         await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
-        await this.page.waitForTimeout(500);
         await this.page.locator("table tbody").waitFor({ state: "visible" });
     },
 
@@ -125,9 +124,8 @@ export const rowsMethods = {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             const targetRow = this.page.locator("table tbody tr").nth(rowIndex);
             await targetRow.scrollIntoViewIfNeeded();
-            await this.page.waitForTimeout(200);
+            await targetRow.waitFor({ state: "visible" });
             await targetRow.click({ button: "right", force: true });
-            await this.page.waitForTimeout(300);
 
             const menuExists =
                 (await this.page.locator('[data-testid="context-menu-edit-row"], [data-testid="context-menu-more-actions"]').count()) > 0;
@@ -138,6 +136,7 @@ export const rowsMethods = {
 
             if (attempt < maxRetries) {
                 await this.page.mouse.click(0, 0);
+                // Required: retry loop stabilization between attempts
                 await this.page.waitForTimeout(100);
             } else {
                 await this.page
@@ -173,6 +172,7 @@ export const rowsMethods = {
      * @param {boolean} cancel
      */
     async updateRow(rowIndex, columnIndex, text, cancel = true) {
+        // Required: state stabilization before opening context menu
         await this.page.waitForTimeout(500);
         await this.openContextMenu(rowIndex);
 

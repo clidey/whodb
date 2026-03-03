@@ -1,5 +1,9 @@
 name: Build Docker Images
 
+# Builds Docker images and populates the GHA buildx cache.
+# Images are NOT pushed here — the deploy workflow rebuilds from cache
+# and pushes with SBOM/provenance attestations.
+
 on:
   workflow_call:
     inputs:
@@ -12,13 +16,6 @@ on:
         required: false
         type: string
         default: 'ce'
-    outputs:
-      amd64-artifact:
-        description: 'AMD64 Docker artifact name'
-        value: docker-image-amd64
-      arm64-artifact:
-        description: 'ARM64 Docker artifact name'
-        value: docker-image-arm64
 
 permissions:
   contents: read
@@ -67,84 +64,19 @@ jobs:
         with:
           submodules: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with:
-          node-version: 'lts/*'
-
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-        with:
-          package_json_file: frontend/package.json
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
-      # - name: Setup pnpm cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pnpm-store-
-
-      # - name: Cache frontend build
-      #   id: frontend-cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: frontend/build
-      #     key: frontend-build-${{ inputs.edition }}-${{ hashFiles('frontend/package.json', 'frontend/pnpm-lock.yaml', 'frontend/tsconfig.json') }}
-      #     restore-keys: |
-      #       frontend-build-${{ inputs.edition }}-
-
-      - name: Build frontend
-        # Always build frontend since cache is disabled
-        working-directory: ./frontend
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
-        run: |
-          pnpm install
-          pnpm run build:${{ inputs.edition }}
-
-      # Upload source maps to PostHog for production error tracking
-      # This injects metadata into JS files and uploads .map files
-      # Only runs on amd64 to avoid duplicate uploads (frontend is identical across architectures)
-      - name: Upload source maps to PostHog
-        if: matrix.arch == 'amd64'
-        uses: PostHog/upload-source-maps@991172e085213c222c61d2ba6a0b9e57c81e5066 # v2.0.0
-        with:
-          directory: frontend/build
-          project-id: ${{ secrets.POSTHOG_PROJECT_ID }}
-          api-key: ${{ secrets.POSTHOG_API_KEY }}
-          release-version: ${{ inputs.version }}
-          delete-after-upload: true
-        continue-on-error: true  # Don't fail build if source map upload fails
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - name: Build Docker image
+      - name: Build Docker image (cache only)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: ./core/Dockerfile
           platforms: ${{ matrix.platform }}
           push: false
-          tags: clidey/whodb:${{ inputs.version }}-${{ matrix.arch }}
-          outputs: type=docker,dest=/tmp/whodb-docker-${{ matrix.arch }}.tar
+          load: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ inputs.version }}
             PLATFORM=docker
-
-      - name: Upload Docker artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: docker-image-${{ matrix.arch }}
-          path: /tmp/whodb-docker-${{ matrix.arch }}.tar
-          retention-days: 1

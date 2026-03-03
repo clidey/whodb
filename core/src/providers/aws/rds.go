@@ -87,12 +87,14 @@ func (p *Provider) rdsInstanceToConnection(instance *rdstypes.DBInstance) *provi
 		return nil
 	}
 
-	metadata := make(map[string]string)
-
-	if instance.Endpoint != nil {
-		metadata["endpoint"] = aws.ToString(instance.Endpoint.Address)
-		metadata["port"] = strconv.Itoa(int(aws.ToInt32(instance.Endpoint.Port)))
+	if instance.Endpoint == nil {
+		log.Warnf("RDS: instance %s has no endpoint, skipping", *instance.DBInstanceIdentifier)
+		return nil
 	}
+
+	metadata := make(map[string]string)
+	metadata["endpoint"] = aws.ToString(instance.Endpoint.Address)
+	metadata["port"] = strconv.Itoa(int(aws.ToInt32(instance.Endpoint.Port)))
 
 	if instance.DBName != nil {
 		metadata["databaseName"] = *instance.DBName
@@ -176,7 +178,7 @@ func mapRDSStatus(status *string) providers.ConnectionStatus {
 		return providers.ConnectionStatusStopped
 	case "deleting":
 		return providers.ConnectionStatusDeleting
-	case "failed", "restore-error", "incompatible-credentials", "incompatible-parameters":
+	case "failed", "restore-error", "incompatible-credentials", "incompatible-parameters", "incompatible-options":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

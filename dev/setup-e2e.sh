@@ -128,9 +128,8 @@ else
     echo "⚠️ cleanup-e2e.sh not found, continuing without cleanup"
 fi
 
-# Build test binary with coverage (with smart caching)
+# Build test binary with coverage
 BINARY_PATH="$PROJECT_ROOT/core/server.test"
-HASH_FILE="$PROJECT_ROOT/core/tmp/.test-binary-hash"
 mkdir -p "$PROJECT_ROOT/core/tmp"
 
 # Allow skipping build when binary is pre-built (e.g. CI artifact from a prior job)
@@ -138,66 +137,20 @@ if [ "${WHODB_SKIP_BUILD:-false}" = "true" ] && [ -f "$BINARY_PATH" ]; then
     echo "✅ Using pre-built test binary (WHODB_SKIP_BUILD=true)"
     echo "   Binary path: $BINARY_PATH"
 else
-    # Allow force rebuild via environment variable
-    if [ "${FORCE_REBUILD:-false}" = "true" ]; then
-        echo "🔨 Force rebuild requested (FORCE_REBUILD=true)"
-        rm -f "$BINARY_PATH" "$HASH_FILE"
-    fi
-
-    # Calculate hash of source files
-    calculate_source_hash() {
-        if [ "$EDITION" = "ee" ]; then
-            find "$PROJECT_ROOT/core" "$PROJECT_ROOT/ee" -name "*.go" -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1
-        else
-            find "$PROJECT_ROOT/core" -name "*.go" -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1
+    if [ "$EDITION" = "ee" ]; then
+        if [ ! -d "$PROJECT_ROOT/ee" ]; then
+            echo "❌ EE directory not found. Cannot run EE tests."
+            exit 1
         fi
-    }
-
-    CURRENT_HASH=$(calculate_source_hash)
-    NEEDS_REBUILD=true
-
-    # Check if we can skip rebuild
-    if [ -f "$BINARY_PATH" ] && [ -f "$HASH_FILE" ]; then
-        STORED_HASH=$(cat "$HASH_FILE")
-        if [ "$CURRENT_HASH" = "$STORED_HASH" ]; then
-            echo "✅ Using cached test binary - NO REBUILD NEEDED"
-            echo "   Previous hash: ${STORED_HASH:0:8}..."
-            echo "   Current hash:  ${CURRENT_HASH:0:8}... (matches)"
-            echo "   Binary path:   $BINARY_PATH"
-            echo "   Last modified: $(date -r "$BINARY_PATH" '+%Y-%m-%d %H:%M:%S')"
-            NEEDS_REBUILD=false
-        else
-            echo "🔄 Source files changed - REBUILD REQUIRED"
-            echo "   Previous hash: ${STORED_HASH:0:8}..."
-            echo "   Current hash:  ${CURRENT_HASH:0:8}... (different)"
-        fi
+        echo "🔧 Building EE test binary with coverage..."
+        cd "$PROJECT_ROOT/core"
+        GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
+        echo "✅ EE test binary built successfully"
     else
-        if [ ! -f "$BINARY_PATH" ]; then
-            echo "🔨 Test binary not found - BUILD REQUIRED"
-        else
-            echo "🔨 Hash file missing - BUILD REQUIRED"
-        fi
-    fi
-
-    if [ "$NEEDS_REBUILD" = "true" ]; then
-        if [ "$EDITION" = "ee" ]; then
-            # Check if EE directory exists
-            if [ ! -d "$PROJECT_ROOT/ee" ]; then
-                echo "❌ EE directory not found. Cannot run EE tests."
-                exit 1
-            fi
-            echo "🔧 Building EE test binary with coverage..."
-            cd "$PROJECT_ROOT/core"
-            GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
-            echo "✅ EE test binary built successfully"
-        else
-            echo "🔧 Building CE test binary with coverage..."
-            cd "$PROJECT_ROOT/core"
-            go test -coverpkg=./... -c -o server.test
-            echo "✅ CE test binary built successfully"
-        fi
-        # Store hash for next run
-        echo "$CURRENT_HASH" > "$HASH_FILE"
+        echo "🔧 Building CE test binary with coverage..."
+        cd "$PROJECT_ROOT/core"
+        go test -coverpkg=./... -c -o server.test
+        echo "✅ CE test binary built successfully"
     fi
 fi
 
@@ -371,7 +324,8 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         done
 
         if [ "$FAILED" = "true" ]; then
-            echo "⚠️ Some services failed to start, but continuing..."
+            echo "❌ Some services failed to start. Aborting."
+            exit 1
         else
             echo "✅ All services are ready!"
         fi
@@ -459,8 +413,8 @@ else
 fi
 COUNTER=0
 while [ $COUNTER -lt $MAX_WAIT ]; do
-    # Check if port 8080 is listening
-    if nc -z localhost 8080 2>/dev/null; then
+    # Check if the server is ready to handle requests (not just listening)
+    if curl -sf http://localhost:8080/health >/dev/null 2>&1; then
         echo "✅ Test server is ready and listening on port 8080 (PID: $TEST_SERVER_PID)"
         break
     fi

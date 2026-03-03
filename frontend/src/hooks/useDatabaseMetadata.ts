@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,13 +96,3 @@ export const useDatabaseMetadata = () => {
     };
 };
 
-/**
- * Get database metadata from Redux store (non-hook version for utilities)
- * This function can be used outside of React components.
- *
- * @param store The Redux store
- * @returns The database metadata state
- */
-export const getDatabaseMetadataFromStore = (store: { getState: () => { databaseMetadata: ReturnType<typeof import('../store/database-metadata').databaseMetadataSlice.getInitialState> } }) => {
-    return store.getState().databaseMetadata;
-};

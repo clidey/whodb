@@ -32,7 +32,6 @@ import (
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -120,18 +119,6 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 
 	t.Setenv("WHODB_OLLAMA_HOST", "ollama.test")
 	t.Setenv("WHODB_OLLAMA_PORT", "11434")
-
-	originalCustom := env.CustomModels
-	originalCompatKey := env.OpenAICompatibleAPIKey
-	originalCompatEndpoint := env.OpenAICompatibleEndpoint
-	env.CustomModels = []string{"mixtral"}
-	env.OpenAICompatibleAPIKey = "token"
-	env.OpenAICompatibleEndpoint = "http://compat.local"
-	t.Cleanup(func() {
-		env.CustomModels = originalCustom
-		env.OpenAICompatibleAPIKey = originalCompatKey
-		env.OpenAICompatibleEndpoint = originalCompatEndpoint
-	})
 
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.ChatFunc = func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error) {

@@ -19,8 +19,7 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
-
-	"github.com/clidey/whodb/core/src/common"
+	"slices"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -46,7 +45,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 		hasPKs := len(pkColumns) > 0
 
 		for column, strValue := range values {
-			isPK := common.ContainsString(pkColumns, column)
+			isPK := slices.Contains(pkColumns, column)
 
 			// Only convert columns we need for the WHERE clause:
 			// - PK columns if PKs exist

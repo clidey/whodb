@@ -18,7 +18,7 @@ FROM golang:1.26-alpine3.23 AS builder
 
 ARG VERSION=dev
 
-RUN apk update && apk add --no-cache gcc musl-dev git bash curl
+RUN apk add --no-cache gcc musl-dev git bash curl
 
 WORKDIR /app
 
@@ -44,7 +44,9 @@ COPY cli/ ./cli/
 # Build CLI binary with version injection
 WORKDIR /app/cli
 ARG TARGETARCH
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build \
+RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
+    CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto" \
+    CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath \
     -ldflags "-s -w -X github.com/clidey/whodb/cli/pkg/version.Version=${VERSION}" \
     -o /whodb-cli .
 
@@ -66,7 +68,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' /app/core/go.mod | awk '{p
 # Final stage
 FROM alpine:3.23
 
-RUN apk update && apk add --no-cache ca-certificates libgcc
+RUN apk add --no-cache ca-certificates libgcc
 
 WORKDIR /app
 

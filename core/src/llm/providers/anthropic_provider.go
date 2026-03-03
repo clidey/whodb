@@ -44,16 +44,6 @@ func (p *AnthropicProvider) GetType() LLMType {
 	return Anthropic_LLMType
 }
 
-// GetName returns the provider name.
-func (p *AnthropicProvider) GetName() string {
-	return "Anthropic"
-}
-
-// RequiresAPIKey returns true as Anthropic requires an API key.
-func (p *AnthropicProvider) RequiresAPIKey() bool {
-	return true
-}
-
 // GetDefaultEndpoint returns the default Anthropic API endpoint.
 func (p *AnthropicProvider) GetDefaultEndpoint() string {
 	return "https://api.anthropic.com/v1"
@@ -123,12 +113,12 @@ func (p *AnthropicProvider) GetBAMLClientType() string {
 
 // CreateBAMLClientOptions creates BAML client options for Anthropic.
 func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
-	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
+	opts := map[string]any{"model": model}
+	if config.APIKey != "" {
+		opts["api_key"] = config.APIKey
 	}
-
-	return map[string]any{
-		"model":   model,
-		"api_key": config.APIKey,
-	}, nil
+	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
+		opts["base_url"] = config.Endpoint
+	}
+	return opts, nil
 }

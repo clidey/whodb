@@ -19,6 +19,10 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	docdbTypes "github.com/aws/aws-sdk-go-v2/service/docdb/types"
+
+	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/providers"
 )
 
@@ -67,5 +71,69 @@ func TestMapDocDBStatus_CaseInsensitive(t *testing.T) {
 		if result != providers.ConnectionStatusAvailable {
 			t.Errorf("mapDocDBStatus(%s): expected Available, got %s", s, result)
 		}
+	}
+}
+
+func newTestDocDBProvider() *Provider {
+	p, _ := New(&Config{
+		ID:                 "test-docdb",
+		Name:               "Test DocumentDB",
+		Region:             "us-west-2",
+		DiscoverDocumentDB: true,
+	})
+	return p
+}
+
+func TestDocDBClusterToConnection_HappyPath(t *testing.T) {
+	p := newTestDocDBProvider()
+	status := "available"
+	cluster := &docdbTypes.DBCluster{
+		DBClusterIdentifier: aws.String("my-docdb"),
+		Endpoint:            aws.String("my-docdb.cluster-abc.us-west-2.docdb.amazonaws.com"),
+		Port:                aws.Int32(27017),
+		Status:              &status,
+	}
+
+	conn := p.docdbClusterToConnection(cluster)
+	if conn == nil {
+		t.Fatal("expected non-nil connection")
+	}
+	if conn.DatabaseType != engine.DatabaseType_DocumentDB {
+		t.Errorf("expected DocumentDB, got %s", conn.DatabaseType)
+	}
+	if conn.Metadata["endpoint"] != "my-docdb.cluster-abc.us-west-2.docdb.amazonaws.com" {
+		t.Errorf("unexpected endpoint: %s", conn.Metadata["endpoint"])
+	}
+	if conn.Metadata["port"] != "27017" {
+		t.Errorf("unexpected port: %s", conn.Metadata["port"])
+	}
+	if conn.Status != providers.ConnectionStatusAvailable {
+		t.Errorf("expected Available status, got %s", conn.Status)
+	}
+}
+
+func TestDocDBClusterToConnection_NilID(t *testing.T) {
+	p := newTestDocDBProvider()
+	cluster := &docdbTypes.DBCluster{
+		DBClusterIdentifier: nil,
+		Endpoint:            aws.String("some-endpoint"),
+	}
+
+	conn := p.docdbClusterToConnection(cluster)
+	if conn != nil {
+		t.Error("expected nil for nil ID")
+	}
+}
+
+func TestDocDBClusterToConnection_NilEndpoint(t *testing.T) {
+	p := newTestDocDBProvider()
+	cluster := &docdbTypes.DBCluster{
+		DBClusterIdentifier: aws.String("my-docdb"),
+		Endpoint:            nil,
+	}
+
+	conn := p.docdbClusterToConnection(cluster)
+	if conn != nil {
+		t.Error("expected nil for nil endpoint")
 	}
 }

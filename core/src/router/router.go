@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,19 @@ func (w *statusResponseWriter) WriteHeader(code int) {
 	w.ResponseWriter.WriteHeader(code)
 }
 
+// healthCheckMiddleware responds to GET /health without requiring authentication.
+// Used by E2E setup scripts to verify the server is ready to handle requests.
+func healthCheckMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.URL.Path == "/health" {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ok"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // accessLogMiddleware logs HTTP requests with method, path, status, duration, host, and remote address.
 func accessLogMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +112,7 @@ func setupMiddlewares(router *chi.Mux) {
 
 	middlewares := []func(http.Handler) http.Handler{
 		accessLogMiddleware,
+		healthCheckMiddleware,
 		middleware.ThrottleBacklog(100, 50, time.Second*5),
 		middleware.RequestID,
 		middleware.RealIP,
