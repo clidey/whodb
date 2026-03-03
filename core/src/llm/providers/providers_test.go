@@ -69,8 +69,12 @@ func TestGetBAMLConfig_RoutesToGenericProvider(t *testing.T) {
 	if opts["default_role"] != "user" {
 		t.Fatalf("expected default_role 'user' for generic provider, got %v", opts["default_role"])
 	}
-	if opts["request_timeout_ms"] != 60000 {
-		t.Fatalf("expected request_timeout_ms 60000 for generic provider, got %v", opts["request_timeout_ms"])
+	httpOpts, ok := opts["http"].(map[string]any)
+	if !ok {
+		t.Fatal("expected http block in opts")
+	}
+	if httpOpts["request_timeout_ms"] != 60000 {
+		t.Fatalf("expected http.request_timeout_ms 60000 for generic provider, got %v", httpOpts["request_timeout_ms"])
 	}
 }
 
@@ -81,7 +85,7 @@ func TestGetBAMLConfig_ErrorsForUnregisteredProvider(t *testing.T) {
 	}
 }
 
-// --- GenericProvider tests (proving default_role/request_timeout_ms are set) ---
+// --- GenericProvider tests (proving default_role and http.request_timeout_ms are set) ---
 
 func TestGenericProvider_CreateBAMLClientOptions_IncludesDefaults(t *testing.T) {
 	p := NewGenericProvider("custom", "Custom Provider", nil, "openai-generic")
@@ -101,8 +105,12 @@ func TestGenericProvider_CreateBAMLClientOptions_IncludesDefaults(t *testing.T) 
 	if opts["default_role"] != "user" {
 		t.Fatalf("expected default_role 'user', got %v", opts["default_role"])
 	}
-	if opts["request_timeout_ms"] != 60000 {
-		t.Fatalf("expected request_timeout_ms 60000, got %v", opts["request_timeout_ms"])
+	httpOpts, ok := opts["http"].(map[string]any)
+	if !ok {
+		t.Fatal("expected http block in opts")
+	}
+	if httpOpts["request_timeout_ms"] != 60000 {
+		t.Fatalf("expected http.request_timeout_ms 60000, got %v", httpOpts["request_timeout_ms"])
 	}
 	if opts["base_url"] != "http://custom.api/v1" {
 		t.Fatalf("expected base_url, got %v", opts["base_url"])

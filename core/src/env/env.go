@@ -64,6 +64,11 @@ var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
 
 var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
+var GoogleAIAPIKey = os.Getenv("WHODB_GOOGLE_AI_API_KEY")
+var GoogleAIModels = os.Getenv("WHODB_GOOGLE_AI_MODELS")
+var GoogleAIBaseURL = os.Getenv("WHODB_GOOGLE_AI_BASE_URL")
+var GoogleAIName = os.Getenv("WHODB_GOOGLE_AI_NAME")
+
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })

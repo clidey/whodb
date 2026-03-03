@@ -201,3 +201,52 @@ func ParseGenericProviders() []env.GenericProviderConfig {
 
 	return providers
 }
+
+// ParseGoogleAIProvider reads WHODB_GOOGLE_AI_* environment variables and returns
+// a GenericProviderConfig for Google AI (Gemini). Returns nil if not configured.
+//
+// Environment variables:
+//   - WHODB_GOOGLE_AI_API_KEY: API key (required; falls back to GOOGLE_API_KEY)
+//   - WHODB_GOOGLE_AI_MODELS: Comma-separated model list (required, no discovery API)
+//   - WHODB_GOOGLE_AI_BASE_URL: Optional, defaults to Google's generative language API
+//   - WHODB_GOOGLE_AI_NAME: Optional display name, defaults to "Google AI"
+func ParseGoogleAIProvider() *env.GenericProviderConfig {
+	apiKey := env.GoogleAIAPIKey
+	if apiKey == "" {
+		apiKey = os.Getenv("GOOGLE_API_KEY")
+	}
+	if apiKey == "" {
+		return nil
+	}
+
+	modelsStr := env.GoogleAIModels
+	if modelsStr == "" {
+		return nil
+	}
+
+	models := common.FilterList(strings.Split(modelsStr, ","), func(item string) bool {
+		return strings.TrimSpace(item) != ""
+	})
+	if len(models) == 0 {
+		return nil
+	}
+
+	baseURL := env.GoogleAIBaseURL
+	if baseURL == "" {
+		baseURL = "https://generativelanguage.googleapis.com/v1beta"
+	}
+
+	name := env.GoogleAIName
+	if name == "" {
+		name = "Google AI"
+	}
+
+	return &env.GenericProviderConfig{
+		ProviderId: "google-ai-1",
+		Name:       name,
+		ClientType: "google-ai",
+		BaseURL:    baseURL,
+		APIKey:     apiKey,
+		Models:     models,
+	}
+}

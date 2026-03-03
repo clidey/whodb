@@ -113,9 +113,11 @@ func (p *OllamaProvider) CreateBAMLClientOptions(config *ProviderConfig, model s
 	baseURL := strings.TrimSuffix(config.Endpoint, "/api") + "/v1"
 
 	return map[string]any{
-		"base_url":           baseURL,
-		"model":              model,
-		"default_role":       "user",
-		"request_timeout_ms": 60000,
+		"base_url":     baseURL,
+		"model":        model,
+		"default_role": "user",
+		"http": map[string]any{
+			"request_timeout_ms": 60000,
+		},
 	}, nil
 }

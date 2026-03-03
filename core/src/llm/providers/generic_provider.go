@@ -79,10 +79,12 @@ func (p *GenericProvider) CreateBAMLClientOptions(config *ProviderConfig, model 
 	}
 
 	opts := map[string]any{
-		"base_url":           config.Endpoint,
-		"model":              model,
-		"default_role":       "user",
-		"request_timeout_ms": 60000,
+		"base_url":     config.Endpoint,
+		"model":        model,
+		"default_role": "user",
+		"http": map[string]any{
+			"request_timeout_ms": 60000,
+		},
 	}
 
 	// Only include api_key if provided

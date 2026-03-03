@@ -71,6 +71,12 @@ func InitializeEngine() *engine.Engine {
 		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType, provider.BaseURL, provider.APIKey)
 	}
 
+	// Register Google AI provider if configured via WHODB_GOOGLE_AI_* env vars
+	if p := envconfig.ParseGoogleAIProvider(); p != nil {
+		llm.RegisterGenericProviders(p.Name, p.ProviderId, p.Models, p.ClientType, p.BaseURL, p.APIKey)
+		log.Infof("Registered AI provider: %s (%s) with %d model(s)", p.Name, p.ProviderId, len(p.Models))
+	}
+
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {
 		initEE(MainEngine)
