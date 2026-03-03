@@ -18,6 +18,7 @@ package postgres
 
 import (
 	"maps"
+	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -56,6 +57,7 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 	pgxConfig.User = connectionInput.Username
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database
+	pgxConfig.ConnectTimeout = time.Duration(connectionInput.ConnectionTimeout) * time.Second
 
 	// Use simpler protocol for multi-statement SQL scripts
 	if multiStatement {

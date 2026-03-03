@@ -69,7 +69,7 @@ Parsed in `core/src/plugins/gorm/db.go`.
 | `HTTP Protocol` | `disable` | Use HTTP protocol (ClickHouse) |
 | `Readonly` | `disable` | Read-only mode (ClickHouse) |
 | `Debug` | `disable` | Debug mode (ClickHouse) |
-| `Connection Timeout` | `90` | Connection timeout in seconds |
+| `Connection Timeout` | `90` | PostgreSQL, MySQL, MariaDB, ClickHouse. Connection timeout in seconds |
 
 ### SSL/TLS options
 
