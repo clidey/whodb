@@ -16,7 +16,11 @@
 
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/clidey/whodb/core/src/migrate"
+)
 
 // DatabaseCredentials holds database connection details parsed from environment
 // variables or configuration files. The Advanced field accepts both "advanced"
@@ -50,6 +54,7 @@ func (d *DatabaseCredentials) UnmarshalJSON(data []byte) error {
 	}
 	if d.Advanced == nil && aux.Config != nil {
 		d.Advanced = aux.Config
+		migrate.DeprecatedConfigKey = true
 	}
 	return nil
 }

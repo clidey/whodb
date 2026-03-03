@@ -30,6 +30,8 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/migrate"
 	"github.com/clidey/whodb/core/src/mockdata"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 )
@@ -72,6 +74,10 @@ func InitializeEngine() *engine.Engine {
 	// Initialize Enterprise Edition plugins if available
 	if initEE != nil {
 		initEE(MainEngine)
+	}
+
+	for _, warning := range migrate.Warnings() {
+		log.Warn(warning)
 	}
 
 	return MainEngine

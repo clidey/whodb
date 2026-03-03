@@ -387,6 +387,49 @@ This removes the API key and disconnects the provider. You'll need to reconfigur
 </Step>
 </Steps>
 
+### Custom Providers via Environment Variables
+
+You can connect any OpenAI-compatible AI provider (LM Studio, OpenRouter, vLLM, etc.) using `WHODB_AI_GENERIC_<ID>_*` environment variables. This is useful for Docker deployments, self-hosted models, or providers not built into the UI.
+
+Each provider needs a unique `<ID>` (e.g., `LMSTUDIO`, `OPENROUTER`) and up to five variables:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `WHODB_AI_GENERIC_<ID>_NAME` | No | `<ID>` | Display name shown in the provider dropdown |
+| `WHODB_AI_GENERIC_<ID>_TYPE` | No | `openai-generic` | Client type (leave default for OpenAI-compatible APIs) |
+| `WHODB_AI_GENERIC_<ID>_BASE_URL` | Yes | | API base URL (e.g., `http://localhost:1234/v1`) |
+| `WHODB_AI_GENERIC_<ID>_API_KEY` | No | | API key if required by the provider |
+| `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | | Comma-separated list of model names |
+
+<CodeGroup>
+```bash LM Studio (local)
+export WHODB_AI_GENERIC_LMSTUDIO_NAME="LM Studio"
+export WHODB_AI_GENERIC_LMSTUDIO_BASE_URL="http://localhost:1234/v1"
+export WHODB_AI_GENERIC_LMSTUDIO_MODELS="mistral-7b,llama-3-8b"
+```
+```bash OpenRouter (cloud)
+export WHODB_AI_GENERIC_OPENROUTER_NAME="OpenRouter"
+export WHODB_AI_GENERIC_OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
+export WHODB_AI_GENERIC_OPENROUTER_API_KEY="your_key_here"
+export WHODB_AI_GENERIC_OPENROUTER_MODELS="google/gemini-2.0-flash-001,anthropic/claude-3.5-sonnet"
+```
+```yaml Docker Compose
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - WHODB_AI_GENERIC_LMSTUDIO_NAME=LM Studio
+      - WHODB_AI_GENERIC_LMSTUDIO_BASE_URL=http://host.docker.internal:1234/v1
+      - WHODB_AI_GENERIC_LMSTUDIO_MODELS=mistral-7b,llama-3-8b
+```
+</CodeGroup>
+
+<Info>
+You can configure multiple generic providers at the same time — each `<ID>` creates a separate entry in the provider dropdown. The `BASE_URL` and `MODELS` variables are required; all others are optional.
+</Info>
+
 ## Provider Comparison
 
 Choose the right provider for your needs:

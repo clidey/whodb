@@ -200,19 +200,74 @@ WhoDB can be configured using environment variables or command-line flags:
 
 ### Environment Variables
 
+#### Server
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WHODB_PORT` | Port to run WhoDB on | `8080` |
-| `WHODB_HOST` | Host address to bind to | `0.0.0.0` |
+| `PORT` | TCP port WhoDB listens on | `8080` |
 | `WHODB_LOG_LEVEL` | Logging level (case-insensitive): `debug`, `info`, `warn`, `error`, `none` | `info` |
-| `WHODB_LOG_FORMAT` | Log output format: `json` | `text` |
-| `WHODB_LOG_FILE` | Redirect all non-HTTP logs to a file instead of stdout. Use `default` for `/var/log/whodb/whodb.log`, or specify a custom path | unset (stdout) |
-| `WHODB_ACCESS_LOG_FILE` | Redirect all HTTP access logs to a dedicated file. Use `default` for `/var/log/whodb/whodb.access.log`, or specify a custom path | unset (disabled) |
-| `WHODB_DISABLE_CREDENTIAL_FORM` | Disable manual DB credential form on the login page; allow login only via preconfigured connections (environment profiles, cloud providers, etc.) | `false` |
+| `WHODB_LOG_FORMAT` | Log output format: `json` or `text` | `text` |
+| `WHODB_LOG_FILE` | Redirect all non-HTTP logs to a file. `default` uses `/var/log/whodb/whodb.log`, or specify a custom path | unset (stdout) |
+| `WHODB_ACCESS_LOG_FILE` | Redirect HTTP access logs to a file. `default` uses `/var/log/whodb/whodb.access.log`, or specify a custom path | unset (disabled) |
+| `WHODB_TOKENS` | Comma-separated static tokens to restrict API/UI access | unset |
+| `WHODB_ALLOWED_ORIGINS` | Comma-separated CORS origins (defaults to all origins) | unset |
+| `WHODB_DISABLE_CREDENTIAL_FORM` | Set `true` to hide the database credential form on the login page | `false` |
+| `WHODB_MAX_PAGE_SIZE` | Maximum number of rows returned per page | `10000` |
+| `WHODB_DISABLE_MOCK_DATA_GENERATION` | Disable mock data generation. `*` disables for all tables, or a comma-separated list of table names to disable selectively (e.g., `logs, metrics`) | unset |
 
 <Note>
 The `default` log paths write to `/var/log/whodb/`, which requires root access. This works out of the box in Docker (which runs as root by default) but not for local development. For local use, specify a custom path instead (e.g., `WHODB_LOG_FILE=./whodb.log`).
 </Note>
+
+#### Database Connection Profiles
+
+| Variable | Description |
+|----------|-------------|
+| `WHODB_POSTGRES` | Pre-configure PostgreSQL connection profiles (JSON array) |
+| `WHODB_MYSQL` | Pre-configure MySQL connection profiles (JSON array) |
+| `WHODB_MARIADB` | Pre-configure MariaDB connection profiles (JSON array) |
+| `WHODB_SQLITE3` | Pre-configure SQLite connection profiles (JSON array) |
+| `WHODB_MONGODB` | Pre-configure MongoDB connection profiles (JSON array) |
+| `WHODB_REDIS` | Pre-configure Redis connection profiles (JSON array) |
+| `WHODB_CLICKHOUSE` | Pre-configure ClickHouse connection profiles (JSON array) |
+| `WHODB_ELASTICSEARCH` | Pre-configure Elasticsearch connection profiles (JSON array) |
+
+See [Database Connection Profiles](#database-connection-profiles) below for JSON format details.
+
+#### AI Providers
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WHODB_OLLAMA_HOST` | Ollama server hostname | `localhost` (`host.docker.internal` in Docker) |
+| `WHODB_OLLAMA_PORT` | Ollama server port | `11434` |
+| `WHODB_OLLAMA_NAME` | Display name for Ollama in the provider dropdown | unset |
+| `WHODB_OPENAI_API_KEY` | OpenAI API key | unset |
+| `WHODB_OPENAI_ENDPOINT` | OpenAI API endpoint | `https://api.openai.com/v1` |
+| `WHODB_OPENAI_NAME` | Display name for OpenAI in the provider dropdown | unset |
+| `WHODB_ANTHROPIC_API_KEY` | Anthropic API key | unset |
+| `WHODB_ANTHROPIC_ENDPOINT` | Anthropic API endpoint | `https://api.anthropic.com/v1` |
+| `WHODB_ANTHROPIC_NAME` | Display name for Anthropic in the provider dropdown | unset |
+
+#### Generic AI Providers
+
+Connect any OpenAI-compatible provider using `WHODB_AI_GENERIC_<ID>_*` variables, where `<ID>` is a unique identifier (e.g., `LMSTUDIO`, `OPENROUTER`).
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `WHODB_AI_GENERIC_<ID>_NAME` | No | Display name in provider dropdown | `<ID>` |
+| `WHODB_AI_GENERIC_<ID>_TYPE` | No | Client type | `openai-generic` |
+| `WHODB_AI_GENERIC_<ID>_BASE_URL` | Yes | API base URL | |
+| `WHODB_AI_GENERIC_<ID>_API_KEY` | No | API key | |
+| `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | Comma-separated list of model names | |
+
+See [Setting Up AI Providers](/ai/setup-providers#custom-providers-via-environment-variables) for examples.
+
+#### Cloud Providers
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WHODB_ENABLE_AWS_PROVIDER` | Set `true` to enable AWS provider (RDS, ElastiCache, DocumentDB discovery) | `false` |
+| `WHODB_AWS_PROVIDER` | JSON array of AWS provider configurations | unset |
 
 ### Database Connection Profiles
 

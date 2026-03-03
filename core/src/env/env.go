@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/migrate"
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
@@ -157,9 +158,9 @@ func GetConfiguredChatProviders() []ChatProvider {
 		})
 	}
 
-	// Warn if legacy OpenAI-Compatible env vars are still set
+	// Flag if legacy OpenAI-Compatible env vars are still set
 	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
-		fmt.Fprintln(os.Stderr, "[DEPRECATED] WHODB_OPENAI_COMPATIBLE_ENDPOINT, WHODB_OPENAI_COMPATIBLE_API_KEY, and WHODB_CUSTOM_MODELS are deprecated and no longer have any effect. Use WHODB_AI_GENERIC_<ID>_* environment variables instead. See documentation for details.")
+		migrate.DeprecatedOpenAICompatibleEnv = true
 	}
 
 	// Add all generic providers

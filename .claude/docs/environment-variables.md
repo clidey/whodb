@@ -136,31 +136,48 @@ export WHODB_POSTGRES_1='{
 
 ## AI Provider Variables
 
-| Variable | Description |
-|---|---|
-| `WHODB_OLLAMA_HOST` | Ollama server hostname |
-| `WHODB_OLLAMA_PORT` | Ollama server port |
-| `WHODB_OPENAI_API_KEY` | OpenAI API key |
-| `WHODB_OPENAI_ENDPOINT` | OpenAI API endpoint |
-| `WHODB_ANTHROPIC_API_KEY` | Anthropic API key |
-| `WHODB_ANTHROPIC_ENDPOINT` | Anthropic API endpoint |
+| Variable | Default | Description |
+|---|---|---|
+| `WHODB_OLLAMA_HOST` | `localhost` (`host.docker.internal` in Docker) | Ollama server hostname |
+| `WHODB_OLLAMA_PORT` | `11434` | Ollama server port |
+| `WHODB_OLLAMA_NAME` | unset | Display name for Ollama in the provider dropdown |
+| `WHODB_OPENAI_API_KEY` | unset | OpenAI API key |
+| `WHODB_OPENAI_ENDPOINT` | `https://api.openai.com/v1` | OpenAI API endpoint |
+| `WHODB_OPENAI_NAME` | unset | Display name for OpenAI in the provider dropdown |
+| `WHODB_ANTHROPIC_API_KEY` | unset | Anthropic API key |
+| `WHODB_ANTHROPIC_ENDPOINT` | `https://api.anthropic.com/v1` | Anthropic API endpoint |
+| `WHODB_ANTHROPIC_NAME` | unset | Display name for Anthropic in the provider dropdown |
 
 ### Generic AI providers
 
-Configured via multiple variables per provider. See `core/src/envconfig/envconfig.go:ParseGenericProviders()`.
+Connect any OpenAI-compatible provider. Configured via multiple variables per provider with a unique `<ID>`. See `core/src/envconfig/envconfig.go:ParseGenericProviders()`.
 
-```bash
-WHODB_AI_GENERIC_<ID>_NAME="Provider Display Name"
-WHODB_AI_GENERIC_<ID>_TYPE="openai-generic"      # default if omitted
-WHODB_AI_GENERIC_<ID>_BASE_URL="https://api.example.com/v1"
-WHODB_AI_GENERIC_<ID>_API_KEY="sk-..."
-WHODB_AI_GENERIC_<ID>_MODELS="model-1,model-2"
-```
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `WHODB_AI_GENERIC_<ID>_NAME` | No | `<ID>` | Display name in provider dropdown |
+| `WHODB_AI_GENERIC_<ID>_TYPE` | No | `openai-generic` | Client type |
+| `WHODB_AI_GENERIC_<ID>_BASE_URL` | Yes | | API base URL |
+| `WHODB_AI_GENERIC_<ID>_API_KEY` | No | | API key |
+| `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | | Comma-separated list of model names |
 
-## Other Variables
+## Server Variables
 
-| Variable | Description |
-|---|---|
-| `WHODB_LOG_FILE` | Redirect all logs to this file |
-| `WHODB_ACCESS_LOG_FILE` | HTTP access log file path |
-| `WHODB_AWS_PROVIDER` | JSON array of AWS provider configs (see `aws-integration.md`) |
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `8080` | TCP port WhoDB listens on |
+| `WHODB_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error`, `none` |
+| `WHODB_LOG_FORMAT` | `text` | Log format: `text` or `json` |
+| `WHODB_LOG_FILE` | unset | Redirect all non-HTTP logs to a file. `default` uses `/var/log/whodb/whodb.log` |
+| `WHODB_ACCESS_LOG_FILE` | unset | Redirect HTTP access logs to a file. `default` uses `/var/log/whodb/whodb.access.log` |
+| `WHODB_TOKENS` | unset | Comma-separated static tokens to restrict API/UI access |
+| `WHODB_ALLOWED_ORIGINS` | unset | Comma-separated CORS origins (defaults to all) |
+| `WHODB_DISABLE_CREDENTIAL_FORM` | `false` | Set `true` to hide the database credential form on the login page |
+| `WHODB_MAX_PAGE_SIZE` | `10000` | Maximum number of rows returned per page |
+| `WHODB_DISABLE_MOCK_DATA_GENERATION` | unset | Disable mock data generation. `*` disables for all tables, or a comma-separated list of table names to disable selectively (e.g., `logs, metrics`) |
+
+## Cloud Provider Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `WHODB_ENABLE_AWS_PROVIDER` | `false` | Set `true` to enable AWS provider |
+| `WHODB_AWS_PROVIDER` | unset | JSON array of AWS provider configs (see `aws-integration.md`) |
