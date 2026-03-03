@@ -376,9 +376,9 @@ func envProfileToConnection(profile types.DatabaseCredentials, dbType string, in
 	name := envProfileName(profile, dbType, index)
 
 	var advanced map[string]string
-	if profile.Port != "" || len(profile.Config) > 0 {
-		advanced = make(map[string]string, len(profile.Config)+1)
-		for key, value := range profile.Config {
+	if profile.Port != "" || len(profile.Advanced) > 0 {
+		advanced = make(map[string]string, len(profile.Advanced)+1)
+		for key, value := range profile.Advanced {
 			advanced[key] = value
 		}
 		if profile.Port != "" {

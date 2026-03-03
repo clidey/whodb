@@ -212,7 +212,7 @@ func TestAuthMiddlewareResolvesIDOnlyCredentialsFromProfiles(t *testing.T) {
 		Password: "pw",
 		Database: "app",
 		Port:     "5432",
-		Config:   map[string]string{},
+		Advanced: map[string]string{},
 	})
 
 	id := "profile-1"

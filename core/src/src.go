@@ -119,7 +119,7 @@ func GetLoginCredentials(profile types.DatabaseCredentials) *engine.Credentials 
 		},
 	}
 
-	for key, value := range profile.Config {
+	for key, value := range profile.Advanced {
 		advanced = append(advanced, engine.Record{
 			Key:   key,
 			Value: value,

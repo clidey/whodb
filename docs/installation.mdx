@@ -214,6 +214,80 @@ WhoDB can be configured using environment variables or command-line flags:
 The `default` log paths write to `/var/log/whodb/`, which requires root access. This works out of the box in Docker (which runs as root by default) but not for local development. For local use, specify a custom path instead (e.g., `WHODB_LOG_FILE=./whodb.log`).
 </Note>
 
+### Database Connection Profiles
+
+You can preconfigure database connections via environment variables so they appear as login profiles in the WhoDB UI. This is useful for Docker and production deployments where you want connections ready without manual entry.
+
+Two JSON formats are supported:
+
+<CodeGroup>
+```bash
+# Array format
+# Multiple connections in a single variable
+export WHODB_POSTGRES='[
+  {"alias":"prod","host":"db.example.com","user":"postgres","password":"secret","database":"mydb","port":"5432"},
+  {"alias":"staging","host":"staging.example.com","user":"postgres","password":"secret","database":"mydb","port":"5432"}
+]'
+```
+```bash
+# Numbered format
+# One connection per variable
+export WHODB_POSTGRES_1='{"alias":"prod","host":"db.example.com","user":"postgres","password":"secret","database":"mydb","port":"5432"}'
+export WHODB_POSTGRES_2='{"alias":"staging","host":"staging.example.com","user":"postgres","password":"secret","database":"mydb","port":"5432"}'
+```
+</CodeGroup>
+
+Supported variable prefixes: `WHODB_POSTGRES`, `WHODB_MYSQL`, `WHODB_MARIADB`, `WHODB_MONGODB`, `WHODB_REDIS`, `WHODB_CLICKHOUSE`, `WHODB_ELASTICSEARCH`, `WHODB_SQLITE3`
+
+Each JSON object supports these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `alias` | string | Display name shown on the login page |
+| `host` | string | Database hostname or IP address |
+| `user` | string | Username |
+| `password` | string | Password |
+| `database` | string | Database name |
+| `port` | string | Port number |
+| `advanced` | object | Key-value map of advanced options (see [Advanced Options Reference](/features/database-connectivity#advanced-options-reference)) |
+
+<Info>
+The `advanced` field accepts SSL, timeout, and database-specific settings. See the [Advanced Options Reference](/features/database-connectivity#advanced-options-reference) for all supported keys.
+</Info>
+
+#### Example with SSL
+
+```bash
+export WHODB_POSTGRES_1='{
+  "alias": "prod",
+  "host": "db.example.com",
+  "user": "postgres",
+  "password": "secret",
+  "database": "mydb",
+  "port": "5433",
+  "advanced": {
+    "SSL Mode": "verify-ca",
+    "SSL CA Path": "/path/to/ca.pem",
+    "SSL Client Cert Path": "/path/to/client-cert.pem",
+    "SSL Client Key Path": "/path/to/client-key.pem"
+  }
+}'
+```
+
+#### Docker Compose Example
+
+```yaml
+version: '3.8'
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - WHODB_POSTGRES_1={"alias":"prod","host":"postgres","user":"postgres","password":"secret","database":"mydb","port":"5432"}
+      - WHODB_REDIS_1={"alias":"cache","host":"redis","password":"secret","database":"0","port":"6379"}
+```
+
 ### Example with Custom Port
 
 ```bash

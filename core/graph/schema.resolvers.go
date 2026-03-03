@@ -1002,7 +1002,7 @@ func (r *queryResolver) Profiles(ctx context.Context) ([]*model.LoginProfile, er
 
 		// Check if SSL is configured (mode is set and not "disabled")
 		sslConfigured := false
-		if mode, ok := profile.Config[ssl.KeySSLMode]; ok && mode != "" && mode != string(ssl.SSLModeDisabled) {
+		if mode, ok := profile.Advanced[ssl.KeySSLMode]; ok && mode != "" && mode != string(ssl.SSLModeDisabled) {
 			sslConfigured = true
 		}
 

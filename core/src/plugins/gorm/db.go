@@ -134,7 +134,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		params := make(map[string]string)
 		for _, record := range config.Credentials.Advanced {
 			switch record.Key {
-			// Skip known keys that are already parsed + skip SSL keyss
+			// Skip known keys that are already parsed + skip SSL keys
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey,
 				ssl.KeySSLMode, ssl.KeySSLCACertContent, ssl.KeySSLClientCertContent, ssl.KeySSLClientKeyContent,
 				ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath, ssl.KeySSLServerName:

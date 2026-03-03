@@ -281,30 +281,83 @@ Enable SSL/TLS for encrypted connections:
 - **Verify-CA**: Verify server certificate against root CA
 - **Verify-Full**: Full certificate validation (recommended for production)
 </Accordion>
-<Accordion title="SSH Tunneling">
-Connect securely through an SSH tunnel:
-```text
-SSH Host: bastion.example.com
-SSH Port: 22
-SSH Username: ssh_user
-SSH Private Key: /path/to/id_rsa
-```
-Useful for accessing databases behind firewalls or in private networks.
-</Accordion>
-<Accordion title="Connection Pooling">
-Optimize performance with connection pooling:
-- **Max Connections**: Maximum concurrent connections (default varies by database)
-- **Max Idle Time**: How long idle connections remain open
-- **Connection Lifetime**: Maximum time before connection is recycled
-</Accordion>
-<Accordion title="Query Timeout">
-Prevent runaway queries from consuming resources:
-```text
-Query Timeout: 30 seconds (configurable)
-```
-Queries exceeding this timeout will be cancelled automatically.
+<Accordion title="Connection Timeout">
+Set the maximum time (in seconds) to wait when establishing a connection. Default is 90 seconds.
 </Accordion>
 </AccordionGroup>
+
+## Advanced Options Reference
+
+These options are available through the "Advanced Options" panel on the login page. When configuring connections via [environment variables](/installation#database-connection-profiles), these are the keys supported in the `advanced` field.
+
+### SSL/TLS Options
+
+Available for all database types (PostgreSQL, MySQL, MariaDB, ClickHouse, MongoDB, Redis, Elasticsearch).
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `SSL Mode` | `disabled` | SSL mode: `disabled`, `require`, `verify-ca`, `verify-full` |
+| `SSL CA Content` | | CA certificate content (inline PEM) |
+| `SSL CA Path` | | Path to CA certificate file |
+| `SSL Client Cert Content` | | Client certificate content (inline PEM) |
+| `SSL Client Cert Path` | | Path to client certificate file |
+| `SSL Client Key Content` | | Client key content (inline PEM) |
+| `SSL Client Key Path` | | Path to client key file |
+| `SSL Server Name` | hostname | Server name for certificate verification |
+
+<Info>
+For each certificate, use either the `Content` variant (inline PEM string) or the `Path` variant (file path), not both. The `Path` variants are only available for preconfigured connection profiles (environment variables); the login form uses the `Content` variants instead.
+</Info>
+
+### General Options
+
+| Key | Default | Applies to | Description |
+|-----|---------|-----------|-------------|
+| `Port` | varies | All databases | Connection port (default: 5432 for Postgres, 3306 for MySQL, etc.) |
+| `Connection Timeout` | `90` | SQL databases | Connection timeout in seconds |
+
+### MySQL / MariaDB Options
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `Parse Time` | `True` | Parse time values into Go `time.Time` |
+| `Loc` | `UTC` | Time zone location for time parsing |
+| `Allow clear text passwords` | `0` | Allow cleartext password authentication |
+
+### ClickHouse Options
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `HTTP Protocol` | `disable` | Use HTTP protocol instead of native |
+| `Readonly` | `disable` | Enable read-only mode |
+| `Debug` | `disable` | Enable debug mode |
+
+### MongoDB Options
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `URL Params` | | Additional URL query parameters appended to the connection string |
+| `DNS Enabled` | `false` | Use `mongodb+srv://` connection scheme |
+
+### Environment Variable Example
+
+```bash
+export WHODB_MYSQL_1='{
+  "alias": "prod-mysql",
+  "host": "db.example.com",
+  "user": "app",
+  "password": "secret",
+  "database": "myapp",
+  "port": "3306",
+  "advanced": {
+    "SSL Mode": "require",
+    "SSL CA Path": "/certs/ca.pem",
+    "Connection Timeout": "30",
+    "Parse Time": "True",
+    "Loc": "America/New_York"
+  }
+}'
+```
 
 ## Security Best Practices
 
