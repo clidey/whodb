@@ -120,10 +120,27 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	fullTableName := b.plugin.FormTableName(schema, tableName)
 
-	// Insert records in transactional batches using single-row INSERTs.
-	// GORM's Table().CreateInBatches() and Table().Create(slice) lose the Table name
-	// during Statement cloning (clone=1 resets Statement without copying Table).
-	// Single-row Create(map) works reliably with Table() and respects parameter limits.
+	// Use GORM's CreateInBatches for efficient bulk insert
+	if b.config.UseBulkInsert {
+		result := db.Table(fullTableName).CreateInBatches(records, effectiveBatchSize)
+		if result.Error != nil {
+			log.WithError(result.Error).
+				WithField("table", fullTableName).
+				WithField("recordCount", len(records)).
+				Error("Batch insert failed")
+			return result.Error
+		}
+
+		if b.config.LogProgress {
+			log.WithField("table", fullTableName).
+				WithField("recordsInserted", result.RowsAffected).
+				Info("Batch insert completed")
+		}
+
+		return nil
+	}
+
+	// Fall back to individual inserts if bulk insert is disabled
 	totalRecords := len(records)
 	for i := 0; i < totalRecords; i += effectiveBatchSize {
 		end := i + effectiveBatchSize
