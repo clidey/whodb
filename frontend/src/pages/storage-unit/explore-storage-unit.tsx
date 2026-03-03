@@ -28,7 +28,6 @@ import {
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue,
     Sheet,
     SheetContent,
     SheetFooter,
@@ -782,7 +781,7 @@ export const ExploreStorageUnit: FC = () => {
                                     onValueChange={handlePageSizeChange}
                                 >
                                     <SelectTrigger className="w-32" data-testid="table-page-size">
-                                        <SelectValue/>
+                                        <span>{isCustomPageSize ? t('customPageSize') : `${t('showPrefix')} ${pageSizeString}`}</span>
                                     </SelectTrigger>
                                     <SelectContent>
                                         {import.meta.env.VITE_E2E_TEST === "true" &&

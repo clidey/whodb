@@ -49,23 +49,22 @@ export const loadTranslations = async (
     try {
         let translations: Record<string, string> | undefined;
 
-        // In EE mode, check EE locale files first
+        // Load CE locale files as the base
+        const ceContent = findModule(ceModules, componentPath);
+        if (ceContent) {
+            const parsed = yaml.load(ceContent) as Record<string, Record<string, string>>;
+            translations = parsed[language] || parsed['en'];
+        }
+
+        // In EE mode, merge EE keys on top of CE (EE overrides individual keys)
         if (isEEMode) {
             const eeContent = findModule(eeModules, componentPath);
             if (eeContent) {
                 const parsed = yaml.load(eeContent) as Record<string, Record<string, string>>;
-                if (parsed[language]) {
-                    translations = parsed[language];
+                const eeTranslations = parsed[language];
+                if (eeTranslations) {
+                    translations = { ...translations, ...eeTranslations };
                 }
-            }
-        }
-
-        // Fallback to CE locale files
-        if (!translations) {
-            const ceContent = findModule(ceModules, componentPath);
-            if (ceContent) {
-                const parsed = yaml.load(ceContent) as Record<string, Record<string, string>>;
-                translations = parsed[language] || parsed['en'];
             }
         }
 

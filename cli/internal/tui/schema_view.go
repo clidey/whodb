@@ -46,7 +46,7 @@ type SchemaView struct {
 
 func NewSchemaView(parent *MainModel) *SchemaView {
 	ti := textinput.New()
-	ti.Placeholder = "Search tables..."
+	ti.Placeholder = "Search Tables"
 	ti.CharLimit = 50
 	ti.Width = 30
 	ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.Primary)

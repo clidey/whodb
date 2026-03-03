@@ -843,8 +843,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <h1 className="flex items-center gap-xs text-xl">
                             {extensions.Logo ?? <img src={logoImage} alt={extensions.AppName ?? "WhoDB"} className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
-                            <span>{t('title')}</span>
                         </h1>
+                        <span className="text-xl">{t('title')}</span>
                         {
                             error &&
                             <Badge id="login-error" variant="destructive" className="self-end" role="alert">
