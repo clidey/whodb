@@ -523,8 +523,30 @@ test.describe('Chat AI Integration', () => {
             test('allows deleting custom providers', async ({ whodb, page }) => {
                 await whodb.gotoChat();
 
-                // Verify delete provider button exists
-                await expect(page.locator('[data-testid="chat-delete-provider"]')).toBeVisible();
+                const btn = page.locator('[data-testid="chat-delete-provider"]');
+                await btn.waitFor({ state: "attached", timeout: 10000 });
+
+                // Debug: trace where display:none comes from
+                const debugInfo = await page.evaluate(() => {
+                    const button = document.querySelector('[data-testid="chat-delete-provider"]');
+                    if (!button) return { error: 'button not found' };
+                    const parent = button.parentElement;
+                    const grandparent = parent?.parentElement;
+                    return {
+                        btnClass: button.className,
+                        btnInlineStyle: button.getAttribute('style'),
+                        btnDisplay: getComputedStyle(button).display,
+                        parentTag: parent?.tagName,
+                        parentClass: parent?.className,
+                        parentDisplay: parent ? getComputedStyle(parent).display : null,
+                        gpTag: grandparent?.tagName,
+                        gpClass: grandparent?.className,
+                        gpDisplay: grandparent ? getComputedStyle(grandparent).display : null,
+                    };
+                });
+                console.log('[DEBUG delete-provider]', JSON.stringify(debugInfo, null, 2));
+
+                await expect(btn).toBeVisible({ timeout: 10000 });
 
                 // Click delete provider button
                 await page.locator('[data-testid="chat-delete-provider"]').click();

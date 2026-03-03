@@ -172,14 +172,14 @@ export const chatMethods = {
 
         const buttonText = await this.page.locator('[data-testid="ai-provider-select"]').innerText();
 
-        if (buttonText.includes("Select Model Type") || buttonText.trim() === "") {
+        if (buttonText.includes("Select Provider") || buttonText.trim() === "") {
             console.log("Selecting AI provider from dropdown");
             await this.page.locator('[data-testid="ai-provider-select"]').click();
             await this.page.locator('[role="option"]').first().waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT });
             await this.page.locator('[role="option"]').first().click();
             // Required: dropdown state propagation after provider selection
             await this.page.waitForTimeout(1500);
-            await expect(this.page.locator('[data-testid="ai-provider-select"]')).not.toContainText("Select Model Type", {
+            await expect(this.page.locator('[data-testid="ai-provider-select"]')).not.toContainText("Select Provider", {
                 timeout: TIMEOUT.ELEMENT,
             });
         } else {
@@ -286,10 +286,11 @@ export const chatMethods = {
 
     async toggleChatSQLView() {
         const group = this.page.locator(".group\\/table-preview").last();
-        await group.hover();
-        // Required: CSS opacity transition on group-hover reveal
-        await this.page.waitForTimeout(200);
-        await group.locator('[data-testid="icon-button"]').first().click();
+        const button = group.locator('[data-testid="icon-button"]').first();
+        // The button wrapper uses opacity-0 → opacity-100 on group-hover.
+        // Radix DropdownMenu listens for pointerdown, not click events.
+        // Dispatch pointerdown to open the dropdown regardless of opacity state.
+        await button.dispatchEvent("pointerdown", { button: 0, pointerType: "mouse" });
         await this.page.locator('[data-testid="toggle-view-option"]').click();
     },
 
@@ -307,10 +308,11 @@ export const chatMethods = {
 
     async openMoveToScratchpad() {
         const group = this.page.locator(".group\\/table-preview").last();
-        await group.hover();
-        // Required: CSS opacity transition on group-hover reveal
-        await this.page.waitForTimeout(200);
-        await group.locator('[data-testid="icon-button"]').first().click();
+        const button = group.locator('[data-testid="icon-button"]').first();
+        // The button wrapper uses opacity-0 → opacity-100 on group-hover.
+        // Radix DropdownMenu listens for pointerdown, not click events.
+        // Dispatch pointerdown to open the dropdown regardless of opacity state.
+        await button.dispatchEvent("pointerdown", { button: 0, pointerType: "mouse" });
         await this.page.locator('[data-testid="move-to-scratchpad-option"]').click();
         await expect(this.page.locator("h2").filter({ hasText: "Move to Scratchpad" })).toBeVisible({ timeout: TIMEOUT.ELEMENT });
     },

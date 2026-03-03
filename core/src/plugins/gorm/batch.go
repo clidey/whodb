@@ -120,27 +120,10 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	fullTableName := b.plugin.FormTableName(schema, tableName)
 
-	// Use GORM's CreateInBatches for efficient bulk insert
-	if b.config.UseBulkInsert {
-		result := db.Table(fullTableName).CreateInBatches(records, effectiveBatchSize)
-		if result.Error != nil {
-			log.WithError(result.Error).
-				WithField("table", fullTableName).
-				WithField("recordCount", len(records)).
-				Error("Batch insert failed")
-			return result.Error
-		}
-
-		if b.config.LogProgress {
-			log.WithField("table", fullTableName).
-				WithField("recordsInserted", result.RowsAffected).
-				Info("Batch insert completed")
-		}
-
-		return nil
-	}
-
-	// Fall back to individual inserts if bulk insert is disabled
+	// Insert records in transactional batches using single-row INSERTs.
+	// GORM's Table().CreateInBatches() and Table().Create(slice) lose the Table name
+	// during Statement cloning (clone=1 resets Statement without copying Table).
+	// Single-row Create(map) works reliably with Table() and respects parameter limits.
 	totalRecords := len(records)
 	for i := 0; i < totalRecords; i += effectiveBatchSize {
 		end := i + effectiveBatchSize
@@ -150,14 +133,12 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 		batch := records[i:end]
 
-		// Process batch
 		err := db.Transaction(func(tx *gorm.DB) error {
 			for _, record := range batch {
 				if err := tx.Table(fullTableName).Create(record).Error; err != nil {
 					if b.config.FailOnError {
 						return err
 					}
-					// Log error but continue
 					log.WithError(err).
 						WithField("table", fullTableName).
 						Warn("Failed to insert record, continuing")
@@ -167,7 +148,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 		})
 
 		if err != nil && b.config.FailOnError {
-			return fmt.Errorf("batch insert failed at batch %d: %w", i/b.config.BatchSize, err)
+			return fmt.Errorf("batch insert failed at batch %d: %w", i/effectiveBatchSize, err)
 		}
 
 		if b.config.LogProgress {
