@@ -148,6 +148,15 @@ export WHODB_POSTGRES_1='{
 | `WHODB_ANTHROPIC_ENDPOINT` | `https://api.anthropic.com/v1` | Anthropic API endpoint |
 | `WHODB_ANTHROPIC_NAME` | unset | Display name for Anthropic in the provider dropdown |
 
+### Google AI (Gemini)
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `WHODB_GOOGLE_AI_API_KEY` | Yes | | API key (falls back to `GOOGLE_API_KEY`) |
+| `WHODB_GOOGLE_AI_MODELS` | Yes | | Comma-separated model list (or `WHODB_GOOGLE_AI_MODEL` for single) |
+| `WHODB_GOOGLE_AI_BASE_URL` | No | Google's generative language API | API endpoint |
+| `WHODB_GOOGLE_AI_NAME` | No | `Google AI` | Display name in dropdown |
+
 ### Generic AI providers
 
 Connect any OpenAI-compatible provider. Configured via multiple variables per provider with a unique `<ID>`. See `core/src/envconfig/envconfig.go:ParseGenericProviders()`.
@@ -158,7 +167,15 @@ Connect any OpenAI-compatible provider. Configured via multiple variables per pr
 | `WHODB_AI_GENERIC_<ID>_TYPE` | No | `openai-generic` | Client type |
 | `WHODB_AI_GENERIC_<ID>_BASE_URL` | Yes | | API base URL |
 | `WHODB_AI_GENERIC_<ID>_API_KEY` | No | | API key |
-| `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | | Comma-separated list of model names |
+| `WHODB_AI_GENERIC_<ID>_MODELS` | Yes | | Comma-separated list of model names (or `_MODEL` for single) |
+
+### EE AI providers
+
+The following providers are available in WhoDB Enterprise Edition only. See `ai-providers.md` for full details.
+
+- **Azure OpenAI** — `WHODB_AZURE_OPENAI_*` (base URL, API key, models, api version)
+- **Vertex AI** — `WHODB_VERTEX_AI_*` (region, models, API key or service account credentials)
+- **AWS Bedrock** — `AWS_BEDROCK_*` + standard AWS env vars (models, region, credentials or profile)
 
 ## Server Variables
 

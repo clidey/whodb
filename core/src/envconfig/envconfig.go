@@ -155,6 +155,9 @@ func ParseGenericProviders() []env.GenericProviderConfig {
 		baseURL := os.Getenv(prefix + "BASE_URL")
 		apiKey := os.Getenv(prefix + "API_KEY")
 		modelsStr := os.Getenv(prefix + "MODELS")
+		if modelsStr == "" {
+			modelsStr = os.Getenv(prefix + "MODEL")
+		}
 
 		// Validate required fields
 		if baseURL == "" || modelsStr == "" {
@@ -220,6 +223,9 @@ func ParseGoogleAIProvider() *env.GenericProviderConfig {
 	}
 
 	modelsStr := env.GoogleAIModels
+	if modelsStr == "" {
+		modelsStr = os.Getenv("WHODB_GOOGLE_AI_MODEL")
+	}
 	if modelsStr == "" {
 		return nil
 	}

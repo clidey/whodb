@@ -430,19 +430,160 @@ services:
 You can configure multiple generic providers at the same time — each `<ID>` creates a separate entry in the provider dropdown. The `BASE_URL` and `MODELS` variables are required; all others are optional.
 </Info>
 
+<Tip>
+All providers that accept `_MODELS` (plural, comma-separated) also accept `_MODEL` (singular) as a convenience for single-model configurations.
+</Tip>
+
+### Google AI (Gemini) via Environment Variables
+
+Connect Google's Gemini models directly using the Google AI API.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `WHODB_GOOGLE_AI_API_KEY` | Yes | | Google AI API key (falls back to `GOOGLE_API_KEY`) |
+| `WHODB_GOOGLE_AI_MODELS` | Yes | | Comma-separated model list (e.g., `gemini-2.0-flash,gemini-1.5-pro`) |
+| `WHODB_GOOGLE_AI_BASE_URL` | No | Google's generative language API | Custom API endpoint |
+| `WHODB_GOOGLE_AI_NAME` | No | `Google AI` | Display name in the provider dropdown |
+
+<CodeGroup>
+```bash Minimal
+export WHODB_GOOGLE_AI_API_KEY="your_key_here"
+export WHODB_GOOGLE_AI_MODELS="gemini-2.0-flash"
+```
+```bash With custom name
+export WHODB_GOOGLE_AI_API_KEY="your_key_here"
+export WHODB_GOOGLE_AI_MODELS="gemini-2.0-flash,gemini-1.5-pro"
+export WHODB_GOOGLE_AI_NAME="Gemini"
+```
+```bash Using standard Google API key
+export GOOGLE_API_KEY="your_key_here"
+export WHODB_GOOGLE_AI_MODELS="gemini-2.0-flash"
+```
+```yaml Docker Compose
+services:
+  whodb:
+    image: clidey/whodb:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - WHODB_GOOGLE_AI_API_KEY=your_key_here
+      - WHODB_GOOGLE_AI_MODELS=gemini-2.0-flash,gemini-1.5-pro
+```
+</CodeGroup>
+
+### Enterprise Edition Providers
+
+<Note>
+The following providers are available exclusively in **WhoDB Enterprise Edition**.
+</Note>
+
+#### Azure OpenAI
+
+Connect to Azure-hosted OpenAI deployments.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `WHODB_AZURE_OPENAI_BASE_URL` | Yes | | Full Azure OpenAI endpoint URL |
+| `WHODB_AZURE_OPENAI_API_KEY` | Yes | | Azure API key (falls back to `AZURE_OPENAI_API_KEY`) |
+| `WHODB_AZURE_OPENAI_MODELS` | Yes | | Comma-separated deployment/model names |
+| `WHODB_AZURE_OPENAI_API_VERSION` | No | Extracted from URL query string | API version (e.g., `2024-06-01`) |
+| `WHODB_AZURE_OPENAI_NAME` | No | `Azure OpenAI` | Display name |
+
+<CodeGroup>
+```bash API version in URL
+export WHODB_AZURE_OPENAI_BASE_URL="https://myresource.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-06-01"
+export WHODB_AZURE_OPENAI_API_KEY="your_key_here"
+export WHODB_AZURE_OPENAI_MODELS="gpt-4o"
+```
+```bash API version as separate variable
+export WHODB_AZURE_OPENAI_BASE_URL="https://myresource.openai.azure.com/openai/deployments/gpt-4o"
+export WHODB_AZURE_OPENAI_API_KEY="your_key_here"
+export WHODB_AZURE_OPENAI_MODELS="gpt-4o"
+export WHODB_AZURE_OPENAI_API_VERSION="2024-06-01"
+```
+</CodeGroup>
+
+#### Google Vertex AI
+
+Connect to Google's Vertex AI platform with API key or service account authentication.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `WHODB_VERTEX_AI_REGION` | Yes | | GCP region (e.g., `us-central1`) |
+| `WHODB_VERTEX_AI_MODELS` | Yes | | Comma-separated model list |
+| `WHODB_VERTEX_AI_API_KEY` | One of two | | Express Mode API key (mutually exclusive with credentials) |
+| `WHODB_VERTEX_AI_CREDENTIALS` | One of two | | Service account JSON: raw string, base64-encoded, or file path |
+| `WHODB_VERTEX_AI_PROJECT_ID` | With API key | | GCP project ID (inferred from credentials JSON if not set) |
+| `WHODB_VERTEX_AI_BASE_URL` | No | Built from project + region | Custom endpoint |
+| `WHODB_VERTEX_AI_NAME` | No | `Vertex AI` | Display name |
+
+<CodeGroup>
+```bash API Key (Express Mode)
+export WHODB_VERTEX_AI_REGION="us-central1"
+export WHODB_VERTEX_AI_MODELS="gemini-2.0-flash"
+export WHODB_VERTEX_AI_API_KEY="your_key_here"
+export WHODB_VERTEX_AI_PROJECT_ID="my-project"
+```
+```bash Service Account (file path)
+export WHODB_VERTEX_AI_REGION="us-central1"
+export WHODB_VERTEX_AI_MODELS="gemini-2.0-flash"
+export WHODB_VERTEX_AI_CREDENTIALS="/path/to/service-account.json"
+```
+```bash Service Account (base64)
+export WHODB_VERTEX_AI_REGION="us-central1"
+export WHODB_VERTEX_AI_MODELS="gemini-2.0-flash"
+export WHODB_VERTEX_AI_CREDENTIALS="eyJ0eXBlIjoic2VydmljZV9hY2NvdW50Ii..."
+```
+</CodeGroup>
+
+#### AWS Bedrock
+
+Connect to AWS Bedrock for models like Claude, Titan, and Llama.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `AWS_BEDROCK_MODELS` | Yes | | Comma-separated model IDs (e.g., `anthropic.claude-sonnet-4-20250514-v1:0`) |
+| `AWS_REGION` | No | `us-east-1` | AWS region |
+| `AWS_ACCESS_KEY_ID` | No | | Explicit AWS credentials |
+| `AWS_SECRET_ACCESS_KEY` | No | | Explicit AWS credentials |
+| `AWS_SESSION_TOKEN` | No | | For temporary credentials |
+| `AWS_PROFILE` | No | | Named profile from `~/.aws/credentials` |
+
+<CodeGroup>
+```bash Explicit credentials
+export AWS_BEDROCK_MODELS="anthropic.claude-sonnet-4-20250514-v1:0"
+export AWS_REGION="us-east-1"
+export AWS_ACCESS_KEY_ID="AKIA..."
+export AWS_SECRET_ACCESS_KEY="..."
+```
+```bash Named profile
+export AWS_BEDROCK_MODELS="anthropic.claude-sonnet-4-20250514-v1:0"
+export AWS_REGION="us-east-1"
+export AWS_PROFILE="my-profile"
+```
+```bash Default credential chain (EC2, ECS, Lambda)
+export AWS_BEDROCK_MODELS="anthropic.claude-sonnet-4-20250514-v1:0"
+export AWS_REGION="us-east-1"
+```
+</CodeGroup>
+
+<Info>
+If no explicit credentials or profile are set, AWS Bedrock uses the standard AWS SDK credential chain: environment variables, shared credentials file, IAM instance profiles, ECS task roles, or Lambda execution roles.
+</Info>
+
 ## Provider Comparison
 
 Choose the right provider for your needs:
 
-| Feature | OpenAI | Anthropic | Ollama |
-|---------|--------|-----------|--------|
-| **Setup Complexity** | Easy | Easy | Moderate |
-| **Cost** | Pay per use | Pay per use | Free |
-| **Privacy** | External | External | Complete |
-| **Speed** | Fast | Medium | Varies |
-| **Accuracy** | Excellent | Excellent | Good |
-| **Internet Required** | Yes | Yes | No |
-| **Best For** | General use | Complex queries | Privacy/Cost |
+| Feature | OpenAI | Anthropic | Google AI | Ollama | Azure OpenAI | Vertex AI | AWS Bedrock |
+|---------|--------|-----------|-----------|--------|-------------|-----------|-------------|
+| **Edition** | CE | CE | CE | CE | EE | EE | EE |
+| **Setup** | Easy | Easy | Easy | Moderate | Easy | Moderate | Moderate |
+| **Cost** | Pay per use | Pay per use | Pay per use | Free | Pay per use | Pay per use | Pay per use |
+| **Privacy** | External | External | External | Complete | Azure-hosted | GCP-hosted | AWS-hosted |
+| **Speed** | Fast | Medium | Fast | Varies | Fast | Fast | Fast |
+| **Internet** | Yes | Yes | Yes | No | Yes | Yes | Yes |
+| **Best For** | General use | Complex queries | Gemini models | Privacy/Cost | Enterprise Azure | Enterprise GCP | Enterprise AWS |
 
 ## Troubleshooting
 
