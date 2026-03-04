@@ -64,6 +64,8 @@ var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
 
 var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
+var AILLMProvider = os.Getenv("WHODB_AI_LLM_PROVIDER")
+
 var GoogleAIAPIKey = os.Getenv("WHODB_GOOGLE_AI_API_KEY")
 var GoogleAIModels = os.Getenv("WHODB_GOOGLE_AI_MODELS")
 var GoogleAIBaseURL = os.Getenv("WHODB_GOOGLE_AI_BASE_URL")
@@ -193,6 +195,17 @@ func GetConfiguredChatProviders() []ChatProvider {
 		ProviderId: "ollama-1",
 	})
 
+	// Filter by WHODB_AI_LLM_PROVIDER if set
+	if AILLMProvider != "" {
+		var filtered []ChatProvider
+		for _, p := range providers {
+			if IsAIProviderAllowed(p.ProviderId) {
+				filtered = append(filtered, p)
+			}
+		}
+		return filtered
+	}
+
 	return providers
 }
 
@@ -306,4 +319,24 @@ func IsMockDataGenerationAllowed(tableName string) bool {
 
 func GetMockDataGenerationMaxRowCount() int {
 	return 200
+}
+
+// IsAIProviderAllowed checks whether a provider is allowed by the WHODB_AI_LLM_PROVIDER filter.
+// If the filter is not set, all providers are allowed.
+// Uses prefix matching: filter value "openai" matches provider ID "openai-1".
+func IsAIProviderAllowed(providerID string) bool {
+	if AILLMProvider == "" {
+		return true
+	}
+	allowed := strings.Split(AILLMProvider, ",")
+	for _, a := range allowed {
+		a = strings.TrimSpace(a)
+		if a == "" {
+			continue
+		}
+		if strings.HasPrefix(providerID, a) || providerID == a {
+			return true
+		}
+	}
+	return false
 }
