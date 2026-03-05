@@ -161,6 +161,7 @@ export const ExploreStorageUnit: FC = () => {
 
     // Track table container height for responsive sizing
     const tableContainerRef = useRef<HTMLDivElement>(null);
+    const pageSizeInitialRef = useRef(true);
     const [tableHeight, setTableHeight] = useState<number>(500);
 
     const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
@@ -423,6 +424,16 @@ export const ExploreStorageUnit: FC = () => {
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortConditions]);
+
+    useEffect(() => {
+        if (pageSizeInitialRef.current) {
+            pageSizeInitialRef.current = false;
+            return;
+        }
+        setCurrentPage(1);
+        handleSubmitRequest(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageSize]);
 
     const routes = useMemo(() => {
         const name = getDatabaseStorageUnitLabel(current?.Type);
