@@ -25,6 +25,8 @@ declare global {
     }
 }
 
+import { reduxStore } from '../store';
+
 /**
  * Platform detection utilities.
  * Computed once at module load time for performance.
@@ -44,10 +46,20 @@ function detectMacPlatform(): boolean {
 }
 
 /**
- * Whether the current platform is macOS/iOS.
- * Use this to determine which modifier key to display (⌘ vs Ctrl).
+ * Whether the current platform is macOS/iOS based on system detection.
+ * Use getEffectiveIsMac() to respect any user OS override.
  */
 export const isMacPlatform = detectMacPlatform();
+
+/**
+ * Returns the effective Mac platform value, reading the OS override
+ * from the Redux store if set, otherwise falling back to system detection.
+ */
+export function getEffectiveIsMac(): boolean {
+    const os = reduxStore.getState().settings.os;
+    if (os === undefined) return isMacPlatform;
+    return os === 'macos';
+}
 
 /**
  * Check if the command/control key is pressed based on platform.
@@ -55,7 +67,7 @@ export const isMacPlatform = detectMacPlatform();
  * On Windows/Linux: checks ctrlKey
  */
 export function isModKeyPressed(event: KeyboardEvent | React.KeyboardEvent): boolean {
-    return isMacPlatform ? event.metaKey : event.ctrlKey;
+    return getEffectiveIsMac() ? event.metaKey : event.ctrlKey;
 }
 
 /**
@@ -87,7 +99,7 @@ const keyDisplayMap: Record<string, { mac: string; win: string }> = {
 export function getKeyDisplay(key: string): string {
     const mapping = keyDisplayMap[key];
     if (mapping) {
-        return isMacPlatform ? mapping.mac : mapping.win;
+        return getEffectiveIsMac() ? mapping.mac : mapping.win;
     }
     return key;
 }
@@ -99,5 +111,5 @@ export function getKeyDisplay(key: string): string {
  */
 export function formatShortcut(keys: string[]): string {
     const displayKeys = keys.map(getKeyDisplay);
-    return isMacPlatform ? displayKeys.join("") : displayKeys.join("+");
+    return getEffectiveIsMac() ? displayKeys.join("") : displayKeys.join("+");
 }

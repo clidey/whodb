@@ -28,7 +28,8 @@ import {FC, useCallback, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "@/hooks/use-translation";
 import {useAppSelector} from "@/store/hooks";
-import {getKeyDisplay, isMacPlatform, isModKeyPressed} from "@/utils/platform";
+import {getKeyDisplay, isModKeyPressed} from "@/utils/platform";
+import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {isNoSQL} from "@/utils/functions";
 import {databaseSupportsScratchpad} from "@/utils/database-features";
 import {InternalRoutes} from "@/config/routes";
@@ -63,6 +64,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const current = useAppSelector(state => state.auth.current);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
+    const isMac = useEffectiveIsMac();
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
 
     // Listen for columns broadcast from storage unit page
@@ -84,7 +86,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     if (isLoggedIn && current) {
         // Navigation actions - only show relevant ones based on database type
         // Use Ctrl+Number on Mac (to avoid Option special chars), Alt+Number on Windows/Linux
-        const navModKey = isMacPlatform ? "Ctrl" : "Alt";
+        const navModKey = isMac ? "Ctrl" : "Alt";
 
         if (!isNoSQL(current.Type)) {
             navigationActions.push({
@@ -214,7 +216,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                     <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                         {getKeyDisplay(key)}
                     </kbd>
-                    {idx < keys.length - 1 && !isMacPlatform && (
+                    {idx < keys.length - 1 && !isMac && (
                         <span className="text-neutral-400 text-xs">+</span>
                     )}
                 </span>

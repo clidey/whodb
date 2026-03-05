@@ -20,7 +20,7 @@ import {InternalRoutes} from "../config/routes";
 import {useAppSelector} from "../store/hooks";
 import {isNoSQL} from "../utils/functions";
 import {databaseSupportsScratchpad} from "../utils/database-features";
-import {isModKeyPressed, isMacPlatform} from "../utils/platform";
+import {isModKeyPressed, getEffectiveIsMac} from "../utils/platform";
 
 export const useSidebarShortcuts = () => {
     const navigate = useNavigate();
@@ -37,7 +37,7 @@ export const useSidebarShortcuts = () => {
         // For number navigation:
         // - Mac: Use Ctrl (avoids Cmd+Number tab switching and Option+Number special chars)
         // - Windows/Linux: Use Alt (avoids Ctrl+Number tab switching in some browsers)
-        const numberNavKey = isMacPlatform ? event.ctrlKey : event.altKey;
+        const numberNavKey = getEffectiveIsMac() ? event.ctrlKey : event.altKey;
 
         // Ignore if typing in an input or textarea
         if (

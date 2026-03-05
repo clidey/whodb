@@ -90,6 +90,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { isDesktopApp } from "../../utils/external-links";
+import { v4 as uuidv4 } from 'uuid';
 import { IPluginProps, QueryView } from "./query-view";
 
 type EEExports = {
@@ -411,7 +412,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const historyItem = {id: crypto.randomUUID(), item: currentCode, status: false, date: new Date()};
+        const historyItem = {id: uuidv4(), item: currentCode, status: false, date: new Date()};
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);

@@ -36,10 +36,10 @@ const findModule = (modules: Record<string, string>, componentPath: string): str
     return undefined;
 };
 
-export const loadTranslations = async (
+export const loadTranslationsSync = (
     componentPath: string,
     language: 'en' | 'es' | 'de' | 'fr'
-): Promise<Record<string, string>> => {
+): Record<string, string> => {
     const cacheKey = `${componentPath}-${language}`;
 
     if (translationCache[cacheKey]) {
@@ -84,6 +84,13 @@ export const loadTranslations = async (
         console.error(`Failed to load translations for ${componentPath}:`, error);
         return {};
     }
+};
+
+export const loadTranslations = async (
+    componentPath: string,
+    language: 'en' | 'es' | 'de' | 'fr'
+): Promise<Record<string, string>> => {
+    return loadTranslationsSync(componentPath, language);
 };
 
 export const getTranslation = (

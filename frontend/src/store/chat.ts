@@ -16,6 +16,7 @@
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { AiChatMessage } from '@graphql';
+import { v4 as uuidv4 } from 'uuid';
 
 
 export type IChatMessage = AiChatMessage & {
@@ -128,7 +129,7 @@ export const houdiniSlice = createSlice({
     // New session management actions
     initializeChatSessions: (state) => {
         if (state.sessions.length === 0) {
-            const newId = crypto.randomUUID();
+            const newId = uuidv4();
             const newSession: ChatSession = {
                 id: newId,
                 name: "Chat 1",
@@ -145,7 +146,7 @@ export const houdiniSlice = createSlice({
         }
     },
     addChatSession: (state, action: PayloadAction<{ name?: string }>) => {
-        const newId = crypto.randomUUID();
+        const newId = uuidv4();
         const newSession: ChatSession = {
             id: newId,
             name: action.payload.name || `Chat ${state.sessions.length + 1}`,

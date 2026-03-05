@@ -47,6 +47,7 @@ import { AIModelsActions, availableExternalModelTypes } from "../store/ai-models
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { ensureModelsArray, ensureModelTypesArray } from "../utils/ai-models-helper";
 import { ExternalLink } from "../utils/external-links";
+import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from "../hooks/use-translation";
 import {
     ArrowPathIcon,
@@ -307,7 +308,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
             },
             onCompleted(data) {
                 dispatch(AIModelsActions.setModels(data.AIModel));
-                const id = crypto.randomUUID();
+                const id = uuidv4();
                 dispatch(AIModelsActions.addAIModelType({
                     id,
                     modelType: externalModelType,

@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
-import { loadTranslations, getTranslation } from '@/utils/i18n';
+import { loadTranslationsSync, getTranslation } from '@/utils/i18n';
 
 /**
  * Hook for loading and using translations from YAML locale files.
@@ -36,14 +36,13 @@ import { loadTranslations, getTranslation } from '@/utils/i18n';
  */
 export const useTranslation = (componentPath: string) => {
     const language = useAppSelector(state => state.settings.language);
-    const [translations, setTranslations] = useState<Record<string, string>>({});
-    const [isLoading, setIsLoading] = useState(true);
+    const [translations, setTranslations] = useState<Record<string, string>>(() =>
+        loadTranslationsSync(componentPath, language)
+    );
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        setIsLoading(true);
-        loadTranslations(componentPath, language)
-            .then(setTranslations)
-            .finally(() => setIsLoading(false));
+        setTranslations(loadTranslationsSync(componentPath, language));
     }, [componentPath, language]);
 
     const t = (key: string, fallbackOrParams?: string | Record<string, any>): string => {

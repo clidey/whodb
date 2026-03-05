@@ -17,7 +17,8 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle,} from "@clidey/ux";
 import {FC, useCallback, useEffect, useState} from "react";
 import {useTranslation} from "@/hooks/use-translation";
-import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
+import {getKeyDisplay, getEffectiveIsMac} from "@/utils/platform";
+import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 
 interface ShortcutDef {
     keys: string[];
@@ -44,7 +45,7 @@ const ShortcutRow: FC<{ shortcut: ShortcutDef }> = ({ shortcut }) => (
             {shortcut.keys.map((key, idx) => (
                 <span key={idx} className="flex items-center gap-0.5">
                     <Kbd>{getKeyDisplay(key)}</Kbd>
-                    {idx < shortcut.keys.length - 1 && !isMacPlatform && (
+                    {idx < shortcut.keys.length - 1 && !getEffectiveIsMac() && (
                         <span className="text-muted-foreground text-xs">+</span>
                     )}
                 </span>
@@ -76,6 +77,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
     onOpenChange,
 }) => {
     const { t } = useTranslation('components/keyboard-shortcuts-help');
+    const isMac = useEffectiveIsMac();
 
     const shortcutCategories: ShortcutCategory[] = [
         {
@@ -90,10 +92,10 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
         {
             title: t('categoryNavigation'),
             shortcuts: [
-                { keys: isMacPlatform ? ["Ctrl", "1"] : ["Alt", "1"], description: t('navFirst') },
-                { keys: isMacPlatform ? ["Ctrl", "2"] : ["Alt", "2"], description: t('navSecond') },
-                { keys: isMacPlatform ? ["Ctrl", "3"] : ["Alt", "3"], description: t('navThird') },
-                { keys: isMacPlatform ? ["Ctrl", "4"] : ["Alt", "4"], description: t('navFourth') },
+                { keys: isMac ? ["Ctrl", "1"] : ["Alt", "1"], description: t('navFirst') },
+                { keys: isMac ? ["Ctrl", "2"] : ["Alt", "2"], description: t('navSecond') },
+                { keys: isMac ? ["Ctrl", "3"] : ["Alt", "3"], description: t('navThird') },
+                { keys: isMac ? ["Ctrl", "4"] : ["Alt", "4"], description: t('navFourth') },
             ],
         },
         {
