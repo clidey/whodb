@@ -298,7 +298,7 @@ export const ExploreStorageUnit: FC = () => {
                 where: mergedCondition,
                 sort: sortConditions.length > 0 ? sortConditions : undefined,
                 pageSize,
-                pageOffset: pageOffset ?? currentPage - 1,
+                pageOffset: pageOffset ?? (currentPage - 1) * pageSize,
             },
         }).then(result => {
             const isLatest = thisRequestId === latestRequestIdRef.current;
@@ -315,7 +315,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
-        handleSubmitRequest(page - 1);
+        handleSubmitRequest((page - 1) * pageSize);
     }, [handleSubmitRequest]);
 
     const handleColumnSort = useCallback((columnName: string) => {
