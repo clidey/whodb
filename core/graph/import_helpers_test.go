@@ -227,8 +227,8 @@ func TestParseExcelImport(t *testing.T) {
 func TestResolveImportMappings(t *testing.T) {
 	source := []string{"a", "b"}
 	targetCols := []engine.Column{
-		{Name: "col1", Type: "TEXT"},
-		{Name: "col2", Type: "INT"},
+		{Name: "col1", Type: "TEXT", IsNullable: true},
+		{Name: "col2", Type: "INT", IsNullable: false},
 	}
 
 	col1 := "col1"
@@ -244,6 +244,12 @@ func TestResolveImportMappings(t *testing.T) {
 	}
 	if len(resolved) != 2 || resolved[0].sourceIndex != 0 || resolved[1].sourceIndex != 1 {
 		t.Fatalf("unexpected mapping result: %#v", resolved)
+	}
+	if !resolved[0].isNullable {
+		t.Fatalf("expected col1 mapping to have isNullable=true")
+	}
+	if resolved[1].isNullable {
+		t.Fatalf("expected col2 mapping to have isNullable=false")
 	}
 
 	t.Run("unknown target", func(t *testing.T) {
@@ -283,8 +289,8 @@ func TestResolveImportMappings(t *testing.T) {
 func TestBuildImportMappingInputs(t *testing.T) {
 	source := []string{"col1", "col2"}
 	targetCols := []engine.Column{
-		{Name: "col1", Type: "TEXT"},
-		{Name: "col2", Type: "INT"},
+		{Name: "col1", Type: "TEXT", IsNullable: true},
+		{Name: "col2", Type: "INT", IsNullable: false},
 	}
 
 	t.Run("header mapping ok", func(t *testing.T) {

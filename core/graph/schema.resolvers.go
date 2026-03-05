@@ -721,12 +721,17 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 						value = row[mapping.sourceIndex]
 					}
 
+					extra := map[string]string{
+						"Type": mapping.targetType,
+					}
+					if mapping.isNullable {
+						extra["IsNullable"] = "true"
+					}
+
 					recordRow = append(recordRow, engine.Record{
 						Key:   mapping.targetName,
 						Value: value,
-						Extra: map[string]string{
-							"Type": mapping.targetType,
-						},
+						Extra: extra,
 					})
 				}
 				records = append(records, recordRow)

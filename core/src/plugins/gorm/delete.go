@@ -19,11 +19,11 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
+	"slices"
 )
 
 func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error) {
@@ -34,7 +34,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			pkColumns = []string{}
 		}
 
-		columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+		columnTypeInfos, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s during delete operation", schema, storageUnit))
 			return false, err
@@ -54,12 +54,12 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 				continue
 			}
 
-			columnType, exists := columnTypes[column]
+			colInfo, exists := columnTypeInfos[column]
 			if !exists {
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
-			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
+			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, colInfo.Type, colInfo.IsNullable)
 			if err != nil {
 				log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during delete from table %s.%s", strValue, column, schema, storageUnit))
 				convertedValue = strValue

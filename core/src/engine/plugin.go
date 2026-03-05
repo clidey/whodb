@@ -73,6 +73,7 @@ type StorageUnit struct {
 type Column struct {
 	Type             string
 	Name             string
+	IsNullable       bool
 	IsPrimary        bool
 	IsAutoIncrement  bool
 	IsComputed       bool // Database-managed, generated, etc
