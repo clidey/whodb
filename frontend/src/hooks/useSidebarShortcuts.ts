@@ -20,7 +20,7 @@ import {InternalRoutes} from "../config/routes";
 import {useAppSelector} from "../store/hooks";
 import {isNoSQL} from "../utils/functions";
 import {databaseSupportsScratchpad} from "../utils/database-features";
-import {isModKeyPressed, getEffectiveIsMac} from "../utils/platform";
+import {matchesShortcut, resolveShortcut, SHORTCUTS} from "../utils/shortcuts";
 
 export const useSidebarShortcuts = () => {
     const navigate = useNavigate();
@@ -30,14 +30,6 @@ export const useSidebarShortcuts = () => {
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
         // Only handle when logged in
         if (!isLoggedIn || !current) return;
-
-        // Check for Cmd (Mac) or Ctrl (Windows/Linux) for sidebar toggle
-        const cmdKey = isModKeyPressed(event);
-
-        // For number navigation:
-        // - Mac: Use Ctrl (avoids Cmd+Number tab switching and Option+Number special chars)
-        // - Windows/Linux: Use Alt (avoids Ctrl+Number tab switching in some browsers)
-        const numberNavKey = getEffectiveIsMac() ? event.ctrlKey : event.altKey;
 
         // Ignore if typing in an input or textarea
         if (
@@ -67,46 +59,22 @@ export const useSidebarShortcuts = () => {
             routes.push(InternalRoutes.RawExecute.path);
         }
 
-        // Number navigation: Ctrl+Number on Mac, Alt+Number on Windows/Linux
-        if (numberNavKey && !event.shiftKey && !event.metaKey) {
-            switch (event.key) {
-                case '1':
-                    if (routes[0]) {
-                        event.preventDefault();
-                        navigate(routes[0]);
-                    }
-                    break;
-                case '2':
-                    if (routes[1]) {
-                        event.preventDefault();
-                        navigate(routes[1]);
-                    }
-                    break;
-                case '3':
-                    if (routes[2]) {
-                        event.preventDefault();
-                        navigate(routes[2]);
-                    }
-                    break;
-                case '4':
-                    if (routes[3]) {
-                        event.preventDefault();
-                        navigate(routes[3]);
-                    }
-                    break;
+        // Number navigation
+        const navDefs = [SHORTCUTS.navFirst, SHORTCUTS.navSecond, SHORTCUTS.navThird, SHORTCUTS.navFourth];
+        for (let i = 0; i < navDefs.length; i++) {
+            if (matchesShortcut(event, resolveShortcut(navDefs[i]))) {
+                if (routes[i]) {
+                    event.preventDefault();
+                    navigate(routes[i]);
+                }
+                return;
             }
-            return;
         }
 
         // Cmd/Ctrl+B for sidebar toggle
-        if (cmdKey) {
-            switch (event.key) {
-                case 'b':
-                case 'B':
-                    event.preventDefault();
-                    window.dispatchEvent(new CustomEvent('menu:toggle-sidebar'));
-                    break;
-            }
+        if (matchesShortcut(event, SHORTCUTS.toggleSidebar)) {
+            event.preventDefault();
+            window.dispatchEvent(new CustomEvent('menu:toggle-sidebar'));
         }
     }, [navigate, current, isLoggedIn]);
 
