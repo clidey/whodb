@@ -19,6 +19,7 @@ enum ImportFileFormat {
 enum ImportMode {
   APPEND
   OVERWRITE
+  UPSERT
 }
 
 type Column {

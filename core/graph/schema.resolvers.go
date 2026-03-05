@@ -709,6 +709,19 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 			txConfig.SkipConflicts = true
 		}
 
+		if input.Mode == model.ImportModeUpsert {
+			var pkCols []string
+			for _, col := range columns {
+				if col.IsPrimary {
+					pkCols = append(pkCols, col.Name)
+				}
+			}
+			if len(pkCols) == 0 {
+				return fmt.Errorf(importErrorUpsertNoPK)
+			}
+			txConfig.UpsertPKColumns = pkCols
+		}
+
 		for start := 0; start < len(parsed.rows); start += importBatchSize {
 			end := start + importBatchSize
 			if end > len(parsed.rows) {
@@ -753,6 +766,11 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 		return nil
 	})
 	if err != nil {
+		// Surface specific upsert errors with their own localization keys
+		errMsg := err.Error()
+		if errMsg == importErrorUpsertNoPK || errMsg == importErrorUpsertNotSupported {
+			return importResult(false, errMsg), nil
+		}
 		log.WithError(err).Error("Import failed")
 		return importResult(false, importErrorImportFailed), nil
 	}
