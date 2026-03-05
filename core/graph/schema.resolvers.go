@@ -39,6 +39,7 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
@@ -688,21 +689,24 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 	}
 
 	err = plugin.WithTransaction(config, func(tx any) error {
-		txConfig := config
+		cloned := *config
 		if tx != nil {
-			cloned := *config
 			cloned.Transaction = tx
-			txConfig = &cloned
 		}
+		txConfig := &cloned
 
 		if input.Mode == model.ImportModeOverwrite {
-			status, err := plugin.ClearTableData(txConfig, input.Schema, input.StorageUnit)
+			graph, err := plugin.GetGraph(txConfig, input.Schema)
 			if err != nil {
-				return err
+				return fmt.Errorf(importErrorClearFailed+": %w", err)
 			}
-			if !status {
-				return fmt.Errorf(importErrorClearFailed)
+			if err := plugins.ClearTableWithDependencies(plugin, txConfig, input.Schema, input.StorageUnit, graph); err != nil {
+				return fmt.Errorf(importErrorClearFailed+": %w", err)
 			}
+		}
+
+		if input.Mode == model.ImportModeAppend {
+			txConfig.SkipConflicts = true
 		}
 
 		for start := 0; start < len(parsed.rows); start += importBatchSize {

@@ -53,6 +53,7 @@ type PluginConfig struct {
 	ExternalModel  *ExternalModel
 	Transaction    any  // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
 	MultiStatement bool // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
+	SkipConflicts  bool // Use ON CONFLICT DO NOTHING / INSERT IGNORE for duplicate rows
 }
 
 // Record represents a key-value pair with optional extra metadata,

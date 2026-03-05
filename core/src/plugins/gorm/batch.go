@@ -23,6 +23,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // BatchConfig holds configuration for batch operations
@@ -31,6 +32,7 @@ type BatchConfig struct {
 	UseBulkInsert bool // Use database-specific bulk insert when available
 	FailOnError   bool // Stop on first error or continue
 	LogProgress   bool // Log progress during batch operations
+	SkipConflicts bool // Use ON CONFLICT DO NOTHING / INSERT IGNORE for duplicate rows
 }
 
 // DefaultBatchConfig returns default batch configuration
@@ -122,7 +124,11 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	// Use GORM's CreateInBatches for efficient bulk insert
 	if b.config.UseBulkInsert {
-		result := db.Table(fullTableName).CreateInBatches(records, effectiveBatchSize)
+		query := db.Table(fullTableName)
+		if b.config.SkipConflicts {
+			query = query.Clauses(clause.OnConflict{DoNothing: true})
+		}
+		result := query.CreateInBatches(records, effectiveBatchSize)
 		if result.Error != nil {
 			log.WithError(result.Error).
 				WithField("table", fullTableName).
@@ -152,7 +158,11 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 		err := db.Transaction(func(tx *gorm.DB) error {
 			for _, record := range batch {
-				if err := tx.Table(fullTableName).Create(record).Error; err != nil {
+				query := tx.Table(fullTableName)
+				if b.config.SkipConflicts {
+					query = query.Clauses(clause.OnConflict{DoNothing: true})
+				}
+				if err := query.Create(record).Error; err != nil {
 					if b.config.FailOnError {
 						return err
 					}
@@ -250,6 +260,7 @@ func (p *GormPlugin) BulkAddRows(config *engine.PluginConfig, schema string, sto
 			UseBulkInsert: true,
 			FailOnError:   true,
 			LogProgress:   len(records) > 10000, // Log progress for large datasets
+			SkipConflicts: config != nil && config.SkipConflicts,
 		})
 
 		err := processor.InsertBatch(db, schema, storageUnit, records)
