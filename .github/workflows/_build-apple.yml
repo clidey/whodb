@@ -286,6 +286,7 @@ jobs:
           echo "🔏 Signing app bundle for DMG distribution with Developer ID..."
           codesign --force --deep \
             --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --entitlements build/darwin/entitlements.plist \
             --options runtime \
             --timestamp \
             "$APP_PATH"
