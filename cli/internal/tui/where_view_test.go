@@ -136,16 +136,16 @@ func TestWhereView_SetTableContext_WithExistingConditions(t *testing.T) {
 	}
 }
 
-func TestWhereView_AddCondition_CtrlA(t *testing.T) {
+func TestWhereView_AddCondition_A(t *testing.T) {
 	v, cleanup := setupWhereViewTest(t)
 	defer cleanup()
 
-	// Press ctrl+a to add new condition
-	msg := tea.KeyMsg{Type: tea.KeyCtrlA}
+	// Press 'a' to add new condition
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}}
 	v, _ = v.Update(msg)
 
 	if !v.addingNew {
-		t.Error("Expected addingNew to be true after ctrl+a")
+		t.Error("Expected addingNew to be true after pressing 'a'")
 	}
 
 	if v.focusIndex != 0 {
@@ -300,7 +300,7 @@ func TestWhereView_Escape_GoesBack(t *testing.T) {
 	}
 }
 
-func TestWhereView_DeleteCondition_CtrlD(t *testing.T) {
+func TestWhereView_DeleteCondition_D(t *testing.T) {
 	v, cleanup := setupWhereViewTest(t)
 	defer cleanup()
 
@@ -310,7 +310,7 @@ func TestWhereView_DeleteCondition_CtrlD(t *testing.T) {
 	}
 	v.selectedIndex = 0
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlD}
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}}
 	v, _ = v.Update(msg)
 
 	if len(v.conditions) != 1 {
@@ -526,17 +526,17 @@ func TestWhereView_HelpText_NormalMode(t *testing.T) {
 	v.addingNew = false
 	view := v.View()
 
-	// Check for ctrl+* shortcuts
-	if !strings.Contains(view, "ctrl+a") {
-		t.Error("Expected help text to show 'ctrl+a' for add")
+	// Check for shortcut keys in help text
+	if !strings.Contains(view, "[a]") {
+		t.Error("Expected help text to show '[a]' for add")
 	}
 
 	if !strings.Contains(view, "ctrl+e") {
 		t.Error("Expected help text to show 'ctrl+e' for edit")
 	}
 
-	if !strings.Contains(view, "ctrl+d") {
-		t.Error("Expected help text to show 'ctrl+d' for delete")
+	if !strings.Contains(view, "[d]") {
+		t.Error("Expected help text to show '[d]' for delete")
 	}
 }
 

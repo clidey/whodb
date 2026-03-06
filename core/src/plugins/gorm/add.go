@@ -95,11 +95,11 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 	}
 
 	// Fetch column types to ensure proper type conversion
-	columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+	columnTypeInfos, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	if err != nil {
 		log.WithError(err).WithField("schema", schema).WithField("storageUnit", storageUnit).
 			Warn("Failed to fetch column types, continuing without type information")
-		columnTypes = make(map[string]string)
+		columnTypeInfos = make(map[string]ColumnTypeInfo)
 	}
 
 	for i, value := range values {
@@ -107,8 +107,11 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 			values[i].Extra = make(map[string]string)
 		}
 		if values[i].Extra["Type"] == "" {
-			if colType, ok := columnTypes[value.Key]; ok {
-				values[i].Extra["Type"] = colType
+			if colInfo, ok := columnTypeInfos[value.Key]; ok {
+				values[i].Extra["Type"] = colInfo.Type
+				if colInfo.IsNullable {
+					values[i].Extra["IsNullable"] = "true"
+				}
 			}
 		}
 	}

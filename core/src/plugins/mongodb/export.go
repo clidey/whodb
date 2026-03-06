@@ -184,7 +184,7 @@ func (p *MongoDBPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema str
 	if err != nil {
 		return err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 	cursor, err := collection.Find(context.Background(), bson.D{})

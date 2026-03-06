@@ -18,24 +18,10 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-var llmInstance map[LLMType]*LLMClient
-
+// Instance returns an LLMClient configured from the given plugin config.
 func Instance(config *engine.PluginConfig) *LLMClient {
-	if llmInstance == nil {
-		llmInstance = make(map[LLMType]*LLMClient)
-	}
-
-	llmType := LLMType(config.ExternalModel.Type)
-
-	if instance, ok := llmInstance[llmType]; ok {
-		// Update the API key if it has changed
-		instance.APIKey = config.ExternalModel.Token
-		return instance
-	}
-	instance := &LLMClient{
-		Type:   llmType,
+	return &LLMClient{
+		Type:   LLMType(config.ExternalModel.Type),
 		APIKey: config.ExternalModel.Token,
 	}
-	llmInstance[llmType] = instance
-	return instance
 }

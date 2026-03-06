@@ -128,6 +128,7 @@ export const ImportData: FC<ImportDataProps> = ({
     () => [
       { value: ImportMode.Append, label: t("modeAppend") },
       { value: ImportMode.Overwrite, label: t("modeOverwrite") },
+      { value: ImportMode.Upsert, label: t("modeUpsert") },
     ],
     [t],
   );
@@ -627,6 +628,11 @@ export const ImportData: FC<ImportDataProps> = ({
                             {dataMode === ImportMode.Overwrite && (
                               <p className="text-xs text-muted-foreground">
                                 {t("overwriteWarning")}
+                              </p>
+                            )}
+                            {dataMode === ImportMode.Upsert && (
+                              <p className="text-xs text-muted-foreground">
+                                {t("upsertInfo")}
                               </p>
                             )}
                           </div>

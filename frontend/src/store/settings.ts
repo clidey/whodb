@@ -32,6 +32,10 @@ type ISettingsState = {
     language: 'en' | 'es' | 'de' | 'fr';
     databaseSchemaTerminology: 'database' | 'schema';
     disableAnimations: boolean;
+    /** Visual theme name. Currently only 'default' is supported. */
+    appTheme: 'default';
+    /** OS override for keyboard shortcuts. Undefined means use system detection. */
+    os: 'linux' | 'macos' | 'windows' | undefined;
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -62,6 +66,8 @@ const getInitialState = (): ISettingsState => {
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
         // Use EE default if available, otherwise default to false (animations enabled)
         disableAnimations: eeSettingsDefaults.disableAnimations ?? false,
+        appTheme: 'default',
+        os: undefined,
     };
 };
 
@@ -107,6 +113,12 @@ export const settingsSlice = createSlice({
         },
         setDisableAnimations: (state, action: PayloadAction<ISettingsState["disableAnimations"]>) => {
             state.disableAnimations = action.payload;
+        },
+        setAppTheme: (state, action: PayloadAction<ISettingsState["appTheme"]>) => {
+            state.appTheme = action.payload;
+        },
+        setOS: (state, action: PayloadAction<ISettingsState["os"]>) => {
+            state.os = action.payload;
         },
     },
 });

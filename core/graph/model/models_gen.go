@@ -735,16 +735,18 @@ type ImportMode string
 const (
 	ImportModeAppend    ImportMode = "APPEND"
 	ImportModeOverwrite ImportMode = "OVERWRITE"
+	ImportModeUpsert    ImportMode = "UPSERT"
 )
 
 var AllImportMode = []ImportMode{
 	ImportModeAppend,
 	ImportModeOverwrite,
+	ImportModeUpsert,
 }
 
 func (e ImportMode) IsValid() bool {
 	switch e {
-	case ImportModeAppend, ImportModeOverwrite:
+	case ImportModeAppend, ImportModeOverwrite, ImportModeUpsert:
 		return true
 	}
 	return false

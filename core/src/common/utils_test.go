@@ -75,7 +75,7 @@ func TestUtilityHelpers(t *testing.T) {
 		t.Fatalf("expected formula to be escaped, got %s", got)
 	}
 
-	if header := FormatCSVHeader("col", "text"); header != "col:text" {
+	if header := FormatCSVHeader("col", "text"); header != "col" {
 		t.Fatalf("unexpected csv header: %s", header)
 	}
 

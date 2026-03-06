@@ -57,6 +57,7 @@ import {SettingsActions} from "../../store/settings";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
+import { v4 as uuidv4 } from 'uuid';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
 import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
@@ -70,7 +71,7 @@ import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 function generateCredentialId(type: string, hostname: string, username: string, database: string): string | undefined {
     // browser environment just uses a random ID
     if (!isDesktopApp()) {
-        return crypto.randomUUID();
+        return uuidv4();
     }
 
     // desktop environment uses a deterministic ID based on connection details
@@ -87,7 +88,7 @@ function generateCredentialId(type: string, hostname: string, username: string, 
         const encoded = btoa(combined).replace(/[+/=]/g, '');
         return encoded.substring(0, 16).toLowerCase();
     } catch {
-        return crypto.randomUUID();
+        return uuidv4();
     }
 }
 
@@ -496,15 +497,35 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [searchParams, dispatch]);
 
-    // Handle theme URL parameter
+    // Handle mode URL parameter (light/dark/system)
     useEffect(() => {
-        if (searchParams.has("theme")) {
-            const theme = searchParams.get("theme")?.toLowerCase();
-            if (theme === 'light' || theme === 'dark' || theme === 'system') {
-                setTheme(theme);
+        if (searchParams.has("mode")) {
+            const mode = searchParams.get("mode")?.toLowerCase();
+            if (mode === 'light' || mode === 'dark' || mode === 'system') {
+                setTheme(mode);
             }
         }
     }, [searchParams, setTheme]);
+
+    // Handle theme URL parameter (visual theme name)
+    useEffect(() => {
+        if (searchParams.has("theme")) {
+            const theme = searchParams.get("theme")?.toLowerCase();
+            if (theme === 'default') {
+                dispatch(SettingsActions.setAppTheme('default'));
+            }
+        }
+    }, [searchParams, dispatch]);
+
+    // Handle os URL parameter (keyboard shortcut OS override)
+    useEffect(() => {
+        if (searchParams.has("os")) {
+            const os = searchParams.get("os")?.toLowerCase();
+            if (os === 'linux' || os === 'macos' || os === 'windows') {
+                dispatch(SettingsActions.setOS(os));
+            }
+        }
+    }, [searchParams, dispatch]);
 
     // Load database types, filtering out AWS types when cloud providers are disabled
     useEffect(() => {
@@ -843,8 +864,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         <h1 className="flex items-center gap-xs text-xl">
                             {extensions.Logo ?? <img src={logoImage} alt={extensions.AppName ?? "WhoDB"} className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
-                            <span>{t('title')}</span>
                         </h1>
+                        <span className="text-xl">{t('title')}</span>
                         {
                             error &&
                             <Badge id="login-error" variant="destructive" className="self-end" role="alert">

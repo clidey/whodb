@@ -77,6 +77,7 @@ import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
 import {addAuthHeader, isDesktopScheme} from "../../utils/auth-headers";
+import {matchesShortcut, SHORTCUTS} from "../../utils/shortcuts";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -676,8 +677,7 @@ export const ChatPage: FC = () => {
     }, [loading, modelAvailable, models.length, currentModel, query]);
 
     const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
-        // Ctrl/Cmd+U to clear input
-        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+        if (matchesShortcut(e, SHORTCUTS.clearEditor)) {
             e.preventDefault();
             setQuery('');
             setCurrentSearchIndex(undefined);
@@ -723,6 +723,23 @@ export const ChatPage: FC = () => {
               searchIndex--;
             }
           }
+        }
+        if (e.key === "ArrowDown") {
+          if (currentSearchIndex == null) return;
+
+          let searchIndex = currentSearchIndex + 1;
+          while (searchIndex < chats.length) {
+            if (chats[searchIndex].isUserInput) {
+              setCurrentSearchIndex(searchIndex);
+              setQuery(chats[searchIndex].Text);
+              return;
+            }
+            searchIndex++;
+          }
+
+          // Past the end of history — clear input
+          setCurrentSearchIndex(undefined);
+          setQuery('');
         }
     }, [chats, currentSearchIndex, query, handleSubmitQuery, disableChat]);
 

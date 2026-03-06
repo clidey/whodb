@@ -72,10 +72,10 @@ func (m *MigratorHelper) GetConstraints(tableName string) (map[string][]gorm.Col
 	return constraints, nil
 }
 
-// GetColumnTypes gets column types using Migrator's ColumnTypes.
+// GetColumnTypes gets column types and nullability using Migrator's ColumnTypes.
 // Returns types with length info when available (e.g., "VARCHAR(255)").
-func (m *MigratorHelper) GetColumnTypes(tableName string) (map[string]string, error) {
-	columnTypes := make(map[string]string)
+func (m *MigratorHelper) GetColumnTypes(tableName string) (map[string]ColumnTypeInfo, error) {
+	columnTypes := make(map[string]ColumnTypeInfo)
 
 	types, err := m.migrator.ColumnTypes(tableName)
 	if err != nil {
@@ -84,12 +84,27 @@ func (m *MigratorHelper) GetColumnTypes(tableName string) (map[string]string, er
 
 	for _, col := range types {
 		fullType := m.buildFullTypeName(col)
-		// Normalize the type using the plugin's normalization
 		normalizedType := m.plugin.NormalizeType(fullType)
-		columnTypes[col.Name()] = normalizedType
+
+		isNullable := true // safe default: assume nullable
+		if nullable, ok := col.Nullable(); ok {
+			isNullable = nullable
+		}
+
+		columnTypes[col.Name()] = ColumnTypeInfo{
+			Type:       normalizedType,
+			IsNullable: isNullable,
+		}
 	}
 
 	return columnTypes, nil
+}
+
+// ColumnTypeInfo holds a column's type string alongside its nullability.
+// Used by CRUD operations that need both pieces of information for value conversion.
+type ColumnTypeInfo struct {
+	Type       string
+	IsNullable bool
 }
 
 // typesWithLength lists types where showing length is meaningful to users.
@@ -150,9 +165,15 @@ func (m *MigratorHelper) GetOrderedColumns(tableName string) ([]engine.Column, e
 
 		isAutoIncr, _ := col.AutoIncrement()
 
+		isNullable := true // safe default: assume nullable
+		if nullable, ok := col.Nullable(); ok {
+			isNullable = nullable
+		}
+
 		column := engine.Column{
 			Name:            col.Name(),
 			Type:            normalizedType,
+			IsNullable:      isNullable,
 			IsAutoIncrement: isAutoIncr,
 		}
 

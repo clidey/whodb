@@ -26,7 +26,8 @@ import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
 import {useTranslation} from "@/hooks/use-translation";
 import {MagnifyingGlassIcon, QuestionMarkCircleIcon} from "./heroicons";
-import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
+import {getKeyDisplay} from "@/utils/platform";
+import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {useDatabaseMetadata} from "@/hooks/useDatabaseMetadata";
 
 type IPageProps = {
@@ -62,13 +63,14 @@ type IInternalPageProps = IPageProps & {
 
 const CommandPaletteTrigger: FC = () => {
     const { t } = useTranslation('components/command-palette');
+    const isMac = useEffectiveIsMac();
 
     const handleClick = () => {
         // Dispatch a keyboard event to trigger the command palette
         window.dispatchEvent(new KeyboardEvent('keydown', {
             key: 'k',
-            metaKey: isMacPlatform,
-            ctrlKey: !isMacPlatform,
+            metaKey: isMac,
+            ctrlKey: !isMac,
         }));
     };
 
@@ -87,7 +89,7 @@ const CommandPaletteTrigger: FC = () => {
                 <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                     {getKeyDisplay("Mod")}
                 </kbd>
-                {!isMacPlatform && <span className="text-neutral-400 text-xs">+</span>}
+                {!isMac && <span className="text-neutral-400 text-xs">+</span>}
                 <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                     K
                 </kbd>

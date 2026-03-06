@@ -28,7 +28,9 @@ import {FC, useCallback, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "@/hooks/use-translation";
 import {useAppSelector} from "@/store/hooks";
-import {getKeyDisplay, isMacPlatform, isModKeyPressed} from "@/utils/platform";
+import {getKeyDisplay} from "@/utils/platform";
+import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
+import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
 import {isNoSQL} from "@/utils/functions";
 import {databaseSupportsScratchpad} from "@/utils/database-features";
 import {InternalRoutes} from "@/config/routes";
@@ -63,6 +65,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const current = useAppSelector(state => state.auth.current);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
+    const isMac = useEffectiveIsMac();
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
 
     // Listen for columns broadcast from storage unit page
@@ -83,15 +86,14 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
 
     if (isLoggedIn && current) {
         // Navigation actions - only show relevant ones based on database type
-        // Use Ctrl+Number on Mac (to avoid Option special chars), Alt+Number on Windows/Linux
-        const navModKey = isMacPlatform ? "Ctrl" : "Alt";
+        const navDefs = [SHORTCUTS.navFirst, SHORTCUTS.navSecond, SHORTCUTS.navThird, SHORTCUTS.navFourth];
 
         if (!isNoSQL(current.Type)) {
             navigationActions.push({
                 id: "nav-chat",
                 label: t('goToChat'),
                 icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
-                shortcut: [navModKey, "1"],
+                shortcut: resolveShortcut(navDefs[0]).displayKeys,
                 onSelect: () => {
                     navigate(InternalRoutes.Chat.path);
                     onOpenChange(false);
@@ -103,7 +105,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-storage-units",
             label: t('goToStorageUnits'),
             icon: <RectangleGroupIcon className="w-4 h-4" />,
-            shortcut: isNoSQL(current.Type) ? [navModKey, "1"] : [navModKey, "2"],
+            shortcut: resolveShortcut(isNoSQL(current.Type) ? navDefs[0] : navDefs[1]).displayKeys,
             onSelect: () => {
                 navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 onOpenChange(false);
@@ -114,7 +116,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-graph",
             label: t('goToGraph'),
             icon: <ShareIcon className="w-4 h-4" />,
-            shortcut: isNoSQL(current.Type) ? [navModKey, "2"] : [navModKey, "3"],
+            shortcut: resolveShortcut(isNoSQL(current.Type) ? navDefs[1] : navDefs[2]).displayKeys,
             onSelect: () => {
                 navigate(InternalRoutes.Graph.path);
                 onOpenChange(false);
@@ -126,7 +128,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 id: "nav-scratchpad",
                 label: t('goToScratchpad'),
                 icon: <CommandLineIcon className="w-4 h-4" />,
-                shortcut: isNoSQL(current.Type) ? [navModKey, "3"] : [navModKey, "4"],
+                shortcut: resolveShortcut(isNoSQL(current.Type) ? navDefs[2] : navDefs[3]).displayKeys,
                 onSelect: () => {
                     navigate(InternalRoutes.RawExecute.path);
                     onOpenChange(false);
@@ -139,7 +141,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "action-refresh",
             label: t('refreshData'),
             icon: <ArrowPathIcon className="w-4 h-4" />,
-            shortcut: ["Mod", "R"],
+            shortcut: SHORTCUTS.refresh.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('app:refresh-data'));
                 onOpenChange(false);
@@ -150,7 +152,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "action-export",
             label: t('exportData'),
             icon: <CircleStackIcon className="w-4 h-4" />,
-            shortcut: ["Mod", "Shift", "E"],
+            shortcut: SHORTCUTS.exportData.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('menu:trigger-export'));
                 onOpenChange(false);
@@ -161,7 +163,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "action-import",
             label: t('importData'),
             icon: <CircleStackIcon className="w-4 h-4" />,
-            shortcut: ["Mod", "Shift", "I"],
+            shortcut: SHORTCUTS.importData.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('menu:trigger-import'));
                 onOpenChange(false);
@@ -172,7 +174,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "action-toggle-sidebar",
             label: t('toggleSidebar'),
             icon: <CogIcon className="w-4 h-4" />,
-            shortcut: ["Mod", "B"],
+            shortcut: SHORTCUTS.toggleSidebar.displayKeys,
             onSelect: () => {
                 window.dispatchEvent(new CustomEvent('menu:toggle-sidebar'));
                 onOpenChange(false);
@@ -214,7 +216,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                     <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                         {getKeyDisplay(key)}
                     </kbd>
-                    {idx < keys.length - 1 && !isMacPlatform && (
+                    {idx < keys.length - 1 && !isMac && (
                         <span className="text-neutral-400 text-xs">+</span>
                     )}
                 </span>
@@ -308,8 +310,7 @@ export const useCommandPalette = () => {
             return;
         }
 
-        // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-        if (isModKeyPressed(event) && event.key.toLowerCase() === 'k') {
+        if (matchesShortcut(event, SHORTCUTS.commandPalette)) {
             event.preventDefault();
             setOpen(prev => !prev);
         }

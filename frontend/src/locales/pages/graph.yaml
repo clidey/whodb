@@ -1,6 +1,6 @@
 en:
   title: Graph
-  searchPlaceholder: Search Tables...
+  searchPlaceholder: Search Tables
   searchAriaLabel: Search Tables
   noItems: No Items
   noNodesTitle: No Nodes Selected

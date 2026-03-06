@@ -5,6 +5,7 @@ en:
   searchPlaceholder: Search query...
   pageSizeLabel: Page Size
   customPageSize: Custom
+  showPrefix: Show
   queryButton: Query
   scratchpad: Scratchpad
   addRowTitle: Add New Row

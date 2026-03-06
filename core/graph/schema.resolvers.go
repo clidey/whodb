@@ -39,6 +39,7 @@ import (
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
@@ -688,21 +689,37 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 	}
 
 	err = plugin.WithTransaction(config, func(tx any) error {
-		txConfig := config
+		cloned := *config
 		if tx != nil {
-			cloned := *config
 			cloned.Transaction = tx
-			txConfig = &cloned
 		}
+		txConfig := &cloned
 
 		if input.Mode == model.ImportModeOverwrite {
-			status, err := plugin.ClearTableData(txConfig, input.Schema, input.StorageUnit)
+			graph, err := plugin.GetGraph(txConfig, input.Schema)
 			if err != nil {
-				return err
+				return fmt.Errorf(importErrorClearFailed+": %w", err)
 			}
-			if !status {
-				return fmt.Errorf(importErrorClearFailed)
+			if err := plugins.ClearTableWithDependencies(plugin, txConfig, input.Schema, input.StorageUnit, graph); err != nil {
+				return fmt.Errorf(importErrorClearFailed+": %w", err)
 			}
+		}
+
+		if input.Mode == model.ImportModeAppend {
+			txConfig.SkipConflicts = true
+		}
+
+		if input.Mode == model.ImportModeUpsert {
+			var pkCols []string
+			for _, col := range columns {
+				if col.IsPrimary {
+					pkCols = append(pkCols, col.Name)
+				}
+			}
+			if len(pkCols) == 0 {
+				return fmt.Errorf(importErrorUpsertNoPK)
+			}
+			txConfig.UpsertPKColumns = pkCols
 		}
 
 		for start := 0; start < len(parsed.rows); start += importBatchSize {
@@ -721,12 +738,17 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 						value = row[mapping.sourceIndex]
 					}
 
+					extra := map[string]string{
+						"Type": mapping.targetType,
+					}
+					if mapping.isNullable {
+						extra["IsNullable"] = "true"
+					}
+
 					recordRow = append(recordRow, engine.Record{
 						Key:   mapping.targetName,
 						Value: value,
-						Extra: map[string]string{
-							"Type": mapping.targetType,
-						},
+						Extra: extra,
 					})
 				}
 				records = append(records, recordRow)
@@ -744,6 +766,11 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 		return nil
 	})
 	if err != nil {
+		// Surface specific upsert errors with their own localization keys
+		errMsg := err.Error()
+		if errMsg == importErrorUpsertNoPK || errMsg == importErrorUpsertNotSupported {
+			return importResult(false, errMsg), nil
+		}
 		log.WithError(err).Error("Import failed")
 		return importResult(false, importErrorImportFailed), nil
 	}
@@ -969,7 +996,8 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
-						// Panic in database check - mark as error
+						log.Errorf("Panic during health check for database: %v", r)
+						status.Database = "error"
 					}
 					done <- true
 				}()

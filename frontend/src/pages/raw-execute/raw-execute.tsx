@@ -90,6 +90,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { isDesktopApp } from "../../utils/external-links";
+import { v4 as uuidv4 } from 'uuid';
 import { IPluginProps, QueryView } from "./query-view";
 
 type EEExports = {
@@ -321,6 +322,18 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [isResizingResults, setIsResizingResults] = useState(false);
     const [allowResultsResize, setAllowResultsResize] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement | null>(null);
+    const activeListenersRef = useRef<{move: (e: MouseEvent) => void; up: () => void}[]>([]);
+
+    // Clean up any dangling document listeners on unmount
+    useEffect(() => {
+        return () => {
+            for (const listener of activeListenersRef.current) {
+                document.removeEventListener('mousemove', listener.move);
+                document.removeEventListener('mouseup', listener.up);
+            }
+            activeListenersRef.current = [];
+        };
+    }, []);
 
     // Sync local state with Redux state
     useEffect(() => {
@@ -411,7 +424,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const historyItem = {id: crypto.randomUUID(), item: currentCode, status: false, date: new Date()};
+        const historyItem = {id: uuidv4(), item: currentCode, status: false, date: new Date()};
         setSubmittedCode(currentCode);
         setError(null);
         setLoading(true);
@@ -448,22 +461,26 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const handleEditorResize = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         setIsResizing(true);
-        
+
         const startY = e.clientY;
         const startHeight = editorHeight;
-        
+
         const handleMouseMove = (e: MouseEvent) => {
             const deltaY = e.clientY - startY;
             const newHeight = Math.max(100, Math.min(500, startHeight + deltaY));
             setEditorHeight(newHeight);
         };
-        
+
+        const entry = {move: handleMouseMove, up: () => {}};
         const handleMouseUp = () => {
             setIsResizing(false);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
+            activeListenersRef.current = activeListenersRef.current.filter(l => l !== entry);
         };
-        
+        entry.up = handleMouseUp;
+        activeListenersRef.current.push(entry);
+
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
     }, [editorHeight]);
@@ -471,22 +488,26 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const handleResultsResize = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         setIsResizingResults(true);
-        
+
         const startY = e.clientY;
         const startHeight = resultsHeight;
-        
+
         const handleMouseMove = (e: MouseEvent) => {
             const deltaY = e.clientY - startY;
             const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
             setResultsHeight(newHeight);
         };
-        
+
+        const entry = {move: handleMouseMove, up: () => {}};
         const handleMouseUp = () => {
             setIsResizingResults(false);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
+            activeListenersRef.current = activeListenersRef.current.filter(l => l !== entry);
         };
-        
+        entry.up = handleMouseUp;
+        activeListenersRef.current.push(entry);
+
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
     }, [resultsHeight]);
