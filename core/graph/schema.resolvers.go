@@ -996,7 +996,8 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
-						// Panic in database check - mark as error
+						log.Errorf("Panic during health check for database: %v", r)
+						status.Database = "error"
 					}
 					done <- true
 				}()

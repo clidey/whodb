@@ -81,7 +81,7 @@ import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-con
 import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 import {useTranslation} from "../../hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";
-import {parseSearchToWhereCondition, mergeSearchWithWhere} from "../../utils/search-parser";
+import {mergeSearchWithWhere, parseSearchToWhereCondition} from "../../utils/search-parser";
 import {SearchIntellisense} from "../../components/search-intellisense";
 import {useSearchIntellisense} from "../../hooks/use-search-intellisense";
 
@@ -159,6 +159,9 @@ export const ExploreStorageUnit: FC = () => {
     } | null>(null);
     const [entitySearchResults, setEntitySearchResults] = useState<RowsResult | null>(null);
 
+    // Track pending add-row timeout so it can be cancelled on unmount
+    const addRowTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
     // Track table container height for responsive sizing
     const tableContainerRef = useRef<HTMLDivElement>(null);
     const pageSizeInitialRef = useRef(true);
@@ -170,6 +173,13 @@ export const ExploreStorageUnit: FC = () => {
     useEffect(() => {
         whereConditionRef.current = whereCondition;
     }, [whereCondition]);
+
+    // Clean up pending add-row timeout on unmount
+    useEffect(() => {
+        return () => {
+            clearTimeout(addRowTimeoutRef.current);
+        };
+    }, []);
 
     // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
     if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) && current?.Database) {
@@ -599,7 +609,7 @@ export const ExploreStorageUnit: FC = () => {
             onCompleted() {
                 toast.success(t('addRowSuccess'));
                 setShowAdd(false);
-                setTimeout(() => {
+                addRowTimeoutRef.current = setTimeout(() => {
                     handleSubmitRequest();
                 }, 500);
             },

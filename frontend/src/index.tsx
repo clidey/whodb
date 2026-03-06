@@ -31,6 +31,7 @@ import {ThemeProvider} from '@clidey/ux'
 import {isEEMode} from './config/ee-imports';
 import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
+import {ErrorBoundary} from './components/error-boundary';
 
 // Detect desktop Linux and add a class for CSS-based overrides (e.g., fonts)
 try {
@@ -95,7 +96,9 @@ root.render(
       <ApolloProvider client={graphqlClient}>
         <Provider store={reduxStore}>
           <PersistGate loading={null} persistor={reduxStorePersistor}>
-            <AppWithProviders />
+            <ErrorBoundary>
+              <AppWithProviders />
+            </ErrorBoundary>
           </PersistGate>
         </Provider>
       </ApolloProvider>

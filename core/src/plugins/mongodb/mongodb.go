@@ -51,9 +51,7 @@ func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
 		log.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for availability check")
 		return false
 	}
-	ctx, cancel := opCtx()
-	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 	return true
 }
 
@@ -65,7 +63,7 @@ func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
@@ -84,7 +82,7 @@ func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, er
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
@@ -105,7 +103,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	listOpts := options.ListCollections().SetAuthorizedCollections(true)
@@ -187,7 +185,7 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	names, err := db.ListCollectionNames(ctx, bson.M{"name": collection})
@@ -209,7 +207,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	coll := db.Collection(collection)
@@ -311,7 +309,7 @@ func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, colle
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	coll := db.Collection(collection)
@@ -342,7 +340,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 		}).Error("Failed to connect to MongoDB for column inference")
 		return nil, err
 	}
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
@@ -684,7 +682,7 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(schema)
 
@@ -847,7 +845,7 @@ func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema strin
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 	result, err := collection.DeleteMany(ctx, bson.M{})

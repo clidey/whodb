@@ -39,7 +39,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 		}).Error("Failed to connect to MongoDB for adding storage unit")
 		return false, err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	database := client.Database(schema)
 
@@ -66,7 +66,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 		}).Error("Failed to connect to MongoDB for adding row")
 		return false, err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 
@@ -120,7 +120,7 @@ func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, 
 	if err != nil {
 		return false, err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 
