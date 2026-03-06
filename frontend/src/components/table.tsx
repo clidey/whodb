@@ -825,13 +825,30 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [onRefresh]);
 
-    // Helper to scroll focused row into view
+    // Helper to scroll focused row into view via the virtualizer's scroll container.
+    // Uses smooth scrolling for small jumps, instant for large ones to avoid virtualizer flicker.
     const scrollRowIntoView = useCallback((rowIndex: number) => {
-        const rowElement = document.querySelector(`[data-row-idx="${rowIndex}"]`);
-        if (rowElement) {
-            rowElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const container = document.querySelector<HTMLElement>('[data-slot="table-body"]');
+        if (!container) return;
+
+        const rowTop = rowIndex * rowHeight;
+        const rowBottom = rowTop + rowHeight;
+        const viewTop = container.scrollTop;
+        const viewBottom = viewTop + container.clientHeight;
+
+        let target: number | null = null;
+        if (rowTop < viewTop) {
+            target = rowTop;
+        } else if (rowBottom > viewBottom) {
+            target = rowBottom - container.clientHeight;
         }
-    }, []);
+
+        if (target === null) return;
+
+        const distance = Math.abs(target - viewTop);
+        const behavior = distance > container.clientHeight ? 'instant' : 'smooth';
+        container.scrollTo({ top: target, behavior });
+    }, [rowHeight]);
 
     // Helper to move focus and optionally extend selection
     const moveFocus = useCallback((newIndex: number, extendSelection: boolean = false) => {
