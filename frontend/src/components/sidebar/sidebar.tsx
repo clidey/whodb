@@ -42,6 +42,7 @@ import {
     useGetDatabaseQuery,
     useGetSchemaQuery,
     useGetSslStatusQuery,
+    useGetUpdateInfoQuery,
     useGetVersionQuery,
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
@@ -120,6 +121,7 @@ export const Sidebar: FC = () => {
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
     const { data: version } = useGetVersionQuery();
+    const { data: updateInfo } = useGetUpdateInfoQuery();
     const { refetch: refetchSslStatus } = useGetSslStatusQuery({
         skip: current == null || sslStatus !== undefined,
         onCompleted(data) {
@@ -505,6 +507,17 @@ export const Sidebar: FC = () => {
                     "hidden": !open,
                 })}>
                     {t('version')} {version?.Version}
+                    {updateInfo?.UpdateInfo?.updateAvailable && (
+                        <a
+                            href={updateInfo.UpdateInfo.releaseURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 text-blue-500 hover:text-blue-400 transition-colors"
+                            title={t('updateAvailable', { version: updateInfo.UpdateInfo.latestVersion })}
+                        >
+                            ↑ {updateInfo.UpdateInfo.latestVersion}
+                        </a>
+                    )}
                 </div>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>

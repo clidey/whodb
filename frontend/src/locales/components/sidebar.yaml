@@ -21,4 +21,5 @@ en:
   version: "Version:"
   databaseLogin: Database Login
   errorSigningIn: "Error Signing You In:"
+  updateAvailable: "Update available: {version}"
   sslSecured: "SSL: {mode}"
