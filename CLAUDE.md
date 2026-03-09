@@ -86,6 +86,7 @@ bash dev/run-cli-tests.sh                   # All CLI tests
 - Define GraphQL operations in `.graphql` files, then run `pnpm run generate`
 - Import generated hooks from `@graphql` alias - never use inline `gql` strings
 - CE features in `frontend/src/`
+- **Keyboard shortcuts** are centralized in `frontend/src/utils/shortcuts.ts`. Never hardcode shortcut keys inline — use `SHORTCUTS.*` for definitions, `matchesShortcut()` for event handling, and `SHORTCUTS.*.displayKeys` for UI display. Platform-variant shortcuts (nav numbers) use `resolveShortcut()`. Some shortcuts also have Wails accelerators in `desktop-common/app.go` that must be updated separately
 
 ## When Updating Dependencies
 

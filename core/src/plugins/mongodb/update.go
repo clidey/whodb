@@ -39,7 +39,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 		}).Error("Failed to connect to MongoDB for storage unit update")
 		return false, err
 	}
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	collection := db.Collection(storageUnit)

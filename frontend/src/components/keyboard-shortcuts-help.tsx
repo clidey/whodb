@@ -17,16 +17,17 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle,} from "@clidey/ux";
 import {FC, useCallback, useEffect, useState} from "react";
 import {useTranslation} from "@/hooks/use-translation";
-import {getKeyDisplay, isMacPlatform} from "@/utils/platform";
+import {getKeyDisplay, getEffectiveIsMac} from "@/utils/platform";
+import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
 
-interface ShortcutDef {
+interface ShortcutEntry {
     keys: string[];
     description: string;
 }
 
 interface ShortcutCategory {
     title: string;
-    shortcuts: ShortcutDef[];
+    shortcuts: ShortcutEntry[];
 }
 
 const Kbd: FC<{ children: string }> = ({ children }) => (
@@ -35,7 +36,7 @@ const Kbd: FC<{ children: string }> = ({ children }) => (
     </kbd>
 );
 
-const ShortcutRow: FC<{ shortcut: ShortcutDef }> = ({ shortcut }) => (
+const ShortcutRow: FC<{ shortcut: ShortcutEntry }> = ({ shortcut }) => (
     <div className="flex items-center justify-between py-1.5">
         <span className="text-sm text-neutral-600 dark:text-neutral-400">
             {shortcut.description}
@@ -44,7 +45,7 @@ const ShortcutRow: FC<{ shortcut: ShortcutDef }> = ({ shortcut }) => (
             {shortcut.keys.map((key, idx) => (
                 <span key={idx} className="flex items-center gap-0.5">
                     <Kbd>{getKeyDisplay(key)}</Kbd>
-                    {idx < shortcut.keys.length - 1 && !isMacPlatform && (
+                    {idx < shortcut.keys.length - 1 && !getEffectiveIsMac() && (
                         <span className="text-muted-foreground text-xs">+</span>
                     )}
                 </span>
@@ -81,61 +82,61 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
         {
             title: t('categoryGlobal'),
             shortcuts: [
-                { keys: ["Shift", "?"], description: t('showShortcuts') },
-                { keys: ["Mod", "K"], description: t('commandPalette') },
-                { keys: ["Escape"], description: t('closeDialogs') },
-                { keys: ["Mod", "B"], description: t('toggleSidebar') },
+                { keys: SHORTCUTS.showShortcuts.displayKeys, description: t('showShortcuts') },
+                { keys: SHORTCUTS.commandPalette.displayKeys, description: t('commandPalette') },
+                { keys: SHORTCUTS.closeDialogs.displayKeys, description: t('closeDialogs') },
+                { keys: SHORTCUTS.toggleSidebar.displayKeys, description: t('toggleSidebar') },
             ],
         },
         {
             title: t('categoryNavigation'),
             shortcuts: [
-                { keys: isMacPlatform ? ["Ctrl", "1"] : ["Alt", "1"], description: t('navFirst') },
-                { keys: isMacPlatform ? ["Ctrl", "2"] : ["Alt", "2"], description: t('navSecond') },
-                { keys: isMacPlatform ? ["Ctrl", "3"] : ["Alt", "3"], description: t('navThird') },
-                { keys: isMacPlatform ? ["Ctrl", "4"] : ["Alt", "4"], description: t('navFourth') },
+                { keys: resolveShortcut(SHORTCUTS.navFirst).displayKeys, description: t('navFirst') },
+                { keys: resolveShortcut(SHORTCUTS.navSecond).displayKeys, description: t('navSecond') },
+                { keys: resolveShortcut(SHORTCUTS.navThird).displayKeys, description: t('navThird') },
+                { keys: resolveShortcut(SHORTCUTS.navFourth).displayKeys, description: t('navFourth') },
             ],
         },
         {
             title: t('categoryTableNavigation'),
             shortcuts: [
-                { keys: ["ArrowDown"], description: t('moveDown') },
-                { keys: ["ArrowUp"], description: t('moveUp') },
-                { keys: ["Home"], description: t('moveFirst') },
-                { keys: ["End"], description: t('moveLast') },
-                { keys: ["PageDown"], description: t('pageDown') },
-                { keys: ["PageUp"], description: t('pageUp') },
-                { keys: ["Mod", "ArrowRight"], description: t('nextPage') },
-                { keys: ["Mod", "ArrowLeft"], description: t('prevPage') },
+                { keys: SHORTCUTS.moveDown.displayKeys, description: t('moveDown') },
+                { keys: SHORTCUTS.moveUp.displayKeys, description: t('moveUp') },
+                { keys: SHORTCUTS.moveFirst.displayKeys, description: t('moveFirst') },
+                { keys: SHORTCUTS.moveLast.displayKeys, description: t('moveLast') },
+                { keys: SHORTCUTS.pageDown.displayKeys, description: t('pageDown') },
+                { keys: SHORTCUTS.pageUp.displayKeys, description: t('pageUp') },
+                { keys: SHORTCUTS.nextPage.displayKeys, description: t('nextPage') },
+                { keys: SHORTCUTS.prevPage.displayKeys, description: t('prevPage') },
             ],
         },
         {
             title: t('categoryTableSelection'),
             shortcuts: [
-                { keys: ["Space"], description: t('toggleSelect') },
-                { keys: ["Shift", "ArrowDown"], description: t('extendSelectDown') },
-                { keys: ["Shift", "ArrowUp"], description: t('extendSelectUp') },
-                { keys: ["Mod", "A"], description: t('selectAll') },
+                { keys: SHORTCUTS.toggleSelect.displayKeys, description: t('toggleSelect') },
+                { keys: SHORTCUTS.extendSelectDown.displayKeys, description: t('extendSelectDown') },
+                { keys: SHORTCUTS.extendSelectUp.displayKeys, description: t('extendSelectUp') },
+                { keys: SHORTCUTS.selectAll.displayKeys, description: t('selectAll') },
             ],
         },
         {
             title: t('categoryTableActions'),
             shortcuts: [
-                { keys: ["Enter"], description: t('editRow') },
-                { keys: ["Mod", "Delete"], description: t('deleteRow') },
-                { keys: ["Mod", "Backspace"], description: t('deleteRowAlt') },
-                { keys: ["Mod", "E"], description: t('editRowAlt') },
-                { keys: ["Mod", "M"], description: t('mockData') },
-                { keys: ["Mod", "R"], description: t('refresh') },
-                { keys: ["Mod", "Shift", "E"], description: t('export') },
-                { keys: ["Mod", "Shift", "I"], description: t('import') },
+                { keys: SHORTCUTS.editRow.displayKeys, description: t('editRow') },
+                { keys: SHORTCUTS.deleteRow.displayKeys, description: t('deleteRow') },
+                { keys: SHORTCUTS.deleteRowAlt.displayKeys, description: t('deleteRowAlt') },
+                { keys: SHORTCUTS.editRowAlt.displayKeys, description: t('editRowAlt') },
+                { keys: SHORTCUTS.mockData.displayKeys, description: t('mockData') },
+                { keys: SHORTCUTS.refresh.displayKeys, description: t('refresh') },
+                { keys: SHORTCUTS.exportData.displayKeys, description: t('export') },
+                { keys: SHORTCUTS.importData.displayKeys, description: t('import') },
             ],
         },
         {
             title: t('categoryEditor'),
             shortcuts: [
-                { keys: ["Mod", "Enter"], description: t('executeQuery') },
-                { keys: ["Mod", "U"], description: t('clearEditor') },
+                { keys: SHORTCUTS.executeQuery.displayKeys, description: t('executeQuery') },
+                { keys: SHORTCUTS.clearEditor.displayKeys, description: t('clearEditor') },
             ],
         },
     ];
@@ -180,8 +181,7 @@ export const useKeyboardShortcutsHelp = () => {
             return;
         }
 
-        // ? key (Shift+/ on most keyboards, or direct ?)
-        if (event.key === "?" || (event.shiftKey && event.key === "/")) {
+        if (matchesShortcut(event, SHORTCUTS.showShortcuts)) {
             event.preventDefault();
             setOpen(true);
         }

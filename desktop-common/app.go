@@ -350,7 +350,7 @@ func (a *App) SetupApplicationMenu() {
 		runtime.EventsEmit(a.ctx, "menu:toggle-sidebar-new-connection")
 	})
 	fileMenu.AddSeparator()
-	fileMenu.AddText("Export Data", keys.CmdOrCtrl("e"), func(_ *menu.CallbackData) {
+	fileMenu.AddText("Export Data", keys.Combo("e", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(a.ctx, "menu:export-data")
 	})
 	fileMenu.AddSeparator()

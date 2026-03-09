@@ -64,7 +64,7 @@ type GormPluginFunctions interface {
 	// these below are meant to be generic-ish implementations by the base gorm plugin
 	ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error)
 
-	ConvertStringValue(value, columnType string) (any, error)
+	ConvertStringValue(value, columnType string, isNullable bool) (any, error)
 	ConvertRawToRows(raw *sql.Rows) (*engine.GetRowsResult, error)
 	ConvertRecordValuesToMap(values []engine.Record) (map[string]any, error)
 
@@ -134,9 +134,9 @@ type GormPluginFunctions interface {
 	// Returns the input unchanged if no mapping exists.
 	NormalizeType(typeName string) string
 
-	// GetColumnTypes returns a map of column names to their types for a table.
+	// GetColumnTypes returns a map of column names to their type info (type + nullability).
 	// Used for type conversion during CRUD operations.
-	GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error)
+	GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]ColumnTypeInfo, error)
 
 	// GetLastInsertID returns the most recently auto-generated ID after an INSERT.
 	// This is used by the mock data generator to track PKs for FK references.
@@ -219,7 +219,7 @@ func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storage
 
 func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
-		var columnTypes map[string]string
+		var columnTypes map[string]ColumnTypeInfo
 		if where != nil {
 			columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 		}
@@ -286,7 +286,7 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 
 // SQLite-specific row retrieval is implemented in the sqlite3 plugin override.
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
-	var columnTypes map[string]string
+	var columnTypes map[string]ColumnTypeInfo
 	if where != nil {
 		columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	}
@@ -375,7 +375,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	return result, nil
 }
 
-func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]string) (*gorm.DB, error) {
+func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
 	if condition == nil {
 		return query, nil
 	}
@@ -385,9 +385,11 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 		if condition.Atomic != nil {
 			// Use actual column type from database if available
 			columnType := condition.Atomic.ColumnType
+			isNullable := false
 			if columnTypes != nil {
-				if dbType, exists := columnTypes[condition.Atomic.Key]; exists && dbType != "" {
-					columnType = dbType
+				if colInfo, exists := columnTypes[condition.Atomic.Key]; exists && colInfo.Type != "" {
+					columnType = colInfo.Type
+					isNullable = colInfo.IsNullable
 				}
 			}
 
@@ -421,7 +423,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 				vals := make([]any, 0, len(parts))
 				for _, part := range parts {
 					v := strings.TrimSpace(part)
-					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType)
+					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType, isNullable)
 					if err != nil {
 						log.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
 						return nil, err
@@ -438,12 +440,12 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 				if len(parts) != 2 {
 					return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
 				}
-				v1, err1 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType)
+				v1, err1 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType, isNullable)
 				if err1 != nil {
 					log.WithError(err1).Error("Failed to convert BETWEEN min value")
 					return nil, err1
 				}
-				v2, err2 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType)
+				v2, err2 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType, isNullable)
 				if err2 != nil {
 					log.WithError(err2).Error("Failed to convert BETWEEN max value")
 					return nil, err2
@@ -456,7 +458,7 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 				return query, nil
 			default:
 				// Single value operators (=, <, >, LIKE, etc.)
-				value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
+				value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType, isNullable)
 				if err != nil {
 					log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
 					return nil, err

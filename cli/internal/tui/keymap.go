@@ -423,24 +423,24 @@ var Keys = Keymap{
 	},
 	WhereList: WhereListKeys{
 		Up: key.NewBinding(
-			key.WithKeys("up"),
-			key.WithHelp("↑", "prev"),
+			key.WithKeys("up", "k"),
+			key.WithHelp("↑/k", "prev"),
 		),
 		Down: key.NewBinding(
-			key.WithKeys("down"),
-			key.WithHelp("↓", "next"),
+			key.WithKeys("down", "j"),
+			key.WithHelp("↓/j", "next"),
 		),
 		Add: key.NewBinding(
-			key.WithKeys("ctrl+a"),
-			key.WithHelp("ctrl+a", "add new"),
+			key.WithKeys("a"),
+			key.WithHelp("[a]", "add new"),
 		),
 		EditCond: key.NewBinding(
 			key.WithKeys("ctrl+e"),
 			key.WithHelp("ctrl+e", "edit"),
 		),
 		Delete: key.NewBinding(
-			key.WithKeys("ctrl+d"),
-			key.WithHelp("ctrl+d", "delete"),
+			key.WithKeys("d"),
+			key.WithHelp("[d]", "delete"),
 		),
 		Apply: key.NewBinding(
 			key.WithKeys("enter"),

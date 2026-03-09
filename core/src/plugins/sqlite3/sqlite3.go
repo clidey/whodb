@@ -193,9 +193,10 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 
 		normalizedType := NormalizeType(strings.ToUpper(dataType))
 		col := engine.Column{
-			Name:      name,
-			Type:      normalizedType,
-			IsPrimary: pk > 0,
+			Name:       name,
+			Type:       normalizedType,
+			IsNullable: notNull == 0,
+			IsPrimary:  pk > 0,
 		}
 		columns = append(columns, col)
 
@@ -283,27 +284,33 @@ func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, 
 }
 
 // GetColumnTypes uses PRAGMA table_info directly instead of GORM's DDL parser.
-func (p *Sqlite3Plugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+func (p *Sqlite3Plugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]gorm_plugin.ColumnTypeInfo, error) {
 	cols, err := p.getColumnsViaPragma(db, tableName)
 	if err != nil {
 		return nil, err
 	}
-	columnTypes := make(map[string]string, len(cols))
+	columnTypes := make(map[string]gorm_plugin.ColumnTypeInfo, len(cols))
 	for _, col := range cols {
-		columnTypes[col.Name] = col.Type
+		columnTypes[col.Name] = gorm_plugin.ColumnTypeInfo{
+			Type:       col.Type,
+			IsNullable: col.IsNullable,
+		}
 	}
 	return columnTypes, nil
 }
 
 // GetOrderedColumnsWithTypes uses PRAGMA table_info directly instead of GORM's DDL parser.
-func (p *Sqlite3Plugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName string) ([]engine.Column, map[string]string, error) {
+func (p *Sqlite3Plugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName string) ([]engine.Column, map[string]gorm_plugin.ColumnTypeInfo, error) {
 	cols, err := p.getColumnsViaPragma(db, tableName)
 	if err != nil {
 		return nil, nil, err
 	}
-	types := make(map[string]string, len(cols))
+	types := make(map[string]gorm_plugin.ColumnTypeInfo, len(cols))
 	for _, col := range cols {
-		types[col.Name] = col.Type
+		types[col.Name] = gorm_plugin.ColumnTypeInfo{
+			Type:       col.Type,
+			IsNullable: col.IsNullable,
+		}
 	}
 	return cols, types, nil
 }

@@ -17,13 +17,17 @@
 package clickhouse
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins/gorm"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
 )
+
+// ErrUpsertNotSupported is returned when upsert mode is attempted on ClickHouse.
+var ErrUpsertNotSupported = errors.New("import.error.upsert_not_supported")
 
 func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
 	builder := gorm_plugin.NewSQLBuilder(db, p)
@@ -64,4 +68,13 @@ func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, stora
 	// Build the CREATE TABLE with ClickHouse-specific ENGINE and ORDER BY
 	suffix := fmt.Sprintf("ENGINE = MergeTree() ORDER BY (%s)", orderByClause)
 	return builder.CreateTableQueryWithSuffix(schema, storageUnit, columnDefs, suffix)
+}
+
+// BulkAddRows rejects upsert mode (ClickHouse has no ON CONFLICT support) and
+// delegates all other modes to the base GormPlugin implementation.
+func (p *ClickHousePlugin) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
+	if len(config.UpsertPKColumns) > 0 {
+		return false, ErrUpsertNotSupported
+	}
+	return p.GormPlugin.BulkAddRows(config, schema, storageUnit, rows)
 }

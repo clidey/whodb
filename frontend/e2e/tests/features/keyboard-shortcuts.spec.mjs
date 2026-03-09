@@ -284,11 +284,11 @@ test.describe('Keyboard Shortcuts', () => {
         });
 
         test.describe('Global Table Shortcuts (Ctrl/Cmd)', () => {
-            test('Cmd/Ctrl+M opens Mock Data sheet', async ({ whodb, page }) => {
+            test('Cmd/Ctrl+Shift+G opens Mock Data sheet', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
-                // Press Cmd+M (Mac) or Ctrl+M (Win/Linux)
-                await whodb.typeCmdShortcut('m');
+                // Press Cmd+Shift+G (Mac) or Ctrl+Shift+G (Win/Linux)
+                await whodb.typeCmdShortcut('g', { shift: true });
 
                 // Mock Data sheet should open
                 await expect(page.locator('[data-testid="mock-data-sheet"]')).toBeVisible();

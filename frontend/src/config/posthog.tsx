@@ -336,3 +336,18 @@ export const resetAnalyticsIdentity = async (): Promise<void> => {
 export const getAnalyticsDistinctId = (): string | null => {
     return loadStoredDistinctId();
 };
+
+/** Capture an exception to PostHog if the client is initialized and consent is granted. */
+export const captureException = async (error: unknown, properties?: Record<string, unknown>) => {
+    if (getStoredConsentState() !== 'granted') {
+        return;
+    }
+    try {
+        const client = await ensureInitializedClient();
+        if (client) {
+            captureClientException(client, error, properties ?? {});
+        }
+    } catch {
+        // best-effort — never throw from error reporting
+    }
+};

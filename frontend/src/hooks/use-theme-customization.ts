@@ -36,4 +36,5 @@ export const useThemeCustomization = () => {
       document.body.classList.remove('disable-animations');
     }
   }, [settings.disableAnimations]);
+
 };

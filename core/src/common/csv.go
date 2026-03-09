@@ -16,10 +16,6 @@
 
 package common
 
-import (
-	"fmt"
-)
-
 // EscapeFormula escapes values that could be interpreted as formulas in spreadsheet applications
 func EscapeFormula(value string) string {
 	if len(value) == 0 {
@@ -36,7 +32,7 @@ func EscapeFormula(value string) string {
 	return value
 }
 
-// FormatCSVHeader creates a header with column name and type
+// FormatCSVHeader creates a header with the column name.
 func FormatCSVHeader(columnName, dataType string) string {
-	return fmt.Sprintf("%s:%s", columnName, dataType)
+	return columnName
 }

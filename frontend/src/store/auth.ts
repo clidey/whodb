@@ -16,6 +16,7 @@
 
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {LoginCredentials} from '@graphql';
+import { v4 as uuidv4 } from 'uuid';
 
 export type LocalLoginProfile = (LoginCredentials & {Id: string, Saved?: boolean, IsEnvironmentDefined?: boolean, SSLConfigured?: boolean});
 
@@ -45,7 +46,7 @@ export const authSlice = createSlice({
   reducers: {
     login: (state, action: PayloadAction<LoginCredentials | LocalLoginProfile>) => {
       const profile = action.payload.Id != null ? action.payload as LocalLoginProfile : {
-        Id: crypto.randomUUID(),
+        Id: uuidv4(),
         ...(action.payload as LoginCredentials),
       }
       state.current = profile as LocalLoginProfile;

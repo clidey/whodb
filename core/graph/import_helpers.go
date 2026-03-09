@@ -41,6 +41,7 @@ type importMapping struct {
 	sourceIndex int
 	targetName  string
 	targetType  string
+	isNullable  bool
 }
 
 type importValidationError struct {
@@ -409,6 +410,7 @@ func resolveImportMappings(
 			sourceIndex: sourceIndex[mapping.SourceColumn],
 			targetName:  targetName,
 			targetType:  column.Type,
+			isNullable:  column.IsNullable,
 		})
 		mappedCount++
 	}

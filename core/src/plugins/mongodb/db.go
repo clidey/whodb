@@ -40,6 +40,13 @@ func opCtx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), DefaultOperationTimeout)
 }
 
+// disconnectClient disconnects a MongoDB client using a fresh short-lived context,
+func disconnectClient(client *mongo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	client.Disconnect(ctx)
+}
+
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	ctx, cancel := opCtx()
 	defer cancel()
@@ -76,6 +83,9 @@ func DB(config *engine.PluginConfig) (*mongo.Client, error) {
 	connectionURI.WriteString(queryParams)
 
 	clientOptions.ApplyURI(connectionURI.String())
+	clientOptions.SetMaxPoolSize(10)
+	clientOptions.SetMinPoolSize(2)
+	clientOptions.SetMaxConnIdleTime(5 * time.Minute)
 	if config.Credentials.Username != "" || config.Credentials.Password != "" {
 		clientOptions.SetAuth(options.Credential{
 			Username: url.QueryEscape(config.Credentials.Username),
