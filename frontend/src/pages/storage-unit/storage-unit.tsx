@@ -424,7 +424,7 @@ export const StorageUnitPage: FC = () => {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
                 <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
-                    <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createPrefix')}</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
+                    <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createPrefix', { storageUnit: getDatabaseStorageUnitLabel(current?.Type, true) })}</span></h1>
                     <Button className="self-end" onClick={handleCreate} variant="secondary">
                         <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
                     </Button>
@@ -433,7 +433,7 @@ export const StorageUnitPage: FC = () => {
                     <div className="flex flex-col gap-4">
                         <SheetTitle className="flex items-center gap-2">
                             <PlusCircleIcon className="w-5 h-5" />
-                            {t('createTitle')} {getDatabaseStorageUnitLabel(current?.Type, true)}
+                            {t('createTitle', { storageUnit: getDatabaseStorageUnitLabel(current?.Type, true) })}
                         </SheetTitle>
                         <div className="flex flex-col gap-2">
                             <Label>{t('nameLabel')}</Label>

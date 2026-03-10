@@ -2,7 +2,7 @@ en:
   title: Settings
   telemetryTitle: Telemetry and Performance Metrics
   telemetryDescription: We use this information solely to enhance the performance of WhoDB.
-  dataCollectionDetails: For details on what data we collect, how it's collected, stored, and used, please refer to our
+  dataCollectionDetails: "For details on what data we collect, how it's collected, stored, and used, please refer to our {privacyPolicyLink}."
   privacyPolicy: Privacy Policy
   posthogInfo: WhoDB uses Posthog to collect and manage this data. More information about this tool can be found on its Github.
   sensitiveDataInfo: We have taken measures to redact as much sensitive information as we can and will continuously evaluate to make sure that it fits yours and our needs without sacrificing anything.
