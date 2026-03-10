@@ -45,7 +45,7 @@ import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, featureFlags, sources} from '../../config/features';
+import {extensions, featureFlags, getAppName, isEEMode, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
 import {useTranslation} from '@/hooks/use-translation';
@@ -117,6 +117,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     advancedDirection = "horizontal",
 }) => {
     const { t } = useTranslation('pages/login');
+    const appName = getAppName();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
@@ -369,7 +370,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    toast.success(t('welcomeToWhodb'));
+                    toast.success(t('welcomeToWhodb', { appName }));
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
@@ -879,8 +880,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt={extensions.AppName ?? "WhoDB"} className="w-auto h-8 mr-1"/>}
-                            <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
+                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>)}
+                            {!extensions.Logo && <span className="text-brand-foreground">{getAppName()}</span>}
                         </h1>
                         <span className="text-xl">{t('title')}</span>
                         {
@@ -1033,7 +1034,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h2 id="sample-db-heading" className="text-2xl font-bold text-foreground">
-                                        {t('tryWhodb')}
+                                        {t('tryWhodb', { appName })}
                                     </h2>
                                     <Badge variant="secondary" className="w-fit">
                                         {t('noSetupRequired')}
@@ -1042,7 +1043,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             </div>
 
                             <p className="text-base text-muted-foreground leading-relaxed">
-                                {t('experienceDescription')}
+                                {t('experienceDescription', { appName })}
                             </p>
                         </div>
 

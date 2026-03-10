@@ -27,13 +27,13 @@ en:
   loginFailed: Login Failed
   loginFailedWithError: "Login Failed: {error}"
   sampleDatabaseNotFound: Sample Database Not Found
-  welcomeToWhodb: Welcome to WhoDB
+  welcomeToWhodb: Welcome to {appName}
   failedToSelectDatabaseFile: Failed to Select Database File
   failedToParseCredentials: Failed to Parse Credentials from URL
   urlParseWarning: We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.
-  tryWhodb: Try WhoDB
+  tryWhodb: Try {appName}
   noSetupRequired: No Setup Required
-  experienceDescription: Experience the power of WhoDB with our interactive sample database. Explore all features with real data.
+  experienceDescription: Experience the power of {appName} with our interactive sample database. Explore all features with real data.
   whatsIncluded: What's Included
   aiChatAssistant: AI Chat Assistant
   aiChatDescription: Query in Natural Language

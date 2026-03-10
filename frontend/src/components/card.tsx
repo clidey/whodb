@@ -116,7 +116,7 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
   return (
     <>
       <Sheet open={expand} onOpenChange={handleOpenChange}>
-        <div>
+        <div onClick={() => handleOpenChange(true)}>
           <Card
             {...props}
             tag={props.collapsedTag}

@@ -20,6 +20,7 @@ import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
 import {isEEMode} from "@/config/ee-imports";
+import {getAppName} from "@/config/features";
 import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
@@ -40,6 +41,7 @@ import {useSettingsConfigQuery} from "@graphql";
 
 export const SettingsPage: FC = () => {
     const {t} = useTranslation('pages/settings');
+    const appName = getAppName();
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
     const storageUnitView = useAppSelector(state => state.settings.storageUnitView);
@@ -131,13 +133,13 @@ export const SettingsPage: FC = () => {
                         {isEEMode ? (
                             <div className="flex flex-col gap-sm">
                                 <h3 className="text-base">
-                                    {t('eeNoTelemetry')}
+                                    {t('eeNoTelemetry', { appName })}
                                 </h3>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-4">
                                 <h3 className="text-base">
-                                    {t('telemetryDescription')}&nbsp;
+                                    {t('telemetryDescription', { appName })}&nbsp;
                                     {t('dataCollectionDetails', {
                                         privacyPolicyLink: <ExternalLink
                                             href={"https://clidey.com/privacy-policy"}
@@ -145,7 +147,7 @@ export const SettingsPage: FC = () => {
                                     })}
                                     <br/>
                                     <br/>
-                                    {t('posthogInfo')}&nbsp;
+                                    {t('posthogInfo', { appName })}&nbsp;
                                     {t('sensitiveDataInfo')}
                                     <br/>
                                     <br/>
@@ -164,7 +166,7 @@ export const SettingsPage: FC = () => {
                                 {t('personalizeTitle')}
                             </p>
                             <p className="text-base">
-                                {t('personalizeDescription')}
+                                {t('personalizeDescription', { appName })}
                             </p>
                         </div>
                         <div className="flex justify-between">

@@ -51,7 +51,7 @@ import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} fro
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
-import {extensions} from "../../config/features";
+import {extensions, getAppName, isEEMode} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {LoginForm} from "../../pages/auth/login";
 import {AuthActions, LocalLoginProfile} from "../../store/auth";
@@ -326,8 +326,8 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />}
-                            {open && <span className="text-3xl font-bold">{extensions.AppName ?? "WhoDB"}</span>}
+                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                            {open && !extensions.Logo && <span className="text-3xl font-bold">{getAppName()}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>
