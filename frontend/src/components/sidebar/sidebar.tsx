@@ -327,7 +327,7 @@ export const Sidebar: FC = () => {
                             "hidden": !open,
                         })}>
                             {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
-                            {open && !extensions.Logo && <span className="text-3xl font-bold">{getAppName()}</span>}
+                            {open && <span className="text-3xl font-bold" data-testid="app-name">{getAppName()}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>

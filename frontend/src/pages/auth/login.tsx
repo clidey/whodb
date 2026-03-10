@@ -881,7 +881,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
                             {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>)}
-                            {!extensions.Logo && <span className="text-brand-foreground">{getAppName()}</span>}
+                            <span className="text-brand-foreground" data-testid="app-name">{getAppName()}</span>
                         </h1>
                         <span className="text-xl">{t('title')}</span>
                         {
@@ -1119,7 +1119,7 @@ export const LoginPage: FC = () => {
     return (
         <Container className="justify-center items-center">
             <LoginForm />
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60">
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60" data-testid="login-page-version">
                 {t('version')}: {__APP_VERSION__}
             </div>
         </Container>

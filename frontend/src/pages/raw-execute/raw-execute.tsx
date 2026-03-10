@@ -699,14 +699,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 ))}
                             </SelectContent>
                         </Select>} */}
-                        <Tip>
+                        <Tip className="w-fit">
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input" aria-label={t('addCell')}>
                                 <PlusCircleIcon className="w-4 h-4 text-primary" />
                             </Button>
                                 <p>{t('addCell')}</p>
                         </Tip>
-                        <Tip>
+                        <Tip className="w-fit">
                             <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary"
                                     className="border border-input" aria-label={t('clearEditor')}>
                                 <ArrowPathIcon className="w-4 h-4" />
@@ -715,7 +715,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </Tip>
                         {
                             onDelete != null &&
-                            <Tip>
+                            <Tip className="w-fit">
                                 <Button variant="secondary" onClick={handleDelete} data-testid="delete-cell-button"
                                         className="border border-input" aria-label={t('deleteCell')}>
                                     <XCircleIcon className="w-4 h-4 text-destructive"/>
@@ -1091,8 +1091,9 @@ export const RawExecutePage: FC = () => {
                                                             <EditableInput page={page}
                                                                 setValue={(newName) => handleUpdatePageName(page, newName)}
                                                                 isActive={page.id === activePageId} />
-                                                            <button
-                                                                type="button"
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
                                                                 title={t('deletePageButton')}
                                                                 onClick={(e) => {
                                                                     e.preventDefault();
@@ -1106,7 +1107,7 @@ export const RawExecutePage: FC = () => {
                                                                 data-testid={`delete-page-tab-${index}`}
                                                             >
                                                                 <XMarkIcon className="w-3 h-3" />
-                                                            </button>
+                                                            </Button>
                                                         </div>
                                                     </TabsTrigger>
                                             ))
