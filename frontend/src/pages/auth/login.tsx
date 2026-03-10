@@ -56,11 +56,16 @@ import {SettingsActions} from "../../store/settings";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
+import {
+    AwsConnectionPicker,
+    AwsConnectionPrefillData,
+    DatabaseIconWithBadge,
+    isAwsConnection
+} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
-import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
+import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -218,6 +223,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         newParams.delete("username");
                         newParams.delete("password");
                         newParams.delete("database");
+                        newParams.delete("port");
+                        newParams.delete("region");
                         setSearchParams(newParams, { replace: true });
                     }
 
@@ -638,6 +645,17 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            // Merge port/region into advancedForm
+            const hasPort = searchParams.has("port");
+            const hasRegion = searchParams.has("region");
+            if (hasPort || hasRegion) {
+                setAdvancedForm(prev => ({
+                    ...prev,
+                    ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
+                    ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
+                }));
+            }
         }
 
         // Handle auto-login with profile from URL
