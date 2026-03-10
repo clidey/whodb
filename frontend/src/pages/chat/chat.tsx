@@ -936,7 +936,7 @@ export const ChatPage: FC = () => {
                                                     "self-start": !chat.isUserInput,
                                                 })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
+                                                        ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                         : <div className="pl-4" />}
                                                     {chat.isUserInput ? (
                                                         <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
@@ -978,14 +978,14 @@ export const ChatPage: FC = () => {
                                                 return (
                                                     <div key={`chat-${i}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                            ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
+                                                            ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : null}
                                                         <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
                                                 return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="visual-message">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                     {/* @ts-ignore */}
@@ -998,7 +998,7 @@ export const ChatPage: FC = () => {
 
                                                 return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="confirmation-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
+                                                        ? (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                         : <div className="pl-4" />}
                                                     <div className="flex flex-col gap-3 w-[calc(100%-50px)] max-w-full min-w-0">
                                                         <Alert className="w-full">
@@ -1049,7 +1049,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
                                             </div>
                                         })

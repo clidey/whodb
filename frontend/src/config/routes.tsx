@@ -30,6 +30,10 @@ const RawExecutePage = lazy(() => import("../pages/raw-execute/raw-execute").the
 const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m.ChatPage })));
 const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
+const SQLAgentPage = isEEFeatureEnabled('sqlAgent') ? loadEEComponent(
+    () => import('@ee/pages/sql-agent/sql-agent').then(m => ({ default: m.SQLAgentPage })),
+    null
+) : null;
 
 // Wrapper component for lazy loaded routes
 const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
@@ -79,7 +83,9 @@ export const InternalRoutes = {
     Chat: {
         name: "Chat",
         path: "/chat",
-        component: <LazyRoute component={ChatPage} />,
+        component: SQLAgentPage
+            ? <Suspense fallback={<LoadingPage />}><SQLAgentPage /></Suspense>
+            : <LazyRoute component={ChatPage} />,
     },
     Logout: {
         name: "Logout",
@@ -99,20 +105,7 @@ export const InternalRoutes = {
             path: "/contact-us",
             component: <LazyRoute component={ContactUsPage} />
         }
-    } : {}),
-    ...(isEEFeatureEnabled('sqlAgent') ? (() => {
-        const SQLAgentPage = loadEEComponent(
-            () => import('@ee/pages/sql-agent/sql-agent').then(m => ({ default: m.SQLAgentPage })),
-            null
-        );
-        return SQLAgentPage ? {
-            SQLAgent: {
-                name: "SQL Agent",
-                path: "/sql-agent",
-                component: <Suspense fallback={<LoadingPage />}><SQLAgentPage /></Suspense>,
-            }
-        } : {};
-    })() : {})
+    } : {})
 }
 
 export const PrivateRoute: FC = () => {

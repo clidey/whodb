@@ -425,7 +425,7 @@ export const StorageUnitPage: FC = () => {
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
                 <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
                     <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createPrefix')}</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
-                    <Button className="self-end" onClick={handleCreate} variant="secondary">
+                    <Button className="self-end" onClick={e => { e.stopPropagation(); handleCreate(); }} variant="secondary">
                         <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
                     </Button>
                 </div>

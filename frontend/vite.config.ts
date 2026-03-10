@@ -96,6 +96,7 @@ export default defineConfig(async () => {
         : path.resolve(__dirname, './src/generated/graphql.tsx'),
       // Handle relative imports from EE to frontend
       '../../../../../frontend/src': path.resolve(__dirname, './src'),
+      '../../../../frontend/src': path.resolve(__dirname, './src'),
       '../../../frontend/src': path.resolve(__dirname, './src'),
     },
   },

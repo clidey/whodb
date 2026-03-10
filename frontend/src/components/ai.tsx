@@ -255,6 +255,7 @@ export const useAI = () => {
 
 export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableNewChat?: boolean;
+    disableClear?: boolean;
     onClear?: () => void;
     onAddExternalModel?: () => void;
 }> = ({
@@ -273,6 +274,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     modelTypesDropdownItems,
     modelDropdownItems,
     disableNewChat,
+    disableClear,
     onClear,
     onAddExternalModel,
 }) => {
@@ -526,7 +528,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
         <div className={cn("flex items-center", {
             "hidden": disableNewChat,
         })}>
-            <Button onClick={handleClear} disabled={loading} data-testid="chat-new-chat" variant="secondary">
+            <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
                 <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
             </Button>
         </div>
