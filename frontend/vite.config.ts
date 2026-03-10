@@ -45,20 +45,25 @@ const eeModulePlugin = () => ({
   }
 });
 
-// Resolve the app title at build time from the EE config (if available)
-const htmlTitlePlugin = () => {
+// Resolve app meta (title, description) at build time from the EE config (if available)
+const htmlMetaPlugin = () => {
   let title = 'Clidey WhoDB';
+  let description = 'WhoDB is the next-generation database explorer';
   if (process.env.VITE_BUILD_EDITION === 'ee' && eeExists) {
     try {
       const configContent = fs.readFileSync(path.resolve(eeDir, 'config.tsx'), 'utf-8');
-      const match = configContent.match(/MetaTitle:\s*["']([^"']+)["']/);
-      if (match) title = match[1];
-    } catch { /* fall back to default */ }
+      const titleMatch = configContent.match(/MetaTitle:\s*["']([^"']*)["']/);
+      if (titleMatch) title = titleMatch[1];
+      const descMatch = configContent.match(/MetaDescription:\s*["']([^"']*)["']/);
+      if (descMatch) description = descMatch[1];
+    } catch { /* fall back to defaults */ }
   }
   return {
-    name: 'html-title',
+    name: 'html-meta',
     transformIndexHtml(html: string) {
-      return html.replace('%VITE_APP_TITLE%', title);
+      return html
+        .replace('%VITE_APP_TITLE%', title)
+        .replace('%VITE_APP_DESCRIPTION%', description);
     }
   };
 };
@@ -101,7 +106,7 @@ export default defineConfig(async () => {
       react(),
       tailwindcss(),
       eeModulePlugin(),
-      htmlTitlePlugin(),
+      htmlMetaPlugin(),
       istanbulPlugin
     ].filter(Boolean),
 
