@@ -8,7 +8,6 @@ en:
   describe: Info
   data: Data
   sampledSchemaBadge: Schema inferred from sample
-  createPrefix: "Create a {storageUnit}"
   create: Create
   createTitle: "Create a {storageUnit}"
   columnsTitle: Columns
