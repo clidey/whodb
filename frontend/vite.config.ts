@@ -45,6 +45,24 @@ const eeModulePlugin = () => ({
   }
 });
 
+// Resolve the app title at build time from the EE config (if available)
+const htmlTitlePlugin = () => {
+  let title = 'Clidey WhoDB';
+  if (process.env.VITE_BUILD_EDITION === 'ee' && eeExists) {
+    try {
+      const configContent = fs.readFileSync(path.resolve(eeDir, 'config.tsx'), 'utf-8');
+      const match = configContent.match(/MetaTitle:\s*["']([^"']+)["']/);
+      if (match) title = match[1];
+    } catch { /* fall back to default */ }
+  }
+  return {
+    name: 'html-title',
+    transformIndexHtml(html: string) {
+      return html.replace('%VITE_APP_TITLE%', title);
+    }
+  };
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(async () => {
   // Dynamically import istanbul plugin only in test mode
@@ -83,6 +101,7 @@ export default defineConfig(async () => {
       react(),
       tailwindcss(),
       eeModulePlugin(),
+      htmlTitlePlugin(),
       istanbulPlugin
     ].filter(Boolean),
 
