@@ -46,22 +46,25 @@ const checkEEAvailability = (): boolean => {
     }
 };
 
+export const isEEMode = checkEEAvailability();
+
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
 export let extensions: Record<string, any> = {};
 export let sources: Record<string, any> = {};
 export let settingsDefaults: Record<string, any> = {};
 
-export const initialize = () => {
-    const isEEAvailable = checkEEAvailability();
+export const getAppName = (): string => extensions.AppName || "WhoDB";
 
-    if (!isEEAvailable) {
+export const initialize = () => {
+    if (!isEEMode) {
         featureFlags = defaultFeatures;
         updateDocumentMeta({});
         return;
     }
 
-    if (isEEAvailable) {
+    if (isEEMode) {
         // Set synchronous defaults for EE mode to avoid race condition
+        extensions = { AppName: "" };
         featureFlags = {
             analyzeView: true,
             explainView: true,
