@@ -41,7 +41,7 @@ var (
 
 type ElasticSearchPlugin struct{}
 
-func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
+func (p *ElasticSearchPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
 		return false
@@ -891,7 +891,9 @@ func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, 
 	return make(map[string]map[string]any), nil
 }
 
-func (p *ElasticSearchPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
+func (p *ElasticSearchPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error {
+	return nil
+}
 
 // ClearTableData - not supported for ElasticSearch
 func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {

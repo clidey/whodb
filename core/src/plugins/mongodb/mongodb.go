@@ -17,6 +17,7 @@
 package mongodb
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,7 +46,7 @@ var (
 
 type MongoDBPlugin struct{}
 
-func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
+func (p *MongoDBPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for availability check")

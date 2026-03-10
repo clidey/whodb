@@ -17,6 +17,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -137,7 +138,7 @@ type SSLStatus struct {
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
-	IsAvailable(config *PluginConfig) bool
+	IsAvailable(ctx context.Context, config *PluginConfig) bool
 	GetAllSchemas(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
