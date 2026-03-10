@@ -55,6 +55,7 @@ jobs:
         working-directory: ./frontend
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+          VITE_APP_VERSION: ${{ inputs.version }}
         run: |
           pnpm install
           pnpm run build:${{ inputs.edition }}

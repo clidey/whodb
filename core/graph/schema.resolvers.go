@@ -79,7 +79,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		})
 	}
 
-	if !src.MainEngine.Choose(engine.DatabaseType(credentials.Type)).IsAvailable(&engine.PluginConfig{
+	if !src.MainEngine.Choose(engine.DatabaseType(credentials.Type)).IsAvailable(ctx, &engine.PluginConfig{
 		Credentials: &engine.Credentials{
 			Type:     credentials.Type,
 			Hostname: credentials.Hostname,
@@ -175,7 +175,7 @@ func (r *mutationResolver) LoginWithProfile(ctx context.Context, profile model.L
 				})
 			}
 
-			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(&engine.PluginConfig{
+			if !src.MainEngine.Choose(engine.DatabaseType(loginProfile.Type)).IsAvailable(ctx, &engine.PluginConfig{
 				Credentials: resolved,
 			}) {
 				log.WithFields(log.Fields{
@@ -1007,8 +1007,8 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 		plugin := src.MainEngine.Choose(engine.DatabaseType(config.Credentials.Type))
 
 		if plugin != nil {
-			// Create a context with 2 second timeout
-			healthCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			// Create a context with 5 second timeout (Oracle connections can take 3-8s)
+			healthCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
 			done := make(chan bool, 1)
@@ -1022,7 +1022,7 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 					done <- true
 				}()
 
-				if plugin.IsAvailable(config) {
+				if plugin.IsAvailable(healthCtx, config) {
 					status.Database = "healthy"
 				} else {
 					status.Database = "error"

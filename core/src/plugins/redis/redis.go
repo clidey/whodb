@@ -47,8 +47,7 @@ var redisOperators = map[string]string{
 	"NOT IN":      "NOT IN",
 }
 
-func (p *RedisPlugin) IsAvailable(config *engine.PluginConfig) bool {
-	ctx := context.Background()
+func (p *RedisPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).Error("Failed to connect to Redis for availability check")
@@ -67,7 +66,7 @@ func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 		dbConfig := *config
 		dbConfig.Credentials.Database = strconv.Itoa(i)
 
-		if p.IsAvailable(&dbConfig) {
+		if p.IsAvailable(context.Background(), &dbConfig) {
 			availableDatabases = append(availableDatabases, strconv.Itoa(i))
 		}
 	}

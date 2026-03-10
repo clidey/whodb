@@ -140,10 +140,11 @@ export const SettingsPage: FC = () => {
                             <div className="flex flex-col gap-4">
                                 <h3 className="text-base">
                                     {t('telemetryDescription', { appName })}&nbsp;
-                                    {t('dataCollectionDetails')}&nbsp;
-                                    <ExternalLink
-                                    href={"https://clidey.com/privacy-policy"}
-                                    className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>.
+                                    {t('dataCollectionDetails', {
+                                        privacyPolicyLink: <ExternalLink
+                                            href={"https://clidey.com/privacy-policy"}
+                                            className={"underline text-blue-500"}>{t('privacyPolicy')}</ExternalLink>
+                                    })}
                                     <br/>
                                     <br/>
                                     {t('posthogInfo', { appName })}&nbsp;

@@ -96,6 +96,13 @@ parts:
       # Install pnpm
       npm install -g pnpm@10.29.3
 
+      # Read version for frontend build
+      if [ -f "${SNAPCRAFT_PROJECT_DIR}/.snap_version" ]; then
+        export VITE_APP_VERSION=$(cat "${SNAPCRAFT_PROJECT_DIR}/.snap_version" | tr -d '[:space:]')
+      else
+        export VITE_APP_VERSION="development"
+      fi
+
       # Build frontend (Cypress binary will be skipped)
       pnpm install
       pnpm run build:ce

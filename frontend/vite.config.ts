@@ -45,6 +45,29 @@ const eeModulePlugin = () => ({
   }
 });
 
+// Resolve app meta (title, description) at build time from the EE config (if available)
+const htmlMetaPlugin = () => {
+  let title = 'Clidey WhoDB';
+  let description = 'WhoDB is the next-generation database explorer';
+  if (process.env.VITE_BUILD_EDITION === 'ee' && eeExists) {
+    try {
+      const configContent = fs.readFileSync(path.resolve(eeDir, 'config.tsx'), 'utf-8');
+      const titleMatch = configContent.match(/MetaTitle:\s*["']([^"']*)["']/);
+      if (titleMatch) title = titleMatch[1];
+      const descMatch = configContent.match(/MetaDescription:\s*["']([^"']*)["']/);
+      if (descMatch) description = descMatch[1];
+    } catch { /* fall back to defaults */ }
+  }
+  return {
+    name: 'html-meta',
+    transformIndexHtml(html: string) {
+      return html
+        .replace('%VITE_APP_TITLE%', title)
+        .replace('%VITE_APP_DESCRIPTION%', description);
+    }
+  };
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(async () => {
   // Dynamically import istanbul plugin only in test mode
@@ -83,6 +106,7 @@ export default defineConfig(async () => {
       react(),
       tailwindcss(),
       eeModulePlugin(),
+      htmlMetaPlugin(),
       istanbulPlugin
     ].filter(Boolean),
 
@@ -121,6 +145,7 @@ export default defineConfig(async () => {
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       'process.env.BUILD_EDITION': JSON.stringify(process.env.VITE_BUILD_EDITION),
+      '__APP_VERSION__': JSON.stringify(process.env.VITE_APP_VERSION || 'development'),
     },
   };
 });

@@ -167,7 +167,7 @@ func TestLoginFailsWhenPluginUnavailable(t *testing.T) {
 	mut := resolver.Mutation()
 
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.IsAvailableFunc = func(*engine.PluginConfig) bool { return false }
+	mock.IsAvailableFunc = func(context.Context, *engine.PluginConfig) bool { return false }
 	setEngineMock(t, mock)
 
 	ctx := context.WithValue(context.Background(), auth.AuthKey_Credentials, &engine.Credentials{Type: "Test"})

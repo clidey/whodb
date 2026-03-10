@@ -8,9 +8,9 @@ en:
   describe: Info
   data: Data
   sampledSchemaBadge: Schema inferred from sample
-  createPrefix: Create a
+  createPrefix: "Create a {storageUnit}"
   create: Create
-  createTitle: Create a
+  createTitle: "Create a {storageUnit}"
   columnsTitle: Columns
   nameLabel: Name
   namePlaceholder: Enter Name...
