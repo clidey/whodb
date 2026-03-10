@@ -1818,10 +1818,6 @@ func (r *queryResolver) LocalAWSProfiles(ctx context.Context) ([]*model.LocalAWS
 
 // AWSRegions is the resolver for the AWSRegions field.
 func (r *queryResolver) AWSRegions(ctx context.Context) ([]*model.AWSRegion, error) {
-	if !env.IsAWSProviderEnabled {
-		return []*model.AWSRegion{}, nil
-	}
-
 	regions := aws.GetRegions()
 	result := make([]*model.AWSRegion, len(regions))
 	for i, region := range regions {
