@@ -33,6 +33,7 @@ const defaultFeatures: FeatureFlags = {
     settingsPage: true, // Enabled in CE
     sampleDatabaseTour: true, // Enabled in CE
     autoStartTourOnLogin: true, // Enabled in CE
+    sqlAgent: false,
 };
 
 // Check if EE modules are available
@@ -74,6 +75,7 @@ export const initialize = () => {
             settingsPage: true,
             sampleDatabaseTour: false,
             autoStartTourOnLogin: false,
+            sqlAgent: true,
         };
 
         // Load EE config asynchronously to override defaults if needed

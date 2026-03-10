@@ -19,7 +19,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { LoginPage } from "../pages/auth/login";
 import { useAppSelector } from "../store/hooks";
 import { LogoutPage } from "../pages/auth/logout";
-import { isEEFeatureEnabled } from "../utils/ee-loader";
+import { isEEFeatureEnabled, loadEEComponent } from "../utils/ee-loader";
 import { LoadingPage } from "../components/loading";
 
 // Lazy load heavy components
@@ -99,7 +99,20 @@ export const InternalRoutes = {
             path: "/contact-us",
             component: <LazyRoute component={ContactUsPage} />
         }
-    } : {})
+    } : {}),
+    ...(isEEFeatureEnabled('sqlAgent') ? (() => {
+        const SQLAgentPage = loadEEComponent(
+            () => import('@ee/pages/sql-agent/sql-agent').then(m => ({ default: m.SQLAgentPage })),
+            null
+        );
+        return SQLAgentPage ? {
+            SQLAgent: {
+                name: "SQL Agent",
+                path: "/sql-agent",
+                component: <Suspense fallback={<LoadingPage />}><SQLAgentPage /></Suspense>,
+            }
+        } : {};
+    })() : {})
 }
 
 export const PrivateRoute: FC = () => {

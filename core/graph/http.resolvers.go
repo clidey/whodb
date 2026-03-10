@@ -38,6 +38,8 @@ func SetupHTTPServer(router chi.Router) {
 	router.Get("/api/ai-models", getAIModelsHandler)
 	router.Post("/api/ai-chat", aiChatHandler)
 	router.Post("/api/ai-chat/stream", aiChatStreamHandler)
+	router.Post("/api/sql-agent/stream", sqlAgentStreamHandler)
+	router.Post("/api/sql-agent/permit", sqlAgentPermitHandler)
 
 	router.Post("/api/storage-units", addStorageUnitHandler)
 	router.Post("/api/rows", addRowHandler)
