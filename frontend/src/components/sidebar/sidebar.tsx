@@ -43,7 +43,6 @@ import {
     useGetSchemaQuery,
     useGetSslStatusQuery,
     useGetUpdateInfoQuery,
-    useGetVersionQuery,
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
@@ -120,7 +119,6 @@ export const Sidebar: FC = () => {
         },
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
-    const { data: version } = useGetVersionQuery();
     const { data: updateInfo } = useGetUpdateInfoQuery();
     const { refetch: refetchSslStatus } = useGetSslStatusQuery({
         skip: current == null || sslStatus !== undefined,
@@ -509,7 +507,7 @@ export const Sidebar: FC = () => {
                 <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                     "hidden": !open,
                 })}>
-                    {t('version')} {version?.Version}
+                    {t('version')} {__APP_VERSION__}
                     {updateInfo?.UpdateInfo?.updateAvailable && (
                         <a
                             href={updateInfo.UpdateInfo.releaseURL}

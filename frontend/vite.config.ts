@@ -144,6 +144,7 @@ export default defineConfig(async () => {
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       'process.env.BUILD_EDITION': JSON.stringify(process.env.VITE_BUILD_EDITION),
+      '__APP_VERSION__': JSON.stringify(process.env.VITE_APP_VERSION || 'development'),
     },
   };
 });
