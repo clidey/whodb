@@ -153,7 +153,7 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 
 func TestRESTRawExecutePropagatesErrors(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.RawExecuteFunc = func(*engine.PluginConfig, string) (*engine.GetRowsResult, error) {
+	mock.RawExecuteFunc = func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error) {
 		return nil, errors.New("raw error")
 	}
 	setEngineMock(t, mock)
