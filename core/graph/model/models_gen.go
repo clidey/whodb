@@ -365,6 +365,13 @@ type TypeDefinition struct {
 	Category         TypeCategory `json:"category"`
 }
 
+type UpdateInfo struct {
+	CurrentVersion  string `json:"currentVersion"`
+	LatestVersion   string `json:"latestVersion"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+	ReleaseURL      string `json:"releaseURL"`
+}
+
 type WhereCondition struct {
 	Type   WhereConditionType       `json:"Type"`
 	Atomic *AtomicWhereCondition    `json:"Atomic,omitempty"`

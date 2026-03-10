@@ -1,0 +1,8 @@
+query GetUpdateInfo {
+    UpdateInfo {
+        currentVersion
+        latestVersion
+        updateAvailable
+        releaseURL
+    }
+}

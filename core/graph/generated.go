@@ -268,6 +268,7 @@ type ComplexityRoot struct {
 		Schema                      func(childComplexity int) int
 		SettingsConfig              func(childComplexity int) int
 		StorageUnit                 func(childComplexity int, schema string) int
+		UpdateInfo                  func(childComplexity int) int
 		Version                     func(childComplexity int) int
 	}
 
@@ -319,6 +320,13 @@ type ComplexityRoot struct {
 		ID               func(childComplexity int) int
 		Label            func(childComplexity int) int
 	}
+
+	UpdateInfo struct {
+		CurrentVersion  func(childComplexity int) int
+		LatestVersion   func(childComplexity int) int
+		ReleaseURL      func(childComplexity int) int
+		UpdateAvailable func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -344,6 +352,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
+	UpdateInfo(ctx context.Context) (*model.UpdateInfo, error)
 	Health(ctx context.Context) (*model.HealthStatus, error)
 	Profiles(ctx context.Context) ([]*model.LoginProfile, error)
 	Database(ctx context.Context, typeArg string) ([]string, error)
@@ -1395,6 +1404,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.StorageUnit(childComplexity, args["schema"].(string)), true
+	case "Query.UpdateInfo":
+		if e.complexity.Query.UpdateInfo == nil {
+			break
+		}
+
+		return e.complexity.Query.UpdateInfo(childComplexity), true
 	case "Query.Version":
 		if e.complexity.Query.Version == nil {
 			break
@@ -1559,6 +1574,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TypeDefinition.Label(childComplexity), true
+
+	case "UpdateInfo.currentVersion":
+		if e.complexity.UpdateInfo.CurrentVersion == nil {
+			break
+		}
+
+		return e.complexity.UpdateInfo.CurrentVersion(childComplexity), true
+	case "UpdateInfo.latestVersion":
+		if e.complexity.UpdateInfo.LatestVersion == nil {
+			break
+		}
+
+		return e.complexity.UpdateInfo.LatestVersion(childComplexity), true
+	case "UpdateInfo.releaseURL":
+		if e.complexity.UpdateInfo.ReleaseURL == nil {
+			break
+		}
+
+		return e.complexity.UpdateInfo.ReleaseURL(childComplexity), true
+	case "UpdateInfo.updateAvailable":
+		if e.complexity.UpdateInfo.UpdateAvailable == nil {
+			break
+		}
+
+		return e.complexity.UpdateInfo.UpdateAvailable(childComplexity), true
 
 	}
 	return 0, false
@@ -6029,6 +6069,45 @@ func (ec *executionContext) fieldContext_Query_Version(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_UpdateInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_UpdateInfo,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().UpdateInfo(ctx)
+		},
+		nil,
+		ec.marshalNUpdateInfo2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_UpdateInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "currentVersion":
+				return ec.fieldContext_UpdateInfo_currentVersion(ctx, field)
+			case "latestVersion":
+				return ec.fieldContext_UpdateInfo_latestVersion(ctx, field)
+			case "updateAvailable":
+				return ec.fieldContext_UpdateInfo_updateAvailable(ctx, field)
+			case "releaseURL":
+				return ec.fieldContext_UpdateInfo_releaseURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8038,6 +8117,122 @@ func (ec *executionContext) fieldContext_TypeDefinition_category(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TypeCategory does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateInfo_currentVersion(ctx context.Context, field graphql.CollectedField, obj *model.UpdateInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateInfo_currentVersion,
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentVersion, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateInfo_currentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateInfo_latestVersion(ctx context.Context, field graphql.CollectedField, obj *model.UpdateInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateInfo_latestVersion,
+		func(ctx context.Context) (any, error) {
+			return obj.LatestVersion, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateInfo_latestVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateInfo_updateAvailable(ctx context.Context, field graphql.CollectedField, obj *model.UpdateInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateInfo_updateAvailable,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdateAvailable, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateInfo_updateAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateInfo_releaseURL(ctx context.Context, field graphql.CollectedField, obj *model.UpdateInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateInfo_releaseURL,
+		func(ctx context.Context) (any, error) {
+			return obj.ReleaseURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateInfo_releaseURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11612,6 +11807,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "UpdateInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_UpdateInfo(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "Health":
 			field := field
 
@@ -12546,6 +12763,60 @@ func (ec *executionContext) _TypeDefinition(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._TypeDefinition_defaultPrecision(ctx, field, obj)
 		case "category":
 			out.Values[i] = ec._TypeDefinition_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateInfoImplementors = []string{"UpdateInfo"}
+
+func (ec *executionContext) _UpdateInfo(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateInfo")
+		case "currentVersion":
+			out.Values[i] = ec._UpdateInfo_currentVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "latestVersion":
+			out.Values[i] = ec._UpdateInfo_latestVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateAvailable":
+			out.Values[i] = ec._UpdateInfo_updateAvailable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "releaseURL":
+			out.Values[i] = ec._UpdateInfo_releaseURL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14237,6 +14508,20 @@ func (ec *executionContext) marshalNTypeDefinition2ᚖgithubᚗcomᚋclideyᚋwh
 		return graphql.Null
 	}
 	return ec._TypeDefinition(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUpdateInfo2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo(ctx context.Context, sel ast.SelectionSet, v model.UpdateInfo) graphql.Marshaler {
+	return ec._UpdateInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateInfo2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐUpdateInfo(ctx context.Context, sel ast.SelectionSet, v *model.UpdateInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (graphql.Upload, error) {

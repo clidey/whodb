@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -43,6 +44,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
 	"github.com/clidey/whodb/core/src/settings"
+	"github.com/clidey/whodb/core/src/version"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -971,6 +973,24 @@ func (r *queryResolver) Version(ctx context.Context) (string, error) {
 	}
 	// Default fallback for development
 	return "development", nil
+}
+
+// UpdateInfo is the resolver for the UpdateInfo field.
+func (r *queryResolver) UpdateInfo(ctx context.Context) (*model.UpdateInfo, error) {
+	currentVersion := env.ApplicationVersion
+	if currentVersion == "" {
+		currentVersion = "development"
+	}
+
+	disabled := env.GetDisableUpdateCheck() || os.Getenv("SNAP") != ""
+
+	info := version.CheckForUpdate(currentVersion, disabled)
+	return &model.UpdateInfo{
+		CurrentVersion:  info.CurrentVersion,
+		LatestVersion:   info.LatestVersion,
+		UpdateAvailable: info.UpdateAvailable,
+		ReleaseURL:      info.ReleaseURL,
+	}, nil
 }
 
 // Health is the resolver for the Health field.
