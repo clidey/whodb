@@ -123,6 +123,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
+    const autoLoginRetryCount = useRef(0);
+    const autoLoginRetryFnRef = useRef<(() => void) | null>(null);
     const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
@@ -182,6 +184,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
+            setIsAutoLoggingIn(false);
             return setError(t('allFieldsRequired'));
         }
         setError(undefined);
@@ -238,11 +241,25 @@ export const LoginForm: FC<LoginFormProps> = ({
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -264,6 +281,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
         if (profileId == null) {
+            setIsAutoLoggingIn(false);
             return setError(t('selectProfileRequired'));
         }
         setError(undefined);
@@ -309,11 +327,25 @@ export const LoginForm: FC<LoginFormProps> = ({
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -663,10 +695,14 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (searchParams.has("resource")) {
             const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
             if (selectedProfile?.value) {
+                autoLoginRetryFnRef.current = () => handleLoginWithProfileSubmit(selectedProfile.value);
                 setSelectedAvailableProfile(selectedProfile?.value);
                 handleLoginWithProfileSubmit(selectedProfile.value);
+            } else {
+                setIsAutoLoggingIn(false);
             }
         } else if (searchParams.has("login")) {
+            autoLoginRetryFnRef.current = handleSubmit;
             setTimeout(() => {
                 handleSubmit();
                 const newParams = new URLSearchParams(searchParams);
