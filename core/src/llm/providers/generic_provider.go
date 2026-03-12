@@ -48,6 +48,19 @@ func (p *GenericProvider) GetType() LLMType {
 	return LLMType(p.providerId)
 }
 
+// GetProtocol returns the streaming protocol family based on the configured client type.
+// Maps "anthropic" → "anthropic", "aws-bedrock" → "aws-bedrock", everything else → "openai".
+func (p *GenericProvider) GetProtocol() string {
+	switch p.clientType {
+	case "anthropic":
+		return "anthropic"
+	case "aws-bedrock":
+		return "aws-bedrock"
+	default:
+		return "openai"
+	}
+}
+
 // GetDefaultEndpoint returns an empty string as generic providers must specify their endpoint.
 func (p *GenericProvider) GetDefaultEndpoint() string {
 	return "" // No default - must be configured
@@ -67,15 +80,10 @@ func (p *GenericProvider) GetSupportedModels(config *ProviderConfig) ([]string, 
 	return p.models, nil
 }
 
-// GetBAMLClientType returns the BAML client type for this provider.
-func (p *GenericProvider) GetBAMLClientType() string {
-	return p.clientType
-}
-
-// CreateBAMLClientOptions creates BAML client options for the generic provider.
-func (p *GenericProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
+// CreateBAMLClient creates BAML client type and options for the generic provider.
+func (p *GenericProvider) CreateBAMLClient(config *ProviderConfig, model string) (string, map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	opts := map[string]any{
@@ -90,5 +98,5 @@ func (p *GenericProvider) CreateBAMLClientOptions(config *ProviderConfig, model 
 		opts["api_key"] = config.APIKey
 	}
 
-	return opts, nil
+	return p.clientType, opts, nil
 }

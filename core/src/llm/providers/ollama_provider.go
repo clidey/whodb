@@ -44,6 +44,9 @@ func (p *OllamaProvider) GetType() LLMType {
 	return Ollama_LLMType
 }
 
+// GetProtocol returns "openai" — Ollama uses the OpenAI-compatible streaming protocol.
+func (p *OllamaProvider) GetProtocol() string { return "openai" }
+
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
 func (p *OllamaProvider) GetDefaultEndpoint() string {
@@ -97,22 +100,17 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 	return models, nil
 }
 
-// GetBAMLClientType returns the BAML client type for Ollama.
+// CreateBAMLClient creates BAML client type and options for Ollama.
 // Ollama uses the openai-generic client type as it's OpenAI-compatible.
-func (p *OllamaProvider) GetBAMLClientType() string {
-	return "openai-generic"
-}
-
-// CreateBAMLClientOptions creates BAML client options for Ollama.
-func (p *OllamaProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
+func (p *OllamaProvider) CreateBAMLClient(config *ProviderConfig, model string) (string, map[string]any, error) {
 	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	// Ollama expects base_url without /api suffix for OpenAI-compatible endpoint
 	baseURL := strings.TrimSuffix(config.Endpoint, "/api") + "/v1"
 
-	return map[string]any{
+	return "openai-generic", map[string]any{
 		"base_url":           baseURL,
 		"model":              model,
 		"default_role":       "user",

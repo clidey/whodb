@@ -49,6 +49,7 @@ type PluginMock struct {
 	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
 	FormatValueFunc          func(any) string
 	GetColumnsForTableFunc   func(*engine.PluginConfig, string, string) ([]engine.Column, error)
+	MarkGeneratedColumnsFunc func(*engine.PluginConfig, string, string, []engine.Column) error
 	GetColumnConstraintsFunc func(*engine.PluginConfig, string, string) (map[string]map[string]any, error)
 	ClearTableDataFunc       func(*engine.PluginConfig, string, string) (bool, error)
 	GetForeignKeysFunc       func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
@@ -207,6 +208,13 @@ func (m *PluginMock) GetColumnsForTable(config *engine.PluginConfig, schema stri
 		return m.GetColumnsForTableFunc(config, schema, storageUnit)
 	}
 	return nil, nil
+}
+
+func (m *PluginMock) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
+	if m.MarkGeneratedColumnsFunc != nil {
+		return m.MarkGeneratedColumnsFunc(config, schema, storageUnit, columns)
+	}
+	return nil
 }
 
 func (m *PluginMock) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
