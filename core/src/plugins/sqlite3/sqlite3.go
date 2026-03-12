@@ -177,7 +177,6 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 	defer rows.Close()
 
 	var columns []engine.Column
-	pkColTypes := make(map[string]string)
 
 	for rows.Next() {
 		var cid int
@@ -199,54 +198,6 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 			IsPrimary:  pk > 0,
 		}
 		columns = append(columns, col)
-
-		if pk > 0 {
-			pkColTypes[name] = strings.ToUpper(dataType)
-		}
-	}
-
-	// Detect auto-increment: SQLite INTEGER PRIMARY KEY with a single PK column
-	if len(pkColTypes) == 1 {
-		for i := range columns {
-			if columns[i].IsPrimary {
-				pkType := pkColTypes[columns[i].Name]
-				colType := strings.ToUpper(columns[i].Type)
-				if pkType == "INTEGER" || colType == "INTEGER" {
-					columns[i].IsAutoIncrement = true
-				}
-			}
-		}
-	}
-
-	// Detect generated columns via table_xinfo
-	tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
-	if err == nil {
-		xrows, xerr := db.Raw(tableXInfoQuery).Rows()
-		if xerr == nil {
-			defer xrows.Close()
-			for xrows.Next() {
-				var cid int
-				var name string
-				var dataType string
-				var notNull int
-				var dfltValue any
-				var pk int
-				var hidden int
-
-				if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
-					continue
-				}
-
-				if hidden == 2 || hidden == 3 {
-					for i := range columns {
-						if columns[i].Name == name {
-							columns[i].IsComputed = true
-							break
-						}
-					}
-				}
-			}
-		}
 	}
 
 	// Enrich with foreign key relationships using the provided db connection directly
@@ -281,6 +232,90 @@ func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, 
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
 		return p.getColumnsViaPragma(db, storageUnit)
 	})
+}
+
+// MarkGeneratedColumns detects SQLite auto-increment (INTEGER PRIMARY KEY) and
+// generated columns (via PRAGMA table_xinfo hidden flags).
+func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
+	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
+		if !ok {
+			return false, fmt.Errorf("failed to create SQLite SQL builder")
+		}
+
+		// Detect auto-increment: SQLite INTEGER PRIMARY KEY with a single PK column
+		// We need PK column types from table_info
+		tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
+		if err != nil {
+			return false, err
+		}
+		rows, err := db.Raw(tableInfoQuery).Rows()
+		if err != nil {
+			return false, err
+		}
+		defer rows.Close()
+
+		pkColTypes := make(map[string]string)
+		for rows.Next() {
+			var cid int
+			var name, dataType string
+			var notNull int
+			var dfltValue any
+			var pk int
+			if err := rows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk); err != nil {
+				continue
+			}
+			if pk > 0 {
+				pkColTypes[name] = strings.ToUpper(dataType)
+			}
+		}
+
+		if len(pkColTypes) == 1 {
+			for i := range columns {
+				if columns[i].IsPrimary {
+					pkType := pkColTypes[columns[i].Name]
+					colType := strings.ToUpper(columns[i].Type)
+					if pkType == "INTEGER" || colType == "INTEGER" {
+						columns[i].IsAutoIncrement = true
+					}
+				}
+			}
+		}
+
+		// Detect generated columns via table_xinfo
+		tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
+		if err != nil {
+			return true, nil
+		}
+		xrows, xerr := db.Raw(tableXInfoQuery).Rows()
+		if xerr != nil {
+			return true, nil
+		}
+		defer xrows.Close()
+		for xrows.Next() {
+			var cid int
+			var name, dataType string
+			var notNull int
+			var dfltValue any
+			var pk, hidden int
+
+			if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
+				continue
+			}
+
+			if hidden == 2 || hidden == 3 {
+				for i := range columns {
+					if columns[i].Name == name {
+						columns[i].IsComputed = true
+						break
+					}
+				}
+			}
+		}
+
+		return true, nil
+	})
+	return err
 }
 
 // GetColumnTypes uses PRAGMA table_info directly instead of GORM's DDL parser.

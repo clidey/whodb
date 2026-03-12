@@ -436,6 +436,11 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 	}
 }
 
+// MarkGeneratedColumns is a no-op for Redis (no generated/computed columns).
+func (p *RedisPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
+	return nil
+}
+
 func filterRedisHash(field, value string, where *model.WhereCondition) bool {
 	condition, err := convertWhereConditionToRedisFilter(where)
 	if err != nil {

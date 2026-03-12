@@ -571,6 +571,11 @@ func (g *Generator) generateTableRows(
 		return 0, fmt.Errorf("failed to get columns: %w", err)
 	}
 
+	// Enrich columns with auto-increment and computed column flags
+	if err := plugin.MarkGeneratedColumns(config, schema, table, columns); err != nil {
+		log.WithError(err).Warn("Failed to mark generated columns for " + table)
+	}
+
 	// Log column details for debugging PK/auto-increment/computed issues
 	columnDetails := make([]map[string]any, 0, len(columns))
 	for _, col := range columns {

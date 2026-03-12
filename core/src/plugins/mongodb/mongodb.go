@@ -446,6 +446,11 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	return columns, nil
 }
 
+// MarkGeneratedColumns is a no-op for MongoDB (no generated/computed columns).
+func (p *MongoDBPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
+	return nil
+}
+
 func inferMongoDBType(value any) string {
 	if value == nil {
 		return "null"

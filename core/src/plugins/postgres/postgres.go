@@ -151,20 +151,15 @@ func (p *PostgresPlugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
 }
 
-// GetColumnsForTable returns columns with computed column detection.
-// Generated columns (GENERATED ALWAYS AS) are marked as IsComputed.
-func (p *PostgresPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
-	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
-	if err != nil {
-		return nil, err
-	}
-
+// MarkGeneratedColumns detects PostgreSQL generated columns (GENERATED ALWAYS AS)
+// and marks them as IsComputed.
+func (p *PostgresPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
 	computed, err := p.QueryComputedColumns(config, `
 		SELECT column_name FROM information_schema.columns
 		WHERE table_schema = ? AND table_name = ? AND is_generated = 'ALWAYS'
 	`, schema, storageUnit)
 	if err != nil {
-		log.WithError(err).Warn("Failed to get generated columns for PostgreSQL table")
+		return err
 	}
 
 	for i := range columns {
@@ -172,7 +167,7 @@ func (p *PostgresPlugin) GetColumnsForTable(config *engine.PluginConfig, schema 
 			columns[i].IsComputed = true
 		}
 	}
-	return columns, nil
+	return nil
 }
 
 func NewPostgresPlugin() *engine.Plugin {

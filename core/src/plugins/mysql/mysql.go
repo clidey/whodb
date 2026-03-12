@@ -140,20 +140,15 @@ func (p *MySQLPlugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
 }
 
-// GetColumnsForTable returns columns with computed column detection.
-// Generated columns (VIRTUAL or STORED) are marked as IsComputed.
-func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
-	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
-	if err != nil {
-		return nil, err
-	}
-
+// MarkGeneratedColumns detects MySQL generated columns (VIRTUAL or STORED)
+// and marks them as IsComputed.
+func (p *MySQLPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
 	computed, err := p.QueryComputedColumns(config, `
 		SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND GENERATION_EXPRESSION IS NOT NULL AND GENERATION_EXPRESSION != ''
 	`, schema, storageUnit)
 	if err != nil {
-		log.WithError(err).Warn("Failed to get generated columns for MySQL table")
+		return err
 	}
 
 	for i := range columns {
@@ -161,7 +156,7 @@ func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 			columns[i].IsComputed = true
 		}
 	}
-	return columns, nil
+	return nil
 }
 
 func NewMySQLPlugin() *engine.Plugin {

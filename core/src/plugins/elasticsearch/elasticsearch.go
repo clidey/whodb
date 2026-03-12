@@ -511,6 +511,11 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	return columns, nil
 }
 
+// MarkGeneratedColumns is a no-op for ElasticSearch (no generated/computed columns).
+func (p *ElasticSearchPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
+	return nil
+}
+
 func inferElasticSearchType(value any) string {
 	if value == nil {
 		return "null"

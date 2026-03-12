@@ -157,6 +157,10 @@ type PluginFunctions interface {
 	FormatValue(val any) string
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)
 
+	// MarkGeneratedColumns enriches columns with auto-increment and computed column flags
+	// by querying database-specific system catalogs
+	MarkGeneratedColumns(config *PluginConfig, schema string, storageUnit string, columns []Column) error
+
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
