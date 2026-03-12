@@ -125,6 +125,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const usernameInputRef = useRef<HTMLInputElement>(null);
     const autoLoginRetryCount = useRef(0);
     const autoLoginRetryFnRef = useRef<(() => void) | null>(null);
+    const [pendingAutoLogin, setPendingAutoLogin] = useState(false);
     const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
@@ -702,16 +703,24 @@ export const LoginForm: FC<LoginFormProps> = ({
                 setIsAutoLoggingIn(false);
             }
         } else if (searchParams.has("login")) {
-            autoLoginRetryFnRef.current = handleSubmit;
-            setTimeout(() => {
-                handleSubmit();
-                const newParams = new URLSearchParams(searchParams);
-                newParams.delete("login");
-                setSearchParams(newParams, { replace: true });
-            }, 10);
+            setPendingAutoLogin(true);
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("login");
+            setSearchParams(newParams, { replace: true });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
+
+    // Auto-login: fires on the NEXT render after URL params set pendingAutoLogin to true.
+    // Using state (not a ref) ensures handleSubmit has current field values — the state change
+    // triggers a re-render, and handleSubmit is recreated with fresh closure values before this runs.
+    useEffect(() => {
+        if (pendingAutoLogin) {
+            setPendingAutoLogin(false);
+            autoLoginRetryFnRef.current = handleSubmit;
+            handleSubmit();
+        }
+    }, [pendingAutoLogin, handleSubmit]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
