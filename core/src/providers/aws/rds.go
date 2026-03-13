@@ -37,7 +37,7 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 
 	log.Debugf("RDS discoverRDS: starting discovery for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &rds.DescribeDBInstancesInput{
 			Marker:     nextToken,
 			MaxRecords: aws.Int32(50),
@@ -123,7 +123,7 @@ func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.Discove
 
 	log.Debugf("RDS discoverRDSClusters: starting for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &rds.DescribeDBClustersInput{
 			Marker:     nextToken,
 			MaxRecords: aws.Int32(50),
@@ -223,7 +223,7 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 
 	log.Debugf("RDS discoverRDSProxies: starting for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &rds.DescribeDBProxiesInput{
 			Marker:     nextToken,
 			MaxRecords: aws.Int32(50),

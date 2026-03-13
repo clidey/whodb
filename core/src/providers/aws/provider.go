@@ -59,6 +59,9 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+// maxPaginationPages is a safety limit to prevent infinite loops if AWS pagination is broken.
+const maxPaginationPages = 1000
+
 // DiscoveryExtension discovers additional database connections.
 type DiscoveryExtension func(ctx context.Context, p *Provider) ([]providers.DiscoveredConnection, error)
 
