@@ -221,13 +221,10 @@ export const Sidebar: FC = () => {
             },
         ];
         if (!isNoSQL(current.Type)) {
-            const sqlAgentEnabled = isEEFeatureEnabled('sqlAgent');
             routes.unshift({
                 title: t('chat'),
                 icon: <SparklesIcon className="w-4 h-4" />,
-                path: sqlAgentEnabled && InternalRoutes.SQLAgent
-                    ? InternalRoutes.SQLAgent.path
-                    : InternalRoutes.Chat.path,
+                path: InternalRoutes.Chat.path,
             });
         }
         if (databaseSupportsScratchpad(current.Type)) {
