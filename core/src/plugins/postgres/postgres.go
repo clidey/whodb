@@ -59,7 +59,7 @@ func (p *PostgresPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
 }
 
 func (p *PostgresPlugin) GetAllSchemasQuery() string {
-	return "SELECT schema_name AS schemaname FROM information_schema.schemata"
+	return "SELECT schema_name AS schemaname FROM information_schema.schemata WHERE has_schema_privilege(schema_name, 'USAGE')"
 }
 
 func (p *PostgresPlugin) GetTableInfoQuery() string {
@@ -107,9 +107,7 @@ func (p *PostgresPlugin) GetDatabases(config *engine.PluginConfig) ([]string, er
 		var databases []struct {
 			Datname string `gorm:"column:datname"`
 		}
-		if err := db.Table("pg_database").
-			Select("datname").
-			Where("datistemplate = ?", false).
+		if err := db.Raw("SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn AND has_database_privilege(datname, 'CONNECT')").
 			Scan(&databases).Error; err != nil {
 			return nil, err
 		}

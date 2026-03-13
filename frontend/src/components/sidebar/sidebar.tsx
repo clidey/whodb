@@ -184,9 +184,8 @@ export const Sidebar: FC = () => {
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-        dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: value }));
         handleProfileChange(current.Id, value);
-    }, [current, dispatch, handleProfileChange, navigate, pathname]);
+    }, [current, handleProfileChange, navigate, pathname]);
 
     // Schema select logic
     const schemaOptions = useMemo(() => {
@@ -222,13 +221,10 @@ export const Sidebar: FC = () => {
             },
         ];
         if (!isNoSQL(current.Type)) {
-            const sqlAgentEnabled = isEEFeatureEnabled('sqlAgent');
             routes.unshift({
                 title: t('chat'),
                 icon: <SparklesIcon className="w-4 h-4" />,
-                path: sqlAgentEnabled && InternalRoutes.SQLAgent
-                    ? InternalRoutes.SQLAgent.path
-                    : InternalRoutes.Chat.path,
+                path: InternalRoutes.Chat.path,
             });
         }
         if (databaseSupportsScratchpad(current.Type)) {

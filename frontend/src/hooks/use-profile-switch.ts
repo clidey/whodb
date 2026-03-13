@@ -65,6 +65,9 @@ export const useProfileSwitch = (options?: UseProfileSwitchOptions) => {
                 onCompleted(data) {
                     if (data.LoginWithProfile.Status) {
                         updateProfileLastAccessed(profile.Id);
+                        if (database) {
+                            dispatch(AuthActions.setLoginProfileDatabase({ id: profile.Id, database }));
+                        }
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: profile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
@@ -96,6 +99,9 @@ export const useProfileSwitch = (options?: UseProfileSwitchOptions) => {
                 onCompleted(data) {
                     if (data.Login.Status) {
                         updateProfileLastAccessed(profile.Id);
+                        if (database) {
+                            dispatch(AuthActions.setLoginProfileDatabase({ id: profile.Id, database }));
+                        }
                         dispatch(DatabaseActions.setSchema(""));
                         dispatch(AuthActions.switch({ id: profile.Id }));
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
