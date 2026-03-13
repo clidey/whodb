@@ -31,9 +31,9 @@ RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts 
     echo "export default {};" > ee/frontend/src/components/export.ts && \
     echo "export default {}; export const EEIcons = { Logos: {} };" > ee/frontend/src/icons.tsx
 
-RUN pnpm run build
-
 ARG VERSION=dev
+ENV VITE_APP_VERSION=${VERSION}
+RUN pnpm run build
 ARG TARGETARCH
 ARG PLATFORM=docker
 

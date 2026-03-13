@@ -44,6 +44,9 @@ func (p *AnthropicProvider) GetType() LLMType {
 	return Anthropic_LLMType
 }
 
+// GetProtocol returns "anthropic" — the streaming protocol family.
+func (p *AnthropicProvider) GetProtocol() string { return "anthropic" }
+
 // GetDefaultEndpoint returns the default Anthropic API endpoint.
 func (p *AnthropicProvider) GetDefaultEndpoint() string {
 	return "https://api.anthropic.com/v1"
@@ -106,13 +109,8 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 	return models, nil
 }
 
-// GetBAMLClientType returns the BAML client type for Anthropic.
-func (p *AnthropicProvider) GetBAMLClientType() string {
-	return "anthropic"
-}
-
-// CreateBAMLClientOptions creates BAML client options for Anthropic.
-func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
+// CreateBAMLClient creates BAML client type and options for Anthropic.
+func (p *AnthropicProvider) CreateBAMLClient(config *ProviderConfig, model string) (string, map[string]any, error) {
 	opts := map[string]any{"model": model}
 	if config.APIKey != "" {
 		opts["api_key"] = config.APIKey
@@ -120,5 +118,5 @@ func (p *AnthropicProvider) CreateBAMLClientOptions(config *ProviderConfig, mode
 	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
 		opts["base_url"] = config.Endpoint
 	}
-	return opts, nil
+	return "anthropic", opts, nil
 }

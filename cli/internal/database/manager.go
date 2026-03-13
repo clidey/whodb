@@ -310,7 +310,7 @@ func (m *Manager) Connect(conn *Connection) error {
 	}
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	if !plugin.IsAvailable(pluginConfig) {
+	if !plugin.IsAvailable(context.Background(), pluginConfig) {
 		// Don't expose connection details in error message for security
 		return fmt.Errorf("cannot connect to database. please check your credentials and ensure the database is accessible")
 	}

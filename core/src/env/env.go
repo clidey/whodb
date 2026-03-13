@@ -79,6 +79,11 @@ const DefaultLogDir = "/var/log/whodb"
 const DefaultLogFile = DefaultLogDir + "/whodb.log"
 const DefaultAccessLogFile = DefaultLogDir + "/whodb.access.log"
 
+// GetDisableUpdateCheck returns true if update checking is disabled.
+func GetDisableUpdateCheck() bool {
+	return os.Getenv("WHODB_DISABLE_UPDATE_CHECK") == "true"
+}
+
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
 var ApplicationEnvironment = os.Getenv("WHODB_APPLICATION_ENVIRONMENT")

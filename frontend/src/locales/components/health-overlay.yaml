@@ -1,6 +1,6 @@
 en:
   serverDownTitle: Server Unavailable
-  serverDownMessage: The WhoDB server is currently unreachable. Please check your connection.
+  serverDownMessage: "The {appName} server is currently unreachable. Please check your connection."
   serverDownRetrying: Attempting to reconnect...
   databaseDownTitle: Database Connection Lost
   databaseDownMessage: The database connection is unavailable. You can switch to another profile or logout.

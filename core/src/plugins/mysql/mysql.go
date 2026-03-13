@@ -17,8 +17,10 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -42,17 +44,45 @@ type MySQLPlugin struct {
 
 func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
-		var databases []struct {
+		var allDBs []struct {
 			Database string `gorm:"column:Database"`
 		}
-		if err := db.Raw("SHOW DATABASES").Scan(&databases).Error; err != nil {
+		if err := db.Raw("SHOW DATABASES").Scan(&allDBs).Error; err != nil {
 			return nil, err
 		}
-		var databaseNames []string
-		for _, database := range databases {
-			databaseNames = append(databaseNames, database.Database)
+
+		// Verify each database with USE — the only reliable access check in MySQL.
+		// INFORMATION_SCHEMA privilege tables are unreliable due to GRANTEE format
+		// mismatches, role-based grants, and server-specific defaults.
+		// Cost is O(N) but runs once per profile (Apollo caches the result).
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, err
 		}
-		return databaseNames, nil
+		ctx := context.Background()
+		conn, err := sqlDB.Conn(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Close()
+
+		var currentDB sql.NullString
+		conn.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&currentDB)
+
+		accessible := make([]string, 0, len(allDBs))
+		for _, d := range allDBs {
+			escaped := strings.ReplaceAll(d.Database, "`", "``")
+			if _, err := conn.ExecContext(ctx, "USE `"+escaped+"`"); err == nil {
+				accessible = append(accessible, d.Database)
+			}
+		}
+
+		if currentDB.Valid && currentDB.String != "" {
+			escaped := strings.ReplaceAll(currentDB.String, "`", "``")
+			conn.ExecContext(ctx, "USE `"+escaped+"`")
+		}
+
+		return accessible, nil
 	})
 }
 
@@ -140,20 +170,15 @@ func (p *MySQLPlugin) NormalizeType(typeName string) string {
 	return NormalizeType(typeName)
 }
 
-// GetColumnsForTable returns columns with computed column detection.
-// Generated columns (VIRTUAL or STORED) are marked as IsComputed.
-func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
-	columns, err := p.GormPlugin.GetColumnsForTable(config, schema, storageUnit)
-	if err != nil {
-		return nil, err
-	}
-
+// MarkGeneratedColumns detects MySQL generated columns (VIRTUAL or STORED)
+// and marks them as IsComputed.
+func (p *MySQLPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
 	computed, err := p.QueryComputedColumns(config, `
 		SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND GENERATION_EXPRESSION IS NOT NULL AND GENERATION_EXPRESSION != ''
 	`, schema, storageUnit)
 	if err != nil {
-		log.WithError(err).Warn("Failed to get generated columns for MySQL table")
+		return err
 	}
 
 	for i := range columns {
@@ -161,7 +186,7 @@ func (p *MySQLPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 			columns[i].IsComputed = true
 		}
 	}
-	return columns, nil
+	return nil
 }
 
 func NewMySQLPlugin() *engine.Plugin {

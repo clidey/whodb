@@ -20,10 +20,12 @@ import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {SettingsActions} from '../../store/settings';
 import {getStoredConsentState, optInUser, optOutUser} from '../../config/posthog';
 import {isEEMode} from '../../config/ee-imports';
+import {getAppName} from '../../config/features';
 import {useTranslation} from '../../hooks/use-translation';
 
 export const PosthogConsentBanner = () => {
     const { t } = useTranslation('components/posthog-consent-banner');
+    const appName = getAppName();
     const dispatch = useAppDispatch();
     const metricsEnabled = useAppSelector((state) => state.settings.metricsEnabled);
     const [visible, setVisible] = useState(false);
@@ -70,7 +72,7 @@ export const PosthogConsentBanner = () => {
                     <div>
                         <p className="text-base font-semibold">{t('title')}</p>
                         <p className="text-muted-foreground mt-1 leading-relaxed">
-                            {t('message')}
+                            {t('message', { appName })}
                         </p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">

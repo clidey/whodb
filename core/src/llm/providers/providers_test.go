@@ -31,6 +31,8 @@ func TestGetBAMLConfig_RoutesToBuiltInProviders(t *testing.T) {
 		providerType     string
 		expectedBAMLType string
 	}{
+		// OpenAI probes https://example.com/responses — likely 404 in tests,
+		// so falls back to "openai" (Chat Completions). This tests the fallback path.
 		{"OpenAI", "openai"},
 		{"Anthropic", "anthropic"},
 		{"Ollama", "openai-generic"}, // Ollama uses openai-generic BAML client
@@ -83,16 +85,20 @@ func TestGetBAMLConfig_ErrorsForUnregisteredProvider(t *testing.T) {
 
 // --- GenericProvider tests (proving default_role/request_timeout_ms are set) ---
 
-func TestGenericProvider_CreateBAMLClientOptions_IncludesDefaults(t *testing.T) {
+func TestGenericProvider_CreateBAMLClient_IncludesDefaults(t *testing.T) {
 	p := NewGenericProvider("custom", "Custom Provider", nil, "openai-generic")
 	config := &ProviderConfig{
 		Endpoint: "http://custom.api/v1",
 		APIKey:   "custom-key",
 	}
 
-	opts, err := p.CreateBAMLClientOptions(config, "custom-model")
+	clientType, opts, err := p.CreateBAMLClient(config, "custom-model")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if clientType != "openai-generic" {
+		t.Fatalf("expected client type 'openai-generic', got %q", clientType)
 	}
 
 	// These are critical for OpenAI-compatible providers — the regression

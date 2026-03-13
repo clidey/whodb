@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { loadTranslationsSync, getTranslation } from '@/utils/i18n';
 
@@ -45,8 +45,59 @@ export const useTranslation = (componentPath: string) => {
         setTranslations(loadTranslationsSync(componentPath, language));
     }, [componentPath, language]);
 
-    const t = (key: string, fallbackOrParams?: string | Record<string, any>): string => {
-        return getTranslation(translations, key, fallbackOrParams);
+    /**
+     * Translates a key with optional interpolation.
+     * - String/number params: returns a string (e.g., `t('greeting', { name: 'Alice' })`)
+     * - ReactNode params (JSX elements): returns ReactNode, allowing translated strings
+     *   to contain embedded components like links that translators can freely reorder.
+     *
+     * @example
+     * ```tsx
+     * // String interpolation → string
+     * t('greeting', { name: 'Alice' })
+     *
+     * // JSX interpolation → ReactNode
+     * t('details', { link: <a href="/privacy">Privacy Policy</a> })
+     * ```
+     */
+    const t: {
+        (key: string): string;
+        (key: string, fallback: string): string;
+        (key: string, params: Record<string, string | number>): string;
+        (key: string, params: Record<string, ReactNode>): ReactNode;
+    } = (key: string, fallbackOrParams?: string | Record<string, any>): any => {
+        if (typeof fallbackOrParams !== 'object' || fallbackOrParams === null) {
+            return getTranslation(translations, key, fallbackOrParams);
+        }
+
+        const hasJsx = Object.values(fallbackOrParams).some(
+            v => v !== null && v !== undefined && typeof v === 'object'
+        );
+
+        if (!hasJsx) {
+            return getTranslation(translations, key, fallbackOrParams);
+        }
+
+        // JSX interpolation: split template on {placeholders} and interleave with ReactNode values
+        const template = translations[key] || key;
+        const parts: ReactNode[] = [];
+        let lastIndex = 0;
+        const regex = /\{(\w+)\}/g;
+        let match;
+
+        while ((match = regex.exec(template)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(template.slice(lastIndex, match.index));
+            }
+            parts.push(fallbackOrParams[match[1]] ?? match[0]);
+            lastIndex = match.index + match[0].length;
+        }
+
+        if (lastIndex < template.length) {
+            parts.push(template.slice(lastIndex));
+        }
+
+        return parts;
     };
 
     return { t, isLoading, language };

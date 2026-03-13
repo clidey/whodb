@@ -44,6 +44,7 @@ import {
 } from "../heroicons";
 import { ReactElement } from "react";
 import { buildConnectionPrefill, ConnectionPrefillData } from "@/utils/cloud-connection-prefill";
+import { getAppName } from "@/config/features";
 
 export type AwsConnectionPrefillData = ConnectionPrefillData;
 
@@ -61,6 +62,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
     onSelectConnection,
 }) => {
     const { t } = useTranslation('components/aws-connection-picker');
+    const appName = getAppName();
     const dispatch = useAppDispatch();
 
     // Redux state
@@ -186,7 +188,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                             <div className="flex flex-col gap-3">
                                 <h4 className="font-medium text-sm">{t('helpTitle')}</h4>
                                 <div className="text-xs text-muted-foreground space-y-2">
-                                    <p>{t('helpIntro')}</p>
+                                    <p>{t('helpIntro', { appName })}</p>
                                     <div className="space-y-1">
                                         <p className="font-medium text-foreground">{t('helpAuthMethods')}</p>
                                         <ul className="list-disc list-inside space-y-1 pl-1">
@@ -202,7 +204,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                                             <li><span className="font-medium">DocumentDB</span> – {t('helpDocumentdbDesc')}</li>
                                         </ul>
                                     </div>
-                                    <p className="pt-1 border-t">{t('helpCredentialNote')}</p>
+                                    <p className="pt-1 border-t">{t('helpCredentialNote', { appName })}</p>
                                 </div>
                             </div>
                         </PopoverContent>

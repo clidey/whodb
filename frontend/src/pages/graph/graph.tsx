@@ -44,7 +44,6 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarHeader,
-    toast,
     toTitleCase
 } from "@clidey/ux";
 import {useNavigate} from "react-router-dom";
@@ -177,26 +176,6 @@ export const GraphPage: FC = () => {
         },
         onCompleted(data) {
             setGraphData(data.Graph);
-            if (data.Graph.length === 0) return;
-
-            const storageUnitNames = data.Graph.map(graphUnit => graphUnit.Unit.Name);
-            fetchColumnsBatch({
-                variables: {
-                    schema: databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "",
-                    storageUnits: storageUnitNames,
-                },
-            }).then(result => {
-                if (result.data?.ColumnsBatch) {
-                    const columnsMap: Record<string, any[]> = {};
-                    for (const item of result.data.ColumnsBatch) {
-                        columnsMap[item.StorageUnit] = item.Columns;
-                    }
-                    setTableColumns(columnsMap);
-                }
-            }).catch(error => {
-                console.error('Failed to fetch columns batch:', error);
-                toast.error('Failed to load column information');
-            });
         },
     });
 
@@ -228,6 +207,29 @@ export const GraphPage: FC = () => {
             return new Set(toSelect.map(u => u.Name));
         });
     }, [storageUnitsData?.StorageUnit]);
+
+    // Incrementally fetch columns for newly selected units
+    useEffect(() => {
+        if (selectedUnits.size === 0) return;
+        const needed = [...selectedUnits].filter(name => !(name in tableColumns));
+        if (needed.length === 0) return;
+        const graphSchema = databaseUsesSchemaForGraph(current?.Type) ? schema : current?.Database ?? "";
+        fetchColumnsBatch({
+            variables: { schema: graphSchema, storageUnits: needed },
+        }).then(result => {
+            if (result.data?.ColumnsBatch) {
+                setTableColumns(prev => {
+                    const next = { ...prev };
+                    for (const item of result.data!.ColumnsBatch) {
+                        next[item.StorageUnit] = item.Columns;
+                    }
+                    return next;
+                });
+            }
+        }).catch(error => {
+            console.error('Failed to fetch columns batch:', error);
+        });
+    }, [selectedUnits, tableColumns, fetchColumnsBatch, current?.Type, schema, current?.Database]);
 
     // Build nodes and edges from graph data and selection
     const { computedNodes, computedEdges } = useMemo(() => {

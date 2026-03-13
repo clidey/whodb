@@ -17,6 +17,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -137,7 +138,7 @@ type SSLStatus struct {
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
-	IsAvailable(config *PluginConfig) bool
+	IsAvailable(ctx context.Context, config *PluginConfig) bool
 	GetAllSchemas(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
@@ -155,6 +156,10 @@ type PluginFunctions interface {
 	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
 	FormatValue(val any) string
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)
+
+	// MarkGeneratedColumns enriches columns with auto-increment and computed column flags
+	// by querying database-specific system catalogs
+	MarkGeneratedColumns(config *PluginConfig, schema string, storageUnit string, columns []Column) error
 
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)

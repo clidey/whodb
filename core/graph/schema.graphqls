@@ -411,6 +411,13 @@ type DiscoveredConnection {
 # Queries
 # =============================================================================
 
+type UpdateInfo {
+  currentVersion: String!
+  latestVersion: String!
+  updateAvailable: Boolean!
+  releaseURL: String!
+}
+
 type HealthStatus {
   Server: String!
   Database: String!
@@ -418,6 +425,7 @@ type HealthStatus {
 
 type Query {
   Version: String!
+  UpdateInfo: UpdateInfo!
   Health: HealthStatus!
   Profiles: [LoginProfile!]!
   Database(type: String!): [String!]!

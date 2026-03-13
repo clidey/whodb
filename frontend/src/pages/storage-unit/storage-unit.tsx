@@ -79,11 +79,14 @@ import {Tip} from '../../components/tip';
 import {SettingsActions} from '../../store/settings';
 import {useTranslation} from '../../hooks/use-translation';
 
-const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, columns }) => {
+const StorageUnitCard: FC<{ unit: StorageUnit, schema: string }> = ({ unit, schema }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
     const current = useAppSelector(state => state.auth.current);
+    const [columns, setColumns] = useState<any[] | undefined>(undefined);
+    const [columnsLoading, setColumnsLoading] = useState(false);
+    const [fetchColumnsBatch] = useGetColumnsBatchLazyQuery();
 
     const handleNavigateToDatabase = useCallback(() => {
         navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
@@ -93,15 +96,41 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
         })
     }, [navigate, unit]);
 
+    const fetchColumns = useCallback(() => {
+        if (columns !== undefined) return;
+        setColumnsLoading(true);
+        fetchColumnsBatch({
+            variables: { schema, storageUnits: [unit.Name] },
+        }).then(result => {
+            const batch = result.data?.ColumnsBatch;
+            if (batch && batch.length > 0 && batch[0].Columns.length > 0) {
+                setColumns(batch[0].Columns);
+            } else {
+                setColumns([]);
+            }
+        }).catch(() => {
+            setColumns([]);
+        }).finally(() => {
+            setColumnsLoading(false);
+        });
+    }, [columns, fetchColumnsBatch, schema, unit.Name]);
+
+    const handleSetExpanded = useCallback((status: boolean) => {
+        setExpanded(status);
+        if (status) requestAnimationFrame(fetchColumns);
+    }, [fetchColumns]);
+
     const handleExpand = useCallback(() => {
-        setExpanded(s => !s);
-    }, []);
+        const next = !expanded;
+        setExpanded(next);
+        if (next) requestAnimationFrame(fetchColumns);
+    }, [expanded, fetchColumns]);
 
     const [introAttributes, expandedAttributes] = useMemo(() => {
         return [ unit.Attributes.slice(0,4), unit.Attributes.slice(4) ];
     }, [unit.Attributes]);
 
-    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={setExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
+    return (<ExpandableCard key={unit.Name} isExpanded={expanded} setExpanded={handleSetExpanded} icon={<TableCellsIcon className="w-4 h-4" />} className={cn({
         "shadow-2xl exploring-storage-unit": expanded,
     })} data-testid="storage-unit-card" data-table-name={unit.Name}>
         <div className="flex flex-col grow mt-2 cursor-pointer" data-testid="storage-unit-card" data-table-name={unit.Name}>
@@ -167,7 +196,12 @@ const StorageUnitCard: FC<{ unit: StorageUnit, columns?: any[] }> = ({ unit, col
                             ))
                         }
                     </StackList>
-                    {columns && columns.length > 0 && (
+                    {columnsLoading && (
+                        <div className="mt-8">
+                            <Loading hideText={true} />
+                        </div>
+                    )}
+                    {!columnsLoading && columns && columns.length > 0 && (
                         <div className="mt-8">
                             <h3 className="text-xs font-semibold uppercase text-muted-foreground">{t('columnsTitle')}</h3>
                             <StackList>
@@ -208,9 +242,10 @@ export const StorageUnitPage: FC = () => {
     const view = useAppSelector(state => state.settings.storageUnitView);
     const [addStorageUnit,] = useAddStorageUnitMutation();
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
+    const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: any[] } | null>(null);
+    const [expandedUnitColumnsLoading, setExpandedUnitColumnsLoading] = useState(false);
+    const [fetchColumnsBatchForList] = useGetColumnsBatchLazyQuery();
     const dispatch = useAppDispatch();
-    const [tableColumns, setTableColumns] = useState<Record<string, any[]>>({});
-    const [fetchColumnsBatch] = useGetColumnsBatchLazyQuery();
     const { t } = useTranslation('pages/storage-unit');
 
     useEffect(() => {
@@ -238,6 +273,27 @@ export const StorageUnitPage: FC = () => {
             refetch();
         }
     }, [currentProfileId, refetch]);
+
+    // Lazy-load columns for list view expanded detail
+    useEffect(() => {
+        if (!expandedUnit) return;
+        if (expandedUnitColumns?.name === expandedUnit) return;
+        setExpandedUnitColumnsLoading(true);
+        fetchColumnsBatchForList({
+            variables: { schema, storageUnits: [expandedUnit] },
+        }).then(result => {
+            const batch = result.data?.ColumnsBatch;
+            if (batch && batch.length > 0 && batch[0].Columns.length > 0) {
+                setExpandedUnitColumns({ name: expandedUnit, columns: batch[0].Columns });
+            } else {
+                setExpandedUnitColumns({ name: expandedUnit, columns: [] });
+            }
+        }).catch(() => {
+            setExpandedUnitColumns({ name: expandedUnit, columns: [] });
+        }).finally(() => {
+            setExpandedUnitColumnsLoading(false);
+        });
+    }, [expandedUnit, expandedUnitColumns?.name, fetchColumnsBatchForList, schema]);
 
     const [filterValue, setFilterValue] = useState("");
 
@@ -330,32 +386,6 @@ export const StorageUnitPage: FC = () => {
         })
     }, [fields.length]);
 
-    useEffect(() => {
-        if (!data?.StorageUnit || data.StorageUnit.length === 0) return;
-
-        const storageUnitNames = data.StorageUnit.map(unit => unit.Name);
-        fetchColumnsBatch({
-            variables: {
-                schema,
-                storageUnits: storageUnitNames,
-            },
-        }).then(result => {
-            if (result.data?.ColumnsBatch) {
-                const columnsMap: Record<string, any[]> = {};
-                for (const item of result.data.ColumnsBatch) {
-                    // Only add to map if columns exist and are non-empty
-                    if (item.Columns && item.Columns.length > 0) {
-                        columnsMap[item.StorageUnit] = item.Columns;
-                    }
-                }
-                setTableColumns(columnsMap);
-            }
-        }).catch(error => {
-            console.error('Failed to fetch columns batch:', error);
-            toast.error('Failed to load column information');
-        });
-    }, [data?.StorageUnit, fetchColumnsBatch, schema]);
-
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
         return (data?.StorageUnit ?? []).filter(unit => unit.Name.toLowerCase().includes(lowerCaseFilterValue))
@@ -424,8 +454,8 @@ export const StorageUnitPage: FC = () => {
                 "hidden": current?.Type === DatabaseType.Redis,
             })} icon={<PlusCircleIcon className="w-4 h-4" />} isExpanded={create} setExpanded={setCreate} tag={<Badge variant="destructive">{error}</Badge>}>
                 <div className="flex flex-col grow h-full justify-between mt-2 gap-2" data-testid="create-storage-unit-card">
-                    <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createPrefix')}</span> {getDatabaseStorageUnitLabel(current?.Type, true)}</h1>
-                    <Button className="self-end" onClick={handleCreate} variant="secondary">
+                    <h1 className="text-lg"><span className="prefix-create-storage-unit">{t('createTitle', { storageUnit: getDatabaseStorageUnitLabel(current?.Type, true) })}</span></h1>
+                    <Button className="self-end" onClick={e => { e.stopPropagation(); handleCreate(); }} variant="secondary">
                         <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
                     </Button>
                 </div>
@@ -433,7 +463,7 @@ export const StorageUnitPage: FC = () => {
                     <div className="flex flex-col gap-4">
                         <SheetTitle className="flex items-center gap-2">
                             <PlusCircleIcon className="w-5 h-5" />
-                            {t('createTitle')} {getDatabaseStorageUnitLabel(current?.Type, true)}
+                            {t('createTitle', { storageUnit: getDatabaseStorageUnitLabel(current?.Type, true) })}
                         </SheetTitle>
                         <div className="flex flex-col gap-2">
                             <Label>{t('nameLabel')}</Label>
@@ -495,7 +525,7 @@ export const StorageUnitPage: FC = () => {
             </ExpandableCard>
             {
                 data != null && data.StorageUnit.length > 0 && filterStorageUnits.map(unit => (
-                    <StorageUnitCard key={unit.Name} unit={unit} columns={tableColumns[unit.Name]} />
+                    <StorageUnitCard key={unit.Name} unit={unit} schema={schema} />
                 ))
             }
         </div>
@@ -553,7 +583,7 @@ export const StorageUnitPage: FC = () => {
                         const unit = filterStorageUnits.find(u => u.Name === expandedUnit);
                         if (!unit) return null;
 
-                        const columns = tableColumns[unit.Name];
+                        const columns = expandedUnitColumns?.name === unit.Name ? expandedUnitColumns.columns : undefined;
                         const [introAttributes, expandedAttributes] = [unit.Attributes.slice(0,4), unit.Attributes.slice(4)];
 
                         return (
@@ -577,7 +607,8 @@ export const StorageUnitPage: FC = () => {
                                             </div>
                                         ))}
                                     </StackList>
-                                    {columns && columns.length > 0 && (
+                                    {expandedUnitColumnsLoading && <Loading hideText={true} />}
+                                    {!expandedUnitColumnsLoading && columns && columns.length > 0 && (
                                         <div>
                                             <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">{t('columnsTitle')}</h3>
                                             <StackList>

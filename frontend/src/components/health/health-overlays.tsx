@@ -23,6 +23,7 @@ import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { LocalLoginProfile } from '@/store/auth';
 import { useProfileSwitch } from '@/hooks/use-profile-switch';
+import { getAppName } from '@/config/features';
 
 /**
  * Generate a display label for a profile in the health overlay.
@@ -53,6 +54,7 @@ function getProfileLabel(profile: LocalLoginProfile): string {
  */
 export const ServerDownOverlay = () => {
     const { t } = useTranslation('components/health-overlay');
+    const appName = getAppName();
     const serverStatus = useAppSelector(state => state.health.serverStatus);
 
     // Show overlay whenever server status is explicitly 'error'
@@ -80,7 +82,7 @@ export const ServerDownOverlay = () => {
                             {t('serverDownTitle')}
                         </h2>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            {t('serverDownMessage')}
+                            {t('serverDownMessage', { appName })}
                         </p>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">

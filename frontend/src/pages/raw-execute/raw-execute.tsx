@@ -640,7 +640,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <DropdownMenuTrigger>
                             <Button
                                 variant="ghost"
-                                className="flex justify-center items-center"
+                                className="flex justify-center items-center editor-options-button"
                                 data-testid="icon-button"
                                 aria-label={t('options')}>
                                 <EllipsisVerticalIcon className="w-4 h-4"/>
@@ -699,14 +699,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 ))}
                             </SelectContent>
                         </Select>} */}
-                        <Tip>
+                        <Tip className="w-fit">
                             <Button onClick={handleAdd} data-testid="add-cell-button" variant="secondary"
                                     className="border border-input" aria-label={t('addCell')}>
                                 <PlusCircleIcon className="w-4 h-4 text-primary" />
                             </Button>
-                                <p>{t('addCell')}</p>
+                            <p>{t('addCell')}</p>
                         </Tip>
-                        <Tip>
+                        <Tip className="w-fit">
                             <Button onClick={() => setCode("")} data-testid="clear-cell-button" variant="secondary"
                                     className="border border-input" aria-label={t('clearEditor')}>
                                 <ArrowPathIcon className="w-4 h-4" />
@@ -715,7 +715,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </Tip>
                         {
                             onDelete != null &&
-                            <Tip>
+                            <Tip className="w-fit">
                                 <Button variant="secondary" onClick={handleDelete} data-testid="delete-cell-button"
                                         className="border border-input" aria-label={t('deleteCell')}>
                                     <XCircleIcon className="w-4 h-4 text-destructive"/>
@@ -780,7 +780,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                         <Card className="w-full p-4 relative" key={id}>
                                             <Badge
                                                 variant={status ? "default" : "destructive"}
-                                                className="absolute top-0 -translate-y-1/2 right-2"
+                                                className={cn("absolute top-0 -translate-y-1/2 right-2", {
+                                                    "!bg-green-600 !text-white": status,
+                                                    "!bg-red-600 !text-white": !status,
+                                                })}
                                             >
                                                 {status ? t('success') : t('error')}
                                             </Badge>
@@ -1091,22 +1094,24 @@ export const RawExecutePage: FC = () => {
                                                             <EditableInput page={page}
                                                                 setValue={(newName) => handleUpdatePageName(page, newName)}
                                                                 isActive={page.id === activePageId} />
-                                                            <button
-                                                                type="button"
-                                                                title={t('deletePageButton')}
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    promptDelete(page.id);
-                                                                }}
-                                                                className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
-                                                                    "hidden": pages.length <= 1,
-                                                                })}
-                                                                aria-label={t('deletePageButton')}
-                                                                data-testid={`delete-page-tab-${index}`}
-                                                            >
-                                                                <XMarkIcon className="w-3 h-3" />
-                                                            </button>
+                                                            <Tip className="w-fit">
+                                                                <button
+                                                                    title={t('deletePageButton')}
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        promptDelete(page.id);
+                                                                    }}
+                                                                    className={cn("opacity-0 group-hover:opacity-100 transition-opacity", {
+                                                                        "hidden": pages.length <= 1,
+                                                                    })}
+                                                                    aria-label={t('deletePageButton')}
+                                                                    data-testid={`delete-page-tab-${index}`}
+                                                                >
+                                                                    <XMarkIcon className="w-3 h-3" />
+                                                                </button>
+                                                                <p>{t('deletePageButton')}</p>
+                                                            </Tip>
                                                         </div>
                                                     </TabsTrigger>
                                             ))

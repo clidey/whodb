@@ -873,6 +873,12 @@ func (p *GormPlugin) GetMaxBulkInsertParameters() int {
 	return 65535
 }
 
+// MarkGeneratedColumns is a no-op base implementation.
+// Database plugins should override this to detect auto-increment and computed columns.
+func (p *GormPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
+	return nil
+}
+
 // GetDatabaseMetadata returns nil by default.
 // Database plugins should override this to provide metadata for frontend configuration.
 func (p *GormPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {

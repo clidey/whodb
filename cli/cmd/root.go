@@ -25,6 +25,7 @@ import (
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/styles"
+	"github.com/clidey/whodb/cli/pkg/updatecheck"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -55,6 +56,14 @@ Features:
 			os.Exit(1)
 		}
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		if viper.GetBool("no-update-check") || version.Version == "dev" {
+			return
+		}
+		if result := updatecheck.Check(version.Version); result != nil {
+			fmt.Fprintf(os.Stderr, "\nA new version of whodb-cli is available: %s → https://github.com/clidey/whodb/releases/latest\n", result.LatestVersion)
+		}
+	},
 }
 
 func Execute() {
@@ -74,10 +83,12 @@ func init() {
 	rootCmd.PersistentFlags().Bool("debug", false, "enable debug mode")
 	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().Bool("no-analytics", false, "disable anonymous usage analytics")
+	rootCmd.PersistentFlags().Bool("no-update-check", false, "disable update check notifications")
 
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 	viper.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color"))
 	viper.BindPFlag("no-analytics", rootCmd.PersistentFlags().Lookup("no-analytics"))
+	viper.BindPFlag("no-update-check", rootCmd.PersistentFlags().Lookup("no-update-check"))
 }
 
 func initAnalytics() {

@@ -93,7 +93,9 @@ func TestStorageUnitQuerySuccess(t *testing.T) {
 
 func TestRawExecuteQueryError(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.RawExecuteFunc = func(*engine.PluginConfig, string) (*engine.GetRowsResult, error) { return nil, errors.New("raw error") }
+	mock.RawExecuteFunc = func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error) {
+		return nil, errors.New("raw error")
+	}
 	setEngineMock(t, mock)
 
 	srv := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))

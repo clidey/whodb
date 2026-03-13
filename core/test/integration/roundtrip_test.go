@@ -30,7 +30,7 @@ func TestConnectorAvailability(t *testing.T) {
 			continue
 		}
 		t.Run(target.name, func(t *testing.T) {
-			if ok := target.plugin.IsAvailable(target.config); !ok {
+			if ok := target.plugin.IsAvailable(context.Background(), target.config); !ok {
 				t.Fatalf("plugin reported unavailable for %s", target.name)
 			}
 		})
@@ -252,7 +252,7 @@ func TestElasticsearchAvailability(t *testing.T) {
 	if esTarget == nil {
 		t.Skip("elasticsearch target not configured")
 	}
-	if !esTarget.plugin.IsAvailable(esTarget.config) {
+	if !esTarget.plugin.IsAvailable(context.Background(), esTarget.config) {
 		t.Fatalf("elasticsearch not available")
 	}
 }

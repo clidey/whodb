@@ -21,7 +21,6 @@ import {
     LoginCredentials,
     useGetDatabaseLazyQuery,
     useGetProfilesQuery,
-    useGetVersionQuery,
     useLoginMutation,
     useLoginWithProfileMutation,
     useSettingsConfigQuery
@@ -46,7 +45,7 @@ import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, featureFlags, sources} from '../../config/features';
+import {extensions, featureFlags, getAppName, isEEMode, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
 import {useTranslation} from '@/hooks/use-translation';
@@ -57,11 +56,16 @@ import {SettingsActions} from "../../store/settings";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
+import {
+    AwsConnectionPicker,
+    AwsConnectionPrefillData,
+    DatabaseIconWithBadge,
+    isAwsConnection
+} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
-import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
+import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -113,11 +117,15 @@ export const LoginForm: FC<LoginFormProps> = ({
     advancedDirection = "horizontal",
 }) => {
     const { t } = useTranslation('pages/login');
+    const appName = getAppName();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
+    const autoLoginRetryCount = useRef(0);
+    const autoLoginRetryFnRef = useRef<(() => void) | null>(null);
+    const [pendingAutoLogin, setPendingAutoLogin] = useState(false);
     const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
@@ -177,6 +185,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
+            setIsAutoLoggingIn(false);
             return setError(t('allFieldsRequired'));
         }
         setError(undefined);
@@ -219,6 +228,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         newParams.delete("username");
                         newParams.delete("password");
                         newParams.delete("database");
+                        newParams.delete("port");
+                        newParams.delete("region");
                         setSearchParams(newParams, { replace: true });
                     }
 
@@ -231,11 +242,25 @@ export const LoginForm: FC<LoginFormProps> = ({
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -257,6 +282,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
         if (profileId == null) {
+            setIsAutoLoggingIn(false);
             return setError(t('selectProfileRequired'));
         }
         setError(undefined);
@@ -302,11 +328,25 @@ export const LoginForm: FC<LoginFormProps> = ({
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
-                setIsAutoLoggingIn(false);
+                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
+                    autoLoginRetryCount.current += 1;
+                    setIsAutoLoggingIn(true);
+                    setTimeout(autoLoginRetryFnRef.current, 5000);
+                } else {
+                    autoLoginRetryFnRef.current = null;
+                    setIsAutoLoggingIn(false);
+                }
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -363,7 +403,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    toast.success(t('welcomeToWhodb'));
+                    toast.success(t('welcomeToWhodb', { appName }));
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
@@ -639,25 +679,48 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            // Merge port/region into advancedForm
+            const hasPort = searchParams.has("port");
+            const hasRegion = searchParams.has("region");
+            if (hasPort || hasRegion) {
+                setAdvancedForm(prev => ({
+                    ...prev,
+                    ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
+                    ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
+                }));
+            }
         }
 
         // Handle auto-login with profile from URL
         if (searchParams.has("resource")) {
             const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
             if (selectedProfile?.value) {
+                autoLoginRetryFnRef.current = () => handleLoginWithProfileSubmit(selectedProfile.value);
                 setSelectedAvailableProfile(selectedProfile?.value);
                 handleLoginWithProfileSubmit(selectedProfile.value);
+            } else {
+                setIsAutoLoggingIn(false);
             }
         } else if (searchParams.has("login")) {
-            setTimeout(() => {
-                handleSubmit();
-                const newParams = new URLSearchParams(searchParams);
-                newParams.delete("login");
-                setSearchParams(newParams, { replace: true });
-            }, 10);
+            setPendingAutoLogin(true);
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("login");
+            setSearchParams(newParams, { replace: true });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
+
+    // Auto-login: fires on the NEXT render after URL params set pendingAutoLogin to true.
+    // Using state (not a ref) ensures handleSubmit has current field values — the state change
+    // triggers a re-render, and handleSubmit is recreated with fresh closure values before this runs.
+    useEffect(() => {
+        if (pendingAutoLogin) {
+            setPendingAutoLogin(false);
+            autoLoginRetryFnRef.current = handleSubmit;
+            handleSubmit();
+        }
+    }, [pendingAutoLogin, handleSubmit]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -862,8 +925,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt={extensions.AppName ?? "WhoDB"} className="w-auto h-8 mr-1"/>}
-                            <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
+                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>)}
+                            <span className="text-brand-foreground" data-testid="app-name">{getAppName()}</span>
                         </h1>
                         <span className="text-xl">{t('title')}</span>
                         {
@@ -1016,7 +1079,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h2 id="sample-db-heading" className="text-2xl font-bold text-foreground">
-                                        {t('tryWhodb')}
+                                        {t('tryWhodb', { appName })}
                                     </h2>
                                     <Badge variant="secondary" className="w-fit">
                                         {t('noSetupRequired')}
@@ -1025,7 +1088,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             </div>
 
                             <p className="text-base text-muted-foreground leading-relaxed">
-                                {t('experienceDescription')}
+                                {t('experienceDescription', { appName })}
                             </p>
                         </div>
 
@@ -1097,13 +1160,12 @@ export const LoginForm: FC<LoginFormProps> = ({
 
 export const LoginPage: FC = () => {
     const { t } = useTranslation('pages/login');
-    const {data: version} = useGetVersionQuery();
 
     return (
         <Container className="justify-center items-center">
             <LoginForm />
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60">
-                {t('version')}: {version?.Version}
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60" data-testid="login-page-version">
+                {t('version')}: {__APP_VERSION__}
             </div>
         </Container>
     );

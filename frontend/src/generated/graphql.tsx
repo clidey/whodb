@@ -518,6 +518,7 @@ export type Query = {
   Schema: Array<Scalars['String']['output']>;
   SettingsConfig: SettingsConfig;
   StorageUnit: Array<StorageUnit>;
+  UpdateInfo: UpdateInfo;
   Version: Scalars['String']['output'];
 };
 
@@ -689,6 +690,14 @@ export type TypeDefinition = {
   label: Scalars['String']['output'];
 };
 
+export type UpdateInfo = {
+  __typename?: 'UpdateInfo';
+  currentVersion: Scalars['String']['output'];
+  latestVersion: Scalars['String']['output'];
+  releaseURL: Scalars['String']['output'];
+  updateAvailable: Scalars['Boolean']['output'];
+};
+
 export type WhereCondition = {
   And?: InputMaybe<OperationWhereCondition>;
   Atomic?: InputMaybe<AtomicWhereCondition>;
@@ -711,6 +720,11 @@ export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
+
+export type GetUpdateInfoQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUpdateInfoQuery = { __typename?: 'Query', UpdateInfo: { __typename?: 'UpdateInfo', currentVersion: string, latestVersion: string, updateAvailable: boolean, releaseURL: string } };
 
 export type GetVersionQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1114,6 +1128,48 @@ export type GetSchemaQueryHookResult = ReturnType<typeof useGetSchemaQuery>;
 export type GetSchemaLazyQueryHookResult = ReturnType<typeof useGetSchemaLazyQuery>;
 export type GetSchemaSuspenseQueryHookResult = ReturnType<typeof useGetSchemaSuspenseQuery>;
 export type GetSchemaQueryResult = Apollo.QueryResult<GetSchemaQuery, GetSchemaQueryVariables>;
+export const GetUpdateInfoDocument = gql`
+    query GetUpdateInfo {
+  UpdateInfo {
+    currentVersion
+    latestVersion
+    updateAvailable
+    releaseURL
+  }
+}
+    `;
+
+/**
+ * __useGetUpdateInfoQuery__
+ *
+ * To run a query within a React component, call `useGetUpdateInfoQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUpdateInfoQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUpdateInfoQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetUpdateInfoQuery(baseOptions?: Apollo.QueryHookOptions<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>(GetUpdateInfoDocument, options);
+      }
+export function useGetUpdateInfoLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>(GetUpdateInfoDocument, options);
+        }
+export function useGetUpdateInfoSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>(GetUpdateInfoDocument, options);
+        }
+export type GetUpdateInfoQueryHookResult = ReturnType<typeof useGetUpdateInfoQuery>;
+export type GetUpdateInfoLazyQueryHookResult = ReturnType<typeof useGetUpdateInfoLazyQuery>;
+export type GetUpdateInfoSuspenseQueryHookResult = ReturnType<typeof useGetUpdateInfoSuspenseQuery>;
+export type GetUpdateInfoQueryResult = Apollo.QueryResult<GetUpdateInfoQuery, GetUpdateInfoQueryVariables>;
 export const GetVersionDocument = gql`
     query GetVersion {
   Version

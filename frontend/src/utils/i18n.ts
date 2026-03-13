@@ -22,8 +22,8 @@ type TranslationCache = Record<string, Record<string, any>>;
 const translationCache: TranslationCache = {};
 
 // Import all YAML files using Vite's import.meta.glob
-const ceModules = import.meta.glob<string>('/src/locales/**/*.yaml', { as: 'raw', eager: true });
-const eeModules = import.meta.glob<string>('../../../ee/frontend/src/locales/**/*.yaml', { as: 'raw', eager: true });
+const ceModules = import.meta.glob<string>('/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
+const eeModules = import.meta.glob<string>('../../../ee/frontend/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
 
 // Helper function to find module by component path
 const findModule = (modules: Record<string, string>, componentPath: string): string | undefined => {
