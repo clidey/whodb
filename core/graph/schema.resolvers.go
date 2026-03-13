@@ -1,19 +1,3 @@
-/*
- * Copyright 2026 Clidey, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package graph
 
 // This file will be automatically regenerated based on the schema, any resolver
@@ -43,6 +27,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"github.com/clidey/whodb/core/src/providers"
+	awsprovider "github.com/clidey/whodb/core/src/providers/aws"
 	"github.com/clidey/whodb/core/src/settings"
 	"github.com/clidey/whodb/core/src/version"
 	"golang.org/x/sync/errgroup"
@@ -931,6 +916,47 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 	return stateToAWSProvider(state), nil
 }
 
+// TestAWSCredentials is the resolver for the TestAWSCredentials field.
+// Tests AWS credentials without creating/persisting a provider.
+func (r *mutationResolver) TestAWSCredentials(ctx context.Context, input model.AWSProviderInput) (model.CloudProviderStatus, error) {
+	if !env.IsAWSProviderEnabled {
+		return model.CloudProviderStatusError, aws.ErrAWSProviderDisabled
+	}
+
+	authMethod := "default"
+	profileName := ""
+	if input.ProfileName != nil && *input.ProfileName != "" {
+		authMethod = "profile"
+		profileName = *input.ProfileName
+	}
+
+	log.Infof("TestAWSCredentials: testing region=%s, authMethod=%s, profileName=%s", input.Region, authMethod, profileName)
+
+	cfg := &awsprovider.Config{
+		ID:          "test-temp",
+		Name:        input.Name,
+		Region:      input.Region,
+		AuthMethod:  aws.AuthMethod(authMethod),
+		ProfileName: profileName,
+	}
+
+	provider, err := awsprovider.New(cfg)
+	if err != nil {
+		log.Errorf("TestAWSCredentials: failed to create provider: %v", err)
+		return model.CloudProviderStatusError, err
+	}
+
+	testCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if err := provider.TestConnection(testCtx); err != nil {
+		log.Warnf("TestAWSCredentials: connection test failed: %v", err)
+		return model.CloudProviderStatusError, err
+	}
+	log.Infof("TestAWSCredentials: connection successful for region=%s", input.Region)
+	return model.CloudProviderStatusConnected, nil
+}
+
 // RemoveCloudProvider is the resolver for the RemoveCloudProvider field.
 func (r *mutationResolver) RemoveCloudProvider(ctx context.Context, id string) (*model.StatusResponse, error) {
 	if !env.IsAWSProviderEnabled {
@@ -970,6 +996,40 @@ func (r *mutationResolver) RefreshCloudProvider(ctx context.Context, id string) 
 		return nil, err
 	}
 	return stateToAWSProvider(state), nil
+}
+
+// GenerateRDSAuthToken is the resolver for the GenerateRDSAuthToken field.
+// Generates a short-lived IAM auth token for RDS database authentication.
+func (r *mutationResolver) GenerateRDSAuthToken(ctx context.Context, providerID string, endpoint string, port int, region string, username string) (string, error) {
+	if !env.IsAWSProviderEnabled {
+		return "", aws.ErrAWSProviderDisabled
+	}
+
+	log.Infof("GenerateRDSAuthToken: providerID=%s, endpoint=%s, port=%d, region=%s, username=%s", providerID, endpoint, port, region, username)
+
+	registry := providers.GetDefaultRegistry()
+	provider, err := registry.Get(providerID)
+	if err != nil {
+		log.Errorf("GenerateRDSAuthToken: provider not found: %v", err)
+		return "", err
+	}
+
+	awsProvider, ok := provider.(*awsprovider.Provider)
+	if !ok {
+		log.Errorf("GenerateRDSAuthToken: provider %s is not an AWS provider", providerID)
+		return "", fmt.Errorf("provider %s is not an AWS provider", providerID)
+	}
+
+	tokenCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	token, err := aws.GenerateRDSAuthToken(tokenCtx, awsProvider.GetAWSConfig(), endpoint, port, region, username)
+	if err != nil {
+		log.Errorf("GenerateRDSAuthToken: failed: %v", err)
+		return "", err
+	}
+	log.Infof("GenerateRDSAuthToken: token generated successfully (length=%d)", len(token))
+	return token, nil
 }
 
 // Version is the resolver for the Version field.
@@ -1817,6 +1877,7 @@ func (r *queryResolver) LocalAWSProfiles(ctx context.Context) ([]*model.LocalAWS
 			Name:      profile.Name,
 			Region:    region,
 			Source:    profile.Source,
+			AuthType:  profile.AuthType,
 			IsDefault: profile.IsDefault,
 		}
 	}
@@ -1831,6 +1892,7 @@ func (r *queryResolver) AWSRegions(ctx context.Context) ([]*model.AWSRegion, err
 		result[i] = &model.AWSRegion{
 			ID:          region.ID,
 			Description: region.Description,
+			Partition:   region.Partition,
 		}
 	}
 	return result, nil

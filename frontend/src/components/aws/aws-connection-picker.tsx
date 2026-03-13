@@ -263,10 +263,23 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                                         <Badge variant="outline" className="text-xs shrink-0">
                                             {conn.DatabaseType}
                                         </Badge>
+                                        {conn.Metadata?.find(m => m.Key === "endpointType")?.Value === "proxy" && (
+                                            <Badge variant="secondary" className="text-xs shrink-0">
+                                                {t('proxy')}
+                                            </Badge>
+                                        )}
+                                        {conn.Metadata?.find(m => m.Key === "endpointType")?.Value === "reader" && (
+                                            <Badge variant="secondary" className="text-xs shrink-0">
+                                                {t('readOnly')}
+                                            </Badge>
+                                        )}
                                     </div>
-                                    <span className="text-xs text-muted-foreground truncate">
-                                        {conn.Region} • {conn.Status}
-                                    </span>
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                                        <span>{conn.Region} • {conn.Status}</span>
+                                        {conn.Metadata?.find(m => m.Key === "connectivity")?.Value === "unreachable" && (
+                                            <span className="text-destructive" title={t('unreachableTooltip')}>• {t('unreachable')}</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <CloudIcon className="w-4 h-4 text-muted-foreground shrink-0" />
                             </button>

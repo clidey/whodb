@@ -382,14 +382,16 @@ input AWSProviderInput {
 type LocalAWSProfile {
   Name: String!
   Region: String
-  Source: String!  # "credentials", "config", or "environment"
+  Source: String!    # "credentials", "config", or "environment"
+  AuthType: String!  # "static", "sso", "assume-role", or "environment"
   IsDefault: Boolean!
 }
 
-# AWS region from SDK partition data
+# AWS region with partition grouping
 type AWSRegion {
   Id: String!
   Description: String!
+  Partition: String!
 }
 
 # =============================================================================
@@ -500,8 +502,12 @@ type Mutation {
   # Provider-specific add/update (type-safe inputs)
   AddAWSProvider(input: AWSProviderInput!): AWSProvider!
   UpdateAWSProvider(id: ID!, input: AWSProviderInput!): AWSProvider!
+  # Test AWS credentials without saving a provider
+  TestAWSCredentials(input: AWSProviderInput!): CloudProviderStatus!
   # Generic operations (work with any provider type)
   RemoveCloudProvider(id: ID!): StatusResponse!
   TestCloudProvider(id: ID!): CloudProviderStatus!
   RefreshCloudProvider(id: ID!): AWSProvider!
+  # Generate a short-lived IAM auth token for RDS database authentication
+  GenerateRDSAuthToken(providerID: ID!, endpoint: String!, port: Int!, region: String!, username: String!): String!
 }

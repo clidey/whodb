@@ -13,6 +13,11 @@ en:
   sourceConfig: "~/.aws/config"
   sourceEnvironment: Environment vars
 
+  authTypeSso: SSO
+  authTypeAssumeRole: Assume Role
+  authTypeStatic: Static
+  authTypeEnvironment: Environment
+
   displayName: Display Name
   namePlaceholder: e.g., Production AWS
   awsRegion: AWS Region

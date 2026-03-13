@@ -134,8 +134,12 @@ export function matchesShortcut(
 ): boolean {
     const isMac = getEffectiveIsMac();
 
-    // Check key match (case-insensitive)
-    if (event.key.toLowerCase() !== def.key.toLowerCase()) return false;
+    // Check key match (case-insensitive).
+    // Special case: "?" can arrive as "/" with shiftKey on some browsers/platforms.
+    const keyMatches =
+        event.key.toLowerCase() === def.key.toLowerCase() ||
+        (def.key === "?" && event.key === "/" && event.shiftKey);
+    if (!keyMatches) return false;
 
     // Determine required modifier state
     const needsMod   = def.modifiers.includes("mod");

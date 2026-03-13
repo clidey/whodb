@@ -25,14 +25,14 @@ import (
 )
 
 var (
-	ErrAccessDenied              = errors.New("access denied: check IAM permissions for this operation")
-	ErrInvalidCredentials        = errors.New("invalid AWS credentials: check access key and secret key")
-	ErrExpiredCredentials        = errors.New("AWS credentials have expired: refresh session token or re-authenticate")
-	ErrResourceNotFound          = errors.New("resource not found: check the resource name and region")
-	ErrServiceUnavailable        = errors.New("AWS service temporarily unavailable: try again later")
-	ErrThrottling                = errors.New("request throttled: too many requests, try again later")
-	ErrConnectionFailed          = errors.New("connection failed: check network connectivity and endpoint")
-	ErrInvalidRegion             = errors.New("invalid or inaccessible region: check the region name")
+	ErrAccessDenied        = errors.New("access denied: check IAM permissions for this operation")
+	ErrInvalidCredentials  = errors.New("invalid AWS credentials: check access key and secret key")
+	ErrExpiredCredentials  = errors.New("AWS credentials have expired: refresh session token or re-authenticate")
+	ErrResourceNotFound    = errors.New("resource not found: check the resource name and region")
+	ErrServiceUnavailable  = errors.New("AWS service temporarily unavailable: try again later")
+	ErrThrottling          = errors.New("request throttled: too many requests, try again later")
+	ErrConnectionFailed    = errors.New("connection failed: check network connectivity and endpoint")
+	ErrInvalidRegion       = errors.New("invalid or inaccessible region: check the region name")
 	ErrRegionRequired      = errors.New("AWS region is required (set via Hostname field)")
 	ErrProfileNameRequired = errors.New("profile auth requires a profile name (set via 'Profile Name' advanced option)")
 	ErrInvalidAuthMethod   = errors.New("invalid auth method: must be one of: default, profile")
@@ -63,6 +63,10 @@ func HandleAWSError(err error) error {
 	if strings.Contains(errMsg, "no credentials") ||
 		strings.Contains(errMsg, "NoCredentialProviders") {
 		return ErrInvalidCredentials
+	}
+	if (strings.Contains(errMsg, "SSO") || strings.Contains(errMsg, "sso")) &&
+		(strings.Contains(errMsg, "expired") || strings.Contains(errMsg, "token")) {
+		return fmt.Errorf("AWS SSO session expired: run 'aws sso login' to refresh your session")
 	}
 	if strings.Contains(errMsg, "connection refused") ||
 		strings.Contains(errMsg, "no such host") ||

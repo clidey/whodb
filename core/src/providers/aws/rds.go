@@ -116,6 +116,176 @@ func (p *Provider) rdsInstanceToConnection(instance *rdstypes.DBInstance) *provi
 	}
 }
 
+// discoverRDSClusters discovers Aurora cluster-level endpoints (writer and reader).
+func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.DiscoveredConnection, error) {
+	var connections []providers.DiscoveredConnection
+	var nextToken *string
+
+	log.Debugf("RDS discoverRDSClusters: starting for provider %s", p.config.ID)
+
+	for {
+		input := &rds.DescribeDBClustersInput{
+			Marker:     nextToken,
+			MaxRecords: aws.Int32(50),
+		}
+
+		output, err := p.rdsClient.DescribeDBClusters(ctx, input)
+		if err != nil {
+			log.Errorf("RDS discoverRDSClusters: DescribeDBClusters failed: %v", err)
+			return nil, awsinfra.HandleAWSError(err)
+		}
+
+		log.Debugf("RDS discoverRDSClusters: DescribeDBClusters returned %d clusters", len(output.DBClusters))
+
+		for _, cluster := range output.DBClusters {
+			if cluster.Engine == nil || cluster.DBClusterIdentifier == nil {
+				continue
+			}
+
+			dbType, ok := mapRDSEngine(*cluster.Engine)
+			if !ok {
+				log.Debugf("RDS discoverRDSClusters: skipping cluster %s (engine=%s not supported)", aws.ToString(cluster.DBClusterIdentifier), aws.ToString(cluster.Engine))
+				continue
+			}
+
+			clusterID := aws.ToString(cluster.DBClusterIdentifier)
+			log.Debugf("RDS discoverRDSClusters: processing cluster %s (engine=%s)", clusterID, aws.ToString(cluster.Engine))
+
+			// Writer endpoint
+			if cluster.Endpoint != nil {
+				port := int32(0)
+				if cluster.Port != nil {
+					port = *cluster.Port
+				}
+				metadata := map[string]string{
+					"endpoint":          *cluster.Endpoint,
+					"port":              strconv.Itoa(int(port)),
+					"endpointType":      "writer",
+					"clusterIdentifier": clusterID,
+				}
+				if aws.ToBool(cluster.IAMDatabaseAuthenticationEnabled) {
+					metadata["iamAuthEnabled"] = "true"
+				}
+				connections = append(connections, providers.DiscoveredConnection{
+					ID:           p.connectionID(clusterID + "-writer"),
+					ProviderType: providers.ProviderTypeAWS,
+					ProviderID:   p.config.ID,
+					Name:         clusterID + " (writer)",
+					DatabaseType: dbType,
+					Region:       p.config.Region,
+					Status:       mapRDSStatus(cluster.Status),
+					Metadata:     metadata,
+				})
+			}
+
+			// Reader endpoint
+			if cluster.ReaderEndpoint != nil {
+				port := int32(0)
+				if cluster.Port != nil {
+					port = *cluster.Port
+				}
+				metadata := map[string]string{
+					"endpoint":          *cluster.ReaderEndpoint,
+					"port":              strconv.Itoa(int(port)),
+					"endpointType":      "reader",
+					"clusterIdentifier": clusterID,
+				}
+				if aws.ToBool(cluster.IAMDatabaseAuthenticationEnabled) {
+					metadata["iamAuthEnabled"] = "true"
+				}
+				connections = append(connections, providers.DiscoveredConnection{
+					ID:           p.connectionID(clusterID + "-reader"),
+					ProviderType: providers.ProviderTypeAWS,
+					ProviderID:   p.config.ID,
+					Name:         clusterID + " (reader)",
+					DatabaseType: dbType,
+					Region:       p.config.Region,
+					Status:       mapRDSStatus(cluster.Status),
+					Metadata:     metadata,
+				})
+			}
+		}
+
+		if output.Marker == nil {
+			break
+		}
+		nextToken = output.Marker
+	}
+
+	log.Debugf("RDS discoverRDSClusters: found %d cluster endpoints", len(connections))
+	return connections, nil
+}
+
+// discoverRDSProxies discovers RDS Proxy endpoints.
+func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.DiscoveredConnection, error) {
+	var connections []providers.DiscoveredConnection
+	var nextToken *string
+
+	log.Debugf("RDS discoverRDSProxies: starting for provider %s", p.config.ID)
+
+	for {
+		input := &rds.DescribeDBProxiesInput{
+			Marker:     nextToken,
+			MaxRecords: aws.Int32(50),
+		}
+
+		output, err := p.rdsClient.DescribeDBProxies(ctx, input)
+		if err != nil {
+			log.Errorf("RDS discoverRDSProxies: DescribeDBProxies failed: %v", err)
+			return nil, awsinfra.HandleAWSError(err)
+		}
+
+		log.Debugf("RDS discoverRDSProxies: DescribeDBProxies returned %d proxies", len(output.DBProxies))
+
+		for _, proxy := range output.DBProxies {
+			if proxy.DBProxyName == nil || proxy.Endpoint == nil {
+				continue
+			}
+
+			dbType := mapProxyEngineFamily(aws.ToString(proxy.EngineFamily))
+			if dbType == "" {
+				log.Debugf("RDS discoverRDSProxies: skipping proxy %s (engine=%s not supported)", aws.ToString(proxy.DBProxyName), aws.ToString(proxy.EngineFamily))
+				continue
+			}
+			log.Debugf("RDS discoverRDSProxies: processing proxy %s (engine=%s, status=%s)", aws.ToString(proxy.DBProxyName), aws.ToString(proxy.EngineFamily), proxy.Status)
+
+			defaultPort := "3306"
+			if dbType == engine.DatabaseType_Postgres {
+				defaultPort = "5432"
+			}
+
+			metadata := map[string]string{
+				"endpoint":     *proxy.Endpoint,
+				"port":         defaultPort,
+				"endpointType": "proxy",
+				"proxyName":    *proxy.DBProxyName,
+			}
+			if aws.ToBool(proxy.RequireTLS) {
+				metadata["requireTLS"] = "true"
+			}
+
+			connections = append(connections, providers.DiscoveredConnection{
+				ID:           p.connectionID("proxy-" + *proxy.DBProxyName),
+				ProviderType: providers.ProviderTypeAWS,
+				ProviderID:   p.config.ID,
+				Name:         *proxy.DBProxyName + " (proxy)",
+				DatabaseType: dbType,
+				Region:       p.config.Region,
+				Status:       mapProxyStatus(string(proxy.Status)),
+				Metadata:     metadata,
+			})
+		}
+
+		if output.Marker == nil {
+			break
+		}
+		nextToken = output.Marker
+	}
+
+	log.Debugf("RDS discoverRDSProxies: found %d proxies", len(connections))
+	return connections, nil
+}
+
 var mapRDSEngineExtension func(string) (engine.DatabaseType, bool)
 
 // SetRDSEngineMapper registers an extension function for mapping RDS engine names
@@ -162,6 +332,38 @@ func mapRDSEngine(engineName string) (engine.DatabaseType, bool) {
 	}
 
 	return "", false
+}
+
+// mapProxyEngineFamily maps RDS Proxy EngineFamily to DatabaseType.
+func mapProxyEngineFamily(family string) engine.DatabaseType {
+	switch strings.ToUpper(family) {
+	case "MYSQL":
+		return engine.DatabaseType_MySQL
+	case "POSTGRESQL":
+		return engine.DatabaseType_Postgres
+	default:
+		if mapRDSEngineExtension != nil {
+			if dbType, ok := mapRDSEngineExtension(strings.ToLower(family)); ok {
+				return dbType
+			}
+		}
+		return ""
+	}
+}
+
+func mapProxyStatus(status string) providers.ConnectionStatus {
+	switch strings.ToLower(status) {
+	case "available":
+		return providers.ConnectionStatusAvailable
+	case "creating", "modifying":
+		return providers.ConnectionStatusStarting
+	case "deleting":
+		return providers.ConnectionStatusDeleting
+	case "incompatible-network", "insufficient-resource-limits":
+		return providers.ConnectionStatusFailed
+	default:
+		return providers.ConnectionStatusUnknown
+	}
 }
 
 func mapRDSStatus(status *string) providers.ConnectionStatus {

@@ -18,6 +18,7 @@ package aws
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/aws/smithy-go"
@@ -187,6 +188,26 @@ func TestHandleAWSError_UnknownCode(t *testing.T) {
 	expected := "AWS error [SomeUnknownError]: unknown error occurred"
 	if result.Error() != expected {
 		t.Errorf("expected %q, got %q", expected, result.Error())
+	}
+}
+
+func TestHandleAWSError_SSOExpired(t *testing.T) {
+	testCases := []string{
+		"SSO session token has expired",
+		"the SSO token is expired",
+		"sso: token is expired, please run aws sso login",
+	}
+
+	for _, msg := range testCases {
+		err := errors.New(msg)
+		result := HandleAWSError(err)
+		if result == nil {
+			t.Errorf("expected non-nil error for %q", msg)
+			continue
+		}
+		if !strings.Contains(result.Error(), "SSO session expired") {
+			t.Errorf("expected SSO expiry message for %q, got %q", msg, result.Error())
+		}
 	}
 }
 

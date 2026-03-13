@@ -244,7 +244,7 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 	// Count how many discovery tasks we'll run
 	taskCount := len(discoveryExtensions)
 	if p.config.DiscoverRDS && p.rdsClient != nil {
-		taskCount++
+		taskCount += 3 // instances, clusters, proxies
 	}
 	if p.config.DiscoverElastiCache && p.elasticacheClient != nil {
 		taskCount++
@@ -264,6 +264,16 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 		g.Go(func() error {
 			conns, err := p.discoverRDS(gctx)
 			results <- discoveryResult{conns, err, "RDS"}
+			return nil
+		})
+		g.Go(func() error {
+			conns, err := p.discoverRDSClusters(gctx)
+			results <- discoveryResult{conns, err, "RDS Clusters"}
+			return nil
+		})
+		g.Go(func() error {
+			conns, err := p.discoverRDSProxies(gctx)
+			results <- discoveryResult{conns, err, "RDS Proxies"}
 			return nil
 		})
 	}

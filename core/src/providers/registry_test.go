@@ -298,6 +298,61 @@ func TestRegistry_RefreshDiscovery(t *testing.T) {
 	_ = callCount // Just to track that we did the call
 }
 
+func TestRegistry_DiscoverAll_CacheStaleness(t *testing.T) {
+	r := NewRegistry()
+
+	callCount := 0
+	p := &mockProviderWithCounter{
+		mockProvider: mockProvider{
+			id:   "test-stale",
+			name: "Stale Test",
+			connections: []DiscoveredConnection{
+				{ID: "test-stale/conn-1", ProviderID: "test-stale"},
+			},
+		},
+		callCount: &callCount,
+	}
+	_ = r.Register(p)
+
+	ctx := context.Background()
+
+	// First call should discover
+	_, _ = r.DiscoverAll(ctx)
+	if callCount != 1 {
+		t.Errorf("expected 1 discovery call, got %d", callCount)
+	}
+
+	// Second call should use cache (within TTL)
+	_, _ = r.DiscoverAll(ctx)
+	if callCount != 1 {
+		t.Errorf("expected still 1 discovery call (cached), got %d", callCount)
+	}
+
+	// Manually expire cache
+	r.cacheMu.Lock()
+	if cached, ok := r.connCache["test-stale"]; ok {
+		cached.discoveredAt = cached.discoveredAt.Add(-DefaultDiscoveryCacheTTL - 1)
+	}
+	r.cacheMu.Unlock()
+
+	// Third call should re-discover (cache stale)
+	_, _ = r.DiscoverAll(ctx)
+	if callCount != 2 {
+		t.Errorf("expected 2 discovery calls (stale cache), got %d", callCount)
+	}
+}
+
+// mockProviderWithCounter wraps mockProvider and counts DiscoverConnections calls.
+type mockProviderWithCounter struct {
+	mockProvider
+	callCount *int
+}
+
+func (m *mockProviderWithCounter) DiscoverConnections(ctx context.Context) ([]DiscoveredConnection, error) {
+	*m.callCount++
+	return m.mockProvider.DiscoverConnections(ctx)
+}
+
 func TestConnectionStatus_IsAvailable(t *testing.T) {
 	testCases := []struct {
 		status   ConnectionStatus

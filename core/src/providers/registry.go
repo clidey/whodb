@@ -20,10 +20,17 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 )
+
+// cachedDiscovery holds discovered connections and when they were fetched.
+type cachedDiscovery struct {
+	connections  []DiscoveredConnection
+	discoveredAt time.Time
+}
 
 var (
 	// ErrProviderNotFound indicates the requested provider doesn't exist.
@@ -36,23 +43,25 @@ var (
 	ErrConnectionNotFound = errors.New("connection not found")
 )
 
+// DefaultDiscoveryCacheTTL is the default max age for cached discoveries.
+// When DiscoverAll is called and a provider's cache is older than this, it auto-refreshes.
+var DefaultDiscoveryCacheTTL = 5 * time.Minute
+
 // Registry manages connection providers and aggregates their discovered connections.
 // It is safe for concurrent use.
 type Registry struct {
 	mu        sync.RWMutex
 	providers map[string]ConnectionProvider
 
-	// discoveryCache caches discovered connections by provider ID.
-	// This avoids repeated expensive API calls.
 	cacheMu   sync.RWMutex
-	connCache map[string][]DiscoveredConnection
+	connCache map[string]*cachedDiscovery
 }
 
 // NewRegistry creates a new provider registry.
 func NewRegistry() *Registry {
 	return &Registry{
 		providers: make(map[string]ConnectionProvider),
-		connCache: make(map[string][]DiscoveredConnection),
+		connCache: make(map[string]*cachedDiscovery),
 	}
 }
 
@@ -134,7 +143,7 @@ func (r *Registry) List() []ConnectionProvider {
 }
 
 // DiscoverAll discovers connections from all registered providers.
-// Results are cached. Use RefreshDiscovery to force a refresh.
+// Uses cached results when fresh (within DefaultDiscoveryCacheTTL), otherwise auto-refreshes.
 func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, error) {
 	r.mu.RLock()
 	providers := make([]ConnectionProvider, 0, len(r.providers))
@@ -155,20 +164,26 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 		cached, hasCached := r.connCache[providerID]
 		r.cacheMu.RUnlock()
 
-		if hasCached {
-			log.Infof("DiscoverAll: using %d cached connections for provider %s", len(cached), providerID)
-			allConns = append(allConns, cached...)
+		if hasCached && time.Since(cached.discoveredAt) < DefaultDiscoveryCacheTTL {
+			age := time.Since(cached.discoveredAt).Round(time.Second)
+			log.Infof("DiscoverAll: using %d cached connections for provider %s (age=%s, ttl=%s)", len(cached.connections), providerID, age, DefaultDiscoveryCacheTTL)
+			allConns = append(allConns, cached.connections...)
 			continue
 		}
 
-		log.Infof("DiscoverAll: no cache for provider %s, calling DiscoverConnections", providerID)
+		if hasCached {
+			age := time.Since(cached.discoveredAt).Round(time.Second)
+			log.Infof("DiscoverAll: cache expired for provider %s (age=%s, ttl=%s), re-discovering", providerID, age, DefaultDiscoveryCacheTTL)
+		} else {
+			log.Infof("DiscoverAll: no cache for provider %s, discovering", providerID)
+		}
 
 		conns, err := p.DiscoverConnections(ctx)
 
 		if len(conns) > 0 {
 			log.Infof("DiscoverAll: got %d connections from provider %s", len(conns), providerID)
 			r.cacheMu.Lock()
-			r.connCache[providerID] = conns
+			r.connCache[providerID] = &cachedDiscovery{connections: conns, discoveredAt: time.Now()}
 			r.cacheMu.Unlock()
 			allConns = append(allConns, conns...)
 		}
@@ -192,7 +207,7 @@ func (r *Registry) DiscoverAll(ctx context.Context) ([]DiscoveredConnection, err
 func (r *Registry) RefreshDiscovery(ctx context.Context, providerID string) ([]DiscoveredConnection, error) {
 	if providerID == "" {
 		r.cacheMu.Lock()
-		r.connCache = make(map[string][]DiscoveredConnection)
+		r.connCache = make(map[string]*cachedDiscovery)
 		r.cacheMu.Unlock()
 		return r.DiscoverAll(ctx)
 	}
@@ -210,14 +225,14 @@ func (r *Registry) RefreshDiscovery(ctx context.Context, providerID string) ([]D
 	if err != nil {
 		if len(conns) > 0 {
 			r.cacheMu.Lock()
-			r.connCache[providerID] = conns
+			r.connCache[providerID] = &cachedDiscovery{connections: conns, discoveredAt: time.Now()}
 			r.cacheMu.Unlock()
 		}
 		return conns, err
 	}
 
 	r.cacheMu.Lock()
-	r.connCache[providerID] = conns
+	r.connCache[providerID] = &cachedDiscovery{connections: conns, discoveredAt: time.Now()}
 	r.cacheMu.Unlock()
 
 	return conns, nil
@@ -286,7 +301,7 @@ func (r *Registry) Close(ctx context.Context) error {
 	r.providers = make(map[string]ConnectionProvider)
 
 	r.cacheMu.Lock()
-	r.connCache = make(map[string][]DiscoveredConnection)
+	r.connCache = make(map[string]*cachedDiscovery)
 	r.cacheMu.Unlock()
 
 	return errors.Join(errs...)

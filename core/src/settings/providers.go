@@ -269,6 +269,11 @@ func RefreshAWSProvider(id string) (*AWSProviderState, error) {
 	conns, err := registry.RefreshDiscovery(ctx, id)
 	log.Infof("RefreshAWSProvider: registry.RefreshDiscovery returned %d connections, err=%v", len(conns), err)
 
+	// Run connectivity checks on refresh (not on cached reads)
+	if len(conns) > 0 {
+		awsprovider.CheckConnectivity(conns)
+	}
+
 	awsProvidersMu.Lock()
 	defer awsProvidersMu.Unlock()
 

@@ -16,66 +16,82 @@
 
 package aws
 
+// Partition constants for AWS region grouping.
+const (
+	PartitionStandard = "aws"
+	PartitionGovCloud = "aws-us-gov"
+	PartitionChina    = "aws-cn"
+)
+
+// Region represents an AWS region with its partition.
 type Region struct {
 	ID          string
 	Description string
+	Partition   string
 }
 
-// GetRegions returns the list of AWS regions.
+// GetRegions returns the list of AWS regions across all supported partitions.
 // Based on https://www.aws-services.info/regions.html
-// Excludes China (cn-*), GovCloud (us-gov-*), and Sovereign Cloud (eusc-*) partitions.
 func GetRegions() []Region {
 	return []Region{
 		// US regions
-		{ID: "us-east-1", Description: "US East (N. Virginia)"},
-		{ID: "us-east-2", Description: "US East (Ohio)"},
-		{ID: "us-west-1", Description: "US West (N. California)"},
-		{ID: "us-west-2", Description: "US West (Oregon)"},
+		{ID: "us-east-1", Description: "US East (N. Virginia)", Partition: PartitionStandard},
+		{ID: "us-east-2", Description: "US East (Ohio)", Partition: PartitionStandard},
+		{ID: "us-west-1", Description: "US West (N. California)", Partition: PartitionStandard},
+		{ID: "us-west-2", Description: "US West (Oregon)", Partition: PartitionStandard},
 
 		// Canada
-		{ID: "ca-central-1", Description: "Canada (Central)"},
-		{ID: "ca-west-1", Description: "Canada West (Calgary)"},
+		{ID: "ca-central-1", Description: "Canada (Central)", Partition: PartitionStandard},
+		{ID: "ca-west-1", Description: "Canada West (Calgary)", Partition: PartitionStandard},
 
 		// Mexico
-		{ID: "mx-central-1", Description: "Mexico (Central)"},
+		{ID: "mx-central-1", Description: "Mexico (Central)", Partition: PartitionStandard},
 
 		// Europe
-		{ID: "eu-west-1", Description: "Europe (Ireland)"},
-		{ID: "eu-west-2", Description: "Europe (London)"},
-		{ID: "eu-west-3", Description: "Europe (Paris)"},
-		{ID: "eu-central-1", Description: "Europe (Frankfurt)"},
-		{ID: "eu-central-2", Description: "Europe (Zurich)"},
-		{ID: "eu-north-1", Description: "Europe (Stockholm)"},
-		{ID: "eu-south-1", Description: "Europe (Milan)"},
-		{ID: "eu-south-2", Description: "Europe (Spain)"},
+		{ID: "eu-west-1", Description: "Europe (Ireland)", Partition: PartitionStandard},
+		{ID: "eu-west-2", Description: "Europe (London)", Partition: PartitionStandard},
+		{ID: "eu-west-3", Description: "Europe (Paris)", Partition: PartitionStandard},
+		{ID: "eu-central-1", Description: "Europe (Frankfurt)", Partition: PartitionStandard},
+		{ID: "eu-central-2", Description: "Europe (Zurich)", Partition: PartitionStandard},
+		{ID: "eu-north-1", Description: "Europe (Stockholm)", Partition: PartitionStandard},
+		{ID: "eu-south-1", Description: "Europe (Milan)", Partition: PartitionStandard},
+		{ID: "eu-south-2", Description: "Europe (Spain)", Partition: PartitionStandard},
 
 		// Asia Pacific
-		{ID: "ap-east-1", Description: "Asia Pacific (Hong Kong)"},
-		{ID: "ap-east-2", Description: "Asia Pacific (Taipei)"},
-		{ID: "ap-northeast-1", Description: "Asia Pacific (Tokyo)"},
-		{ID: "ap-northeast-2", Description: "Asia Pacific (Seoul)"},
-		{ID: "ap-northeast-3", Description: "Asia Pacific (Osaka)"},
-		{ID: "ap-south-1", Description: "Asia Pacific (Mumbai)"},
-		{ID: "ap-south-2", Description: "Asia Pacific (Hyderabad)"},
-		{ID: "ap-southeast-1", Description: "Asia Pacific (Singapore)"},
-		{ID: "ap-southeast-2", Description: "Asia Pacific (Sydney)"},
-		{ID: "ap-southeast-3", Description: "Asia Pacific (Jakarta)"},
-		{ID: "ap-southeast-4", Description: "Asia Pacific (Melbourne)"},
-		{ID: "ap-southeast-5", Description: "Asia Pacific (Malaysia)"},
-		{ID: "ap-southeast-6", Description: "Asia Pacific (New Zealand)"},
-		{ID: "ap-southeast-7", Description: "Asia Pacific (Thailand)"},
+		{ID: "ap-east-1", Description: "Asia Pacific (Hong Kong)", Partition: PartitionStandard},
+		{ID: "ap-east-2", Description: "Asia Pacific (Taipei)", Partition: PartitionStandard},
+		{ID: "ap-northeast-1", Description: "Asia Pacific (Tokyo)", Partition: PartitionStandard},
+		{ID: "ap-northeast-2", Description: "Asia Pacific (Seoul)", Partition: PartitionStandard},
+		{ID: "ap-northeast-3", Description: "Asia Pacific (Osaka)", Partition: PartitionStandard},
+		{ID: "ap-south-1", Description: "Asia Pacific (Mumbai)", Partition: PartitionStandard},
+		{ID: "ap-south-2", Description: "Asia Pacific (Hyderabad)", Partition: PartitionStandard},
+		{ID: "ap-southeast-1", Description: "Asia Pacific (Singapore)", Partition: PartitionStandard},
+		{ID: "ap-southeast-2", Description: "Asia Pacific (Sydney)", Partition: PartitionStandard},
+		{ID: "ap-southeast-3", Description: "Asia Pacific (Jakarta)", Partition: PartitionStandard},
+		{ID: "ap-southeast-4", Description: "Asia Pacific (Melbourne)", Partition: PartitionStandard},
+		{ID: "ap-southeast-5", Description: "Asia Pacific (Malaysia)", Partition: PartitionStandard},
+		{ID: "ap-southeast-6", Description: "Asia Pacific (New Zealand)", Partition: PartitionStandard},
+		{ID: "ap-southeast-7", Description: "Asia Pacific (Thailand)", Partition: PartitionStandard},
 
 		// South America
-		{ID: "sa-east-1", Description: "South America (São Paulo)"},
+		{ID: "sa-east-1", Description: "South America (São Paulo)", Partition: PartitionStandard},
 
 		// Middle East
-		{ID: "me-south-1", Description: "Middle East (Bahrain)"},
-		{ID: "me-central-1", Description: "Middle East (UAE)"},
+		{ID: "me-south-1", Description: "Middle East (Bahrain)", Partition: PartitionStandard},
+		{ID: "me-central-1", Description: "Middle East (UAE)", Partition: PartitionStandard},
 
 		// Africa
-		{ID: "af-south-1", Description: "Africa (Cape Town)"},
+		{ID: "af-south-1", Description: "Africa (Cape Town)", Partition: PartitionStandard},
 
 		// Israel
-		{ID: "il-central-1", Description: "Israel (Tel Aviv)"},
+		{ID: "il-central-1", Description: "Israel (Tel Aviv)", Partition: PartitionStandard},
+
+		// GovCloud
+		{ID: "us-gov-west-1", Description: "AWS GovCloud (US-West)", Partition: PartitionGovCloud},
+		{ID: "us-gov-east-1", Description: "AWS GovCloud (US-East)", Partition: PartitionGovCloud},
+
+		// China
+		{ID: "cn-north-1", Description: "China (Beijing)", Partition: PartitionChina},
+		{ID: "cn-northwest-1", Description: "China (Ningxia)", Partition: PartitionChina},
 	}
 }

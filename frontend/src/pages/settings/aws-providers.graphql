@@ -69,6 +69,7 @@ query GetLocalAWSProfiles {
     Name
     Region
     Source
+    AuthType
     IsDefault
   }
 }
@@ -77,6 +78,7 @@ query GetAWSRegions {
   AWSRegions {
     Id
     Description
+    Partition
   }
 }
 
@@ -122,6 +124,14 @@ mutation RemoveCloudProvider($id: ID!) {
 
 mutation TestCloudProvider($id: ID!) {
   TestCloudProvider(id: $id)
+}
+
+mutation TestAWSCredentials($input: AWSProviderInput!) {
+  TestAWSCredentials(input: $input)
+}
+
+mutation GenerateRDSAuthToken($providerID: ID!, $endpoint: String!, $port: Int!, $region: String!, $username: String!) {
+  GenerateRDSAuthToken(providerID: $providerID, endpoint: $endpoint, port: $port, region: $region, username: $username)
 }
 
 mutation RefreshCloudProvider($id: ID!) {

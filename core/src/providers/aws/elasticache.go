@@ -215,6 +215,9 @@ func (p *Provider) replicationGroupToConnection(rg *ectypes.ReplicationGroup) *p
 	metadata := make(map[string]string)
 	metadata["transitEncryption"] = strconv.FormatBool(aws.ToBool(rg.TransitEncryptionEnabled))
 	metadata["authTokenEnabled"] = strconv.FormatBool(aws.ToBool(rg.AuthTokenEnabled))
+	if len(rg.UserGroupIds) > 0 {
+		metadata["iamAuthSupported"] = "true"
+	}
 
 	var endpoint string
 	var port int32

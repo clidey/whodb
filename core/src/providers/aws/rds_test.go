@@ -232,6 +232,80 @@ func TestRDSInstanceToConnection_UnsupportedEngine(t *testing.T) {
 	}
 }
 
+func TestRDSInstanceToConnection_IAMAuth(t *testing.T) {
+	p := newTestRDSProvider()
+	status := "available"
+	instance := &rdstypes.DBInstance{
+		DBInstanceIdentifier:             aws.String("my-iam-postgres"),
+		Engine:                           aws.String("postgres"),
+		DBInstanceStatus:                 &status,
+		IAMDatabaseAuthenticationEnabled: aws.Bool(true),
+		Endpoint: &rdstypes.Endpoint{
+			Address: aws.String("iam-db.abc.us-west-2.rds.amazonaws.com"),
+			Port:    aws.Int32(5432),
+		},
+	}
+
+	conn := p.rdsInstanceToConnection(instance)
+	if conn == nil {
+		t.Fatal("expected non-nil connection")
+	}
+	if conn.Metadata["iamAuthEnabled"] != "true" {
+		t.Error("expected iamAuthEnabled=true in metadata")
+	}
+}
+
+func TestMapProxyEngineFamily(t *testing.T) {
+	testCases := []struct {
+		family   string
+		expected engine.DatabaseType
+	}{
+		{"MYSQL", engine.DatabaseType_MySQL},
+		{"mysql", engine.DatabaseType_MySQL},
+		{"POSTGRESQL", engine.DatabaseType_Postgres},
+		{"postgresql", engine.DatabaseType_Postgres},
+		{"PostgreSQL", engine.DatabaseType_Postgres},
+	}
+
+	for _, tc := range testCases {
+		dbType := mapProxyEngineFamily(tc.family)
+		if dbType != tc.expected {
+			t.Errorf("mapProxyEngineFamily(%s): expected %s, got %s", tc.family, tc.expected, dbType)
+		}
+	}
+}
+
+func TestMapProxyEngineFamily_Unsupported(t *testing.T) {
+	// SQL Server not in CE
+	dbType := mapProxyEngineFamily("SQLSERVERCE")
+	if dbType != "" {
+		t.Errorf("expected empty for unsupported engine, got %s", dbType)
+	}
+}
+
+func TestMapProxyStatus(t *testing.T) {
+	testCases := []struct {
+		status   string
+		expected providers.ConnectionStatus
+	}{
+		{"available", providers.ConnectionStatusAvailable},
+		{"creating", providers.ConnectionStatusStarting},
+		{"modifying", providers.ConnectionStatusStarting},
+		{"deleting", providers.ConnectionStatusDeleting},
+		{"incompatible-network", providers.ConnectionStatusFailed},
+		{"insufficient-resource-limits", providers.ConnectionStatusFailed},
+		{"suspended", providers.ConnectionStatusUnknown},
+		{"unknown", providers.ConnectionStatusUnknown},
+	}
+
+	for _, tc := range testCases {
+		result := mapProxyStatus(tc.status)
+		if result != tc.expected {
+			t.Errorf("mapProxyStatus(%s): expected %s, got %s", tc.status, tc.expected, result)
+		}
+	}
+}
+
 func TestRDSInstanceToConnection_NilEndpoint(t *testing.T) {
 	p := newTestRDSProvider()
 	instance := &rdstypes.DBInstance{
