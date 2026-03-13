@@ -184,9 +184,8 @@ export const Sidebar: FC = () => {
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-        dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: value }));
         handleProfileChange(current.Id, value);
-    }, [current, dispatch, handleProfileChange, navigate, pathname]);
+    }, [current, handleProfileChange, navigate, pathname]);
 
     // Schema select logic
     const schemaOptions = useMemo(() => {

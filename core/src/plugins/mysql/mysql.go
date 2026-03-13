@@ -17,8 +17,10 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -42,17 +44,45 @@ type MySQLPlugin struct {
 
 func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]string, error) {
-		var databases []struct {
+		var allDBs []struct {
 			Database string `gorm:"column:Database"`
 		}
-		if err := db.Raw("SHOW DATABASES").Scan(&databases).Error; err != nil {
+		if err := db.Raw("SHOW DATABASES").Scan(&allDBs).Error; err != nil {
 			return nil, err
 		}
-		var databaseNames []string
-		for _, database := range databases {
-			databaseNames = append(databaseNames, database.Database)
+
+		// Verify each database with USE — the only reliable access check in MySQL.
+		// INFORMATION_SCHEMA privilege tables are unreliable due to GRANTEE format
+		// mismatches, role-based grants, and server-specific defaults.
+		// Cost is O(N) but runs once per profile (Apollo caches the result).
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, err
 		}
-		return databaseNames, nil
+		ctx := context.Background()
+		conn, err := sqlDB.Conn(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Close()
+
+		var currentDB sql.NullString
+		conn.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&currentDB)
+
+		accessible := make([]string, 0, len(allDBs))
+		for _, d := range allDBs {
+			escaped := strings.ReplaceAll(d.Database, "`", "``")
+			if _, err := conn.ExecContext(ctx, "USE `"+escaped+"`"); err == nil {
+				accessible = append(accessible, d.Database)
+			}
+		}
+
+		if currentDB.Valid && currentDB.String != "" {
+			escaped := strings.ReplaceAll(currentDB.String, "`", "``")
+			conn.ExecContext(ctx, "USE `"+escaped+"`")
+		}
+
+		return accessible, nil
 	})
 }
 
