@@ -27,6 +27,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var (
@@ -187,6 +188,23 @@ func (p *MySQLPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema s
 		}
 	}
 	return nil
+}
+
+// BuildSkipConflictClause returns ON DUPLICATE KEY UPDATE pk = pk for MySQL.
+// MySQL's GORM driver can't generate the id=id fallback without schema info when
+// using .Table() with map records, so we provide explicit identity assignments.
+func (p *MySQLPlugin) BuildSkipConflictClause(pkColumns []string) clause.OnConflict {
+	conflictCols := make([]clause.Column, len(pkColumns))
+	assignments := make([]clause.Assignment, len(pkColumns))
+	for i, col := range pkColumns {
+		c := clause.Column{Name: col}
+		conflictCols[i] = c
+		assignments[i] = clause.Assignment{Column: c, Value: c}
+	}
+	return clause.OnConflict{
+		Columns:   conflictCols,
+		DoUpdates: assignments,
+	}
 }
 
 func NewMySQLPlugin() *engine.Plugin {

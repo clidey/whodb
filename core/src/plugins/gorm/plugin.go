@@ -31,6 +31,7 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/dromara/carbon/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type GormPlugin struct {
@@ -147,6 +148,12 @@ type GormPluginFunctions interface {
 	// for bulk insert operations. Used to calculate appropriate batch sizes.
 	// Default: 65535 (PostgreSQL/MySQL limit). Override for databases with lower limits.
 	GetMaxBulkInsertParameters() int
+
+	// BuildSkipConflictClause returns an OnConflict clause that skips duplicate rows
+	// during append-mode imports. Dialect-specific because Postgres uses DO NOTHING
+	// while MySQL needs identity assignments (pk = pk) since GORM can't generate the
+	// fallback without schema info when using .Table() with map records.
+	BuildSkipConflictClause(pkColumns []string) clause.OnConflict
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -871,6 +878,19 @@ func (p *GormPlugin) NormalizeType(typeName string) string {
 // GetMaxBulkInsertParameters returns the default limit of 65535 parameters.
 func (p *GormPlugin) GetMaxBulkInsertParameters() int {
 	return 65535
+}
+
+// BuildSkipConflictClause returns ON CONFLICT (pk) DO NOTHING — works for Postgres, SQLite, ClickHouse.
+// MySQL/MariaDB plugins override this with identity assignments.
+func (p *GormPlugin) BuildSkipConflictClause(pkColumns []string) clause.OnConflict {
+	conflictCols := make([]clause.Column, len(pkColumns))
+	for i, col := range pkColumns {
+		conflictCols[i] = clause.Column{Name: col}
+	}
+	return clause.OnConflict{
+		Columns:   conflictCols,
+		DoNothing: true,
+	}
 }
 
 // MarkGeneratedColumns is a no-op base implementation.

@@ -262,18 +262,12 @@ export const extrasMethods = {
     },
 
     async closeQueryHistory() {
-        // Press Escape twice: first to dismiss any open autocomplete/popover in the
-        // editor behind the dialog, second to close the sheet itself.
-        await this.page.keyboard.press("Escape");
-        const stillOpen = await this.page.locator('[role="dialog"]').count();
-        if (stillOpen > 0) {
-            await this.page.keyboard.press("Escape");
-        }
-
-        const dialogCount = await this.page.locator('[role="dialog"]').count();
-        if (dialogCount > 0) {
-            await this.page.locator('[role="dialog"]').waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
-        }
+        // Click the Sheet's built-in Close button instead of pressing Escape.
+        // Escape is unreliable here because nested TooltipTrigger buttons
+        // (from Tip without asChild) intercept the keypress.
+        const dialog = this.page.locator('[role="dialog"]');
+        await dialog.getByRole('button', { name: 'Close' }).click();
+        await dialog.waitFor({ state: "hidden", timeout: TIMEOUT.ACTION });
 
         await expect(this.page.locator("body")).not.toHaveAttribute("data-scroll-locked", /.+/, { timeout: TIMEOUT.ELEMENT });
         // Required: scroll-lock release animation

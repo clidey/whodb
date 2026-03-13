@@ -698,21 +698,21 @@ func (r *mutationResolver) ImportTableFile(ctx context.Context, input model.Impo
 			}
 		}
 
-		if input.Mode == model.ImportModeAppend {
-			txConfig.SkipConflicts = true
-		}
-
-		if input.Mode == model.ImportModeUpsert {
+		if input.Mode == model.ImportModeAppend || input.Mode == model.ImportModeUpsert {
 			var pkCols []string
 			for _, col := range columns {
 				if col.IsPrimary {
 					pkCols = append(pkCols, col.Name)
 				}
 			}
-			if len(pkCols) == 0 {
-				return fmt.Errorf(importErrorUpsertNoPK)
+			if input.Mode == model.ImportModeUpsert {
+				if len(pkCols) == 0 {
+					return fmt.Errorf(importErrorUpsertNoPK)
+				}
+				txConfig.UpsertPKColumns = pkCols
+			} else if len(pkCols) > 0 {
+				txConfig.SkipConflictPKColumns = pkCols
 			}
-			txConfig.UpsertPKColumns = pkCols
 		}
 
 		for start := 0; start < len(parsed.rows); start += importBatchSize {

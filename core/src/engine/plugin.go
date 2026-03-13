@@ -50,12 +50,12 @@ type ExternalModel struct {
 
 // PluginConfig contains all configuration needed to connect to and operate on a database.
 type PluginConfig struct {
-	Credentials     *Credentials
-	ExternalModel   *ExternalModel
-	Transaction     any      // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
-	MultiStatement  bool     // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
-	SkipConflicts   bool     // Use ON CONFLICT DO NOTHING / INSERT IGNORE for duplicate rows
-	UpsertPKColumns []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	Credentials           *Credentials
+	ExternalModel         *ExternalModel
+	Transaction           any      // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
+	MultiStatement        bool     // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
+	UpsertPKColumns       []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	SkipConflictPKColumns []string // PK columns for ON CONFLICT DO NOTHING (append mode — skip duplicate rows)
 }
 
 // Record represents a key-value pair with optional extra metadata,
