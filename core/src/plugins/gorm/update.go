@@ -103,14 +103,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return false, result.Error
 		}
 
-		// TODO: BIG EDGE CASE - ClickHouse driver doesn't report affected rows properly
-		// Need to investigate the ClickHouse GORM driver behavior
-		/*
-			if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
-				return false, errors.New("no rows were updated")
-			}
-		*/
-		// For now, only check affected rows for non-ClickHouse databases
+		// ClickHouse GORM driver doesn't report affected rows for UPDATE mutations
 		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
 			return false, errors.New("no rows were updated")
 		}

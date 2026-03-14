@@ -89,7 +89,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			return false, result.Error
 		}
 
-		// TODO: BIG EDGE CASE - ClickHouse driver doesn't report affected rows properly for DELETE
+		// ClickHouse GORM driver doesn't report affected rows for DELETE mutations
 		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
 			return false, errors.New("no rows were deleted")
 		}
