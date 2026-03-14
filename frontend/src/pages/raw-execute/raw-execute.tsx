@@ -429,11 +429,6 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setError(null);
         setLoading(true);
 
-        // TODO: Remove artificial delay - exists to show loading state for fast queries
-        setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-        
         handleExecute.current(currentCode).then((data) => {
             historyItem.status = true;
             setRows(data);

@@ -389,119 +389,137 @@ func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.Where
 
 	switch condition.Type {
 	case model.WhereConditionTypeAtomic:
-		if condition.Atomic != nil {
-			// Use actual column type from database if available
-			columnType := condition.Atomic.ColumnType
-			isNullable := false
-			if columnTypes != nil {
-				if colInfo, exists := columnTypes[condition.Atomic.Key]; exists && colInfo.Type != "" {
-					columnType = colInfo.Type
-					isNullable = colInfo.IsNullable
-				}
-			}
-
-			operator, ok := p.GetSupportedOperators()[condition.Atomic.Operator]
-			if !ok {
-				return nil, fmt.Errorf("invalid SQL operator: %s", condition.Atomic.Operator)
-			}
-
-			builder := p.GormPluginFunctions.CreateSQLBuilder(query.Session(&gorm.Session{NewDB: true}))
-			col := builder.QuoteIdentifier(condition.Atomic.Key)
-
-			// Handle operators that don't take values
-			switch operator {
-			case "IS NULL", "IS NOT NULL":
-				query = query.Where(col + " " + operator)
-				return query, nil
-			}
-
-			// Convert value for typed comparison
-			// Special handling for operators with multiple values
-			switch operator {
-			case "IN", "NOT IN":
-				// Expect comma-separated list; split and convert each
-				raw := strings.TrimSpace(condition.Atomic.Value)
-				if raw == "" {
-					// empty IN list should return no rows; use a false predicate
-					query = query.Where("1 = 0")
-					return query, nil
-				}
-				parts := strings.Split(raw, ",")
-				vals := make([]any, 0, len(parts))
-				for _, part := range parts {
-					v := strings.TrimSpace(part)
-					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType, isNullable)
-					if err != nil {
-						log.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
-						return nil, err
-					}
-					vals = append(vals, cv)
-				}
-				query = query.Where(col+" "+operator+" ?", vals)
-				return query, nil
-
-			case "BETWEEN", "NOT BETWEEN":
-				// Expect two values separated by comma: min,max
-				raw := strings.TrimSpace(condition.Atomic.Value)
-				parts := strings.Split(raw, ",")
-				if len(parts) != 2 {
-					return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
-				}
-				v1, err1 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType, isNullable)
-				if err1 != nil {
-					log.WithError(err1).Error("Failed to convert BETWEEN min value")
-					return nil, err1
-				}
-				v2, err2 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType, isNullable)
-				if err2 != nil {
-					log.WithError(err2).Error("Failed to convert BETWEEN max value")
-					return nil, err2
-				}
-				if operator == "BETWEEN" {
-					query = query.Where(col+" BETWEEN ? AND ?", v1, v2)
-				} else {
-					query = query.Where(col+" NOT BETWEEN ? AND ?", v1, v2)
-				}
-				return query, nil
-			default:
-				// Single value operators (=, <, >, LIKE, etc.)
-				value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType, isNullable)
-				if err != nil {
-					log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
-					return nil, err
-				}
-				query = query.Where(col+" "+operator+" ?", value)
-			}
-		}
-
+		return p.applyAtomicCondition(query, condition.Atomic, columnTypes)
 	case model.WhereConditionTypeAnd:
-		if condition.And != nil {
-			for _, child := range condition.And.Children {
-				var err error
-				query, err = p.ApplyWhereConditions(query, child, columnTypes)
-				if err != nil {
-					log.WithError(err).Error("Failed to apply AND where condition")
-					return nil, err
-				}
-			}
-		}
-
+		return p.applyAndConditions(query, condition.And, columnTypes)
 	case model.WhereConditionTypeOr:
-		if condition.Or != nil {
-			orQueries := query
-			for _, child := range condition.Or.Children {
-				childQuery, err := p.ApplyWhereConditions(query, child, columnTypes)
-				if err != nil {
-					log.WithError(err).Error("Failed to apply OR where condition")
-					return nil, err
-				}
-				orQueries = orQueries.Or(childQuery)
-			}
-			query = orQueries
-		}
+		return p.applyOrConditions(query, condition.Or, columnTypes)
 	}
 
 	return query, nil
+}
+
+// applyAtomicCondition handles a single atomic WHERE condition (e.g., column = value).
+func (p *GormPlugin) applyAtomicCondition(query *gorm.DB, atomic *model.AtomicWhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
+	if atomic == nil {
+		return query, nil
+	}
+
+	// Use actual column type from database if available
+	columnType := atomic.ColumnType
+	isNullable := false
+	if columnTypes != nil {
+		if colInfo, exists := columnTypes[atomic.Key]; exists && colInfo.Type != "" {
+			columnType = colInfo.Type
+			isNullable = colInfo.IsNullable
+		}
+	}
+
+	operator, ok := p.GetSupportedOperators()[atomic.Operator]
+	if !ok {
+		return nil, fmt.Errorf("invalid SQL operator: %s", atomic.Operator)
+	}
+
+	builder := p.GormPluginFunctions.CreateSQLBuilder(query.Session(&gorm.Session{NewDB: true}))
+	col := builder.QuoteIdentifier(atomic.Key)
+
+	switch operator {
+	case "IS NULL", "IS NOT NULL":
+		return query.Where(col + " " + operator), nil
+	case "IN", "NOT IN":
+		return p.applyInCondition(query, col, operator, atomic.Value, columnType, isNullable)
+	case "BETWEEN", "NOT BETWEEN":
+		return p.applyBetweenCondition(query, col, operator, atomic.Value, columnType, isNullable)
+	default:
+		return p.applySingleValueCondition(query, col, operator, atomic.Value, columnType, isNullable)
+	}
+}
+
+// applyInCondition handles IN and NOT IN operators with comma-separated values.
+func (p *GormPlugin) applyInCondition(query *gorm.DB, col, operator, rawValue, columnType string, isNullable bool) (*gorm.DB, error) {
+	raw := strings.TrimSpace(rawValue)
+	if raw == "" {
+		// empty IN list should return no rows; use a false predicate
+		return query.Where("1 = 0"), nil
+	}
+	parts := strings.Split(raw, ",")
+	vals := make([]any, 0, len(parts))
+	for _, part := range parts {
+		v := strings.TrimSpace(part)
+		cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType, isNullable)
+		if err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
+			return nil, err
+		}
+		vals = append(vals, cv)
+	}
+	return query.Where(col+" "+operator+" ?", vals), nil
+}
+
+// applyBetweenCondition handles BETWEEN and NOT BETWEEN operators with "min,max" values.
+func (p *GormPlugin) applyBetweenCondition(query *gorm.DB, col, operator, rawValue, columnType string, isNullable bool) (*gorm.DB, error) {
+	raw := strings.TrimSpace(rawValue)
+	parts := strings.Split(raw, ",")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
+	}
+	v1, err := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType, isNullable)
+	if err != nil {
+		log.WithError(err).Error("Failed to convert BETWEEN min value")
+		return nil, err
+	}
+	v2, err := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType, isNullable)
+	if err != nil {
+		log.WithError(err).Error("Failed to convert BETWEEN max value")
+		return nil, err
+	}
+	if operator == "BETWEEN" {
+		return query.Where(col+" BETWEEN ? AND ?", v1, v2), nil
+	}
+	return query.Where(col+" NOT BETWEEN ? AND ?", v1, v2), nil
+}
+
+// applySingleValueCondition handles operators that compare against a single value (=, <, >, LIKE, etc.).
+func (p *GormPlugin) applySingleValueCondition(query *gorm.DB, col, operator, rawValue, columnType string, isNullable bool) (*gorm.DB, error) {
+	value, err := p.GormPluginFunctions.ConvertStringValue(rawValue, columnType, isNullable)
+	if err != nil {
+		log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", rawValue, columnType))
+		return nil, err
+	}
+	return query.Where(col+" "+operator+" ?", value), nil
+}
+
+// applyAndConditions applies all children as AND-combined WHERE clauses.
+func (p *GormPlugin) applyAndConditions(query *gorm.DB, and *model.OperationWhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
+	if and == nil {
+		return query, nil
+	}
+	for _, child := range and.Children {
+		var err error
+		query, err = p.ApplyWhereConditions(query, child, columnTypes)
+		if err != nil {
+			log.WithError(err).Error("Failed to apply AND where condition")
+			return nil, err
+		}
+	}
+	return query, nil
+}
+
+// applyOrConditions applies all children as OR-combined WHERE clauses.
+func (p *GormPlugin) applyOrConditions(query *gorm.DB, or *model.OperationWhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
+	if or == nil {
+		return query, nil
+	}
+	orQueries := query
+	for _, child := range or.Children {
+		childQuery, err := p.ApplyWhereConditions(query, child, columnTypes)
+		if err != nil {
+			log.WithError(err).Error("Failed to apply OR where condition")
+			return nil, err
+		}
+		orQueries = orQueries.Or(childQuery)
+	}
+	return orQueries, nil
 }
 
 func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {

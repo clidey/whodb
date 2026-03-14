@@ -170,7 +170,8 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string,
 // in the same way as traditional SQL DELETE. GORM's Delete method doesn't handle this properly.
 func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		tableName := p.FormTableName(schema, storageUnit)
+		builder := p.CreateSQLBuilder(db)
+		tableName := builder.BuildFullTableName(schema, storageUnit)
 
 		query := fmt.Sprintf("ALTER TABLE %s DELETE WHERE 1=1", tableName)
 
