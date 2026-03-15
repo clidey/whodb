@@ -29,7 +29,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -565,9 +564,9 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 }
 
 // GetRows overrides the base GormPlugin to avoid binary decode crashes for
-func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
-		cols, err := p.getColumnsFromSystemColumns(db, schema, storageUnit)
+		cols, err := p.getColumnsFromSystemColumns(db, req.Schema, req.StorageUnit)
 		if err != nil {
 			return nil, err
 		}
@@ -581,7 +580,7 @@ func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, schema string, s
 		}
 
 		if !needsProjection {
-			return p.GormPlugin.GetRows(config, schema, storageUnit, where, sort, pageSize, pageOffset)
+			return p.GormPlugin.GetRows(config, req)
 		}
 
 		parts := make([]string, 0, len(cols))
@@ -590,10 +589,8 @@ func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, schema string, s
 				upper := strings.ToUpper(col.Type)
 				var expr string
 				if strings.HasPrefix(upper, "AGGREGATEFUNCTION(") {
-					// finalizeAggregation() runs the merge step and returns the actual value
 					expr = fmt.Sprintf("finalizeAggregation(`%s`) AS `%s`", col.Name, col.Name)
 				} else {
-					// Geometry types — toString() gives WKT-like representation
 					expr = fmt.Sprintf("toString(`%s`) AS `%s`", col.Name, col.Name)
 				}
 				parts = append(parts, expr)
@@ -602,9 +599,9 @@ func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, schema string, s
 			}
 		}
 
-		tableName := p.FormTableName(schema, storageUnit)
+		tableName := p.FormTableName(req.Schema, req.StorageUnit)
 		query := fmt.Sprintf("SELECT %s FROM %s LIMIT %d OFFSET %d",
-			strings.Join(parts, ", "), tableName, pageSize, pageOffset)
+			strings.Join(parts, ", "), tableName, req.PageSize, req.PageOffset)
 
 		return p.executeRawSQL(config, query)
 	})
