@@ -21,10 +21,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"golang.org/x/sync/errgroup"
 )
 
 // StreamRequest represents the incoming SSE request
@@ -67,27 +69,54 @@ func SetupSSEHeaders(w http.ResponseWriter) http.Flusher {
 	return flusher
 }
 
-// BuildTableDetails builds the table schema string for BAML context
+// BuildTableDetails builds the table schema string for BAML context.
+// Uses concurrent column fetching (up to 10 parallel) to avoid N+1 queries.
 func BuildTableDetails(plugin *engine.Plugin, config *engine.PluginConfig, schema string) (string, error) {
 	storageUnits, err := plugin.GetStorageUnits(config, schema)
 	if err != nil {
 		return "", err
 	}
 
-	tableDetails := ""
-	for _, unit := range storageUnits {
-		columns, err := plugin.GetColumnsForTable(config, schema, unit.Name)
-		if err != nil {
-			log.WithError(err).Warnf("Failed to get columns for table %s in streaming chat", unit.Name)
+	type tableResult struct {
+		name    string
+		columns []engine.Column
+	}
+
+	results := make([]tableResult, len(storageUnits))
+	var mu sync.Mutex
+	g := new(errgroup.Group)
+	g.SetLimit(10)
+
+	for i, unit := range storageUnits {
+		i, unit := i, unit
+		g.Go(func() error {
+			columns, err := plugin.GetColumnsForTable(config, schema, unit.Name)
+			if err != nil {
+				log.WithError(err).Warnf("Failed to get columns for table %s in streaming chat", unit.Name)
+				return nil
+			}
+			mu.Lock()
+			results[i] = tableResult{name: unit.Name, columns: columns}
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return "", err
+	}
+
+	var b strings.Builder
+	for _, r := range results {
+		if r.name == "" {
 			continue
 		}
-
-		tableDetails += fmt.Sprintf("table: %s\n", unit.Name)
-		for _, col := range columns {
-			tableDetails += fmt.Sprintf("- %s (%s)\n", col.Name, col.Type)
+		fmt.Fprintf(&b, "table: %s\n", r.name)
+		for _, col := range r.columns {
+			fmt.Fprintf(&b, "- %s (%s)\n", col.Name, col.Type)
 		}
 	}
-	return tableDetails, nil
+	return b.String(), nil
 }
 
 // SendSSEMessage sends a complete message via SSE

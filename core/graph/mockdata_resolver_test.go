@@ -12,6 +12,7 @@ import (
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/mockdata"
 )
 
 func TestGenerateMockDataRejectsWhenNotAllowed(t *testing.T) {
@@ -127,7 +128,7 @@ func TestGenerateMockDataStopsWhenExceedingMax(t *testing.T) {
 	_, err := r.GenerateMockData(ctx, model.MockDataGenerationInput{
 		Schema:            "public",
 		StorageUnit:       "orders",
-		RowCount:          env.GetMockDataGenerationMaxRowCount() + 1,
+		RowCount:          mockdata.GetMockDataGenerationMaxRowCount() + 1,
 		Method:            "default",
 		OverwriteExisting: false,
 	})

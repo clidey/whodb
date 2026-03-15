@@ -14,6 +14,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/mockdata"
 )
 
 func TestAddRowSuccess(t *testing.T) {
@@ -109,8 +110,8 @@ func TestQueryMockDataMaxRowCount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if result != env.GetMockDataGenerationMaxRowCount() {
-		t.Fatalf("expected mock data max row count %d, got %d", env.GetMockDataGenerationMaxRowCount(), result)
+	if result != mockdata.GetMockDataGenerationMaxRowCount() {
+		t.Fatalf("expected mock data max row count %d, got %d", mockdata.GetMockDataGenerationMaxRowCount(), result)
 	}
 }
 

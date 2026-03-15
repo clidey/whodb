@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
-	"github.com/clidey/whodb/core/src/migrate"
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
@@ -132,101 +131,11 @@ func AddGenericProvider(config GenericProviderConfig) {
 	GenericProviders = append(GenericProviders, config)
 }
 
-func GetConfiguredChatProviders() []ChatProvider {
-	var providers []ChatProvider
-
-	if len(OpenAIAPIKey) > 0 {
-		name := OpenAIName
-		if name == "" {
-			name = "OpenAI"
-		}
-		providers = append(providers, ChatProvider{
-			Type:       "OpenAI",
-			Name:       name,
-			APIKey:     OpenAIAPIKey,
-			Endpoint:   GetOpenAIEndpoint(),
-			ProviderId: "openai-1",
-		})
-	}
-
-	if len(AnthropicAPIKey) > 0 {
-		name := AnthropicName
-		if name == "" {
-			name = "Anthropic"
-		}
-		providers = append(providers, ChatProvider{
-			Type:       "Anthropic",
-			Name:       name,
-			APIKey:     AnthropicAPIKey,
-			Endpoint:   GetAnthropicEndpoint(),
-			ProviderId: "anthropic-1",
-		})
-	}
-
-	// Flag if legacy OpenAI-Compatible env vars are still set
-	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
-		migrate.DeprecatedOpenAICompatibleEnv = true
-	}
-
-	// Add all generic providers
-	for _, genericProvider := range GenericProviders {
-		providers = append(providers, ChatProvider{
-			Type:       genericProvider.ProviderId, // Use provider ID as type
-			Name:       genericProvider.Name,       // Display name
-			APIKey:     genericProvider.APIKey,
-			Endpoint:   common.ResolveLocalURL(genericProvider.BaseURL),
-			ProviderId: genericProvider.ProviderId,
-			ClientType: genericProvider.ClientType, // BAML client type
-			IsGeneric:  true,                       // Mark as generic provider
-		})
-	}
-
-	name := OllamaName
-	if name == "" {
-		name = "Ollama"
-	}
-	providers = append(providers, ChatProvider{
-		Type:       "Ollama",
-		Name:       name,
-		APIKey:     "",
-		Endpoint:   GetOllamaEndpoint(),
-		ProviderId: "ollama-1",
-	})
-
-	return providers
-}
-
 // ResolvedCredentials holds provider credentials resolved from environment config.
 type ResolvedCredentials struct {
 	ModelType string // Provider type as sent by the frontend (ProviderId)
 	Token     string // API key
 	Endpoint  string // Base URL
-}
-
-// ResolveProviderCredentials looks up a provider by ID and resolves credentials.
-// Request-level values take precedence over environment-configured values.
-func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, requestModelType string) ResolvedCredentials {
-	result := ResolvedCredentials{
-		ModelType: requestModelType,
-		Token:     requestToken,
-		Endpoint:  requestEndpoint,
-	}
-	if providerId == "" {
-		return result
-	}
-	for _, provider := range GetConfiguredChatProviders() {
-		if provider.ProviderId != providerId {
-			continue
-		}
-		if result.Token == "" {
-			result.Token = provider.APIKey
-		}
-		if result.Endpoint == "" {
-			result.Endpoint = provider.Endpoint
-		}
-		break
-	}
-	return result
 }
 
 func GetOllamaEndpoint() string {
@@ -284,26 +193,3 @@ func getMaxPageSize() int {
 	return n
 }
 
-func IsMockDataGenerationAllowed(tableName string) bool {
-	if DisableMockDataGeneration == "" {
-		return true
-	}
-
-	// If all tables are disabled
-	if DisableMockDataGeneration == "*" {
-		return false
-	}
-
-	disabledTables := strings.Split(DisableMockDataGeneration, ",")
-	for _, disabled := range disabledTables {
-		if strings.TrimSpace(disabled) == tableName {
-			return false
-		}
-	}
-
-	return true
-}
-
-func GetMockDataGenerationMaxRowCount() int {
-	return 200
-}

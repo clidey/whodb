@@ -24,7 +24,6 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 )
@@ -207,7 +206,7 @@ func (g *Generator) collectDependencies(
 	}
 
 	// Check if mock data generation is allowed using env function
-	isBlocked := !env.IsMockDataGenerationAllowed(table)
+	isBlocked := !IsMockDataGenerationAllowed(table)
 	if isBlocked {
 		log.WithField("table", table).Debug("Mock data generation blocked for table")
 	}
