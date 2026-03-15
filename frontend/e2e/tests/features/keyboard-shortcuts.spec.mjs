@@ -616,8 +616,10 @@ test.describe('Keyboard Shortcuts', () => {
                 // Command palette should open
                 await expect(page.locator('[data-testid="command-palette"]')).toBeVisible();
 
-                // Should have search input
-                await expect(page.locator('[data-testid="command-palette-input"]')).toBeVisible();
+                // Should have search input focused
+                const input = page.locator('[data-testid="command-palette-input"]');
+                await expect(input).toBeVisible();
+                await expect(input).toBeFocused();
 
                 // Close with ESC
                 await page.keyboard.press('Escape');
