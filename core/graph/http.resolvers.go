@@ -109,7 +109,7 @@ func getRowsHandler(w http.ResponseWriter, r *http.Request) {
 	pageOffset := parseQueryParamToInt(r.URL.Query().Get("pageOffset"))
 
 	// TODO: Add where condition parsing from query params if needed
-	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, &model.WhereCondition{}, []*model.SortCondition{}, pageSize, pageOffset)
+	rowsResult, err := resolver.Query().Row(r.Context(), schema, storageUnit, nil, []*model.SortCondition{}, pageSize, pageOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
