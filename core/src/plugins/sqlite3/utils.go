@@ -20,6 +20,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 // DateTimeString is a custom type that stores datetime values as plain strings
@@ -66,6 +68,31 @@ func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string, isNullable 
 	}
 	// For non-datetime types, delegate to the base GORM implementation
 	return p.GormPlugin.ConvertStringValue(value, columnType, isNullable)
+}
+
+// GetPrimaryKeyColumns overrides the base implementation because SQLite's
+// primary key query takes only a table name parameter (no schema).
+func (p *Sqlite3Plugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]string, error) {
+	query := p.GetPrimaryKeyColQuery()
+	if query == "" {
+		return nil, nil
+	}
+
+	rows, err := db.Raw(query, tableName).Rows()
+	if err != nil {
+		return nil, nil
+	}
+	defer rows.Close()
+
+	var primaryKeys []string
+	for rows.Next() {
+		var columnName string
+		if err := rows.Scan(&columnName); err != nil {
+			continue
+		}
+		primaryKeys = append(primaryKeys, columnName)
+	}
+	return primaryKeys, nil
 }
 
 func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {

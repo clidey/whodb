@@ -37,10 +37,7 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.GraphUnit, error) {
 		var tableRelations []tableRelations
 
-		// ClickHouse uses database name as the schema parameter for graph queries
-		if p.Type == engine.DatabaseType_ClickHouse {
-			schema = config.Credentials.Database
-		}
+		schema = p.GormPluginFunctions.ResolveGraphSchema(config, schema)
 		if err := p.GetGraphQueryDB(db, schema).Scan(&tableRelations).Error; err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to execute graph query for schema: %s", schema))
 			return nil, err

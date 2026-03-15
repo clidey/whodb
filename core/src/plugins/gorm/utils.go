@@ -30,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/dromara/carbon/v2"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -81,15 +82,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 		return primaryKeys, nil
 	}
 
-	var rows *sql.Rows
-	var err error
-
-	// SQLite doesn't use schema in queries
-	if p.Type == engine.DatabaseType_Sqlite3 {
-		rows, err = db.Raw(query, tableName).Rows()
-	} else {
-		rows, err = db.Raw(query, schema, tableName).Rows()
-	}
+	rows, err := db.Raw(query, schema, tableName).Rows()
 
 	if err != nil {
 		// Primary keys might not exist, which is ok - return empty array
@@ -119,24 +112,99 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 	return migrator.GetColumnTypes(fullTableName)
 }
 
-// todo: test this thouroughly for each DB to ensure that the casting is correct and there's no data loss
-// todo: how do we handle if user doesn't pass in a value, or it's null
-func (p *GormPlugin) ConvertStringValue(value, columnType string, isNullable bool) (any, error) {
-	// handle nullable type wrapper (ClickHouse encodes nullability in type string)
-	upperCheck := strings.ToUpper(columnType)
-	if strings.HasPrefix(upperCheck, "NULLABLE(") {
-		isNullable = true
-		columnType = columnType[9:] // strip "Nullable(" or "NULLABLE(" (9 chars)
-		if strings.HasSuffix(columnType, ")") {
-			columnType = columnType[:len(columnType)-1]
-		}
-	}
+// typeConverter defines how to handle null values and value conversion for a type category.
+type typeConverter struct {
+	// types is the set of base type names this converter handles
+	types mapset.Set[string]
+	// isNumeric indicates whether empty strings should be rejected
+	isNumeric bool
+	// nullValue returns the appropriate null representation for this type
+	nullValue func() any
+	// convert parses the string value into the appropriate Go type.
+	// baseType and columnType are provided for converters that need them.
+	convert func(p *GormPlugin, value, baseType, columnType string, isNullable bool) (any, error)
+}
 
+// typeConverters defines the conversion table for all supported type categories.
+// Order matters: the first matching converter wins.
+var typeConverters = []typeConverter{
+	{
+		types: intTypes, isNumeric: true,
+		nullValue: func() any { return sql.NullInt64{Valid: false} },
+		convert:   convertInt,
+	},
+	{
+		types: uintTypes, isNumeric: true,
+		nullValue: func() any { return nil },
+		convert:   convertUint,
+	},
+	{
+		types: bigIntTypes, isNumeric: true,
+		nullValue: func() any { return nil },
+		convert:   convertBigInt,
+	},
+	{
+		types: decimalTypes, isNumeric: true,
+		nullValue: func() any { return nil },
+		convert:   convertDecimal,
+	},
+	{
+		types: floatTypes, isNumeric: true,
+		nullValue: func() any { return sql.NullFloat64{Valid: false} },
+		convert:   convertFloat,
+	},
+	{
+		types: boolTypes,
+		nullValue: func() any { return sql.NullBool{Valid: false} },
+		convert:   convertBool,
+	},
+	{
+		types:     dateTypes,
+		nullValue: func() any { return sql.NullTime{Valid: false} },
+		convert:   convertDate,
+	},
+	{
+		types:     dateTimeTypes,
+		nullValue: func() any { return sql.NullTime{Valid: false} },
+		convert:   convertDateTime,
+	},
+	{
+		types:     binaryTypes,
+		nullValue: func() any { return sql.NullString{Valid: false} },
+		convert:   convertBinary,
+	},
+	{
+		types:     uuidTypes,
+		nullValue: func() any { return sql.NullString{Valid: false} },
+		convert:   convertUUID,
+	},
+	{
+		types:     jsonTypes,
+		nullValue: func() any { return sql.NullString{Valid: false} },
+		convert:   convertJSON,
+	},
+	{
+		types:     networkTypes,
+		nullValue: func() any { return sql.NullString{Valid: false} },
+		convert:   convertNetwork,
+	},
+	{
+		types:     geometryTypes,
+		nullValue: func() any { return sql.NullString{Valid: false} },
+		convert:   convertString,
+	},
+	{
+		types:     xmlTypes,
+		nullValue: func() any { return sql.NullString{Valid: false} },
+		convert:   convertString,
+	},
+}
+
+// ConvertStringValue converts a string value to the appropriate Go type based on column type.
+func (p *GormPlugin) ConvertStringValue(value, columnType string, isNullable bool) (any, error) {
 	columnType = strings.ToUpper(columnType)
 	columnType = p.NormalizeType(columnType)
 
-	// Extract base type for type set comparisons (e.g., "DECIMAL(10,2)" -> "DECIMAL")
-	// This is needed because type sets contain only base types, not parameterized types
 	baseType := common.ParseTypeSpec(columnType).BaseType
 
 	// Check if plugin wants to handle this data type
@@ -144,234 +212,189 @@ func (p *GormPlugin) ConvertStringValue(value, columnType string, isNullable boo
 		return customValue, err
 	}
 
-	// Handle NULL values
+	// Find matching converter
+	for i := range typeConverters {
+		tc := &typeConverters[i]
+		if !tc.types.Contains(baseType) {
+			continue
+		}
+
+		// Handle NULL values
+		if isNullable && (value == "" || strings.EqualFold(value, "NULL")) {
+			return tc.nullValue(), nil
+		}
+
+		// Reject empty strings for numeric types
+		if value == "" && tc.isNumeric {
+			return nil, fmt.Errorf("cannot convert empty string to %s (column is not nullable)", columnType)
+		}
+
+		return tc.convert(p, value, baseType, columnType, isNullable)
+	}
+
+	// Default: treat as string/text
 	if isNullable && (value == "" || strings.EqualFold(value, "NULL")) {
-		switch {
-		case intTypes.Contains(baseType):
-			return sql.NullInt64{Valid: false}, nil
-		case uintTypes.Contains(baseType), // Go's sql package does not have sql.NullUint64
-			bigIntTypes.Contains(baseType),  // big.Int doesn't have a nullable variant, use nil
-			decimalTypes.Contains(baseType): // decimal.Decimal doesn't have a nullable variant, use nil
-			return nil, nil
-		case floatTypes.Contains(baseType):
-			return sql.NullFloat64{Valid: false}, nil
-		case boolTypes.Contains(baseType):
-			return sql.NullBool{Valid: false}, nil
-		case dateTypes.Contains(baseType), dateTimeTypes.Contains(baseType):
-			return sql.NullTime{Valid: false}, nil
-		case binaryTypes.Contains(baseType):
-			fallthrough //	todo: treating binary as string but might have to treat as binary
-		default: // Assume text
-			return sql.NullString{Valid: false}, nil
+		return sql.NullString{Valid: false}, nil
+	}
+	if isNullable {
+		return sql.NullString{String: value, Valid: true}, nil
+	}
+	return value, nil
+}
+
+func convertInt(_ *GormPlugin, value, _, columnType string, isNullable bool) (any, error) {
+	parsedValue, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	if isNullable {
+		return sql.NullInt64{Int64: parsedValue, Valid: true}, nil
+	}
+	return parsedValue, nil
+}
+
+func convertUint(_ *GormPlugin, value, baseType, _ string, isNullable bool) (any, error) {
+	bitSize := 64
+	if len(baseType) > 4 {
+		if size, err := strconv.Atoi(baseType[4:]); err == nil {
+			bitSize = size
 		}
 	}
-
-	// Handle Array type. clickhouse specific
-	if strings.HasPrefix(baseType, "ARRAY") {
-		if !strings.Contains(columnType, "(") {
-			// Without element type, treat as a single-element array of the original value to avoid recursion
-			return []any{value}, nil
-		}
-		return p.convertArrayValue(value, columnType)
+	parsedValue, err := strconv.ParseUint(value, 10, bitSize)
+	if err != nil {
+		return nil, err
 	}
-
-	// Remove any LowCardinality() wrapper. clickhouse specific
-	if strings.HasPrefix(baseType, "LOWCARDINALITY") {
-		if strings.HasPrefix(strings.ToUpper(columnType), "LOWCARDINALITY(") {
-			columnType = columnType[15:] // strip "LOWCARDINALITY(" (15 chars)
-			if strings.HasSuffix(columnType, ")") {
-				columnType = columnType[:len(columnType)-1]
-			}
-		}
-		baseType = common.ParseTypeSpec(columnType).BaseType
+	if isNullable {
+		return &parsedValue, nil
 	}
+	return parsedValue, nil
+}
 
-	// Numeric types cannot be parsed from empty strings
-	isNumericType := intTypes.Contains(baseType) || uintTypes.Contains(baseType) ||
-		bigIntTypes.Contains(baseType) || decimalTypes.Contains(baseType) || floatTypes.Contains(baseType)
-	if value == "" && isNumericType {
-		return nil, fmt.Errorf("cannot convert empty string to %s (column is not nullable)", columnType)
+func convertBigInt(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	parsedValue := new(big.Int)
+	if _, ok := parsedValue.SetString(value, 10); !ok {
+		return nil, fmt.Errorf("invalid big integer value: %s", value)
 	}
+	return parsedValue, nil
+}
 
-	switch {
-	case intTypes.Contains(baseType):
-		parsedValue, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse integer value")
-			return nil, err
-		}
-		if isNullable {
-			return sql.NullInt64{Int64: parsedValue, Valid: true}, nil
-		}
-		return parsedValue, nil
-	case uintTypes.Contains(baseType):
-		// Extract bit size from base type (e.g., UINT32 -> 32, UINT64 -> 64)
-		bitSize := 64
-		if len(baseType) > 4 {
-			if size, err := strconv.Atoi(baseType[4:]); err == nil {
-				bitSize = size
-			}
-		}
-		parsedValue, err := strconv.ParseUint(value, 10, bitSize)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse unsigned integer value")
-			return nil, err
-		}
-		if isNullable {
-			return &parsedValue, nil
-		}
-		return parsedValue, nil
-	case bigIntTypes.Contains(baseType):
-		// Use math/big.Int for INT128, INT256, UINT128, UINT256 which exceed int64/uint64 range
-		parsedValue := new(big.Int)
-		_, ok := parsedValue.SetString(value, 10)
-		if !ok {
-			log.WithField("value", value).WithField("columnType", columnType).Error("Failed to parse big integer value")
-			return nil, fmt.Errorf("invalid big integer value: %s", value)
-		}
-		if isNullable {
-			return parsedValue, nil
-		}
-		return parsedValue, nil
-	case decimalTypes.Contains(baseType):
-		// Use shopspring/decimal for high-precision numeric types (DECIMAL, NUMERIC, NUMBER, MONEY)
-		// This preserves full precision unlike float64 which only has ~15-17 significant digits
-		parsedValue, err := decimal.NewFromString(value)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse decimal value")
-			return nil, err
-		}
-		if isNullable {
-			return &parsedValue, nil
-		}
-		return parsedValue, nil
-	case floatTypes.Contains(baseType):
-		parsedValue, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse float value")
-			return nil, err
-		}
-		if isNullable {
-			return sql.NullFloat64{Float64: parsedValue, Valid: true}, nil
-		}
-		return parsedValue, nil
-	case boolTypes.Contains(baseType):
-		parsedValue, err := strconv.ParseBool(value)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse boolean value")
-			return nil, err
-		}
-		if isNullable {
-			return sql.NullBool{Bool: parsedValue, Valid: true}, nil
-		}
-		return parsedValue, nil
-	case dateTypes.Contains(baseType):
-		// todo: need to figure out how to handle date/time functions across db like now(), curdate(), etc
-		date, err := p.parseDate(value)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse date value")
-			return nil, fmt.Errorf("invalid date format: %v", err)
-		}
-		if isNullable {
-			return sql.NullTime{Time: date, Valid: true}, nil
-		}
-		return date, nil
-	case dateTimeTypes.Contains(baseType):
-		// TIME-only and YEAR types should not go through full datetime parsing as underlying sql driver should parse it fine
-		if baseType == "TIME" || baseType == "TIME WITH TIME ZONE" || baseType == "YEAR" {
-			if isNullable {
-				return sql.NullString{String: value, Valid: true}, nil
-			}
-			return value, nil
-		}
-		datetime, err := p.parseDateTime(value)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse datetime value")
-			return nil, fmt.Errorf("invalid datetime format: %v", err)
-		}
-		if isNullable {
-			return sql.NullTime{Time: datetime, Valid: true}, nil
-		}
-		return datetime, nil
-	case binaryTypes.Contains(baseType):
-		// Handle hex-encoded binary data (0x prefix from mock data generator)
-		log.WithFields(map[string]any{
-			"baseType":     baseType,
-			"columnType":   columnType,
-			"valueLen":     len(value),
-			"hasHexPrefix": strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X"),
-		}).Debug("Converting binary type value")
-		var blobData []byte
-		if strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X") {
-			var err error
-			blobData, err = hex.DecodeString(value[2:])
-			if err != nil {
-				log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to decode hex binary value")
-				return nil, fmt.Errorf("invalid hex binary format: %v", err)
-			}
-		} else {
-			blobData = []byte(value)
-		}
-		if isNullable && len(blobData) == 0 {
-			return sql.NullString{Valid: false}, nil
-		}
-		return blobData, nil
-	case uuidTypes.Contains(baseType):
-		_, err := uuid.Parse(value)
-		if err != nil {
-			log.WithError(err).WithField("value", value).WithField("columnType", columnType).Error("Failed to parse UUID value")
-			return nil, fmt.Errorf("invalid UUID format: %v", err)
-		}
-		if isNullable {
-			return sql.NullString{String: value, Valid: true}, nil
-		}
-		return value, nil
-	case jsonTypes.Contains(baseType):
-		if !json.Valid([]byte(value)) {
-			log.WithField("value", value).WithField("columnType", columnType).Error("Invalid JSON value")
-			return nil, fmt.Errorf("invalid JSON format")
-		}
-		// Return as string, not json.RawMessage ([]byte), because:
-		// - MariaDB's JSON type is LONGTEXT with JSON_VALID constraint (expects string)
-		// - MySQL's JSON type accepts string input
-		// - PostgreSQL's JSON/JSONB types accept string input
-		return value, nil
-	case networkTypes.Contains(baseType):
-		// MAC addresses (MACADDR, MACADDR8) stay as strings
-		if baseType == "IPV4" || baseType == "IPV6" || baseType == "INET" || baseType == "CIDR" {
-			// For CIDR, extract just the IP part
-			ipStr := value
-			if strings.Contains(value, "/") {
-				ipStr = strings.Split(value, "/")[0]
-			}
-			ip := net.ParseIP(ipStr)
-			if ip == nil {
-				log.WithField("value", value).WithField("columnType", columnType).Error("Invalid IP address")
-				return nil, fmt.Errorf("invalid IP address format: %s", value)
-			}
-			if isNullable {
-				return sql.NullString{String: value, Valid: true}, nil
-			}
-			return value, nil
-		}
-		if isNullable {
-			return sql.NullString{String: value, Valid: true}, nil
-		}
-		return value, nil
-	case geometryTypes.Contains(baseType):
-		// Let the database validate the format - it will return a clear error if invalid
-		if isNullable {
-			return sql.NullString{String: value, Valid: true}, nil
-		}
-		return value, nil
-	case xmlTypes.Contains(baseType):
-		fallthrough
-	default: // should be always string/text/etc
+func convertDecimal(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	parsedValue, err := decimal.NewFromString(value)
+	if err != nil {
+		return nil, err
+	}
+	if isNullable {
+		return &parsedValue, nil
+	}
+	return parsedValue, nil
+}
+
+func convertFloat(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	parsedValue, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return nil, err
+	}
+	if isNullable {
+		return sql.NullFloat64{Float64: parsedValue, Valid: true}, nil
+	}
+	return parsedValue, nil
+}
+
+func convertBool(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	parsedValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return nil, err
+	}
+	if isNullable {
+		return sql.NullBool{Bool: parsedValue, Valid: true}, nil
+	}
+	return parsedValue, nil
+}
+
+func convertDate(p *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	date, err := p.parseDate(value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid date format: %v", err)
+	}
+	if isNullable {
+		return sql.NullTime{Time: date, Valid: true}, nil
+	}
+	return date, nil
+}
+
+func convertDateTime(p *GormPlugin, value, baseType, _ string, isNullable bool) (any, error) {
+	// TIME-only and YEAR types pass through as strings
+	if baseType == "TIME" || baseType == "TIME WITH TIME ZONE" || baseType == "YEAR" {
 		if isNullable {
 			return sql.NullString{String: value, Valid: true}, nil
 		}
 		return value, nil
 	}
+	datetime, err := p.parseDateTime(value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid datetime format: %v", err)
+	}
+	if isNullable {
+		return sql.NullTime{Time: datetime, Valid: true}, nil
+	}
+	return datetime, nil
+}
+
+func convertBinary(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	var blobData []byte
+	if strings.HasPrefix(value, "0x") || strings.HasPrefix(value, "0X") {
+		var err error
+		blobData, err = hex.DecodeString(value[2:])
+		if err != nil {
+			return nil, fmt.Errorf("invalid hex binary format: %v", err)
+		}
+	} else {
+		blobData = []byte(value)
+	}
+	if isNullable && len(blobData) == 0 {
+		return sql.NullString{Valid: false}, nil
+	}
+	return blobData, nil
+}
+
+func convertUUID(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	if _, err := uuid.Parse(value); err != nil {
+		return nil, fmt.Errorf("invalid UUID format: %v", err)
+	}
+	if isNullable {
+		return sql.NullString{String: value, Valid: true}, nil
+	}
+	return value, nil
+}
+
+func convertJSON(_ *GormPlugin, value, _, _ string, _ bool) (any, error) {
+	if !json.Valid([]byte(value)) {
+		return nil, fmt.Errorf("invalid JSON format")
+	}
+	return value, nil
+}
+
+func convertNetwork(_ *GormPlugin, value, baseType, _ string, isNullable bool) (any, error) {
+	if baseType == "IPV4" || baseType == "IPV6" || baseType == "INET" || baseType == "CIDR" {
+		ipStr := value
+		if strings.Contains(value, "/") {
+			ipStr = strings.Split(value, "/")[0]
+		}
+		if ip := net.ParseIP(ipStr); ip == nil {
+			return nil, fmt.Errorf("invalid IP address format: %s", value)
+		}
+	}
+	if isNullable {
+		return sql.NullString{String: value, Valid: true}, nil
+	}
+	return value, nil
+}
+
+func convertString(_ *GormPlugin, value, _, _ string, isNullable bool) (any, error) {
+	if isNullable {
+		return sql.NullString{String: value, Valid: true}, nil
+	}
+	return value, nil
 }
 
 func (p *GormPlugin) parseDateTime(value string) (time.Time, error) {
@@ -405,7 +428,9 @@ func (p *GormPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
 	return 0, nil
 }
 
-func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, error) {
+// ConvertArrayValue parses array literal values (e.g., "[1, 2, 3]") into Go slices.
+// Used by ClickHouse for ARRAY() type conversion.
+func (p *GormPlugin) ConvertArrayValue(value string, columnType string) (any, error) {
 	// Extract the element type from ARRAY(Type)
 	upperType := strings.ToUpper(columnType)
 	if strings.HasPrefix(upperType, "ARRAY(") {

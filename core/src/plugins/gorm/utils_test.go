@@ -43,48 +43,8 @@ func TestConvertStringValue_NullableCaseInsensitive(t *testing.T) {
 		wantErr    bool
 		checkVal   func(t *testing.T, val any)
 	}{
-		{
-			name:       "Nullable(Int32) mixed case via type wrapper",
-			value:      "100",
-			columnType: "Nullable(Int32)",
-			checkVal: func(t *testing.T, val any) {
-				nv, ok := val.(sql.NullInt64)
-				if !ok {
-					t.Fatalf("expected sql.NullInt64, got %T", val)
-				}
-				if !nv.Valid || nv.Int64 != 100 {
-					t.Fatalf("expected NullInt64{100, true}, got %+v", nv)
-				}
-			},
-		},
-		{
-			name:       "NULLABLE(INT32) all uppercase",
-			value:      "100",
-			columnType: "NULLABLE(INT32)",
-			checkVal: func(t *testing.T, val any) {
-				nv, ok := val.(sql.NullInt64)
-				if !ok {
-					t.Fatalf("expected sql.NullInt64, got %T", val)
-				}
-				if !nv.Valid || nv.Int64 != 100 {
-					t.Fatalf("expected NullInt64{100, true}, got %+v", nv)
-				}
-			},
-		},
-		{
-			name:       "NULLABLE(INT32) null value via type wrapper",
-			value:      "",
-			columnType: "NULLABLE(INT32)",
-			checkVal: func(t *testing.T, val any) {
-				nv, ok := val.(sql.NullInt64)
-				if !ok {
-					t.Fatalf("expected sql.NullInt64, got %T", val)
-				}
-				if nv.Valid {
-					t.Fatalf("expected NullInt64 with Valid=false, got %+v", nv)
-				}
-			},
-		},
+		// NULLABLE() and LOWCARDINALITY() wrapper tests are in the ClickHouse plugin
+		// test suite since those are ClickHouse-specific type encodings.
 		{
 			name:       "plain INT32 without nullable",
 			value:      "42",
@@ -151,21 +111,6 @@ func TestConvertStringValue_NullableCaseInsensitive(t *testing.T) {
 				}
 			},
 		},
-		{
-			name:       "isNullable OR'd with NULLABLE wrapper",
-			value:      "",
-			columnType: "NULLABLE(INT32)",
-			isNullable: false, // wrapper overrides
-			checkVal: func(t *testing.T, val any) {
-				nv, ok := val.(sql.NullInt64)
-				if !ok {
-					t.Fatalf("expected sql.NullInt64, got %T", val)
-				}
-				if nv.Valid {
-					t.Fatalf("expected NullInt64 with Valid=false, got %+v", nv)
-				}
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -184,9 +129,9 @@ func TestConvertStringValue_NullableCaseInsensitive(t *testing.T) {
 func TestConvertArrayValue_NoInfiniteRecursion(t *testing.T) {
 	p := newTestPlugin()
 
-	// This previously caused infinite recursion (stack overflow) because
-	// convertArrayValue used case-sensitive "Array(" prefix but received
-	// uppercased "ARRAY(INT32)" from ConvertStringValue.
+	// Array type handling is now in the ClickHouse plugin's ConvertStringValue.
+	// This test verifies the base convertArrayValue helper still works correctly
+	// when called directly (it's used by ClickHouse through embedding).
 	tests := []struct {
 		name       string
 		value      string
@@ -216,7 +161,7 @@ func TestConvertArrayValue_NoInfiniteRecursion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			val, err := p.ConvertStringValue(tt.value, tt.columnType, false)
+			val, err := p.ConvertArrayValue(tt.value, tt.columnType)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error = %v, wantErr = %v", err, tt.wantErr)
 			}

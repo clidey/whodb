@@ -100,7 +100,34 @@ func (p *ClickHousePlugin) HandleCustomDataType(value string, columnType string,
 }
 
 func (p *ClickHousePlugin) ConvertStringValue(value, columnType string, isNullable bool) (any, error) {
+	// Unwrap Nullable() wrapper — ClickHouse encodes nullability in the type string
+	upperCheck := strings.ToUpper(columnType)
+	if strings.HasPrefix(upperCheck, "NULLABLE(") {
+		isNullable = true
+		columnType = columnType[9:] // strip "Nullable(" (9 chars)
+		if strings.HasSuffix(columnType, ")") {
+			columnType = columnType[:len(columnType)-1]
+		}
+	}
+
+	// Unwrap LowCardinality() wrapper
+	if strings.HasPrefix(strings.ToUpper(columnType), "LOWCARDINALITY(") {
+		columnType = columnType[15:] // strip "LowCardinality(" (15 chars)
+		if strings.HasSuffix(columnType, ")") {
+			columnType = columnType[:len(columnType)-1]
+		}
+	}
+
 	normalized := strings.ToUpper(p.NormalizeType(columnType))
+
+	// Handle Array types
+	if strings.HasPrefix(normalized, "ARRAY") {
+		if !strings.Contains(columnType, "(") {
+			return []any{value}, nil
+		}
+		return p.ConvertArrayValue(value, columnType)
+	}
+
 	if strings.Contains(normalized, "JSON") {
 		if !json.Valid([]byte(value)) {
 			return nil, fmt.Errorf("invalid JSON format")
@@ -242,7 +269,7 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 			colInfo := columnTypeInfos[column]
 			converted, convErr := p.ConvertStringValue(strValue, colInfo.Type, colInfo.IsNullable)
 			if convErr != nil {
-				converted = strValue
+				return false, fmt.Errorf("failed to convert value for column '%s' in table %s.%s: %w", column, schema, storageUnit, convErr)
 			}
 
 			if isUpdated && arrayColumns[column] && reflect.ValueOf(converted).Kind() == reflect.Slice {
@@ -517,6 +544,18 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 // empty results, which breaks mock data generation and other operations that need column information.
 func (p *ClickHousePlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
 	return operation(nil)
+}
+
+// ResolveGraphSchema returns the database name for ClickHouse graph queries,
+// since ClickHouse uses database name as the schema parameter.
+func (p *ClickHousePlugin) ResolveGraphSchema(config *engine.PluginConfig, schema string) string {
+	return config.Credentials.Database
+}
+
+// ShouldCheckRowsAffected returns false because ClickHouse's GORM driver
+// doesn't report affected rows for UPDATE/DELETE mutations.
+func (p *ClickHousePlugin) ShouldCheckRowsAffected() bool {
+	return false
 }
 
 func NewClickHousePlugin() *engine.Plugin {

@@ -116,6 +116,19 @@ type GormPluginFunctions interface {
 	// Return (value, true) if handled, or (nil, false) to use default handling
 	HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error)
 
+	// IsArrayType returns true if the column type represents an array type.
+	// Used to format array type names for display (e.g., PostgreSQL _int4 -> []int4).
+	IsArrayType(columnType string) bool
+
+	// ResolveGraphSchema returns the schema to use for graph queries.
+	// Most databases use the schema parameter as-is; ClickHouse uses the database name instead.
+	ResolveGraphSchema(config *engine.PluginConfig, schema string) string
+
+	// ShouldCheckRowsAffected returns whether the plugin supports checking RowsAffected
+	// after UPDATE/DELETE mutations. Returns false for databases like ClickHouse where
+	// the GORM driver doesn't report affected rows.
+	ShouldCheckRowsAffected() bool
+
 	// GetPrimaryKeyColumns returns the primary key columns for a table
 	GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName string) ([]string, error)
 
@@ -226,7 +239,11 @@ func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, sto
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
 		var columnTypes map[string]ColumnTypeInfo
 		if where != nil {
-			columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+			var err error
+			columnTypes, err = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+			if err != nil {
+				log.WithError(err).Warn(fmt.Sprintf("Failed to get column types for table %s.%s during row count; proceeding without type info", schema, storageUnit))
+			}
 		}
 
 		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
@@ -293,7 +310,11 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
 	var columnTypes map[string]ColumnTypeInfo
 	if where != nil {
-		columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+		var err error
+		columnTypes, err = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+		if err != nil {
+			log.WithError(err).Warn(fmt.Sprintf("Failed to get column types for table %s.%s during row retrieval; proceeding without type info", schema, storageUnit))
+		}
 	}
 
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)

@@ -65,8 +65,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 
 			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, colInfo.Type, colInfo.IsNullable)
 			if err != nil {
-				log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during update of table %s.%s", strValue, column, schema, storageUnit))
-				convertedValue = strValue
+				return false, fmt.Errorf("failed to convert value for column '%s' in table %s.%s: %w", column, schema, storageUnit, err)
 			}
 
 			// GORM handles identifier escaping automatically
@@ -103,8 +102,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return false, result.Error
 		}
 
-		// ClickHouse GORM driver doesn't report affected rows for UPDATE mutations
-		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
+		if p.GormPluginFunctions.ShouldCheckRowsAffected() && result.RowsAffected == 0 {
 			return false, errors.New("no rows were updated")
 		}
 

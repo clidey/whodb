@@ -58,8 +58,8 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 	for _, col := range columns {
 		if colType, exists := typeMap[col]; exists {
 			colTypeName := colType.DatabaseTypeName()
-			// PostgreSQL array types use underscore prefix (e.g., _int4 for int[])
-			if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
+			// Let plugins handle array type display (e.g., PostgreSQL _int4 -> []int4)
+			if p.GormPluginFunctions.IsArrayType(colTypeName) {
 				colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
 			}
 			if customName := p.GormPluginFunctions.GetCustomColumnTypeName(col, colTypeName); customName != "" {
@@ -262,4 +262,23 @@ func formatTimeOnly(value string) string {
 // HandleCustomDataType returns false by default (no custom handling).
 func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error) {
 	return nil, false, nil
+}
+
+// IsArrayType returns false by default.
+// PostgreSQL overrides this to detect underscore-prefixed array types.
+func (p *GormPlugin) IsArrayType(columnType string) bool {
+	return false
+}
+
+// ResolveGraphSchema returns the schema parameter unchanged by default.
+// ClickHouse overrides this to return the database name.
+func (p *GormPlugin) ResolveGraphSchema(config *engine.PluginConfig, schema string) string {
+	return schema
+}
+
+// ShouldCheckRowsAffected returns true by default.
+// ClickHouse overrides this to return false since its GORM driver
+// doesn't report affected rows for mutations.
+func (p *GormPlugin) ShouldCheckRowsAffected() bool {
+	return true
 }
