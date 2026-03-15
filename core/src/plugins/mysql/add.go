@@ -27,31 +27,13 @@ import (
 func (p *MySQLPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
 	builder := p.GormPluginFunctions.CreateSQLBuilder(db)
 
-	// Convert engine.Record to ColumnDef
-	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
-	for i, column := range columns {
-		def := gorm_plugin.ColumnDef{
-			Name: column.Key,
-			Type: column.Value,
+	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
+		def.Primary = true
+		if strings.Contains(strings.ToLower(column.Value), "int") {
+			def.Extra = "AUTO_INCREMENT"
 		}
+		return def
+	})
 
-		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
-			lowerType := strings.ToLower(column.Value)
-			if strings.Contains(lowerType, "int") {
-				def.Primary = true
-				def.Extra = "AUTO_INCREMENT"
-			} else {
-				def.Primary = true
-			}
-		} else {
-			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-				def.NotNull = true
-			}
-		}
-
-		columnDefs[i] = def
-	}
-
-	// MySQL/MariaDB syntax uses database.table rather than schema.table
 	return builder.CreateTableQuery(schema, storageUnit, columnDefs)
 }

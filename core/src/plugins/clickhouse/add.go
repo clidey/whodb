@@ -32,26 +32,17 @@ var ErrUpsertNotSupported = errors.New("import.error.upsert_not_supported")
 func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
 	builder := gorm_plugin.NewSQLBuilder(db, p)
 
-	// Convert engine.Record to ColumnDef
-	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
+	// ClickHouse doesn't decorate primary columns in the column definition;
+	// instead it uses them for the ORDER BY clause.
 	var primaryKeys []string
-
-	for i, column := range columns {
-		def := gorm_plugin.ColumnDef{
-			Name: column.Key,
-			Type: column.Value,
-		}
-
+	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
+		primaryKeys = append(primaryKeys, column.Key)
+		// ClickHouse primary keys still respect nullable constraints
 		if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
 			def.NotNull = true
 		}
-
-		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
-			primaryKeys = append(primaryKeys, column.Key)
-		}
-
-		columnDefs[i] = def
-	}
+		return def
+	})
 
 	// Determine ORDER BY clause
 	orderByClause := ""
@@ -65,7 +56,6 @@ func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, stora
 		orderByClause = builder.QuoteIdentifier(columns[0].Key)
 	}
 
-	// Build the CREATE TABLE with ClickHouse-specific ENGINE and ORDER BY
 	suffix := fmt.Sprintf("ENGINE = MergeTree() ORDER BY (%s)", orderByClause)
 	return builder.CreateTableQueryWithSuffix(schema, storageUnit, columnDefs, suffix)
 }

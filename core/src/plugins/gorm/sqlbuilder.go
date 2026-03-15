@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -262,4 +263,33 @@ type ColumnDef struct {
 	Nullable bool
 	NotNull  bool   // Explicit NOT NULL flag (opposite of Nullable)
 	Extra    string // Additional column modifiers (e.g., AUTO_INCREMENT, DEFAULT)
+}
+
+// PrimaryKeyDecorator customizes how a primary key column is decorated.
+// It receives the column def (with Name and Type already set) and the
+// original engine.Record, and returns the modified def.
+type PrimaryKeyDecorator func(def ColumnDef, column engine.Record) ColumnDef
+
+// RecordsToColumnDefs converts engine.Record columns to ColumnDef slices.
+// The decorator callback handles database-specific primary key decoration
+// (e.g., AUTO_INCREMENT for MySQL, GENERATED ALWAYS AS IDENTITY for Postgres).
+func RecordsToColumnDefs(columns []engine.Record, decorator PrimaryKeyDecorator) []ColumnDef {
+	defs := make([]ColumnDef, len(columns))
+	for i, column := range columns {
+		def := ColumnDef{
+			Name: column.Key,
+			Type: column.Value,
+		}
+
+		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
+			def = decorator(def, column)
+		} else {
+			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
+				def.NotNull = true
+			}
+		}
+
+		defs[i] = def
+	}
+	return defs
 }

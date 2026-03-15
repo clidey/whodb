@@ -27,33 +27,13 @@ import (
 func (p *Sqlite3Plugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
 	builder := gorm_plugin.NewSQLBuilder(db, p)
 
-	// Convert engine.Record to ColumnDef
-	columnDefs := make([]gorm_plugin.ColumnDef, len(columns))
-	for i, column := range columns {
-		def := gorm_plugin.ColumnDef{
-			Name: column.Key,
+	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
+		def.Primary = true
+		if strings.Contains(strings.ToLower(column.Value), "int") {
+			def.Type = "INTEGER"
 		}
-
-		// Handle primary key with INTEGER type for auto-increment
-		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
-			if strings.Contains(strings.ToLower(column.Value), "int") {
-				def.Type = "INTEGER"
-				def.Primary = true
-			} else {
-				def.Type = column.Value
-				def.Primary = true
-			}
-		} else {
-			def.Type = column.Value
-
-			// Add NOT NULL constraint if specified
-			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
-				def.NotNull = true
-			}
-		}
-
-		columnDefs[i] = def
-	}
+		return def
+	})
 
 	// SQLite doesn't use schema, only table name
 	return builder.CreateTableQuery("", storageUnit, columnDefs)
