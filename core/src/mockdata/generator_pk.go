@@ -66,7 +66,7 @@ func (g *Generator) loadExistingPKs(
 	}
 
 	// Get existing rows
-	rows, err := plugin.GetRows(config, schema, table, nil, nil, 50, 0)
+	rows, err := plugin.GetRows(config, &engine.GetRowsRequest{Schema: schema, StorageUnit: table, PageSize: 50})
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func (g *Generator) loadExistingPKsForUniqueness(
 	}
 
 	// Get existing rows (limit to avoid memory issues)
-	rows, err := plugin.GetRows(config, schema, table, nil, nil, MaxExistingPKsToLoad, 0)
+	rows, err := plugin.GetRows(config, &engine.GetRowsRequest{Schema: schema, StorageUnit: table, PageSize: MaxExistingPKsToLoad})
 	if err != nil {
 		return fmt.Errorf("failed to load existing rows for PK uniqueness check: %w", err)
 	}

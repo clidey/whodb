@@ -134,6 +134,16 @@ type SSLStatus struct {
 	Mode      string // SSL mode: disabled, required, verify-ca, verify-identity, etc.
 }
 
+// GetRowsRequest bundles the parameters for a GetRows query.
+type GetRowsRequest struct {
+	Schema      string
+	StorageUnit string
+	Where       *model.WhereCondition
+	Sort        []*model.SortCondition
+	PageSize    int
+	PageOffset  int
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
@@ -148,7 +158,7 @@ type PluginFunctions interface {
 	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)
 	BulkAddRows(config *PluginConfig, schema string, storageUnit string, rows [][]Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
-	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRows(config *PluginConfig, req *GetRowsRequest) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string, params ...any) (*GetRowsResult, error)

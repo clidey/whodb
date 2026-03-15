@@ -215,10 +215,10 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 	})
 }
 
-func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Use generic implementation; database-specific behavior should be handled in each plugin
-		return p.getGenericRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
+		return p.getGenericRows(db, req.Schema, req.StorageUnit, req.Where, req.Sort, req.PageSize, req.PageOffset)
 	})
 }
 

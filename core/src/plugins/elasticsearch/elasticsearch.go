@@ -199,7 +199,9 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 	return res.StatusCode == 200, nil
 }
 
-func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	collection := req.StorageUnit
+	where, sortConds, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithField("collection", collection).Error("Failed to connect to ElasticSearch while getting rows")
@@ -223,9 +225,9 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 
 	// Apply sorting if provided
 	// Skip "document" column as it's a virtual column representing the entire JSON document
-	if len(sort) > 0 {
+	if len(sortConds) > 0 {
 		sortArray := []map[string]any{}
-		for _, s := range sort {
+		for _, s := range sortConds {
 			if s.Column == "document" {
 				continue
 			}

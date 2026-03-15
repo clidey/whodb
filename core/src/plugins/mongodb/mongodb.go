@@ -196,7 +196,9 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 	return len(names) > 0, nil
 }
 
-func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	database, collection := req.Schema, req.StorageUnit
+	where, sortConds, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
@@ -238,9 +240,9 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	findOptions.SetSkip(int64(pageOffset))
 
 	// Apply sorting if provided
-	if len(sort) > 0 {
+	if len(sortConds) > 0 {
 		sortMap := bson.D{}
-		for _, s := range sort {
+		for _, s := range sortConds {
 			direction := 1 // ASC
 			if s.Direction == model.SortDirectionDesc {
 				direction = -1 // DESC

@@ -41,7 +41,7 @@ type PluginMock struct {
 	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
 	BulkAddRowsFunc          func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
 	DeleteRowFunc            func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
-	GetRowsFunc              func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error)
+	GetRowsFunc              func(*engine.PluginConfig, *engine.GetRowsRequest) (*engine.GetRowsResult, error)
 	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
 	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
 	RawExecuteFunc           func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
@@ -154,9 +154,9 @@ func (m *PluginMock) DeleteRow(config *engine.PluginConfig, schema string, stora
 	return false, nil
 }
 
-func (m *PluginMock) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+func (m *PluginMock) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 	if m.GetRowsFunc != nil {
-		return m.GetRowsFunc(config, schema, storageUnit, where, sort, pageSize, pageOffset)
+		return m.GetRowsFunc(config, req)
 	}
 	return nil, nil
 }

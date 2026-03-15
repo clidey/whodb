@@ -243,11 +243,10 @@ func (p *RedisPlugin) StorageUnitExists(config *engine.PluginConfig, schema stri
 
 func (p *RedisPlugin) GetRows(
 	config *engine.PluginConfig,
-	schema, storageUnit string,
-	where *model.WhereCondition,
-	sortConditions []*model.SortCondition,
-	pageSize, pageOffset int,
+	req *engine.GetRowsRequest,
 ) (*engine.GetRowsResult, error) {
+	storageUnit := req.StorageUnit
+	where := req.Where
 	ctx := context.Background()
 
 	client, err := DB(config)

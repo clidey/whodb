@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 import (
@@ -100,7 +116,8 @@ func TestGraphQLDatabaseMetadataQueryReturnsNilWhenNotProvided(t *testing.T) {
 func TestGraphQLRowQueryWithSortAndWhere(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }
-	mock.GetRowsFunc = func(_ *engine.PluginConfig, _, _ string, where *model.WhereCondition, sort []*model.SortCondition, _, _ int) (*engine.GetRowsResult, error) {
+	mock.GetRowsFunc = func(_ *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+		where, sort := req.Where, req.Sort
 		if where == nil || where.Atomic == nil || where.Atomic.Key != "id" || where.Atomic.Operator != "=" || where.Atomic.Value != "1" {
 			t.Fatalf("unexpected where clause passed to plugin: %#v", where)
 		}
