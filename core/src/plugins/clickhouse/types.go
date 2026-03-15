@@ -34,6 +34,7 @@ var AliasMap = map[string]string{
 	"VARCHAR":   "String",
 	"CHAR":      "FixedString",
 	"TIMESTAMP": "DateTime",
+	"BFLOAT16":  "BFloat16",
 }
 
 // TypeDefinitions contains the canonical ClickHouse types with metadata for UI.
@@ -52,6 +53,7 @@ var TypeDefinitions = []engine.TypeDefinition{
 	{ID: "UInt256", Label: "UInt256", Category: engine.TypeCategoryNumeric},
 	{ID: "Float32", Label: "Float32", Category: engine.TypeCategoryNumeric},
 	{ID: "Float64", Label: "Float64", Category: engine.TypeCategoryNumeric},
+	{ID: "BFloat16", Label: "BFloat16", Category: engine.TypeCategoryNumeric},
 	{ID: "Decimal", Label: "Decimal", HasPrecision: true, DefaultPrecision: engine.IntPtr(10), Category: engine.TypeCategoryNumeric},
 	{ID: "Decimal32", Label: "Decimal32", HasPrecision: true, DefaultPrecision: engine.IntPtr(9), Category: engine.TypeCategoryNumeric},
 	{ID: "Decimal64", Label: "Decimal64", HasPrecision: true, DefaultPrecision: engine.IntPtr(18), Category: engine.TypeCategoryNumeric},
@@ -62,13 +64,24 @@ var TypeDefinitions = []engine.TypeDefinition{
 	{ID: "Date32", Label: "Date32", Category: engine.TypeCategoryDatetime},
 	{ID: "DateTime", Label: "DateTime", Category: engine.TypeCategoryDatetime},
 	{ID: "DateTime64", Label: "DateTime64", Category: engine.TypeCategoryDatetime},
+	{ID: "Time", Label: "Time", Category: engine.TypeCategoryDatetime},
+	{ID: "Time64", Label: "Time64", Category: engine.TypeCategoryDatetime},
 	{ID: "Bool", Label: "Bool", Category: engine.TypeCategoryBoolean},
 	{ID: "UUID", Label: "UUID", Category: engine.TypeCategoryOther},
 	{ID: "JSON", Label: "JSON", Category: engine.TypeCategoryJSON},
+	{ID: "Variant", Label: "Variant", Category: engine.TypeCategoryJSON},
+	{ID: "Dynamic", Label: "Dynamic", Category: engine.TypeCategoryJSON},
 	{ID: "IPv4", Label: "IPv4", Category: engine.TypeCategoryOther},
 	{ID: "IPv6", Label: "IPv6", Category: engine.TypeCategoryOther},
 	{ID: "Enum8", Label: "Enum8", Category: engine.TypeCategoryOther},
 	{ID: "Enum16", Label: "Enum16", Category: engine.TypeCategoryOther},
+	{ID: "LineString", Label: "LineString", Category: engine.TypeCategoryOther},
+	{ID: "MultiLineString", Label: "MultiLineString", Category: engine.TypeCategoryOther},
+	{ID: "Ring", Label: "Ring", Category: engine.TypeCategoryOther},
+	{ID: "Geometry", Label: "Geometry", Category: engine.TypeCategoryOther},
+	{ID: "AggregateFunction", Label: "AggregateFunction", Category: engine.TypeCategoryOther},
+	{ID: "SimpleAggregateFunction", Label: "SimpleAggregateFunction", Category: engine.TypeCategoryOther},
+	{ID: "QBit", Label: "QBit", Category: engine.TypeCategoryOther},
 }
 
 // NormalizeType converts a ClickHouse type alias to its canonical form.
