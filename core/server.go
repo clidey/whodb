@@ -86,8 +86,6 @@ func main() {
 		IdleTimeout:       30 * time.Second,
 	}
 
-	serverStarted := make(chan bool, 1)
-
 	go func() {
 		log.Info("Almost there...")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -95,22 +93,16 @@ func main() {
 		}
 	}()
 
-	select {
-	case success := <-serverStarted:
-		if !success {
-			log.Error("Server failed to start. Exiting...")
-			os.Exit(1)
-		}
-	case <-time.After(2 * time.Second):
-		if env.IsEnterpriseEdition {
-			log.Always("🎉 Welcome to WhoDB Enterprise! 🎉")
-		} else {
-			log.Always("🎉 Welcome to WhoDB! 🎉")
-		}
-		log.Always("Get started by visiting:")
-		log.Alwaysf("http://0.0.0.0:%s", port)
-		log.Always("Explore and enjoy working with your databases!")
+	// Brief pause to let ListenAndServe bind the port before printing the welcome banner
+	time.Sleep(2 * time.Second)
+	if env.IsEnterpriseEdition {
+		log.Always("🎉 Welcome to WhoDB Enterprise! 🎉")
+	} else {
+		log.Always("🎉 Welcome to WhoDB! 🎉")
 	}
+	log.Always("Get started by visiting:")
+	log.Alwaysf("http://0.0.0.0:%s", port)
+	log.Always("Explore and enjoy working with your databases!")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -139,7 +131,6 @@ func main() {
 
 	wg.Wait()
 
-	close(serverStarted)
 	close(quit)
 
 	log.Info("Server exiting")
