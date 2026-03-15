@@ -18,7 +18,6 @@ package gorm_plugin
 
 import (
 	"database/sql"
-	"encoding/hex"
 	"fmt"
 	"slices"
 	"strconv"
@@ -29,8 +28,8 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"github.com/dromara/carbon/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type GormPlugin struct {
@@ -64,7 +63,7 @@ type GormPluginFunctions interface {
 	// these below are meant to be generic-ish implementations by the base gorm plugin
 	ParseConnectionConfig(config *engine.PluginConfig) (*ConnectionInput, error)
 
-	ConvertStringValue(value, columnType string) (any, error)
+	ConvertStringValue(value, columnType string, isNullable bool) (any, error)
 	ConvertRawToRows(raw *sql.Rows) (*engine.GetRowsResult, error)
 	ConvertRecordValuesToMap(values []engine.Record) (map[string]any, error)
 
@@ -134,9 +133,9 @@ type GormPluginFunctions interface {
 	// Returns the input unchanged if no mapping exists.
 	NormalizeType(typeName string) string
 
-	// GetColumnTypes returns a map of column names to their types for a table.
+	// GetColumnTypes returns a map of column names to their type info (type + nullability).
 	// Used for type conversion during CRUD operations.
-	GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error)
+	GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]ColumnTypeInfo, error)
 
 	// GetLastInsertID returns the most recently auto-generated ID after an INSERT.
 	// This is used by the mock data generator to track PKs for FK references.
@@ -147,6 +146,12 @@ type GormPluginFunctions interface {
 	// for bulk insert operations. Used to calculate appropriate batch sizes.
 	// Default: 65535 (PostgreSQL/MySQL limit). Override for databases with lower limits.
 	GetMaxBulkInsertParameters() int
+
+	// BuildSkipConflictClause returns an OnConflict clause that skips duplicate rows
+	// during append-mode imports. Dialect-specific because Postgres uses DO NOTHING
+	// while MySQL needs identity assignments (pk = pk) since GORM can't generate the
+	// fallback without schema info when using .Table() with map records.
+	BuildSkipConflictClause(pkColumns []string) clause.OnConflict
 }
 
 func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -210,16 +215,16 @@ func (p *GormPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error
 	})
 }
 
-func (p *GormPlugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *GormPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		// Use generic implementation; database-specific behavior should be handled in each plugin
-		return p.getGenericRows(db, schema, storageUnit, where, sort, pageSize, pageOffset)
+		return p.getGenericRows(db, req.Schema, req.StorageUnit, req.Where, req.Sort, req.PageSize, req.PageOffset)
 	})
 }
 
 func (p *GormPlugin) GetRowCount(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {
-		var columnTypes map[string]string
+		var columnTypes map[string]ColumnTypeInfo
 		if where != nil {
 			columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 		}
@@ -286,7 +291,7 @@ func (p *GormPlugin) GetColumnsForTable(config *engine.PluginConfig, schema stri
 
 // SQLite-specific row retrieval is implemented in the sqlite3 plugin override.
 func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
-	var columnTypes map[string]string
+	var columnTypes map[string]ColumnTypeInfo
 	if where != nil {
 		columnTypes, _ = p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 	}
@@ -375,360 +380,144 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 	return result, nil
 }
 
-func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]string) (*gorm.DB, error) {
+func (p *GormPlugin) ApplyWhereConditions(query *gorm.DB, condition *model.WhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
 	if condition == nil {
 		return query, nil
 	}
 
 	switch condition.Type {
 	case model.WhereConditionTypeAtomic:
-		if condition.Atomic != nil {
-			// Use actual column type from database if available
-			columnType := condition.Atomic.ColumnType
-			if columnTypes != nil {
-				if dbType, exists := columnTypes[condition.Atomic.Key]; exists && dbType != "" {
-					columnType = dbType
-				}
-			}
-
-			operator, ok := p.GetSupportedOperators()[condition.Atomic.Operator]
-			if !ok {
-				return nil, fmt.Errorf("invalid SQL operator: %s", condition.Atomic.Operator)
-			}
-
-			builder := p.GormPluginFunctions.CreateSQLBuilder(query.Session(&gorm.Session{NewDB: true}))
-			col := builder.QuoteIdentifier(condition.Atomic.Key)
-
-			// Handle operators that don't take values
-			switch operator {
-			case "IS NULL", "IS NOT NULL":
-				query = query.Where(col + " " + operator)
-				return query, nil
-			}
-
-			// Convert value for typed comparison
-			// Special handling for operators with multiple values
-			switch operator {
-			case "IN", "NOT IN":
-				// Expect comma-separated list; split and convert each
-				raw := strings.TrimSpace(condition.Atomic.Value)
-				if raw == "" {
-					// empty IN list should return no rows; use a false predicate
-					query = query.Where("1 = 0")
-					return query, nil
-				}
-				parts := strings.Split(raw, ",")
-				vals := make([]any, 0, len(parts))
-				for _, part := range parts {
-					v := strings.TrimSpace(part)
-					cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType)
-					if err != nil {
-						log.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
-						return nil, err
-					}
-					vals = append(vals, cv)
-				}
-				query = query.Where(col+" "+operator+" ?", vals)
-				return query, nil
-
-			case "BETWEEN", "NOT BETWEEN":
-				// Expect two values separated by comma: min,max
-				raw := strings.TrimSpace(condition.Atomic.Value)
-				parts := strings.Split(raw, ",")
-				if len(parts) != 2 {
-					return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
-				}
-				v1, err1 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType)
-				if err1 != nil {
-					log.WithError(err1).Error("Failed to convert BETWEEN min value")
-					return nil, err1
-				}
-				v2, err2 := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType)
-				if err2 != nil {
-					log.WithError(err2).Error("Failed to convert BETWEEN max value")
-					return nil, err2
-				}
-				if operator == "BETWEEN" {
-					query = query.Where(col+" BETWEEN ? AND ?", v1, v2)
-				} else {
-					query = query.Where(col+" NOT BETWEEN ? AND ?", v1, v2)
-				}
-				return query, nil
-			default:
-				// Single value operators (=, <, >, LIKE, etc.)
-				value, err := p.GormPluginFunctions.ConvertStringValue(condition.Atomic.Value, columnType)
-				if err != nil {
-					log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", condition.Atomic.Value, columnType))
-					return nil, err
-				}
-				query = query.Where(col+" "+operator+" ?", value)
-			}
-		}
-
+		return p.applyAtomicCondition(query, condition.Atomic, columnTypes)
 	case model.WhereConditionTypeAnd:
-		if condition.And != nil {
-			for _, child := range condition.And.Children {
-				var err error
-				query, err = p.ApplyWhereConditions(query, child, columnTypes)
-				if err != nil {
-					log.WithError(err).Error("Failed to apply AND where condition")
-					return nil, err
-				}
-			}
-		}
-
+		return p.applyAndConditions(query, condition.And, columnTypes)
 	case model.WhereConditionTypeOr:
-		if condition.Or != nil {
-			orQueries := query
-			for _, child := range condition.Or.Children {
-				childQuery, err := p.ApplyWhereConditions(query, child, columnTypes)
-				if err != nil {
-					log.WithError(err).Error("Failed to apply OR where condition")
-					return nil, err
-				}
-				orQueries = orQueries.Or(childQuery)
-			}
-			query = orQueries
-		}
+		return p.applyOrConditions(query, condition.Or, columnTypes)
 	}
 
 	return query, nil
 }
 
-func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, error) {
-	columns, err := rows.Columns()
-	if err != nil {
-		log.WithError(err).Error("Failed to get column names from result set")
-		return nil, err
+// applyAtomicCondition handles a single atomic WHERE condition (e.g., column = value).
+func (p *GormPlugin) applyAtomicCondition(query *gorm.DB, atomic *model.AtomicWhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
+	if atomic == nil {
+		return query, nil
 	}
 
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		log.WithError(err).Error("Failed to get column types from result set")
-		return nil, err
-	}
-
-	// Create a map for faster column type lookup
-	typeMap := make(map[string]*sql.ColumnType, len(columnTypes))
-	for _, colType := range columnTypes {
-		typeMap[colType.Name()] = colType
-	}
-
-	result := &engine.GetRowsResult{
-		Columns: make([]engine.Column, 0, len(columns)),
-		Rows:    make([][]string, 0, 100),
-	}
-
-	// TODO: Extract database-specific type handling into individual plugins
-	for _, col := range columns {
-		if colType, exists := typeMap[col]; exists {
-			colTypeName := colType.DatabaseTypeName()
-			// TODO: BIG EDGE CASE - PostgreSQL array types use underscore prefix (e.g., _int4 for int[])
-			// Move to PostgreSQL plugin's GetCustomColumnTypeName once all edge cases are tested
-			if p.Type == engine.DatabaseType_Postgres && strings.HasPrefix(colTypeName, "_") {
-				colTypeName = strings.Replace(colTypeName, "_", "[]", 1)
-			}
-			if customName := p.GormPluginFunctions.GetCustomColumnTypeName(col, colTypeName); customName != "" {
-				colTypeName = customName
-			}
-
-			column := engine.Column{Name: col, Type: colTypeName}
-			baseTypeName := strings.ToUpper(colType.DatabaseTypeName())
-
-			// Only extract length for types where it's user-specifiable
-			if typesWithLength[baseTypeName] {
-				if length, ok := colType.Length(); ok && length > 0 {
-					l := int(length)
-					column.Length = &l
-					// Include length in type name for display
-					colTypeName = fmt.Sprintf("%s(%d)", colTypeName, length)
-					column.Type = colTypeName
-				}
-			}
-
-			// Only extract precision/scale for decimal-like types
-			if typesWithPrecision[baseTypeName] {
-				if precision, scale, ok := colType.DecimalSize(); ok && precision > 0 {
-					prec := int(precision)
-					column.Precision = &prec
-					if scale > 0 {
-						s := int(scale)
-						column.Scale = &s
-						colTypeName = fmt.Sprintf("%s(%d,%d)", colType.DatabaseTypeName(), precision, scale)
-					} else {
-						colTypeName = fmt.Sprintf("%s(%d)", colType.DatabaseTypeName(), precision)
-					}
-					column.Type = colTypeName
-				}
-			}
-
-			result.Columns = append(result.Columns, column)
+	// Use actual column type from database if available
+	columnType := atomic.ColumnType
+	isNullable := false
+	if columnTypes != nil {
+		if colInfo, exists := columnTypes[atomic.Key]; exists && colInfo.Type != "" {
+			columnType = colInfo.Type
+			isNullable = colInfo.IsNullable
 		}
 	}
 
-	for rows.Next() {
-		columnPointers := make([]any, len(columns))
-		row := make([]string, len(columns))
+	operator, ok := p.GetSupportedOperators()[atomic.Operator]
+	if !ok {
+		return nil, fmt.Errorf("invalid SQL operator: %s", atomic.Operator)
+	}
 
-		for i, col := range columns {
-			colType := typeMap[col]
-			typeName := colType.DatabaseTypeName()
+	builder := p.GormPluginFunctions.CreateSQLBuilder(query.Session(&gorm.Session{NewDB: true}))
+	col := builder.QuoteIdentifier(atomic.Key)
 
-			if p.GormPluginFunctions.ShouldHandleColumnType(typeName) {
-				columnPointers[i] = p.GormPluginFunctions.GetColumnScanner(typeName)
-			} else {
-				switch typeName {
-				case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB", "HIERARCHYID",
-					"GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
-					"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
-					columnPointers[i] = new(sql.RawBytes)
-				default:
-					columnPointers[i] = new(sql.NullString)
-				}
-			}
-		}
+	switch operator {
+	case "IS NULL", "IS NOT NULL":
+		return query.Where(col + " " + operator), nil
+	case "IN", "NOT IN":
+		return p.applyInCondition(query, col, operator, atomic.Value, columnType, isNullable)
+	case "BETWEEN", "NOT BETWEEN":
+		return p.applyBetweenCondition(query, col, operator, atomic.Value, columnType, isNullable)
+	default:
+		return p.applySingleValueCondition(query, col, operator, atomic.Value, columnType, isNullable)
+	}
+}
 
-		if err := rows.Scan(columnPointers...); err != nil {
-			log.WithError(err).Error("Failed to scan row data")
+// applyInCondition handles IN and NOT IN operators with comma-separated values.
+func (p *GormPlugin) applyInCondition(query *gorm.DB, col, operator, rawValue, columnType string, isNullable bool) (*gorm.DB, error) {
+	raw := strings.TrimSpace(rawValue)
+	if raw == "" {
+		// empty IN list should return no rows; use a false predicate
+		return query.Where("1 = 0"), nil
+	}
+	parts := strings.Split(raw, ",")
+	vals := make([]any, 0, len(parts))
+	for _, part := range parts {
+		v := strings.TrimSpace(part)
+		cv, err := p.GormPluginFunctions.ConvertStringValue(v, columnType, isNullable)
+		if err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Failed to convert IN value '%s' for column type '%s'", v, columnType))
 			return nil, err
 		}
+		vals = append(vals, cv)
+	}
+	return query.Where(col+" "+operator+" ?", vals), nil
+}
 
-		for i, colPtr := range columnPointers {
-			colType := typeMap[columns[i]]
-			typeName := colType.DatabaseTypeName()
+// applyBetweenCondition handles BETWEEN and NOT BETWEEN operators with "min,max" values.
+func (p *GormPlugin) applyBetweenCondition(query *gorm.DB, col, operator, rawValue, columnType string, isNullable bool) (*gorm.DB, error) {
+	raw := strings.TrimSpace(rawValue)
+	parts := strings.Split(raw, ",")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
+	}
+	v1, err := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType, isNullable)
+	if err != nil {
+		log.WithError(err).Error("Failed to convert BETWEEN min value")
+		return nil, err
+	}
+	v2, err := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[1]), columnType, isNullable)
+	if err != nil {
+		log.WithError(err).Error("Failed to convert BETWEEN max value")
+		return nil, err
+	}
+	if operator == "BETWEEN" {
+		return query.Where(col+" BETWEEN ? AND ?", v1, v2), nil
+	}
+	return query.Where(col+" NOT BETWEEN ? AND ?", v1, v2), nil
+}
 
-			if p.GormPluginFunctions.ShouldHandleColumnType(typeName) {
-				value, err := p.GormPluginFunctions.FormatColumnValue(typeName, colPtr)
-				if err != nil {
-					row[i] = "ERROR: " + err.Error()
-				} else {
-					row[i] = value
-				}
-			} else {
-				switch typeName {
-				case "VARBINARY", "BINARY", "IMAGE", "BYTEA", "BLOB":
-					rawBytes := colPtr.(*sql.RawBytes)
-					if rawBytes == nil || len(*rawBytes) == 0 {
-						row[i] = ""
-					} else {
-						row[i] = "0x" + hex.EncodeToString(*rawBytes)
-					}
-				// TODO: Geometry types need more testing before production use
-				case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
-					"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
-					rawBytes := colPtr.(*sql.RawBytes)
-					if rawBytes == nil || len(*rawBytes) == 0 {
-						row[i] = ""
-					} else if formatted := p.GormPluginFunctions.FormatGeometryValue(*rawBytes, typeName); formatted != "" {
-						row[i] = formatted
-					} else {
-						row[i] = "0x" + hex.EncodeToString(*rawBytes)
-					}
-				case "TIME":
-					// TIME columns are returned as full datetime strings with zero date (e.g., "0001-01-01T12:00:00Z")
-					// Extract just the time portion for display
-					val := colPtr.(*sql.NullString)
-					if val.Valid {
-						row[i] = formatTimeOnly(val.String)
-					} else {
-						row[i] = ""
-					}
-				default:
-					val := colPtr.(*sql.NullString)
-					if val.Valid {
-						row[i] = val.String
-					} else {
-						row[i] = ""
-					}
-				}
-			}
+// applySingleValueCondition handles operators that compare against a single value (=, <, >, LIKE, etc.).
+func (p *GormPlugin) applySingleValueCondition(query *gorm.DB, col, operator, rawValue, columnType string, isNullable bool) (*gorm.DB, error) {
+	value, err := p.GormPluginFunctions.ConvertStringValue(rawValue, columnType, isNullable)
+	if err != nil {
+		log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column type '%s'", rawValue, columnType))
+		return nil, err
+	}
+	return query.Where(col+" "+operator+" ?", value), nil
+}
+
+// applyAndConditions applies all children as AND-combined WHERE clauses.
+func (p *GormPlugin) applyAndConditions(query *gorm.DB, and *model.OperationWhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
+	if and == nil {
+		return query, nil
+	}
+	for _, child := range and.Children {
+		var err error
+		query, err = p.ApplyWhereConditions(query, child, columnTypes)
+		if err != nil {
+			log.WithError(err).Error("Failed to apply AND where condition")
+			return nil, err
 		}
-
-		result.Rows = append(result.Rows, row)
 	}
-
-	result.TotalCount = int64(len(result.Rows))
-	return result, nil
+	return query, nil
 }
 
-// TODO: Extract into base GormPlugin if needed by other database plugins
-func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string {
-	if p.Type == engine.DatabaseType_Postgres {
-		var typname string
-		if err := db.Table("pg_type").
-			Select("typname").
-			Where("oid = ?", columnType).
-			Scan(&typname).Error; err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to find PostgreSQL type name for OID: %s", columnType))
-			typname = columnType
+// applyOrConditions applies all children as OR-combined WHERE clauses.
+func (p *GormPlugin) applyOrConditions(query *gorm.DB, or *model.OperationWhereCondition, columnTypes map[string]ColumnTypeInfo) (*gorm.DB, error) {
+	if or == nil {
+		return query, nil
+	}
+	orQueries := query
+	for _, child := range or.Children {
+		childQuery, err := p.ApplyWhereConditions(query, child, columnTypes)
+		if err != nil {
+			log.WithError(err).Error("Failed to apply OR where condition")
+			return nil, err
 		}
-		return strings.ToUpper(typname)
+		orQueries = orQueries.Or(childQuery)
 	}
-	return columnType
-}
-
-// GetRowsOrderBy returns the ORDER BY clause for pagination queries
-// Default implementation returns empty string (no ordering)
-func (p *GormPlugin) GetRowsOrderBy(db *gorm.DB, schema string, storageUnit string) string {
-	return ""
-}
-
-// ShouldHandleColumnType returns false by default
-func (p *GormPlugin) ShouldHandleColumnType(columnType string) bool {
-	return false
-}
-
-// GetColumnScanner returns nil by default
-func (p *GormPlugin) GetColumnScanner(columnType string) any {
-	return nil
-}
-
-// FormatColumnValue returns empty string by default
-func (p *GormPlugin) FormatColumnValue(columnType string, scanner any) (string, error) {
-	return "", nil
-}
-
-// GetCustomColumnTypeName returns empty string by default
-func (p *GormPlugin) GetCustomColumnTypeName(columnName string, defaultTypeName string) string {
-	return ""
-}
-
-// IsGeometryType returns true for common geometry type names
-func (p *GormPlugin) IsGeometryType(columnType string) bool {
-	switch columnType {
-	case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
-		"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION":
-		return true
-	default:
-		return false
-	}
-}
-
-// FormatGeometryValue returns empty string by default (use hex formatting)
-func (p *GormPlugin) FormatGeometryValue(rawBytes []byte, columnType string) string {
-	return ""
-}
-
-// formatTimeOnly extracts just the time portion from a datetime string.
-// Database drivers return TIME columns as full datetime with zero date (e.g., "0001-01-01T12:00:00Z").
-// This function extracts just the time portion for cleaner display.
-func formatTimeOnly(value string) string {
-	c := carbon.Parse(value)
-	if c.Error != nil || c.IsInvalid() {
-		// If carbon can't parse it, return as-is
-		return value
-	}
-
-	// Check if it has sub-second precision
-	if c.Nanosecond() > 0 {
-		return c.ToTimeMilliString()
-	}
-	return c.ToTimeString()
-}
-
-// HandleCustomDataType returns false by default (no custom handling)
-func (p *GormPlugin) HandleCustomDataType(value string, columnType string, isNullable bool) (any, bool, error) {
-	return nil, false, nil
+	return orQueries, nil
 }
 
 // GetDatabaseType returns the database type
@@ -869,6 +658,25 @@ func (p *GormPlugin) NormalizeType(typeName string) string {
 // GetMaxBulkInsertParameters returns the default limit of 65535 parameters.
 func (p *GormPlugin) GetMaxBulkInsertParameters() int {
 	return 65535
+}
+
+// BuildSkipConflictClause returns ON CONFLICT (pk) DO NOTHING — works for Postgres, SQLite, ClickHouse.
+// MySQL/MariaDB plugins override this with identity assignments.
+func (p *GormPlugin) BuildSkipConflictClause(pkColumns []string) clause.OnConflict {
+	conflictCols := make([]clause.Column, len(pkColumns))
+	for i, col := range pkColumns {
+		conflictCols[i] = clause.Column{Name: col}
+	}
+	return clause.OnConflict{
+		Columns:   conflictCols,
+		DoNothing: true,
+	}
+}
+
+// MarkGeneratedColumns is a no-op base implementation.
+// Database plugins should override this to detect auto-increment and computed columns.
+func (p *GormPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
+	return nil
 }
 
 // GetDatabaseMetadata returns nil by default.

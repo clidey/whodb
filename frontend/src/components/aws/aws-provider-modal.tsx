@@ -38,6 +38,7 @@ import {
     useAddAwsProviderMutation,
     useUpdateAwsProviderMutation,
     useTestCloudProviderMutation,
+    useTestAwsCredentialsMutation,
     useGetLocalAwsProfilesQuery,
     useGetAwsRegionsQuery,
 } from "@graphql";
@@ -95,8 +96,9 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
         refetchQueries: ['GetCloudProviders', 'GetDiscoveredConnections'],
     });
     const [testProvider, { loading: testLoading }] = useTestCloudProviderMutation();
+    const [testCredentials, { loading: testCredentialsLoading }] = useTestAwsCredentialsMutation();
 
-    const loading = addLoading || updateLoading || testLoading;
+    const loading = addLoading || updateLoading || testLoading || testCredentialsLoading;
 
     // Reset form when modal opens/closes or editingProvider changes
     useEffect(() => {
@@ -223,38 +225,68 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     }, [name, getEffectiveRegion, buildInput, isEditMode, editingProviderId, updateProvider, addProvider, dispatch, handleClose, t]);
 
     const handleTest = useCallback(async () => {
-        if (!editingProviderId) {
-            toast.error(t('saveBeforeTest'));
+        const effectiveRegion = getEffectiveRegion();
+        if (!name.trim() || !effectiveRegion.trim()) {
+            toast.error(t('nameRequired'));
             return;
         }
 
         try {
-            const { data } = await testProvider({
-                variables: { id: editingProviderId },
-            });
-            if (data?.TestCloudProvider === CloudProviderStatus.Connected) {
-                dispatch(ProvidersActions.setProviderStatus({
-                    id: editingProviderId,
-                    status: CloudProviderStatus.Connected,
-                }));
-                toast.success(t('connectionSuccessful'));
+            if (isEditMode && editingProviderId) {
+                // Test persisted provider
+                const { data } = await testProvider({
+                    variables: { id: editingProviderId },
+                });
+                if (data?.TestCloudProvider === CloudProviderStatus.Connected) {
+                    dispatch(ProvidersActions.setProviderStatus({
+                        id: editingProviderId,
+                        status: CloudProviderStatus.Connected,
+                    }));
+                    toast.success(t('connectionSuccessful'));
+                } else {
+                    dispatch(ProvidersActions.setProviderStatus({
+                        id: editingProviderId,
+                        status: CloudProviderStatus.Error,
+                    }));
+                    toast.error(t('connectionFailed'));
+                }
             } else {
-                dispatch(ProvidersActions.setProviderStatus({
-                    id: editingProviderId,
-                    status: CloudProviderStatus.Error,
-                }));
-                toast.error(t('connectionFailed'));
+                // Test credentials without saving
+                const input = buildInput();
+                const { data } = await testCredentials({
+                    variables: { input },
+                });
+                if (data?.TestAWSCredentials === CloudProviderStatus.Connected) {
+                    toast.success(t('connectionSuccessful'));
+                } else {
+                    toast.error(t('connectionFailed'));
+                }
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : t('unknownError');
             toast.error(t('testFailed', { error: errorMessage }));
         }
-    }, [editingProviderId, testProvider, dispatch, t]);
+    }, [name, getEffectiveRegion, isEditMode, editingProviderId, testProvider, testCredentials, buildInput, dispatch, t]);
 
-    const regionOptions = useMemo(() => [
-        ...awsRegions.map(r => ({ value: r.Id, label: `${r.Id} - ${r.Description}` })),
-        { value: "custom", label: t('customRegion') },
-    ], [awsRegions, t]);
+    const regionOptions = useMemo(() => {
+        const partitionLabels: Record<string, string> = {
+            "aws": "",
+            "aws-us-gov": "GovCloud",
+            "aws-cn": "China",
+        };
+        const grouped: { value: string; label: string }[] = [];
+        let lastPartition = "";
+        for (const r of awsRegions) {
+            const partition = r.Partition ?? "aws";
+            if (partition !== lastPartition && partitionLabels[partition]) {
+                grouped.push({ value: `__header_${partition}`, label: `── ${partitionLabels[partition]} ──` });
+            }
+            lastPartition = partition;
+            grouped.push({ value: r.Id, label: `${r.Id} - ${r.Description}` });
+        }
+        grouped.push({ value: "custom", label: t('customRegion') });
+        return grouped;
+    }, [awsRegions, t]);
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -283,6 +315,14 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                                     }[profile.Source];
                                     const sourceDisplay = sourceKey ? t(sourceKey) : profile.Source;
 
+                                    const authTypeKey = {
+                                        sso: 'authTypeSso',
+                                        'assume-role': 'authTypeAssumeRole',
+                                        static: 'authTypeStatic',
+                                        environment: 'authTypeEnvironment',
+                                    }[profile.AuthType ?? 'static'];
+                                    const authTypeDisplay = authTypeKey ? t(authTypeKey) : undefined;
+
                                     return (
                                         <button
                                             key={`${profile.Source}-${profile.Name}`}
@@ -306,6 +346,11 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                                             <Badge variant="secondary" className="text-xs font-normal">
                                                 {sourceDisplay}
                                             </Badge>
+                                            {authTypeDisplay && profile.AuthType !== 'static' && profile.AuthType !== 'environment' && (
+                                                <Badge variant="outline" className="text-xs font-normal">
+                                                    {authTypeDisplay}
+                                                </Badge>
+                                            )}
                                         </button>
                                     );
                                 })}
@@ -406,16 +451,14 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                 </div>
 
                 <DialogFooter className="flex gap-2">
-                    {isEditMode && (
-                        <Button
-                            variant="outline"
-                            onClick={handleTest}
-                            disabled={loading}
-                            data-testid="test-connection"
-                        >
-                            {testLoading ? t('testing') : t('testConnection')}
-                        </Button>
-                    )}
+                    <Button
+                        variant="outline"
+                        onClick={handleTest}
+                        disabled={loading}
+                        data-testid="test-connection"
+                    >
+                        {(testLoading || testCredentialsLoading) ? t('testing') : t('testConnection')}
+                    </Button>
                     <Button
                         variant="outline"
                         onClick={handleClose}

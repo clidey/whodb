@@ -77,7 +77,7 @@ export const Card: FC<ICardProps> = ({
             <CardHeader className="flex flex-row justify-between items-start px-4">
               {propsIcon && <div className="h-[40px] w-[40px] rounded-lg flex justify-center items-center bg-icon border border-icon-foreground">
                 {cloneElement(propsIcon, {
-                  className: "w-6 h-6 stroke-icon-foreground dark:stroke-icon-foreground",
+                  className: "w-6 h-6 text-primary dark:text-primary",
                 })}
               </div>}
               {tag && <Badge variant="secondary">{tag}</Badge>}
@@ -116,7 +116,7 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
   return (
     <>
       <Sheet open={expand} onOpenChange={handleOpenChange}>
-        <div>
+        <div onClick={() => handleOpenChange(true)}>
           <Card
             {...props}
             tag={props.collapsedTag}

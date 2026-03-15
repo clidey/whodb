@@ -60,7 +60,8 @@ func (p *GormPlugin) ConvertRecordValuesToMap(values []engine.Record) (map[strin
 		if value.Extra != nil && value.Extra["IsNull"] == "true" {
 			data[value.Key] = nil
 		} else {
-			val, err := p.GormPluginFunctions.ConvertStringValue(value.Value, value.Extra["Type"])
+			isNullable := value.Extra != nil && value.Extra["IsNullable"] == "true"
+			val, err := p.GormPluginFunctions.ConvertStringValue(value.Value, value.Extra["Type"], isNullable)
 			if err != nil {
 				return nil, err
 			}
@@ -111,7 +112,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 }
 
 // GetColumnTypes uses GORM's Migrator when possible, falls back to raw SQL
-func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]ColumnTypeInfo, error) {
 	migrator := NewMigratorHelper(db, p.GormPluginFunctions)
 
 	fullTableName := p.FormTableName(schema, tableName)
@@ -120,9 +121,8 @@ func (p *GormPlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[
 
 // todo: test this thouroughly for each DB to ensure that the casting is correct and there's no data loss
 // todo: how do we handle if user doesn't pass in a value, or it's null
-func (p *GormPlugin) ConvertStringValue(value, columnType string) (any, error) {
-	// handle nullable type. clickhouse specific
-	isNullable := false
+func (p *GormPlugin) ConvertStringValue(value, columnType string, isNullable bool) (any, error) {
+	// handle nullable type wrapper (ClickHouse encodes nullability in type string)
 	upperCheck := strings.ToUpper(columnType)
 	if strings.HasPrefix(upperCheck, "NULLABLE(") {
 		isNullable = true
@@ -431,7 +431,7 @@ func (p *GormPlugin) convertArrayValue(value string, columnType string) (any, er
 			continue
 		}
 
-		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType)
+		converted, err := p.GormPluginFunctions.ConvertStringValue(element, elementType, false)
 		if err != nil {
 			log.WithError(err).WithField("element", element).WithField("elementType", elementType).Error("Failed to convert array element")
 			return nil, fmt.Errorf("converting array element: %w", err)

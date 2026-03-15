@@ -310,7 +310,7 @@ func (m *Manager) Connect(conn *Connection) error {
 	}
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	if !plugin.IsAvailable(pluginConfig) {
+	if !plugin.IsAvailable(context.Background(), pluginConfig) {
 		// Don't expose connection details in error message for security
 		return fmt.Errorf("cannot connect to database. please check your credentials and ensure the database is accessible")
 	}
@@ -376,9 +376,9 @@ func envProfileToConnection(profile types.DatabaseCredentials, dbType string, in
 	name := envProfileName(profile, dbType, index)
 
 	var advanced map[string]string
-	if profile.Port != "" || len(profile.Config) > 0 {
-		advanced = make(map[string]string, len(profile.Config)+1)
-		for key, value := range profile.Config {
+	if profile.Port != "" || len(profile.Advanced) > 0 {
+		advanced = make(map[string]string, len(profile.Advanced)+1)
+		for key, value := range profile.Advanced {
 			advanced[key] = value
 		}
 		if profile.Port != "" {
@@ -509,7 +509,10 @@ func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereConditio
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+	return plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
+		Schema: schema, StorageUnit: storageUnit, Where: where,
+		PageSize: pageSize, PageOffset: pageOffset,
+	})
 }
 
 // runWithContext runs fn in a goroutine and returns its result, or ctx.Err() if the
@@ -616,7 +619,10 @@ func (m *Manager) GetRowsWithContext(ctx context.Context, schema, storageUnit st
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
-		return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+		return plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
+			Schema: schema, StorageUnit: storageUnit, Where: where,
+			PageSize: pageSize, PageOffset: pageOffset,
+		})
 	})
 }
 
@@ -711,7 +717,7 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	// Get all rows
-	result, err := plugin.GetRows(pluginConfig, schema, storageUnit, nil, nil, 0, 0)
+	result, err := plugin.GetRows(pluginConfig, &engine.GetRowsRequest{Schema: schema, StorageUnit: storageUnit})
 	if err != nil {
 		return fmt.Errorf("failed to fetch data: %w", err)
 	}
@@ -785,7 +791,7 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	// Get all rows
-	result, err := plugin.GetRows(pluginConfig, schema, storageUnit, nil, nil, 0, 0)
+	result, err := plugin.GetRows(pluginConfig, &engine.GetRowsRequest{Schema: schema, StorageUnit: storageUnit})
 	if err != nil {
 		return fmt.Errorf("failed to fetch data: %w", err)
 	}

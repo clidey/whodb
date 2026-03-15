@@ -51,6 +51,7 @@ func (p *MySQLPlugin) openDB(config *engine.PluginConfig, multiStatements bool) 
 	mysqlConfig.AllowCleartextPasswords = connectionInput.AllowClearTextPasswords
 	mysqlConfig.ParseTime = connectionInput.ParseTime
 	mysqlConfig.Loc = connectionInput.Loc
+	mysqlConfig.Timeout = time.Duration(connectionInput.ConnectionTimeout) * time.Second
 	mysqlConfig.Params = connectionInput.ExtraOptions
 	mysqlConfig.MultiStatements = multiStatements
 

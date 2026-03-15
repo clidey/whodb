@@ -42,6 +42,7 @@ import {useApolloClient} from "@apollo/client";
 import {createSQLAutocomplete} from "./editor-autocomplete";
 import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
+import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
 import { Tip } from "./tip";
 
 const isValidSQLQuery = (text: string): boolean => {
@@ -339,8 +340,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         extensions: [
           EditorView.domEventHandlers({
               keydown(event) {
-                // Ctrl/Cmd+U to clear editor
-                if ((event.metaKey || event.ctrlKey) && event.key === "u" && setValue != null) {
+                if (matchesShortcut(event, SHORTCUTS.clearEditor) && setValue != null) {
                   view.dispatch({
                     changes: { from: 0, to: view.state.doc.length, insert: "" }
                   });
@@ -349,7 +349,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                   return true;
                 }
 
-                if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && onRunReference.current != null) {
+                if (matchesShortcut(event, SHORTCUTS.executeQuery) && onRunReference.current != null) {
                       // Get the selected text if any, otherwise use the entire content
                       const selection = view.state.selection;
                       let textToExecute = '';

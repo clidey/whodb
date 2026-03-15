@@ -32,8 +32,12 @@ type LLMModel string
 type AIProvider interface {
 	// Metadata methods
 	GetType() LLMType
-	GetName() string
-	RequiresAPIKey() bool
+
+	// GetProtocol returns the API protocol family this provider uses for streaming.
+	// Values: "openai", "anthropic", "aws-bedrock".
+	// This is a static property — no network calls. Used for routing to the correct
+	// streaming client implementation (e.g. in the agent package).
+	GetProtocol() string
 
 	// Configuration methods
 	GetDefaultEndpoint() string
@@ -43,8 +47,7 @@ type AIProvider interface {
 	GetSupportedModels(config *ProviderConfig) ([]string, error)
 
 	// BAML integration methods
-	GetBAMLClientType() string
-	CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error)
+	CreateBAMLClient(config *ProviderConfig, model string) (clientType string, opts map[string]any, err error)
 }
 
 // ProviderConfig holds configuration for a specific provider instance.
@@ -139,4 +142,19 @@ func ListProviders() []LLMType {
 		return []LLMType{}
 	}
 	return providerRegistry.List()
+}
+
+// GetBAMLConfig resolves BAML provider string + options for the given provider type.
+// This is the single source of truth for mapping a provider type to BAML configuration.
+func GetBAMLConfig(providerType string, apiKey, endpoint, model string) (string, map[string]any, error) {
+	provider, err := GetProvider(LLMType(providerType))
+	if err != nil {
+		return "", nil, err
+	}
+	config := &ProviderConfig{
+		Type:     LLMType(providerType),
+		APIKey:   apiKey,
+		Endpoint: endpoint,
+	}
+	return provider.CreateBAMLClient(config, model)
 }

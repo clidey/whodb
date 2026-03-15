@@ -41,6 +41,7 @@ import (
 func RunApp(edition string, title string, assets embed.FS) error {
 	defer log.CloseLogFile()
 	os.Setenv("WHODB_DESKTOP", "true")
+	os.Setenv("WHODB_DISABLE_UPDATE_CHECK", "true")
 	settingsCfg := settings.Get()
 	if err := analytics.Initialize(analytics.Config{
 		APIKey:      env.PosthogAPIKey,

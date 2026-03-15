@@ -19,11 +19,11 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
+	"slices"
 )
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
@@ -34,7 +34,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			pkColumns = []string{}
 		}
 
-		columnTypes, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
+		columnTypeInfos, err := p.GormPluginFunctions.GetColumnTypes(db, schema, storageUnit)
 		if err != nil {
 			log.WithError(err).Error(fmt.Sprintf("Failed to get column types for table %s.%s during update operation", schema, storageUnit))
 			return false, err
@@ -58,12 +58,12 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 				continue
 			}
 
-			columnType, exists := columnTypes[column]
+			colInfo, exists := columnTypeInfos[column]
 			if !exists {
 				return false, fmt.Errorf("column '%s' does not exist in table %s", column, storageUnit)
 			}
 
-			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, columnType)
+			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, colInfo.Type, colInfo.IsNullable)
 			if err != nil {
 				log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during update of table %s.%s", strValue, column, schema, storageUnit))
 				convertedValue = strValue
@@ -103,14 +103,7 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			return false, result.Error
 		}
 
-		// TODO: BIG EDGE CASE - ClickHouse driver doesn't report affected rows properly
-		// Need to investigate the ClickHouse GORM driver behavior
-		/*
-			if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
-				return false, errors.New("no rows were updated")
-			}
-		*/
-		// For now, only check affected rows for non-ClickHouse databases
+		// ClickHouse GORM driver doesn't report affected rows for UPDATE mutations
 		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
 			return false, errors.New("no rows were updated")
 		}
@@ -118,4 +111,3 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 		return true, nil
 	})
 }
-

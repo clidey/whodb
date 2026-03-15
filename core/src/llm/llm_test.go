@@ -22,30 +22,24 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-func TestInstanceCachesPerTypeAndUpdatesAPIKey(t *testing.T) {
-	llmInstance = nil
-	t.Cleanup(func() { llmInstance = nil })
-
+func TestInstanceReturnsCorrectClient(t *testing.T) {
 	cfg := &engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(OpenAI_LLMType), Token: "key1"}}
-	first := Instance(cfg)
-	if first.APIKey != "key1" {
-		t.Fatalf("expected API key to be set on first instance")
+	client := Instance(cfg)
+	if client.Type != OpenAI_LLMType {
+		t.Fatalf("expected type %s, got %s", OpenAI_LLMType, client.Type)
+	}
+	if client.APIKey != "key1" {
+		t.Fatalf("expected API key 'key1', got %s", client.APIKey)
 	}
 
-	// Same type: should reuse instance and update key
-	cfg.ExternalModel.Token = "key2"
-	second := Instance(cfg)
-	if first != second {
-		t.Fatalf("expected same instance for same type")
+	// Different config produces a client with the new values
+	cfg2 := &engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(Ollama_LLMType), Token: "key2"}}
+	client2 := Instance(cfg2)
+	if client2.Type != Ollama_LLMType {
+		t.Fatalf("expected type %s, got %s", Ollama_LLMType, client2.Type)
 	}
-	if second.APIKey != "key2" {
-		t.Fatalf("expected API key to be updated on reuse, got %s", second.APIKey)
-	}
-
-	// Different type: new instance
-	other := Instance(&engine.PluginConfig{ExternalModel: &engine.ExternalModel{Type: string(Ollama_LLMType), Token: ""}})
-	if other == first {
-		t.Fatalf("expected different instance for different LLM type")
+	if client2.APIKey != "key2" {
+		t.Fatalf("expected API key 'key2', got %s", client2.APIKey)
 	}
 }
 

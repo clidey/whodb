@@ -39,7 +39,7 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 		}).Error("Failed to connect to MongoDB for adding storage unit")
 		return false, err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	database := client.Database(schema)
 
@@ -66,7 +66,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 		}).Error("Failed to connect to MongoDB for adding row")
 		return false, err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 
@@ -120,26 +120,17 @@ func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, 
 	if err != nil {
 		return false, err
 	}
-	defer client.Disconnect(context.Background())
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 
+	if len(config.UpsertPKColumns) > 0 {
+		return bulkUpsertMongo(collection, config.UpsertPKColumns, rows)
+	}
+
 	documents := make([]any, len(rows))
 	for i, row := range rows {
-		document := make(map[string]any)
-		for _, value := range row {
-			// Skip null values - MongoDB treats missing fields as null for optional fields
-			if value.Extra["IsNull"] == "true" {
-				continue
-			}
-			typeHint := value.Extra["Type"]
-			document[value.Key] = coerceMongoValue(value.Key, value.Value, typeHint)
-		}
-		if rawID, exists := document["_id"]; exists {
-			if id, err := normalizeMongoID(rawID); err == nil {
-				document["_id"] = id
-			}
-		}
+		document := recordsToMongoDoc(row)
 		documents[i] = document
 	}
 
@@ -151,6 +142,60 @@ func (p *MongoDBPlugin) BulkAddRows(config *engine.PluginConfig, schema string, 
 			"rowCount":    len(rows),
 		}).Error("Failed to bulk insert documents into MongoDB collection")
 		return false, handleMongoError(err)
+	}
+
+	return true, nil
+}
+
+// recordsToMongoDoc converts a row of engine.Record values into a MongoDB document map.
+func recordsToMongoDoc(row []engine.Record) map[string]any {
+	document := make(map[string]any)
+	for _, value := range row {
+		if value.Extra["IsNull"] == "true" {
+			continue
+		}
+		typeHint := value.Extra["Type"]
+		document[value.Key] = coerceMongoValue(value.Key, value.Value, typeHint)
+	}
+	if rawID, exists := document["_id"]; exists {
+		if id, err := normalizeMongoID(rawID); err == nil {
+			document["_id"] = id
+		}
+	}
+	return document
+}
+
+// bulkUpsertMongo performs ReplaceOne with upsert:true for each document, batched via BulkWrite.
+func bulkUpsertMongo(collection *mongo.Collection, pkColumns []string, rows [][]engine.Record) (bool, error) {
+	const batchSize = 1000
+
+	for i := 0; i < len(rows); i += batchSize {
+		end := i + batchSize
+		if end > len(rows) {
+			end = len(rows)
+		}
+
+		models := make([]mongo.WriteModel, 0, end-i)
+		for _, row := range rows[i:end] {
+			document := recordsToMongoDoc(row)
+
+			filter := bson.D{}
+			for _, pk := range pkColumns {
+				if val, exists := document[pk]; exists {
+					filter = append(filter, bson.E{Key: pk, Value: val})
+				}
+			}
+
+			models = append(models, mongo.NewReplaceOneModel().
+				SetFilter(filter).
+				SetReplacement(document).
+				SetUpsert(true))
+		}
+
+		_, err := collection.BulkWrite(context.Background(), models)
+		if err != nil {
+			return false, handleMongoError(err)
+		}
 	}
 
 	return true, nil

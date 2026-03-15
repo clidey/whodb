@@ -47,8 +47,7 @@ var redisOperators = map[string]string{
 	"NOT IN":      "NOT IN",
 }
 
-func (p *RedisPlugin) IsAvailable(config *engine.PluginConfig) bool {
-	ctx := context.Background()
+func (p *RedisPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).Error("Failed to connect to Redis for availability check")
@@ -67,7 +66,7 @@ func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 		dbConfig := *config
 		dbConfig.Credentials.Database = strconv.Itoa(i)
 
-		if p.IsAvailable(&dbConfig) {
+		if p.IsAvailable(context.Background(), &dbConfig) {
 			availableDatabases = append(availableDatabases, strconv.Itoa(i))
 		}
 	}
@@ -244,11 +243,10 @@ func (p *RedisPlugin) StorageUnitExists(config *engine.PluginConfig, schema stri
 
 func (p *RedisPlugin) GetRows(
 	config *engine.PluginConfig,
-	schema, storageUnit string,
-	where *model.WhereCondition,
-	sortConditions []*model.SortCondition,
-	pageSize, pageOffset int,
+	req *engine.GetRowsRequest,
 ) (*engine.GetRowsResult, error) {
+	storageUnit := req.StorageUnit
+	where := req.Where
 	ctx := context.Background()
 
 	client, err := DB(config)
@@ -437,6 +435,11 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 	}
 }
 
+// MarkGeneratedColumns is a no-op for Redis (no generated/computed columns).
+func (p *RedisPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
+	return nil
+}
+
 func filterRedisHash(field, value string, where *model.WhereCondition) bool {
 	condition, err := convertWhereConditionToRedisFilter(where)
 	if err != nil {
@@ -609,6 +612,8 @@ func (p *RedisPlugin) FormatValue(val any) string {
 func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return make(map[string]map[string]any), nil
 }
+
+func (p *RedisPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
 
 // ClearTableData - not supported for Redis
 func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {

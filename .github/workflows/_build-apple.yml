@@ -205,12 +205,18 @@ jobs:
         run: |
           APP_PATH="build/darwin/universal/WhoDB.app"
           FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
-          BAML_VERSION=$(grep 'github.com/boundaryml/baml ' core/go.mod | awk '{print $2}' | sed 's/^v//')
+          BAML_VERSION=$(grep 'github.com/boundaryml/baml ' ../core/go.mod | awk '{print $2}' | sed 's/^v//')
 
-          echo "📦 Bundling BAML native library..."
+          if [ -z "$BAML_VERSION" ]; then
+            echo "❌ ERROR: Could not extract BAML version from ../core/go.mod"
+            exit 1
+          fi
+
+          echo "📦 Bundling BAML native library (version: $BAML_VERSION)..."
           mkdir -p "$FRAMEWORKS_DIR"
 
           # Download both architectures for universal binary support
+          DOWNLOAD_COUNT=0
           for arch in "aarch64" "x86_64"; do
             DYLIB_NAME="libbaml_cffi-${arch}-apple-darwin.dylib"
             DOWNLOAD_URL="https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/${DYLIB_NAME}"
@@ -219,10 +225,16 @@ jobs:
             if curl -fsSL -o "$FRAMEWORKS_DIR/$DYLIB_NAME" "$DOWNLOAD_URL"; then
               echo "  ✅ Downloaded $DYLIB_NAME"
               chmod 755 "$FRAMEWORKS_DIR/$DYLIB_NAME"
+              DOWNLOAD_COUNT=$((DOWNLOAD_COUNT + 1))
             else
               echo "  ⚠️ Failed to download $DYLIB_NAME (may not be critical if not running on $arch)"
             fi
           done
+
+          if [ $DOWNLOAD_COUNT -eq 0 ]; then
+            echo "❌ ERROR: Failed to download any BAML dylibs. The app will not work."
+            exit 1
+          fi
 
           echo "📁 Frameworks directory contents:"
           ls -la "$FRAMEWORKS_DIR"
@@ -237,11 +249,8 @@ jobs:
           if [ -f build/darwin/entitlements.plist ]; then
             echo "✅ Entitlements exist after build"
           else
-            echo "❌ Entitlements deleted during build"
-            echo "Recreating from source..."
-            if [ -f ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist ]; then
-              cp ../../desktop-${{ inputs.edition }}/build/darwin/entitlements.plist build/darwin/
-            fi
+            echo "❌ ERROR: Entitlements deleted during build — signing will fail"
+            exit 1
           fi
 
       - name: Patch Bundle ID and Sign (DMG)
@@ -282,10 +291,49 @@ jobs:
           # Validate plist is still valid
           plutil -lint "$PLIST_PATH"
 
+          # Sign inside-out: nested binaries first, then executable, then bundle.
+          # Apple discourages --deep as it can sign in wrong order and apply
+          # inappropriate entitlements to dylibs. Dylibs must NOT use --options
+          # runtime — the process-level hardened runtime from the main executable
+          # covers all loaded code, and the app's entitlements apply process-wide.
           echo ""
-          echo "🔏 Signing app bundle for DMG distribution with Developer ID..."
-          codesign --force --deep \
+          echo "🔏 Signing nested binaries for DMG distribution..."
+          while IFS= read -r -d '' dylib; do
+            echo "  Signing: $(basename "$dylib")"
+            codesign --force \
+              --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+              --timestamp \
+              "$dylib"
+          done < <(find "$APP_PATH" -name "*.dylib" -print0 2>/dev/null)
+
+          while IFS= read -r -d '' sofile; do
+            echo "  Signing: $(basename "$sofile")"
+            codesign --force \
+              --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+              --timestamp \
+              "$sofile"
+          done < <(find "$APP_PATH" -name "*.so" -print0 2>/dev/null)
+
+          while IFS= read -r -d '' framework; do
+            echo "  Signing framework: $(basename "$framework")"
+            codesign --force \
+              --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+              --timestamp \
+              "$framework"
+          done < <(find "$APP_PATH/Contents/Frameworks" -maxdepth 1 -name "*.framework" -print0 2>/dev/null)
+
+          echo "🔏 Signing main executable..."
+          codesign --force \
             --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --entitlements build/darwin/entitlements.plist \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH/Contents/MacOS/whodb"
+
+          echo "🔏 Signing app bundle..."
+          codesign --force \
+            --sign "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --entitlements build/darwin/entitlements.plist \
             --options runtime \
             --timestamp \
             "$APP_PATH"
@@ -405,7 +453,12 @@ jobs:
           echo "Using entitlements: build/darwin/entitlements.plist"
 
           # Step 2a: Sign nested binaries FIRST (dylibs, frameworks)
-          # This is required because third-party libraries may include unsigned dylibs
+          # IMPORTANT: Dylibs must NOT use --options runtime. When a dylib is signed
+          # with hardened runtime, it needs its own entitlements to allow things like
+          # executable memory mapping (which FFI libraries like BAML require). Without
+          # --options runtime, the process-level hardened runtime from the main executable
+          # covers all loaded code, and the app's entitlements (allow-jit, allow-unsigned-
+          # executable-memory, disable-library-validation) apply to the whole process.
           echo ""
           echo "📦 Step 2a: Signing nested binaries (dylibs, frameworks)..."
 
@@ -415,7 +468,6 @@ jobs:
             echo "  Signing: $(basename "$dylib")"
             codesign --force \
               --sign "$MAS_CERT_ID" \
-              --options runtime \
               --timestamp \
               "$dylib"
             DYLIB_COUNT=$((DYLIB_COUNT + 1))
@@ -426,7 +478,6 @@ jobs:
             echo "  Signing: $(basename "$sofile")"
             codesign --force \
               --sign "$MAS_CERT_ID" \
-              --options runtime \
               --timestamp \
               "$sofile"
             DYLIB_COUNT=$((DYLIB_COUNT + 1))
@@ -437,7 +488,6 @@ jobs:
             echo "  Signing framework: $(basename "$framework")"
             codesign --force \
               --sign "$MAS_CERT_ID" \
-              --options runtime \
               --timestamp \
               "$framework"
             DYLIB_COUNT=$((DYLIB_COUNT + 1))

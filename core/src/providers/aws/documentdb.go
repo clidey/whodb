@@ -37,7 +37,7 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 
 	log.Debugf("DocumentDB: starting discovery for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &docdb.DescribeDBClustersInput{
 			Marker:     nextToken,
 			MaxRecords: aws.Int32(50),

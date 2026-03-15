@@ -177,7 +177,6 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 	defer rows.Close()
 
 	var columns []engine.Column
-	pkColTypes := make(map[string]string)
 
 	for rows.Next() {
 		var cid int
@@ -193,59 +192,12 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 
 		normalizedType := NormalizeType(strings.ToUpper(dataType))
 		col := engine.Column{
-			Name:      name,
-			Type:      normalizedType,
-			IsPrimary: pk > 0,
+			Name:       name,
+			Type:       normalizedType,
+			IsNullable: notNull == 0,
+			IsPrimary:  pk > 0,
 		}
 		columns = append(columns, col)
-
-		if pk > 0 {
-			pkColTypes[name] = strings.ToUpper(dataType)
-		}
-	}
-
-	// Detect auto-increment: SQLite INTEGER PRIMARY KEY with a single PK column
-	if len(pkColTypes) == 1 {
-		for i := range columns {
-			if columns[i].IsPrimary {
-				pkType := pkColTypes[columns[i].Name]
-				colType := strings.ToUpper(columns[i].Type)
-				if pkType == "INTEGER" || colType == "INTEGER" {
-					columns[i].IsAutoIncrement = true
-				}
-			}
-		}
-	}
-
-	// Detect generated columns via table_xinfo
-	tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
-	if err == nil {
-		xrows, xerr := db.Raw(tableXInfoQuery).Rows()
-		if xerr == nil {
-			defer xrows.Close()
-			for xrows.Next() {
-				var cid int
-				var name string
-				var dataType string
-				var notNull int
-				var dfltValue any
-				var pk int
-				var hidden int
-
-				if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
-					continue
-				}
-
-				if hidden == 2 || hidden == 3 {
-					for i := range columns {
-						if columns[i].Name == name {
-							columns[i].IsComputed = true
-							break
-						}
-					}
-				}
-			}
-		}
 	}
 
 	// Enrich with foreign key relationships using the provided db connection directly
@@ -282,28 +234,118 @@ func (p *Sqlite3Plugin) GetColumnsForTable(config *engine.PluginConfig, schema, 
 	})
 }
 
+// MarkGeneratedColumns detects SQLite auto-increment (INTEGER PRIMARY KEY) and
+// generated columns (via PRAGMA table_xinfo hidden flags).
+func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
+	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
+		if !ok {
+			return false, fmt.Errorf("failed to create SQLite SQL builder")
+		}
+
+		// Detect auto-increment: SQLite INTEGER PRIMARY KEY with a single PK column
+		// We need PK column types from table_info
+		tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
+		if err != nil {
+			return false, err
+		}
+		rows, err := db.Raw(tableInfoQuery).Rows()
+		if err != nil {
+			return false, err
+		}
+		defer rows.Close()
+
+		pkColTypes := make(map[string]string)
+		for rows.Next() {
+			var cid int
+			var name, dataType string
+			var notNull int
+			var dfltValue any
+			var pk int
+			if err := rows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk); err != nil {
+				continue
+			}
+			if pk > 0 {
+				pkColTypes[name] = strings.ToUpper(dataType)
+			}
+		}
+
+		if len(pkColTypes) == 1 {
+			for i := range columns {
+				if columns[i].IsPrimary {
+					pkType := pkColTypes[columns[i].Name]
+					colType := strings.ToUpper(columns[i].Type)
+					if pkType == "INTEGER" || colType == "INTEGER" {
+						columns[i].IsAutoIncrement = true
+					}
+				}
+			}
+		}
+
+		// Detect generated columns via table_xinfo
+		tableXInfoQuery, err := builder.PragmaQuery("table_xinfo", storageUnit)
+		if err != nil {
+			return true, nil
+		}
+		xrows, xerr := db.Raw(tableXInfoQuery).Rows()
+		if xerr != nil {
+			return true, nil
+		}
+		defer xrows.Close()
+		for xrows.Next() {
+			var cid int
+			var name, dataType string
+			var notNull int
+			var dfltValue any
+			var pk, hidden int
+
+			if err := xrows.Scan(&cid, &name, &dataType, &notNull, &dfltValue, &pk, &hidden); err != nil {
+				continue
+			}
+
+			if hidden == 2 || hidden == 3 {
+				for i := range columns {
+					if columns[i].Name == name {
+						columns[i].IsComputed = true
+						break
+					}
+				}
+			}
+		}
+
+		return true, nil
+	})
+	return err
+}
+
 // GetColumnTypes uses PRAGMA table_info directly instead of GORM's DDL parser.
-func (p *Sqlite3Plugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+func (p *Sqlite3Plugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]gorm_plugin.ColumnTypeInfo, error) {
 	cols, err := p.getColumnsViaPragma(db, tableName)
 	if err != nil {
 		return nil, err
 	}
-	columnTypes := make(map[string]string, len(cols))
+	columnTypes := make(map[string]gorm_plugin.ColumnTypeInfo, len(cols))
 	for _, col := range cols {
-		columnTypes[col.Name] = col.Type
+		columnTypes[col.Name] = gorm_plugin.ColumnTypeInfo{
+			Type:       col.Type,
+			IsNullable: col.IsNullable,
+		}
 	}
 	return columnTypes, nil
 }
 
 // GetOrderedColumnsWithTypes uses PRAGMA table_info directly instead of GORM's DDL parser.
-func (p *Sqlite3Plugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName string) ([]engine.Column, map[string]string, error) {
+func (p *Sqlite3Plugin) GetOrderedColumnsWithTypes(db *gorm.DB, schema, tableName string) ([]engine.Column, map[string]gorm_plugin.ColumnTypeInfo, error) {
 	cols, err := p.getColumnsViaPragma(db, tableName)
 	if err != nil {
 		return nil, nil, err
 	}
-	types := make(map[string]string, len(cols))
+	types := make(map[string]gorm_plugin.ColumnTypeInfo, len(cols))
 	for _, col := range cols {
-		types[col.Name] = col.Type
+		types[col.Name] = gorm_plugin.ColumnTypeInfo{
+			Type:       col.Type,
+			IsNullable: col.IsNullable,
+		}
 	}
 	return cols, types, nil
 }
@@ -323,7 +365,9 @@ func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []eng
 }
 
 // GetRows overrides the base GORM implementation to handle SQLite datetime quirks
-func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	schema, storageUnit := req.Schema, req.StorageUnit
+	where, sort, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		builder := gorm_plugin.NewSQLBuilder(db, p)
 		fullTable := builder.BuildFullTableName("", storageUnit)

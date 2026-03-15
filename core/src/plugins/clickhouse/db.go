@@ -49,7 +49,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	options := &clickhouse.Options{
 		Addr:             address,
 		Auth:             auth,
-		DialTimeout:      time.Second * 30,
+		DialTimeout:      time.Duration(connectionInput.ConnectionTimeout) * time.Second,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,

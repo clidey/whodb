@@ -99,7 +99,8 @@ import {
     XMarkIcon
 } from "./heroicons";
 import {Tip} from "./tip";
-import {formatShortcut, isModKeyPressed} from "@/utils/platform";
+import {formatShortcut} from "@/utils/platform";
+import {matchesShortcut, SHORTCUTS} from "@/utils/shortcuts";
 import {isNoSQL} from "@/utils/functions";
 
 // Dynamically load EE Export component
@@ -827,13 +828,30 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
     }, [onRefresh]);
 
-    // Helper to scroll focused row into view
+    // Helper to scroll focused row into view via the virtualizer's scroll container.
+    // Uses smooth scrolling for small jumps, instant for large ones to avoid virtualizer flicker.
     const scrollRowIntoView = useCallback((rowIndex: number) => {
-        const rowElement = document.querySelector(`[data-row-idx="${rowIndex}"]`);
-        if (rowElement) {
-            rowElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const container = document.querySelector<HTMLElement>('[data-slot="table-body"]');
+        if (!container) return;
+
+        const rowTop = rowIndex * rowHeight;
+        const rowBottom = rowTop + rowHeight;
+        const viewTop = container.scrollTop;
+        const viewBottom = viewTop + container.clientHeight;
+
+        let target: number | null = null;
+        if (rowTop < viewTop) {
+            target = rowTop;
+        } else if (rowBottom > viewBottom) {
+            target = rowBottom - container.clientHeight;
         }
-    }, []);
+
+        if (target === null) return;
+
+        const distance = Math.abs(target - viewTop);
+        const behavior = distance > container.clientHeight ? 'instant' : 'smooth';
+        container.scrollTo({ top: target, behavior });
+    }, [rowHeight]);
 
     // Helper to move focus and optionally extend selection
     const moveFocus = useCallback((newIndex: number, extendSelection: boolean = false) => {
@@ -870,147 +888,152 @@ export const StorageUnitTable: FC<TableProps> = ({
             // Skip if no rows
             if (paginatedRows.length === 0) return;
 
-            const cmdKey = isModKeyPressed(event);
-
-            // Arrow key navigation (no modifier required)
-            switch (event.key) {
-                case 'ArrowDown':
-                    event.preventDefault();
-                    if (focusedRowIndex === null) {
-                        moveFocus(0, event.shiftKey);
-                    } else {
-                        moveFocus(Math.min(focusedRowIndex + 1, paginatedRows.length - 1), event.shiftKey);
-                    }
-                    return;
-
-                case 'ArrowUp':
-                    event.preventDefault();
-                    if (focusedRowIndex === null) {
-                        moveFocus(paginatedRows.length - 1, event.shiftKey);
-                    } else {
-                        moveFocus(Math.max(focusedRowIndex - 1, 0), event.shiftKey);
-                    }
-                    return;
-
-                case 'Home':
-                    event.preventDefault();
-                    moveFocus(0, event.shiftKey);
-                    return;
-
-                case 'End':
-                    event.preventDefault();
-                    moveFocus(paginatedRows.length - 1, event.shiftKey);
-                    return;
-
-                case 'PageDown':
-                    event.preventDefault();
-                    if (focusedRowIndex === null) {
-                        moveFocus(Math.min(visibleRowCount - 1, paginatedRows.length - 1), event.shiftKey);
-                    } else {
-                        moveFocus(Math.min(focusedRowIndex + visibleRowCount, paginatedRows.length - 1), event.shiftKey);
-                    }
-                    return;
-
-                case 'PageUp':
-                    event.preventDefault();
-                    if (focusedRowIndex === null) {
-                        moveFocus(0, event.shiftKey);
-                    } else {
-                        moveFocus(Math.max(focusedRowIndex - visibleRowCount, 0), event.shiftKey);
-                    }
-                    return;
-
-                case ' ': // Space - toggle selection of focused row
-                    if (focusedRowIndex !== null) {
-                        event.preventDefault();
-                        handleSelectRow(focusedRowIndex);
-                    }
-                    return;
-
-                case 'Enter': // Enter - edit focused row
-                    if (focusedRowIndex !== null && !disableEdit) {
-                        event.preventDefault();
-                        handleEdit(focusedRowIndex);
-                    }
-                    return;
-
-                case 'Escape':
-                    // Clear focus and selection
-                    event.preventDefault();
-                    setFocusedRowIndex(null);
-                    return;
+            // Extend-select variants (Shift+Arrow)
+            if (matchesShortcut(event, SHORTCUTS.extendSelectDown)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(0, true);
+                } else {
+                    moveFocus(Math.min(focusedRowIndex + 1, paginatedRows.length - 1), true);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.extendSelectUp)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(paginatedRows.length - 1, true);
+                } else {
+                    moveFocus(Math.max(focusedRowIndex - 1, 0), true);
+                }
+                return;
             }
 
-            // Modifier key combinations (Cmd/Ctrl)
-            if (cmdKey) {
-                // Handle Shift+Key combinations first
-                if (event.shiftKey) {
-                    switch (event.key.toLowerCase()) {
-                        case 'e':
-                            // Mod+Shift+E: Export (opens export dialog)
-                            event.preventDefault();
-                            openExport();
-                            break;
-                        case 'i':
-                            // Mod+Shift+I: Import (opens import dialog)
-                            if (isImportSupported && allowImport) {
-                                event.preventDefault();
-                                setShowImport(true);
-                            }
-                            break;
-                    }
-                    return;
+            // Mod+Shift combos
+            if (matchesShortcut(event, SHORTCUTS.exportData)) {
+                event.preventDefault();
+                openExport();
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.mockData)) {
+                if (isMockDataSupported) {
+                    event.preventDefault();
+                    setShowMockDataSheet(true);
                 }
+                return;
+            }
 
-                // Handle Cmd/Ctrl+Key combinations (without Shift)
-                switch (event.key.toLowerCase()) {
-                    case 'm':
-                        // Mod+M: Mock data (only for databases that support it)
-                        if (isMockDataSupported) {
-                            event.preventDefault();
-                            setShowMockDataSheet(true);
-                        }
-                        break;
-                    case 'r':
-                        // Mod+R: Refresh table
-                        event.preventDefault();
-                        onRefresh?.();
-                        break;
-                    case 'a':
-                        // Mod+A: Select/deselect all visible rows
-                        event.preventDefault();
-                        setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
-                        break;
-                    case 'e':
-                        // Mod+E: Edit focused row
-                        if (focusedRowIndex !== null && !disableEdit) {
-                            event.preventDefault();
-                            handleEdit(focusedRowIndex);
-                        }
-                        break;
-                    case 'backspace':
-                    case 'delete':
-                        // Mod+Delete/Backspace: Delete focused row
-                        if (focusedRowIndex !== null && !disableEdit) {
-                            event.preventDefault();
-                            handleDeleteRow(focusedRowIndex);
-                        }
-                        break;
-                    case 'arrowright':
-                        // Mod+ArrowRight: Next page
-                        if (onPageChange && currentPage < totalPages) {
-                            event.preventDefault();
-                            onPageChange(currentPage + 1);
-                        }
-                        break;
-                    case 'arrowleft':
-                        // Mod+ArrowLeft: Previous page
-                        if (onPageChange && currentPage > 1) {
-                            event.preventDefault();
-                            onPageChange(currentPage - 1);
-                        }
-                        break;
+            // Mod combos (no Shift)
+            if (matchesShortcut(event, SHORTCUTS.importData)) {
+                if (isImportSupported && allowImport) {
+                    event.preventDefault();
+                    setShowImport(true);
                 }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.refresh)) {
+                event.preventDefault();
+                onRefresh?.();
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.selectAll)) {
+                event.preventDefault();
+                setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.editRowAlt)) {
+                if (focusedRowIndex !== null && !disableEdit) {
+                    event.preventDefault();
+                    handleEdit(focusedRowIndex);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.deleteRow) || matchesShortcut(event, SHORTCUTS.deleteRowAlt)) {
+                if (focusedRowIndex !== null && !disableEdit) {
+                    event.preventDefault();
+                    handleDeleteRow(focusedRowIndex);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.nextPage)) {
+                event.preventDefault();
+                if (onPageChange && currentPage < totalPages) {
+                    onPageChange(currentPage + 1);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.prevPage)) {
+                event.preventDefault();
+                if (onPageChange && currentPage > 1) {
+                    onPageChange(currentPage - 1);
+                }
+                return;
+            }
+
+            // Plain key navigation
+            if (matchesShortcut(event, SHORTCUTS.moveDown)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(0, false);
+                } else {
+                    moveFocus(Math.min(focusedRowIndex + 1, paginatedRows.length - 1), false);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.moveUp)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(paginatedRows.length - 1, false);
+                } else {
+                    moveFocus(Math.max(focusedRowIndex - 1, 0), false);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.moveFirst)) {
+                event.preventDefault();
+                moveFocus(0, false);
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.moveLast)) {
+                event.preventDefault();
+                moveFocus(paginatedRows.length - 1, false);
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.pageDown)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(Math.min(visibleRowCount - 1, paginatedRows.length - 1), false);
+                } else {
+                    moveFocus(Math.min(focusedRowIndex + visibleRowCount, paginatedRows.length - 1), false);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.pageUp)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(0, false);
+                } else {
+                    moveFocus(Math.max(focusedRowIndex - visibleRowCount, 0), false);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.toggleSelect)) {
+                if (focusedRowIndex !== null) {
+                    event.preventDefault();
+                    handleSelectRow(focusedRowIndex);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.editRow)) {
+                if (focusedRowIndex !== null && !disableEdit) {
+                    event.preventDefault();
+                    handleEdit(focusedRowIndex);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.closeDialogs)) {
+                event.preventDefault();
+                setFocusedRowIndex(null);
+                return;
             }
         };
 
@@ -1275,7 +1298,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         >
                             <DocumentIcon className="w-4 h-4" />
                             {t('exportAllAsCsv')}
-                            <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                         </ContextMenuItem>
                         <ContextMenuItem
                             onSelect={() => openExport('excel', true)}
@@ -1310,7 +1333,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     >
                         <DocumentDuplicateIcon className="w-4 h-4" />
                         {t('mockData')}
-                        <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                        <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
                     </ContextMenuItem>
                 )}
                 {!limitContextMenu && (
@@ -1324,7 +1347,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     >
                         <TrashIcon className="w-4 h-4 text-destructive" />
                         {t('deleteRow')}
-                        <ContextMenuShortcut>{formatShortcut(["Mod", "Delete"])}</ContextMenuShortcut>
+                        <ContextMenuShortcut>{formatShortcut(SHORTCUTS.deleteRow.displayKeys)}</ContextMenuShortcut>
                     </ContextMenuItem>
                 )}
             </ContextMenuContent>
@@ -1417,7 +1440,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         <ContextMenuItem onSelect={() => setShowMockDataSheet(true)} data-testid="context-menu-mock-data">
                                             <CalculatorIcon className="w-4 h-4" />
                                             {t('mockData')}
-                                            <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                     )}
                                     {!limitContextMenu && isMockDataSupported && <ContextMenuSeparator />}
@@ -1434,7 +1457,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             >
                                                 <DocumentIcon className="w-4 h-4" />
                                                 {t('exportAllAsCsv')}
-                                                <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                                             </ContextMenuItem>
                                             <ContextMenuItem
                                                 onSelect={() => openExport('excel', true)}
@@ -1468,7 +1491,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         <ContextMenuItem onSelect={() => onRefresh?.()}>
                                             <CircleStackIcon className="w-4 h-4" />
                                             {t('refreshData')}
-                                            <ContextMenuShortcut>{formatShortcut(["Mod", "R"])}</ContextMenuShortcut>
+                                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.refresh.displayKeys)}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                     )}
                                     {!limitContextMenu && (
@@ -1479,7 +1502,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         >
                                             <CheckCircleIcon className="w-4 h-4" />
                                             {checked.length === paginatedRows.length ? t('deselectAll') : t('selectAll')}
-                                            <ContextMenuShortcut>{formatShortcut(["Mod", "A"])}</ContextMenuShortcut>
+                                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.selectAll.displayKeys)}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                     )}
                                 </ContextMenuContent>
@@ -1515,7 +1538,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
                                 {t('mockData')}
-                                <ContextMenuShortcut>{formatShortcut(["Mod", "M"])}</ContextMenuShortcut>
+                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuSub>
                                 <ContextMenuSubTrigger>
@@ -1530,7 +1553,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportAllAsCsv')}
-                                        <ContextMenuShortcut>{formatShortcut(["Mod", "Shift", "E"])}</ContextMenuShortcut>
+                                        <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                                     </ContextMenuItem>
                                     <ContextMenuItem
                                         onSelect={() => openExport('excel', true)}

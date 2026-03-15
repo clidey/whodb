@@ -72,11 +72,16 @@ export const Export: FC<IExportProps> = ({
     }, [defaultFormat, preselectedFormat]);
 
     // Export options as lists - CE version only has basic download
-    const exportFormatOptions = useMemo(() => [
-        {value: 'csv', label: t('formatCsv')},
-        {value: 'excel', label: t('formatExcel')},
-        {value: 'ndjson', label: t('formatJson')},
-    ] as const, [t]);
+    const exportFormatOptions = useMemo(() => {
+        const options: {value: 'csv' | 'excel' | 'ndjson', label: string}[] = [
+            {value: 'csv', label: t('formatCsv')},
+            {value: 'excel', label: t('formatExcel')},
+        ];
+        if (isNoSQL(databaseType ?? '')) {
+            options.push({value: 'ndjson', label: t('formatJson')});
+        }
+        return options;
+    }, [t, databaseType]);
 
     const exportDelimiterOptions = useMemo(() => [
         {value: ',', label: t('delimiterComma')},

@@ -39,11 +39,12 @@ func TestConvertStringValue_NullableCaseInsensitive(t *testing.T) {
 		name       string
 		value      string
 		columnType string
+		isNullable bool
 		wantErr    bool
 		checkVal   func(t *testing.T, val any)
 	}{
 		{
-			name:       "Nullable(Int32) mixed case",
+			name:       "Nullable(Int32) mixed case via type wrapper",
 			value:      "100",
 			columnType: "Nullable(Int32)",
 			checkVal: func(t *testing.T, val any) {
@@ -71,7 +72,7 @@ func TestConvertStringValue_NullableCaseInsensitive(t *testing.T) {
 			},
 		},
 		{
-			name:       "NULLABLE(INT32) null value",
+			name:       "NULLABLE(INT32) null value via type wrapper",
 			value:      "",
 			columnType: "NULLABLE(INT32)",
 			checkVal: func(t *testing.T, val any) {
@@ -98,11 +99,78 @@ func TestConvertStringValue_NullableCaseInsensitive(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:       "empty value for nullable INTEGER via isNullable param",
+			value:      "",
+			columnType: "INTEGER",
+			isNullable: true,
+			checkVal: func(t *testing.T, val any) {
+				nv, ok := val.(sql.NullInt64)
+				if !ok {
+					t.Fatalf("expected sql.NullInt64, got %T", val)
+				}
+				if nv.Valid {
+					t.Fatalf("expected NullInt64 with Valid=false, got %+v", nv)
+				}
+			},
+		},
+		{
+			name:       "empty value for non-nullable INTEGER errors",
+			value:      "",
+			columnType: "INTEGER",
+			isNullable: false,
+			wantErr:    true,
+		},
+		{
+			name:       "empty value for nullable FLOAT via isNullable param",
+			value:      "",
+			columnType: "FLOAT",
+			isNullable: true,
+			checkVal: func(t *testing.T, val any) {
+				nv, ok := val.(sql.NullFloat64)
+				if !ok {
+					t.Fatalf("expected sql.NullFloat64, got %T", val)
+				}
+				if nv.Valid {
+					t.Fatalf("expected NullFloat64 with Valid=false, got %+v", nv)
+				}
+			},
+		},
+		{
+			name:       "empty value for nullable TEXT via isNullable param",
+			value:      "",
+			columnType: "TEXT",
+			isNullable: true,
+			checkVal: func(t *testing.T, val any) {
+				nv, ok := val.(sql.NullString)
+				if !ok {
+					t.Fatalf("expected sql.NullString, got %T", val)
+				}
+				if nv.Valid {
+					t.Fatalf("expected NullString with Valid=false, got %+v", nv)
+				}
+			},
+		},
+		{
+			name:       "isNullable OR'd with NULLABLE wrapper",
+			value:      "",
+			columnType: "NULLABLE(INT32)",
+			isNullable: false, // wrapper overrides
+			checkVal: func(t *testing.T, val any) {
+				nv, ok := val.(sql.NullInt64)
+				if !ok {
+					t.Fatalf("expected sql.NullInt64, got %T", val)
+				}
+				if nv.Valid {
+					t.Fatalf("expected NullInt64 with Valid=false, got %+v", nv)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			val, err := p.ConvertStringValue(tt.value, tt.columnType)
+			val, err := p.ConvertStringValue(tt.value, tt.columnType, tt.isNullable)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error = %v, wantErr = %v", err, tt.wantErr)
 			}
@@ -148,7 +216,7 @@ func TestConvertArrayValue_NoInfiniteRecursion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			val, err := p.ConvertStringValue(tt.value, tt.columnType)
+			val, err := p.ConvertStringValue(tt.value, tt.columnType, false)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error = %v, wantErr = %v", err, tt.wantErr)
 			}

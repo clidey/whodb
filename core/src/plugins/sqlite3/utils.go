@@ -58,14 +58,14 @@ func (ds DateTimeString) Value() (driver.Value, error) {
 }
 
 // ConvertStringValue overrides the base GORM implementation to preserve datetime strings
-func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string) (any, error) {
+func (p *Sqlite3Plugin) ConvertStringValue(value, columnType string, isNullable bool) (any, error) {
 	// For datetime types, preserve the original string value
 	normalizedType := strings.ToUpper(columnType)
 	if normalizedType == "DATE" || normalizedType == "DATETIME" || normalizedType == "TIMESTAMP" {
 		return value, nil
 	}
 	// For non-datetime types, delegate to the base GORM implementation
-	return p.GormPlugin.ConvertStringValue(value, columnType)
+	return p.GormPlugin.ConvertStringValue(value, columnType, isNullable)
 }
 
 func (p *Sqlite3Plugin) GetPrimaryKeyColQuery() string {

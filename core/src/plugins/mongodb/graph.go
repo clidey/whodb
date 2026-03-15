@@ -44,7 +44,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		}).Error("Failed to connect to MongoDB for graph generation")
 		return nil, err
 	}
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	cursor, err := db.ListCollections(ctx, bson.M{})

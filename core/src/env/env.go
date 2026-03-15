@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/migrate"
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
@@ -63,13 +64,6 @@ var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
 
 var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
-var OpenAICompatibleEndpoint = os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT")
-var OpenAICompatibleAPIKey = os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY")
-
-var CustomModels = common.FilterList(strings.Split(os.Getenv("WHODB_CUSTOM_MODELS"), ","), func(item string) bool {
-	return strings.TrimSpace(item) != ""
-})
-
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -84,6 +78,11 @@ var LogFormat = os.Getenv("WHODB_LOG_FORMAT")          // only option right now 
 const DefaultLogDir = "/var/log/whodb"
 const DefaultLogFile = DefaultLogDir + "/whodb.log"
 const DefaultAccessLogFile = DefaultLogDir + "/whodb.access.log"
+
+// GetDisableUpdateCheck returns true if update checking is disabled.
+func GetDisableUpdateCheck() bool {
+	return os.Getenv("WHODB_DISABLE_UPDATE_CHECK") == "true"
+}
 
 var DisableMockDataGeneration = os.Getenv("WHODB_DISABLE_MOCK_DATA_GENERATION")
 
@@ -164,14 +163,9 @@ func GetConfiguredChatProviders() []ChatProvider {
 		})
 	}
 
-	if len(OpenAICompatibleAPIKey) > 0 && len(OpenAICompatibleEndpoint) > 0 && len(CustomModels) > 0 {
-		providers = append(providers, ChatProvider{
-			Type:       "OpenAI-Compatible",
-			Name:       "OpenAI-Compatible",
-			APIKey:     OpenAICompatibleAPIKey,
-			Endpoint:   GetOpenAICompatibleEndpoint(),
-			ProviderId: "openai-compatible-1",
-		})
+	// Flag if legacy OpenAI-Compatible env vars are still set
+	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
+		migrate.DeprecatedOpenAICompatibleEnv = true
 	}
 
 	// Add all generic providers
@@ -180,7 +174,7 @@ func GetConfiguredChatProviders() []ChatProvider {
 			Type:       genericProvider.ProviderId, // Use provider ID as type
 			Name:       genericProvider.Name,       // Display name
 			APIKey:     genericProvider.APIKey,
-			Endpoint:   genericProvider.BaseURL,
+			Endpoint:   common.ResolveLocalURL(genericProvider.BaseURL),
 			ProviderId: genericProvider.ProviderId,
 			ClientType: genericProvider.ClientType, // BAML client type
 			IsGeneric:  true,                       // Mark as generic provider
@@ -200,6 +194,39 @@ func GetConfiguredChatProviders() []ChatProvider {
 	})
 
 	return providers
+}
+
+// ResolvedCredentials holds provider credentials resolved from environment config.
+type ResolvedCredentials struct {
+	ModelType string // Provider type as sent by the frontend (ProviderId)
+	Token     string // API key
+	Endpoint  string // Base URL
+}
+
+// ResolveProviderCredentials looks up a provider by ID and resolves credentials.
+// Request-level values take precedence over environment-configured values.
+func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, requestModelType string) ResolvedCredentials {
+	result := ResolvedCredentials{
+		ModelType: requestModelType,
+		Token:     requestToken,
+		Endpoint:  requestEndpoint,
+	}
+	if providerId == "" {
+		return result
+	}
+	for _, provider := range GetConfiguredChatProviders() {
+		if provider.ProviderId != providerId {
+			continue
+		}
+		if result.Token == "" {
+			result.Token = provider.APIKey
+		}
+		if result.Endpoint == "" {
+			result.Endpoint = provider.Endpoint
+		}
+		break
+	}
+	return result
 }
 
 func GetOllamaEndpoint() string {
@@ -241,13 +268,6 @@ func GetAnthropicEndpoint() string {
 func GetOpenAIEndpoint() string {
 	if OpenAIEndpoint != "" {
 		return OpenAIEndpoint
-	}
-	return "https://api.openai.com/v1"
-}
-
-func GetOpenAICompatibleEndpoint() string {
-	if OpenAICompatibleEndpoint != "" && OpenAICompatibleAPIKey != "" && len(CustomModels) > 0 {
-		return OpenAICompatibleEndpoint
 	}
 	return "https://api.openai.com/v1"
 }

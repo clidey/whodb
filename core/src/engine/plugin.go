@@ -17,6 +17,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -49,10 +50,12 @@ type ExternalModel struct {
 
 // PluginConfig contains all configuration needed to connect to and operate on a database.
 type PluginConfig struct {
-	Credentials    *Credentials
-	ExternalModel  *ExternalModel
-	Transaction    any  // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
-	MultiStatement bool // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
+	Credentials           *Credentials
+	ExternalModel         *ExternalModel
+	Transaction           any      // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
+	MultiStatement        bool     // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
+	UpsertPKColumns       []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	SkipConflictPKColumns []string // PK columns for ON CONFLICT DO NOTHING (append mode — skip duplicate rows)
 }
 
 // Record represents a key-value pair with optional extra metadata,
@@ -73,6 +76,7 @@ type StorageUnit struct {
 type Column struct {
 	Type             string
 	Name             string
+	IsNullable       bool
 	IsPrimary        bool
 	IsAutoIncrement  bool
 	IsComputed       bool // Database-managed, generated, etc
@@ -130,11 +134,21 @@ type SSLStatus struct {
 	Mode      string // SSL mode: disabled, required, verify-ca, verify-identity, etc.
 }
 
+// GetRowsRequest bundles the parameters for a GetRows query.
+type GetRowsRequest struct {
+	Schema      string
+	StorageUnit string
+	Where       *model.WhereCondition
+	Sort        []*model.SortCondition
+	PageSize    int
+	PageOffset  int
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
 	GetDatabases(config *PluginConfig) ([]string, error)
-	IsAvailable(config *PluginConfig) bool
+	IsAvailable(ctx context.Context, config *PluginConfig) bool
 	GetAllSchemas(config *PluginConfig) ([]string, error)
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
@@ -144,7 +158,7 @@ type PluginFunctions interface {
 	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)
 	BulkAddRows(config *PluginConfig, schema string, storageUnit string, rows [][]Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
-	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRows(config *PluginConfig, req *GetRowsRequest) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string, params ...any) (*GetRowsResult, error)
@@ -153,9 +167,14 @@ type PluginFunctions interface {
 	FormatValue(val any) string
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)
 
+	// MarkGeneratedColumns enriches columns with auto-increment and computed column flags
+	// by querying database-specific system catalogs
+	MarkGeneratedColumns(config *PluginConfig, schema string, storageUnit string, columns []Column) error
+
 	// Mock data generation methods
 	GetColumnConstraints(config *PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error)
 	ClearTableData(config *PluginConfig, schema string, storageUnit string) (bool, error)
+	NullifyFKColumn(config *PluginConfig, schema string, storageUnit string, column string) error
 
 	// Foreign key detection
 	GetForeignKeyRelationships(config *PluginConfig, schema string, storageUnit string) (map[string]*ForeignKeyRelationship, error)

@@ -16,6 +16,7 @@
 
 import {ComponentType, ReactElement} from "react";
 import {Icons} from "../components/icons";
+import {EEDatabaseType} from "./ee-types";
 
 /**
  * Type category for grouping database types in the UI.
@@ -329,8 +330,7 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
                     : {};
 
             // Then map EE database types to the correct format with resolved icons
-            // @ts-ignore - TODO: fix this
-            eeDatabaseTypes = eeConfig.eeDatabaseTypes.map(dbType => ({
+            eeDatabaseTypes = (eeConfig.eeDatabaseTypes as EEDatabaseType[]).map((dbType): IDatabaseDropdownItem => ({
                 id: dbType.id,
                 label: dbType.label,
                 icon: Icons.Logos[dbType.iconName as keyof typeof Icons.Logos],

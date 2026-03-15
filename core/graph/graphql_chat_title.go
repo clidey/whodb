@@ -55,34 +55,27 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		}, nil
 	}
 
-	// Build token lookup if providerId is set
-	token := ""
+	// Resolve credentials from environment if providerId is set
+	providerId := ""
+	if input.ProviderID != nil {
+		providerId = *input.ProviderID
+	}
+	requestToken := ""
 	if input.Token != nil {
-		token = *input.Token
+		requestToken = *input.Token
 	}
-	endpoint := ""
+	requestEndpoint := ""
 	if input.Endpoint != nil {
-		endpoint = *input.Endpoint
+		requestEndpoint = *input.Endpoint
 	}
-
-	if input.ProviderID != nil && *input.ProviderID != "" && token == "" {
-		for _, provider := range env.GetConfiguredChatProviders() {
-			if provider.ProviderId == *input.ProviderID {
-				token = provider.APIKey
-				if endpoint == "" {
-					endpoint = provider.Endpoint
-				}
-				break
-			}
-		}
-	}
+	creds := env.ResolveProviderCredentials(providerId, requestToken, requestEndpoint, input.ModelType)
 
 	// Build ExternalModel for BAML
 	externalModel := &engine.ExternalModel{
-		Type:     input.ModelType,
-		Token:    token,
+		Type:     creds.ModelType,
+		Token:    creds.Token,
 		Model:    input.Model,
-		Endpoint: endpoint,
+		Endpoint: creds.Endpoint,
 	}
 
 	// Create the prompt for title generation

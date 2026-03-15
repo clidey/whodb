@@ -23,14 +23,17 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // BatchConfig holds configuration for batch operations
 type BatchConfig struct {
-	BatchSize     int  // Number of records per batch
-	UseBulkInsert bool // Use database-specific bulk insert when available
-	FailOnError   bool // Stop on first error or continue
-	LogProgress   bool // Log progress during batch operations
+	BatchSize             int      // Number of records per batch
+	UseBulkInsert         bool     // Use database-specific bulk insert when available
+	FailOnError           bool     // Stop on first error or continue
+	LogProgress           bool     // Log progress during batch operations
+	UpsertPKColumns       []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	SkipConflictPKColumns []string // PK columns for ON CONFLICT with identity update (append mode — skip duplicates)
 }
 
 // DefaultBatchConfig returns default batch configuration
@@ -97,6 +100,45 @@ func (b *BatchProcessor) calculateBatchSize(columnCount int) int {
 	return b.config.BatchSize
 }
 
+// buildSkipConflictClause delegates to the plugin's dialect-specific implementation.
+func (b *BatchProcessor) buildSkipConflictClause() clause.OnConflict {
+	return b.plugin.BuildSkipConflictClause(b.config.SkipConflictPKColumns)
+}
+
+// buildUpsertClause creates an OnConflict clause for upsert operations.
+// It uses UpsertPKColumns as the conflict target and updates all non-PK columns.
+func (b *BatchProcessor) buildUpsertClause(record map[string]any) clause.OnConflict {
+	conflictCols := make([]clause.Column, len(b.config.UpsertPKColumns))
+	for i, col := range b.config.UpsertPKColumns {
+		conflictCols[i] = clause.Column{Name: col}
+	}
+
+	pkSet := make(map[string]bool, len(b.config.UpsertPKColumns))
+	for _, pk := range b.config.UpsertPKColumns {
+		pkSet[pk] = true
+	}
+
+	var updateCols []string
+	for col := range record {
+		if !pkSet[col] {
+			updateCols = append(updateCols, col)
+		}
+	}
+
+	// All-PK table (e.g., junction table): no columns to update, so DO NOTHING
+	if len(updateCols) == 0 {
+		return clause.OnConflict{
+			Columns:   conflictCols,
+			DoNothing: true,
+		}
+	}
+
+	return clause.OnConflict{
+		Columns:   conflictCols,
+		DoUpdates: clause.AssignmentColumns(updateCols),
+	}
+}
+
 // InsertBatch inserts multiple rows in batches
 func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, records []map[string]any) error {
 	if len(records) == 0 {
@@ -122,7 +164,13 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 	// Use GORM's CreateInBatches for efficient bulk insert
 	if b.config.UseBulkInsert {
-		result := db.Table(fullTableName).CreateInBatches(records, effectiveBatchSize)
+		query := db.Table(fullTableName)
+		if len(b.config.SkipConflictPKColumns) > 0 {
+			query = query.Clauses(b.buildSkipConflictClause())
+		} else if len(b.config.UpsertPKColumns) > 0 {
+			query = query.Clauses(b.buildUpsertClause(records[0]))
+		}
+		result := query.CreateInBatches(records, effectiveBatchSize)
 		if result.Error != nil {
 			log.WithError(result.Error).
 				WithField("table", fullTableName).
@@ -150,14 +198,18 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 
 		batch := records[i:end]
 
-		// Process batch
 		err := db.Transaction(func(tx *gorm.DB) error {
 			for _, record := range batch {
-				if err := tx.Table(fullTableName).Create(record).Error; err != nil {
+				query := tx.Table(fullTableName)
+				if len(b.config.SkipConflictPKColumns) > 0 {
+					query = query.Clauses(b.buildSkipConflictClause())
+				} else if len(b.config.UpsertPKColumns) > 0 {
+					query = query.Clauses(b.buildUpsertClause(record))
+				}
+				if err := query.Create(record).Error; err != nil {
 					if b.config.FailOnError {
 						return err
 					}
-					// Log error but continue
 					log.WithError(err).
 						WithField("table", fullTableName).
 						Warn("Failed to insert record, continuing")
@@ -167,7 +219,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 		})
 
 		if err != nil && b.config.FailOnError {
-			return fmt.Errorf("batch insert failed at batch %d: %w", i/b.config.BatchSize, err)
+			return fmt.Errorf("batch insert failed at batch %d: %w", i/effectiveBatchSize, err)
 		}
 
 		if b.config.LogProgress {
@@ -247,12 +299,17 @@ func (p *GormPlugin) BulkAddRows(config *engine.PluginConfig, schema string, sto
 			records = append(records, record)
 		}
 
-		processor := NewBatchProcessor(p.GormPluginFunctions, p.Type, &BatchConfig{
+		batchCfg := &BatchConfig{
 			BatchSize:     1000,
 			UseBulkInsert: true,
 			FailOnError:   true,
 			LogProgress:   len(records) > 10000, // Log progress for large datasets
-		})
+		}
+		if config != nil {
+			batchCfg.UpsertPKColumns = config.UpsertPKColumns
+			batchCfg.SkipConflictPKColumns = config.SkipConflictPKColumns
+		}
+		processor := NewBatchProcessor(p.GormPluginFunctions, p.Type, batchCfg)
 
 		err := processor.InsertBatch(db, schema, storageUnit, records)
 		return err == nil, err

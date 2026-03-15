@@ -177,6 +177,109 @@ func TestHasEnvCredentials(t *testing.T) {
 	}
 }
 
+func TestParseINIFile_SSOProfile(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config")
+
+	content := `[default]
+region = us-east-1
+
+[profile sso-user]
+sso_start_url = https://my-sso.awsapps.com/start
+sso_account_id = 123456789012
+sso_role_name = ReadOnly
+region = us-west-2
+
+[profile role-user]
+role_arn = arn:aws:iam::123456789012:role/MyRole
+source_profile = default
+region = eu-west-1
+
+[profile static-user]
+aws_access_key_id = AKIAEXAMPLE
+aws_secret_access_key = secretkey
+`
+	if err := os.WriteFile(configPath, []byte(content), 0600); err != nil {
+		t.Fatalf("Failed to write test config file: %v", err)
+	}
+
+	profiles, err := parseINIFile(configPath, "config", true)
+	if err != nil {
+		t.Fatalf("parseINIFile failed: %v", err)
+	}
+
+	if len(profiles) != 4 {
+		t.Errorf("Expected 4 profiles, got %d", len(profiles))
+	}
+
+	// SSO profile
+	if sso, ok := profiles["sso-user"]; !ok {
+		t.Error("Expected 'sso-user' profile")
+	} else {
+		if sso.AuthType != "sso" {
+			t.Errorf("Expected auth type 'sso', got '%s'", sso.AuthType)
+		}
+		if sso.Region != "us-west-2" {
+			t.Errorf("Expected region 'us-west-2', got '%s'", sso.Region)
+		}
+	}
+
+	// Assume-role profile
+	if role, ok := profiles["role-user"]; !ok {
+		t.Error("Expected 'role-user' profile")
+	} else {
+		if role.AuthType != "assume-role" {
+			t.Errorf("Expected auth type 'assume-role', got '%s'", role.AuthType)
+		}
+	}
+
+	// Static profile
+	if static, ok := profiles["static-user"]; !ok {
+		t.Error("Expected 'static-user' profile")
+	} else {
+		if static.AuthType != "static" {
+			t.Errorf("Expected auth type 'static', got '%s'", static.AuthType)
+		}
+	}
+
+	// Default profile (no SSO/role keys)
+	if def, ok := profiles["default"]; !ok {
+		t.Error("Expected 'default' profile")
+	} else {
+		if def.AuthType != "static" {
+			t.Errorf("Expected auth type 'static' for default, got '%s'", def.AuthType)
+		}
+	}
+}
+
+func TestParseINIFile_SSOSessionProfile(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config")
+
+	content := `[profile sso-session-user]
+sso_session = my-session
+sso_account_id = 123456789012
+sso_role_name = Admin
+region = us-east-1
+`
+	if err := os.WriteFile(configPath, []byte(content), 0600); err != nil {
+		t.Fatalf("Failed to write test config file: %v", err)
+	}
+
+	profiles, err := parseINIFile(configPath, "config", true)
+	if err != nil {
+		t.Fatalf("parseINIFile failed: %v", err)
+	}
+
+	if sso, ok := profiles["sso-session-user"]; !ok {
+		t.Error("Expected 'sso-session-user' profile")
+	} else {
+		if sso.AuthType != "sso" {
+			t.Errorf("Expected auth type 'sso' for sso_session profile, got '%s'", sso.AuthType)
+		}
+	}
+}
+
 func TestDiscoverLocalProfiles_NoFiles(t *testing.T) {
 	// Save and clear relevant env vars
 	oldConfigFile := os.Getenv("AWS_CONFIG_FILE")

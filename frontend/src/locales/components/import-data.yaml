@@ -58,13 +58,17 @@ en:
   import.error.import_failed: Import failed.
   import.error.clear_failed: Failed to clear existing data.
   import.error.insert_failed: Failed to insert rows.
+  import.error.upsert_no_pk: Table has no primary key. Upsert requires a primary key to identify existing rows.
+  import.error.upsert_not_supported: This database does not support upsert imports.
 
   previewTruncated: Preview shows the first rows only
 
   importMode: Import Mode
   modeAppend: Append to existing data
   modeOverwrite: Overwrite existing data
+  modeUpsert: Merge with existing data
   overwriteWarning: Existing data will be deleted before import. Some databases may not support full rollback.
+  upsertInfo: Existing rows matching the primary key will be updated. New rows will be inserted. Rows not present in the file will not be deleted. Changing a primary key value will insert a new row rather than update the original.
 
   sqlFile: SQL File
   sqlPaste: Paste SQL

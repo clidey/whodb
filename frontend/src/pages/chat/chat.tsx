@@ -49,6 +49,7 @@ import {
     CircleStackIcon,
     CodeBracketIcon,
     CommandLineIcon,
+    DocumentDuplicateIcon,
     EllipsisHorizontalIcon,
     PresentationChartLineIcon,
     SparklesIcon,
@@ -77,6 +78,7 @@ import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
 import {addAuthHeader, isDesktopScheme} from "../../utils/auth-headers";
+import {matchesShortcut, SHORTCUTS} from "../../utils/shortcuts";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -91,6 +93,32 @@ const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
 
 const THINKING_PHRASES_COUNT = 25;
 
+const CodeBlock: FC<{ children: string }> = ({ children }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = useCallback(() => {
+        navigator.clipboard.writeText(children);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [children]);
+
+    return (
+        <div className="relative group/code-block my-2">
+            <code className="block bg-neutral-100 dark:bg-neutral-800 p-2 pr-16 rounded text-sm overflow-x-auto">
+                {children}
+            </code>
+            <button
+                onClick={handleCopy}
+                className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+            >
+                {copied
+                    ? <><CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> <span className="text-green-500">Copied!</span></>
+                    : <><DocumentDuplicateIcon className="w-3.5 h-3.5" /> <span>Copy</span></>
+                }
+            </button>
+        </div>
+    );
+};
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -310,6 +338,7 @@ export const ChatPage: FC = () => {
     const authProfile = useAppSelector(state => state.auth.current);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
     const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
+    const [copiedSqlId, setCopiedSqlId] = useState<number | null>(null);
     const messageIdCounter = useRef(0);
 
     // For databases that use "database" instead of "schema" (MySQL, MariaDB, etc.),
@@ -676,8 +705,7 @@ export const ChatPage: FC = () => {
     }, [loading, modelAvailable, models.length, currentModel, query]);
 
     const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
-        // Ctrl/Cmd+U to clear input
-        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+        if (matchesShortcut(e, SHORTCUTS.clearEditor)) {
             e.preventDefault();
             setQuery('');
             setCurrentSearchIndex(undefined);
@@ -723,6 +751,23 @@ export const ChatPage: FC = () => {
               searchIndex--;
             }
           }
+        }
+        if (e.key === "ArrowDown") {
+          if (currentSearchIndex == null) return;
+
+          let searchIndex = currentSearchIndex + 1;
+          while (searchIndex < chats.length) {
+            if (chats[searchIndex].isUserInput) {
+              setCurrentSearchIndex(searchIndex);
+              setQuery(chats[searchIndex].Text);
+              return;
+            }
+            searchIndex++;
+          }
+
+          // Past the end of history — clear input
+          setCurrentSearchIndex(undefined);
+          setQuery('');
         }
     }, [chats, currentSearchIndex, query, handleSubmitQuery, disableChat]);
 
@@ -919,7 +964,7 @@ export const ChatPage: FC = () => {
                                                     "self-start": !chat.isUserInput,
                                                 })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
+                                                        ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                         : <div className="pl-4" />}
                                                     {chat.isUserInput ? (
                                                         <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
@@ -942,11 +987,11 @@ export const ChatPage: FC = () => {
                                                                     h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
                                                                     h2: ({node, ...props}) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
                                                                     h3: ({node, ...props}) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
-                                                                    code: ({node, ...props}) => {
+                                                                    code: ({node, children, ...props}) => {
                                                                         const isInline = !String(props.className || '').includes('language-');
                                                                         return isInline
-                                                                            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props} />
-                                                                            : <code className="block bg-neutral-100 dark:bg-neutral-800 p-2 rounded my-2 text-sm overflow-x-auto" {...props} />;
+                                                                            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
+                                                                            : <CodeBlock>{String(children)}</CodeBlock>;
                                                                     },
                                                                     blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
                                                                 }}
@@ -961,14 +1006,14 @@ export const ChatPage: FC = () => {
                                                 return (
                                                     <div key={`chat-${i}`} className="flex overflow-hidden break-words leading-6 shrink-0 pt-6 relative self-start" data-testid="error-message">
                                                         {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                            ? extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
+                                                            ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                             : null}
                                                         <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
                                                     </div>
                                                 );
                                             } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
                                                 return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="visual-message">
-                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                                                    {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}
                                                     {/* @ts-ignore */}
@@ -981,7 +1026,7 @@ export const ChatPage: FC = () => {
 
                                                 return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="confirmation-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput
-                                                        ? (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
+                                                        ? (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)
                                                         : <div className="pl-4" />}
                                                     <div className="flex flex-col gap-3 w-[calc(100%-50px)] max-w-full min-w-0">
                                                         <Alert className="w-full">
@@ -1005,8 +1050,23 @@ export const ChatPage: FC = () => {
 
                                                         {/* SQL Query Display */}
                                                         {showQuery && (
-                                                            <div className="h-[300px] w-full rounded-lg overflow-hidden">
-                                                                <CodeEditor value={chat.Text} language="sql" />
+                                                            <div className="relative w-full rounded-lg overflow-hidden">
+                                                                <div className="h-[300px]">
+                                                                    <CodeEditor value={chat.Text} language="sql" />
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(chat.Text);
+                                                                        setCopiedSqlId(chat.id ?? null);
+                                                                        setTimeout(() => setCopiedSqlId(null), 2000);
+                                                                    }}
+                                                                    className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors z-10"
+                                                                >
+                                                                    {copiedSqlId === chat.id
+                                                                        ? <><CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> <span className="text-green-500">Copied!</span></>
+                                                                        : <><DocumentDuplicateIcon className="w-3.5 h-3.5" /> <span>Copy</span></>
+                                                                    }
+                                                                </button>
                                                             </div>
                                                         )}
 
@@ -1032,7 +1092,7 @@ export const ChatPage: FC = () => {
                                                 </div>
                                             }
                                             return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="table-message">
-                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                                                {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                 <TablePreview type={chat.Type} text={chat.Text} data={chat.Result} containerWidth={containerWidth} />
                                             </div>
                                         })

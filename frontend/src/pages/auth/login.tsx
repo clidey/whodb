@@ -21,7 +21,6 @@ import {
     LoginCredentials,
     useGetDatabaseLazyQuery,
     useGetProfilesQuery,
-    useGetVersionQuery,
     useLoginMutation,
     useLoginWithProfileMutation,
     useSettingsConfigQuery
@@ -46,7 +45,7 @@ import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, featureFlags, sources} from '../../config/features';
+import {extensions, featureFlags, getAppName, isEEMode, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
 import {useTranslation} from '@/hooks/use-translation';
@@ -57,10 +56,16 @@ import {SettingsActions} from "../../store/settings";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
+import {v4 as uuidv4} from 'uuid';
 import {hasCompletedOnboarding, markOnboardingComplete} from '../../utils/onboarding';
-import {AwsConnectionPicker, AwsConnectionPrefillData, DatabaseIconWithBadge, isAwsConnection} from '../../components/aws';
+import {
+    AwsConnectionPicker,
+    AwsConnectionPrefillData,
+    DatabaseIconWithBadge,
+    isAwsConnection
+} from '../../components/aws';
 import {isAwsHostname} from '../../utils/cloud-connection-prefill';
-import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
+import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -70,7 +75,7 @@ import {SSLConfig, SSL_KEYS} from '../../components/ssl-config';
 function generateCredentialId(type: string, hostname: string, username: string, database: string): string | undefined {
     // browser environment just uses a random ID
     if (!isDesktopApp()) {
-        return crypto.randomUUID();
+        return uuidv4();
     }
 
     // desktop environment uses a deterministic ID based on connection details
@@ -87,7 +92,7 @@ function generateCredentialId(type: string, hostname: string, username: string, 
         const encoded = btoa(combined).replace(/[+/=]/g, '');
         return encoded.substring(0, 16).toLowerCase();
     } catch {
-        return crypto.randomUUID();
+        return uuidv4();
     }
 }
 
@@ -112,11 +117,15 @@ export const LoginForm: FC<LoginFormProps> = ({
     advancedDirection = "horizontal",
 }) => {
     const { t } = useTranslation('pages/login');
+    const appName = getAppName();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
+    const handleSubmitRef = useRef<() => void>(() => {});
+    const handleLoginWithProfileSubmitRef = useRef<(overrideProfileId?: string) => void>(() => {});
+    const [pendingAutoLogin, setPendingAutoLogin] = useState(false);
     const { setTheme } = useTheme();
 
     const FIRST_LOGIN_KEY = 'whodb_has_logged_in';
@@ -157,6 +166,9 @@ export const LoginForm: FC<LoginFormProps> = ({
         // Detect auto-login on initial render to prevent flash of login form
         return searchParams.has("resource") || searchParams.has("login");
     });
+    const [isEmbedded] = useState(() => {
+        return searchParams.has("credentials") || searchParams.has("resource") || searchParams.has("login");
+    });
 
     const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
 
@@ -176,6 +188,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
+            setIsAutoLoggingIn(false);
             return setError(t('allFieldsRequired'));
         }
         setError(undefined);
@@ -218,6 +231,8 @@ export const LoginForm: FC<LoginFormProps> = ({
                         newParams.delete("username");
                         newParams.delete("password");
                         newParams.delete("database");
+                        newParams.delete("port");
+                        newParams.delete("region");
                         setSearchParams(newParams, { replace: true });
                     }
 
@@ -324,6 +339,10 @@ export const LoginForm: FC<LoginFormProps> = ({
         });
     }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess, markFirstLoginComplete, t]);
 
+    // Keep refs in sync with latest callback versions each render to avoid stale closures
+    handleSubmitRef.current = handleSubmit;
+    handleLoginWithProfileSubmitRef.current = handleLoginWithProfileSubmit;
+
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.Profiles.find(p => p.Source === "builtin");
         if (!sampleProfile) {
@@ -362,7 +381,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     } else {
                         navigate(InternalRoutes.Dashboard.StorageUnit.path);
                     }
-                    toast.success(t('welcomeToWhodb'));
+                    toast.success(t('welcomeToWhodb', { appName }));
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
@@ -496,15 +515,35 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [searchParams, dispatch]);
 
-    // Handle theme URL parameter
+    // Handle mode URL parameter (light/dark/system)
     useEffect(() => {
-        if (searchParams.has("theme")) {
-            const theme = searchParams.get("theme")?.toLowerCase();
-            if (theme === 'light' || theme === 'dark' || theme === 'system') {
-                setTheme(theme);
+        if (searchParams.has("mode")) {
+            const mode = searchParams.get("mode")?.toLowerCase();
+            if (mode === 'light' || mode === 'dark' || mode === 'system') {
+                setTheme(mode);
             }
         }
     }, [searchParams, setTheme]);
+
+    // Handle theme URL parameter (visual theme name)
+    useEffect(() => {
+        if (searchParams.has("theme")) {
+            const theme = searchParams.get("theme")?.toLowerCase();
+            if (theme === 'default') {
+                dispatch(SettingsActions.setAppTheme('default'));
+            }
+        }
+    }, [searchParams, dispatch]);
+
+    // Handle os URL parameter (keyboard shortcut OS override)
+    useEffect(() => {
+        if (searchParams.has("os")) {
+            const os = searchParams.get("os")?.toLowerCase();
+            if (os === 'linux' || os === 'macos' || os === 'windows') {
+                dispatch(SettingsActions.setOS(os));
+            }
+        }
+    }, [searchParams, dispatch]);
 
     // Load database types, filtering out AWS types when cloud providers are disabled
     useEffect(() => {
@@ -618,25 +657,44 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("username")) setUsername(searchParams.get("username")!);
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+
+            // Merge port/region into advancedForm
+            const hasPort = searchParams.has("port");
+            const hasRegion = searchParams.has("region");
+            if (hasPort || hasRegion) {
+                setAdvancedForm(prev => ({
+                    ...prev,
+                    ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
+                    ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
+                }));
+            }
         }
 
         // Handle auto-login with profile from URL
         if (searchParams.has("resource")) {
             const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
             if (selectedProfile?.value) {
-                setSelectedAvailableProfile(selectedProfile?.value);
-                handleLoginWithProfileSubmit(selectedProfile.value);
+                setSelectedAvailableProfile(selectedProfile.value);
+                handleLoginWithProfileSubmitRef.current(selectedProfile.value);
             }
         } else if (searchParams.has("login")) {
-            setTimeout(() => {
-                handleSubmit();
-                const newParams = new URLSearchParams(searchParams);
-                newParams.delete("login");
-                setSearchParams(newParams, { replace: true });
-            }, 10);
+            // Batch this state update with the credential setters above so handleSubmit fires
+            // only after the next render (when all form fields have their new values).
+            setPendingAutoLogin(true);
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("login");
+            setSearchParams(newParams, { replace: true });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
+    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange]);
+
+    // Fire credential-based login after React has committed all form-field state updates.
+    // Using a state flag (not a ref) ensures this effect runs on the render AFTER the parsing
+    // effect, so handleSubmitRef.current has fresh field values instead of the stale initial ones.
+    useEffect(() => {
+        if (!pendingAutoLogin) return;
+        setPendingAutoLogin(false);
+        handleSubmitRef.current();
+    }, [pendingAutoLogin]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -774,7 +832,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             { databaseType.fields?.password && (
                 <div className="flex flex-col gap-sm w-full">
                     <Label htmlFor="login-password">{t('password')}</Label>
-                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={true} />
+                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={!isEmbedded} />
                 </div>
             )}
             { databaseType.fields?.database && (
@@ -841,10 +899,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
-                            {extensions.Logo ?? <img src={logoImage} alt={extensions.AppName ?? "WhoDB"} className="w-auto h-8 mr-1"/>}
-                            <span className="text-brand-foreground">{extensions.AppName ?? "WhoDB"}</span>
-                            <span>{t('title')}</span>
+                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>)}
+                            <span className="text-brand-foreground" data-testid="app-name">{getAppName()}</span>
                         </h1>
+                        <span className="text-xl">{t('title')}</span>
                         {
                             error &&
                             <Badge id="login-error" variant="destructive" className="self-end" role="alert">
@@ -995,7 +1053,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h2 id="sample-db-heading" className="text-2xl font-bold text-foreground">
-                                        {t('tryWhodb')}
+                                        {t('tryWhodb', { appName })}
                                     </h2>
                                     <Badge variant="secondary" className="w-fit">
                                         {t('noSetupRequired')}
@@ -1004,7 +1062,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             </div>
 
                             <p className="text-base text-muted-foreground leading-relaxed">
-                                {t('experienceDescription')}
+                                {t('experienceDescription', { appName })}
                             </p>
                         </div>
 
@@ -1076,13 +1134,12 @@ export const LoginForm: FC<LoginFormProps> = ({
 
 export const LoginPage: FC = () => {
     const { t } = useTranslation('pages/login');
-    const {data: version} = useGetVersionQuery();
 
     return (
         <Container className="justify-center items-center">
             <LoginForm />
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60">
-                {t('version')}: {version?.Version}
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-foreground/60" data-testid="login-page-version">
+                {t('version')}: {__APP_VERSION__}
             </div>
         </Container>
     );

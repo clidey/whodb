@@ -168,7 +168,7 @@ body {
 }
 
 /* Accessibility: Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
+/* @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
@@ -177,17 +177,17 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
+} */
 
 /* Disable all animations when user preference is set */
-body.disable-animations *,
+/* body.disable-animations *,
 body.disable-animations *::before,
 body.disable-animations *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
-}
+} */
 
 [data-testid="storage-unit-card-list"]:not(.hidden) {
   width: 100%;
@@ -221,4 +221,8 @@ body.disable-animations *::after {
 
 [data-radix-popper-content-wrapper] {
   z-index: 100 !important;
+}
+
+[data-testid="ai-provider"] ~ div [data-testid="empty-state"] h1 {
+  font-size: 18px;
 }

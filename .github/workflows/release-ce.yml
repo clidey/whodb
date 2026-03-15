@@ -595,12 +595,14 @@ jobs:
     secrets: inherit
 
   # Step 6: Deploy to Docker Hub (after GitHub release)
+  # Rebuilds from GHA buildx cache populated by build-docker and pushes with attestations.
   deploy-docker:
     name: Deploy Docker
-    needs: [ calculate-version, create-github-release ]
+    needs: [ calculate-version, build-docker, create-github-release ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-docker == 'true' &&
+      needs.build-docker.result == 'success' &&
       needs.create-github-release.result == 'success'
     uses: ./.github/workflows/_deploy-docker.yml
     with:

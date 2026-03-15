@@ -69,7 +69,7 @@ func (p *Provider) discoverElastiCacheServerless(ctx context.Context) ([]provide
 
 	log.Debugf("ElastiCache: calling DescribeServerlessCaches for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &elasticache.DescribeServerlessCachesInput{
 			NextToken:  nextToken,
 			MaxResults: aws.Int32(50),
@@ -118,7 +118,7 @@ func (p *Provider) discoverElastiCacheReplicationGroups(ctx context.Context) ([]
 
 	log.Debugf("ElastiCache: calling DescribeReplicationGroups for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &elasticache.DescribeReplicationGroupsInput{
 			Marker:     nextToken,
 			MaxRecords: aws.Int32(50),
@@ -161,7 +161,7 @@ func (p *Provider) discoverElastiCacheClusters(ctx context.Context) ([]providers
 
 	log.Debugf("ElastiCache: calling DescribeCacheClusters for provider %s", p.config.ID)
 
-	for {
+	for page := 0; page < maxPaginationPages; page++ {
 		input := &elasticache.DescribeCacheClustersInput{
 			Marker:            nextToken,
 			MaxRecords:        aws.Int32(50),
@@ -215,6 +215,9 @@ func (p *Provider) replicationGroupToConnection(rg *ectypes.ReplicationGroup) *p
 	metadata := make(map[string]string)
 	metadata["transitEncryption"] = strconv.FormatBool(aws.ToBool(rg.TransitEncryptionEnabled))
 	metadata["authTokenEnabled"] = strconv.FormatBool(aws.ToBool(rg.AuthTokenEnabled))
+	if len(rg.UserGroupIds) > 0 {
+		metadata["iamAuthSupported"] = "true"
+	}
 
 	var endpoint string
 	var port int32

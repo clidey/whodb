@@ -28,11 +28,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -44,7 +42,7 @@ func TestRESTHandlersAddRowAndGetRows(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }
 	mock.AddRowFunc = func(*engine.PluginConfig, string, string, []engine.Record) (bool, error) { return true, nil }
-	mock.GetRowsFunc = func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error) {
+	mock.GetRowsFunc = func(*engine.PluginConfig, *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 		return &engine.GetRowsResult{
 			Columns: []engine.Column{{Name: "id", Type: "int"}},
 			Rows:    [][]string{{"1"}},
@@ -121,18 +119,6 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 	t.Setenv("WHODB_OLLAMA_HOST", "ollama.test")
 	t.Setenv("WHODB_OLLAMA_PORT", "11434")
 
-	originalCustom := env.CustomModels
-	originalCompatKey := env.OpenAICompatibleAPIKey
-	originalCompatEndpoint := env.OpenAICompatibleEndpoint
-	env.CustomModels = []string{"mixtral"}
-	env.OpenAICompatibleAPIKey = "token"
-	env.OpenAICompatibleEndpoint = "http://compat.local"
-	t.Cleanup(func() {
-		env.CustomModels = originalCustom
-		env.OpenAICompatibleAPIKey = originalCompatKey
-		env.OpenAICompatibleEndpoint = originalCompatEndpoint
-	})
-
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.ChatFunc = func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error) {
 		return nil, errors.New("chat error")
@@ -166,7 +152,7 @@ func TestRESTHandlersAIModelsAndChat(t *testing.T) {
 
 func TestRESTRawExecutePropagatesErrors(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
-	mock.RawExecuteFunc = func(*engine.PluginConfig, string) (*engine.GetRowsResult, error) {
+	mock.RawExecuteFunc = func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error) {
 		return nil, errors.New("raw error")
 	}
 	setEngineMock(t, mock)

@@ -81,6 +81,13 @@ func (w *statusResponseWriter) WriteHeader(code int) {
 	w.ResponseWriter.WriteHeader(code)
 }
 
+// Flush forwards to the underlying ResponseWriter if it supports flushing (required for SSE streaming).
+func (w *statusResponseWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 // healthCheckMiddleware responds to GET /health without requiring authentication.
 // Used by E2E setup scripts to verify the server is ready to handle requests.
 func healthCheckMiddleware(next http.Handler) http.Handler {

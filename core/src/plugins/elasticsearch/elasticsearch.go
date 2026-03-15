@@ -41,7 +41,7 @@ var (
 
 type ElasticSearchPlugin struct{}
 
-func (p *ElasticSearchPlugin) IsAvailable(config *engine.PluginConfig) bool {
+func (p *ElasticSearchPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
 		return false
@@ -199,7 +199,9 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 	return res.StatusCode == 200, nil
 }
 
-func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	collection := req.StorageUnit
+	where, sortConds, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithField("collection", collection).Error("Failed to connect to ElasticSearch while getting rows")
@@ -223,9 +225,9 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, database, col
 
 	// Apply sorting if provided
 	// Skip "document" column as it's a virtual column representing the entire JSON document
-	if len(sort) > 0 {
+	if len(sortConds) > 0 {
 		sortArray := []map[string]any{}
-		for _, s := range sort {
+		for _, s := range sortConds {
 			if s.Column == "document" {
 				continue
 			}
@@ -509,6 +511,11 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	}
 
 	return columns, nil
+}
+
+// MarkGeneratedColumns is a no-op for ElasticSearch (no generated/computed columns).
+func (p *ElasticSearchPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
+	return nil
 }
 
 func inferElasticSearchType(value any) string {
@@ -889,6 +896,10 @@ func (p *ElasticSearchPlugin) FormatValue(val any) string {
 // GetColumnConstraints - not supported for ElasticSearch
 func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	return make(map[string]map[string]any), nil
+}
+
+func (p *ElasticSearchPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error {
+	return nil
 }
 
 // ClearTableData - not supported for ElasticSearch

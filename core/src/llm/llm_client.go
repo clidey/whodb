@@ -17,6 +17,7 @@
 package llm
 
 import (
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/llm/providers"
 	"github.com/clidey/whodb/core/src/log"
@@ -27,6 +28,9 @@ func init() {
 	providers.RegisterProvider(providers.NewOpenAIProvider())
 	providers.RegisterProvider(providers.NewAnthropicProvider())
 	providers.RegisterProvider(providers.NewOllamaProvider())
+
+	// Wire BAML config resolution to use the provider registry
+	common.RegisterBAMLConfigResolver(providers.GetBAMLConfig)
 }
 
 // RegisterGenericProviders registers generic AI providers from environment configuration.

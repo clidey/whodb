@@ -60,3 +60,9 @@ func SetupAIClient(externalModel *engine.ExternalModel) []any {
 func CreateDynamicBAMLClient(externalModel *engine.ExternalModel) any {
 	return nil
 }
+
+// BAMLConfigResolver resolves BAML provider string + options for a given provider type.
+type BAMLConfigResolver func(providerType, apiKey, endpoint, model string) (string, map[string]any, error)
+
+// RegisterBAMLConfigResolver is a no-op on unsupported platforms.
+func RegisterBAMLConfigResolver(resolver BAMLConfigResolver) {}

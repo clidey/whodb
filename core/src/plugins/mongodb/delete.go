@@ -38,7 +38,7 @@ func (p *MongoDBPlugin) DeleteRow(config *engine.PluginConfig, database string, 
 		}).Error("Failed to connect to MongoDB for row deletion")
 		return false, err
 	}
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	collection := db.Collection(storageUnit)

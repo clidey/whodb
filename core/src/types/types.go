@@ -16,6 +16,15 @@
 
 package types
 
+import (
+	"encoding/json"
+
+	"github.com/clidey/whodb/core/src/migrate"
+)
+
+// DatabaseCredentials holds database connection details parsed from environment
+// variables or configuration files. The Advanced field accepts both "advanced"
+// and the legacy "config" JSON key for backwards compatibility.
 type DatabaseCredentials struct {
 	Alias    string            `json:"alias"`
 	Hostname string            `json:"host"`
@@ -23,11 +32,29 @@ type DatabaseCredentials struct {
 	Password string            `json:"password"`
 	Database string            `json:"database"`
 	Port     string            `json:"port"`
-	Config   map[string]string `json:"config"`
+	Advanced map[string]string `json:"advanced"`
 	Extra    map[string]any
 
 	IsProfile bool
 	Type      string
 	CustomId  string
 	Source    string
+}
+
+// UnmarshalJSON supports both "advanced" and the legacy "config" JSON key.
+func (d *DatabaseCredentials) UnmarshalJSON(data []byte) error {
+	type Alias DatabaseCredentials
+	aux := &struct {
+		*Alias
+		Config map[string]string `json:"config"`
+	}{Alias: (*Alias)(d)}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	if d.Advanced == nil && aux.Config != nil {
+		d.Advanced = aux.Config
+		migrate.DeprecatedConfigKey = true
+	}
+	return nil
 }

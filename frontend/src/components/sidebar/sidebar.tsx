@@ -42,7 +42,7 @@ import {
     useGetDatabaseQuery,
     useGetSchemaQuery,
     useGetSslStatusQuery,
-    useGetVersionQuery,
+    useGetUpdateInfoQuery,
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
@@ -51,7 +51,7 @@ import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} fro
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
-import {extensions} from "../../config/features";
+import {extensions, getAppName, isEEMode} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {LoginForm} from "../../pages/auth/login";
 import {AuthActions, LocalLoginProfile} from "../../store/auth";
@@ -119,7 +119,7 @@ export const Sidebar: FC = () => {
         },
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
-    const { data: version } = useGetVersionQuery();
+    const { data: updateInfo } = useGetUpdateInfoQuery();
     const { refetch: refetchSslStatus } = useGetSslStatusQuery({
         skip: current == null || sslStatus !== undefined,
         onCompleted(data) {
@@ -184,9 +184,8 @@ export const Sidebar: FC = () => {
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
             navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-        dispatch(AuthActions.setLoginProfileDatabase({ id: current?.Id, database: value }));
         handleProfileChange(current.Id, value);
-    }, [current, dispatch, handleProfileChange, navigate, pathname]);
+    }, [current, handleProfileChange, navigate, pathname]);
 
     // Schema select logic
     const schemaOptions = useMemo(() => {
@@ -323,8 +322,8 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />}
-                            {open && <span className="text-3xl font-bold">{extensions.AppName ?? "WhoDB"}</span>}
+                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                            {open && <span className="text-3xl font-bold" data-testid="app-name">{getAppName()}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>
@@ -504,7 +503,18 @@ export const Sidebar: FC = () => {
                 <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                     "hidden": !open,
                 })}>
-                    {t('version')} {version?.Version}
+                    {t('version')} {__APP_VERSION__}
+                    {updateInfo?.UpdateInfo?.updateAvailable && (
+                        <a
+                            href={updateInfo.UpdateInfo.releaseURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 text-blue-500 hover:text-blue-400 transition-colors"
+                            title={t('updateAvailable', { version: updateInfo.UpdateInfo.latestVersion })}
+                        >
+                            ↑ {updateInfo.UpdateInfo.latestVersion}
+                        </a>
+                    )}
                 </div>
             </SidebarComponent>
             <Sheet open={showLoginCard} onOpenChange={setShowLoginCard}>

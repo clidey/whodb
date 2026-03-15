@@ -191,10 +191,7 @@ class HealthCheckService {
         this.wasDatabaseDown = false;
         this.currentInterval = this.config.initialInterval;
 
-        // Perform first check immediately
-        this.performHealthCheck();
-
-        // Schedule recurring checks
+        // Schedule first check after initialInterval (login already verified connectivity)
         this.reschedule();
     }
 

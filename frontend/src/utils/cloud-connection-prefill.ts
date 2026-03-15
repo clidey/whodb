@@ -72,6 +72,14 @@ const basePrefillRules: Record<string, PrefillRule> = {
         return {};
     },
 
+    // Valkey (ElastiCache Valkey engine, same as Redis)
+    Valkey: (_, meta): Record<string, string> => {
+        if (meta("transitEncryption") === "true") {
+            return { "TLS": "true" };
+        }
+        return {};
+    },
+
     // DocumentDB (MongoDB-compatible)
     DocumentDB: () => ({
         "URL Params": "?tls=true&tlsInsecure=true&replicaSet=rs0&retryWrites=false&readPreference=secondaryPreferred"
@@ -112,6 +120,11 @@ export function buildConnectionPrefill(conn: LocalDiscoveredConnection): Connect
     const rule = prefillRules[conn.DatabaseType];
     if (rule) {
         Object.assign(advanced, rule(conn, meta));
+    }
+
+    // RDS Proxy with requireTLS forces SSL
+    if (meta("endpointType") === "proxy" && meta("requireTLS") === "true") {
+        advanced["SSL Mode"] = "require";
     }
 
     return {

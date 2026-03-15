@@ -17,6 +17,7 @@
 package mongodb
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,15 +46,13 @@ var (
 
 type MongoDBPlugin struct{}
 
-func (p *MongoDBPlugin) IsAvailable(config *engine.PluginConfig) bool {
+func (p *MongoDBPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithField("hostname", config.Credentials.Hostname).Error("Failed to connect to MongoDB for availability check")
 		return false
 	}
-	ctx, cancel := opCtx()
-	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 	return true
 }
 
@@ -65,7 +64,7 @@ func (p *MongoDBPlugin) GetDatabases(config *engine.PluginConfig) ([]string, err
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
@@ -84,7 +83,7 @@ func (p *MongoDBPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, er
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
@@ -105,7 +104,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	listOpts := options.ListCollections().SetAuthorizedCollections(true)
@@ -187,7 +186,7 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	names, err := db.ListCollectionNames(ctx, bson.M{"name": collection})
@@ -197,7 +196,9 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 	return len(names) > 0, nil
 }
 
-func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collection string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	database, collection := req.Schema, req.StorageUnit
+	where, sortConds, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
@@ -209,7 +210,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	coll := db.Collection(collection)
@@ -239,9 +240,9 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, database, collectio
 	findOptions.SetSkip(int64(pageOffset))
 
 	// Apply sorting if provided
-	if len(sort) > 0 {
+	if len(sortConds) > 0 {
 		sortMap := bson.D{}
-		for _, s := range sort {
+		for _, s := range sortConds {
 			direction := 1 // ASC
 			if s.Direction == model.SortDirectionDesc {
 				direction = -1 // DESC
@@ -311,7 +312,7 @@ func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, colle
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(database)
 	coll := db.Collection(collection)
@@ -342,7 +343,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 		}).Error("Failed to connect to MongoDB for column inference")
 		return nil, err
 	}
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(schema)
 	collection := db.Collection(storageUnit)
@@ -445,6 +446,11 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	}
 
 	return columns, nil
+}
+
+// MarkGeneratedColumns is a no-op for MongoDB (no generated/computed columns).
+func (p *MongoDBPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
+	return nil
 }
 
 func inferMongoDBType(value any) string {
@@ -684,7 +690,7 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	db := client.Database(schema)
 
@@ -832,6 +838,8 @@ func toFloat64(v any) *float64 {
 }
 
 // ClearTableData deletes all documents from a MongoDB collection.
+func (p *MongoDBPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
+
 // This is used by the mock data generator when overwrite mode is enabled.
 func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	client, err := DB(config)
@@ -845,7 +853,7 @@ func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema strin
 	}
 	ctx, cancel := opCtx()
 	defer cancel()
-	defer client.Disconnect(ctx)
+	defer disconnectClient(client)
 
 	collection := client.Database(schema).Collection(storageUnit)
 	result, err := collection.DeleteMany(ctx, bson.M{})

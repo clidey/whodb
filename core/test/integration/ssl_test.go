@@ -19,6 +19,7 @@
 package integration
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -409,7 +410,7 @@ func TestSSLConnectionAvailability(t *testing.T) {
 				t.Skip(target.skipReason)
 			}
 
-			ok := target.plugin.IsAvailable(target.config)
+			ok := target.plugin.IsAvailable(context.Background(), target.config)
 			if target.expectFail {
 				if ok {
 					t.Errorf("expected connection to fail for %s but it succeeded", target.name)
@@ -488,7 +489,7 @@ func TestSSLDisabledConnection(t *testing.T) {
 	// The server requires SSL, so this should either:
 	// 1. Fail to connect
 	// 2. Connect but report SSL as disabled
-	ok := plugin.IsAvailable(config)
+	ok := plugin.IsAvailable(context.Background(), config)
 	if ok {
 		// If it connected, verify SSL status shows disabled
 		status, err := plugin.GetSSLStatus(config)

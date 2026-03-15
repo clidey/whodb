@@ -100,7 +100,7 @@ func (p *ClickHousePlugin) HandleCustomDataType(value string, columnType string,
 	return result, true, err
 }
 
-func (p *ClickHousePlugin) ConvertStringValue(value, columnType string) (any, error) {
+func (p *ClickHousePlugin) ConvertStringValue(value, columnType string, isNullable bool) (any, error) {
 	normalized := strings.ToUpper(p.NormalizeType(columnType))
 	if strings.Contains(normalized, "JSON") {
 		if !json.Valid([]byte(value)) {
@@ -108,7 +108,7 @@ func (p *ClickHousePlugin) ConvertStringValue(value, columnType string) (any, er
 		}
 		return value, nil
 	}
-	return p.GormPlugin.ConvertStringValue(value, columnType)
+	return p.GormPlugin.ConvertStringValue(value, columnType, isNullable)
 }
 
 func (p *ClickHousePlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
@@ -171,7 +171,8 @@ func (p *ClickHousePlugin) RawExecute(config *engine.PluginConfig, query string,
 // in the same way as traditional SQL DELETE. GORM's Delete method doesn't handle this properly.
 func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		tableName := p.FormTableName(schema, storageUnit)
+		builder := p.CreateSQLBuilder(db)
+		tableName := builder.BuildFullTableName(schema, storageUnit)
 
 		query := fmt.Sprintf("ALTER TABLE %s DELETE WHERE 1=1", tableName)
 
@@ -201,14 +202,14 @@ func (p *ClickHousePlugin) ClearTableData(config *engine.PluginConfig, schema st
 // mutations may return "driver: bad connection" on success.
 func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		columnTypes, err := p.GetColumnTypes(db, schema, storageUnit)
+		columnTypeInfos, err := p.GetColumnTypes(db, schema, storageUnit)
 		if err != nil {
 			return false, err
 		}
 
 		arrayColumns := map[string]bool{}
 		for _, col := range updatedColumns {
-			if ct, ok := columnTypes[col]; ok && strings.HasPrefix(strings.ToUpper(ct), "ARRAY(") {
+			if ct, ok := columnTypeInfos[col]; ok && strings.HasPrefix(strings.ToUpper(ct.Type), "ARRAY(") {
 				arrayColumns[col] = true
 			}
 		}
@@ -239,8 +240,8 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 				continue
 			}
 
-			columnType := columnTypes[column]
-			converted, convErr := p.ConvertStringValue(strValue, columnType)
+			colInfo := columnTypeInfos[column]
+			converted, convErr := p.ConvertStringValue(strValue, colInfo.Type, colInfo.IsNullable)
 			if convErr != nil {
 				converted = strValue
 			}
@@ -479,7 +480,7 @@ func (p *ClickHousePlugin) NormalizeType(typeName string) string {
 // GetColumnTypes overrides the base implementation because GORM ClickHouse's
 // migrator.ColumnTypes() doesn't support "database.table" format - it uses
 // m.CurrentDatabase() internally and expects just the table name.
-func (p *ClickHousePlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]string, error) {
+func (p *ClickHousePlugin) GetColumnTypes(db *gorm.DB, schema, tableName string) (map[string]gorm_plugin.ColumnTypeInfo, error) {
 	migrator := gorm_plugin.NewMigratorHelper(db, p)
 	// Pass just table name - ClickHouse GORM driver handles database context
 	return migrator.GetColumnTypes(tableName)

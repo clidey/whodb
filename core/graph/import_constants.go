@@ -55,4 +55,6 @@ const (
 	importErrorImportFailed                 = "import.error.import_failed"
 	importErrorClearFailed                  = "import.error.clear_failed"
 	importErrorInsertFailed                 = "import.error.insert_failed"
+	importErrorUpsertNoPK                   = "import.error.upsert_no_pk"
+	importErrorUpsertNotSupported           = "import.error.upsert_not_supported"
 )

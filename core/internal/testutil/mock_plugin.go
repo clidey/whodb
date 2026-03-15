@@ -17,6 +17,7 @@
 package testutil
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -30,7 +31,7 @@ type PluginMock struct {
 	Type engine.DatabaseType
 
 	GetDatabasesFunc         func(*engine.PluginConfig) ([]string, error)
-	IsAvailableFunc          func(*engine.PluginConfig) bool
+	IsAvailableFunc          func(context.Context, *engine.PluginConfig) bool
 	GetAllSchemasFunc        func(*engine.PluginConfig) ([]string, error)
 	GetStorageUnitsFunc      func(*engine.PluginConfig, string) ([]engine.StorageUnit, error)
 	StorageUnitExistsFunc    func(*engine.PluginConfig, string, string) (bool, error)
@@ -40,14 +41,15 @@ type PluginMock struct {
 	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
 	BulkAddRowsFunc          func(*engine.PluginConfig, string, string, [][]engine.Record) (bool, error)
 	DeleteRowFunc            func(*engine.PluginConfig, string, string, map[string]string) (bool, error)
-	GetRowsFunc              func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error)
+	GetRowsFunc              func(*engine.PluginConfig, *engine.GetRowsRequest) (*engine.GetRowsResult, error)
 	GetRowCountFunc          func(*engine.PluginConfig, string, string, *model.WhereCondition) (int64, error)
 	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
-	RawExecuteFunc func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
+	RawExecuteFunc           func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
 	ChatFunc                 func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
 	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
 	FormatValueFunc          func(any) string
 	GetColumnsForTableFunc   func(*engine.PluginConfig, string, string) ([]engine.Column, error)
+	MarkGeneratedColumnsFunc func(*engine.PluginConfig, string, string, []engine.Column) error
 	GetColumnConstraintsFunc func(*engine.PluginConfig, string, string) (map[string]map[string]any, error)
 	ClearTableDataFunc       func(*engine.PluginConfig, string, string) (bool, error)
 	GetForeignKeysFunc       func(*engine.PluginConfig, string, string) (map[string]*engine.ForeignKeyRelationship, error)
@@ -76,9 +78,9 @@ func (m *PluginMock) GetDatabases(config *engine.PluginConfig) ([]string, error)
 	return nil, nil
 }
 
-func (m *PluginMock) IsAvailable(config *engine.PluginConfig) bool {
+func (m *PluginMock) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	if m.IsAvailableFunc != nil {
-		return m.IsAvailableFunc(config)
+		return m.IsAvailableFunc(ctx, config)
 	}
 	return true
 }
@@ -152,9 +154,9 @@ func (m *PluginMock) DeleteRow(config *engine.PluginConfig, schema string, stora
 	return false, nil
 }
 
-func (m *PluginMock) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*engine.GetRowsResult, error) {
+func (m *PluginMock) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 	if m.GetRowsFunc != nil {
-		return m.GetRowsFunc(config, schema, storageUnit, where, sort, pageSize, pageOffset)
+		return m.GetRowsFunc(config, req)
 	}
 	return nil, nil
 }
@@ -208,6 +210,13 @@ func (m *PluginMock) GetColumnsForTable(config *engine.PluginConfig, schema stri
 	return nil, nil
 }
 
+func (m *PluginMock) MarkGeneratedColumns(config *engine.PluginConfig, schema string, storageUnit string, columns []engine.Column) error {
+	if m.MarkGeneratedColumnsFunc != nil {
+		return m.MarkGeneratedColumnsFunc(config, schema, storageUnit, columns)
+	}
+	return nil
+}
+
 func (m *PluginMock) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	if m.GetColumnConstraintsFunc != nil {
 		return m.GetColumnConstraintsFunc(config, schema, storageUnit)
@@ -221,6 +230,8 @@ func (m *PluginMock) ClearTableData(config *engine.PluginConfig, schema string, 
 	}
 	return false, nil
 }
+
+func (m *PluginMock) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
 
 func (m *PluginMock) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
 	if m.GetForeignKeysFunc != nil {

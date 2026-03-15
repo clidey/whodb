@@ -107,6 +107,18 @@ func (p *GormPlugin) clearTableDataWithDB(db *gorm.DB, schema string, storageUni
 	return result.Error
 }
 
+// NullifyFKColumn sets a column to NULL for all rows where it is not already NULL.
+// Used to break circular FK constraints during mock data overwrite.
+func (p *GormPlugin) NullifyFKColumn(config *engine.PluginConfig, schema string, storageUnit string, column string) error {
+	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		builder := p.GormPluginFunctions.CreateSQLBuilder(db)
+		tableName := builder.BuildFullTableName(schema, storageUnit)
+		result := db.Table(tableName).Where(column + " IS NOT NULL").Update(column, gorm.Expr("NULL"))
+		return result.Error == nil, result.Error
+	})
+	return err
+}
+
 // ClearTableData clears all data from a table
 func (p *GormPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {

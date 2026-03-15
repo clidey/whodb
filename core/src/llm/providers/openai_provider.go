@@ -23,9 +23,14 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/clidey/whodb/core/src/log"
 )
+
+// responsesAPICache caches whether a given endpoint supports the Responses API.
+// Keyed by endpoint URL, value is bool (true = supports Responses API).
+var responsesAPICache sync.Map
 
 const (
 	OpenAI_LLMType LLMType = "OpenAI"
@@ -44,15 +49,8 @@ func (p *OpenAIProvider) GetType() LLMType {
 	return OpenAI_LLMType
 }
 
-// GetName returns the provider name.
-func (p *OpenAIProvider) GetName() string {
-	return "OpenAI"
-}
-
-// RequiresAPIKey returns true as OpenAI requires an API key.
-func (p *OpenAIProvider) RequiresAPIKey() bool {
-	return true
-}
+// GetProtocol returns "openai" — the streaming protocol family.
+func (p *OpenAIProvider) GetProtocol() string { return "openai" }
 
 // GetDefaultEndpoint returns the default OpenAI API endpoint.
 func (p *OpenAIProvider) GetDefaultEndpoint() string {
@@ -105,19 +103,12 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	// Filter to only include chat-compatible models
-	// Exclude: *-instruct (completions), *-codex (completions), *-base (base models)
+	// Filter out non-chat models using a blocklist approach.
+	// New model families pass through automatically.
 	var models []string
 	for _, model := range modelsResp.Models {
 		name := model.Name
-		// Must be a GPT model or chatgpt model
-		if !strings.HasPrefix(name, "gpt-") && !strings.HasPrefix(name, "chatgpt-") {
-			continue
-		}
-		// Exclude non-chat models
-		if strings.HasSuffix(name, "-instruct") ||
-			strings.Contains(name, "-codex") ||
-			strings.HasSuffix(name, "-base") {
+		if isNonChatModel(name) {
 			continue
 		}
 		models = append(models, name)
@@ -125,21 +116,104 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 	return models, nil
 }
 
-// GetBAMLClientType returns the BAML client type for OpenAI.
-func (p *OpenAIProvider) GetBAMLClientType() string {
-	return "openai"
-}
-
-// CreateBAMLClientOptions creates BAML client options for OpenAI.
-func (p *OpenAIProvider) CreateBAMLClientOptions(config *ProviderConfig, model string) (map[string]any, error) {
-	if err := p.ValidateConfig(config); err != nil {
-		return nil, err
+// CreateBAMLClient creates BAML client type and options for OpenAI.
+// It probes the endpoint to determine whether the Responses API is available,
+// falling back to Chat Completions if not. The probe result is cached per endpoint.
+func (p *OpenAIProvider) CreateBAMLClient(config *ProviderConfig, model string) (string, map[string]any, error) {
+	endpoint := config.Endpoint
+	if endpoint == "" {
+		endpoint = p.GetDefaultEndpoint()
 	}
 
-	return map[string]any{
-		"model":   model,
-		"api_key": config.APIKey,
-	}, nil
+	clientType := "openai"
+	if p.supportsResponsesAPI(endpoint, config.APIKey) {
+		clientType = "openai-responses"
+	}
+
+	opts := map[string]any{"model": model}
+	if config.APIKey != "" {
+		opts["api_key"] = config.APIKey
+	}
+	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
+		opts["base_url"] = config.Endpoint
+	}
+	return clientType, opts, nil
+}
+
+// supportsResponsesAPI probes the endpoint to check for Responses API support.
+// Results are cached in responsesAPICache (keyed by endpoint URL).
+//
+// Logic: POST to {endpoint}/responses with empty JSON body.
+//   - 404/405 → endpoint not found → Chat Completions only (cached)
+//   - Any other status (400, 401, 422, etc.) → endpoint exists → Responses API available (cached)
+//   - Network error → safe fallback to Chat Completions (not cached, will retry next call)
+func (p *OpenAIProvider) supportsResponsesAPI(endpoint, apiKey string) bool {
+	if cached, ok := responsesAPICache.Load(endpoint); ok {
+		return cached.(bool)
+	}
+
+	probeURL := endpoint + "/responses"
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	if apiKey != "" {
+		headers["Authorization"] = "Bearer " + apiKey
+	}
+
+	resp, err := sendHTTPRequest("POST", probeURL, []byte("{}"), headers)
+	if err != nil {
+		log.Debugf("Responses API probe failed for %s (network error), falling back to Chat Completions", endpoint)
+		return false
+	}
+	defer resp.Body.Close()
+	io.ReadAll(resp.Body)
+
+	supports := resp.StatusCode != http.StatusNotFound && resp.StatusCode != http.StatusMethodNotAllowed
+	if supports {
+		log.Debugf("Responses API available at %s (probe status: %d)", endpoint, resp.StatusCode)
+	} else {
+		log.Debugf("Responses API not available at %s (probe status: %d), using Chat Completions", endpoint, resp.StatusCode)
+	}
+
+	responsesAPICache.Store(endpoint, supports)
+	return supports
+}
+
+// isNonChatModel returns true for model IDs that are not chat-compatible.
+// Uses a blocklist so new chat model families pass through automatically.
+func isNonChatModel(name string) bool {
+	// Non-chat model families (prefix match)
+	nonChatPrefixes := []string{
+		"dall-e-",          // image generation
+		"whisper-",         // speech-to-text
+		"tts-",             // text-to-speech
+		"text-embedding-",  // embeddings
+		"text-moderation-", // moderation
+		"gpt-image-",       // image generation
+		"babbage-",         // legacy completions
+		"davinci-",         // legacy completions
+	}
+	for _, prefix := range nonChatPrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+
+	// Non-chat model suffixes/infixes
+	nonChatPatterns := []string{"-instruct", "-base", "-codex"}
+	for _, pattern := range nonChatPatterns {
+		if strings.Contains(name, pattern) {
+			return true
+		}
+	}
+
+	// Non-chat model infixes (partial name matches)
+	if strings.Contains(name, "-transcribe") ||
+		strings.Contains(name, "-realtime") {
+		return true
+	}
+
+	return false
 }
 
 // sendHTTPRequest is a helper function to send HTTP requests.

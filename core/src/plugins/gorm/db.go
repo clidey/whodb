@@ -17,6 +17,7 @@
 package gorm_plugin
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -134,7 +135,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		params := make(map[string]string)
 		for _, record := range config.Credentials.Advanced {
 			switch record.Key {
-			// Skip known keys that are already parsed + skip SSL keyss
+			// Skip known keys that are already parsed + skip SSL keys
 			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey,
 				ssl.KeySSLMode, ssl.KeySSLCACertContent, ssl.KeySSLClientCertContent, ssl.KeySSLClientKeyContent,
 				ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath, ssl.KeySSLServerName:
@@ -154,17 +155,9 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 	return input, nil
 }
 
-func (p *GormPlugin) IsAvailable(config *engine.PluginConfig) bool {
+func (p *GormPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
+	// WithConnection calls getOrCreateConnection which already pings to validate the connection
 	available, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		sqlDb, err := db.DB()
-		if err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to get SQL DB instance for database type %s", p.Type))
-			return false, err
-		}
-		if err = sqlDb.Ping(); err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to ping database for type %s", p.Type))
-			return false, nil
-		}
 		return true, nil
 	})
 

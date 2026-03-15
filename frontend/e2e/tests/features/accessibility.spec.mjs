@@ -104,11 +104,11 @@ test.describe("Accessibility (axe-core)", () => {
     });
 
     test("storage-unit list view has no critical violations", async ({ whodb, page }, testInfo) => {
-      await page.evaluate(() => {
-        const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
-        settings.storageUnitView = '"list"';
-        localStorage.setItem("persist:settings", JSON.stringify(settings));
-      });
+      // Use settings UI to switch to list view (direct localStorage writes
+      // race with redux-persist rehydration).
+      await whodb.goto("settings");
+      await page.locator("#storage-unit-view").click();
+      await page.locator('[data-value="list"]').click();
 
       await page.goto(whodb.url("/storage-unit"));
       await page.locator("table").filter({ visible: true }).waitFor({ timeout: 15_000 });
