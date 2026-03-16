@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,5 +102,13 @@ func (p *PostgresPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		TypeDefinitions: TypeDefinitions,
 		Operators:       operators,
 		AliasMap:        AliasMap,
+		Capabilities: engine.Capabilities{
+			SupportsScratchpad:     true,
+			SupportsChat:           true,
+			SupportsGraph:          true,
+			SupportsSchema:         true,
+			SupportsDatabaseSwitch: true,
+			SupportsModifiers:      true,
+		},
 	}
 }
