@@ -103,13 +103,19 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debugf("AI Chat Stream: BAML context created")
 
-	// Create BAML stream
+	// Create BAML stream — use database-agnostic prompt for NoSQL databases
 	log.Debugf("AI Chat Stream: Setting up AI client...")
 	callOpts := common.SetupAIClient(config.ExternalModel)
-	log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
-	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	var stream <-chan baml_client.StreamValue[[]stream_types.ChatResponse, []types.ChatResponse]
+	if IsNoSQLDatabase(config.Credentials.Type) {
+		log.Debugf("AI Chat Stream: Starting BAML GenerateDBQuery stream (NoSQL)...")
+		stream, err = baml_client.Stream.GenerateDBQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	} else {
+		log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
+		stream, err = baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	}
 	if err != nil {
-		log.Debugf("AI Chat Stream: GenerateSQLQuery failed: %v", err)
+		log.Debugf("AI Chat Stream: BAML stream failed: %v", err)
 		SendSSEError(w, flusher, "Failed to start stream: "+err.Error())
 		return
 	}
@@ -302,9 +308,14 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 		Previous_conversation: req.Input.PreviousConversation,
 	}
 
-	// Use non-streaming BAML client
+	// Use non-streaming BAML client — pick prompt based on database type
 	callOpts := common.SetupAIClient(config.ExternalModel)
-	responses, err := baml_client.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	var responses []types.ChatResponse
+	if IsNoSQLDatabase(config.Credentials.Type) {
+		responses, err = baml_client.GenerateDBQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	} else {
+		responses, err = baml_client.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	}
 	if err != nil {
 		http.Error(w, "AI query failed: "+err.Error(), http.StatusInternalServerError)
 		return
