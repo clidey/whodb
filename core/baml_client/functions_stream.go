@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // ----------------------------------------------------------------------------
 //
 //  Welcome to Baml! To use this generated code, please run the following:
@@ -104,6 +120,80 @@ func (*stream) GenerateChatTitle(ctx context.Context, user_query string, opts ..
 			} else {
 				data := (result.StreamData).(string)
 				channel <- StreamValue[string, string]{
+					IsFinal:   false,
+					as_stream: &data,
+				}
+			}
+		}
+
+		// when internal_channel is closed, close the output too
+		close(channel)
+	}()
+	return channel, nil
+}
+
+// / Streaming version of GenerateDBQuery
+func (*stream) GenerateDBQuery(ctx context.Context, context types.DatabaseContext, user_query string, opts ...CallOptionFunc) (<-chan StreamValue[[]stream_types.ChatResponse, []types.ChatResponse], error) {
+
+	var callOpts callOption
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	args := baml.BamlFunctionArguments{
+		Kwargs: map[string]any{"context": context, "user_query": user_query},
+		Env:    getEnvVars(callOpts.env),
+	}
+
+	if callOpts.clientRegistry != nil {
+		args.ClientRegistry = callOpts.clientRegistry
+	}
+
+	if callOpts.collectors != nil {
+		args.Collectors = callOpts.collectors
+	}
+
+	if callOpts.typeBuilder != nil {
+		args.TypeBuilder = callOpts.typeBuilder
+	}
+
+	if callOpts.tags != nil {
+		args.Tags = callOpts.tags
+	}
+
+	encoded, err := args.Encode()
+	if err != nil {
+		// This should never happen. if it does, please file an issue at https://github.com/boundaryml/baml/issues
+		// and include the type of the args you're passing in.
+		wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateDBQuery: %w", err)
+		panic(wrapped_err)
+	}
+
+	internal_channel, err := bamlRuntime.CallFunctionStream(ctx, "GenerateDBQuery", encoded, callOpts.onTick)
+	if err != nil {
+		return nil, err
+	}
+
+	channel := make(chan StreamValue[[]stream_types.ChatResponse, []types.ChatResponse])
+	go func() {
+		for result := range internal_channel {
+			if result.Error != nil {
+				channel <- StreamValue[[]stream_types.ChatResponse, []types.ChatResponse]{
+					IsError: true,
+					Error:   result.Error,
+				}
+				close(channel)
+				return
+			}
+			if result.HasData {
+				data := (result.Data).([]types.ChatResponse)
+				channel <- StreamValue[[]stream_types.ChatResponse, []types.ChatResponse]{
+					IsFinal:  true,
+					as_final: &data,
+				}
+			} else {
+				data := (result.StreamData).([]stream_types.ChatResponse)
+				channel <- StreamValue[[]stream_types.ChatResponse, []types.ChatResponse]{
 					IsFinal:   false,
 					as_stream: &data,
 				}

@@ -27,6 +27,29 @@ function getBackendCapabilities() {
 }
 
 /**
+ * Check if a database supports chat/AI query generation.
+ * Reads from backend capabilities first, falls back to assuming SQL databases support it.
+ */
+export function databaseSupportsChat(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return false;
+    }
+
+    const capabilities = getBackendCapabilities();
+    if (capabilities != null) {
+        return capabilities.supportsChat;
+    }
+
+    // Fallback: SQL databases support chat, NoSQL don't (until capabilities load)
+    const databasesThatDontSupportChat = [
+        DatabaseType.MongoDb,
+        DatabaseType.Redis,
+        DatabaseType.ElasticSearch
+    ];
+    return !databasesThatDontSupportChat.includes(databaseType as DatabaseType);
+}
+
+/**
  * Check if a database supports scratchpad/raw query execution.
  * Reads from backend capabilities first, falls back to config/hardcoded lists.
  */

@@ -43,7 +43,7 @@
   "features": {
     "graph": true,
     "export": true,
-    "scratchpad": false,
+    "scratchpad": true,
     "mockData": true,
     "chat": true,
     "whereConditions": true,
@@ -52,7 +52,7 @@
     "documentEdit": true
   },
   "featureNotes": {
-    "scratchpad": "Scratchpad requires SQL execution which MongoDB does not support natively",
+    "scratchpad": "Scratchpad executes MongoDB shell commands (db.collection.find(), etc.)",
     "queryHistory": "Query history not supported for document databases"
   },
   "whereOperators": {

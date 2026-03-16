@@ -58,13 +58,14 @@ import {AuthActions, LocalLoginProfile} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {useAppSelector} from "../../store/hooks";
 import {
+    databaseSupportsChat,
     databaseSupportsDatabaseSwitching,
     databaseSupportsSchema,
     databaseSupportsScratchpad,
     databaseTypesThatUseDatabaseInsteadOfSchema
 } from "../../utils/database-features";
 import {isEEFeatureEnabled} from "../../utils/ee-loader";
-import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {getDatabaseStorageUnitLabel} from "../../utils/functions";
 import {isAwsHostname} from "../../utils/cloud-connection-prefill";
 import {
     ArrowLeftStartOnRectangleIcon,
@@ -220,7 +221,7 @@ export const Sidebar: FC = () => {
                 path: InternalRoutes.Graph.path,
             },
         ];
-        if (!isNoSQL(current.Type)) {
+        if (databaseSupportsChat(current.Type)) {
             routes.unshift({
                 title: t('chat'),
                 icon: <SparklesIcon className="w-4 h-4" />,

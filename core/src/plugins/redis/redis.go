@@ -600,6 +600,8 @@ func (p *RedisPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		AliasMap:        map[string]string{},
 		Capabilities: engine.Capabilities{
 			SupportsDatabaseSwitch: true,
+			SupportsChat:           true,
+			SupportsScratchpad:     true,
 		},
 	}
 }

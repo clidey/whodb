@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ import {useAppSelector} from "@/store/hooks";
 import {getKeyDisplay} from "@/utils/platform";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
 import {useEffectiveIsMac} from "@/hooks/useEffectiveIsMac";
-import {isNoSQL} from "@/utils/functions";
-import {databaseSupportsScratchpad} from "@/utils/database-features";
+import {databaseSupportsChat, databaseSupportsScratchpad} from "@/utils/database-features";
 import {InternalRoutes} from "@/config/routes";
 import {
     ArrowLeftStartOnRectangleIcon,
@@ -88,7 +87,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
         // Navigation actions - only show relevant ones based on database type
         const navDefs = [SHORTCUTS.navFirst, SHORTCUTS.navSecond, SHORTCUTS.navThird, SHORTCUTS.navFourth];
 
-        if (!isNoSQL(current.Type)) {
+        if (!!databaseSupportsChat(current.Type)) {
             navigationActions.push({
                 id: "nav-chat",
                 label: t('goToChat'),
@@ -105,7 +104,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-storage-units",
             label: t('goToStorageUnits'),
             icon: <RectangleGroupIcon className="w-4 h-4" />,
-            shortcut: resolveShortcut(isNoSQL(current.Type) ? navDefs[0] : navDefs[1]).displayKeys,
+            shortcut: resolveShortcut(!databaseSupportsChat(current.Type) ? navDefs[0] : navDefs[1]).displayKeys,
             onSelect: () => {
                 navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 onOpenChange(false);
@@ -116,7 +115,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             id: "nav-graph",
             label: t('goToGraph'),
             icon: <ShareIcon className="w-4 h-4" />,
-            shortcut: resolveShortcut(isNoSQL(current.Type) ? navDefs[1] : navDefs[2]).displayKeys,
+            shortcut: resolveShortcut(!databaseSupportsChat(current.Type) ? navDefs[1] : navDefs[2]).displayKeys,
             onSelect: () => {
                 navigate(InternalRoutes.Graph.path);
                 onOpenChange(false);
@@ -128,7 +127,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 id: "nav-scratchpad",
                 label: t('goToScratchpad'),
                 icon: <CommandLineIcon className="w-4 h-4" />,
-                shortcut: resolveShortcut(isNoSQL(current.Type) ? navDefs[2] : navDefs[3]).displayKeys,
+                shortcut: resolveShortcut(!databaseSupportsChat(current.Type) ? navDefs[2] : navDefs[3]).displayKeys,
                 onSelect: () => {
                     navigate(InternalRoutes.RawExecute.path);
                     onOpenChange(false);

@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import { Navigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
-import { isNoSQL } from "../../utils/functions";
+import { databaseSupportsChat } from "../../utils/database-features";
 import { availableInternalModelTypes } from "../../store/ai-models";
 
 export const NavigateToDefault: FC = () => {
@@ -32,7 +32,7 @@ export const NavigateToDefault: FC = () => {
         }
     });
 
-    if (isNoSQL(current?.Type as DatabaseType) ||  error != null) {
+    if (!databaseSupportsChat(current?.Type as DatabaseType) || error != null) {
         return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
     }
 

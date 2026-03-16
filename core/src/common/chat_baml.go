@@ -110,6 +110,76 @@ func SQLChatBAML(
 	return chatMessages, nil
 }
 
+// DBChatBAML generates database queries using BAML with the database-agnostic prompt.
+// Works for any database type (SQL, MongoDB, Elasticsearch, Redis, etc.).
+// Uses the same execution pipeline as SQLChatBAML — non-mutation queries are executed
+// immediately via plugin.RawExecute(), mutations require user confirmation.
+func DBChatBAML(
+	ctx context.Context,
+	databaseType string,
+	schema string,
+	tableDetails string,
+	previousConversation string,
+	userQuery string,
+	config *engine.PluginConfig,
+	plugin RawExecutePlugin,
+) ([]*engine.ChatMessage, error) {
+
+	dbContext := types.DatabaseContext{
+		Database_type:         databaseType,
+		Schema:                schema,
+		Tables_and_fields:     tableDetails,
+		Previous_conversation: previousConversation,
+	}
+
+	callOpts := SetupAIClient(config.ExternalModel)
+
+	responses, err := baml_client.GenerateDBQuery(ctx, dbContext, userQuery, callOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var chatMessages []*engine.ChatMessage
+	for _, bamlResp := range responses {
+		message := &engine.ChatMessage{
+			Type:                 string(bamlResp.Type),
+			Text:                 bamlResp.Text,
+			Result:               &engine.GetRowsResult{},
+			RequiresConfirmation: false,
+		}
+
+		message.Type = convertBAMLTypeToWhoDB(bamlResp.Type)
+
+		if bamlResp.Type == types.ChatMessageTypeSQL && bamlResp.Operation != nil {
+			isMutation := *bamlResp.Operation == types.OperationTypeINSERT ||
+				*bamlResp.Operation == types.OperationTypeUPDATE ||
+				*bamlResp.Operation == types.OperationTypeDELETE ||
+				*bamlResp.Operation == types.OperationTypeCREATE ||
+				*bamlResp.Operation == types.OperationTypeALTER ||
+				*bamlResp.Operation == types.OperationTypeDROP
+
+			if isMutation {
+				message.Type = convertOperationType(*bamlResp.Operation)
+				message.RequiresConfirmation = true
+				message.Result = nil
+			} else {
+				result, execErr := plugin.RawExecute(config, bamlResp.Text)
+				if execErr != nil {
+					message.Type = "error"
+					message.Text = execErr.Error()
+				} else {
+					message.Type = convertOperationType(*bamlResp.Operation)
+				}
+				message.Result = result
+			}
+		}
+
+		chatMessages = append(chatMessages, message)
+	}
+
+	return chatMessages, nil
+}
+
 // convertBAMLTypeToWhoDB converts BAML ChatMessageType to WhoDB message type string
 func convertBAMLTypeToWhoDB(bamlType types.ChatMessageType) string {
 	switch bamlType {

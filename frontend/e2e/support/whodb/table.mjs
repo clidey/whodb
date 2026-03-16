@@ -90,6 +90,9 @@ export const tableMethods = {
         if (waitForRows) {
             await this.page.locator("table").filter({ visible: true }).locator("tbody tr").first().waitFor({ timeout: TIMEOUT.SLOW });
         }
+        // Wait for background queries (e.g., DatabaseMetadata capabilities) to settle
+        // to prevent sidebar re-renders from destabilizing dialogs
+        await this.page.waitForLoadState('networkidle');
     },
 
     /**

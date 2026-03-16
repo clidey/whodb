@@ -51,6 +51,20 @@ func SQLChatBAML(
 	return nil, ErrBAMLNotSupported
 }
 
+// DBChatBAML returns an error on unsupported platforms
+func DBChatBAML(
+	ctx context.Context,
+	databaseType string,
+	schema string,
+	tableDetails string,
+	previousConversation string,
+	userQuery string,
+	config *engine.PluginConfig,
+	plugin RawExecutePlugin,
+) ([]*engine.ChatMessage, error) {
+	return nil, ErrBAMLNotSupported
+}
+
 // SetupAIClient returns nil on unsupported platforms
 func SetupAIClient(externalModel *engine.ExternalModel) []any {
 	return nil

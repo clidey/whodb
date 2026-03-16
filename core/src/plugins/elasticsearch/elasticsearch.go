@@ -224,6 +224,10 @@ func (p *ElasticSearchPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		},
 		Operators: operators,
 		AliasMap:  map[string]string{},
+		Capabilities: engine.Capabilities{
+			SupportsChat:       true,
+			SupportsScratchpad: true,
+		},
 	}
 }
 
