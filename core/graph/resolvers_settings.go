@@ -112,6 +112,14 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 		TypeDefinitions: typeDefinitions,
 		Operators:       metadata.Operators,
 		AliasMap:        aliasMap,
+		Capabilities: &model.Capabilities{
+			SupportsScratchpad:     metadata.Capabilities.SupportsScratchpad,
+			SupportsChat:           metadata.Capabilities.SupportsChat,
+			SupportsGraph:          metadata.Capabilities.SupportsGraph,
+			SupportsSchema:         metadata.Capabilities.SupportsSchema,
+			SupportsDatabaseSwitch: metadata.Capabilities.SupportsDatabaseSwitch,
+			SupportsModifiers:      metadata.Capabilities.SupportsModifiers,
+		},
 	}, nil
 }
 

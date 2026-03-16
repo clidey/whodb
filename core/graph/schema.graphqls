@@ -286,11 +286,21 @@ type TypeDefinition {
   category: TypeCategory!
 }
 
+type Capabilities {
+  supportsScratchpad: Boolean!
+  supportsChat: Boolean!
+  supportsGraph: Boolean!
+  supportsSchema: Boolean!
+  supportsDatabaseSwitch: Boolean!
+  supportsModifiers: Boolean!
+}
+
 type DatabaseMetadata {
   databaseType: String!
   typeDefinitions: [TypeDefinition!]!
   operators: [String!]!
   aliasMap: [Record!]!
+  capabilities: Capabilities!
 }
 
 type DatabaseQuerySuggestion {
