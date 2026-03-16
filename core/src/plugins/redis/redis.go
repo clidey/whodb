@@ -30,7 +30,9 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RedisPlugin struct{}
+type RedisPlugin struct {
+	engine.BasePlugin
+}
 
 var redisOperators = map[string]string{
 	"=":           "=",
@@ -78,10 +80,6 @@ func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 	}
 
 	return availableDatabases, nil
-}
-
-func (p *RedisPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
 }
 
 func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string) ([]engine.StorageUnit, error) {
@@ -435,11 +433,6 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 	}
 }
 
-// MarkGeneratedColumns is a no-op for Redis (no generated/computed columns).
-func (p *RedisPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
-	return nil
-}
-
 func filterRedisHash(field, value string, where *model.WhereCondition) bool {
 	condition, err := convertWhereConditionToRedisFilter(where)
 	if err != nil {
@@ -518,10 +511,6 @@ type redisFilter struct {
 	Value    string
 }
 
-func (p *RedisPlugin) GetSupportedOperators() map[string]string {
-	return redisOperators
-}
-
 func convertWhereConditionToRedisFilter(where *model.WhereCondition) (map[string]redisFilter, error) {
 	if where == nil {
 		return nil, nil
@@ -589,46 +578,11 @@ func evaluateRedisCondition(value, operator, target string) bool {
 	}
 }
 
-func (p *RedisPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]engine.GraphUnit, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *RedisPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
-	return nil, errors.ErrUnsupported
-}
-
 func (p *RedisPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
-}
-
-// GetColumnConstraints - not supported for Redis
-func (p *RedisPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
-	return make(map[string]map[string]any), nil
-}
-
-func (p *RedisPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
-
-// ClearTableData - not supported for Redis
-func (p *RedisPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
-	return false, errors.ErrUnsupported
-}
-
-// WithTransaction executes the operation directly since Redis doesn't support transactions in the same way as SQL databases
-func (p *RedisPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
-	// Redis doesn't support transactions in the same way as SQL databases
-	// For now, just execute the operation directly
-	return operation(nil)
-}
-
-func (p *RedisPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
-	return make(map[string]*engine.ForeignKeyRelationship), nil
 }
 
 // GetDatabaseMetadata returns Redis metadata for frontend configuration.
@@ -644,6 +598,9 @@ func (p *RedisPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		TypeDefinitions: []engine.TypeDefinition{},
 		Operators:       ops,
 		AliasMap:        map[string]string{},
+		Capabilities: engine.Capabilities{
+			SupportsDatabaseSwitch: true,
+		},
 	}
 }
 

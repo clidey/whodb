@@ -19,7 +19,6 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -36,7 +35,9 @@ var (
 	}
 )
 
-type ElasticSearchPlugin struct{}
+type ElasticSearchPlugin struct {
+	engine.BasePlugin
+}
 
 func (p *ElasticSearchPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
@@ -97,10 +98,6 @@ func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]strin
 	}
 
 	return databases, nil
-}
-
-func (p *ElasticSearchPlugin) GetAllSchemas(config *engine.PluginConfig) ([]string, error) {
-	return nil, errors.ErrUnsupported
 }
 
 func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, database string) ([]engine.StorageUnit, error) {
@@ -196,53 +193,11 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 	return res.StatusCode == 200, nil
 }
 
-// MarkGeneratedColumns is a no-op for ElasticSearch (no generated/computed columns).
-func (p *ElasticSearchPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
-	return nil
-}
-
-func (p *ElasticSearchPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
-	return nil, errors.ErrUnsupported
-}
-
 func (p *ElasticSearchPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
-}
-
-// GetColumnConstraints - not supported for ElasticSearch
-func (p *ElasticSearchPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
-	return make(map[string]map[string]any), nil
-}
-
-func (p *ElasticSearchPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error {
-	return nil
-}
-
-// ClearTableData - not supported for ElasticSearch
-func (p *ElasticSearchPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
-	return false, errors.ErrUnsupported
-}
-
-// WithTransaction executes the operation directly since ElasticSearch doesn't support transactions
-func (p *ElasticSearchPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error { //nolint:unused
-	// ElasticSearch doesn't support transactions
-	// For now, just execute the operation directly
-	return operation(nil)
-}
-
-func (p *ElasticSearchPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
-	return make(map[string]*engine.ForeignKeyRelationship), nil
-}
-
-func (p *ElasticSearchPlugin) GetSupportedOperators() map[string]string { //nolint:unused
-	return supportedOperators
 }
 
 // GetDatabaseMetadata returns ElasticSearch metadata for frontend configuration.

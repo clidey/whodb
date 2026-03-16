@@ -18,7 +18,6 @@ package mongodb
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -39,7 +38,9 @@ var (
 	}
 )
 
-type MongoDBPlugin struct{}
+type MongoDBPlugin struct {
+	engine.BasePlugin
+}
 
 func (p *MongoDBPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfig) bool {
 	client, err := DB(config)
@@ -191,28 +192,11 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 	return len(names) > 0, nil
 }
 
-// MarkGeneratedColumns is a no-op for MongoDB (no generated/computed columns).
-func (p *MongoDBPlugin) MarkGeneratedColumns(_ *engine.PluginConfig, _, _ string, _ []engine.Column) error {
-	return nil
-}
-
-func (p *MongoDBPlugin) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
-	return nil, errors.ErrUnsupported
-}
-
 func (p *MongoDBPlugin) FormatValue(val any) string {
 	if val == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
-}
-
-func (p *MongoDBPlugin) GetSupportedOperators() map[string]string {
-	return supportedOperators
 }
 
 // GetColumnConstraints retrieves MongoDB schema validation rules and maps them to the constraint format
@@ -382,8 +366,6 @@ func toFloat64(v any) *float64 {
 }
 
 // ClearTableData deletes all documents from a MongoDB collection.
-func (p *MongoDBPlugin) NullifyFKColumn(_ *engine.PluginConfig, _, _, _ string) error { return nil }
-
 // This is used by the mock data generator when overwrite mode is enabled.
 func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema string, storageUnit string) (bool, error) {
 	client, err := DB(config)
@@ -418,17 +400,6 @@ func (p *MongoDBPlugin) ClearTableData(config *engine.PluginConfig, schema strin
 	return true, nil
 }
 
-// WithTransaction executes the operation directly since MongoDB doesn't support transactions in the same way as SQL databases
-func (p *MongoDBPlugin) WithTransaction(config *engine.PluginConfig, operation func(tx any) error) error {
-	// MongoDB doesn't support transactions in the same way as SQL databases
-	// For now, just execute the operation directly
-	return operation(nil)
-}
-
-func (p *MongoDBPlugin) GetForeignKeyRelationships(config *engine.PluginConfig, schema string, storageUnit string) (map[string]*engine.ForeignKeyRelationship, error) {
-	return make(map[string]*engine.ForeignKeyRelationship), nil
-}
-
 // GetDatabaseMetadata returns MongoDB metadata for frontend configuration.
 // MongoDB is a document database without traditional type definitions.
 func (p *MongoDBPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
@@ -451,6 +422,9 @@ func (p *MongoDBPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 		},
 		Operators: operators,
 		AliasMap:  map[string]string{},
+		Capabilities: engine.Capabilities{
+			SupportsDatabaseSwitch: true,
+		},
 	}
 }
 
