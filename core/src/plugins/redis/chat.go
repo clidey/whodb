@@ -60,5 +60,5 @@ func (p *RedisPlugin) Chat(config *engine.PluginConfig, schema string, previousC
 	}
 
 	callCtx := context.Background()
-	return common.DBChatBAML(callCtx, "Redis", schema, tableDetails.String(), previousConversation, query, config, p)
+	return common.ExecuteChatQuery(callCtx, "Redis", schema, tableDetails.String(), previousConversation, query, config, p)
 }

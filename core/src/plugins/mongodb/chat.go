@@ -67,5 +67,5 @@ func (p *MongoDBPlugin) Chat(config *engine.PluginConfig, schema string, previou
 	}
 
 	callCtx := context.Background()
-	return common.DBChatBAML(callCtx, "MongoDB", schema, tableDetails.String(), previousConversation, query, config, p)
+	return common.ExecuteChatQuery(callCtx, "MongoDB", schema, tableDetails.String(), previousConversation, query, config, p)
 }

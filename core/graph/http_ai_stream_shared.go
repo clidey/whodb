@@ -69,18 +69,6 @@ func SetupSSEHeaders(w http.ResponseWriter) http.Flusher {
 	return flusher
 }
 
-// IsNoSQLDatabase returns true if the database type should use the database-agnostic
-// BAML prompt (GenerateDBQuery) instead of the SQL-specific prompt (GenerateSQLQuery).
-func IsNoSQLDatabase(dbType string) bool {
-	switch engine.DatabaseType(dbType) {
-	case engine.DatabaseType_MongoDB,
-		engine.DatabaseType_Redis,
-		engine.DatabaseType_ElasticSearch:
-		return true
-	}
-	return false
-}
-
 // BuildTableDetails builds the table schema string for BAML context.
 // Uses concurrent column fetching (up to 10 parallel) to avoid N+1 queries.
 func BuildTableDetails(plugin *engine.Plugin, config *engine.PluginConfig, schema string) (string, error) {
