@@ -56,6 +56,5 @@ func (p *ElasticSearchPlugin) Chat(config *engine.PluginConfig, _ string, previo
 		}
 	}
 
-	callCtx := context.Background()
-	return common.ExecuteChatQuery(callCtx, "Elasticsearch", "", tableDetails.String(), previousConversation, query, config, p)
+	return common.ExecuteChatQuery(context.Background(), "Elasticsearch", "", tableDetails.String(), previousConversation, query, config, p)
 }

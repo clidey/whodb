@@ -40,13 +40,8 @@ export function databaseSupportsChat(databaseType: DatabaseType | string | undef
         return capabilities.supportsChat;
     }
 
-    // Fallback: SQL databases support chat, NoSQL don't (until capabilities load)
-    const databasesThatDontSupportChat = [
-        DatabaseType.MongoDb,
-        DatabaseType.Redis,
-        DatabaseType.ElasticSearch
-    ];
-    return !databasesThatDontSupportChat.includes(databaseType as DatabaseType);
+    // Capabilities not yet loaded — safe default until they arrive
+    return false;
 }
 
 /**
@@ -70,12 +65,8 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
         return dbConfig.supportsScratchpad;
     }
 
-    const databasesThatDontSupportScratchpad = [
-        DatabaseType.MongoDb,
-        DatabaseType.Redis,
-        DatabaseType.ElasticSearch
-    ];
-    return !databasesThatDontSupportScratchpad.includes(databaseType as DatabaseType);
+    // All databases now support scratchpad (native query execution)
+    return true;
 }
 
 /**

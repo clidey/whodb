@@ -120,36 +120,6 @@ func ExecuteChatQuery(
 	return chatMessages, nil
 }
 
-// SQLChatBAML is a convenience wrapper for SQL databases. Calls ExecuteChatQuery.
-// Deprecated: Use ExecuteChatQuery directly.
-func SQLChatBAML(
-	ctx context.Context,
-	databaseType string,
-	schema string,
-	tableDetails string,
-	previousConversation string,
-	userQuery string,
-	config *engine.PluginConfig,
-	plugin RawExecutePlugin,
-) ([]*engine.ChatMessage, error) {
-	return ExecuteChatQuery(ctx, databaseType, schema, tableDetails, previousConversation, userQuery, config, plugin)
-}
-
-// DBChatBAML is a convenience wrapper for NoSQL databases. Calls ExecuteChatQuery.
-// Deprecated: Use ExecuteChatQuery directly.
-func DBChatBAML(
-	ctx context.Context,
-	databaseType string,
-	schema string,
-	tableDetails string,
-	previousConversation string,
-	userQuery string,
-	config *engine.PluginConfig,
-	plugin RawExecutePlugin,
-) ([]*engine.ChatMessage, error) {
-	return ExecuteChatQuery(ctx, databaseType, schema, tableDetails, previousConversation, userQuery, config, plugin)
-}
-
 // convertBAMLTypeToWhoDB converts BAML ChatMessageType to WhoDB message type string
 func convertBAMLTypeToWhoDB(bamlType types.ChatMessageType) string {
 	switch bamlType {

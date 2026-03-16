@@ -56,7 +56,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If streaming not supported (e.g., Wails), fall back to non-streaming mode
 	if !streamingSupported {
-		handleNonStreamingAIChat(w, r, req)
+		HandleNonStreamingAIChat(w, r, req)
 		return
 	}
 	log.Debugf("AI Chat Stream: SSE headers set, flusher available")
@@ -270,9 +270,9 @@ func convertOperationType(operation types.OperationType) string {
 	return "sql:" + operationToString(operation)
 }
 
-// handleNonStreamingAIChat handles AI chat when SSE streaming is not supported (e.g., Wails desktop)
-// It uses the non-streaming BAML client and returns a JSON response
-func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *StreamRequest) {
+// HandleNonStreamingAIChat handles AI chat when SSE streaming is not supported (e.g., Wails desktop).
+// It uses the shared ExecuteChatQuery path and returns a JSON response.
+func HandleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *StreamRequest) {
 	// Get plugin and config
 	plugin, config := GetPluginForContext(r.Context())
 	if plugin == nil {
@@ -338,6 +338,6 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-
+		log.WithError(err).Error("Failed to encode non-streaming AI chat response")
 	}
 }
