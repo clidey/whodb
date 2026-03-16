@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -74,6 +90,16 @@ export type AtomicWhereCondition = {
   Value: Scalars['String']['input'];
 };
 
+export type Capabilities = {
+  __typename?: 'Capabilities';
+  supportsChat: Scalars['Boolean']['output'];
+  supportsDatabaseSwitch: Scalars['Boolean']['output'];
+  supportsGraph: Scalars['Boolean']['output'];
+  supportsModifiers: Scalars['Boolean']['output'];
+  supportsSchema: Scalars['Boolean']['output'];
+  supportsScratchpad: Scalars['Boolean']['output'];
+};
+
 export type ChatInput = {
   Model: Scalars['String']['input'];
   PreviousConversation: Scalars['String']['input'];
@@ -128,6 +154,7 @@ export enum ConnectionStatus {
 export type DatabaseMetadata = {
   __typename?: 'DatabaseMetadata';
   aliasMap: Array<Record>;
+  capabilities: Capabilities;
   databaseType: Scalars['String']['output'];
   operators: Array<Scalars['String']['output']>;
   typeDefinitions: Array<TypeDefinition>;
@@ -735,7 +762,7 @@ export type GetVersionQuery = { __typename?: 'Query', Version: string };
 export type GetDatabaseMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }> } | null };
+export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }>, capabilities: { __typename?: 'Capabilities', supportsScratchpad: boolean, supportsChat: boolean, supportsGraph: boolean, supportsSchema: boolean, supportsDatabaseSwitch: boolean, supportsModifiers: boolean } } | null };
 
 export type ExecuteConfirmedSqlMutationVariables = Exact<{
   query: Scalars['String']['input'];
@@ -1243,6 +1270,14 @@ export const GetDatabaseMetadataDocument = gql`
     aliasMap {
       Key
       Value
+    }
+    capabilities {
+      supportsScratchpad
+      supportsChat
+      supportsGraph
+      supportsSchema
+      supportsDatabaseSwitch
+      supportsModifiers
     }
   }
 }

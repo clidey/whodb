@@ -15,5 +15,13 @@ query GetDatabaseMetadata {
       Key
       Value
     }
+    capabilities {
+      supportsScratchpad
+      supportsChat
+      supportsGraph
+      supportsSchema
+      supportsDatabaseSwitch
+      supportsModifiers
+    }
   }
 }
