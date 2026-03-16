@@ -373,21 +373,52 @@ test.describe('Schema Management', () => {
         });
     });
 
-    test.describe('Hide Create for Key-Value Databases', () => {
+    test.describe('Create for Key-Value Databases', () => {
         forEachDatabase('keyvalue', (db) => {
             test.describe(`${db.type}`, () => {
-                test('hides create option for key-value databases', async ({ whodb, page }) => {
+                test('shows create option for key-value databases', async ({ whodb, page }) => {
                     await page.goto(whodb.url('/storage-unit'));
 
-                    // Wait for page to load
                     await expect(page.locator('[data-testid="storage-unit-card-list"]')).toBeVisible({ timeout: 15000 });
 
-                    // Create storage unit card should NOT be visible for Redis
-                    await expect(page.locator('[data-testid="create-storage-unit-card"]')).not.toBeVisible();
-
-                    // Verify it's in the DOM but hidden (CSS hidden)
+                    // Create storage unit card should be visible and have a create button
                     await expect(page.locator('[data-testid="create-storage-unit-card"]')).toBeAttached();
-                    await expect(page.locator('[data-testid="create-storage-unit-card"]')).not.toBeVisible();
+                    await expect(
+                        page.locator('[data-testid="create-storage-unit-card"]')
+                            .locator('button')
+                            .filter({ hasText: /create/i })
+                    ).toBeAttached();
+                });
+
+                test('creates a new key', async ({ whodb, page }) => {
+                    const uniqueKey = `e2e_test_key_${Date.now()}`;
+
+                    await page.goto(whodb.url('/storage-unit'));
+                    await expect(page.locator('[data-testid="storage-unit-card-list"]')).toBeVisible({ timeout: 15000 });
+
+                    // Open create form
+                    await page.locator('[data-testid="create-storage-unit-card"]')
+                        .locator('button')
+                        .filter({ hasText: /create/i })
+                        .click();
+
+                    await page.waitForTimeout(500);
+
+                    // Enter key name
+                    await page.locator('input[placeholder*="name" i]').first().fill(uniqueKey);
+
+                    // Submit
+                    await page.locator('[data-testid="submit-button"]').click();
+
+                    await page.waitForTimeout(2000);
+
+                    // Refresh and verify new key appears
+                    await page.goto(whodb.url('/storage-unit'));
+                    await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
+
+                    await expect(
+                        page.locator('[data-testid="storage-unit-card"]').filter({ hasText: uniqueKey })
+                    ).toBeAttached({ timeout: 10000 });
                 });
             });
         });

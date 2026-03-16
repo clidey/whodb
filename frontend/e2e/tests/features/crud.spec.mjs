@@ -408,6 +408,32 @@ test.describe('CRUD Operations', () => {
             });
         });
 
+        test.describe('Add Hash Field', () => {
+            test('adds a new field to a hash key', async ({ whodb, page }) => {
+                await whodb.data(keyName);
+
+                const { rows: before } = await whodb.getTableData();
+                const initialCount = before.length;
+
+                const uniqueField = `test_field_${Date.now()}`;
+                const verifyAdd = waitForMutation(page, 'AddRow');
+                await whodb.addRow({ field: uniqueField, value: 'test_value' });
+                await verifyAdd();
+
+                // Verify field was added
+                const { rows: after } = await whodb.getTableData();
+                expect(after.length).toEqual(initialCount + 1);
+
+                // Clean up - delete the added field
+                const addedIndex = after.findIndex(r => r[1] === uniqueField);
+                expect(addedIndex, `Added field ${uniqueField} should exist`).toBeGreaterThan(-1);
+
+                const verifyDelete = waitForMutation(page, 'DeleteRow');
+                await whodb.deleteRow(addedIndex);
+                await verifyDelete();
+            });
+        });
+
         test.describe('Delete Hash Field', () => {
             test('deletes a hash field', async ({ whodb, page }) => {
                 // Use user:2 for delete test to avoid affecting user:1 used in edit tests
