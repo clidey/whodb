@@ -11,5 +11,5 @@ en:
   switching: Switching...
   switchSuccessful: Successfully switched profile
   switchFailed: Failed to switch profile
-  switchFailedWithError: "Failed to switch profile: {{error}}"
+  switchFailedWithError: "Failed to switch profile: {error}"
   logout: Logout

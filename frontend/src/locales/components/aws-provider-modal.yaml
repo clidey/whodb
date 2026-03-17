@@ -5,8 +5,8 @@ en:
   detectedProfiles: Detected AWS Profiles
   clickToAutofill: Click a profile to auto-fill the form
   defaultAwsName: Default AWS
-  awsProfileName: "AWS ({{name}})"
-  profileSourceTooltip: "Found in {{source}}"
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Found in {source}"
   defaultProfileName: default
 
   sourceCredentials: "~/.aws/credentials"
@@ -41,7 +41,7 @@ en:
   testing: Testing...
   connectionSuccessful: Connection successful
   connectionFailed: Connection test failed
-  testFailed: "Test failed: {{error}}"
+  testFailed: "Test failed: {error}"
   saveBeforeTest: Save the provider before testing
   cancel: Cancel
   save: Save
@@ -49,7 +49,7 @@ en:
   saving: Saving...
   providerAdded: AWS account added successfully
   providerUpdated: AWS account updated successfully
-  operationFailed: "Operation failed: {{error}}"
+  operationFailed: "Operation failed: {error}"
   unknownError: Unknown error occurred
 
   nameRequired: Display name is required
