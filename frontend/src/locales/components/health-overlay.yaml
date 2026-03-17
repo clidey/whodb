@@ -1,4 +1,4 @@
-en:
+en_US:
   serverDownTitle: Server Unavailable
   serverDownMessage: "The {appName} server is currently unreachable. Please check your connection."
   serverDownRetrying: Attempting to reconnect...

@@ -286,6 +286,40 @@ function applyEESettingsDefaultsV4(): void {
 }
 
 /**
+ * Migrate language codes from old format (en, es, fr, de) to regional variants
+ * (en_US, es_ES, fr_FR, de_DE).
+ */
+function migrateLanguageCodesV5(): void {
+  try {
+    const persistedSettingsState = localStorage.getItem('persist:settings');
+    if (!persistedSettingsState) {
+      return;
+    }
+
+    const settingsState = JSON.parse(persistedSettingsState);
+    if (!settingsState.language) {
+      return;
+    }
+
+    const languageMap: Record<string, string> = {
+      'en': 'en_US',
+      'es': 'es_ES',
+      'fr': 'fr_FR',
+      'de': 'de_DE',
+    };
+
+    const currentLanguage = JSON.parse(settingsState.language);
+    const mapped = languageMap[currentLanguage];
+    if (mapped) {
+      settingsState.language = JSON.stringify(mapped);
+      localStorage.setItem('persist:settings', JSON.stringify(settingsState));
+    }
+  } catch (error) {
+    console.error('Error migrating language codes:', error);
+  }
+}
+
+/**
  * Run all necessary migrations
  */
 export function runMigrations(): void {
@@ -305,6 +339,11 @@ export function runMigrations(): void {
   if (currentVersion < 4) {
     applyEESettingsDefaultsV4();
     setMigrationVersion(4);
+  }
+
+  if (currentVersion < 5) {
+    migrateLanguageCodesV5();
+    setMigrationVersion(5);
   }
 
   // Always ensure AI models state is valid

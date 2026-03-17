@@ -1,4 +1,4 @@
-en:
+en_US:
   title: Schema
   columns: Columns
   indexes: Indexes
@@ -8,7 +8,7 @@ en:
   searchAriaLabel: Search Tables
   noResults: No tables found
 
-es:
+es_ES:
   title: Esquema
   columns: Columnas
   indexes: Índices

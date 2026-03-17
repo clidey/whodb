@@ -53,6 +53,7 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {SettingsActions} from "../../store/settings";
+import {isSupportedLanguage} from "@/utils/languages";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
@@ -508,8 +509,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     // Handle locale URL parameter
     useEffect(() => {
         if (searchParams.has("locale")) {
-            const locale = searchParams.get("locale")?.toLowerCase();
-            if (locale === 'en' || locale === 'es' || locale === 'de' || locale === 'fr') {
+            const locale = searchParams.get("locale");
+            if (locale && isSupportedLanguage(locale)) {
                 dispatch(SettingsActions.setLanguage(locale));
             }
         }

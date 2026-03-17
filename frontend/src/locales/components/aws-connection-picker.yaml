@@ -1,4 +1,4 @@
-en:
+en_US:
   connectAwsAccount: Connect an AWS account to discover databases
   addAwsAccount: Add AWS Account
   awsConnections: AWS Connections

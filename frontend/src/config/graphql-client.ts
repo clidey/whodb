@@ -31,6 +31,7 @@ import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
 import {isAwsHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslations} from '../utils/i18n';
+import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 
 // Always use a relative URI so that:
 // - Desktop/Wails uses the embedded router handler
@@ -39,7 +40,6 @@ const uri = "/api/query";
 const loginWithProfileQuery = print(LoginWithProfileDocument);
 const loginMutationQuery = print(LoginDocument);
 
-type SupportedLanguage = 'en' | 'es' | 'de' | 'fr';
 type GraphQLClientTranslationKey = 'sessionExpired' | 'autoLoginSuccess' | 'autoLoginFailed';
 type TranslatorFn = (key: GraphQLClientTranslationKey) => string;
 
@@ -47,7 +47,7 @@ let cachedTranslationLanguage: SupportedLanguage | undefined;
 let cachedTranslationsPromise: Promise<Record<string, string>> | null = null;
 
 const getTranslator = async (): Promise<TranslatorFn> => {
-    const language = (reduxStore.getState().settings.language ?? 'en') as SupportedLanguage;
+    const language = (reduxStore.getState().settings.language ?? DEFAULT_LANGUAGE) as SupportedLanguage;
     if (!cachedTranslationsPromise || cachedTranslationLanguage !== language) {
         cachedTranslationLanguage = language;
         cachedTranslationsPromise = loadTranslations('config/graphql-client', language);

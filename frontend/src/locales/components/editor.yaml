@@ -1,4 +1,4 @@
-en:
+en_US:
   confirmOperationTitle: Confirm Operation
   confirmOperationDescription: This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone.
   cancel: Cancel

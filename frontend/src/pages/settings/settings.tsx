@@ -34,6 +34,7 @@ import {
     Switch,
 } from "@clidey/ux";
 import {optInUser, optOutUser, trackFrontendEvent} from "@/config/posthog";
+import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
 import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
 import {AwsProvidersSection} from "../../components/aws";
@@ -108,7 +109,7 @@ export const SettingsPage: FC = () => {
         dispatch(SettingsActions.setWhereConditionMode(mode));
     }, [dispatch]);
 
-    const handleLanguageChange = useCallback((lang: 'en' | 'es' | 'de' | 'fr') => {
+    const handleLanguageChange = useCallback((lang: SupportedLanguage) => {
         dispatch(SettingsActions.setLanguage(lang));
     }, [dispatch]);
 
@@ -291,14 +292,13 @@ export const SettingsPage: FC = () => {
                             <div className="flex justify-between">
                                 <Label>{t('language')}</Label>
                                 <Select value={language} onValueChange={handleLanguageChange}>
-                                    <SelectTrigger id="language" className="w-[135px]">
+                                    <SelectTrigger id="language" className="w-[200px]">
                                         <SelectValue placeholder={t('selectLanguage')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="en" data-value="en">English</SelectItem>
-                                        <SelectItem value="es" data-value="es">Español</SelectItem>
-                                        <SelectItem value="de" data-value="de">Deutsch</SelectItem>
-                                        <SelectItem value="fr" data-value="fr">Français</SelectItem>
+                                        {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+                                            <SelectItem key={code} value={code} data-value={code}>{name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
