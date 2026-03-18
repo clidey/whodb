@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.19
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.48.11
-	github.com/aws/aws-sdk-go-v2/service/elasticache v1.51.11
+	github.com/aws/aws-sdk-go-v2/service/elasticache v1.51.12
 	github.com/aws/aws-sdk-go-v2/service/rds v1.116.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.9
 	github.com/aws/smithy-go v1.24.2
