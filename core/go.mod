@@ -31,7 +31,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/twpayne/go-geom v1.6.1
 	github.com/vektah/gqlparser/v2 v2.5.32
-	github.com/xuri/excelize/v2 v2.10.0
+	github.com/xuri/excelize/v2 v2.10.1
 	github.com/zalando/go-keyring v0.2.6
 	go.mongodb.org/mongo-driver v1.17.9
 	golang.org/x/sync v0.20.0
@@ -84,11 +84,11 @@ require (
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/paulmach/orb v0.12.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
-	github.com/richardlehane/mscfb v1.0.4 // indirect
-	github.com/richardlehane/msoleps v1.0.4 // indirect
+	github.com/richardlehane/mscfb v1.0.6 // indirect
+	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
-	github.com/tiendc/go-deepcopy v1.7.1 // indirect
+	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/urfave/cli/v3 v3.7.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
