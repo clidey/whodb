@@ -1,6 +1,6 @@
 module github.com/clidey/whodb/cli
 
-go 1.25.4
+go 1.26.1
 
 require (
 	github.com/charmbracelet/bubbles v1.0.0

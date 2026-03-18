@@ -31,7 +31,6 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/types"
@@ -985,7 +984,7 @@ type AIProvider struct {
 }
 
 func (m *Manager) GetAIProviders() []AIProvider {
-	providers := env.GetConfiguredChatProviders()
+	providers := envconfig.GetConfiguredChatProviders()
 	aiProviders := []AIProvider{}
 	for _, provider := range providers {
 		aiProviders = append(aiProviders, AIProvider{
@@ -1009,7 +1008,7 @@ func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, er
 	}
 
 	if providerID != "" {
-		providers := env.GetConfiguredChatProviders()
+		providers := envconfig.GetConfiguredChatProviders()
 		for _, provider := range providers {
 			if provider.ProviderId == providerID {
 				config.ExternalModel.Token = provider.APIKey
@@ -1051,7 +1050,7 @@ func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previo
 	config := engine.NewPluginConfig(credentials)
 
 	if providerID != "" {
-		providers := env.GetConfiguredChatProviders()
+		providers := envconfig.GetConfiguredChatProviders()
 		for _, provider := range providers {
 			if provider.ProviderId == providerID {
 				config.ExternalModel = &engine.ExternalModel{
