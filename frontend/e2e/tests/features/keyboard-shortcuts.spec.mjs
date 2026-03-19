@@ -616,8 +616,10 @@ test.describe('Keyboard Shortcuts', () => {
                 // Command palette should open
                 await expect(page.locator('[data-testid="command-palette"]')).toBeVisible();
 
-                // Should have search input
-                await expect(page.locator('[data-testid="command-palette-input"]')).toBeVisible();
+                // Should have search input focused
+                const input = page.locator('[data-testid="command-palette-input"]');
+                await expect(input).toBeVisible();
+                await expect(input).toBeFocused();
 
                 // Close with ESC
                 await page.keyboard.press('Escape');
@@ -774,10 +776,10 @@ test.describe('Keyboard Shortcuts', () => {
                 // Write a simple query
                 await whodb.writeCode(0, 'SELECT 1 as test');
 
-                // Focus the editor and press Ctrl+Enter
+                // Focus the editor and press Mod+Enter (Cmd on Mac, Ctrl on Windows/Linux)
                 const editorSelector = '[role="tabpanel"][data-state="active"] [data-testid="cell-0"] .cm-content';
                 await page.locator(editorSelector).click();
-                await page.keyboard.press('Control+Enter');
+                await whodb.typeCmdShortcut('Enter');
 
                 // Query should execute and show results
                 await expect(

@@ -100,7 +100,6 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 			log.WithError(err).WithField("collection", collectionName).Warn("MongoDB Graph: Unable to sample documents")
 			continue
 		}
-		defer cursorSample.Close(ctx)
 
 		fieldFrequency := make(map[string]int)
 		fieldSamples := make(map[string]any)
@@ -118,6 +117,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 				}
 			}
 		}
+		cursorSample.Close(ctx)
 
 		if len(fieldFrequency) == 0 {
 			log.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")

@@ -315,7 +315,15 @@ test.describe('Data Import', () => {
         const csvTable = db.import.csvTable;
 
         test.describe('Data Integrity', () => {
-            test('shows error when importing duplicate primary keys', async ({ whodb, page }) => {
+            test('append mode skips duplicate primary keys without error', async ({ whodb, page }) => {
+                let countBefore;
+
+                await test.step('record row count before import', async () => {
+                    await whodb.data(csvTable);
+                    const text = await page.locator('[data-testid="total-count-top"]').textContent();
+                    countBefore = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                });
+
                 await test.step('upload and preview', async () => {
                     await whodb.openImport(csvTable);
                     await whodb.uploadDataFile(samplePath(db, 'users.csv'));
@@ -330,14 +338,18 @@ test.describe('Data Import', () => {
                     await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled({ timeout: 5000 });
                 });
 
-                await test.step('attempt import', async () => {
+                await test.step('submit import (append mode)', async () => {
                     await whodb.confirmImportData();
+                    await expect(page.locator('[data-testid="import-dialog"]')).not.toBeAttached({ timeout: 30000 });
                 });
 
-                await test.step('verify failure', async () => {
-                    await page.waitForTimeout(3000);
-                    await expect(page.locator('[data-testid="import-dialog"]')).toBeVisible();
-                    await expect(page.locator('[data-testid="import-submit-button"]')).toBeEnabled();
+                await test.step('verify row count unchanged', async () => {
+                    await whodb.data(csvTable);
+                    await expect(async () => {
+                        const text = await page.locator('[data-testid="total-count-top"]').textContent();
+                        const countAfter = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                        expect(countAfter).toBe(countBefore);
+                    }).toPass({ timeout: 5000 });
                 });
             });
 

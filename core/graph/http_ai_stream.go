@@ -29,7 +29,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
 )
 
@@ -76,7 +76,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("AI Chat Stream: Plugin=%s, DB=%s", config.Credentials.Type, config.Credentials.Database)
 
 	// Build ExternalModel, resolving credentials from environment if providerId is set
-	creds := env.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
+	creds := envconfig.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
 	config.ExternalModel = &engine.ExternalModel{
 		Type:     creds.ModelType,
 		Token:    creds.Token,
@@ -279,7 +279,7 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 	}
 
 	// Build ExternalModel, resolving credentials from environment if providerId is set
-	creds := env.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
+	creds := envconfig.ResolveProviderCredentials(req.ProviderId, req.Token, req.Endpoint, req.ModelType)
 	config.ExternalModel = &engine.ExternalModel{
 		Type:     creds.ModelType,
 		Token:    creds.Token,

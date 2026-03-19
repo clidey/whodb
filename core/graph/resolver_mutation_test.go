@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package graph
 
 import (
@@ -14,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/mockdata"
 )
 
 func TestAddRowSuccess(t *testing.T) {
@@ -109,8 +126,8 @@ func TestQueryMockDataMaxRowCount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if result != env.GetMockDataGenerationMaxRowCount() {
-		t.Fatalf("expected mock data max row count %d, got %d", env.GetMockDataGenerationMaxRowCount(), result)
+	if result != mockdata.GetMockDataGenerationMaxRowCount() {
+		t.Fatalf("expected mock data max row count %d, got %d", mockdata.GetMockDataGenerationMaxRowCount(), result)
 	}
 }
 
@@ -133,6 +150,14 @@ func TestQueryDatabaseMetadataMapsFields(t *testing.T) {
 			}},
 			Operators: []string{"=", "LIKE"},
 			AliasMap:  map[string]string{"varchar": "text"},
+			Capabilities: engine.Capabilities{
+				SupportsScratchpad:     true,
+				SupportsChat:           true,
+				SupportsGraph:          true,
+				SupportsSchema:         false,
+				SupportsDatabaseSwitch: true,
+				SupportsModifiers:      true,
+			},
 		}
 	}
 	setEngineMock(t, mock)
@@ -159,6 +184,18 @@ func TestQueryDatabaseMetadataMapsFields(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("expected varchar alias to be present, got %#v", result.AliasMap)
+	}
+	if result.Capabilities == nil {
+		t.Fatalf("expected capabilities to be returned")
+	}
+	if !result.Capabilities.SupportsScratchpad {
+		t.Fatalf("expected SupportsScratchpad to be true")
+	}
+	if !result.Capabilities.SupportsChat {
+		t.Fatalf("expected SupportsChat to be true")
+	}
+	if result.Capabilities.SupportsSchema {
+		t.Fatalf("expected SupportsSchema to be false")
 	}
 }
 

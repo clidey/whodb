@@ -93,19 +93,21 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 			log.WithError(err).WithField("indexName", indexName).Error("Failed to execute ElasticSearch search query for graph generation")
 			return nil, err
 		}
-		defer res.Body.Close()
 
 		if res.IsError() {
 			err := fmt.Errorf("error searching documents: %s", formatElasticError(res))
+			res.Body.Close()
 			log.WithError(err).WithField("indexName", indexName).Error("ElasticSearch search API returned error for graph generation")
 			return nil, err
 		}
 
 		var searchResult map[string]any
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
+			res.Body.Close()
 			log.WithError(err).WithField("indexName", indexName).Error("Failed to decode ElasticSearch search result for graph generation")
 			return nil, err
 		}
+		res.Body.Close()
 
 		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
 		if len(hits) > 0 {

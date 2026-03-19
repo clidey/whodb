@@ -168,6 +168,12 @@ func (p *PostgresPlugin) MarkGeneratedColumns(config *engine.PluginConfig, schem
 	return nil
 }
 
+// IsArrayType returns true for PostgreSQL array types which use an underscore prefix
+// (e.g., _int4 for int[], _text for text[]).
+func (p *PostgresPlugin) IsArrayType(columnType string) bool {
+	return strings.HasPrefix(columnType, "_")
+}
+
 func NewPostgresPlugin() *engine.Plugin {
 	plugin := &PostgresPlugin{}
 	plugin.Type = engine.DatabaseType_Postgres

@@ -198,6 +198,14 @@ func discoveredConnectionToModel(conn *providers.DiscoveredConnection) *model.Di
 		"serverless":        true,
 		"iamAuthEnabled":    true,
 		"authTokenEnabled":  true,
+		"iamAuthSupported":  true,
+		"endpointType":      true,
+		"clusterIdentifier": true,
+		"proxyName":         true,
+		"requireTLS":        true,
+		"connectivity":      true,
+		"service":           true,
+		"region":            true,
 	}
 
 	var metadata []*model.Record

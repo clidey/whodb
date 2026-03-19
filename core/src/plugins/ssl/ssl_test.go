@@ -306,8 +306,8 @@ func TestRegisterDatabaseSSLModes(t *testing.T) {
 
 	// Register modes
 	testModes := []SSLModeInfo{
-		{SSLModeDisabled, "Off", "No encryption"},
-		{SSLModeEnabled, "On", "Full encryption"},
+		{Value: SSLModeDisabled, Label: "Off", Description: "No encryption"},
+		{Value: SSLModeEnabled, Label: "On", Description: "Full encryption"},
 	}
 	RegisterDatabaseSSLModes(fakeDBType, testModes)
 

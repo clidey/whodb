@@ -50,12 +50,12 @@ type ExternalModel struct {
 
 // PluginConfig contains all configuration needed to connect to and operate on a database.
 type PluginConfig struct {
-	Credentials     *Credentials
-	ExternalModel   *ExternalModel
-	Transaction     any      // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
-	MultiStatement  bool     // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
-	SkipConflicts   bool     // Use ON CONFLICT DO NOTHING / INSERT IGNORE for duplicate rows
-	UpsertPKColumns []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	Credentials           *Credentials
+	ExternalModel         *ExternalModel
+	Transaction           any      // Optional transaction for transactional operations (e.g., *gorm.DB for SQL plugins)
+	MultiStatement        bool     // Hint for plugins that need special handling for multi-statement scripts (e.g., MySQL)
+	UpsertPKColumns       []string // PK columns for ON CONFLICT DO UPDATE; non-nil = upsert mode
+	SkipConflictPKColumns []string // PK columns for ON CONFLICT DO NOTHING (append mode — skip duplicate rows)
 }
 
 // Record represents a key-value pair with optional extra metadata,
@@ -134,6 +134,16 @@ type SSLStatus struct {
 	Mode      string // SSL mode: disabled, required, verify-ca, verify-identity, etc.
 }
 
+// GetRowsRequest bundles the parameters for a GetRows query.
+type GetRowsRequest struct {
+	Schema      string
+	StorageUnit string
+	Where       *model.WhereCondition
+	Sort        []*model.SortCondition
+	PageSize    int
+	PageOffset  int
+}
+
 // PluginFunctions defines the interface that all database plugins must implement.
 // Each method provides a specific database operation capability.
 type PluginFunctions interface {
@@ -148,7 +158,7 @@ type PluginFunctions interface {
 	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)
 	BulkAddRows(config *PluginConfig, schema string, storageUnit string, rows [][]Record) (bool, error)
 	DeleteRow(config *PluginConfig, schema string, storageUnit string, values map[string]string) (bool, error)
-	GetRows(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*GetRowsResult, error)
+	GetRows(config *PluginConfig, req *GetRowsRequest) (*GetRowsResult, error)
 	GetRowCount(config *PluginConfig, schema string, storageUnit string, where *model.WhereCondition) (int64, error)
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, query string, params ...any) (*GetRowsResult, error)

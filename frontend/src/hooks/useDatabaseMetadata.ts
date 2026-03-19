@@ -85,6 +85,8 @@ export const useDatabaseMetadata = () => {
         operators: metadata.operators,
         /** Alias map for the current database */
         aliasMap: metadata.aliasMap,
+        /** Capabilities declared by the backend plugin */
+        capabilities: metadata.capabilities,
         /** Current database type */
         databaseType: metadata.databaseType,
         /** Whether metadata is being fetched */

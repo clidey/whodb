@@ -365,7 +365,9 @@ func (p *Sqlite3Plugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []eng
 }
 
 // GetRows overrides the base GORM implementation to handle SQLite datetime quirks
-func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, schema string, storageUnit string, where *model.WhereCondition, sort []*model.SortCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
+func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	schema, storageUnit := req.Schema, req.StorageUnit
+	where, sort, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
 		builder := gorm_plugin.NewSQLBuilder(db, p)
 		fullTable := builder.BuildFullTableName("", storageUnit)

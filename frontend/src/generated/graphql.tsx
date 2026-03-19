@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
+import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
-import {gql} from '@apollo/client';
-
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -81,6 +80,7 @@ export type AwsRegion = {
   __typename?: 'AWSRegion';
   Description: Scalars['String']['output'];
   Id: Scalars['String']['output'];
+  Partition: Scalars['String']['output'];
 };
 
 export type AtomicWhereCondition = {
@@ -88,6 +88,16 @@ export type AtomicWhereCondition = {
   Key: Scalars['String']['input'];
   Operator: Scalars['String']['input'];
   Value: Scalars['String']['input'];
+};
+
+export type Capabilities = {
+  __typename?: 'Capabilities';
+  supportsChat: Scalars['Boolean']['output'];
+  supportsDatabaseSwitch: Scalars['Boolean']['output'];
+  supportsGraph: Scalars['Boolean']['output'];
+  supportsModifiers: Scalars['Boolean']['output'];
+  supportsSchema: Scalars['Boolean']['output'];
+  supportsScratchpad: Scalars['Boolean']['output'];
 };
 
 export type ChatInput = {
@@ -144,6 +154,7 @@ export enum ConnectionStatus {
 export type DatabaseMetadata = {
   __typename?: 'DatabaseMetadata';
   aliasMap: Array<Record>;
+  capabilities: Capabilities;
   databaseType: Scalars['String']['output'];
   operators: Array<Scalars['String']['output']>;
   typeDefinitions: Array<TypeDefinition>;
@@ -286,6 +297,7 @@ export type ImportSqlInput = {
 
 export type LocalAwsProfile = {
   __typename?: 'LocalAWSProfile';
+  AuthType: Scalars['String']['output'];
   IsDefault: Scalars['Boolean']['output'];
   Name: Scalars['String']['output'];
   Region?: Maybe<Scalars['String']['output']>;
@@ -368,6 +380,7 @@ export type Mutation = {
   ExecuteConfirmedSQL: AiChatMessage;
   GenerateChatTitle: GenerateChatTitleResponse;
   GenerateMockData: MockDataGenerationStatus;
+  GenerateRDSAuthToken: Scalars['String']['output'];
   ImportPreview: ImportPreview;
   ImportSQL: ImportResult;
   ImportTableFile: ImportResult;
@@ -376,6 +389,7 @@ export type Mutation = {
   Logout: StatusResponse;
   RefreshCloudProvider: AwsProvider;
   RemoveCloudProvider: StatusResponse;
+  TestAWSCredentials: CloudProviderStatus;
   TestCloudProvider: CloudProviderStatus;
   UpdateAWSProvider: AwsProvider;
   UpdateSettings: StatusResponse;
@@ -425,6 +439,15 @@ export type MutationGenerateMockDataArgs = {
 };
 
 
+export type MutationGenerateRdsAuthTokenArgs = {
+  endpoint: Scalars['String']['input'];
+  port: Scalars['Int']['input'];
+  providerID: Scalars['ID']['input'];
+  region: Scalars['String']['input'];
+  username: Scalars['String']['input'];
+};
+
+
 export type MutationImportPreviewArgs = {
   file: Scalars['Upload']['input'];
   options: ImportFileOptions;
@@ -461,6 +484,11 @@ export type MutationRefreshCloudProviderArgs = {
 
 export type MutationRemoveCloudProviderArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationTestAwsCredentialsArgs = {
+  input: AwsProviderInput;
 };
 
 
@@ -734,7 +762,7 @@ export type GetVersionQuery = { __typename?: 'Query', Version: string };
 export type GetDatabaseMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }> } | null };
+export type GetDatabaseMetadataQuery = { __typename?: 'Query', DatabaseMetadata?: { __typename?: 'DatabaseMetadata', databaseType: string, operators: Array<string>, typeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, aliasMap: Array<{ __typename?: 'Record', Key: string, Value: string }>, capabilities: { __typename?: 'Capabilities', supportsScratchpad: boolean, supportsChat: boolean, supportsGraph: boolean, supportsSchema: boolean, supportsDatabaseSwitch: boolean, supportsModifiers: boolean } } | null };
 
 export type ExecuteConfirmedSqlMutationVariables = Exact<{
   query: Scalars['String']['input'];
@@ -925,12 +953,12 @@ export type GetProviderConnectionsQuery = { __typename?: 'Query', ProviderConnec
 export type GetLocalAwsProfilesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLocalAwsProfilesQuery = { __typename?: 'Query', LocalAWSProfiles: Array<{ __typename?: 'LocalAWSProfile', Name: string, Region?: string | null, Source: string, IsDefault: boolean }> };
+export type GetLocalAwsProfilesQuery = { __typename?: 'Query', LocalAWSProfiles: Array<{ __typename?: 'LocalAWSProfile', Name: string, Region?: string | null, Source: string, AuthType: string, IsDefault: boolean }> };
 
 export type GetAwsRegionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAwsRegionsQuery = { __typename?: 'Query', AWSRegions: Array<{ __typename?: 'AWSRegion', Id: string, Description: string }> };
+export type GetAwsRegionsQuery = { __typename?: 'Query', AWSRegions: Array<{ __typename?: 'AWSRegion', Id: string, Description: string, Partition: string }> };
 
 export type AddAwsProviderMutationVariables = Exact<{
   input: AwsProviderInput;
@@ -960,6 +988,24 @@ export type TestCloudProviderMutationVariables = Exact<{
 
 
 export type TestCloudProviderMutation = { __typename?: 'Mutation', TestCloudProvider: CloudProviderStatus };
+
+export type TestAwsCredentialsMutationVariables = Exact<{
+  input: AwsProviderInput;
+}>;
+
+
+export type TestAwsCredentialsMutation = { __typename?: 'Mutation', TestAWSCredentials: CloudProviderStatus };
+
+export type GenerateRdsAuthTokenMutationVariables = Exact<{
+  providerID: Scalars['ID']['input'];
+  endpoint: Scalars['String']['input'];
+  port: Scalars['Int']['input'];
+  region: Scalars['String']['input'];
+  username: Scalars['String']['input'];
+}>;
+
+
+export type GenerateRdsAuthTokenMutation = { __typename?: 'Mutation', GenerateRDSAuthToken: string };
 
 export type RefreshCloudProviderMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1224,6 +1270,14 @@ export const GetDatabaseMetadataDocument = gql`
     aliasMap {
       Key
       Value
+    }
+    capabilities {
+      supportsScratchpad
+      supportsChat
+      supportsGraph
+      supportsSchema
+      supportsDatabaseSwitch
+      supportsModifiers
     }
   }
 }
@@ -2401,6 +2455,7 @@ export const GetLocalAwsProfilesDocument = gql`
     Name
     Region
     Source
+    AuthType
     IsDefault
   }
 }
@@ -2442,6 +2497,7 @@ export const GetAwsRegionsDocument = gql`
   AWSRegions {
     Id
     Description
+    Partition
   }
 }
     `;
@@ -2630,6 +2686,78 @@ export function useTestCloudProviderMutation(baseOptions?: Apollo.MutationHookOp
 export type TestCloudProviderMutationHookResult = ReturnType<typeof useTestCloudProviderMutation>;
 export type TestCloudProviderMutationResult = Apollo.MutationResult<TestCloudProviderMutation>;
 export type TestCloudProviderMutationOptions = Apollo.BaseMutationOptions<TestCloudProviderMutation, TestCloudProviderMutationVariables>;
+export const TestAwsCredentialsDocument = gql`
+    mutation TestAWSCredentials($input: AWSProviderInput!) {
+  TestAWSCredentials(input: $input)
+}
+    `;
+export type TestAwsCredentialsMutationFn = Apollo.MutationFunction<TestAwsCredentialsMutation, TestAwsCredentialsMutationVariables>;
+
+/**
+ * __useTestAwsCredentialsMutation__
+ *
+ * To run a mutation, you first call `useTestAwsCredentialsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useTestAwsCredentialsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [testAwsCredentialsMutation, { data, loading, error }] = useTestAwsCredentialsMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useTestAwsCredentialsMutation(baseOptions?: Apollo.MutationHookOptions<TestAwsCredentialsMutation, TestAwsCredentialsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<TestAwsCredentialsMutation, TestAwsCredentialsMutationVariables>(TestAwsCredentialsDocument, options);
+      }
+export type TestAwsCredentialsMutationHookResult = ReturnType<typeof useTestAwsCredentialsMutation>;
+export type TestAwsCredentialsMutationResult = Apollo.MutationResult<TestAwsCredentialsMutation>;
+export type TestAwsCredentialsMutationOptions = Apollo.BaseMutationOptions<TestAwsCredentialsMutation, TestAwsCredentialsMutationVariables>;
+export const GenerateRdsAuthTokenDocument = gql`
+    mutation GenerateRDSAuthToken($providerID: ID!, $endpoint: String!, $port: Int!, $region: String!, $username: String!) {
+  GenerateRDSAuthToken(
+    providerID: $providerID
+    endpoint: $endpoint
+    port: $port
+    region: $region
+    username: $username
+  )
+}
+    `;
+export type GenerateRdsAuthTokenMutationFn = Apollo.MutationFunction<GenerateRdsAuthTokenMutation, GenerateRdsAuthTokenMutationVariables>;
+
+/**
+ * __useGenerateRdsAuthTokenMutation__
+ *
+ * To run a mutation, you first call `useGenerateRdsAuthTokenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateRdsAuthTokenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateRdsAuthTokenMutation, { data, loading, error }] = useGenerateRdsAuthTokenMutation({
+ *   variables: {
+ *      providerID: // value for 'providerID'
+ *      endpoint: // value for 'endpoint'
+ *      port: // value for 'port'
+ *      region: // value for 'region'
+ *      username: // value for 'username'
+ *   },
+ * });
+ */
+export function useGenerateRdsAuthTokenMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRdsAuthTokenMutation, GenerateRdsAuthTokenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateRdsAuthTokenMutation, GenerateRdsAuthTokenMutationVariables>(GenerateRdsAuthTokenDocument, options);
+      }
+export type GenerateRdsAuthTokenMutationHookResult = ReturnType<typeof useGenerateRdsAuthTokenMutation>;
+export type GenerateRdsAuthTokenMutationResult = Apollo.MutationResult<GenerateRdsAuthTokenMutation>;
+export type GenerateRdsAuthTokenMutationOptions = Apollo.BaseMutationOptions<GenerateRdsAuthTokenMutation, GenerateRdsAuthTokenMutationVariables>;
 export const RefreshCloudProviderDocument = gql`
     mutation RefreshCloudProvider($id: ID!) {
   RefreshCloudProvider(id: $id) {

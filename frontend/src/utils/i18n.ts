@@ -16,6 +16,7 @@
 
 import yaml from 'js-yaml';
 import {isEEMode} from '@/config/ee-imports';
+import {type SupportedLanguage, DEFAULT_LANGUAGE} from '@/utils/languages';
 
 type TranslationCache = Record<string, Record<string, any>>;
 
@@ -38,7 +39,7 @@ const findModule = (modules: Record<string, string>, componentPath: string): str
 
 export const loadTranslationsSync = (
     componentPath: string,
-    language: 'en' | 'es' | 'de' | 'fr'
+    language: SupportedLanguage
 ): Record<string, string> => {
     const cacheKey = `${componentPath}-${language}`;
 
@@ -53,7 +54,7 @@ export const loadTranslationsSync = (
         const ceContent = findModule(ceModules, componentPath);
         if (ceContent) {
             const parsed = yaml.load(ceContent) as Record<string, Record<string, string>>;
-            translations = parsed[language] || parsed['en'];
+            translations = parsed[language] || parsed[DEFAULT_LANGUAGE];
         }
 
         // In EE mode, merge EE keys on top of CE (EE overrides individual keys)
@@ -88,7 +89,7 @@ export const loadTranslationsSync = (
 
 export const loadTranslations = async (
     componentPath: string,
-    language: 'en' | 'es' | 'de' | 'fr'
+    language: SupportedLanguage
 ): Promise<Record<string, string>> => {
     return loadTranslationsSync(componentPath, language);
 };

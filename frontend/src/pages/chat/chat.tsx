@@ -49,6 +49,7 @@ import {
     CircleStackIcon,
     CodeBracketIcon,
     CommandLineIcon,
+    DocumentDuplicateIcon,
     EllipsisHorizontalIcon,
     PresentationChartLineIcon,
     SparklesIcon,
@@ -92,6 +93,32 @@ const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
 
 const THINKING_PHRASES_COUNT = 25;
 
+const CodeBlock: FC<{ children: string }> = ({ children }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = useCallback(() => {
+        navigator.clipboard.writeText(children);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [children]);
+
+    return (
+        <div className="relative group/code-block my-2">
+            <code className="block bg-neutral-100 dark:bg-neutral-800 p-2 pr-16 rounded text-sm overflow-x-auto">
+                {children}
+            </code>
+            <button
+                onClick={handleCopy}
+                className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+            >
+                {copied
+                    ? <><CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> <span className="text-green-500">Copied!</span></>
+                    : <><DocumentDuplicateIcon className="w-3.5 h-3.5" /> <span>Copy</span></>
+                }
+            </button>
+        </div>
+    );
+};
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
@@ -311,6 +338,7 @@ export const ChatPage: FC = () => {
     const authProfile = useAppSelector(state => state.auth.current);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
     const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
+    const [copiedSqlId, setCopiedSqlId] = useState<number | null>(null);
     const messageIdCounter = useRef(0);
 
     // For databases that use "database" instead of "schema" (MySQL, MariaDB, etc.),
@@ -959,11 +987,11 @@ export const ChatPage: FC = () => {
                                                                     h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
                                                                     h2: ({node, ...props}) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
                                                                     h3: ({node, ...props}) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
-                                                                    code: ({node, ...props}) => {
+                                                                    code: ({node, children, ...props}) => {
                                                                         const isInline = !String(props.className || '').includes('language-');
                                                                         return isInline
-                                                                            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props} />
-                                                                            : <code className="block bg-neutral-100 dark:bg-neutral-800 p-2 rounded my-2 text-sm overflow-x-auto" {...props} />;
+                                                                            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
+                                                                            : <CodeBlock>{String(children)}</CodeBlock>;
                                                                     },
                                                                     blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
                                                                 }}
@@ -1022,8 +1050,23 @@ export const ChatPage: FC = () => {
 
                                                         {/* SQL Query Display */}
                                                         {showQuery && (
-                                                            <div className="h-[300px] w-full rounded-lg overflow-hidden">
-                                                                <CodeEditor value={chat.Text} language="sql" />
+                                                            <div className="relative w-full rounded-lg overflow-hidden">
+                                                                <div className="h-[300px]">
+                                                                    <CodeEditor value={chat.Text} language="sql" />
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(chat.Text);
+                                                                        setCopiedSqlId(chat.id ?? null);
+                                                                        setTimeout(() => setCopiedSqlId(null), 2000);
+                                                                    }}
+                                                                    className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors z-10"
+                                                                >
+                                                                    {copiedSqlId === chat.id
+                                                                        ? <><CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> <span className="text-green-500">Copied!</span></>
+                                                                        : <><DocumentDuplicateIcon className="w-3.5 h-3.5" /> <span>Copy</span></>
+                                                                    }
+                                                                </button>
                                                             </div>
                                                         )}
 

@@ -53,6 +53,7 @@ import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {TourActions} from "../../store/tour";
 import {SettingsActions} from "../../store/settings";
+import {isSupportedLanguage} from "@/utils/languages";
 import {HealthActions} from "../../store/health";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {isDesktopApp} from '../../utils/external-links';
@@ -123,8 +124,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     const currentProfile = useAppSelector(state => state.auth.current);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
-    const autoLoginRetryCount = useRef(0);
-    const autoLoginRetryFnRef = useRef<(() => void) | null>(null);
+    const handleSubmitRef = useRef<() => void>(() => {});
+    const handleLoginWithProfileSubmitRef = useRef<(overrideProfileId?: string) => void>(() => {});
     const [pendingAutoLogin, setPendingAutoLogin] = useState(false);
     const { setTheme } = useTheme();
 
@@ -165,6 +166,9 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(() => {
         // Detect auto-login on initial render to prevent flash of login form
         return searchParams.has("resource") || searchParams.has("login");
+    });
+    const [isEmbedded] = useState(() => {
+        return searchParams.has("credentials") || searchParams.has("resource") || searchParams.has("login");
     });
 
     const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
@@ -242,25 +246,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
-                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
-                    autoLoginRetryCount.current += 1;
-                    setIsAutoLoggingIn(true);
-                    setTimeout(autoLoginRetryFnRef.current, 5000);
-                } else {
-                    autoLoginRetryFnRef.current = null;
-                    setIsAutoLoggingIn(false);
-                }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
-                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
-                    autoLoginRetryCount.current += 1;
-                    setIsAutoLoggingIn(true);
-                    setTimeout(autoLoginRetryFnRef.current, 5000);
-                } else {
-                    autoLoginRetryFnRef.current = null;
-                    setIsAutoLoggingIn(false);
-                }
+                setIsAutoLoggingIn(false);
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -282,7 +272,6 @@ export const LoginForm: FC<LoginFormProps> = ({
     const handleLoginWithProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
         if (profileId == null) {
-            setIsAutoLoggingIn(false);
             return setError(t('selectProfileRequired'));
         }
         setError(undefined);
@@ -328,25 +317,11 @@ export const LoginForm: FC<LoginFormProps> = ({
                     // Component will unmount after navigation, no need to clear state
                     return;
                 }
-                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
-                    autoLoginRetryCount.current += 1;
-                    setIsAutoLoggingIn(true);
-                    setTimeout(autoLoginRetryFnRef.current, 5000);
-                } else {
-                    autoLoginRetryFnRef.current = null;
-                    setIsAutoLoggingIn(false);
-                }
+                setIsAutoLoggingIn(false);
                 return toast.error(t('loginFailed'));
             },
             onError(error) {
-                if (autoLoginRetryFnRef.current && autoLoginRetryCount.current < 1) {
-                    autoLoginRetryCount.current += 1;
-                    setIsAutoLoggingIn(true);
-                    setTimeout(autoLoginRetryFnRef.current, 5000);
-                } else {
-                    autoLoginRetryFnRef.current = null;
-                    setIsAutoLoggingIn(false);
-                }
+                setIsAutoLoggingIn(false);
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -364,6 +339,10 @@ export const LoginForm: FC<LoginFormProps> = ({
             }
         });
     }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, selectedAvailableProfile, onLoginSuccess, markFirstLoginComplete, t]);
+
+    // Keep refs in sync with latest callback versions each render to avoid stale closures
+    handleSubmitRef.current = handleSubmit;
+    handleLoginWithProfileSubmitRef.current = handleLoginWithProfileSubmit;
 
     const handleSampleDatabaseLogin = useCallback(() => {
         const sampleProfile = profiles?.Profiles.find(p => p.Source === "builtin");
@@ -530,8 +509,8 @@ export const LoginForm: FC<LoginFormProps> = ({
     // Handle locale URL parameter
     useEffect(() => {
         if (searchParams.has("locale")) {
-            const locale = searchParams.get("locale")?.toLowerCase();
-            if (locale === 'en' || locale === 'es' || locale === 'de' || locale === 'fr') {
+            const locale = searchParams.get("locale");
+            if (locale && isSupportedLanguage(locale)) {
                 dispatch(SettingsActions.setLanguage(locale));
             }
         }
@@ -696,31 +675,27 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (searchParams.has("resource")) {
             const selectedProfile = availableProfiles.find(profile => profile.value === searchParams.get("resource"));
             if (selectedProfile?.value) {
-                autoLoginRetryFnRef.current = () => handleLoginWithProfileSubmit(selectedProfile.value);
-                setSelectedAvailableProfile(selectedProfile?.value);
-                handleLoginWithProfileSubmit(selectedProfile.value);
-            } else {
-                setIsAutoLoggingIn(false);
+                setSelectedAvailableProfile(selectedProfile.value);
+                handleLoginWithProfileSubmitRef.current(selectedProfile.value);
             }
         } else if (searchParams.has("login")) {
+            // Batch this state update with the credential setters above so handleSubmit fires
+            // only after the next render (when all form fields have their new values).
             setPendingAutoLogin(true);
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("login");
             setSearchParams(newParams, { replace: true });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles]);
+    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange]);
 
-    // Auto-login: fires on the NEXT render after URL params set pendingAutoLogin to true.
-    // Using state (not a ref) ensures handleSubmit has current field values — the state change
-    // triggers a re-render, and handleSubmit is recreated with fresh closure values before this runs.
+    // Fire credential-based login after React has committed all form-field state updates.
+    // Using a state flag (not a ref) ensures this effect runs on the render AFTER the parsing
+    // effect, so handleSubmitRef.current has fresh field values instead of the stale initial ones.
     useEffect(() => {
-        if (pendingAutoLogin) {
-            setPendingAutoLogin(false);
-            autoLoginRetryFnRef.current = handleSubmit;
-            handleSubmit();
-        }
-    }, [pendingAutoLogin, handleSubmit]);
+        if (!pendingAutoLogin) return;
+        setPendingAutoLogin(false);
+        handleSubmitRef.current();
+    }, [pendingAutoLogin]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
         if (databaseType.id !== DatabaseType.MongoDb || !newHostName.startsWith("mongodb+srv://")) {
@@ -858,7 +833,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             { databaseType.fields?.password && (
                 <div className="flex flex-col gap-sm w-full">
                     <Label htmlFor="login-password">{t('password')}</Label>
-                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={true} />
+                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={t('enterPassword')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={!isEmbedded} />
                 </div>
             )}
             { databaseType.fields?.database && (

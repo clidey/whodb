@@ -235,7 +235,10 @@ func isAllowed(r *http.Request, body []byte) bool {
 	switch query.OperationName {
 	case "Login", "LoginWithProfile", "GetProfiles", "UpdateSettings", "SettingsConfig", "GetVersion",
 		"GetAWSProviders", "GetDiscoveredConnections", "GetProviderConnections",
-		"GetLocalAWSProfiles", "GetAWSRegions":
+		"GetLocalAWSProfiles", "GetAWSRegions",
+		"AddAWSProvider", "TestAWSCredentials", "TestCloudProvider",
+		"RefreshCloudProvider", "RemoveCloudProvider", "UpdateAWSProvider",
+		"GenerateRDSAuthToken":
 		return true
 	}
 	return false

@@ -28,6 +28,7 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/migrate"
 	"github.com/clidey/whodb/core/src/types"
 )
 
@@ -200,4 +201,96 @@ func ParseGenericProviders() []env.GenericProviderConfig {
 	}
 
 	return providers
+}
+
+// GetConfiguredChatProviders returns all configured AI chat providers from
+// environment variables and dynamically registered generic providers.
+func GetConfiguredChatProviders() []env.ChatProvider {
+	var providers []env.ChatProvider
+
+	if len(env.OpenAIAPIKey) > 0 {
+		name := env.OpenAIName
+		if name == "" {
+			name = "OpenAI"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "OpenAI",
+			Name:       name,
+			APIKey:     env.OpenAIAPIKey,
+			Endpoint:   env.GetOpenAIEndpoint(),
+			ProviderId: "openai-1",
+		})
+	}
+
+	if len(env.AnthropicAPIKey) > 0 {
+		name := env.AnthropicName
+		if name == "" {
+			name = "Anthropic"
+		}
+		providers = append(providers, env.ChatProvider{
+			Type:       "Anthropic",
+			Name:       name,
+			APIKey:     env.AnthropicAPIKey,
+			Endpoint:   env.GetAnthropicEndpoint(),
+			ProviderId: "anthropic-1",
+		})
+	}
+
+	// Flag if legacy OpenAI-Compatible env vars are still set
+	if os.Getenv("WHODB_OPENAI_COMPATIBLE_ENDPOINT") != "" || os.Getenv("WHODB_OPENAI_COMPATIBLE_API_KEY") != "" || os.Getenv("WHODB_CUSTOM_MODELS") != "" {
+		migrate.DeprecatedOpenAICompatibleEnv = true
+	}
+
+	// Add all generic providers
+	for _, genericProvider := range env.GenericProviders {
+		providers = append(providers, env.ChatProvider{
+			Type:       genericProvider.ProviderId,
+			Name:       genericProvider.Name,
+			APIKey:     genericProvider.APIKey,
+			Endpoint:   common.ResolveLocalURL(genericProvider.BaseURL),
+			ProviderId: genericProvider.ProviderId,
+			ClientType: genericProvider.ClientType,
+			IsGeneric:  true,
+		})
+	}
+
+	name := env.OllamaName
+	if name == "" {
+		name = "Ollama"
+	}
+	providers = append(providers, env.ChatProvider{
+		Type:       "Ollama",
+		Name:       name,
+		APIKey:     "",
+		Endpoint:   env.GetOllamaEndpoint(),
+		ProviderId: "ollama-1",
+	})
+
+	return providers
+}
+
+// ResolveProviderCredentials looks up a provider by ID and resolves credentials.
+// Request-level values take precedence over environment-configured values.
+func ResolveProviderCredentials(providerId, requestToken, requestEndpoint, requestModelType string) env.ResolvedCredentials {
+	result := env.ResolvedCredentials{
+		ModelType: requestModelType,
+		Token:     requestToken,
+		Endpoint:  requestEndpoint,
+	}
+	if providerId == "" {
+		return result
+	}
+	for _, provider := range GetConfiguredChatProviders() {
+		if provider.ProviderId != providerId {
+			continue
+		}
+		if result.Token == "" {
+			result.Token = provider.APIKey
+		}
+		if result.Endpoint == "" {
+			result.Endpoint = provider.Endpoint
+		}
+		break
+	}
+	return result
 }

@@ -27,7 +27,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
+	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
 )
 
@@ -68,7 +68,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	if input.Endpoint != nil {
 		requestEndpoint = *input.Endpoint
 	}
-	creds := env.ResolveProviderCredentials(providerId, requestToken, requestEndpoint, input.ModelType)
+	creds := envconfig.ResolveProviderCredentials(providerId, requestToken, requestEndpoint, input.ModelType)
 
 	// Build ExternalModel for BAML
 	externalModel := &engine.ExternalModel{

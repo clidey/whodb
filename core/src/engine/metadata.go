@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,24 @@ type TypeDefinition struct {
 	Category         TypeCategory // Type category for grouping
 }
 
+// Capabilities declares which optional features a plugin supports.
+// The frontend reads these to determine which UI elements to show.
+type Capabilities struct {
+	SupportsScratchpad     bool
+	SupportsChat           bool
+	SupportsGraph          bool
+	SupportsSchema         bool
+	SupportsDatabaseSwitch bool
+	SupportsModifiers      bool
+}
+
 // DatabaseMetadata contains all metadata for a database type
 type DatabaseMetadata struct {
 	DatabaseType    DatabaseType
 	TypeDefinitions []TypeDefinition
 	Operators       []string
 	AliasMap        map[string]string
+	Capabilities    Capabilities
 }
 
 // Helper function to create a pointer to an int

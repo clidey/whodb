@@ -81,13 +81,13 @@ type SSLModeInfo struct {
 
 // Pre-defined mode info entries (frontend can override with localized strings using Value as key)
 var (
-	ModeInfoDisabled       = SSLModeInfo{SSLModeDisabled, "Disabled", "No SSL/TLS encryption"}
-	ModeInfoPreferred      = SSLModeInfo{SSLModePreferred, "Preferred", "Use TLS if server supports it"}
-	ModeInfoRequired       = SSLModeInfo{SSLModeRequired, "Required", "Require TLS, skip certificate verification"}
-	ModeInfoVerifyCA       = SSLModeInfo{SSLModeVerifyCA, "Verify CA", "Verify server certificate against CA"}
-	ModeInfoVerifyIdentity = SSLModeInfo{SSLModeVerifyIdentity, "Verify Identity", "Verify CA and server hostname"}
-	ModeInfoEnabled        = SSLModeInfo{SSLModeEnabled, "Enabled", "Enable TLS with certificate verification"}
-	ModeInfoInsecure       = SSLModeInfo{SSLModeInsecure, "Insecure", "Enable TLS, skip certificate verification"}
+	ModeInfoDisabled       = SSLModeInfo{Value: SSLModeDisabled, Label: "Disabled", Description: "No SSL/TLS encryption"}
+	ModeInfoPreferred      = SSLModeInfo{Value: SSLModePreferred, Label: "Preferred", Description: "Use TLS if server supports it"}
+	ModeInfoRequired       = SSLModeInfo{Value: SSLModeRequired, Label: "Required", Description: "Require TLS, skip certificate verification"}
+	ModeInfoVerifyCA       = SSLModeInfo{Value: SSLModeVerifyCA, Label: "Verify CA", Description: "Verify server certificate against CA"}
+	ModeInfoVerifyIdentity = SSLModeInfo{Value: SSLModeVerifyIdentity, Label: "Verify Identity", Description: "Verify CA and server hostname"}
+	ModeInfoEnabled        = SSLModeInfo{Value: SSLModeEnabled, Label: "Enabled", Description: "Enable TLS with certificate verification"}
+	ModeInfoInsecure       = SSLModeInfo{Value: SSLModeInsecure, Label: "Insecure", Description: "Enable TLS, skip certificate verification"}
 )
 
 // Alias mappings for database-native SSL mode names

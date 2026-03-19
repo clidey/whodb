@@ -1,4 +1,4 @@
-en:
+en_US:
   connectAwsAccount: Connect an AWS account to discover databases
   addAwsAccount: Add AWS Account
   awsConnections: AWS Connections
@@ -8,6 +8,11 @@ en:
   refreshPartialError: Some AWS services could not be discovered. Check IAM permissions.
   clickToFillForm: Click a connection to fill the login form above
   connectionSelected: Settings loaded — enter your credentials
+
+  proxy: Proxy
+  readOnly: Read-Only
+  unreachable: Unreachable
+  unreachableTooltip: "WhoDB cannot reach this endpoint. Ensure WhoDB has network access (same VPC, peering, or tunnel)."
 
   helpLabel: How to set up AWS
   helpTitle: AWS Database Discovery

@@ -16,6 +16,7 @@
 
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {eeSettingsDefaults} from '../config/ee-imports';
+import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 
 const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
 
@@ -29,7 +30,7 @@ type ISettingsState = {
     whereConditionMode: 'popover' | 'sheet';
     defaultPageSize: number;
     maxPageSize: number;
-    language: 'en' | 'es' | 'de' | 'fr';
+    language: SupportedLanguage;
     databaseSchemaTerminology: 'database' | 'schema';
     disableAnimations: boolean;
     /** Visual theme name. Currently only 'default' is supported. */
@@ -62,7 +63,7 @@ const getInitialState = (): ISettingsState => {
         whereConditionMode: eeSettingsDefaults.whereConditionMode ?? 'popover',
         defaultPageSize: 100,
         maxPageSize: 10000,
-        language: 'en',
+        language: DEFAULT_LANGUAGE,
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
         // Use EE default if available, otherwise default to false (animations enabled)
         disableAnimations: eeSettingsDefaults.disableAnimations ?? false,

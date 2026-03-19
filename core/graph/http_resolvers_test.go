@@ -28,7 +28,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/engine"
@@ -43,7 +42,7 @@ func TestRESTHandlersAddRowAndGetRows(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Test"))
 	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }
 	mock.AddRowFunc = func(*engine.PluginConfig, string, string, []engine.Record) (bool, error) { return true, nil }
-	mock.GetRowsFunc = func(*engine.PluginConfig, string, string, *model.WhereCondition, []*model.SortCondition, int, int) (*engine.GetRowsResult, error) {
+	mock.GetRowsFunc = func(*engine.PluginConfig, *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 		return &engine.GetRowsResult{
 			Columns: []engine.Column{{Name: "id", Type: "int"}},
 			Rows:    [][]string{{"1"}},

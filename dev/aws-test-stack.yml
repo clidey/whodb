@@ -210,6 +210,159 @@ Resources:
       StorageType: gp3
       DeletionProtection: false
 
+  # ---------- Aurora PostgreSQL Cluster ----------
+  AuroraSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for Aurora
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      DBClusterIdentifier: whodb-test-aurora
+      Engine: aurora-postgresql
+      EngineVersion: "16.4"
+      MasterUsername: whodb
+      MasterUserPassword: !Ref DBPassword
+      DatabaseName: whodb
+      DBSubnetGroupName: !Ref AuroraSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref DatabaseSecurityGroup
+      EnableIAMDatabaseAuthentication: true
+      EnableHttpEndpoint: true
+      DeletionProtection: false
+
+  AuroraInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: whodb-test-aurora-0
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.t3.medium
+      Engine: aurora-postgresql
+
+  # ---------- IAM DB User Setup ----------
+  IAMUserSetupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: rds-data-api
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rds-data:ExecuteStatement
+                Resource: !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:whodb-test-aurora
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref ProxySecret
+
+  IAMUserSetupFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: whodb-test-iam-user-setup
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt IAMUserSetupRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+              if event['RequestType'] == 'Delete':
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return
+              try:
+                  client = boto3.client('rds-data')
+                  props = event['ResourceProperties']
+                  params = dict(
+                      resourceArn=props['ClusterArn'],
+                      secretArn=props['SecretArn'],
+                      database='whodb',
+                  )
+                  client.execute_statement(
+                      sql="DO $$ BEGIN CREATE USER iam_user WITH LOGIN; EXCEPTION WHEN duplicate_object THEN NULL; END $$;",
+                      **params,
+                  )
+                  client.execute_statement(sql="GRANT rds_iam TO iam_user;", **params)
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {'User': 'iam_user'})
+              except Exception as e:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+  IAMUserSetup:
+    Type: Custom::IAMDBUser
+    DependsOn: AuroraInstance
+    Properties:
+      ServiceToken: !GetAtt IAMUserSetupFunction.Arn
+      ClusterArn: !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:whodb-test-aurora
+      SecretArn: !Ref ProxySecret
+
+  # ---------- RDS Proxy ----------
+  ProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: rds-proxy-secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref ProxySecret
+
+  ProxySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: whodb-test-proxy-secret
+      SecretString: !Sub '{"username":"whodb","password":"${DBPassword}"}'
+
+  RDSProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      DBProxyName: whodb-test-proxy
+      EngineFamily: POSTGRESQL
+      RoleArn: !GetAtt ProxyRole.Arn
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: !Ref ProxySecret
+          IAMAuth: DISABLED
+      VpcSubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+      VpcSecurityGroupIds:
+        - !Ref DatabaseSecurityGroup
+      RequireTLS: true
+
+  RDSProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref RDSProxy
+      TargetGroupName: default
+      DBClusterIdentifiers:
+        - !Ref AuroraCluster
+
   # ---------- ElastiCache Redis ----------
   ElastiCacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
@@ -303,7 +456,7 @@ Resources:
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
-        Statement:
+        Statement:`
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
@@ -330,7 +483,9 @@ Resources:
                 Action:
                   - rds:DescribeDBInstances
                   - rds:DescribeDBClusters
+                  - rds:DescribeDBProxies
                   - rds:ListTagsForResource
+                  - rds-db:connect
                   - elasticache:DescribeCacheClusters
                   - elasticache:DescribeReplicationGroups
                   - elasticache:DescribeServerlessCaches
@@ -421,3 +576,15 @@ Outputs:
   DocumentDBEndpoint:
     Description: DocumentDB endpoint
     Value: !GetAtt DocDBCluster.Endpoint
+
+  AuroraWriterEndpoint:
+    Description: Aurora PostgreSQL writer endpoint
+    Value: !GetAtt AuroraCluster.Endpoint.Address
+
+  AuroraReaderEndpoint:
+    Description: Aurora PostgreSQL reader endpoint
+    Value: !GetAtt AuroraCluster.ReadEndpoint.Address
+
+  RDSProxyEndpoint:
+    Description: RDS Proxy endpoint
+    Value: !GetAtt RDSProxy.Endpoint

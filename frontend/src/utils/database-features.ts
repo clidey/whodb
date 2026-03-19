@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,66 @@
 
 import {DatabaseType} from '@graphql';
 import {getDatabaseTypeDropdownItemsSync} from '../config/database-types';
+import {reduxStore} from '../store';
 
 /**
- * Check if a database supports scratchpad/raw query execution
- * @param databaseType The database type (can be CE or EE type)
- * @returns boolean indicating if the database supports scratchpad
+ * Get backend capabilities from the Redux store.
+ * Returns null if capabilities haven't been fetched yet.
+ */
+function getBackendCapabilities() {
+    return reduxStore.getState().databaseMetadata.capabilities;
+}
+
+/**
+ * Check if a database supports scratchpad/raw query execution.
+ * Reads from backend capabilities first, falls back to config/hardcoded lists.
  */
 export function databaseSupportsScratchpad(databaseType: DatabaseType | string | undefined): boolean {
     if (!databaseType) {
         return false;
     }
-    
-    // Try to get scratchpad support from the database configuration first
+
+    const capabilities = getBackendCapabilities();
+    if (capabilities != null) {
+        return capabilities.supportsScratchpad;
+    }
+
+    // Fallback: check database configuration
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-
     if (dbConfig?.supportsScratchpad != null) {
         return dbConfig.supportsScratchpad;
     }
-    
-    // Fall back to checking known databases that don't support scratchpad
+
     const databasesThatDontSupportScratchpad = [
-        DatabaseType.MongoDb, 
-        DatabaseType.Redis, 
+        DatabaseType.MongoDb,
+        DatabaseType.Redis,
         DatabaseType.ElasticSearch
     ];
-    
     return !databasesThatDontSupportScratchpad.includes(databaseType as DatabaseType);
 }
 
 /**
- * Check if a database supports schemas
- * @param databaseType The database type (can be CE or EE type)
- * @returns boolean indicating if the database supports schemas
+ * Check if a database supports schemas.
+ * Reads from backend capabilities first, falls back to config/hardcoded lists.
  */
 export function databaseSupportsSchema(databaseType: DatabaseType | string | undefined): boolean {
     if (databaseType == null) {
         return false;
     }
-    
-    // Try to get schema support from the database configuration first
+
+    const capabilities = getBackendCapabilities();
+    if (capabilities != null) {
+        return capabilities.supportsSchema;
+    }
+
+    // Fallback: check database configuration
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-
     if (dbConfig?.supportsSchema != null) {
         return dbConfig.supportsSchema;
     }
 
-    // Fall back to checking known databases that don't support schemas
-    // MySQL and MariaDB treat database=schema, so they don't have a separate schema concept
     const databasesThatDontSupportSchema = [
         DatabaseType.Sqlite3,
         DatabaseType.Redis,
@@ -74,31 +85,30 @@ export function databaseSupportsSchema(databaseType: DatabaseType | string | und
         DatabaseType.MySql,
         DatabaseType.MariaDb,
     ];
-
     return !databasesThatDontSupportSchema.includes(databaseType as DatabaseType);
 }
 
 /**
- * Check if a database supports switching between databases in the UI
- * @param databaseType The database type (can be CE or EE type)
- * @returns boolean indicating if the database supports database switching
+ * Check if a database supports switching between databases in the UI.
+ * Reads from backend capabilities first, falls back to config/hardcoded lists.
  */
 export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | string | undefined): boolean {
     if (!databaseType) {
         return false;
     }
 
-    // Try to get database switching support from the database configuration first
+    const capabilities = getBackendCapabilities();
+    if (capabilities != null) {
+        return capabilities.supportsDatabaseSwitch;
+    }
+
+    // Fallback: check database configuration
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-
     if (dbConfig?.supportsDatabaseSwitching !== undefined) {
         return dbConfig.supportsDatabaseSwitching;
     }
 
-    // Fall back to checking known databases that support database switching
-    // MySQL/MariaDB treat database=schema, so switching "databases" is their equivalent
-    // Redis has numbered databases 0-15
     const databasesThatSupportDatabaseSwitching = [
         DatabaseType.MongoDb,
         DatabaseType.ClickHouse,
@@ -111,43 +121,30 @@ export function databaseSupportsDatabaseSwitching(databaseType: DatabaseType | s
 }
 
 /**
- * Check if a database should use the schema field for graph queries
- * @param databaseType The database type (can be CE or EE type)
- * @returns boolean indicating if the database uses schema field (true) or database field (false) for graph queries
+ * Check if a database should use the schema field for graph queries.
  */
 export function databaseUsesSchemaForGraph(databaseType: DatabaseType | string | undefined): boolean {
     if (!databaseType) {
-        return true; // Default to schema field if unknown
+        return true;
     }
 
-    // Try to get graph field preference from the database configuration first
     const dbTypeItems = getDatabaseTypeDropdownItemsSync();
     const dbConfig = dbTypeItems.find(item => item.id === databaseType);
-
     if (dbConfig?.usesSchemaForGraph !== undefined) {
         return dbConfig.usesSchemaForGraph;
     }
 
-    // Fall back to using the database switching logic (inverted)
-    // If database supports database switching, it uses database field (false)
-    // If database doesn't support database switching, it uses schema field (true)
     return !databaseSupportsDatabaseSwitching(databaseType);
 }
 
 /**
  * Check if a database type uses the "database" concept instead of "schema".
- * These are databases where the backend expects the "database" value to be passed
- * in place of "schema" for queries.
- * @param databaseType - The database type (can be CE or EE type)
- * @returns True for databases that use database-level organization instead of schemas
  */
 export function databaseTypesThatUseDatabaseInsteadOfSchema(databaseType: DatabaseType | string | undefined): boolean {
     if (!databaseType) {
         return false;
     }
 
-    // MySQL and MariaDB treat database=schema, so we pass the database value where schema is expected
-    // MongoDB, ClickHouse, and Redis only have a database concept, no schemas
     const databasesThatUseDatabaseInsteadOfSchema = [
         DatabaseType.MongoDb,
         DatabaseType.ClickHouse,
@@ -155,6 +152,5 @@ export function databaseTypesThatUseDatabaseInsteadOfSchema(databaseType: Databa
         DatabaseType.MariaDb,
         DatabaseType.Redis,
     ];
-
     return databasesThatUseDatabaseInsteadOfSchema.includes(databaseType as DatabaseType);
 }

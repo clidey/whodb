@@ -61,8 +61,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 
 			convertedValue, err := p.GormPluginFunctions.ConvertStringValue(strValue, colInfo.Type, colInfo.IsNullable)
 			if err != nil {
-				log.WithError(err).Error(fmt.Sprintf("Failed to convert string value '%s' for column '%s' during delete from table %s.%s", strValue, column, schema, storageUnit))
-				convertedValue = strValue
+				return false, fmt.Errorf("failed to convert value for column '%s' in table %s.%s: %w", column, schema, storageUnit, err)
 			}
 
 			// GORM handles identifier escaping automatically
@@ -89,8 +88,7 @@ func (p *GormPlugin) DeleteRow(config *engine.PluginConfig, schema string, stora
 			return false, result.Error
 		}
 
-		// TODO: BIG EDGE CASE - ClickHouse driver doesn't report affected rows properly for DELETE
-		if p.Type != engine.DatabaseType_ClickHouse && result.RowsAffected == 0 {
+		if p.GormPluginFunctions.ShouldCheckRowsAffected() && result.RowsAffected == 0 {
 			return false, errors.New("no rows were deleted")
 		}
 

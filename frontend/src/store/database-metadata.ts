@@ -1,5 +1,5 @@
-/**
- * Copyright 2025 Clidey, Inc.
+/*
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,18 @@ export interface BackendTypeDefinition {
 }
 
 /**
+ * Capabilities from backend - declares which optional features a plugin supports.
+ */
+export interface BackendCapabilities {
+    supportsScratchpad: boolean;
+    supportsChat: boolean;
+    supportsGraph: boolean;
+    supportsSchema: boolean;
+    supportsDatabaseSwitch: boolean;
+    supportsModifiers: boolean;
+}
+
+/**
  * DatabaseMetadata from backend - matches the GraphQL schema
  */
 export interface BackendDatabaseMetadata {
@@ -39,6 +51,7 @@ export interface BackendDatabaseMetadata {
     typeDefinitions: BackendTypeDefinition[];
     operators: string[];
     aliasMap: { Key: string; Value: string }[];
+    capabilities: BackendCapabilities;
 }
 
 /**
@@ -53,6 +66,8 @@ export interface IDatabaseMetadataState {
     operators: string[];
     /** Alias map (key: alias, value: canonical name) */
     aliasMap: Record<string, string>;
+    /** Capabilities declared by the backend plugin */
+    capabilities: BackendCapabilities | null;
     /** Timestamp of last fetch */
     lastFetched: number | null;
     /** Whether metadata is currently being fetched */
@@ -64,6 +79,7 @@ const initialState: IDatabaseMetadataState = {
     typeDefinitions: [],
     operators: [],
     aliasMap: {},
+    capabilities: null,
     lastFetched: null,
     loading: false,
 };
@@ -84,6 +100,7 @@ export const databaseMetadataSlice = createSlice({
                 acc[item.Key] = item.Value;
                 return acc;
             }, {} as Record<string, string>);
+            state.capabilities = action.payload.capabilities;
             state.lastFetched = Date.now();
             state.loading = false;
         },
@@ -92,6 +109,7 @@ export const databaseMetadataSlice = createSlice({
             state.typeDefinitions = [];
             state.operators = [];
             state.aliasMap = {};
+            state.capabilities = null;
             state.lastFetched = null;
             state.loading = false;
         },
@@ -104,6 +122,7 @@ export const databaseMetadataSlice = createSlice({
             state.typeDefinitions = [];
             state.operators = [];
             state.aliasMap = {};
+            state.capabilities = null;
             state.lastFetched = null;
             state.loading = false;
         });

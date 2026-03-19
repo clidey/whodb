@@ -125,6 +125,54 @@ func TestReplicationGroupToConnection_HappyPath(t *testing.T) {
 	}
 }
 
+func TestReplicationGroupToConnection_WithUserGroups(t *testing.T) {
+	p := newTestElastiCacheProvider()
+	rg := &ectypes.ReplicationGroup{
+		ReplicationGroupId:       aws.String("my-redis-iam"),
+		Status:                   aws.String("available"),
+		TransitEncryptionEnabled: aws.Bool(true),
+		AuthTokenEnabled:         aws.Bool(false),
+		UserGroupIds:             []string{"my-user-group"},
+		ConfigurationEndpoint: &ectypes.Endpoint{
+			Address: aws.String("my-redis-iam.abc.cache.amazonaws.com"),
+			Port:    aws.Int32(6379),
+		},
+	}
+
+	conn := p.replicationGroupToConnection(rg)
+	if conn == nil {
+		t.Fatal("expected non-nil connection")
+	}
+	if conn.Metadata["iamAuthSupported"] != "true" {
+		t.Error("expected iamAuthSupported=true when user groups present")
+	}
+}
+
+func TestReplicationGroupToConnection_NoUserGroups(t *testing.T) {
+	p := newTestElastiCacheProvider()
+	rg := &ectypes.ReplicationGroup{
+		ReplicationGroupId:       aws.String("my-redis-basic"),
+		Status:                   aws.String("available"),
+		TransitEncryptionEnabled: aws.Bool(false),
+		AuthTokenEnabled:         aws.Bool(true),
+		ConfigurationEndpoint: &ectypes.Endpoint{
+			Address: aws.String("my-redis-basic.abc.cache.amazonaws.com"),
+			Port:    aws.Int32(6379),
+		},
+	}
+
+	conn := p.replicationGroupToConnection(rg)
+	if conn == nil {
+		t.Fatal("expected non-nil connection")
+	}
+	if _, ok := conn.Metadata["iamAuthSupported"]; ok {
+		t.Error("expected no iamAuthSupported when no user groups")
+	}
+	if conn.Metadata["authTokenEnabled"] != "true" {
+		t.Error("expected authTokenEnabled=true")
+	}
+}
+
 func TestReplicationGroupToConnection_NilID(t *testing.T) {
 	p := newTestElastiCacheProvider()
 	rg := &ectypes.ReplicationGroup{
@@ -232,7 +280,7 @@ func TestCacheClusterToConnection_HappyPath(t *testing.T) {
 	p := newTestElastiCacheProvider()
 	cluster := &ectypes.CacheCluster{
 		CacheClusterId:           aws.String("my-cluster"),
-		CacheClusterStatus:      aws.String("available"),
+		CacheClusterStatus:       aws.String("available"),
 		TransitEncryptionEnabled: aws.Bool(false),
 		AuthTokenEnabled:         aws.Bool(false),
 		CacheNodes: []ectypes.CacheNode{
@@ -270,7 +318,7 @@ func TestCacheClusterToConnection_NoNodes(t *testing.T) {
 	p := newTestElastiCacheProvider()
 	cluster := &ectypes.CacheCluster{
 		CacheClusterId:           aws.String("my-cluster"),
-		CacheClusterStatus:      aws.String("creating"),
+		CacheClusterStatus:       aws.String("creating"),
 		TransitEncryptionEnabled: aws.Bool(false),
 		AuthTokenEnabled:         aws.Bool(false),
 		CacheNodes:               []ectypes.CacheNode{},

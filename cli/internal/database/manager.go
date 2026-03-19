@@ -31,7 +31,6 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/types"
@@ -509,7 +508,10 @@ func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereConditio
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+	return plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
+		Schema: schema, StorageUnit: storageUnit, Where: where,
+		PageSize: pageSize, PageOffset: pageOffset,
+	})
 }
 
 // runWithContext runs fn in a goroutine and returns its result, or ctx.Err() if the
@@ -616,7 +618,10 @@ func (m *Manager) GetRowsWithContext(ctx context.Context, schema, storageUnit st
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
-		return plugin.GetRows(pluginConfig, schema, storageUnit, where, nil, pageSize, pageOffset)
+		return plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
+			Schema: schema, StorageUnit: storageUnit, Where: where,
+			PageSize: pageSize, PageOffset: pageOffset,
+		})
 	})
 }
 
@@ -711,7 +716,7 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	// Get all rows
-	result, err := plugin.GetRows(pluginConfig, schema, storageUnit, nil, nil, 0, 0)
+	result, err := plugin.GetRows(pluginConfig, &engine.GetRowsRequest{Schema: schema, StorageUnit: storageUnit})
 	if err != nil {
 		return fmt.Errorf("failed to fetch data: %w", err)
 	}
@@ -785,7 +790,7 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 	pluginConfig := engine.NewPluginConfig(credentials)
 
 	// Get all rows
-	result, err := plugin.GetRows(pluginConfig, schema, storageUnit, nil, nil, 0, 0)
+	result, err := plugin.GetRows(pluginConfig, &engine.GetRowsRequest{Schema: schema, StorageUnit: storageUnit})
 	if err != nil {
 		return fmt.Errorf("failed to fetch data: %w", err)
 	}
@@ -979,7 +984,7 @@ type AIProvider struct {
 }
 
 func (m *Manager) GetAIProviders() []AIProvider {
-	providers := env.GetConfiguredChatProviders()
+	providers := envconfig.GetConfiguredChatProviders()
 	aiProviders := []AIProvider{}
 	for _, provider := range providers {
 		aiProviders = append(aiProviders, AIProvider{
@@ -1003,7 +1008,7 @@ func (m *Manager) GetAIModels(providerID, modelType, token string) ([]string, er
 	}
 
 	if providerID != "" {
-		providers := env.GetConfiguredChatProviders()
+		providers := envconfig.GetConfiguredChatProviders()
 		for _, provider := range providers {
 			if provider.ProviderId == providerID {
 				config.ExternalModel.Token = provider.APIKey
@@ -1045,7 +1050,7 @@ func (m *Manager) SendAIChat(providerID, modelType, token, schema, model, previo
 	config := engine.NewPluginConfig(credentials)
 
 	if providerID != "" {
-		providers := env.GetConfiguredChatProviders()
+		providers := envconfig.GetConfiguredChatProviders()
 		for _, provider := range providers {
 			if provider.ProviderId == providerID {
 				config.ExternalModel = &engine.ExternalModel{

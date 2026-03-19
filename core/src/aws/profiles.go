@@ -31,6 +31,7 @@ type LocalProfile struct {
 	Name      string
 	Region    string
 	Source    string
+	AuthType  string // "static", "sso", "assume-role", "environment"
 	IsDefault bool
 }
 
@@ -43,6 +44,7 @@ func DiscoverLocalProfiles() ([]LocalProfile, error) {
 		envProfile := &LocalProfile{
 			Name:      "environment",
 			Source:    "environment",
+			AuthType:  "environment",
 			IsDefault: os.Getenv("AWS_PROFILE") == "",
 		}
 		if region := os.Getenv("AWS_DEFAULT_REGION"); region != "" {
@@ -123,6 +125,8 @@ func parseINIFile(path, source string, isConfigFile bool) (map[string]*LocalProf
 
 	profiles := make(map[string]*LocalProfile)
 	var currentProfile *LocalProfile
+	// Track keys per profile to determine auth type after parsing
+	profileKeys := make(map[string]map[string]bool)
 
 	sectionRegex := regexp.MustCompile(`^\s*\[([^\]]+)\]\s*$`)
 	keyValueRegex := regexp.MustCompile(`^\s*([^=]+?)\s*=\s*(.+?)\s*$`)
@@ -147,9 +151,11 @@ func parseINIFile(path, source string, isConfigFile bool) (map[string]*LocalProf
 			currentProfile = &LocalProfile{
 				Name:      profileName,
 				Source:    source,
+				AuthType:  "static",
 				IsDefault: profileName == "default",
 			}
 			profiles[profileName] = currentProfile
+			profileKeys[profileName] = make(map[string]bool)
 			continue
 		}
 
@@ -158,10 +164,27 @@ func parseINIFile(path, source string, isConfigFile bool) (map[string]*LocalProf
 				key := strings.ToLower(matches[1])
 				value := matches[2]
 
+				profileKeys[currentProfile.Name][key] = true
+
 				if key == "region" {
 					currentProfile.Region = value
 				}
 			}
+		}
+	}
+
+	// Determine auth type based on observed keys
+	for name, keys := range profileKeys {
+		profile, ok := profiles[name]
+		if !ok {
+			continue
+		}
+		if keys["sso_start_url"] || keys["sso_session"] {
+			profile.AuthType = "sso"
+			log.Debugf("AWS profiles: %s detected as SSO profile", name)
+		} else if keys["role_arn"] {
+			profile.AuthType = "assume-role"
+			log.Debugf("AWS profiles: %s detected as assume-role profile", name)
 		}
 	}
 
