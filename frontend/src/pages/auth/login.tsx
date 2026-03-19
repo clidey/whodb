@@ -69,6 +69,21 @@ import {isAwsHostname} from '../../utils/cloud-connection-prefill';
 import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
 
 /**
+ * URL params that are reserved for the standard login form fields and control flags.
+ * These are never treated as advanced database fields.
+ */
+const LOGIN_RESERVED_PARAMS = new Set([
+    "type", "host", "username", "password", "database",
+    "port", "region",
+    "login", "resource", "credentials",
+]);
+
+/**
+ * URL params that control UI behavior and should be preserved after login.
+ */
+const LOGIN_UI_PARAMS = new Set(["locale", "mode", "theme", "os"]);
+
+/**
  * Generate a consistent ID for desktop credentials based on connection details.
  * This ensures the same credentials always produce the same ID, preventing duplicate keyring entries.
  * For browser environments, returns undefined to rely on cookie-based auth.
@@ -222,18 +237,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                     dispatch(AuthActions.login(profileData));
                     markFirstLoginComplete();
 
-                    // Clear login-related URL params before navigation
-                    if (searchParams.has("credentials") || searchParams.has("login")) {
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.delete("credentials");
-                        newParams.delete("login");
-                        newParams.delete("type");
-                        newParams.delete("host");
-                        newParams.delete("username");
-                        newParams.delete("password");
-                        newParams.delete("database");
-                        newParams.delete("port");
-                        newParams.delete("region");
+                    // Clear all login-related URL params before navigation, preserving UI-only params.
+                    const hasLoginParams = [...searchParams.keys()].some(k => !LOGIN_UI_PARAMS.has(k));
+                    if (hasLoginParams) {
+                        const newParams = new URLSearchParams();
+                        LOGIN_UI_PARAMS.forEach(key => {
+                            if (searchParams.has(key)) {
+                                newParams.set(key, searchParams.get(key)!);
+                            }
+                        });
                         setSearchParams(newParams, { replace: true });
                     }
 
@@ -643,7 +655,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 toast.error(t('failedToParseCredentials'));
             }
         } else {
-            // Handle individual URL parameters (existing logic)
+            // Handle individual URL parameters
             if (searchParams.has("type")) {
                 const typeParam = searchParams.get("type")!;
                 const dbType = databaseTypeItems.find(item =>
@@ -659,7 +671,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
 
-            // Merge port/region into advancedForm
+            // Merge port/region into advancedForm (existing behavior preserved)
             const hasPort = searchParams.has("port");
             const hasRegion = searchParams.has("region");
             if (hasPort || hasRegion) {
@@ -668,6 +680,19 @@ export const LoginForm: FC<LoginFormProps> = ({
                     ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
                     ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
                 }));
+            }
+
+            // All other non-reserved params go into advanced form generically,
+            // supporting any database type including EE databases.
+            const advancedEntries: Record<string, string> = {};
+            searchParams.forEach((value, key) => {
+                if (!LOGIN_RESERVED_PARAMS.has(key) && !LOGIN_UI_PARAMS.has(key)) {
+                    advancedEntries[key] = value;
+                }
+            });
+            if (Object.keys(advancedEntries).length > 0) {
+                setAdvancedForm(prev => ({...prev, ...advancedEntries}));
+                setShowAdvanced(true);
             }
         }
 

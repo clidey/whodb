@@ -17,6 +17,14 @@
 import {
     Alert,
     AlertDescription,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
     AlertTitle,
     Button,
     Checkbox,
@@ -344,6 +352,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
     const [deleting, setDeleting] = useState(false);
+    const [pendingDeleteIndexes, setPendingDeleteIndexes] = useState<number[] | null>(null);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [showImport, setShowImport] = useState(false);
@@ -456,20 +465,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, []);
 
     // Delete logic, adapted from explore-storage-unit.tsx
-    const handleDeleteRow = useCallback(async (rowIndex: number) => {
-        if (!rows || !columns) return;
+    const doDeleteRows = useCallback(async (indexesToDelete: number[]) => {
         let unableToDeleteAll = false;
-        const deletedIndexes: number[] = [];
-        let indexesToDelete: number[] = [];
-        if (Array.isArray(rowIndex)) {
-            indexesToDelete = rowIndex;
-        } else if (typeof rowIndex === "number") {
-            indexesToDelete = [rowIndex];
-        }
-        if (checked.length > 0) {
-            indexesToDelete = [...checked];
-        }
-        if (indexesToDelete.length === 0) return;
         toast.info(indexesToDelete.length === 1 ? t('deletingRow') : t('deletingRows'));
         for (const index of indexesToDelete) {
             const row = rows[index];
@@ -486,7 +483,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                         values,
                     },
                 });
-                deletedIndexes.push(index);
             } catch (e: any) {
                 toast.error(t('unableToDeleteRow', { message: e?.message || e }));
                 unableToDeleteAll = true;
@@ -497,7 +493,34 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.success(t('rowDeleted'));
         }
         onRefresh?.();
-    }, [deleteRow, schema, storageUnit, rows, columns, checked, onRefresh, t]);
+    }, [deleteRow, schema, storageUnit, rows, columns, onRefresh, t]);
+
+    const handleDeleteRow = useCallback((rowIndex: number) => {
+        if (!rows || !columns) return;
+        let indexesToDelete: number[] = [];
+        if (Array.isArray(rowIndex)) {
+            indexesToDelete = rowIndex;
+        } else if (typeof rowIndex === "number") {
+            indexesToDelete = [rowIndex];
+        }
+        if (checked.length > 0) {
+            indexesToDelete = [...checked];
+        }
+        if (indexesToDelete.length === 0) return;
+        setPendingDeleteIndexes(indexesToDelete);
+    }, [rows, columns, checked]);
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (pendingDeleteIndexes) {
+            const indexes = pendingDeleteIndexes;
+            setPendingDeleteIndexes(null);
+            await doDeleteRows(indexes);
+        }
+    }, [pendingDeleteIndexes, doDeleteRows]);
+
+    const handleCancelDelete = useCallback(() => {
+        setPendingDeleteIndexes(null);
+    }, []);
 
     const paginatedRows = useMemo(() => {
         // For server-side pagination, rows are already paginated
@@ -1869,6 +1892,26 @@ export const StorageUnitTable: FC<TableProps> = ({
                     onImportSuccess={onRefresh}
                 />
             )}
+            <AlertDialog open={pendingDeleteIndexes != null} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('deleteRowConfirmTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {pendingDeleteIndexes && pendingDeleteIndexes.length > 1
+                                ? t('deleteRowsConfirmDescription', { count: pendingDeleteIndexes.length })
+                                : t('deleteRowConfirmDescription')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={handleCancelDelete}>{t('cancel')}</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Button variant="destructive" onClick={handleConfirmDelete}>
+                                {t('deleteRow')}
+                            </Button>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

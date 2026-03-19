@@ -49,6 +49,7 @@ import {
     toast
 } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
+import { isDestructiveQuery, isValidSQLQuery } from '@/utils/query-utils';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -314,6 +315,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [historyOpen, setHistoryOpen] = useState(false);
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(false);
+    const [pendingExecuteCode, setPendingExecuteCode] = useState<string | null>(null);
     const [rows, setRows] = useState<RowsResult | null>(null);
     const { modelType } = useAI();    
     const [editorHeight, setEditorHeight] = useState(150);
@@ -418,12 +420,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         return () => { mounted = false; }
     }, []);
 
-    const handleRawExecute = useCallback((historyCode?: string) => {
-        if (current == null) {
-            setLoading(false);
-            return;
-        }
-        const currentCode = historyCode ?? code;
+    const doExecute = useCallback((currentCode: string) => {
         const historyItem = {id: uuidv4(), item: currentCode, status: false, date: new Date()};
         setSubmittedCode(currentCode);
         setError(null);
@@ -443,14 +440,46 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 status: historyItem.status
             }));
         });
-    }, [code, current, mode, allActionOptions, handleExecute, cellId, dispatch]);
+    }, [handleExecute, cellId, dispatch]);
+
+    const handleRawExecute = useCallback((historyCode?: string) => {
+        if (current == null) {
+            setLoading(false);
+            return;
+        }
+        const currentCode = historyCode ?? code;
+        const needsConfirmation = mode !== ActionOptions.Query || (isValidSQLQuery(currentCode) && isDestructiveQuery(currentCode));
+        if (needsConfirmation) {
+            setPendingExecuteCode(currentCode);
+        } else {
+            doExecute(currentCode);
+        }
+    }, [code, current, mode, doExecute]);
+
+    const handleConfirmExecute = useCallback(() => {
+        if (pendingExecuteCode != null) {
+            doExecute(pendingExecuteCode);
+            setPendingExecuteCode(null);
+        }
+    }, [pendingExecuteCode, doExecute]);
+
+    const handleCancelExecute = useCallback(() => {
+        setPendingExecuteCode(null);
+    }, []);
 
     const handleAdd = useCallback(() => {
         onAdd(cellId);
     }, [cellId, onAdd]);
 
+    const [confirmDeleteCellOpen, setConfirmDeleteCellOpen] = useState(false);
+
     const handleDelete = useCallback(() => {
+        setConfirmDeleteCellOpen(true);
+    }, []);
+
+    const handleConfirmDeleteCell = useCallback(() => {
         onDelete?.(cellId);
+        setConfirmDeleteCellOpen(false);
     }, [cellId, onDelete]);
 
     const handleEditorResize = useCallback((e: React.MouseEvent) => {
@@ -877,6 +906,42 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
+            <AlertDialog open={pendingExecuteCode != null} onOpenChange={(open) => { if (!open) handleCancelExecute(); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('confirmExecutionTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('confirmExecutionDescription')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={handleCancelExecute}>{t('cancel')}</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Button variant="destructive" onClick={handleConfirmExecute}>
+                                {t('executeQuery')}
+                            </Button>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={confirmDeleteCellOpen} onOpenChange={setConfirmDeleteCellOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('deleteCellTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('deleteCellDescription')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel data-testid="delete-cell-cancel">{t('cancel')}</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Button variant="destructive" onClick={handleConfirmDeleteCell} data-testid="delete-cell-confirm">
+                                {t('continue')}
+                            </Button>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

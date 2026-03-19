@@ -45,50 +45,7 @@ import { useAppSelector } from "@/store/hooks";
 import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
 import { Tip } from "./tip";
 
-const isValidSQLQuery = (text: string): boolean => {
-  const trimmed = text.trim();
-  if (!trimmed) return false;
-
-  const sqlKeywords = [
-    'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
-    'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE', 'SET'
-  ];
-  
-  const upperText = trimmed.toUpperCase();
-  return sqlKeywords.some(keyword => upperText.startsWith(keyword));
-};
-
-const isDestructiveQuery = (text: string): boolean => {
-  const trimmed = text.trim();
-  if (!trimmed) return false;
-
-  const upperText = trimmed.toUpperCase();
-
-  const safeKeywords = [
-    'SELECT', 'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE'
-  ];
-
-  const destructiveKeywords = [
-    'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
-    'TRUNCATE', 'REPLACE', 'MERGE', 'CALL', 'EXEC', 'EXECUTE'
-  ];
-  
-  // Check if query starts with a destructive keyword
-  const isDestructive = destructiveKeywords.some(keyword => upperText.startsWith(keyword));
-  
-  // Check if query starts with a safe keyword
-  const isSafe = safeKeywords.some(keyword => upperText.startsWith(keyword));
-  
-  // If it's explicitly safe, it's not destructive
-  if (isSafe) return false;
-  
-  // If it's explicitly destructive, it is destructive
-  if (isDestructive) return true;
-  
-  // For other cases (like SET statements), consider them potentially destructive
-  // as they can modify session state or configuration
-  return true;
-};
+import { isDestructiveQuery, isValidSQLQuery } from '@/utils/query-utils';
 
 const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
   const fullText = doc.toString();

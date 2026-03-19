@@ -36,11 +36,24 @@ import (
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
 	"errors"
+	"flag"
 )
 
 const defaultPort = "8080"
 
 func main() {
+	showVersion := flag.Bool("version", false, "Print the version and exit")
+	flag.Parse()
+
+	if *showVersion {
+		version := env.ApplicationVersion
+		if version == "" {
+			version = "dev"
+		}
+		fmt.Println(version)
+		return
+	}
+
 	defer log.CloseLogFile()
 	log.Alwaysf("Starting WhoDB... (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", log.GetLevel())
 
