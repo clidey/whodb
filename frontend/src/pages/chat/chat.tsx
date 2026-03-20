@@ -66,6 +66,7 @@ import {ErrorState} from "../../components/error-state";
 import {Loading} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
+import {copyToClipboard} from "../../services/clipboard";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {HoudiniActions} from "../../store/chat";
@@ -97,9 +98,12 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = useCallback(() => {
-        navigator.clipboard.writeText(children);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        copyToClipboard(children).then(success => {
+            if (success) {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        });
     }, [children]);
 
     return (
@@ -1056,9 +1060,12 @@ export const ChatPage: FC = () => {
                                                                 </div>
                                                                 <button
                                                                     onClick={() => {
-                                                                        navigator.clipboard.writeText(chat.Text);
-                                                                        setCopiedSqlId(chat.id ?? null);
-                                                                        setTimeout(() => setCopiedSqlId(null), 2000);
+                                                                        copyToClipboard(chat.Text).then(success => {
+                                                                            if (success) {
+                                                                                setCopiedSqlId(chat.id ?? null);
+                                                                                setTimeout(() => setCopiedSqlId(null), 2000);
+                                                                            }
+                                                                        });
                                                                     }}
                                                                     className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors z-10"
                                                                 >

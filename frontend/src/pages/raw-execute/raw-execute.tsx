@@ -90,6 +90,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { isDesktopApp } from "../../utils/external-links";
+import { copyToClipboard } from "../../services/clipboard";
 import { v4 as uuidv4 } from 'uuid';
 import { IPluginProps, QueryView } from "./query-view";
 
@@ -271,9 +272,11 @@ const CopyButton: FC<{ text: string }> = ({text}) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopyToClipboard = useCallback(() => {
-        navigator.clipboard.writeText(text).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+        copyToClipboard(text).then(success => {
+            if (success) {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
         });
     }, [text]);
 
@@ -647,8 +650,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 {t('clear')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
-                                navigator.clipboard.writeText(code).then(() => {
-                                    toast.success(t('copyCode'));
+                                copyToClipboard(code).then(success => {
+                                    if (success) toast.success(t('copyCode'));
                                 });
                             }}>
                                 <ClipboardDocumentIcon className="w-4 h-4"/>

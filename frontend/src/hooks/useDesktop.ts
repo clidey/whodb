@@ -50,24 +50,6 @@ export const useDesktopFile = () => {
   };
 };
 
-// Hook for clipboard operations
-export const useDesktopClipboard = () => {
-  const isDesktop = isDesktopApp();
-
-  const copyToClipboard = useCallback(async (text: string) => {
-    return await desktopService.copyToClipboard(text);
-  }, []);
-
-  const getFromClipboard = useCallback(async () => {
-    return await desktopService.getFromClipboard();
-  }, []);
-
-  return {
-    isDesktop,
-    copyToClipboard,
-    getFromClipboard,
-  };
-};
 
 // Hook for window management
 export const useDesktopWindow = () => {

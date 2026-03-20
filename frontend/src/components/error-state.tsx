@@ -18,6 +18,7 @@ import {Alert, AlertDescription, AlertTitle, Button, toast} from "@clidey/ux";
 import {BellAlertIcon, CheckCircleIcon, ClipboardDocumentIcon} from "./heroicons";
 import {useState} from "react";
 import {useTranslation} from "@/hooks/use-translation";
+import {copyToClipboard} from "@/services/clipboard";
 
 interface ErrorStateProps {
     error?: { message?: string } | string | null;
@@ -29,9 +30,12 @@ export const ErrorState = ({ error }: ErrorStateProps) => {
     const message = typeof error === "string" ? error : error?.message ?? t('unknownError');
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(message);
-        setCopied(true);
-        toast.success(t('copySuccess'));
+        copyToClipboard(message).then(success => {
+            if (success) {
+                setCopied(true);
+                toast.success(t('copySuccess'));
+            }
+        });
     };
 
     return (

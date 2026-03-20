@@ -70,6 +70,7 @@ import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "r
 import {Export} from "./export";
 import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
+import {copyToClipboard} from '@/services/clipboard';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -604,10 +605,9 @@ export const StorageUnitTable: FC<TableProps> = ({
         const timeout = setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
             if (cell !== undefined && cell !== null) {
-                if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(String(cell));
-                    toast.success(t('copiedToClipboard'));
-                }
+                copyToClipboard(String(cell)).then(success => {
+                    if (success) toast.success(t('copiedToClipboard'));
+                });
             }
             clickTimeouts.current.delete(cellKey);
         }, 200); // 200ms delay to detect double-click
@@ -629,10 +629,9 @@ export const StorageUnitTable: FC<TableProps> = ({
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
-            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                navigator.clipboard.writeText(rowString);
-                toast.success(t('rowCopiedToClipboard'));
-            }
+            copyToClipboard(rowString).then(success => {
+                if (success) toast.success(t('rowCopiedToClipboard'));
+            });
         }
     }, [paginatedRows, columns.length, t]);
 
@@ -1224,11 +1223,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         if (contextMenuCellIdx == null) return;
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
-                            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                const copyValue = String(cell);
-                                navigator.clipboard.writeText(copyValue);
-                                toast.success(t('copiedCellToClipboard'));
-                            }
+                            copyToClipboard(String(cell)).then(success => {
+                                if (success) toast.success(t('copiedCellToClipboard'));
+                            });
                         }
                     }}
                     disabled={contextMenuCellIdx == null}
@@ -1257,10 +1254,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const row = paginatedRows[index];
                         if (row && Array.isArray(row)) {
                             const rowString = row.map(cell => cell ?? "").join("\t");
-                            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                navigator.clipboard.writeText(rowString);
-                                toast.success(t('rowCopiedToClipboard'));
-                            }
+                            copyToClipboard(rowString).then(success => {
+                                if (success) toast.success(t('rowCopiedToClipboard'));
+                            });
                         }
                     }}
                     className="[&>[data-slot='context-menu-shortcut']]:flex"
