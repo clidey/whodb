@@ -548,7 +548,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         return (
             <div className="flex flex-col mt-4 w-full group relative">
                 <div
-                    className={cn("h-2 cursor-row-resize transition-all duration-200 group-hover:border-b border-muted", {
+                    className={cn("h-2 cursor-row-resize transition-all duration-200", {
                         "hidden": rows == null || !allowResultsResize,
                     })}
                     onMouseDown={handleResultsResize}
