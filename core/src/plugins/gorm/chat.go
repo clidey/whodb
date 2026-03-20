@@ -64,9 +64,7 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 
 		tableContext := tableDetails.String()
 
-		// Use BAML for structured SQL query generation
 		callCtx := ctx.Background()
-
-		return common.SQLChatBAML(callCtx, string(p.Type), schema, tableContext, previousConversation, query, config, p)
+		return common.ExecuteChatQuery(callCtx, string(p.Type), schema, tableContext, previousConversation, query, config, p)
 	})
 }

@@ -212,20 +212,18 @@ test.describe('Sidebar Navigation', () => {
     });
 
     test.describe('NoSQL Navigation', () => {
-        // Test NoSQL databases that may not show all options
+        // Test NoSQL databases show navigation based on capabilities
         forEachDatabase('keyvalue', (db) => {
             test.describe(`${db.type}`, () => {
-                test('hides chat option for key-value databases', async ({ whodb, page }) => {
-                    // Redis and similar don't support SQL chat
-                    await expect(page.locator('[href="/chat"]')).not.toBeAttached();
+                test('shows chat option for key-value databases', async ({ whodb, page }) => {
+                    await expect(page.locator('[href="/chat"]')).toBeAttached();
                 });
 
-                test('hides scratchpad option for key-value databases', async ({ whodb, page }) => {
-                    // Key-value stores don't support SQL scratchpad
-                    await expect(page.locator('[href="/scratchpad"]')).not.toBeAttached();
+                test('shows scratchpad option for key-value databases', async ({ whodb, page }) => {
+                    await expect(page.locator('[href="/scratchpad"]')).toBeAttached();
                 });
 
-                test('still shows graph option', async ({ whodb, page }) => {
+                test('shows graph option', async ({ whodb, page }) => {
                     await expect(page.locator('[href="/graph"]')).toBeAttached();
                 });
             });

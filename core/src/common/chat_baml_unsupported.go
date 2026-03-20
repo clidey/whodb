@@ -29,16 +29,28 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-// RawExecutePlugin defines the interface for executing raw SQL queries
+// RawExecutePlugin defines the interface for executing raw queries
 type RawExecutePlugin interface {
 	RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error)
+}
+
+// IsNoSQLDatabase returns true if the database type should use the database-agnostic
+// BAML prompt instead of the SQL-specific prompt.
+func IsNoSQLDatabase(dbType string) bool {
+	switch engine.DatabaseType(dbType) {
+	case engine.DatabaseType_MongoDB,
+		engine.DatabaseType_Redis,
+		engine.DatabaseType_ElasticSearch:
+		return true
+	}
+	return false
 }
 
 // ErrBAMLNotSupported is returned when AI features are used on unsupported platforms
 var ErrBAMLNotSupported = errors.New("AI features are not supported on this platform (arm/riscv64). BAML requires amd64 or arm64 architecture")
 
-// SQLChatBAML returns an error on unsupported platforms
-func SQLChatBAML(
+// ExecuteChatQuery returns an error on unsupported platforms
+func ExecuteChatQuery(
 	ctx context.Context,
 	databaseType string,
 	schema string,

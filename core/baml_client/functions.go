@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // ----------------------------------------------------------------------------
 //
 //  Welcome to Baml! To use this generated code, please run the following:
@@ -92,6 +108,80 @@ func GenerateChatTitle(ctx context.Context, user_query string, opts ...CallOptio
 		}
 
 		return "", fmt.Errorf("No data returned from stream")
+	}
+}
+
+func GenerateDBQuery(ctx context.Context, context types.DatabaseContext, user_query string, opts ...CallOptionFunc) ([]types.ChatResponse, error) {
+
+	var callOpts callOption
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	// Resolve client option to clientRegistry (client takes precedence)
+	if callOpts.client != nil {
+		if callOpts.clientRegistry == nil {
+			callOpts.clientRegistry = baml.NewClientRegistry()
+		}
+		callOpts.clientRegistry.SetPrimaryClient(*callOpts.client)
+	}
+
+	args := baml.BamlFunctionArguments{
+		Kwargs: map[string]any{"context": context, "user_query": user_query},
+		Env:    getEnvVars(callOpts.env),
+	}
+
+	if callOpts.clientRegistry != nil {
+		args.ClientRegistry = callOpts.clientRegistry
+	}
+
+	if callOpts.collectors != nil {
+		args.Collectors = callOpts.collectors
+	}
+
+	if callOpts.typeBuilder != nil {
+		args.TypeBuilder = callOpts.typeBuilder
+	}
+
+	if callOpts.tags != nil {
+		args.Tags = callOpts.tags
+	}
+
+	encoded, err := args.Encode()
+	if err != nil {
+		panic(err)
+	}
+
+	if callOpts.onTick == nil {
+		result, err := bamlRuntime.CallFunction(ctx, "GenerateDBQuery", encoded, callOpts.onTick)
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Error != nil {
+			return nil, result.Error
+		}
+
+		casted := (result.Data).([]types.ChatResponse)
+
+		return casted, nil
+	} else {
+		channel, err := bamlRuntime.CallFunctionStream(ctx, "GenerateDBQuery", encoded, callOpts.onTick)
+		if err != nil {
+			return nil, err
+		}
+
+		for result := range channel {
+			if result.Error != nil {
+				return nil, result.Error
+			}
+
+			if result.HasData {
+				return result.Data.([]types.ChatResponse), nil
+			}
+		}
+
+		return nil, fmt.Errorf("No data returned from stream")
 	}
 }
 

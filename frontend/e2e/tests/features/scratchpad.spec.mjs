@@ -338,4 +338,128 @@ test.describe('Scratchpad', () => {
         });
     }, { features: ['scratchpad'] });
 
+    // Key-Value Databases
+    forEachDatabase('keyvalue', (db) => {
+        test.describe('Native Query Execution', () => {
+            test('executes a read command and shows results', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'KEYS *');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(columns.length).toBeGreaterThan(0);
+                expect(rows.length).toBeGreaterThan(0);
+            });
+
+            test('executes HGETALL and shows hash fields', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'HGETALL user:1');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(columns.map(c => c.toLowerCase())).toContain('field');
+                expect(columns.map(c => c.toLowerCase())).toContain('value');
+                expect(rows.length).toBeGreaterThan(0);
+            });
+
+            test('shows error for invalid command', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'INVALIDCOMMAND xyz');
+                await whodb.runCode(0);
+
+                const output = await whodb.getCellError(0);
+                expect(output.toLowerCase()).toContain('unknown command');
+            });
+        });
+    }, { features: ['scratchpad'] });
+
+    // MongoDB
+    forEachDatabase('document', (db) => {
+        if (db.type !== 'MongoDB') return;
+
+        test.describe('MongoDB Query Execution', () => {
+            test('executes find query and shows results', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'db.users.find({}).limit(5)');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(columns.length).toBeGreaterThan(0);
+                expect(rows.length).toBeGreaterThan(0);
+            });
+
+            test('executes countDocuments query', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'db.users.countDocuments({})');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(rows.length).toEqual(1);
+            });
+
+            test('executes aggregate query', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'db.users.aggregate([{ "$group": { "_id": null, "count": { "$sum": 1 } } }])');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(rows.length).toBeGreaterThan(0);
+            });
+
+            test('shows error for invalid query', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'db.users.invalidOperation()');
+                await whodb.runCode(0);
+
+                const output = await whodb.getCellError(0);
+                expect(output.length).toBeGreaterThan(0);
+            });
+        });
+    }, { features: ['scratchpad'] });
+
+    // Elasticsearch
+    forEachDatabase('document', (db) => {
+        if (db.type !== 'ElasticSearch') return;
+
+        test.describe('Elasticsearch Query Execution', () => {
+            test('executes search query and shows results', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'users | {"query": {"match_all": {}}, "size": 5}');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(columns.length).toBeGreaterThan(0);
+                expect(rows.length).toBeGreaterThan(0);
+            });
+
+            test('executes filtered search query', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'users | {"query": {"match": {"username": "john_doe"}}, "size": 10}');
+                await whodb.runCode(0);
+
+                const { columns, rows } = await whodb.getCellQueryOutput(0);
+                expect(rows.length).toBeGreaterThan(0);
+            });
+
+            test('shows error for invalid query', async ({ whodb, page }) => {
+                await whodb.goto('scratchpad');
+
+                await whodb.writeCode(0, 'users | {invalid json}');
+                await whodb.runCode(0);
+
+                const output = await whodb.getCellError(0);
+                expect(output.length).toBeGreaterThan(0);
+            });
+        });
+    }, { features: ['scratchpad'] });
+
 });
