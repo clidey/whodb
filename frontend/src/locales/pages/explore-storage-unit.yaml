@@ -28,3 +28,5 @@ en_US:
   noPrimaryKeyFound: "No primary key found for table {table}"
   failedToSearchEntity: "Failed to search for entity: {error}"
   failedToGetTargetTableStructure: "Failed to get target table structure: {error}"
+  confirmOperationTitle: Confirm Operation
+  confirmOperationDescription: This operation may modify or delete data. Are you sure you want to proceed?

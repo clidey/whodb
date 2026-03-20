@@ -311,6 +311,8 @@ interface TableProps {
     rawQuery?: string;
     // Enforce minimum height - when true, always uses passed height; when false, shrinks to content if smaller
     enforceMinHeight?: boolean;
+    // Enable keyboard shortcuts - should only be true on the explore-storage-unit page
+    enableKeyboardShortcuts?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -347,6 +349,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     allowImport = false,
     rawQuery,
     enforceMinHeight = false,
+    enableKeyboardShortcuts = false,
 }) => {
     const { t } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -899,6 +902,8 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Keyboard navigation and shortcuts
     useEffect(() => {
+        if (!enableKeyboardShortcuts) return;
+
         const handleKeyDown = (event: KeyboardEvent) => {
             // Only handle shortcuts when not in input fields
             if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -1059,7 +1064,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages, openExport]);
+    }, [enableKeyboardShortcuts, onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages, openExport]);
 
 
 

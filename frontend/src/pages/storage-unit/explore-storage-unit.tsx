@@ -15,6 +15,14 @@
  */
 
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
     Badge,
     Button,
     cn,
@@ -81,9 +89,11 @@ import {ExploreStorageUnitWhereCondition} from "./explore-storage-unit-where-con
 import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-where-condition-sheet";
 import {useTranslation} from "../../hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";
+import {isDestructiveQuery} from "../../utils/query-utils";
 import {mergeSearchWithWhere, parseSearchToWhereCondition} from "../../utils/search-parser";
 import {SearchIntellisense} from "../../components/search-intellisense";
 import {useSearchIntellisense} from "../../hooks/use-search-intellisense";
+import {useContainerWidth} from "../../hooks/use-container-width";
 
 // Conditionally import EE query utilities
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -164,6 +174,8 @@ export const ExploreStorageUnit: FC = () => {
 
     // Track table container height for responsive sizing
     const tableContainerRef = useRef<HTMLDivElement>(null);
+    const scratchpadResultsRef = useRef<HTMLDivElement>(null);
+    const scratchpadContainerWidth = useContainerWidth(scratchpadResultsRef);
     const pageSizeInitialRef = useRef(true);
     const [tableHeight, setTableHeight] = useState<number>(500);
 
@@ -194,7 +206,7 @@ export const ExploreStorageUnit: FC = () => {
         fetchPolicy: "network-only",
     });
     const [addRow, { loading: adding }] = useAddRowMutation();
-    const [rawExecute, { data: rawExecuteData }] = useRawExecuteLazyQuery();
+    const [rawExecute, { data: rawExecuteData, error: rawExecuteError }] = useRawExecuteLazyQuery();
 
     const unitName = useMemo(() => {
         return unit?.Name;
@@ -621,16 +633,23 @@ export const ExploreStorageUnit: FC = () => {
         });
     }, [addRow, addRowData, handleSubmitRequest, rows?.Columns, schema, t, unit?.Name, current?.Type]);
 
+    const [pendingScratchpadQuery, setPendingScratchpadQuery] = useState<string | null>(null);
+
+    const doScratchpadExecute = useCallback((query: string) => {
+        rawExecute({ variables: { query } });
+    }, [rawExecute]);
+
     const handleScratchpad = useCallback((specificCode?: string) => {
         if (current == null) {
             return;
         }
-        rawExecute({
-            variables: {
-                query: specificCode ?? code,
-            },
-        });
-    }, [code, current, rawExecute]);
+        const query = specificCode ?? code;
+        if (isDestructiveQuery(query)) {
+            setPendingScratchpadQuery(query);
+        } else {
+            doScratchpadExecute(query);
+        }
+    }, [code, current, doScratchpadExecute]);
 
     const handleOpenScratchpad = useCallback(() => {
         setIsScratchpadOpen(true);
@@ -976,6 +995,7 @@ export const ExploreStorageUnit: FC = () => {
                         isMockDataGenerationAllowed={isMockDataGenerationAllowed}
                         // Import control - enabled for explore view
                         allowImport={true}
+                        enableKeyboardShortcuts={true}
                     >
                         <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
@@ -1008,21 +1028,57 @@ export const ExploreStorageUnit: FC = () => {
                 <div className="flex flex-col gap-sm h-[150px] mb-4" data-vaul-no-drag>
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
-                <div className="overflow-y-auto" data-vaul-no-drag>
-                    <StorageUnitTable
-                        columns={rawExecuteData?.RawExecute.Columns.map(c => c.Name) ?? []}
-                        columnTypes={rawExecuteData?.RawExecute.Columns.map(c => c.Type) ?? []}
-                        rows={rawExecuteData?.RawExecute.Rows ?? []}
-                        disableEdit={true}
-                        limitContextMenu={true}
-                        schema={schema}
-                        storageUnit={unitName}
-                        onRefresh={handleSubmitRequest}
-                        showPagination={false}
-                        databaseType={current?.Type}
-                        totalCount={Number.parseInt(totalCount, 10)}
-                    />
+                <div className="overflow-y-auto" data-vaul-no-drag ref={scratchpadResultsRef}>
+                    {rawExecuteError != null && (
+                        <div className="flex items-center justify-between mt-4">
+                            <ErrorState error={rawExecuteError} />
+                        </div>
+                    )}
+                    {rawExecuteData != null && (
+                        !isDestructiveQuery(code) || rawExecuteData.RawExecute.Rows.length > 0 ? (
+                            <StorageUnitTable
+                                key={scratchpadContainerWidth}
+                                columns={rawExecuteData.RawExecute.Columns.map(c => c.Name)}
+                                columnTypes={rawExecuteData.RawExecute.Columns.map(c => c.Type)}
+                                rows={rawExecuteData.RawExecute.Rows}
+                                disableEdit={true}
+                                limitContextMenu={true}
+                                schema={schema}
+                                storageUnit={unitName}
+                                onRefresh={handleSubmitRequest}
+                                showPagination={false}
+                                databaseType={current?.Type}
+                                totalCount={Number.parseInt(totalCount, 10)}
+                            />
+                        ) : (
+                            <div className="bg-white/10 text-neutral-800 dark:text-neutral-300 rounded-lg p-2 flex gap-sm self-start items-center my-4">
+                                Action Executed
+                                <CheckCircleIcon className="w-4 h-4" />
+                            </div>
+                        )
+                    )}
                 </div>
+                <AlertDialog open={pendingScratchpadQuery != null} onOpenChange={(open) => { if (!open) setPendingScratchpadQuery(null); }}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('confirmOperationTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>{t('confirmOperationDescription')}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setPendingScratchpadQuery(null)}>{t('cancel')}</AlertDialogCancel>
+                            <AlertDialogAction asChild>
+                                <Button variant="destructive" onClick={() => {
+                                    if (pendingScratchpadQuery != null) {
+                                        doScratchpadExecute(pendingScratchpadQuery);
+                                        setPendingScratchpadQuery(null);
+                                    }
+                                }}>
+                                    {t('run')}
+                                </Button>
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
