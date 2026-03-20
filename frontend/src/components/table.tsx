@@ -428,7 +428,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     const hasSelectedRows = checked.length > 0;
     const selectedRowsData = useMemo(() => {
         if (hasSelectedRows) {
-            return checked.map(idx => {
+            const validChecked = checked.filter(idx => idx < rows.length);
+            return validChecked.map(idx => {
                 const row = rows[idx];
                 const rowObj: Record<string, any> = {};
                 columns.forEach((col, colIdx) => {
