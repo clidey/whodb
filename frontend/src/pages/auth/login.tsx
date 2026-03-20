@@ -166,6 +166,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
+    const [databaseTypesLoaded, setDatabaseTypesLoaded] = useState(false);
     const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
@@ -558,10 +559,11 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [searchParams, dispatch]);
 
-    // Load database types, filtering out AWS types when cloud providers are disabled
+    // Load database types (including EE types) before allowing auto-login
     useEffect(() => {
         getDatabaseTypeDropdownItems({ cloudProvidersEnabled }).then(items => {
             setDatabaseTypeItems(items);
+            setDatabaseTypesLoaded(true);
         });
     }, [cloudProvidersEnabled]);
 
@@ -606,6 +608,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     // 3. Multiple dependencies (handleSubmit, profiles, etc.) can trigger re-runs
     useEffect(() => {
         if (searchParams.size === 0) {
+            return;
+        }
+
+        // Wait until EE database types have finished loading before processing auto-login.
+        // This ensures EE types (MSSQL, Oracle, DynamoDB) are available for type lookup.
+        if (!databaseTypesLoaded) {
             return;
         }
 
@@ -704,14 +712,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                 handleLoginWithProfileSubmitRef.current(selectedProfile.value);
             }
         } else if (searchParams.has("login")) {
-            // Batch this state update with the credential setters above so handleSubmit fires
-            // only after the next render (when all form fields have their new values).
             setPendingAutoLogin(true);
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("login");
             setSearchParams(newParams, { replace: true });
         }
-    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange]);
+    }, [searchParams, databaseTypeItems, databaseTypesLoaded, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange]);
 
     // Fire credential-based login after React has committed all form-field state updates.
     // Using a state flag (not a ref) ensures this effect runs on the render AFTER the parsing

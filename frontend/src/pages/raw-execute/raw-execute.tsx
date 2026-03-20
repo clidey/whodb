@@ -93,6 +93,7 @@ import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
 import { isDesktopApp } from "../../utils/external-links";
 import { v4 as uuidv4 } from 'uuid';
 import { IPluginProps, QueryView } from "./query-view";
+import { useContainerWidth } from "../../hooks/use-container-width";
 
 type EEExports = {
     plugins: any[];
@@ -324,6 +325,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [isResizingResults, setIsResizingResults] = useState(false);
     const [allowResultsResize, setAllowResultsResize] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement | null>(null);
+    const containerWidth = useContainerWidth(resultsContainerRef);
     const activeListenersRef = useRef<{move: (e: MouseEvent) => void; up: () => void}[]>([]);
 
     // Clean up any dangling document listeners on unmount
@@ -569,12 +571,13 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 >
                     <Suspense fallback={<Loading />}>
                         <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
-                                   schema={current.Database} token={modelType?.token} providerId={current.Id}/>
+                                   schema={current.Database} token={modelType?.token} providerId={current.Id}
+                                   containerWidth={containerWidth} />
                     </Suspense>
                 </div>
             </div>
         );
-    }, [mode, allActionOptions, allPlugins, code, modelType, current, resultsHeight, isResizingResults, handleResultsResize, rows, allowResultsResize]);
+    }, [mode, allActionOptions, allPlugins, code, modelType, current, resultsHeight, isResizingResults, handleResultsResize, rows, allowResultsResize, containerWidth]);
 
     // Measure results on first mount to fit content
     useEffect(() => {
