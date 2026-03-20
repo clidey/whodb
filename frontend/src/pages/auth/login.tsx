@@ -69,6 +69,21 @@ import {isAwsHostname} from '../../utils/cloud-connection-prefill';
 import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
 
 /**
+ * URL params that are reserved for the standard login form fields and control flags.
+ * These are never treated as advanced database fields.
+ */
+const LOGIN_RESERVED_PARAMS = new Set([
+    "type", "host", "username", "password", "database",
+    "port", "region",
+    "login", "resource", "credentials",
+]);
+
+/**
+ * URL params that control UI behavior and should be preserved after login.
+ */
+const LOGIN_UI_PARAMS = new Set(["locale", "mode", "theme", "os"]);
+
+/**
  * Generate a consistent ID for desktop credentials based on connection details.
  * This ensures the same credentials always produce the same ID, preventing duplicate keyring entries.
  * For browser environments, returns undefined to rely on cookie-based auth.
@@ -151,6 +166,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [databaseTypeItems, setDatabaseTypeItems] = useState<IDatabaseDropdownItem[]>(baseDatabaseTypes);
+    const [databaseTypesLoaded, setDatabaseTypesLoaded] = useState(false);
     const [databaseType, setDatabaseType] = useState<IDatabaseDropdownItem>(baseDatabaseTypes[0]);
     const [hostName, setHostName] = useState("");
     const [database, setDatabase] = useState("");
@@ -222,18 +238,15 @@ export const LoginForm: FC<LoginFormProps> = ({
                     dispatch(AuthActions.login(profileData));
                     markFirstLoginComplete();
 
-                    // Clear login-related URL params before navigation
-                    if (searchParams.has("credentials") || searchParams.has("login")) {
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.delete("credentials");
-                        newParams.delete("login");
-                        newParams.delete("type");
-                        newParams.delete("host");
-                        newParams.delete("username");
-                        newParams.delete("password");
-                        newParams.delete("database");
-                        newParams.delete("port");
-                        newParams.delete("region");
+                    // Clear all login-related URL params before navigation, preserving UI-only params.
+                    const hasLoginParams = [...searchParams.keys()].some(k => !LOGIN_UI_PARAMS.has(k));
+                    if (hasLoginParams) {
+                        const newParams = new URLSearchParams();
+                        LOGIN_UI_PARAMS.forEach(key => {
+                            if (searchParams.has(key)) {
+                                newParams.set(key, searchParams.get(key)!);
+                            }
+                        });
                         setSearchParams(newParams, { replace: true });
                     }
 
@@ -546,10 +559,11 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [searchParams, dispatch]);
 
-    // Load database types, filtering out AWS types when cloud providers are disabled
+    // Load database types (including EE types) before allowing auto-login
     useEffect(() => {
         getDatabaseTypeDropdownItems({ cloudProvidersEnabled }).then(items => {
             setDatabaseTypeItems(items);
+            setDatabaseTypesLoaded(true);
         });
     }, [cloudProvidersEnabled]);
 
@@ -594,6 +608,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     // 3. Multiple dependencies (handleSubmit, profiles, etc.) can trigger re-runs
     useEffect(() => {
         if (searchParams.size === 0) {
+            return;
+        }
+
+        // Wait until EE database types have finished loading before processing auto-login.
+        // This ensures EE types (MSSQL, Oracle, DynamoDB) are available for type lookup.
+        if (!databaseTypesLoaded) {
             return;
         }
 
@@ -643,7 +663,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 toast.error(t('failedToParseCredentials'));
             }
         } else {
-            // Handle individual URL parameters (existing logic)
+            // Handle individual URL parameters
             if (searchParams.has("type")) {
                 const typeParam = searchParams.get("type")!;
                 const dbType = databaseTypeItems.find(item =>
@@ -659,7 +679,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
 
-            // Merge port/region into advancedForm
+            // Merge port/region into advancedForm (existing behavior preserved)
             const hasPort = searchParams.has("port");
             const hasRegion = searchParams.has("region");
             if (hasPort || hasRegion) {
@@ -668,6 +688,19 @@ export const LoginForm: FC<LoginFormProps> = ({
                     ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
                     ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
                 }));
+            }
+
+            // All other non-reserved params go into advanced form generically,
+            // supporting any database type including EE databases.
+            const advancedEntries: Record<string, string> = {};
+            searchParams.forEach((value, key) => {
+                if (!LOGIN_RESERVED_PARAMS.has(key) && !LOGIN_UI_PARAMS.has(key)) {
+                    advancedEntries[key] = value;
+                }
+            });
+            if (Object.keys(advancedEntries).length > 0) {
+                setAdvancedForm(prev => ({...prev, ...advancedEntries}));
+                setShowAdvanced(true);
             }
         }
 
@@ -679,14 +712,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                 handleLoginWithProfileSubmitRef.current(selectedProfile.value);
             }
         } else if (searchParams.has("login")) {
-            // Batch this state update with the credential setters above so handleSubmit fires
-            // only after the next render (when all form fields have their new values).
             setPendingAutoLogin(true);
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("login");
             setSearchParams(newParams, { replace: true });
         }
-    }, [searchParams, databaseTypeItems, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange]);
+    }, [searchParams, databaseTypeItems, databaseTypesLoaded, profiles?.Profiles, availableProfiles, handleDatabaseTypeChange]);
 
     // Fire credential-based login after React has committed all form-field state updates.
     // Using a state flag (not a ref) ensures this effect runs on the render AFTER the parsing

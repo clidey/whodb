@@ -48,7 +48,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
     operators 
 }) => {
     const dispatch = useAppDispatch();
-    const { pages, activePageId } = useAppSelector(state => state.scratchpad);
+    const { pages } = useAppSelector(state => state.scratchpad);
     const { t } = useTranslation('pages/where-condition');
     const [filters, setFilters] = useState<WhereCondition>(defaultWhere ?? {
         Type: WhereConditionType.And,
@@ -59,29 +59,16 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
     const [editingIndex, setEditingIndex] = useState<number>(0);
     const [editingExistingIndex, setEditingExistingIndex] = useState<number>(-1);
     const [editingExistingFilter, setEditingExistingFilter] = useState<AtomicWhereCondition | null>(null);
-    const [selectedPageId, setSelectedPageId] = useState<string>("");
-    const [newPageName, setNewPageName] = useState<string>("");
 
     const fieldsDropdownItems = useMemo(() => columns.map(column => ({ value: column, label: column })), [columns]);
     const validOperators = useMemo(() => {
         return operators.map(operator => ({ value: operator, label: operator }));
     }, [operators]);
 
-    // Create page options excluding current page
-    const pageOptions = useMemo(() => {
-        const availablePages = pages.filter(page => page.id !== activePageId);
-        return [
-            ...availablePages.map(page => ({ value: page.id, label: page.name })),
-            { value: "new", label: "Create new page" }
-        ];
-    }, [pages, activePageId]);
-
     // Open sheet with a clean "add new" section; existing conditions are listed separately
     const handleOpenSheet = useCallback(() => {
         setSheetFilters([{ ColumnType: "string", Key: "", Operator: "", Value: "" }]);
         setEditingIndex(0);
-        setSelectedPageId("");
-        setNewPageName("");
         setEditingExistingIndex(-1);
         setEditingExistingFilter(null);
         setSheetOpen(true);
@@ -130,100 +117,33 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
         if (filterToEdit?.Atomic) {
             setEditingExistingIndex(index);
             setEditingExistingFilter(filterToEdit.Atomic);
-            setSheetFilters([]); // Clear new filters when editing existing
         }
     }, [filters]);
 
     const handleSheetSave = useCallback(() => {
-        if (editingExistingIndex >= 0 && editingExistingFilter) {
-            // Update existing filter
+        const validFilters = sheetFilters.filter(filter => filter.Key && filter.Operator && filter.Value);
+
+        if (validFilters.length > 0) {
             const currentFilters = filters.And?.Children ?? [];
-            const updatedFilters = [...currentFilters];
-            updatedFilters[editingExistingIndex] = {
-                Type: WhereConditionType.Atomic,
-                Atomic: editingExistingFilter
-            };
-            
-            const newWhereCondition = {
+            const updatedFilters = {
                 Type: WhereConditionType.And,
                 And: {
-                    Children: updatedFilters
-                }
-            };
-            
-            setFilters(newWhereCondition);
-            onChange?.(newWhereCondition);
-            
-            // Reset editing state
-            setEditingExistingIndex(-1);
-            setEditingExistingFilter(null);
-            setSheetFilters([{ColumnType: "string", Key: "", Operator: "", Value: ""}]);
-            setEditingIndex(0);
-        } else {
-            // Add new filter
-            const validFilters = sheetFilters.filter(filter => filter.Key && filter.Operator && filter.Value);
-            
-            if (validFilters.length > 0) {
-                const newWhereCondition = {
-                    Type: WhereConditionType.And,
-                    And: {
-                        Children: validFilters.map(filter => ({
+                    Children: [
+                        ...currentFilters,
+                        ...validFilters.map(filter => ({
                             Type: WhereConditionType.Atomic,
                             Atomic: filter
                         }))
-                    }
-                };
-
-                // If a page is selected, add condition to that page
-                if (selectedPageId) {
-                    if (selectedPageId === "new") {
-                        // Create new page with condition
-                        const pageName = newPageName.trim() || `Page ${pages.length + 1}`;
-                        dispatch(ScratchpadActions.addPage({ name: pageName }));
-                        // The condition will be added after the page is created
-                        setTimeout(() => {
-                            const newPage = pages.find(p => p.name === pageName);
-                            if (newPage) {
-                                dispatch(ScratchpadActions.addConditionToPage({ 
-                                    pageId: newPage.id, 
-                                    condition: newWhereCondition 
-                                }));
-                            }
-                        }, 100);
-                    } else {
-                        // Add condition to existing page
-                        dispatch(ScratchpadActions.addConditionToPage({ 
-                            pageId: selectedPageId, 
-                            condition: newWhereCondition 
-                        }));
-                    }
-                } else {
-                    // No page selected, add to current filters
-                    const currentFilters = filters.And?.Children ?? [];
-                    const updatedFilters = {
-                        Type: WhereConditionType.And,
-                        And: {
-                            Children: [
-                                ...currentFilters,
-                                ...validFilters.map(filter => ({
-                                    Type: WhereConditionType.Atomic,
-                                    Atomic: filter
-                                }))
-                            ]
-                        }
-                    };
-                    setFilters(updatedFilters);
-                    onChange?.(updatedFilters);
+                    ]
                 }
-            }
-            
-            // Reset form
-            setSheetFilters([{ColumnType: "string", Key: "", Operator: "", Value: ""}]);
-            setEditingIndex(0);
-            setSelectedPageId("");
-            setNewPageName("");
+            };
+            setFilters(updatedFilters);
+            onChange?.(updatedFilters);
         }
-    }, [sheetFilters, onChange, editingExistingIndex, editingExistingFilter, filters, selectedPageId, newPageName, pages, dispatch]);
+
+        setSheetFilters([{ColumnType: "string", Key: "", Operator: "", Value: ""}]);
+        setEditingIndex(0);
+    }, [sheetFilters, onChange, filters]);
 
     const handleEditExistingFilterChange = useCallback((field: keyof AtomicWhereCondition, value: string) => {
         if (editingExistingFilter) {
@@ -244,8 +164,6 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
         setEditingExistingIndex(-1);
         setEditingExistingFilter(null);
         setSheetFilters([{ColumnType: "string", Key: "", Operator: "", Value: ""}]);
-        setSelectedPageId("");
-        setNewPageName("");
     }, []);
 
     useEffect(() => {
@@ -295,17 +213,48 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             {existingFilters.map((filter, i) => {
                                 const isEditing = editingExistingIndex === i;
                                 return (
-                                    <div
-                                        key={`existing-condition-card-${i}`}
-                                        className="flex gap-2 p-4 border rounded-lg"
-                                        data-testid={`existing-condition-card-${i}`}
-                                    >
-                                        {isEditing ? (
-                                            // Editing mode - show form fields
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center justify-between">
-                                                    <Label className="text-sm font-medium">{t('editingCondition')}</Label>
+                                    <div key={`existing-condition-card-${i}`} className="flex flex-col gap-2">
+                                        <div
+                                            className="flex gap-2 p-4 border rounded-lg"
+                                            data-testid={`existing-condition-card-${i}`}
+                                        >
+                                            <div className="flex items-center justify-between w-full">
+                                                <div className="text-sm">
+                                                    {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
                                                 </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        className="size-6 h-full ml-1"
+                                                        onClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            handleEditExistingFilter(i);
+                                                        }}
+                                                        data-testid={`edit-existing-filter-${i}`}
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={t('editCondition')}
+                                                    >
+                                                        <PencilIcon className="w-3 h-3" aria-hidden="true" />
+                                                    </Button>
+                                                    <Button
+                                                        className="size-6 h-full"
+                                                        onClick={(e: React.MouseEvent) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteExistingFilter(i);
+                                                        }}
+                                                        data-testid={`delete-existing-filter-${i}`}
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={t('deleteCondition')}
+                                                    >
+                                                        <XCircleIcon className="w-3 h-3" aria-hidden="true" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {isEditing && (
+                                            <div className="flex flex-col gap-2 p-4 border rounded-lg">
+                                                <Label className="text-sm font-medium">{t('editingCondition')}</Label>
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('field')}</Label>
                                                     <SearchSelect
@@ -345,7 +294,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                             setEditingExistingIndex(-1);
                                                             setEditingExistingFilter(null);
                                                         }}
-                                                        data-testid={`cancel-edit-existing-filter-${i}`}
+                                                        data-testid={`edit-existing-filter-cancel-${i}`}
                                                         size="sm"
                                                         className="flex-1"
                                                     >
@@ -355,25 +304,18 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                         className="flex-1"
                                                         onClick={() => {
                                                             if (editingExistingFilter && editingExistingIndex >= 0) {
-                                                                // Update existing filter
                                                                 const currentFilters = filters.And?.Children ?? [];
                                                                 const updatedFilters = [...currentFilters];
                                                                 updatedFilters[editingExistingIndex] = {
                                                                     Type: WhereConditionType.Atomic,
                                                                     Atomic: editingExistingFilter
                                                                 };
-                                                                
                                                                 const newWhereCondition = {
                                                                     Type: WhereConditionType.And,
-                                                                    And: {
-                                                                        Children: updatedFilters
-                                                                    }
+                                                                    And: { Children: updatedFilters }
                                                                 };
-                                                                
                                                                 setFilters(newWhereCondition);
                                                                 onChange?.(newWhereCondition);
-                                                                
-                                                                // Reset editing state
                                                                 setEditingExistingIndex(-1);
                                                                 setEditingExistingFilter(null);
                                                             }
@@ -382,41 +324,6 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                         size="sm"
                                                     >
                                                         {t('update')}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            // View mode - show condition and action buttons
-                                            <div className="flex items-center justify-between w-full">
-                                                <div className="text-sm">
-                                                    {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        className="size-6 h-full ml-1"
-                                                        onClick={(e: React.MouseEvent) => {
-                                                            e.stopPropagation();
-                                                            handleEditExistingFilter(i);
-                                                        }}
-                                                        data-testid={`edit-existing-filter-${i}`}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        aria-label={t('editCondition')}
-                                                    >
-                                                        <PencilIcon className="w-3 h-3" aria-hidden="true" />
-                                                    </Button>
-                                                    <Button
-                                                        className="size-6 h-full"
-                                                        onClick={(e: React.MouseEvent) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteExistingFilter(i);
-                                                        }}
-                                                        data-testid={`delete-existing-filter-${i}`}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        aria-label={t('deleteCondition')}
-                                                    >
-                                                        <XCircleIcon className="w-3 h-3" aria-hidden="true" />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -541,7 +448,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             onClick={handleSheetSave}
                             data-testid="add-conditions-button"
                         >
-                            {selectedPageId ? t('addToPage') : t('addCondition')}
+                            {t('addCondition')}
                         </Button>
                     </SheetFooter>
                 </SheetContent>

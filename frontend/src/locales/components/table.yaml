@@ -132,3 +132,8 @@ en_US:
 
   # Context menu shortcuts
   delete: Delete
+
+  # Delete confirmation dialog
+  deleteRowConfirmTitle: Delete Row?
+  deleteRowConfirmDescription: Are you sure you want to delete this row? This action cannot be undone.
+  deleteRowsConfirmDescription: "Are you sure you want to delete {count} rows? This action cannot be undone."

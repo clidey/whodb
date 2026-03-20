@@ -80,6 +80,7 @@ import {useChatExamples} from "./examples";
 import {useTranslation} from '@/hooks/use-translation';
 import {addAuthHeader, isDesktopScheme} from "../../utils/auth-headers";
 import {matchesShortcut, SHORTCUTS} from "../../utils/shortcuts";
+import {useContainerWidth} from "../../hooks/use-container-width";
 
 // Lazy load chart components if EE is enabled
 const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
@@ -338,6 +339,7 @@ export const ChatPage: FC = () => {
     const [executeConfirmedSql] = useExecuteConfirmedSqlMutation();
     const [generateChatTitleMutation] = useGenerateChatTitleMutation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const containerWidth = useContainerWidth(scrollContainerRef);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
@@ -374,7 +376,6 @@ export const ChatPage: FC = () => {
 
     const [loading, setLoading] = useState(false);
     const loadingPhraseRef = useRef<string>("");
-    const [containerWidth, setContainerWidth] = useState(0);
 
     // Database-specific suggestions
     const [getDatabaseSuggestions, { loading: suggestionsLoading }] = useGetDatabaseQuerySuggestionsLazyQuery({
@@ -864,22 +865,6 @@ export const ChatPage: FC = () => {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
     }, [chats.length]);
-
-    // Track container width to force table re-renders on resize
-    useEffect(() => {
-        const updateWidth = () => {
-            if (scrollContainerRef.current) {
-                setContainerWidth(scrollContainerRef.current.offsetWidth);
-            }
-        };
-
-        // Set initial width
-        updateWidth();
-
-        // Listen for window resize
-        window.addEventListener('resize', updateWidth);
-        return () => window.removeEventListener('resize', updateWidth);
-    }, []);
 
     // Fetch database-specific suggestions when AI is available and chat is empty
     useEffect(() => {
