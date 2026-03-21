@@ -344,6 +344,11 @@ func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
 		strings.HasPrefix(upper, "TUPLE(") ||
 		strings.HasPrefix(upper, "MAP(") ||
 		strings.HasPrefix(upper, "NESTED(") ||
+		strings.HasPrefix(upper, "AGGREGATEFUNCTION(") ||
+		strings.HasPrefix(upper, "SIMPLEAGGREGATEFUNCTION(") ||
+		strings.HasPrefix(upper, "VARIANT(") ||
+		strings.HasPrefix(upper, "QBIT(") ||
+		strings.HasPrefix(upper, "TIME64") ||
 		strings.HasPrefix(upper, "INT128") ||
 		strings.HasPrefix(upper, "INT256") ||
 		strings.HasPrefix(upper, "UINT128") ||
@@ -352,6 +357,8 @@ func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
 		strings.HasPrefix(upper, "FIXEDSTRING") ||
 		strings.HasPrefix(upper, "ENUM") || // Enum8, Enum16
 		strings.Contains(upper, "DATETIME64") ||
+		upper == "TIME" ||
+		upper == "DYNAMIC" ||
 		upper == "IPV4" ||
 		upper == "IPV6" ||
 		upper == "UUID" ||
@@ -360,7 +367,10 @@ func (p *ClickHousePlugin) ShouldHandleColumnType(typeName string) bool {
 		upper == "POINT" ||
 		upper == "RING" ||
 		upper == "POLYGON" ||
-		upper == "MULTIPOLYGON"
+		upper == "MULTIPOLYGON" ||
+		upper == "LINESTRING" ||
+		upper == "MULTILINESTRING" ||
+		upper == "GEOMETRY"
 }
 
 // GetColumnScanner returns appropriate scanner for ClickHouse column types
@@ -370,6 +380,19 @@ func (p *ClickHousePlugin) GetColumnScanner(typeName string) any {
 		return new(big.Int)
 	}
 	// For special ClickHouse types, use any to handle any type
+	if strings.HasPrefix(upper, "AGGREGATEFUNCTION(") ||
+		strings.HasPrefix(upper, "SIMPLEAGGREGATEFUNCTION(") ||
+		strings.HasPrefix(upper, "VARIANT(") ||
+		strings.HasPrefix(upper, "QBIT(") ||
+		upper == "DYNAMIC" ||
+		upper == "RING" ||
+		upper == "LINESTRING" ||
+		upper == "MULTILINESTRING" ||
+		upper == "GEOMETRY" {
+		var v any
+		return &v
+	}
+
 	var value any
 	return &value
 }
@@ -489,6 +512,31 @@ func (p *ClickHousePlugin) GetColumnTypes(db *gorm.DB, schema, tableName string)
 	return migrator.GetColumnTypes(tableName)
 }
 
+func (p *ClickHousePlugin) getColumnsFromSystemColumns(db *gorm.DB, schema, tableName string) ([]engine.Column, error) {
+	type sysCol struct {
+		Name           string `gorm:"column:name"`
+		Type           string `gorm:"column:type"`
+		IsInPrimaryKey uint8  `gorm:"column:is_in_primary_key"`
+	}
+	var rows []sysCol
+	if err := db.Raw(
+		`SELECT name, type, is_in_primary_key FROM system.columns WHERE database = ? AND table = ? ORDER BY position`,
+		schema, tableName,
+	).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	cols := make([]engine.Column, 0, len(rows))
+	for _, r := range rows {
+		col := engine.Column{Name: r.Name, Type: r.Type, IsPrimary: r.IsInPrimaryKey == 1}
+		ts := common.ParseTypeSpec(r.Type)
+		if ts.Length > 0 {
+			col.Length = &ts.Length
+		}
+		cols = append(cols, col)
+	}
+	return cols, nil
+}
+
 // GetColumnsForTable overrides the base implementation for the same reason as GetColumnTypes.
 func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) ([]engine.Column, error) {
@@ -497,8 +545,11 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 		// Pass just table name - ClickHouse GORM driver handles database context
 		columns, err := migrator.GetOrderedColumns(storageUnit)
 		if err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
-			return nil, err
+			columns, err = p.getColumnsFromSystemColumns(db, schema, storageUnit)
+			if err != nil {
+				log.WithError(err).Error(fmt.Sprintf("Failed to get columns for table %s.%s", schema, storageUnit))
+				return nil, err
+			}
 		}
 
 		// Get primary keys
@@ -537,6 +588,62 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 
 		return columns, nil
 	})
+}
+
+// GetRows overrides the base GormPlugin to avoid binary decode crashes for
+func (p *ClickHousePlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
+	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (*engine.GetRowsResult, error) {
+		cols, err := p.getColumnsFromSystemColumns(db, req.Schema, req.StorageUnit)
+		if err != nil {
+			return nil, err
+		}
+
+		needsProjection := false
+		for _, col := range cols {
+			if isUnsupportedDriverType(col.Type) {
+				needsProjection = true
+				break
+			}
+		}
+
+		if !needsProjection {
+			return p.GormPlugin.GetRows(config, req)
+		}
+
+		parts := make([]string, 0, len(cols))
+		for _, col := range cols {
+			if isUnsupportedDriverType(col.Type) {
+				upper := strings.ToUpper(col.Type)
+				var expr string
+				if strings.HasPrefix(upper, "AGGREGATEFUNCTION(") {
+					expr = fmt.Sprintf("finalizeAggregation(`%s`) AS `%s`", col.Name, col.Name)
+				} else {
+					expr = fmt.Sprintf("toString(`%s`) AS `%s`", col.Name, col.Name)
+				}
+				parts = append(parts, expr)
+			} else {
+				parts = append(parts, fmt.Sprintf("`%s`", col.Name))
+			}
+		}
+
+		tableName := p.FormTableName(req.Schema, req.StorageUnit)
+		query := fmt.Sprintf("SELECT %s FROM %s LIMIT %d OFFSET %d",
+			strings.Join(parts, ", "), tableName, req.PageSize, req.PageOffset)
+
+		return p.executeRawSQL(config, query)
+	})
+}
+
+func isUnsupportedDriverType(typeName string) bool {
+	upper := strings.ToUpper(typeName)
+	return upper == "GEOMETRY" ||
+		upper == "RING" ||
+		upper == "LINESTRING" ||
+		upper == "MULTILINESTRING" ||
+		upper == "POLYGON" ||
+		upper == "MULTIPOLYGON" ||
+		upper == "POINT" ||
+		strings.HasPrefix(upper, "AGGREGATEFUNCTION(")
 }
 
 // WithTransaction executes the operation directly since ClickHouse doesn't support traditional ACID transactions.
