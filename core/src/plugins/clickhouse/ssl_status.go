@@ -17,9 +17,9 @@
 package clickhouse
 
 import (
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"github.com/clidey/whodb/core/src/plugins/ssl"
 )
 
 // GetSSLStatus returns the SSL status based on the configured SSL mode for ClickHouse.

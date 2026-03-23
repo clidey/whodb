@@ -25,9 +25,9 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

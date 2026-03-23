@@ -17,9 +17,9 @@
 package mysql
 
 import (
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"github.com/clidey/whodb/core/src/plugins/ssl"
 	"gorm.io/gorm"
 )
 
