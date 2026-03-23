@@ -52,6 +52,7 @@ export const scratchpadMethods = {
         await this.page
             .locator(`[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="delete-cell-button"]`)
             .click();
+        await this.page.locator('[data-testid="delete-cell-confirm"]').click();
     },
 
     /**
@@ -78,6 +79,12 @@ export const scratchpadMethods = {
     async runCode(index) {
         const buttonSelector = `[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"] [data-testid="query-cell-button"]`;
         await this.page.locator(buttonSelector).first().click({ force: true });
+
+        // If a confirmation dialog appears (destructive queries), click through it
+        const confirmBtn = this.page.locator('[data-testid="execute-query-confirm"]');
+        if (await confirmBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+            await confirmBtn.click();
+        }
 
         const cellLocator = this.page.locator(`[role="tabpanel"][data-state="active"] [data-testid="cell-${index}"]`);
         await cellLocator
