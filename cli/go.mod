@@ -16,12 +16,11 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/xuri/excelize/v2 v2.10.1
-	github.com/zalando/go-keyring v0.2.6
+	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/term v0.41.0
 )
 
 require (
-	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
 	github.com/ClickHouse/ch-go v0.71.0 // indirect
