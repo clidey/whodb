@@ -27,7 +27,7 @@ import (
 	"github.com/clidey/whodb/core/baml_client/stream_types"
 	"github.com/clidey/whodb/core/baml_client/types"
 	"github.com/clidey/whodb/core/graph/model"
-	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
@@ -105,7 +105,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create BAML stream
 	log.Debugf("AI Chat Stream: Setting up AI client...")
-	callOpts := common.SetupAIClient(config.ExternalModel)
+	callOpts := bamlconfig.SetupAIClient(config.ExternalModel)
 	log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
 	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
@@ -303,7 +303,7 @@ func handleNonStreamingAIChat(w http.ResponseWriter, r *http.Request, req *Strea
 	}
 
 	// Use non-streaming BAML client
-	callOpts := common.SetupAIClient(config.ExternalModel)
+	callOpts := bamlconfig.SetupAIClient(config.ExternalModel)
 	responses, err := baml_client.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
 		http.Error(w, "AI query failed: "+err.Error(), http.StatusInternalServerError)
