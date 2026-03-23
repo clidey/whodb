@@ -25,7 +25,7 @@ import (
 
 	"github.com/clidey/whodb/core/baml_client"
 	"github.com/clidey/whodb/core/graph/model"
-	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/log"
@@ -88,7 +88,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	log.Debugf("Generate Chat Title: Calling BAML GenerateChatTitle")
 
 	// Setup BAML context and call
-	callOpts := common.SetupAIClient(externalModel)
+	callOpts := bamlconfig.SetupAIClient(externalModel)
 	stream, err := baml_client.Stream.GenerateChatTitle(c, titlePrompt, callOpts...)
 	if err != nil {
 		log.Debugf("Generate Chat Title: BAML call failed: %v", err)

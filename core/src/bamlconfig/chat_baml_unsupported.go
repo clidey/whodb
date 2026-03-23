@@ -20,7 +20,7 @@
 // where BAML is not supported. AI features will return user-friendly errors
 // instead of crashing.
 
-package common
+package bamlconfig
 
 import (
 	"context"

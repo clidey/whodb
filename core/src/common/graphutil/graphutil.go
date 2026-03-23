@@ -88,13 +88,11 @@ func InferForeignKeys(currentUnit string, fieldNames []string, allUnits []string
 func BuildGraphUnits(relations []Relation, storageUnits []engine.StorageUnit) []engine.GraphUnit {
 	tableMap := make(map[string][]engine.GraphUnitRelationship)
 	for _, tr := range relations {
-		sourceCol := tr.SourceColumn
-		targetCol := tr.TargetColumn
 		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
 			Name:             tr.Table2,
 			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
-			SourceColumn:     &sourceCol,
-			TargetColumn:     &targetCol,
+			SourceColumn:     new(tr.SourceColumn),
+			TargetColumn:     new(tr.TargetColumn),
 		})
 	}
 

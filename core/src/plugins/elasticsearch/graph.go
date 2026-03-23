@@ -21,19 +21,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
+	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 )
-
-type tableRelation struct {
-	Table1       string
-	Table2       string
-	Relation     string
-	SourceColumn string
-	TargetColumn string
-}
 
 func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database string) ([]engine.GraphUnit, error) {
 	client, err := DB(config)
@@ -68,7 +60,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		indices = append(indices, indexName)
 	}
 
-	relations := []tableRelation{}
+	var relations []graphutil.Relation
 	uniqueRelations := make(map[string]bool)
 
 	for indexName := range indicesStats {
@@ -111,62 +103,30 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 
 		hits := searchResult["hits"].(map[string]any)["hits"].([]any)
 		if len(hits) > 0 {
-			foreignKeys := make(map[string]string)
-
+			// Collect unique field names across all sampled documents
+			fieldSet := make(map[string]struct{})
 			for _, h := range hits {
 				doc, ok := h.(map[string]any)["_source"].(map[string]any)
 				if !ok {
 					continue
 				}
-
 				for fieldName := range doc {
-					if fieldName == "_id" {
-						continue
-					}
-
-					// Check for explicit relation hints
-					if strings.Contains(strings.ToLower(fieldName), ".id") {
-						for _, otherIndex := range indices {
-							if otherIndex == indexName {
-								continue
-							}
-							if strings.Contains(strings.ToLower(fieldName), strings.ToLower(otherIndex)) {
-								foreignKeys[otherIndex] = fieldName
-								break
-							}
-						}
-					}
-
-					for _, otherIndex := range indices {
-						if otherIndex == indexName {
-							continue
-						}
-
-						singularName := strings.TrimSuffix(otherIndex, "s")
-						pluralName := otherIndex
-						if !strings.HasSuffix(otherIndex, "s") {
-							pluralName = otherIndex + "s"
-						}
-
-						lowerField := strings.ToLower(fieldName)
-						if lowerField == strings.ToLower(singularName)+"_id" ||
-							lowerField == strings.ToLower(singularName)+"id" ||
-							lowerField == strings.ToLower(otherIndex)+"_id" ||
-							lowerField == strings.ToLower(otherIndex)+"id" ||
-							lowerField == strings.ToLower(pluralName)+"_id" ||
-							lowerField == strings.ToLower(pluralName)+"id" {
-							foreignKeys[otherIndex] = fieldName
-							break
-						}
-					}
+					fieldSet[fieldName] = struct{}{}
 				}
 			}
 
+			fieldNames := make([]string, 0, len(fieldSet))
+			for fieldName := range fieldSet {
+				fieldNames = append(fieldNames, fieldName)
+			}
+
+			foreignKeys := graphutil.InferForeignKeys(indexName, fieldNames, indices)
+
 			for fk, fieldName := range foreignKeys {
-				relKey := indexName + ":" + fk
-				if !uniqueRelations[relKey+":ManyToOne"] {
-					uniqueRelations[relKey+":ManyToOne"] = true
-					relations = append(relations, tableRelation{
+				relKey := indexName + ":" + fk + ":ManyToOne"
+				if !uniqueRelations[relKey] {
+					uniqueRelations[relKey] = true
+					relations = append(relations, graphutil.Relation{
 						Table1:       indexName,
 						Table2:       fk,
 						Relation:     "ManyToOne",
@@ -178,38 +138,11 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		}
 	}
 
-	tableMap := make(map[string][]engine.GraphUnitRelationship)
-	for _, tr := range relations {
-		sourceCol := tr.SourceColumn
-		targetCol := tr.TargetColumn
-		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
-			Name:             tr.Table2,
-			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
-			SourceColumn:     &sourceCol,
-			TargetColumn:     &targetCol,
-		})
-	}
-
 	storageUnits, err := p.GetStorageUnits(config, database)
 	if err != nil {
 		log.WithError(err).Error("Failed to get storage units for ElasticSearch graph generation")
 		return nil, err
 	}
 
-	storageUnitsMap := map[string]engine.StorageUnit{}
-	for _, storageUnit := range storageUnits {
-		storageUnitsMap[storageUnit.Name] = storageUnit
-	}
-
-	tables := []engine.GraphUnit{}
-	for _, storageUnit := range storageUnits {
-		foundTable, ok := tableMap[storageUnit.Name]
-		var relations []engine.GraphUnitRelationship
-		if ok {
-			relations = foundTable
-		}
-		tables = append(tables, engine.GraphUnit{Unit: storageUnit, Relations: relations})
-	}
-
-	return tables, nil
+	return graphutil.BuildGraphUnits(relations, storageUnits), nil
 }
