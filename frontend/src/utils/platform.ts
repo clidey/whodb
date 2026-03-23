@@ -77,7 +77,7 @@ export function isModKeyPressed(event: KeyboardEvent | React.KeyboardEvent): boo
 const keyDisplayMap: Record<string, { mac: string; win: string }> = {
     Mod: { mac: "⌘", win: "Ctrl" },
     Alt: { mac: "⌥", win: "Alt" },
-    Shift: { mac: "⇧", win: "Shift" },
+    Shift: { mac: "⇧", win: "⇧" },
     Delete: { mac: "⌫", win: "Del" },
     Backspace: { mac: "⌫", win: "Backspace" },
     Enter: { mac: "↵", win: "Enter" },

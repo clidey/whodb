@@ -17,6 +17,14 @@
 import {
     Alert,
     AlertDescription,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
     AlertTitle,
     Button,
     Checkbox,
@@ -70,6 +78,7 @@ import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "r
 import {Export} from "./export";
 import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
+import {copyToClipboard} from '@/services/clipboard';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -101,7 +110,7 @@ import {
 import {Tip} from "./tip";
 import {formatShortcut} from "@/utils/platform";
 import {matchesShortcut, SHORTCUTS} from "@/utils/shortcuts";
-import {isNoSQL} from "@/utils/functions";
+import {formatNumber, isNoSQL} from "@/utils/functions";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -302,6 +311,8 @@ interface TableProps {
     rawQuery?: string;
     // Enforce minimum height - when true, always uses passed height; when false, shrinks to content if smaller
     enforceMinHeight?: boolean;
+    // Enable keyboard shortcuts - should only be true on the explore-storage-unit page
+    enableKeyboardShortcuts?: boolean;
 }
 
 export const StorageUnitTable: FC<TableProps> = ({
@@ -338,12 +349,14 @@ export const StorageUnitTable: FC<TableProps> = ({
     allowImport = false,
     rawQuery,
     enforceMinHeight = false,
+    enableKeyboardShortcuts = false,
 }) => {
-    const { t } = useTranslation('components/table');
+    const { t, language } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
     const [deleting, setDeleting] = useState(false);
+    const [pendingDeleteIndexes, setPendingDeleteIndexes] = useState<number[] | null>(null);
     const [checked, setChecked] = useState<number[]>([]);
     const [showExportConfirm, setShowExportConfirm] = useState(false);
     const [showImport, setShowImport] = useState(false);
@@ -428,7 +441,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     const hasSelectedRows = checked.length > 0;
     const selectedRowsData = useMemo(() => {
         if (hasSelectedRows) {
-            return checked.map(idx => {
+            const validChecked = checked.filter(idx => idx < rows.length);
+            return validChecked.map(idx => {
                 const row = rows[idx];
                 const rowObj: Record<string, any> = {};
                 columns.forEach((col, colIdx) => {
@@ -456,20 +470,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, []);
 
     // Delete logic, adapted from explore-storage-unit.tsx
-    const handleDeleteRow = useCallback(async (rowIndex: number) => {
-        if (!rows || !columns) return;
+    const doDeleteRows = useCallback(async (indexesToDelete: number[]) => {
         let unableToDeleteAll = false;
-        const deletedIndexes: number[] = [];
-        let indexesToDelete: number[] = [];
-        if (Array.isArray(rowIndex)) {
-            indexesToDelete = rowIndex;
-        } else if (typeof rowIndex === "number") {
-            indexesToDelete = [rowIndex];
-        }
-        if (checked.length > 0) {
-            indexesToDelete = [...checked];
-        }
-        if (indexesToDelete.length === 0) return;
         toast.info(indexesToDelete.length === 1 ? t('deletingRow') : t('deletingRows'));
         for (const index of indexesToDelete) {
             const row = rows[index];
@@ -486,7 +488,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                         values,
                     },
                 });
-                deletedIndexes.push(index);
             } catch (e: any) {
                 toast.error(t('unableToDeleteRow', { message: e?.message || e }));
                 unableToDeleteAll = true;
@@ -497,7 +498,34 @@ export const StorageUnitTable: FC<TableProps> = ({
             toast.success(t('rowDeleted'));
         }
         onRefresh?.();
-    }, [deleteRow, schema, storageUnit, rows, columns, checked, onRefresh, t]);
+    }, [deleteRow, schema, storageUnit, rows, columns, onRefresh, t]);
+
+    const handleDeleteRow = useCallback((rowIndex: number) => {
+        if (!rows || !columns) return;
+        let indexesToDelete: number[] = [];
+        if (Array.isArray(rowIndex)) {
+            indexesToDelete = rowIndex;
+        } else if (typeof rowIndex === "number") {
+            indexesToDelete = [rowIndex];
+        }
+        if (checked.length > 0) {
+            indexesToDelete = [...checked];
+        }
+        if (indexesToDelete.length === 0) return;
+        setPendingDeleteIndexes(indexesToDelete);
+    }, [rows, columns, checked]);
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (pendingDeleteIndexes) {
+            const indexes = pendingDeleteIndexes;
+            setPendingDeleteIndexes(null);
+            await doDeleteRows(indexes);
+        }
+    }, [pendingDeleteIndexes, doDeleteRows]);
+
+    const handleCancelDelete = useCallback(() => {
+        setPendingDeleteIndexes(null);
+    }, []);
 
     const paginatedRows = useMemo(() => {
         // For server-side pagination, rows are already paginated
@@ -539,7 +567,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (start > 1) {
             links.push(
                 <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>1</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>{formatNumber(1, language)}</PaginationLink>
                 </PaginationItem>
             );
             if (start > 2) {
@@ -561,7 +589,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         aria-label={i === currentPage ? t('currentPage', { page: i }) : t('goToPage', { page: i })}
                         aria-current={i === currentPage ? 'page' : undefined}
                     >
-                        {i}
+                        {formatNumber(i, language)}
                     </PaginationLink>
                 </PaginationItem>
             );
@@ -573,7 +601,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
             links.push(
                 <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{totalPages}</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{formatNumber(totalPages, language)}</PaginationLink>
                 </PaginationItem>
             );
         }
@@ -603,10 +631,9 @@ export const StorageUnitTable: FC<TableProps> = ({
         const timeout = setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
             if (cell !== undefined && cell !== null) {
-                if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(String(cell));
-                    toast.success(t('copiedToClipboard'));
-                }
+                copyToClipboard(String(cell)).then(success => {
+                    if (success) toast.success(t('copiedToClipboard'));
+                });
             }
             clickTimeouts.current.delete(cellKey);
         }, 200); // 200ms delay to detect double-click
@@ -628,10 +655,9 @@ export const StorageUnitTable: FC<TableProps> = ({
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
-            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                navigator.clipboard.writeText(rowString);
-                toast.success(t('rowCopiedToClipboard'));
-            }
+            copyToClipboard(rowString).then(success => {
+                if (success) toast.success(t('rowCopiedToClipboard'));
+            });
         }
     }, [paginatedRows, columns.length, t]);
 
@@ -876,6 +902,8 @@ export const StorageUnitTable: FC<TableProps> = ({
 
     // Keyboard navigation and shortcuts
     useEffect(() => {
+        if (!enableKeyboardShortcuts) return;
+
         const handleKeyDown = (event: KeyboardEvent) => {
             // Only handle shortcuts when not in input fields
             if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -1036,7 +1064,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages, openExport]);
+    }, [enableKeyboardShortcuts, onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, disableEdit, onPageChange, currentPage, totalPages, openExport]);
 
 
 
@@ -1223,11 +1251,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         if (contextMenuCellIdx == null) return;
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
-                            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                const copyValue = String(cell);
-                                navigator.clipboard.writeText(copyValue);
-                                toast.success(t('copiedCellToClipboard'));
-                            }
+                            copyToClipboard(String(cell)).then(success => {
+                                if (success) toast.success(t('copiedCellToClipboard'));
+                            });
                         }
                     }}
                     disabled={contextMenuCellIdx == null}
@@ -1256,10 +1282,9 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const row = paginatedRows[index];
                         if (row && Array.isArray(row)) {
                             const rowString = row.map(cell => cell ?? "").join("\t");
-                            if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                navigator.clipboard.writeText(rowString);
-                                toast.success(t('rowCopiedToClipboard'));
-                            }
+                            copyToClipboard(rowString).then(success => {
+                                if (success) toast.success(t('rowCopiedToClipboard'));
+                            });
                         }
                     }}
                     className="[&>[data-slot='context-menu-shortcut']]:flex"
@@ -1363,7 +1388,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         aria-rowcount={paginatedRows.length}
                         aria-multiselectable={true}
                     >
-                    <TableHeader>
+                    <TableHeader data-column-count={columns.length}>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
                                     <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>
@@ -1613,7 +1638,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 <div className="flex justify-end items-center mb-2 gap-4">
                     {totalCount != null && totalCount > 0 && (
                         <div className="text-sm" data-testid="total-count-bottom">
-                            <span className="font-semibold">{t('totalCount')}</span> {totalCount}
+                            <span className="font-semibold">{t('totalCount')}</span> {formatNumber(totalCount, language)}
                         </div>
                     )}
                     {isImportSupported && allowImport && (
@@ -1869,6 +1894,26 @@ export const StorageUnitTable: FC<TableProps> = ({
                     onImportSuccess={onRefresh}
                 />
             )}
+            <AlertDialog open={pendingDeleteIndexes != null} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('deleteRowConfirmTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {pendingDeleteIndexes && pendingDeleteIndexes.length > 1
+                                ? t('deleteRowsConfirmDescription', { count: pendingDeleteIndexes.length })
+                                : t('deleteRowConfirmDescription')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={handleCancelDelete}>{t('cancel')}</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Button variant="destructive" onClick={handleConfirmDelete}>
+                                {t('deleteRow')}
+                            </Button>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

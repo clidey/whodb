@@ -109,7 +109,7 @@ export const SHORTCUTS = {
 
     // ── Table Actions ────────────────────────────────────────
     editRow:       plain("Enter"),
-    deleteRow:     mod("Delete"),
+    deleteRow:     mod("Delete", "Delete"),
     deleteRowAlt:  mod("Backspace"),
     editRowAlt:    mod("e"),
     mockData:      modShift("g"),

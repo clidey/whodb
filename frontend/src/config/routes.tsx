@@ -16,13 +16,13 @@
 
 import { FC, lazy, ReactNode, Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { LoginPage } from "../pages/auth/login";
 import { useAppSelector } from "../store/hooks";
 import { LogoutPage } from "../pages/auth/logout";
 import { isEEFeatureEnabled, loadEEComponent } from "../utils/ee-loader";
 import { LoadingPage } from "../components/loading";
 
 // Lazy load heavy components
+const LoginPage = lazy(() => import("../pages/auth/login").then(m => ({ default: m.LoginPage })));
 const GraphPage = lazy(() => import("../pages/graph/graph").then(m => ({ default: m.GraphPage })));
 const ExploreStorageUnit = lazy(() => import("../pages/storage-unit/explore-storage-unit").then(m => ({ default: m.ExploreStorageUnit })));
 const StorageUnitPage = lazy(() => import("../pages/storage-unit/storage-unit").then(m => ({ default: m.StorageUnitPage })));
@@ -53,7 +53,7 @@ export const PublicRoutes = {
     Login: {
         name: "Login",
         path: "/login",
-        component: <LoginPage />,
+        component: <Suspense fallback={<LoadingPage />}><LoginPage /></Suspense>,
     },
 }
 

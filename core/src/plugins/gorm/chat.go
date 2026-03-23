@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/common"
+	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -67,6 +67,6 @@ func (p *GormPlugin) Chat(config *engine.PluginConfig, schema string, previousCo
 		// Use BAML for structured SQL query generation
 		callCtx := ctx.Background()
 
-		return common.SQLChatBAML(callCtx, string(p.Type), schema, tableContext, previousConversation, query, config, p)
+		return bamlconfig.SQLChatBAML(callCtx, string(p.Type), schema, tableContext, previousConversation, query, config, p)
 	})
 }

@@ -18,6 +18,15 @@ import sampleSize from "lodash/sampleSize";
 import {DatabaseType} from '@graphql';
 
 /**
+ * Formats a number using locale-aware grouping separators (e.g. 1,000,000 in en-US, 10,00,000 in hi-IN).
+ * @param value - The number to format
+ * @param language - App locale string in underscore format (e.g. "en_US", "hi_IN")
+ */
+export function formatNumber(value: number, language: string): string {
+    return new Intl.NumberFormat(language.replace('_', '-')).format(value);
+}
+
+/**
  * Checks if a string can be parsed as a numeric value.
  * @param str - The string to check
  * @returns True if the string represents a valid number

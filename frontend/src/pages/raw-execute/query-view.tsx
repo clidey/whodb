@@ -29,6 +29,7 @@ export type IPluginProps = {
     modelType: string;
     token?: string;
     schema: string;
+    containerWidth?: number;
 }
 
 function isSQLQueryAction(code?: string): boolean {
@@ -49,7 +50,7 @@ function isSQLQueryAction(code?: string): boolean {
     return /^(select|with|values|show|explain|describe)\b/.test(cleaned);
 }
 
-export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
+export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerWidth }) => {
     const [rawExecute, { data }] = useRawExecuteLazyQuery();
     const current = useAppSelector(state => state.auth.current);
 
@@ -86,6 +87,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef }) => {
                 {
                     data.RawExecute.Columns.length > 0 && (
                         <StorageUnitTable
+                            key={containerWidth}
                             columns={data.RawExecute.Columns.map((c: any) => c.Name)}
                             columnTypes={data.RawExecute.Columns.map((c: any) => c.Type)}
                             rows={data.RawExecute.Rows}

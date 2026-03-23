@@ -6,6 +6,8 @@ en_US:
   addCell: Add a New Cell
   clearEditor: Clear the Editor
   deleteCell: Delete the Cell
+  deleteCellTitle: Delete Cell?
+  deleteCellDescription: Are you sure you want to delete this cell? This action cannot be undone.
   noHistoryTitle: No History Yet
   noHistoryDescription: Run a Query to See Your History
   success: Success
@@ -26,3 +28,5 @@ en_US:
   options: Options
   executeQuery: Execute Query
   addPage: Add Page
+  confirmExecutionTitle: Confirm Execution
+  confirmExecutionDescription: This query will modify your database. This action cannot be undone.

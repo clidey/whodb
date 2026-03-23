@@ -25,6 +25,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
@@ -32,7 +33,6 @@ import (
 	"github.com/clidey/whodb/core/src/plugins/mysql"
 	"github.com/clidey/whodb/core/src/plugins/postgres"
 	"github.com/clidey/whodb/core/src/plugins/redis"
-	"github.com/clidey/whodb/core/src/plugins/ssl"
 )
 
 // sslTarget represents an SSL-enabled database target for testing.

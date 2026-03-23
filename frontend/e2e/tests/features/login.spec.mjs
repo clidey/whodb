@@ -301,4 +301,161 @@ test.describe('Login & Authentication', () => {
             await expect(page.locator('[data-testid="database"]')).toHaveValue('encodeddb');
         });
     });
+
+    test.describe('URL Parameter Advanced Fields', () => {
+        test('port param maps to Port advanced field (backward compat)', async ({ whodb, page }) => {
+            await page.goto(whodb.url('/login?type=Postgres&host=localhost&username=user&database=db&port=5433'));
+
+            await page.waitForTimeout(500);
+            const disableBtn = page.locator('button').filter({ hasText: 'Disable Telemetry' });
+            if (await disableBtn.count() > 0) {
+                await disableBtn.click();
+            }
+
+            // Advanced panel should be visible and Port should be pre-filled
+            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
+            await expect(page.locator('[data-testid="Port-input"]')).toHaveValue('5433');
+        });
+
+        test('region param maps to Region advanced field (backward compat)', async ({ whodb, page }) => {
+            await page.goto(whodb.url('/login?type=MongoDB&host=localhost&region=eu-west-1'));
+
+            await page.waitForTimeout(500);
+            const disableBtn = page.locator('button').filter({ hasText: 'Disable Telemetry' });
+            if (await disableBtn.count() > 0) {
+                await disableBtn.click();
+            }
+
+            await expect(page.locator('[data-testid="Region-input"]')).toBeVisible();
+            await expect(page.locator('[data-testid="Region-input"]')).toHaveValue('eu-west-1');
+        });
+
+        test('generic unknown params populate advanced form', async ({ whodb, page }) => {
+            await page.goto(whodb.url('/login?type=ClickHouse&host=localhost&username=default&database=default&HTTP+Protocol=enable&Readonly=enable'));
+
+            await page.waitForTimeout(500);
+            const disableBtn = page.locator('button').filter({ hasText: 'Disable Telemetry' });
+            if (await disableBtn.count() > 0) {
+                await disableBtn.click();
+            }
+
+            // Advanced panel should open automatically
+            await expect(page.locator('[data-testid="HTTP Protocol-input"]')).toBeVisible();
+            await expect(page.locator('[data-testid="HTTP Protocol-input"]')).toHaveValue('enable');
+            await expect(page.locator('[data-testid="Readonly-input"]')).toHaveValue('enable');
+        });
+
+        test('SSL Mode param populates advanced SSL field', async ({ whodb, page }) => {
+            await page.goto(whodb.url('/login?type=Postgres&host=localhost&username=user&database=db&SSL+Mode=require'));
+
+            await page.waitForTimeout(500);
+            const disableBtn = page.locator('button').filter({ hasText: 'Disable Telemetry' });
+            if (await disableBtn.count() > 0) {
+                await disableBtn.click();
+            }
+
+            // Advanced panel should be visible (SSL Mode opened it)
+            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
+        });
+
+        test('UI params are not consumed as advanced fields', async ({ whodb, page }) => {
+            await page.goto(whodb.url('/login?type=Postgres&host=localhost&username=user&database=db&locale=en&mode=dark'));
+
+            await page.waitForTimeout(500);
+            const disableBtn = page.locator('button').filter({ hasText: 'Disable Telemetry' });
+            if (await disableBtn.count() > 0) {
+                await disableBtn.click();
+            }
+
+            // locale and mode should not appear as advanced form inputs
+            await expect(page.locator('[data-testid="locale-input"]')).not.toBeAttached();
+            await expect(page.locator('[data-testid="mode-input"]')).not.toBeAttached();
+
+            // Basic fields should still be populated
+            await expect(page.locator('[data-testid="hostname"]')).toHaveValue('localhost');
+        });
+
+        test('credentials config object populates advanced form', async ({ whodb, page }) => {
+            const credentials = {
+                type: 'Postgres',
+                host: 'localhost',
+                username: 'user',
+                password: 'pass',
+                database: 'db',
+                config: {
+                    'Port': '5433',
+                    'SSL Mode': 'require',
+                },
+            };
+            const encoded = Buffer.from(JSON.stringify(credentials)).toString('base64');
+
+            await page.goto(whodb.url(`/login?credentials=${encoded}`));
+
+            await page.waitForTimeout(500);
+            const disableBtn = page.locator('button').filter({ hasText: 'Disable Telemetry' });
+            if (await disableBtn.count() > 0) {
+                await disableBtn.click();
+            }
+
+            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
+            await expect(page.locator('[data-testid="Port-input"]')).toHaveValue('5433');
+        });
+
+        test('auto-login with ?login param navigates to storage unit', async ({ whodb, page }) => {
+            const db = getDatabaseConfig('postgres');
+            const params = new URLSearchParams({
+                type: db.type,
+                host: db.connection.host,
+                username: db.connection.user,
+                password: db.connection.password,
+                database: db.connection.database,
+                port: String(db.connection.port),
+                login: '',
+            });
+
+            await page.goto(whodb.url(`/login?${params.toString()}`));
+
+            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
+        });
+
+        test('URL is cleaned up after auto-login', async ({ whodb, page }) => {
+            const db = getDatabaseConfig('postgres');
+            const params = new URLSearchParams({
+                type: db.type,
+                host: db.connection.host,
+                username: db.connection.user,
+                password: db.connection.password,
+                database: db.connection.database,
+                login: '',
+            });
+
+            await page.goto(whodb.url(`/login?${params.toString()}`));
+            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
+
+            // None of the login params should remain in the URL
+            const url = new URL(page.url());
+            for (const key of ['type', 'host', 'username', 'password', 'database', 'login']) {
+                expect(url.searchParams.has(key)).toBe(false);
+            }
+        });
+
+        test('UI params survive URL cleanup after login', async ({ whodb, page }) => {
+            const db = getDatabaseConfig('postgres');
+            const params = new URLSearchParams({
+                type: db.type,
+                host: db.connection.host,
+                username: db.connection.user,
+                password: db.connection.password,
+                database: db.connection.database,
+                login: '',
+                locale: 'en',
+            });
+
+            await page.goto(whodb.url(`/login?${params.toString()}`));
+            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
+
+            const url = new URL(page.url());
+            expect(url.searchParams.get('locale')).toBe('en');
+        });
+    });
 });

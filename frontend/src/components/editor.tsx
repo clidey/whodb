@@ -15,16 +15,6 @@
  */
 
 import {Button, useTheme} from "@clidey/ux";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@clidey/ux";
 import {json} from "@codemirror/lang-json";
 import {markdown} from "@codemirror/lang-markdown";
 import {sql} from "@codemirror/lang-sql";
@@ -44,51 +34,7 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useAppSelector } from "@/store/hooks";
 import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
 import { Tip } from "./tip";
-
-const isValidSQLQuery = (text: string): boolean => {
-  const trimmed = text.trim();
-  if (!trimmed) return false;
-
-  const sqlKeywords = [
-    'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
-    'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE', 'SET'
-  ];
-  
-  const upperText = trimmed.toUpperCase();
-  return sqlKeywords.some(keyword => upperText.startsWith(keyword));
-};
-
-const isDestructiveQuery = (text: string): boolean => {
-  const trimmed = text.trim();
-  if (!trimmed) return false;
-
-  const upperText = trimmed.toUpperCase();
-
-  const safeKeywords = [
-    'SELECT', 'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW', 'USE'
-  ];
-
-  const destructiveKeywords = [
-    'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 
-    'TRUNCATE', 'REPLACE', 'MERGE', 'CALL', 'EXEC', 'EXECUTE'
-  ];
-  
-  // Check if query starts with a destructive keyword
-  const isDestructive = destructiveKeywords.some(keyword => upperText.startsWith(keyword));
-  
-  // Check if query starts with a safe keyword
-  const isSafe = safeKeywords.some(keyword => upperText.startsWith(keyword));
-  
-  // If it's explicitly safe, it's not destructive
-  if (isSafe) return false;
-  
-  // If it's explicitly destructive, it is destructive
-  if (isDestructive) return true;
-  
-  // For other cases (like SET statements), consider them potentially destructive
-  // as they can modify session state or configuration
-  return true;
-};
+import { isValidSQLQuery } from '@/utils/query-utils';
 
 const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLine: number}> => {
   const fullText = doc.toString();
@@ -220,8 +166,6 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
 }) => {
   const { t } = useTranslation('components/editor');
   const [showPreview, setShowPreview] = useState(defaultShowPreview);
-  const [showDestructiveDialog, setShowDestructiveDialog] = useState(false);
-  const [pendingQuery, setPendingQuery] = useState<string>("");
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onRunReference = useRef<Function>();
@@ -238,33 +182,13 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     onRunReference.current = onRun;
   }, [onRun]);
 
-  const handleQueryExecution = useCallback((queryText: string) => {
-    if (language === "sql" && isDestructiveQuery(queryText)) {
-      setPendingQuery(queryText);
-      setShowDestructiveDialog(true);
-    } else {
-      // Safe query, execute directly
-      onRun?.(queryText);
-    }
-  }, [language, onRun]);
-
-  const handleConfirmDestructiveQuery = useCallback(() => {
-    onRun?.(pendingQuery);
-    setShowDestructiveDialog(false);
-    setPendingQuery("");
-  }, [onRun, pendingQuery]);
-
-  const handleCancelDestructiveQuery = useCallback(() => {
-    setShowDestructiveDialog(false);
-    setPendingQuery("");
-  }, []);
 
   // Listen for menu execute query trigger
   useEffect(() => {
     const handleExecuteTrigger = () => {
       // Execute the entire content when triggered from menu
       if (onRun && value) {
-        handleQueryExecution(value);
+        onRun(value);
       }
     };
 
@@ -272,7 +196,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
     return () => {
       window.removeEventListener('menu:trigger-execute-query', handleExecuteTrigger);
     };
-  }, [value, handleQueryExecution, onRun]);
+  }, [value, onRun]);
 
   useEffect(() => {
     if (viewRef.current && value !== viewRef.current.state.doc.toString()) {
@@ -321,7 +245,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                 // Create a unique marker for each query with the specific query text
                 const playMarker = new PlayButtonMarker((lineText) => {
                   if (lineText) {
-                    handleQueryExecution(lineText);
+                    onRunReference.current?.(lineText);
                   }
                 }, query, t('runQuery'));
                 
@@ -362,7 +286,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
                         textToExecute = view.state.sliceDoc(selection.main.from, selection.main.to);
                       }
 
-                      handleQueryExecution(textToExecute);
+                      onRunReference.current?.(textToExecute);
                       event.preventDefault();
                       event.stopPropagation();
                   }
@@ -499,30 +423,6 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         {actionButtons}
       </div>
       
-      {/* Destructive Query Confirmation Dialog */}
-      <AlertDialog open={showDestructiveDialog} onOpenChange={setShowDestructiveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('confirmOperationTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('confirmOperationDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelDestructiveQuery}>
-              {t('cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                onClick={handleConfirmDestructiveQuery}
-                variant="destructive"
-              >
-                {t('executeQuery')}
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

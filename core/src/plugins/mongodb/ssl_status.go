@@ -17,9 +17,9 @@
 package mongodb
 
 import (
+	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/clidey/whodb/core/src/plugins/ssl"
 )
 
 // GetSSLStatus returns the SSL status based on the configured SSL mode for MongoDB.

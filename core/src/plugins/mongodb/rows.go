@@ -20,9 +20,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -236,44 +236,28 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	}
 	sort.Strings(fieldNames)
 
+	// Infer FK relationships using shared heuristics
+	fkMap := graphutil.InferForeignKeys(storageUnit, fieldNames, collections)
+	fieldToRef := make(map[string]string, len(fkMap))
+	for refUnit, field := range fkMap {
+		fieldToRef[field] = refUnit
+	}
+
 	columns := []engine.Column{}
 	for _, fieldName := range fieldNames {
 		fieldType := fieldTypes[fieldName]
-		isPrimary := fieldName == "_id"
 
 		var isForeignKey bool
 		var referencedTable *string
-
-		if fieldName != "_id" {
-			lowerField := strings.ToLower(fieldName)
-			for _, otherCollection := range collections {
-				if otherCollection == storageUnit {
-					continue
-				}
-
-				singularName := strings.TrimSuffix(otherCollection, "s")
-				pluralName := otherCollection
-				if !strings.HasSuffix(otherCollection, "s") {
-					pluralName = otherCollection + "s"
-				}
-
-				if lowerField == strings.ToLower(singularName)+"_id" ||
-					lowerField == strings.ToLower(singularName)+"id" ||
-					lowerField == strings.ToLower(otherCollection)+"_id" ||
-					lowerField == strings.ToLower(otherCollection)+"id" ||
-					lowerField == strings.ToLower(pluralName)+"_id" ||
-					lowerField == strings.ToLower(pluralName)+"id" {
-					isForeignKey = true
-					referencedTable = &otherCollection
-					break
-				}
-			}
+		if ref, ok := fieldToRef[fieldName]; ok {
+			isForeignKey = true
+			referencedTable = &ref
 		}
 
 		columns = append(columns, engine.Column{
 			Name:            fieldName,
 			Type:            fieldType,
-			IsPrimary:       isPrimary,
+			IsPrimary:       fieldName == "_id",
 			IsForeignKey:    isForeignKey,
 			ReferencedTable: referencedTable,
 		})

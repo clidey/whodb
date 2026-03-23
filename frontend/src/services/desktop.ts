@@ -117,53 +117,6 @@ export async function selectSQLiteDatabase(): Promise<string | null> {
   }
 }
 
-// Clipboard Operations
-export async function copyToClipboard(text: string): Promise<boolean> {
-  // Try desktop first
-  if (isDesktop && window.go?.common?.App?.CopyToClipboard) {
-    try {
-      await window.go.common.App.CopyToClipboard(text);
-      return true;
-    } catch (error) {
-      console.error('Desktop clipboard failed:', error);
-    }
-  }
-
-  // Fallback to browser clipboard API (works in both browser and desktop)
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch (error) {
-    console.error('Failed to copy to clipboard:', error);
-  }
-
-  return false;
-}
-
-export async function getFromClipboard(): Promise<string | null> {
-  // Try desktop first
-  if (isDesktop && window.go?.common?.App?.GetFromClipboard) {
-    try {
-      const text = await window.go.common.App.GetFromClipboard();
-      return text || null;
-    } catch (error) {
-      console.error('Desktop clipboard failed:', error);
-    }
-  }
-
-  // Fallback to browser clipboard API
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      return await navigator.clipboard.readText();
-    }
-  } catch (error) {
-    console.error('Failed to read from clipboard:', error);
-  }
-
-  return null;
-}
 
 // Window Management - Desktop only
 export async function minimizeWindow(): Promise<void> {

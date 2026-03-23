@@ -494,6 +494,18 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 			if err != nil {
 				return nil, err
 			}
+
+			// Overlay schema types from PRAGMA table_info onto result columns,
+			// since CAST expressions lose the declared column type in the result set
+			schemaTypeMap := make(map[string]string, len(orderedColumns))
+			for _, col := range orderedColumns {
+				schemaTypeMap[col.Name] = col.Type
+			}
+			for i, col := range result.Columns {
+				if schemaType, ok := schemaTypeMap[col.Name]; ok && col.Type == "" {
+					result.Columns[i].Type = schemaType
+				}
+			}
 		}
 
 		// Wait for count query to complete and set TotalCount

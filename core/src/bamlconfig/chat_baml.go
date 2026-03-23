@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package common
+package bamlconfig
 
 import (
 	"context"
