@@ -49,6 +49,7 @@ en_US:
 
   # Empty state
   noDataAvailable: No Data Available
+  noDataAvailableDescription: Try adjusting your filters or adding a new row.
 
   # Table header tooltip
   rightClickForOptions: Right-Click for Table Options

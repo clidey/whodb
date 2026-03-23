@@ -167,10 +167,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
     }, []);
 
     useEffect(() => {
-        if (defaultWhere == null) {
-            return;
-        }
-        setFilters(defaultWhere);
+        setFilters(defaultWhere ?? { Type: WhereConditionType.And, And: { Children: [] } });
     }, [defaultWhere]);
 
     // Initialize scratchpad if needed
