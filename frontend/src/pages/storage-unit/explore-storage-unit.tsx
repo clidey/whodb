@@ -54,7 +54,6 @@ import {
     useAddRowMutation,
     useColumnsLazyQuery,
     useGetStorageUnitRowsLazyQuery,
-    useGetStorageUnitsLazyQuery,
     useRawExecuteLazyQuery,
     useUpdateStorageUnitMutation,
     WhereCondition,
@@ -80,7 +79,8 @@ import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../.
 import {Tip} from "../../components/tip";
 import {BUILD_EDITION} from "../../config/edition";
 import {InternalRoutes} from "../../config/routes";
-import {useAppSelector} from "../../store/hooks";
+import {useAppDispatch, useAppSelector} from "../../store/hooks";
+import {ExploreConditionsActions} from "../../store/explore-conditions";
 import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {getDatabaseOperators} from "../../utils/database-operators";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
@@ -124,10 +124,29 @@ export const ExploreStorageUnit: FC = () => {
     const { t } = useTranslation('pages/explore-storage-unit');
     const { t: tTable } = useTranslation('components/table');
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const [whereCondition, setWhereCondition] = useState<WhereCondition>();
-    const [sortConditions, setSortConditions] = useState<SortCondition[]>([]);
+    let schema = useAppSelector(state => state.database.schema);
+    const current = useAppSelector(state => state.auth.current);
+    const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const unit: StorageUnit = useLocation().state?.unit;
+    const navigate = useNavigate();
+
+    // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
+    if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) && current?.Database) {
+        schema = current.Database;
+    }
+
+    const dispatch = useAppDispatch();
+    const conditionKey = useMemo(() => {
+        if (!current?.Id || !unit?.Name) return '';
+        return `${current.Id}__${schema}__${unit.Name}`;
+    }, [current?.Id, schema, unit?.Name]);
+    const savedConditions = useAppSelector(state =>
+        conditionKey ? state.exploreConditions.conditions[conditionKey] : undefined
+    );
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [whereCondition, setWhereCondition] = useState<WhereCondition | undefined>(savedConditions?.whereCondition);
+    const [sortConditions, setSortConditions] = useState<SortCondition[]>(savedConditions?.sortConditions ?? []);
     const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
 
     // Check if this is a view/materialized view - mock data generation not allowed for these
@@ -139,10 +158,6 @@ export const ExploreStorageUnit: FC = () => {
         return !upperType.includes("VIEW") && !upperType.includes("MATERIALIZED") && !upperType.includes("SYSTEM");
     }, [unit?.Attributes]);
 
-    let schema = useAppSelector(state => state.database.schema);
-    const current = useAppSelector(state => state.auth.current);
-    const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
-    const navigate = useNavigate();
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
     const searchRef = useRef<(search: string) => void>(() => {});
@@ -179,12 +194,13 @@ export const ExploreStorageUnit: FC = () => {
     const pageSizeInitialRef = useRef(true);
     const [tableHeight, setTableHeight] = useState<number>(500);
 
-    const [updateStorageUnit, {loading: updating}] = useUpdateStorageUnitMutation();
+    const [updateStorageUnit] = useUpdateStorageUnitMutation();
 
     // Keep whereConditionRef in sync with whereCondition state
     useEffect(() => {
         whereConditionRef.current = whereCondition;
     }, [whereCondition]);
+
 
     // Clean up pending add-row timeout on unmount
     useEffect(() => {
@@ -193,15 +209,9 @@ export const ExploreStorageUnit: FC = () => {
         };
     }, []);
 
-    // TODO: ClickHouse/MongoDB use database name as schema parameter since they lack traditional schemas
-    if (databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) && current?.Database) {
-        schema = current.Database
-    }
-
     const [getStorageUnitRows, { loading }] = useGetStorageUnitRowsLazyQuery({
         fetchPolicy: "no-cache",
     });
-    const [getStorageUnits] = useGetStorageUnitsLazyQuery();
     const [getColumns] = useColumnsLazyQuery({
         fetchPolicy: "network-only",
     });
@@ -342,22 +352,24 @@ export const ExploreStorageUnit: FC = () => {
     }, [handleSubmitRequest]);
 
     const handleColumnSort = useCallback((columnName: string) => {
-        setSortConditions(prev => {
-            const existingSort = prev.find(s => s.Column === columnName);
-
-            if (!existingSort) {
-                return [...prev, { Column: columnName, Direction: SortDirection.Asc }];
-            } else if (existingSort.Direction === SortDirection.Asc) {
-                return prev.map(s =>
-                    s.Column === columnName
-                        ? { ...s, Direction: SortDirection.Desc }
-                        : s
-                );
-            } else {
-                return prev.filter(s => s.Column !== columnName);
-            }
-        });
-    }, []);
+        const existingSort = sortConditions.find(s => s.Column === columnName);
+        let newSort: SortCondition[];
+        if (!existingSort) {
+            newSort = [...sortConditions, { Column: columnName, Direction: SortDirection.Asc }];
+        } else if (existingSort.Direction === SortDirection.Asc) {
+            newSort = sortConditions.map(s => s.Column === columnName ? { ...s, Direction: SortDirection.Desc } : s);
+        } else {
+            newSort = sortConditions.filter(s => s.Column !== columnName);
+        }
+        setSortConditions(newSort);
+        if (conditionKey) {
+            dispatch(ExploreConditionsActions.setExploreConditions({
+                key: conditionKey,
+                whereCondition,
+                sortConditions: newSort,
+            }));
+        }
+    }, [sortConditions, conditionKey, whereCondition, dispatch]);
 
     const handleRowUpdate = useCallback(
         (
@@ -420,12 +432,8 @@ export const ExploreStorageUnit: FC = () => {
     }, [unit, rows?.TotalCount, rows?.Rows.length]);
 
     useEffect(() => {
-        // Reset all state when switching to a new table to prevent cached data
+        // Reset non-condition state when switching to a new table to prevent cached data
         setCurrentPage(1);
-        setWhereCondition(undefined);
-        whereConditionRef.current = undefined;
-        setSortConditions([]);
-        setSearch("");
         setRows(undefined);
         setShowAdd(false);
         setAddRowData({});
@@ -433,6 +441,14 @@ export const ExploreStorageUnit: FC = () => {
         setShowEntitySearchSheet(false);
         setEntitySearchData(null);
         setEntitySearchResults(null);
+        setSearch("");
+
+        // Restore saved conditions for this unit, or reset to empty if none saved
+        const restoredWhere = savedConditions?.whereCondition;
+        const restoredSort = savedConditions?.sortConditions ?? [];
+        setWhereCondition(restoredWhere);
+        whereConditionRef.current = restoredWhere;
+        setSortConditions(restoredSort);
 
         // Fetch fresh data for the new table
         handleSubmitRequest();
@@ -541,10 +557,16 @@ export const ExploreStorageUnit: FC = () => {
     }, [rows]);
 
     const handleFilterChange = useCallback((filters: WhereCondition) => {
-        // Update ref synchronously to avoid stale closure issues
         whereConditionRef.current = filters;
         setWhereCondition(filters);
-    }, []);
+        if (conditionKey) {
+            dispatch(ExploreConditionsActions.setExploreConditions({
+                key: conditionKey,
+                whereCondition: filters,
+                sortConditions,
+            }));
+        }
+    }, [conditionKey, sortConditions, dispatch]);
 
     const sortedColumnsMap = useMemo(() => {
         const map = new Map<string, 'asc' | 'desc'>();

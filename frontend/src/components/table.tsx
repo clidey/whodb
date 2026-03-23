@@ -1388,7 +1388,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         aria-rowcount={paginatedRows.length}
                         aria-multiselectable={true}
                     >
-                    <TableHeader>
+                    <TableHeader data-column-count={columns.length}>
                         <ContextMenu>
                             <ContextMenuTrigger asChild>
                                     <TableHeadRow role="row" aria-rowindex={0} className="group relative cursor-context-menu hover:bg-muted/50 transition-colors" title={t('rightClickForOptions')}>

@@ -326,10 +326,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, [sheetFilters, onChange]);
 
     useEffect(() => {
-        if (defaultWhere == null) {
-            return;
-        }
-        setFilters(defaultWhere);
+        setFilters(defaultWhere ?? { Type: WhereConditionType.And, And: { Children: [] } });
     }, [defaultWhere]);
 
     const hasFilterContent = useCallback(() => {

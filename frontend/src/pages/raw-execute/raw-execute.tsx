@@ -49,7 +49,7 @@ import {
     toast
 } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
-import { isDestructiveQuery, isValidSQLQuery } from '@/utils/query-utils';
+import { isDestructiveQuery } from '@/utils/query-utils';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -453,7 +453,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             return;
         }
         const currentCode = historyCode ?? code;
-        const needsConfirmation = mode !== ActionOptions.Query || (isValidSQLQuery(currentCode) && isDestructiveQuery(currentCode));
+        const needsConfirmation = mode !== ActionOptions.Query || isDestructiveQuery(currentCode);
         if (needsConfirmation) {
             setPendingExecuteCode(currentCode);
         } else {

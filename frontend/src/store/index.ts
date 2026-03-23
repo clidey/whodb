@@ -28,6 +28,7 @@ import { tourReducers } from './tour';
 import { databaseMetadataReducers } from './database-metadata';
 import { providersReducers } from './providers';
 import { healthReducers } from './health';
+import { exploreConditionsReducers } from './explore-conditions';
 import { runMigrations } from './migrations';
 
 // Run migrations before initializing the store
@@ -170,6 +171,7 @@ const persistedReducer = combineReducers({
   databaseMetadata: persistReducer({ key: "databaseMetadata", storage }, databaseMetadataReducers),
   providers: persistReducer({ key: "providers", storage }, providersReducers),
   health: healthReducers, // Health status is not persisted (transient state)
+  exploreConditions: persistReducer({ key: 'exploreConditions', storage }, exploreConditionsReducers),
 });
 
 export const reduxStore = configureStore({
