@@ -27,6 +27,24 @@ function getBackendCapabilities() {
 }
 
 /**
+ * Check if a database supports chat/AI query generation.
+ * Reads from backend capabilities first, falls back to assuming SQL databases support it.
+ */
+export function databaseSupportsChat(databaseType: DatabaseType | string | undefined): boolean {
+    if (!databaseType) {
+        return false;
+    }
+
+    const capabilities = getBackendCapabilities();
+    if (capabilities != null) {
+        return capabilities.supportsChat;
+    }
+
+    // Capabilities not yet loaded — safe default until they arrive
+    return false;
+}
+
+/**
  * Check if a database supports scratchpad/raw query execution.
  * Reads from backend capabilities first, falls back to config/hardcoded lists.
  */
@@ -47,12 +65,8 @@ export function databaseSupportsScratchpad(databaseType: DatabaseType | string |
         return dbConfig.supportsScratchpad;
     }
 
-    const databasesThatDontSupportScratchpad = [
-        DatabaseType.MongoDb,
-        DatabaseType.Redis,
-        DatabaseType.ElasticSearch
-    ];
-    return !databasesThatDontSupportScratchpad.includes(databaseType as DatabaseType);
+    // All databases now support scratchpad (native query execution)
+    return true;
 }
 
 /**

@@ -27,14 +27,28 @@ import (
 	"github.com/clidey/whodb/core/src/engine"
 )
 
-// RawExecutePlugin defines the interface for executing raw SQL queries
+// RawExecutePlugin defines the interface for executing raw queries
 type RawExecutePlugin interface {
 	RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error)
 }
 
-// SQLChatBAML generates SQL queries using BAML for structured prompt engineering
-// This replaces the old string-based prompt and JSON parsing approach
-func SQLChatBAML(
+// IsNoSQLDatabase returns true if the database type should use the database-agnostic
+// BAML prompt (GenerateDBQuery) instead of the SQL-specific prompt (GenerateSQLQuery).
+func IsNoSQLDatabase(dbType string) bool {
+	switch engine.DatabaseType(dbType) {
+	case engine.DatabaseType_MongoDB,
+		engine.DatabaseType_Redis,
+		engine.DatabaseType_ElasticSearch:
+		return true
+	}
+	return false
+}
+
+// ExecuteChatQuery is the single non-streaming chat execution path.
+// Picks the right BAML prompt based on database type, calls it, executes
+// read queries via plugin.RawExecute(), and gates mutations for confirmation.
+// Used by both plugin.Chat() implementations and the HTTP non-streaming fallback.
+func ExecuteChatQuery(
 	ctx context.Context,
 	databaseType string,
 	schema string,
@@ -45,7 +59,6 @@ func SQLChatBAML(
 	plugin RawExecutePlugin,
 ) ([]*engine.ChatMessage, error) {
 
-	// Build BAML context
 	dbContext := types.DatabaseContext{
 		Database_type:         databaseType,
 		Schema:                schema,
@@ -53,16 +66,19 @@ func SQLChatBAML(
 		Previous_conversation: previousConversation,
 	}
 
-	// Create dynamic BAML client and log request
 	callOpts := SetupAIClient(config.ExternalModel)
 
-	// Call BAML function to generate SQL
-	responses, err := baml_client.GenerateSQLQuery(ctx, dbContext, userQuery, callOpts...)
+	var responses []types.ChatResponse
+	var err error
+	if IsNoSQLDatabase(databaseType) {
+		responses, err = baml_client.GenerateDBQuery(ctx, dbContext, userQuery, callOpts...)
+	} else {
+		responses, err = baml_client.GenerateSQLQuery(ctx, dbContext, userQuery, callOpts...)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert BAML responses to WhoDB ChatMessage format
 	var chatMessages []*engine.ChatMessage
 	for _, bamlResp := range responses {
 		message := &engine.ChatMessage{
@@ -72,12 +88,9 @@ func SQLChatBAML(
 			RequiresConfirmation: false,
 		}
 
-		// Convert BAML type to WhoDB type format
 		message.Type = convertBAMLTypeToWhoDB(bamlResp.Type)
 
-		// Execute SQL if it's a query
 		if bamlResp.Type == types.ChatMessageTypeSQL && bamlResp.Operation != nil {
-			// Check if operation is a mutation that requires confirmation
 			isMutation := *bamlResp.Operation == types.OperationTypeINSERT ||
 				*bamlResp.Operation == types.OperationTypeUPDATE ||
 				*bamlResp.Operation == types.OperationTypeDELETE ||
@@ -86,18 +99,15 @@ func SQLChatBAML(
 				*bamlResp.Operation == types.OperationTypeDROP
 
 			if isMutation {
-				// Don't execute mutations immediately - require user confirmation
 				message.Type = convertOperationType(*bamlResp.Operation)
 				message.RequiresConfirmation = true
 				message.Result = nil
 			} else {
-				// Execute non-mutation queries (SELECT, etc.) immediately
 				result, execErr := plugin.RawExecute(config, bamlResp.Text)
 				if execErr != nil {
 					message.Type = "error"
 					message.Text = execErr.Error()
 				} else {
-					// Set operation-specific type
 					message.Type = convertOperationType(*bamlResp.Operation)
 				}
 				message.Result = result

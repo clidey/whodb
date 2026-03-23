@@ -47,7 +47,7 @@
   "features": {
     "graph": false,
     "export": true,
-    "scratchpad": false,
+    "scratchpad": true,
     "mockData": false,
     "chat": true,
     "whereConditions": false,
@@ -58,7 +58,7 @@
   "featureNotes": {
     "graph": "Graph view not applicable for Redis - key-value store has no schema relationships",
     "export": "Export supported for Redis data types",
-    "scratchpad": "Scratchpad requires SQL execution which Redis does not support",
+    "scratchpad": "Scratchpad executes Redis commands (HGETALL, KEYS, etc.)",
     "mockData": "Mock data generation not applicable for key-value stores",
     "whereConditions": "Where conditions not applicable for key-value lookups",
     "queryHistory": "Query history not supported for key-value operations",

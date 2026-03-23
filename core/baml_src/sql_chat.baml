@@ -3,35 +3,35 @@
 
 // Database operation types
 enum OperationType {
-  GET @alias("get") @description("SELECT queries to retrieve data")
-  INSERT @alias("insert") @description("INSERT queries to add data")
-  UPDATE @alias("update") @description("UPDATE queries to modify data")
-  DELETE @alias("delete") @description("DELETE queries to remove data")
-  CREATE @alias("create") @description("CREATE TABLE, CREATE INDEX and other schema creation operations")
-  ALTER @alias("alter") @description("ALTER TABLE and other schema modification operations")
-  DROP @alias("drop") @description("DROP TABLE, DROP INDEX and other schema deletion operations")
-  TEXT @alias("text") @description("General text responses without SQL")
+  GET @alias("get") @description("Read or retrieve data")
+  INSERT @alias("insert") @description("Add or insert new data")
+  UPDATE @alias("update") @description("Modify or update existing data")
+  DELETE @alias("delete") @description("Remove or delete data")
+  CREATE @alias("create") @description("Create new tables, collections, indices, or keys")
+  ALTER @alias("alter") @description("Modify structure of tables, collections, or indices")
+  DROP @alias("drop") @description("Remove tables, collections, indices, or keys")
+  TEXT @alias("text") @description("General text response without a query")
 }
 
 // Chat message type
 enum ChatMessageType {
-  SQL @alias("sql") @description("SQL query response")
+  SQL @alias("sql") @description("Query response (database query to execute)")
   MESSAGE @alias("message") @description("Textual response without query")
   ERROR @alias("error") @description("Error response")
 }
 
 // Chat response structure matching engine.ChatMessage
 class ChatResponse {
-  type ChatMessageType @description("Type of response: sql or message")
-  operation OperationType? @description("SQL operation type if applicable")
-  text string @description("The SQL query or response text")
+  type ChatMessageType @description("Type of response: sql (query) or message (text)")
+  operation OperationType? @description("Operation type if applicable")
+  text string @description("The database query or response text")
 }
 
-// Database context for SQL generation
+// Database context for query generation
 class DatabaseContext {
-  database_type string @description("Database type (e.g., PostgreSQL, MySQL)")
-  schema string @description("Database schema name")
-  tables_and_fields string @description("Available tables with their field definitions")
+  database_type string @description("Database type (e.g., PostgreSQL, MySQL, MongoDB, Redis)")
+  schema string @description("Database schema or namespace")
+  tables_and_fields string @description("Available tables/collections/keys with their field definitions")
   previous_conversation string @description("Previous conversation history for context")
 }
 

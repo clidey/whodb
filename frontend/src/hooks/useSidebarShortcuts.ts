@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ import {useCallback, useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {InternalRoutes} from "../config/routes";
 import {useAppSelector} from "../store/hooks";
-import {isNoSQL} from "../utils/functions";
-import {databaseSupportsScratchpad} from "../utils/database-features";
+import {databaseSupportsChat, databaseSupportsScratchpad} from "../utils/database-features";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "../utils/shortcuts";
 
 export const useSidebarShortcuts = () => {
@@ -44,7 +43,7 @@ export const useSidebarShortcuts = () => {
         const routes: string[] = [];
 
         // Chat is first for SQL databases
-        if (!isNoSQL(current.Type)) {
+        if (databaseSupportsChat(current.Type)) {
             routes.push(InternalRoutes.Chat.path);
         }
 
