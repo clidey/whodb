@@ -17,21 +17,12 @@
 package mongodb
 
 import (
-	"strings"
-
+	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-type tableRelation struct {
-	Table1       string
-	Table2       string
-	Relation     string
-	SourceColumn string
-	TargetColumn string
-}
 
 func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) ([]engine.GraphUnit, error) {
 	ctx, cancel := opCtx()
@@ -78,7 +69,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 	}
 
 	uniqueRelations := make(map[string]bool)
-	relations := []tableRelation{}
+	var relations []graphutil.Relation
 
 	log.WithFields(map[string]any{
 		"database":    database,
@@ -124,62 +115,24 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 			continue
 		}
 
-		foreignKeys := make(map[string]string)
-
+		fieldNames := make([]string, 0, len(fieldFrequency))
 		for fieldName := range fieldFrequency {
-			if fieldName == "_id" {
-				continue
-			}
-
-			// If fieldName contains ".id" or ends with "Id", treat as potential reference
-			lowerField := strings.ToLower(fieldName)
-			if strings.HasSuffix(lowerField, ".id") || strings.HasSuffix(lowerField, "id") || strings.HasSuffix(lowerField, "_id") {
-				for _, otherCollection := range collections {
-					if otherCollection == collectionName {
-						continue
-					}
-					if strings.Contains(lowerField, strings.ToLower(otherCollection)) {
-						foreignKeys[otherCollection] = fieldName
-						break
-					}
-				}
-			}
-
-			for _, otherCollection := range collections {
-				if otherCollection == collectionName {
-					continue
-				}
-
-				singularName := strings.TrimSuffix(otherCollection, "s")
-				pluralName := otherCollection
-				if !strings.HasSuffix(otherCollection, "s") {
-					pluralName = otherCollection + "s"
-				}
-
-				lowerField := strings.ToLower(fieldName)
-				if lowerField == strings.ToLower(singularName)+"_id" ||
-					lowerField == strings.ToLower(singularName)+"id" ||
-					lowerField == strings.ToLower(otherCollection)+"_id" ||
-					lowerField == strings.ToLower(otherCollection)+"id" ||
-					lowerField == strings.ToLower(pluralName)+"_id" ||
-					lowerField == strings.ToLower(pluralName)+"id" {
-					foreignKeys[otherCollection] = fieldName
-					log.WithFields(map[string]any{
-						"collection": collectionName,
-						"field":      fieldName,
-						"references": otherCollection,
-					}).Info("MongoDB Graph: FOUND FK RELATIONSHIP")
-					break
-				}
-			}
+			fieldNames = append(fieldNames, fieldName)
 		}
 
-		for fk, fieldName := range foreignKeys {
-			relKey1 := collectionName + ":" + fk
+		foreignKeys := graphutil.InferForeignKeys(collectionName, fieldNames, collections)
 
-			if !uniqueRelations[relKey1+":ManyToOne"] {
-				uniqueRelations[relKey1+":ManyToOne"] = true
-				relations = append(relations, tableRelation{
+		for fk, fieldName := range foreignKeys {
+			log.WithFields(map[string]any{
+				"collection": collectionName,
+				"field":      fieldName,
+				"references": fk,
+			}).Info("MongoDB Graph: FOUND FK RELATIONSHIP")
+
+			relKey := collectionName + ":" + fk + ":ManyToOne"
+			if !uniqueRelations[relKey] {
+				uniqueRelations[relKey] = true
+				relations = append(relations, graphutil.Relation{
 					Table1:       collectionName,
 					Table2:       fk,
 					Relation:     "ManyToOne",
@@ -201,18 +154,6 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		"relationsCount": len(relations),
 	}).Info("MongoDB Graph: Finished relationship detection")
 
-	tableMap := make(map[string][]engine.GraphUnitRelationship)
-	for _, tr := range relations {
-		sourceCol := tr.SourceColumn
-		targetCol := tr.TargetColumn
-		tableMap[tr.Table1] = append(tableMap[tr.Table1], engine.GraphUnitRelationship{
-			Name:             tr.Table2,
-			RelationshipType: engine.GraphUnitRelationshipType(tr.Relation),
-			SourceColumn:     &sourceCol,
-			TargetColumn:     &targetCol,
-		})
-	}
-
 	storageUnits, err := p.GetStorageUnits(config, database)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
@@ -222,23 +163,5 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		return nil, err
 	}
 
-	storageUnitsMap := map[string]engine.StorageUnit{}
-	for _, storageUnit := range storageUnits {
-		storageUnitsMap[storageUnit.Name] = storageUnit
-	}
-
-	tables := []engine.GraphUnit{}
-	for _, storageUnit := range storageUnits {
-		foundTable, ok := tableMap[storageUnit.Name]
-		var relations []engine.GraphUnitRelationship
-		if ok {
-			relations = foundTable
-		}
-		tables = append(tables, engine.GraphUnit{
-			Unit:      storageUnit,
-			Relations: relations,
-		})
-	}
-
-	return tables, nil
+	return graphutil.BuildGraphUnits(relations, storageUnits), nil
 }

@@ -22,9 +22,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/clidey/whodb/core/graph/model"
+	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 )
@@ -292,6 +292,13 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	}
 	sort.Strings(fieldNames)
 
+	// Infer FK relationships using shared heuristics
+	fkMap := graphutil.InferForeignKeys(storageUnit, fieldNames, indices)
+	fieldToRef := make(map[string]string, len(fkMap))
+	for refUnit, field := range fkMap {
+		fieldToRef[field] = refUnit
+	}
+
 	columns := []engine.Column{
 		{
 			Name:         "_id",
@@ -306,29 +313,9 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 		var isForeignKey bool
 		var referencedTable *string
-
-		lowerField := strings.ToLower(fieldName)
-		for _, otherIndex := range indices {
-			if otherIndex == storageUnit {
-				continue
-			}
-
-			singularName := strings.TrimSuffix(otherIndex, "s")
-			pluralName := otherIndex
-			if !strings.HasSuffix(otherIndex, "s") {
-				pluralName = otherIndex + "s"
-			}
-
-			if lowerField == strings.ToLower(singularName)+"_id" ||
-				lowerField == strings.ToLower(singularName)+"id" ||
-				lowerField == strings.ToLower(otherIndex)+"_id" ||
-				lowerField == strings.ToLower(otherIndex)+"id" ||
-				lowerField == strings.ToLower(pluralName)+"_id" ||
-				lowerField == strings.ToLower(pluralName)+"id" {
-				isForeignKey = true
-				referencedTable = &otherIndex
-				break
-			}
+		if ref, ok := fieldToRef[fieldName]; ok {
+			isForeignKey = true
+			referencedTable = &ref
 		}
 
 		columns = append(columns, engine.Column{
