@@ -63,6 +63,10 @@ var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
 
 var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
+var LMStudioBaseURL = os.Getenv("WHODB_LMSTUDIO_BASE_URL")
+var LMStudioAPIKey = os.Getenv("WHODB_LMSTUDIO_API_KEY")
+var LMStudioName = os.Getenv("WHODB_LMSTUDIO_NAME")
+
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -181,6 +185,15 @@ func GetOpenAIEndpoint() string {
 	return "https://api.openai.com/v1"
 }
 
+// GetLMStudioEndpoint returns the configured LM Studio base URL, or the
+// default localhost:1234 endpoint if no override is set.
+func GetLMStudioEndpoint() string {
+	if LMStudioBaseURL != "" {
+		return LMStudioBaseURL
+	}
+	return "http://localhost:1234/v1"
+}
+
 func getMaxPageSize() int {
 	val := os.Getenv("WHODB_MAX_PAGE_SIZE")
 	if val == "" {
@@ -192,4 +205,3 @@ func getMaxPageSize() int {
 	}
 	return n
 }
-
