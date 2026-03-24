@@ -110,8 +110,9 @@ import {
 import {Tip} from "./tip";
 import {formatShortcut} from "@/utils/platform";
 import {matchesShortcut, SHORTCUTS} from "@/utils/shortcuts";
-import {isNoSQL} from "@/utils/functions";
+import {formatNumber, isNoSQL} from "@/utils/functions";
 import {databaseSupportsMockData} from "@/utils/database-features";
+
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -352,7 +353,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     enforceMinHeight = false,
     enableKeyboardShortcuts = false,
 }) => {
-    const { t } = useTranslation('components/table');
+    const { t, language } = useTranslation('components/table');
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [editRow, setEditRow] = useState<string[] | null>(null);
     const [editRowInitialLengths, setEditRowInitialLengths] = useState<number[]>([]);
@@ -568,7 +569,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (start > 1) {
             links.push(
                 <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>1</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>{formatNumber(1, language)}</PaginationLink>
                 </PaginationItem>
             );
             if (start > 2) {
@@ -590,7 +591,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         aria-label={i === currentPage ? t('currentPage', { page: i }) : t('goToPage', { page: i })}
                         aria-current={i === currentPage ? 'page' : undefined}
                     >
-                        {i}
+                        {formatNumber(i, language)}
                     </PaginationLink>
                 </PaginationItem>
             );
@@ -602,7 +603,7 @@ export const StorageUnitTable: FC<TableProps> = ({
             }
             links.push(
                 <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{totalPages}</PaginationLink>
+                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{formatNumber(totalPages, language)}</PaginationLink>
                 </PaginationItem>
             );
         }
@@ -1639,7 +1640,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 <div className="flex justify-end items-center mb-2 gap-4">
                     {totalCount != null && totalCount > 0 && (
                         <div className="text-sm" data-testid="total-count-bottom">
-                            <span className="font-semibold">{t('totalCount')}</span> {totalCount}
+                            <span className="font-semibold">{t('totalCount')}</span> {formatNumber(totalCount, language)}
                         </div>
                     )}
                     {isImportSupported && allowImport && (

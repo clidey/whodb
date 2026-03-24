@@ -59,3 +59,4 @@ tools/docs-agent/.venv
 tools/docs-agent/runs/
 tools/
 .playwright-mcp
+.claude/worktrees

@@ -921,9 +921,9 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={handleCancelExecute}>{t('cancel')}</AlertDialogCancel>
+                        <AlertDialogCancel data-testid="execute-query-cancel" onClick={handleCancelExecute}>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction asChild>
-                            <Button variant="destructive" onClick={handleConfirmExecute}>
+                            <Button variant="destructive" data-testid="execute-query-confirm" onClick={handleConfirmExecute}>
                                 {t('executeQuery')}
                             </Button>
                         </AlertDialogAction>
