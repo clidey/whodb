@@ -31,6 +31,8 @@ export function getCategoryHelpers(category) {
             return documentHelpers;
         case 'keyvalue':
             return keyvalueHelpers;
+        case 'cache':
+            return {};
         default:
             throw new Error(`Unknown category: ${category}`);
     }

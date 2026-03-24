@@ -129,6 +129,7 @@ var (
 		engine.DatabaseType_ClickHouse:    modesSimple,
 		engine.DatabaseType_MongoDB:       modesSimple,
 		engine.DatabaseType_Redis:         modesSimple,
+		engine.DatabaseType_Memcached:     modesSimple,
 		engine.DatabaseType_ElasticSearch: modesSimple,
 	}
 

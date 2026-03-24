@@ -54,6 +54,7 @@ export function isNoSQL(databaseType: string) {
         case DatabaseType.MongoDb:
         case DatabaseType.Redis:
         case DatabaseType.ElasticSearch:
+        case DatabaseType.Memcached:
             return true;
     }
     return false;
@@ -94,6 +95,8 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
             return singular ? "Collection" : "Collections";
         case DatabaseType.Redis:
             return singular ? "Key" : "Keys";
+        case DatabaseType.Memcached:
+            return singular ? "Item" : "Items";
         case DatabaseType.MySql:
         case DatabaseType.Postgres:
         case DatabaseType.MariaDb:

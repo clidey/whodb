@@ -111,6 +111,7 @@ import {Tip} from "./tip";
 import {formatShortcut} from "@/utils/platform";
 import {matchesShortcut, SHORTCUTS} from "@/utils/shortcuts";
 import {isNoSQL} from "@/utils/functions";
+import {databaseSupportsMockData} from "@/utils/database-features";
 
 // Dynamically load EE Export component
 // const EEExport = loadEEComponent(
@@ -377,7 +378,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
-    const isMockDataSupported = databaseType !== "Redis" && databaseType !== "ElasticSearch" && isMockDataGenerationAllowed;
+    const isMockDataSupported = databaseSupportsMockData(databaseType) && isMockDataGenerationAllowed;
     const isClickHouse = databaseType === "ClickHouse";
     const isImportSupported = !isNoSQL(databaseType ?? "");
     const { data: maxRowData } = useMockDataMaxRowCountQuery();

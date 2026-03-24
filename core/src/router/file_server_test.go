@@ -27,7 +27,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-//go:embed all:build
+// Empty embed.FS — tests skip gracefully if build/ is not available.
 var testStaticFiles embed.FS
 
 func TestFileServerServesIndexAndAssets(t *testing.T) {

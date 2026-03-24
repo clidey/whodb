@@ -269,4 +269,37 @@ test.describe('Data Export', () => {
             await expect(page.locator('[role="dialog"]')).not.toBeAttached();
         });
     }, { features: ['export'] });
+
+    // Cache Databases (Memcached)
+    forEachDatabase('cache', (db) => {
+        const tableName = db.testTable.name;
+
+        test('exports item data as NDJSON by default', async ({ whodb, page }) => {
+            await whodb.data(tableName);
+
+            const exportPromise = page.waitForResponse(resp =>
+                resp.url().includes('/api/export') && resp.request().method() === 'POST'
+            );
+
+            await page.locator('[data-testid="export-all-button"]').click();
+            await expect(page.locator('h2').filter({ hasText: 'Export Data' }).first()).toBeVisible();
+
+            await expect(page.locator('[data-testid="export-format-select"]')).toContainText('JSON');
+
+            await whodb.confirmExport();
+
+            const response = await exportPromise;
+            expect(response.status()).toEqual(200);
+            const request = response.request();
+            const postData = JSON.parse(request.postData());
+            expect(postData.format).toEqual('ndjson');
+            const headers = response.headers();
+            const cd = headers['content-disposition'];
+            expect(typeof cd).toEqual('string');
+            expect(cd).toMatch(/\.ndjson/i);
+
+            await page.keyboard.press('Escape');
+            await expect(page.locator('[role="dialog"]')).not.toBeAttached();
+        });
+    }, { features: ['export'] });
 });

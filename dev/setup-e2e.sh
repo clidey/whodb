@@ -50,6 +50,7 @@ get_docker_services() {
         sqlite)      echo "" ;;  # No Docker service needed
         mongodb)     echo "e2e_mongo e2e_mongo_ssl" ;;
         redis)       echo "e2e_redis redis-init e2e_redis_ssl" ;;
+        memcached)   echo "e2e_memcached memcached-init e2e_memcached_ssl" ;;
         elasticsearch) echo "e2e_elasticsearch elasticsearch-init e2e_elasticsearch_ssl" ;;
         clickhouse)  echo "e2e_clickhouse e2e_clickhouse_ssl" ;;
         all)         echo "" ;;  # Empty means start all
@@ -66,6 +67,7 @@ get_db_port() {
         mariadb)     echo "3307" ;;
         mongodb)     echo "27017" ;;
         redis)       echo "6379" ;;
+        memcached)   echo "11211" ;;
         elasticsearch) echo "9200" ;;
         clickhouse)  echo "8123" ;;
         *)           echo "" ;;
@@ -78,7 +80,7 @@ get_db_wait_time() {
         postgres|mysql|mysql8|mariadb) echo "90" ;;  # Heavy init scripts
         elasticsearch)                  echo "60" ;;  # Can be slow
         mongodb|clickhouse)             echo "30" ;;  # Light init
-        redis)                          echo "20" ;;  # Very fast
+        redis|memcached)                 echo "20" ;;  # Very fast
         *)                              echo "30" ;;
     esac
 }
@@ -91,6 +93,7 @@ get_ssl_port() {
         mariadb)       echo "3310" ;;
         mongodb)       echo "27018" ;;
         redis)         echo "6380" ;;
+        memcached)     echo "11212" ;;
         clickhouse)    echo "9440" ;;
         elasticsearch) echo "9201" ;;
         *)             echo "" ;;
