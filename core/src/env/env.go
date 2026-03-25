@@ -186,12 +186,13 @@ func GetOpenAIEndpoint() string {
 }
 
 // GetLMStudioEndpoint returns the configured LM Studio base URL, or the
-// default localhost:1234 endpoint if no override is set.
+// default localhost:1234 endpoint if no override is set. The result is
+// Docker/WSL2-aware so callers don't need to wrap it with ResolveLocalURL.
 func GetLMStudioEndpoint() string {
 	if LMStudioBaseURL != "" {
-		return LMStudioBaseURL
+		return common.ResolveLocalURL(LMStudioBaseURL)
 	}
-	return "http://localhost:1234/v1"
+	return common.ResolveLocalURL("http://localhost:1234/v1")
 }
 
 func getMaxPageSize() int {

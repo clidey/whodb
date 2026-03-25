@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package providers
 
 import (
@@ -13,24 +29,30 @@ const (
 	LMStudio_LLMType LLMType = "LMStudio"
 )
 
+// LMStudioProvider implements the AIProvider interface for local LM Studio instances.
 type LMStudioProvider struct{}
 
+// NewLMStudioProvider creates a new LM Studio provider instance.
 func NewLMStudioProvider() *LMStudioProvider {
 	return &LMStudioProvider{}
 }
 
+// GetType returns the provider type.
 func (p *LMStudioProvider) GetType() LLMType {
 	return LMStudio_LLMType
 }
 
+// GetProtocol returns "openai" — LM Studio uses the OpenAI-compatible streaming protocol.
 func (p *LMStudioProvider) GetProtocol() string {
 	return "openai"
 }
 
+// GetDefaultEndpoint returns the default LM Studio API endpoint.
 func (p *LMStudioProvider) GetDefaultEndpoint() string {
 	return "http://localhost:1234/v1"
 }
 
+// ValidateConfig validates the provider configuration.
 func (p *LMStudioProvider) ValidateConfig(config *ProviderConfig) error {
 	if config.Endpoint == "" {
 		config.Endpoint = p.GetDefaultEndpoint()

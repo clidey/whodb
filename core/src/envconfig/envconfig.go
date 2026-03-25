@@ -262,7 +262,7 @@ func GetConfiguredChatProviders() []env.ChatProvider {
 		Type:       "LMStudio",
 		Name:       name,
 		APIKey:     env.LMStudioAPIKey,
-		Endpoint:   common.ResolveLocalURL(env.GetLMStudioEndpoint()),
+		Endpoint:   env.GetLMStudioEndpoint(),
 		ProviderId: "lmstudio-1",
 	})
 
