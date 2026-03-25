@@ -60,7 +60,7 @@ export function validateFixture(fixture, name) {
     }
   }
 
-  const validCategories = ["sql", "document", "keyvalue"];
+  const validCategories = ["sql", "document", "keyvalue", "cache"];
   if (fixture.category && !validCategories.includes(fixture.category)) {
     errors.push(
       `Invalid category: ${fixture.category}. Must be one of: ${validCategories.join(", ")}`

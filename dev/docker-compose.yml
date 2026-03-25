@@ -155,6 +155,29 @@ services:
     networks:
       - db
 
+  e2e_memcached:
+    image: memcached:latest
+    container_name: e2e_memcached
+    ports:
+      - "11211:11211"
+    networks:
+      - db
+    command: memcached -m 64
+
+  memcached-init:
+    image: alpine:latest
+    depends_on:
+      - e2e_memcached
+    volumes:
+      - ./sample-data/memcached/init.sh:/init.sh
+    entrypoint: >
+      sh -c "
+        chmod +x /init.sh &&
+        /init.sh
+      "
+    networks:
+      - db
+
   # todo: this version is old, need to look into upgrading to a newer
   e2e_elasticsearch:
     image: elasticsearch:8.11.1
@@ -364,6 +387,46 @@ services:
       REDIS_PASSWORD: password
       REDIS_CACERT: /certs/ca.pem
     entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - db
+
+  # SSL-enabled Memcached for SSL E2E tests
+  e2e_memcached_ssl:
+    profiles: ["ssl"]
+    image: memcached:latest
+    container_name: e2e_memcached_ssl
+    ports:
+      - "11212:11211"
+    volumes:
+      - ./certs/server/memcached/server-cert.pem:/tls/server-cert.pem:ro
+      - ./certs/server/memcached/server-key.pem:/tls/server-key.pem:ro
+      - ./certs/ca/memcached/ca.pem:/tls/ca.pem:ro
+    networks:
+      - db
+    command: memcached -m 64 -Z -o ssl_chain_cert=/tls/server-cert.pem,ssl_key=/tls/server-key.pem
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/11211"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  memcached-ssl-init:
+    profiles: ["ssl"]
+    image: debian:bookworm-slim
+    depends_on:
+      e2e_memcached_ssl:
+        condition: service_healthy
+    volumes:
+      - ./sample-data/memcached/init.sh:/init.sh:ro
+    environment:
+      MEMCACHED_HOST: e2e_memcached_ssl
+      MEMCACHED_PORT: "11211"
+      MEMCACHED_TLS: "true"
+    entrypoint: >
+      sh -c "
+        apt-get update -qq && apt-get install -y -qq openssl netcat-openbsd >/dev/null 2>&1 &&
+        /bin/sh /init.sh
+      "
     networks:
       - db
 
