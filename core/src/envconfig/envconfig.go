@@ -254,7 +254,19 @@ func GetConfiguredChatProviders() []env.ChatProvider {
 		})
 	}
 
-	name := env.OllamaName
+	name := env.LMStudioName
+	if name == "" {
+		name = "LM Studio"
+	}
+	providers = append(providers, env.ChatProvider{
+		Type:       "LMStudio",
+		Name:       name,
+		APIKey:     env.LMStudioAPIKey,
+		Endpoint:   common.ResolveLocalURL(env.GetLMStudioEndpoint()),
+		ProviderId: "lmstudio-1",
+	})
+
+	name = env.OllamaName
 	if name == "" {
 		name = "Ollama"
 	}
