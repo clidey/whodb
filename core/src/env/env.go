@@ -142,33 +142,18 @@ type ResolvedCredentials struct {
 	Endpoint  string // Base URL
 }
 
+// GetOllamaEndpoint returns the resolved Ollama API endpoint, accounting for
+// WHODB_OLLAMA_HOST/PORT overrides and Docker/WSL2 environments.
 func GetOllamaEndpoint() string {
-	host, port := GetOllamaHost()
-	return fmt.Sprintf("http://%s:%s/api", host, port)
-}
-
-// GetOllamaHost returns the resolved Ollama host and port, accounting for
-// Docker/WSL2 environments and WHODB_OLLAMA_HOST/PORT overrides.
-func GetOllamaHost() (string, string) {
 	host := "localhost"
 	port := "11434"
-
-	if common.IsRunningInsideDocker() {
-		host = "host.docker.internal"
-	} else if common.IsRunningInsideWSL2() {
-		if wslHost := common.GetWSL2WindowsHost(); wslHost != "" {
-			host = wslHost
-		}
-	}
-
 	if OllamaHost != "" {
 		host = OllamaHost
 	}
 	if OllamaPort != "" {
 		port = OllamaPort
 	}
-
-	return host, port
+	return common.ResolveLocalURL(fmt.Sprintf("http://%s:%s/api", host, port))
 }
 
 func GetAnthropicEndpoint() string {
