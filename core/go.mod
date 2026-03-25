@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.20
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.48.12
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.51.12
-	github.com/aws/aws-sdk-go-v2/service/rds v1.116.3
+	github.com/aws/aws-sdk-go-v2/service/rds v1.117.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.9
 	github.com/aws/smithy-go v1.24.2
 	github.com/boundaryml/baml v0.218.1
