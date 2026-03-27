@@ -17,7 +17,7 @@
 package common
 
 import (
-	_ "github.com/clidey/whodb/core/src/bamlconfig" // Must be first - sets BAML_LOG before native library loads
+	_ "github.com/clidey/whodb/core/src/bamlinit" // Must be first - sets BAML env vars before native library loads
 
 	"embed"
 	"os"
