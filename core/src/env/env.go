@@ -63,6 +63,10 @@ var OpenAIName = os.Getenv("WHODB_OPENAI_NAME")
 
 var OllamaName = os.Getenv("WHODB_OLLAMA_NAME")
 
+var LMStudioBaseURL = os.Getenv("WHODB_LMSTUDIO_BASE_URL")
+var LMStudioAPIKey = os.Getenv("WHODB_LMSTUDIO_API_KEY")
+var LMStudioName = os.Getenv("WHODB_LMSTUDIO_NAME")
+
 var AllowedOrigins = common.FilterList(strings.Split(os.Getenv("WHODB_ALLOWED_ORIGINS"), ","), func(item string) bool {
 	return item != ""
 })
@@ -138,33 +142,18 @@ type ResolvedCredentials struct {
 	Endpoint  string // Base URL
 }
 
+// GetOllamaEndpoint returns the resolved Ollama API endpoint, accounting for
+// WHODB_OLLAMA_HOST/PORT overrides and Docker/WSL2 environments.
 func GetOllamaEndpoint() string {
-	host, port := GetOllamaHost()
-	return fmt.Sprintf("http://%s:%s/api", host, port)
-}
-
-// GetOllamaHost returns the resolved Ollama host and port, accounting for
-// Docker/WSL2 environments and WHODB_OLLAMA_HOST/PORT overrides.
-func GetOllamaHost() (string, string) {
 	host := "localhost"
 	port := "11434"
-
-	if common.IsRunningInsideDocker() {
-		host = "host.docker.internal"
-	} else if common.IsRunningInsideWSL2() {
-		if wslHost := common.GetWSL2WindowsHost(); wslHost != "" {
-			host = wslHost
-		}
-	}
-
 	if OllamaHost != "" {
 		host = OllamaHost
 	}
 	if OllamaPort != "" {
 		port = OllamaPort
 	}
-
-	return host, port
+	return common.ResolveLocalURL(fmt.Sprintf("http://%s:%s/api", host, port))
 }
 
 func GetAnthropicEndpoint() string {
@@ -181,6 +170,16 @@ func GetOpenAIEndpoint() string {
 	return "https://api.openai.com/v1"
 }
 
+// GetLMStudioEndpoint returns the configured LM Studio base URL, or the
+// default localhost:1234 endpoint if no override is set. The result is
+// Docker/WSL2-aware so callers don't need to wrap it with ResolveLocalURL.
+func GetLMStudioEndpoint() string {
+	if LMStudioBaseURL != "" {
+		return common.ResolveLocalURL(LMStudioBaseURL)
+	}
+	return common.ResolveLocalURL("http://localhost:1234/v1")
+}
+
 func getMaxPageSize() int {
 	val := os.Getenv("WHODB_MAX_PAGE_SIZE")
 	if val == "" {
@@ -192,4 +191,3 @@ func getMaxPageSize() int {
 	}
 	return n
 }
-

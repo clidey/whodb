@@ -19,8 +19,8 @@ package main
 import (
 	"os"
 
-	_ "github.com/clidey/whodb/cli/internal/baml"   // Must be first - downloads BAML library if needed
-	_ "github.com/clidey/whodb/core/src/bamlconfig" // Sets BAML_LOG before native library loads
+	_ "github.com/clidey/whodb/cli/internal/baml" // Must be first - downloads BAML library if needed
+	_ "github.com/clidey/whodb/core/src/bamlinit" // Sets BAML env vars before native library loads
 
 	"github.com/clidey/whodb/cli/cmd"
 	"github.com/clidey/whodb/cli/pkg/crash"

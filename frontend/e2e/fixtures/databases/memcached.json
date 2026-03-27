@@ -1,0 +1,107 @@
+{
+  "type": "Memcached",
+  "category": "cache",
+  "testTable": {
+    "name": "user:1",
+    "idField": "Value",
+    "identifierField": "Value",
+    "firstName": "Value",
+    "identifierColIndex": 1,
+    "identifierRowIndex": 0,
+    "testValues": {
+      "original": "{\"id\":1,\"username\":\"johndoe\",\"email\":\"john@example.com\",\"created_at\":\"2023-01-15T10:30:00Z\"}",
+      "modified": "{\"id\":1,\"username\":\"johndoe_updated\",\"email\":\"john@example.com\",\"created_at\":\"2023-01-15T10:30:00Z\"}",
+      "rowIndex": 0
+    },
+    "searchTerm": "user",
+    "whereConditions": {
+      "testId1": "user:1",
+      "testId2": "user:2",
+      "testId3": "user:3",
+      "thirdColumn": "Value",
+      "thirdValue": "",
+      "expectedValue": ""
+    },
+    "typeCastingTable": "test_casting"
+  },
+  "whereOperators": {
+    "equals": "="
+  },
+  "connection": {
+    "host": "localhost",
+    "port": 11211,
+    "user": null,
+    "password": null,
+    "database": null,
+    "advanced": {}
+  },
+  "schema": null,
+  "mockData": {
+    "supportedTable": "user:1",
+    "tableWithFKs": "orders"
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": false
+  },
+  "features": {
+    "graph": false,
+    "export": true,
+    "scratchpad": false,
+    "mockData": false,
+    "chat": false,
+    "whereConditions": false,
+    "queryHistory": false,
+    "pagination": false,
+    "documentEdit": true
+  },
+  "featureNotes": {
+    "graph": "Graph view not applicable for Memcached - key-value store has no relationships",
+    "export": "Export supported for Memcached items as NDJSON",
+    "scratchpad": "Scratchpad requires a query language which Memcached does not have",
+    "mockData": "Mock data generation not applicable for key-value stores",
+    "chat": "AI chat not supported for Memcached",
+    "whereConditions": "Where conditions not applicable for key-value lookups",
+    "queryHistory": "Query history not supported for key-value operations",
+    "pagination": "Memcached items are fetched individually, no server-side pagination"
+  },
+  "expectedKeys": [
+    "cache:categories",
+    "cache:homepage",
+    "counter:api_calls",
+    "counter:page_views",
+    "inventory:product:1",
+    "inventory:product:2",
+    "inventory:product:3",
+    "inventory:product:4",
+    "inventory:product:5",
+    "order:1",
+    "order:2",
+    "order:3",
+    "product:1",
+    "product:2",
+    "product:3",
+    "product:4",
+    "product:5",
+    "session:abc123",
+    "session:def456",
+    "session:ghi789",
+    "user:1",
+    "user:2",
+    "user:3",
+    "user:4",
+    "user:5"
+  ],
+  "ssl": {
+    "port": 11212,
+    "caCertPath": "/app/certs/ca/memcached/ca.pem",
+    "modes": [
+      { "mode": "disabled", "shouldSucceed": false, "needsCert": false, "description": "No TLS - server requires TLS" },
+      { "mode": "enabled", "shouldSucceed": true, "needsCert": true, "description": "TLS enabled with CA verification" },
+      { "mode": "insecure", "shouldSucceed": true, "needsCert": false, "description": "TLS without certificate verification" }
+    ],
+    "negativeTests": [
+      { "mode": "enabled", "withCert": false, "description": "enabled without CA cert should fail" }
+    ]
+  }
+}

@@ -1019,11 +1019,11 @@ export const ExploreStorageUnit: FC = () => {
                         allowImport={true}
                         enableKeyboardShortcuts={true}
                     >
-                        <div className="flex gap-2">
+                        {current?.Type !== DatabaseType.Memcached && <div className="flex gap-2">
                             <Button onClick={handleOpenAddSheet} disabled={adding} data-testid="add-row-button">
                                 <PlusCircleIcon className="w-4 h-4" /> {t('addRowButton')}
                             </Button>
-                        </div>
+                        </div>}
                     </StorageUnitTable>
                 ) : null}
             </div>

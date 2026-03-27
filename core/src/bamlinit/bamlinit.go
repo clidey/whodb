@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-// Package bamlconfig sets BAML environment defaults before the BAML native library loads.
-// This package MUST be imported first (before any other imports) in main packages
-// to ensure the environment variable is set before baml_client is imported.
+// Package bamlinit sets BAML environment defaults before the BAML native library loads.
 //
-// Usage in main.go:
+// This package MUST have zero BAML dependencies so its init() runs before BAML's
+// init() loads the native library. Import it first (blank import) in main packages:
 //
 //	import (
-//		_ "github.com/clidey/whodb/core/src/bamlconfig" // Must be first!
+//		_ "github.com/clidey/whodb/core/src/bamlinit" // Must be first!
 //		// ... other imports
 //	)
-package bamlconfig
+//
+// The bamlconfig package contains the BAML client usage code (chat, etc.) and
+// DOES import BAML — keep that separate from this package.
+package bamlinit
 
 import (
 	"os"
@@ -34,8 +36,8 @@ import (
 )
 
 func init() {
-	// Set BAML_LIBRARY_PATH for macOS desktop builds
-	// This must happen before BAML's init() loads the native library
+	// Set BAML_LIBRARY_PATH for macOS desktop builds.
+	// This must happen before BAML's init() loads the native library.
 	configureBamlLibraryPath()
 
 	// Don't override if user explicitly set BAML_LOG

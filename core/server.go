@@ -17,7 +17,7 @@
 package main
 
 import (
-	_ "github.com/clidey/whodb/core/src/bamlconfig" // Must be first - sets BAML_LOG before native library loads
+	_ "github.com/clidey/whodb/core/src/bamlinit" // Must be first - sets BAML env vars before native library loads
 
 	"context"
 	"fmt"
@@ -28,6 +28,8 @@ import (
 	"syscall"
 	"time"
 
+	"errors"
+	"flag"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/env"
@@ -35,8 +37,6 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
-	"errors"
-	"flag"
 )
 
 const defaultPort = "8080"

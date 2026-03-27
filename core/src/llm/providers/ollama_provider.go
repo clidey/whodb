@@ -50,8 +50,7 @@ func (p *OllamaProvider) GetProtocol() string { return "openai" }
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).
 func (p *OllamaProvider) GetDefaultEndpoint() string {
-	host, port := env.GetOllamaHost()
-	return fmt.Sprintf("http://%s:%s/api", host, port)
+	return env.GetOllamaEndpoint()
 }
 
 // ValidateConfig validates the provider configuration.

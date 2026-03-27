@@ -33,7 +33,7 @@ import (
 	"github.com/clidey/whodb/core/src/router"
 )
 
-//go:embed build/*
+// Empty embed.FS — tests run the frontend separately, no build/ needed.
 var staticFilesTest embed.FS
 
 const defaultPortTest = "8080"

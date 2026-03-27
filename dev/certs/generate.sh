@@ -137,6 +137,7 @@ chmod 644 "server/mongodb/mongodb.pem"
 
 # Redis - standard certs work
 generate_standard_certs "redis" "DNS.5 = e2e_redis_ssl"
+generate_standard_certs "memcached" "DNS.5 = e2e_memcached_ssl"
 # Redis also needs a combined file sometimes
 cat "server/redis/server-cert.pem" "server/redis/server-key.pem" > "server/redis/redis.pem"
 chmod 644 "server/redis/redis.pem"
