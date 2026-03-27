@@ -4,11 +4,12 @@ go 1.26.1
 
 require (
 	github.com/clidey/whodb/core v0.0.0
-	github.com/wailsapp/wails/v2 v2.11.0
+	github.com/wailsapp/wails/v2 v2.12.0
 )
 
 require (
 	filippo.io/edwards25519 v1.1.1 // indirect
+	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/99designs/gqlgen v0.17.88 // indirect
 	github.com/ClickHouse/ch-go v0.71.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0 // indirect
