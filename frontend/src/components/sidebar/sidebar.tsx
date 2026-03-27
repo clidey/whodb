@@ -268,8 +268,8 @@ export const Sidebar: FC = () => {
         }
     }, []);
 
-    // Refetch databases, schemas, and SSL status when the current profile changes
-    // This ensures queries use the correct auth context after profile switch
+    // Refetch databases, schemas, and SSL status when the connection context changes
+    // (profile switch or database switch within the same profile)
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -287,7 +287,7 @@ export const Sidebar: FC = () => {
                 dispatch(AuthActions.setSSLStatus(data.SSLStatus));
             }
         });
-    }, [current?.Id]);
+    }, [current?.Id, current?.Database]);
 
     // Listen for menu event to open add profile form
     useEffect(() => {
