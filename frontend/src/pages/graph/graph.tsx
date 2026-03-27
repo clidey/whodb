@@ -188,14 +188,15 @@ export const GraphPage: FC = () => {
         fetchPolicy: "cache-and-network",
     });
 
-    // Refetch when profile changes (current?.Id changes means different server/credentials)
+    // Refetch when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
+    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetchGraph();
             refetchStorageUnits();
         }
-    }, [currentProfileId, refetchGraph, refetchStorageUnits]);
+    }, [currentProfileId, currentDatabase, refetchGraph, refetchStorageUnits]);
 
     // Default selection logic: auto-select up to 10 units
     useEffect(() => {

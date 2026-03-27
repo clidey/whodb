@@ -266,13 +266,14 @@ export const StorageUnitPage: FC = () => {
         },
     });
 
-    // Refetch storage units when profile changes (current?.Id changes means different server/credentials)
+    // Refetch storage units when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
+    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetch();
         }
-    }, [currentProfileId, refetch]);
+    }, [currentProfileId, currentDatabase, refetch]);
 
     // Lazy-load columns for list view expanded detail
     useEffect(() => {

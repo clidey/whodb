@@ -69,13 +69,14 @@ export const SchemaViewer: FC = () => {
         skip: !current || !schemaValue,
     });
 
-    // Refetch when profile changes (current?.Id changes means different server/credentials)
+    // Refetch when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
+    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetch();
         }
-    }, [currentProfileId, refetch]);
+    }, [currentProfileId, currentDatabase, refetch]);
 
     // Group storage units by type for tree display, with search filter
     const treeData: TreeDataItem[] = useMemo(() => {
