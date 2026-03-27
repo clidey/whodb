@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/clidey/whodb/core/src/plugins/clickhouse"
+	"github.com/clidey/whodb/core/src/plugins/duckdb"
 	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
 	"github.com/clidey/whodb/core/src/plugins/mongodb"
 	"github.com/clidey/whodb/core/src/plugins/mysql"
@@ -61,6 +62,7 @@ func InitializeEngine() *engine.Engine {
 	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
 	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
 	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
+	MainEngine.RegistryPlugin(duckdb.NewDuckDBPlugin())
 
 	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
 

@@ -1,0 +1,279 @@
+{
+  "type": "DuckDB",
+  "id": "duckdb",
+  "category": "sql",
+  "dataTypesTable": "data_types",
+  "testTable": {
+    "name": "users",
+    "identifierField": "username",
+    "identifierColIndex": 1,
+    "idField": "id",
+    "firstId": "1",
+    "firstName": "john_doe",
+    "testValues": {
+      "original": "john_doe",
+      "modified": "john_doe1",
+      "rowIndex": 0
+    },
+    "searchTerm": "john",
+    "whereConditions": {
+      "testId1": "1",
+      "testId2": "2",
+      "testId3": "3",
+      "thirdColumn": "email",
+      "thirdValue": "jane@example.com",
+      "expectedValue": "admin_user"
+    },
+    "typeCastingTable": "test_casting"
+  },
+  "connection": {
+    "host": null,
+    "port": null,
+    "user": null,
+    "password": null,
+    "database": "e2e_test.duckdb",
+    "advanced": {}
+  },
+  "schema": "main",
+  "whereOperators": {
+    "equals": "=",
+    "notEquals": "!=",
+    "greaterThan": ">",
+    "lessThan": "<",
+    "greaterOrEqual": ">=",
+    "lessOrEqual": "<="
+  },
+  "sidebar": {
+    "showsDatabaseDropdown": false,
+    "showsSchemaDropdown": true
+  },
+  "features": {
+    "graph": true,
+    "export": true,
+    "scratchpad": true,
+    "mockData": true,
+    "chat": true,
+    "whereConditions": true,
+    "queryHistory": true,
+    "crud": true,
+    "import": true,
+    "pagination": true,
+    "documentEdit": true
+  },
+  "import": {
+    "sampleDataDir": "duckdb",
+    "supportsMultiStatement": true,
+    "csvTable": "users",
+    "excelTable": "products",
+    "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]
+  },
+  "featureNotes": {},
+  "expectedTables": [
+    "data_types",
+    "order_items",
+    "order_summary",
+    "orders",
+    "payments",
+    "products",
+    "test_casting",
+    "users"
+  ],
+  "tables": {
+    "users": {
+      "columns": {
+        "id": "integer",
+        "username": "varchar",
+        "email": "varchar",
+        "password": "varchar",
+        "created_at": "timestamp"
+      },
+      "expectedColumns": [
+        "",
+        "id",
+        "username",
+        "email",
+        "password",
+        "created_at"
+      ],
+      "testData": {
+        "initial": [
+          [
+            "",
+            "1",
+            "john_doe",
+            "john@example.com",
+            "securepassword1"
+          ],
+          [
+            "",
+            "2",
+            "jane_smith",
+            "jane@example.com",
+            "securepassword2"
+          ],
+          [
+            "",
+            "3",
+            "admin_user",
+            "admin@example.com",
+            "adminpass1"
+          ]
+        ],
+        "newRow": {
+          "id": "9999",
+          "username": "alice_wonder",
+          "email": "alice@example.com",
+          "password": "securepassword2",
+          "created_at": "2022-02-02"
+        }
+      },
+      "metadata": {
+        "type": "base table",
+        "hasSize": false,
+        "hasCount": false
+      }
+    },
+    "test_casting": {
+      "columns": {
+        "id": "INTEGER",
+        "bigint_col": "BIGINT",
+        "integer_col": "INTEGER",
+        "smallint_col": "SMALLINT",
+        "numeric_col": "DOUBLE",
+        "description": "VARCHAR"
+      },
+      "testData": {
+        "newRow": {
+          "bigint_col": "5000000000",
+          "integer_col": "42",
+          "smallint_col": "256",
+          "numeric_col": "9876.54",
+          "description": "Test casting from strings"
+        }
+      }
+    },
+    "data_types": {
+      "columns": {
+        "id": "INTEGER",
+        "col_tinyint": "TINYINT",
+        "col_smallint": "SMALLINT",
+        "col_integer": "INTEGER",
+        "col_bigint": "BIGINT",
+        "col_hugeint": "HUGEINT",
+        "col_utinyint": "UTINYINT",
+        "col_usmallint": "USMALLINT",
+        "col_uinteger": "UINTEGER",
+        "col_ubigint": "UBIGINT",
+        "col_float": "FLOAT",
+        "col_double": "DOUBLE",
+        "col_decimal": "DECIMAL(10,2)",
+        "col_varchar": "VARCHAR",
+        "col_blob": "BLOB",
+        "col_boolean": "BOOLEAN",
+        "col_date": "DATE",
+        "col_time": "TIME",
+        "col_timestamp": "TIMESTAMP",
+        "col_timestamptz": "TIMESTAMP WITH TIME ZONE",
+        "col_interval": "INTERVAL",
+        "col_json": "JSON",
+        "col_uuid": "UUID"
+      },
+      "testData": {
+        "typeTests": {
+          "col_integer": {
+            "type": "INTEGER",
+            "addValue": "2000000000",
+            "deleteValue": "2100000000",
+            "originalValue": "1000000",
+            "updateValue": "1500000000"
+          },
+          "col_double": {
+            "type": "DOUBLE",
+            "addValue": "3.5",
+            "deleteValue": "6.5",
+            "originalValue": "3.14159265358979",
+            "updateValue": "2.5"
+          },
+          "col_varchar": {
+            "type": "VARCHAR",
+            "addValue": "new text content",
+            "deleteValue": "delete text content",
+            "originalValue": "text_value",
+            "updateValue": "updated text content"
+          },
+          "col_decimal": {
+            "type": "DECIMAL(10,2)",
+            "addValue": "12345.67",
+            "deleteValue": "54321.89",
+            "originalValue": "12345.67",
+            "updateValue": "98765.43"
+          },
+          "col_boolean": {
+            "type": "BOOLEAN",
+            "addValue": "false",
+            "deleteValue": "false",
+            "originalValue": "true",
+            "updateValue": "false"
+          },
+          "col_date": {
+            "type": "DATE",
+            "addValue": "2025-12-31",
+            "deleteValue": "2025-11-15",
+            "originalValue": "2025-01-01",
+            "updateValue": "2025-06-15"
+          },
+          "col_timestamp": {
+            "type": "TIMESTAMP",
+            "addValue": "2025-12-31 23:59:59",
+            "deleteValue": "2025-11-15 10:30:00",
+            "originalValue": "2025-01-01 12:00:00",
+            "updateValue": "2025-06-15 12:30:00"
+          }
+        }
+      }
+    }
+  },
+  "graph": {
+    "expectedNodes": {
+      "users": [],
+      "orders": [
+        "users"
+      ],
+      "order_items": [
+        "orders",
+        "products"
+      ],
+      "products": [],
+      "payments": [
+        "orders"
+      ]
+    }
+  },
+  "sql": {
+    "schemaPrefix": "main.",
+    "selectAllUsers": "SELECT * FROM main.users ORDER BY id;",
+    "selectUserById": "SELECT * FROM main.users WHERE id=1;",
+    "updateUser": "UPDATE main.users SET username='john_doe1' WHERE id=1",
+    "revertUser": "UPDATE main.users SET username='john_doe' WHERE id=1",
+    "countUsers": "SELECT COUNT(*) as user_count FROM main.users;",
+    "countColumn": "user_count",
+    "selectUsersFiltered": "SELECT username, email FROM main.users WHERE id > 1;",
+    "invalidQuery": "SELECT * FROM main.users1;",
+    "permissionDeniedQuery": "CREATE TABLE main.users (id INT)",
+    "emptyResultQuery": "SELECT * FROM main.users WHERE id = -99999",
+    "errorPatterns": {
+      "tableNotFound": "Table with name users1 does not exist"
+    }
+  },
+  "mockData": {
+    "supportedTable": "products",
+    "tableWithFKs": "orders",
+    "fkRelationships": {
+      "orders": {
+        "parentTable": "users",
+        "fkColumn": "user_id",
+        "parentPkColumn": "id"
+      }
+    }
+  }
+}

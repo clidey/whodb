@@ -270,6 +270,20 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         usesSchemaForGraph: false,
         sslModes: SSL_MODES_SIMPLE,
     },
+    {
+        id: "DuckDB",
+        label: "DuckDB",
+        icon: Icons.Logos.DuckDB,
+        extra: {},
+        fields: {
+            database: true,
+        },
+        supportsModifiers: true,
+        supportsScratchpad: true,
+        supportsSchema: true,
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,
+    },
     // AWS managed database types (discovered via AWS providers, use underlying plugins)
     {
         id: "ElastiCache",

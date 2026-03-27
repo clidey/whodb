@@ -203,7 +203,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const handleSubmit = useCallback(() => {
         if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
-            || (databaseType.id === DatabaseType.Sqlite3 && database.length === 0)
+            || ((databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDb) && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
             setIsAutoLoggingIn(false);
             return setError(t('allFieldsRequired'));
@@ -423,13 +423,6 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [dispatch, loginWithProfile, navigate, profiles?.Profiles, onLoginSuccess, markFirstLoginComplete, t]);
 
     const handleDatabaseTypeChange = useCallback((item: IDatabaseDropdownItem) => {
-        if (item.id === DatabaseType.Sqlite3) {
-            getDatabases({
-                variables: {
-                    type: DatabaseType.Sqlite3,
-                },
-            });
-        }
         setHostName("");
         setUsername("");
         setPassword("");
@@ -437,11 +430,20 @@ export const LoginForm: FC<LoginFormProps> = ({
         setDatabaseType(item);
         setAdvancedForm(item.extra ?? {});
         setFormResetKey(k => k + 1);
-    }, [getDatabases]);
+    }, []);
 
     const handleAdvancedToggle = useCallback(() => {
         setShowAdvanced(a => !a);
     }, []);
+
+    // Fetch available databases for file-based types after the form re-mounts.
+    // This must be in useEffect (not in handleDatabaseTypeChange) because
+    // setFormResetKey causes a re-mount that resets the useLazyQuery hook state.
+    useEffect(() => {
+        if (databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDb) {
+            getDatabases({ variables: { type: databaseType.id as DatabaseType } });
+        }
+    }, [databaseType.id, getDatabases, formResetKey]);
 
     const handleAdvancedForm = useCallback((key: string, value: string) => {
         setAdvancedForm(form => {
@@ -796,7 +798,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 setAdvancedForm={setAdvancedForm}
             />;
         }
-        if (databaseType.id === DatabaseType.Sqlite3) {
+        if (databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDb) {
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
                     <Label htmlFor="sqlite-database">{t('database')}</Label>
@@ -880,7 +882,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (databaseType.customFormRenderer) {
             return hostName.length > 0 || Object.keys(advancedForm).length > 0;
         }
-        if (databaseType.id === DatabaseType.Sqlite3) {
+        if (databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDb) {
             return database.length > 0;
         }
         const redisCompatible = [DatabaseType.Redis, "ElastiCache"];
@@ -1023,7 +1025,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 })}>
                     {!disableCredentialForm && <>
                     <Button className={classNames({
-                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3 || databaseType.customFormRenderer != null,
+                        "hidden": advancedForm == null || databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDb || databaseType.customFormRenderer != null,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>

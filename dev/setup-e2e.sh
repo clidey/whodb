@@ -48,6 +48,7 @@ get_docker_services() {
         mysql8)      echo "e2e_mysql_842" ;;
         mariadb)     echo "e2e_mariadb e2e_mariadb_ssl" ;;
         sqlite)      echo "" ;;  # No Docker service needed
+        duckdb)      echo "" ;;  # No Docker service needed
         mongodb)     echo "e2e_mongo e2e_mongo_ssl" ;;
         redis)       echo "e2e_redis redis-init e2e_redis_ssl" ;;
         elasticsearch) echo "e2e_elasticsearch elasticsearch-init e2e_elasticsearch_ssl" ;;
@@ -186,6 +187,36 @@ if [ "$SQLITE_NEEDS_INIT" = "true" ]; then
     echo "✅ SQLite E2E database ready at core/tmp/e2e_test.db"
 fi
 
+# Setup DuckDB (with smart initialization check, uses Docker CLI)
+DUCKDB_DB="$PROJECT_ROOT/core/tmp/e2e_test.duckdb"
+DUCKDB_NEEDS_INIT=true
+
+if [ -f "$DUCKDB_DB" ]; then
+    # Check if database has expected structure
+    if docker run --rm -v "$PROJECT_ROOT/core/tmp:/db" --entrypoint /duckdb duckdb/duckdb /db/e2e_test.duckdb -c "SELECT table_name FROM information_schema.tables WHERE table_schema='main' AND table_name='users';" 2>/dev/null | grep -q users; then
+        echo "✅ DuckDB E2E database already initialized, skipping setup"
+        DUCKDB_NEEDS_INIT=false
+    else
+        echo "⚠️ DuckDB database exists but is incomplete, reinitializing..."
+        rm -f "$DUCKDB_DB"
+    fi
+fi
+
+if [ "$DUCKDB_NEEDS_INIT" = "true" ]; then
+    echo "🔧 Setting up DuckDB E2E database..."
+
+    mkdir -p "$PROJECT_ROOT/core/tmp"
+
+    docker run --rm -i \
+        -v "$PROJECT_ROOT/core/tmp:/db" \
+        --entrypoint /duckdb \
+        duckdb/duckdb /db/e2e_test.duckdb < "$SCRIPT_DIR/sample-data/duckdb/data.sql"
+
+    chmod 644 "$DUCKDB_DB"
+
+    echo "✅ DuckDB E2E database ready at core/tmp/e2e_test.duckdb"
+fi
+
 # Start CE database services (skip if EE-only mode)
 if [ "$SKIP_CE_DATABASES" = "false" ]; then
     echo "🐳 Preparing Docker services..."
@@ -220,7 +251,7 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         DOCKER_SERVICES="$POSTGRES_SERVICES $DOCKER_SERVICES"
     fi
 
-    if [ "$TARGET_DB" = "sqlite" ]; then
+    if [ "$TARGET_DB" = "sqlite" ] || [ "$TARGET_DB" = "duckdb" ]; then
         echo "📦 Ensuring Docker images are available for: postgres (always needed)..."
         $(docker_compose_cmd) pull --quiet $POSTGRES_SERVICES 2>/dev/null || true
 

@@ -31,6 +31,7 @@ echo "🧹 Cleaning up tmp directory..."
 if [ -d "$PROJECT_ROOT/core/tmp" ]; then
     # Clean specific files but preserve the hash file
     rm -f "$PROJECT_ROOT/core/tmp/e2e_test.db"
+    rm -f "$PROJECT_ROOT/core/tmp/e2e_test.duckdb"
     rm -f "$PROJECT_ROOT/core/tmp/test-server.pid"
     # Only delete other files, keep .test-binary-hash
     find "$PROJECT_ROOT/core/tmp" -type f ! -name '.test-binary-hash' -delete 2>/dev/null || true
