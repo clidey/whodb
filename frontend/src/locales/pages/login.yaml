@@ -16,6 +16,7 @@ en_US:
   browseForSqliteFile: Browse for SQLite File
   selectDatabase: Select Database
   enterDatabase: Enter Database
+  enterSearchPath: Enter Schema Name
   advancedButton: Advanced
   lessAdvancedButton: Less Advanced
   loginButton: Login
@@ -46,3 +47,13 @@ en_US:
   getStarted: Get Started
   quickStartFooter: Takes less than a minute • No credit card required
   version: Version
+  advancedFields.port: Port
+  advancedFields.parseTime: Parse Time
+  advancedFields.loc: Location
+  advancedFields.allowClearTextPasswords: Allow clear text passwords
+  advancedFields.searchPath: Search Path (Schema)
+  advancedFields.httpProtocol: HTTP Protocol
+  advancedFields.readonly: Readonly
+  advancedFields.debug: Debug
+  advancedFields.urlParams: URL Params
+  advancedFields.dnsEnabled: DNS Enabled

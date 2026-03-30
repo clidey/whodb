@@ -25,6 +25,7 @@ import {
     useLoginWithProfileMutation,
     useSettingsConfigQuery
 } from '@graphql';
+import camelCase from "lodash/camelCase";
 import classNames from "classnames";
 import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
@@ -74,7 +75,7 @@ import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
  */
 const LOGIN_RESERVED_PARAMS = new Set([
     "type", "host", "username", "password", "database",
-    "port", "region",
+    "port", "region", "search_path",
     "login", "resource", "credentials",
 ]);
 
@@ -82,6 +83,7 @@ const LOGIN_RESERVED_PARAMS = new Set([
  * URL params that control UI behavior and should be preserved after login.
  */
 const LOGIN_UI_PARAMS = new Set(["locale", "mode", "theme", "os"]);
+
 
 /**
  * Generate a consistent ID for desktop credentials based on connection details.
@@ -679,14 +681,16 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (searchParams.has("password")) setPassword(searchParams.get("password")!);
             if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
 
-            // Merge port/region into advancedForm (existing behavior preserved)
+            // Merge known URL params into advancedForm with their canonical key names
             const hasPort = searchParams.has("port");
             const hasRegion = searchParams.has("region");
-            if (hasPort || hasRegion) {
+            const hasSearchPath = searchParams.has("search_path");
+            if (hasPort || hasRegion || hasSearchPath) {
                 setAdvancedForm(prev => ({
                     ...prev,
                     ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
                     ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
+                    ...(hasSearchPath ? {'Search Path': searchParams.get("search_path")!} : {}),
                 }));
             }
 
@@ -873,6 +877,12 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <Input id="login-database" value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder={t('enterDatabase')} aria-required="true" aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
+            { databaseType.fields?.searchPath && (
+                <div className="flex flex-col gap-sm w-full">
+                    <Label htmlFor="login-search-path">{t(`advancedFields.${camelCase('Search Path')}`)}</Label>
+                    <Input id="login-search-path" value={advancedForm['Search Path'] ?? ''} onChange={(e) => handleAdvancedForm('Search Path', e.target.value)} data-testid="search-path" placeholder={t('enterSearchPath')} />
+                </div>
+            )}
         </div>
     }, [database, databaseType.id, databaseType.fields, databaseType.customFormRenderer, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, advancedForm, formResetKey, t, error]);
 
@@ -896,6 +906,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     const loginWithProfileEnabled = useMemo(() => {
         return selectedAvailableProfile != null;
     }, [selectedAvailableProfile]);
+
+    // Keys to exclude from the advanced section (SSL keys + fields promoted to the main form)
+    const excludedAdvancedKeys = useMemo(() => new Set<string>([
+        ...Object.values(SSL_KEYS),
+        'Search Path',
+    ]), []);
 
     // Always show loading during auto-login, regardless of mutation or profile loading state
     // Only show form if auto-login fails (isAutoLoggingIn set to false in error handlers)
@@ -996,10 +1012,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                             "w-full": advancedDirection === "vertical",
                         })}>
                             {Object.entries(advancedForm)
-                                .filter(([key]) => !Object.values(SSL_KEYS).includes(key as any))
+                                .filter(([key]) => !excludedAdvancedKeys.has(key))
                                 .map(([key, value]) => (
                                 <div className="flex flex-col gap-sm" key={key}>
-                                    <Label htmlFor={`${key}-input`}>{key}</Label>
+                                    <Label htmlFor={`${key}-input`}>{t(`advancedFields.${camelCase(key)}`, key)}</Label>
                                     <Input
                                         id={`${key}-input`}
                                         value={value}
