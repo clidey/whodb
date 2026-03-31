@@ -122,6 +122,10 @@ export default defineConfig(async () => {
       '../../../../../frontend/src': path.resolve(__dirname, './src'),
       '../../../../frontend/src': path.resolve(__dirname, './src'),
       '../../../frontend/src': path.resolve(__dirname, './src'),
+      // Resolve CE node_modules for EE files (EE lives outside frontend/ so node resolution doesn't reach frontend/node_modules)
+      '@codemirror/autocomplete': path.resolve(__dirname, './node_modules/@codemirror/autocomplete'),
+      '@codemirror/view': path.resolve(__dirname, './node_modules/@codemirror/view'),
+      '@codemirror/state': path.resolve(__dirname, './node_modules/@codemirror/state'),
     },
   },
   server: {

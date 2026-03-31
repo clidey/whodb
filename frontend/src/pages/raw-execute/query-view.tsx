@@ -56,24 +56,19 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
 
     // Set the ref to a function that executes the query and returns a promise
     useEffect(() => {
-        handleExecuteRef.current = (code: string) => {
-            return new Promise((resolve, reject) => {
-                rawExecute({
-                    variables: {
-                        query: code,
-                    },
-                    onCompleted: (data) => {
-                        if (isSQLQueryAction(code) || (data?.RawExecute?.Rows?.length || 0) > 0) {
-                            resolve(data.RawExecute);
-                        } else {
-                            resolve(null);
-                        }
-                    },
-                    onError: (error) => {
-                        reject(error);
-                    },
-                });
+        handleExecuteRef.current = async (code: string) => {
+            const result = await rawExecute({
+                variables: { query: code },
+                fetchPolicy: 'network-only',
             });
+            if (result.error) {
+                throw result.error;
+            }
+            const data = result.data;
+            if (isSQLQueryAction(code) || (data?.RawExecute?.Rows?.length || 0) > 0) {
+                return data?.RawExecute ?? null;
+            }
+            return null;
         };
     }, [rawExecute, handleExecuteRef, code]);
 
