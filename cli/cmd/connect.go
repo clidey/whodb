@@ -174,8 +174,8 @@ func normalizeDBType(dbType string) string {
 		return "ClickHouse"
 	case "elasticsearch":
 		return "ElasticSearch"
-	case "sqlite":
-		return "SQLite"
+	case "sqlite", "sqlite3":
+		return "Sqlite3"
 	case "duckdb":
 		return "DuckDB"
 	default:
