@@ -37,7 +37,7 @@ func (p *DuckDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUn
 		if strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer") {
 			seqName := fmt.Sprintf("%s_%s_seq", storageUnit, column.Key)
 			seqSQL = fmt.Sprintf("CREATE SEQUENCE IF NOT EXISTS %s; ", builder.QuoteIdentifier(seqName))
-			def.Extra = fmt.Sprintf("PRIMARY KEY DEFAULT nextval('%s')", seqName)
+			def.Extra = fmt.Sprintf("PRIMARY KEY DEFAULT nextval('%s')", strings.ReplaceAll(seqName, "'", "''"))
 		} else {
 			def.Primary = true
 		}
