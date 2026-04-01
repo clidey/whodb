@@ -8,6 +8,7 @@ enum DatabaseType {
   MariaDB,
   ClickHouse,
   DuckDB,
+  Memcached,
 }
 
 scalar Upload

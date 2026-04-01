@@ -40,6 +40,7 @@ const (
 	readOnlyKey                = "Readonly"
 	debugKey                   = "Debug"
 	connectionTimeoutKey       = "Connection Timeout"
+	searchPathKey              = "Search Path"
 )
 
 type ConnectionInput struct {
@@ -54,6 +55,9 @@ type ConnectionInput struct {
 	ParseTime               bool           `validate:"boolean"`
 	Loc                     *time.Location `validate:"required"`
 	AllowClearTextPasswords bool           `validate:"boolean"`
+
+	//postgres
+	SearchPath string
 
 	//clickhouse
 	HTTPProtocol string
@@ -101,6 +105,9 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
 	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
 
+	//postgres specific
+	searchPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, searchPathKey, "")
+
 	sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 
 	connectionTimeout, err := strconv.Atoi(common.GetRecordValueOrDefault(config.Credentials.Advanced, connectionTimeoutKey, "90"))
@@ -123,6 +130,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		ParseTime:               parseTime,
 		Loc:                     loc,
 		AllowClearTextPasswords: allowClearTextPasswords,
+		SearchPath:              searchPath,
 		HTTPProtocol:            httpProtocol,
 		ReadOnly:                readOnly,
 		Debug:                   debug,
@@ -136,7 +144,7 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 		for _, record := range config.Credentials.Advanced {
 			switch record.Key {
 			// Skip known keys that are already parsed + skip SSL keys
-			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey,
+			case portKey, parseTimeKey, locKey, allowClearTextPasswordsKey, httpProtocolKey, readOnlyKey, debugKey, connectionTimeoutKey, searchPathKey,
 				ssl.KeySSLMode, ssl.KeySSLCACertContent, ssl.KeySSLClientCertContent, ssl.KeySSLClientKeyContent,
 				ssl.KeySSLCACertPath, ssl.KeySSLClientCertPath, ssl.KeySSLClientKeyPath, ssl.KeySSLServerName:
 				continue

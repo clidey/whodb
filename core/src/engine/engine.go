@@ -36,6 +36,7 @@ const (
 	DatabaseType_ElasticSearch = "ElasticSearch"
 	DatabaseType_ClickHouse    = "ClickHouse"
 	DatabaseType_DuckDB        = "DuckDB"
+	DatabaseType_Memcached     = "Memcached"
 	DatabaseType_ElastiCache   = "ElastiCache" // Uses Redis plugin for now
 	DatabaseType_DocumentDB    = "DocumentDB"  // Uses MongoDB plugin for now
 )

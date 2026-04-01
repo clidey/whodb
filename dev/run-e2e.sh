@@ -59,7 +59,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Default CE database configurations (can be overridden via env vars)
 DEFAULT_DATABASES="postgres mysql mysql8 mariadb sqlite duckdb mongodb redis elasticsearch clickhouse"
-DEFAULT_CATEGORIES="postgres:sql mysql:sql mysql8:sql mariadb:sql sqlite:sql duckdb:sql mongodb:document redis:keyvalue elasticsearch:document clickhouse:sql"
+DEFAULT_CATEGORIES="postgres:sql mysql:sql mysql8:sql mariadb:sql sqlite:sql duckdb:sql mongodb:document redis:keyvalue elasticsearch:document clickhouse:sql memcached:cache"
 
 # Use env vars or defaults
 DATABASES_STR="${WHODB_DATABASES:-$DEFAULT_DATABASES}"

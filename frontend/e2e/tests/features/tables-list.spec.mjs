@@ -59,4 +59,16 @@ test.describe('Storage Unit Listing', () => {
         });
     });
 
+    // Cache Databases (Memcached)
+    forEachDatabase('cache', (db) => {
+        test('lists expected items', async ({ whodb, page }) => {
+            const keys = await whodb.getTables();
+            expect(Array.isArray(keys)).toBeTruthy();
+            expect(keys.length).toBeGreaterThanOrEqual(db.expectedKeys.length);
+            db.expectedKeys.forEach(key => {
+                expect(keys).toContain(key);
+            });
+        });
+    });
+
 });

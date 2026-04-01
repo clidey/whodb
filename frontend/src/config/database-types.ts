@@ -82,6 +82,7 @@ export interface IDatabaseDropdownItem {
         username?: boolean;
         password?: boolean;
         database?: boolean;
+        searchPath?: boolean;
     };
     // Valid operators for this database type
     operators?: string[];
@@ -140,6 +141,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             username: true,
             password: true,
             database: true,
+            searchPath: true,
         },
         supportsModifiers: true,
         supportsScratchpad: true,
@@ -283,6 +285,22 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsSchema: true,
         supportsDatabaseSwitching: false,
         usesSchemaForGraph: true,
+    },
+    {
+        id: "Memcached",
+        label: "Memcached",
+        icon: Icons.Logos.Memcached,
+        extra: {"Port": "11211"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+        },
+        supportsScratchpad: false,
+        supportsSchema: false,
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: false,
+        sslModes: SSL_MODES_SIMPLE,
     },
     // AWS managed database types (discovered via AWS providers, use underlying plugins)
     {

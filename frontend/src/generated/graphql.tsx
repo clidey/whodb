@@ -155,6 +155,7 @@ export enum DatabaseType {
   DuckDb = 'DuckDB',
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
+  Memcached = 'Memcached',
   MongoDb = 'MongoDB',
   MySql = 'MySQL',
   Postgres = 'Postgres',

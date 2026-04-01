@@ -79,11 +79,14 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 		pgxConfig.TLSConfig = tlsConfig
 	}
 
-	if connectionInput.ExtraOptions != nil {
+	if connectionInput.ExtraOptions != nil || connectionInput.SearchPath != "" {
 		if pgxConfig.RuntimeParams == nil {
 			pgxConfig.RuntimeParams = make(map[string]string)
 		}
 		maps.Copy(pgxConfig.RuntimeParams, connectionInput.ExtraOptions)
+		if connectionInput.SearchPath != "" {
+			pgxConfig.RuntimeParams["search_path"] = connectionInput.SearchPath
+		}
 	}
 
 	l := log.WithFields(map[string]any{

@@ -68,4 +68,15 @@ test.describe('Explore Metadata', () => {
         });
     });
 
+    // Cache Databases (Memcached)
+    forEachDatabase('cache', (db) => {
+        const tableName = db.testTable.name;
+
+        test('shows item metadata', async ({ whodb, page }) => {
+            await whodb.explore(tableName);
+            const fields = await whodb.getExploreFields();
+            verifyKeyMetadata(fields, 'string');
+        });
+    });
+
 });

@@ -103,6 +103,17 @@ test.describe('SSL Configuration', () => {
             await expect(page.locator('[data-testid="ssl-mode-select"]')).toBeVisible();
         });
 
+        test('shows SSL mode dropdown for Memcached in advanced options', async ({ whodb, page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="Memcached"]').click();
+
+            // Open advanced options
+            await page.locator('[data-testid="advanced-button"]').click();
+
+            // SSL mode dropdown should be visible
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toBeVisible();
+        });
+
         test('shows SSL mode dropdown for Elasticsearch in advanced options', async ({ whodb, page }) => {
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator('[data-value="ElasticSearch"]').click();
