@@ -48,18 +48,61 @@ export interface AnalyzeGraphProps {
 export interface LineChartProps {
     data: string[][];
     columns: string[];
+    text: string;
 }
 
 export interface PieChartProps {
     data: string[][];
     columns: string[];
+    text: string;
 }
+
+export interface BarChartProps {
+    data: string[][];
+    columns: string[];
+    text: string;
+}
+
+export interface AreaChartProps {
+    data: string[][];
+    columns: string[];
+    text: string;
+}
+
+export interface ScatterChartProps {
+    data: string[][];
+    columns: string[];
+    text: string;
+}
+
+export interface RadarChartProps {
+    data: string[][];
+    columns: string[];
+    text: string;
+}
+
+export interface TreemapChartProps { data: string[][]; columns: string[]; text: string; }
+export interface FunnelChartProps { data: string[][]; columns: string[]; text: string; }
+export interface BubbleChartProps { data: string[][]; columns: string[]; text: string; }
+export interface WaterfallChartProps { data: string[][]; columns: string[]; text: string; }
+export interface HeatmapChartProps { data: string[][]; columns: string[]; text: string; }
+export interface GeoMapChartProps { data: string[][]; columns: string[]; text: string; }
 
 // Type-safe EE component registry
 export type EEComponentTypes = {
     AnalyzeGraph: ComponentType<AnalyzeGraphProps> | null;
     LineChart: ComponentType<LineChartProps> | null;
     PieChart: ComponentType<PieChartProps> | null;
+    BarChart: ComponentType<BarChartProps> | null;
+    AreaChart: ComponentType<AreaChartProps> | null;
+    ScatterChart: ComponentType<ScatterChartProps> | null;
+    RadarChart: ComponentType<RadarChartProps> | null;
+    TreemapChart: ComponentType<TreemapChartProps> | null;
+    FunnelChart: ComponentType<FunnelChartProps> | null;
+    BubbleChart: ComponentType<BubbleChartProps> | null;
+    WaterfallChart: ComponentType<WaterfallChartProps> | null;
+    HeatmapChart: ComponentType<HeatmapChartProps> | null;
+    GeoMapChart: ComponentType<GeoMapChartProps> | null;
 };
 
 // Feature flags for Enterprise Edition
