@@ -37,8 +37,8 @@ export const useDesktopFile = () => {
     return await desktopService.selectDirectory();
   }, []);
 
-  const selectSQLiteDatabase = useCallback(async () => {
-    return await desktopService.selectSQLiteDatabase();
+  const selectDatabaseFile = useCallback(async (dbType: string) => {
+    return await desktopService.selectDatabaseFile(dbType);
   }, []);
 
   return {
@@ -46,7 +46,7 @@ export const useDesktopFile = () => {
     saveFile,
     saveBinaryFile,
     selectDirectory,
-    selectSQLiteDatabase,
+    selectDatabaseFile,
   };
 };
 

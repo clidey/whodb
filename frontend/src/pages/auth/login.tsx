@@ -189,7 +189,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         return searchParams.has("credentials") || searchParams.has("resource") || searchParams.has("login");
     });
 
-    const { isDesktop, selectSQLiteDatabase } = useDesktopFile();
+    const { isDesktop, selectDatabaseFile } = useDesktopFile();
 
     const loading = useMemo(() => {
         return loginLoading || loginWithProfileLoading || isAutoLoggingIn;
@@ -497,17 +497,17 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [databaseTypeItems, handleDatabaseTypeChange]);
 
-    const handleBrowseSQLiteFile = useCallback(async () => {
+    const handleBrowseDatabaseFile = useCallback(async () => {
         try {
-            const filePath = await selectSQLiteDatabase();
+            const filePath = await selectDatabaseFile(databaseType.id);
             if (filePath) {
                 setDatabase(filePath);
             }
         } catch (error) {
-            console.error('Failed to select SQLite database:', error);
+            console.error('Failed to select database file:', error);
             toast.error(t('failedToSelectDatabaseFile'));
         }
-    }, [selectSQLiteDatabase, t]);
+    }, [selectDatabaseFile, databaseType.id, t]);
 
     useEffect(() => {
         dispatch(DatabaseActions.setSchema(""));
@@ -819,7 +819,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 aria-describedby={error ? "login-error" : undefined}
                             />
                             <Button
-                                onClick={handleBrowseSQLiteFile}
+                                onClick={handleBrowseDatabaseFile}
                                 variant="outline"
                                 className="w-full"
                             >
@@ -886,7 +886,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 </div>
             )}
         </div>
-    }, [database, databaseType.id, databaseType.fields, databaseType.customFormRenderer, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseSQLiteFile, advancedForm, formResetKey, t, error]);
+    }, [database, databaseType.id, databaseType.fields, databaseType.customFormRenderer, databasesLoading, foundDatabases?.Database, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseDatabaseFile, advancedForm, formResetKey, t, error]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.customFormRenderer) {

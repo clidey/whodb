@@ -176,6 +176,8 @@ func normalizeDBType(dbType string) string {
 		return "ElasticSearch"
 	case "sqlite":
 		return "SQLite"
+	case "duckdb":
+		return "DuckDB"
 	default:
 		return dbType
 	}
@@ -203,7 +205,7 @@ func getDefaultPort(dbType string) int {
 func init() {
 	rootCmd.AddCommand(connectCmd)
 
-	connectCmd.Flags().StringVar(&dbType, "type", "", "database type (postgres, mysql, sqlite, mongodb, redis, etc.)")
+	connectCmd.Flags().StringVar(&dbType, "type", "", "database type (postgres, mysql, sqlite, duckdb, mongodb, redis, etc.)")
 	connectCmd.Flags().StringVar(&host, "host", "", "database host")
 	connectCmd.Flags().IntVar(&port, "port", 0, "database port (default depends on database type)")
 	connectCmd.Flags().StringVar(&username, "user", "", "database username")
