@@ -3,7 +3,7 @@ module github.com/clidey/whodb/ee
 go 1.26.1
 
 require (
-	github.com/99designs/gqlgen v0.17.88
+	github.com/99designs/gqlgen v0.17.89
 	github.com/clidey/whodb/core v0.0.0-20250812120033-ae27c05241d1
 )
 
