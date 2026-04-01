@@ -25,7 +25,7 @@ declare global {
           SaveFile: (data: string, defaultName: string) => Promise<string>;
           SaveBinaryFile: (data: number[], defaultName: string) => Promise<string>;
           SelectDirectory: () => Promise<string>;
-          SelectSQLiteDatabase: () => Promise<string>;
+          SelectDatabaseFile: (dbType: string) => Promise<string>;
           CopyToClipboard: (text: string) => Promise<void>;
           GetFromClipboard: () => Promise<string>;
           MinimizeWindow: () => Promise<void>;
@@ -102,17 +102,17 @@ export async function selectDirectory(): Promise<string | null> {
   }
 }
 
-export async function selectSQLiteDatabase(): Promise<string | null> {
-  if (!isDesktop || !window.go?.common?.App?.SelectSQLiteDatabase) {
-    console.warn('Select SQLite database not available in browser mode');
+export async function selectDatabaseFile(dbType: string): Promise<string | null> {
+  if (!isDesktop || !window.go?.common?.App?.SelectDatabaseFile) {
+    console.warn('Select database file not available in browser mode');
     return null;
   }
 
   try {
-    const filepath = await window.go.common.App.SelectSQLiteDatabase();
+    const filepath = await window.go.common.App.SelectDatabaseFile(dbType);
     return filepath || null;
   } catch (error) {
-    console.error('Failed to select SQLite database:', error);
+    console.error('Failed to select database file:', error);
     return null;
   }
 }

@@ -148,7 +148,7 @@ export const coreMethods = {
             }
 
             if (database !== undefined) {
-                if (databaseType === "Sqlite3") {
+                if (databaseType === "Sqlite3" || databaseType === "DuckDB") {
                     await expect(this.page.locator('[data-testid="database"]')).toBeEnabled({ timeout: TIMEOUT.ACTION });
                     await this.page.locator('[data-testid="database"]').click();
                     await this.page.locator('[role="option"]').first().waitFor({ timeout: TIMEOUT.ACTION });

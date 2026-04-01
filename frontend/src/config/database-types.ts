@@ -273,6 +273,20 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         sslModes: SSL_MODES_SIMPLE,
     },
     {
+        id: "DuckDB",
+        label: "DuckDB",
+        icon: Icons.Logos.DuckDB,
+        extra: {},
+        fields: {
+            database: true,
+        },
+        supportsModifiers: true,
+        supportsScratchpad: true,
+        supportsSchema: true,
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,
+    },
+    {
         id: "Memcached",
         label: "Memcached",
         icon: Icons.Logos.Memcached,

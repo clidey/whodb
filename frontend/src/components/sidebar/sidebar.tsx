@@ -85,7 +85,7 @@ import {useProfileSwitch} from "@/hooks/use-profile-switch";
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
     if (profile.Type === DatabaseType.Redis) return profile.Hostname;
-    if (profile.Type === DatabaseType.Sqlite3) return profile.Database;
+    if (profile.Type === DatabaseType.Sqlite3 || profile.Type === DatabaseType.DuckDb) return profile.Database;
     return `${profile.Hostname} [${profile.Username}]`;
 }
 
