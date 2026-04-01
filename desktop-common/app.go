@@ -186,14 +186,43 @@ func (a *App) SelectDirectory() (string, error) {
 	return dir, nil
 }
 
-// SelectSQLiteDatabase shows native file dialog for selecting SQLite database files
-func (a *App) SelectSQLiteDatabase() (string, error) {
+// databaseFileConfig holds file dialog settings for a file-based database type.
+type databaseFileConfig struct {
+	Title       string
+	DisplayName string
+	Pattern     string
+	Extensions  map[string]bool
+}
+
+var databaseFileConfigs = map[string]databaseFileConfig{
+	"Sqlite3": {
+		Title:       "Select SQLite Database",
+		DisplayName: "SQLite Database Files (*.db,*.sqlite,*.sqlite3,*.db3)",
+		Pattern:     "*.db;*.sqlite;*.sqlite3;*.db3",
+		Extensions:  map[string]bool{"db": true, "sqlite": true, "sqlite3": true, "db3": true},
+	},
+	"DuckDB": {
+		Title:       "Select DuckDB Database",
+		DisplayName: "DuckDB Database Files (*.duckdb,*.db)",
+		Pattern:     "*.duckdb;*.db",
+		Extensions:  map[string]bool{"duckdb": true, "db": true},
+	},
+}
+
+// SelectDatabaseFile shows a native file dialog for selecting database files.
+// The dbType parameter determines which file extensions are allowed (e.g. "Sqlite3", "DuckDB").
+func (a *App) SelectDatabaseFile(dbType string) (string, error) {
+	cfg, ok := databaseFileConfigs[dbType]
+	if !ok {
+		return "", fmt.Errorf("unsupported file-based database type: %s", dbType)
+	}
+
 	options := runtime.OpenDialogOptions{
-		Title: "Select SQLite Database",
+		Title: cfg.Title,
 		Filters: []runtime.FileFilter{
 			{
-				DisplayName: "SQLite Database Files (*.db,*.sqlite,*.sqlite3,*.db3)",
-				Pattern:     "*.db;*.sqlite;*.sqlite3;*.db3",
+				DisplayName: cfg.DisplayName,
+				Pattern:     cfg.Pattern,
 			},
 		},
 	}
@@ -207,23 +236,15 @@ func (a *App) SelectSQLiteDatabase() (string, error) {
 		return "", nil
 	}
 
-	// Validate file extension
 	ext := strings.ToLower(filepath)
 	dotIndex := strings.LastIndex(ext, ".")
 	if dotIndex == -1 || dotIndex == len(ext)-1 {
-		return "", fmt.Errorf("invalid file type: only .db, .sqlite, .sqlite3, and .db3 files are allowed")
+		return "", fmt.Errorf("invalid file type for %s", dbType)
 	}
 	ext = ext[dotIndex+1:]
 
-	validExtensions := map[string]bool{
-		"db":      true,
-		"sqlite":  true,
-		"sqlite3": true,
-		"db3":     true,
-	}
-
-	if !validExtensions[ext] {
-		return "", fmt.Errorf("invalid file type: only .db, .sqlite, .sqlite3, and .db3 files are allowed")
+	if !cfg.Extensions[ext] {
+		return "", fmt.Errorf("invalid file type for %s", dbType)
 	}
 
 	return filepath, nil

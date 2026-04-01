@@ -199,7 +199,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	prompt.TextStyle = lipgloss.NewStyle().Foreground(styles.Foreground)
 	prompt.Cursor.Style = lipgloss.NewStyle().Foreground(styles.Primary)
 
-	dbTypes := []string{"Postgres", "MySQL", "Sqlite3", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
+	dbTypes := []string{"Postgres", "MySQL", "Sqlite3", "DuckDB", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
 
 	return &ConnectionView{
 		parent:           parent,
@@ -777,7 +777,7 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 		return 9000
 	case "ElasticSearch":
 		return 9200
-	case "Sqlite3":
+	case "Sqlite3", "DuckDB":
 		return 0
 	default:
 		return 5432
@@ -787,7 +787,7 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 // Field indices: 0=name, 1=host, 2=port, 3=username, 4=password, 5=database, 6=schema
 func getVisibleFields(dbType string) []int {
 	switch dbType {
-	case "Sqlite3":
+	case "Sqlite3", "DuckDB":
 		return []int{0, 5} // name, database
 	case "MongoDB":
 		return []int{0, 1, 2, 3, 4, 5} // all except schema
@@ -814,8 +814,8 @@ func (v *ConnectionView) onDbTypeChanged() {
 	v.updatePortPlaceholder()
 	v.visibleFields = getVisibleFields(v.dbTypes[v.dbTypeIndex])
 
-	// Update database placeholder for SQLite
-	if v.dbTypes[v.dbTypeIndex] == "Sqlite3" {
+	// Update database placeholder for file-based databases
+	if v.dbTypes[v.dbTypeIndex] == "Sqlite3" || v.dbTypes[v.dbTypeIndex] == "DuckDB" {
 		v.inputs[5].Placeholder = "/path/to/database.db"
 	} else {
 		v.inputs[5].Placeholder = "mydb"

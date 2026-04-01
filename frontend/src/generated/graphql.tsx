@@ -152,6 +152,7 @@ export type DatabaseQuerySuggestion = {
 
 export enum DatabaseType {
   ClickHouse = 'ClickHouse',
+  DuckDb = 'DuckDB',
   ElasticSearch = 'ElasticSearch',
   MariaDb = 'MariaDB',
   Memcached = 'Memcached',

@@ -82,6 +82,7 @@ export interface IDatabaseDropdownItem {
         username?: boolean;
         password?: boolean;
         database?: boolean;
+        searchPath?: boolean;
     };
     // Valid operators for this database type
     operators?: string[];
@@ -140,6 +141,7 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
             username: true,
             password: true,
             database: true,
+            searchPath: true,
         },
         supportsModifiers: true,
         supportsScratchpad: true,
@@ -269,6 +271,20 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsDatabaseSwitching: true,
         usesSchemaForGraph: false,
         sslModes: SSL_MODES_SIMPLE,
+    },
+    {
+        id: "DuckDB",
+        label: "DuckDB",
+        icon: Icons.Logos.DuckDB,
+        extra: {},
+        fields: {
+            database: true,
+        },
+        supportsModifiers: true,
+        supportsScratchpad: true,
+        supportsSchema: true,
+        supportsDatabaseSwitching: false,
+        usesSchemaForGraph: true,
     },
     {
         id: "Memcached",

@@ -367,7 +367,7 @@ func buildQueryDescription(secOpts *SecurityOptions) string {
   }
 }
 ` + "```" + `
-**Placeholder syntax by database:** PostgreSQL uses $1, $2, $3; MySQL/SQLite/ClickHouse use ?
+**Placeholder syntax by database:** PostgreSQL uses $1, $2, $3; MySQL/SQLite/DuckDB/ClickHouse use ?
 
 **Best practices:**
 - **Use parameterized queries** when incorporating user-provided values - this prevents SQL injection
@@ -519,7 +519,7 @@ func registerPrompts(server *mcp.Server) {
 			{
 				Name:        "database_type",
 				Title:       "Database Type",
-				Description: "The type of database (postgres, mysql, sqlite, etc.) for dialect-specific help.",
+				Description: "The type of database (postgres, mysql, sqlite, duckdb, etc.) for dialect-specific help.",
 				Required:    false,
 			},
 			{
@@ -690,6 +690,12 @@ func buildQueryHelpContent(dbType, queryType string) string {
 - Use json_extract() for JSON columns
 - Use .schema command equivalent via whodb_columns
 - VACUUM periodically for performance
+`
+		case "duckdb":
+			base += `- DuckDB uses ? for query placeholders
+- Use information_schema for metadata queries
+- DuckDB supports INTERVAL, HUGEINT, and JSON types natively
+- Use duckdb_constraints() for constraint introspection
 `
 		}
 	}
@@ -1007,7 +1013,7 @@ const descConnections = `List all available database connections.
 
 **Returns:** Array of connection objects with:
 - name: Connection identifier to use in other tools
-- type: Database type (postgres, mysql, sqlite, etc.)
+- type: Database type (postgres, mysql, sqlite, duckdb, etc.)
 - host/port/database: Connection details (passwords are never exposed)
 - source: "saved" (from CLI config) or "env" (from environment variables)
 
@@ -1107,5 +1113,5 @@ Best practices:
 - Prefer specific column selection over SELECT *
 - For writes, explain to the user what will happen before proposing the query
 - Use parameterized queries when incorporating user input: whodb_query(query="SELECT * FROM users WHERE id = $1", parameters=[42])
-  Placeholders: PostgreSQL uses $1, $2; MySQL/SQLite/ClickHouse use ?
+  Placeholders: PostgreSQL uses $1, $2; MySQL/SQLite/DuckDB/ClickHouse use ?
 `

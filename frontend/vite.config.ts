@@ -23,12 +23,16 @@ import tailwindcss from '@tailwindcss/vite'
 // Check if EE directory exists
 const eeDir = path.resolve(__dirname, '../ee/frontend/src');
 const eeExists = fs.existsSync(eeDir);
+const isEEBuild = process.env.VITE_BUILD_EDITION === 'ee';
 
-// Plugin to handle missing EE modules
+// Plugin to handle missing EE modules — stubs @ee/ imports when the EE
+// directory is absent OR when running a CE build (even if the directory exists,
+// Vite's import-analysis resolves dynamic imports at transform time regardless
+// of runtime guards).
 const eeModulePlugin = () => ({
   name: 'ee-module-fallback',
   resolveId(id: string) {
-    if (id.startsWith('@ee/') && !eeExists) {
+    if (id.startsWith('@ee/') && (!eeExists || !isEEBuild)) {
       // Return a virtual module ID for missing EE modules
       return '\0virtual:ee-fallback:' + id;
     }
@@ -113,7 +117,7 @@ export default defineConfig(async () => {
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      ...(eeExists ? { '@ee': eeDir } : {}),
+      ...(eeExists && isEEBuild ? { '@ee': eeDir } : {}),
       // Dynamic GraphQL import based on build edition
       '@graphql': process.env.VITE_BUILD_EDITION === 'ee' 
         ? path.resolve(__dirname, '../ee/frontend/src/generated/graphql.tsx')
@@ -122,6 +126,10 @@ export default defineConfig(async () => {
       '../../../../../frontend/src': path.resolve(__dirname, './src'),
       '../../../../frontend/src': path.resolve(__dirname, './src'),
       '../../../frontend/src': path.resolve(__dirname, './src'),
+      // Resolve CE node_modules for EE files (EE lives outside frontend/ so node resolution doesn't reach frontend/node_modules)
+      '@codemirror/autocomplete': path.resolve(__dirname, './node_modules/@codemirror/autocomplete'),
+      '@codemirror/view': path.resolve(__dirname, './node_modules/@codemirror/view'),
+      '@codemirror/state': path.resolve(__dirname, './node_modules/@codemirror/state'),
     },
   },
   server: {
