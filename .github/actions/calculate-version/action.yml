@@ -41,6 +41,10 @@ inputs:
     description: 'Build CLI binaries'
     required: false
     default: 'false'
+  deploy-npm:
+    description: 'Publish to npm registry'
+    required: false
+    default: 'false'
   publish-github-release:
     description: 'Publish GitHub release to production (production mode only)'
     required: false
@@ -80,6 +84,9 @@ outputs:
   deploy-cli:
     description: 'Deploy CLI flag'
     value: ${{ steps.stores.outputs.deploy-cli }}
+  deploy-npm:
+    description: 'Deploy npm flag'
+    value: ${{ steps.stores.outputs.deploy-npm }}
   publish-github-release:
     description: 'Publish GitHub release flag'
     value: ${{ steps.flags.outputs.publish-github-release }}
@@ -212,6 +219,7 @@ runs:
         echo "deploy-appimage=false" >> $GITHUB_OUTPUT  # DISABLED: AppImage requires system WebKit2GTK
         echo "deploy-linux-terminal=${{ inputs.deploy-linux-terminal }}" >> $GITHUB_OUTPUT
         echo "deploy-cli=${{ inputs.deploy-cli }}" >> $GITHUB_OUTPUT
+        echo "deploy-npm=${{ inputs.deploy-npm }}" >> $GITHUB_OUTPUT
 
         if [ "$MODE" = "production" ]; then
           echo "Production mode: deploying selected stores to production channels"
