@@ -25,7 +25,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.8.0
-	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jackc/pgx/v5 v5.9.1
 	github.com/marcboeker/go-duckdb/v2 v2.4.3
 	github.com/posthog/posthog-go v1.11.1
 	github.com/shopspring/decimal v1.4.0
