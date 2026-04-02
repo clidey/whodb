@@ -16,16 +16,9 @@
  * limitations under the License.
  */
 
-package main
+package src
 
-import (
-	"fmt"
-	"os"
-)
+import "github.com/clidey/whodb/core/src/engine"
 
-func init() {
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "⚠️  Notice: AI features and DuckDB are unavailable on this architecture (arm/riscv64).")
-	fmt.Fprintln(os.Stderr, "   All other database features work normally.")
-	fmt.Fprintln(os.Stderr, "")
-}
+// registerDuckDB is a no-op on arm/riscv64 where DuckDB is not supported.
+func registerDuckDB(e *engine.Engine) {}
