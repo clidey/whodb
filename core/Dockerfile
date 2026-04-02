@@ -45,6 +45,13 @@ RUN apk add --no-cache \
 	git \
 	ca-certificates \
 	curl
+
+# DuckDB's pre-built static library references glibc-specific symbols unavailable in musl.
+# Build a static compat library so the linker deduplicates across CGO packages.
+RUN printf '#include <stddef.h>\nint __res_init(void) { return 0; }\nint backtrace(void **b, int s) { return 0; }\nchar **backtrace_symbols(void *const *b, int s) { return NULL; }\nvoid backtrace_symbols_fd(void *const *b, int s, int fd) {}\nint malloc_trim(size_t pad) { return 0; }\n' \
+    | gcc -c -x c - -o /tmp/duckdb_musl_compat.o \
+    && ar rcs /usr/lib/libduckdb_musl_compat.a /tmp/duckdb_musl_compat.o
+
 WORKDIR /app
 
 # Copy ee-stub for CE builds (provides stub packages for EE imports)
@@ -64,7 +71,7 @@ ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
 RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
-	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto" \
+	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
 	CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod -trimpath \
 	-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core
@@ -86,7 +93,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
 FROM alpine:3.23
-RUN apk add --no-cache ca-certificates libgcc
+RUN apk add --no-cache ca-certificates libgcc libstdc++
 WORKDIR /app
 COPY --from=backend-stage /core /core
 # Copy BAML musl library and set path via env var
