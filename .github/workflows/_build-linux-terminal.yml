@@ -55,8 +55,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential gcc libc6-dev \
-            gcc-aarch64-linux-gnu \
+          sudo apt-get install -y build-essential gcc g++ libc6-dev \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             gcc-riscv64-linux-gnu \
             gcc-arm-linux-gnueabihf
 
