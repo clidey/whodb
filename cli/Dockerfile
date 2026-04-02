@@ -18,7 +18,7 @@ FROM golang:1.26-alpine3.23 AS builder
 
 ARG VERSION=dev
 
-RUN apk add --no-cache gcc musl-dev git bash curl
+RUN apk add --no-cache gcc g++ musl-dev git bash curl
 
 WORKDIR /app
 

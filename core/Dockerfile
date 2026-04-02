@@ -40,6 +40,7 @@ ARG PLATFORM=docker
 FROM golang:1.26-alpine3.23 AS backend-stage
 RUN apk add --no-cache \
 	gcc \
+	g++ \
 	musl-dev \
 	git \
 	ca-certificates \
