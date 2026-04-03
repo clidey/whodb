@@ -336,7 +336,7 @@ test.describe('Loading States & Spinners', () => {
                     await page.locator('.react-flow__node').first().waitFor({ timeout: 15000 });
                 });
             });
-        });
+        }, { features: ['graph'] });
     });
 
     test.describe('Storage Units Loading State', () => {
