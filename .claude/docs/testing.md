@@ -9,9 +9,6 @@ This document covers all testing infrastructure for WhoDB: frontend Playwright E
 cd frontend && pnpm e2e:ce:headless          # All CE databases, headless
 cd frontend && pnpm e2e:ce                   # Interactive mode (headed)
 
-# Frontend Playwright E2E (EE) - requires ee/ submodule
-cd frontend && pnpm e2e:ee:headless          # EE databases only
-cd frontend && pnpm e2e:all:headless         # CE + EE combined
 
 # Backend Go tests
 bash dev/run-backend-tests.sh all            # Unit + integration
@@ -75,7 +72,7 @@ Each fixture defines: connection details, expected schemas, test data, and featu
 
 ### NPM Scripts
 
-#### CE Tests (Community Edition)
+#### E2E Tests
 
 ```bash
 # Interactive mode (opens browser UI)
@@ -92,22 +89,11 @@ pnpm e2e:feature:headless <feature>     # Single feature
 pnpm e2e:ce:headless:debug              # With Playwright debug logging
 ```
 
-#### EE Tests (Enterprise Edition)
-
-Requires the `ee/` submodule.
 
 ```bash
 # Interactive mode
-pnpm e2e:ee                             # EE databases only
-pnpm e2e:all                            # CE + EE combined
-pnpm e2e:ee:db <database>               # Single EE database
-pnpm e2e:ee:feature <feature>           # Single EE feature
 
 # Headless mode
-pnpm e2e:ee:headless                    # EE databases only
-pnpm e2e:all:headless                   # CE + EE combined
-pnpm e2e:ee:db:headless <database>
-pnpm e2e:ee:feature:headless <feature>
 ```
 
 ### Feature Test Files
@@ -212,9 +198,6 @@ Location: `dev/docker-compose.yml`
 
 SQLite uses a local file (`core/tmp/e2e_test.db`), no container needed.
 
-#### EE Database Services
-
-Location: `ee/dev/docker-compose.yml`
 
 ### Sample Data Scripts
 
@@ -245,8 +228,8 @@ Located in `dev/sample-data/`:
 |----------|-------------|
 | `WHODB_DATABASES` | Space-separated list of databases to test |
 | `WHODB_DB_CATEGORIES` | Colon-separated db:category pairs |
-| `WHODB_VITE_EDITION` | Build edition (empty=CE, 'ee'=EE) |
-| `WHODB_SETUP_MODE` | Setup mode ('ce' or 'ee') |
+| `WHODB_VITE_EDITION | Build edition |
+| `WHODB_SETUP_MODE | Setup mode |
 | `WHODB_LOG_LEVEL` | Log level (default: 'error') |
 | `DATABASE` | Target database (set by run script per invocation) |
 | `CATEGORY` | Target category (set by run script per invocation) |
@@ -325,221 +308,6 @@ cd core && go test ./test/integration/...
 bash dev/run-backend-tests.sh integration
 ```
 
-### EE Backend Tests
-
-If `ee/` submodule is available:
-
-```bash
-# Unit tests with EE tag
-cd core && go test -tags ee ./...
-
-# The run-backend-tests.sh script handles this automatically
-bash dev/run-backend-tests.sh all
-```
-
----
-
-## CLI Tests
-
-### Architecture
-
-```
-cli/
-├── cmd/
-│   ├── cmd_test.go                     # Command tests
-│   ├── mcp_test.go                     # MCP integration
-│   ├── programmatic_commands_test.go   # Programmatic commands
-│   └── test_env_test.go                # Test environment
-├── internal/
-│   ├── config/config_test.go           # Configuration
-│   ├── database/
-│   │   ├── manager_test.go             # Database manager
-│   │   ├── integration_test.go         # Integration tests
-│   │   └── test_env_test.go            # Test environment
-│   └── tui/
-│       ├── model_test.go               # TUI model
-│       ├── history_view_test.go        # History view
-│       ├── where_view_test.go          # WHERE clause view
-│       ├── columns_view_test.go        # Columns view
-│       ├── results_view_test.go        # Results view
-│       ├── browser_view_test.go        # Browser view
-│       ├── schema_view_test.go         # Schema view
-│       ├── chat_view_test.go           # Chat view
-│       ├── connection_view_test.go     # Connection view
-│       ├── export_view_test.go         # Export view
-│       ├── editor_view_test.go         # Editor view
-│       └── test_env_test.go            # Test environment
-└── e2e/                                # E2E test setup
-```
-
-### Running CLI Tests
-
-```bash
-# Main test runner (recommended)
-bash dev/run-cli-tests.sh                  # All tests
-bash dev/run-cli-tests.sh --skip-postgres  # Skip PostgreSQL E2E
-bash dev/run-cli-tests.sh -v               # Verbose output
-
-# Direct Go commands
-cd cli && go test ./internal/...           # Internal tests only
-cd cli && go test ./cmd/...                # Command tests only
-```
-
-### CLI E2E Tests
-
-```bash
-# Full E2E workflow (setup, test, cleanup)
-bash dev/run-cli-e2e.sh
-
-# Manual control
-bash dev/setup-cli-e2e.sh     # Setup PostgreSQL container
-bash dev/cleanup-cli-e2e.sh   # Cleanup container
-```
-
-### Test Types
-
-| Type | Command | Description |
-|------|---------|-------------|
-| Unit | `go test ./internal/...` | Internal package tests |
-| SQLite E2E | `go test ./e2e/... -run "^TestEndToEnd"` | SQLite integration |
-| CLI E2E | `go test -tags=e2e_cli ./e2e/... -run "^TestCLI_"` | Full CLI E2E |
-| Postgres E2E | `go test -tags=e2e_postgres ./e2e/... -run "^TestPostgres_"` | PostgreSQL E2E |
-
----
-
-## Coverage
-
-### Frontend Coverage
-
-Coverage is collected via Istanbul instrumentation during Playwright E2E runs:
-
-```bash
-cd frontend && pnpm view:coverage           # Text summary
-cd frontend && pnpm view:coverage:frontend  # HTML report
-cd frontend && pnpm coverage:clean          # Clear coverage data
-```
-
-### Backend Coverage
-
-```bash
-# Generate coverage
-cd core && go test -coverprofile=coverage.out ./...
-
-# View coverage
-go tool cover -html=coverage.out
-```
-
----
-
-## E2E Test Authoring Rules
-
-### Database-Specific vs Global Features
-
-Not all features apply to all databases. Before writing a test, check whether the feature is database-specific:
-
-- **Sidebar terminology** (`databaseSchemaTerminology` setting): Only affects databases where `sidebar.showsDatabaseDropdown: true` AND `sidebar.showsSchemaDropdown: false` (MySQL, MariaDB, ClickHouse, MongoDB, Redis). Has NO effect on Postgres (which always shows "Database" + "Schema" as separate dropdowns). Filter with: `if (!db.sidebar?.showsDatabaseDropdown || db.sidebar?.showsSchemaDropdown !== false) return;`
-- **Schema dropdown** (`sidebar-schema`): Only exists for databases where `sidebar.showsSchemaDropdown: true` (Postgres). Other databases don't have it.
-- **Database dropdown** (`sidebar-database`): Only for databases where `sidebar.showsDatabaseDropdown: true`.
-
-General rule: check the fixture's `sidebar` config to determine which UI elements exist for that database type.
-
-### Sidebar Test IDs
-
-The sidebar has distinct test IDs for **labels** (headings) vs **values** (selected items):
-
-| Test ID | Element | Contains |
-|---------|---------|----------|
-| `sidebar-database-label` | `<h2>` heading | Label text: "Database" or "Schema" (based on terminology setting) |
-| `sidebar-database` | `SearchSelect` button | Selected value: e.g., "test_db" |
-| `sidebar-schema` | `SearchSelect` button | Selected value: e.g., "test_schema" |
-| `sidebar-profile` | Profile section | Connection info |
-
-### Redux State: Never Write to localStorage Directly
-
-Redux-persist rehydrates from localStorage **asynchronously** on page load. Writing directly to `localStorage` and then navigating creates a race condition — the component may mount before rehydration completes, using default values instead.
-
-**Wrong** (flaky):
-```js
-await page.evaluate(() => {
-    const settings = JSON.parse(localStorage.getItem('persist:settings') || '{}');
-    settings.defaultPageSize = '2';
-    localStorage.setItem('persist:settings', JSON.stringify(settings));
-});
-await whodb.data(tableName); // May use default pageSize=100 instead of 2
-```
-
-**Right** — use the settings page UI (dispatches Redux action, immediately updates in-memory store):
-```js
-await whodb.goto('settings');
-await page.locator('#default-page-size').click();
-await page.locator('[data-value="custom"]').click();
-await page.locator('input[type="number"]').clear();
-await page.locator('input[type="number"]').fill('2');
-await page.locator('input[type="number"]').press('Enter');
-await whodb.data(tableName); // Reliably uses pageSize=2
-```
-
-**Exception**: The `whodb.login()` and `whodb.data()` helpers write `storageUnitView` to localStorage. This works because they immediately trigger a full page navigation afterward, and the value is non-critical (just controls card vs list view).
-
-### forEachDatabase Filtering Patterns
-
-Use fixture config properties to filter, not hardcoded type names:
-
-```js
-// Good: condition-based, works for any database with the right config
-forEachDatabase('all', (db) => {
-    if (!db.sidebar?.showsDatabaseDropdown || db.sidebar?.showsSchemaDropdown !== false) return;
-    // Tests for databases where terminology setting is relevant
-});
-
-// Good: feature-based filtering via options
-forEachDatabase('sql', (db) => { ... }, { features: ['pagination'] });
-
-// Acceptable: type-based when testing truly database-specific behavior
-forEachDatabase('sql', (db) => {
-    if (db.type !== 'Postgres') return;
-    // Postgres-specific tests
-});
-```
-
-### WhoDB Helper Methods
-
-Always prefer existing helper methods over raw page interactions:
-
-| Task | Helper | Don't Do |
-|------|--------|----------|
-| Navigate to table data | `whodb.data(tableName)` | Manual card click |
-| Change page size in table | `whodb.setTablePageSize(n)` | Direct combobox interaction |
-| Submit table query | `whodb.submitTable()` | Click query button manually |
-| Get table contents | `whodb.getTableData()` | Manual DOM scraping |
-| Select schema | `whodb.selectSchema(v)` | Click sidebar-schema manually |
-| Navigate to route | `whodb.goto('settings')` | `page.goto(url)` |
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**E2E tests fail to start:**
-- Ensure Docker services are running: `docker compose -f dev/docker-compose.yml ps`
-- Check frontend is built: `cd frontend && pnpm build`
-- Verify ports are free: 3000 (frontend), 8080 (backend)
-
-**Permission errors on test artifacts:**
-- Root-owned files from Docker/gateway runs: `sudo rm -rf frontend/e2e/reports/`
-- The run script attempts `sudo` cleanup automatically
-
-**Database connection errors:**
-- Wait for services to be healthy: `bash dev/wait-for-services.sh`
-- Check Docker logs: `docker compose -f dev/docker-compose.yml logs <service>`
-
-**Test binary caching issues:**
-- Clear cache: `rm -rf core/tmp/server.test*`
-- Force rebuild: Delete `core/tmp/.source_hash`
-
-**EE tests not found:**
-- Ensure `ee/` submodule is cloned: `git submodule update --init`
 
 ### Debug Mode
 

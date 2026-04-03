@@ -40,7 +40,7 @@ jobs:
 
       - name: Build CE test binary
         working-directory: core
-        run: go test -coverpkg=./... -c -o server.test
+        run: go test -coverpkg=./... -c -o server.test ./cmd/whodb
 
       - name: Upload test binary
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

@@ -20,7 +20,6 @@ set -euo pipefail
 # Unified backend test runner for CE, EE, and integration.
 # - Uses a repo-local GOCACHE to avoid sandboxed cache permission issues
 # - Runs CE unit tests (excludes interactive server_test)
-# - Runs EE tests when the ee module is present
 # - Runs live integration tests (docker-compose) by default; set MODE to limit
 #   MODE values: all (default) | unit | integration | ssl
 
@@ -38,13 +37,6 @@ run_unit() {
   )
 
   if [ -d "$ROOT_DIR/ee" ]; then
-    echo "→ Running EE backend tests (ee build tag)"
-    (
-      cd "$ROOT_DIR/ee"
-      go test -tags ee ./core/...
-    )
-  else
-    echo "ℹ️ EE module not found; skipping EE backend tests"
   fi
 }
 

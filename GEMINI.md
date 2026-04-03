@@ -93,7 +93,7 @@ bash dev/run-cli-tests.sh                   # All CLI tests
 ```
 
 ```bash
-# Backend: cd core && go run .
+# Backend: cd core && go run ./cmd/whodb
 # Frontend: cd frontend && pnpm start
 # CLI: cd cli && go run .
 ```

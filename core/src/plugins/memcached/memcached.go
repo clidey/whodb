@@ -211,6 +211,10 @@ func (p *MemcachedPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 	}
 }
 
+func init() {
+	engine.RegisterPlugin(NewMemcachedPlugin())
+}
+
 // NewMemcachedPlugin creates a new Memcached plugin.
 func NewMemcachedPlugin() *engine.Plugin {
 	return &engine.Plugin{

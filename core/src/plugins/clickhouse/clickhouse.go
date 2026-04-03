@@ -558,6 +558,10 @@ func (p *ClickHousePlugin) ShouldCheckRowsAffected() bool {
 	return false
 }
 
+func init() {
+	engine.RegisterPlugin(NewClickHousePlugin())
+}
+
 func NewClickHousePlugin() *engine.Plugin {
 	clickhousePlugin := &ClickHousePlugin{}
 	clickhousePlugin.Type = engine.DatabaseType_ClickHouse

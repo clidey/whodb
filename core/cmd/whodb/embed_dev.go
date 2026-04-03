@@ -1,3 +1,5 @@
+//go:build !prod
+
 /*
  * Copyright 2026 Clidey, Inc.
  *
@@ -14,12 +16,10 @@
  * limitations under the License.
  */
 
-let currentEdition: string = 'ce';
+package main
 
-export const getEdition = (): string => currentEdition;
+import "embed"
 
-export const setEdition = (edition: string) => {
-    currentEdition = edition;
-};
-
-export const isEnterpriseEdition = (): boolean => currentEdition !== 'ce';
+// In dev mode, frontend is served separately (e.g., via pnpm start).
+// This provides an empty embed.FS so compilation succeeds without build/.
+var staticFiles embed.FS

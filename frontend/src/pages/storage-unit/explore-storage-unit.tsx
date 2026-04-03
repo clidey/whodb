@@ -77,7 +77,6 @@ import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
 import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
 import {Tip} from "../../components/tip";
-import {BUILD_EDITION} from "../../config/edition";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ExploreConditionsActions} from "../../store/explore-conditions";
@@ -95,17 +94,16 @@ import {SearchIntellisense} from "../../components/search-intellisense";
 import {useSearchIntellisense} from "../../hooks/use-search-intellisense";
 import {useContainerWidth} from "../../hooks/use-container-width";
 
-// Conditionally import EE query utilities
+// Extension query utilities — set via registerQueryUtils()
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
 
-if (BUILD_EDITION === 'ee') {
-    // Dynamically import EE query utilities when in EE mode
-    import('@ee/pages/storage-unit/query-utils').then(module => {
-        generateInitialQuery = module.generateInitialQuery;
-    }).catch(() => {
-        // EE module not available, use default
-        generateInitialQuery = undefined;
-    });
+/** Register extension query utilities. */
+export function registerQueryUtils(fns: {
+    generateInitialQuery?: (databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string;
+}) {
+    if (fns.generateInitialQuery) {
+        generateInitialQuery = fns.generateInitialQuery;
+    }
 }
 
 export const ExploreStorageUnit: FC = () => {

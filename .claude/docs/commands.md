@@ -4,10 +4,10 @@
 
 ```bash
 # Run backend
-cd core && go run .
+cd core && go run ./cmd/whodb
 
 # Build CE binary
-cd core && go build -o whodb .
+cd core && go build -o whodb ./cmd/whodb
 
 # Run tests (see testing.md for full guide)
 cd core && go test ./...

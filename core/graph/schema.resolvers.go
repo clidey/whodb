@@ -1075,7 +1075,7 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 		plugin := src.MainEngine.Choose(engine.DatabaseType(config.Credentials.Type))
 
 		if plugin != nil {
-			// Create a context with 5 second timeout (Oracle connections can take 3-8s)
+			// Create a context with 5 second timeout
 			healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
 

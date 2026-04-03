@@ -51,7 +51,7 @@ import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} fro
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
-import {extensions, getAppName, isEEMode} from "../../config/features";
+import {extensions, getAppName} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {LoginForm} from "../../pages/auth/login";
 import {AuthActions, LocalLoginProfile} from "../../store/auth";
@@ -63,7 +63,7 @@ import {
     databaseSupportsScratchpad,
     databaseTypesThatUseDatabaseInsteadOfSchema
 } from "../../utils/database-features";
-import {isEEFeatureEnabled} from "../../utils/ee-loader";
+import {featureFlags} from "../../config/features";
 import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
 import {isAwsHostname} from "../../utils/cloud-connection-prefill";
 import {
@@ -322,7 +322,7 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />}
                             {open && <span className="text-3xl font-bold" data-testid="app-name">{getAppName()}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
@@ -430,7 +430,7 @@ export const Sidebar: FC = () => {
                                     "mx-0": !open,
                                 })} />
 
-                                {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
+                                {featureFlags.contactUsPage && InternalRoutes.ContactUs && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild tooltip={t('contactUs')}>
                                             <Link
@@ -445,7 +445,7 @@ export const Sidebar: FC = () => {
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )}
-                                {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
+                                {featureFlags.settingsPage && InternalRoutes.Settings && (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton asChild tooltip={t('settings')}>
                                             <Link

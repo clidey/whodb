@@ -15,7 +15,7 @@
  */
 
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {eeSettingsDefaults} from '../config/ee-imports';
+import {settingsDefaults} from '../config/features';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 
 const ANALYTICS_CONSENT_KEY = 'whodb.analytics.consent';
@@ -59,14 +59,14 @@ const getInitialState = (): ISettingsState => {
         fontSize: 'medium',
         borderRadius: 'medium',
         spacing: 'comfortable',
-        // Use EE default if available, otherwise default to 'popover'
-        whereConditionMode: eeSettingsDefaults.whereConditionMode ?? 'popover',
+        // Use extension default if available, otherwise default to 'popover'
+        whereConditionMode: settingsDefaults.whereConditionMode ?? 'popover',
         defaultPageSize: 100,
         maxPageSize: 10000,
         language: DEFAULT_LANGUAGE,
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
-        // Use EE default if available, otherwise default to false (animations enabled)
-        disableAnimations: eeSettingsDefaults.disableAnimations ?? false,
+        // Use extension default if available, otherwise default to false (animations enabled)
+        disableAnimations: settingsDefaults.disableAnimations ?? false,
         appTheme: 'default',
         os: undefined,
     };

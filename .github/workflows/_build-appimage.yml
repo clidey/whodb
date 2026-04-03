@@ -7,11 +7,6 @@ on:
         description: 'Version to build'
         required: true
         type: string
-      edition:
-        description: 'Edition to build (ce or ee)'
-        required: false
-        type: string
-        default: 'ce'
 
 permissions:
   contents: read
@@ -59,13 +54,13 @@ jobs:
       - name: Download frontend build artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: frontend-build-${{ inputs.edition }}
+          name: frontend-build
           path: frontend/build
 
       - name: Copy frontend to desktop directory
         run: |
-          mkdir -p desktop-${{ inputs.edition }}/frontend/dist
-          cp -r frontend/build/* desktop-${{ inputs.edition }}/frontend/dist/
+          mkdir -p desktop-ce/frontend/dist
+          cp -r frontend/build/* desktop-ce/frontend/dist/
 
       # - name: Cache Wails binary
       #   id: cache-wails
@@ -82,13 +77,6 @@ jobs:
       - name: Determine Go workspace
         id: gowork
         run: |
-          if [ "${{ inputs.edition }}" = "ee" ]; then
-            echo "workspace=$PWD/ee/go.work.desktop" >> $GITHUB_OUTPUT
-            echo "source_dir=ee/desktop" >> $GITHUB_OUTPUT
-          else
-            echo "workspace=$PWD/go.work.desktop-ce" >> $GITHUB_OUTPUT
-            echo "source_dir=desktop-ce" >> $GITHUB_OUTPUT
-          fi
 
       - name: Build Wails app for ${{ matrix.arch }}
         run: |
@@ -120,6 +108,6 @@ jobs:
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: appimage-${{ inputs.edition }}-${{ matrix.arch }}
+          name: appimage-${{ matrix.arch }}
           path: WhoDB-${{ inputs.version }}-${{ matrix.arch }}.AppImage
           retention-days: 1

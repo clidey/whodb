@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"errors"
+	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
@@ -44,7 +45,8 @@ func TestMain(m *testing.M) {
 	log.Info("Starting WhoDB in test mode (Ctrl+C to exit)...")
 
 	src.InitializeEngine()
-	r := router.InitializeRouter(staticFilesTest)
+	schema := graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}})
+	r := router.InitializeRouter(schema, nil, staticFilesTest)
 
 	port := os.Getenv("PORT")
 	if port == "" {

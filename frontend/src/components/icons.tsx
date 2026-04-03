@@ -53,15 +53,12 @@ const ceLogos = {
 };
 
 let eeLogos: Record<string, JSX.Element> = {};
-if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
-  try {
-    const eeIconsModule = await import('@ee/icons');
-    if (eeIconsModule?.EEIcons?.Logos) {
-      eeLogos = eeIconsModule.EEIcons.Logos;
+
+/** Register additional icon logos. */
+export function registerIcons(icons: { Logos?: Record<string, JSX.Element> }) {
+    if (icons.Logos) {
+        eeLogos = icons.Logos;
     }
-  } catch {
-    // Silently ignore if EE icons can't be loaded
-  }
 }
 
 export const Icons = {

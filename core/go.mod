@@ -15,7 +15,6 @@ require (
 	github.com/aws/smithy-go v1.24.2
 	github.com/boundaryml/baml v0.218.1
 	github.com/brianvoe/gofakeit/v7 v7.14.1
-	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/dromara/carbon/v2 v2.6.16
 	github.com/elastic/go-elasticsearch/v8 v8.19.3
@@ -108,5 +107,3 @@ require (
 	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
-
-replace github.com/clidey/whodb/ee => ../ee-stub

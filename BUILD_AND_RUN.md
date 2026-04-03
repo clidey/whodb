@@ -6,10 +6,10 @@
 ```bash
 # Community Edition
 cd core
-go run .
+go run ./cmd/whodb
 
 # Enterprise Edition (from ee directory)
-cd ee && go run -tags ee ../core
+cd ee && go run ./cmd/whodb
 ```
 
 ## GraphQL Generation
@@ -27,8 +27,8 @@ cd ee && go generate .
 ### Frontend
 ```bash
 # Start backend first
-cd core && go run .                     # CE
-cd ee && go run -tags ee ../core        # EE
+cd core && go run ./cmd/whodb                     # CE
+cd ee && go run ./cmd/whodb        # EE
 
 # Generate types
 cd frontend
@@ -45,22 +45,13 @@ Due to the dual-module workspace architecture, `go mod tidy` must be run with th
 
 #### Community Edition
 ```bash
-# From project root
-cd core && go mod edit -replace github.com/clidey/whodb/ee=../ee-stub && go mod tidy && go mod edit -dropreplace github.com/clidey/whodb/ee -droprequire github.com/clidey/whodb/ee
-cd ee-stub && go mod tidy
-
-# Or if already in core directory
-go mod edit -replace github.com/clidey/whodb/ee=../ee-stub && go mod tidy && go mod edit -dropreplace github.com/clidey/whodb/ee -droprequire github.com/clidey/whodb/ee
+cd core && go mod tidy
 ```
 
 #### Enterprise Edition
 ```bash
-# From project root
-cd core && go mod edit -replace github.com/clidey/whodb/ee=../ee && go mod tidy && go mod edit -dropreplace github.com/clidey/whodb/ee -droprequire github.com/clidey/whodb/ee
+cd core && go mod tidy
 cd ee && go mod tidy
-
-# Or if already in core directory
-go mod edit -replace github.com/clidey/whodb/ee=../ee && go mod tidy && go mod edit -dropreplace github.com/clidey/whodb/ee -droprequire github.com/clidey/whodb/ee
 
 # Or if already in ee directory
 go mod tidy
@@ -74,10 +65,10 @@ go mod tidy
 ```bash
 # Community Edition
 cd core
-go run .
+go run ./cmd/whodb
 
 # Enterprise Edition (from ee directory)
-cd ee && go run -tags ee ../core
+cd ee && go run ./cmd/whodb
 ```
 
 ### Frontend

@@ -22,58 +22,28 @@ import (
 	"github.com/clidey/whodb/core/src/types"
 )
 
-func TestInitializeEngineRegistersCEPlugins(t *testing.T) {
+func TestInitializeEngineCollectsRegisteredPlugins(t *testing.T) {
+	// Register test plugins via the global registry (simulates what init() does in each plugin package)
+	engine.RegisterPlugin(&engine.Plugin{Type: "TestDB1"})
+	engine.RegisterPlugin(&engine.Plugin{Type: "TestDB2"})
+
 	t.Cleanup(func() {
 		MainEngine = nil
-		initEE = nil
 	})
 
 	eng := InitializeEngine()
 
-	expectedTypes := map[engine.DatabaseType]bool{
-		engine.DatabaseType_Postgres:      false,
-		engine.DatabaseType_MySQL:         false,
-		engine.DatabaseType_MariaDB:       false,
-		engine.DatabaseType_Sqlite3:       false,
-		engine.DatabaseType_MongoDB:       false,
-		engine.DatabaseType_Redis:         false,
-		engine.DatabaseType_ElasticSearch: false,
-		engine.DatabaseType_ClickHouse:    false,
+	if eng.Choose("TestDB1") == nil {
+		t.Fatalf("expected TestDB1 to be registered via global registry")
 	}
-
-	for _, plugin := range eng.Plugins {
-		if _, ok := expectedTypes[plugin.Type]; ok {
-			expectedTypes[plugin.Type] = true
-		}
-	}
-
-	for pluginType, seen := range expectedTypes {
-		if !seen {
-			t.Fatalf("expected CE plugin %s to be registered", pluginType)
-		}
-	}
-}
-
-func TestInitializeEngineInvokesEEInitializer(t *testing.T) {
-	t.Cleanup(func() {
-		MainEngine = nil
-		initEE = nil
-	})
-
-	SetEEInitializer(func(e *engine.Engine) {
-		e.RegistryPlugin(&engine.Plugin{Type: "EEOnly"})
-	})
-
-	eng := InitializeEngine()
-	if eng.Choose("EEOnly") == nil {
-		t.Fatalf("expected EE initializer to register EEOnly plugin")
+	if eng.Choose("TestDB2") == nil {
+		t.Fatalf("expected TestDB2 to be registered via global registry")
 	}
 }
 
 func TestGetLoginProfilesMergesSources(t *testing.T) {
 	t.Cleanup(func() {
 		MainEngine = nil
-		initEE = nil
 	})
 
 	MainEngine = &engine.Engine{}

@@ -67,7 +67,7 @@ cd "$PROJECT_ROOT/core"
 # Always rebuild the test binary to ensure the latest schema changes are included
 BINARY_PATH="$PROJECT_ROOT/core/server.test"
 echo "   Building test binary..."
-go test -coverpkg=./... -c -o server.test
+go test -coverpkg=./... -c -o server.test ./cmd/whodb
 echo "   ✅ Test binary built"
 
 # Step 2: Setup SQLite database

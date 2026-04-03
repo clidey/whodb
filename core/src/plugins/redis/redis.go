@@ -604,6 +604,10 @@ func (p *RedisPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 	}
 }
 
+func init() {
+	engine.RegisterPlugin(NewRedisPlugin())
+}
+
 func NewRedisPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_Redis,

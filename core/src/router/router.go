@@ -59,15 +59,20 @@ func NewGraphQLServer(es graphql.ExecutableSchema) *handler.Server {
 	return srv
 }
 
-func setupServer(router *chi.Mux, staticFiles embed.FS) {
+func setupServer(router *chi.Mux, schema graphql.ExecutableSchema, httpHandlers map[string]http.HandlerFunc, staticFiles embed.FS) {
 	if !env.IsAPIGatewayEnabled {
 		fileServer(router, staticFiles)
 	}
 
-	server := createGraphQLServer()
+	server := NewGraphQLServer(schema)
 	server.AddTransport(&transport.Websocket{})
 	graph.SetupHTTPServer(router)
 	setupPlaygroundHandler(router, server)
+
+	// Register additional HTTP handlers
+	for path, handler := range httpHandlers {
+		router.HandleFunc(path, handler)
+	}
 }
 
 // statusResponseWriter wraps http.ResponseWriter to capture the status code.
@@ -141,11 +146,12 @@ func setupMiddlewares(router *chi.Mux) {
 	router.Use(middlewares...)
 }
 
-func InitializeRouter(staticFiles embed.FS) *chi.Mux {
+// InitializeRouter creates the chi router with all middleware, GraphQL server, and additional HTTP handlers.
+func InitializeRouter(schema graphql.ExecutableSchema, httpHandlers map[string]http.HandlerFunc, staticFiles embed.FS) *chi.Mux {
 	router := chi.NewRouter()
 
 	setupMiddlewares(router)
-	setupServer(router, staticFiles)
+	setupServer(router, schema, httpHandlers, staticFiles)
 
 	return router
 }

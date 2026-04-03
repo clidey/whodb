@@ -1,7 +1,7 @@
-//go:build ee
+//go:build prod
 
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@
 
 package main
 
-import (
-	// Import EE package to register EE plugins
-	// This import will only work when using the EE workspace (ee/go.work)
-	// which includes the ee module
-	_ "github.com/clidey/whodb/ee/core/graph"
-	_ "github.com/clidey/whodb/ee/core/src/plugins"
-)
+import "embed"
+
+//go:embed build/*
+var staticFiles embed.FS

@@ -19,63 +19,33 @@ package src
 import (
 	"fmt"
 
-	"github.com/clidey/whodb/core/src/plugins/clickhouse"
-	"github.com/clidey/whodb/core/src/plugins/elasticsearch"
-	"github.com/clidey/whodb/core/src/plugins/memcached"
-	"github.com/clidey/whodb/core/src/plugins/mongodb"
-	"github.com/clidey/whodb/core/src/plugins/mysql"
-	"github.com/clidey/whodb/core/src/plugins/redis"
-	"github.com/clidey/whodb/core/src/plugins/sqlite3"
-	"github.com/clidey/whodb/core/src/types"
-
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/migrate"
 	"github.com/clidey/whodb/core/src/mockdata"
-	"github.com/clidey/whodb/core/src/plugins/postgres"
+	"github.com/clidey/whodb/core/src/plugins/sqlite3"
+	"github.com/clidey/whodb/core/src/types"
 )
 
 var MainEngine *engine.Engine
 
-// InitEEFunc is a function type for initializing Enterprise Edition features
-type InitEEFunc func(*engine.Engine)
-
-// initEE is a variable that will be set by the EE build to initialize EE features
-var initEE InitEEFunc
-
-// SetEEInitializer allows external packages to register the EE initialization function
-func SetEEInitializer(fn InitEEFunc) {
-	initEE = fn
-}
-
+// InitializeEngine creates the engine and registers all plugins from the global registry.
+// Plugins self-register via init() when their packages are imported by the entry point.
 func InitializeEngine() *engine.Engine {
 	MainEngine = &engine.Engine{}
 
-	// Register community edition plugins
-	MainEngine.RegistryPlugin(postgres.NewPostgresPlugin())
-	MainEngine.RegistryPlugin(mysql.NewMySQLPlugin())
-	MainEngine.RegistryPlugin(mysql.NewMyMariaDBPlugin())
-	MainEngine.RegistryPlugin(sqlite3.NewSqlite3Plugin())
-	MainEngine.RegistryPlugin(mongodb.NewMongoDBPlugin())
-	MainEngine.RegistryPlugin(redis.NewRedisPlugin())
-	MainEngine.RegistryPlugin(elasticsearch.NewElasticSearchPlugin())
-	MainEngine.RegistryPlugin(clickhouse.NewClickHousePlugin())
-	MainEngine.RegistryPlugin(memcached.NewMemcachedPlugin())
+	// Collect plugins from the global registry (populated by init() in each plugin package)
+	for _, p := range engine.RegisteredPlugins() {
+		MainEngine.RegistryPlugin(p)
+	}
 
 	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
 
 	// Parse and register generic AI providers from environment configuration.
-	// RegisterGenericProviders calls env.AddGenericProvider internally,
-	// so we iterate directly without pre-assigning env.GenericProviders.
 	for _, provider := range envconfig.ParseGenericProviders() {
 		llm.RegisterGenericProviders(provider.Name, provider.ProviderId, provider.Models, provider.ClientType, provider.BaseURL, provider.APIKey)
-	}
-
-	// Initialize Enterprise Edition plugins if available
-	if initEE != nil {
-		initEE(MainEngine)
 	}
 
 	for _, warning := range migrate.Warnings() {

@@ -19,8 +19,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
-import {isEEMode} from "@/config/ee-imports";
-import {getAppName} from "@/config/features";
+import {featureFlags, getAppName} from "@/config/features";
 import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
@@ -131,14 +130,7 @@ export const SettingsPage: FC = () => {
                         </p>
                     </div>
                     <div className="flex flex-col gap-xl py-6">
-                        {isEEMode ? (
-                            <div className="flex flex-col gap-sm">
-                                <h3 className="text-base">
-                                    {t('eeNoTelemetry', { appName })}
-                                </h3>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4">
                                 <h3 className="text-base">
                                     {t('telemetryDescription', { appName })}&nbsp;
                                     {t('dataCollectionDetails', {
@@ -161,7 +153,6 @@ export const SettingsPage: FC = () => {
                                 </div>
                                 <Separator className="mt-4" />
                             </div>
-                        )}
                         <div className="flex flex-col gap-sm mb-2">
                             <p className="text-lg font-bold">
                                 {t('personalizeTitle')}
@@ -288,7 +279,7 @@ export const SettingsPage: FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {isEEMode && (
+                        {featureFlags.advancedDatabases && (
                             <div className="flex justify-between">
                                 <Label>{t('language')}</Label>
                                 <Select value={language} onValueChange={handleLanguageChange}>

@@ -46,10 +46,9 @@ GormPlugin base class (`core/src/plugins/gorm/`) provides:
 
 ## Adding a New Database
 
-1. Create plugin directory in `core/src/plugins/` (CE) or `ee/core/src/plugins/` (EE)
+1. Create plugin directory in `core/src/plugins/`
 2. Implement `PluginFunctions` interface (extend GormPlugin for SQL databases)
 3. Register in `core/src/src.go` via `MainEngine.RegistryPlugin(yourplugin.NewYourPlugin())`
-4. For EE: Register in `ee/core/src/plugins/init.go`
 
 ## Key Methods to Override for SQL Plugins
 
@@ -118,8 +117,4 @@ Column type validation uses `engine.ValidateColumnType()` which checks against T
 - MySQL `GetDatabases()` returns `ErrUnsupported`
 - Redis iterates through 16 database slots to discover databases
 
-## EE Compatibility
-
-- EE uses `SetEEInitializer()` pattern to register plugins without modifying CE
-- EE plugins in `ee/core/src/plugins/` automatically inherit interface methods
-- Plugin architecture ensures clean CE/EE separation
+- Plugin architecture ensures clean code separation
