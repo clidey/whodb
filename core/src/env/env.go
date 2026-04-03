@@ -103,8 +103,6 @@ var IsAWSProviderEnabled = os.Getenv("WHODB_ENABLE_AWS_PROVIDER") == "true"
 // DisableCredentialForm controls whether the credential form is disabled.
 var DisableCredentialForm = os.Getenv("WHODB_DISABLE_CREDENTIAL_FORM") == "true"
 
-// BridgeURL is the URL of the Bridge service (EE only).
-// When set, bridge database types (H2, Teradata, DB2, etc.) become available.
 var BridgeURL = os.Getenv("WHODB_BRIDGE_URL")
 
 // MaxPageSize is the maximum number of rows that can be requested in a single
