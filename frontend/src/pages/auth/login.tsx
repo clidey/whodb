@@ -902,8 +902,17 @@ export const LoginForm: FC<LoginFormProps> = ({
             return hostName.length > 0;
         }
 
+        const fields = databaseType.fields;
+        if (fields) {
+            const hostnameOk = !fields.hostname || hostName.length > 0;
+            const usernameOk = !fields.username || username.length > 0;
+            const passwordOk = !fields.password || password.length > 0;
+            const databaseOk = !fields.database || database.length > 0;
+            return hostnameOk && usernameOk && passwordOk && databaseOk;
+        }
+
         return hostName.length > 0 && username.length > 0 && password.length > 0 && database.length > 0;
-    }, [databaseType.id, databaseType.customFormRenderer, hostName, username, password, database]);
+    }, [databaseType.id, databaseType.customFormRenderer, databaseType.fields, hostName, username, password, database, advancedForm]);
 
     const loginWithProfileEnabled = useMemo(() => {
         return selectedAvailableProfile != null;
