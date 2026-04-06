@@ -20,10 +20,10 @@ bash dev/run-backend-tests.sh all    # Unit + integration
 # Run frontend (separate terminal)
 cd frontend && pnpm start
 
-# E2E tests - see testing.md for full guide
-cd frontend && pnpm cypress:ce           # Interactive, all CE databases
-cd frontend && pnpm cypress:ce:headless  # Headless, all CE databases
-cd frontend && pnpm cypress:db postgres  # Single database
+# E2E tests (Playwright) - see testing.md for full guide
+cd frontend && pnpm e2e:ce               # Interactive, all databases
+cd frontend && pnpm e2e:ce:headless      # Headless, all databases
+cd frontend && pnpm e2e:db postgres      # Single database
 # Available: postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse
 
 # Type check
