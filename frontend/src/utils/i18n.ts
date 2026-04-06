@@ -24,6 +24,14 @@ const translationCache: TranslationCache = {};
 // Import all YAML files using Vite's import.meta.glob
 const ceModules = import.meta.glob<string>('/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
 
+// Extension locale modules — populated by registerLocaleModules()
+let extensionModules: Record<string, string> = {};
+
+/** Register additional locale modules (called by extensions at boot). */
+export const registerLocaleModules = (modules: Record<string, string>) => {
+    extensionModules = { ...extensionModules, ...modules };
+};
+
 // Helper function to find module by component path
 const findModule = (modules: Record<string, string>, componentPath: string): string | undefined => {
     // Try exact match first
@@ -53,6 +61,16 @@ export const loadTranslationsSync = (
         if (ceContent) {
             const parsed = yaml.load(ceContent) as Record<string, Record<string, string>>;
             translations = parsed[language] || parsed[DEFAULT_LANGUAGE];
+        }
+
+        // Merge extension translations on top (overrides CE keys if present)
+        const extContent = findModule(extensionModules, componentPath);
+        if (extContent) {
+            const parsed = yaml.load(extContent) as Record<string, Record<string, string>>;
+            const extTranslations = parsed[language] || parsed[DEFAULT_LANGUAGE];
+            if (extTranslations) {
+                translations = { ...translations, ...extTranslations };
+            }
         }
 
         if (!translations) {
