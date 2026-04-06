@@ -17,7 +17,7 @@
 package main
 
 import (
-	_ "github.com/clidey/whodb/core/src/bamlconfig" // Must be first - sets BAML_LOG before native library loads
+	_ "github.com/clidey/whodb/core/src/bamlinit" // Must be first - sets BAML env vars before native library loads
 
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src/app"

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { useTranslation } from '@/hooks/use-translation';
+import { isDestructiveQuery } from '@/utils/query-utils';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -34,14 +36,11 @@ import {
     DropdownMenuTrigger,
     EmptyState,
     formatDate,
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
     Separator,
     Sheet,
     SheetContent,
     SheetFooter,
+    Spinner,
     Tabs,
     TabsContent,
     TabsList,
@@ -49,12 +48,10 @@ import {
     toast
 } from "@clidey/ux";
 import { DatabaseType, RowsResult } from '@graphql';
-import { isDestructiveQuery } from '@/utils/query-utils';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     ChangeEvent,
-    cloneElement,
     FC,
     ReactElement,
     Suspense,
@@ -65,9 +62,9 @@ import {
     useState
 } from "react";
 import { useLocation } from "react-router-dom";
-import { AIProvider, useAI } from "../../components/ai";
+import { v4 as uuidv4 } from 'uuid';
+import { useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
-import {useTranslation} from '@/hooks/use-translation';
 import { ErrorState } from "../../components/error-state";
 import {
     ArrowPathIcon,
@@ -87,14 +84,13 @@ import { Loading } from "../../components/loading";
 import { InternalPage } from "../../components/page";
 import { Tip } from "../../components/tip";
 import { InternalRoutes } from "../../config/routes";
+import { useContainerWidth } from "../../hooks/use-container-width";
+import { copyToClipboard } from "../../services/clipboard";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
 import { featureFlags } from "../../config/features";
 import { isDesktopApp } from "../../utils/external-links";
-import { copyToClipboard } from "../../services/clipboard";
-import { v4 as uuidv4 } from 'uuid';
 import { IPluginProps, QueryView } from "./query-view";
-import { useContainerWidth } from "../../hooks/use-container-width";
 
 /** Raw-execute extensions — set via registerRawExecuteExtensions(). */
 let eeRawExecuteExtensions: {
@@ -333,10 +329,9 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [rows, setRows] = useState<RowsResult | null>(null);
     const { modelType } = useAI();    
     const [editorHeight, setEditorHeight] = useState(150);
-    const [resultsHeight, setResultsHeight] = useState(250);
+    const [userResizedHeight, setUserResizedHeight] = useState<number | null>(null);
     const [isResizing, setIsResizing] = useState(false);
     const [isResizingResults, setIsResizingResults] = useState(false);
-    const [allowResultsResize, setAllowResultsResize] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement | null>(null);
     const containerWidth = useContainerWidth(resultsContainerRef);
     const activeListenersRef = useRef<{move: (e: MouseEvent) => void; up: () => void}[]>([]);
@@ -508,12 +503,12 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         setIsResizingResults(true);
 
         const startY = e.clientY;
-        const startHeight = resultsHeight;
+        const startHeight = resultsContainerRef.current?.getBoundingClientRect().height ?? 250;
 
         const handleMouseMove = (e: MouseEvent) => {
             const deltaY = e.clientY - startY;
             const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
-            setResultsHeight(newHeight);
+            setUserResizedHeight(newHeight);
         };
 
         const entry = {move: handleMouseMove, up: () => {}};
@@ -528,7 +523,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
 
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-    }, [resultsHeight]);
+    }, []);
 
     // Use all plugins
     const output = useMemo(() => {
@@ -541,7 +536,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             <div className="flex flex-col mt-4 w-full group relative">
                 <div
                     className={cn("h-2 cursor-row-resize transition-all duration-200", {
-                        "hidden": rows == null || !allowResultsResize,
+                        "hidden": rows == null,
                     })}
                     onMouseDown={handleResultsResize}
                     data-testid="output-resize-button"
@@ -550,15 +545,14 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                         <EllipsisHorizontalIcon className="w-4 h-4 text-gray-400" />
                     </div>
                 </div>
-                <div 
+                <div
                     ref={resultsContainerRef}
                     className={cn({
-                        "overflow-auto": allowResultsResize,
-                        "overflow-visible": !allowResultsResize,
+                        "overflow-auto": userResizedHeight != null,
+                        "overflow-visible": userResizedHeight == null,
                     })}
                     style={{
-                        minHeight: "fit-content",
-                        height: allowResultsResize ? `${resultsHeight}px` : "auto",
+                        height: userResizedHeight != null ? `${userResizedHeight}px` : "auto",
                     }}
                 >
                     <Suspense fallback={<Loading />}>
@@ -569,48 +563,15 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 </div>
             </div>
         );
-    }, [mode, allActionOptions, allPlugins, code, modelType, current, resultsHeight, isResizingResults, handleResultsResize, rows, allowResultsResize, containerWidth]);
+    }, [mode, allActionOptions, allPlugins, code, modelType, current, userResizedHeight, isResizingResults, handleResultsResize, rows, containerWidth]);
 
-    // Measure results on first mount to fit content
-    useEffect(() => {
-        if (allowResultsResize) {
-            return;
-        }
-        const raf = requestAnimationFrame(() => {
-            const el = resultsContainerRef.current;
-            if (el == null) {
-                return;
-            }
-            const measured = el.scrollHeight;
-            if (measured > 0) {
-                setResultsHeight(Math.min(800, Math.max(100, measured)));
-                setAllowResultsResize(true);
-            }
-        });
-        return () => cancelAnimationFrame(raf);
-    }, [allowResultsResize]);
-
-    // Re-measure whenever results change (e.g., query re-run) to fit new content
+    // Reset user-resized height when new results come in so the container auto-fits
     useEffect(() => {
         if (rows == null) {
             return;
         }
-        // Temporarily allow content to define height, then measure and lock
-        setAllowResultsResize(false);
-        const raf = requestAnimationFrame(() => {
-            const el = resultsContainerRef.current;
-            if (el == null) {
-                setAllowResultsResize(true);
-                return;
-            }
-            const measured = el.scrollHeight;
-            if (measured > 0) {
-                setResultsHeight(Math.min(800, Math.max(100, measured)));
-            }
-            setAllowResultsResize(true);
-        });
-        return () => cancelAnimationFrame(raf);
-    }, [rows, mode]);
+        setUserResizedHeight(null);
+    }, [rows]);
 
     const isAnalyzeAvailable = useMemo(() => {
         if (!featureFlags.analyzeView) {
@@ -777,8 +738,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     <ErrorState error={error} />
                 </div>
             }
-            {loading && <div className="flex justify-center items-center h-full my-16">
-                <Loading/>
+            {loading && <div className="flex justify-center items-center h-full py-2">
+                <Spinner />
             </div>}
             {output}
             <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>

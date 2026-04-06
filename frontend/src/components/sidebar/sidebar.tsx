@@ -85,7 +85,7 @@ import {useProfileSwitch} from "@/hooks/use-profile-switch";
 function getProfileLabel(profile: LocalLoginProfile) {
     if (profile.Saved) return profile.Id;
     if (profile.Type === DatabaseType.Redis) return profile.Hostname;
-    if (profile.Type === DatabaseType.Sqlite3) return profile.Database;
+    if (profile.Type === DatabaseType.Sqlite3 || profile.Type === DatabaseType.DuckDb) return profile.Database;
     return `${profile.Hostname} [${profile.Username}]`;
 }
 
@@ -111,14 +111,18 @@ export const Sidebar: FC = () => {
         skip: current == null || !databaseSupportsDatabaseSwitching(current?.Type),
     });
     const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useGetSchemaQuery({
-        onCompleted(data) {
-            if (current == null) return;
-            if (schema === "") {
-                dispatch(DatabaseActions.setSchema(data.Schema[0] ?? ""));
-            }
-        },
         skip: current == null || !databaseSupportsSchema(current?.Type),
     });
+
+    // Default schema selection: prefer Search Path from login config, fall back to first schema
+    useEffect(() => {
+        if (current == null || schema !== "" || !availableSchemas?.Schema?.length) return;
+        const searchPath = current.Advanced?.find(a => a.Key === "Search Path")?.Value;
+        const defaultSchema = (searchPath && availableSchemas.Schema.includes(searchPath))
+            ? searchPath
+            : availableSchemas.Schema[0] ?? "";
+        dispatch(DatabaseActions.setSchema(defaultSchema));
+    }, [current, schema, availableSchemas, dispatch]);
     const { data: updateInfo } = useGetUpdateInfoQuery();
     const { refetch: refetchSslStatus } = useGetSslStatusQuery({
         skip: current == null || sslStatus !== undefined,
@@ -268,8 +272,8 @@ export const Sidebar: FC = () => {
         }
     }, []);
 
-    // Refetch databases, schemas, and SSL status when the current profile changes
-    // This ensures queries use the correct auth context after profile switch
+    // Refetch databases, schemas, and SSL status when the connection context changes
+    // (profile switch or database switch within the same profile)
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -287,7 +291,7 @@ export const Sidebar: FC = () => {
                 dispatch(AuthActions.setSSLStatus(data.SSLStatus));
             }
         });
-    }, [current?.Id]);
+    }, [current?.Id, current?.Database]);
 
     // Listen for menu event to open add profile form
     useEffect(() => {

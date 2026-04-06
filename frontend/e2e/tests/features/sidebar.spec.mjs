@@ -113,26 +113,27 @@ test.describe('Sidebar Navigation', () => {
                 });
 
                 test('reloads storage units when schema changes', async ({ whodb, page }) => {
-                    const queryPromise = page.waitForResponse(resp =>
-                        resp.url().includes('/api/query') && resp.request().method() === 'POST'
-                    );
-
                     await page.locator('[data-testid="sidebar-schema"]').click();
                     // Select a different schema first (to trigger an actual change)
-                    // Then select the fixture schema (known to have tables)
                     const options = await page.locator('[role="option"]').all();
                     const currentSchema = db.schema || '';
                     let foundOther = false;
                     for (const opt of options) {
                         const text = await opt.textContent();
                         if (!text.includes(currentSchema)) {
+                            // Set up response listener BEFORE clicking to avoid race
+                            const queryPromise = page.waitForResponse(resp =>
+                                resp.url().includes('/api/query') && resp.request().method() === 'POST'
+                            );
                             await opt.click();
+                            await queryPromise;
                             foundOther = true;
                             break;
                         }
                     }
                     if (!foundOther) {
-                        // Only one schema exists, just click first
+                        // Only one schema exists — re-selecting the same schema
+                        // won't trigger a reload, so just verify the dropdown works
                         await page.locator('[role="option"]').first().click();
                     }
 

@@ -18,7 +18,13 @@ FROM golang:1.26-alpine3.23 AS builder
 
 ARG VERSION=dev
 
-RUN apk add --no-cache gcc musl-dev git bash curl
+RUN apk add --no-cache gcc g++ musl-dev git bash curl
+
+# DuckDB's pre-built static library references glibc-specific symbols unavailable in musl.
+# Build a static compat library so the linker deduplicates across CGO packages.
+RUN printf '#include <stddef.h>\nint __res_init(void) { return 0; }\nint backtrace(void **b, int s) { return 0; }\nchar **backtrace_symbols(void *const *b, int s) { return NULL; }\nvoid backtrace_symbols_fd(void *const *b, int s, int fd) {}\nint malloc_trim(size_t pad) { return 0; }\n' \
+    | gcc -c -x c - -o /tmp/duckdb_musl_compat.o \
+    && ar rcs /usr/lib/libduckdb_musl_compat.a /tmp/duckdb_musl_compat.o
 
 WORKDIR /app
 
@@ -42,7 +48,7 @@ COPY cli/ ./cli/
 WORKDIR /app/cli
 ARG TARGETARCH
 RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
-    CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto" \
+    CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
     CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath \
     -ldflags "-s -w -X github.com/clidey/whodb/cli/pkg/version.Version=${VERSION}" \
     -o /whodb-cli .
@@ -65,7 +71,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' /app/core/go.mod | awk '{p
 # Final stage
 FROM alpine:3.23
 
-RUN apk add --no-cache ca-certificates libgcc
+RUN apk add --no-cache ca-certificates libgcc libstdc++
 
 WORKDIR /app
 

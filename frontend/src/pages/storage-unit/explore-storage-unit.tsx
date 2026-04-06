@@ -89,10 +89,8 @@ import {ExploreStorageUnitWhereConditionSheet} from "./explore-storage-unit-wher
 import {useTranslation} from "../../hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";
 import {isDestructiveQuery} from "../../utils/query-utils";
-import {mergeSearchWithWhere, parseSearchToWhereCondition} from "../../utils/search-parser";
-import {SearchIntellisense} from "../../components/search-intellisense";
-import {useSearchIntellisense} from "../../hooks/use-search-intellisense";
 import {useContainerWidth} from "../../hooks/use-container-width";
+import {getComponent} from "../../config/component-registry";
 
 // Extension query utilities — set via registerQueryUtils()
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
@@ -105,6 +103,14 @@ export function registerQueryUtils(fns: {
         generateInitialQuery = fns.generateInitialQuery;
     }
 }
+
+type EESearchBarProps = {
+    columns: string[];
+    columnTypes: (string | undefined)[];
+    validOperators: string[];
+    onConditionChange: (condition: WhereCondition | undefined) => void;
+    onSubmit: () => void;
+};
 
 export const ExploreStorageUnit: FC = () => {
     const defaultPageSize = useAppSelector(state => state.settings.defaultPageSize);
@@ -159,9 +165,9 @@ export const ExploreStorageUnit: FC = () => {
     const [rows, setRows] = useState<RowsResult>();
     const [showAdd, setShowAdd] = useState(false);
     const searchRef = useRef<(search: string) => void>(() => {});
-    const [search, setSearch] = useState("");
-    const [searchCursorPosition, setSearchCursorPosition] = useState(0);
-    const searchInputRef = useRef<HTMLInputElement>(null);
+    const [localSearch, setLocalSearch] = useState("");
+    const [searchCondition, setSearchCondition] = useState<WhereCondition | undefined>();
+    const [EESearchBar, setEESearchBar] = useState<FC<EESearchBarProps> | null>(null);
 
     // Request counter to prevent race conditions - only the latest query's results should be used
     const latestRequestIdRef = useRef(0);
@@ -193,6 +199,14 @@ export const ExploreStorageUnit: FC = () => {
     const [tableHeight, setTableHeight] = useState<number>(500);
 
     const [updateStorageUnit] = useUpdateStorageUnitMutation();
+
+    // Load search bar extension from component registry
+    useEffect(() => {
+        const SearchBarComponent = getComponent('search-bar');
+        if (SearchBarComponent) {
+            setEESearchBar(() => SearchBarComponent as unknown as FC<EESearchBarProps>);
+        }
+    }, []);
 
     // Keep whereConditionRef in sync with whereCondition state
     useEffect(() => {
@@ -292,17 +306,6 @@ export const ExploreStorageUnit: FC = () => {
         return {whereColumns: columns, whereColumnTypes: columnTypes}
     }, [rows?.Columns, rows?.Rows, current?.Type, columns, columnTypes]);
 
-    // Intellisense for search input
-    const intellisense = useSearchIntellisense({
-        columns: whereColumns,
-        operators: validOperators,
-        value: search,
-        cursorPosition: searchCursorPosition,
-        inputRef: searchInputRef,
-        onCursorPositionChange: setSearchCursorPosition,
-        onValueChange: setSearch,
-    });
-
     const handleSubmitRequest = useCallback((pageOffset: number | null = null) => {
         const tableNameToUse = unitName || currentTableName;
         if (tableNameToUse) {
@@ -314,13 +317,10 @@ export const ExploreStorageUnit: FC = () => {
         // Use ref to always get the latest whereCondition (avoids stale closure issues)
         const currentWhereCondition = whereConditionRef.current;
 
-        // Parse search input and convert to where condition
-        const searchCondition = search.trim()
-            ? parseSearchToWhereCondition(search, whereColumns, whereColumnTypes, validOperators)
-            : undefined;
-
-        // Merge search condition with user-defined where condition
-        const mergedCondition = mergeSearchWithWhere(searchCondition, currentWhereCondition);
+        // Merge EE search condition with user-defined where condition
+        const mergedCondition = searchCondition && currentWhereCondition
+            ? { Type: WhereConditionType.And, And: { Children: [currentWhereCondition, searchCondition] } }
+            : searchCondition || currentWhereCondition;
 
         getStorageUnitRows({
             variables: {
@@ -337,7 +337,7 @@ export const ExploreStorageUnit: FC = () => {
                 setRows(result.data.Row);
             }
         });
-    }, [getStorageUnitRows, schema, unitName, currentTableName, sortConditions, pageSize, currentPage, search, whereColumns, whereColumnTypes, validOperators]);
+    }, [getStorageUnitRows, schema, unitName, currentTableName, sortConditions, pageSize, currentPage, searchCondition]);
 
     const handleQuery = useCallback(() => {
         handleSubmitRequest();
@@ -439,7 +439,9 @@ export const ExploreStorageUnit: FC = () => {
         setShowEntitySearchSheet(false);
         setEntitySearchData(null);
         setEntitySearchResults(null);
-        setSearch("");
+        setLocalSearch("");
+        searchRef.current("");
+        setSearchCondition(undefined);
 
         // Restore saved conditions for this unit, or reset to empty if none saved
         const restoredWhere = savedConditions?.whereCondition;
@@ -792,47 +794,38 @@ export const ExploreStorageUnit: FC = () => {
             <div className="flex w-full relative" data-testid="explore-storage-unit-options">
                 <div className="flex justify-between items-end w-full">
                     <div className="flex gap-2">
-                        <div className="flex flex-col gap-2 relative">
-                            <Label>{t('searchLabel')}</Label>
-                            <div className="relative">
-                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                <Input
-                                    ref={searchInputRef}
-                                    placeholder={t('searchPlaceholder')}
-                                    className="w-64 pl-10"
-                                    value={search}
-                                    onChange={e => {
-                                        setSearch(e.target.value);
-                                        setSearchCursorPosition(e.target.selectionStart || 0);
-                                    }}
-                                    onKeyDown={e => {
-                                        // Let intellisense handle its keys first
-                                        const handled = intellisense.handleKeyDown(e);
-                                        if (handled) return;
-
-                                        if (e.key === "Enter") {
-                                            handleQuery();
-                                        }
-                                    }}
-                                    onSelect={e => {
-                                        setSearchCursorPosition((e.target as HTMLInputElement).selectionStart || 0);
-                                    }}
-                                    onClick={e => {
-                                        setSearchCursorPosition((e.target as HTMLInputElement).selectionStart || 0);
-                                    }}
-                                    data-testid="table-search"
-                                />
-                                {intellisense.isOpen && (
-                                    <SearchIntellisense
-                                        suggestions={intellisense.suggestions}
-                                        selectedIndex={intellisense.selectedIndex}
-                                        onSelect={intellisense.acceptSuggestion}
-                                        onClose={intellisense.closeDropdown}
-                                        position={intellisense.dropdownPosition}
+                        {EESearchBar != null ? (
+                            <EESearchBar
+                                key={conditionKey}
+                                columns={whereColumns}
+                                columnTypes={whereColumnTypes ?? []}
+                                validOperators={validOperators}
+                                onConditionChange={setSearchCondition}
+                                onSubmit={handleQuery}
+                            />
+                        ) : (
+                            <div className="flex flex-col gap-2">
+                                <Label>{t('searchLabel')}</Label>
+                                <div className="relative">
+                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    <Input
+                                        placeholder={t('searchPlaceholder')}
+                                        className="w-64 pl-10"
+                                        value={localSearch}
+                                        onChange={e => {
+                                            setLocalSearch(e.target.value);
+                                            searchRef.current(e.target.value);
+                                        }}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter" && localSearch) {
+                                                searchRef.current(localSearch);
+                                            }
+                                        }}
+                                        data-testid="table-search"
                                     />
-                                )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <div className="flex flex-col gap-2">
                             <Label>{t('pageSizeLabel')}</Label>
                             <div className="flex gap-2">

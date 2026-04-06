@@ -29,8 +29,18 @@ import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
 import {useApolloClient} from "@apollo/client";
-import {createSQLAutocomplete} from "./editor-autocomplete";
 import { useTranslation } from "@/hooks/use-translation";
+
+// Extension autocomplete — set via registerEditorExtensions()
+let createSQLAutocomplete: ((options: { apolloClient: any; defaultSchema?: string }) => any[]) | undefined;
+
+export const registerEditorExtensions = (fns: {
+    createSQLAutocomplete?: (options: { apolloClient: any; defaultSchema?: string }) => any[];
+}) => {
+    if (fns.createSQLAutocomplete) {
+        createSQLAutocomplete = fns.createSQLAutocomplete;
+    }
+};
 import { useAppSelector } from "@/store/hooks";
 import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
 import { Tip } from "./tip";
@@ -294,8 +304,8 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
           }),
             basicSetup,
             languageExtension != null ? languageExtension : [],
-            // Add autocomplete for SQL, but allow disabling it during E2E tests to prevent flakiness.
-            (language === "sql" && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
+            // Add autocomplete for SQL in EE mode, but allow disabling it during E2E tests to prevent flakiness.
+            (language === "sql" && createSQLAutocomplete && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({
               ".cm-activeLine": { backgroundColor: "rgba(0,0,0,0.05) !important" },
               ".cm-activeLineGutter": { backgroundColor: "rgba(0,0,0,0.05) !important" },

@@ -41,6 +41,10 @@ func InitializeEngine() *engine.Engine {
 		MainEngine.RegistryPlugin(p)
 	}
 
+	// DuckDB has platform constraints (not available on ARM/RISCV64),
+	// so it uses a build-tagged registration function instead of init().
+	registerDuckDB(MainEngine)
+
 	MainEngine.AddLoginProfile(sqlite3.GetSampleProfile())
 
 	// Parse and register generic AI providers from environment configuration.

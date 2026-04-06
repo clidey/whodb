@@ -439,6 +439,26 @@ test.describe('Login & Authentication', () => {
             }
         });
 
+        test('auto-login with search_path selects the correct schema', async ({ whodb, page }) => {
+            const db = getDatabaseConfig('postgres');
+            const params = new URLSearchParams({
+                type: db.type,
+                host: db.connection.host,
+                username: db.connection.user,
+                password: db.connection.password,
+                database: db.connection.database,
+                port: String(db.connection.port),
+                search_path: 'test_schema',
+                login: '',
+            });
+
+            await page.goto(whodb.url(`/login?${params.toString()}`));
+            await expect(page).toHaveURL(/\/storage-unit/, { timeout: 15000 });
+
+            // Schema dropdown should show test_schema, not public
+            await expect(page.locator('[data-testid="sidebar-schema"]')).toHaveText('test_schema', { timeout: 10000 });
+        });
+
         test('UI params survive URL cleanup after login', async ({ whodb, page }) => {
             const db = getDatabaseConfig('postgres');
             const params = new URLSearchParams({

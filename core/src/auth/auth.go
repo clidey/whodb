@@ -229,7 +229,8 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	if query.OperationName == "GetDatabase" {
-		return query.Variables["type"] == engine.DatabaseType_Sqlite3
+		dbType, _ := query.Variables["type"].(string)
+		return dbType == engine.DatabaseType_Sqlite3 || dbType == engine.DatabaseType_DuckDB
 	}
 
 	switch query.OperationName {

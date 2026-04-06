@@ -101,6 +101,7 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
         case DatabaseType.Postgres:
         case DatabaseType.MariaDb:
         case DatabaseType.Sqlite3:
+        case DatabaseType.DuckDb:
         case DatabaseType.ClickHouse:
             return singular ? "Table" : "Tables";
     }

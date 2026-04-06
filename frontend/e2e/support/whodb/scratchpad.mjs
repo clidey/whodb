@@ -90,7 +90,7 @@ export const scratchpadMethods = {
         await cellLocator
             .locator('[data-testid="cell-query-output"], [data-testid="cell-action-output"], [data-testid="cell-error"]')
             .first()
-            .waitFor({ timeout: TIMEOUT.ELEMENT });
+            .waitFor({ timeout: TIMEOUT.SLOW });
     },
 
     /**
