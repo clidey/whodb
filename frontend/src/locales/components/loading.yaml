@@ -157,3 +157,91 @@ ur_PK:
 vi_VN:
   loading: Đang tải...
   pleaseWait: Vui lòng chờ
+
+af_ZA:
+  loading: "Laai tans..."
+  pleaseWait: "Wag asseblief"
+
+am_ET:
+  loading: "በመጫን ላይ..."
+  pleaseWait: "እባክህ ጠብቅ"
+
+az_AZ:
+  loading: "Yüklənir..."
+  pleaseWait: "Zəhmət olmasa gözləyin"
+
+et_EE:
+  loading: "Laadimine..."
+  pleaseWait: "Palun oodake"
+
+gu_IN:
+  loading: "લોડ કરી રહ્યું છે..."
+  pleaseWait: "કૃપા કરીને રાહ જુઓ"
+
+ha_NG:
+  loading: "Ana lodawa..."
+  pleaseWait: "Don Allah jira"
+
+ka_GE:
+  loading: "იტვირთება..."
+  pleaseWait: "გთხოვთ დაელოდეთ"
+
+km_KH:
+  loading: "កំពុង​ផ្ទុក..."
+  pleaseWait: "សូមរង់ចាំ"
+
+kn_IN:
+  loading: "ಲೋಡ್ ಆಗುತ್ತಿದೆ..."
+  pleaseWait: "ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ"
+
+lt_LT:
+  loading: "Įkeliama..."
+  pleaseWait: "Prašome palaukti"
+
+lv_LV:
+  loading: "Notiek ielāde..."
+  pleaseWait: "Lūdzu, uzgaidiet"
+
+ml_IN:
+  loading: "ലോഡ് ചെയ്യുന്നു..."
+  pleaseWait: "കാത്തിരിക്കൂ"
+
+mr_IN:
+  loading: "लोड करत आहे..."
+  pleaseWait: "कृपया प्रतीक्षा करा"
+
+ne_NP:
+  loading: "लोड गर्दै..."
+  pleaseWait: "कृपया प्रतीक्षा गर्नुहोस्"
+
+pa_IN:
+  loading: "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ..."
+  pleaseWait: "ਕ੍ਰਿਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ"
+
+si_LK:
+  loading: "පූරණය වෙමින්..."
+  pleaseWait: "කරුණාකර රැඳී සිටින්න"
+
+sl_SI:
+  loading: "Nalaganje..."
+  pleaseWait: "prosim počakajte"
+
+sr_RS:
+  loading: "Учитавање..."
+  pleaseWait: "Молим сачекајте"
+
+te_IN:
+  loading: "లోడ్ అవుతోంది..."
+  pleaseWait: "దయచేసి వేచి ఉండండి"
+
+tl_PH:
+  loading: "Naglo-load..."
+  pleaseWait: "Mangyaring Maghintay"
+
+uz_UZ:
+  loading: "Yuklanmoqda..."
+  pleaseWait: "Iltimos kuting"
+
+yo_NG:
+  loading: "Nkojọpọ..."
+  pleaseWait: "Jọwọ duro"

@@ -237,3 +237,135 @@ vi_VN:
   loggingOut: Đăng xuất
   success: Đăng xuất thành công
   error: Lỗi đăng xuất
+
+af_ZA:
+  title: "Teken uit"
+  loggingOut: "Meld af"
+  success: "Suksesvol afgemeld"
+  error: "Fout met afmeld"
+
+am_ET:
+  title: "ውጣ"
+  loggingOut: "መውጣት"
+  success: "በተሳካ ሁኔታ ወጥቷል።"
+  error: "የመውጣት ስህተት"
+
+az_AZ:
+  title: "Çıxın"
+  loggingOut: "Çıxış"
+  success: "Uğurla Çıxıldı"
+  error: "Çıxış xətası"
+
+et_EE:
+  title: "Väljalogimine"
+  loggingOut: "Väljalogimine"
+  success: "Edukalt välja logitud"
+  error: "Viga väljalogimisel"
+
+gu_IN:
+  title: "લોગઆઉટ"
+  loggingOut: "લૉગ આઉટ"
+  success: "સફળતાપૂર્વક લૉગ આઉટ થયું"
+  error: "લોગ આઉટ કરવામાં ભૂલ"
+
+ha_NG:
+  title: "Fita"
+  loggingOut: "Fita"
+  success: "An Shiga Cikin Nasara"
+  error: "Kuskuren Fitarwa"
+
+ka_GE:
+  title: "გამოსვლა"
+  loggingOut: "გამოსვლა"
+  success: "წარმატებით გამოვიდა"
+  error: "შეცდომა გამოსვლისას"
+
+km_KH:
+  title: "ចេញ"
+  loggingOut: "ចេញ"
+  success: "ចេញដោយជោគជ័យ"
+  error: "កំហុសក្នុងការចេញ"
+
+kn_IN:
+  title: "ಲಾಗ್ಔಟ್"
+  loggingOut: "ಲಾಗ್ ಔಟ್ ಆಗುತ್ತಿದೆ"
+  success: "ಯಶಸ್ವಿಯಾಗಿ ಲಾಗ್ ಔಟ್ ಮಾಡಲಾಗಿದೆ"
+  error: "ಲಾಗ್ ಔಟ್ ಮಾಡುವಲ್ಲಿ ದೋಷ"
+
+lt_LT:
+  title: "Atsijungti"
+  loggingOut: "Atsijungimas"
+  success: "Sėkmingai atsijungta"
+  error: "Klaida atsijungiant"
+
+lv_LV:
+  title: "Atteikties"
+  loggingOut: "Atteikšanās"
+  success: "Veiksmīgi atteicies"
+  error: "Kļūda izejot"
+
+ml_IN:
+  title: "പുറത്തുകടക്കുക"
+  loggingOut: "ലോഗ് ഔട്ട് ചെയ്യുന്നു"
+  success: "ലോഗ് ഔട്ട് ചെയ്‌തു"
+  error: "ലോഗ് ഔട്ട് ചെയ്യുന്നതിൽ പിശക്"
+
+mr_IN:
+  title: "लॉगआउट करा"
+  loggingOut: "लॉग आउट करत आहे"
+  success: "यशस्वीरित्या लॉग आउट केले"
+  error: "लॉग आउट करताना त्रुटी"
+
+ne_NP:
+  title: "लगआउट"
+  loggingOut: "लग आउट गर्दै"
+  success: "सफलतापूर्वक लग आउट भयो"
+  error: "लग आउट गर्दा त्रुटि"
+
+pa_IN:
+  title: "ਲਾਗਆਉਟ"
+  loggingOut: "ਲੌਗ ਆਉਟ ਹੋ ਰਿਹਾ ਹੈ"
+  success: "ਸਫਲਤਾਪੂਰਵਕ ਲੌਗ ਆਉਟ ਹੋਇਆ"
+  error: "ਲੌਗ ਆਉਟ ਕਰਨ ਵਿੱਚ ਤਰੁੱਟੀ"
+
+si_LK:
+  title: "පිටවීම"
+  loggingOut: "ලොග් අවුට් වීම"
+  success: "සාර්ථකව ලොග් අවුට් විය"
+  error: "ලොග් අවුට් වීමේ දෝෂයකි"
+
+sl_SI:
+  title: "Odjava"
+  loggingOut: "Odjava"
+  success: "Uspešno odjavljen"
+  error: "Napaka pri odjavi"
+
+sr_RS:
+  title: "Одјава"
+  loggingOut: "Одјава"
+  success: "Успешно одјављен"
+  error: "Грешка при одјављивању"
+
+te_IN:
+  title: "లాగ్అవుట్"
+  loggingOut: "లాగ్ అవుట్ అవుతోంది"
+  success: "విజయవంతంగా లాగ్ అవుట్ చేయబడింది"
+  error: "లాగ్ అవుట్ చేయడంలో లోపం"
+
+tl_PH:
+  title: "Mag-logout"
+  loggingOut: "Nagla-log Out"
+  success: "Matagumpay na Naka-log Out"
+  error: "Error sa Pag-log Out"
+
+uz_UZ:
+  title: "Chiqish"
+  loggingOut: "Chiqish"
+  success: "Hisobdan muvaffaqiyatli chiqdi"
+  error: "Chiqishda xato"
+
+yo_NG:
+  title: "Jade jade"
+  loggingOut: "Wọle Jade"
+  success: "Wọle Jade ni aṣeyọri"
+  error: "Aṣiṣe Wọle Jade"

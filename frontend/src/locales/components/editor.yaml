@@ -357,3 +357,201 @@ vi_VN:
   showPreview: Hiển thị bản xem trước
   hidePreview: Ẩn bản xem trước
   runQuery: Chạy truy vấn
+
+af_ZA:
+  confirmOperationTitle: "Bevestig werking"
+  confirmOperationDescription: "Hierdie navraag sal data of skema wysig. Is jy seker jy wil dit uitvoer? Hierdie handeling kan nie ontdoen word nie."
+  cancel: "Kanselleer"
+  executeQuery: "Voer navraag uit"
+  showPreview: "Wys voorskou"
+  hidePreview: "Versteek voorskou"
+  runQuery: "Voer navraag uit"
+
+am_ET:
+  confirmOperationTitle: "አሠራሩን ያረጋግጡ"
+  confirmOperationDescription: "ይህ መጠይቅ ውሂብን ወይም ንድፍን ይቀይራል። እርግጠኛ ነዎት እሱን ማስፈጸም ይፈልጋሉ? ይህ እርምጃ ሊቀለበስ አይችልም።"
+  cancel: "ሰርዝ"
+  executeQuery: "መጠይቁን ያስፈጽሙ"
+  showPreview: "ቅድመ እይታ አሳይ"
+  hidePreview: "ቅድመ እይታን ደብቅ"
+  runQuery: "መጠይቁን አሂድ"
+
+az_AZ:
+  confirmOperationTitle: "Əməliyyatı təsdiqləyin"
+  confirmOperationDescription: "Bu sorğu data və ya sxemi dəyişdirəcək. Onu həyata keçirmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz."
+  cancel: "Ləğv et"
+  executeQuery: "Sorğunu icra edin"
+  showPreview: "Önizləməni göstərin"
+  hidePreview: "Önizləməni gizlədin"
+  runQuery: "Sorğunu icra edin"
+
+et_EE:
+  confirmOperationTitle: "Kinnitage toiming"
+  confirmOperationDescription: "See päring muudab andmeid või skeemi. Kas olete kindel, et soovite seda teostada? Seda toimingut ei saa tagasi võtta."
+  cancel: "Tühista"
+  executeQuery: "Käivitage päring"
+  showPreview: "Näita eelvaadet"
+  hidePreview: "Peida eelvaade"
+  runQuery: "Käivita päring"
+
+gu_IN:
+  confirmOperationTitle: "ઓપરેશનની પુષ્ટિ કરો"
+  confirmOperationDescription: "આ ક્વેરી ડેટા અથવા સ્કીમાને સંશોધિત કરશે. શું તમે ખરેખર તેને ચલાવવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી."
+  cancel: "રદ કરો"
+  executeQuery: "ક્વેરી ચલાવો"
+  showPreview: "પૂર્વાવલોકન બતાવો"
+  hidePreview: "પૂર્વાવલોકન છુપાવો"
+  runQuery: "ક્વેરી ચલાવો"
+
+ha_NG:
+  confirmOperationTitle: "Tabbatar da Aiki"
+  confirmOperationDescription: "Wannan tambayar za ta canza bayanai ko tsari. Ka tabbata kana son aiwatar da shi? Ba za a iya soke wannan aikin ba."
+  cancel: "Soke"
+  executeQuery: "Yi Tambaya"
+  showPreview: "Nuna Preview"
+  hidePreview: "Boye Preview"
+  runQuery: "Gudanar da tambaya"
+
+ka_GE:
+  confirmOperationTitle: "დაადასტურეთ ოპერაცია"
+  confirmOperationDescription: "ეს მოთხოვნა შეცვლის მონაცემებს ან სქემას. დარწმუნებული ხართ, რომ გსურთ მისი შესრულება? ამ მოქმედების გაუქმება შეუძლებელია."
+  cancel: "გაუქმება"
+  executeQuery: "შეასრულეთ შეკითხვა"
+  showPreview: "გადახედვის ჩვენება"
+  hidePreview: "გადახედვის დამალვა"
+  runQuery: "შეკითხვის გაშვება"
+
+km_KH:
+  confirmOperationTitle: "បញ្ជាក់ប្រតិបត្តិការ"
+  confirmOperationDescription: "សំណួរនេះនឹងកែប្រែទិន្នន័យ ឬគ្រោងការណ៍។ តើអ្នកប្រាកដថាចង់ប្រតិបត្តិវាទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។"
+  cancel: "បោះបង់"
+  executeQuery: "ប្រតិបត្តិសំណួរ"
+  showPreview: "បង្ហាញការមើលជាមុន"
+  hidePreview: "លាក់ការមើលជាមុន"
+  runQuery: "ដំណើរការសំណួរ"
+
+kn_IN:
+  confirmOperationTitle: "ಕಾರ್ಯಾಚರಣೆಯನ್ನು ದೃಢೀಕರಿಸಿ"
+  confirmOperationDescription: "ಈ ಪ್ರಶ್ನೆಯು ಡೇಟಾ ಅಥವಾ ಸ್ಕೀಮಾವನ್ನು ಮಾರ್ಪಡಿಸುತ್ತದೆ. ನೀವು ಅದನ್ನು ಕಾರ್ಯಗತಗೊಳಿಸಲು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ? ಈ ಕ್ರಿಯೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ."
+  cancel: "ರದ್ದುಮಾಡು"
+  executeQuery: "ಪ್ರಶ್ನೆಯನ್ನು ಕಾರ್ಯಗತಗೊಳಿಸಿ"
+  showPreview: "ಪೂರ್ವವೀಕ್ಷಣೆ ತೋರಿಸು"
+  hidePreview: "ಮುನ್ನೋಟ ಮರೆಮಾಡಿ"
+  runQuery: "ಪ್ರಶ್ನೆಯನ್ನು ರನ್ ಮಾಡಿ"
+
+lt_LT:
+  confirmOperationTitle: "Patvirtinkite veikimą"
+  confirmOperationDescription: "Ši užklausa pakeis duomenis arba schemą. Ar tikrai norite tai įvykdyti? Šio veiksmo anuliuoti negalima."
+  cancel: "Atšaukti"
+  executeQuery: "Vykdykite užklausą"
+  showPreview: "Rodyti peržiūrą"
+  hidePreview: "Slėpti peržiūrą"
+  runQuery: "Vykdyti užklausą"
+
+lv_LV:
+  confirmOperationTitle: "Apstipriniet darbību"
+  confirmOperationDescription: "Šis vaicājums mainīs datus vai shēmu. Vai tiešām vēlaties to izpildīt? Šo darbību nevar atsaukt."
+  cancel: "Atcelt"
+  executeQuery: "Izpildiet vaicājumu"
+  showPreview: "Rādīt priekšskatījumu"
+  hidePreview: "Paslēpt priekšskatījumu"
+  runQuery: "Palaist vaicājumu"
+
+ml_IN:
+  confirmOperationTitle: "പ്രവർത്തനം സ്ഥിരീകരിക്കുക"
+  confirmOperationDescription: "ഈ ചോദ്യം ഡാറ്റ അല്ലെങ്കിൽ സ്കീമ പരിഷ്കരിക്കും. അത് നടപ്പിലാക്കണമെന്ന് തീർച്ചയാണോ? ഈ പ്രവർത്തനം പഴയപടിയാക്കാനാകില്ല."
+  cancel: "റദ്ദാക്കുക"
+  executeQuery: "ചോദ്യം എക്സിക്യൂട്ട് ചെയ്യുക"
+  showPreview: "പ്രിവ്യൂ കാണിക്കുക"
+  hidePreview: "പ്രിവ്യൂ മറയ്ക്കുക"
+  runQuery: "ചോദ്യം റൺ ചെയ്യുക"
+
+mr_IN:
+  confirmOperationTitle: "ऑपरेशनची पुष्टी करा"
+  confirmOperationDescription: "ही क्वेरी डेटा किंवा स्कीमा सुधारेल. तुमची खात्री आहे की तुम्ही ते अंमलात आणू इच्छिता? ही क्रिया पूर्ववत केली जाऊ शकत नाही."
+  cancel: "रद्द करा"
+  executeQuery: "क्वेरी कार्यान्वित करा"
+  showPreview: "पूर्वावलोकन दर्शवा"
+  hidePreview: "पूर्वावलोकन लपवा"
+  runQuery: "क्वेरी चालवा"
+
+ne_NP:
+  confirmOperationTitle: "सञ्चालन पुष्टि गर्नुहोस्"
+  confirmOperationDescription: "यो क्वेरीले डाटा वा स्कीमा परिमार्जन गर्नेछ। के तपाइँ यसलाई कार्यान्वयन गर्न निश्चित हुनुहुन्छ? यो कार्य अन्डू गर्न सकिँदैन।"
+  cancel: "रद्द गर्नुहोस्"
+  executeQuery: "क्वेरी कार्यान्वयन गर्नुहोस्"
+  showPreview: "पूर्वावलोकन देखाउनुहोस्"
+  hidePreview: "पूर्वावलोकन लुकाउनुहोस्"
+  runQuery: "क्वेरी चलाउनुहोस्"
+
+pa_IN:
+  confirmOperationTitle: "ਓਪਰੇਸ਼ਨ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ"
+  confirmOperationDescription: "ਇਹ ਪੁੱਛਗਿੱਛ ਡੇਟਾ ਜਾਂ ਸਕੀਮਾ ਨੂੰ ਸੰਸ਼ੋਧਿਤ ਕਰੇਗੀ। ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ 'ਤੇ ਇਸਨੂੰ ਚਲਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ? ਇਸ ਕਾਰਵਾਈ ਨੂੰ ਅਣਕੀਤਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"
+  cancel: "ਰੱਦ ਕਰੋ"
+  executeQuery: "ਪੁੱਛਗਿੱਛ ਚਲਾਓ"
+  showPreview: "ਝਲਕ ਦਿਖਾਓ"
+  hidePreview: "ਝਲਕ ਲੁਕਾਓ"
+  runQuery: "ਪੁੱਛਗਿੱਛ ਚਲਾਓ"
+
+si_LK:
+  confirmOperationTitle: "මෙහෙයුම තහවුරු කරන්න"
+  confirmOperationDescription: "මෙම විමසුම දත්ත හෝ යෝජනා ක්‍රමය වෙනස් කරයි. ඔබට එය ක්‍රියාත්මක කිරීමට අවශ්‍ය බව විශ්වාසද? මෙම ක්‍රියාව පසුගමනය කළ නොහැක."
+  cancel: "අවලංගු කරන්න"
+  executeQuery: "විමසුම ක්‍රියාත්මක කරන්න"
+  showPreview: "පෙරදසුන පෙන්වන්න"
+  hidePreview: "පෙරදසුන සඟවන්න"
+  runQuery: "විමසුම ධාවනය කරන්න"
+
+sl_SI:
+  confirmOperationTitle: "Potrdite operacijo"
+  confirmOperationDescription: "Ta poizvedba bo spremenila podatke ali shemo. Ali ste prepričani, da ga želite izvesti? Tega dejanja ni mogoče razveljaviti."
+  cancel: "Prekliči"
+  executeQuery: "Izvedi poizvedbo"
+  showPreview: "Prikaži predogled"
+  hidePreview: "Skrij predogled"
+  runQuery: "Zaženi poizvedbo"
+
+sr_RS:
+  confirmOperationTitle: "Потврдите операцију"
+  confirmOperationDescription: "Овај упит ће изменити податке или шему. Да ли сте сигурни да желите да га извршите? Ова радња се не може опозвати."
+  cancel: "Откажи"
+  executeQuery: "Изврши упит"
+  showPreview: "Прикажи преглед"
+  hidePreview: "Сакриј преглед"
+  runQuery: "Покрени упит"
+
+te_IN:
+  confirmOperationTitle: "ఆపరేషన్ను నిర్ధారించండి"
+  confirmOperationDescription: "ఈ ప్రశ్న డేటా లేదా స్కీమాను సవరిస్తుంది. మీరు దీన్ని ఖచ్చితంగా అమలు చేయాలనుకుంటున్నారా? ఈ చర్య రద్దు చేయబడదు."
+  cancel: "రద్దు చేయి"
+  executeQuery: "ప్రశ్నను అమలు చేయండి"
+  showPreview: "ప్రివ్యూ చూపించు"
+  hidePreview: "ప్రివ్యూను దాచు"
+  runQuery: "ప్రశ్నను అమలు చేయండి"
+
+tl_PH:
+  confirmOperationTitle: "Kumpirmahin ang Operasyon"
+  confirmOperationDescription: "Babaguhin ng query na ito ang data o schema. Sigurado ka bang gusto mong isagawa ito? Ang pagkilos na ito ay hindi maaaring i-undo."
+  cancel: "Kanselahin"
+  executeQuery: "Isagawa ang Query"
+  showPreview: "Ipakita ang Preview"
+  hidePreview: "Itago ang Preview"
+  runQuery: "Patakbuhin ang query"
+
+uz_UZ:
+  confirmOperationTitle: "Operatsiyani tasdiqlang"
+  confirmOperationDescription: "Bu soʻrov maʼlumotlar yoki sxemani oʻzgartiradi. Haqiqatan ham buni amalga oshirmoqchimisiz? Bu amalni ortga qaytarib bo‘lmaydi."
+  cancel: "Bekor qilish"
+  executeQuery: "So'rovni bajarish"
+  showPreview: "Ko‘rish"
+  hidePreview: "Ko‘rib chiqishni yashirish"
+  runQuery: "So'rovni ishga tushirish"
+
+yo_NG:
+  confirmOperationTitle: "Jẹrisi isẹ"
+  confirmOperationDescription: "Ibeere yii yoo ṣe atunṣe data tabi eto. Ṣe o da ọ loju pe o fẹ ṣiṣẹ? Iṣe yii ko le ṣe atunṣe."
+  cancel: "Fagilee"
+  executeQuery: "Ṣiṣe ibeere"
+  showPreview: "Ṣe afihan Awotẹlẹ"
+  hidePreview: "Tọju Awotẹlẹ"
+  runQuery: "Ṣiṣe ibeere"

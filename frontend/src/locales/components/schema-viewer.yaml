@@ -397,3 +397,223 @@ vi_VN:
   searchPlaceholder: Tìm kiếm bảng
   searchAriaLabel: Tìm kiếm bảng
   noResults: Không tìm thấy bảng nào
+
+af_ZA:
+  title: "Skema"
+  columns: "Kolomme"
+  indexes: "Indekse"
+  relationships: "Verhoudings"
+  refresh: "Verfris"
+  searchPlaceholder: "Soek Tabelle"
+  searchAriaLabel: "Soek Tabelle"
+  noResults: "Geen tabelle gevind nie"
+
+am_ET:
+  title: "እቅድ"
+  columns: "አምዶች"
+  indexes: "ኢንዴክሶች"
+  relationships: "ግንኙነቶች"
+  refresh: "አድስ"
+  searchPlaceholder: "ሰንጠረዦችን ፈልግ"
+  searchAriaLabel: "ሰንጠረዦችን ፈልግ"
+  noResults: "ምንም ጠረጴዛዎች አልተገኙም።"
+
+az_AZ:
+  title: "Sxem"
+  columns: "Sütunlar"
+  indexes: "İndekslər"
+  relationships: "Əlaqələr"
+  refresh: "Yeniləyin"
+  searchPlaceholder: "Cədvəlləri axtarın"
+  searchAriaLabel: "Cədvəlləri axtarın"
+  noResults: "Cədvəl tapılmadı"
+
+et_EE:
+  title: "Skeem"
+  columns: "Veerud"
+  indexes: "Indeksid"
+  relationships: "Suhted"
+  refresh: "Värskenda"
+  searchPlaceholder: "Otsi tabeleid"
+  searchAriaLabel: "Otsi tabeleid"
+  noResults: "Tabeleid ei leitud"
+
+gu_IN:
+  title: "સ્કીમા"
+  columns: "કૉલમ"
+  indexes: "અનુક્રમણિકાઓ"
+  relationships: "સંબંધો"
+  refresh: "તાજું કરો"
+  searchPlaceholder: "કોષ્ટકો શોધો"
+  searchAriaLabel: "કોષ્ટકો શોધો"
+  noResults: "કોઈ કોષ્ટકો મળ્યાં નથી"
+
+ha_NG:
+  title: "Tsarin tsari"
+  columns: "ginshiƙai"
+  indexes: "Fihirisa"
+  relationships: "Dangantaka"
+  refresh: "Sake sabuntawa"
+  searchPlaceholder: "Bincika Tables"
+  searchAriaLabel: "Bincika Tables"
+  noResults: "Ba a sami teburi ba"
+
+ka_GE:
+  title: "სქემა"
+  columns: "სვეტები"
+  indexes: "ინდექსები"
+  relationships: "ურთიერთობები"
+  refresh: "განაახლეთ"
+  searchPlaceholder: "ცხრილების ძიება"
+  searchAriaLabel: "ცხრილების ძიება"
+  noResults: "ცხრილები ვერ მოიძებნა"
+
+km_KH:
+  title: "គ្រោងការណ៍"
+  columns: "ជួរឈរ"
+  indexes: "សន្ទស្សន៍"
+  relationships: "ទំនាក់ទំនង"
+  refresh: "ធ្វើឱ្យស្រស់"
+  searchPlaceholder: "ស្វែងរកតារាង"
+  searchAriaLabel: "ស្វែងរកតារាង"
+  noResults: "រកមិនឃើញតារាងទេ។"
+
+kn_IN:
+  title: "ಸ್ಕೀಮಾ"
+  columns: "ಕಾಲಮ್ಗಳು"
+  indexes: "ಸೂಚ್ಯಂಕಗಳು"
+  relationships: "ಸಂಬಂಧಗಳು"
+  refresh: "ರಿಫ್ರೆಶ್ ಮಾಡಿ"
+  searchPlaceholder: "ಹುಡುಕಾಟ ಕೋಷ್ಟಕಗಳು"
+  searchAriaLabel: "ಹುಡುಕಾಟ ಕೋಷ್ಟಕಗಳು"
+  noResults: "ಯಾವುದೇ ಕೋಷ್ಟಕಗಳು ಕಂಡುಬಂದಿಲ್ಲ"
+
+lt_LT:
+  title: "Schema"
+  columns: "Stulpeliai"
+  indexes: "Indeksai"
+  relationships: "Santykiai"
+  refresh: "Atnaujinti"
+  searchPlaceholder: "Paieškos lentelės"
+  searchAriaLabel: "Paieškos lentelės"
+  noResults: "Lentelių nerasta"
+
+lv_LV:
+  title: "Shēma"
+  columns: "Kolonnas"
+  indexes: "Indeksi"
+  relationships: "Attiecības"
+  refresh: "Atsvaidzināt"
+  searchPlaceholder: "Meklēt tabulas"
+  searchAriaLabel: "Meklēt tabulas"
+  noResults: "Nav atrasta neviena tabula"
+
+ml_IN:
+  title: "സ്കീമ"
+  columns: "നിരകൾ"
+  indexes: "സൂചികകൾ"
+  relationships: "ബന്ധങ്ങൾ"
+  refresh: "പുതുക്കുക"
+  searchPlaceholder: "പട്ടികകൾ തിരയുക"
+  searchAriaLabel: "പട്ടികകൾ തിരയുക"
+  noResults: "പട്ടികകളൊന്നും കണ്ടെത്തിയില്ല"
+
+mr_IN:
+  title: "स्कीमा"
+  columns: "स्तंभ"
+  indexes: "निर्देशांक"
+  relationships: "नातेसंबंध"
+  refresh: "रिफ्रेश करा"
+  searchPlaceholder: "सारण्या शोधा"
+  searchAriaLabel: "सारण्या शोधा"
+  noResults: "कोणतेही टेबल आढळले नाहीत"
+
+ne_NP:
+  title: "योजना"
+  columns: "स्तम्भहरू"
+  indexes: "अनुक्रमणिकाहरू"
+  relationships: "सम्बन्धहरू"
+  refresh: "रिफ्रेस गर्नुहोस्"
+  searchPlaceholder: "तालिकाहरू खोज्नुहोस्"
+  searchAriaLabel: "तालिकाहरू खोज्नुहोस्"
+  noResults: "कुनै तालिका भेटिएन"
+
+pa_IN:
+  title: "ਸਕੀਮਾ"
+  columns: "ਕਾਲਮ"
+  indexes: "ਸੂਚਕਾਂਕ"
+  relationships: "ਰਿਸ਼ਤੇ"
+  refresh: "ਤਾਜ਼ਾ ਕਰੋ"
+  searchPlaceholder: "ਟੇਬਲ ਖੋਜੋ"
+  searchAriaLabel: "ਟੇਬਲ ਖੋਜੋ"
+  noResults: "ਕੋਈ ਟੇਬਲ ਨਹੀਂ ਮਿਲੇ"
+
+si_LK:
+  title: "යෝජනා ක්රමය"
+  columns: "තීරු"
+  indexes: "දර්ශක"
+  relationships: "සබඳතා"
+  refresh: "නැවුම් කරන්න"
+  searchPlaceholder: "සෙවුම් වගු"
+  searchAriaLabel: "සෙවුම් වගු"
+  noResults: "වගු හමු නොවීය"
+
+sl_SI:
+  title: "Shema"
+  columns: "Stolpci"
+  indexes: "Indeksi"
+  relationships: "Odnosi"
+  refresh: "Osveži"
+  searchPlaceholder: "Iskanje tabel"
+  searchAriaLabel: "Iskanje tabel"
+  noResults: "Ni miz"
+
+sr_RS:
+  title: "Шема"
+  columns: "Колумне"
+  indexes: "Индекси"
+  relationships: "Односи"
+  refresh: "Освежи"
+  searchPlaceholder: "Сеарцх Таблес"
+  searchAriaLabel: "Сеарцх Таблес"
+  noResults: "Нема пронађених табела"
+
+te_IN:
+  title: "స్కీమా"
+  columns: "నిలువు వరుసలు"
+  indexes: "సూచికలు"
+  relationships: "సంబంధాలు"
+  refresh: "రిఫ్రెష్ చేయండి"
+  searchPlaceholder: "పట్టికలను శోధించండి"
+  searchAriaLabel: "పట్టికలను శోధించండి"
+  noResults: "పట్టికలు ఏవీ కనుగొనబడలేదు"
+
+tl_PH:
+  title: "Schema"
+  columns: "Mga hanay"
+  indexes: "Mga index"
+  relationships: "Mga relasyon"
+  refresh: "I-refresh"
+  searchPlaceholder: "Maghanap ng mga Talahanayan"
+  searchAriaLabel: "Maghanap ng mga Talahanayan"
+  noResults: "Walang nakitang mga talahanayan"
+
+uz_UZ:
+  title: "Sxema"
+  columns: "Ustunlar"
+  indexes: "Indekslar"
+  relationships: "Aloqalar"
+  refresh: "Yangilash"
+  searchPlaceholder: "Jadvallarni qidirish"
+  searchAriaLabel: "Jadvallarni qidirish"
+  noResults: "Hech qanday jadval topilmadi"
+
+yo_NG:
+  title: "Eto"
+  columns: "Awọn ọwọn"
+  indexes: "Awọn atọka"
+  relationships: "Awọn ibatan"
+  refresh: "Tuntun"
+  searchPlaceholder: "Wa Awọn tabili"
+  searchAriaLabel: "Wa Awọn tabili"
+  noResults: "Ko si awọn tabili ti a rii"

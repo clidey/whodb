@@ -29,7 +29,10 @@ const EE_LOCALES_DIR = join(PROJECT_ROOT, 'ee/frontend/src/locales');
 
 // Our locale codes → Google Translate language codes
 const LANG_MAP = {
+    af_ZA: 'af',
+    am_ET: 'am',
     ar_AE: 'ar',
+    az_AZ: 'az',
     bg_BG: 'bg',
     bn_BD: 'bn',
     ca_ES: 'ca',
@@ -39,9 +42,12 @@ const LANG_MAP = {
     el_GR: 'el',
     en_GB: null,       // handled separately — copy en_US with UK spelling adjustments
     es_ES: 'es',
+    et_EE: 'et',
     fa_IR: 'fa',
     fi_FI: 'fi',
     fr_FR: 'fr',
+    gu_IN: 'gu',
+    ha_NG: 'ha',
     hi_IN: 'hi',
     hr_HR: 'hr',
     hu_HU: 'hu',
@@ -49,24 +55,40 @@ const LANG_MAP = {
     it_IT: 'it',
     iw_IL: 'iw',
     ja_JP: 'ja',
+    ka_GE: 'ka',
+    km_KH: 'km',
+    kn_IN: 'kn',
     ko_KR: 'ko',
+    lt_LT: 'lt',
+    lv_LV: 'lv',
+    ml_IN: 'ml',
+    mr_IN: 'mr',
     ms_MY: 'ms',
     nb_NO: 'no',
+    ne_NP: 'ne',
     nl_NL: 'nl',
+    pa_IN: 'pa',
     pl_PL: 'pl',
     pt_BR: 'pt',
     // pt_PT: 'pt',    // TODO: same as pt_BR — add back when we have distinct translations
     ro_RO: 'ro',
     ru_RU: 'ru',
+    si_LK: 'si',
     sk_SK: 'sk',
+    sl_SI: 'sl',
+    sr_RS: 'sr',
     sv_SE: 'sv',
     sw_KE: 'sw',
     ta_IN: 'ta',
+    te_IN: 'te',
     th_TH: 'th',
+    tl_PH: 'tl',
     tr_TR: 'tr',
     uk_UA: 'uk',
     ur_PK: 'ur',
+    uz_UZ: 'uz',
     vi_VN: 'vi',
+    yo_NG: 'yo',
     zh_CN: 'zh',
     // zh_HK: 'zh-tw', // TODO: same as zh_TW — add back when we have distinct translations
     zh_TW: 'zh-TW',
@@ -112,30 +134,8 @@ function formatYamlKey(key) {
 }
 
 function formatYamlValue(val) {
-    const needsQuotes =
-        val.includes(':') ||
-        val.includes('{') ||
-        val.includes('}') ||
-        val.includes('#') ||
-        val.includes('"') ||
-        val.startsWith('- ') ||
-        val.startsWith('* ') ||
-        val.startsWith('&') ||
-        val.startsWith('!') ||
-        val.startsWith('%') ||
-        val.startsWith('@') ||
-        val.startsWith('`') ||
-        val.startsWith('[') ||
-        val.startsWith('>') ||
-        val.startsWith('|') ||
-        val.startsWith('?') ||
-        YAML_KEYWORDS.has(val);
-
-    if (needsQuotes) {
-        const escaped = val.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        return `"${escaped}"`;
-    }
-    return val;
+    const escaped = val.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${escaped}"`;
 }
 
 function buildYamlBlock(locale, translations) {

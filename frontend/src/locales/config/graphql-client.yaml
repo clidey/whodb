@@ -197,3 +197,113 @@ vi_VN:
   sessionExpired: Phiên đã hết hạn. Vui lòng đăng nhập lại.
   autoLoginSuccess: Tự động xác thực lại
   autoLoginFailed: Tự động đăng nhập không thành công. Vui lòng đăng nhập thủ công.
+
+af_ZA:
+  sessionExpired: "Sessie het verval. Meld asseblief weer aan."
+  autoLoginSuccess: "Outomaties herverifieer"
+  autoLoginFailed: "Outo-aanmelding het misluk. Meld asseblief handmatig aan."
+
+am_ET:
+  sessionExpired: "ክፍለ ጊዜው አልፎበታል። እባክዎ እንደገና ይግቡ።"
+  autoLoginSuccess: "በራስ ሰር ዳግም የተረጋገጠ"
+  autoLoginFailed: "ራስ-ሰር መግባት አልተሳካም። እባኮትን በእጅ ይግቡ።"
+
+az_AZ:
+  sessionExpired: "Sessiyanın vaxtı bitdi. Zəhmət olmasa yenidən daxil olun."
+  autoLoginSuccess: "Avtomatik olaraq yenidən təsdiqlənir"
+  autoLoginFailed: "Avtomatik giriş uğursuz oldu. Zəhmət olmasa əl ilə daxil olun."
+
+et_EE:
+  sessionExpired: "Seanss aegus. Palun logi uuesti sisse."
+  autoLoginSuccess: "Automaatselt uuesti autentitud"
+  autoLoginFailed: "Automaatne sisselogimine ebaõnnestus. Palun logige sisse käsitsi."
+
+gu_IN:
+  sessionExpired: "સત્ર સમાપ્ત થયું. કૃપા કરીને ફરી લોગિન કરો."
+  autoLoginSuccess: "આપમેળે ફરીથી પ્રમાણિત"
+  autoLoginFailed: "સ્વતઃ લૉગિન નિષ્ફળ થયું. કૃપા કરીને મેન્યુઅલી લોગિન કરો."
+
+ha_NG:
+  sessionExpired: "Zaman ya kare. Da fatan za a sake shiga"
+  autoLoginSuccess: "An sake inganta ta atomatik"
+  autoLoginFailed: "Shiga ta atomatik ya kasa. Da fatan za a shiga da hannu."
+
+ka_GE:
+  sessionExpired: "სესიას ვადა ამოეწურა. გთხოვთ შეხვიდეთ ხელახლა."
+  autoLoginSuccess: "ავტომატური ხელახალი ავტორიზაცია"
+  autoLoginFailed: "ავტომატური შესვლა ვერ მოხერხდა. გთხოვთ შეხვიდეთ ხელით."
+
+km_KH:
+  sessionExpired: "វគ្គ​បាន​ផុត​កំណត់។ សូមចូលម្តងទៀត។"
+  autoLoginSuccess: "ផ្ទៀងផ្ទាត់ឡើងវិញដោយស្វ័យប្រវត្តិ"
+  autoLoginFailed: "ការចូលដោយស្វ័យប្រវត្តិបានបរាជ័យ។ សូមចូលដោយដៃ។"
+
+kn_IN:
+  sessionExpired: "ಸೆಷನ್ ಅವಧಿ ಮೀರಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಲಾಗಿನ್ ಮಾಡಿ."
+  autoLoginSuccess: "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮರು-ದೃಢೀಕರಿಸಲಾಗಿದೆ"
+  autoLoginFailed: "ಸ್ವಯಂ ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಹಸ್ತಚಾಲಿತವಾಗಿ ಲಾಗಿನ್ ಮಾಡಿ."
+
+lt_LT:
+  sessionExpired: "Sesija baigėsi. Prašome prisijungti dar kartą."
+  autoLoginSuccess: "Automatiškai iš naujo autentifikuota"
+  autoLoginFailed: "Automatinis prisijungimas nepavyko. Prašome prisijungti rankiniu būdu."
+
+lv_LV:
+  sessionExpired: "Sesija beidzās. Lūdzu, piesakieties vēlreiz."
+  autoLoginSuccess: "Automātiski atkārtoti autentificēts"
+  autoLoginFailed: "Automātiskā pieteikšanās neizdevās. Lūdzu, piesakieties manuāli."
+
+ml_IN:
+  sessionExpired: "സെഷൻ കാലഹരണപ്പെട്ടു. ദയവായി വീണ്ടും ലോഗിൻ ചെയ്യുക."
+  autoLoginSuccess: "യാന്ത്രികമായി വീണ്ടും പ്രാമാണീകരിച്ചു"
+  autoLoginFailed: "യാന്ത്രിക-ലോഗിൻ പരാജയപ്പെട്ടു. ദയവായി സ്വമേധയാ ലോഗിൻ ചെയ്യുക."
+
+mr_IN:
+  sessionExpired: "सत्र कालबाह्य झाले. कृपया पुन्हा लॉगिन करा."
+  autoLoginSuccess: "स्वयंचलितपणे पुन्हा प्रमाणीकृत"
+  autoLoginFailed: "स्वयं-लॉगिन अयशस्वी. कृपया व्यक्तिचलितपणे लॉगिन करा."
+
+ne_NP:
+  sessionExpired: "सत्रको म्याद सकियो। कृपया फेरि लगइन गर्नुहोस्।"
+  autoLoginSuccess: "स्वचालित रूपमा पुन: प्रमाणीकरण"
+  autoLoginFailed: "स्वतः लगइन असफल भयो। कृपया म्यानुअल रूपमा लगइन गर्नुहोस्।"
+
+pa_IN:
+  sessionExpired: "ਸੈਸ਼ਨ ਦੀ ਮਿਆਦ ਪੁੱਗ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਲੌਗਇਨ ਕਰੋ।"
+  autoLoginSuccess: "ਸਵੈਚਲਿਤ ਤੌਰ 'ਤੇ ਮੁੜ-ਪ੍ਰਮਾਣਿਤ ਕੀਤਾ ਗਿਆ"
+  autoLoginFailed: "ਆਟੋ-ਲੌਗਇਨ ਅਸਫਲ ਰਿਹਾ। ਕਿਰਪਾ ਕਰਕੇ ਹੱਥੀਂ ਲੌਗਇਨ ਕਰੋ।"
+
+si_LK:
+  sessionExpired: "සැසිය කල් ඉකුත් විය. කරුණාකර නැවත පිවිසෙන්න."
+  autoLoginSuccess: "ස්වයංක්‍රීයව නැවත සත්‍යාපනය කර ඇත"
+  autoLoginFailed: "ස්වයංක්‍රීය පුරනය වීම අසාර්ථක විය. කරුණාකර අතින් පුරනය වන්න."
+
+sl_SI:
+  sessionExpired: "Seja je potekla. Prosimo, prijavite se znova."
+  autoLoginSuccess: "Samodejno ponovno overjeno"
+  autoLoginFailed: "Samodejna prijava ni uspela. Prijavite se ročno."
+
+sr_RS:
+  sessionExpired: "Сесија је истекла. Молимо пријавите се поново."
+  autoLoginSuccess: "Аутоматски поново аутентификован"
+  autoLoginFailed: "Аутоматско пријављивање није успело. Молимо пријавите се ручно."
+
+te_IN:
+  sessionExpired: "సెషన్ గడువు ముగిసింది. దయచేసి మళ్లీ లాగిన్ చేయండి."
+  autoLoginSuccess: "స్వయంచాలకంగా తిరిగి ప్రామాణీకరించబడింది"
+  autoLoginFailed: "స్వీయ-లాగిన్ విఫలమైంది. దయచేసి మాన్యువల్‌గా లాగిన్ చేయండి."
+
+tl_PH:
+  sessionExpired: "Nag-expire na ang session. Mangyaring mag-login muli."
+  autoLoginSuccess: "Awtomatikong muling napatotohanan"
+  autoLoginFailed: "Nabigo ang auto-login. Mangyaring mag-login nang manu-mano."
+
+uz_UZ:
+  sessionExpired: "Seans muddati tugadi. Iltimos, qayta kiring."
+  autoLoginSuccess: "Avtomatik qayta autentifikatsiya qilingan"
+  autoLoginFailed: "Avtomatik kirish amalga oshmadi. Iltimos, qo'lda tizimga kiring."
+
+yo_NG:
+  sessionExpired: "Akoko ti pari. Jọwọ buwolu wọle lẹẹkansi."
+  autoLoginSuccess: "Laifọwọyi tun-ifọwọsi"
+  autoLoginFailed: "Iwọle laifọwọyi kuna. Jọwọ buwolu wọle pẹlu ọwọ."

@@ -237,3 +237,135 @@ vi_VN:
   unknownError: Đã xảy ra lỗi không xác định.
   copySuccess: Đã sao chép vào Clipboard
   copyLabel: Sao chép thông báo lỗi
+
+af_ZA:
+  title: "Fout"
+  unknownError: "'n Onbekende fout het voorgekom."
+  copySuccess: "Gekopieer na knipbord"
+  copyLabel: "Kopieer foutboodskap"
+
+am_ET:
+  title: "ስህተት"
+  unknownError: "ያልታወቀ ስህተት ተከስቷል።"
+  copySuccess: "ወደ ቅንጥብ ሰሌዳ ተቀድቷል።"
+  copyLabel: "የስህተት መልእክት ቅዳ"
+
+az_AZ:
+  title: "Xəta"
+  unknownError: "Naməlum xəta baş verdi."
+  copySuccess: "Buferə kopyalandı"
+  copyLabel: "Xəta Mesajını Kopyalayın"
+
+et_EE:
+  title: "Viga"
+  unknownError: "Ilmnes tundmatu viga."
+  copySuccess: "Kopeeriti lõikelauale"
+  copyLabel: "Kopeeri veateade"
+
+gu_IN:
+  title: "ભૂલ"
+  unknownError: "એક અજાણી ભૂલ આવી."
+  copySuccess: "ક્લિપબોર્ડ પર કૉપિ કરી"
+  copyLabel: "ભૂલ સંદેશની નકલ કરો"
+
+ha_NG:
+  title: "Kuskure"
+  unknownError: "An sami kuskuren da ba a sani ba."
+  copySuccess: "An kwafi zuwa Clipboard"
+  copyLabel: "Kwafi Saƙon Kuskure"
+
+ka_GE:
+  title: "შეცდომა"
+  unknownError: "მოხდა უცნობი შეცდომა."
+  copySuccess: "კოპირებულია ბუფერში"
+  copyLabel: "შეცდომის შეტყობინების კოპირება"
+
+km_KH:
+  title: "កំហុស"
+  unknownError: "កំហុសមិនស្គាល់បានកើតឡើង។"
+  copySuccess: "បានចម្លងទៅក្ដារតម្បៀតខ្ទាស់"
+  copyLabel: "ចម្លងសារកំហុស"
+
+kn_IN:
+  title: "ದೋಷ"
+  unknownError: "ಅಜ್ಞಾತ ದೋಷ ಸಂಭವಿಸಿದೆ."
+  copySuccess: "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ"
+  copyLabel: "ದೋಷ ಸಂದೇಶವನ್ನು ನಕಲಿಸಿ"
+
+lt_LT:
+  title: "Klaida"
+  unknownError: "Įvyko nežinoma klaida."
+  copySuccess: "Nukopijuota į mainų sritį"
+  copyLabel: "Nukopijuokite klaidos pranešimą"
+
+lv_LV:
+  title: "Kļūda"
+  unknownError: "Radās nezināma kļūda."
+  copySuccess: "Kopēts starpliktuvē"
+  copyLabel: "Kopēt kļūdas ziņojumu"
+
+ml_IN:
+  title: "പിശക്"
+  unknownError: "ഒരു അജ്ഞാത പിശക് സംഭവിച്ചു."
+  copySuccess: "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി"
+  copyLabel: "പിശക് സന്ദേശം പകർത്തുക"
+
+mr_IN:
+  title: "त्रुटी"
+  unknownError: "एक अज्ञात त्रुटी आली."
+  copySuccess: "क्लिपबोर्डवर कॉपी केले"
+  copyLabel: "एरर मेसेज कॉपी करा"
+
+ne_NP:
+  title: "त्रुटि"
+  unknownError: "एउटा अज्ञात त्रुटि भयो।"
+  copySuccess: "क्लिपबोर्डमा प्रतिलिपि गरियो"
+  copyLabel: "त्रुटि सन्देश प्रतिलिपि गर्नुहोस्"
+
+pa_IN:
+  title: "ਗਲਤੀ"
+  unknownError: "ਇੱਕ ਅਗਿਆਤ ਤਰੁੱਟੀ ਆਈ ਹੈ।"
+  copySuccess: "ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ ਗਿਆ"
+  copyLabel: "ਗਲਤੀ ਸੁਨੇਹਾ ਕਾਪੀ ਕਰੋ"
+
+si_LK:
+  title: "දෝෂයකි"
+  unknownError: "නොදන්නා දෝෂයක් සිදු විය."
+  copySuccess: "පසුරු පුවරුවට පිටපත් කර ඇත"
+  copyLabel: "දෝෂ පණිවිඩය පිටපත් කරන්න"
+
+sl_SI:
+  title: "Napaka"
+  unknownError: "Prišlo je do neznane napake."
+  copySuccess: "Kopirano v odložišče"
+  copyLabel: "Kopiraj sporočilo o napaki"
+
+sr_RS:
+  title: "Грешка"
+  unknownError: "Дошло је до непознате грешке."
+  copySuccess: "Копирано у међуспремник"
+  copyLabel: "Копирај поруку о грешци"
+
+te_IN:
+  title: "లోపం"
+  unknownError: "తెలియని లోపం సంభవించింది."
+  copySuccess: "క్లిప్‌బోర్డ్‌కి కాపీ చేయబడింది"
+  copyLabel: "దోష సందేశాన్ని కాపీ చేయండి"
+
+tl_PH:
+  title: "Error"
+  unknownError: "May naganap na hindi kilalang error."
+  copySuccess: "Kinopya sa Clipboard"
+  copyLabel: "Kopyahin ang Error Message"
+
+uz_UZ:
+  title: "Xato"
+  unknownError: "Noma'lum xatolik yuz berdi."
+  copySuccess: "Buferga nusxalandi"
+  copyLabel: "Xato xabarini nusxalash"
+
+yo_NG:
+  title: "Asise"
+  unknownError: "Aṣiṣe aimọ kan ṣẹlẹ."
+  copySuccess: "Ti daakọ si Agekuru"
+  copyLabel: "Daakọ Ifiranṣẹ Aṣiṣe"

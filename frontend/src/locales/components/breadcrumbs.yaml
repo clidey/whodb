@@ -157,3 +157,91 @@ ur_PK:
 vi_VN:
   home: Trang chủ
   back: Mặt sau
+
+af_ZA:
+  home: "Tuis"
+  back: "Terug"
+
+am_ET:
+  home: "ቤት"
+  back: "ተመለስ"
+
+az_AZ:
+  home: "Ev"
+  back: "Geri"
+
+et_EE:
+  home: "Kodu"
+  back: "Tagasi"
+
+gu_IN:
+  home: "ઘર"
+  back: "પાછળ"
+
+ha_NG:
+  home: "Gida"
+  back: "Baya"
+
+ka_GE:
+  home: "მთავარი"
+  back: "უკან"
+
+km_KH:
+  home: "ផ្ទះ"
+  back: "ត្រឡប់មកវិញ"
+
+kn_IN:
+  home: "ಮುಖಪುಟ"
+  back: "ಹಿಂದೆ"
+
+lt_LT:
+  home: "Pradžia"
+  back: "Atgal"
+
+lv_LV:
+  home: "Sākums"
+  back: "Atpakaļ"
+
+ml_IN:
+  home: "വീട്"
+  back: "തിരികെ"
+
+mr_IN:
+  home: "घर"
+  back: "मागे"
+
+ne_NP:
+  home: "घर"
+  back: "पछाडि"
+
+pa_IN:
+  home: "ਘਰ"
+  back: "ਵਾਪਸ"
+
+si_LK:
+  home: "නිවස"
+  back: "ආපසු"
+
+sl_SI:
+  home: "domov"
+  back: "Nazaj"
+
+sr_RS:
+  home: "Хоме"
+  back: "Назад"
+
+te_IN:
+  home: "హోమ్"
+  back: "వెనుకకు"
+
+tl_PH:
+  home: "Bahay"
+  back: "Bumalik"
+
+uz_UZ:
+  home: "Uy"
+  back: "Orqaga"
+
+yo_NG:
+  home: "Ile"
+  back: "Pada"

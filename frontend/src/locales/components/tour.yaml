@@ -317,3 +317,179 @@ vi_VN:
   finish: Hoàn thành
   close: Đóng
   back: Mặt sau
+
+af_ZA:
+  next: "Volgende"
+  previous: "Vorige"
+  skip: "Slaan oor"
+  finish: "Voltooi"
+  close: "Maak toe"
+  back: "Terug"
+
+am_ET:
+  next: "ቀጥሎ"
+  previous: "ቀዳሚ"
+  skip: "ዝለል"
+  finish: "ጨርስ"
+  close: "ገጠመ"
+  back: "ተመለስ"
+
+az_AZ:
+  next: "Sonrakı"
+  previous: "Əvvəlki"
+  skip: "Keç"
+  finish: "Bitir"
+  close: "Bağlayın"
+  back: "Geri"
+
+et_EE:
+  next: "Edasi"
+  previous: "Eelmine"
+  skip: "Jäta vahele"
+  finish: "Lõpeta"
+  close: "Sule"
+  back: "Tagasi"
+
+gu_IN:
+  next: "આગળ"
+  previous: "ગત"
+  skip: "છોડો"
+  finish: "સમાપ્ત કરો"
+  close: "બંધ કરો"
+  back: "પાછળ"
+
+ha_NG:
+  next: "Na gaba"
+  previous: "A baya"
+  skip: "Tsallake"
+  finish: "Gama"
+  close: "Kusa"
+  back: "Baya"
+
+ka_GE:
+  next: "შემდეგი"
+  previous: "წინა"
+  skip: "გამოტოვება"
+  finish: "დასრულება"
+  close: "დახურვა"
+  back: "უკან"
+
+km_KH:
+  next: "បន្ទាប់"
+  previous: "មុន"
+  skip: "រំលង"
+  finish: "បញ្ចប់"
+  close: "បិទ"
+  back: "ត្រឡប់មកវិញ"
+
+kn_IN:
+  next: "ಮುಂದೆ"
+  previous: "ಹಿಂದಿನ"
+  skip: "ಬಿಟ್ಟುಬಿಡಿ"
+  finish: "ಮುಗಿಸು"
+  close: "ಮುಚ್ಚಿ"
+  back: "ಹಿಂದೆ"
+
+lt_LT:
+  next: "Kitas"
+  previous: "Ankstesnis"
+  skip: "Praleisti"
+  finish: "Baigti"
+  close: "Uždaryti"
+  back: "Atgal"
+
+lv_LV:
+  next: "Tālāk"
+  previous: "Iepriekšējais"
+  skip: "Izlaist"
+  finish: "Pabeigt"
+  close: "Aizvērt"
+  back: "Atpakaļ"
+
+ml_IN:
+  next: "അടുത്തത്"
+  previous: "മുമ്പത്തെ"
+  skip: "ഒഴിവാക്കുക"
+  finish: "പൂർത്തിയാക്കുക"
+  close: "അടയ്ക്കുക"
+  back: "തിരികെ"
+
+mr_IN:
+  next: "पुढे"
+  previous: "मागील"
+  skip: "वगळा"
+  finish: "समाप्त करा"
+  close: "बंद करा"
+  back: "मागे"
+
+ne_NP:
+  next: "अर्को"
+  previous: "अघिल्लो"
+  skip: "छोड्नुहोस्"
+  finish: "समाप्त गर्नुहोस्"
+  close: "बन्द गर्नुहोस्"
+  back: "पछाडि"
+
+pa_IN:
+  next: "ਅਗਲਾ"
+  previous: "ਪਿਛਲਾ"
+  skip: "ਛੱਡੋ"
+  finish: "ਸਮਾਪਤ"
+  close: "ਬੰਦ ਕਰੋ"
+  back: "ਵਾਪਸ"
+
+si_LK:
+  next: "ඊළඟ"
+  previous: "පෙර"
+  skip: "මඟ හරින්න"
+  finish: "අවසන් කරන්න"
+  close: "වසන්න"
+  back: "ආපසු"
+
+sl_SI:
+  next: "Naprej"
+  previous: "Prejšnja"
+  skip: "Preskoči"
+  finish: "Končaj"
+  close: "Zapri"
+  back: "Nazaj"
+
+sr_RS:
+  next: "Следеће"
+  previous: "Претходно"
+  skip: "Скип"
+  finish: "Заврши"
+  close: "Затвори"
+  back: "Назад"
+
+te_IN:
+  next: "తదుపరి"
+  previous: "మునుపటి"
+  skip: "దాటవేయి"
+  finish: "ముగించు"
+  close: "మూసివేయి"
+  back: "వెనుకకు"
+
+tl_PH:
+  next: "Susunod"
+  previous: "Nakaraang"
+  skip: "Laktawan"
+  finish: "Tapusin"
+  close: "Isara"
+  back: "Bumalik"
+
+uz_UZ:
+  next: "Keyingisi"
+  previous: "Oldingi"
+  skip: "Oʻtkazib yuborish"
+  finish: "Tugatish"
+  close: "Yopish"
+  back: "Orqaga"
+
+yo_NG:
+  next: "Itele"
+  previous: "Ti tẹlẹ"
+  skip: "Rekọja"
+  finish: "Pari"
+  close: "Sunmọ"
+  back: "Pada"

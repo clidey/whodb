@@ -237,3 +237,135 @@ vi_VN:
   collapse: Sụp đổ
   close: Đóng
   details: Chi tiết thẻ
+
+af_ZA:
+  expand: "Brei uit"
+  collapse: "Ineenstort"
+  close: "Maak toe"
+  details: "Kaartbesonderhede"
+
+am_ET:
+  expand: "ዘርጋ"
+  collapse: "ሰብስብ"
+  close: "ገጠመ"
+  details: "የካርድ ዝርዝሮች"
+
+az_AZ:
+  expand: "Genişləndirin"
+  collapse: "Yıxılma"
+  close: "Bağlayın"
+  details: "Kart Təfərrüatları"
+
+et_EE:
+  expand: "Laienda"
+  collapse: "Ahenda"
+  close: "Sule"
+  details: "Kaardi üksikasjad"
+
+gu_IN:
+  expand: "વિસ્તૃત કરો"
+  collapse: "સંકુચિત કરો"
+  close: "બંધ કરો"
+  details: "કાર્ડ વિગતો"
+
+ha_NG:
+  expand: "Fadada"
+  collapse: "Rushewa"
+  close: "Kusa"
+  details: "Cikakken Bayani"
+
+ka_GE:
+  expand: "გაფართოება"
+  collapse: "კოლაფსი"
+  close: "დახურვა"
+  details: "ბარათის დეტალები"
+
+km_KH:
+  expand: "ពង្រីក"
+  collapse: "ដួលរលំ"
+  close: "បិទ"
+  details: "ព័ត៌មានលម្អិតអំពីកាត"
+
+kn_IN:
+  expand: "ವಿಸ್ತರಿಸು"
+  collapse: "ಕುಗ್ಗಿಸು"
+  close: "ಮುಚ್ಚಿ"
+  details: "ಕಾರ್ಡ್ ವಿವರಗಳು"
+
+lt_LT:
+  expand: "Išskleisti"
+  collapse: "Sutraukti"
+  close: "Uždaryti"
+  details: "Kortelės detalės"
+
+lv_LV:
+  expand: "Izvērst"
+  collapse: "Sakļaut"
+  close: "Aizvērt"
+  details: "Kartes informācija"
+
+ml_IN:
+  expand: "വികസിപ്പിക്കുക"
+  collapse: "ചുരുക്കുക"
+  close: "അടയ്ക്കുക"
+  details: "കാർഡ് വിശദാംശങ്ങൾ"
+
+mr_IN:
+  expand: "विस्तृत करा"
+  collapse: "संकुचित करा"
+  close: "बंद करा"
+  details: "कार्ड तपशील"
+
+ne_NP:
+  expand: "विस्तार गर्नुहोस्"
+  collapse: "संक्षिप्त गर्नुहोस्"
+  close: "बन्द गर्नुहोस्"
+  details: "कार्ड विवरणहरू"
+
+pa_IN:
+  expand: "ਫੈਲਾਓ"
+  collapse: "ਸਮੇਟਣਾ"
+  close: "ਬੰਦ ਕਰੋ"
+  details: "ਕਾਰਡ ਦੇ ਵੇਰਵੇ"
+
+si_LK:
+  expand: "පුළුල් කරන්න"
+  collapse: "හකුළන්න"
+  close: "වසන්න"
+  details: "කාඩ්පත් විස්තර"
+
+sl_SI:
+  expand: "Razširi"
+  collapse: "Strni"
+  close: "Zapri"
+  details: "Podrobnosti kartice"
+
+sr_RS:
+  expand: "Прошири"
+  collapse: "Колапс"
+  close: "Затвори"
+  details: "Детаљи картице"
+
+te_IN:
+  expand: "విస్తరించు"
+  collapse: "కుదించు"
+  close: "మూసివేయి"
+  details: "కార్డ్ వివరాలు"
+
+tl_PH:
+  expand: "Palawakin"
+  collapse: "I-collapse"
+  close: "Isara"
+  details: "Mga Detalye ng Card"
+
+uz_UZ:
+  expand: "Kengaytirish"
+  collapse: "Yiqilish"
+  close: "Yopish"
+  details: "Karta tafsilotlari"
+
+yo_NG:
+  expand: "Faagun"
+  collapse: "Kọlulẹ"
+  close: "Sunmọ"
+  details: "Awọn alaye kaadi"

@@ -237,3 +237,135 @@ vi_VN:
   message: "Chúng tôi thu thập các phân tích sử dụng ẩn danh, phát lại phiên được xử lý lại và báo cáo lỗi thông qua PostHog để giữ cho {appName} nhanh chóng và đáng tin cậy. Bạn có thể tắt tính năng này ngay bây giờ hoặc bất kỳ lúc nào từ Cài đặt."
   accept: Tiếp tục kích hoạt
   decline: Vô hiệu hóa từ xa
+
+af_ZA:
+  title: "Telemetrie is geaktiveer"
+  message: "Ons samel anonieme gebruiksontledings, geredigeerde sessieherhaling en foutverslae in deur PostHog om {appName} vinnig en betroubaar te hou. Jy kan dit nou of enige tyd uit Instellings afskakel."
+  accept: "Hou geaktiveer"
+  decline: "Deaktiveer telemetrie"
+
+am_ET:
+  title: "ቴሌሜትሪ ነቅቷል።"
+  message: "[[0]] ፈጣን እና አስተማማኝ እንዲሆን ስም-አልባ የአጠቃቀም ትንታኔዎችን፣ የክፍለ ጊዜ ዳግም ማጫወትን እና የስህተት ሪፖርቶችን በPostHog በኩል እንሰበስባለን። ይህንን አሁን ወይም በማንኛውም ጊዜ ከቅንብሮች ማጥፋት ይችላሉ።"
+  accept: "እንደነቃ ይቀጥሉ"
+  decline: "ቴሌሜትሪ አሰናክል"
+
+az_AZ:
+  title: "Telemetriya Aktivdir"
+  message: "Biz {appName}-ni sürətli və etibarlı saxlamaq üçün PostHog vasitəsilə anonim istifadə analitikası, redaktə edilmiş sessiya təkrarı və səhv hesabatları toplayırıq. Bunu indi və ya istənilən vaxt Ayarlardan söndürə bilərsiniz."
+  accept: "Aktiv saxlayın"
+  decline: "Telemetriyanı söndürün"
+
+et_EE:
+  title: "Telemeetria on lubatud"
+  message: "Kogume PostHogi kaudu anonüümseid kasutusanalüüse, redigeeritud seansi kordusi ja veateateid, et hoida {appName} kiire ja usaldusväärne. Saate selle kohe või igal ajal seadetes välja lülitada."
+  accept: "Hoidke Lubatuna"
+  decline: "Telemeetria keelamine"
+
+gu_IN:
+  title: "ટેલિમેટ્રી સક્ષમ છે"
+  message: "અમે {appName} ને ઝડપી અને ભરોસાપાત્ર રાખવા માટે પોસ્ટહોગ દ્વારા અનામી વપરાશ વિશ્લેષણ, સુધારેલ સત્ર રીપ્લે અને ભૂલ અહેવાલો એકત્રિત કરીએ છીએ. તમે આને હમણાં અથવા કોઈપણ સમયે સેટિંગ્સમાંથી બંધ કરી શકો છો."
+  accept: "સક્ષમ રાખો"
+  decline: "ટેલિમેટ્રી અક્ષમ કરો"
+
+ha_NG:
+  title: "An Kunna Telemetry"
+  message: "Muna tattara bayanan amfani da ba a san su ba, sake kunnawa zaman, da rahotannin kuskure ta hanyar PostHog don kiyaye [[0]] cikin sauri da dogaro. Kuna iya kashe wannan yanzu ko a kowane lokaci daga Saituna."
+  accept: "Ci gaba da kunnawa"
+  decline: "Kashe Telemetry"
+
+ka_GE:
+  title: "ტელემეტრია ჩართულია"
+  message: "ჩვენ ვაგროვებთ ანონიმური გამოყენების ანალიტიკას, რედაქტირებულ სესიის გამეორებას და შეცდომის ანგარიშებს PostHog-ის მეშვეობით, რათა {appName} იყოს სწრაფი და საიმედო. შეგიძლიათ გამორთოთ ეს ახლა ან ნებისმიერ დროს პარამეტრებიდან."
+  accept: "შეინახეთ ჩართული"
+  decline: "გამორთეთ ტელემეტრია"
+
+km_KH:
+  title: "Telemetry ត្រូវបានបើក"
+  message: "យើងប្រមូលការវិភាគនៃការប្រើប្រាស់អនាមិក ការលេងវគ្គឡើងវិញ និងរបាយការណ៍កំហុសតាមរយៈ PostHog ដើម្បីរក្សា {appName} លឿន និងអាចទុកចិត្តបាន។ អ្នកអាចបិទវាឥឡូវនេះ ឬនៅពេលណាក៏បានពីការកំណត់។"
+  accept: "បើកដំណើរការ"
+  decline: "បិទ Telemetry"
+
+kn_IN:
+  title: "ಟೆಲಿಮೆಟ್ರಿಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  message: "ನಾವು ಅನಾಮಧೇಯ ಬಳಕೆಯ ವಿಶ್ಲೇಷಣೆಗಳು, ಪರಿಷ್ಕರಿಸಿದ ಸೆಶನ್ ಮರುಪಂದ್ಯಗಳು ಮತ್ತು ದೋಷ ವರದಿಗಳನ್ನು ಪೋಸ್ಟ್‌ಹಾಗ್ ಮೂಲಕ {appName} ವೇಗವಾಗಿ ಮತ್ತು ವಿಶ್ವಾಸಾರ್ಹವಾಗಿಡಲು ಸಂಗ್ರಹಿಸುತ್ತೇವೆ. ನೀವು ಇದನ್ನು ಈಗ ಅಥವಾ ಯಾವುದೇ ಸಮಯದಲ್ಲಿ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಂದ ಆಫ್ ಮಾಡಬಹುದು."
+  accept: "ಸಕ್ರಿಯಗೊಳಿಸಿ ಇರಿಸಿಕೊಳ್ಳಿ"
+  decline: "ಟೆಲಿಮೆಟ್ರಿಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ"
+
+lt_LT:
+  title: "Telemetrija įjungta"
+  message: "Per „PostHog“ renkame anoniminę naudojimo analizę, redaguotą seanso pakartojimą ir klaidų ataskaitas, kad {appName} būtų greitas ir patikimas. Tai galite išjungti dabar arba bet kuriuo metu nustatymuose."
+  accept: "Laikyti įjungtą"
+  decline: "Išjungti telemetriją"
+
+lv_LV:
+  title: "Telemetrija ir iespējota"
+  message: "Mēs apkopojam anonīmu lietojuma analīzi, rediģētu sesijas atkārtojumu un kļūdu ziņojumus, izmantojot PostHog, lai {appName} nodrošinātu ātru un uzticamu. Varat to izslēgt tagad vai jebkurā laikā sadaļā Iestatījumi."
+  accept: "Saglabāt iespējotu"
+  decline: "Atspējot telemetriju"
+
+ml_IN:
+  title: "ടെലിമെട്രി പ്രവർത്തനക്ഷമമാക്കി"
+  message: "{appName} വേഗത്തിലും വിശ്വസനീയമായും നിലനിർത്താൻ ഞങ്ങൾ അജ്ഞാത ഉപയോഗ അനലിറ്റിക്‌സ്, തിരുത്തിയ സെഷൻ റീപ്ലേ, പിശക് റിപ്പോർട്ടുകൾ എന്നിവ പോസ്റ്റ്‌ഹോഗിലൂടെ ശേഖരിക്കുന്നു. നിങ്ങൾക്ക് ഇത് ഇപ്പോൾ അല്ലെങ്കിൽ എപ്പോൾ വേണമെങ്കിലും ക്രമീകരണത്തിൽ നിന്ന് ഓഫാക്കാം."
+  accept: "പ്രവർത്തനക്ഷമമാക്കി സൂക്ഷിക്കുക"
+  decline: "ടെലിമെട്രി പ്രവർത്തനരഹിതമാക്കുക"
+
+mr_IN:
+  title: "टेलीमेट्री सक्षम आहे"
+  message: "{appName} जलद आणि विश्वासार्ह ठेवण्यासाठी आम्ही पोस्टहॉगद्वारे अनामित वापर विश्लेषणे, सुधारित सत्र रीप्ले आणि त्रुटी अहवाल गोळा करतो. तुम्ही हे आता किंवा सेटिंग्जमधून कधीही बंद करू शकता."
+  accept: "सक्षम ठेवा"
+  decline: "टेलीमेट्री अक्षम करा"
+
+ne_NP:
+  title: "टेलिमेट्री सक्षम छ"
+  message: "हामीले {appName} छिटो र भरपर्दो राख्नको लागि पोस्टहग मार्फत अज्ञात प्रयोग विश्लेषण, रिडेक्ट गरिएको सत्र रिप्ले, र त्रुटि रिपोर्टहरू सङ्कलन गर्छौं। तपाईं यसलाई अहिले वा कुनै पनि समयमा सेटिङहरूबाट बन्द गर्न सक्नुहुन्छ।"
+  accept: "सक्षम राख्नुहोस्"
+  decline: "टेलिमेट्री असक्षम गर्नुहोस्"
+
+pa_IN:
+  title: "ਟੈਲੀਮੈਟਰੀ ਚਾਲੂ ਹੈ"
+  message: "ਅਸੀਂ {appName} ਨੂੰ ਤੇਜ਼ ਅਤੇ ਭਰੋਸੇਮੰਦ ਰੱਖਣ ਲਈ ਪੋਸਟਹੌਗ ਦੁਆਰਾ ਅਗਿਆਤ ਵਰਤੋਂ ਵਿਸ਼ਲੇਸ਼ਣ, ਰੀਡੈਕਟ ਕੀਤੇ ਸੈਸ਼ਨ ਰੀਪਲੇਅ, ਅਤੇ ਗਲਤੀ ਰਿਪੋਰਟਾਂ ਇਕੱਤਰ ਕਰਦੇ ਹਾਂ। ਤੁਸੀਂ ਇਸਨੂੰ ਹੁਣੇ ਜਾਂ ਕਿਸੇ ਵੀ ਸਮੇਂ ਸੈਟਿੰਗਾਂ ਤੋਂ ਬੰਦ ਕਰ ਸਕਦੇ ਹੋ।"
+  accept: "ਚਾਲੂ ਰੱਖੋ"
+  decline: "ਟੈਲੀਮੈਟਰੀ ਨੂੰ ਅਸਮਰੱਥ ਬਣਾਓ"
+
+si_LK:
+  title: "Telemetry සබල කර ඇත"
+  message: "අපි {appName} වේගවත්ව සහ විශ්වාසවන්තව තබා ගැනීමට PostHog හරහා නිර්නාමික භාවිත විශ්ලේෂණ, නැවත සකස් කළ සැසි නැවත ධාවනය සහ දෝෂ වාර්තා එකතු කරමු. ඔබට මෙය දැන් හෝ ඕනෑම වේලාවක සැකසීම් වෙතින් අක්‍රිය කළ හැක."
+  accept: "සබල කර තබන්න"
+  decline: "Telemetry අක්රිය කරන්න"
+
+sl_SI:
+  title: "Telemetrija je omogočena"
+  message: "Prek PostHog zbiramo anonimne analitike uporabe, redigirano predvajanje seje in poročila o napakah, da ostane {appName} hitro in zanesljivo. To lahko zdaj ali kadar koli izklopite v nastavitvah."
+  accept: "Naj ostane omogočeno"
+  decline: "Onemogoči telemetrijo"
+
+sr_RS:
+  title: "Телеметрија је омогућена"
+  message: "Прикупљамо анонимну аналитику коришћења, редиговану репродукцију сесије и извештаје о грешкама преко ПостХог-а да бисмо {appName} били брзи и поуздани. Ово можете да искључите сада или у било ком тренутку у подешавањима."
+  accept: "Оставите омогућено"
+  decline: "Онемогућите телеметрију"
+
+te_IN:
+  title: "టెలిమెట్రీ ప్రారంభించబడింది"
+  message: "మేము {appName} వేగంగా మరియు విశ్వసనీయంగా ఉంచడానికి పోస్ట్‌హాగ్ ద్వారా అనామక వినియోగ విశ్లేషణలు, సవరించిన సెషన్ రీప్లే మరియు ఎర్రర్ నివేదికలను సేకరిస్తాము. మీరు దీన్ని ఇప్పుడు లేదా ఎప్పుడైనా సెట్టింగ్‌ల నుండి ఆఫ్ చేయవచ్చు."
+  accept: "ప్రారంభించబడి ఉంచండి"
+  decline: "టెలిమెట్రీని నిలిపివేయండి"
+
+tl_PH:
+  title: "Naka-enable ang Telemetry"
+  message: "Nangongolekta kami ng anonymous na analytics sa paggamit, na-redact na session replay, at mga ulat ng error sa pamamagitan ng PostHog upang mapanatiling mabilis at maaasahan ang {appName}. Maaari mo itong i-off ngayon o anumang oras mula sa Mga Setting."
+  accept: "Panatilihing Pinagana"
+  decline: "Huwag paganahin ang Telemetry"
+
+uz_UZ:
+  title: "Telemetriya yoqilgan"
+  message: "Biz [[0]]] ni tez va ishonchli saqlash uchun PostHog orqali anonim foydalanish tahlillari, tahrirlangan seansni takrorlash va xato hisobotlarini to'playmiz. Buni hozir yoki istalgan vaqtda Sozlamalar orqali o‘chirib qo‘yishingiz mumkin."
+  accept: "Yoqilgan holda saqlang"
+  decline: "Telemetriyani o'chirib qo'ying"
+
+yo_NG:
+  title: "Telemetry Ti ṣiṣẹ"
+  message: "A n gba awọn atupale lilo ailorukọ, atunṣe igba atunṣe, ati awọn ijabọ aṣiṣe nipasẹ PostHog lati tọju [[0]] ni iyara ati igbẹkẹle. O le paa eyi ni bayi tabi nigbakugba lati Eto."
+  accept: "Jeki Ṣiṣẹ"
+  decline: "Pa Telemetry"

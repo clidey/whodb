@@ -157,3 +157,91 @@ ur_PK:
 vi_VN:
   enterValidNumber: Vui lòng nhập số lớn hơn 0
   exceedsMaxPageSize: "Kích thước trang không được vượt quá {max}"
+
+af_ZA:
+  enterValidNumber: "Voer asseblief 'n getal groter as 0 in"
+  exceedsMaxPageSize: "Bladsygrootte kan nie meer as {max}"
+
+am_ET:
+  enterValidNumber: "እባክህ ከ0 በላይ ቁጥር አስገባ"
+  exceedsMaxPageSize: "የገጽ መጠን መብለጥ አይችልም [[0]]]"
+
+az_AZ:
+  enterValidNumber: "Zəhmət olmasa 0-dan böyük rəqəm daxil edin"
+  exceedsMaxPageSize: "Səhifə ölçüsü {max}-dan çox ola bilməz"
+
+et_EE:
+  enterValidNumber: "Sisestage arv, mis on suurem kui 0"
+  exceedsMaxPageSize: "Lehekülje suurus ei tohi ületada {max}"
+
+gu_IN:
+  enterValidNumber: "કૃપા કરીને 0 થી મોટી સંખ્યા દાખલ કરો"
+  exceedsMaxPageSize: "પૃષ્ઠનું કદ {max} કરતાં વધી શકતું નથી"
+
+ha_NG:
+  enterValidNumber: "Da fatan za a shigar da lamba fiye da 0"
+  exceedsMaxPageSize: "Girman shafi ba zai iya wuce [[0]]"
+
+ka_GE:
+  enterValidNumber: "გთხოვთ შეიყვანოთ 0-ზე მეტი რიცხვი"
+  exceedsMaxPageSize: "გვერდის ზომა არ უნდა აღემატებოდეს {max}"
+
+km_KH:
+  enterValidNumber: "សូមបញ្ចូលលេខធំជាង 0"
+  exceedsMaxPageSize: "ទំហំទំព័រមិនអាចលើសពី [[0]]]"
+
+kn_IN:
+  enterValidNumber: "ದಯವಿಟ್ಟು 0 ಕ್ಕಿಂತ ಹೆಚ್ಚಿನ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ"
+  exceedsMaxPageSize: "ಪುಟದ ಗಾತ್ರವು {max} ಮೀರುವಂತಿಲ್ಲ"
+
+lt_LT:
+  enterValidNumber: "Įveskite skaičių, didesnį nei 0"
+  exceedsMaxPageSize: "Puslapio dydis negali viršyti {max}"
+
+lv_LV:
+  enterValidNumber: "Lūdzu, ievadiet skaitli, kas ir lielāks par 0"
+  exceedsMaxPageSize: "Lapas izmērs nedrīkst pārsniegt {max}"
+
+ml_IN:
+  enterValidNumber: "ദയവായി 0-നേക്കാൾ വലിയ ഒരു സംഖ്യ നൽകുക"
+  exceedsMaxPageSize: "പേജിൻ്റെ വലുപ്പം {max} കവിയാൻ പാടില്ല"
+
+mr_IN:
+  enterValidNumber: "कृपया 0 पेक्षा मोठी संख्या प्रविष्ट करा"
+  exceedsMaxPageSize: "पृष्ठाचा आकार {max} पेक्षा जास्त असू शकत नाही"
+
+ne_NP:
+  enterValidNumber: "कृपया ० भन्दा ठूलो नम्बर प्रविष्ट गर्नुहोस्"
+  exceedsMaxPageSize: "पृष्ठको आकार {max} भन्दा बढी हुन सक्दैन"
+
+pa_IN:
+  enterValidNumber: "ਕਿਰਪਾ ਕਰਕੇ 0 ਤੋਂ ਵੱਡਾ ਨੰਬਰ ਦਾਖਲ ਕਰੋ"
+  exceedsMaxPageSize: "ਪੰਨੇ ਦਾ ਆਕਾਰ {max} ਤੋਂ ਵੱਧ ਨਹੀਂ ਹੋ ਸਕਦਾ"
+
+si_LK:
+  enterValidNumber: "කරුණාකර 0 ට වඩා වැඩි අංකයක් ඇතුළත් කරන්න"
+  exceedsMaxPageSize: "පිටු ප්‍රමාණය {max} ඉක්මවිය නොහැක"
+
+sl_SI:
+  enterValidNumber: "Vnesite številko, večjo od 0"
+  exceedsMaxPageSize: "Velikost strani ne sme presegati {max}"
+
+sr_RS:
+  enterValidNumber: "Унесите број већи од 0"
+  exceedsMaxPageSize: "Величина странице не може да пређе {max}"
+
+te_IN:
+  enterValidNumber: "దయచేసి 0 కంటే ఎక్కువ సంఖ్యను నమోదు చేయండి"
+  exceedsMaxPageSize: "పేజీ పరిమాణం {max} మించకూడదు"
+
+tl_PH:
+  enterValidNumber: "Mangyaring magpasok ng numerong higit sa 0"
+  exceedsMaxPageSize: "Ang laki ng pahina ay hindi maaaring lumampas sa {max}"
+
+uz_UZ:
+  enterValidNumber: "Iltimos, 0 dan katta raqam kiriting"
+  exceedsMaxPageSize: "Sahifa hajmi {max} dan oshmasligi kerak"
+
+yo_NG:
+  enterValidNumber: "Jọwọ tẹ nọmba ti o tobi ju 0 lọ"
+  exceedsMaxPageSize: "Iwọn oju-iwe ko le kọja [[0]]]"

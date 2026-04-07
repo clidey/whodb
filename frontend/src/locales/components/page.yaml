@@ -117,3 +117,69 @@ ur_PK:
 
 vi_VN:
   skipToContent: Chuyển đến nội dung chính
+
+af_ZA:
+  skipToContent: "Slaan oor na hoofinhoud"
+
+am_ET:
+  skipToContent: "ወደ ዋናው ይዘት ዝለል"
+
+az_AZ:
+  skipToContent: "Əsas məzmuna keçin"
+
+et_EE:
+  skipToContent: "Mine põhisisu juurde"
+
+gu_IN:
+  skipToContent: "મુખ્ય સામગ્રી પર જાઓ"
+
+ha_NG:
+  skipToContent: "Tsallake zuwa babban abun ciki"
+
+ka_GE:
+  skipToContent: "გადადით მთავარ შინაარსზე"
+
+km_KH:
+  skipToContent: "រំលងទៅមាតិកាសំខាន់"
+
+kn_IN:
+  skipToContent: "ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ"
+
+lt_LT:
+  skipToContent: "Pereiti prie pagrindinio turinio"
+
+lv_LV:
+  skipToContent: "Pāriet uz galveno saturu"
+
+ml_IN:
+  skipToContent: "പ്രധാന ഉള്ളടക്കത്തിലേക്ക് പോകുക"
+
+mr_IN:
+  skipToContent: "मुख्य सामग्रीवर जा"
+
+ne_NP:
+  skipToContent: "मुख्य सामग्रीमा जानुहोस्"
+
+pa_IN:
+  skipToContent: "ਮੁੱਖ ਸਮੱਗਰੀ 'ਤੇ ਜਾਓ"
+
+si_LK:
+  skipToContent: "ප්‍රධාන අන්තර්ගතය වෙත යන්න"
+
+sl_SI:
+  skipToContent: "Preskoči na glavno vsebino"
+
+sr_RS:
+  skipToContent: "Пређи на главни садржај"
+
+te_IN:
+  skipToContent: "ప్రధాన కంటెంట్‌కి దాటవేయండి"
+
+tl_PH:
+  skipToContent: "Lumaktaw sa pangunahing nilalaman"
+
+uz_UZ:
+  skipToContent: "Asosiy tarkibga o'tish"
+
+yo_NG:
+  skipToContent: "Rekọja si akoonu akọkọ"

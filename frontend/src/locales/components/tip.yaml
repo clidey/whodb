@@ -157,3 +157,91 @@ ur_PK:
 vi_VN:
   tip: Mẹo
   close: Đóng
+
+af_ZA:
+  tip: "Wenk"
+  close: "Maak toe"
+
+am_ET:
+  tip: "ጠቃሚ ምክር"
+  close: "ገጠመ"
+
+az_AZ:
+  tip: "İpucu"
+  close: "Bağlayın"
+
+et_EE:
+  tip: "Vihje"
+  close: "Sule"
+
+gu_IN:
+  tip: "ટીપ"
+  close: "બંધ કરો"
+
+ha_NG:
+  tip: "Tukwici"
+  close: "Kusa"
+
+ka_GE:
+  tip: "რჩევა"
+  close: "დახურვა"
+
+km_KH:
+  tip: "ព័ត៌មានជំនួយ"
+  close: "បិទ"
+
+kn_IN:
+  tip: "ಸಲಹೆ"
+  close: "ಮುಚ್ಚಿ"
+
+lt_LT:
+  tip: "Patarimas"
+  close: "Uždaryti"
+
+lv_LV:
+  tip: "Padoms"
+  close: "Aizvērt"
+
+ml_IN:
+  tip: "നുറുങ്ങ്"
+  close: "അടയ്ക്കുക"
+
+mr_IN:
+  tip: "टीप"
+  close: "बंद करा"
+
+ne_NP:
+  tip: "टिप"
+  close: "बन्द गर्नुहोस्"
+
+pa_IN:
+  tip: "ਟਿਪ"
+  close: "ਬੰਦ ਕਰੋ"
+
+si_LK:
+  tip: "ඉඟිය"
+  close: "වසන්න"
+
+sl_SI:
+  tip: "Namig"
+  close: "Zapri"
+
+sr_RS:
+  tip: "Савет"
+  close: "Затвори"
+
+te_IN:
+  tip: "చిట్కా"
+  close: "మూసివేయి"
+
+tl_PH:
+  tip: "Tip"
+  close: "Isara"
+
+uz_UZ:
+  tip: "Maslahat"
+  close: "Yopish"
+
+yo_NG:
+  tip: "Imọran"
+  close: "Sunmọ"

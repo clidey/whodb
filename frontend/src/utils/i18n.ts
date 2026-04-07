@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-import yaml from 'js-yaml';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '@/utils/languages';
 
 type TranslationMap = Record<string, string>;
 type TranslationCache = Record<string, TranslationMap>;
+type ParsedYaml = Record<string, TranslationMap>;
 
 const translationCache: TranslationCache = {};
 
 // Import all YAML files using Vite's import.meta.glob
-const ceModules = import.meta.glob<string>('/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
+// The yamlPlugin in vite.config.ts transforms these to pre-parsed JSON at build time.
+const ceModules = import.meta.glob<ParsedYaml>('/src/locales/**/*.yaml', { import: 'default', eager: true });
 
 // Extension locale modules — populated by registerLocaleModules()
-let extensionModules: Record<string, string> = {};
+let extensionModules: Record<string, ParsedYaml> = {};
 
 /** Register additional locale modules (called by extensions at boot). */
-export const registerLocaleModules = (modules: Record<string, string>) => {
+export const registerLocaleModules = (modules: Record<string, ParsedYaml>) => {
     extensionModules = { ...extensionModules, ...modules };
 };
 
 // Helper function to find module by component path
-const findModule = (modules: Record<string, string>, componentPath: string): string | undefined => {
+const findModule = (modules: Record<string, ParsedYaml>, componentPath: string): ParsedYaml | undefined => {
     // Try exact match first
     for (const key in modules) {
         if (key.endsWith(`/${componentPath}.yaml`)) {
@@ -77,17 +78,15 @@ export const loadTranslationsSync = (
         let translations: TranslationMap | undefined;
 
         // Load CE locale files as the base
-        const ceContent = findModule(ceModules, componentPath);
-        if (ceContent) {
-            const parsed = yaml.load(ceContent) as Record<string, TranslationMap>;
-            translations = parsed[language] || parsed[DEFAULT_LANGUAGE];
+        const ceParsed = findModule(ceModules, componentPath);
+        if (ceParsed) {
+            translations = ceParsed[language] || ceParsed[DEFAULT_LANGUAGE];
         }
 
         // Merge extension translations on top (overrides CE keys if present)
-        const extContent = findModule(extensionModules, componentPath);
-        if (extContent) {
-            const parsed = yaml.load(extContent) as Record<string, TranslationMap>;
-            const extTranslations = parsed[language] || parsed[DEFAULT_LANGUAGE];
+        const extParsed = findModule(extensionModules, componentPath);
+        if (extParsed) {
+            const extTranslations = extParsed[language] || extParsed[DEFAULT_LANGUAGE];
             if (extTranslations) {
                 translations = { ...translations, ...extTranslations };
             }

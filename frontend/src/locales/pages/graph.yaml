@@ -357,3 +357,201 @@ vi_VN:
   noNodesTitle: Không có nút nào được chọn
   noNodesDescription: "Chọn {storageUnit} ở bên trái để thêm chúng vào biểu đồ."
   createButton: "Tạo {storageUnit}"
+
+af_ZA:
+  title: "Grafiek"
+  searchPlaceholder: "Soek Tabelle"
+  searchAriaLabel: "Soek Tabelle"
+  noItems: "Geen items"
+  noNodesTitle: "Geen nodusse gekies nie"
+  noNodesDescription: "Kies {storageUnit} aan die linkerkant om hulle by die grafiek te voeg."
+  createButton: "Skep {storageUnit}"
+
+am_ET:
+  title: "ግራፍ"
+  searchPlaceholder: "ሰንጠረዦችን ፈልግ"
+  searchAriaLabel: "ሰንጠረዦችን ፈልግ"
+  noItems: "ምንም እቃዎች የሉም"
+  noNodesTitle: "ምንም አንጓዎች አልተመረጡም።"
+  noNodesDescription: "ወደ ግራፉ ለመጨመር [[0]]ን በግራ በኩል ይምረጡ።"
+  createButton: "ፍጠር [[0]]"
+
+az_AZ:
+  title: "Qrafik"
+  searchPlaceholder: "Cədvəlləri axtarın"
+  searchAriaLabel: "Cədvəlləri axtarın"
+  noItems: "Element yoxdur"
+  noNodesTitle: "Heç bir qovşaq seçilməyib"
+  noNodesDescription: "Onları qrafikə əlavə etmək üçün soldan {storageUnit} seçin."
+  createButton: "{storageUnit} yaradın"
+
+et_EE:
+  title: "Graafik"
+  searchPlaceholder: "Otsi tabeleid"
+  searchAriaLabel: "Otsi tabeleid"
+  noItems: "Üksusi pole"
+  noNodesTitle: "Sõlme pole valitud"
+  noNodesDescription: "Nende graafikule lisamiseks valige vasakult {storageUnit}."
+  createButton: "Loo {storageUnit}"
+
+gu_IN:
+  title: "આલેખ"
+  searchPlaceholder: "કોષ્ટકો શોધો"
+  searchAriaLabel: "કોષ્ટકો શોધો"
+  noItems: "કોઈ આઇટમ્સ નથી"
+  noNodesTitle: "કોઈ નોડ પસંદ કરેલ નથી"
+  noNodesDescription: "તેમને ગ્રાફમાં ઉમેરવા માટે ડાબી બાજુએ {storageUnit} પસંદ કરો."
+  createButton: "{storageUnit} બનાવો"
+
+ha_NG:
+  title: "Graph"
+  searchPlaceholder: "Bincika Tables"
+  searchAriaLabel: "Bincika Tables"
+  noItems: "Babu Abubuwa"
+  noNodesTitle: "Babu Nodes da aka zaɓa"
+  noNodesDescription: "Zaɓi [[0]] a hagu don ƙara su zuwa jadawali."
+  createButton: "Ƙirƙiri [[0]]"
+
+ka_GE:
+  title: "გრაფიკი"
+  searchPlaceholder: "ცხრილების ძიება"
+  searchAriaLabel: "ცხრილების ძიება"
+  noItems: "არ არის ელემენტი"
+  noNodesTitle: "კვანძები არ არის არჩეული"
+  noNodesDescription: "აირჩიეთ [[0]]] მარცხნივ, რომ დაამატოთ ისინი გრაფიკზე."
+  createButton: "შექმნა {storageUnit}"
+
+km_KH:
+  title: "ក្រាហ្វ"
+  searchPlaceholder: "ស្វែងរកតារាង"
+  searchAriaLabel: "ស្វែងរកតារាង"
+  noItems: "គ្មានធាតុ"
+  noNodesTitle: "គ្មានថ្នាំងដែលបានជ្រើសរើសទេ។"
+  noNodesDescription: "ជ្រើសរើស {storageUnit} នៅខាងឆ្វេង ដើម្បីបន្ថែមពួកវាទៅក្នុងក្រាហ្វ។"
+  createButton: "បង្កើត {storageUnit}"
+
+kn_IN:
+  title: "ಗ್ರಾಫ್"
+  searchPlaceholder: "ಹುಡುಕಾಟ ಕೋಷ್ಟಕಗಳು"
+  searchAriaLabel: "ಹುಡುಕಾಟ ಕೋಷ್ಟಕಗಳು"
+  noItems: "ಯಾವುದೇ ಐಟಂಗಳಿಲ್ಲ"
+  noNodesTitle: "ಯಾವುದೇ ನೋಡ್‌ಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಲಾಗಿಲ್ಲ"
+  noNodesDescription: "ಅವುಗಳನ್ನು ಗ್ರಾಫ್‌ಗೆ ಸೇರಿಸಲು ಎಡಭಾಗದಲ್ಲಿ {storageUnit} ಆಯ್ಕೆಮಾಡಿ."
+  createButton: "ರಚಿಸಿ {storageUnit}"
+
+lt_LT:
+  title: "Grafikas"
+  searchPlaceholder: "Paieškos lentelės"
+  searchAriaLabel: "Paieškos lentelės"
+  noItems: "Nėra elementų"
+  noNodesTitle: "Nepasirinkta jokių mazgų"
+  noNodesDescription: "Kairėje pasirinkite {storageUnit}, kad įtrauktumėte juos į diagramą."
+  createButton: "Sukurti {storageUnit}"
+
+lv_LV:
+  title: "Grafiks"
+  searchPlaceholder: "Meklēt tabulas"
+  searchAriaLabel: "Meklēt tabulas"
+  noItems: "Nav vienumu"
+  noNodesTitle: "Nav atlasīts neviens mezgls"
+  noNodesDescription: "Kreisajā pusē atlasiet {storageUnit}, lai pievienotu tos diagrammai."
+  createButton: "Izveidot {storageUnit}"
+
+ml_IN:
+  title: "ഗ്രാഫ്"
+  searchPlaceholder: "പട്ടികകൾ തിരയുക"
+  searchAriaLabel: "പട്ടികകൾ തിരയുക"
+  noItems: "ഇനങ്ങളൊന്നുമില്ല"
+  noNodesTitle: "നോഡുകളൊന്നും തിരഞ്ഞെടുത്തിട്ടില്ല"
+  noNodesDescription: "ഗ്രാഫിലേക്ക് ചേർക്കുന്നതിന് ഇടതുവശത്തുള്ള {storageUnit} തിരഞ്ഞെടുക്കുക."
+  createButton: "{storageUnit} സൃഷ്‌ടിക്കുക"
+
+mr_IN:
+  title: "आलेख"
+  searchPlaceholder: "सारण्या शोधा"
+  searchAriaLabel: "सारण्या शोधा"
+  noItems: "कोणतेही आयटम नाहीत"
+  noNodesTitle: "कोणतेही नोड निवडलेले नाहीत"
+  noNodesDescription: "त्यांना आलेखामध्ये जोडण्यासाठी डावीकडील {storageUnit} निवडा."
+  createButton: "तयार करा {storageUnit}"
+
+ne_NP:
+  title: "ग्राफ"
+  searchPlaceholder: "तालिकाहरू खोज्नुहोस्"
+  searchAriaLabel: "तालिकाहरू खोज्नुहोस्"
+  noItems: "कुनै वस्तुहरू छैनन्"
+  noNodesTitle: "कुनै नोड चयन गरिएको छैन"
+  noNodesDescription: "तिनीहरूलाई ग्राफमा थप्न बाँयामा {storageUnit} चयन गर्नुहोस्।"
+  createButton: "सिर्जना गर्नुहोस् {storageUnit}"
+
+pa_IN:
+  title: "ਗ੍ਰਾਫ਼"
+  searchPlaceholder: "ਟੇਬਲ ਖੋਜੋ"
+  searchAriaLabel: "ਟੇਬਲ ਖੋਜੋ"
+  noItems: "ਕੋਈ ਆਈਟਮਾਂ ਨਹੀਂ"
+  noNodesTitle: "ਕੋਈ ਨੋਡ ਨਹੀਂ ਚੁਣਿਆ ਗਿਆ"
+  noNodesDescription: "ਉਹਨਾਂ ਨੂੰ ਗ੍ਰਾਫ ਵਿੱਚ ਜੋੜਨ ਲਈ ਖੱਬੇ ਪਾਸੇ {storageUnit} ਨੂੰ ਚੁਣੋ।"
+  createButton: "ਬਣਾਓ {storageUnit}"
+
+si_LK:
+  title: "ප්‍රස්තාරය"
+  searchPlaceholder: "සෙවුම් වගු"
+  searchAriaLabel: "සෙවුම් වගු"
+  noItems: "අයිතම නැත"
+  noNodesTitle: "නෝඩ් තෝරාගෙන නැත"
+  noNodesDescription: "ඒවා ප්‍රස්ථාරයට එක් කිරීමට වම් පස ඇති {storageUnit} තෝරන්න."
+  createButton: "{storageUnit} සාදන්න"
+
+sl_SI:
+  title: "Graf"
+  searchPlaceholder: "Iskanje tabel"
+  searchAriaLabel: "Iskanje tabel"
+  noItems: "Ni predmetov"
+  noNodesTitle: "Ni izbranih vozlišč"
+  noNodesDescription: "Izberite {storageUnit} na levi, da jih dodate na graf."
+  createButton: "Ustvari {storageUnit}"
+
+sr_RS:
+  title: "Граф"
+  searchPlaceholder: "Сеарцх Таблес"
+  searchAriaLabel: "Сеарцх Таблес"
+  noItems: "Нема предмета"
+  noNodesTitle: "Нема изабраних чворова"
+  noNodesDescription: "Изаберите {storageUnit} са леве стране да бисте их додали на графикон."
+  createButton: "Креирај {storageUnit}"
+
+te_IN:
+  title: "గ్రాఫ్"
+  searchPlaceholder: "పట్టికలను శోధించండి"
+  searchAriaLabel: "పట్టికలను శోధించండి"
+  noItems: "అంశాలు లేవు"
+  noNodesTitle: "నోడ్‌లు ఎంచుకోబడలేదు"
+  noNodesDescription: "వాటిని గ్రాఫ్‌కి జోడించడానికి ఎడమవైపున {storageUnit}ని ఎంచుకోండి."
+  createButton: "సృష్టించు {storageUnit}"
+
+tl_PH:
+  title: "Graph"
+  searchPlaceholder: "Maghanap ng mga Talahanayan"
+  searchAriaLabel: "Maghanap ng mga Talahanayan"
+  noItems: "Walang Item"
+  noNodesTitle: "Walang Napiling Node"
+  noNodesDescription: "Piliin ang {storageUnit} sa kaliwa upang idagdag sila sa graph."
+  createButton: "Lumikha ng {storageUnit}"
+
+uz_UZ:
+  title: "Grafik"
+  searchPlaceholder: "Jadvallarni qidirish"
+  searchAriaLabel: "Jadvallarni qidirish"
+  noItems: "Elementlar yoʻq"
+  noNodesTitle: "Hech qanday tugun tanlanmagan"
+  noNodesDescription: "Grafikga qo'shish uchun chap tarafdagi {storageUnit} ni tanlang."
+  createButton: "Yaratish [[[0]]"
+
+yo_NG:
+  title: "Aworan"
+  searchPlaceholder: "Wa Awọn tabili"
+  searchAriaLabel: "Wa Awọn tabili"
+  noItems: "Ko si Awọn nkan"
+  noNodesTitle: "Ko si Awọn apa ti a yan"
+  noNodesDescription: "Yan [[0]] ni apa osi lati fi wọn kun aworan."
+  createButton: "Ṣẹda [[0]]"

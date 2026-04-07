@@ -157,3 +157,91 @@ ur_PK:
 vi_VN:
   download: Tải xuống
   layout: Cách trình bày
+
+af_ZA:
+  download: "Laai af"
+  layout: "Uitleg"
+
+am_ET:
+  download: "አውርድ"
+  layout: "አቀማመጥ"
+
+az_AZ:
+  download: "Yüklə"
+  layout: "Layout"
+
+et_EE:
+  download: "Laadi alla"
+  layout: "Paigutus"
+
+gu_IN:
+  download: "ડાઉનલોડ કરો"
+  layout: "લેઆઉટ"
+
+ha_NG:
+  download: "Zazzagewa"
+  layout: "Tsarin tsari"
+
+ka_GE:
+  download: "ჩამოტვირთვა"
+  layout: "განლაგება"
+
+km_KH:
+  download: "ទាញយក"
+  layout: "ប្លង់"
+
+kn_IN:
+  download: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+  layout: "ಲೇಔಟ್"
+
+lt_LT:
+  download: "Atsisiųsti"
+  layout: "Išdėstymas"
+
+lv_LV:
+  download: "Lejupielādēt"
+  layout: "Izkārtojums"
+
+ml_IN:
+  download: "ഡൗൺലോഡ് ചെയ്യുക"
+  layout: "ലേഔട്ട്"
+
+mr_IN:
+  download: "डाउनलोड करा"
+  layout: "मांडणी"
+
+ne_NP:
+  download: "डाउनलोड गर्नुहोस्"
+  layout: "लेआउट"
+
+pa_IN:
+  download: "ਡਾਊਨਲੋਡ ਕਰੋ"
+  layout: "ਖਾਕਾ"
+
+si_LK:
+  download: "බාගන්න"
+  layout: "පිරිසැලසුම"
+
+sl_SI:
+  download: "Prenos"
+  layout: "Postavitev"
+
+sr_RS:
+  download: "Преузми"
+  layout: "Лаиоут"
+
+te_IN:
+  download: "డౌన్‌లోడ్ చేయండి"
+  layout: "లేఅవుట్"
+
+tl_PH:
+  download: "I-download"
+  layout: "Layout"
+
+uz_UZ:
+  download: "Yuklab olish"
+  layout: "Tartib"
+
+yo_NG:
+  download: "Gba lati ayelujara"
+  layout: "Ìfilélẹ"
