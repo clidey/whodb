@@ -242,5 +242,3 @@ These are planned but not yet implemented:
 2. **S3 export** - Export query results to S3
 3. **CloudWatch metrics** - Show database performance metrics
 
-- **MSSQL on RDS** - SQL Server support
-- **Oracle on RDS** - Oracle support
