@@ -28,7 +28,6 @@ import {PostHogProvider} from 'posthog-js/react';
 import type {PostHog} from 'posthog-js';
 import {initPosthog} from "./config/posthog";
 import {ThemeProvider} from '@clidey/ux'
-import {isEEMode} from './config/ee-imports';
 import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 import {ErrorBoundary} from './components/error-boundary';
@@ -44,10 +43,6 @@ try {
     // best-effort; do not block startup on UA detection issues
 }
 
-if (isEEMode) {
-  import("@ee/index.css");
-}
-
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -58,7 +53,7 @@ const AppWithProviders = () => {
     const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        if (isEEMode || initialized) {
+        if (initialized) {
             return;
         }
         setInitialized(true);
@@ -73,11 +68,6 @@ const AppWithProviders = () => {
             <PosthogConsentBanner/>
         </ThemeProvider>
     );
-
-    // For EE mode, no PostHog provider needed
-    if (isEEMode) {
-        return app;
-    }
 
     if (posthogClient) {
         return <PostHogProvider client={posthogClient}>{app}</PostHogProvider>;

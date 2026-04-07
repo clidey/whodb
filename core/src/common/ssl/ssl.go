@@ -15,7 +15,7 @@
  */
 
 // Package ssl provides SSL/TLS configuration types and utilities for database connections.
-// It defines an extensible registry of SSL modes per database type, allowing EE to register
+// It defines an extensible registry of SSL modes per database type, allowing extensions to register
 // additional modes without modifying CE code.
 package ssl
 
@@ -133,16 +133,16 @@ var (
 		engine.DatabaseType_ElasticSearch: modesSimple,
 	}
 
-	// additionalSSLModes holds EE-registered modes
+	// additionalSSLModes holds dynamically registered modes
 	additionalSSLModes = make(map[engine.DatabaseType][]SSLModeInfo)
 )
 
-// RegisterDatabaseSSLModes allows EE to register SSL modes for EE databases.
+// RegisterDatabaseSSLModes registers SSL modes for additional databases.
 func RegisterDatabaseSSLModes(dbType engine.DatabaseType, modes []SSLModeInfo) {
 	additionalSSLModes[dbType] = modes
 }
 
-// RegisterSSLModeAliases allows EE to register SSL mode aliases for EE databases.
+// RegisterSSLModeAliases registers SSL mode aliases for additional databases.
 func RegisterSSLModeAliases(dbType engine.DatabaseType, aliases map[string]SSLMode) {
 	sslModeAliases[dbType] = aliases
 }
@@ -155,7 +155,7 @@ func GetSSLModes(dbType engine.DatabaseType) []SSLModeInfo {
 		return modes
 	}
 
-	// Check EE-registered modes
+	// Check dynamically registered modes
 	if modes, ok := additionalSSLModes[dbType]; ok {
 		return modes
 	}

@@ -26,7 +26,7 @@ import (
 type Options struct {
 	// AppName is the base application name (e.g., "whodb").
 	AppName string
-	// EnterpriseEdition appends "-ee" to distinguish EE data.
+	// EnterpriseEdition appends "-ee" to distinguish data directories.
 	EnterpriseEdition bool
 	// Development appends "-dev" to distinguish dev data.
 	Development bool

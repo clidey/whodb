@@ -35,7 +35,6 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.14.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clidey/whodb/core v0.0.0 // indirect
-	github.com/clidey/whodb/ee v0.0.0-00010101000000-000000000000 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -146,5 +145,3 @@ require (
 replace github.com/clidey/whodb/core => ../core
 
 replace github.com/clidey/whodb/desktop-common => ../desktop-common
-
-replace github.com/clidey/whodb/ee => ../ee-stub

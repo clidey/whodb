@@ -1,7 +1,5 @@
-//go:build !prod
-
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +14,19 @@
  * limitations under the License.
  */
 
-package main
+package engine
 
-import "embed"
+// globalPlugins holds plugins registered via init() in each plugin package.
+// The entry point's blank imports control which plugins are registered.
+var globalPlugins []*Plugin
 
-// In dev mode, frontend is served separately (e.g., via pnpm start).
-// This provides an empty embed.FS so compilation succeeds without build/.
-var staticFiles embed.FS
+// RegisterPlugin adds a plugin to the global registry.
+// Called from init() in each plugin package.
+func RegisterPlugin(p *Plugin) {
+	globalPlugins = append(globalPlugins, p)
+}
+
+// RegisteredPlugins returns all plugins registered via RegisterPlugin.
+func RegisteredPlugins() []*Plugin {
+	return globalPlugins
+}

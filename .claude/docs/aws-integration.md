@@ -242,10 +242,3 @@ These are planned but not yet implemented:
 2. **S3 export** - Export query results to S3
 3. **CloudWatch metrics** - Show database performance metrics
 
-## EE Features
-
-The following are Enterprise Edition only:
-
-- **DynamoDB** - NoSQL database support (in `ee/core/src/plugins/dynamodb/`)
-- **MSSQL on RDS** - SQL Server support
-- **Oracle on RDS** - Oracle support

@@ -77,7 +77,6 @@ import {InternalPage} from "../../components/page";
 import {SchemaViewer} from "../../components/schema-viewer";
 import {getColumnIcons, getInputPropsForColumnType, StorageUnitTable} from "../../components/table";
 import {Tip} from "../../components/tip";
-import {BUILD_EDITION} from "../../config/edition";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ExploreConditionsActions} from "../../store/explore-conditions";
@@ -91,18 +90,18 @@ import {useTranslation} from "../../hooks/use-translation";
 import {whereConditionToSql} from "../../utils/where-condition-to-sql";
 import {isDestructiveQuery} from "../../utils/query-utils";
 import {useContainerWidth} from "../../hooks/use-container-width";
+import {getComponent} from "../../config/component-registry";
 
-// Conditionally import EE query utilities
+// Extension query utilities — set via registerQueryUtils()
 let generateInitialQuery: ((databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string) | undefined;
 
-if (BUILD_EDITION === 'ee') {
-    // Dynamically import EE query utilities when in EE mode
-    import('@ee/pages/storage-unit/query-utils').then(module => {
-        generateInitialQuery = module.generateInitialQuery;
-    }).catch(() => {
-        // EE module not available, use default
-        generateInitialQuery = undefined;
-    });
+/** Register extension query utilities. */
+export function registerQueryUtils(fns: {
+    generateInitialQuery?: (databaseType: string | undefined, schema: string | undefined, tableName: string | undefined) => string;
+}) {
+    if (fns.generateInitialQuery) {
+        generateInitialQuery = fns.generateInitialQuery;
+    }
 }
 
 type EESearchBarProps = {
@@ -201,12 +200,12 @@ export const ExploreStorageUnit: FC = () => {
 
     const [updateStorageUnit] = useUpdateStorageUnitMutation();
 
-    // Load EE search bar component
+    // Load search bar extension from component registry
     useEffect(() => {
-        if (BUILD_EDITION !== 'ee') return;
-        import('@ee/pages/storage-unit/search-bar').then(module => {
-            setEESearchBar(() => module.SearchBar);
-        }).catch(() => {});
+        const SearchBarComponent = getComponent('search-bar');
+        if (SearchBarComponent) {
+            setEESearchBar(() => SearchBarComponent as unknown as FC<EESearchBarProps>);
+        }
     }, []);
 
     // Keep whereConditionRef in sync with whereCondition state

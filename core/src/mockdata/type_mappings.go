@@ -32,8 +32,8 @@ type TypeGenerator func(dbType string, databaseType string, constraints map[stri
 
 var eeTypeGenerator TypeGenerator
 
-// RegisterEETypeGenerator allows EE to register a handler for EE-specific types
-func RegisterEETypeGenerator(gen TypeGenerator) {
+// RegisterExtTypeGenerator registers a handler for additional types
+func RegisterExtTypeGenerator(gen TypeGenerator) {
 	eeTypeGenerator = gen
 }
 
@@ -64,7 +64,7 @@ func unwrapTypeModifiers(dbType string) string {
 // The dbType parameter is the raw column type (e.g., "int", "text[]", "varchar(255)").
 // The constraints map contains check_min, check_max, length, scale, check_values, etc.
 func GenerateByType(dbType string, databaseType string, constraints map[string]any, faker *gofakeit.Faker) any {
-	// Try ee first
+	// Try extension first
 	if eeTypeGenerator != nil {
 		if value, handled := eeTypeGenerator(dbType, databaseType, constraints, faker); handled {
 			return value

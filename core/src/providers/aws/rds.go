@@ -289,7 +289,7 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 var mapRDSEngineExtension func(string) (engine.DatabaseType, bool)
 
 // SetRDSEngineMapper registers an extension function for mapping RDS engine names
-// to database types. This allows EE to add support for additional engines without modifying CE code
+// to database types. This allows extensions to add support for additional engines
 func SetRDSEngineMapper(fn func(string) (engine.DatabaseType, bool)) {
 	mapRDSEngineExtension = fn
 }

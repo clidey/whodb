@@ -428,6 +428,10 @@ func (p *MongoDBPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 	}
 }
 
+func init() {
+	engine.RegisterPlugin(NewMongoDBPlugin())
+}
+
 func NewMongoDBPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_MongoDB,

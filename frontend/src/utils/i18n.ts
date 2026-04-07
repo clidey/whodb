@@ -15,7 +15,6 @@
  */
 
 import yaml from 'js-yaml';
-import {isEEMode} from '@/config/ee-imports';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '@/utils/languages';
 
 type TranslationCache = Record<string, Record<string, any>>;
@@ -24,7 +23,14 @@ const translationCache: TranslationCache = {};
 
 // Import all YAML files using Vite's import.meta.glob
 const ceModules = import.meta.glob<string>('/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
-const eeModules = import.meta.glob<string>('../../../ee/frontend/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
+
+// Extension locale modules — populated by registerLocaleModules()
+let extensionModules: Record<string, string> = {};
+
+/** Register additional locale modules (called by extensions at boot). */
+export const registerLocaleModules = (modules: Record<string, string>) => {
+    extensionModules = { ...extensionModules, ...modules };
+};
 
 // Helper function to find module by component path
 const findModule = (modules: Record<string, string>, componentPath: string): string | undefined => {
@@ -57,23 +63,19 @@ export const loadTranslationsSync = (
             translations = parsed[language] || parsed[DEFAULT_LANGUAGE];
         }
 
-        // In EE mode, merge EE keys on top of CE (EE overrides individual keys)
-        if (isEEMode) {
-            const eeContent = findModule(eeModules, componentPath);
-            if (eeContent) {
-                const parsed = yaml.load(eeContent) as Record<string, Record<string, string>>;
-                const eeTranslations = parsed[language];
-                if (eeTranslations) {
-                    translations = { ...translations, ...eeTranslations };
-                }
+        // Merge extension translations on top (overrides CE keys if present)
+        const extContent = findModule(extensionModules, componentPath);
+        if (extContent) {
+            const parsed = yaml.load(extContent) as Record<string, Record<string, string>>;
+            const extTranslations = parsed[language] || parsed[DEFAULT_LANGUAGE];
+            if (extTranslations) {
+                translations = { ...translations, ...extTranslations };
             }
         }
 
         if (!translations) {
             console.error(`Translation file not found for ${componentPath}`, {
                 availableCE: Object.keys(ceModules),
-                availableEE: Object.keys(eeModules),
-                isEEMode,
                 language
             });
             return {};

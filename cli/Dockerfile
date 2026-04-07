@@ -28,9 +28,6 @@ RUN printf '#include <stddef.h>\nint __res_init(void) { return 0; }\nint backtra
 
 WORKDIR /app
 
-# Copy ee-stub for CE builds (provides stub packages for EE imports)
-COPY ./ee-stub/ ./ee-stub/
-
 # Copy core module
 COPY core/go.mod core/go.sum ./core/
 WORKDIR /app/core

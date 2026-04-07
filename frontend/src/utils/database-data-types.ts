@@ -21,7 +21,7 @@ import { reduxStore } from '../store';
 /**
  * Get type definitions for a database from the backend-driven Redux store.
  *
- * @param databaseType The database type (can be CE or EE type)
+ * @param databaseType The database type (can be any registered type)
  * @returns Array of TypeDefinition objects for the database
  */
 export function getDatabaseTypeDefinitions(databaseType: DatabaseType | string): TypeDefinition[] {
@@ -54,7 +54,7 @@ export function getDatabaseTypeDefinitions(databaseType: DatabaseType | string):
 /**
  * Get the alias map for a database from the backend-driven Redux store.
  *
- * @param databaseType The database type (can be CE or EE type)
+ * @param databaseType The database type (can be any registered type)
  * @returns Record mapping aliases to canonical type names
  */
 export function getDatabaseAliasMap(databaseType: DatabaseType | string): Record<string, string> {
@@ -117,7 +117,7 @@ export function findTypeDefinition(typeId: string, databaseType: DatabaseType | 
 
 /**
  * Check if a database supports field modifiers (primary, nullable)
- * @param databaseType The database type (can be CE or EE type)
+ * @param databaseType The database type (can be any registered type)
  * @returns boolean indicating if the database supports modifiers
  */
 export function databaseSupportsModifiers(databaseType: DatabaseType | string): boolean {

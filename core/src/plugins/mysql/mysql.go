@@ -207,6 +207,11 @@ func (p *MySQLPlugin) BuildSkipConflictClause(pkColumns []string) clause.OnConfl
 	}
 }
 
+func init() {
+	engine.RegisterPlugin(NewMySQLPlugin())
+	engine.RegisterPlugin(NewMyMariaDBPlugin())
+}
+
 func NewMySQLPlugin() *engine.Plugin {
 	mysqlPlugin := &MySQLPlugin{}
 	mysqlPlugin.Type = engine.DatabaseType_MySQL

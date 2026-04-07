@@ -1,4 +1,4 @@
-//go:build !ee && !arm && !riscv64
+//go:build !arm && !riscv64
 
 /*
  * Copyright 2026 Clidey, Inc.
@@ -31,8 +31,32 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 )
 
-// generateChatTitleImpl generates a chat title using BAML
+// GenerateChatTitleFunc is the function signature for chat title generation.
+type GenerateChatTitleFunc func(c ctx.Context, input model.GenerateChatTitleInput) (*model.GenerateChatTitleResponse, error)
+
+// registeredGenerateChatTitle allows overriding the default implementation.
+var registeredGenerateChatTitle GenerateChatTitleFunc
+
+// RegisterGenerateChatTitle allows registering a custom chat title implementation.
+func RegisterGenerateChatTitle(fn GenerateChatTitleFunc) {
+	registeredGenerateChatTitle = fn
+}
+
+func init() {
+	// Register the default implementation
+	registeredGenerateChatTitle = ceGenerateChatTitle
+}
+
+// generateChatTitleImpl delegates to the registered implementation.
 func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*model.GenerateChatTitleResponse, error) {
+	if registeredGenerateChatTitle != nil {
+		return registeredGenerateChatTitle(c, input)
+	}
+	return nil, fmt.Errorf("chat title generation not available")
+}
+
+// ceGenerateChatTitle generates a chat title using BAML
+func ceGenerateChatTitle(c ctx.Context, input model.GenerateChatTitleInput) (*model.GenerateChatTitleResponse, error) {
 	log.Debugf("Generate Chat Title: Started with query=%s, model=%s", input.Query, input.Model)
 
 	// Handle very short or unclear inputs - return empty to keep default name
@@ -40,7 +64,6 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	queryLower := strings.ToLower(query)
 
 	// For very short inputs, greetings, or unclear queries, skip title generation
-	// This signals the frontend to keep the default "Chat X" name
 	if len(query) <= 3 ||
 		queryLower == "hi" ||
 		queryLower == "hello" ||
@@ -51,7 +74,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		queryLower == "blah" ||
 		queryLower == "test" {
 		return &model.GenerateChatTitleResponse{
-			Title: "", // Empty title means "keep default"
+			Title: "",
 		}, nil
 	}
 
@@ -70,7 +93,6 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	}
 	creds := envconfig.ResolveProviderCredentials(providerId, requestToken, requestEndpoint, input.ModelType)
 
-	// Build ExternalModel for BAML
 	externalModel := &engine.ExternalModel{
 		Type:     creds.ModelType,
 		Token:    creds.Token,
@@ -78,7 +100,6 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		Endpoint: creds.Endpoint,
 	}
 
-	// Create the prompt for title generation
 	titlePrompt := fmt.Sprintf(
 		"Generate a very short title (maximum 5 words) for a chat conversation that starts with this question: \"%s\"\n\n"+
 			"Return ONLY the title text, nothing else. No quotes, no explanations. The title should be concise and descriptive.",
@@ -87,7 +108,6 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 
 	log.Debugf("Generate Chat Title: Calling BAML GenerateChatTitle")
 
-	// Setup BAML context and call
 	callOpts := bamlconfig.SetupAIClient(externalModel)
 	stream, err := baml_client.Stream.GenerateChatTitle(c, titlePrompt, callOpts...)
 	if err != nil {
@@ -95,7 +115,6 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		return nil, fmt.Errorf("failed to generate title: %w", err)
 	}
 
-	// Wait for the response
 	var title string
 	for chunk := range stream {
 		if chunk.IsError {
@@ -111,7 +130,6 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 		}
 	}
 
-	// Clean up the title (remove quotes, trim, limit length)
 	title = strings.Trim(title, `"'`)
 	title = strings.TrimSpace(title)
 	if len(title) > 50 {

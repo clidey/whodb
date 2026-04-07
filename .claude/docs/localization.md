@@ -215,7 +215,6 @@ en:
 
 1. Add the key to the appropriate YAML file under `en:`
 2. Use `t('keyName')` in your component
-3. If EE needs Spanish, add translation to `ee/frontend/src/locales/`
 
 ## What NOT to Localize
 

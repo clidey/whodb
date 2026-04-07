@@ -26,7 +26,10 @@ import (
 )
 
 var IsDevelopment = os.Getenv("ENVIRONMENT") == "dev"
-var IsEnterpriseEdition = false // Set to true by EE build
+var IsEnterpriseEdition = false // Set at startup by the entry point
+
+// ActiveDatabases lists database type names available in this build (populated from registered plugins at startup).
+var ActiveDatabases []string
 
 // GetIsDesktopMode returns true if running in desktop mode.
 // This is a function (not a variable) so it reads the env var each time,
@@ -132,7 +135,7 @@ type GenericProviderConfig struct {
 var GenericProviders []GenericProviderConfig
 
 // AddGenericProvider adds a generic provider to the GenericProviders list.
-// This is used by EE providers and other dynamic provider registration systems.
+// Used by dynamic provider registration.
 func AddGenericProvider(config GenericProviderConfig) {
 	GenericProviders = append(GenericProviders, config)
 }

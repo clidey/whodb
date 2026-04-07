@@ -11,11 +11,6 @@ on:
         description: 'Version to build'
         required: true
         type: string
-      edition:
-        description: 'Edition to build (ce or ee)'
-        required: false
-        type: string
-        default: 'ce'
 
 permissions:
   contents: read

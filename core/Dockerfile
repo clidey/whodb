@@ -21,16 +21,6 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN pnpm install
 COPY ./frontend/ ./
 
-# Create empty EE modules for Vite to resolve during CE build
-RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts ee/frontend/src/pages/raw-execute ee/frontend/src && \
-    echo "export default {}; export const LineChart = () => null;" > ee/frontend/src/components/charts/line-chart.tsx && \
-    echo "export default {}; export const PieChart = () => null;" > ee/frontend/src/components/charts/pie-chart.tsx && \
-    echo "export default {}; export const AnalyzeGraph = () => null;" > ee/frontend/src/pages/raw-execute/analyze-view.tsx && \
-    echo "export default {};" > ee/frontend/src/index.ts && \
-    echo "export default {}; export const eeDatabaseTypes = []; export const eeFeatures = {};" > ee/frontend/src/config.ts && \
-    echo "export default {};" > ee/frontend/src/components/export.ts && \
-    echo "export default {}; export const EEIcons = { Logos: {} };" > ee/frontend/src/icons.tsx
-
 ARG VERSION=dev
 ENV VITE_APP_VERSION=${VERSION}
 RUN pnpm run build
@@ -54,19 +44,14 @@ RUN printf '#include <stddef.h>\nint __res_init(void) { return 0; }\nint backtra
 
 WORKDIR /app
 
-# Copy ee-stub for CE builds (provides stub packages for EE imports)
-COPY ./ee-stub/ ./ee-stub/
-
-# Copy core module files and fix replace path for Docker context
+# Copy core module files
 COPY ./core/go.mod ./core/go.sum ./
-RUN sed -i 's|../ee-stub|./ee-stub|g' go.mod
 RUN go mod download
 COPY ./core/ ./
 
+COPY --from=build-stage /app/build/ ./cmd/whodb/build/
 
-COPY --from=build-stage /app/build/ ./build/
-
-# Build backend with version and environment
+# Build CE backend from the new entry point
 ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
@@ -74,7 +59,7 @@ RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind
 	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
 	CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod -trimpath \
 	-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
-	-o /core
+	-o /core ./cmd/whodb
 
 # Pre-download BAML native library for the target architecture (musl for Alpine)
 # Extract BAML version from go.mod to stay in sync

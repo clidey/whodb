@@ -231,7 +231,6 @@ jobs:
     uses: ./.github/workflows/_build-frontend.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
     secrets: inherit
 
   # Step 2b: Build platform artifacts in parallel (only what's selected)
@@ -242,7 +241,6 @@ jobs:
     uses: ./.github/workflows/_build-docker.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
     secrets: inherit
 
   build-windows:
@@ -252,7 +250,6 @@ jobs:
     uses: ./.github/workflows/_build-windows.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
       platforms: 'windows-amd64,windows-arm64'
     secrets: inherit
 
@@ -263,7 +260,6 @@ jobs:
     uses: ./.github/workflows/_build-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
     secrets: inherit
 
   build-snap:
@@ -283,7 +279,6 @@ jobs:
   #   uses: ./.github/workflows/_build-appimage.yml
   #   with:
   #     version: ${{ needs.calculate-version.outputs.version }}
-  #     edition: 'ce'
   #   secrets: inherit
 
   build-linux-terminal:

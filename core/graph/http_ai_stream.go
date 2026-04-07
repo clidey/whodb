@@ -1,4 +1,4 @@
-//go:build !ee && !arm && !riscv64
+//go:build !arm && !riscv64
 
 /*
  * Copyright 2026 Clidey, Inc.

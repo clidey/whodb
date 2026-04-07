@@ -114,15 +114,14 @@ import {formatNumber, isNoSQL} from "@/utils/functions";
 import {databaseSupportsMockData} from "@/utils/database-features";
 
 
-// Dynamically load EE Export component
+// Dynamically load Export component
 // const EEExport = loadEEComponent(
-//     () => import('@ee/components/export').then(mod => ({ default: mod.Export })),
 //     null,
 // );
 
 const EEExport = null;
 
-// Dynamic Export component that uses EE version if available, otherwise CE version
+// Dynamic Export component
 const DynamicExport: FC<{
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -136,7 +135,7 @@ const DynamicExport: FC<{
     preselectedFormat?: 'csv' | 'excel' | 'ndjson';
     forceExportAll?: boolean;
 }> = (props) => {
-    // Use EE Export if available, otherwise fall back to CE Export
+    // Use registered Export if available, otherwise fall back to default
     const ExportComponent = EEExport || Export;
     return <ExportComponent {...props} />;
 };

@@ -136,7 +136,7 @@ GOWORK=$PWD/../go.work.desktop-ce wails build -o whodb-ce
 
 # Enterprise Edition
 cd ee/desktop
-wails build -tags ee -o whodb-ee
+wails build -o whodb-ee
 ```
 
 ## Architecture
@@ -154,7 +154,6 @@ The desktop application:
 
 - **CE workspace** (`go.work.desktop-ce`):
   - `./core` - Core WhoDB functionality
-  - `./ee-stub` - EE stub for CE builds
   - `./desktop-ce` - CE desktop module
   - `./desktop-common` - Shared desktop code
 

@@ -34,7 +34,7 @@ var defaultDatabasePorts = map[engine.DatabaseType]string{
 	engine.DatabaseType_Memcached:     "11211",
 }
 
-// additionalPorts holds ports registered by external packages (e.g., enterprise edition)
+// additionalPorts holds ports registered by external packages
 var additionalPorts = make(map[engine.DatabaseType]string)
 
 // GetDefaultPort returns the default port for a database type

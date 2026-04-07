@@ -696,6 +696,10 @@ func (p *Sqlite3Plugin) GetMaxBulkInsertParameters() int {
 	return 999
 }
 
+func init() {
+	engine.RegisterPlugin(NewSqlite3Plugin())
+}
+
 func NewSqlite3Plugin() *engine.Plugin {
 	plugin := &Sqlite3Plugin{}
 	plugin.Type = engine.DatabaseType_Sqlite3

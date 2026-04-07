@@ -29,6 +29,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
+	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/env"
@@ -58,7 +59,8 @@ func RunApp(edition string, title string, assets embed.FS) error {
 	src.InitializeEngine()
 	log.Infof("Running WhoDB Desktop %s Edition", strings.ToUpper(edition))
 
-	r := router.InitializeRouter(assets)
+	schema := graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}})
+	r := router.InitializeRouter(schema, nil, assets)
 	app := NewApp(edition)
 
 	err := wails.Run(&options.App{

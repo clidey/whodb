@@ -1,7 +1,5 @@
-//go:build prod
-
 /*
- * Copyright 2025 Clidey, Inc.
+ * Copyright 2026 Clidey, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +16,4 @@
 
 package main
 
-import "embed"
-
-//go:embed build/*
-var staticFiles embed.FS
+//go:generate go run github.com/99designs/gqlgen generate

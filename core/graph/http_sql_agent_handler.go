@@ -21,18 +21,18 @@ package graph
 import "net/http"
 
 // SQLAgentHandlerFunc is the type for the SQL agent stream handler.
-// EE registers its implementation via RegisterSQLAgentHandler.
+// Override via RegisterSQLAgentHandler.
 type SQLAgentHandlerFunc func(w http.ResponseWriter, r *http.Request)
 
 var registeredSQLAgentHandler SQLAgentHandlerFunc
 var registeredPermitHandler SQLAgentHandlerFunc
 
-// RegisterSQLAgentHandler allows EE to register its SQL agent stream handler.
+// RegisterSQLAgentHandler registers a SQL agent stream handler.
 func RegisterSQLAgentHandler(handler SQLAgentHandlerFunc) {
 	registeredSQLAgentHandler = handler
 }
 
-// RegisterPermitHandler allows EE to register its SQL agent permission handler.
+// RegisterPermitHandler registers a SQL agent permission handler.
 func RegisterPermitHandler(handler SQLAgentHandlerFunc) {
 	registeredPermitHandler = handler
 }

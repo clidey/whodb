@@ -88,15 +88,25 @@ import { useContainerWidth } from "../../hooks/use-container-width";
 import { copyToClipboard } from "../../services/clipboard";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";
-import { isEEFeatureEnabled, loadEEModule } from "../../utils/ee-loader";
+import { featureFlags } from "../../config/features";
 import { isDesktopApp } from "../../utils/external-links";
 import { IPluginProps, QueryView } from "./query-view";
 
-type EEExports = {
-    plugins: any[];
+/** Raw-execute extensions — set via registerRawExecuteExtensions(). */
+let eeRawExecuteExtensions: {
+    plugins: { type: string; component: FC<IPluginProps> }[];
     ActionOptions: Record<string, string>;
     ActionOptionIcons: Record<string, ReactElement>;
-};
+} | null = null;
+
+/** Register raw-execute extension plugins. */
+export function registerRawExecuteExtensions(ext: {
+    plugins: { type: string; component: FC<IPluginProps> }[];
+    ActionOptions: Record<string, string>;
+    ActionOptionIcons: Record<string, ReactElement>;
+}) {
+    eeRawExecuteExtensions = ext;
+}
 
 type IRawExecuteCellProps = {
     cellId: string;
@@ -375,7 +385,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         }
     }, [mode, cellId, dispatch, cellData]);
 
-    // State for all plugins, action options, and action option icons (not just EE)
+    // State for all plugins, action options, and action option icons
     const [allPlugins, setAllPlugins] = useState<{ type: string, component: FC<IPluginProps> }[]>([
         {
             type: ActionOptions.Query,
@@ -385,39 +395,18 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     const [allActionOptions, setAllActionOptions] = useState<Record<string, string>>({ ...ActionOptions });
     const [allActionOptionIcons, setAllActionOptionIcons] = useState<Record<string, ReactElement>>({ ...ActionOptionIcons });
 
-    // Load EE module on mount and merge with base
+    // Merge extensions on mount (registered via registerRawExecuteExtensions)
     useEffect(() => {
-        let mounted = true;
-        loadEEModule<EEExports>(
-            () => import('@ee/pages/raw-execute/index'),
-            { plugins: [], ActionOptions: {}, ActionOptionIcons: {} }
-        ).then((mod) => {
-            if (mod && mounted) {
-                const { default: defaultMod } = mod as any;
-                if (defaultMod == null || defaultMod.plugins == null) {
-                    return;
-                }
-                // Merge plugins
-                setAllPlugins(prev => [
-                    ...prev,
-                    ...(defaultMod.plugins || []).map((p: any) => ({
-                        type: p.type,
-                        component: p.component,
-                    })),
-                ]);
-                // Merge action options
-                setAllActionOptions(prev => ({
-                    ...prev,
-                    ...(defaultMod.ActionOptions || {})
-                }));
-                // Merge action option icons
-                setAllActionOptionIcons(prev => ({
-                    ...prev,
-                    ...(defaultMod.ActionOptionIcons || {})
-                }));
-            }
-        });
-        return () => { mounted = false; }
+        if (!eeRawExecuteExtensions) {
+            return;
+        }
+        const ext = eeRawExecuteExtensions;
+        setAllPlugins(prev => [
+            ...prev,
+            ...ext.plugins.map(p => ({ type: p.type, component: p.component })),
+        ]);
+        setAllActionOptions(prev => ({ ...prev, ...ext.ActionOptions }));
+        setAllActionOptionIcons(prev => ({ ...prev, ...ext.ActionOptionIcons }));
     }, []);
 
     const doExecute = useCallback((currentCode: string) => {
@@ -585,7 +574,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, [rows]);
 
     const isAnalyzeAvailable = useMemo(() => {
-        if (!isEEFeatureEnabled('analyzeView')) {
+        if (!featureFlags.analyzeView) {
             return false;
         }
         switch(current?.Type) {
@@ -1102,7 +1091,7 @@ export const RawExecutePage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.RawExecute]}>
             <div className="flex flex-col w-full gap-2" data-testid="raw-execute-page">
-                {/* {isEEFeatureEnabled('analyzeView') && <AIProvider 
+                {/* {featureFlags.analyzeView && <AIProvider 
                     {...aiState}
                     disableNewChat={true}
                 />} */}

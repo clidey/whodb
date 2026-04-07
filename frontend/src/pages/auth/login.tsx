@@ -46,7 +46,7 @@ import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
 import {baseDatabaseTypes, getDatabaseTypeDropdownItems, IDatabaseDropdownItem} from "../../config/database-types";
-import {extensions, featureFlags, getAppName, isEEMode, sources} from '../../config/features';
+import {extensions, featureFlags, getAppName, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useDesktopFile} from '../../hooks/useDesktop';
 import {useTranslation} from '@/hooks/use-translation';
@@ -563,7 +563,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
     }, [searchParams, dispatch]);
 
-    // Load database types (including EE types) before allowing auto-login
+    // Load database types before allowing auto-login
     useEffect(() => {
         getDatabaseTypeDropdownItems({ cloudProvidersEnabled }).then(items => {
             setDatabaseTypeItems(items);
@@ -615,8 +615,8 @@ export const LoginForm: FC<LoginFormProps> = ({
             return;
         }
 
-        // Wait until EE database types have finished loading before processing auto-login.
-        // This ensures EE types (MSSQL, Oracle, DynamoDB) are available for type lookup.
+        // Wait until database types have finished loading before processing auto-login.
+        // This ensures all registered types are available for type lookup.
         if (!databaseTypesLoaded) {
             return;
         }
@@ -697,7 +697,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             }
 
             // All other non-reserved params go into advanced form generically,
-            // supporting any database type including EE databases.
+            // supporting any registered database type.
             const advancedEntries: Record<string, string> = {};
             searchParams.forEach((value, key) => {
                 if (!LOGIN_RESERVED_PARAMS.has(key) && !LOGIN_UI_PARAMS.has(key)) {
@@ -958,7 +958,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 {!hideHeader && (
                     <header className="flex justify-between" data-testid="login-header">
                         <h1 className="flex items-center gap-xs text-xl">
-                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>)}
+                            {extensions.Logo ?? <img src={logoImage} alt="WhoDB" className="w-auto h-8 mr-1"/>}
                             <span className="text-brand-foreground" data-testid="app-name">{getAppName()}</span>
                         </h1>
                         <span className="text-xl">{t('title')}</span>

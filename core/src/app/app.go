@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package main
+package app
 
 import (
-	_ "github.com/clidey/whodb/core/src/bamlinit" // Must be first - sets BAML env vars before native library loads
-
 	"context"
+	"embed"
+	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -28,10 +29,10 @@ import (
 	"syscall"
 	"time"
 
-	"errors"
-	"flag"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
@@ -41,7 +42,26 @@ import (
 
 const defaultPort = "8080"
 
-func main() {
+// PopulateActiveDatabases sets env.ActiveDatabases from registered plugins.
+func PopulateActiveDatabases() {
+	for _, p := range engine.RegisteredPlugins() {
+		env.ActiveDatabases = append(env.ActiveDatabases, string(p.Type))
+	}
+}
+
+// AppConfig is the single point of dependency injection for the application.
+// The entry point builds this config and passes it to Run().
+type AppConfig struct {
+	// Schema is the GraphQL executable schema.
+	Schema graphql.ExecutableSchema
+
+	// HTTPHandlers maps additional HTTP paths to handlers.
+	HTTPHandlers map[string]http.HandlerFunc
+}
+
+// Run starts the WhoDB server with the given configuration.
+// Called by the entry point.
+func Run(config AppConfig, staticFiles embed.FS) {
 	showVersion := flag.Bool("version", false, "Print the version and exit")
 	flag.Parse()
 
@@ -53,6 +73,8 @@ func main() {
 		fmt.Println(version)
 		return
 	}
+
+	PopulateActiveDatabases()
 
 	defer log.CloseLogFile()
 	log.Alwaysf("Starting WhoDB... (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", log.GetLevel())
@@ -83,7 +105,7 @@ func main() {
 		log.Warnf("Failed to initialize AWS providers from environment: %v", err)
 	}
 
-	r := router.InitializeRouter(staticFiles)
+	r := router.InitializeRouter(config.Schema, config.HTTPHandlers, staticFiles)
 
 	port := os.Getenv("PORT")
 	if port == "" {

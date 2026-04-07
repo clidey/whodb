@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { LocalLoginProfile } from "../store/auth";
-import { databaseTypeDropdownItems } from "../config/database-types";
+import { getDatabaseTypeDropdownItemsSync } from "../config/database-types";
 import { InformationCircleIcon } from "./heroicons";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -22,7 +22,7 @@ const isValidProfileId = (profileId: string): boolean =>
   PROFILE_ID_REGEX.test(profileId);
 
 const getPortFromAdvanced = (profile: LocalLoginProfile): string | null => {
-  const defaultPortItem = databaseTypeDropdownItems.find(item => item.id === profile.Type);
+  const defaultPortItem = getDatabaseTypeDropdownItemsSync().find(item => item.id === profile.Type);
   const defaultPort = defaultPortItem?.extra?.Port;
   
   if (!defaultPort) return null;

@@ -86,20 +86,12 @@ const basePrefillRules: Record<string, PrefillRule> = {
     }),
 };
 
-// Combined rules - EE rules will be merged at runtime
+// Combined rules - Extension rules are merged at runtime via registerPrefillRules()
 let prefillRules: Record<string, PrefillRule> = { ...basePrefillRules };
 
-// Load EE prefill rules if in EE mode
-if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
-    import('@ee/utils/cloud-prefill-rules')
-        .then((eeModule) => {
-            if (eeModule?.eePrefillRules) {
-                prefillRules = { ...basePrefillRules, ...eeModule.eePrefillRules };
-            }
-        })
-        .catch((error) => {
-            console.error('Could not load EE prefill rules:', error);
-        });
+/** Register additional prefill rules. */
+export function registerPrefillRules(eeRules: Record<string, PrefillRule>) {
+    prefillRules = { ...basePrefillRules, ...eeRules };
 }
 
 /**
@@ -116,7 +108,7 @@ export function buildConnectionPrefill(conn: LocalDiscoveredConnection): Connect
         advanced["Port"] = port;
     }
 
-    // Apply database-specific rules (CE or EE)
+    // Apply database-specific rules
     const rule = prefillRules[conn.DatabaseType];
     if (rule) {
         Object.assign(advanced, rule(conn, meta));
