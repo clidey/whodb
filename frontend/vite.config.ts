@@ -18,6 +18,7 @@ import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import tailwindcss from '@tailwindcss/vite'
+import yamlPlugin from './plugins/vite-plugin-yaml';
 
 // Resolve app meta (title, description) at build time
 const htmlMetaPlugin = () => {
@@ -61,6 +62,7 @@ export default defineConfig(async () => {
 
   return {
     plugins: [
+      yamlPlugin(),
       react(),
       tailwindcss(),
       htmlMetaPlugin(),
