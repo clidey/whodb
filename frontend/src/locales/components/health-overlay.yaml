@@ -333,3 +333,307 @@ zh_TW:
   switchFailed: 切換設定檔失敗
   switchFailedWithError: "切換設定檔失敗：{error}"
   logout: 退出
+
+bg_BG:
+  serverDownTitle: Сървърът е недостъпен
+  serverDownMessage: "В момента сървърът {appName} е недостъпен. Моля, проверете връзката си."
+  serverDownRetrying: Опит за повторно свързване...
+  databaseDownTitle: Връзката с базата данни е прекъсната
+  databaseDownMessage: Връзката с базата данни е недостъпна. Можете да превключите към друг профил или да излезете.
+  databaseDownRetrying: Опит за повторно свързване...
+  selectProfile: Изберете Профил
+  selectProfilePlaceholder: Изберете профил...
+  switchProfile: Превключване на профил
+  switching: Превключване...
+  switchSuccessful: Успешно превключен профил
+  switchFailed: Неуспешно превключване на профила
+  switchFailedWithError: "Неуспешно превключване на профила: {error}"
+  logout: Изход
+
+bn_BD:
+  serverDownTitle: সার্ভার অনুপলব্ধ
+  serverDownMessage: "{appName} সার্ভারটি বর্তমানে পাওয়া যাচ্ছে না। আপনার সংযোগ পরীক্ষা করুন."
+  serverDownRetrying: পুনরায় সংযোগ করার চেষ্টা করা হচ্ছে...
+  databaseDownTitle: ডাটাবেস সংযোগ হারিয়েছে
+  databaseDownMessage: ডাটাবেস সংযোগ অনুপলব্ধ. আপনি অন্য প্রোফাইলে যেতে পারেন বা লগআউট করতে পারেন৷
+  databaseDownRetrying: পুনরায় সংযোগ করার চেষ্টা করা হচ্ছে...
+  selectProfile: প্রোফাইল নির্বাচন করুন
+  selectProfilePlaceholder: একটি প্রোফাইল চয়ন করুন...
+  switchProfile: প্রোফাইল স্যুইচ করুন
+  switching: পাল্টানো হচ্ছে...
+  switchSuccessful: সফলভাবে প্রোফাইল স্যুইচ করা হয়েছে
+  switchFailed: প্রোফাইল স্যুইচ করতে ব্যর্থ হয়েছে
+  switchFailedWithError: "প্রোফাইল স্যুইচ করতে ব্যর্থ হয়েছে: {error}"
+  logout: লগআউট
+
+ca_ES:
+  serverDownTitle: Servidor no disponible
+  serverDownMessage: "The {appName} server is currently unreachable. Please check your connection."
+  serverDownRetrying: Attempting to reconnect...
+  databaseDownTitle: S'ha perdut la connexió a la base de dades
+  databaseDownMessage: La connexió a la base de dades no està disponible. Podeu canviar a un altre perfil o tancar la sessió.
+  databaseDownRetrying: S'està intentant tornar a connectar...
+  selectProfile: Seleccioneu Perfil
+  selectProfilePlaceholder: Tria un perfil...
+  switchProfile: Canvia el perfil
+  switching: S'està canviant...
+  switchSuccessful: S'ha canviat de perfil correctament
+  switchFailed: No s'ha pogut canviar de perfil
+  switchFailedWithError: "No s'ha pogut canviar de perfil: [[0]]]"
+  logout: Tanca la sessió
+
+cs_CZ:
+  serverDownTitle: Server nedostupný
+  serverDownMessage: "Server {appName} je momentálně nedostupný. Zkontrolujte připojení."
+  serverDownRetrying: Pokus o opětovné připojení...
+  databaseDownTitle: Databázové připojení ztraceno
+  databaseDownMessage: Připojení k databázi je nedostupné. Můžete se přepnout na jiný profil nebo se odhlásit.
+  databaseDownRetrying: Pokus o opětovné připojení...
+  selectProfile: Vyberte Profil
+  selectProfilePlaceholder: Vyberte profil...
+  switchProfile: Přepnout profil
+  switching: Přepínání...
+  switchSuccessful: Profil byl úspěšně přepnut
+  switchFailed: Přepnutí profilu se nezdařilo
+  switchFailedWithError: "Přepnutí profilu se nezdařilo: {error}"
+  logout: Odhlášení
+
+da_DK:
+  serverDownTitle: Server ikke tilgængelig
+  serverDownMessage: "{appName}-serveren er i øjeblikket ikke tilgængelig. Tjek venligst din forbindelse."
+  serverDownRetrying: Forsøger at oprette forbindelse igen...
+  databaseDownTitle: Databaseforbindelse mistet
+  databaseDownMessage: Databaseforbindelsen er ikke tilgængelig. Du kan skifte til en anden profil eller logge ud.
+  databaseDownRetrying: Forsøger at oprette forbindelse igen...
+  selectProfile: Vælg Profil
+  selectProfilePlaceholder: Vælg en profil...
+  switchProfile: Skift profil
+  switching: Skifter...
+  switchSuccessful: Skiftet profil
+  switchFailed: Det lykkedes ikke at skifte profil
+  switchFailedWithError: "Kunne ikke skifte profil: {error}"
+  logout: Log ud
+
+fa_IR:
+  serverDownTitle: سرور در دسترس نیست
+  serverDownMessage: "سرور {appName} در حال حاضر غیر قابل دسترسی است. لطفا اتصال خود را بررسی کنید."
+  serverDownRetrying: تلاش برای اتصال مجدد...
+  databaseDownTitle: اتصال پایگاه داده قطع شد
+  databaseDownMessage: اتصال پایگاه داده در دسترس نیست. می توانید به نمایه دیگری بروید یا از سیستم خارج شوید.
+  databaseDownRetrying: تلاش برای اتصال مجدد...
+  selectProfile: نمایه را انتخاب کنید
+  selectProfilePlaceholder: انتخاب پروفایل...
+  switchProfile: تغییر نمایه
+  switching: در حال تعویض...
+  switchSuccessful: تغییر نمایه با موفقیت انجام شد
+  switchFailed: تغییر نمایه انجام نشد
+  switchFailedWithError: "تغییر نمایه انجام نشد: {error}"
+  logout: خروج از سیستم
+
+hi_IN:
+  serverDownTitle: सर्वर अनुपलब्ध
+  serverDownMessage: "{appName} सर्वर फिलहाल पहुंच योग्य नहीं है। कृपया अपना कनेक्शन जांचें."
+  serverDownRetrying: फिर से कनेक्ट करने का प्रयास...
+  databaseDownTitle: डेटाबेस कनेक्शन टूट गया
+  databaseDownMessage: डेटाबेस कनेक्शन अनुपलब्ध है. आप किसी अन्य प्रोफ़ाइल पर स्विच कर सकते हैं या लॉगआउट कर सकते हैं।
+  databaseDownRetrying: फिर से कनेक्ट करने का प्रयास...
+  selectProfile: प्रोफ़ाइल चुनें
+  selectProfilePlaceholder: एक प्रोफ़ाइल चुनें...
+  switchProfile: प्रोफ़ाइल स्विच करें
+  switching: स्विचिंग...
+  switchSuccessful: प्रोफ़ाइल सफलतापूर्वक स्विच की गई
+  switchFailed: प्रोफ़ाइल स्विच करने में विफल
+  switchFailedWithError: "प्रोफ़ाइल स्विच करने में विफल: {error}"
+  logout: लॉग आउट
+
+hr_HR:
+  serverDownTitle: Poslužitelj nedostupan
+  serverDownMessage: "Poslužitelj {appName} trenutno je nedostupan. Provjerite vezu."
+  serverDownRetrying: Pokušaj ponovnog povezivanja...
+  databaseDownTitle: Veza s bazom podataka izgubljena
+  databaseDownMessage: Veza s bazom podataka nije dostupna. Možete se prebaciti na drugi profil ili se odjaviti.
+  databaseDownRetrying: Pokušaj ponovnog povezivanja...
+  selectProfile: Odaberite Profil
+  selectProfilePlaceholder: Odaberite profil...
+  switchProfile: Promjena profila
+  switching: Prebacivanje...
+  switchSuccessful: Uspješno promijenjen profil
+  switchFailed: Promjena profila nije uspjela
+  switchFailedWithError: "Promjena profila nije uspjela: {error}"
+  logout: Odjava
+
+hu_HU:
+  serverDownTitle: A szerver nem elérhető
+  serverDownMessage: "A {appName} szerver jelenleg nem érhető el. Kérjük, ellenőrizze a kapcsolatot."
+  serverDownRetrying: Újracsatlakozási kísérlet...
+  databaseDownTitle: Adatbázis kapcsolat megszakadt
+  databaseDownMessage: Az adatbázis kapcsolat nem elérhető. Átválthat másik profilra vagy kijelentkezhet.
+  databaseDownRetrying: Újracsatlakozási kísérlet...
+  selectProfile: Válassza a Profil lehetőséget
+  selectProfilePlaceholder: Válassz egy profilt...
+  switchProfile: Profil váltása
+  switching: Átkapcsolás...
+  switchSuccessful: Sikeres profilváltás
+  switchFailed: Nem sikerült váltani a profilt
+  switchFailedWithError: "Nem sikerült a profilváltás: {error}"
+  logout: Kijelentkezés
+
+id_ID:
+  serverDownTitle: Server Tidak Tersedia
+  serverDownMessage: "Server {appName} saat ini tidak dapat dijangkau. Silakan periksa koneksi Anda."
+  serverDownRetrying: Mencoba menyambung kembali...
+  databaseDownTitle: Koneksi Basis Data Hilang
+  databaseDownMessage: Koneksi database tidak tersedia. Anda dapat beralih ke profil lain atau keluar.
+  databaseDownRetrying: Mencoba menyambung kembali...
+  selectProfile: Pilih Profil
+  selectProfilePlaceholder: Pilih profil...
+  switchProfile: Ganti Profil
+  switching: Beralih...
+  switchSuccessful: Berhasil mengganti profil
+  switchFailed: Gagal mengganti profil
+  switchFailedWithError: "Gagal mengganti profil: {error}"
+  logout: Keluar
+
+ms_MY:
+  serverDownTitle: Pelayan Tidak Tersedia
+  serverDownMessage: "Pelayan {appName} tidak dapat dihubungi pada masa ini. Sila semak sambungan anda."
+  serverDownRetrying: Cuba untuk menyambung semula...
+  databaseDownTitle: Sambungan Pangkalan Data Hilang
+  databaseDownMessage: Sambungan pangkalan data tidak tersedia. Anda boleh bertukar kepada profil lain atau log keluar.
+  databaseDownRetrying: Cuba untuk menyambung semula...
+  selectProfile: Pilih Profil
+  selectProfilePlaceholder: Pilih profil...
+  switchProfile: Tukar Profil
+  switching: Bertukar...
+  switchSuccessful: Berjaya menukar profil
+  switchFailed: Gagal menukar profil
+  switchFailedWithError: "Gagal menukar profil: {error}"
+  logout: Log keluar
+
+nb_NO:
+  serverDownTitle: Server utilgjengelig
+  serverDownMessage: "{appName}-serveren er for øyeblikket ikke tilgjengelig. Vennligst sjekk tilkoblingen din."
+  serverDownRetrying: Forsøker å koble til igjen...
+  databaseDownTitle: Databaseforbindelse mistet
+  databaseDownMessage: Databasetilkoblingen er utilgjengelig. Du kan bytte til en annen profil eller logge ut.
+  databaseDownRetrying: Forsøker å koble til igjen...
+  selectProfile: Velg Profil
+  selectProfilePlaceholder: Velg en profil...
+  switchProfile: Bytt profil
+  switching: Bytter...
+  switchSuccessful: Byttet profil
+  switchFailed: Kunne ikke bytte profil
+  switchFailedWithError: "Kunne ikke bytte profil: {error}"
+  logout: Logg ut
+
+sw_KE:
+  serverDownTitle: Seva Haipatikani
+  serverDownMessage: "Seva ya {appName} haiwezi kufikiwa kwa sasa. Tafadhali angalia muunganisho wako."
+  serverDownRetrying: Inajaribu kuunganisha tena...
+  databaseDownTitle: Muunganisho wa Hifadhidata Umepotea
+  databaseDownMessage: Muunganisho wa hifadhidata haupatikani. Unaweza kubadilisha hadi wasifu mwingine au kuondoka.
+  databaseDownRetrying: Inajaribu kuunganisha tena...
+  selectProfile: Chagua Wasifu
+  selectProfilePlaceholder: Chagua wasifu...
+  switchProfile: Badili Wasifu
+  switching: Inabadilisha...
+  switchSuccessful: Imefaulu kubadilisha wasifu
+  switchFailed: Imeshindwa kubadilisha wasifu
+  switchFailedWithError: "Imeshindwa kubadilisha wasifu: {error}"
+  logout: Ondoka
+
+ta_IN:
+  serverDownTitle: சேவையகம் கிடைக்கவில்லை
+  serverDownMessage: "{appName} சேவையகத்தை தற்போது அணுக முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்க்கவும்."
+  serverDownRetrying: மீண்டும் இணைக்க முயற்சிக்கிறது...
+  databaseDownTitle: தரவுத்தள இணைப்பு துண்டிக்கப்பட்டது
+  databaseDownMessage: தரவுத்தள இணைப்பு கிடைக்கவில்லை. நீங்கள் மற்றொரு சுயவிவரத்திற்கு மாறலாம் அல்லது வெளியேறலாம்.
+  databaseDownRetrying: மீண்டும் இணைக்க முயற்சிக்கிறது...
+  selectProfile: சுயவிவரத்தைத் தேர்ந்தெடுக்கவும்
+  selectProfilePlaceholder: சுயவிவரத்தைத் தேர்வுசெய்க...
+  switchProfile: சுயவிவரத்தை மாற்றவும்
+  switching: மாறுகிறது...
+  switchSuccessful: சுயவிவரம் வெற்றிகரமாக மாற்றப்பட்டது
+  switchFailed: சுயவிவரத்தை மாற்ற முடியவில்லை
+  switchFailedWithError: "சுயவிவரத்தை மாற்றுவதில் தோல்வி: {error}"
+  logout: வெளியேறு
+
+th_TH:
+  serverDownTitle: เซิร์ฟเวอร์ไม่พร้อมใช้งาน
+  serverDownMessage: "ไม่สามารถเข้าถึงเซิร์ฟเวอร์ {appName} ได้ในขณะนี้ กรุณาตรวจสอบการเชื่อมต่อของคุณ"
+  serverDownRetrying: กำลังพยายามเชื่อมต่อใหม่...
+  databaseDownTitle: การเชื่อมต่อฐานข้อมูลสูญหาย
+  databaseDownMessage: การเชื่อมต่อฐานข้อมูลไม่พร้อมใช้งาน คุณสามารถเปลี่ยนไปใช้โปรไฟล์อื่นหรือออกจากระบบได้
+  databaseDownRetrying: กำลังพยายามเชื่อมต่อใหม่...
+  selectProfile: เลือกโปรไฟล์
+  selectProfilePlaceholder: เลือกโปรไฟล์...
+  switchProfile: สลับโปรไฟล์
+  switching: กำลังเปลี่ยน...
+  switchSuccessful: เปลี่ยนโปรไฟล์เรียบร้อยแล้ว
+  switchFailed: ไม่สามารถเปลี่ยนโปรไฟล์ได้
+  switchFailedWithError: "ไม่สามารถเปลี่ยนโปรไฟล์: {error}"
+  logout: ออกจากระบบ
+
+tr_TR:
+  serverDownTitle: Sunucu Kullanılamıyor
+  serverDownMessage: "{appName} sunucusuna şu anda erişilemiyor. Lütfen bağlantınızı kontrol edin."
+  serverDownRetrying: Yeniden bağlanmaya çalışılıyor...
+  databaseDownTitle: Veritabanı Bağlantısı Kesildi
+  databaseDownMessage: Veritabanı bağlantısı kullanılamıyor. Başka bir profile geçebilir veya oturumu kapatabilirsiniz.
+  databaseDownRetrying: Yeniden bağlanmaya çalışılıyor...
+  selectProfile: Profil Seç
+  selectProfilePlaceholder: Bir profil seçin...
+  switchProfile: Profili Değiştir
+  switching: Değiştiriliyor...
+  switchSuccessful: Profil başarıyla değiştirildi
+  switchFailed: Profil değiştirilemedi
+  switchFailedWithError: "Profil değiştirilemedi: {error}"
+  logout: Oturumu kapat
+
+uk_UA:
+  serverDownTitle: Сервер недоступний
+  serverDownMessage: "Сервер {appName} наразі недоступний. Перевірте підключення."
+  serverDownRetrying: Спроба повторного підключення...
+  databaseDownTitle: З’єднання з базою даних втрачено
+  databaseDownMessage: Підключення до бази даних недоступне. Ви можете перейти на інший профіль або вийти.
+  databaseDownRetrying: Спроба повторного підключення...
+  selectProfile: Виберіть Профіль
+  selectProfilePlaceholder: Виберіть профіль...
+  switchProfile: Змінити профіль
+  switching: Перемикання...
+  switchSuccessful: Успішно змінено профіль
+  switchFailed: Не вдалося змінити профіль
+  switchFailedWithError: "Не вдалося змінити профіль: {error}"
+  logout: Вийти
+
+ur_PK:
+  serverDownTitle: سرور دستیاب نہیں ہے۔
+  serverDownMessage: "{appName} سرور فی الحال ناقابل رسائی ہے۔ براہ کرم اپنا کنکشن چیک کریں۔"
+  serverDownRetrying: دوبارہ منسلک کرنے کی کوشش کر رہا ہے...
+  databaseDownTitle: ڈیٹا بیس کنکشن کھو گیا۔
+  databaseDownMessage: ڈیٹا بیس کنکشن دستیاب نہیں ہے۔ آپ کسی دوسرے پروفائل پر جا سکتے ہیں یا لاگ آؤٹ کر سکتے ہیں۔
+  databaseDownRetrying: دوبارہ منسلک کرنے کی کوشش کر رہا ہے...
+  selectProfile: پروفائل منتخب کریں۔
+  selectProfilePlaceholder: ایک پروفائل منتخب کریں...
+  switchProfile: پروفائل سوئچ کریں۔
+  switching: سوئچ کر رہا ہے...
+  switchSuccessful: پروفائل کو کامیابی سے تبدیل کر دیا گیا۔
+  switchFailed: پروفائل کو تبدیل کرنے میں ناکام
+  switchFailedWithError: "پروفائل کو تبدیل کرنے میں ناکام: {error}"
+  logout: لاگ آؤٹ
+
+vi_VN:
+  serverDownTitle: Máy chủ không khả dụng
+  serverDownMessage: "Máy chủ {appName} hiện không thể truy cập được. Vui lòng kiểm tra kết nối của bạn."
+  serverDownRetrying: Đang cố gắng kết nối lại...
+  databaseDownTitle: Mất kết nối cơ sở dữ liệu
+  databaseDownMessage: Kết nối cơ sở dữ liệu không có sẵn. Bạn có thể chuyển sang hồ sơ khác hoặc đăng xuất.
+  databaseDownRetrying: Đang cố gắng kết nối lại...
+  selectProfile: Chọn hồ sơ
+  selectProfilePlaceholder: Chọn hồ sơ...
+  switchProfile: Chuyển hồ sơ
+  switching: Đang chuyển đổi...
+  switchSuccessful: Đã chuyển đổi hồ sơ thành công
+  switchFailed: Không thể chuyển đổi hồ sơ
+  switchFailedWithError: "Không thể chuyển đổi hồ sơ: {error}"
+  logout: Đăng xuất

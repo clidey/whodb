@@ -2118,3 +2118,1922 @@ zh_TW:
   example25: 列出去年標記為審計的所有交易
   example26: 總結各地區報告的合規問題
   example27: 顯示上季所有政策違規行為的報告
+
+bg_BG:
+  title: Чат
+  placeholder: Въведете вашето съобщение тук...
+  emptyStateTitle: С какво мога да ви помогна?
+  noModelTitle: Няма наличен модел
+  noModelDescription: Моля, изберете наличен модел, за да започнете чат с вашите данни.
+  loadingSuggestions: Предложенията се зареждат...
+  genericExamplesLabel: Примерни заявки (не са специфични за вашата база данни)
+  databaseSpecificSuggestionsLabel: Предложени заявки въз основа на схемата на вашата база данни
+  scratchpadNotSupported: Scratchpad не се поддържа за този тип база данни
+  queryMoved: Заявката е преместена в Scratchpad
+  moveToScratchpad: Преминете към Scratchpad
+  unableToQuery: Не може да се направи заявка. Опитайте отново.
+  failedToExecuteSQL: Неуспешно изпълнение на SQL. Опитайте отново.
+  actionExecuted: Действието е изпълнено
+  noDataReturned: Не са върнати данни.
+  dialogTitle: Преминете към Scratchpad
+  dialogDescription: Изберете към коя страница в scratchpad да добавите тази заявка.
+  selectPageLabel: Изберете страница
+  selectPagePlaceholder: Изберете страница...
+  newPageLabel: Ново име на страница
+  newPagePlaceholder: Въведете име на страница
+  createNewPage: Създаване на нова страница
+  cancel: Отказ
+  chatHistory: История на чата
+  newChat: Нов чат
+  deleteChat: Изтриване на чат
+  deleteChatTitle: "Изтриване на {chatName}?"
+  deleteChatDescription: Това ще изтрие за постоянно този чат и всичките му съобщения. Това действие не може да бъде отменено.
+  continue: Продължи
+  doubleClickEdit: Щракнете два пъти, за да редактирате
+  messageCount: "{count} съобщения"
+  messageCount_one: "{count} съобщение"
+  noMessages: Все още няма съобщения
+  confirmExecutionTitle: Потвърждаване на изпълнението
+  confirmExecutionDescription: Тази операция ще промени вашата база данни. Прегледайте и потвърдете, за да продължите.
+  showQuery: Показване на заявка
+  hideQuery: Скриване на заявката
+  "yes": да
+  "no": не
+  executing: Изпълнява се...
+  queryCancelled: Заявката е отменена
+  sendMessage: Изпратете съобщение
+  showTable: Показване като таблица
+  showCode: Показване като код
+  showChart: Показване на диаграма
+  actions: Действия
+  thinking0: Мислене
+  thinking1: Размишляване върху мистериите на живота
+  thinking2: Консултиране с облачните оракули
+  thinking3: Гугъл яростно (шегувам се)
+  thinking4: Подравняване на невронните мрежи
+  thinking5: Измислям го докато вървя (шшш)
+  thinking6: Броене на виртуални овце
+  thinking7: Канализиране на Айнщайн
+  thinking8: Настройване на моите алгоритми
+  thinking9: Пиене на байт кафе
+  thinking10: Тичане в кръг виртуално.
+  thinking11: Преструвайки се на зает
+  thinking12: Зареждане на остроумно завръщане
+  thinking13: Изтегляне на малко мъдрост
+  thinking14: Готвене на яхния с данни
+  thinking15: Правене на AI неща™
+  thinking16: Хакване на мейнфрейм (за забавление)
+  thinking17: Взиране в дигиталната бездна
+  thinking18: Хвърляне на квантова монета
+  thinking19: Четене на мислите ви (етично)
+  thinking20: Изостря сарказма си
+  thinking21: Проверявам вибрациите си
+  thinking22: Симулиране на дълбока мисъл
+  thinking23: Преокабеляване на моите вериги
+  thinking24: Полиране на кристалния ми процесор
+  example0: Вземете обобщение на всички поръчки за покупка
+  example1: Избройте всички клиенти, които са направили покупка през последния месец
+  example2: Покажете първите 10 клиенти по общи разходи
+  example3: Предоставете обобщение на отзивите на клиентите за изминалата година
+  example4: Избройте всички поръчки за покупка, направени през последната седмица
+  example5: Обобщете общите продажби по региони за това тримесечие
+  example6: Покажете средната стойност на поръчката за всяка продуктова категория
+  example7: Избройте всички продукти, които в момента не са на склад
+  example8: Покажете топ 5 на най-продаваните продукти в категорията електроника
+  example9: Посочете общия брой различни продукти във всеки склад
+  example10: Избройте всички служители, които са се присъединили през последните шест месеца
+  example11: Получете обобщена информация за демографията на служителите по отдели
+  example12: Покажете средната заплата за софтуерните инженери
+  example13: Предоставете разбивка на разходите по отдели за последната финансова година
+  example14: Обобщете отчета за печалбата и загубата за последното тримесечие
+  example15: Покажете общите приходи, генерирани от всеки канал за продажба
+  example16: Предоставете списък на всички активни маркетингови кампании
+  example17: Обобщете честотата на кликване на имейл кампаниите за последното тримесечие
+  example18: Показване на общия брой потенциални клиенти, генерирани от всяка кампания
+  example19: Избройте всички текущи проекти и текущото им състояние
+  example20: Получете обобщение на крайните срокове на проекта и етапите за следващото тримесечие
+  example21: Покажете първите 5 проекта по разпределение на бюджета
+  example22: Предоставете анализ на тенденциите в трафика на уебсайта за последните шест месеца
+  example23: Обобщете процентите на реализация по източник на трафик
+  example24: Показвайте най-ефективните ключови думи в нашите маркетингови кампании в търсачките
+  example25: Избройте всички транзакции, маркирани за одит през последната година
+  example26: Обобщете докладваните проблеми със съответствието по региони
+  example27: Показване на отчет за всички нарушения на правилата през последното тримесечие
+
+bn_BD:
+  title: চ্যাট
+  placeholder: এখানে আপনার বার্তা টাইপ করুন...
+  emptyStateTitle: আমি আপনাকে কি সাহায্য করতে পারি?
+  noModelTitle: কোন মডেল উপলব্ধ নেই
+  noModelDescription: আপনার ডেটার সাথে চ্যাটিং শুরু করতে অনুগ্রহ করে একটি উপলব্ধ মডেল বেছে নিন।
+  loadingSuggestions: পরামর্শ লোড হচ্ছে...
+  genericExamplesLabel: উদাহরণ প্রশ্ন (আপনার ডাটাবেসের জন্য নির্দিষ্ট নয়)
+  databaseSpecificSuggestionsLabel: আপনার ডাটাবেস স্কিমার উপর ভিত্তি করে প্রস্তাবিত প্রশ্ন
+  scratchpadNotSupported: স্ক্র্যাচপ্যাড এই ডাটাবেস প্রকারের জন্য সমর্থিত নয়
+  queryMoved: প্রশ্ন স্ক্র্যাচপ্যাডে সরানো হয়েছে
+  moveToScratchpad: স্ক্র্যাচপ্যাডে যান
+  unableToQuery: প্রশ্ন করতে অক্ষম। আবার চেষ্টা করুন.
+  failedToExecuteSQL: SQL এক্সিকিউট করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন.
+  actionExecuted: কর্ম সম্পাদিত
+  noDataReturned: কোনো ডেটা ফেরত দেওয়া হয়নি।
+  dialogTitle: স্ক্র্যাচপ্যাডে যান
+  dialogDescription: এই ক্যোয়ারীটি কোন স্ক্র্যাচপ্যাড পৃষ্ঠাতে যোগ করতে হবে তা বেছে নিন।
+  selectPageLabel: একটি পৃষ্ঠা নির্বাচন করুন
+  selectPagePlaceholder: একটি পৃষ্ঠা চয়ন করুন...
+  newPageLabel: নতুন পৃষ্ঠার নাম
+  newPagePlaceholder: পৃষ্ঠার নাম লিখুন
+  createNewPage: নতুন পেজ তৈরি করুন
+  cancel: বাতিল করুন
+  chatHistory: চ্যাট ইতিহাস
+  newChat: নতুন চ্যাট
+  deleteChat: চ্যাট মুছুন
+  deleteChatTitle: "মুছবেন {chatName}?"
+  deleteChatDescription: এটি স্থায়ীভাবে এই চ্যাট এবং এর সমস্ত বার্তা মুছে ফেলবে৷ এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷
+  continue: চালিয়ে যান
+  doubleClickEdit: সম্পাদনা করতে ডাবল-ক্লিক করুন
+  messageCount: "{count} বার্তা"
+  messageCount_one: "{count} বার্তা"
+  noMessages: এখনও কোন বার্তা নেই
+  confirmExecutionTitle: এক্সিকিউশন নিশ্চিত করুন
+  confirmExecutionDescription: এই অপারেশন আপনার ডাটাবেস পরিবর্তন করবে. পর্যালোচনা করুন এবং এগিয়ে যেতে নিশ্চিত করুন.
+  showQuery: ক্যোয়ারী দেখান
+  hideQuery: ক্যোয়ারী লুকান
+  "yes": হ্যাঁ
+  "no": না
+  executing: কার্যকর করা হচ্ছে...
+  queryCancelled: প্রশ্ন বাতিল করা হয়েছে
+  sendMessage: বার্তা পাঠান
+  showTable: টেবিল হিসাবে দেখান
+  showCode: কোড হিসাবে দেখান
+  showChart: চার্ট দেখান
+  actions: কর্ম
+  thinking0: ভাবছেন
+  thinking1: জীবনের রহস্য নিয়ে ভাবছেন
+  thinking2: ক্লাউড ওরাকলের সাথে পরামর্শ করা
+  thinking3: উগ্রভাবে গুগলিং (শুধু মজা করছি)
+  thinking4: নিউরাল নেটওয়ার্কগুলি সারিবদ্ধ করা
+  thinking5: আমি যাওয়ার সাথে সাথে এটি তৈরি করছি (shh)
+  thinking6: ভার্চুয়াল ভেড়া গণনা
+  thinking7: আইনস্টাইন চ্যানেলিং
+  thinking8: আমার অ্যালগরিদম টিউনিং
+  thinking9: এক বাইট কফি পান করছি
+  thinking10: কার্যত চেনাশোনা মধ্যে চলমান.
+  thinking11: ব্যস্ততার ভান করে
+  thinking12: মজাদার প্রত্যাবর্তন লোড হচ্ছে
+  thinking13: কিছু জ্ঞান ডাউনলোড করা হচ্ছে
+  thinking14: কিছু ডাটা স্টু রান্না করা
+  thinking15: AI জিনিসগুলি করা হচ্ছে™৷
+  thinking16: মেইনফ্রেম হ্যাক করা (মজা করার জন্য)
+  thinking17: ডিজিটাল অতল দিকে তাকিয়ে আছে
+  thinking18: একটি কোয়ান্টাম মুদ্রা উল্টানো
+  thinking19: আপনার মন পড়া (নৈতিকভাবে)
+  thinking20: আমার কটাক্ষ শার্পনিং
+  thinking21: আমার ভাইব পরীক্ষা করা হচ্ছে
+  thinking22: গভীর চিন্তা অনুকরণ
+  thinking23: আমার সার্কিট rewiring
+  thinking24: আমার ক্রিস্টাল প্রসেসর পালিশ করা
+  example0: সমস্ত ক্রয় আদেশের সারসংক্ষেপ পান
+  example1: গত মাসে কেনাকাটা করা সমস্ত গ্রাহকদের তালিকা করুন
+  example2: মোট খরচের মাধ্যমে সেরা 10 জন গ্রাহককে দেখান
+  example3: গত বছরের জন্য গ্রাহক প্রতিক্রিয়ার একটি সারসংক্ষেপ প্রদান করুন
+  example4: গত সপ্তাহের মধ্যে স্থাপিত সমস্ত ক্রয় আদেশ তালিকা
+  example5: এই ত্রৈমাসিকের জন্য অঞ্চল অনুসারে মোট বিক্রয় সংক্ষিপ্ত করুন
+  example6: প্রতিটি পণ্য বিভাগের জন্য গড় অর্ডার মান দেখান
+  example7: বর্তমানে স্টক আউট যে সমস্ত পণ্য তালিকা
+  example8: ইলেকট্রনিক্স বিভাগে সেরা 5টি সর্বাধিক বিক্রিত পণ্য দেখান৷
+  example9: প্রতিটি গুদামে বিভিন্ন পণ্যের মোট গণনা প্রদান করুন
+  example10: গত ছয় মাসে যোগদানকারী সমস্ত কর্মচারীদের তালিকা করুন
+  example11: বিভাগ দ্বারা কর্মচারী জনসংখ্যার একটি সারসংক্ষেপ পান
+  example12: সফটওয়্যার ইঞ্জিনিয়ারদের গড় বেতন দেখান
+  example13: বিগত আর্থিক বছরের জন্য বিভাগ দ্বারা ব্যয়ের একটি ব্রেকডাউন প্রদান করুন
+  example14: শেষ ত্রৈমাসিকের লাভ-ক্ষতির বিবরণী সংক্ষিপ্ত করুন
+  example15: প্রতিটি বিক্রয় চ্যানেল দ্বারা উত্পন্ন মোট আয় দেখান
+  example16: সমস্ত সক্রিয় বিপণন প্রচারাভিযানের একটি তালিকা প্রদান করুন
+  example17: শেষ ত্রৈমাসিকের জন্য ইমেল প্রচারাভিযানের ক্লিক-থ্রু রেট সংক্ষিপ্ত করুন
+  example18: প্রতিটি প্রচারাভিযানের দ্বারা উৎপন্ন লিডের মোট সংখ্যা দেখান
+  example19: সমস্ত চলমান প্রকল্প এবং তাদের বর্তমান অবস্থা তালিকাভুক্ত করুন
+  example20: পরবর্তী ত্রৈমাসিকের জন্য প্রকল্পের সময়সীমা এবং মাইলফলকের একটি সারসংক্ষেপ পান
+  example21: বাজেট বরাদ্দের মাধ্যমে শীর্ষ 5টি প্রকল্প দেখান
+  example22: গত ছয় মাসের জন্য ওয়েবসাইট ট্র্যাফিকের একটি প্রবণতা বিশ্লেষণ প্রদান করুন
+  example23: ট্রাফিক উত্স দ্বারা রূপান্তর হার সংক্ষিপ্ত
+  example24: আমাদের সার্চ ইঞ্জিন বিপণন প্রচারাভিযানে সেরা-পারফর্মিং কীওয়ার্ড দেখান
+  example25: গত বছরে নিরীক্ষার জন্য পতাকাঙ্কিত সমস্ত লেনদেনের তালিকা করুন
+  example26: অঞ্চল দ্বারা রিপোর্ট করা সম্মতি সংক্রান্ত সমস্যাগুলির সংক্ষিপ্ত বিবরণ
+  example27: গত ত্রৈমাসিকে সমস্ত নীতি লঙ্ঘনের রিপোর্ট দেখান৷
+
+ca_ES:
+  title: Xatejar
+  placeholder: Escriu el teu missatge aquí...
+  emptyStateTitle: En què et puc ajudar?
+  noModelTitle: No hi ha cap model disponible
+  noModelDescription: Trieu un model disponible per començar a xatejar amb les vostres dades.
+  loadingSuggestions: S'estan carregant els suggeriments...
+  genericExamplesLabel: Exemples de consultes (no específiques de la vostra base de dades)
+  databaseSpecificSuggestionsLabel: Consultes suggerides en funció de l'esquema de la vostra base de dades
+  scratchpadNotSupported: Scratchpad no és compatible amb aquest tipus de base de dades
+  queryMoved: S'ha mogut la consulta a Scratchpad
+  moveToScratchpad: Mou a Scratchpad
+  unableToQuery: No es pot consultar. Torna-ho a provar.
+  failedToExecuteSQL: No s'ha pogut executar SQL. Torna-ho a provar.
+  actionExecuted: Acció executada
+  noDataReturned: No s'ha retornat cap dada.
+  dialogTitle: Mou a Scratchpad
+  dialogDescription: Trieu a quina pàgina de bloc de notes afegir aquesta consulta.
+  selectPageLabel: Seleccioneu una pàgina
+  selectPagePlaceholder: Tria una pàgina...
+  newPageLabel: Nom de la pàgina nou
+  newPagePlaceholder: Introduïu el nom de la pàgina
+  createNewPage: Crea una pàgina nova
+  cancel: Cancel·la
+  chatHistory: Historial de xat
+  newChat: Xat nou
+  deleteChat: Suprimeix el xat
+  deleteChatTitle: Vols suprimir [[0]]]?
+  deleteChatDescription: Això suprimirà permanentment aquest xat i tots els seus missatges. Aquesta acció no es pot desfer.
+  continue: Continua
+  doubleClickEdit: Feu doble clic per editar
+  messageCount: "[[0]]] missatges"
+  messageCount_one: "[[0]]] missatge"
+  noMessages: Encara no hi ha missatges
+  confirmExecutionTitle: Confirmeu l'execució
+  confirmExecutionDescription: Aquesta operació modificarà la vostra base de dades. Revisa i confirma per continuar.
+  showQuery: Mostra la consulta
+  hideQuery: Amaga la consulta
+  "yes": Sí
+  "no": "No"
+  executing: S'està executant...
+  queryCancelled: Consulta cancel·lada
+  sendMessage: Enviar missatge
+  showTable: Mostra com a taula
+  showCode: Mostra com a codi
+  showChart: Mostra el gràfic
+  actions: Accions
+  thinking0: Pensant
+  thinking1: Reflexionant sobre els misteris de la vida
+  thinking2: Consultant els oracles del núvol
+  thinking3: Buscant a google furiós (broma)
+  thinking4: Alineació de les xarxes neuronals
+  thinking5: Inventant-ho a mesura que vaig (shh)
+  thinking6: Comptant ovelles virtuals
+  thinking7: Canalització d'Einstein
+  thinking8: Ajustant els meus algorismes
+  thinking9: Bevent un byte de cafè
+  thinking10: Córrer en cercles virtualment.
+  thinking11: Fingint estar ocupat
+  thinking12: S'està carregant un retorn enginyós
+  thinking13: Descarregant una mica de saviesa
+  thinking14: Preparant un guisat de dades
+  thinking15: Fent coses d'IA™
+  thinking16: Piratejar el mainframe (per diversió)
+  thinking17: Mirant cap a l'abisme digital
+  thinking18: Llançar una moneda quàntica
+  thinking19: Llegint la teva ment (èticament)
+  thinking20: Aguditzant el meu sarcasme
+  thinking21: Comprovant les meves vibracions
+  thinking22: Simulant un pensament profund
+  thinking23: Tornant a cablejar els meus circuits
+  thinking24: Polint el meu processador de cristall
+  example0: Obteniu un resum de totes les comandes de compra
+  example1: Enumereu tots els clients que han fet una compra durant l'últim mes
+  example2: Mostra els 10 principals clients per despesa total
+  example3: Proporcioneu un resum dels comentaris dels clients durant l'últim any
+  example4: Llista totes les comandes de compra realitzades durant l'última setmana
+  example5: Resumeix les vendes totals per regió per aquest trimestre
+  example6: Mostra el valor mitjà de la comanda per a cada categoria de producte
+  example7: Llista tots els productes que actualment estan esgotats
+  example8: Mostra els 5 millors productes més venuts a la categoria d'electrònica
+  example9: Proporcioneu el recompte total de diferents productes a cada magatzem
+  example10: Enumereu tots els empleats que s'han incorporat en els últims sis mesos
+  example11: Obteniu un resum de la demografia dels empleats per departament
+  example12: Mostra el salari mitjà dels enginyers de programari
+  example13: Proporcioneu un desglossament de les despeses per departament de l'últim exercici
+  example14: Resumeix el compte de pèrdues i guanys de l'últim trimestre
+  example15: Mostra els ingressos totals generats per cada canal de vendes
+  example16: Proporcioneu una llista de totes les campanyes de màrqueting actives
+  example17: Resumeix els percentatges de clics de les campanyes de correu electrònic de l'últim trimestre
+  example18: Mostra el nombre total de clients potencials generats per cada campanya
+  example19: Enumereu tots els projectes en curs i el seu estat actual
+  example20: Obteniu un resum dels terminis i fites del projecte per al proper trimestre
+  example21: Mostra els 5 millors projectes per dotació pressupostària
+  example22: Proporcioneu una anàlisi de tendències del trànsit del lloc web durant els últims sis mesos
+  example23: Resumeix les taxes de conversió per font de trànsit
+  example24: Mostra les paraules clau de millor rendiment a les nostres campanyes de màrqueting en motors de cerca
+  example25: Enumereu totes les transaccions marcades per a auditoria durant l'últim any
+  example26: Resumeix els problemes de compliment notificats per regió
+  example27: Mostra un informe de totes les infraccions de les polítiques durant l'últim trimestre
+
+cs_CZ:
+  title: Povídání
+  placeholder: Sem napište svou zprávu...
+  emptyStateTitle: S čím vám mohu pomoci?
+  noModelTitle: Není k dispozici žádný model
+  noModelDescription: Chcete-li začít chatovat se svými daty, vyberte dostupný model.
+  loadingSuggestions: Načítání návrhů...
+  genericExamplesLabel: Příklady dotazů (nespecifické pro vaši databázi)
+  databaseSpecificSuggestionsLabel: Navrhované dotazy založené na schématu vaší databáze
+  scratchpadNotSupported: Zápisník není pro tento typ databáze podporován
+  queryMoved: Dotaz přesunut do Zápisníku
+  moveToScratchpad: Přesunout do Zápisníku
+  unableToQuery: Nelze zadat dotaz. Zkuste to znovu.
+  failedToExecuteSQL: Spuštění SQL se nezdařilo. Zkuste to znovu.
+  actionExecuted: Akce provedena
+  noDataReturned: Nebyla vrácena žádná data.
+  dialogTitle: Přesunout do Zápisníku
+  dialogDescription: Vyberte, na kterou stránku zápisníku chcete přidat tento dotaz.
+  selectPageLabel: Vyberte stránku
+  selectPagePlaceholder: Vyberte stránku...
+  newPageLabel: Název nové stránky
+  newPagePlaceholder: Zadejte Název stránky
+  createNewPage: Vytvořit novou stránku
+  cancel: Zrušit
+  chatHistory: Historie chatu
+  newChat: Nový chat
+  deleteChat: Smazat chat
+  deleteChatTitle: "Smazat {chatName}?"
+  deleteChatDescription: Tímto trvale smažete tento chat a všechny jeho zprávy. Tuto akci nelze vrátit zpět.
+  continue: Pokračovat
+  doubleClickEdit: Poklepáním upravte
+  messageCount: "{count} zpráv"
+  messageCount_one: "{count} zpráva"
+  noMessages: Zatím žádné zprávy
+  confirmExecutionTitle: Potvrďte provedení
+  confirmExecutionDescription: Tato operace změní vaši databázi. Zkontrolujte a potvrďte pro pokračování.
+  showQuery: Zobrazit dotaz
+  hideQuery: Skrýt dotaz
+  "yes": Ano
+  "no": Žádný
+  executing: Probíhá...
+  queryCancelled: Dotaz zrušen
+  sendMessage: Odeslat zprávu
+  showTable: Zobrazit jako tabulku
+  showCode: Zobrazit jako kód
+  showChart: Zobrazit graf
+  actions: Akce
+  thinking0: Myslící
+  thinking1: Přemítání o záhadách života
+  thinking2: Konzultace s cloudovými věštci
+  thinking3: Zuřivě googlovat (jen si dělám srandu)
+  thinking4: Zarovnání neuronových sítí
+  thinking5: Vymýšlím si to za pochodu (shh)
+  thinking6: Počítání virtuálních oveček
+  thinking7: Channeling Einstein
+  thinking8: Ladění mých algoritmů
+  thinking9: Vypít bajt kávy
+  thinking10: Virtuální běh v kruzích.
+  thinking11: Předstírání zaneprázdněnosti
+  thinking12: Nahrávám vtipný návrat
+  thinking13: Stahování nějaké moudrosti
+  thinking14: Vaření datového guláše
+  thinking15: Dělat věci AI™
+  thinking16: Hackování sálového počítače (pro zábavu)
+  thinking17: Dívat se do digitální propasti
+  thinking18: Házení kvantovou mincí
+  thinking19: Čtení vaší mysli (eticky)
+  thinking20: Zostření mého sarkasmu
+  thinking21: Kontrola mých vibrací
+  thinking22: Simulace hluboké myšlenky
+  thinking23: Přepojuji obvody
+  thinking24: Leštění krystalového procesoru
+  example0: Získejte souhrn všech nákupních objednávek
+  example1: Uveďte všechny zákazníky, kteří za poslední měsíc nakoupili
+  example2: Ukažte 10 nejlepších zákazníků podle celkových výdajů
+  example3: Poskytněte souhrn zpětné vazby od zákazníků za uplynulý rok
+  example4: Uveďte všechny objednávky zadané během minulého týdne
+  example5: Shrňte celkové prodeje podle regionů za toto čtvrtletí
+  example6: Zobrazit průměrnou hodnotu objednávky pro každou kategorii produktu
+  example7: Uveďte všechny produkty, které jsou aktuálně vyprodané
+  example8: Ukažte top 5 nejprodávanějších produktů v kategorii elektronika
+  example9: Uveďte celkový počet různých produktů v každém skladu
+  example10: Uveďte všechny zaměstnance, kteří nastoupili za posledních šest měsíců
+  example11: Získejte souhrn demografických údajů zaměstnanců podle oddělení
+  example12: Ukažte průměrnou mzdu softwarových inženýrů
+  example13: Poskytněte rozpis výdajů podle oddělení za poslední finanční rok
+  example14: Shrňte výkaz zisků a ztrát za poslední čtvrtletí
+  example15: Ukažte celkové tržby generované jednotlivými prodejními kanály
+  example16: Poskytněte seznam všech aktivních marketingových kampaní
+  example17: Shrňte míru prokliku e-mailových kampaní za poslední čtvrtletí
+  example18: Ukažte celkový počet potenciálních zákazníků vygenerovaných každou kampaní
+  example19: Uveďte všechny probíhající projekty a jejich aktuální stav
+  example20: Získejte souhrn termínů a milníků projektů na příští čtvrtletí
+  example21: Ukažte 5 nejlepších projektů podle přidělení rozpočtu
+  example22: Poskytněte analýzu trendů návštěvnosti webových stránek za posledních šest měsíců
+  example23: Shrňte konverzní poměry podle zdroje návštěvnosti
+  example24: Ukažte nejvýkonnější klíčová slova v našich marketingových kampaních pro vyhledávače
+  example25: Seznam všech transakcí označených k auditu za poslední rok
+  example26: Shrňte problémy s dodržováním předpisů hlášené podle regionu
+  example27: Zobrazit zprávu o všech porušeních zásad za poslední čtvrtletí
+
+da_DK:
+  title: Snak
+  placeholder: Skriv din besked her...
+  emptyStateTitle: Hvad kan jeg hjælpe dig med?
+  noModelTitle: Ingen model tilgængelig
+  noModelDescription: Vælg venligst en tilgængelig model for at begynde at chatte med dine data.
+  loadingSuggestions: Indlæser forslag...
+  genericExamplesLabel: Eksempelforespørgsler (ikke specifik for din database)
+  databaseSpecificSuggestionsLabel: Foreslåede forespørgsler baseret på dit databaseskema
+  scratchpadNotSupported: Scratchpad er ikke understøttet for denne databasetype
+  queryMoved: Forespørgsel flyttet til Scratchpad
+  moveToScratchpad: Flyt til Scratchpad
+  unableToQuery: Kan ikke forespørge. Prøv igen.
+  failedToExecuteSQL: Kunne ikke udføre SQL. Prøv igen.
+  actionExecuted: Handling udført
+  noDataReturned: Ingen data blev returneret.
+  dialogTitle: Flyt til Scratchpad
+  dialogDescription: Vælg, hvilken kladdeside denne forespørgsel skal føjes til.
+  selectPageLabel: Vælg en side
+  selectPagePlaceholder: Vælg en side...
+  newPageLabel: Nyt sidenavn
+  newPagePlaceholder: Indtast sidenavn
+  createNewPage: Opret ny side
+  cancel: Ophæve
+  chatHistory: Chat historie
+  newChat: Ny chat
+  deleteChat: Slet chat
+  deleteChatTitle: "Vil du slette {chatName}?"
+  deleteChatDescription: Dette vil permanent slette denne chat og alle dens beskeder. Denne handling kan ikke fortrydes.
+  continue: Fortsætte
+  doubleClickEdit: Dobbeltklik for at redigere
+  messageCount: "{count} beskeder"
+  messageCount_one: "{count} besked"
+  noMessages: Ingen beskeder endnu
+  confirmExecutionTitle: Bekræft udførelse
+  confirmExecutionDescription: Denne handling vil ændre din database. Gennemgå og bekræft for at fortsætte.
+  showQuery: Vis forespørgsel
+  hideQuery: Skjul forespørgsel
+  "yes": Ja
+  "no": Ingen
+  executing: Udfører...
+  queryCancelled: Forespørgsel annulleret
+  sendMessage: Send besked
+  showTable: Vis som tabel
+  showCode: Vis som kode
+  showChart: Vis diagram
+  actions: Handlinger
+  thinking0: Tænker
+  thinking1: Overvejer livets mysterier
+  thinking2: Rådgivning af cloud-oraklerne
+  thinking3: Googler rasende (bare for sjov)
+  thinking4: Justering af de neurale netværk
+  thinking5: Finder det op, mens jeg går (shh)
+  thinking6: Tæller virtuelle får
+  thinking7: Kanalisering af Einstein
+  thinking8: Tuning af mine algoritmer
+  thinking9: Drikker en byte kaffe
+  thinking10: Løb i cirkler virtuelt.
+  thinking11: Foregiver at have travlt
+  thinking12: Indlæser vittigt comeback
+  thinking13: Downloader noget visdom
+  thinking14: Tilbereder noget datagryderet
+  thinking15: At lave AI-ting™
+  thinking16: Hacking af mainframen (for sjov)
+  thinking17: Stirrer ind i den digitale afgrund
+  thinking18: At vende en kvantemønt
+  thinking19: Læs dit sind (etisk)
+  thinking20: Skærper min sarkasme
+  thinking21: Tjekker mine vibes
+  thinking22: Simulerer dybe tanker
+  thinking23: Omledning af mine kredsløb
+  thinking24: Polerer min krystalprocessor
+  example0: Få en oversigt over alle indkøbsordrer
+  example1: Liste over alle kunder, der har foretaget et køb inden for den sidste måned
+  example2: Vis de 10 bedste kunder efter samlet forbrug
+  example3: Giv en oversigt over kundefeedback for det seneste år
+  example4: Liste over alle købsordrer afgivet inden for den sidste uge
+  example5: Opsummer det samlede salg efter region for dette kvartal
+  example6: Vis den gennemsnitlige ordreværdi for hver produktkategori
+  example7: Liste over alle produkter, der i øjeblikket er udsolgt
+  example8: Vis de 5 bedst sælgende produkter i kategorien elektronik
+  example9: Angiv det samlede antal af forskellige produkter i hvert lager
+  example10: Liste over alle medarbejdere, der tiltrådte inden for de seneste seks måneder
+  example11: Få en oversigt over medarbejderdemografi efter afdeling
+  example12: Vis den gennemsnitlige løn for softwareingeniører
+  example13: Giv en fordeling af udgifter på afdelinger for det seneste regnskabsår
+  example14: Opsummer resultatopgørelsen for sidste kvartal
+  example15: Vis den samlede omsætning genereret af hver salgskanal
+  example16: Angiv en liste over alle aktive marketingkampagner
+  example17: Opsummer klikraterne for e-mailkampagner for det sidste kvartal
+  example18: Vis det samlede antal leads genereret af hver kampagne
+  example19: Liste over alle igangværende projekter og deres nuværende status
+  example20: Få en oversigt over projektdeadlines og milepæle for det næste kvartal
+  example21: Vis de 5 bedste projekter efter budgettildeling
+  example22: Giv en trendanalyse af webstedstrafik for de seneste seks måneder
+  example23: Opsummer konverteringsraterne efter trafikkilde
+  example24: Vis de bedst ydende søgeord i vores søgemaskinemarketingkampagner
+  example25: Liste over alle transaktioner, der er markeret til revision i det sidste år
+  example26: Opsummer overholdelsesproblemer rapporteret efter region
+  example27: Vis en rapport over alle politikovertrædelser i det sidste kvartal
+
+fa_IR:
+  title: چت کنید
+  placeholder: پیام خود را اینجا تایپ کنید...
+  emptyStateTitle: با چه چیزی می توانم به شما کمک کنم؟
+  noModelTitle: مدل موجود نیست
+  noModelDescription: لطفاً یک مدل موجود را برای شروع چت با داده های خود انتخاب کنید.
+  loadingSuggestions: در حال بارگیری پیشنهادات...
+  genericExamplesLabel: پرس و جوهای مثال (مخصوص پایگاه داده شما نیست)
+  databaseSpecificSuggestionsLabel: پرس و جوهای پیشنهادی بر اساس طرح پایگاه داده شما
+  scratchpadNotSupported: Scratchpad برای این نوع پایگاه داده پشتیبانی نمی شود
+  queryMoved: درخواست به Scratchpad منتقل شد
+  moveToScratchpad: به Scratchpad بروید
+  unableToQuery: امکان پرس و جو وجود ندارد. دوباره امتحان کنید.
+  failedToExecuteSQL: SQL اجرا نشد. دوباره امتحان کنید.
+  actionExecuted: اقدام اجرا شد
+  noDataReturned: هیچ داده ای برگردانده نشد
+  dialogTitle: به Scratchpad بروید
+  dialogDescription: انتخاب کنید به کدام صفحه scratchpad این عبارت را اضافه کنید.
+  selectPageLabel: یک صفحه را انتخاب کنید
+  selectPagePlaceholder: انتخاب صفحه...
+  newPageLabel: نام صفحه جدید
+  newPagePlaceholder: نام صفحه را وارد کنید
+  createNewPage: ایجاد صفحه جدید
+  cancel: لغو کنید
+  chatHistory: تاریخچه چت
+  newChat: چت جدید
+  deleteChat: چت را حذف کنید
+  deleteChatTitle: "{chatName} حذف شود؟"
+  deleteChatDescription: با این کار این چت و همه پیام های آن برای همیشه حذف می شود. این عمل قابل لغو نیست.
+  continue: ادامه دهید
+  doubleClickEdit: برای ویرایش دوبار کلیک کنید
+  messageCount: "{count} پیام"
+  messageCount_one: "{count} پیام"
+  noMessages: هنوز پیامی وجود ندارد
+  confirmExecutionTitle: تایید اجرا
+  confirmExecutionDescription: این عملیات پایگاه داده شما را تغییر می دهد. برای ادامه بررسی و تایید کنید.
+  showQuery: نمایش پرس و جو
+  hideQuery: پنهان کردن پرس و جو
+  "yes": بله
+  "no": خیر
+  executing: در حال اجرا...
+  queryCancelled: پرس و جو لغو شد
+  sendMessage: ارسال پیام
+  showTable: نمایش به عنوان جدول
+  showCode: نمایش به عنوان کد
+  showChart: نمایش نمودار
+  actions: اقدامات
+  thinking0: فکر کردن
+  thinking1: تعمق در اسرار زندگی
+  thinking2: مشاوره با اوراکل های ابری
+  thinking3: با عصبانیت گوگل کردن (شوخی کردم)
+  thinking4: تراز کردن شبکه های عصبی
+  thinking5: درست کردن آن در حالی که من می روم (سس)
+  thinking6: شمارش گوسفند مجازی
+  thinking7: هدایت انیشتین
+  thinking8: تنظیم الگوریتم های من
+  thinking9: نوشیدن یک بایت قهوه
+  thinking10: دویدن در دایره به صورت مجازی.
+  thinking11: تظاهر به مشغول بودن
+  thinking12: در حال بارگیری بازگشت شوخ
+  thinking13: دانلود مقداری حکمت
+  thinking14: پختن مقداری خورش داده
+  thinking15: انجام کارهای هوش مصنوعی™
+  thinking16: هک مین فریم (برای سرگرمی)
+  thinking17: خیره شدن به ورطه دیجیتال
+  thinking18: چرخاندن یک سکه کوانتومی
+  thinking19: خواندن ذهن شما (از لحاظ اخلاقی)
+  thinking20: کنایه ام را تیز می کنم
+  thinking21: در حال بررسی حالات من
+  thinking22: شبیه سازی تفکر عمیق
+  thinking23: سیم کشی مجدد مدارهایم
+  thinking24: پولیش کردن پردازنده کریستالی من
+  example0: خلاصه تمام سفارشات خرید را دریافت کنید
+  example1: تمام مشتریانی که در ماه گذشته خرید کرده اند را فهرست کنید
+  example2: 10 مشتری برتر را بر اساس کل هزینه نشان دهید
+  example3: خلاصه ای از بازخورد مشتریان در سال گذشته را ارائه دهید
+  example4: تمام سفارش های خرید انجام شده در هفته گذشته را فهرست کنید
+  example5: کل فروش را بر اساس منطقه برای این سه ماهه خلاصه کنید
+  example6: میانگین ارزش سفارش برای هر دسته محصول را نشان دهید
+  example7: لیست تمام محصولاتی که در حال حاضر موجود نیستند
+  example8: نمایش 5 محصول پرفروش در دسته الکترونیک
+  example9: تعداد کل محصولات مختلف در هر انبار را ارائه دهید
+  example10: لیست تمام کارمندانی که در شش ماه گذشته به آن پیوسته اند را فهرست کنید
+  example11: خلاصه ای از جمعیت شناسی کارکنان را بر اساس بخش دریافت کنید
+  example12: نمایش میانگین حقوق برای مهندسان نرم افزار
+  example13: ارائه تفکیک هزینه ها به تفکیک بخش برای سال مالی گذشته
+  example14: صورت سود و زیان سه ماهه آخر را خلاصه کنید
+  example15: کل درآمد ایجاد شده توسط هر کانال فروش را نشان دهید
+  example16: فهرستی از تمام کمپین های بازاریابی فعال ارائه دهید
+  example17: نرخ کلیک کمپین های ایمیل در سه ماهه گذشته را خلاصه کنید
+  example18: تعداد کل سرنخ های تولید شده توسط هر کمپین را نشان دهید
+  example19: تمام پروژه های در حال انجام و وضعیت فعلی آنها را فهرست کنید
+  example20: خلاصه ای از مهلت ها و نقاط عطف پروژه برای سه ماهه بعدی را دریافت کنید
+  example21: نمایش 5 پروژه برتر بر اساس تخصیص بودجه
+  example22: تجزیه و تحلیل روند ترافیک وب سایت در شش ماه گذشته را ارائه دهید
+  example23: نرخ تبدیل را بر اساس منبع ترافیک خلاصه کنید
+  example24: کلمات کلیدی با عملکرد برتر را در کمپین های بازاریابی موتور جستجوی ما نشان دهید
+  example25: فهرست تمام معاملات علامت گذاری شده برای حسابرسی در سال گذشته
+  example26: مسائل مربوط به انطباق گزارش شده بر اساس منطقه را خلاصه کنید
+  example27: گزارشی از تمام تخلفات خط‌مشی در سه ماهه گذشته نشان دهید
+
+hi_IN:
+  title: बात करना
+  placeholder: यहाँ आपके संदेश लिखें...
+  emptyStateTitle: मैं किस चीज़ में आपकी मदद करूं?
+  noModelTitle: कोई मॉडल उपलब्ध नहीं
+  noModelDescription: कृपया अपने डेटा के साथ चैट शुरू करने के लिए एक उपलब्ध मॉडल चुनें।
+  loadingSuggestions: सुझाव लोड हो रहे हैं...
+  genericExamplesLabel: उदाहरण प्रश्न (आपके डेटाबेस के लिए विशिष्ट नहीं)
+  databaseSpecificSuggestionsLabel: आपके डेटाबेस स्कीमा के आधार पर सुझाई गई क्वेरीज़
+  scratchpadNotSupported: स्क्रैचपैड इस डेटाबेस प्रकार के लिए समर्थित नहीं है
+  queryMoved: क्वेरी को स्क्रैचपैड पर ले जाया गया
+  moveToScratchpad: स्क्रैचपैड पर जाएँ
+  unableToQuery: पूछताछ करने में असमर्थ. पुनः प्रयास करें।
+  failedToExecuteSQL: SQL निष्पादित करने में विफल. पुनः प्रयास करें।
+  actionExecuted: कार्यवाही निष्पादित
+  noDataReturned: कोई डेटा वापस नहीं किया गया.
+  dialogTitle: स्क्रैचपैड पर जाएँ
+  dialogDescription: चुनें कि इस क्वेरी को किस स्क्रैचपैड पेज पर जोड़ना है।
+  selectPageLabel: एक पेज चुनें
+  selectPagePlaceholder: एक पेज चुनें...
+  newPageLabel: नये पेज का नाम
+  newPagePlaceholder: पेज का नाम दर्ज करें
+  createNewPage: नया पेज बनाएं
+  cancel: रद्द करना
+  chatHistory: चैट का इतिहास
+  newChat: नई चैट
+  deleteChat: चैट हटाएँ
+  deleteChatTitle: "{chatName} हटाएं?"
+  deleteChatDescription: इससे यह चैट और उसके सभी संदेश स्थायी रूप से हटा दिए जाएंगे. इस एक्शन को वापस नहीं किया जा सकता।
+  continue: जारी रखना
+  doubleClickEdit: संपादित करने के लिए डबल-क्लिक करें
+  messageCount: "{count} संदेश"
+  messageCount_one: "{count} संदेश"
+  noMessages: अभी तक कोई संदेश नहीं
+  confirmExecutionTitle: निष्पादन की पुष्टि करें
+  confirmExecutionDescription: यह ऑपरेशन आपके डेटाबेस को संशोधित करेगा. समीक्षा करें और आगे बढ़ने की पुष्टि करें।
+  showQuery: क्वेरी दिखाएँ
+  hideQuery: क्वेरी छिपाएँ
+  "yes": हाँ
+  "no": नहीं
+  executing: क्रियान्वयन...
+  queryCancelled: क्वेरी रद्द कर दी गई
+  sendMessage: मेसेज भेजें
+  showTable: तालिका के रूप में दिखाएँ
+  showCode: कोड के रूप में दिखाएँ
+  showChart: चार्ट दिखाएँ
+  actions: कार्रवाई
+  thinking0: सोच
+  thinking1: जीवन के रहस्यों पर विचार करना
+  thinking2: क्लाउड दैवज्ञों से परामर्श करना
+  thinking3: गुस्से से गूगल करना (सिर्फ मजाक कर रहा हूँ)
+  thinking4: तंत्रिका नेटवर्क को संरेखित करना
+  thinking5: जैसे-जैसे मैं आगे बढ़ता हूँ, इसे बनाता जाता हूँ (shh)
+  thinking6: आभासी भेड़ों की गिनती
+  thinking7: आइंस्टीन को चैनल करना
+  thinking8: मेरे एल्गोरिदम ट्यूनिंग
+  thinking9: कॉफ़ी की एक बाइट पीना
+  thinking10: वस्तुतः मंडलियों में चल रहा है।
+  thinking11: व्यस्त होने का नाटक करना
+  thinking12: मजाकिया वापसी लोड हो रही है
+  thinking13: कुछ ज्ञान डाउनलोड कर रहा हूँ
+  thinking14: कुछ डेटा स्टू पका रहे हैं
+  thinking15: एआई चीज़ें™ करना
+  thinking16: मेनफ्रेम को हैक करना (मनोरंजन के लिए)
+  thinking17: डिजिटल खाई में घूरना
+  thinking18: क्वांटम सिक्के को उछालना
+  thinking19: अपना मन पढ़ना (नैतिक रूप से)
+  thinking20: अपने व्यंग्य को तीखा कर रहा हूँ
+  thinking21: मेरी वाइब्स की जाँच कर रहा हूँ
+  thinking22: गहन विचार का अनुकरण
+  thinking23: मेरे सर्किट को पुनः वायरिंग कर रहा हूँ
+  thinking24: मेरे क्रिस्टल प्रोसेसर को पॉलिश करना
+  example0: सभी खरीद आदेशों का सारांश प्राप्त करें
+  example1: उन सभी ग्राहकों की सूची बनाएं जिन्होंने पिछले महीने खरीदारी की थी
+  example2: कुल व्यय के आधार पर शीर्ष 10 ग्राहक दिखाएँ
+  example3: पिछले वर्ष के लिए ग्राहक प्रतिक्रिया का सारांश प्रदान करें
+  example4: पिछले सप्ताह के भीतर दिए गए सभी खरीद आदेशों की सूची बनाएं
+  example5: इस तिमाही के लिए क्षेत्र के अनुसार कुल बिक्री का सारांश प्रस्तुत करें
+  example6: प्रत्येक उत्पाद श्रेणी के लिए औसत ऑर्डर मूल्य दिखाएं
+  example7: उन सभी उत्पादों की सूची बनाएं जो वर्तमान में स्टॉक से बाहर हैं
+  example8: इलेक्ट्रॉनिक्स श्रेणी में शीर्ष 5 सबसे अधिक बिकने वाले उत्पाद दिखाएं
+  example9: प्रत्येक गोदाम में विभिन्न उत्पादों की कुल संख्या प्रदान करें
+  example10: पिछले छह महीनों में शामिल हुए सभी कर्मचारियों की सूची बनाएं
+  example11: विभाग द्वारा कर्मचारी जनसांख्यिकी का सारांश प्राप्त करें
+  example12: सॉफ़्टवेयर इंजीनियरों का औसत वेतन दिखाएँ
+  example13: पिछले वित्तीय वर्ष के लिए विभाग द्वारा व्यय का विवरण प्रदान करें
+  example14: पिछली तिमाही के लाभ और हानि विवरण का सारांश प्रस्तुत करें
+  example15: प्रत्येक बिक्री चैनल द्वारा उत्पन्न कुल राजस्व दिखाएँ
+  example16: सभी सक्रिय विपणन अभियानों की सूची प्रदान करें
+  example17: पिछली तिमाही के लिए ईमेल अभियानों की क्लिक-थ्रू दरों का सारांश प्रस्तुत करें
+  example18: प्रत्येक अभियान द्वारा उत्पन्न लीड की कुल संख्या दिखाएँ
+  example19: सभी चल रही परियोजनाओं और उनकी वर्तमान स्थिति की सूची बनाएं
+  example20: अगली तिमाही के लिए परियोजना की समय सीमा और मील के पत्थर का सारांश प्राप्त करें
+  example21: बजट आवंटन के आधार पर शीर्ष 5 परियोजनाएँ दिखाएँ
+  example22: पिछले छह महीनों के लिए वेबसाइट ट्रैफ़िक का रुझान विश्लेषण प्रदान करें
+  example23: ट्रैफ़िक स्रोत के आधार पर रूपांतरण दरों का सारांश प्रस्तुत करें
+  example24: हमारे खोज इंजन विपणन अभियानों में शीर्ष प्रदर्शन करने वाले कीवर्ड दिखाएं
+  example25: पिछले वर्ष ऑडिट के लिए चिह्नित सभी लेनदेन की सूची बनाएं
+  example26: क्षेत्र द्वारा रिपोर्ट किए गए अनुपालन मुद्दों का सारांश प्रस्तुत करें
+  example27: पिछली तिमाही में सभी नीति उल्लंघनों की रिपोर्ट दिखाएँ
+
+hr_HR:
+  title: Razgovor
+  placeholder: Ovdje upišite svoju poruku...
+  emptyStateTitle: Što vam mogu pomoći?
+  noModelTitle: Nijedan model nije dostupan
+  noModelDescription: Odaberite dostupni model da biste započeli razgovor sa svojim podacima.
+  loadingSuggestions: Učitavanje prijedloga...
+  genericExamplesLabel: Primjeri upita (nisu specifični za vašu bazu podataka)
+  databaseSpecificSuggestionsLabel: Predloženi upiti na temelju vaše sheme baze podataka
+  scratchpadNotSupported: Scratchpad nije podržan za ovu vrstu baze podataka
+  queryMoved: Upit premješten u Scratchpad
+  moveToScratchpad: Prijeđite na Scratchpad
+  unableToQuery: Nije moguće postaviti upit. Pokušajte ponovno.
+  failedToExecuteSQL: Izvršenje SQL-a nije uspjelo. Pokušajte ponovno.
+  actionExecuted: Radnja izvršena
+  noDataReturned: Podaci nisu vraćeni.
+  dialogTitle: Prijeđite na Scratchpad
+  dialogDescription: Odaberite na koju stranicu za natuknice želite dodati ovaj upit.
+  selectPageLabel: Odaberite stranicu
+  selectPagePlaceholder: Odaberite stranicu...
+  newPageLabel: Novi naziv stranice
+  newPagePlaceholder: Unesite naziv stranice
+  createNewPage: Stvori novu stranicu
+  cancel: Otkazati
+  chatHistory: Povijest razgovora
+  newChat: Novi razgovor
+  deleteChat: Izbriši chat
+  deleteChatTitle: "Izbrisati {chatName}?"
+  deleteChatDescription: Ovo će trajno izbrisati ovaj chat i sve njegove poruke. Ova se radnja ne može poništiti.
+  continue: Nastaviti
+  doubleClickEdit: Dvaput kliknite za uređivanje
+  messageCount: "{count} poruka"
+  messageCount_one: "{count} poruka"
+  noMessages: Još nema poruka
+  confirmExecutionTitle: Potvrdi izvršenje
+  confirmExecutionDescription: Ova operacija će izmijeniti vašu bazu podataka. Pregledajte i potvrdite za nastavak.
+  showQuery: Prikaži upit
+  hideQuery: Sakrij upit
+  "yes": Da
+  "no": Ne
+  executing: Izvršavanje...
+  queryCancelled: Upit poništen
+  sendMessage: Pošalji poruku
+  showTable: Prikaži kao tablicu
+  showCode: Prikaži kao kod
+  showChart: Prikaži grafikon
+  actions: Radnje
+  thinking0: Razmišljanje
+  thinking1: Razmišljanje o životnim misterijama
+  thinking2: Savjetovanje s proročištima u oblaku
+  thinking3: Guglanje bijesno (samo se šalim)
+  thinking4: Usklađivanje neuronskih mreža
+  thinking5: Izmišljam usput (shh)
+  thinking6: Brojanje virtualnih ovaca
+  thinking7: Kanaliziranje Einsteina
+  thinking8: Podešavanje mojih algoritama
+  thinking9: Ispijajući bajtu kave
+  thinking10: Trčanje u krug virtualno.
+  thinking11: Praveći se zaposlenom
+  thinking12: Učitavanje duhovitog povratka
+  thinking13: Preuzimanje neke mudrosti
+  thinking14: Kuhanje gulaša s podacima
+  thinking15: Raditi AI stvari™
+  thinking16: Hakiranje glavnog računala (iz zabave)
+  thinking17: Zureći u digitalni ponor
+  thinking18: Bacanje kvantnog novčića
+  thinking19: Čitanje vaših misli (etički)
+  thinking20: Zaoštravanje mog sarkazma
+  thinking21: Provjeravam svoje vibracije
+  thinking22: Simulacija duboke misli
+  thinking23: Ponovno ožičenje mojih strujnih krugova
+  thinking24: Poliranje mog kristalnog procesora
+  example0: Dobijte sažetak svih narudžbenica
+  example1: Navedite sve kupce koji su kupili u prošlom mjesecu
+  example2: Prikažite 10 najvećih kupaca prema ukupnoj potrošnji
+  example3: Navedite sažetak povratnih informacija kupaca za prošlu godinu
+  example4: Navedite sve narudžbe poslane u prošlom tjednu
+  example5: Sažeti ukupnu prodaju po regijama za ovo tromjesečje
+  example6: Prikaži prosječnu vrijednost narudžbe za svaku kategoriju proizvoda
+  example7: Navedite sve proizvode kojih trenutno nema na skladištu
+  example8: Prikažite 5 najprodavanijih proizvoda u kategoriji elektronike
+  example9: Navedite ukupan broj različitih proizvoda u svakom skladištu
+  example10: Navedite sve zaposlenike koji su se pridružili u posljednjih šest mjeseci
+  example11: Dobijte sažetak demografskih podataka zaposlenika po odjelima
+  example12: Pokažite prosječnu plaću softverskih inženjera
+  example13: Navedite raščlambu troškova po odjelima za posljednju financijsku godinu
+  example14: Sažmite izvještaj o dobiti i gubitku za posljednje tromjesečje
+  example15: Prikažite ukupni prihod koji je ostvario svaki prodajni kanal
+  example16: Navedite popis svih aktivnih marketinških kampanja
+  example17: Sažeti stope klikanja kampanja putem e-pošte za posljednje tromjesečje
+  example18: Prikaži ukupan broj potencijalnih kupaca koje je generirala svaka kampanja
+  example19: Navedite sve projekte koji su u tijeku i njihov trenutni status
+  example20: Dobijte sažetak projektnih rokova i prekretnica za sljedeći kvartal
+  example21: Prikažite 5 najboljih projekata prema raspodjeli proračuna
+  example22: Pružite analizu trendova prometa na web stranici u posljednjih šest mjeseci
+  example23: Sažmite stope konverzije prema izvoru prometa
+  example24: Prikažite ključne riječi s najboljom izvedbom u našim marketinškim kampanjama na tražilicama
+  example25: Navedite sve transakcije označene za reviziju u prošloj godini
+  example26: Sažeti prijavljene probleme usklađenosti po regijama
+  example27: Prikaži izvješće o svim kršenjima pravila u zadnjem kvartalu
+
+hu_HU:
+  title: Csevegés
+  placeholder: Írja be üzenetét ide...
+  emptyStateTitle: Miben segíthetek?
+  noModelTitle: Nincs elérhető modell
+  noModelDescription: Kérjük, válasszon egy elérhető modellt az adataival való csevegés megkezdéséhez.
+  loadingSuggestions: Javaslatok betöltése...
+  genericExamplesLabel: Példalekérdezések (nem az Ön adatbázisára jellemző)
+  databaseSpecificSuggestionsLabel: Javasolt lekérdezések az adatbázisséma alapján
+  scratchpadNotSupported: A Scratchpad nem támogatott ennél az adatbázistípusnál
+  queryMoved: A lekérdezés áthelyezve a Firkálótömbre
+  moveToScratchpad: Ugrás a Firkálótömbre
+  unableToQuery: Nem lehet lekérdezni. Próbáld újra.
+  failedToExecuteSQL: Nem sikerült végrehajtani az SQL-t. Próbáld újra.
+  actionExecuted: Akció végrehajtva
+  noDataReturned: Nem küldtek vissza adatokat.
+  dialogTitle: Ugrás a Firkálótömbre
+  dialogDescription: Válassza ki, hogy melyik firkálólap oldalhoz szeretné hozzáadni ezt a lekérdezést.
+  selectPageLabel: Válasszon egy oldalt
+  selectPagePlaceholder: Válassz egy oldalt...
+  newPageLabel: Új oldalnév
+  newPagePlaceholder: Írja be az oldal nevét
+  createNewPage: Új oldal létrehozása
+  cancel: Mégsem
+  chatHistory: Csevegés előzményei
+  newChat: Új csevegés
+  deleteChat: Csevegés törlése
+  deleteChatTitle: "Törli a következőt: {chatName}?"
+  deleteChatDescription: Ezzel véglegesen törli ezt a csevegést és az összes üzenetét. Ez a művelet nem vonható vissza.
+  continue: Folytatás
+  doubleClickEdit: Kattintson duplán a szerkesztéshez
+  messageCount: "{count} üzenet"
+  messageCount_one: "{count} üzenet"
+  noMessages: Még nincsenek üzenetek
+  confirmExecutionTitle: Végrehajtás megerősítése
+  confirmExecutionDescription: Ez a művelet módosítja az adatbázist. Tekintse át és erősítse meg a folytatáshoz.
+  showQuery: Lekérdezés megjelenítése
+  hideQuery: Lekérdezés elrejtése
+  "yes": Igen
+  "no": Nem
+  executing: Végrehajtó...
+  queryCancelled: Lekérdezés megszakítva
+  sendMessage: Üzenet küldése
+  showTable: Megjelenítés táblázatként
+  showCode: Megjelenítés kódként
+  showChart: Diagram megjelenítése
+  actions: Akciók
+  thinking0: Gondolkodás
+  thinking1: Elgondolkodni az élet rejtelmein
+  thinking2: Konzultáció a felhő orákulumokkal
+  thinking3: Heves guglizás (csak viccelek)
+  thinking4: A neurális hálózatok összehangolása
+  thinking5: Kiegyenlítés menet közben (shh)
+  thinking6: Virtuális birkák számolása
+  thinking7: Einstein csatornázása
+  thinking8: Az algoritmusaim hangolása
+  thinking9: Egy bájt kávé megivása
+  thinking10: Körben futva virtuálisan.
+  thinking11: Úgy tesz, mintha elfoglalt lenne
+  thinking12: Szellemes visszatérés betöltése folyamatban
+  thinking13: Egy kis bölcsesség letöltése
+  thinking14: Egy kis adatpörkölt főzése
+  thinking15: AI dolgok készítése™
+  thinking16: A nagyszámítógép feltörése (szórakozásból)
+  thinking17: A digitális szakadékba bámulni
+  thinking18: Kvantumérme feldobása
+  thinking19: Olvasni a gondolataidban (etikailag)
+  thinking20: Élesíti a szarkazmusomat
+  thinking21: Ellenőriztem a hangulatomat
+  thinking22: Mély gondolat szimulálása
+  thinking23: Áramköreim újrahuzalozása
+  thinking24: A kristály processzor polírozása
+  example0: Összefoglaló az összes beszerzési rendelésről
+  example1: Sorolja fel az összes vásárlót, aki az elmúlt hónapban vásárolt
+  example2: Mutassa meg a 10 legnagyobb ügyfelet a teljes költés alapján
+  example3: Adja meg az elmúlt év vásárlói visszajelzéseinek összefoglalását
+  example4: Sorolja fel az elmúlt héten leadott összes beszerzési rendelést
+  example5: Foglalja össze az összes értékesítést régiónként ebben a negyedévben
+  example6: Mutassa meg az egyes termékkategóriák átlagos rendelési értékét
+  example7: Sorolja fel az összes terméket, amely jelenleg nincs raktáron
+  example8: Mutassa meg az elektronika kategória 5 legkelendőbb termékét
+  example9: Adja meg a különböző termékek teljes számát az egyes raktárakban
+  example10: Sorolja fel az összes alkalmazottat, aki az elmúlt hat hónapban csatlakozott
+  example11: Az alkalmazottak demográfiai adatainak osztályonkénti összefoglalása
+  example12: Mutassa meg a szoftvermérnökök átlagos fizetését
+  example13: Adja meg a kiadások osztályonkénti bontását az utolsó pénzügyi évre vonatkozóan
+  example14: Foglalja össze az utolsó negyedév eredménykimutatását
+  example15: Mutassa meg az egyes értékesítési csatornák által generált teljes bevételt
+  example16: Adja meg az összes aktív marketingkampány listáját
+  example17: Foglalja össze az e-mail kampányok átkattintási arányát az elmúlt negyedévben
+  example18: Mutassa meg az egyes kampányok által generált potenciális ügyfelek teljes számát
+  example19: Sorolja fel az összes folyamatban lévő projektet és azok jelenlegi állapotát
+  example20: Szerezzen összefoglalót a projekt határidőiről és a következő negyedév mérföldköveiről
+  example21: Mutassa meg az 5 legjobb projektet költségvetési allokáció szerint
+  example22: Készítsen trendelemzést a webhely forgalmáról az elmúlt hat hónapban
+  example23: Foglalja össze a konverziós arányokat forgalmi források szerint
+  example24: Mutassa meg a legjobban teljesítő kulcsszavakat keresőmarketing kampányainkban
+  example25: Sorolja fel az összes, az elmúlt évben ellenőrzésre megjelölt tranzakciót
+  example26: Foglalja össze a jelentett megfelelőségi problémákat régiónként
+  example27: Jelentés megjelenítése az összes irányelvsértésről az elmúlt negyedévben
+
+id_ID:
+  title: Mengobrol
+  placeholder: Ketik Pesan Anda Disini...
+  emptyStateTitle: Apa yang Dapat Saya Bantu?
+  noModelTitle: Tidak Ada Model yang Tersedia
+  noModelDescription: Silakan pilih model yang tersedia untuk mulai mengobrol dengan data Anda.
+  loadingSuggestions: Memuat saran...
+  genericExamplesLabel: Contoh kueri (tidak spesifik untuk database Anda)
+  databaseSpecificSuggestionsLabel: Kueri yang disarankan berdasarkan skema database Anda
+  scratchpadNotSupported: Scratchpad Tidak Didukung untuk Jenis Basis Data Ini
+  queryMoved: Kueri Dipindahkan ke Scratchpad
+  moveToScratchpad: Pindah ke Scratchpad
+  unableToQuery: Tidak Dapat Mengkueri. Coba Lagi.
+  failedToExecuteSQL: Gagal Menjalankan SQL. Coba Lagi.
+  actionExecuted: Tindakan Dieksekusi
+  noDataReturned: Tidak Ada Data yang Dikembalikan.
+  dialogTitle: Pindah ke Scratchpad
+  dialogDescription: Pilih halaman scratchpad mana yang akan ditambahkan kueri ini.
+  selectPageLabel: Pilih Halaman
+  selectPagePlaceholder: Pilih Halaman...
+  newPageLabel: Nama Halaman Baru
+  newPagePlaceholder: Masukkan Nama Halaman
+  createNewPage: Buat Halaman Baru
+  cancel: Membatalkan
+  chatHistory: Riwayat Obrolan
+  newChat: Obrolan Baru
+  deleteChat: Hapus Obrolan
+  deleteChatTitle: "Hapus {chatName}?"
+  deleteChatDescription: Tindakan ini akan menghapus obrolan ini dan semua pesannya secara permanen. Tindakan ini tidak dapat dibatalkan.
+  continue: Melanjutkan
+  doubleClickEdit: Klik dua kali untuk mengedit
+  messageCount: "{count} pesan"
+  messageCount_one: "{count} pesan"
+  noMessages: Belum ada pesan
+  confirmExecutionTitle: Konfirmasi Eksekusi
+  confirmExecutionDescription: Operasi ini akan mengubah database Anda. Tinjau dan konfirmasi untuk melanjutkan.
+  showQuery: Tampilkan Kueri
+  hideQuery: Sembunyikan Kueri
+  "yes": Ya
+  "no": TIDAK
+  executing: Menjalankan...
+  queryCancelled: Kueri Dibatalkan
+  sendMessage: Kirim pesan
+  showTable: Tampilkan sebagai tabel
+  showCode: Tampilkan sebagai kode
+  showChart: Tampilkan Bagan
+  actions: Tindakan
+  thinking0: Pemikiran
+  thinking1: Merenungkan misteri kehidupan
+  thinking2: Berkonsultasi dengan ramalan cloud
+  thinking3: Googling dengan marah (bercanda)
+  thinking4: Menyelaraskan jaringan saraf
+  thinking5: Membuatnya sambil jalan (ssst)
+  thinking6: Menghitung domba virtual
+  thinking7: Menyalurkan Einstein
+  thinking8: Menyetel algoritma saya
+  thinking9: Minum satu byte kopi
+  thinking10: Berlari berputar-putar secara virtual.
+  thinking11: Pura-pura sibuk
+  thinking12: Memuat comeback yang cerdas
+  thinking13: Mengunduh beberapa kebijaksanaan
+  thinking14: Memasak beberapa data rebusan
+  thinking15: Melakukan hal-hal AI™
+  thinking16: Meretas mainframe (untuk bersenang-senang)
+  thinking17: Menatap jurang digital
+  thinking18: Membalik koin kuantum
+  thinking19: Membaca pikiran Anda (secara etis)
+  thinking20: Mempertajam sarkasme saya
+  thinking21: Memeriksa getaranku
+  thinking22: Mensimulasikan pemikiran mendalam
+  thinking23: Memperbaiki sirkuit saya
+  thinking24: Memoles prosesor kristal saya
+  example0: Dapatkan ringkasan semua pesanan pembelian
+  example1: Cantumkan semua pelanggan yang melakukan pembelian dalam sebulan terakhir
+  example2: Tampilkan 10 pelanggan teratas berdasarkan total pembelanjaan
+  example3: Berikan ringkasan umpan balik pelanggan selama setahun terakhir
+  example4: Cantumkan semua pesanan pembelian yang dilakukan dalam seminggu terakhir
+  example5: Ringkaslah total penjualan menurut wilayah untuk kuartal ini
+  example6: Tampilkan nilai pesanan rata-rata untuk setiap kategori produk
+  example7: Cantumkan semua produk yang saat ini kehabisan stok
+  example8: Tampilkan 5 produk terlaris di kategori elektronik
+  example9: Berikan jumlah total produk yang berbeda di setiap gudang
+  example10: Daftar semua karyawan yang bergabung dalam enam bulan terakhir
+  example11: Dapatkan ringkasan demografi karyawan berdasarkan departemen
+  example12: Tunjukkan gaji rata-rata untuk insinyur perangkat lunak
+  example13: Memberikan rincian pengeluaran berdasarkan departemen untuk tahun keuangan terakhir
+  example14: Ringkaslah laporan laba rugi untuk kuartal terakhir
+  example15: Tunjukkan total pendapatan yang dihasilkan oleh setiap saluran penjualan
+  example16: Berikan daftar semua kampanye pemasaran yang aktif
+  example17: Ringkaslah rasio klik-tayang kampanye email untuk kuartal terakhir
+  example18: Tampilkan jumlah total prospek yang dihasilkan oleh setiap kampanye
+  example19: Buat daftar semua proyek yang sedang berjalan dan statusnya saat ini
+  example20: Dapatkan ringkasan tenggat waktu dan pencapaian proyek untuk kuartal berikutnya
+  example21: Tampilkan 5 proyek teratas berdasarkan alokasi anggaran
+  example22: Memberikan analisis tren lalu lintas situs web selama enam bulan terakhir
+  example23: Ringkaslah tingkat konversi berdasarkan sumber lalu lintas
+  example24: Tampilkan kata kunci dengan kinerja terbaik dalam kampanye pemasaran mesin pencari kami
+  example25: Cantumkan semua transaksi yang ditandai untuk diaudit pada tahun lalu
+  example26: Meringkas masalah kepatuhan yang dilaporkan berdasarkan wilayah
+  example27: Tampilkan laporan semua pelanggaran kebijakan pada kuartal terakhir
+
+ms_MY:
+  title: Sembang
+  placeholder: Taip Mesej Anda Di Sini...
+  emptyStateTitle: Apa yang Boleh Saya Bantu Anda?
+  noModelTitle: Tiada Model Tersedia
+  noModelDescription: Sila pilih model yang tersedia untuk mula bersembang dengan data anda.
+  loadingSuggestions: Memuatkan cadangan...
+  genericExamplesLabel: Contoh pertanyaan (tidak khusus untuk pangkalan data anda)
+  databaseSpecificSuggestionsLabel: Pertanyaan yang dicadangkan berdasarkan skema pangkalan data anda
+  scratchpadNotSupported: Pad Conteng Tidak Disokong untuk Jenis Pangkalan Data Ini
+  queryMoved: Pertanyaan Dialihkan ke Pad Conteng
+  moveToScratchpad: Beralih ke Pad Conteng
+  unableToQuery: Tidak dapat Bersoal. Cuba Lagi.
+  failedToExecuteSQL: Gagal Melaksanakan SQL. Cuba Lagi.
+  actionExecuted: Tindakan Dilaksanakan
+  noDataReturned: Tiada Data Dikembalikan.
+  dialogTitle: Beralih ke Pad Conteng
+  dialogDescription: Pilih halaman pad conteng untuk menambah pertanyaan ini.
+  selectPageLabel: Pilih Halaman
+  selectPagePlaceholder: Pilih Halaman...
+  newPageLabel: Nama Halaman Baharu
+  newPagePlaceholder: Masukkan Nama Halaman
+  createNewPage: Buat Halaman Baharu
+  cancel: Batal
+  chatHistory: Sejarah Sembang
+  newChat: Sembang Baharu
+  deleteChat: Padam Sembang
+  deleteChatTitle: "Padamkan {chatName}?"
+  deleteChatDescription: Ini akan memadamkan sembang ini dan semua mesejnya secara kekal. Tindakan ini tidak boleh dibuat asal.
+  continue: teruskan
+  doubleClickEdit: Klik dua kali untuk mengedit
+  messageCount: "{count} mesej"
+  messageCount_one: "{count} mesej"
+  noMessages: Tiada mesej lagi
+  confirmExecutionTitle: Sahkan Pelaksanaan
+  confirmExecutionDescription: Operasi ini akan mengubah suai pangkalan data anda. Semak dan sahkan untuk meneruskan.
+  showQuery: Tunjukkan Pertanyaan
+  hideQuery: Sembunyikan Pertanyaan
+  "yes": ya
+  "no": Tidak
+  executing: Melaksanakan...
+  queryCancelled: Pertanyaan Dibatalkan
+  sendMessage: Hantar mesej
+  showTable: Tunjukkan sebagai jadual
+  showCode: Tunjukkan sebagai kod
+  showChart: Tunjukkan Carta
+  actions: Tindakan
+  thinking0: Berfikir
+  thinking1: Memikirkan misteri kehidupan
+  thinking2: Berunding dengan ramalan awan
+  thinking3: Googling dengan marah (hanya bergurau)
+  thinking4: Menyelaraskan rangkaian saraf
+  thinking5: Mengada-ada sambil saya pergi (shh)
+  thinking6: Mengira biri-biri maya
+  thinking7: Menyalurkan Einstein
+  thinking8: Menala algoritma saya
+  thinking9: Minum satu bait kopi
+  thinking10: Berlari dalam bulatan secara maya.
+  thinking11: Berpura-pura sibuk
+  thinking12: Memuatkan kemunculan semula yang bijak
+  thinking13: Memuat turun beberapa kebijaksanaan
+  thinking14: Memasak beberapa rebusan data
+  thinking15: Melakukan perkara AI™
+  thinking16: Menggodam kerangka utama (untuk keseronokan)
+  thinking17: Merenung ke dalam jurang digital
+  thinking18: Membalikkan syiling kuantum
+  thinking19: Membaca fikiran anda (secara beretika)
+  thinking20: Menajamkan sindiranku
+  thinking21: Menyemak getaran saya
+  thinking22: Mensimulasikan pemikiran yang mendalam
+  thinking23: Mendawai semula litar saya
+  thinking24: Menggilap pemproses kristal saya
+  example0: Dapatkan ringkasan semua pesanan pembelian
+  example1: Senaraikan semua pelanggan yang membuat pembelian pada bulan lepas
+  example2: Tunjukkan 10 pelanggan teratas mengikut jumlah perbelanjaan
+  example3: Sediakan ringkasan maklum balas pelanggan untuk tahun lalu
+  example4: Senaraikan semua pesanan pembelian yang dibuat dalam minggu lepas
+  example5: Ringkaskan jumlah jualan mengikut wilayah untuk suku ini
+  example6: Tunjukkan purata nilai pesanan untuk setiap kategori produk
+  example7: Senaraikan semua produk yang sedang kehabisan stok
+  example8: Tunjukkan 5 produk terlaris teratas dalam kategori elektronik
+  example9: Berikan jumlah kiraan produk yang berbeza di setiap gudang
+  example10: Senaraikan semua pekerja yang telah menyertai dalam tempoh enam bulan yang lalu
+  example11: Dapatkan ringkasan demografi pekerja mengikut jabatan
+  example12: Tunjukkan purata gaji jurutera perisian
+  example13: Menyediakan pecahan perbelanjaan mengikut jabatan untuk tahun kewangan yang lepas
+  example14: Ringkaskan penyata untung rugi bagi suku terakhir
+  example15: Tunjukkan jumlah hasil yang dijana oleh setiap saluran jualan
+  example16: Sediakan senarai semua kempen pemasaran yang aktif
+  example17: Ringkaskan kadar klik lalu kempen e-mel untuk suku terakhir
+  example18: Tunjukkan jumlah bilangan petunjuk yang dijana oleh setiap kempen
+  example19: Senaraikan semua projek yang sedang berjalan dan status semasanya
+  example20: Dapatkan ringkasan tarikh akhir projek dan pencapaian untuk suku seterusnya
+  example21: Tunjukkan 5 projek teratas mengikut peruntukan belanjawan
+  example22: Sediakan analisis aliran trafik tapak web selama enam bulan yang lalu
+  example23: Ringkaskan kadar penukaran mengikut sumber trafik
+  example24: Tunjukkan kata kunci berprestasi tinggi dalam kempen pemasaran enjin carian kami
+  example25: Senaraikan semua transaksi yang dibenderakan untuk diaudit pada tahun lepas
+  example26: Ringkaskan isu pematuhan yang dilaporkan mengikut wilayah
+  example27: Tunjukkan laporan semua pelanggaran dasar pada suku terakhir
+
+nb_NO:
+  title: Chat
+  placeholder: Skriv inn meldingen din her...
+  emptyStateTitle: Hva kan jeg hjelpe deg med?
+  noModelTitle: Ingen modell tilgjengelig
+  noModelDescription: Velg en tilgjengelig modell for å begynne å chatte med dataene dine.
+  loadingSuggestions: Laster inn forslag ...
+  genericExamplesLabel: Eksempelspørringer (ikke spesifikke for databasen din)
+  databaseSpecificSuggestionsLabel: Foreslåtte spørringer basert på databaseskjemaet ditt
+  scratchpadNotSupported: Scratchpad støttes ikke for denne databasetypen
+  queryMoved: Spørsmål flyttet til skrapelodd
+  moveToScratchpad: Flytt til Scratchpad
+  unableToQuery: Kan ikke spørre. Prøv igjen.
+  failedToExecuteSQL: Kunne ikke kjøre SQL. Prøv igjen.
+  actionExecuted: Handling utført
+  noDataReturned: Ingen data ble returnert.
+  dialogTitle: Flytt til Scratchpad
+  dialogDescription: Velg hvilken skrapeloddside du vil legge til denne spørringen på.
+  selectPageLabel: Velg en side
+  selectPagePlaceholder: Velg en side...
+  newPageLabel: Nytt sidenavn
+  newPagePlaceholder: Skriv inn sidenavn
+  createNewPage: Opprett ny side
+  cancel: Kansellere
+  chatHistory: Chat historie
+  newChat: Ny chat
+  deleteChat: Slett Chat
+  deleteChatTitle: "Vil du slette {chatName}?"
+  deleteChatDescription: Dette vil permanent slette denne chatten og alle dens meldinger. Denne handlingen kan ikke angres.
+  continue: Fortsette
+  doubleClickEdit: Dobbeltklikk for å redigere
+  messageCount: "{count} meldinger"
+  messageCount_one: "{count} melding"
+  noMessages: Ingen meldinger ennå
+  confirmExecutionTitle: Bekreft utførelse
+  confirmExecutionDescription: Denne operasjonen vil endre databasen din. Se gjennom og bekreft for å fortsette.
+  showQuery: Vis spørring
+  hideQuery: Skjul spørring
+  "yes": Ja
+  "no": Ingen
+  executing: Utfører...
+  queryCancelled: Spørsmålet kansellert
+  sendMessage: Send melding
+  showTable: Vis som tabell
+  showCode: Vis som kode
+  showChart: Vis diagram
+  actions: Handlinger
+  thinking0: Tenker
+  thinking1: Grubler over livets mysterier
+  thinking2: Konsultasjon av sky-orakler
+  thinking3: Googler rasende (bare tuller)
+  thinking4: Justering av nevrale nettverk
+  thinking5: Finner det opp mens jeg går (shh)
+  thinking6: Teller virtuelle sauer
+  thinking7: Kanalisering av Einstein
+  thinking8: Juster algoritmene mine
+  thinking9: Drikker en byte kaffe
+  thinking10: Løper i sirkler virtuelt.
+  thinking11: Lat som om du er opptatt
+  thinking12: Laster vittig comeback
+  thinking13: Laster ned litt visdom
+  thinking14: Koker opp litt datagryte
+  thinking15: Å gjøre AI-ting™
+  thinking16: Hacking av stormaskinen (for moro skyld)
+  thinking17: Stirrer inn i den digitale avgrunnen
+  thinking18: Slenger en kvantemynt
+  thinking19: Les tankene dine (etisk)
+  thinking20: Skjerper sarkasmen min
+  thinking21: Sjekker vibbene mine
+  thinking22: Simulerer dype tanker
+  thinking23: Omkobler kretsene mine
+  thinking24: Polerer krystallprosessoren min
+  example0: Få en oversikt over alle innkjøpsordrene
+  example1: List opp alle kunder som har foretatt et kjøp den siste måneden
+  example2: Vis de 10 beste kundene etter totalt forbruk
+  example3: Gi et sammendrag av tilbakemeldinger fra kunder for det siste året
+  example4: List opp alle innkjøpsordrer som er lagt inn i løpet av den siste uken
+  example5: Oppsummer totalt salg etter region for dette kvartalet
+  example6: Vis gjennomsnittlig bestillingsverdi for hver produktkategori
+  example7: List opp alle produkter som for øyeblikket er utsolgt
+  example8: Vis de 5 bestselgende produktene i kategorien elektronikk
+  example9: Oppgi det totale antallet forskjellige produkter i hvert lager
+  example10: List opp alle ansatte som har sluttet seg til de siste seks månedene
+  example11: Få et sammendrag av ansattes demografi etter avdeling
+  example12: Vis gjennomsnittslønnen for programvareingeniører
+  example13: Gi en kostnadsfordeling på avdeling for siste regnskapsår
+  example14: Oppsummer resultatregnskapet for siste kvartal
+  example15: Vis den totale inntekten generert av hver salgskanal
+  example16: Oppgi en liste over alle aktive markedsføringskampanjer
+  example17: Oppsummer klikkfrekvensen for e-postkampanjer for siste kvartal
+  example18: Vis det totale antallet potensielle salg generert av hver kampanje
+  example19: Liste over alle pågående prosjekter og deres nåværende status
+  example20: Få et sammendrag av prosjektfrister og milepæler for neste kvartal
+  example21: Vis de 5 beste prosjektene etter budsjettfordeling
+  example22: Gi en trendanalyse av nettstedtrafikken de siste seks månedene
+  example23: Oppsummer konverteringsfrekvensene etter trafikkkilde
+  example24: Vis de beste søkeordene i våre søkemotormarkedsføringskampanjer
+  example25: List opp alle transaksjoner som er flagget for revisjon det siste året
+  example26: Oppsummer samsvarsproblemer rapportert etter region
+  example27: Vis en rapport over alle brudd på retningslinjene i det siste kvartalet
+
+sw_KE:
+  title: Soga
+  placeholder: Andika Ujumbe wako Hapa...
+  emptyStateTitle: Nikusaidie Nini?
+  noModelTitle: Hakuna Modeli Inayopatikana
+  noModelDescription: Tafadhali chagua muundo unaopatikana ili kuanza kupiga gumzo na data yako.
+  loadingSuggestions: Inapakia mapendekezo...
+  genericExamplesLabel: Maswali ya mfano (sio maalum kwa hifadhidata yako)
+  databaseSpecificSuggestionsLabel: Hoja zinazopendekezwa kulingana na mpangilio wa hifadhidata yako
+  scratchpadNotSupported: Scratchpad Haitumiki kwa Aina Hii ya Hifadhidata
+  queryMoved: Hoja Imehamishwa hadi kwenye Scratchpad
+  moveToScratchpad: Hamisha hadi kwenye Scratchpad
+  unableToQuery: Imeshindwa Kuuliza. Jaribu Tena.
+  failedToExecuteSQL: Imeshindwa Kutekeleza SQL. Jaribu Tena.
+  actionExecuted: Kitendo Kimetekelezwa
+  noDataReturned: Hakuna Data Iliyorejeshwa.
+  dialogTitle: Hamisha hadi kwenye Scratchpad
+  dialogDescription: Chagua ukurasa gani wa padi ya kuandikia ili kuongeza swali hili.
+  selectPageLabel: Chagua Ukurasa
+  selectPagePlaceholder: Chagua Ukurasa...
+  newPageLabel: Jina la Ukurasa Mpya
+  newPagePlaceholder: Ingiza Jina la Ukurasa
+  createNewPage: Unda Ukurasa Mpya
+  cancel: Ghairi
+  chatHistory: Historia ya Gumzo
+  newChat: Gumzo Mpya
+  deleteChat: Futa Gumzo
+  deleteChatTitle: "Ungependa kufuta {chatName}?"
+  deleteChatDescription: Hii itafuta kabisa gumzo hili na ujumbe wake wote. Kitendo hiki hakiwezi kutenduliwa.
+  continue: Endelea
+  doubleClickEdit: Bofya mara mbili ili kuhariri
+  messageCount: "{count} ujumbe"
+  messageCount_one: "{count} ujumbe"
+  noMessages: Bado hakuna ujumbe
+  confirmExecutionTitle: Thibitisha Utekelezaji
+  confirmExecutionDescription: Operesheni hii itarekebisha hifadhidata yako. Kagua na uthibitishe ili kuendelea.
+  showQuery: Onyesha Hoja
+  hideQuery: Ficha Hoja
+  "yes": Ndiyo
+  "no": Hapana
+  executing: Inatekeleza...
+  queryCancelled: Hoja Imeghairiwa
+  sendMessage: Tuma ujumbe
+  showTable: Onyesha kama meza
+  showCode: Onyesha kama msimbo
+  showChart: Onyesha Chati
+  actions: Vitendo
+  thinking0: Kufikiri
+  thinking1: Kutafakari siri za maisha
+  thinking2: Ushauri wa maneno ya wingu
+  thinking3: Kuvinjari kwa hasira (kutania tu)
+  thinking4: Kupanga mitandao ya neva
+  thinking5: Kuitengeneza ninapoenda (shh)
+  thinking6: Kuhesabu kondoo halisi
+  thinking7: Kuelekeza Einstein
+  thinking8: Kurekebisha algoriti zangu
+  thinking9: Kunywa baiti ya kahawa
+  thinking10: Kukimbia kwenye miduara karibu.
+  thinking11: Kujifanya kuwa na shughuli nyingi
+  thinking12: Inapakia urejesho wa busara
+  thinking13: Inapakua hekima fulani
+  thinking14: Kupika kitoweo cha data
+  thinking15: Kufanya mambo ya AI™
+  thinking16: Kuvinjari mfumo mkuu (kwa kujifurahisha)
+  thinking17: Kuangalia kwenye dimbwi la dijitali
+  thinking18: Kugeuza sarafu ya quantum
+  thinking19: Kusoma akili yako (kimaadili)
+  thinking20: Kuimarisha kejeli zangu
+  thinking21: Kuangalia mitetemo yangu
+  thinking22: Kuiga mawazo ya kina
+  thinking23: Kuweka upya mizunguko yangu
+  thinking24: Kusafisha kichakataji changu cha fuwele
+  example0: Pata muhtasari wa maagizo yote ya ununuzi
+  example1: Orodhesha wateja wote walionunua katika mwezi uliopita
+  example2: Onyesha wateja 10 bora kwa jumla ya matumizi
+  example3: Toa muhtasari wa maoni ya wateja kwa mwaka uliopita
+  example4: Orodhesha maagizo yote ya ununuzi yaliyowekwa ndani ya wiki iliyopita
+  example5: Toa muhtasari wa jumla ya mauzo kwa eneo kwa robo hii
+  example6: Onyesha thamani ya wastani ya agizo kwa kila aina ya bidhaa
+  example7: Orodhesha bidhaa zote ambazo hazina soko kwa sasa
+  example8: Onyesha bidhaa 5 bora zinazouzwa zaidi katika kitengo cha vifaa vya elektroniki
+  example9: Kutoa jumla ya hesabu ya bidhaa mbalimbali katika kila ghala
+  example10: Orodhesha wafanyikazi wote waliojiunga katika miezi sita iliyopita
+  example11: Pata muhtasari wa idadi ya wafanyikazi kulingana na idara
+  example12: Onyesha wastani wa mshahara kwa wahandisi wa programu
+  example13: Kutoa mchanganuo wa gharama kwa idara kwa mwaka wa fedha uliopita
+  example14: Fanya muhtasari wa taarifa ya faida na hasara ya robo ya mwisho
+  example15: Onyesha jumla ya mapato yanayotokana na kila kituo cha mauzo
+  example16: Toa orodha ya kampeni zote zinazoendelea za uuzaji
+  example17: Fanya muhtasari wa viwango vya kubofya vya kampeni za barua pepe kwa robo ya mwisho
+  example18: Onyesha jumla ya idadi ya miongozo inayotolewa na kila kampeni
+  example19: Orodhesha miradi yote inayoendelea na hali yake ya sasa
+  example20: Pata muhtasari wa tarehe za mwisho za mradi na hatua muhimu za robo inayofuata
+  example21: Onyesha miradi 5 bora kwa mgao wa bajeti
+  example22: Toa uchanganuzi wa mwenendo wa trafiki ya tovuti kwa muda wa miezi sita iliyopita
+  example23: Fanya muhtasari wa viwango vya ubadilishaji kulingana na chanzo cha trafiki
+  example24: Onyesha maneno muhimu yanayofanya vizuri katika kampeni zetu za uuzaji za injini tafuti
+  example25: Orodhesha miamala yote iliyoalamishwa kwa ukaguzi katika mwaka uliopita
+  example26: Toa muhtasari wa masuala ya kufuata yaliyoripotiwa na eneo
+  example27: Onyesha ripoti ya ukiukaji wote wa sera katika robo ya mwisho
+
+ta_IN:
+  title: அரட்டை
+  placeholder: உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்...
+  emptyStateTitle: நான் உங்களுக்கு என்ன உதவ முடியும்?
+  noModelTitle: எந்த மாதிரியும் கிடைக்கவில்லை
+  noModelDescription: உங்கள் தரவுடன் அரட்டையடிக்க, கிடைக்கக்கூடிய மாதிரியைத் தேர்வுசெய்யவும்.
+  loadingSuggestions: பரிந்துரைகளை ஏற்றுகிறது...
+  genericExamplesLabel: எடுத்துக்காட்டு வினவல்கள் (உங்கள் தரவுத்தளத்திற்கு குறிப்பிட்டதல்ல)
+  databaseSpecificSuggestionsLabel: உங்கள் தரவுத்தளத் திட்டத்தின் அடிப்படையில் பரிந்துரைக்கப்படும் வினவல்கள்
+  scratchpadNotSupported: இந்த தரவுத்தள வகைக்கு Scratchpad ஆதரிக்கப்படவில்லை
+  queryMoved: வினவல் ஸ்க்ராட்ச்பேடிற்கு நகர்த்தப்பட்டது
+  moveToScratchpad: ஸ்க்ராட்ச்பேடிற்கு நகர்த்தவும்
+  unableToQuery: வினவ முடியவில்லை. மீண்டும் முயற்சிக்கவும்.
+  failedToExecuteSQL: SQL ஐ இயக்குவதில் தோல்வி. மீண்டும் முயற்சிக்கவும்.
+  actionExecuted: செயல் நிறைவேற்றப்பட்டது
+  noDataReturned: தரவு எதுவும் திரும்பப் பெறப்படவில்லை.
+  dialogTitle: ஸ்க்ராட்ச்பேடிற்கு நகர்த்தவும்
+  dialogDescription: இந்த வினவலை எந்த ஸ்கிராட்ச்பேட் பக்கத்தில் சேர்க்க வேண்டும் என்பதை தேர்வு செய்யவும்.
+  selectPageLabel: ஒரு பக்கத்தைத் தேர்ந்தெடுக்கவும்
+  selectPagePlaceholder: ஒரு பக்கத்தைத் தேர்வுசெய்க...
+  newPageLabel: புதிய பக்கத்தின் பெயர்
+  newPagePlaceholder: பக்கத்தின் பெயரை உள்ளிடவும்
+  createNewPage: புதிய பக்கத்தை உருவாக்கவும்
+  cancel: ரத்து செய்
+  chatHistory: அரட்டை வரலாறு
+  newChat: புதிய அரட்டை
+  deleteChat: அரட்டையை நீக்கு
+  deleteChatTitle: "{chatName} நீக்கவா?"
+  deleteChatDescription: இது இந்த அரட்டையையும் அதன் அனைத்து செய்திகளையும் நிரந்தரமாக நீக்கும். இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.
+  continue: தொடரவும்
+  doubleClickEdit: திருத்துவதற்கு இருமுறை கிளிக் செய்யவும்
+  messageCount: "{count} செய்திகள்"
+  messageCount_one: "{count} செய்தி"
+  noMessages: இதுவரை செய்திகள் இல்லை
+  confirmExecutionTitle: செயல்படுத்துவதை உறுதிப்படுத்தவும்
+  confirmExecutionDescription: இந்த செயல்பாடு உங்கள் தரவுத்தளத்தை மாற்றியமைக்கும். தொடர மதிப்பாய்வு செய்து உறுதிப்படுத்தவும்.
+  showQuery: வினவலைக் காட்டு
+  hideQuery: வினவலை மறை
+  "yes": ஆம்
+  "no": இல்லை
+  executing: செயல்படுத்துகிறது...
+  queryCancelled: வினவல் ரத்துசெய்யப்பட்டது
+  sendMessage: செய்தி அனுப்பு
+  showTable: அட்டவணையாகக் காட்டு
+  showCode: குறியீடாகக் காட்டு
+  showChart: விளக்கப்படத்தைக் காட்டு
+  actions: செயல்கள்
+  thinking0: யோசிக்கிறேன்
+  thinking1: வாழ்க்கையின் மர்மங்களைச் சிந்தித்தல்
+  thinking2: மேகம் ஆரக்கிள்ஸ் ஆலோசனை
+  thinking3: ஆவேசமாக கூகுள் செய்தல் (விளையாடுகிறேன்)
+  thinking4: நரம்பியல் நெட்வொர்க்குகளை சீரமைத்தல்
+  thinking5: நான் செல்லும்போது அதை உருவாக்குகிறேன் (ஷ்ஷ்)
+  thinking6: மெய்நிகர் ஆடுகளை எண்ணுதல்
+  thinking7: ஐன்ஸ்டீனை சேனல் செய்தல்
+  thinking8: எனது அல்காரிதம்களை சரிசெய்கிறது
+  thinking9: ஒரு பைட் காபி குடிப்பது
+  thinking10: கிட்டத்தட்ட வட்டங்களில் இயங்குகிறது.
+  thinking11: பிஸியாக இருப்பது போல் நடிக்கிறார்
+  thinking12: நகைச்சுவையான மறுபிரவேசத்தை ஏற்றுகிறது
+  thinking13: சில ஞானத்தைப் பதிவிறக்குகிறது
+  thinking14: சில டேட்டா ஸ்டூவை சமைப்பது
+  thinking15: AI விஷயங்களைச் செய்தல்™
+  thinking16: மெயின்பிரேமை ஹேக்கிங் (வேடிக்கைக்காக)
+  thinking17: டிஜிட்டல் படுகுழியில் வெறித்துப் பார்க்கிறது
+  thinking18: குவாண்டம் நாணயத்தை புரட்டுதல்
+  thinking19: உங்கள் மனதைப் படித்தல் (நெறிமுறை)
+  thinking20: என் கிண்டலைக் கூர்மையாக்குகிறது
+  thinking21: எனது அதிர்வுகளை சரிபார்க்கிறது
+  thinking22: ஆழ்ந்த சிந்தனையை உருவகப்படுத்துதல்
+  thinking23: எனது சுற்றுகளை மீண்டும் இணைக்கிறது
+  thinking24: எனது படிக செயலியை மெருகூட்டுகிறது
+  example0: அனைத்து கொள்முதல் ஆர்டர்களின் சுருக்கத்தைப் பெறுங்கள்
+  example1: கடந்த மாதத்தில் வாங்கிய அனைத்து வாடிக்கையாளர்களையும் பட்டியலிடுங்கள்
+  example2: மொத்த செலவின் அடிப்படையில் முதல் 10 வாடிக்கையாளர்களைக் காட்டு
+  example3: கடந்த ஆண்டிற்கான வாடிக்கையாளர் கருத்துகளின் சுருக்கத்தை வழங்கவும்
+  example4: கடந்த வாரத்தில் செய்யப்பட்ட அனைத்து கொள்முதல் ஆர்டர்களையும் பட்டியலிடுங்கள்
+  example5: இந்த காலாண்டிற்கான மொத்த விற்பனையை பிராந்திய வாரியாக சுருக்கவும்
+  example6: ஒவ்வொரு தயாரிப்பு வகைக்கும் சராசரி ஆர்டர் மதிப்பைக் காட்டு
+  example7: தற்போது கையிருப்பில் இல்லாத அனைத்து தயாரிப்புகளையும் பட்டியலிடுங்கள்
+  example8: எலக்ட்ரானிக்ஸ் பிரிவில் அதிகம் விற்பனையாகும் முதல் 5 தயாரிப்புகளைக் காட்டு
+  example9: ஒவ்வொரு கிடங்கிலும் உள்ள பல்வேறு பொருட்களின் மொத்த எண்ணிக்கையை வழங்கவும்
+  example10: கடந்த ஆறு மாதங்களில் சேர்ந்த அனைத்து ஊழியர்களையும் பட்டியலிடுங்கள்
+  example11: துறை வாரியாக பணியாளர் புள்ளிவிவரங்களின் சுருக்கத்தைப் பெறுங்கள்
+  example12: மென்பொருள் பொறியாளர்களுக்கான சராசரி சம்பளத்தைக் காட்டு
+  example13: கடந்த நிதியாண்டில் துறை வாரியாக செலவினங்களின் தொகுப்பை வழங்கவும்
+  example14: கடந்த காலாண்டிற்கான லாபம் மற்றும் நஷ்ட அறிக்கையை சுருக்கவும்
+  example15: ஒவ்வொரு விற்பனை சேனலின் மொத்த வருவாயைக் காட்டு
+  example16: அனைத்து செயலில் உள்ள சந்தைப்படுத்தல் பிரச்சாரங்களின் பட்டியலை வழங்கவும்
+  example17: கடந்த காலாண்டிற்கான மின்னஞ்சல் பிரச்சாரங்களின் கிளிக்-த்ரூ விகிதங்களைச் சுருக்கவும்
+  example18: ஒவ்வொரு பிரச்சாரத்திலும் உருவாக்கப்படும் மொத்த லீட்களின் எண்ணிக்கையைக் காட்டு
+  example19: நடந்து கொண்டிருக்கும் திட்டங்கள் மற்றும் அவற்றின் தற்போதைய நிலையை பட்டியலிடுங்கள்
+  example20: அடுத்த காலாண்டிற்கான திட்ட காலக்கெடு மற்றும் மைல்கற்களின் சுருக்கத்தைப் பெறுங்கள்
+  example21: பட்ஜெட் ஒதுக்கீடு மூலம் முதல் 5 திட்டங்களைக் காட்டு
+  example22: கடந்த ஆறு மாதங்களாக இணையதள போக்குவரத்தின் போக்கு பகுப்பாய்வை வழங்கவும்
+  example23: போக்குவரத்து மூலத்தின் மூலம் மாற்று விகிதங்களைச் சுருக்கவும்
+  example24: எங்கள் தேடுபொறி மார்க்கெட்டிங் பிரச்சாரங்களில் சிறந்த செயல்திறன் கொண்ட முக்கிய வார்த்தைகளைக் காட்டு
+  example25: கடந்த ஆண்டில் தணிக்கைக்காகக் கொடியிடப்பட்ட அனைத்து பரிவர்த்தனைகளையும் பட்டியலிடுங்கள்
+  example26: பிராந்தியத்தால் புகாரளிக்கப்பட்ட இணக்கச் சிக்கல்களைச் சுருக்கவும்
+  example27: கடந்த காலாண்டில் நடந்த அனைத்து கொள்கை மீறல்களின் அறிக்கையையும் காட்டு
+
+th_TH:
+  title: แชท
+  placeholder: พิมพ์ข้อความของคุณที่นี่...
+  emptyStateTitle: ฉันสามารถช่วยอะไรคุณได้?
+  noModelTitle: ไม่มีรุ่นที่มีจำหน่าย
+  noModelDescription: โปรดเลือกรุ่นที่พร้อมใช้งานเพื่อเริ่มสนทนากับข้อมูลของคุณ
+  loadingSuggestions: กำลังโหลดคำแนะนำ...
+  genericExamplesLabel: ตัวอย่างแบบสอบถาม (ไม่เฉพาะเจาะจงกับฐานข้อมูลของคุณ)
+  databaseSpecificSuggestionsLabel: แบบสอบถามที่แนะนำตามสคีมาฐานข้อมูลของคุณ
+  scratchpadNotSupported: ไม่รองรับ Scratchpad สำหรับฐานข้อมูลประเภทนี้
+  queryMoved: แบบสอบถามถูกย้ายไปยัง Scratchpad
+  moveToScratchpad: ย้ายไปที่ Scratchpad
+  unableToQuery: ไม่สามารถสืบค้นได้ ลองอีกครั้ง
+  failedToExecuteSQL: ล้มเหลวในการดำเนินการ SQL ลองอีกครั้ง
+  actionExecuted: ดำเนินการแล้ว
+  noDataReturned: ไม่มีการส่งคืนข้อมูล
+  dialogTitle: ย้ายไปที่ Scratchpad
+  dialogDescription: เลือกหน้า Scratchpad ที่จะเพิ่มคำค้นหานี้
+  selectPageLabel: เลือกเพจ
+  selectPagePlaceholder: เลือกเพจ...
+  newPageLabel: ชื่อเพจใหม่
+  newPagePlaceholder: ป้อนชื่อเพจ
+  createNewPage: สร้างเพจใหม่
+  cancel: ยกเลิก
+  chatHistory: ประวัติการแชท
+  newChat: แชทใหม่
+  deleteChat: ลบแชท
+  deleteChatTitle: "ลบ {chatName}?"
+  deleteChatDescription: การดำเนินการนี้จะลบแชทนี้และข้อความทั้งหมดอย่างถาวร การดำเนินการนี้ไม่สามารถยกเลิกได้
+  continue: ดำเนินการต่อ
+  doubleClickEdit: ดับเบิลคลิกเพื่อแก้ไข
+  messageCount: "{count} ข้อความ"
+  messageCount_one: "{count} ข้อความ"
+  noMessages: ยังไม่มีข้อความ
+  confirmExecutionTitle: ยืนยันการดำเนินการ
+  confirmExecutionDescription: การดำเนินการนี้จะแก้ไขฐานข้อมูลของคุณ ตรวจสอบและยืนยันเพื่อดำเนินการต่อ
+  showQuery: แสดงแบบสอบถาม
+  hideQuery: ซ่อนแบบสอบถาม
+  "yes": ใช่
+  "no": เลขที่
+  executing: กำลังดำเนินการ...
+  queryCancelled: ยกเลิกแบบสอบถามแล้ว
+  sendMessage: ส่งข้อความ
+  showTable: แสดงเป็นตาราง
+  showCode: แสดงเป็นรหัส
+  showChart: แสดงแผนภูมิ
+  actions: การดำเนินการ
+  thinking0: กำลังคิด
+  thinking1: ไตร่ตรองถึงความลึกลับของชีวิต
+  thinking2: ให้คำปรึกษาเกี่ยวกับ cloud oracles
+  thinking3: กูเกิลอย่างแรง (ล้อเล่นนะ)
+  thinking4: การจัดแนวโครงข่ายประสาทเทียม
+  thinking5: ทำมันขึ้นมาในขณะที่ฉันไป (ชู่ว)
+  thinking6: นับแกะเสมือนจริง
+  thinking7: ช่องทางไอน์สไตน์
+  thinking8: ปรับแต่งอัลกอริธึมของฉัน
+  thinking9: ดื่มกาแฟไปหนึ่งไบต์
+  thinking10: วิ่งเป็นวงกลมแทบ
+  thinking11: แกล้งทำเป็นยุ่ง
+  thinking12: กำลังโหลดการกลับมาอย่างมีไหวพริบ
+  thinking13: ดาวน์โหลดภูมิปัญญาบางอย่าง
+  thinking14: กำลังปรุงสตูว์ข้อมูลอยู่
+  thinking15: ทำสิ่ง AI™
+  thinking16: การแฮ็กเมนเฟรม (เพื่อความสนุกสนาน)
+  thinking17: เหม่อมองไปสู่ห้วงแห่งดิจิทัล
+  thinking18: พลิกเหรียญควอนตัม
+  thinking19: อ่านใจ (อย่างมีจริยธรรม)
+  thinking20: เหลาการเสียดสีของฉัน
+  thinking21: กำลังตรวจสอบความรู้สึกของฉัน
+  thinking22: จำลองความคิดเชิงลึก
+  thinking23: การให้รางวัลวงจรของฉัน
+  thinking24: กำลังขัดโปรเซสเซอร์คริสตัลของฉัน
+  example0: รับข้อมูลสรุปการสั่งซื้อทั้งหมด
+  example1: แสดงรายการลูกค้าทั้งหมดที่ทำการซื้อในเดือนที่ผ่านมา
+  example2: แสดงลูกค้า 10 อันดับแรกตามการใช้จ่ายทั้งหมด
+  example3: จัดทำสรุปผลตอบรับของลูกค้าในปีที่ผ่านมา
+  example4: แสดงรายการคำสั่งซื้อทั้งหมดที่วางไว้ภายในสัปดาห์ที่ผ่านมา
+  example5: สรุปยอดขายรวมตามภูมิภาคสำหรับไตรมาสนี้
+  example6: แสดงมูลค่าการสั่งซื้อเฉลี่ยของผลิตภัณฑ์แต่ละประเภท
+  example7: แสดงรายการสินค้าทั้งหมดที่หมดสต๊อกในปัจจุบัน
+  example8: แสดงสินค้าขายดี 5 อันดับแรกในหมวดอิเล็กทรอนิกส์
+  example9: ระบุจำนวนรวมของผลิตภัณฑ์ที่แตกต่างกันในแต่ละคลังสินค้า
+  example10: รายชื่อพนักงานทั้งหมดที่เข้าร่วมในช่วงหกเดือนที่ผ่านมา
+  example11: รับข้อมูลสรุปข้อมูลประชากรของพนักงานแยกตามแผนก
+  example12: แสดงเงินเดือนโดยเฉลี่ยสำหรับวิศวกรซอฟต์แวร์
+  example13: จัดทำรายละเอียดค่าใช้จ่ายตามแผนกสำหรับปีการเงินล่าสุด
+  example14: สรุปงบกำไรขาดทุนสำหรับไตรมาสสุดท้าย
+  example15: แสดงรายได้รวมที่เกิดจากแต่ละช่องทางการขาย
+  example16: ระบุรายการแคมเปญการตลาดที่ใช้งานอยู่ทั้งหมด
+  example17: สรุปอัตราการคลิกผ่านของแคมเปญอีเมลสำหรับไตรมาสสุดท้าย
+  example18: แสดงจำนวนลูกค้าเป้าหมายทั้งหมดที่สร้างโดยแต่ละแคมเปญ
+  example19: แสดงรายการโครงการที่กำลังดำเนินอยู่ทั้งหมดและสถานะปัจจุบัน
+  example20: รับสรุปกำหนดเวลาโครงการและเหตุการณ์สำคัญสำหรับไตรมาสถัดไป
+  example21: แสดง 5 อันดับแรกของโครงการตามการจัดสรรงบประมาณ
+  example22: จัดทำการวิเคราะห์แนวโน้มการเข้าชมเว็บไซต์ในช่วงหกเดือนที่ผ่านมา
+  example23: สรุปอัตราการแปลงตามแหล่งที่มาของการเข้าชม
+  example24: แสดงคำหลักที่มีประสิทธิภาพสูงสุดในแคมเปญการตลาดผ่านเครื่องมือค้นหาของเรา
+  example25: แสดงรายการธุรกรรมทั้งหมดที่ถูกตั้งค่าสถานะสำหรับการตรวจสอบในปีที่แล้ว
+  example26: สรุปประเด็นการปฏิบัติตามข้อกำหนดที่รายงานตามภูมิภาค
+  example27: แสดงรายงานการละเมิดนโยบายทั้งหมดในไตรมาสสุดท้าย
+
+tr_TR:
+  title: Sohbet
+  placeholder: Mesajınızı Buraya Yazın...
+  emptyStateTitle: Size Ne Konuda Yardımcı Olabilirim?
+  noModelTitle: Mevcut Model Yok
+  noModelDescription: Lütfen verilerinizle sohbet etmeye başlamak için uygun bir model seçin.
+  loadingSuggestions: Öneriler yükleniyor...
+  genericExamplesLabel: Örnek sorgular (veritabanınıza özel değil)
+  databaseSpecificSuggestionsLabel: Veritabanı şemanıza göre önerilen sorgular
+  scratchpadNotSupported: Scratchpad Bu Veritabanı Türü İçin Desteklenmiyor
+  queryMoved: Sorgu Scratchpad'e Taşındı
+  moveToScratchpad: Scratchpad'e taşı
+  unableToQuery: Sorgulanamıyor. Tekrar deneyin.
+  failedToExecuteSQL: SQL yürütülemedi. Tekrar deneyin.
+  actionExecuted: İşlem Gerçekleştirildi
+  noDataReturned: Hiçbir Veri Döndürülmedi.
+  dialogTitle: Scratchpad'e taşı
+  dialogDescription: Bu sorgunun hangi karalama defteri sayfasına ekleneceğini seçin.
+  selectPageLabel: Bir Sayfa Seçin
+  selectPagePlaceholder: Bir Sayfa Seçin...
+  newPageLabel: Yeni Sayfa Adı
+  newPagePlaceholder: Sayfa Adını Girin
+  createNewPage: Yeni Sayfa Oluştur
+  cancel: İptal etmek
+  chatHistory: Sohbet Geçmişi
+  newChat: Yeni Sohbet
+  deleteChat: Sohbeti Sil
+  deleteChatTitle: "{chatName} silinsin mi?"
+  deleteChatDescription: Bu işlem, bu sohbeti ve tüm mesajlarını kalıcı olarak silecektir. Bu eylem geri alınamaz.
+  continue: Devam etmek
+  doubleClickEdit: Düzenlemek için çift tıklayın
+  messageCount: "{count} mesajlar"
+  messageCount_one: "{count} mesaj"
+  noMessages: Henüz mesaj yok
+  confirmExecutionTitle: Yürütmeyi Onayla
+  confirmExecutionDescription: Bu işlem veritabanınızı değiştirecektir. Devam etmek için inceleyin ve onaylayın.
+  showQuery: Sorguyu Göster
+  hideQuery: Sorguyu Gizle
+  "yes": Evet
+  "no": HAYIR
+  executing: Yürütülüyor...
+  queryCancelled: Sorgu İptal Edildi
+  sendMessage: Mesaj gönder
+  showTable: Tablo olarak göster
+  showCode: Kod olarak göster
+  showChart: Grafiği Göster
+  actions: Eylemler
+  thinking0: Düşünme
+  thinking1: Hayatın gizemlerini düşünmek
+  thinking2: Bulut kahinlerine danışma
+  thinking3: Öfkeyle Google'da araştırıyorum (şaka yapıyorum)
+  thinking4: Sinir ağlarını hizalama
+  thinking5: Giderken uyduruyorum (şşşt)
+  thinking6: Sanal koyun sayma
+  thinking7: Einstein'ı Kanalize Etmek
+  thinking8: Algoritmalarımı ayarlama
+  thinking9: Bir byte kahve içmek
+  thinking10: Neredeyse daireler çizerek koşuyorum.
+  thinking11: Meşgul gibi davranmak
+  thinking12: Esprili geri dönüş yükleniyor
+  thinking13: Biraz bilgelik indiriyorum
+  thinking14: Biraz veri çorbası hazırlamak
+  thinking15: AI işleri yapmak™
+  thinking16: Ana bilgisayarı hacklemek (eğlence için)
+  thinking17: Dijital uçuruma bakmak
+  thinking18: Kuantum parasını çevirmek
+  thinking19: Aklınızı okumak (etik olarak)
+  thinking20: Alaycılığımı keskinleştiriyorum
+  thinking21: Titreşimlerimi kontrol ediyorum
+  thinking22: Derin düşünceyi simüle etmek
+  thinking23: Devrelerimi yeniden kablolama
+  thinking24: Kristal işlemcimi parlatıyorum
+  example0: Tüm satın alma siparişlerinin özetini alın
+  example1: Geçen ay satın alma işlemi gerçekleştiren tüm müşterileri listeleyin
+  example2: Toplam harcamaya göre ilk 10 müşteriyi göster
+  example3: Geçen yılın müşteri geri bildirimlerinin bir özetini sağlayın
+  example4: Geçen hafta verilen tüm satın alma siparişlerini listeleyin
+  example5: Bu çeyreğe ait toplam satışları bölgelere göre özetleyin
+  example6: Her ürün kategorisi için ortalama sipariş değerini göster
+  example7: Şu anda stokta olmayan tüm ürünleri listeleyin
+  example8: Elektronik kategorisinde en çok satan 5 ürünü göster
+  example9: Her depodaki farklı ürünlerin toplam sayısını sağlayın
+  example10: Son altı ayda katılan tüm çalışanları listeleyin
+  example11: Departmanlara göre çalışan demografisinin özetini alın
+  example12: Yazılım mühendislerinin ortalama maaşını göster
+  example13: Son mali yıla ait harcamaların departmanlara göre dökümünü sağlayın
+  example14: Son çeyreğe ait kar ve zarar tablosunu özetleyin
+  example15: Her satış kanalının ürettiği toplam geliri gösterin
+  example16: Tüm aktif pazarlama kampanyalarının bir listesini sağlayın
+  example17: Son çeyreğe ait e-posta kampanyalarının tıklama oranlarını özetleyin
+  example18: Her kampanyanın oluşturduğu toplam potansiyel müşteri sayısını göster
+  example19: Devam eden tüm projeleri ve mevcut durumlarını listeleyin
+  example20: Gelecek çeyreğe ait proje son tarihlerinin ve kilometre taşlarının özetini alın
+  example21: Bütçe tahsisine göre ilk 5 projeyi göster
+  example22: Son altı aydaki web sitesi trafiğinin trend analizini sağlayın
+  example23: Dönüşüm oranlarını trafik kaynağına göre özetleyin
+  example24: Arama motoru pazarlamacılığı kampanyalarımızda en iyi performansı gösteren anahtar kelimeleri gösterin
+  example25: Geçen yıl denetim için işaretlenen tüm işlemleri listeleyin
+  example26: Bölgeye göre bildirilen uyumluluk sorunlarını özetleyin
+  example27: Son çeyrekteki tüm politika ihlallerinin raporunu göster
+
+uk_UA:
+  title: Чат
+  placeholder: Введіть своє повідомлення тут...
+  emptyStateTitle: Чим я можу вам допомогти?
+  noModelTitle: Немає доступних моделей
+  noModelDescription: Будь ласка, виберіть доступну модель, щоб почати спілкуватися в чаті зі своїми даними.
+  loadingSuggestions: Завантаження пропозицій...
+  genericExamplesLabel: Приклади запитів (не специфічні для вашої бази даних)
+  databaseSpecificSuggestionsLabel: Запропоновані запити на основі вашої схеми бази даних
+  scratchpadNotSupported: Scratchpad не підтримується для цього типу бази даних
+  queryMoved: Запит переміщено в Scratchpad
+  moveToScratchpad: Перейти до Scratchpad
+  unableToQuery: Не вдається зробити запит. Спробуйте знову.
+  failedToExecuteSQL: Не вдалося виконати SQL. Спробуйте знову.
+  actionExecuted: Дія виконана
+  noDataReturned: Дані не повернуто.
+  dialogTitle: Перейти до Scratchpad
+  dialogDescription: Виберіть, до якої сторінки блокнота додати цей запит.
+  selectPageLabel: Виберіть сторінку
+  selectPagePlaceholder: Виберіть сторінку...
+  newPageLabel: Нова назва сторінки
+  newPagePlaceholder: Введіть назву сторінки
+  createNewPage: Створити нову сторінку
+  cancel: Скасувати
+  chatHistory: Історія чату
+  newChat: Новий чат
+  deleteChat: Видалити чат
+  deleteChatTitle: "Видалити {chatName}?"
+  deleteChatDescription: Це назавжди видалить цей чат і всі його повідомлення. Цю дію не можна скасувати.
+  continue: Продовжити
+  doubleClickEdit: Двічі клацніть, щоб редагувати
+  messageCount: "{count} повідомлень"
+  messageCount_one: "{count} повідомлення"
+  noMessages: Поки що немає повідомлень
+  confirmExecutionTitle: Підтвердити виконання
+  confirmExecutionDescription: Ця операція змінить вашу базу даних. Перегляньте та підтвердьте, щоб продовжити.
+  showQuery: Показати запит
+  hideQuery: Приховати запит
+  "yes": так
+  "no": немає
+  executing: Виконання...
+  queryCancelled: Запит скасовано
+  sendMessage: Надіслати повідомлення
+  showTable: Показати як таблицю
+  showCode: Показати як код
+  showChart: Показати діаграму
+  actions: Дії
+  thinking0: Мислення
+  thinking1: Роздум над таємницями життя
+  thinking2: Консультування хмарних оракулів
+  thinking3: Несамовито гуглити (жартую)
+  thinking4: Вирівнювання нейронних мереж
+  thinking5: Вигадую все на ходу (тсс)
+  thinking6: Підрахунок віртуальних овець
+  thinking7: Ченнелінг Ейнштейна
+  thinking8: Налаштування моїх алгоритмів
+  thinking9: Випив байт кави
+  thinking10: Віртуальний біг по колу.
+  thinking11: Прикидаючись зайнятим
+  thinking12: Завантаження дотепного повернення
+  thinking13: Завантаження мудрості
+  thinking14: Готуємо рагу з даними
+  thinking15: Роблячи речі AI™
+  thinking16: Злом мейнфрейму (для розваги)
+  thinking17: Вдивляючись у цифрову безодню
+  thinking18: Підкидання квантової монети
+  thinking19: Читання ваших думок (етично)
+  thinking20: Загострюючи мій сарказм
+  thinking21: Перевіряю свої настрої
+  thinking22: Імітація глибокої думки
+  thinking23: Переробка моїх схем
+  thinking24: Полірую мій кристалічний процесор
+  example0: Отримати зведення всіх замовлень на купівлю
+  example1: Перелічіть усіх клієнтів, які зробили покупку за останній місяць
+  example2: Показати 10 найбільших клієнтів за загальними витратами
+  example3: Надайте підсумок відгуків клієнтів за минулий рік
+  example4: Перелічіть усі замовлення на купівлю, розміщені протягом останнього тижня
+  example5: Підсумуйте загальні продажі по регіонах за цей квартал
+  example6: Показати середню вартість замовлення для кожної категорії товару
+  example7: Перелічіть усі товари, яких зараз немає в наявності
+  example8: Показати 5 найбільш продаваних товарів у категорії електроніка
+  example9: Надайте загальну кількість різних товарів на кожному складі
+  example10: Перелічіть усіх працівників, які приєдналися за останні шість місяців
+  example11: Отримайте підсумок демографічних показників співробітників за відділами
+  example12: Покажіть середню зарплату інженерів-програмістів
+  example13: Надайте розбивку витрат за відділами за останній фінансовий рік
+  example14: Узагальніть звіт про прибутки та збитки за останній квартал
+  example15: Показати загальний дохід, отриманий кожним каналом продажів
+  example16: Надайте список усіх активних маркетингових кампаній
+  example17: Узагальніть показники кліків кампаній електронною поштою за останній квартал
+  example18: Показати загальну кількість потенційних клієнтів, створених кожною кампанією
+  example19: Перелічіть усі поточні проекти та їх поточний статус
+  example20: Отримайте зведення про кінцеві терміни та основні етапи проекту на наступний квартал
+  example21: Показати 5 найкращих проектів за розподілом бюджету
+  example22: Надайте аналіз тенденцій відвідуваності веб-сайту за останні шість місяців
+  example23: Узагальніть коефіцієнти конверсії за джерелом трафіку
+  example24: Показуйте найефективніші ключові слова в наших маркетингових кампаніях у пошукових системах
+  example25: Перелічіть усі транзакції, позначені для аудиту за останній рік
+  example26: Узагальніть проблеми відповідності, про які повідомлено за регіонами
+  example27: Показати звіт про всі порушення політики за останній квартал
+
+ur_PK:
+  title: گپ شپ
+  placeholder: اپنا پیغام یہاں ٹائپ کریں...
+  emptyStateTitle: میں آپ کی کیا مدد کر سکتا ہوں؟
+  noModelTitle: کوئی ماڈل دستیاب نہیں ہے۔
+  noModelDescription: براہ کرم اپنے ڈیٹا کے ساتھ چیٹنگ شروع کرنے کے لیے دستیاب ماڈل کا انتخاب کریں۔
+  loadingSuggestions: تجاویز لوڈ ہو رہی ہیں...
+  genericExamplesLabel: مثال کے سوالات (آپ کے ڈیٹا بیس کے لیے مخصوص نہیں)
+  databaseSpecificSuggestionsLabel: آپ کے ڈیٹا بیس اسکیما کی بنیاد پر تجویز کردہ سوالات
+  scratchpadNotSupported: سکریچ پیڈ اس ڈیٹا بیس کی قسم کے لیے تعاون یافتہ نہیں ہے۔
+  queryMoved: استفسار سکریچ پیڈ پر منتقل کر دیا گیا۔
+  moveToScratchpad: سکریچ پیڈ پر جائیں۔
+  unableToQuery: استفسار کرنے سے قاصر۔ دوبارہ کوشش کریں۔
+  failedToExecuteSQL: ایس کیو ایل پر عمل درآمد کرنے میں ناکام۔ دوبارہ کوشش کریں۔
+  actionExecuted: کارروائی عمل میں لائی گئی۔
+  noDataReturned: کوئی ڈیٹا واپس نہیں کیا گیا۔
+  dialogTitle: سکریچ پیڈ پر جائیں۔
+  dialogDescription: اس استفسار کو شامل کرنے کے لیے کون سا سکریچ پیڈ صفحہ منتخب کریں۔
+  selectPageLabel: ایک صفحہ منتخب کریں۔
+  selectPagePlaceholder: ایک صفحہ منتخب کریں...
+  newPageLabel: صفحہ کا نیا نام
+  newPagePlaceholder: صفحہ کا نام درج کریں۔
+  createNewPage: نیا صفحہ بنائیں
+  cancel: منسوخ کریں۔
+  chatHistory: چیٹ کی سرگزشت
+  newChat: نئی چیٹ
+  deleteChat: چیٹ کو حذف کریں۔
+  deleteChatTitle: "حذف کریں {chatName}؟"
+  deleteChatDescription: اس سے یہ چیٹ اور اس کے تمام پیغامات مستقل طور پر حذف ہو جائیں گے۔ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔
+  continue: جاری رکھیں
+  doubleClickEdit: ترمیم کرنے کے لیے ڈبل کلک کریں۔
+  messageCount: "{count} پیغامات"
+  messageCount_one: "{count} پیغام"
+  noMessages: ابھی تک کوئی پیغامات نہیں ہیں۔
+  confirmExecutionTitle: عملدرآمد کی تصدیق کریں۔
+  confirmExecutionDescription: یہ آپریشن آپ کے ڈیٹا بیس میں ترمیم کرے گا۔ جائزہ لیں اور آگے بڑھنے کے لیے تصدیق کریں۔
+  showQuery: استفسار دکھائیں۔
+  hideQuery: استفسار چھپائیں۔
+  "yes": جی ہاں
+  "no": نہیں
+  executing: عملدرآمد کر رہا ہے...
+  queryCancelled: استفسار منسوخ کر دیا گیا۔
+  sendMessage: پیغام بھیجیں۔
+  showTable: ٹیبل کے طور پر دکھائیں۔
+  showCode: کوڈ کے بطور دکھائیں۔
+  showChart: چارٹ دکھائیں۔
+  actions: اعمال
+  thinking0: سوچنا
+  thinking1: زندگی کے اسرار پر غور کرنا
+  thinking2: کلاؤڈ اوریکلز سے مشورہ کرنا
+  thinking3: غصے سے گوگل کرنا (صرف مذاق کر رہا ہے)
+  thinking4: عصبی نیٹ ورکس کو سیدھ میں لانا
+  thinking5: جیسا کہ میں جاتا ہوں اسے بنا رہا ہوں (shh)
+  thinking6: مجازی بھیڑوں کی گنتی
+  thinking7: آئن سٹائن کو چینل کرنا
+  thinking8: میرے الگورتھم کو ٹیون کرنا
+  thinking9: ایک بائٹ کافی پینا
+  thinking10: عملی طور پر حلقوں میں چل رہا ہے۔
+  thinking11: مصروف ہونے کا بہانہ کرنا
+  thinking12: دلچسپ واپسی لوڈ ہو رہی ہے۔
+  thinking13: کچھ حکمت ڈاؤن لوڈ کر رہا ہے۔
+  thinking14: کچھ ڈیٹا سٹو پکانا
+  thinking15: AI چیزیں کرنا™
+  thinking16: مین فریم کو ہیک کرنا (تفریح ​​کے لیے)
+  thinking17: ڈیجیٹل پاتال میں گھور رہے ہیں۔
+  thinking18: کوانٹم سکے کو پلٹنا
+  thinking19: اپنے دماغ کو پڑھنا (اخلاقی طور پر)
+  thinking20: میرے طنز کو تیز کرنا
+  thinking21: میری وائبز چیک کر رہا ہوں۔
+  thinking22: گہری سوچ کی نقالی
+  thinking23: میرے سرکٹس کو دوبارہ تیار کرنا
+  thinking24: میرے کرسٹل پروسیسر کو پالش کر رہا ہوں۔
+  example0: خریداری کے تمام آرڈرز کا خلاصہ حاصل کریں۔
+  example1: ان تمام صارفین کی فہرست بنائیں جنہوں نے پچھلے مہینے میں خریداری کی ہے۔
+  example2: کل اخراجات کے لحاظ سے سرفہرست 10 صارفین دکھائیں۔
+  example3: گزشتہ سال کے لیے صارفین کے تاثرات کا خلاصہ فراہم کریں۔
+  example4: پچھلے ہفتے کے اندر دیے گئے تمام خریداری کے آرڈرز کی فہرست بنائیں
+  example5: اس سہ ماہی کے لیے علاقے کے لحاظ سے کل فروخت کا خلاصہ کریں۔
+  example6: ہر پروڈکٹ کے زمرے کے لیے آرڈر کی اوسط قیمت دکھائیں۔
+  example7: ان تمام پروڈکٹس کی فہرست بنائیں جو اس وقت اسٹاک سے باہر ہیں۔
+  example8: الیکٹرانکس کے زمرے میں سب سے زیادہ فروخت ہونے والی 5 مصنوعات دکھائیں۔
+  example9: ہر گودام میں مختلف مصنوعات کی کل گنتی فراہم کریں۔
+  example10: ان تمام ملازمین کی فہرست بنائیں جنہوں نے پچھلے چھ ماہ میں شمولیت اختیار کی۔
+  example11: محکمہ کے لحاظ سے ملازمین کی آبادی کا خلاصہ حاصل کریں۔
+  example12: سافٹ ویئر انجینئرز کی اوسط تنخواہ دکھائیں۔
+  example13: پچھلے مالی سال کے محکمے کے حساب سے اخراجات کا بریک ڈاؤن فراہم کریں۔
+  example14: پچھلی سہ ماہی کے منافع اور نقصان کے بیان کا خلاصہ کریں۔
+  example15: ہر سیلز چینل کے ذریعے پیدا ہونے والی کل آمدنی دکھائیں۔
+  example16: تمام فعال مارکیٹنگ مہمات کی فہرست فراہم کریں۔
+  example17: پچھلی سہ ماہی کے لیے ای میل مہمات کے کلک کے ذریعے کی شرحوں کا خلاصہ کریں۔
+  example18: ہر مہم سے پیدا ہونے والی لیڈز کی کل تعداد دکھائیں۔
+  example19: تمام جاری منصوبوں اور ان کی موجودہ صورتحال کی فہرست بنائیں
+  example20: اگلی سہ ماہی کے لیے پروجیکٹ کی آخری تاریخ اور سنگ میل کا خلاصہ حاصل کریں۔
+  example21: بجٹ مختص کے لحاظ سے سرفہرست 5 منصوبے دکھائیں۔
+  example22: پچھلے چھ مہینوں سے ویب سائٹ ٹریفک کا رجحان تجزیہ فراہم کریں۔
+  example23: ٹریفک کے ذریعہ کے ذریعہ تبادلوں کی شرحوں کا خلاصہ کریں۔
+  example24: ہماری سرچ انجن کی مارکیٹنگ مہمات میں اعلیٰ کارکردگی کا مظاہرہ کرنے والے مطلوبہ الفاظ دکھائیں۔
+  example25: پچھلے سال میں آڈٹ کے لیے جھنڈا لگائے گئے تمام لین دین کی فہرست بنائیں
+  example26: علاقے کے لحاظ سے رپورٹ کردہ تعمیل کے مسائل کا خلاصہ کریں۔
+  example27: پچھلی سہ ماہی میں پالیسی کی تمام خلاف ورزیوں کی رپورٹ دکھائیں۔
+
+vi_VN:
+  title: Trò chuyện
+  placeholder: Nhập tin nhắn của bạn ở đây...
+  emptyStateTitle: Tôi có thể giúp gì cho bạn?
+  noModelTitle: Không có mẫu nào
+  noModelDescription: Vui lòng chọn một mẫu có sẵn để bắt đầu trò chuyện với dữ liệu của bạn.
+  loadingSuggestions: Đang tải đề xuất...
+  genericExamplesLabel: Truy vấn mẫu (không cụ thể cho cơ sở dữ liệu của bạn)
+  databaseSpecificSuggestionsLabel: Các truy vấn được đề xuất dựa trên lược đồ cơ sở dữ liệu của bạn
+  scratchpadNotSupported: Scratchpad không được hỗ trợ cho loại cơ sở dữ liệu này
+  queryMoved: Truy vấn đã được chuyển sang Scratchpad
+  moveToScratchpad: Di chuyển tới Scratchpad
+  unableToQuery: Không thể truy vấn. Hãy thử lại.
+  failedToExecuteSQL: Không thể thực thi SQL. Hãy thử lại.
+  actionExecuted: Hành động đã thực hiện
+  noDataReturned: Không có dữ liệu nào được trả lại.
+  dialogTitle: Di chuyển tới Scratchpad
+  dialogDescription: Chọn trang Scratchpad để thêm truy vấn này vào.
+  selectPageLabel: Chọn một trang
+  selectPagePlaceholder: Chọn một trang...
+  newPageLabel: Tên trang mới
+  newPagePlaceholder: Nhập tên trang
+  createNewPage: Tạo trang mới
+  cancel: Hủy bỏ
+  chatHistory: Lịch sử trò chuyện
+  newChat: Trò chuyện mới
+  deleteChat: Xóa cuộc trò chuyện
+  deleteChatTitle: "Xóa {chatName}?"
+  deleteChatDescription: Thao tác này sẽ xóa vĩnh viễn cuộc trò chuyện này và tất cả tin nhắn trong đó. Không thể hoàn tác hành động này.
+  continue: Tiếp tục
+  doubleClickEdit: Nhấp đúp để chỉnh sửa
+  messageCount: "{count} tin nhắn"
+  messageCount_one: "{count} tin nhắn"
+  noMessages: Chưa có tin nhắn nào
+  confirmExecutionTitle: Xác nhận thực hiện
+  confirmExecutionDescription: Thao tác này sẽ sửa đổi cơ sở dữ liệu của bạn. Xem lại và xác nhận để tiếp tục.
+  showQuery: Hiển thị truy vấn
+  hideQuery: Ẩn truy vấn
+  "yes": Đúng
+  "no": KHÔNG
+  executing: Đang thực hiện...
+  queryCancelled: Truy vấn đã bị hủy
+  sendMessage: Gửi tin nhắn
+  showTable: Hiển thị dưới dạng bảng
+  showCode: Hiển thị dưới dạng mã
+  showChart: Hiển thị biểu đồ
+  actions: hành động
+  thinking0: suy nghĩ
+  thinking1: Suy ngẫm về những bí ẩn của cuộc sống
+  thinking2: Tư vấn các oracle trên nền tảng đám mây
+  thinking3: Tra cứu Google một cách giận dữ (đùa thôi)
+  thinking4: Căn chỉnh mạng lưới thần kinh
+  thinking5: Làm nó lên khi tôi đi (suỵt)
+  thinking6: Đếm cừu ảo
+  thinking7: Kênh Einstein
+  thinking8: Điều chỉnh thuật toán của tôi
+  thinking9: Uống một byte cà phê
+  thinking10: Hầu như chạy theo vòng tròn.
+  thinking11: Giả vờ bận rộn
+  thinking12: Đang tải sự trở lại dí dỏm
+  thinking13: Đang tải xuống một số trí tuệ
+  thinking14: Nấu một số món hầm dữ liệu
+  thinking15: Làm những việc AI™
+  thinking16: Hack máy tính lớn (cho vui)
+  thinking17: Nhìn chằm chằm vào vực thẳm kỹ thuật số
+  thinking18: Lật một đồng xu lượng tử
+  thinking19: Đọc suy nghĩ của bạn (về mặt đạo đức)
+  thinking20: Làm sắc nét sự mỉa mai của tôi
+  thinking21: Kiểm tra rung cảm của tôi
+  thinking22: Mô phỏng suy nghĩ sâu sắc
+  thinking23: Nối lại mạch của tôi
+  thinking24: Đánh bóng bộ xử lý tinh thể của tôi
+  example0: Nhận bản tóm tắt của tất cả các đơn đặt hàng
+  example1: Liệt kê tất cả khách hàng đã mua hàng trong tháng trước
+  example2: Hiển thị 10 khách hàng hàng đầu theo tổng chi tiêu
+  example3: Cung cấp bản tóm tắt phản hồi của khách hàng trong năm qua
+  example4: Liệt kê tất cả các đơn đặt hàng được đặt trong tuần trước
+  example5: Tổng hợp tổng doanh thu theo khu vực trong quý này
+  example6: Hiển thị giá trị đơn hàng trung bình cho từng danh mục sản phẩm
+  example7: Liệt kê tất cả các sản phẩm hiện đã hết hàng
+  example8: Hiển thị top 5 sản phẩm bán chạy nhất ngành hàng điện tử
+  example9: Cung cấp tổng số lượng sản phẩm khác nhau trong mỗi kho
+  example10: Liệt kê tất cả nhân viên đã tham gia trong sáu tháng qua
+  example11: Nhận bản tóm tắt về nhân khẩu học của nhân viên theo bộ phận
+  example12: Hiển thị mức lương trung bình cho kỹ sư phần mềm
+  example13: Cung cấp bảng phân tích chi phí theo bộ phận trong năm tài chính vừa qua
+  example14: Tổng hợp báo cáo lãi lỗ quý vừa qua
+  example15: Hiển thị tổng doanh thu được tạo ra bởi từng kênh bán hàng
+  example16: Cung cấp danh sách tất cả các chiến dịch tiếp thị đang hoạt động
+  example17: Tóm tắt tỷ lệ nhấp của các chiến dịch email trong quý vừa qua
+  example18: Hiển thị tổng số khách hàng tiềm năng được tạo bởi mỗi chiến dịch
+  example19: Liệt kê tất cả các dự án đang thực hiện và trạng thái hiện tại của chúng
+  example20: Nhận bản tóm tắt về thời hạn và các mốc quan trọng của dự án cho quý tiếp theo
+  example21: Hiển thị 5 dự án hàng đầu theo phân bổ ngân sách
+  example22: Cung cấp phân tích xu hướng về lưu lượng truy cập trang web trong sáu tháng qua
+  example23: Tổng hợp tỷ lệ chuyển đổi theo nguồn lưu lượng truy cập
+  example24: Hiển thị các từ khóa hoạt động tốt nhất trong các chiến dịch tiếp thị trên công cụ tìm kiếm của chúng tôi
+  example25: Liệt kê tất cả các giao dịch được gắn cờ để kiểm toán trong năm qua
+  example26: Tổng hợp các vấn đề tuân thủ được báo cáo theo khu vực
+  example27: Hiển thị báo cáo về tất cả các vi phạm chính sách trong quý vừa qua

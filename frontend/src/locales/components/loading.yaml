@@ -81,3 +81,79 @@ zh_CN:
 zh_TW:
   loading: 載入中...
   pleaseWait: 請稍等
+
+bg_BG:
+  loading: Зареждане...
+  pleaseWait: Моля изчакайте
+
+bn_BD:
+  loading: লোড হচ্ছে...
+  pleaseWait: অপেক্ষা করুন
+
+ca_ES:
+  loading: Carregant...
+  pleaseWait: Si us plau, espereu
+
+cs_CZ:
+  loading: Načítání...
+  pleaseWait: Prosím čekejte
+
+da_DK:
+  loading: Indlæser...
+  pleaseWait: Vent venligst
+
+fa_IR:
+  loading: در حال بارگیری...
+  pleaseWait: لطفا صبر کنید
+
+hi_IN:
+  loading: लोड हो रहा है...
+  pleaseWait: कृपया प्रतीक्षा करें
+
+hr_HR:
+  loading: Učitavanje...
+  pleaseWait: Molimo pričekajte
+
+hu_HU:
+  loading: Terhelés...
+  pleaseWait: Kérem, várjon
+
+id_ID:
+  loading: Memuat...
+  pleaseWait: Harap tunggu
+
+ms_MY:
+  loading: Memuatkan...
+  pleaseWait: Sila Tunggu
+
+nb_NO:
+  loading: Laster inn...
+  pleaseWait: Vennligst vent
+
+sw_KE:
+  loading: Inapakia...
+  pleaseWait: Tafadhali Subiri
+
+ta_IN:
+  loading: ஏற்றுகிறது...
+  pleaseWait: தயவுசெய்து காத்திருங்கள்
+
+th_TH:
+  loading: กำลังโหลด...
+  pleaseWait: โปรดรอ
+
+tr_TR:
+  loading: Yükleniyor...
+  pleaseWait: Lütfen bekleyin
+
+uk_UA:
+  loading: Завантаження...
+  pleaseWait: Будь ласка, зачекайте
+
+ur_PK:
+  loading: لوڈ ہو رہا ہے...
+  pleaseWait: برائے مہربانی انتظار کریں۔
+
+vi_VN:
+  loading: Đang tải...
+  pleaseWait: Vui lòng chờ

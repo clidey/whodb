@@ -81,3 +81,79 @@ zh_CN:
 zh_TW:
   home: 家
   back: 後退
+
+bg_BG:
+  home: Начало
+  back: Назад
+
+bn_BD:
+  home: বাড়ি
+  back: ব্যাক
+
+ca_ES:
+  home: Casa
+  back: Enrere
+
+cs_CZ:
+  home: Domov
+  back: Zadní
+
+da_DK:
+  home: Hjem
+  back: Tilbage
+
+fa_IR:
+  home: صفحه اصلی
+  back: برگشت
+
+hi_IN:
+  home: घर
+  back: पीछे
+
+hr_HR:
+  home: Dom
+  back: Nazad
+
+hu_HU:
+  home: Otthon
+  back: Vissza
+
+id_ID:
+  home: Rumah
+  back: Kembali
+
+ms_MY:
+  home: Rumah
+  back: belakang
+
+nb_NO:
+  home: Hjem
+  back: Tilbake
+
+sw_KE:
+  home: Nyumbani
+  back: Nyuma
+
+ta_IN:
+  home: வீடு
+  back: மீண்டும்
+
+th_TH:
+  home: บ้าน
+  back: กลับ
+
+tr_TR:
+  home: Ev
+  back: Geri
+
+uk_UA:
+  home: додому
+  back: Назад
+
+ur_PK:
+  home: گھر
+  back: پیچھے
+
+vi_VN:
+  home: Trang chủ
+  back: Mặt sau

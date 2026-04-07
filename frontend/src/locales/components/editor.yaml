@@ -186,3 +186,174 @@ zh_TW:
   showPreview: 顯示預覽
   hidePreview: 隱藏預覽
   runQuery: 執行查詢
+
+bg_BG:
+  confirmOperationTitle: Потвърдете операцията
+  confirmOperationDescription: Тази заявка ще промени данни или схема. Сигурни ли сте, че искате да го изпълните? Това действие не може да бъде отменено.
+  cancel: Отказ
+  executeQuery: Изпълнение на заявка
+  showPreview: Показване на визуализация
+  hidePreview: Скриване на визуализация
+  runQuery: Изпълнение на заявка
+
+bn_BD:
+  confirmOperationTitle: অপারেশন নিশ্চিত করুন
+  confirmOperationDescription: এই ক্যোয়ারী ডেটা বা স্কিমা পরিবর্তন করবে। আপনি কি এটি কার্যকর করতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷
+  cancel: বাতিল করুন
+  executeQuery: কোয়েরি চালান
+  showPreview: পূর্বরূপ দেখান
+  hidePreview: পূর্বরূপ লুকান
+  runQuery: কোয়েরি চালান
+
+ca_ES:
+  confirmOperationTitle: Confirmeu l'operació
+  confirmOperationDescription: Aquesta consulta modificarà les dades o l'esquema. Esteu segur que voleu executar-lo? Aquesta acció no es pot desfer.
+  cancel: Cancel·la
+  executeQuery: Execute Query
+  showPreview: Mostra la vista prèvia
+  hidePreview: Hide Preview
+  runQuery: Executeu la consulta
+
+cs_CZ:
+  confirmOperationTitle: Potvrďte operaci
+  confirmOperationDescription: Tento dotaz změní data nebo schéma. Opravdu to chcete provést? Tuto akci nelze vrátit zpět.
+  cancel: Zrušit
+  executeQuery: Provést dotaz
+  showPreview: Zobrazit náhled
+  hidePreview: Skrýt náhled
+  runQuery: Spustit dotaz
+
+da_DK:
+  confirmOperationTitle: Bekræft betjening
+  confirmOperationDescription: Denne forespørgsel vil ændre data eller skema. Er du sikker på, at du vil udføre det? Denne handling kan ikke fortrydes.
+  cancel: Ophæve
+  executeQuery: Udfør forespørgsel
+  showPreview: Vis forhåndsvisning
+  hidePreview: Skjul forhåndsvisning
+  runQuery: Kør forespørgsel
+
+fa_IR:
+  confirmOperationTitle: تایید عملیات
+  confirmOperationDescription: این پرس و جو داده ها یا طرحواره را تغییر می دهد. آیا مطمئن هستید که می خواهید آن را اجرا کنید؟ این عمل قابل لغو نیست.
+  cancel: لغو کنید
+  executeQuery: Query را اجرا کنید
+  showPreview: نمایش پیش نمایش
+  hidePreview: پنهان کردن پیش نمایش
+  runQuery: پرس و جو را اجرا کنید
+
+hi_IN:
+  confirmOperationTitle: संचालन की पुष्टि करें
+  confirmOperationDescription: यह क्वेरी डेटा या स्कीमा को संशोधित करेगी. क्या आप वाकई इसे निष्पादित करना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।
+  cancel: रद्द करना
+  executeQuery: क्वेरी को निष्पादित करें
+  showPreview: पूर्वावलोकन दिखाएं
+  hidePreview: पूर्वावलोकन छिपाएँ
+  runQuery: क्वेरी चलाएँ
+
+hr_HR:
+  confirmOperationTitle: Potvrdite operaciju
+  confirmOperationDescription: Ovaj će upit izmijeniti podatke ili shemu. Jeste li sigurni da ga želite izvršiti? Ova se radnja ne može poništiti.
+  cancel: Otkazati
+  executeQuery: Izvrši upit
+  showPreview: Prikaži pregled
+  hidePreview: Sakrij pretpregled
+  runQuery: Pokreni upit
+
+hu_HU:
+  confirmOperationTitle: Működés megerősítése
+  confirmOperationDescription: Ez a lekérdezés módosítja az adatokat vagy a sémát. Biztos, hogy végre akarod hajtani? Ez a művelet nem vonható vissza.
+  cancel: Mégse
+  executeQuery: Lekérdezés végrehajtása
+  showPreview: Előnézet megjelenítése
+  hidePreview: Előnézet elrejtése
+  runQuery: Lekérdezés futtatása
+
+id_ID:
+  confirmOperationTitle: Konfirmasikan Operasi
+  confirmOperationDescription: Kueri ini akan mengubah data atau skema. Apakah Anda yakin ingin menjalankannya? Tindakan ini tidak dapat dibatalkan.
+  cancel: Membatalkan
+  executeQuery: Jalankan Kueri
+  showPreview: Tampilkan Pratinjau
+  hidePreview: Sembunyikan Pratinjau
+  runQuery: Jalankan kueri
+
+ms_MY:
+  confirmOperationTitle: Sahkan Operasi
+  confirmOperationDescription: Pertanyaan ini akan mengubah suai data atau skema. Adakah anda pasti mahu melaksanakannya? Tindakan ini tidak boleh dibuat asal.
+  cancel: Batal
+  executeQuery: Laksanakan Pertanyaan
+  showPreview: Tunjukkan Pratonton
+  hidePreview: Sembunyikan Pratonton
+  runQuery: Jalankan pertanyaan
+
+nb_NO:
+  confirmOperationTitle: Bekreft operasjon
+  confirmOperationDescription: Denne spørringen vil endre data eller skjema. Er du sikker på at du vil utføre den? Denne handlingen kan ikke angres.
+  cancel: Kansellere
+  executeQuery: Utfør spørring
+  showPreview: Vis forhåndsvisning
+  hidePreview: Skjul forhåndsvisning
+  runQuery: Kjør spørringen
+
+sw_KE:
+  confirmOperationTitle: Thibitisha Uendeshaji
+  confirmOperationDescription: Hoja hii itarekebisha data au schema. Je, una uhakika unataka kuitekeleza? Kitendo hiki hakiwezi kutenduliwa.
+  cancel: Ghairi
+  executeQuery: Tekeleza Hoja
+  showPreview: Onyesha Hakiki
+  hidePreview: Ficha Onyesho la Kuchungulia
+  runQuery: Endesha swali
+
+ta_IN:
+  confirmOperationTitle: செயல்பாட்டை உறுதிப்படுத்தவும்
+  confirmOperationDescription: இந்த வினவல் தரவு அல்லது திட்டத்தை மாற்றும். அதைச் செயல்படுத்த விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.
+  cancel: ரத்து செய்
+  executeQuery: வினவலை இயக்கவும்
+  showPreview: முன்னோட்டத்தைக் காட்டு
+  hidePreview: முன்னோட்டத்தை மறை
+  runQuery: வினவலை இயக்கவும்
+
+th_TH:
+  confirmOperationTitle: ยืนยันการดำเนินการ
+  confirmOperationDescription: แบบสอบถามนี้จะแก้ไขข้อมูลหรือสคีมา คุณแน่ใจหรือไม่ว่าต้องการดำเนินการดังกล่าว การดำเนินการนี้ไม่สามารถยกเลิกได้
+  cancel: ยกเลิก
+  executeQuery: ดำเนินการค้นหา
+  showPreview: แสดงตัวอย่าง
+  hidePreview: ซ่อนการแสดงตัวอย่าง
+  runQuery: เรียกใช้แบบสอบถาม
+
+tr_TR:
+  confirmOperationTitle: İşlemi Onayla
+  confirmOperationDescription: Bu sorgu verileri veya şemayı değiştirecektir. Bunu yürütmek istediğinizden emin misiniz? Bu eylem geri alınamaz.
+  cancel: İptal etmek
+  executeQuery: Sorguyu Yürüt
+  showPreview: Önizlemeyi Göster
+  hidePreview: Önizlemeyi Gizle
+  runQuery: Sorguyu çalıştır
+
+uk_UA:
+  confirmOperationTitle: Підтвердити операцію
+  confirmOperationDescription: Цей запит змінить дані або схему. Ви впевнені, що хочете його виконати? Цю дію не можна скасувати.
+  cancel: Скасувати
+  executeQuery: Виконати запит
+  showPreview: Показати попередній перегляд
+  hidePreview: Приховати попередній перегляд
+  runQuery: Виконати запит
+
+ur_PK:
+  confirmOperationTitle: آپریشن کی تصدیق کریں۔
+  confirmOperationDescription: یہ استفسار ڈیٹا یا اسکیما میں ترمیم کرے گا۔ کیا آپ واقعی اس پر عمل کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔
+  cancel: منسوخ کریں۔
+  executeQuery: استفسار پر عمل کریں۔
+  showPreview: پیش نظارہ دکھائیں۔
+  hidePreview: پیش نظارہ چھپائیں۔
+  runQuery: استفسار چلائیں۔
+
+vi_VN:
+  confirmOperationTitle: Xác nhận hoạt động
+  confirmOperationDescription: Truy vấn này sẽ sửa đổi dữ liệu hoặc lược đồ. Bạn có chắc chắn muốn thực hiện nó không? Không thể hoàn tác hành động này.
+  cancel: Hủy bỏ
+  executeQuery: Thực hiện truy vấn
+  showPreview: Hiển thị bản xem trước
+  hidePreview: Ẩn bản xem trước
+  runQuery: Chạy truy vấn

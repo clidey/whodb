@@ -753,3 +753,687 @@ zh_TW:
   createSuccessMessage: "{storageUnit} 創建成功！"
   actionsColumn: 行動
   close: 關閉
+
+bg_BG:
+  title: Маси
+  search: Търсене
+  searchPlaceholder: Въведете стойност на филтъра...
+  scratchpad: Скречпад
+  cardView: Изглед на карта
+  listView: Списъчен изглед
+  describe: Информация
+  data: данни
+  sampledSchemaBadge: Схема, изведена от пробата
+  create: Създавайте
+  createTitle: "Създайте {storageUnit}"
+  columnsTitle: Колони
+  nameLabel: Име
+  namePlaceholder: Въведете име...
+  fieldNameLabel: Име на полето
+  fieldNamePlaceholder: Въведете име на поле
+  fieldTypeLabel: Тип поле
+  fieldTypePlaceholder: Изберете Тип
+  searchTypePlaceholder: Тип търсене...
+  fieldLengthLabel: Дължина
+  fieldLengthPlaceholder: напр. 255
+  fieldPrecisionLabel: Прецизност
+  fieldScaleLabel: Мащаб
+  modifiersLabel: Модификатори
+  primaryModifier: Първичен
+  nullableModifier: Nullable
+  removeField: Премахнете
+  addField: Добавяне на поле
+  createButton: Създавайте
+  nameRequired: Името е задължително
+  fieldsCannotBeEmpty: Полетата не могат да бъдат празни
+  createSuccessMessage: "{storageUnit} Създаден успешно!"
+  actionsColumn: Действия
+  close: затвори
+
+bn_BD:
+  title: টেবিল
+  search: অনুসন্ধান করুন
+  searchPlaceholder: ফিল্টার মান লিখুন...
+  scratchpad: স্ক্র্যাচপ্যাড
+  cardView: কার্ড ভিউ
+  listView: তালিকা দেখুন
+  describe: তথ্য
+  data: ডেটা
+  sampledSchemaBadge: নমুনা থেকে অনুমানকৃত স্কিমা
+  create: তৈরি করুন
+  createTitle: "একটি {storageUnit} তৈরি করুন"
+  columnsTitle: কলাম
+  nameLabel: নাম
+  namePlaceholder: নাম লিখুন...
+  fieldNameLabel: ক্ষেত্রের নাম
+  fieldNamePlaceholder: ক্ষেত্রের নাম লিখুন
+  fieldTypeLabel: ক্ষেত্র প্রকার
+  fieldTypePlaceholder: প্রকার নির্বাচন করুন
+  searchTypePlaceholder: অনুসন্ধান প্রকার...
+  fieldLengthLabel: দৈর্ঘ্য
+  fieldLengthPlaceholder: যেমন, 255
+  fieldPrecisionLabel: যথার্থতা
+  fieldScaleLabel: স্কেল
+  modifiersLabel: সংশোধক
+  primaryModifier: প্রাথমিক
+  nullableModifier: বাতিলযোগ্য
+  removeField: সরান
+  addField: ক্ষেত্র যোগ করুন
+  createButton: তৈরি করুন
+  nameRequired: নাম আবশ্যক
+  fieldsCannotBeEmpty: ক্ষেত্রগুলি খালি হতে পারে না
+  createSuccessMessage: "{storageUnit} সফলভাবে তৈরি করা হয়েছে!"
+  actionsColumn: কর্ম
+  close: বন্ধ
+
+ca_ES:
+  title: Taules
+  search: Cerca
+  searchPlaceholder: Introduïu el valor del filtre...
+  scratchpad: Bloc de notes
+  cardView: Vista de la targeta
+  listView: Vista de llista
+  describe: Informació
+  data: Dades
+  sampledSchemaBadge: Esquema inferit de la mostra
+  create: Crear
+  createTitle: Crea un [[0]]]
+  columnsTitle: Columnes
+  nameLabel: Nom
+  namePlaceholder: Introdueix el nom...
+  fieldNameLabel: Nom del camp
+  fieldNamePlaceholder: Introduïu el nom del camp
+  fieldTypeLabel: Tipus de camp
+  fieldTypePlaceholder: Seleccioneu Tipus
+  searchTypePlaceholder: Tipus de cerca...
+  fieldLengthLabel: Longitud
+  fieldLengthPlaceholder: per exemple, 255
+  fieldPrecisionLabel: Precisió
+  fieldScaleLabel: Escala
+  modifiersLabel: Modificadors
+  primaryModifier: primària
+  nullableModifier: Nul·lable
+  removeField: Eliminar
+  addField: Afegeix un camp
+  createButton: Crear
+  nameRequired: El nom és obligatori
+  fieldsCannotBeEmpty: Els camps no poden estar buits
+  createSuccessMessage: "{storageUnit} Creat correctament!"
+  actionsColumn: Accions
+  close: Tancar
+
+cs_CZ:
+  title: Tabulky
+  search: Vyhledávání
+  searchPlaceholder: Zadejte hodnotu filtru...
+  scratchpad: Zápisník
+  cardView: Zobrazení karty
+  listView: Zobrazení seznamu
+  describe: Info
+  data: Data
+  sampledSchemaBadge: Schéma odvozené ze vzorku
+  create: Vytvořit
+  createTitle: "Vytvořit {storageUnit}"
+  columnsTitle: Sloupce
+  nameLabel: Jméno
+  namePlaceholder: Zadejte jméno...
+  fieldNameLabel: Název pole
+  fieldNamePlaceholder: Zadejte název pole
+  fieldTypeLabel: Typ pole
+  fieldTypePlaceholder: Vyberte Typ
+  searchTypePlaceholder: Typ hledání...
+  fieldLengthLabel: Délka
+  fieldLengthPlaceholder: např. 255
+  fieldPrecisionLabel: Přesnost
+  fieldScaleLabel: Měřítko
+  modifiersLabel: Modifikátory
+  primaryModifier: Primární
+  nullableModifier: S možností nulování
+  removeField: Odstranit
+  addField: Přidat pole
+  createButton: Vytvořit
+  nameRequired: Jméno je povinné
+  fieldsCannotBeEmpty: Pole nemohou být prázdná
+  createSuccessMessage: "{storageUnit} Úspěšně vytvořeno!"
+  actionsColumn: Akce
+  close: Blízko
+
+da_DK:
+  title: Tabeller
+  search: Søge
+  searchPlaceholder: Indtast filterværdi...
+  scratchpad: Scratchpad
+  cardView: Kortvisning
+  listView: Listevisning
+  describe: Info
+  data: Data
+  sampledSchemaBadge: Skema udledt fra prøven
+  create: Skabe
+  createTitle: "Opret en {storageUnit}"
+  columnsTitle: Kolonner
+  nameLabel: Navn
+  namePlaceholder: Indtast navn...
+  fieldNameLabel: Feltnavn
+  fieldNamePlaceholder: Indtast feltnavn
+  fieldTypeLabel: Felttype
+  fieldTypePlaceholder: Vælg Type
+  searchTypePlaceholder: Søgetype...
+  fieldLengthLabel: Længde
+  fieldLengthPlaceholder: f.eks. 255
+  fieldPrecisionLabel: Præcision
+  fieldScaleLabel: Skala
+  modifiersLabel: Modifikatorer
+  primaryModifier: Primær
+  nullableModifier: Nullbar
+  removeField: Fjerne
+  addField: Tilføj felt
+  createButton: Skabe
+  nameRequired: Navn er påkrævet
+  fieldsCannotBeEmpty: Felter må ikke være tomme
+  createSuccessMessage: "{storageUnit} Oprettet med succes!"
+  actionsColumn: Handlinger
+  close: Tæt
+
+fa_IR:
+  title: جداول
+  search: جستجو کنید
+  searchPlaceholder: مقدار فیلتر را وارد کنید...
+  scratchpad: Scratchpad
+  cardView: نمای کارت
+  listView: نمایش لیست
+  describe: اطلاعات
+  data: داده ها
+  sampledSchemaBadge: طرحواره استنباط شده از نمونه
+  create: ایجاد کنید
+  createTitle: "ایجاد یک {storageUnit}"
+  columnsTitle: ستون ها
+  nameLabel: نام
+  namePlaceholder: نام را وارد کنید...
+  fieldNameLabel: نام فیلد
+  fieldNamePlaceholder: نام فیلد را وارد کنید
+  fieldTypeLabel: نوع فیلد
+  fieldTypePlaceholder: نوع را انتخاب کنید
+  searchTypePlaceholder: نوع جستجو...
+  fieldLengthLabel: طول
+  fieldLengthPlaceholder: به عنوان مثال، 255
+  fieldPrecisionLabel: دقت
+  fieldScaleLabel: مقیاس
+  modifiersLabel: اصلاح کننده ها
+  primaryModifier: اولیه
+  nullableModifier: باطل شدنی
+  removeField: حذف کنید
+  addField: فیلد را اضافه کنید
+  createButton: ایجاد کنید
+  nameRequired: نام الزامی است
+  fieldsCannotBeEmpty: فیلدها نمی توانند خالی باشند
+  createSuccessMessage: "{storageUnit} با موفقیت ایجاد شد!"
+  actionsColumn: اقدامات
+  close: بستن
+
+hi_IN:
+  title: टेबल
+  search: खोज
+  searchPlaceholder: फ़िल्टर मान दर्ज करें...
+  scratchpad: स्क्रैचपैड
+  cardView: कार्ड दृश्य
+  listView: लिस्ट व्यू
+  describe: जानकारी
+  data: डेटा
+  sampledSchemaBadge: नमूने से स्कीमा का अनुमान लगाया गया
+  create: बनाएं
+  createTitle: "एक {storageUnit} बनाएं"
+  columnsTitle: कॉलम
+  nameLabel: नाम
+  namePlaceholder: नाम दर्ज करें...
+  fieldNameLabel: फ़ील्ड का नाम
+  fieldNamePlaceholder: फ़ील्ड नाम दर्ज करें
+  fieldTypeLabel: क्षेत्र प्रकार
+  fieldTypePlaceholder: प्रकार चुनें
+  searchTypePlaceholder: तलाश की विधि...
+  fieldLengthLabel: लंबाई
+  fieldLengthPlaceholder: जैसे, 255
+  fieldPrecisionLabel: शुद्धता
+  fieldScaleLabel: पैमाना
+  modifiersLabel: संशोधक
+  primaryModifier: प्राथमिक
+  nullableModifier: नल
+  removeField: निकालना
+  addField: क्षेत्र जोड़ें
+  createButton: बनाएं
+  nameRequired: नाम आवश्यक है
+  fieldsCannotBeEmpty: फ़ील्ड ख़ाली नहीं रह सकते
+  createSuccessMessage: "{storageUnit} सफलतापूर्वक बनाया गया!"
+  actionsColumn: कार्रवाई
+  close: बंद करना
+
+hr_HR:
+  title: Stolovi
+  search: Pretraživanje
+  searchPlaceholder: Unesite vrijednost filtra...
+  scratchpad: Scratchpad
+  cardView: Prikaz kartice
+  listView: Prikaz popisa
+  describe: Info
+  data: Podaci
+  sampledSchemaBadge: Shema izvedena iz uzorka
+  create: Stvoriti
+  createTitle: "Izradi {storageUnit}"
+  columnsTitle: Stupci
+  nameLabel: Ime
+  namePlaceholder: Unesite ime...
+  fieldNameLabel: Naziv polja
+  fieldNamePlaceholder: Unesite naziv polja
+  fieldTypeLabel: Vrsta polja
+  fieldTypePlaceholder: Odaberite vrstu
+  searchTypePlaceholder: Vrsta pretraživanja...
+  fieldLengthLabel: Duljina
+  fieldLengthPlaceholder: npr. 255
+  fieldPrecisionLabel: Preciznost
+  fieldScaleLabel: Skala
+  modifiersLabel: Modifikatori
+  primaryModifier: Primarni
+  nullableModifier: Nullable
+  removeField: Ukloniti
+  addField: Dodaj polje
+  createButton: Stvoriti
+  nameRequired: Ime je obavezno
+  fieldsCannotBeEmpty: Polja ne mogu biti prazna
+  createSuccessMessage: "{storageUnit} Uspješno kreirano!"
+  actionsColumn: Radnje
+  close: Zatvoriti
+
+hu_HU:
+  title: Táblázatok
+  search: Keresés
+  searchPlaceholder: Adja meg a szűrő értékét...
+  scratchpad: Firkálótömb
+  cardView: Kártya nézet
+  listView: Listanézet
+  describe: Info
+  data: Adat
+  sampledSchemaBadge: A mintából kikövetkeztetett séma
+  create: Teremt
+  createTitle: "Hozzon létre egy {storageUnit}"
+  columnsTitle: Oszlopok
+  nameLabel: Név
+  namePlaceholder: Írja be a nevet...
+  fieldNameLabel: Mező neve
+  fieldNamePlaceholder: Írja be a mező nevét
+  fieldTypeLabel: Mező típusa
+  fieldTypePlaceholder: Válassza a Típus lehetőséget
+  searchTypePlaceholder: Keresés típusa...
+  fieldLengthLabel: Hossz
+  fieldLengthPlaceholder: például 255
+  fieldPrecisionLabel: Pontosság
+  fieldScaleLabel: Skála
+  modifiersLabel: Módosítók
+  primaryModifier: Elsődleges
+  nullableModifier: Nullálható
+  removeField: Távolítsa el
+  addField: Mező hozzáadása
+  createButton: Teremt
+  nameRequired: Név kötelező
+  fieldsCannotBeEmpty: A mezők nem lehetnek üresek
+  createSuccessMessage: "{storageUnit} Sikeresen létrehozva!"
+  actionsColumn: Akciók
+  close: Közeli
+
+id_ID:
+  title: Tabel
+  search: Mencari
+  searchPlaceholder: Masukkan Nilai Filter...
+  scratchpad: Papan penggaris
+  cardView: Tampilan Kartu
+  listView: Tampilan Daftar
+  describe: Informasi
+  data: Data
+  sampledSchemaBadge: Skema disimpulkan dari sampel
+  create: Membuat
+  createTitle: "Buat {storageUnit}"
+  columnsTitle: Kolom
+  nameLabel: Nama
+  namePlaceholder: Masukkan Nama...
+  fieldNameLabel: Nama Bidang
+  fieldNamePlaceholder: Masukkan Nama Bidang
+  fieldTypeLabel: Jenis Bidang
+  fieldTypePlaceholder: Pilih Jenis
+  searchTypePlaceholder: Jenis Pencarian...
+  fieldLengthLabel: Panjang
+  fieldLengthPlaceholder: misalnya, 255
+  fieldPrecisionLabel: Presisi
+  fieldScaleLabel: Skala
+  modifiersLabel: Pengubah
+  primaryModifier: Utama
+  nullableModifier: Tidak dapat dibatalkan
+  removeField: Menghapus
+  addField: Tambahkan Bidang
+  createButton: Membuat
+  nameRequired: Nama Diperlukan
+  fieldsCannotBeEmpty: Bidang Tidak Boleh Kosong
+  createSuccessMessage: "{storageUnit} Berhasil Dibuat!"
+  actionsColumn: Tindakan
+  close: Menutup
+
+ms_MY:
+  title: Meja
+  search: Cari
+  searchPlaceholder: Masukkan Nilai Penapis...
+  scratchpad: Pad conteng
+  cardView: Paparan Kad
+  listView: Paparan Senarai
+  describe: info
+  data: Data
+  sampledSchemaBadge: Skema disimpulkan daripada sampel
+  create: Buat
+  createTitle: "Buat {storageUnit}"
+  columnsTitle: Lajur
+  nameLabel: Nama
+  namePlaceholder: Masukkan Nama...
+  fieldNameLabel: Nama Medan
+  fieldNamePlaceholder: Masukkan Nama Medan
+  fieldTypeLabel: Jenis Medan
+  fieldTypePlaceholder: Pilih Jenis
+  searchTypePlaceholder: Jenis Carian...
+  fieldLengthLabel: Panjang
+  fieldLengthPlaceholder: cth., 255
+  fieldPrecisionLabel: Ketepatan
+  fieldScaleLabel: Skala
+  modifiersLabel: Pengubah suai
+  primaryModifier: utama
+  nullableModifier: Boleh dibatalkan
+  removeField: Alih keluar
+  addField: Tambah Medan
+  createButton: Buat
+  nameRequired: Nama Diperlukan
+  fieldsCannotBeEmpty: Medan Tidak Boleh Kosong
+  createSuccessMessage: "{storageUnit} Berjaya Dicipta!"
+  actionsColumn: Tindakan
+  close: tutup
+
+nb_NO:
+  title: Tabeller
+  search: Søk
+  searchPlaceholder: Angi filterverdi...
+  scratchpad: Scratchpad
+  cardView: Kortvisning
+  listView: Listevisning
+  describe: Info
+  data: Data
+  sampledSchemaBadge: Skjema utledet fra prøven
+  create: Skape
+  createTitle: "Opprett en {storageUnit}"
+  columnsTitle: Kolonner
+  nameLabel: Navn
+  namePlaceholder: Skriv inn navn...
+  fieldNameLabel: Feltnavn
+  fieldNamePlaceholder: Skriv inn feltnavn
+  fieldTypeLabel: Felttype
+  fieldTypePlaceholder: Velg Type
+  searchTypePlaceholder: Søketype...
+  fieldLengthLabel: Lengde
+  fieldLengthPlaceholder: f.eks. 255
+  fieldPrecisionLabel: Presisjon
+  fieldScaleLabel: Skala
+  modifiersLabel: Modifikatorer
+  primaryModifier: Primær
+  nullableModifier: Nullbar
+  removeField: Fjerne
+  addField: Legg til felt
+  createButton: Skape
+  nameRequired: Navn er påkrevd
+  fieldsCannotBeEmpty: Felter kan ikke være tomme
+  createSuccessMessage: "{storageUnit} Opprettet med suksess!"
+  actionsColumn: Handlinger
+  close: Lukke
+
+sw_KE:
+  title: Majedwali
+  search: Tafuta
+  searchPlaceholder: Weka Thamani ya Kichujio...
+  scratchpad: Padi ya kukwaruza
+  cardView: Mwonekano wa Kadi
+  listView: Mwonekano wa Orodha
+  describe: Habari
+  data: Data
+  sampledSchemaBadge: Schema inayokisiwa kutoka kwa sampuli
+  create: Unda
+  createTitle: "Unda {storageUnit}"
+  columnsTitle: Safu
+  nameLabel: Jina
+  namePlaceholder: Weka Jina...
+  fieldNameLabel: Jina la shamba
+  fieldNamePlaceholder: Weka Jina la Uga
+  fieldTypeLabel: Aina ya shamba
+  fieldTypePlaceholder: Chagua Aina
+  searchTypePlaceholder: Aina ya Utafutaji...
+  fieldLengthLabel: Urefu
+  fieldLengthPlaceholder: k.m., 255
+  fieldPrecisionLabel: Usahihi
+  fieldScaleLabel: Mizani
+  modifiersLabel: Virekebishaji
+  primaryModifier: Msingi
+  nullableModifier: Inayoweza kubatilishwa
+  removeField: Ondoa
+  addField: Ongeza Uga
+  createButton: Unda
+  nameRequired: Jina Linahitajika
+  fieldsCannotBeEmpty: Sehemu Haziwezi Kuwa Tupu
+  createSuccessMessage: "{storageUnit} Imeundwa Kwa Mafanikio!"
+  actionsColumn: Vitendo
+  close: Funga
+
+ta_IN:
+  title: அட்டவணைகள்
+  search: தேடு
+  searchPlaceholder: வடிகட்டி மதிப்பை உள்ளிடவும்...
+  scratchpad: ஸ்க்ராட்ச்பேட்
+  cardView: அட்டை பார்வை
+  listView: பட்டியல் காட்சி
+  describe: தகவல்
+  data: தரவு
+  sampledSchemaBadge: மாதிரியிலிருந்து ஊகிக்கப்பட்ட திட்டம்
+  create: உருவாக்கு
+  createTitle: "{storageUnit} ஒன்றை உருவாக்கவும்"
+  columnsTitle: நெடுவரிசைகள்
+  nameLabel: பெயர்
+  namePlaceholder: பெயரை உள்ளிடவும்...
+  fieldNameLabel: புலத்தின் பெயர்
+  fieldNamePlaceholder: புலத்தின் பெயரை உள்ளிடவும்
+  fieldTypeLabel: புல வகை
+  fieldTypePlaceholder: வகையைத் தேர்ந்தெடுக்கவும்
+  searchTypePlaceholder: தேடல் வகை...
+  fieldLengthLabel: நீளம்
+  fieldLengthPlaceholder: எ.கா., 255
+  fieldPrecisionLabel: துல்லியம்
+  fieldScaleLabel: அளவுகோல்
+  modifiersLabel: மாற்றியமைப்பவர்கள்
+  primaryModifier: முதன்மை
+  nullableModifier: எண்ணத்தக்கது
+  removeField: அகற்று
+  addField: புலத்தைச் சேர்க்கவும்
+  createButton: உருவாக்கு
+  nameRequired: பெயர் தேவை
+  fieldsCannotBeEmpty: புலங்கள் காலியாக இருக்க முடியாது
+  createSuccessMessage: "{storageUnit} வெற்றிகரமாக உருவாக்கப்பட்டது!"
+  actionsColumn: செயல்கள்
+  close: மூடு
+
+th_TH:
+  title: ตาราง
+  search: ค้นหา
+  searchPlaceholder: ป้อนค่าตัวกรอง...
+  scratchpad: สแครชแพด
+  cardView: มุมมองการ์ด
+  listView: มุมมองรายการ
+  describe: ข้อมูล
+  data: ข้อมูล
+  sampledSchemaBadge: สคีมาอนุมานจากตัวอย่าง
+  create: สร้าง
+  createTitle: "สร้าง {storageUnit}"
+  columnsTitle: คอลัมน์
+  nameLabel: ชื่อ
+  namePlaceholder: ใส่ชื่อ...
+  fieldNameLabel: ชื่อฟิลด์
+  fieldNamePlaceholder: ป้อนชื่อฟิลด์
+  fieldTypeLabel: ประเภทฟิลด์
+  fieldTypePlaceholder: เลือกประเภท
+  searchTypePlaceholder: ประเภทการค้นหา...
+  fieldLengthLabel: ความยาว
+  fieldLengthPlaceholder: เช่น 255
+  fieldPrecisionLabel: ความแม่นยำ
+  fieldScaleLabel: มาตราส่วน
+  modifiersLabel: ตัวดัดแปลง
+  primaryModifier: หลัก
+  nullableModifier: เป็นโมฆะ
+  removeField: ลบ
+  addField: เพิ่มฟิลด์
+  createButton: สร้าง
+  nameRequired: จำเป็นต้องระบุชื่อ
+  fieldsCannotBeEmpty: ช่องไม่สามารถเว้นว่างได้
+  createSuccessMessage: "{storageUnit} สร้างสำเร็จแล้ว!"
+  actionsColumn: การดำเนินการ
+  close: ปิด
+
+tr_TR:
+  title: Tablolar
+  search: Aramak
+  searchPlaceholder: Filtre Değerini Girin...
+  scratchpad: Karalama defteri
+  cardView: Kart Görünümü
+  listView: Liste Görünümü
+  describe: Bilgi
+  data: Veri
+  sampledSchemaBadge: Örnekten çıkarılan şema
+  create: Yaratmak
+  createTitle: "Bir {storageUnit} oluştur"
+  columnsTitle: Sütunlar
+  nameLabel: İsim
+  namePlaceholder: Ad Girin...
+  fieldNameLabel: Alan Adı
+  fieldNamePlaceholder: Alan Adını Girin
+  fieldTypeLabel: Alan Türü
+  fieldTypePlaceholder: Tür Seçin
+  searchTypePlaceholder: Arama Türü...
+  fieldLengthLabel: Uzunluk
+  fieldLengthPlaceholder: örneğin 255
+  fieldPrecisionLabel: Kesinlik
+  fieldScaleLabel: Ölçek
+  modifiersLabel: Değiştiriciler
+  primaryModifier: Öncelik
+  nullableModifier: Geçersiz kılınabilir
+  removeField: Kaldırmak
+  addField: Alan Ekle
+  createButton: Yaratmak
+  nameRequired: İsim Gerekli
+  fieldsCannotBeEmpty: Alanlar Boş Bırakılamaz
+  createSuccessMessage: "{storageUnit} Başarıyla Oluşturuldu!"
+  actionsColumn: Eylemler
+  close: Kapalı
+
+uk_UA:
+  title: Таблиці
+  search: Пошук
+  searchPlaceholder: Введіть значення фільтра...
+  scratchpad: Блокнот
+  cardView: Перегляд картки
+  listView: Перегляд списку
+  describe: Інформація
+  data: Дані
+  sampledSchemaBadge: Схема, виведена із зразка
+  create: Створити
+  createTitle: "Створити {storageUnit}"
+  columnsTitle: Стовпці
+  nameLabel: Ім'я
+  namePlaceholder: Введіть ім'я...
+  fieldNameLabel: Назва поля
+  fieldNamePlaceholder: Введіть назву поля
+  fieldTypeLabel: Тип поля
+  fieldTypePlaceholder: Виберіть Тип
+  searchTypePlaceholder: Тип пошуку...
+  fieldLengthLabel: Довжина
+  fieldLengthPlaceholder: наприклад, 255
+  fieldPrecisionLabel: Точність
+  fieldScaleLabel: масштаб
+  modifiersLabel: Модифікатори
+  primaryModifier: Первинний
+  nullableModifier: Nullable
+  removeField: видалити
+  addField: Додати поле
+  createButton: Створити
+  nameRequired: Ім'я є обов'язковим
+  fieldsCannotBeEmpty: Поля не можуть бути порожніми
+  createSuccessMessage: "{storageUnit} Створено успішно!"
+  actionsColumn: Дії
+  close: Закрити
+
+ur_PK:
+  title: میزیں
+  search: تلاش کریں۔
+  searchPlaceholder: فلٹر ویلیو درج کریں...
+  scratchpad: سکریچ پیڈ
+  cardView: کارڈ ویو
+  listView: فہرست دیکھیں
+  describe: معلومات
+  data: ڈیٹا
+  sampledSchemaBadge: نمونے سے اسکیما کا اندازہ لگایا گیا۔
+  create: بنائیں
+  createTitle: "ایک {storageUnit} بنائیں"
+  columnsTitle: کالم
+  nameLabel: نام
+  namePlaceholder: نام درج کریں...
+  fieldNameLabel: فیلڈ کا نام
+  fieldNamePlaceholder: فیلڈ کا نام درج کریں۔
+  fieldTypeLabel: فیلڈ کی قسم
+  fieldTypePlaceholder: قسم منتخب کریں۔
+  searchTypePlaceholder: تلاش کی قسم...
+  fieldLengthLabel: لمبائی
+  fieldLengthPlaceholder: مثال کے طور پر، 255
+  fieldPrecisionLabel: صحت سے متعلق
+  fieldScaleLabel: پیمانہ
+  modifiersLabel: ترمیم کرنے والے
+  primaryModifier: پرائمری
+  nullableModifier: کالعدم
+  removeField: ہٹا دیں۔
+  addField: فیلڈ شامل کریں۔
+  createButton: بنائیں
+  nameRequired: نام درکار ہے۔
+  fieldsCannotBeEmpty: فیلڈز خالی نہیں ہو سکتے
+  createSuccessMessage: "{storageUnit} کامیابی کے ساتھ بنایا گیا!"
+  actionsColumn: اعمال
+  close: بند
+
+vi_VN:
+  title: Bàn
+  search: Tìm kiếm
+  searchPlaceholder: Nhập giá trị bộ lọc...
+  scratchpad: Bàn di chuột
+  cardView: Xem thẻ
+  listView: Xem danh sách
+  describe: Thông tin
+  data: dữ liệu
+  sampledSchemaBadge: Lược đồ suy ra từ mẫu
+  create: Tạo nên
+  createTitle: "Tạo một {storageUnit}"
+  columnsTitle: Cột
+  nameLabel: Tên
+  namePlaceholder: Nhập tên...
+  fieldNameLabel: Tên trường
+  fieldNamePlaceholder: Nhập tên trường
+  fieldTypeLabel: Loại trường
+  fieldTypePlaceholder: Chọn loại
+  searchTypePlaceholder: Loại tìm kiếm...
+  fieldLengthLabel: Chiều dài
+  fieldLengthPlaceholder: "ví dụ: 255"
+  fieldPrecisionLabel: Độ chính xác
+  fieldScaleLabel: Tỉ lệ
+  modifiersLabel: sửa đổi
+  primaryModifier: Sơ đẳng
+  nullableModifier: Có thể rỗng
+  removeField: Di dời
+  addField: Thêm trường
+  createButton: Tạo nên
+  nameRequired: Tên là bắt buộc
+  fieldsCannotBeEmpty: Các trường không thể trống
+  createSuccessMessage: "{storageUnit} Đã tạo thành công!"
+  actionsColumn: hành động
+  close: Đóng

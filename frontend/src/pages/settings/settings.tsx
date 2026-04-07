@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {FC, useCallback, useEffect, useMemo} from "react";
+import {FC, Suspense, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
@@ -37,6 +37,7 @@ import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
 import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
 import {AwsProvidersSection} from "../../components/aws";
+import {getComponent} from "../../config/component-registry";
 import {useSettingsConfigQuery} from "@graphql";
 
 export const SettingsPage: FC = () => {
@@ -298,6 +299,18 @@ export const SettingsPage: FC = () => {
                                 <AwsProvidersSection />
                             </>
                         )}
+                        {(() => {
+                            const BridgeDriverPanel = getComponent('bridge-driver-panel');
+                            if (!BridgeDriverPanel) return null;
+                            return (
+                                <>
+                                    <Separator className="my-6" />
+                                    <Suspense fallback={null}>
+                                        <BridgeDriverPanel />
+                                    </Suspense>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

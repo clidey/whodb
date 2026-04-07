@@ -123,3 +123,117 @@ zh_TW:
   collapse: 坍塌
   close: 關閉
   details: 卡詳情
+
+bg_BG:
+  expand: Разширяване
+  collapse: Свиване
+  close: затвори
+  details: Подробности за картата
+
+bn_BD:
+  expand: প্রসারিত করুন
+  collapse: সঙ্কুচিত
+  close: বন্ধ
+  details: কার্ডের বিবরণ
+
+ca_ES:
+  expand: Ampliar
+  collapse: Col·lapse
+  close: Tancar
+  details: Detalls de la targeta
+
+cs_CZ:
+  expand: Rozšířit
+  collapse: Kolaps
+  close: Blízko
+  details: Podrobnosti karty
+
+da_DK:
+  expand: Udvide
+  collapse: Bryde sammen
+  close: Tæt
+  details: Kortdetaljer
+
+fa_IR:
+  expand: گسترش دهید
+  collapse: فرو ریختن
+  close: بستن
+  details: مشخصات کارت
+
+hi_IN:
+  expand: बढ़ाना
+  collapse: गिर जाना
+  close: बंद करना
+  details: कार्ड विवरण
+
+hr_HR:
+  expand: Proširiti
+  collapse: Kolaps
+  close: Zatvoriti
+  details: Podaci o kartici
+
+hu_HU:
+  expand: Bontsa ki
+  collapse: Összeomlás
+  close: Közeli
+  details: Kártya részletei
+
+id_ID:
+  expand: Memperluas
+  collapse: Runtuh
+  close: Menutup
+  details: Detail Kartu
+
+ms_MY:
+  expand: Kembangkan
+  collapse: Runtuh
+  close: tutup
+  details: Butiran Kad
+
+nb_NO:
+  expand: Utvide
+  collapse: Kollapse
+  close: Lukke
+  details: Kortdetaljer
+
+sw_KE:
+  expand: Panua
+  collapse: Kunja
+  close: Funga
+  details: Maelezo ya Kadi
+
+ta_IN:
+  expand: விரிவாக்கு
+  collapse: சுருக்கு
+  close: மூடு
+  details: அட்டை விவரங்கள்
+
+th_TH:
+  expand: ขยาย
+  collapse: ทรุด
+  close: ปิด
+  details: รายละเอียดบัตร
+
+tr_TR:
+  expand: Genişletmek
+  collapse: Yıkılmak
+  close: Kapalı
+  details: Kart Detayları
+
+uk_UA:
+  expand: Розгорнути
+  collapse: Згорнути
+  close: Закрити
+  details: Реквізити картки
+
+ur_PK:
+  expand: پھیلائیں۔
+  collapse: سمٹنا
+  close: بند
+  details: کارڈ کی تفصیلات
+
+vi_VN:
+  expand: Mở rộng
+  collapse: Sụp đổ
+  close: Đóng
+  details: Chi tiết thẻ

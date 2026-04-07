@@ -16,17 +16,29 @@
 
 export type SupportedLanguage =
     | 'ar_AE'
+    | 'bg_BG'
+    | 'bn_BD'
+    | 'ca_ES'
+    | 'cs_CZ'
+    | 'da_DK'
     | 'de_DE'
     | 'el_GR'
     | 'en_GB'
     | 'en_US'
     | 'es_ES'
+    | 'fa_IR'
     | 'fi_FI'
     | 'fr_FR'
+    | 'hi_IN'
+    | 'hr_HR'
+    | 'hu_HU'
+    | 'id_ID'
     | 'it_IT'
     | 'iw_IL'
     | 'ja_JP'
     | 'ko_KR'
+    | 'ms_MY'
+    | 'nb_NO'
     | 'nl_NL'
     | 'pl_PL'
     | 'pt_BR'
@@ -35,6 +47,13 @@ export type SupportedLanguage =
     | 'ru_RU'
     | 'sk_SK'
     | 'sv_SE'
+    | 'sw_KE'
+    | 'ta_IN'
+    | 'th_TH'
+    | 'tr_TR'
+    | 'uk_UA'
+    | 'ur_PK'
+    | 'vi_VN'
     | 'zh_CN'
     // | 'zh_HK'  // TODO: Google Translate has no zh-HK variant (produces same as zh-TW) — add back when we have distinct translations
     | 'zh_TW';
@@ -45,15 +64,27 @@ export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, string> = {
     en_US: 'English (US)',
     en_GB: 'English (UK)',
     ar_AE: 'العربية',
+    bg_BG: 'Български',
+    bn_BD: 'বাংলা',
+    ca_ES: 'Català',
+    cs_CZ: 'Čeština',
+    da_DK: 'Dansk',
     de_DE: 'Deutsch',
     el_GR: 'Ελληνικά',
     es_ES: 'Español',
+    fa_IR: 'فارسی',
     fi_FI: 'Suomi',
     fr_FR: 'Français',
+    hi_IN: 'हिन्दी',
+    hr_HR: 'Hrvatski',
+    hu_HU: 'Magyar',
+    id_ID: 'Bahasa Indonesia',
     it_IT: 'Italiano',
     iw_IL: 'עברית',
     ja_JP: '日本語',
     ko_KR: '한국어',
+    ms_MY: 'Bahasa Melayu',
+    nb_NO: 'Norsk Bokmål',
     nl_NL: 'Nederlands',
     pl_PL: 'Polski',
     pt_BR: 'Português (Brasil)',
@@ -62,6 +93,13 @@ export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, string> = {
     ru_RU: 'Русский',
     sk_SK: 'Slovenčina',
     sv_SE: 'Svenska',
+    sw_KE: 'Kiswahili',
+    ta_IN: 'தமிழ்',
+    th_TH: 'ไทย',
+    tr_TR: 'Türkçe',
+    uk_UA: 'Українська',
+    ur_PK: 'اردو',
+    vi_VN: 'Tiếng Việt',
     zh_CN: '中文 (简体)',
     // zh_HK: '中文 (香港)',  // TODO: add back when we have distinct translations
     zh_TW: '中文 (繁體)',

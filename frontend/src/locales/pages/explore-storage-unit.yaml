@@ -690,3 +690,630 @@ zh_TW:
   failedToGetTargetTableStructure: "取得目標表結構失敗：{error}"
   confirmOperationTitle: 確認操作
   confirmOperationDescription: 該操作可能會修改或刪除資料。 您確定要繼續嗎？
+
+bg_BG:
+  title: Разгледайте таблицата
+  totalCount: "Общ брой:"
+  searchLabel: Търсене
+  searchPlaceholder: Заявка за търсене...
+  pageSizeLabel: Размер на страницата
+  customPageSize: По поръчка
+  showPrefix: Покажи
+  queryButton: Запитване
+  scratchpad: Скречпад
+  addRowTitle: Добавете нов ред
+  addRowButton: Добавяне на ред
+  documentJson: Документ JSON
+  documentJsonHelp: Въведете документа като JSON обект. Всички полета ще бъдат индексирани.
+  cancel: Отказ
+  submit: Изпратете
+  scratchpadTitle: Скречпад
+  run: Бягай
+  searchAround: Търсете наоколо
+  query: "Заявка: {table} (ID: {id})"
+  noEntityFound: Няма намерен обект с посочения идентификатор
+  close: затвори
+  addRowSuccess: Успешно добавен ред с данни!
+  addRowError: "Не може да се добави редът с данни: {error}"
+  invalidJson: Невалиден JSON.
+  fillAtLeastOneValue: Моля, попълнете поне една стойност.
+  couldNotDetermineTargetTable: Не можа да се определи целевата таблица за външен ключ
+  noPrimaryKeyFound: "Не е намерен първичен ключ за таблица {table}"
+  failedToSearchEntity: "Неуспешно търсене на обект: {error}"
+  failedToGetTargetTableStructure: "Неуспешно получаване на структурата на целевата таблица: {error}"
+  confirmOperationTitle: Потвърдете операцията
+  confirmOperationDescription: Тази операция може да промени или изтрие данни. Сигурни ли сте, че искате да продължите?
+
+bn_BD:
+  title: টেবিল অন্বেষণ
+  totalCount: "মোট গণনা:"
+  searchLabel: অনুসন্ধান করুন
+  searchPlaceholder: অনুসন্ধান ক্যোয়ারী...
+  pageSizeLabel: পৃষ্ঠার আকার
+  customPageSize: কাস্টম
+  showPrefix: দেখান
+  queryButton: প্রশ্ন
+  scratchpad: স্ক্র্যাচপ্যাড
+  addRowTitle: নতুন সারি যোগ করুন
+  addRowButton: সারি যোগ করুন
+  documentJson: নথি JSON
+  documentJsonHelp: একটি JSON অবজেক্ট হিসাবে নথি লিখুন. সমস্ত ক্ষেত্র সূচিত করা হবে.
+  cancel: বাতিল করুন
+  submit: জমা দিন
+  scratchpadTitle: স্ক্র্যাচপ্যাড
+  run: চালান
+  searchAround: চারপাশে অনুসন্ধান করুন
+  query: "প্রশ্ন: {table} (আইডি: {id})"
+  noEntityFound: নির্দিষ্ট আইডি সহ কোনো সত্তা পাওয়া যায়নি
+  close: বন্ধ
+  addRowSuccess: সফলভাবে ডেটা সারি যোগ করা হয়েছে!
+  addRowError: "ডেটা সারি যোগ করতে অক্ষম: {error}"
+  invalidJson: অবৈধ JSON।
+  fillAtLeastOneValue: অন্তত একটি মান পূরণ করুন.
+  couldNotDetermineTargetTable: বিদেশী কীর জন্য লক্ষ্য সারণী নির্ধারণ করা যায়নি
+  noPrimaryKeyFound: "টেবিলের জন্য কোন প্রাথমিক কী পাওয়া যায়নি {table}"
+  failedToSearchEntity: "সত্তা অনুসন্ধান করতে ব্যর্থ হয়েছে: {error}"
+  failedToGetTargetTableStructure: "লক্ষ্য টেবিল গঠন পেতে ব্যর্থ হয়েছে: {error}"
+  confirmOperationTitle: অপারেশন নিশ্চিত করুন
+  confirmOperationDescription: এই অপারেশন ডেটা পরিবর্তন বা মুছে ফেলতে পারে। আপনি কি এগিয়ে যাওয়ার বিষয়ে নিশ্চিত?
+
+ca_ES:
+  title: Explora la taula
+  totalCount: "Recompte total:"
+  searchLabel: Cerca
+  searchPlaceholder: Consulta de cerca...
+  pageSizeLabel: Mida de la pàgina
+  customPageSize: Personalitzat
+  showPrefix: Mostra
+  queryButton: Consulta
+  scratchpad: Bloc de notes
+  addRowTitle: Afegeix una fila nova
+  addRowButton: Afegeix una fila
+  documentJson: Document JSON
+  documentJsonHelp: Introduïu el document com a objecte JSON. Tots els camps estaran indexats.
+  cancel: Cancel·la
+  submit: Envia
+  scratchpadTitle: Bloc de notes
+  run: Corre
+  searchAround: Cerca al voltant
+  query: "Consulta: [[0]]] (ID: [{id})"
+  noEntityFound: No s'ha trobat cap entitat amb l'identificador especificat
+  close: Tancar
+  addRowSuccess: S'ha afegit la fila de dades correctament!
+  addRowError: "No es pot afegir la fila de dades: {error}"
+  invalidJson: JSON no vàlid.
+  fillAtLeastOneValue: Ompliu almenys un valor.
+  couldNotDetermineTargetTable: No s'ha pogut determinar la taula de destinació per a la clau estrangera
+  noPrimaryKeyFound: "No s'ha trobat cap clau primària per a la taula {table}"
+  failedToSearchEntity: "No s'ha pogut cercar l'entitat: {error}"
+  failedToGetTargetTableStructure: "No s'ha pogut obtenir l'estructura de la taula de destinació: [[0]]]"
+  confirmOperationTitle: Confirmeu l'operació
+  confirmOperationDescription: Aquesta operació pot modificar o eliminar dades. Esteu segur que voleu continuar?
+
+cs_CZ:
+  title: Prozkoumat tabulku
+  totalCount: "Celkový počet:"
+  searchLabel: Vyhledávání
+  searchPlaceholder: Vyhledávací dotaz...
+  pageSizeLabel: Velikost stránky
+  customPageSize: Zvyk
+  showPrefix: Show
+  queryButton: Dotaz
+  scratchpad: Zápisník
+  addRowTitle: Přidat nový řádek
+  addRowButton: Přidat řádek
+  documentJson: Dokument JSON
+  documentJsonHelp: Zadejte dokument jako objekt JSON. Všechna pole budou indexována.
+  cancel: Zrušit
+  submit: Předložit
+  scratchpadTitle: Zápisník
+  run: Běh
+  searchAround: Hledat v okolí
+  query: "Dotaz: {table} (ID: {id})"
+  noEntityFound: Nebyla nalezena žádná entita se zadaným ID
+  close: Blízko
+  addRowSuccess: Úspěšně přidán řádek dat!
+  addRowError: "Nelze přidat řádek dat: {error}"
+  invalidJson: Neplatný JSON.
+  fillAtLeastOneValue: Vyplňte prosím alespoň jednu hodnotu.
+  couldNotDetermineTargetTable: Nelze určit cílovou tabulku pro cizí klíč
+  noPrimaryKeyFound: "Pro tabulku {table} nebyl nalezen žádný primární klíč"
+  failedToSearchEntity: "Nepodařilo se vyhledat entitu: {error}"
+  failedToGetTargetTableStructure: "Nepodařilo se získat strukturu cílové tabulky: {error}"
+  confirmOperationTitle: Potvrďte operaci
+  confirmOperationDescription: Tato operace může upravit nebo odstranit data. Opravdu chcete pokračovat?
+
+da_DK:
+  title: Udforsk tabel
+  totalCount: "Samlet antal:"
+  searchLabel: Søge
+  searchPlaceholder: Søgeforespørgsel...
+  pageSizeLabel: Sidestørrelse
+  customPageSize: Skik
+  showPrefix: Vise
+  queryButton: Forespørgsel
+  scratchpad: Scratchpad
+  addRowTitle: Tilføj ny række
+  addRowButton: Tilføj række
+  documentJson: Dokument JSON
+  documentJsonHelp: Indtast dokumentet som et JSON-objekt. Alle felter vil blive indekseret.
+  cancel: Ophæve
+  submit: Indsend
+  scratchpadTitle: Scratchpad
+  run: Løbe
+  searchAround: Søg rundt
+  query: "Forespørgsel: {table} (ID: {id})"
+  noEntityFound: Ingen enhed fundet med det angivne id
+  close: Tæt
+  addRowSuccess: Tilføjet datarække med succes!
+  addRowError: "Kan ikke tilføje datarækken: {error}"
+  invalidJson: Ugyldig JSON.
+  fillAtLeastOneValue: Udfyld venligst mindst én værdi.
+  couldNotDetermineTargetTable: Kunne ikke bestemme måltabel for fremmednøgle
+  noPrimaryKeyFound: "Ingen primær nøgle fundet for tabel {table}"
+  failedToSearchEntity: "Kunne ikke søge efter entitet: {error}"
+  failedToGetTargetTableStructure: "Kunne ikke hente måltabelstruktur: {error}"
+  confirmOperationTitle: Bekræft betjening
+  confirmOperationDescription: Denne handling kan ændre eller slette data. Er du sikker på, at du vil fortsætte?
+
+fa_IR:
+  title: جدول کاوش
+  totalCount: "تعداد کل:"
+  searchLabel: جستجو کنید
+  searchPlaceholder: درخواست جستجو...
+  pageSizeLabel: اندازه صفحه
+  customPageSize: سفارشی
+  showPrefix: نمایش دهید
+  queryButton: پرس و جو
+  scratchpad: Scratchpad
+  addRowTitle: افزودن ردیف جدید
+  addRowButton: ردیف اضافه کنید
+  documentJson: سند JSON
+  documentJsonHelp: سند را به عنوان یک شی JSON وارد کنید. تمام فیلدها ایندکس خواهند شد.
+  cancel: لغو کنید
+  submit: ارسال کنید
+  scratchpadTitle: Scratchpad
+  run: اجرا کنید
+  searchAround: جستجو در اطراف
+  query: "پرس و جو: {table} (شناسه: {id})"
+  noEntityFound: هیچ موجودی با شناسه مشخص شده یافت نشد
+  close: بستن
+  addRowSuccess: ردیف داده با موفقیت اضافه شد!
+  addRowError: "نمی‌توان ردیف داده را اضافه کرد: {error}"
+  invalidJson: JSON نامعتبر است.
+  fillAtLeastOneValue: لطفا حداقل یک مقدار را پر کنید.
+  couldNotDetermineTargetTable: جدول هدف برای کلید خارجی تعیین نشد
+  noPrimaryKeyFound: "کلید اصلی برای جدول {table} یافت نشد"
+  failedToSearchEntity: "جستجوی موجودیت انجام نشد: {error}"
+  failedToGetTargetTableStructure: "ساختار جدول هدف دریافت نشد: {error}"
+  confirmOperationTitle: تایید عملیات
+  confirmOperationDescription: این عملیات ممکن است داده ها را تغییر یا حذف کند. آیا مطمئن هستید که می خواهید ادامه دهید؟
+
+hi_IN:
+  title: तालिका का अन्वेषण करें
+  totalCount: "कुल गणना:"
+  searchLabel: खोज
+  searchPlaceholder: प्रश्न खोजना...
+  pageSizeLabel: पृष्ठ का आकार
+  customPageSize: रिवाज़
+  showPrefix: दिखाओ
+  queryButton: सवाल
+  scratchpad: स्क्रैचपैड
+  addRowTitle: नई पंक्ति जोड़ें
+  addRowButton: लाइन जोड़ो
+  documentJson: दस्तावेज़ JSON
+  documentJsonHelp: दस्तावेज़ को JSON ऑब्जेक्ट के रूप में दर्ज करें। सभी फ़ील्ड अनुक्रमित किए जाएंगे.
+  cancel: रद्द करना
+  submit: जमा करना
+  scratchpadTitle: स्क्रैचपैड
+  run: दौड़ना
+  searchAround: चारों ओर खोजें
+  query: "प्रश्न: {table} (आईडी: {id})"
+  noEntityFound: निर्दिष्ट आईडी के साथ कोई इकाई नहीं मिली
+  close: बंद करना
+  addRowSuccess: डेटा पंक्ति सफलतापूर्वक जोड़ी गई!
+  addRowError: "डेटा पंक्ति जोड़ने में असमर्थ: {error}"
+  invalidJson: अमान्य JSON.
+  fillAtLeastOneValue: कृपया कम से कम एक मान भरें.
+  couldNotDetermineTargetTable: विदेशी कुंजी के लिए लक्ष्य तालिका निर्धारित नहीं कर सका
+  noPrimaryKeyFound: "तालिका के लिए कोई प्राथमिक कुंजी नहीं मिली {table}"
+  failedToSearchEntity: "इकाई की खोज करने में विफल: {error}"
+  failedToGetTargetTableStructure: "लक्ष्य तालिका संरचना प्राप्त करने में विफल: {error}"
+  confirmOperationTitle: संचालन की पुष्टि करें
+  confirmOperationDescription: यह ऑपरेशन डेटा को संशोधित या हटा सकता है। क्या आप सुनिश्चित रूप से आगे बढ़ना चाहते हैं?
+
+hr_HR:
+  title: Istražite tablicu
+  totalCount: "Ukupni broj:"
+  searchLabel: Pretraživanje
+  searchPlaceholder: Upit za pretraživanje...
+  pageSizeLabel: Veličina stranice
+  customPageSize: Običaj
+  showPrefix: Pokazati
+  queryButton: Upit
+  scratchpad: Scratchpad
+  addRowTitle: Dodaj novi red
+  addRowButton: Dodaj red
+  documentJson: Dokument JSON
+  documentJsonHelp: Unesite dokument kao JSON objekt. Sva će polja biti indeksirana.
+  cancel: Otkazati
+  submit: Pošalji
+  scratchpadTitle: Scratchpad
+  run: Trčanje
+  searchAround: Traži okolo
+  query: "Upit: {table} (ID: {id})"
+  noEntityFound: Nije pronađen nijedan entitet s navedenim ID-om
+  close: Zatvoriti
+  addRowSuccess: Podatkovni red uspješno dodan!
+  addRowError: "Nije moguće dodati red podataka: {error}"
+  invalidJson: Nevažeći JSON.
+  fillAtLeastOneValue: Ispunite barem jednu vrijednost.
+  couldNotDetermineTargetTable: Nije moguće odrediti ciljnu tablicu za strani ključ
+  noPrimaryKeyFound: "Nije pronađen primarni ključ za tablicu {table}"
+  failedToSearchEntity: "Neuspješno traženje entiteta: {error}"
+  failedToGetTargetTableStructure: "Nije uspjelo dobivanje ciljne strukture tablice: {error}"
+  confirmOperationTitle: Potvrdite operaciju
+  confirmOperationDescription: Ova operacija može izmijeniti ili izbrisati podatke. Jeste li sigurni da želite nastaviti?
+
+hu_HU:
+  title: Táblázat felfedezése
+  totalCount: "Teljes szám:"
+  searchLabel: Keresés
+  searchPlaceholder: Keresési lekérdezés...
+  pageSizeLabel: Oldalméret
+  customPageSize: Szokás
+  showPrefix: Megmutat
+  queryButton: Lekérdezés
+  scratchpad: Firkálótömb
+  addRowTitle: Új sor hozzáadása
+  addRowButton: Sor hozzáadása
+  documentJson: JSON dokumentum
+  documentJsonHelp: Írja be a dokumentumot JSON-objektumként. Minden mező indexelve lesz.
+  cancel: Mégse
+  submit: Beküld
+  scratchpadTitle: Firkálótömb
+  run: Fut
+  searchAround: Keresés körül
+  query: "Lekérdezés: {table} (azonosító: {id})"
+  noEntityFound: Nem található entitás a megadott azonosítóval
+  close: Közeli
+  addRowSuccess: Adatsor sikeresen hozzáadva!
+  addRowError: "Nem sikerült hozzáadni a következő adatsort: {error}"
+  invalidJson: Érvénytelen JSON.
+  fillAtLeastOneValue: Kérjük, töltsön ki legalább egy értéket.
+  couldNotDetermineTargetTable: Nem sikerült meghatározni az idegen kulcs céltábláját
+  noPrimaryKeyFound: "Nem található elsődleges kulcs a {table} táblához"
+  failedToSearchEntity: "Nem sikerült a következő entitás keresése: {error}"
+  failedToGetTargetTableStructure: "Nem sikerült lekérni a céltábla szerkezetét: {error}"
+  confirmOperationTitle: Működés megerősítése
+  confirmOperationDescription: Ez a művelet módosíthatja vagy törölheti az adatokat. Biztosan folytatja?
+
+id_ID:
+  title: Jelajahi Tabel
+  totalCount: "Jumlah Total:"
+  searchLabel: Mencari
+  searchPlaceholder: Kueri penelusuran...
+  pageSizeLabel: Ukuran Halaman
+  customPageSize: Kebiasaan
+  showPrefix: Menunjukkan
+  queryButton: Pertanyaan
+  scratchpad: Papan penggaris
+  addRowTitle: Tambahkan Baris Baru
+  addRowButton: Tambahkan Baris
+  documentJson: Dokumen JSON
+  documentJsonHelp: Masukkan dokumen sebagai objek JSON. Semua bidang akan diindeks.
+  cancel: Membatalkan
+  submit: Kirim
+  scratchpadTitle: Papan penggaris
+  run: Berlari
+  searchAround: Cari di Sekitar
+  query: "Kueri: {table} (ID: {id})"
+  noEntityFound: Tidak ada entitas yang ditemukan dengan ID yang ditentukan
+  close: Menutup
+  addRowSuccess: Berhasil menambahkan baris data!
+  addRowError: "Tidak dapat menambahkan baris data: {error}"
+  invalidJson: JSON tidak valid.
+  fillAtLeastOneValue: Silakan isi setidaknya satu nilai.
+  couldNotDetermineTargetTable: Tidak dapat menentukan tabel target untuk kunci asing
+  noPrimaryKeyFound: "Tidak ditemukan kunci utama untuk tabel {table}"
+  failedToSearchEntity: "Gagal mencari entitas: {error}"
+  failedToGetTargetTableStructure: "Gagal mendapatkan struktur tabel target: {error}"
+  confirmOperationTitle: Konfirmasikan Operasi
+  confirmOperationDescription: Operasi ini dapat mengubah atau menghapus data. Apakah Anda yakin ingin melanjutkan?
+
+ms_MY:
+  title: Terokai Jadual
+  totalCount: "Jumlah Kiraan:"
+  searchLabel: Cari
+  searchPlaceholder: Pertanyaan carian...
+  pageSizeLabel: Saiz Halaman
+  customPageSize: Adat
+  showPrefix: Tunjukkan
+  queryButton: Pertanyaan
+  scratchpad: Pad conteng
+  addRowTitle: Tambah Baris Baharu
+  addRowButton: Tambah Baris
+  documentJson: Dokumen JSON
+  documentJsonHelp: Masukkan dokumen sebagai objek JSON. Semua medan akan diindeks.
+  cancel: Batal
+  submit: Hantar
+  scratchpadTitle: Pad conteng
+  run: Lari
+  searchAround: Cari Sekeliling
+  query: "Pertanyaan: {table} (ID: {id})"
+  noEntityFound: Tiada entiti ditemui dengan ID yang ditentukan
+  close: tutup
+  addRowSuccess: Menambah baris data berjaya!
+  addRowError: "Tidak dapat menambah baris data: {error}"
+  invalidJson: JSON tidak sah.
+  fillAtLeastOneValue: Sila isi sekurang-kurangnya satu nilai.
+  couldNotDetermineTargetTable: Tidak dapat menentukan jadual sasaran untuk kunci asing
+  noPrimaryKeyFound: "Tiada kunci utama ditemui untuk jadual {table}"
+  failedToSearchEntity: "Gagal mencari entiti: {error}"
+  failedToGetTargetTableStructure: "Gagal mendapatkan struktur jadual sasaran: {error}"
+  confirmOperationTitle: Sahkan Operasi
+  confirmOperationDescription: Operasi ini boleh mengubah suai atau memadam data. Adakah anda pasti mahu meneruskan?
+
+nb_NO:
+  title: Utforsk tabellen
+  totalCount: "Totalt antall:"
+  searchLabel: Søk
+  searchPlaceholder: Søkeord...
+  pageSizeLabel: Sidestørrelse
+  customPageSize: Skikk
+  showPrefix: Vise
+  queryButton: Spørsmål
+  scratchpad: Scratchpad
+  addRowTitle: Legg til ny rad
+  addRowButton: Legg til rad
+  documentJson: Dokument JSON
+  documentJsonHelp: Skriv inn dokumentet som et JSON-objekt. Alle felt vil bli indeksert.
+  cancel: Kansellere
+  submit: Send inn
+  scratchpadTitle: Scratchpad
+  run: Løp
+  searchAround: Søk rundt
+  query: "Spørring: {table} (ID: {id})"
+  noEntityFound: Ingen enhet funnet med den angitte IDen
+  close: Lukke
+  addRowSuccess: Dataraden ble lagt til!
+  addRowError: "Kan ikke legge til dataraden: {error}"
+  invalidJson: Ugyldig JSON.
+  fillAtLeastOneValue: Fyll ut minst én verdi.
+  couldNotDetermineTargetTable: Kunne ikke bestemme måltabell for fremmednøkkel
+  noPrimaryKeyFound: "Finner ingen primærnøkkel for tabellen {table}"
+  failedToSearchEntity: "Kunne ikke søke etter enhet: {error}"
+  failedToGetTargetTableStructure: "Kunne ikke hente måltabellstrukturen: {error}"
+  confirmOperationTitle: Bekreft operasjon
+  confirmOperationDescription: Denne operasjonen kan endre eller slette data. Er du sikker på at du vil fortsette?
+
+sw_KE:
+  title: Chunguza Jedwali
+  totalCount: "Jumla ya Hesabu:"
+  searchLabel: Tafuta
+  searchPlaceholder: Hoja ya utafutaji...
+  pageSizeLabel: Ukubwa wa Ukurasa
+  customPageSize: Desturi
+  showPrefix: Onyesha
+  queryButton: Hoja
+  scratchpad: Padi ya kukwaruza
+  addRowTitle: Ongeza Safu Mpya
+  addRowButton: Ongeza Safu
+  documentJson: Hati ya JSON
+  documentJsonHelp: Ingiza hati kama kipengee cha JSON. Sehemu zote zitaorodheshwa.
+  cancel: Ghairi
+  submit: Wasilisha
+  scratchpadTitle: Padi ya kukwaruza
+  run: Kimbia
+  searchAround: Tafuta Karibu
+  query: "Hoja: {table} (Kitambulisho: {id})"
+  noEntityFound: Hakuna huluki iliyopatikana na kitambulisho kilichobainishwa
+  close: Funga
+  addRowSuccess: Imeongeza safu mlalo ya data!
+  addRowError: "Imeshindwa kuongeza safu mlalo ya data: {error}"
+  invalidJson: JSON batili.
+  fillAtLeastOneValue: Tafadhali jaza angalau thamani moja.
+  couldNotDetermineTargetTable: Haikuweza kubainisha jedwali lengwa kwa ufunguo wa kigeni
+  noPrimaryKeyFound: "Hakuna ufunguo msingi uliopatikana wa jedwali {table}"
+  failedToSearchEntity: "Imeshindwa kutafuta huluki: {error}"
+  failedToGetTargetTableStructure: "Imeshindwa kupata muundo wa jedwali lengwa: {error}"
+  confirmOperationTitle: Thibitisha Uendeshaji
+  confirmOperationDescription: Operesheni hii inaweza kurekebisha au kufuta data. Je, una uhakika unataka kuendelea?
+
+ta_IN:
+  title: அட்டவணையை ஆராயுங்கள்
+  totalCount: "மொத்த எண்ணிக்கை:"
+  searchLabel: தேடு
+  searchPlaceholder: தேடல் வினவல்...
+  pageSizeLabel: பக்க அளவு
+  customPageSize: தனிப்பயன்
+  showPrefix: காட்டு
+  queryButton: வினவு
+  scratchpad: ஸ்க்ராட்ச்பேட்
+  addRowTitle: புதிய வரிசையைச் சேர்க்கவும்
+  addRowButton: வரிசையைச் சேர்க்கவும்
+  documentJson: ஆவணம் JSON
+  documentJsonHelp: ஆவணத்தை JSON பொருளாக உள்ளிடவும். அனைத்து புலங்களும் அட்டவணைப்படுத்தப்படும்.
+  cancel: ரத்து செய்
+  submit: சமர்ப்பிக்கவும்
+  scratchpadTitle: ஸ்க்ராட்ச்பேட்
+  run: ஓடவும்
+  searchAround: சுற்றி தேடுங்கள்
+  query: "வினவல்: {table} (ஐடி: {id})"
+  noEntityFound: குறிப்பிட்ட ஐடியுடன் எந்த உட்பொருளும் இல்லை
+  close: மூடு
+  addRowSuccess: தரவு வரிசை வெற்றிகரமாக சேர்க்கப்பட்டது!
+  addRowError: "தரவு வரிசையைச் சேர்க்க முடியவில்லை: {error}"
+  invalidJson: தவறான JSON.
+  fillAtLeastOneValue: குறைந்தது ஒரு மதிப்பையாவது நிரப்பவும்.
+  couldNotDetermineTargetTable: வெளிநாட்டு விசைக்கான இலக்கு அட்டவணையைத் தீர்மானிக்க முடியவில்லை
+  noPrimaryKeyFound: "{table} அட்டவணைக்கான முதன்மை விசை எதுவும் இல்லை"
+  failedToSearchEntity: "உட்பொருளைத் தேடுவதில் தோல்வி: {error}"
+  failedToGetTargetTableStructure: "இலக்கு அட்டவணை அமைப்பைப் பெறுவதில் தோல்வி: {error}"
+  confirmOperationTitle: செயல்பாட்டை உறுதிப்படுத்தவும்
+  confirmOperationDescription: இந்த செயல்பாடு தரவை மாற்றலாம் அல்லது நீக்கலாம். நீங்கள் நிச்சயமாக தொடர விரும்புகிறீர்களா?
+
+th_TH:
+  title: สำรวจตาราง
+  totalCount: "จำนวนทั้งหมด:"
+  searchLabel: ค้นหา
+  searchPlaceholder: คำค้นหา...
+  pageSizeLabel: ขนาดหน้า
+  customPageSize: กำหนดเอง
+  showPrefix: แสดง
+  queryButton: แบบสอบถาม
+  scratchpad: สแครชแพด
+  addRowTitle: เพิ่มแถวใหม่
+  addRowButton: เพิ่มแถว
+  documentJson: เอกสาร JSON
+  documentJsonHelp: ป้อนเอกสารเป็นออบเจ็กต์ JSON ฟิลด์ทั้งหมดจะถูกจัดทำดัชนี
+  cancel: ยกเลิก
+  submit: ส่ง
+  scratchpadTitle: สแครชแพด
+  run: วิ่ง
+  searchAround: ค้นหารอบ ๆ
+  query: "แบบสอบถาม: {table} (รหัส: {id})"
+  noEntityFound: ไม่พบเอนทิตีที่มีรหัสที่ระบุ
+  close: ปิด
+  addRowSuccess: เพิ่มแถวข้อมูลเรียบร้อยแล้ว!
+  addRowError: "ไม่สามารถเพิ่มแถวข้อมูล: {error}"
+  invalidJson: JSON ไม่ถูกต้อง
+  fillAtLeastOneValue: กรุณากรอกอย่างน้อยหนึ่งค่า
+  couldNotDetermineTargetTable: ไม่สามารถระบุตารางเป้าหมายสำหรับคีย์นอกได้
+  noPrimaryKeyFound: "ไม่พบคีย์หลักสำหรับตาราง {table}"
+  failedToSearchEntity: "ไม่สามารถค้นหาเอนทิตี: {error}"
+  failedToGetTargetTableStructure: "ไม่สามารถรับโครงสร้างตารางเป้าหมาย: {error}"
+  confirmOperationTitle: ยืนยันการดำเนินการ
+  confirmOperationDescription: การดำเนินการนี้อาจแก้ไขหรือลบข้อมูล คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?
+
+tr_TR:
+  title: Tabloyu Keşfet
+  totalCount: "Toplam Sayı:"
+  searchLabel: Aramak
+  searchPlaceholder: Arama sorgusu...
+  pageSizeLabel: Sayfa Boyutu
+  customPageSize: Gelenek
+  showPrefix: Göstermek
+  queryButton: Sorgu
+  scratchpad: Karalama defteri
+  addRowTitle: Yeni Satır Ekle
+  addRowButton: Satır Ekle
+  documentJson: JSON'u belgeleyin
+  documentJsonHelp: Belgeyi JSON nesnesi olarak girin. Tüm alanlar indekslenecektir.
+  cancel: İptal etmek
+  submit: Göndermek
+  scratchpadTitle: Karalama defteri
+  run: Koşmak
+  searchAround: Etrafında Ara
+  query: "Sorgu: {table} (Kimlik: {id})"
+  noEntityFound: Belirtilen kimliğe sahip varlık bulunamadı
+  close: Kapalı
+  addRowSuccess: Veri satırı başarıyla eklendi!
+  addRowError: "Veri satırı eklenemiyor: {error}"
+  invalidJson: Geçersiz JSON.
+  fillAtLeastOneValue: Lütfen en az bir değer girin.
+  couldNotDetermineTargetTable: Yabancı anahtar için hedef tablo belirlenemedi
+  noPrimaryKeyFound: "{table} tablosu için birincil anahtar bulunamadı"
+  failedToSearchEntity: "Varlık aranamadı: {error}"
+  failedToGetTargetTableStructure: "Hedef tablo yapısı alınamadı: {error}"
+  confirmOperationTitle: İşlemi Onayla
+  confirmOperationDescription: Bu işlem verileri değiştirebilir veya silebilir. Devam etmek istediğinizden emin misiniz?
+
+uk_UA:
+  title: Дослідити таблицю
+  totalCount: "Загальна кількість:"
+  searchLabel: Пошук
+  searchPlaceholder: Пошуковий запит...
+  pageSizeLabel: Розмір сторінки
+  customPageSize: Custom
+  showPrefix: Показати
+  queryButton: Запит
+  scratchpad: Блокнот
+  addRowTitle: Додати новий рядок
+  addRowButton: Додати рядок
+  documentJson: Документ JSON
+  documentJsonHelp: Введіть документ як об’єкт JSON. Усі поля будуть проіндексовані.
+  cancel: Скасувати
+  submit: Надіслати
+  scratchpadTitle: Блокнот
+  run: бігти
+  searchAround: Пошук навколо
+  query: "Запит: {table} (ID: {id})"
+  noEntityFound: Не знайдено сутності з указаним ідентифікатором
+  close: Закрити
+  addRowSuccess: Рядок даних успішно додано!
+  addRowError: "Не вдалося додати рядок даних: {error}"
+  invalidJson: Недійсний JSON.
+  fillAtLeastOneValue: Введіть принаймні одне значення.
+  couldNotDetermineTargetTable: Не вдалося визначити цільову таблицю для зовнішнього ключа
+  noPrimaryKeyFound: "Не знайдено первинний ключ для таблиці {table}"
+  failedToSearchEntity: "Не вдалося знайти об’єкт: {error}"
+  failedToGetTargetTableStructure: "Не вдалося отримати структуру цільової таблиці: {error}"
+  confirmOperationTitle: Підтвердити операцію
+  confirmOperationDescription: Ця операція може змінити або видалити дані. Ви впевнені, що бажаєте продовжити?
+
+ur_PK:
+  title: ٹیبل کو دریافت کریں۔
+  totalCount: "کل شمار:"
+  searchLabel: تلاش کریں۔
+  searchPlaceholder: استفسار تلاش کریں...
+  pageSizeLabel: صفحہ کا سائز
+  customPageSize: حسب ضرورت
+  showPrefix: دکھائیں۔
+  queryButton: استفسار
+  scratchpad: سکریچ پیڈ
+  addRowTitle: نئی قطار شامل کریں۔
+  addRowButton: قطار شامل کریں۔
+  documentJson: دستاویز JSON
+  documentJsonHelp: دستاویز کو JSON آبجیکٹ کے بطور درج کریں۔ تمام فیلڈز کو انڈیکس کیا جائے گا۔
+  cancel: منسوخ کریں۔
+  submit: جمع کروائیں۔
+  scratchpadTitle: سکریچ پیڈ
+  run: دوڑو
+  searchAround: ارد گرد تلاش کریں۔
+  query: "سوال: {table} (ID: {id})"
+  noEntityFound: مخصوص ID کے ساتھ کوئی ہستی نہیں ملی
+  close: بند
+  addRowSuccess: ڈیٹا قطار کامیابی کے ساتھ شامل کر دی گئی!
+  addRowError: "ڈیٹا قطار شامل کرنے سے قاصر: {error}"
+  invalidJson: غلط JSON۔
+  fillAtLeastOneValue: براہ کرم کم از کم ایک قدر بھریں۔
+  couldNotDetermineTargetTable: غیر ملکی کلید کے لیے ہدف کے جدول کا تعین نہیں کیا جا سکا
+  noPrimaryKeyFound: "ٹیبل کے لیے کوئی بنیادی کلید نہیں ملی {table}"
+  failedToSearchEntity: "ہستی کی تلاش میں ناکام: {error}"
+  failedToGetTargetTableStructure: "ہدف ٹیبل کا ڈھانچہ حاصل کرنے میں ناکام: {error}"
+  confirmOperationTitle: آپریشن کی تصدیق کریں۔
+  confirmOperationDescription: یہ آپریشن ڈیٹا میں ترمیم یا حذف کر سکتا ہے۔ کیا آپ واقعی آگے بڑھنا چاہتے ہیں؟
+
+vi_VN:
+  title: Khám phá bảng
+  totalCount: "Tổng số:"
+  searchLabel: Tìm kiếm
+  searchPlaceholder: Truy vấn tìm kiếm...
+  pageSizeLabel: Kích thước trang
+  customPageSize: Phong tục
+  showPrefix: Trình diễn
+  queryButton: Truy vấn
+  scratchpad: Bàn di chuột
+  addRowTitle: Thêm hàng mới
+  addRowButton: Thêm hàng
+  documentJson: Tài liệu JSON
+  documentJsonHelp: Nhập tài liệu dưới dạng đối tượng JSON. Tất cả các trường sẽ được lập chỉ mục.
+  cancel: Hủy bỏ
+  submit: Nộp
+  scratchpadTitle: Bàn di chuột
+  run: Chạy
+  searchAround: Tìm kiếm xung quanh
+  query: "Truy vấn: {table} (ID: {id})"
+  noEntityFound: Không tìm thấy thực thể nào có ID được chỉ định
+  close: Đóng
+  addRowSuccess: Đã thêm hàng dữ liệu thành công!
+  addRowError: "Không thể thêm hàng dữ liệu: {error}"
+  invalidJson: JSON không hợp lệ.
+  fillAtLeastOneValue: Vui lòng điền ít nhất một giá trị.
+  couldNotDetermineTargetTable: Không thể xác định bảng mục tiêu cho khóa ngoại
+  noPrimaryKeyFound: "Không tìm thấy khóa chính cho bảng {table}"
+  failedToSearchEntity: "Không thể tìm kiếm thực thể: {error}"
+  failedToGetTargetTableStructure: "Không lấy được cấu trúc bảng mục tiêu: {error}"
+  confirmOperationTitle: Xác nhận hoạt động
+  confirmOperationDescription: Thao tác này có thể sửa đổi hoặc xóa dữ liệu. Bạn có chắc chắn muốn tiếp tục không?

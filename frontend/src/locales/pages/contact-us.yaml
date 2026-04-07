@@ -354,3 +354,326 @@ zh_TW:
   urgentNote: 如有緊急事宜，請註明
   urgentLabel: "[緊迫的]"
   urgentNoteEnd: 在您的電子郵件主題中。
+
+bg_BG:
+  title: Свържете се с нас
+  description: Ние сме тук, за да помогнем! Свържете се с нас за поддръжка, въпроси или обратна връзка.
+  emailTitle: Имейл
+  emailAddress: support@cliday.com
+  emailDescription: Нашият екип за поддръжка обикновено отговаря в рамките на 1 работен ден.
+  communityTitle: Общност и проблеми
+  submitIssue: Изпратете проблем в GitHub
+  communityDescription: За доклади за грешки, заявки за функции или за да се присъедините към дискусията, посетете нашата страница за проблеми с GitHub.
+  liveChatTitle: Чат на живо (Очаквайте скоро)
+  chatButton: Разговаряйте с поддръжката
+  liveChatDescription: Поддръжката за чат на живо ще бъде налична скоро. Останете на линия!
+  companyInfo: Clidey, Inc. · 2025 · Всички права запазени.
+  urgentNote: За спешни въпроси, моля, споменете
+  urgentLabel: "[СПЕШНО]"
+  urgentNoteEnd: в темата на вашия имейл.
+
+bn_BD:
+  title: আমাদের সাথে যোগাযোগ করুন
+  description: আমরা সাহায্য করতে এখানে আছি! সমর্থন, প্রশ্ন বা প্রতিক্রিয়ার জন্য আমাদের সাথে যোগাযোগ করুন।
+  emailTitle: ইমেইল
+  emailAddress: support@clidey.com
+  emailDescription: আমাদের সহায়তা দল সাধারণত 1 কার্যদিবসের মধ্যে প্রতিক্রিয়া জানায়।
+  communityTitle: সম্প্রদায় এবং সমস্যা
+  submitIssue: GitHub-এ একটি সমস্যা জমা দিন
+  communityDescription: বাগ রিপোর্ট, বৈশিষ্ট্য অনুরোধ, বা আলোচনায় যোগদানের জন্য, আমাদের GitHub সমস্যা পৃষ্ঠা দেখুন।
+  liveChatTitle: লাইভ চ্যাট (শীঘ্রই আসছে)
+  chatButton: সমর্থন সঙ্গে চ্যাট
+  liveChatDescription: লাইভ চ্যাট সমর্থন শীঘ্রই উপলব্ধ হবে. সঙ্গে থাকুন!
+  companyInfo: Clidey, Inc. · 2025 · সর্বস্বত্ব সংরক্ষিত।
+  urgentNote: জরুরী বিষয়ের জন্য, উল্লেখ করুন
+  urgentLabel: "[জরুরী]"
+  urgentNoteEnd: আপনার ইমেইল বিষয়.
+
+ca_ES:
+  title: Contacta amb nosaltres
+  description: Estem aquí per ajudar! Poseu-vos en contacte amb nosaltres per obtenir suport, preguntes o comentaris.
+  emailTitle: Correu electrònic
+  emailAddress: support@clidey.com
+  emailDescription: El nostre equip d'assistència normalment respon en 1 dia laborable.
+  communityTitle: Comunitat i problemes
+  submitIssue: Envieu un problema a GitHub
+  communityDescription: Per obtenir informes d'errors, sol·licituds de funcions o per unir-vos a la discussió, visiteu la nostra pàgina de problemes de GitHub.
+  liveChatTitle: Xat en directe (properament)
+  chatButton: Xateja amb el suport
+  liveChatDescription: El suport de xat en directe estarà disponible aviat. Estigueu atents!
+  companyInfo: Clidey, Inc. · 2025 · Tots els drets reservats.
+  urgentNote: Per a assumptes urgents, si us plau, esmenteu
+  urgentLabel: "[URGENT]"
+  urgentNoteEnd: a l'assumpte del vostre correu electrònic.
+
+cs_CZ:
+  title: Kontaktujte nás
+  description: Jsme tu, abychom vám pomohli! Obraťte se na nás s žádostí o podporu, dotazy nebo zpětnou vazbu.
+  emailTitle: E-mail
+  emailAddress: podpora@clidey.com
+  emailDescription: Náš tým podpory obvykle odpoví do 1 pracovního dne.
+  communityTitle: Komunita a problémy
+  submitIssue: Odešlete problém na GitHubu
+  communityDescription: Chcete-li hlásit chyby, požadavky na funkce nebo se zapojit do diskuze, navštivte naši stránku problémů GitHubu.
+  liveChatTitle: Živý chat (již brzy)
+  chatButton: Chatujte s podporou
+  liveChatDescription: Podpora živého chatu bude brzy k dispozici. Zůstaňte naladěni!
+  companyInfo: Clidey, Inc. · 2025 · Všechna práva vyhrazena.
+  urgentNote: U naléhavých záležitostí uveďte
+  urgentLabel: "[NALÉHAVÉ]"
+  urgentNoteEnd: v předmětu vašeho e-mailu.
+
+da_DK:
+  title: Kontakt os
+  description: Vi er her for at hjælpe! Kontakt os for support, spørgsmål eller feedback.
+  emailTitle: E-mail
+  emailAddress: support@clidey.com
+  emailDescription: Vores supportteam svarer typisk inden for 1 hverdag.
+  communityTitle: Fællesskab og problemer
+  submitIssue: Indsend et problem på GitHub
+  communityDescription: Besøg vores GitHub-problemside for fejlrapporter, funktionsanmodninger eller for at deltage i diskussionen.
+  liveChatTitle: Live chat (kommer snart)
+  chatButton: Chat med support
+  liveChatDescription: Live chat support vil snart være tilgængelig. Følg med!
+  companyInfo: Clidey, Inc. · 2025 · Alle rettigheder forbeholdes.
+  urgentNote: For presserende sager, bedes du nævne
+  urgentLabel: "[PRESSERENDE]"
+  urgentNoteEnd: i dit e-mail-emne.
+
+fa_IR:
+  title: تماس با ما
+  description: ما اینجا هستیم تا کمک کنیم! برای پشتیبانی، سؤال یا بازخورد با ما تماس بگیرید.
+  emailTitle: ایمیل
+  emailAddress: support@clidey.com
+  emailDescription: تیم پشتیبانی ما معمولاً ظرف 1 روز کاری پاسخ می‌دهد.
+  communityTitle: انجمن و مسائل
+  submitIssue: یک مشکل در GitHub ارسال کنید
+  communityDescription: برای گزارش‌های اشکال، درخواست‌های ویژگی، یا برای پیوستن به بحث، از صفحه مشکلات GitHub ما دیدن کنید.
+  liveChatTitle: چت زنده (به زودی)
+  chatButton: با پشتیبانی چت کنید
+  liveChatDescription: پشتیبانی چت زنده به زودی در دسترس خواهد بود. با ما همراه باشید!
+  companyInfo: Clidey, Inc. · 2025 · کلیه حقوق محفوظ است.
+  urgentNote: برای موارد ضروری لطفا ذکر کنید
+  urgentLabel: "[فوری]"
+  urgentNoteEnd: در موضوع ایمیل شما
+
+hi_IN:
+  title: हमसे संपर्क करें
+  description: हम मदद के लिए यहां हैं! समर्थन, प्रश्न या प्रतिक्रिया के लिए हमसे संपर्क करें।
+  emailTitle: ईमेल
+  emailAddress: support@clidey.com
+  emailDescription: हमारी सहायता टीम आमतौर पर 1 व्यावसायिक दिन के भीतर जवाब देती है।
+  communityTitle: समुदाय और मुद्दे
+  submitIssue: GitHub पर एक अंक सबमिट करें
+  communityDescription: बग रिपोर्ट, फीचर अनुरोध या चर्चा में शामिल होने के लिए, हमारे GitHub मुद्दे पृष्ठ पर जाएँ।
+  liveChatTitle: लाइव चैट (जल्द ही आ रहा है)
+  chatButton: समर्थन के साथ चैट करें
+  liveChatDescription: लाइव चैट समर्थन जल्द ही उपलब्ध होगा. बने रहें!
+  companyInfo: क्लिडी, इंक. · 2025 · सर्वाधिकार सुरक्षित।
+  urgentNote: अत्यावश्यक मामलों के लिए कृपया उल्लेख करें
+  urgentLabel: "[अति आवश्यक]"
+  urgentNoteEnd: आपके ईमेल विषय में.
+
+hr_HR:
+  title: Kontaktirajte nas
+  description: Ovdje smo da pomognemo! Obratite nam se za podršku, pitanja ili povratne informacije.
+  emailTitle: E-mail
+  emailAddress: support@cliday.com
+  emailDescription: Naš tim za podršku obično odgovara u roku od 1 radnog dana.
+  communityTitle: Zajednica i problemi
+  submitIssue: Pošaljite problem na GitHub
+  communityDescription: Za izvješća o pogreškama, zahtjeve za značajkama ili za pridruživanje raspravi posjetite našu stranicu s problemima na GitHubu.
+  liveChatTitle: Razgovor uživo (uskoro)
+  chatButton: Razgovarajte s podrškom
+  liveChatDescription: Podrška za chat uživo bit će dostupna uskoro. Ostanite s nama!
+  companyInfo: Clidey, Inc. · 2025 · Sva prava pridržana.
+  urgentNote: Za hitne stvari, navedite
+  urgentLabel: "[HITNO]"
+  urgentNoteEnd: u predmetu e-pošte.
+
+hu_HU:
+  title: Lépjen kapcsolatba velünk
+  description: Azért vagyunk itt, hogy segítsünk! Forduljon hozzánk támogatásért, kérdésért vagy visszajelzésért.
+  emailTitle: Email
+  emailAddress: support@clidey.com
+  emailDescription: Ügyfélszolgálati csapatunk általában 1 munkanapon belül válaszol.
+  communityTitle: Közösség és problémák
+  submitIssue: Probléma bejelentése a GitHubon
+  communityDescription: Hibajelentésekért, funkciókra vonatkozó kérésekért vagy a vitához való csatlakozáshoz keresse fel GitHub-problémák oldalunkat.
+  liveChatTitle: Élő csevegés (hamarosan)
+  chatButton: Csevegés az ügyfélszolgálattal
+  liveChatDescription: Az élő chat támogatás hamarosan elérhető lesz. Maradjon velünk!
+  companyInfo: Clidey, Inc. · 2025 · Minden jog fenntartva.
+  urgentNote: Sürgős ügyekben kérjük jelezze
+  urgentLabel: "[SÜRGŐS]"
+  urgentNoteEnd: az e-mail tárgyában.
+
+id_ID:
+  title: Hubungi kami
+  description: Kami di sini untuk membantu! Hubungi kami untuk mendapatkan dukungan, pertanyaan, atau masukan.
+  emailTitle: E-mail
+  emailAddress: dukungan@clidey.com
+  emailDescription: Tim dukungan kami biasanya merespons dalam 1 hari kerja.
+  communityTitle: Komunitas & Masalah
+  submitIssue: Kirim Masalah di GitHub
+  communityDescription: Untuk laporan bug, permintaan fitur, atau untuk bergabung dalam diskusi, kunjungi halaman masalah GitHub kami.
+  liveChatTitle: Obrolan Langsung (Segera Hadir)
+  chatButton: Mengobrol dengan Dukungan
+  liveChatDescription: Dukungan obrolan langsung akan segera tersedia. Pantau terus!
+  companyInfo: Clidey, Inc. · 2025 · Hak cipta dilindungi undang-undang.
+  urgentNote: Untuk urusan mendesak, harap disebutkan
+  urgentLabel: "[MENDESAK]"
+  urgentNoteEnd: di subjek email Anda.
+
+ms_MY:
+  title: Hubungi Kami
+  description: Kami di sini untuk membantu! Hubungi kami untuk sokongan, soalan atau maklum balas.
+  emailTitle: E-mel
+  emailAddress: support@clidey.com
+  emailDescription: Pasukan sokongan kami biasanya bertindak balas dalam masa 1 hari perniagaan.
+  communityTitle: Komuniti & Isu
+  submitIssue: Hantar Isu pada GitHub
+  communityDescription: Untuk laporan pepijat, permintaan ciri atau untuk menyertai perbincangan, lawati halaman isu GitHub kami.
+  liveChatTitle: Sembang Langsung (Akan Datang)
+  chatButton: Sembang dengan Sokongan
+  liveChatDescription: Sokongan sembang langsung akan tersedia tidak lama lagi. Nantikan!
+  companyInfo: Clidey, Inc. · 2025 · Hak cipta terpelihara.
+  urgentNote: Untuk perkara yang mendesak, sila nyatakan
+  urgentLabel: "[URGENT]"
+  urgentNoteEnd: dalam subjek e-mel anda.
+
+nb_NO:
+  title: Kontakt oss
+  description: Vi er her for å hjelpe! Ta kontakt med oss ​​for støtte, spørsmål eller tilbakemeldinger.
+  emailTitle: E-post
+  emailAddress: support@clidey.com
+  emailDescription: Supportteamet vårt svarer vanligvis innen 1 virkedag.
+  communityTitle: Fellesskap og problemer
+  submitIssue: Send inn et problem på GitHub
+  communityDescription: For feilrapporter, funksjonsforespørsler eller for å bli med i diskusjonen, besøk vår GitHub-problemside.
+  liveChatTitle: Live Chat (kommer snart)
+  chatButton: Chat med support
+  liveChatDescription: Live chat-støtte vil snart være tilgjengelig. Følg med!
+  companyInfo: Clidey, Inc. · 2025 · Alle rettigheter forbeholdt.
+  urgentNote: For hastesaker, vennligst nevne
+  urgentLabel: "[SOM HASTER]"
+  urgentNoteEnd: i e-postemnet ditt.
+
+sw_KE:
+  title: Wasiliana Nasi
+  description: Tuko hapa kusaidia! Wasiliana nasi kwa usaidizi, maswali au maoni.
+  emailTitle: Barua pepe
+  emailAddress: support@clidey.com
+  emailDescription: Timu yetu ya usaidizi kwa kawaida hujibu ndani ya siku 1 ya kazi.
+  communityTitle: Jumuiya na Masuala
+  submitIssue: Wasilisha Suala kwenye GitHub
+  communityDescription: Kwa ripoti za hitilafu, maombi ya vipengele, au kujiunga na majadiliano, tembelea ukurasa wetu wa masuala ya GitHub.
+  liveChatTitle: Gumzo la Moja kwa Moja (Inakuja Hivi Karibuni)
+  chatButton: Piga gumzo na Usaidizi
+  liveChatDescription: Usaidizi wa gumzo la moja kwa moja utapatikana hivi karibuni. Endelea kufuatilia!
+  companyInfo: Clidey, Inc. · 2025 · Haki zote zimehifadhiwa.
+  urgentNote: Kwa mambo ya dharura, tafadhali taja
+  urgentLabel: "[HARAKA]"
+  urgentNoteEnd: katika somo lako la barua pepe.
+
+ta_IN:
+  title: எங்களை தொடர்பு கொள்ளவும்
+  description: நாங்கள் உதவ இங்கே இருக்கிறோம்! ஆதரவு, கேள்விகள் அல்லது கருத்துக்கு எங்களைத் தொடர்புகொள்ளவும்.
+  emailTitle: மின்னஞ்சல்
+  emailAddress: support@clidey.com
+  emailDescription: எங்கள் ஆதரவுக் குழு பொதுவாக 1 வணிக நாளுக்குள் பதிலளிக்கும்.
+  communityTitle: சமூகம் & சிக்கல்கள்
+  submitIssue: GitHub இல் சிக்கலைச் சமர்ப்பிக்கவும்
+  communityDescription: பிழை அறிக்கைகள், அம்சக் கோரிக்கைகள் அல்லது விவாதத்தில் சேர, எங்கள் GitHub சிக்கல்கள் பக்கத்தைப் பார்வையிடவும்.
+  liveChatTitle: நேரலை அரட்டை (விரைவில்)
+  chatButton: ஆதரவுடன் அரட்டையடிக்கவும்
+  liveChatDescription: நேரடி அரட்டை ஆதரவு விரைவில் கிடைக்கும். காத்திருங்கள்!
+  companyInfo: Clidey, Inc. · 2025 · அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.
+  urgentNote: அவசர விஷயங்களுக்கு, தயவுசெய்து குறிப்பிடவும்
+  urgentLabel: "[அவசரம்]"
+  urgentNoteEnd: உங்கள் மின்னஞ்சல் தலைப்பில்.
+
+th_TH:
+  title: ติดต่อเรา
+  description: เราพร้อมให้ความช่วยเหลือ! ติดต่อเราเพื่อขอรับการสนับสนุน คำถาม หรือข้อเสนอแนะ
+  emailTitle: อีเมล
+  emailAddress: support@clidey.com
+  emailDescription: โดยทั่วไปทีมสนับสนุนของเราจะตอบกลับภายใน 1 วันทำการ
+  communityTitle: ชุมชนและประเด็นปัญหา
+  submitIssue: ส่งปัญหาบน GitHub
+  communityDescription: สำหรับรายงานข้อผิดพลาด คำขอคุณสมบัติ หรือเข้าร่วมการสนทนา โปรดไปที่หน้าปัญหา GitHub ของเรา
+  liveChatTitle: แชทสด (เร็วๆ นี้)
+  chatButton: แชทกับฝ่ายสนับสนุน
+  liveChatDescription: การสนับสนุนแชทสดจะพร้อมให้บริการเร็วๆ นี้ คอยติดตาม!
+  companyInfo: Clidey, Inc. · 2025 · สงวนลิขสิทธิ์
+  urgentNote: ในกรณีเร่งด่วนโปรดระบุ
+  urgentLabel: "[ด่วน]"
+  urgentNoteEnd: ในหัวเรื่องอีเมลของคุณ
+
+tr_TR:
+  title: Bize Ulaşın
+  description: Yardım etmek için buradayız! Destek, soru veya geri bildirim için bize ulaşın.
+  emailTitle: E-posta
+  emailAddress: destek@clidey.com
+  emailDescription: Destek ekibimiz genellikle 1 iş günü içinde yanıt verir.
+  communityTitle: Topluluk ve Sorunlar
+  submitIssue: GitHub'a Bir Sayı Gönderin
+  communityDescription: Hata raporları, özellik istekleri veya tartışmaya katılmak için GitHub sorunları sayfamızı ziyaret edin.
+  liveChatTitle: Canlı Sohbet (Çok Yakında)
+  chatButton: Destek ile sohbet edin
+  liveChatDescription: Canlı sohbet desteği yakında sunulacaktır. Bizi izlemeye devam edin!
+  companyInfo: Clidey, Inc. · 2025 · Tüm hakları saklıdır.
+  urgentNote: Acil konular için lütfen belirtin
+  urgentLabel: "[ACİL]"
+  urgentNoteEnd: e-posta konunuzda.
+
+uk_UA:
+  title: Зв'яжіться з нами
+  description: Ми тут, щоб допомогти! Зв’яжіться з нами, щоб отримати підтримку, отримати запитання чи відгук.
+  emailTitle: Електронна пошта
+  emailAddress: support@cliday.com
+  emailDescription: Наша служба підтримки зазвичай відповідає протягом 1 робочого дня.
+  communityTitle: Спільнота та проблеми
+  submitIssue: Надішліть проблему на GitHub
+  communityDescription: Щоб отримати звіти про помилки, запити щодо функцій або приєднатися до обговорення, відвідайте нашу сторінку проблем GitHub.
+  liveChatTitle: Живий чат (незабаром)
+  chatButton: Спілкуйтеся зі службою підтримки
+  liveChatDescription: Незабаром буде доступна підтримка в чаті. Залишайтеся на зв'язку!
+  companyInfo: Clidey, Inc. · 2025 · Усі права захищено.
+  urgentNote: Для термінових справ, будь ласка, зазначте
+  urgentLabel: "[ТЕРМІНОВО]"
+  urgentNoteEnd: у темі вашого електронного листа.
+
+ur_PK:
+  title: ہم سے رابطہ کریں۔
+  description: ہم مدد کے لیے حاضر ہیں! سپورٹ، سوالات، یا فیڈ بیک کے لیے ہم سے رابطہ کریں۔
+  emailTitle: ای میل
+  emailAddress: support@clidey.com
+  emailDescription: ہماری سپورٹ ٹیم عام طور پر 1 کاروباری دن کے اندر جواب دیتی ہے۔
+  communityTitle: کمیونٹی اور مسائل
+  submitIssue: GitHub پر ایک مسئلہ جمع کروائیں۔
+  communityDescription: بگ رپورٹس، فیچر کی درخواستوں، یا بحث میں شامل ہونے کے لیے، ہمارے GitHub مسائل کا صفحہ دیکھیں۔
+  liveChatTitle: لائیو چیٹ (جلد آرہا ہے)
+  chatButton: سپورٹ کے ساتھ چیٹ کریں۔
+  liveChatDescription: لائیو چیٹ سپورٹ جلد ہی دستیاب ہوگا۔ دیکھتے رہو!
+  companyInfo: Clidey, Inc. · 2025 · جملہ حقوق محفوظ ہیں۔
+  urgentNote: فوری معاملات کے لیے، براہ کرم ذکر کریں۔
+  urgentLabel: "[ضروری]"
+  urgentNoteEnd: آپ کے ای میل کے مضمون میں۔
+
+vi_VN:
+  title: Liên hệ với chúng tôi
+  description: Chúng tôi ở đây để giúp đỡ! Hãy liên hệ với chúng tôi để được hỗ trợ, đặt câu hỏi hoặc phản hồi.
+  emailTitle: E-mail
+  emailAddress: support@clidey.com
+  emailDescription: Nhóm hỗ trợ của chúng tôi thường phản hồi trong vòng 1 ngày làm việc.
+  communityTitle: Cộng đồng & Vấn đề
+  submitIssue: Gửi sự cố trên GitHub
+  communityDescription: Để biết báo cáo lỗi, yêu cầu tính năng hoặc tham gia thảo luận, hãy truy cập trang sự cố GitHub của chúng tôi.
+  liveChatTitle: Trò chuyện trực tiếp (Sắp có)
+  chatButton: Trò chuyện với bộ phận hỗ trợ
+  liveChatDescription: Hỗ trợ trò chuyện trực tiếp sẽ sớm có sẵn. Hãy theo dõi!
+  companyInfo: Clidey, Inc. · 2025 · Bảo lưu mọi quyền.
+  urgentNote: Đối với những vấn đề khẩn cấp, vui lòng đề cập
+  urgentLabel: "[CẤP BÁCH]"
+  urgentNoteEnd: trong chủ đề email của bạn.

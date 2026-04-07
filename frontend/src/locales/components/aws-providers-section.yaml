@@ -570,3 +570,516 @@ zh_TW:
   refreshFailed: "刷新失敗：{error}"
   unknownError: 未知錯誤
   cannotRemoveEnv: 無法刪除環境定義的提供程序
+
+bg_BG:
+  cloudConnection: Облачна връзка
+  title: AWS акаунти
+  description: Свържете AWS акаунти с автоматично откриване на RDS, ElastiCache и DocumentDB инстанции.
+  noProviders: Няма конфигурирани AWS акаунти
+  addFirstProvider: Добавете първия си акаунт в AWS, за да откриете бази данни
+  addProvider: Добавете акаунт
+  refresh: Опресни всички
+  refreshResources: Обновяване на ресурсите
+  edit: Редактиране
+  remove: Премахнете
+  status.connected: Свързан
+  status.discovering: Откриване
+  status.error: Грешка
+  status.disconnected: Прекъсната връзка
+  envDefined: Околна среда
+  resourcesDiscovered: "{count} ресурси"
+  resourcesDiscovered_one: "{count} ресурс"
+  lastDiscovery: "Последно: {time}"
+  providerRemoved: "Премахнати {name}"
+  removeFailed: "Неуспешно премахване: {error}"
+  refreshComplete: "Намерени {count} ресурси"
+  refreshComplete_one: "Намерен {count} ресурс"
+  refreshFailed: "Неуспешно опресняване: {error}"
+  unknownError: Неизвестна грешка
+  cannotRemoveEnv: Не може да се премахне дефиниран от средата доставчик
+
+bn_BD:
+  cloudConnection: মেঘ সংযোগ
+  title: AWS অ্যাকাউন্টস
+  description: RDS, ElastiCache, এবং DocumentDB দৃষ্টান্তগুলি স্বয়ংক্রিয়ভাবে আবিষ্কার করতে AWS অ্যাকাউন্টগুলিকে সংযুক্ত করুন৷
+  noProviders: কোনো AWS অ্যাকাউন্ট কনফিগার করা নেই
+  addFirstProvider: ডেটাবেস আবিষ্কার করতে আপনার প্রথম AWS অ্যাকাউন্ট যোগ করুন
+  addProvider: অ্যাকাউন্ট যোগ করুন
+  refresh: রিফ্রেশ
+  refreshResources: রিফ্রেশ সম্পদ
+  edit: সম্পাদনা করুন
+  remove: সরান
+  status.connected: সংযুক্ত
+  status.discovering: আবিষ্কার করছে
+  status.error: ত্রুটি
+  status.disconnected: সংযোগ বিচ্ছিন্ন
+  envDefined: পরিবেশ
+  resourcesDiscovered: "{count} সম্পদ"
+  resourcesDiscovered_one: "{count} সম্পদ"
+  lastDiscovery: "শেষ: {time}"
+  providerRemoved: "সরানো হয়েছে {name}"
+  removeFailed: "সরাতে ব্যর্থ হয়েছে: {error}"
+  refreshComplete: "{count} সংস্থান পাওয়া গেছে"
+  refreshComplete_one: "{count} সংস্থান পাওয়া গেছে"
+  refreshFailed: "রিফ্রেশ ব্যর্থ হয়েছে: {error}"
+  unknownError: অজানা ত্রুটি
+  cannotRemoveEnv: পরিবেশ-সংজ্ঞায়িত প্রদানকারীকে সরানো যাবে না
+
+ca_ES:
+  cloudConnection: Connexió al núvol
+  title: Comptes d'AWS
+  description: Connecteu els comptes d'AWS per descobrir automàticament instàncies RDS, ElastiCache i DocumentDB.
+  noProviders: No s'ha configurat cap compte AWS
+  addFirstProvider: Afegiu el vostre primer compte d'AWS per descobrir bases de dades
+  addProvider: Afegeix un compte
+  refresh: Actualitza-ho tot
+  refreshResources: Actualitzar recursos
+  edit: Edita
+  remove: Eliminar
+  status.connected: Connectat
+  status.discovering: Descobrint
+  status.error: Error
+  status.disconnected: Desconnectat
+  envDefined: Medi ambient
+  resourcesDiscovered: "[[0]]] recursos"
+  resourcesDiscovered_one: "[[0]]] recurs"
+  lastDiscovery: "Últim: [[0]]]"
+  providerRemoved: S'ha eliminat [[0]]]
+  removeFailed: "No s'ha pogut eliminar: [[0]]]"
+  refreshComplete: S'han trobat [[0]]] recursos
+  refreshComplete_one: S'ha trobat [[0]]] recurs
+  refreshFailed: "No s'ha pogut actualitzar: [[0]]]"
+  unknownError: Error desconegut
+  cannotRemoveEnv: No es pot eliminar el proveïdor definit per l'entorn
+
+cs_CZ:
+  cloudConnection: Cloudové připojení
+  title: Účty AWS
+  description: Připojte účty AWS a automaticky zjistěte instance RDS, ElastiCache a DocumentDB.
+  noProviders: Nejsou nakonfigurovány žádné účty AWS
+  addFirstProvider: Přidejte svůj první účet AWS a objevujte databáze
+  addProvider: Přidat účet
+  refresh: Obnovit vše
+  refreshResources: Obnovit zdroje
+  edit: Upravit
+  remove: Odstranit
+  status.connected: Připojeno
+  status.discovering: Objevování
+  status.error: Chyba
+  status.disconnected: Odpojeno
+  envDefined: Prostředí
+  resourcesDiscovered: "{count} zdrojů"
+  resourcesDiscovered_one: "{count} zdroj"
+  lastDiscovery: "Poslední: {time}"
+  providerRemoved: "Odebráno {name}"
+  removeFailed: "Odebrání se nezdařilo: {error}"
+  refreshComplete: "Nalezeno {count} zdrojů"
+  refreshComplete_one: "Nalezeno {count} zdroj"
+  refreshFailed: "Obnovení se nezdařilo: {error}"
+  unknownError: Neznámá chyba
+  cannotRemoveEnv: Poskytovatele definovaného prostředím nelze odebrat
+
+da_DK:
+  cloudConnection: Cloud forbindelse
+  title: AWS konti
+  description: Tilslut AWS-konti for automatisk at opdage RDS-, ElastiCache- og DocumentDB-forekomster.
+  noProviders: Ingen AWS-konti konfigureret
+  addFirstProvider: Tilføj din første AWS-konto for at opdage databaser
+  addProvider: Tilføj konto
+  refresh: Opdater alle
+  refreshResources: Opdater ressourcer
+  edit: Redigere
+  remove: Fjerne
+  status.connected: Forbundet
+  status.discovering: Opdagende
+  status.error: Fejl
+  status.disconnected: Afbrudt
+  envDefined: Miljø
+  resourcesDiscovered: "{count} ressourcer"
+  resourcesDiscovered_one: "{count} ressource"
+  lastDiscovery: "Sidste: {time}"
+  providerRemoved: "Fjernede {name}"
+  removeFailed: "Kunne ikke fjerne: {error}"
+  refreshComplete: "Fundet {count} ressourcer"
+  refreshComplete_one: "Fundet {count} ressource"
+  refreshFailed: "Opdatering mislykkedes: {error}"
+  unknownError: Ukendt fejl
+  cannotRemoveEnv: Kan ikke fjerne miljødefineret udbyder
+
+fa_IR:
+  cloudConnection: اتصال ابری
+  title: حساب های AWS
+  description: حساب‌های AWS را برای کشف خودکار نمونه‌های RDS، ElastiCache و DocumentDB متصل کنید.
+  noProviders: هیچ حساب AWS پیکربندی نشده است
+  addFirstProvider: اولین حساب AWS خود را برای کشف پایگاه داده اضافه کنید
+  addProvider: افزودن حساب
+  refresh: تازه کردن همه
+  refreshResources: تجدید منابع
+  edit: ویرایش کنید
+  remove: حذف کنید
+  status.connected: متصل شد
+  status.discovering: کشف کردن
+  status.error: خطا
+  status.disconnected: قطع شده است
+  envDefined: محیط زیست
+  resourcesDiscovered: "{count} منابع"
+  resourcesDiscovered_one: "{count} منبع"
+  lastDiscovery: "آخرین: {time}"
+  providerRemoved: "حذف شد {name}"
+  removeFailed: "حذف نشد: {error}"
+  refreshComplete: "منابع {count} پیدا شد"
+  refreshComplete_one: "منبع {count} پیدا شد"
+  refreshFailed: "بازخوانی انجام نشد: {error}"
+  unknownError: خطای ناشناخته
+  cannotRemoveEnv: ارائه دهنده تعریف شده از محیط حذف نمی شود
+
+hi_IN:
+  cloudConnection: क्लाउड कनेक्शन
+  title: एडब्ल्यूएस खाते
+  description: AWS खातों को RDS, ElastiCache और DocumentDB इंस्टेंसेस को ऑटो-डिस्कवर करने के लिए कनेक्ट करें।
+  noProviders: कोई AWS खाता कॉन्फ़िगर नहीं किया गया
+  addFirstProvider: डेटाबेस खोजने के लिए अपना पहला AWS खाता जोड़ें
+  addProvider: खाता जोड़ें
+  refresh: सभी को रीफ्रेश करें
+  refreshResources: संसाधनों को ताज़ा करें
+  edit: संपादन करना
+  remove: निकालना
+  status.connected: जुड़े हुए
+  status.discovering: खोज
+  status.error: गलती
+  status.disconnected: डिस्कनेक्ट किया गया
+  envDefined: पर्यावरण
+  resourcesDiscovered: "{count} संसाधन"
+  resourcesDiscovered_one: "{count} संसाधन"
+  lastDiscovery: "अंतिम: {time}"
+  providerRemoved: "हटाया गया {name}"
+  removeFailed: "हटाने में विफल: {error}"
+  refreshComplete: "{count} संसाधन मिले"
+  refreshComplete_one: "{count} संसाधन मिला"
+  refreshFailed: "रिफ्रेश विफल: {error}"
+  unknownError: अज्ञात त्रुटि
+  cannotRemoveEnv: पर्यावरण-परिभाषित प्रदाता को हटाया नहीं जा सकता
+
+hr_HR:
+  cloudConnection: Veza s oblakom
+  title: AWS računi
+  description: Povežite AWS račune s automatskim otkrivanjem RDS, ElastiCache i DocumentDB instanci.
+  noProviders: Nema konfiguriranih AWS računa
+  addFirstProvider: Dodajte svoj prvi AWS račun za otkrivanje baza podataka
+  addProvider: Dodaj račun
+  refresh: Osvježi sve
+  refreshResources: Osvježi resurse
+  edit: Uredi
+  remove: Ukloniti
+  status.connected: Povezan
+  status.discovering: Otkrivanje
+  status.error: Greška
+  status.disconnected: Isključeno
+  envDefined: okoliš
+  resourcesDiscovered: "{count} resursa"
+  resourcesDiscovered_one: "{count} resurs"
+  lastDiscovery: "Zadnje: {time}"
+  providerRemoved: "Uklonjeno {name}"
+  removeFailed: "Uklanjanje nije uspjelo: {error}"
+  refreshComplete: "Pronađeni {count} resursi"
+  refreshComplete_one: "Pronađen {count} resurs"
+  refreshFailed: "Osvježavanje nije uspjelo: {error}"
+  unknownError: Nepoznata greška
+  cannotRemoveEnv: Nije moguće ukloniti pružatelja definiranog okruženjem
+
+hu_HU:
+  cloudConnection: Felhő kapcsolat
+  title: AWS-fiókok
+  description: Csatlakoztassa az AWS-fiókokat az RDS, ElastiCache és DocumentDB példányok automatikus felfedezéséhez.
+  noProviders: Nincsenek konfigurálva AWS-fiókok
+  addFirstProvider: Adja hozzá első AWS-fiókját az adatbázisok felfedezéséhez
+  addProvider: Fiók hozzáadása lehetőségre
+  refresh: Összes frissítése
+  refreshResources: Erőforrások frissítése
+  edit: Szerkesztés
+  remove: Távolítsa el
+  status.connected: Csatlakozva
+  status.discovering: Felfedezés
+  status.error: Hiba
+  status.disconnected: Szétkapcsolt
+  envDefined: Környezet
+  resourcesDiscovered: "{count} források"
+  resourcesDiscovered_one: "{count} forrás"
+  lastDiscovery: "Utolsó: {time}"
+  providerRemoved: "Eltávolítva {name}"
+  removeFailed: "Nem sikerült eltávolítani: {error}"
+  refreshComplete: "Talált {count} forrást"
+  refreshComplete_one: "Talált {count} forrás"
+  refreshFailed: "A frissítés nem sikerült: {error}"
+  unknownError: Ismeretlen hiba
+  cannotRemoveEnv: A környezet által meghatározott szolgáltató nem távolítható el
+
+id_ID:
+  cloudConnection: Koneksi awan
+  title: Akun AWS
+  description: Hubungkan akun AWS untuk menemukan instans RDS, ElastiCache, dan DocumentDB secara otomatis.
+  noProviders: Tidak ada akun AWS yang dikonfigurasi
+  addFirstProvider: Tambahkan akun AWS pertama Anda untuk menemukan database
+  addProvider: Tambahkan Akun
+  refresh: Segarkan Semua
+  refreshResources: Segarkan Sumber Daya
+  edit: Sunting
+  remove: Menghapus
+  status.connected: Terhubung
+  status.discovering: Menemukan
+  status.error: Kesalahan
+  status.disconnected: Terputus
+  envDefined: Lingkungan
+  resourcesDiscovered: "{count} sumber daya"
+  resourcesDiscovered_one: "{count} sumber daya"
+  lastDiscovery: "Terakhir: {time}"
+  providerRemoved: "Dihapus {name}"
+  removeFailed: "Gagal menghapus: {error}"
+  refreshComplete: "Ditemukan {count} sumber daya"
+  refreshComplete_one: "Ditemukan sumber daya {count}"
+  refreshFailed: "Penyegaran gagal: {error}"
+  unknownError: Kesalahan tidak diketahui
+  cannotRemoveEnv: Tidak dapat menghapus penyedia yang ditentukan lingkungan
+
+ms_MY:
+  cloudConnection: Sambungan awan
+  title: Akaun AWS
+  description: Sambungkan akaun AWS untuk mencari auto RDS, ElastiCache dan kejadian DocumentDB.
+  noProviders: Tiada akaun AWS dikonfigurasikan
+  addFirstProvider: Tambahkan akaun AWS pertama anda untuk menemui pangkalan data
+  addProvider: Tambah Akaun
+  refresh: Muat semula Semua
+  refreshResources: Muat semula Sumber
+  edit: Sunting
+  remove: Alih keluar
+  status.connected: Bersambung
+  status.discovering: Menemui
+  status.error: ralat
+  status.disconnected: Terputus sambungan
+  envDefined: Persekitaran
+  resourcesDiscovered: "{count} sumber"
+  resourcesDiscovered_one: "{count} sumber"
+  lastDiscovery: "Terakhir: {time}"
+  providerRemoved: "Dialih keluar {name}"
+  removeFailed: "Gagal mengalih keluar: {error}"
+  refreshComplete: "Menemui sumber {count}."
+  refreshComplete_one: "Menemui sumber {count}."
+  refreshFailed: "Muat semula gagal: {error}"
+  unknownError: Ralat tidak diketahui
+  cannotRemoveEnv: Tidak boleh mengalih keluar pembekal yang ditentukan persekitaran
+
+nb_NO:
+  cloudConnection: Skyforbindelse
+  title: AWS-kontoer
+  description: Koble til AWS-kontoer for å automatisk oppdage RDS-, ElastiCache- og DocumentDB-forekomster.
+  noProviders: Ingen AWS-kontoer er konfigurert
+  addFirstProvider: Legg til din første AWS-konto for å oppdage databaser
+  addProvider: Legg til konto
+  refresh: Oppdater alle
+  refreshResources: Oppdater ressurser
+  edit: Redigere
+  remove: Fjerne
+  status.connected: Tilkoblet
+  status.discovering: Oppdager
+  status.error: Feil
+  status.disconnected: Koblet fra
+  envDefined: Miljø
+  resourcesDiscovered: "{count} ressurser"
+  resourcesDiscovered_one: "{count} ressurs"
+  lastDiscovery: "Siste: {time}"
+  providerRemoved: "Fjernet {name}"
+  removeFailed: "Kunne ikke fjerne: {error}"
+  refreshComplete: "Fant {count} ressurser"
+  refreshComplete_one: "Fant {count} ressurs"
+  refreshFailed: "Oppdatering mislyktes: {error}"
+  unknownError: Ukjent feil
+  cannotRemoveEnv: Kan ikke fjerne miljødefinert leverandør
+
+sw_KE:
+  cloudConnection: Uunganisho wa wingu
+  title: Akaunti za AWS
+  description: Unganisha akaunti za AWS ili kugundua kiotomatiki matukio ya RDS, ElastiCache na DocumentDB.
+  noProviders: Hakuna akaunti za AWS zilizosanidiwa
+  addFirstProvider: Ongeza akaunti yako ya kwanza ya AWS ili kugundua hifadhidata
+  addProvider: Ongeza Akaunti
+  refresh: Onyesha upya Wote
+  refreshResources: Onyesha upya Rasilimali
+  edit: Hariri
+  remove: Ondoa
+  status.connected: Imeunganishwa
+  status.discovering: Kugundua
+  status.error: Hitilafu
+  status.disconnected: Imetenganishwa
+  envDefined: Mazingira
+  resourcesDiscovered: "{count} rasilimali"
+  resourcesDiscovered_one: "{count} rasilimali"
+  lastDiscovery: "Mwisho: {time}"
+  providerRemoved: "Imeondolewa {name}"
+  removeFailed: "Imeshindwa kuondoa: {error}"
+  refreshComplete: "Imepata rasilimali {count}"
+  refreshComplete_one: "Rasilimali {count} imepatikana"
+  refreshFailed: "Imeshindwa kuonyesha upya: {error}"
+  unknownError: Hitilafu isiyojulikana
+  cannotRemoveEnv: Haiwezi kuondoa mtoaji aliyebainishwa na mazingira
+
+ta_IN:
+  cloudConnection: கிளவுட் இணைப்பு
+  title: AWS கணக்குகள்
+  description: RDS, ElastiCache மற்றும் DocumentDB நிகழ்வுகளைத் தானாகக் கண்டறிய AWS கணக்குகளை இணைக்கவும்.
+  noProviders: AWS கணக்குகள் எதுவும் கட்டமைக்கப்படவில்லை
+  addFirstProvider: தரவுத்தளங்களைக் கண்டறிய உங்கள் முதல் AWS கணக்கைச் சேர்க்கவும்
+  addProvider: கணக்கைச் சேர்க்கவும்
+  refresh: அனைத்தையும் புதுப்பிக்கவும்
+  refreshResources: வளங்களைப் புதுப்பிக்கவும்
+  edit: திருத்தவும்
+  remove: அகற்று
+  status.connected: இணைக்கப்பட்டது
+  status.discovering: கண்டறிதல்
+  status.error: பிழை
+  status.disconnected: துண்டிக்கப்பட்டது
+  envDefined: சுற்றுச்சூழல்
+  resourcesDiscovered: "{count} ஆதாரங்கள்"
+  resourcesDiscovered_one: "{count} வளம்"
+  lastDiscovery: "கடைசியாக: {time}"
+  providerRemoved: "அகற்றப்பட்டது {name}"
+  removeFailed: "அகற்றுவதில் தோல்வி: {error}"
+  refreshComplete: "{count} ஆதாரங்கள் உள்ளன"
+  refreshComplete_one: "{count} ஆதாரம் கிடைத்தது"
+  refreshFailed: "புதுப்பிக்க முடியவில்லை: {error}"
+  unknownError: அறியப்படாத பிழை
+  cannotRemoveEnv: சுற்றுச்சூழல் வரையறுக்கப்பட்ட வழங்குநரை அகற்ற முடியாது
+
+th_TH:
+  cloudConnection: การเชื่อมต่อคลาวด์
+  title: บัญชี AWS
+  description: เชื่อมต่อบัญชี AWS เพื่อค้นหาอินสแตนซ์ RDS, ElastiCache และ DocumentDB โดยอัตโนมัติ
+  noProviders: ไม่มีการกำหนดค่าบัญชี AWS
+  addFirstProvider: เพิ่มบัญชี AWS แรกของคุณเพื่อค้นหาฐานข้อมูล
+  addProvider: เพิ่มบัญชี
+  refresh: รีเฟรชทั้งหมด
+  refreshResources: รีเฟรชทรัพยากร
+  edit: แก้ไข
+  remove: ลบ
+  status.connected: เชื่อมต่อแล้ว
+  status.discovering: การค้นพบ
+  status.error: ข้อผิดพลาด
+  status.disconnected: ตัดการเชื่อมต่อแล้ว
+  envDefined: สิ่งแวดล้อม
+  resourcesDiscovered: "{count} ทรัพยากร"
+  resourcesDiscovered_one: "ทรัพยากร {count}"
+  lastDiscovery: "ล่าสุด: {time}"
+  providerRemoved: "ลบ {name} ออกแล้ว"
+  removeFailed: "ไม่สามารถลบ: {error}"
+  refreshComplete: "พบทรัพยากร {count}"
+  refreshComplete_one: "พบทรัพยากร {count}"
+  refreshFailed: "การรีเฟรชล้มเหลว: {error}"
+  unknownError: ข้อผิดพลาดที่ไม่รู้จัก
+  cannotRemoveEnv: ไม่สามารถลบผู้ให้บริการที่กำหนดโดยสภาพแวดล้อมได้
+
+tr_TR:
+  cloudConnection: Bulut bağlantısı
+  title: AWS Hesapları
+  description: RDS, ElastiCache ve DocumentDB bulut sunucularını otomatik olarak keşfetmek için AWS hesaplarını bağlayın.
+  noProviders: Hiçbir AWS hesabı yapılandırılmadı
+  addFirstProvider: Veritabanlarını keşfetmek için ilk AWS hesabınızı ekleyin
+  addProvider: Hesap Ekle
+  refresh: Tümünü Yenile
+  refreshResources: Kaynakları Yenile
+  edit: Düzenlemek
+  remove: Kaldırmak
+  status.connected: Bağlı
+  status.discovering: Keşfetmek
+  status.error: Hata
+  status.disconnected: Bağlantı kesildi
+  envDefined: Çevre
+  resourcesDiscovered: "{count} kaynak"
+  resourcesDiscovered_one: "{count} kaynak"
+  lastDiscovery: "Son: {time}"
+  providerRemoved: "{name} kaldırıldı"
+  removeFailed: "Kaldırılamadı: {error}"
+  refreshComplete: "{count} kaynak bulundu"
+  refreshComplete_one: "{count} kaynak bulundu"
+  refreshFailed: "Yenileme başarısız oldu: {error}"
+  unknownError: Bilinmeyen hata
+  cannotRemoveEnv: Ortam tanımlı sağlayıcı kaldırılamıyor
+
+uk_UA:
+  cloudConnection: Хмарне підключення
+  title: Облікові записи AWS
+  description: Підключіть облікові записи AWS до примірників RDS, ElastiCache і DocumentDB з автоматичним виявленням.
+  noProviders: Облікові записи AWS не налаштовано
+  addFirstProvider: Додайте свій перший обліковий запис AWS, щоб відкривати бази даних
+  addProvider: Додати обліковий запис
+  refresh: Оновити все
+  refreshResources: Оновити ресурси
+  edit: Редагувати
+  remove: видалити
+  status.connected: Підключено
+  status.discovering: Відкриття
+  status.error: Помилка
+  status.disconnected: Відключено
+  envDefined: Навколишнє середовище
+  resourcesDiscovered: "{count} ресурси"
+  resourcesDiscovered_one: "{count} ресурс"
+  lastDiscovery: "Остання: {time}"
+  providerRemoved: "Видалено {name}"
+  removeFailed: "Не вдалося видалити: {error}"
+  refreshComplete: "Знайдено {count} ресурсів"
+  refreshComplete_one: "Знайдено {count} ресурс"
+  refreshFailed: "Не вдалося оновити: {error}"
+  unknownError: Невідома помилка
+  cannotRemoveEnv: Неможливо видалити постачальника, визначеного середовищем
+
+ur_PK:
+  cloudConnection: کلاؤڈ کنکشن
+  title: AWS اکاؤنٹس
+  description: AWS اکاؤنٹس کو RDS، ElastiCache، اور DocumentDB مثالوں کو خودکار دریافت کرنے سے مربوط کریں۔
+  noProviders: کوئی AWS اکاؤنٹس کنفیگر نہیں ہیں۔
+  addFirstProvider: ڈیٹا بیس دریافت کرنے کے لیے اپنا پہلا AWS اکاؤنٹ شامل کریں۔
+  addProvider: اکاؤنٹ شامل کریں۔
+  refresh: سب کو ریفریش کریں۔
+  refreshResources: وسائل کو ریفریش کریں۔
+  edit: ترمیم کریں۔
+  remove: ہٹا دیں۔
+  status.connected: جڑا ہوا
+  status.discovering: دریافت کرنا
+  status.error: خرابی
+  status.disconnected: منقطع
+  envDefined: ماحولیات
+  resourcesDiscovered: "{count} وسائل"
+  resourcesDiscovered_one: "{count} وسائل"
+  lastDiscovery: "آخری: {time}"
+  providerRemoved: "ہٹا دیا گیا {name}"
+  removeFailed: "ہٹانے میں ناکام: {error}"
+  refreshComplete: "{count} وسائل ملے"
+  refreshComplete_one: "{count} وسیلہ ملا"
+  refreshFailed: "ریفریش ناکام: {error}"
+  unknownError: نامعلوم خرابی۔
+  cannotRemoveEnv: ماحول سے طے شدہ فراہم کنندہ کو نہیں ہٹا سکتا
+
+vi_VN:
+  cloudConnection: Kết nối đám mây
+  title: Tài khoản AWS
+  description: Kết nối tài khoản AWS để tự động khám phá các phiên bản RDS, ElastiCache và DocumentDB.
+  noProviders: Không có tài khoản AWS nào được định cấu hình
+  addFirstProvider: Thêm tài khoản AWS đầu tiên của bạn để khám phá cơ sở dữ liệu
+  addProvider: Thêm tài khoản
+  refresh: Làm mới tất cả
+  refreshResources: Làm mới tài nguyên
+  edit: Biên tập
+  remove: Di dời
+  status.connected: Đã kết nối
+  status.discovering: Khám phá
+  status.error: Lỗi
+  status.disconnected: Đã ngắt kết nối
+  envDefined: Môi trường
+  resourcesDiscovered: "{count} tài nguyên"
+  resourcesDiscovered_one: "{count} tài nguyên"
+  lastDiscovery: "Cuối cùng: {time}"
+  providerRemoved: "Đã xóa {name}"
+  removeFailed: "Không xóa được: {error}"
+  refreshComplete: "Đã tìm thấy tài nguyên {count}"
+  refreshComplete_one: "Đã tìm thấy tài nguyên {count}"
+  refreshFailed: "Làm mới không thành công: {error}"
+  unknownError: Lỗi không xác định
+  cannotRemoveEnv: Không thể xóa nhà cung cấp do môi trường xác định

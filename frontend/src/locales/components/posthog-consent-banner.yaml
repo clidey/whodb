@@ -123,3 +123,117 @@ zh_TW:
   message: "我們透過 PostHog 收集匿名使用分析、經過編輯的會話重播和錯誤報告，以保持 {appName} 快速可靠。 您可以立即或隨時從「設定」關閉此功能。"
   accept: Keep Enabled
   decline: Disable Telemetry
+
+bg_BG:
+  title: Телеметрията е активирана
+  message: "Събираме анонимни анализи на употребата, редактирано повторение на сесията и доклади за грешки чрез PostHog, за да поддържаме {appName} бързи и надеждни. Можете да изключите това сега или по всяко време от Настройки."
+  accept: Запазете активирано
+  decline: Деактивирайте телеметрията
+
+bn_BD:
+  title: টেলিমেট্রি সক্রিয় করা হয়েছে
+  message: "{appName} দ্রুত এবং নির্ভরযোগ্য রাখার জন্য আমরা পোস্টহগের মাধ্যমে বেনামী ব্যবহারের বিশ্লেষণ, সংশোধন করা সেশন রিপ্লে এবং ত্রুটি রিপোর্ট সংগ্রহ করি। আপনি সেটিংস থেকে এখন বা যেকোনো সময় এটি বন্ধ করতে পারেন।"
+  accept: সক্রিয় রাখুন
+  decline: টেলিমেট্রি অক্ষম করুন
+
+ca_ES:
+  title: La telemetria està activada
+  message: "We collect anonymous usage analytics, redacted session replay, and error reports through PostHog to keep {appName} fast and reliable. You can turn this off now or at any time from Settings."
+  accept: Mantenir activat
+  decline: Desactiva la telemetria
+
+cs_CZ:
+  title: Telemetrie je povolena
+  message: "Prostřednictvím PostHog shromažďujeme anonymní analýzy využití, redigované přehrávání relace a chybová hlášení, abychom udrželi {appName} rychlý a spolehlivý. Tuto funkci můžete nyní nebo kdykoli vypnout v Nastavení."
+  accept: Ponechat povoleno
+  decline: Zakázat telemetrii
+
+da_DK:
+  title: Telemetri er aktiveret
+  message: "Vi indsamler anonym brugsanalyse, redigeret sessionsgentagelse og fejlrapporter gennem PostHog for at holde {appName} hurtig og pålidelig. Du kan slå dette fra nu eller når som helst fra Indstillinger."
+  accept: Hold aktiveret
+  decline: Deaktiver telemetri
+
+fa_IR:
+  title: تله متری فعال است
+  message: "ما تجزیه و تحلیل استفاده ناشناس، پخش مجدد جلسه ویرایش شده، و گزارش های خطا را از طریق PostHog جمع آوری می کنیم تا {appName} سریع و قابل اعتماد باشد. می‌توانید هم‌اکنون یا هر زمان که بخواهید از تنظیمات آن را خاموش کنید."
+  accept: فعال نگه دارید
+  decline: غیرفعال کردن تله متری
+
+hi_IN:
+  title: टेलीमेट्री सक्षम है
+  message: "{appName} को तेज़ और विश्वसनीय बनाए रखने के लिए हम पोस्टहॉग के माध्यम से अनाम उपयोग विश्लेषण, संशोधित सत्र रीप्ले और त्रुटि रिपोर्ट एकत्र करते हैं। आप इसे अभी या किसी भी समय सेटिंग्स से बंद कर सकते हैं।"
+  accept: सक्षम रखें
+  decline: टेलीमेट्री अक्षम करें
+
+hr_HR:
+  title: Telemetrija je omogućena
+  message: "Prikupljamo anonimnu analitiku upotrebe, redigiranu reprodukciju sesije i izvješća o pogreškama putem PostHog-a kako bi {appName} bio brz i pouzdan. To možete isključiti sada ili bilo kada u postavkama."
+  accept: Ostavi uključeno
+  decline: Onemogući telemetriju
+
+hu_HU:
+  title: A telemetria engedélyezve van
+  message: "A PostHog segítségével névtelen használati elemzéseket, szerkesztett munkamenet-visszajátszásokat és hibajelentéseket gyűjtünk, hogy a {appName} gyors és megbízható legyen. Ezt most vagy bármikor kikapcsolhatja a Beállításokban."
+  accept: Tartsa engedélyezve
+  decline: Telemetria letiltása
+
+id_ID:
+  title: Telemetri Diaktifkan
+  message: "Kami mengumpulkan analitik penggunaan anonim, pemutaran ulang sesi yang disunting, dan laporan kesalahan melalui PostHog untuk menjaga {appName} tetap cepat dan andal. Anda dapat menonaktifkannya sekarang atau kapan saja dari Pengaturan."
+  accept: Tetap Aktif
+  decline: Nonaktifkan Telemetri
+
+ms_MY:
+  title: Telemetri Didayakan
+  message: "Kami mengumpul analitik penggunaan tanpa nama, ulang tayang sesi yang disunting dan laporan ralat melalui PostHog untuk memastikan {appName} pantas dan boleh dipercayai. Anda boleh mematikan ini sekarang atau pada bila-bila masa daripada Tetapan."
+  accept: Kekal Didayakan
+  decline: Lumpuhkan Telemetri
+
+nb_NO:
+  title: Telemetri er aktivert
+  message: "Vi samler inn anonym bruksanalyse, redigert øktavspilling og feilrapporter gjennom PostHog for å holde {appName} rask og pålitelig. Du kan slå dette av nå eller når som helst fra Innstillinger."
+  accept: Hold aktivert
+  decline: Deaktiver telemetri
+
+sw_KE:
+  title: Telemetry Imewezeshwa
+  message: "Tunakusanya uchanganuzi wa matumizi usiojulikana, uchezaji upya wa kipindi, na ripoti za makosa kupitia PostHog ili kuweka {appName} haraka na kutegemewa. Unaweza kuzima hii sasa au wakati wowote kwenye Mipangilio."
+  accept: Endelea Kuwezeshwa
+  decline: Lemaza Telemetry
+
+ta_IN:
+  title: டெலிமெட்ரி இயக்கப்பட்டது
+  message: "{appName} வேகமாகவும் நம்பகத்தன்மையுடனும் இருக்க, அநாமதேய பயன்பாட்டு பகுப்பாய்வு, திருத்தப்பட்ட அமர்வு மறுபதிப்பு மற்றும் பிழை அறிக்கைகளை PostHog மூலம் சேகரிக்கிறோம். இதை இப்போது அல்லது எந்த நேரத்திலும் அமைப்புகளில் முடக்கலாம்."
+  accept: இயக்கத்தில் வைத்திருங்கள்
+  decline: டெலிமெட்ரியை முடக்கு
+
+th_TH:
+  title: เปิดใช้งานการวัดและส่งข้อมูลทางไกลแล้ว
+  message: "เรารวบรวมการวิเคราะห์การใช้งานที่ไม่เปิดเผยตัวตน การเล่นซ้ำเซสชั่นที่แก้ไข และรายงานข้อผิดพลาดผ่าน PostHog เพื่อให้ {appName} รวดเร็วและเชื่อถือได้ คุณสามารถปิดตอนนี้หรือเมื่อใดก็ได้จากการตั้งค่า"
+  accept: เปิดใช้งานต่อไป
+  decline: ปิดการใช้งานการวัดและส่งข้อมูลทางไกล
+
+tr_TR:
+  title: Telemetri Etkinleştirildi
+  message: "{appName}'ı hızlı ve güvenilir tutmak için PostHog aracılığıyla anonim kullanım analizlerini, düzenlenmiş oturum tekrarlarını ve hata raporlarını topluyoruz. Bunu şimdi veya istediğiniz zaman Ayarlar'dan kapatabilirsiniz."
+  accept: Etkin Tut
+  decline: Telemetriyi Devre Dışı Bırak
+
+uk_UA:
+  title: Телеметрію ввімкнено
+  message: "Ми збираємо анонімну аналітику використання, відредаговані повтори сеансу та звіти про помилки через PostHog, щоб {appName} був швидким і надійним. Ви можете вимкнути це зараз або будь-коли в налаштуваннях."
+  accept: Залишити ввімкненим
+  decline: Вимкнути телеметрію
+
+ur_PK:
+  title: ٹیلی میٹری فعال ہے۔
+  message: "{appName} کو تیز اور قابل اعتماد رکھنے کے لیے ہم پوسٹ ہاگ کے ذریعے گمنام استعمال کے تجزیات، ترمیم شدہ سیشن ری پلے، اور خرابی کی رپورٹس جمع کرتے ہیں۔ آپ اسے ابھی یا کسی بھی وقت ترتیبات سے آف کر سکتے ہیں۔"
+  accept: فعال رکھیں
+  decline: ٹیلی میٹری کو غیر فعال کریں۔
+
+vi_VN:
+  title: Đo từ xa đã được kích hoạt
+  message: "Chúng tôi thu thập các phân tích sử dụng ẩn danh, phát lại phiên được xử lý lại và báo cáo lỗi thông qua PostHog để giữ cho {appName} nhanh chóng và đáng tin cậy. Bạn có thể tắt tính năng này ngay bây giờ hoặc bất kỳ lúc nào từ Cài đặt."
+  accept: Tiếp tục kích hoạt
+  decline: Vô hiệu hóa từ xa

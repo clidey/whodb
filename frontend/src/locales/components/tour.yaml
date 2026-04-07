@@ -165,3 +165,155 @@ zh_TW:
   finish: 結束
   close: 關閉
   back: 後退
+
+bg_BG:
+  next: Следваща
+  previous: Предишен
+  skip: Пропускане
+  finish: Завършете
+  close: затвори
+  back: Назад
+
+bn_BD:
+  next: পরবর্তী
+  previous: আগের
+  skip: এড়িয়ে যান
+  finish: শেষ করুন
+  close: বন্ধ
+  back: ব্যাক
+
+ca_ES:
+  next: A continuació
+  previous: Anterior
+  skip: Saltar
+  finish: Acabar
+  close: Tancar
+  back: Enrere
+
+cs_CZ:
+  next: Další
+  previous: Předchozí
+  skip: Přeskočit
+  finish: Dokončit
+  close: Blízko
+  back: Zadní
+
+da_DK:
+  next: Næste
+  previous: Tidligere
+  skip: Springe
+  finish: Slutte
+  close: Tæt
+  back: Tilbage
+
+fa_IR:
+  next: بعدی
+  previous: قبلی
+  skip: پرش کنید
+  finish: پایان
+  close: بستن
+  back: برگشت
+
+hi_IN:
+  next: अगला
+  previous: पहले का
+  skip: छोडना
+  finish: खत्म करना
+  close: बंद करना
+  back: पीछे
+
+hr_HR:
+  next: Sljedeći
+  previous: Prethodno
+  skip: Preskočiti
+  finish: Završiti
+  close: Zatvoriti
+  back: Nazad
+
+hu_HU:
+  next: Következő
+  previous: Előző
+  skip: Kihagyás
+  finish: Befejezés
+  close: Közeli
+  back: Vissza
+
+id_ID:
+  next: Berikutnya
+  previous: Sebelumnya
+  skip: Melewati
+  finish: Menyelesaikan
+  close: Menutup
+  back: Kembali
+
+ms_MY:
+  next: Seterusnya
+  previous: Sebelumnya
+  skip: Langkau
+  finish: Selesai
+  close: tutup
+  back: belakang
+
+nb_NO:
+  next: Neste
+  previous: Tidligere
+  skip: Hopp over
+  finish: Fullfør
+  close: Lukke
+  back: Tilbake
+
+sw_KE:
+  next: Inayofuata
+  previous: Iliyotangulia
+  skip: Ruka
+  finish: Maliza
+  close: Funga
+  back: Nyuma
+
+ta_IN:
+  next: அடுத்து
+  previous: முந்தைய
+  skip: தவிர்க்கவும்
+  finish: முடிக்கவும்
+  close: மூடு
+  back: மீண்டும்
+
+th_TH:
+  next: ต่อไป
+  previous: ก่อนหน้า
+  skip: ข้าม
+  finish: เสร็จ
+  close: ปิด
+  back: กลับ
+
+tr_TR:
+  next: Sonraki
+  previous: Öncesi
+  skip: Atlamak
+  finish: Sona ermek
+  close: Kapalı
+  back: Geri
+
+uk_UA:
+  next: Далі
+  previous: Попередній
+  skip: Пропустити
+  finish: Закінчити
+  close: Закрити
+  back: Назад
+
+ur_PK:
+  next: اگلا
+  previous: پچھلا
+  skip: چھوڑیں۔
+  finish: ختم کرنا
+  close: بند
+  back: پیچھے
+
+vi_VN:
+  next: Kế tiếp
+  previous: Trước
+  skip: Nhảy
+  finish: Hoàn thành
+  close: Đóng
+  back: Mặt sau

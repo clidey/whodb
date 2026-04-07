@@ -2223,3 +2223,2017 @@ zh_TW:
   deleteRowConfirmTitle_other: 刪除行？
   deleteRowConfirmDescription: "您確定要刪除 {count} 行嗎？ 此操作無法撤銷。"
   deleteRowConfirmDescription_one: "您確定要刪除 {count} 行嗎？ 此操作無法撤銷。"
+
+bg_BG:
+  copiedToClipboard: Копирано в клипборда
+  rowCopiedToClipboard: Редът е копиран в клипборда
+  rowUpdated: Редът е актуализиран
+  errorUpdatingRow: Грешка при актуализиране на ред
+  deletingRows: Изтриване на редове...
+  deletingRows_one: Изтриване на ред...
+  unableToDeleteRow: "Не може да се изтрие редът: {message}"
+  rowDeleted: Редът е изтрит
+  copiedCellToClipboard: Клетката е копирана в клипборда
+  maximumRowCount: "Максималният брой редове е {max}"
+  storageUnitRequired: Необходима е единица за съхранение за фалшиво генериране на данни
+  rowCountExceedsMax: "Броят на редовете не може да надвишава {max}"
+  rowCountMustBePositive: Броят на редовете трябва да бъде поне 1
+  successfullyGenerated: "Успешно генерирани {count} редове"
+  successfullyGenerated_one: "Успешно генериран {count} ред"
+  failedToMockData: Неуспешно подиграване на данни
+  mockDataNotAllowed: Фалшивото генериране на данни не е разрешено за тази таблица
+  mockDataFailed: "Неуспешно макетиране на данни: {message}"
+  copyCell: Копиране на клетка
+  searchForEntity: Търсене на обект
+  copyRow: Копиране на ред
+  deselectRow: Демаркирайте ред
+  selectRow: Изберете Ред
+  editRow: Редактиране на ред
+  export: Експортиране
+  exportAllAsCsv: Експортирайте всички като CSV
+  exportAllAsExcel: Експортирайте всичко като Excel
+  exportSelectedAsCsv: Експортиране на избраното като CSV
+  exportSelectedAsExcel: Експортиране на избраното като Excel
+  mockData: Фалшиви данни
+  moreActions: Още действия
+  deleteRow: Изтриване на ред
+  deleteRow_other: Изтриване на редове
+  openInGraph: Отворете в Graph
+  exportData: Експортиране на данни
+  refreshData: Обновяване на данните
+  selectAll: Изберете Всички
+  deselectAll: Демаркирайте всички
+  columnStatistics: Колона Статистика
+  schemaInformation: Информация за схемата
+  noDataAvailable: Няма налични данни
+  noDataAvailableDescription: Опитайте да коригирате филтрите си или да добавите нов ред.
+  rightClickForOptions: Щракнете с десния бутон за опции на таблицата
+  exportSelected: "Експортиране {count} Избрано"
+  exportAll: Експортиране на всички
+  importData: Импортиране
+  editRowTitle: Редактиране на ред
+  cancel: Отказ
+  update: Актуализация
+  typeHint: "{type}"
+  mockDataTitle: Фалшиви данни
+  numberOfRows: "Брой редове (макс.: {max})"
+  enterNumberOfRows: "Въведете брой редове (1-{max})"
+  method: Метод
+  methodNormal: нормално
+  dataHandling: Обработка на данни
+  appendToExisting: Добавяне към съществуващи данни
+  overwriteExisting: Презаписване на съществуващи данни
+  fkVariety: FK Variety
+  fkVarietyDescription: Контролира колко уникални родителски стойности се генерират
+  fkVarietyHigh: "Високо (съотношение 1:5)"
+  fkVarietyMedium: "Средно (съотношение 1:10)"
+  fkVarietyNormal: "Нормално (съотношение 1:20)"
+  fkVarietyLow: "Ниска (съотношение 1:50)"
+  generate: Генерирай
+  overwriteConfirmation: "Сигурни ли сте, че искате да презапишете всички съществуващи данни в {storageUnit}? Това действие не може да бъде отменено."
+  yesOverwrite: Да, презаписване
+  mockDataNote: Забележка
+  mockDataWarning: Фалшивото генериране на данни ще попълни родителските таблици с външни ключове, ако е необходимо.
+  mockDataWarningClickHouse: ClickHouse не поддържа външни ключове. Фиктивните данни ще бъдат генерирани само за тази таблица.
+  dependencyError: Не може да се генерира
+  tablesToPopulate: "Таблици за попълване:"
+  rows: редове
+  usingExisting: използвайки съществуващите
+  totalRows: "Общо: {count} реда"
+  totalRows_one: "Общо: {count} ред"
+  totalCount: "Общ брой:"
+  rowsSelected: "Избрани са {count} реда"
+  rowsSelected_one: "Избран {count} ред"
+  searchMatchFound: "Съвпадение на {current} от {total}"
+  noSearchMatches: Няма намерени съвпадения
+  cellInteractionHint: Щракнете, за да копирате клетка, щракнете двукратно, за да копирате ред, щракнете с десния бутон за повече опции
+  tablePagination: Страниране на таблица
+  previousPage: Отидете на предишната страница
+  nextPage: Отидете на следващата страница
+  goToPage: "Отидете на страница {page}"
+  currentPage: "Страница {page}, текуща страница"
+  integerType: Целочислен тип
+  decimalType: Десетичен тип
+  booleanType: Булев тип
+  dateType: Тип дата
+  dateTimeType: Тип DateTime
+  uuidType: UUID тип
+  binaryType: Двоичен тип
+  arrayType: Тип масив
+  textType: Тип текст
+  dataType: Тип данни
+  primaryKey: Първичен ключ
+  foreignKey: Външен ключ
+  delete: Изтриване
+  deleteRowConfirmTitle: Изтриване на ред?
+  deleteRowConfirmTitle_other: Изтриване на редове?
+  deleteRowConfirmDescription: "Сигурни ли сте, че искате да изтриете {count} реда? Това действие не може да бъде отменено."
+  deleteRowConfirmDescription_one: "Сигурни ли сте, че искате да изтриете {count} ред? Това действие не може да бъде отменено."
+
+bn_BD:
+  copiedToClipboard: ক্লিপবোর্ডে কপি করা হয়েছে
+  rowCopiedToClipboard: সারি ক্লিপবোর্ডে অনুলিপি করা হয়েছে৷
+  rowUpdated: সারি আপডেট করা হয়েছে
+  errorUpdatingRow: সারি আপডেট করার সময় ত্রুটি৷
+  deletingRows: সারি মুছে ফেলা হচ্ছে...
+  deletingRows_one: সারি মোছা হচ্ছে...
+  unableToDeleteRow: "সারিটি মুছতে অক্ষম: {message}"
+  rowDeleted: সারি মুছে ফেলা হয়েছে
+  copiedCellToClipboard: ক্লিপবোর্ডে সেল কপি করা হয়েছে
+  maximumRowCount: "সর্বাধিক সারি গণনা {max}"
+  storageUnitRequired: মক ডেটা জেনারেশনের জন্য স্টোরেজ ইউনিট প্রয়োজন
+  rowCountExceedsMax: "সারি সংখ্যা অতিক্রম করা যাবে না {max}"
+  rowCountMustBePositive: সারি গণনা কমপক্ষে 1 হতে হবে
+  successfullyGenerated: "সফলভাবে তৈরি {count} সারি"
+  successfullyGenerated_one: "সফলভাবে তৈরি করা হয়েছে {count} সারি"
+  failedToMockData: ডেটা উপহাস করতে ব্যর্থ হয়েছে৷
+  mockDataNotAllowed: এই টেবিলের জন্য মক ডেটা জেনারেশন অনুমোদিত নয়
+  mockDataFailed: "ডেটা উপহাস করতে ব্যর্থ হয়েছে: {message}"
+  copyCell: কপি সেল
+  searchForEntity: সত্তা জন্য অনুসন্ধান করুন
+  copyRow: সারি কপি করুন
+  deselectRow: সারি নির্বাচন মুক্ত করুন
+  selectRow: সারি নির্বাচন করুন
+  editRow: সারি সম্পাদনা করুন
+  export: রপ্তানি
+  exportAllAsCsv: সমস্ত CSV হিসাবে রপ্তানি করুন৷
+  exportAllAsExcel: এক্সেল হিসাবে সব রপ্তানি করুন
+  exportSelectedAsCsv: CSV হিসাবে নির্বাচিত রপ্তানি
+  exportSelectedAsExcel: এক্সেল হিসাবে নির্বাচিত রপ্তানি
+  mockData: উপহাস তথ্য
+  moreActions: আরও অ্যাকশন
+  deleteRow: সারি মুছুন
+  deleteRow_other: সারি মুছুন
+  openInGraph: গ্রাফে খুলুন
+  exportData: ডেটা রপ্তানি করুন
+  refreshData: ডেটা রিফ্রেশ করুন
+  selectAll: সব নির্বাচন করুন
+  deselectAll: সকলকে অনির্বাচন করুন
+  columnStatistics: কলাম পরিসংখ্যান
+  schemaInformation: স্কিমা তথ্য
+  noDataAvailable: কোন ডেটা উপলব্ধ নেই
+  noDataAvailableDescription: আপনার ফিল্টার সামঞ্জস্য বা একটি নতুন সারি যোগ করার চেষ্টা করুন.
+  rightClickForOptions: টেবিল বিকল্পের জন্য ডান-ক্লিক করুন
+  exportSelected: "রপ্তানি {count} নির্বাচিত"
+  exportAll: সব রপ্তানি করুন
+  importData: আমদানি
+  editRowTitle: সারি সম্পাদনা করুন
+  cancel: বাতিল করুন
+  update: আপডেট
+  typeHint: "{type}"
+  mockDataTitle: উপহাস তথ্য
+  numberOfRows: "সারির সংখ্যা (সর্বোচ্চ: {max})"
+  enterNumberOfRows: "সারির সংখ্যা লিখুন (1-{max})"
+  method: পদ্ধতি
+  methodNormal: স্বাভাবিক
+  dataHandling: ডেটা হ্যান্ডলিং
+  appendToExisting: বিদ্যমান ডেটাতে যোগ করুন
+  overwriteExisting: বিদ্যমান ডেটা ওভাররাইট করুন
+  fkVariety: এফ কে বৈচিত্র্য
+  fkVarietyDescription: কতগুলি অনন্য অভিভাবক মান তৈরি হয় তা নিয়ন্ত্রণ করে
+  fkVarietyHigh: "উচ্চ (1:5 অনুপাত)"
+  fkVarietyMedium: "মাঝারি (1:10 অনুপাত)"
+  fkVarietyNormal: "সাধারণ (1:20 অনুপাত)"
+  fkVarietyLow: "কম (1:50 অনুপাত)"
+  generate: তৈরি করুন
+  overwriteConfirmation: "আপনি কি নিশ্চিত যে আপনি {storageUnit}-এ বিদ্যমান সমস্ত ডেটা ওভাররাইট করতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷"
+  yesOverwrite: হ্যাঁ, ওভাররাইট করুন
+  mockDataNote: দ্রষ্টব্য
+  mockDataWarning: মক ডেটা জেনারেশন প্রয়োজন অনুযায়ী বিদেশী কী প্যারেন্ট টেবিল তৈরি করবে।
+  mockDataWarningClickHouse: ক্লিকহাউস বিদেশী কী সমর্থন করে না। শুধুমাত্র এই টেবিলের জন্য মক ডেটা তৈরি করা হবে।
+  dependencyError: জেনারেট করা যাবে না
+  tablesToPopulate: "জনসংখ্যার জন্য টেবিল:"
+  rows: সারি
+  usingExisting: বিদ্যমান ব্যবহার করে
+  totalRows: "মোট: {count} সারি"
+  totalRows_one: "মোট: {count} সারি"
+  totalCount: "মোট গণনা:"
+  rowsSelected: "{count} সারি নির্বাচন করা হয়েছে৷"
+  rowsSelected_one: "{count} সারি নির্বাচন করা হয়েছে৷"
+  searchMatchFound: "{total} এর {current} ম্যাচ"
+  noSearchMatches: কোন মিল পাওয়া যায়নি
+  cellInteractionHint: সেল কপি করতে ক্লিক করুন, সারি কপি করতে ডাবল-ক্লিক করুন, আরও বিকল্পের জন্য ডান-ক্লিক করুন
+  tablePagination: সারণী পৃষ্ঠা সংখ্যা
+  previousPage: আগের পৃষ্ঠায় যান
+  nextPage: পরবর্তী পৃষ্ঠায় যান
+  goToPage: "পৃষ্ঠায় যান {page}"
+  currentPage: "পৃষ্ঠা {page}, বর্তমান পৃষ্ঠা"
+  integerType: পূর্ণসংখ্যার ধরন
+  decimalType: দশমিক টাইপ
+  booleanType: বুলিয়ান টাইপ
+  dateType: তারিখের ধরন
+  dateTimeType: তারিখ সময় প্রকার
+  uuidType: UUID প্রকার
+  binaryType: বাইনারি টাইপ
+  arrayType: অ্যারে টাইপ
+  textType: পাঠ্য প্রকার
+  dataType: ডেটা টাইপ
+  primaryKey: প্রাথমিক কী
+  foreignKey: বিদেশী চাবি
+  delete: মুছে দিন
+  deleteRowConfirmTitle: সারি মুছবেন?
+  deleteRowConfirmTitle_other: সারি মুছবেন?
+  deleteRowConfirmDescription: "আপনি কি {count} সারি মুছতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷"
+  deleteRowConfirmDescription_one: "আপনি কি {count} সারি মুছতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷"
+
+ca_ES:
+  copiedToClipboard: S'ha copiat al porta-retalls
+  rowCopiedToClipboard: S'ha copiat la fila al porta-retalls
+  rowUpdated: Fila actualitzada
+  errorUpdatingRow: Error en actualitzar la fila
+  deletingRows: S'estan suprimint files...
+  deletingRows_one: S'està suprimint la fila...
+  unableToDeleteRow: "No es pot suprimir la fila: {message}"
+  rowDeleted: Fila suprimida
+  copiedCellToClipboard: S'ha copiat la cel·la al porta-retalls
+  maximumRowCount: "El recompte màxim de files és {max}"
+  storageUnitRequired: La unitat d'emmagatzematge és necessària per a la generació de dades simulades
+  rowCountExceedsMax: "El recompte de files no pot superar {max}"
+  rowCountMustBePositive: El recompte de files ha de ser com a mínim 1
+  successfullyGenerated: "{count} files generades correctament"
+  successfullyGenerated_one: "Fila {count} generada correctament"
+  failedToMockData: No s'han pogut simular les dades
+  mockDataNotAllowed: No es permet la generació de dades simulades per a aquesta taula
+  mockDataFailed: "No s'han pogut simular les dades: {message}"
+  copyCell: Copia la cel·la
+  searchForEntity: Cerca entitat
+  copyRow: Copia fila
+  deselectRow: Desseleccioneu Fila
+  selectRow: Seleccioneu Fila
+  editRow: Edita fila
+  export: Exporta
+  exportAllAsCsv: Exporta-ho tot com a CSV
+  exportAllAsExcel: Exporta-ho tot com a Excel
+  exportSelectedAsCsv: Exportació seleccionada com a CSV
+  exportSelectedAsExcel: Exportació seleccionada com a Excel
+  mockData: Dades simulades
+  moreActions: Més accions
+  deleteRow: Suprimeix la fila
+  deleteRow_other: Suprimeix files
+  openInGraph: Obre al gràfic
+  exportData: Exporta dades
+  refreshData: Actualitzar dades
+  selectAll: Seleccioneu Tot
+  deselectAll: Desseleccioneu-ho tot
+  columnStatistics: Estadístiques de columna
+  schemaInformation: Informació de l'esquema
+  noDataAvailable: No hi ha dades disponibles
+  noDataAvailableDescription: Proveu d'ajustar els filtres o afegir una fila nova.
+  rightClickForOptions: Feu clic amb el botó dret per a les opcions de la taula
+  exportSelected: Exporta [[0]]] Seleccionat
+  exportAll: Exportar-ho tot
+  importData: Importar
+  editRowTitle: Edita fila
+  cancel: Cancel·la
+  update: Actualització
+  typeHint: "[[0]]]"
+  mockDataTitle: Dades simulades
+  numberOfRows: "Nombre de files (màx.: {max})"
+  enterNumberOfRows: "Introduïu el nombre de files (1-{max})"
+  method: Mètode
+  methodNormal: Normal
+  dataHandling: Tractament de dades
+  appendToExisting: Afegeix a les dades existents
+  overwriteExisting: Sobreescriu les dades existents
+  fkVariety: Varietat FK
+  fkVarietyDescription: Controla quants valors pare únics es generen
+  fkVarietyHigh: "Alt (proporció 1:5)"
+  fkVarietyMedium: "Mitjà (proporció 1:10)"
+  fkVarietyNormal: "Normal (proporció 1:20)"
+  fkVarietyLow: "Baixa (proporció 1:50)"
+  generate: Generar
+  overwriteConfirmation: "Esteu segur que voleu sobreescriure totes les dades existents a {storageUnit}? Aquesta acció no es pot desfer."
+  yesOverwrite: Sí, sobreescriu
+  mockDataNote: Nota
+  mockDataWarning: La generació de dades simulades omplirà les taules pares de clau estrangera segons sigui necessari.
+  mockDataWarningClickHouse: ClickHouse no admet claus externes. Només es generaran dades simulades per a aquesta taula.
+  dependencyError: No es pot generar
+  tablesToPopulate: "Taules per omplir:"
+  rows: files
+  usingExisting: utilitzant l'existent
+  totalRows: "Total: [[0]]] files"
+  totalRows_one: "Total: [[0]]] fila"
+  totalCount: "Recompte total:"
+  rowsSelected: "[[0]]] files seleccionades"
+  rowsSelected_one: "[[0]]] fila seleccionada"
+  searchMatchFound: "Coincidència {current} de {total}"
+  noSearchMatches: No s'han trobat coincidències
+  cellInteractionHint: Click to copy cell, double-click to copy row, right-click for more options
+  tablePagination: Paginació de taules
+  previousPage: Anar a la pàgina anterior
+  nextPage: Aneu a la pàgina següent
+  goToPage: Anar a la pàgina [[0]]]
+  currentPage: Pàgina [[0]]], pàgina actual
+  integerType: Tipus enter
+  decimalType: Tipus decimal
+  booleanType: tipus booleà
+  dateType: Tipus de data
+  dateTimeType: Tipus DateTime
+  uuidType: tipus UUID
+  binaryType: Tipus binari
+  arrayType: Tipus de matriu
+  textType: Tipus de text
+  dataType: Tipus de dades
+  primaryKey: Clau primària
+  foreignKey: Clau estrangera
+  delete: Suprimeix
+  deleteRowConfirmTitle: Vols suprimir la fila?
+  deleteRowConfirmTitle_other: Vols suprimir files?
+  deleteRowConfirmDescription: "Esteu segur que voleu suprimir {count} files? Aquesta acció no es pot desfer."
+  deleteRowConfirmDescription_one: "Esteu segur que voleu suprimir la fila {count}? Aquesta acció no es pot desfer."
+
+cs_CZ:
+  copiedToClipboard: Zkopírováno do schránky
+  rowCopiedToClipboard: Řádek zkopírován do schránky
+  rowUpdated: Řádek aktualizován
+  errorUpdatingRow: Chyba při aktualizaci řádku
+  deletingRows: Mazání řádků...
+  deletingRows_one: Mazání řádku...
+  unableToDeleteRow: "Nelze smazat řádek: {message}"
+  rowDeleted: Řádek smazán
+  copiedCellToClipboard: Buňka byla zkopírována do schránky
+  maximumRowCount: "Maximální počet řádků je {max}"
+  storageUnitRequired: Úložná jednotka je vyžadována pro generování simulovaných dat
+  rowCountExceedsMax: "Počet řádků nemůže překročit {max}"
+  rowCountMustBePositive: Počet řádků musí být alespoň 1
+  successfullyGenerated: "Úspěšně vygenerováno {count} řádků"
+  successfullyGenerated_one: "Úspěšně vygenerován řádek {count}"
+  failedToMockData: Vysmívání dat se nezdařilo
+  mockDataNotAllowed: Pro tuto tabulku není povoleno generování simulovaných dat
+  mockDataFailed: "Nepodařilo se zesměšnit data: {message}"
+  copyCell: Kopírovat buňku
+  searchForEntity: Vyhledejte entitu
+  copyRow: Kopírovat řádek
+  deselectRow: Zrušte výběr řádku
+  selectRow: Vyberte řádek
+  editRow: Upravit řádek
+  export: Vývozní
+  exportAllAsCsv: Exportovat vše jako CSV
+  exportAllAsExcel: Exportovat vše jako Excel
+  exportSelectedAsCsv: Exportovat vybrané jako CSV
+  exportSelectedAsExcel: Exportovat vybrané jako Excel
+  mockData: Falešná data
+  moreActions: Další akce
+  deleteRow: Smazat řádek
+  deleteRow_other: Smazat řádky
+  openInGraph: Otevřít v grafu
+  exportData: Export dat
+  refreshData: Obnovit data
+  selectAll: Vyberte Vše
+  deselectAll: Zrušte výběr všech
+  columnStatistics: Sloupec Statistika
+  schemaInformation: Informace o schématu
+  noDataAvailable: Nejsou k dispozici žádná data
+  noDataAvailableDescription: Zkuste upravit filtry nebo přidat nový řádek.
+  rightClickForOptions: Klepnutím pravým tlačítkem myši zobrazíte možnosti tabulky
+  exportSelected: "Exportovat {count} Vybráno"
+  exportAll: Exportovat vše
+  importData: Importovat
+  editRowTitle: Upravit řádek
+  cancel: Zrušit
+  update: Aktualizovat
+  typeHint: "{type}"
+  mockDataTitle: Falešná data
+  numberOfRows: "Počet řádků (max.: {max})"
+  enterNumberOfRows: "Zadejte počet řádků (1-{max})"
+  method: Metoda
+  methodNormal: Normální
+  dataHandling: Manipulace s daty
+  appendToExisting: Připojit k existujícím datům
+  overwriteExisting: Přepsat existující data
+  fkVariety: Odrůda FK
+  fkVarietyDescription: Řídí, kolik jedinečných nadřazených hodnot se vygeneruje
+  fkVarietyHigh: "Vysoká (poměr 1:5)"
+  fkVarietyMedium: "Střední (poměr 1:10)"
+  fkVarietyNormal: "Normální (poměr 1:20)"
+  fkVarietyLow: "Nízká (poměr 1:50)"
+  generate: Generovat
+  overwriteConfirmation: "Opravdu chcete přepsat všechna existující data v {storageUnit}? Tuto akci nelze vrátit zpět."
+  yesOverwrite: Ano, přepsat
+  mockDataNote: Poznámka
+  mockDataWarning: Generování simulovaných dat podle potřeby naplní nadřazené tabulky cizího klíče.
+  mockDataWarningClickHouse: ClickHouse nepodporuje cizí klíče. Mock data budou generována pouze pro tuto tabulku.
+  dependencyError: Nelze generovat
+  tablesToPopulate: "Tabulky k naplnění:"
+  rows: řádky
+  usingExisting: pomocí stávajících
+  totalRows: "Celkem: {count} řádků"
+  totalRows_one: "Celkem: {count} řádek"
+  totalCount: "Celkový počet:"
+  rowsSelected: "Vybráno {count} řádků"
+  rowsSelected_one: "Vybrán řádek {count}"
+  searchMatchFound: "Shoda {current} z {total}"
+  noSearchMatches: Nebyly nalezeny žádné shody
+  cellInteractionHint: Kliknutím zkopírujete buňku, dvojitým kliknutím zkopírujete řádek, kliknutím pravým tlačítkem zobrazíte další možnosti
+  tablePagination: Stránkování tabulky
+  previousPage: Přejít na předchozí stránku
+  nextPage: Přejít na další stránku
+  goToPage: "Přejít na stránku {page}"
+  currentPage: "Stránka {page}, aktuální stránka"
+  integerType: Celočíselný typ
+  decimalType: Desetinný typ
+  booleanType: Booleovský typ
+  dateType: Typ data
+  dateTimeType: Typ DateTime
+  uuidType: Typ UUID
+  binaryType: Binární typ
+  arrayType: Typ pole
+  textType: Typ textu
+  dataType: Typ dat
+  primaryKey: Primární klíč
+  foreignKey: Cizí klíč
+  delete: Vymazat
+  deleteRowConfirmTitle: Smazat řádek?
+  deleteRowConfirmTitle_other: Smazat řádky?
+  deleteRowConfirmDescription: "Opravdu chcete smazat {count} řádky? Tuto akci nelze vrátit zpět."
+  deleteRowConfirmDescription_one: "Opravdu chcete smazat řádek {count}? Tuto akci nelze vrátit zpět."
+
+da_DK:
+  copiedToClipboard: Kopieret til udklipsholder
+  rowCopiedToClipboard: Række kopieret til udklipsholder
+  rowUpdated: Række opdateret
+  errorUpdatingRow: Fejl under opdatering af række
+  deletingRows: Sletter rækker...
+  deletingRows_one: Sletter række...
+  unableToDeleteRow: "Kan ikke slette rækken: {message}"
+  rowDeleted: Række slettet
+  copiedCellToClipboard: Kopierede celle til udklipsholder
+  maximumRowCount: "Maksimalt antal rækker er {max}"
+  storageUnitRequired: Lagerenhed er påkrævet til mock datagenerering
+  rowCountExceedsMax: "Antal rækker kan ikke overstige {max}"
+  rowCountMustBePositive: Rækketælling skal være mindst 1
+  successfullyGenerated: "Succesfuldt genererede {count} rækker"
+  successfullyGenerated_one: "Succesfuldt genereret {count} række"
+  failedToMockData: Kunne ikke håne data
+  mockDataNotAllowed: Mock datagenerering er ikke tilladt for denne tabel
+  mockDataFailed: "Kunne ikke håne data: {message}"
+  copyCell: Kopier celle
+  searchForEntity: Søg efter enhed
+  copyRow: Kopiér række
+  deselectRow: Fravælg Række
+  selectRow: Vælg Række
+  editRow: Rediger række
+  export: Eksportere
+  exportAllAsCsv: Eksporter alle som CSV
+  exportAllAsExcel: Eksporter alle som Excel
+  exportSelectedAsCsv: Eksporter valgt som CSV
+  exportSelectedAsExcel: Eksporter valgt som Excel
+  mockData: Mock data
+  moreActions: Flere handlinger
+  deleteRow: Slet række
+  deleteRow_other: Slet rækker
+  openInGraph: Åbn i Graph
+  exportData: Eksporter data
+  refreshData: Opdater data
+  selectAll: Vælg alle
+  deselectAll: Fravælg Alle
+  columnStatistics: Kolonnestatistik
+  schemaInformation: Skemaoplysninger
+  noDataAvailable: Ingen tilgængelige data
+  noDataAvailableDescription: Prøv at justere dine filtre eller tilføje en ny række.
+  rightClickForOptions: Højreklik for tabelindstillinger
+  exportSelected: "Eksporter {count} valgt"
+  exportAll: Eksporter alle
+  importData: Importere
+  editRowTitle: Rediger række
+  cancel: Ophæve
+  update: Opdatering
+  typeHint: "{type}"
+  mockDataTitle: Mock data
+  numberOfRows: "Antal rækker (maks.: {max})"
+  enterNumberOfRows: "Indtast antal rækker (1-{max})"
+  method: Metode
+  methodNormal: Normal
+  dataHandling: Datahåndtering
+  appendToExisting: Tilføj til eksisterende data
+  overwriteExisting: Overskriv eksisterende data
+  fkVariety: FK Variety
+  fkVarietyDescription: Styrer, hvor mange unikke overordnede værdier, der genereres
+  fkVarietyHigh: "Høj (forhold 1:5)"
+  fkVarietyMedium: "Medium (forhold 1:10)"
+  fkVarietyNormal: "Normal (forhold 1:20)"
+  fkVarietyLow: "Lav (forhold 1:50)"
+  generate: Frembringe
+  overwriteConfirmation: "Er du sikker på, at du vil overskrive alle eksisterende data i {storageUnit}? Denne handling kan ikke fortrydes."
+  yesOverwrite: Ja, overskriv
+  mockDataNote: Note
+  mockDataWarning: Mock datagenerering vil udfylde fremmed nøgle overordnede tabeller efter behov.
+  mockDataWarningClickHouse: ClickHouse understøtter ikke fremmednøgler. Mock-data vil kun blive genereret for denne tabel.
+  dependencyError: Kan ikke generere
+  tablesToPopulate: "Tabeller, der skal udfyldes:"
+  rows: rækker
+  usingExisting: ved hjælp af eksisterende
+  totalRows: "I alt: {count} rækker"
+  totalRows_one: "I alt: {count} række"
+  totalCount: "Samlet antal:"
+  rowsSelected: "{count} rækker valgt"
+  rowsSelected_one: "{count} række valgt"
+  searchMatchFound: "Match {current} af {total}"
+  noSearchMatches: Ingen resultater fundet
+  cellInteractionHint: Klik for at kopiere celle, dobbeltklik for at kopiere række, højreklik for flere muligheder
+  tablePagination: Tabel paginering
+  previousPage: Gå til forrige side
+  nextPage: Gå til næste side
+  goToPage: "Gå til side {page}"
+  currentPage: "Side {page}, nuværende side"
+  integerType: Heltalstype
+  decimalType: Decimaltype
+  booleanType: boolesk type
+  dateType: Datotype
+  dateTimeType: DatoTid type
+  uuidType: UUID type
+  binaryType: Binær type
+  arrayType: Array type
+  textType: Teksttype
+  dataType: Datatype
+  primaryKey: Primær nøgle
+  foreignKey: Fremmednøgle
+  delete: Slet
+  deleteRowConfirmTitle: Vil du slette rækken?
+  deleteRowConfirmTitle_other: Vil du slette rækker?
+  deleteRowConfirmDescription: "Er du sikker på, at du vil slette {count} rækker? Denne handling kan ikke fortrydes."
+  deleteRowConfirmDescription_one: "Er du sikker på, at du vil slette rækken {count}? Denne handling kan ikke fortrydes."
+
+fa_IR:
+  copiedToClipboard: در کلیپ بورد کپی شد
+  rowCopiedToClipboard: ردیف در کلیپ بورد کپی شد
+  rowUpdated: ردیف به روز شد
+  errorUpdatingRow: خطا در به‌روزرسانی ردیف
+  deletingRows: در حال حذف سطرها...
+  deletingRows_one: در حال حذف ردیف...
+  unableToDeleteRow: "نمی توان ردیف را حذف کرد: {message}"
+  rowDeleted: ردیف حذف شد
+  copiedCellToClipboard: سلول در کلیپ بورد کپی شد
+  maximumRowCount: "حداکثر تعداد ردیف {max} است"
+  storageUnitRequired: واحد ذخیره سازی برای تولید داده های ساختگی مورد نیاز است
+  rowCountExceedsMax: "تعداد ردیف نمی تواند بیشتر از {max}"
+  rowCountMustBePositive: تعداد ردیف باید حداقل 1 باشد
+  successfullyGenerated: "با موفقیت {count} ردیف ایجاد شد"
+  successfullyGenerated_one: "ردیف {count} با موفقیت ایجاد شد"
+  failedToMockData: Mock Data انجام نشد
+  mockDataNotAllowed: تولید داده های ساختگی برای این جدول مجاز نیست
+  mockDataFailed: "الگوبرداری از داده ها ناموفق بود: {message}"
+  copyCell: سلول را کپی کنید
+  searchForEntity: Entity را جستجو کنید
+  copyRow: ردیف را کپی کنید
+  deselectRow: ردیف را لغو انتخاب کنید
+  selectRow: ردیف را انتخاب کنید
+  editRow: ویرایش ردیف
+  export: صادرات
+  exportAllAsCsv: همه را به عنوان CSV صادر کنید
+  exportAllAsExcel: همه را به عنوان اکسل صادر کنید
+  exportSelectedAsCsv: صادرات به عنوان CSV انتخاب شد
+  exportSelectedAsExcel: صادرات به عنوان Excel انتخاب شد
+  mockData: داده های ساختگی
+  moreActions: اقدامات بیشتر
+  deleteRow: حذف ردیف
+  deleteRow_other: ردیف ها را حذف کنید
+  openInGraph: در نمودار باز کنید
+  exportData: صادرات داده ها
+  refreshData: Refresh Data
+  selectAll: همه را انتخاب کنید
+  deselectAll: همه را لغو انتخاب کنید
+  columnStatistics: آمار ستونی
+  schemaInformation: اطلاعات طرحواره
+  noDataAvailable: داده ای موجود نیست
+  noDataAvailableDescription: سعی کنید فیلترهای خود را تنظیم کنید یا یک ردیف جدید اضافه کنید.
+  rightClickForOptions: برای گزینه های جدول کلیک راست کنید
+  exportSelected: صادرات [[0]]] انتخاب شد
+  exportAll: صادرات همه
+  importData: واردات
+  editRowTitle: ویرایش ردیف
+  cancel: لغو کنید
+  update: به روز رسانی
+  typeHint: "{type}"
+  mockDataTitle: داده های ساختگی
+  numberOfRows: "تعداد ردیف (حداکثر: {max})"
+  enterNumberOfRows: "تعداد ردیف ها را وارد کنید (1-{max})"
+  method: روش
+  methodNormal: عادی
+  dataHandling: مدیریت داده ها
+  appendToExisting: به داده های موجود اضافه شود
+  overwriteExisting: بازنویسی داده های موجود
+  fkVariety: FK Variety
+  fkVarietyDescription: تعداد مقادیر والد منحصر به فرد ایجاد شده را کنترل می کند
+  fkVarietyHigh: "بالا (نسبت 1:5)"
+  fkVarietyMedium: "متوسط ​​(نسبت 1:10)"
+  fkVarietyNormal: "معمولی (نسبت 1:20)"
+  fkVarietyLow: "کم (نسبت 1:50)"
+  generate: ایجاد کنید
+  overwriteConfirmation: "آیا مطمئن هستید که می خواهید همه داده های موجود در {storageUnit} را بازنویسی کنید؟ این عمل قابل لغو نیست."
+  yesOverwrite: بله، بازنویسی کنید
+  mockDataNote: توجه داشته باشید
+  mockDataWarning: تولید داده های ساختگی جداول والد کلید خارجی را در صورت نیاز پر می کند.
+  mockDataWarningClickHouse: ClickHouse از کلیدهای خارجی پشتیبانی نمی کند. داده های ساختگی فقط برای این جدول تولید می شود.
+  dependencyError: نمی توان تولید کرد
+  tablesToPopulate: "جداول برای پر کردن:"
+  rows: ردیف ها
+  usingExisting: با استفاده از موجود
+  totalRows: "مجموع: {count} ردیف"
+  totalRows_one: "مجموع: {count} ردیف"
+  totalCount: "تعداد کل:"
+  rowsSelected: "{count} ردیف انتخاب شد"
+  rowsSelected_one: "{count} ردیف انتخاب شد"
+  searchMatchFound: "مطابقت {current} از {total}"
+  noSearchMatches: هیچ منطبقی یافت نشد
+  cellInteractionHint: برای کپی سلول کلیک کنید، برای کپی ردیف دوبار کلیک کنید، برای گزینه های بیشتر کلیک راست کنید
+  tablePagination: صفحه بندی جدول
+  previousPage: برو به صفحه قبل
+  nextPage: به صفحه بعد بروید
+  goToPage: "رفتن به صفحه {page}"
+  currentPage: "صفحه {page}، صفحه فعلی"
+  integerType: نوع عدد صحیح
+  decimalType: نوع اعشاری
+  booleanType: نوع بولی
+  dateType: نوع تاریخ
+  dateTimeType: نوع DateTime
+  uuidType: نوع UUID
+  binaryType: نوع باینری
+  arrayType: نوع آرایه
+  textType: نوع متن
+  dataType: نوع داده
+  primaryKey: کلید اصلی
+  foreignKey: کلید خارجی
+  delete: حذف کنید
+  deleteRowConfirmTitle: ردیف حذف شود؟
+  deleteRowConfirmTitle_other: ردیف ها حذف شوند؟
+  deleteRowConfirmDescription: "آیا مطمئنید که می‌خواهید {count} ردیف‌ها را حذف کنید؟ این عمل قابل لغو نیست."
+  deleteRowConfirmDescription_one: "آیا مطمئن هستید که می خواهید ردیف {count} را حذف کنید؟ این عمل قابل لغو نیست."
+
+hi_IN:
+  copiedToClipboard: क्लिपबोर्ड पर कॉपी किया गया
+  rowCopiedToClipboard: पंक्ति को क्लिपबोर्ड पर कॉपी किया गया
+  rowUpdated: पंक्ति अद्यतन की गई
+  errorUpdatingRow: पंक्ति अद्यतन करने में त्रुटि
+  deletingRows: पंक्तियाँ हटाई जा रही हैं...
+  deletingRows_one: पंक्ति हटाई जा रही है...
+  unableToDeleteRow: "पंक्ति को हटाने में असमर्थ: {message}"
+  rowDeleted: पंक्ति हटाई गई
+  copiedCellToClipboard: सेल को क्लिपबोर्ड पर कॉपी किया गया
+  maximumRowCount: "अधिकतम पंक्ति गणना है {max}"
+  storageUnitRequired: मॉक डेटा जेनरेशन के लिए स्टोरेज यूनिट आवश्यक है
+  rowCountExceedsMax: "पंक्ति संख्या अधिक नहीं हो सकती {max}"
+  rowCountMustBePositive: पंक्ति संख्या कम से कम 1 होनी चाहिए
+  successfullyGenerated: "सफलतापूर्वक उत्पन्न {count} पंक्तियाँ"
+  successfullyGenerated_one: "सफलतापूर्वक उत्पन्न {count} पंक्ति"
+  failedToMockData: डेटा का नकल करने में विफल
+  mockDataNotAllowed: इस तालिका के लिए नकली डेटा सृजन की अनुमति नहीं है
+  mockDataFailed: "डेटा की नकल करने में विफल: {message}"
+  copyCell: कॉपी सेल
+  searchForEntity: इकाई खोजें
+  copyRow: पंक्ति कॉपी करें
+  deselectRow: पंक्ति का चयन रद्द करें
+  selectRow: पंक्ति का चयन करें
+  editRow: पंक्ति संपादित करें
+  export: निर्यात
+  exportAllAsCsv: सभी को सीएसवी के रूप में निर्यात करें
+  exportAllAsExcel: सभी को एक्सेल के रूप में निर्यात करें
+  exportSelectedAsCsv: सीएसवी के रूप में निर्यात चयनित
+  exportSelectedAsExcel: Excel के रूप में निर्यात चयनित
+  mockData: नकली डेटा
+  moreActions: अधिक कार्रवाइयां
+  deleteRow: पंक्ति को हटाएं
+  deleteRow_other: पंक्तियाँ हटाएँ
+  openInGraph: ग्राफ़ में खोलें
+  exportData: डेटा निर्यात करें
+  refreshData: डेटा ताज़ा करें
+  selectAll: सबका चयन करें
+  deselectAll: सबको अचयनित करो
+  columnStatistics: स्तंभ सांख्यिकी
+  schemaInformation: स्कीमा सूचना
+  noDataAvailable: कोई डेटा मौजूद नहीं
+  noDataAvailableDescription: अपने फ़िल्टर समायोजित करने या नई पंक्ति जोड़ने का प्रयास करें।
+  rightClickForOptions: तालिका विकल्पों के लिए राइट-क्लिक करें
+  exportSelected: "निर्यात {count} चयनित"
+  exportAll: सभी निर्यात करें
+  importData: आयात
+  editRowTitle: पंक्ति संपादित करें
+  cancel: रद्द करना
+  update: अद्यतन
+  typeHint: "{type}"
+  mockDataTitle: नकली डेटा
+  numberOfRows: "पंक्तियों की संख्या (अधिकतम: {max})"
+  enterNumberOfRows: "पंक्तियों की संख्या दर्ज करें (1-{max})"
+  method: तरीका
+  methodNormal: सामान्य
+  dataHandling: डेटा संधारण
+  appendToExisting: मौजूदा डेटा में जोड़ें
+  overwriteExisting: मौजूदा डेटा को अधिलेखित करें
+  fkVariety: एफके किस्म
+  fkVarietyDescription: नियंत्रित करता है कि कितने अद्वितीय मूल मान उत्पन्न होते हैं
+  fkVarietyHigh: "उच्च (1:5 अनुपात)"
+  fkVarietyMedium: "मध्यम (1:10 अनुपात)"
+  fkVarietyNormal: "सामान्य (1:20 अनुपात)"
+  fkVarietyLow: "निम्न (1:50 अनुपात)"
+  generate: उत्पन्न
+  overwriteConfirmation: "क्या आप वाकई {storageUnit} में सभी मौजूदा डेटा को ओवरराइट करना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।"
+  yesOverwrite: हाँ, अधिलेखित करें
+  mockDataNote: टिप्पणी
+  mockDataWarning: मॉक डेटा जनरेशन आवश्यकतानुसार विदेशी कुंजी मूल तालिकाओं को भर देगा।
+  mockDataWarningClickHouse: ClickHouse विदेशी कुंजियों का समर्थन नहीं करता. नकली डेटा केवल इस तालिका के लिए तैयार किया जाएगा।
+  dependencyError: उत्पन्न नहीं कर सकता
+  tablesToPopulate: "भरने के लिए तालिकाएँ:"
+  rows: पंक्तियों
+  usingExisting: मौजूदा का उपयोग करना
+  totalRows: "कुल: {count} पंक्तियाँ"
+  totalRows_one: "कुल: {count} पंक्ति"
+  totalCount: "कुल गणना:"
+  rowsSelected: "{count} पंक्तियाँ चयनित"
+  rowsSelected_one: "{count} पंक्ति चयनित"
+  searchMatchFound: "{total} का मिलान {current} से करें"
+  noSearchMatches: कोई मेल नहीं मिले
+  cellInteractionHint: सेल कॉपी करने के लिए क्लिक करें, पंक्ति कॉपी करने के लिए डबल-क्लिक करें, अधिक विकल्पों के लिए राइट-क्लिक करें
+  tablePagination: तालिका पृष्ठांकन
+  previousPage: पिछले पृष्ठ पर जाएं
+  nextPage: अगले पृष्ठ पर जाएँ
+  goToPage: "पेज पर जाएँ {page}"
+  currentPage: "पृष्ठ {page}, वर्तमान पृष्ठ"
+  integerType: पूर्णांक प्रकार
+  decimalType: दशमलव प्रकार
+  booleanType: बूलियन प्रकार
+  dateType: दिनांक प्रकार
+  dateTimeType: दिनांकसमय प्रकार
+  uuidType: यूयूआईडी प्रकार
+  binaryType: बाइनरी प्रकार
+  arrayType: सारणी प्रकार
+  textType: पाठ प्रकार
+  dataType: डेटा प्रकार
+  primaryKey: प्राथमिक कुंजी
+  foreignKey: विदेशी कुंजी
+  delete: मिटाना
+  deleteRowConfirmTitle: पंक्ति को हटाएं?
+  deleteRowConfirmTitle_other: पंक्तियाँ हटाएँ?
+  deleteRowConfirmDescription: "क्या आप वाकई {count} पंक्तियाँ हटाना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।"
+  deleteRowConfirmDescription_one: "क्या आप वाकई {count} पंक्ति को हटाना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।"
+
+hr_HR:
+  copiedToClipboard: Kopirano u međuspremnik
+  rowCopiedToClipboard: Redak kopiran u međuspremnik
+  rowUpdated: Redak ažuriran
+  errorUpdatingRow: Pogreška pri ažuriranju retka
+  deletingRows: Brisanje redaka...
+  deletingRows_one: Brisanje retka...
+  unableToDeleteRow: "Nije moguće izbrisati redak: {message}"
+  rowDeleted: Redak izbrisan
+  copiedCellToClipboard: Ćelija je kopirana u međuspremnik
+  maximumRowCount: "Maksimalan broj redaka je {max}"
+  storageUnitRequired: Za lažno generiranje podataka potrebna je jedinica za pohranu
+  rowCountExceedsMax: "Broj redaka ne može premašiti {max}"
+  rowCountMustBePositive: Broj redaka mora biti najmanje 1
+  successfullyGenerated: "Uspješno generirano {count} redaka"
+  successfullyGenerated_one: "Uspješno generiran {count} red"
+  failedToMockData: Ismijavanje podataka nije uspjelo
+  mockDataNotAllowed: Lažno generiranje podataka nije dopušteno za ovu tablicu
+  mockDataFailed: "Neuspješno lažiranje podataka: {message}"
+  copyCell: Kopiraj ćeliju
+  searchForEntity: Potražite entitet
+  copyRow: Kopiraj red
+  deselectRow: Poništi odabir reda
+  selectRow: Odaberite red
+  editRow: Uredi redak
+  export: Izvoz
+  exportAllAsCsv: Izvezi sve kao CSV
+  exportAllAsExcel: Izvezi sve kao Excel
+  exportSelectedAsCsv: Izvezi odabrano kao CSV
+  exportSelectedAsExcel: Izvezi odabrano kao Excel
+  mockData: Lažni podaci
+  moreActions: Više radnji
+  deleteRow: Izbriši redak
+  deleteRow_other: Izbriši retke
+  openInGraph: Otvori u Graphu
+  exportData: Izvoz podataka
+  refreshData: Osvježi podatke
+  selectAll: Odaberite sve
+  deselectAll: Poništi odabir svih
+  columnStatistics: Stupac Statistika
+  schemaInformation: Informacije o shemi
+  noDataAvailable: Nema dostupnih podataka
+  noDataAvailableDescription: Pokušajte prilagoditi svoje filtre ili dodati novi redak.
+  rightClickForOptions: Kliknite desnom tipkom miša za opcije tablice
+  exportSelected: "Izvoz {count} odabrano"
+  exportAll: Izvezi sve
+  importData: Uvoz
+  editRowTitle: Uredi redak
+  cancel: Otkazati
+  update: Ažurirati
+  typeHint: "{type}"
+  mockDataTitle: Lažni podaci
+  numberOfRows: "Broj redaka (maks.: {max})"
+  enterNumberOfRows: "Unesite broj redaka (1-{max})"
+  method: metoda
+  methodNormal: Normalan
+  dataHandling: Rukovanje podacima
+  appendToExisting: Dodavanje postojećim podacima
+  overwriteExisting: Prepiši postojeće podatke
+  fkVariety: FK Raznovrsnost
+  fkVarietyDescription: Kontrolira koliko se jedinstvenih nadređenih vrijednosti generira
+  fkVarietyHigh: "Visoko (omjer 1:5)"
+  fkVarietyMedium: "Srednje (omjer 1:10)"
+  fkVarietyNormal: "Normalno (omjer 1:20)"
+  fkVarietyLow: "Nisko (omjer 1:50)"
+  generate: Generirati
+  overwriteConfirmation: "Jeste li sigurni da želite prebrisati sve postojeće podatke u {storageUnit}? Ova se radnja ne može poništiti."
+  yesOverwrite: Da, Prepiši
+  mockDataNote: Bilješka
+  mockDataWarning: Generiranje lažnih podataka će prema potrebi popuniti roditeljske tablice stranog ključa.
+  mockDataWarningClickHouse: ClickHouse ne podržava strane ključeve. Lažni podaci bit će generirani samo za ovu tablicu.
+  dependencyError: Nije moguće generirati
+  tablesToPopulate: "Tablice za popunjavanje:"
+  rows: redaka
+  usingExisting: koristeći postojeće
+  totalRows: "Ukupno: {count} redaka"
+  totalRows_one: "Ukupno: {count} red"
+  totalCount: "Ukupni broj:"
+  rowsSelected: "{count} redaka odabrano"
+  rowsSelected_one: "{count} redak odabran"
+  searchMatchFound: "Podudaranje {current} od {total}"
+  noSearchMatches: Nije pronađeno nijedno podudaranje
+  cellInteractionHint: Kliknite za kopiranje ćelije, dvokliknite za kopiranje retka, kliknite desnom tipkom za više opcija
+  tablePagination: Paginacija tablice
+  previousPage: Idi na prethodnu stranicu
+  nextPage: Idi na sljedeću stranicu
+  goToPage: "Idi na stranicu {page}"
+  currentPage: "Stranica {page}, trenutna stranica"
+  integerType: Cjelobrojni tip
+  decimalType: Decimalni tip
+  booleanType: Booleov tip
+  dateType: Vrsta datuma
+  dateTimeType: Vrsta datuma i vremena
+  uuidType: Vrsta UUID-a
+  binaryType: Binarni tip
+  arrayType: Vrsta polja
+  textType: Vrsta teksta
+  dataType: Vrsta podataka
+  primaryKey: Primarni ključ
+  foreignKey: Strani ključ
+  delete: Izbrisati
+  deleteRowConfirmTitle: Izbrisati redak?
+  deleteRowConfirmTitle_other: Izbrisati retke?
+  deleteRowConfirmDescription: "Jeste li sigurni da želite obrisati {count} redaka? Ova se radnja ne može poništiti."
+  deleteRowConfirmDescription_one: "Jeste li sigurni da želite izbrisati {count} redak? Ova se radnja ne može poništiti."
+
+hu_HU:
+  copiedToClipboard: Vágólapra másolva
+  rowCopiedToClipboard: Sor a vágólapra másolva
+  rowUpdated: Sor frissítve
+  errorUpdatingRow: Hiba a sor frissítése közben
+  deletingRows: Sorok törlése...
+  deletingRows_one: Sor törlése...
+  unableToDeleteRow: "Nem sikerült törölni a sort: {message}"
+  rowDeleted: Sor törölve
+  copiedCellToClipboard: Cella a vágólapra másolva
+  maximumRowCount: "A sorok maximális száma {max}"
+  storageUnitRequired: Tárolóegység szükséges a hamis adatok generálásához
+  rowCountExceedsMax: "A sorok száma nem haladhatja meg a {max}"
+  rowCountMustBePositive: A sorok számának legalább 1-nek kell lennie
+  successfullyGenerated: "Sikeresen generált {count} sor"
+  successfullyGenerated_one: "Sikeresen generált {count} sor"
+  failedToMockData: Nem sikerült az adatok meghamisítása
+  mockDataNotAllowed: Ebben a táblázatban nem engedélyezett a hamis adatok generálása
+  mockDataFailed: "Nem sikerült meghamisítani az adatokat: {message}"
+  copyCell: Cella másolása
+  searchForEntity: Entitás keresése
+  copyRow: Sor másolása
+  deselectRow: Törölje a Sor kijelölését
+  selectRow: Válassza a Sor lehetőséget
+  editRow: Sor szerkesztése
+  export: Export
+  exportAllAsCsv: Az összes exportálása CSV-ként
+  exportAllAsExcel: Az összes exportálása Excel formátumban
+  exportSelectedAsCsv: Exportálás CSV-ként kiválasztva
+  exportSelectedAsExcel: Exportálás Excelként kiválasztva
+  mockData: Mock Data
+  moreActions: További műveletek
+  deleteRow: Sor törlése
+  deleteRow_other: Sorok törlése
+  openInGraph: Megnyitás a Graphban
+  exportData: Adatok exportálása
+  refreshData: Adatok frissítése
+  selectAll: Válassza az Összes lehetőséget
+  deselectAll: Törölje az Összes kijelölését
+  columnStatistics: Statisztika oszlop
+  schemaInformation: Sémainformáció
+  noDataAvailable: Nem állnak rendelkezésre adatok
+  noDataAvailableDescription: Próbálja meg módosítani a szűrőket, vagy adjon hozzá egy új sort.
+  rightClickForOptions: Kattintson a jobb gombbal a táblázatbeállításokhoz
+  exportSelected: "Exportálás {count} Kijelölve"
+  exportAll: Összes exportálása
+  importData: Importálás
+  editRowTitle: Sor szerkesztése
+  cancel: Mégsem
+  update: Frissítés
+  typeHint: "{type}"
+  mockDataTitle: Mock Data
+  numberOfRows: "Sorok száma (max: {max})"
+  enterNumberOfRows: "Adja meg a sorok számát (1-{max})"
+  method: Módszer
+  methodNormal: Normál
+  dataHandling: Adatkezelés
+  appendToExisting: Hozzáfűzés a meglévő adatokhoz
+  overwriteExisting: Meglévő adatok felülírása
+  fkVariety: FK Variety
+  fkVarietyDescription: Azt szabályozza, hogy hány egyedi szülőérték kerüljön előállításra
+  fkVarietyHigh: "Magas (1:5 arány)"
+  fkVarietyMedium: "Közepes (1:10 arány)"
+  fkVarietyNormal: "Normál (1:20 arány)"
+  fkVarietyLow: "Alacsony (1:50 arány)"
+  generate: Generál
+  overwriteConfirmation: "Biztos, hogy felül akarja írni az összes meglévő adatot a {storageUnit} mappában? Ez a művelet nem vonható vissza."
+  yesOverwrite: Igen, felülírás
+  mockDataNote: Jegyzet
+  mockDataWarning: A hamis adatok generálása szükség szerint feltölti az idegen kulcsú szülőtáblákat.
+  mockDataWarningClickHouse: A ClickHouse nem támogatja az idegen kulcsokat. Hamis adatok csak ehhez a táblázathoz jönnek létre.
+  dependencyError: Nem lehet generálni
+  tablesToPopulate: "Feltöltendő táblázatok:"
+  rows: sorokat
+  usingExisting: meglévő felhasználásával
+  totalRows: "Összesen: {count} sor"
+  totalRows_one: "Összesen: {count} sor"
+  totalCount: "Teljes szám:"
+  rowsSelected: "{count} sor kiválasztva"
+  rowsSelected_one: "{count} sor kiválasztva"
+  searchMatchFound: "mérkőzés {current} / {total}"
+  noSearchMatches: Nincs találat
+  cellInteractionHint: Kattintson a cella másolásához, kattintson duplán a sor másolásához, kattintson a jobb gombbal további lehetőségekért
+  tablePagination: A táblázat oldalszámozása
+  previousPage: Ugrás az előző oldalra
+  nextPage: Ugrás a következő oldalra
+  goToPage: "Ugrás a {page} oldalra"
+  currentPage: "{page} oldal, aktuális oldal"
+  integerType: Egész típusú
+  decimalType: Tizedes típus
+  booleanType: Logikai típus
+  dateType: Dátum típusa
+  dateTimeType: DateTime típus
+  uuidType: UUID típus
+  binaryType: Bináris típus
+  arrayType: Tömb típus
+  textType: Szöveg típusa
+  dataType: Adattípus
+  primaryKey: Elsődleges kulcs
+  foreignKey: Idegen kulcs
+  delete: Töröl
+  deleteRowConfirmTitle: Törli a sort?
+  deleteRowConfirmTitle_other: Törli a sorokat?
+  deleteRowConfirmDescription: "Biztosan törölni akar {count} sort? Ez a művelet nem vonható vissza."
+  deleteRowConfirmDescription_one: "Biztosan törölni szeretné a {count} sort? Ez a művelet nem vonható vissza."
+
+id_ID:
+  copiedToClipboard: Disalin ke Papan Klip
+  rowCopiedToClipboard: Baris Disalin ke Papan Klip
+  rowUpdated: Baris Diperbarui
+  errorUpdatingRow: Terjadi Kesalahan Saat Memperbarui Baris
+  deletingRows: Menghapus Baris...
+  deletingRows_one: Menghapus Baris...
+  unableToDeleteRow: "Tidak Dapat Menghapus Baris: {message}"
+  rowDeleted: Baris Dihapus
+  copiedCellToClipboard: Menyalin Sel ke Papan Klip
+  maximumRowCount: "Jumlah Baris Maksimum Adalah {max}"
+  storageUnitRequired: Unit Penyimpanan Diperlukan untuk Pembuatan Data Tiruan
+  rowCountExceedsMax: "Jumlah Baris Tidak Boleh Melebihi {max}"
+  rowCountMustBePositive: Jumlah Baris Minimal Harus 1
+  successfullyGenerated: "Baris {count} Berhasil Dihasilkan"
+  successfullyGenerated_one: "Baris {count} Berhasil Dihasilkan"
+  failedToMockData: Gagal Mengejek Data
+  mockDataNotAllowed: Pembuatan Data Tiruan Tidak Diizinkan untuk Tabel Ini
+  mockDataFailed: "Gagal Mengejek Data: {message}"
+  copyCell: Salin Sel
+  searchForEntity: Cari Entitas
+  copyRow: Salin Baris
+  deselectRow: Batalkan pilihan Baris
+  selectRow: Pilih Baris
+  editRow: Sunting Baris
+  export: Ekspor
+  exportAllAsCsv: Ekspor Semua sebagai CSV
+  exportAllAsExcel: Ekspor Semua sebagai Excel
+  exportSelectedAsCsv: Ekspor Dipilih sebagai CSV
+  exportSelectedAsExcel: Ekspor Dipilih sebagai Excel
+  mockData: Data Tiruan
+  moreActions: Tindakan Lainnya
+  deleteRow: Hapus Baris
+  deleteRow_other: Hapus Baris
+  openInGraph: Buka di Grafik
+  exportData: Ekspor Data
+  refreshData: Segarkan Data
+  selectAll: Pilih Semua
+  deselectAll: Batalkan pilihan Semua
+  columnStatistics: Statistik Kolom
+  schemaInformation: Informasi Skema
+  noDataAvailable: Tidak Ada Data yang Tersedia
+  noDataAvailableDescription: Coba sesuaikan filter Anda atau tambahkan baris baru.
+  rightClickForOptions: Klik kanan untuk Opsi Tabel
+  exportSelected: "Ekspor {count} Dipilih"
+  exportAll: Ekspor Semua
+  importData: Impor
+  editRowTitle: Sunting Baris
+  cancel: Membatalkan
+  update: Memperbarui
+  typeHint: "{type}"
+  mockDataTitle: Data Tiruan
+  numberOfRows: "Jumlah Baris (maks: {max})"
+  enterNumberOfRows: "Masukkan Jumlah Baris (1-{max})"
+  method: Metode
+  methodNormal: Normal
+  dataHandling: Penanganan Data
+  appendToExisting: Tambahkan ke Data yang Ada
+  overwriteExisting: Timpa Data yang Ada
+  fkVariety: Variasi FK
+  fkVarietyDescription: Mengontrol berapa banyak nilai induk unik yang dihasilkan
+  fkVarietyHigh: "Tinggi (rasio 1:5)"
+  fkVarietyMedium: "Sedang (rasio 1:10)"
+  fkVarietyNormal: "Normal (rasio 1:20)"
+  fkVarietyLow: "Rendah (rasio 1:50)"
+  generate: Menghasilkan
+  overwriteConfirmation: "Apakah Anda yakin ingin menimpa semua data yang ada di {storageUnit}? Tindakan ini tidak dapat dibatalkan."
+  yesOverwrite: Ya, Timpa
+  mockDataNote: Catatan
+  mockDataWarning: Pembuatan data tiruan akan mengisi tabel induk kunci asing sesuai kebutuhan.
+  mockDataWarningClickHouse: ClickHouse tidak mendukung kunci asing. Data tiruan akan dihasilkan hanya untuk tabel ini.
+  dependencyError: Tidak Dapat Menghasilkan
+  tablesToPopulate: "Tabel yang harus diisi:"
+  rows: baris
+  usingExisting: menggunakan yang sudah ada
+  totalRows: "Total: {count} baris"
+  totalRows_one: "Total: {count} baris"
+  totalCount: "Jumlah Total:"
+  rowsSelected: "{count} baris dipilih"
+  rowsSelected_one: "{count} baris dipilih"
+  searchMatchFound: "Cocokkan {current} dari {total}"
+  noSearchMatches: Tidak ada kecocokan yang ditemukan
+  cellInteractionHint: Klik untuk menyalin sel, klik dua kali untuk menyalin baris, klik kanan untuk opsi lainnya
+  tablePagination: Penomoran tabel
+  previousPage: Buka halaman sebelumnya
+  nextPage: Buka halaman berikutnya
+  goToPage: "Buka halaman {page}"
+  currentPage: "Halaman {page}, halaman saat ini"
+  integerType: Tipe bilangan bulat
+  decimalType: Tipe desimal
+  booleanType: Tipe Boolean
+  dateType: Jenis tanggal
+  dateTimeType: Jenis TanggalWaktu
+  uuidType: tipe UUID
+  binaryType: Tipe biner
+  arrayType: Tipe larik
+  textType: Jenis teks
+  dataType: Tipe data
+  primaryKey: Kunci utama
+  foreignKey: Kunci asing
+  delete: Menghapus
+  deleteRowConfirmTitle: Hapus Baris?
+  deleteRowConfirmTitle_other: Hapus Baris?
+  deleteRowConfirmDescription: "Apakah Anda yakin ingin menghapus baris {count}? Tindakan ini tidak dapat dibatalkan."
+  deleteRowConfirmDescription_one: "Apakah Anda yakin ingin menghapus baris {count}? Tindakan ini tidak dapat dibatalkan."
+
+ms_MY:
+  copiedToClipboard: Disalin ke Papan Klip
+  rowCopiedToClipboard: Baris Disalin ke Papan Klip
+  rowUpdated: Baris Dikemas Kini
+  errorUpdatingRow: Ralat Mengemas kini Baris
+  deletingRows: Memadamkan Baris...
+  deletingRows_one: Memadamkan Baris...
+  unableToDeleteRow: "Tidak Dapat Memadam Baris: {message}"
+  rowDeleted: Baris Dipadamkan
+  copiedCellToClipboard: Menyalin Sel ke Papan Klip
+  maximumRowCount: "Kiraan Baris Maksimum ialah {max}"
+  storageUnitRequired: Unit Storan Diperlukan untuk Penjanaan Data Olok-olok
+  rowCountExceedsMax: "Kiraan Baris Tidak Boleh Melebihi {max}"
+  rowCountMustBePositive: Kiraan Baris Mestilah Sekurang-kurangnya 1
+  successfullyGenerated: "Berjaya Menjana {count} Baris"
+  successfullyGenerated_one: "Berjaya Dijana {count} Baris"
+  failedToMockData: Gagal Mengejek Data
+  mockDataNotAllowed: Penjanaan Data Olok-olok Tidak Dibenarkan untuk Jadual Ini
+  mockDataFailed: "Gagal Mengejek Data: {message}"
+  copyCell: Salin Sel
+  searchForEntity: Cari Entiti
+  copyRow: Salin Baris
+  deselectRow: Nyahpilih Baris
+  selectRow: Pilih Baris
+  editRow: Edit Baris
+  export: Eksport
+  exportAllAsCsv: Eksport Semua sebagai CSV
+  exportAllAsExcel: Eksport Semua sebagai Excel
+  exportSelectedAsCsv: Eksport Dipilih sebagai CSV
+  exportSelectedAsExcel: Eksport Dipilih sebagai Excel
+  mockData: Data Olok-olok
+  moreActions: Lagi Tindakan
+  deleteRow: Padam Baris
+  deleteRow_other: Padam Baris
+  openInGraph: Buka dalam Graf
+  exportData: Eksport Data
+  refreshData: Muat semula Data
+  selectAll: Pilih Semua
+  deselectAll: Nyahpilih Semua
+  columnStatistics: Statistik Lajur
+  schemaInformation: Maklumat Skema
+  noDataAvailable: Tiada Data Tersedia
+  noDataAvailableDescription: Cuba laraskan penapis anda atau tambahkan baris baharu.
+  rightClickForOptions: Klik kanan untuk Pilihan Jadual
+  exportSelected: "Eksport {count} Dipilih"
+  exportAll: Eksport Semua
+  importData: Import
+  editRowTitle: Edit Baris
+  cancel: Batal
+  update: Kemas kini
+  typeHint: "{type}"
+  mockDataTitle: Data Olok-olok
+  numberOfRows: "Bilangan Baris (maks: {max})"
+  enterNumberOfRows: "Masukkan Bilangan Baris (1-{max})"
+  method: Kaedah
+  methodNormal: Biasalah
+  dataHandling: Pengendalian Data
+  appendToExisting: Tambah pada Data Sedia Ada
+  overwriteExisting: Tulis ganti Data Sedia Ada
+  fkVariety: Kepelbagaian FK
+  fkVarietyDescription: Mengawal bilangan nilai induk unik yang dijana
+  fkVarietyHigh: "Tinggi (nisbah 1:5)"
+  fkVarietyMedium: "Sederhana (nisbah 1:10)"
+  fkVarietyNormal: "Biasa (nisbah 1:20)"
+  fkVarietyLow: "Rendah (nisbah 1:50)"
+  generate: Menjana
+  overwriteConfirmation: "Adakah anda pasti mahu menulis ganti semua data sedia ada dalam {storageUnit}? Tindakan ini tidak boleh dibuat asal."
+  yesOverwrite: Ya, Tulis Ganti
+  mockDataNote: Nota
+  mockDataWarning: Penjanaan data olok-olok akan mengisi jadual induk kunci asing mengikut keperluan.
+  mockDataWarningClickHouse: ClickHouse tidak menyokong kunci asing. Data olok-olok akan dijana untuk jadual ini sahaja.
+  dependencyError: Tidak Dapat Menjana
+  tablesToPopulate: "Jadual untuk diisi:"
+  rows: barisan
+  usingExisting: menggunakan sedia ada
+  totalRows: "Jumlah: {count} baris"
+  totalRows_one: "Jumlah: {count} baris"
+  totalCount: "Jumlah Kiraan:"
+  rowsSelected: "{count} baris dipilih"
+  rowsSelected_one: "{count} baris dipilih"
+  searchMatchFound: "Padankan {current} daripada {total}"
+  noSearchMatches: Tiada padanan ditemui
+  cellInteractionHint: Klik untuk menyalin sel, klik dua kali untuk menyalin baris, klik kanan untuk lebih banyak pilihan
+  tablePagination: Penomboran jadual
+  previousPage: Pergi ke halaman sebelumnya
+  nextPage: Pergi ke halaman seterusnya
+  goToPage: "Pergi ke halaman {page}"
+  currentPage: "Halaman {page}, halaman semasa"
+  integerType: Jenis integer
+  decimalType: Jenis perpuluhan
+  booleanType: Jenis Boolean
+  dateType: Jenis tarikh
+  dateTimeType: Jenis DateTime
+  uuidType: Jenis UUID
+  binaryType: Jenis binari
+  arrayType: Jenis tatasusunan
+  textType: Jenis teks
+  dataType: Jenis data
+  primaryKey: Kunci utama
+  foreignKey: Kunci asing
+  delete: Padam
+  deleteRowConfirmTitle: Padamkan Baris?
+  deleteRowConfirmTitle_other: Padamkan Baris?
+  deleteRowConfirmDescription: "Adakah anda pasti mahu memadamkan {count} baris? Tindakan ini tidak boleh dibuat asal."
+  deleteRowConfirmDescription_one: "Adakah anda pasti mahu memadamkan baris {count}? Tindakan ini tidak boleh dibuat asal."
+
+nb_NO:
+  copiedToClipboard: Kopiert til utklippstavlen
+  rowCopiedToClipboard: Rad kopiert til utklippstavlen
+  rowUpdated: Rad oppdatert
+  errorUpdatingRow: Feil under oppdatering av rad
+  deletingRows: Sletter rader...
+  deletingRows_one: Sletter rad …
+  unableToDeleteRow: "Kan ikke slette raden: {message}"
+  rowDeleted: Rad slettet
+  copiedCellToClipboard: Kopierte celle til utklippstavlen
+  maximumRowCount: "Maksimalt antall rader er {max}"
+  storageUnitRequired: Lagringsenhet kreves for mock datagenerering
+  rowCountExceedsMax: "Antall rader kan ikke overstige {max}"
+  rowCountMustBePositive: Antall rader må være minst 1
+  successfullyGenerated: "Vellykket generert {count} rader"
+  successfullyGenerated_one: "Vellykket generert {count} rad"
+  failedToMockData: Kunne ikke imitere data
+  mockDataNotAllowed: Mock datagenerering er ikke tillatt for denne tabellen
+  mockDataFailed: "Kunne ikke imitere data: {message}"
+  copyCell: Kopier celle
+  searchForEntity: Søk etter Entitet
+  copyRow: Kopier rad
+  deselectRow: Fjern merket for rad
+  selectRow: Velg Rad
+  editRow: Rediger rad
+  export: Eksport
+  exportAllAsCsv: Eksporter alle som CSV
+  exportAllAsExcel: Eksporter alle som Excel
+  exportSelectedAsCsv: Eksporter valgt som CSV
+  exportSelectedAsExcel: Eksporter valgt som Excel
+  mockData: Hånte data
+  moreActions: Flere handlinger
+  deleteRow: Slett rad
+  deleteRow_other: Slett rader
+  openInGraph: Åpne i Graph
+  exportData: Eksporter data
+  refreshData: Oppdater data
+  selectAll: Velg alle
+  deselectAll: Fjern merket for Alle
+  columnStatistics: Kolonnestatistikk
+  schemaInformation: Skjemainformasjon
+  noDataAvailable: Ingen data tilgjengelig
+  noDataAvailableDescription: Prøv å justere filtrene dine eller legg til en ny rad.
+  rightClickForOptions: Høyreklikk for tabellalternativer
+  exportSelected: "Eksporter {count} valgt"
+  exportAll: Eksporter alle
+  importData: Import
+  editRowTitle: Rediger rad
+  cancel: Kansellere
+  update: Oppdater
+  typeHint: "{type}"
+  mockDataTitle: Hånte data
+  numberOfRows: "Antall rader (maks: {max})"
+  enterNumberOfRows: "Skriv inn antall rader (1-{max})"
+  method: Metode
+  methodNormal: Normal
+  dataHandling: Datahåndtering
+  appendToExisting: Legg til eksisterende data
+  overwriteExisting: Overskriv eksisterende data
+  fkVariety: FK Variety
+  fkVarietyDescription: Styrer hvor mange unike overordnede verdier som genereres
+  fkVarietyHigh: "Høy (forhold 1:5)"
+  fkVarietyMedium: "Middels (forhold 1:10)"
+  fkVarietyNormal: "Normal (forhold 1:20)"
+  fkVarietyLow: "Lav (forhold 1:50)"
+  generate: Generere
+  overwriteConfirmation: "Er du sikker på at du vil overskrive alle eksisterende data i {storageUnit}? Denne handlingen kan ikke angres."
+  yesOverwrite: Ja, overskriv
+  mockDataNote: Note
+  mockDataWarning: Mock datagenerering vil fylle ut utenlandske nøkkeloverordnede tabeller etter behov.
+  mockDataWarningClickHouse: ClickHouse støtter ikke fremmednøkler. Mock-data vil kun genereres for denne tabellen.
+  dependencyError: Kan ikke generere
+  tablesToPopulate: "Tabeller som skal fylles ut:"
+  rows: rader
+  usingExisting: bruke eksisterende
+  totalRows: "Totalt: {count} rader"
+  totalRows_one: "Totalt: {count} rad"
+  totalCount: "Totalt antall:"
+  rowsSelected: "{count} rader er valgt"
+  rowsSelected_one: "{count} rad er valgt"
+  searchMatchFound: "Match {current} av {total}"
+  noSearchMatches: Ingen treff funnet
+  cellInteractionHint: Klikk for å kopiere celle, dobbeltklikk for å kopiere rad, høyreklikk for flere alternativer
+  tablePagination: Tabellpaginering
+  previousPage: Gå til forrige side
+  nextPage: Gå til neste side
+  goToPage: "Gå til side {page}"
+  currentPage: "Side {page}, gjeldende side"
+  integerType: Heltallstype
+  decimalType: Desimaltype
+  booleanType: Boolsk type
+  dateType: Datotype
+  dateTimeType: DatoTid type
+  uuidType: UUID-type
+  binaryType: Binær type
+  arrayType: Matrisetype
+  textType: Teksttype
+  dataType: Datatype
+  primaryKey: Primærnøkkel
+  foreignKey: Fremmednøkkel
+  delete: Slett
+  deleteRowConfirmTitle: Vil du slette rad?
+  deleteRowConfirmTitle_other: Vil du slette rader?
+  deleteRowConfirmDescription: "Er du sikker på at du vil slette {count} rader? Denne handlingen kan ikke angres."
+  deleteRowConfirmDescription_one: "Er du sikker på at du vil slette {count} rad? Denne handlingen kan ikke angres."
+
+sw_KE:
+  copiedToClipboard: Imenakiliwa kwenye Ubao wa kunakili
+  rowCopiedToClipboard: Safu Mlalo Imenakiliwa kwenye Ubao wa kunakili
+  rowUpdated: Safu Mlalo Imesasishwa
+  errorUpdatingRow: Hitilafu katika Kusasisha Safu
+  deletingRows: Inafuta Safu...
+  deletingRows_one: Inafuta Safu...
+  unableToDeleteRow: "Haiwezi Kufuta Safu Mlalo: {message}"
+  rowDeleted: Safu Mlalo Imefutwa
+  copiedCellToClipboard: Imenakili Kisanduku kwenye Ubao wa kunakili
+  maximumRowCount: "Idadi ya Juu ya Safu Mlalo Ni {max}"
+  storageUnitRequired: Sehemu ya Hifadhi Inahitajika kwa Uzalishaji wa Data ya Mock
+  rowCountExceedsMax: "Hesabu ya Safu Mlalo Haiwezi Kuzidi {max}"
+  rowCountMustBePositive: Hesabu ya safu mlalo lazima iwe angalau 1
+  successfullyGenerated: "Imefaulu Kuzalisha Safu {count}"
+  successfullyGenerated_one: "Imefaulu Kuzalisha {count} Safu"
+  failedToMockData: Imeshindwa Kukejeli Data
+  mockDataNotAllowed: Uzalishaji wa Data ya Mzaha Hauruhusiwi kwa Jedwali Hili
+  mockDataFailed: "Imeshindwa Kukejeli Data: {message}"
+  copyCell: Nakili Kiini
+  searchForEntity: Tafuta Huluki
+  copyRow: Nakili Safu
+  deselectRow: Acha kuchagua Safu
+  selectRow: Chagua Safu
+  editRow: Hariri Safu
+  export: Hamisha
+  exportAllAsCsv: Hamisha Zote kama CSV
+  exportAllAsExcel: Hamisha Zote kama Excel
+  exportSelectedAsCsv: Hamisha Imechaguliwa kama CSV
+  exportSelectedAsExcel: Hamisha Imechaguliwa kama Excel
+  mockData: Data ya Mzaha
+  moreActions: Vitendo Zaidi
+  deleteRow: Futa Safu
+  deleteRow_other: Futa Safu
+  openInGraph: Fungua kwenye Grafu
+  exportData: Hamisha Data
+  refreshData: Onyesha upya Data
+  selectAll: Chagua Zote
+  deselectAll: Usichague Zote
+  columnStatistics: Takwimu za Safu
+  schemaInformation: Habari ya Schema
+  noDataAvailable: Hakuna Data Inayopatikana
+  noDataAvailableDescription: Jaribu kurekebisha vichujio vyako au kuongeza safu mlalo mpya.
+  rightClickForOptions: Bofya kulia kwa Chaguzi za Jedwali
+  exportSelected: "Hamisha {count} Imechaguliwa"
+  exportAll: Hamisha Zote
+  importData: Ingiza
+  editRowTitle: Hariri Safu
+  cancel: Ghairi
+  update: Sasisha
+  typeHint: "{type}"
+  mockDataTitle: Data ya Mzaha
+  numberOfRows: "Idadi ya Safu mlalo (kiwango cha juu zaidi: {max})"
+  enterNumberOfRows: "Weka Idadi ya Safu Mlalo (1-{max})"
+  method: Mbinu
+  methodNormal: Kawaida
+  dataHandling: Ushughulikiaji wa Data
+  appendToExisting: Ongeza kwa Data Iliyopo
+  overwriteExisting: Batilisha Data Iliyopo
+  fkVariety: Aina za FK
+  fkVarietyDescription: Hudhibiti ni thamani ngapi za kipekee za mzazi zinazozalishwa
+  fkVarietyHigh: "Juu (uwiano wa 1:5)"
+  fkVarietyMedium: "Wastani (uwiano wa 1:10)"
+  fkVarietyNormal: "Kawaida (uwiano wa 1:20)"
+  fkVarietyLow: "Chini (uwiano 1:50)"
+  generate: Tengeneza
+  overwriteConfirmation: "Je, una uhakika unataka kubatilisha data yote iliyopo katika {storageUnit}? Kitendo hiki hakiwezi kutenduliwa."
+  yesOverwrite: Ndiyo, Badili
+  mockDataNote: Kumbuka
+  mockDataWarning: Uzalishaji wa data ya dhihaka utajaza jedwali kuu za kigeni za wazazi kama inahitajika.
+  mockDataWarningClickHouse: ClickHouse haitumii funguo za kigeni. Data ya majaribio itatolewa kwa jedwali hili pekee.
+  dependencyError: Haiwezi Kuzalisha
+  tablesToPopulate: "Jedwali za kujaza:"
+  rows: safu
+  usingExisting: kwa kutumia zilizopo
+  totalRows: "Jumla: {count} safu mlalo"
+  totalRows_one: "Jumla: {count} safu mlalo"
+  totalCount: "Jumla ya Hesabu:"
+  rowsSelected: "{count} safu mlalo zimechaguliwa"
+  rowsSelected_one: "{count} safu mlalo imechaguliwa"
+  searchMatchFound: "Zinazolingana {current} kati ya {total}"
+  noSearchMatches: Hakuna zinazolingana zilizopatikana
+  cellInteractionHint: Bofya ili kunakili kisanduku, bofya mara mbili ili kunakili safu mlalo, bofya kulia kwa chaguo zaidi
+  tablePagination: Upangaji wa meza
+  previousPage: Nenda kwenye ukurasa uliopita
+  nextPage: Nenda kwenye ukurasa unaofuata
+  goToPage: "Nenda kwenye ukurasa {page}"
+  currentPage: "Ukurasa {page}, ukurasa wa sasa"
+  integerType: Aina kamili
+  decimalType: Aina ya decimal
+  booleanType: Aina ya Boolean
+  dateType: Aina ya tarehe
+  dateTimeType: Aina ya Tarehe
+  uuidType: Aina ya UUID
+  binaryType: Aina ya binary
+  arrayType: Aina ya safu
+  textType: Aina ya maandishi
+  dataType: Aina ya data
+  primaryKey: Ufunguo wa msingi
+  foreignKey: Kitufe cha kigeni
+  delete: Futa
+  deleteRowConfirmTitle: Je, ungependa kufuta safu mlalo?
+  deleteRowConfirmTitle_other: Je, ungependa kufuta safu mlalo?
+  deleteRowConfirmDescription: "Je, una uhakika unataka kufuta safu mlalo {count}? Kitendo hiki hakiwezi kutenduliwa."
+  deleteRowConfirmDescription_one: "Je, una uhakika unataka kufuta safu mlalo {count}? Kitendo hiki hakiwezi kutenduliwa."
+
+ta_IN:
+  copiedToClipboard: கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது
+  rowCopiedToClipboard: வரிசை கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது
+  rowUpdated: வரிசை புதுப்பிக்கப்பட்டது
+  errorUpdatingRow: வரிசையைப் புதுப்பிப்பதில் பிழை
+  deletingRows: வரிசைகளை நீக்குகிறது...
+  deletingRows_one: வரிசையை நீக்குகிறது...
+  unableToDeleteRow: "வரிசையை நீக்க முடியவில்லை: {message}"
+  rowDeleted: வரிசை நீக்கப்பட்டது
+  copiedCellToClipboard: கிளிப்போர்டுக்கு செல் நகலெடுக்கப்பட்டது
+  maximumRowCount: "அதிகபட்ச வரிசை எண்ணிக்கை {max}"
+  storageUnitRequired: போலி தரவு உருவாக்கத்திற்கு சேமிப்பக அலகு தேவை
+  rowCountExceedsMax: "வரிசை எண்ணிக்கை {max} ஐ விட அதிகமாக இருக்க முடியாது"
+  rowCountMustBePositive: வரிசை எண்ணிக்கை குறைந்தது 1 ஆக இருக்க வேண்டும்
+  successfullyGenerated: "{count} வரிசைகள் வெற்றிகரமாக உருவாக்கப்பட்டன"
+  successfullyGenerated_one: "வெற்றிகரமாக {count} வரிசை உருவாக்கப்பட்டது"
+  failedToMockData: தரவை போலியாக்குவதில் தோல்வி
+  mockDataNotAllowed: இந்த அட்டவணையில் போலி தரவு உருவாக்கம் அனுமதிக்கப்படவில்லை
+  mockDataFailed: "தரவை போலியாக்குவதில் தோல்வி: {message}"
+  copyCell: கலத்தை நகலெடுக்கவும்
+  searchForEntity: நிறுவனத்தைத் தேடுங்கள்
+  copyRow: வரிசையை நகலெடுக்கவும்
+  deselectRow: வரிசையைத் தேர்வுநீக்கவும்
+  selectRow: வரிசையைத் தேர்ந்தெடுக்கவும்
+  editRow: வரிசையைத் திருத்தவும்
+  export: ஏற்றுமதி
+  exportAllAsCsv: அனைத்தையும் CSV ஆக ஏற்றுமதி செய்யவும்
+  exportAllAsExcel: அனைத்தையும் Excel ஆக ஏற்றுமதி செய்யவும்
+  exportSelectedAsCsv: ஏற்றுமதி CSV ஆக தேர்ந்தெடுக்கப்பட்டது
+  exportSelectedAsExcel: Excel என தேர்ந்தெடுக்கப்பட்ட ஏற்றுமதி
+  mockData: போலி தரவு
+  moreActions: மேலும் செயல்கள்
+  deleteRow: வரிசையை நீக்கு
+  deleteRow_other: வரிசைகளை நீக்கு
+  openInGraph: வரைபடத்தில் திறக்கவும்
+  exportData: தரவு ஏற்றுமதி
+  refreshData: தரவைப் புதுப்பிக்கவும்
+  selectAll: அனைத்தையும் தேர்ந்தெடுக்கவும்
+  deselectAll: அனைத்தையும் தேர்வுநீக்கவும்
+  columnStatistics: நெடுவரிசை புள்ளிவிவரங்கள்
+  schemaInformation: திட்ட தகவல்
+  noDataAvailable: தரவு எதுவும் கிடைக்கவில்லை
+  noDataAvailableDescription: உங்கள் வடிப்பான்களைச் சரிசெய்யவும் அல்லது புதிய வரிசையைச் சேர்க்கவும்.
+  rightClickForOptions: அட்டவணை விருப்பங்களுக்கு வலது கிளிக் செய்யவும்
+  exportSelected: "ஏற்றுமதி {count} தேர்ந்தெடுக்கப்பட்டது"
+  exportAll: அனைத்தையும் ஏற்றுமதி செய்
+  importData: இறக்குமதி
+  editRowTitle: வரிசையைத் திருத்தவும்
+  cancel: ரத்து செய்
+  update: புதுப்பிக்கவும்
+  typeHint: "{type}"
+  mockDataTitle: போலி தரவு
+  numberOfRows: "வரிசைகளின் எண்ணிக்கை (அதிகபட்சம்: {max})"
+  enterNumberOfRows: "வரிசைகளின் எண்ணிக்கையை உள்ளிடவும் (1-{max})"
+  method: முறை
+  methodNormal: இயல்பானது
+  dataHandling: தரவு கையாளுதல்
+  appendToExisting: ஏற்கனவே உள்ள தரவுகளுடன் இணைக்கவும்
+  overwriteExisting: ஏற்கனவே உள்ள தரவை மேலெழுதவும்
+  fkVariety: FK வெரைட்டி
+  fkVarietyDescription: எத்தனை தனிப்பட்ட பெற்றோர் மதிப்புகள் உருவாக்கப்படுகின்றன என்பதைக் கட்டுப்படுத்துகிறது
+  fkVarietyHigh: "அதிக (1:5 விகிதம்)"
+  fkVarietyMedium: "நடுத்தர (1:10 விகிதம்)"
+  fkVarietyNormal: "இயல்பானது (1:20 விகிதம்)"
+  fkVarietyLow: "குறைந்த (1:50 விகிதம்)"
+  generate: உருவாக்கு
+  overwriteConfirmation: "ஏற்கனவே உள்ள எல்லா தரவையும் {storageUnit} இல் மேலெழுத விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது."
+  yesOverwrite: ஆம், மேலெழுதவும்
+  mockDataNote: குறிப்பு
+  mockDataWarning: போலி தரவு உருவாக்கம் தேவைக்கேற்ப வெளிநாட்டு முக்கிய பெற்றோர் அட்டவணைகளை விரிவுபடுத்தும்.
+  mockDataWarningClickHouse: ClickHouse வெளிநாட்டு விசைகளை ஆதரிக்காது. இந்த அட்டவணைக்கு மட்டுமே போலி தரவு உருவாக்கப்படும்.
+  dependencyError: உருவாக்க முடியாது
+  tablesToPopulate: "நிரப்ப வேண்டிய அட்டவணைகள்:"
+  rows: வரிசைகள்
+  usingExisting: இருக்கும் பயன்படுத்தி
+  totalRows: "மொத்தம்: {count} வரிசைகள்"
+  totalRows_one: "மொத்தம்: {count} வரிசை"
+  totalCount: "மொத்த எண்ணிக்கை:"
+  rowsSelected: "{count} வரிசைகள் தேர்ந்தெடுக்கப்பட்டன"
+  rowsSelected_one: "{count} வரிசை தேர்ந்தெடுக்கப்பட்டது"
+  searchMatchFound: "போட்டி {current} இல் {total}"
+  noSearchMatches: பொருத்தங்கள் எதுவும் இல்லை
+  cellInteractionHint: கலத்தை நகலெடுக்க கிளிக் செய்யவும், வரிசையை நகலெடுக்க இருமுறை கிளிக் செய்யவும், மேலும் விருப்பங்களுக்கு வலது கிளிக் செய்யவும்
+  tablePagination: அட்டவணை பேஜினேஷன்
+  previousPage: முந்தைய பக்கத்திற்குச் செல்லவும்
+  nextPage: அடுத்த பக்கத்திற்குச் செல்லவும்
+  goToPage: "பக்கத்திற்கு செல்க {page}"
+  currentPage: "பக்கம் {page}, தற்போதைய பக்கம்"
+  integerType: முழு எண் வகை
+  decimalType: தசம வகை
+  booleanType: பூலியன் வகை
+  dateType: தேதி வகை
+  dateTimeType: தேதி நேர வகை
+  uuidType: UUID வகை
+  binaryType: பைனரி வகை
+  arrayType: வரிசை வகை
+  textType: உரை வகை
+  dataType: தரவு வகை
+  primaryKey: முதன்மை விசை
+  foreignKey: வெளிநாட்டு விசை
+  delete: நீக்கு
+  deleteRowConfirmTitle: வரிசையை நீக்கவா?
+  deleteRowConfirmTitle_other: வரிசைகளை நீக்கவா?
+  deleteRowConfirmDescription: "{count} வரிசைகளை நிச்சயமாக நீக்க விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது."
+  deleteRowConfirmDescription_one: "{count} வரிசையை நிச்சயமாக நீக்க விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது."
+
+th_TH:
+  copiedToClipboard: คัดลอกไปยังคลิปบอร์ดแล้ว
+  rowCopiedToClipboard: คัดลอกแถวไปยังคลิปบอร์ดแล้ว
+  rowUpdated: อัปเดตแถวแล้ว
+  errorUpdatingRow: เกิดข้อผิดพลาดในการอัปเดตแถว
+  deletingRows: กำลังลบแถว...
+  deletingRows_one: กำลังลบแถว...
+  unableToDeleteRow: "ไม่สามารถลบแถวได้: {message}"
+  rowDeleted: ลบแถวแล้ว
+  copiedCellToClipboard: คัดลอกเซลล์ไปยังคลิปบอร์ด
+  maximumRowCount: "จำนวนแถวสูงสุดคือ {max}"
+  storageUnitRequired: จำเป็นต้องมีหน่วยจัดเก็บข้อมูลสำหรับการสร้างข้อมูลจำลอง
+  rowCountExceedsMax: "จำนวนแถวต้องไม่เกิน {max}"
+  rowCountMustBePositive: จำนวนแถวต้องมีอย่างน้อย 1
+  successfullyGenerated: "สร้างแถว {count} สำเร็จแล้ว"
+  successfullyGenerated_one: "สร้างแถว {count} สำเร็จแล้ว"
+  failedToMockData: ไม่สามารถจำลองข้อมูล
+  mockDataNotAllowed: ไม่อนุญาตให้สร้างข้อมูลจำลองสำหรับตารางนี้
+  mockDataFailed: "ไม่สามารถจำลองข้อมูล: {message}"
+  copyCell: คัดลอกเซลล์
+  searchForEntity: ค้นหาเอนทิตี
+  copyRow: คัดลอกแถว
+  deselectRow: ยกเลิกการเลือกแถว
+  selectRow: เลือกแถว
+  editRow: แก้ไขแถว
+  export: ส่งออก
+  exportAllAsCsv: ส่งออกทั้งหมดเป็น CSV
+  exportAllAsExcel: ส่งออกทั้งหมดเป็น Excel
+  exportSelectedAsCsv: ส่งออกที่เลือกเป็น CSV
+  exportSelectedAsExcel: ส่งออกที่เลือกเป็น Excel
+  mockData: ข้อมูลจำลอง
+  moreActions: การดำเนินการเพิ่มเติม
+  deleteRow: ลบแถว
+  deleteRow_other: ลบแถว
+  openInGraph: เปิดในกราฟ
+  exportData: ส่งออกข้อมูล
+  refreshData: รีเฟรชข้อมูล
+  selectAll: เลือกทั้งหมด
+  deselectAll: ยกเลิกการเลือกทั้งหมด
+  columnStatistics: สถิติคอลัมน์
+  schemaInformation: ข้อมูลสคีมา
+  noDataAvailable: ไม่มีข้อมูล
+  noDataAvailableDescription: ลองปรับตัวกรองของคุณหรือเพิ่มแถวใหม่
+  rightClickForOptions: คลิกขวาเพื่อดูตัวเลือกตาราง
+  exportSelected: "ส่งออก {count} เลือกแล้ว"
+  exportAll: ส่งออกทั้งหมด
+  importData: นำเข้า
+  editRowTitle: แก้ไขแถว
+  cancel: ยกเลิก
+  update: อัปเดต
+  typeHint: "{type}"
+  mockDataTitle: ข้อมูลจำลอง
+  numberOfRows: "จำนวนแถว (สูงสุด: {max})"
+  enterNumberOfRows: "ป้อนจำนวนแถว (1-{max})"
+  method: วิธี
+  methodNormal: ปกติ
+  dataHandling: การจัดการข้อมูล
+  appendToExisting: ผนวกเข้ากับข้อมูลที่มีอยู่
+  overwriteExisting: เขียนทับข้อมูลที่มีอยู่
+  fkVariety: เอฟเค วาไรตี้
+  fkVarietyDescription: ควบคุมจำนวนค่าพาเรนต์ที่ไม่ซ้ำกันที่ถูกสร้างขึ้น
+  fkVarietyHigh: "สูง (อัตราส่วน 1:5)"
+  fkVarietyMedium: "ปานกลาง (อัตราส่วน 1:10)"
+  fkVarietyNormal: "ปกติ (อัตราส่วน 1:20)"
+  fkVarietyLow: "ต่ำ (อัตราส่วน 1:50)"
+  generate: สร้าง
+  overwriteConfirmation: "คุณแน่ใจหรือไม่ว่าต้องการเขียนทับข้อมูลที่มีอยู่ใน {storageUnit} การดำเนินการนี้ไม่สามารถยกเลิกได้"
+  yesOverwrite: ใช่ เขียนทับ
+  mockDataNote: บันทึก
+  mockDataWarning: การสร้างข้อมูลจำลองจะเติมข้อมูลตารางพาเรนต์คีย์นอกตามความจำเป็น
+  mockDataWarningClickHouse: ClickHouse ไม่รองรับคีย์ต่างประเทศ ข้อมูลจำลองจะถูกสร้างขึ้นสำหรับตารางนี้เท่านั้น
+  dependencyError: ไม่สามารถสร้างได้
+  tablesToPopulate: "ตารางที่จะเติม:"
+  rows: แถว
+  usingExisting: โดยใช้ที่มีอยู่
+  totalRows: "ทั้งหมด: {count} แถว"
+  totalRows_one: "รวมทั้งหมด: {count} แถว"
+  totalCount: "จำนวนทั้งหมด:"
+  rowsSelected: "{count} แถวที่เลือก"
+  rowsSelected_one: "{count} เลือกแถวแล้ว"
+  searchMatchFound: "จับคู่ {current} ของ {total}"
+  noSearchMatches: ไม่พบรายการที่ตรงกัน
+  cellInteractionHint: คลิกเพื่อคัดลอกเซลล์ ดับเบิลคลิกเพื่อคัดลอกแถว คลิกขวาเพื่อดูตัวเลือกเพิ่มเติม
+  tablePagination: การแบ่งหน้าตาราง
+  previousPage: ไปที่หน้าก่อนหน้า
+  nextPage: ไปที่หน้าถัดไป
+  goToPage: "ไปที่หน้า {page}"
+  currentPage: "หน้า {page} หน้าปัจจุบัน"
+  integerType: ประเภทจำนวนเต็ม
+  decimalType: ประเภททศนิยม
+  booleanType: ประเภทบูลีน
+  dateType: ประเภทวันที่
+  dateTimeType: ประเภทวันที่และเวลา
+  uuidType: ประเภท UUID
+  binaryType: ประเภทไบนารี
+  arrayType: ประเภทอาร์เรย์
+  textType: ประเภทข้อความ
+  dataType: ชนิดข้อมูล
+  primaryKey: คีย์หลัก
+  foreignKey: คีย์ต่างประเทศ
+  delete: ลบ
+  deleteRowConfirmTitle: ลบแถวใช่ไหม
+  deleteRowConfirmTitle_other: ลบแถวใช่ไหม
+  deleteRowConfirmDescription: "คุณแน่ใจหรือไม่ว่าต้องการลบแถว {count} การดำเนินการนี้ไม่สามารถยกเลิกได้"
+  deleteRowConfirmDescription_one: "คุณแน่ใจหรือไม่ว่าต้องการลบแถว {count} การดำเนินการนี้ไม่สามารถยกเลิกได้"
+
+tr_TR:
+  copiedToClipboard: Panoya kopyalandı
+  rowCopiedToClipboard: Satır Panoya Kopyalandı
+  rowUpdated: Satır Güncellendi
+  errorUpdatingRow: Satır Güncellenirken Hata oluştu
+  deletingRows: Satırlar Siliniyor...
+  deletingRows_one: Satır siliniyor...
+  unableToDeleteRow: "Satır Silinemiyor: {message}"
+  rowDeleted: Satır Silindi
+  copiedCellToClipboard: Hücre Panoya Kopyalandı
+  maximumRowCount: "Maksimum Satır Sayısı {max}"
+  storageUnitRequired: Sahte Veri Üretimi İçin Depolama Birimi Gereklidir
+  rowCountExceedsMax: "Satır Sayısı {max}'ı Geçemez"
+  rowCountMustBePositive: Satır Sayısı En Az 1 Olmalıdır
+  successfullyGenerated: "Başarıyla Oluşturulan {count} Satır"
+  successfullyGenerated_one: "Başarıyla Oluşturulan {count} Satır"
+  failedToMockData: Verilerin Sahtesi Başarısız Oldu
+  mockDataNotAllowed: Bu Tablo İçin Sahte Veri Oluşturulmasına İzin Verilmez
+  mockDataFailed: "Verilerin Sahtesi Başarısız Oldu: {message}"
+  copyCell: Hücreyi Kopyala
+  searchForEntity: Varlık Ara
+  copyRow: Satırı Kopyala
+  deselectRow: Satır Seçimini Kaldır
+  selectRow: Satır Seç
+  editRow: Satırı Düzenle
+  export: İhracat
+  exportAllAsCsv: Tümünü CSV Olarak Dışa Aktar
+  exportAllAsExcel: Tümünü Excel Olarak Dışa Aktar
+  exportSelectedAsCsv: Seçilenleri CSV Olarak Dışa Aktar
+  exportSelectedAsExcel: Seçilenleri Excel Olarak Dışa Aktar
+  mockData: Sahte Veri
+  moreActions: Daha Fazla Eylem
+  deleteRow: Satırı Sil
+  deleteRow_other: Satırları Sil
+  openInGraph: Grafikte Aç
+  exportData: Verileri Dışa Aktar
+  refreshData: Verileri Yenile
+  selectAll: Tümünü Seç
+  deselectAll: Tümünün Seçimini Kaldır
+  columnStatistics: Sütun İstatistikleri
+  schemaInformation: Şema Bilgileri
+  noDataAvailable: Mevcut Veri Yok
+  noDataAvailableDescription: Filtrelerinizi ayarlamayı veya yeni bir satır eklemeyi deneyin.
+  rightClickForOptions: Tablo Seçenekleri için Sağ Tıklayın
+  exportSelected: "Dışa Aktar {count} Seçildi"
+  exportAll: Tümünü Dışa Aktar
+  importData: İçe aktarmak
+  editRowTitle: Satırı Düzenle
+  cancel: İptal etmek
+  update: Güncelleme
+  typeHint: "{type}"
+  mockDataTitle: Sahte Veri
+  numberOfRows: "Satır Sayısı (maks: {max})"
+  enterNumberOfRows: "Satır Sayısını Girin (1-{max})"
+  method: Yöntem
+  methodNormal: Normal
+  dataHandling: Veri İşleme
+  appendToExisting: Mevcut Verilere Ekle
+  overwriteExisting: Mevcut Verilerin Üzerine Yaz
+  fkVariety: FK Çeşitleri
+  fkVarietyDescription: Kaç tane benzersiz üst değerin oluşturulduğunu kontrol eder
+  fkVarietyHigh: "Yüksek (1:5 oranı)"
+  fkVarietyMedium: "Orta (1:10 oranı)"
+  fkVarietyNormal: "Normal (1:20 oranı)"
+  fkVarietyLow: "Düşük (1:50 oranı)"
+  generate: Oluştur
+  overwriteConfirmation: "{storageUnit} içindeki tüm mevcut verilerin üzerine yazmak istediğinizden emin misiniz? Bu eylem geri alınamaz."
+  yesOverwrite: Evet, Üzerine Yaz
+  mockDataNote: Not
+  mockDataWarning: Sahte veri oluşturma, yabancı anahtar ana tablolarını gerektiği gibi dolduracaktır.
+  mockDataWarningClickHouse: ClickHouse yabancı anahtarları desteklemez. Yalnızca bu tablo için sahte veriler oluşturulacak.
+  dependencyError: Oluşturulamıyor
+  tablesToPopulate: "Doldurulacak tablolar:"
+  rows: satırlar
+  usingExisting: mevcut olanı kullanarak
+  totalRows: "Toplam: {count} satır"
+  totalRows_one: "Toplam: {count} satır"
+  totalCount: "Toplam Sayı:"
+  rowsSelected: "{count} satır seçildi"
+  rowsSelected_one: "{count} satır seçildi"
+  searchMatchFound: "{current} / {total} ile eşleş"
+  noSearchMatches: Eşleşme bulunamadı
+  cellInteractionHint: Hücreyi kopyalamak için tıklayın, satırı kopyalamak için çift tıklayın, daha fazla seçenek için sağ tıklayın
+  tablePagination: Tablo sayfalandırması
+  previousPage: Önceki sayfaya git
+  nextPage: Sonraki sayfaya git
+  goToPage: "{page} sayfasına git"
+  currentPage: "Sayfa {page}, geçerli sayfa"
+  integerType: Tam sayı türü
+  decimalType: Ondalık tip
+  booleanType: Boole türü
+  dateType: Tarih türü
+  dateTimeType: TarihSaat türü
+  uuidType: UUID türü
+  binaryType: İkili tip
+  arrayType: Dizi türü
+  textType: Metin türü
+  dataType: Veri türü
+  primaryKey: Birincil anahtar
+  foreignKey: Yabancı anahtar
+  delete: Silmek
+  deleteRowConfirmTitle: Satır Silinsin mi?
+  deleteRowConfirmTitle_other: Satırları Silinsin mi?
+  deleteRowConfirmDescription: "{count} satırı silmek istediğinizden emin misiniz? Bu eylem geri alınamaz."
+  deleteRowConfirmDescription_one: "{count} satırını silmek istediğinizden emin misiniz? Bu eylem geri alınamaz."
+
+uk_UA:
+  copiedToClipboard: Скопійовано в буфер обміну
+  rowCopiedToClipboard: Рядок скопійовано в буфер обміну
+  rowUpdated: Рядок оновлено
+  errorUpdatingRow: Помилка оновлення рядка
+  deletingRows: Видалення рядків...
+  deletingRows_one: Видалення рядка...
+  unableToDeleteRow: "Не вдалося видалити рядок: {message}"
+  rowDeleted: Рядок видалено
+  copiedCellToClipboard: Комірку скопійовано в буфер обміну
+  maximumRowCount: "Максимальна кількість рядків {max}"
+  storageUnitRequired: Блок зберігання потрібен для створення імітаційних даних
+  rowCountExceedsMax: "Кількість рядків не може перевищувати {max}"
+  rowCountMustBePositive: Кількість рядків має бути принаймні 1
+  successfullyGenerated: "Успішно згенеровано {count} рядків"
+  successfullyGenerated_one: "Успішно створено рядок {count}."
+  failedToMockData: Не вдалося імітувати дані
+  mockDataNotAllowed: Формування фіктивних даних не дозволено для цієї таблиці
+  mockDataFailed: "Не вдалося імітувати дані: {message}"
+  copyCell: Копіювати комірку
+  searchForEntity: Шукати Entity
+  copyRow: Копіювати рядок
+  deselectRow: Скасувати вибір рядка
+  selectRow: Виберіть рядок
+  editRow: Редагувати рядок
+  export: Експорт
+  exportAllAsCsv: Експортувати все як CSV
+  exportAllAsExcel: Експортувати все як Excel
+  exportSelectedAsCsv: Експортувати вибране як CSV
+  exportSelectedAsExcel: Експортувати вибране як Excel
+  mockData: Макет даних
+  moreActions: Більше дій
+  deleteRow: Видалити рядок
+  deleteRow_other: Видалити рядки
+  openInGraph: Відкрити в Graph
+  exportData: Експорт даних
+  refreshData: Оновити дані
+  selectAll: Виберіть усі
+  deselectAll: Зняти вибір із усіх
+  columnStatistics: Колонка Статистика
+  schemaInformation: Інформація про схему
+  noDataAvailable: Немає даних
+  noDataAvailableDescription: Спробуйте налаштувати фільтри або додати новий рядок.
+  rightClickForOptions: Клацніть правою кнопкою миші, щоб відкрити параметри таблиці
+  exportSelected: "Експорт {count} вибрано"
+  exportAll: Експортувати все
+  importData: Імпорт
+  editRowTitle: Редагувати рядок
+  cancel: Скасувати
+  update: оновлення
+  typeHint: "{type}"
+  mockDataTitle: Макет даних
+  numberOfRows: "Кількість рядків (макс.: {max})"
+  enterNumberOfRows: "Введіть кількість рядків (1-{max})"
+  method: метод
+  methodNormal: нормальний
+  dataHandling: Обробка даних
+  appendToExisting: Додати до існуючих даних
+  overwriteExisting: Перезаписати наявні дані
+  fkVariety: ФК Вар'єте
+  fkVarietyDescription: Керує кількістю згенерованих унікальних батьківських значень
+  fkVarietyHigh: "Високий (співвідношення 1:5)"
+  fkVarietyMedium: "Середній (співвідношення 1:10)"
+  fkVarietyNormal: "Нормальний (співвідношення 1:20)"
+  fkVarietyLow: "Низький (співвідношення 1:50)"
+  generate: Генерувати
+  overwriteConfirmation: "Ви впевнені, що бажаєте перезаписати всі існуючі дані в {storageUnit}? Цю дію не можна скасувати."
+  yesOverwrite: Так, перезаписати
+  mockDataNote: Примітка
+  mockDataWarning: Формування фіктивних даних заповнюватиме батьківські таблиці зовнішнього ключа за потреби.
+  mockDataWarningClickHouse: ClickHouse не підтримує зовнішні ключі. Фіктивні дані будуть створені лише для цієї таблиці.
+  dependencyError: Неможливо згенерувати
+  tablesToPopulate: "Таблиці для заповнення:"
+  rows: рядки
+  usingExisting: використовуючи існуючі
+  totalRows: "Усього: {count} рядків"
+  totalRows_one: "Усього: {count} ряд"
+  totalCount: "Загальна кількість:"
+  rowsSelected: "Вибрано {count} рядків"
+  rowsSelected_one: "Вибрано {count} рядок"
+  searchMatchFound: "Збіг {current} з {total}"
+  noSearchMatches: Збігів не знайдено
+  cellInteractionHint: Клацніть, щоб скопіювати клітинку, двічі клацніть, щоб скопіювати рядок, клацніть правою кнопкою миші, щоб отримати додаткові параметри
+  tablePagination: Пагінація таблиці
+  previousPage: Перейти на попередню сторінку
+  nextPage: Перейти до наступної сторінки
+  goToPage: "Перейти на сторінку {page}"
+  currentPage: "Сторінка {page}, поточна сторінка"
+  integerType: Цілочисельний тип
+  decimalType: Десятковий тип
+  booleanType: Логічний тип
+  dateType: Тип дати
+  dateTimeType: Тип DateTime
+  uuidType: Тип UUID
+  binaryType: Двійковий тип
+  arrayType: Тип масиву
+  textType: Тип тексту
+  dataType: Тип даних
+  primaryKey: Первинний ключ
+  foreignKey: Зовнішній ключ
+  delete: Видалити
+  deleteRowConfirmTitle: Видалити рядок?
+  deleteRowConfirmTitle_other: Видалити рядки?
+  deleteRowConfirmDescription: "Ви впевнені, що хочете видалити {count} рядків? Цю дію не можна скасувати."
+  deleteRowConfirmDescription_one: "Ви впевнені, що хочете видалити {count} рядок? Цю дію не можна скасувати."
+
+ur_PK:
+  copiedToClipboard: کلپ بورڈ پر کاپی کیا گیا۔
+  rowCopiedToClipboard: قطار کلپ بورڈ پر کاپی ہو گئی۔
+  rowUpdated: قطار کو اپ ڈیٹ کر دیا گیا۔
+  errorUpdatingRow: قطار کو اپ ڈیٹ کرنے میں خرابی۔
+  deletingRows: قطاریں حذف ہو رہی ہیں...
+  deletingRows_one: قطار کو حذف کیا جا رہا ہے...
+  unableToDeleteRow: "قطار کو حذف کرنے سے قاصر: {message}"
+  rowDeleted: قطار حذف کر دی گئی۔
+  copiedCellToClipboard: سیل کو کلپ بورڈ پر کاپی کیا گیا۔
+  maximumRowCount: "زیادہ سے زیادہ قطار کی گنتی {max} ہے"
+  storageUnitRequired: فرضی ڈیٹا جنریشن کے لیے سٹوریج یونٹ درکار ہے۔
+  rowCountExceedsMax: "قطاروں کی تعداد {max} سے زیادہ نہیں ہو سکتی"
+  rowCountMustBePositive: قطار کی تعداد کم از کم 1 ہونی چاہیے۔
+  successfullyGenerated: "کامیابی سے {count} قطاریں تیار کی گئیں۔"
+  successfullyGenerated_one: "کامیابی کے ساتھ {count} قطار تیار کی گئی۔"
+  failedToMockData: ڈیٹا کا مذاق اڑانے میں ناکام
+  mockDataNotAllowed: اس ٹیبل کے لیے فرضی ڈیٹا جنریشن کی اجازت نہیں ہے۔
+  mockDataFailed: "ڈیٹا کا مذاق اڑانے میں ناکام: {message}"
+  copyCell: سیل کاپی کریں۔
+  searchForEntity: ہستی کی تلاش کریں۔
+  copyRow: قطار کاپی کریں۔
+  deselectRow: قطار کو غیر منتخب کریں۔
+  selectRow: قطار کو منتخب کریں۔
+  editRow: قطار میں ترمیم کریں۔
+  export: برآمد کریں۔
+  exportAllAsCsv: سبھی کو بطور CSV برآمد کریں۔
+  exportAllAsExcel: تمام کو ایکسل کے بطور ایکسپورٹ کریں۔
+  exportSelectedAsCsv: CSV کے بطور منتخب برآمد کریں۔
+  exportSelectedAsExcel: ایکسل کے بطور منتخب برآمد کریں۔
+  mockData: فرضی ڈیٹا
+  moreActions: مزید کارروائیاں
+  deleteRow: قطار کو حذف کریں۔
+  deleteRow_other: قطاریں حذف کریں۔
+  openInGraph: گراف میں کھولیں۔
+  exportData: ڈیٹا ایکسپورٹ کریں۔
+  refreshData: ڈیٹا ریفریش کریں۔
+  selectAll: سبھی کو منتخب کریں۔
+  deselectAll: سبھی کو غیر منتخب کریں۔
+  columnStatistics: کالم کے اعدادوشمار
+  schemaInformation: اسکیما کی معلومات
+  noDataAvailable: کوئی ڈیٹا دستیاب نہیں ہے۔
+  noDataAvailableDescription: اپنے فلٹرز کو ایڈجسٹ کرنے یا ایک نئی قطار شامل کرنے کی کوشش کریں۔
+  rightClickForOptions: ٹیبل کے اختیارات کے لیے دائیں کلک کریں۔
+  exportSelected: "برآمد کریں {count} منتخب"
+  exportAll: تمام برآمد کریں۔
+  importData: درآمد کریں۔
+  editRowTitle: قطار میں ترمیم کریں۔
+  cancel: منسوخ کریں۔
+  update: اپڈیٹ کریں۔
+  typeHint: "{type}"
+  mockDataTitle: فرضی ڈیٹا
+  numberOfRows: "قطاروں کی تعداد (زیادہ سے زیادہ: {max})"
+  enterNumberOfRows: "قطاروں کی تعداد درج کریں (1-{max})"
+  method: طریقہ
+  methodNormal: نارمل
+  dataHandling: ڈیٹا ہینڈلنگ
+  appendToExisting: موجودہ ڈیٹا میں شامل کریں۔
+  overwriteExisting: موجودہ ڈیٹا کو اوور رائٹ کریں۔
+  fkVariety: ایف کے ورائٹی
+  fkVarietyDescription: یہ کنٹرول کرتا ہے کہ والدین کی کتنی منفرد قدریں تیار ہوتی ہیں۔
+  fkVarietyHigh: "اعلی (1:5 تناسب)"
+  fkVarietyMedium: "درمیانہ (1:10 تناسب)"
+  fkVarietyNormal: "عمومی (1:20 تناسب)"
+  fkVarietyLow: "کم (1:50 تناسب)"
+  generate: پیدا کریں۔
+  overwriteConfirmation: "کیا آپ واقعی {storageUnit} میں موجود تمام ڈیٹا کو اوور رائٹ کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔"
+  yesOverwrite: ہاں، اوور رائٹ کریں۔
+  mockDataNote: نوٹ
+  mockDataWarning: فرضی ڈیٹا جنریشن غیر ملکی کلیدی پیرنٹ ٹیبلز کو ضرورت کے مطابق آباد کرے گی۔
+  mockDataWarningClickHouse: کلک ہاؤس غیر ملکی کلیدوں کو سپورٹ نہیں کرتا ہے۔ فرضی ڈیٹا صرف اس ٹیبل کے لیے تیار کیا جائے گا۔
+  dependencyError: پیدا نہیں کر سکتے
+  tablesToPopulate: "آباد کرنے کے لیے میزیں:"
+  rows: قطاریں
+  usingExisting: موجودہ کا استعمال کرتے ہوئے
+  totalRows: "کل: {count} قطاریں۔"
+  totalRows_one: "کل: {count} قطار"
+  totalCount: "کل شمار:"
+  rowsSelected: "{count} قطاریں منتخب کی گئیں۔"
+  rowsSelected_one: "{count} قطار منتخب کی گئی۔"
+  searchMatchFound: "{total} کا {current} میچ"
+  noSearchMatches: کوئی مماثلت نہیں ملی
+  cellInteractionHint: سیل کاپی کرنے کے لیے کلک کریں، قطار کاپی کرنے کے لیے ڈبل کلک کریں، مزید اختیارات کے لیے دائیں کلک کریں۔
+  tablePagination: ٹیبل صفحہ بندی
+  previousPage: پچھلے صفحے پر جائیں۔
+  nextPage: اگلے صفحے پر جائیں۔
+  goToPage: "صفحہ پر جائیں {page}"
+  currentPage: "صفحہ {page}، موجودہ صفحہ"
+  integerType: عددی قسم
+  decimalType: اعشاریہ کی قسم
+  booleanType: بولین قسم
+  dateType: تاریخ کی قسم
+  dateTimeType: ڈیٹ ٹائم کی قسم
+  uuidType: UUID کی قسم
+  binaryType: بائنری قسم
+  arrayType: صف کی قسم
+  textType: متن کی قسم
+  dataType: ڈیٹا کی قسم
+  primaryKey: بنیادی کلید
+  foreignKey: غیر ملکی کلید
+  delete: حذف کریں۔
+  deleteRowConfirmTitle: قطار کو حذف کریں؟
+  deleteRowConfirmTitle_other: قطاریں حذف کریں؟
+  deleteRowConfirmDescription: "کیا آپ واقعی {count} قطاروں کو حذف کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔"
+  deleteRowConfirmDescription_one: "کیا آپ واقعی {count} قطار کو حذف کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔"
+
+vi_VN:
+  copiedToClipboard: Đã sao chép vào Clipboard
+  rowCopiedToClipboard: Đã sao chép hàng vào bảng nhớ tạm
+  rowUpdated: Đã cập nhật hàng
+  errorUpdatingRow: Lỗi cập nhật hàng
+  deletingRows: Đang xóa hàng...
+  deletingRows_one: Đang xóa hàng...
+  unableToDeleteRow: "Không thể xóa hàng: {message}"
+  rowDeleted: Đã xóa hàng
+  copiedCellToClipboard: Đã sao chép ô vào bảng nhớ tạm
+  maximumRowCount: "Số hàng tối đa là {max}"
+  storageUnitRequired: Cần có đơn vị lưu trữ để tạo dữ liệu mô phỏng
+  rowCountExceedsMax: "Số hàng không thể vượt quá {max}"
+  rowCountMustBePositive: Số hàng phải ít nhất là 1
+  successfullyGenerated: "Đã tạo thành công hàng {count}"
+  successfullyGenerated_one: "Đã tạo thành công hàng {count}"
+  failedToMockData: Không thể mô phỏng dữ liệu
+  mockDataNotAllowed: Không được phép tạo dữ liệu mô phỏng cho bảng này
+  mockDataFailed: "Không thể mô phỏng dữ liệu: {message}"
+  copyCell: Sao chép ô
+  searchForEntity: Tìm kiếm thực thể
+  copyRow: Sao chép hàng
+  deselectRow: Bỏ chọn hàng
+  selectRow: Chọn hàng
+  editRow: Chỉnh sửa hàng
+  export: Xuất khẩu
+  exportAllAsCsv: Xuất tất cả dưới dạng CSV
+  exportAllAsExcel: Xuất tất cả dưới dạng Excel
+  exportSelectedAsCsv: Xuất đã chọn dưới dạng CSV
+  exportSelectedAsExcel: Xuất đã chọn dưới dạng Excel
+  mockData: Dữ liệu giả
+  moreActions: Thêm hành động
+  deleteRow: Xóa hàng
+  deleteRow_other: Xóa hàng
+  openInGraph: Mở trong biểu đồ
+  exportData: Xuất dữ liệu
+  refreshData: Làm mới dữ liệu
+  selectAll: Chọn tất cả
+  deselectAll: Bỏ chọn tất cả
+  columnStatistics: Thống kê cột
+  schemaInformation: Thông tin lược đồ
+  noDataAvailable: Không có sẵn dữ liệu
+  noDataAvailableDescription: Hãy thử điều chỉnh bộ lọc của bạn hoặc thêm một hàng mới.
+  rightClickForOptions: Nhấp chuột phải vào Tùy chọn bảng
+  exportSelected: "Xuất {count} Đã chọn"
+  exportAll: Xuất tất cả
+  importData: Nhập khẩu
+  editRowTitle: Chỉnh sửa hàng
+  cancel: Hủy bỏ
+  update: Cập nhật
+  typeHint: "{type}"
+  mockDataTitle: Dữ liệu giả
+  numberOfRows: "Số hàng (tối đa: {max})"
+  enterNumberOfRows: "Nhập số hàng (1-{max})"
+  method: Phương pháp
+  methodNormal: Bình thường
+  dataHandling: Xử lý dữ liệu
+  appendToExisting: Nối vào dữ liệu hiện có
+  overwriteExisting: Ghi đè dữ liệu hiện có
+  fkVariety: Giống FK
+  fkVarietyDescription: Kiểm soát số lượng giá trị gốc duy nhất được tạo ra
+  fkVarietyHigh: "Cao (tỷ lệ 1:5)"
+  fkVarietyMedium: "Trung bình (tỷ lệ 1:10)"
+  fkVarietyNormal: "Bình thường (tỷ lệ 1:20)"
+  fkVarietyLow: "Thấp (tỷ lệ 1:50)"
+  generate: Phát ra
+  overwriteConfirmation: "Bạn có chắc chắn muốn ghi đè tất cả dữ liệu hiện có trong {storageUnit} không? Không thể hoàn tác hành động này."
+  yesOverwrite: Có, ghi đè
+  mockDataNote: Ghi chú
+  mockDataWarning: Việc tạo dữ liệu mô phỏng sẽ điền vào các bảng cha khóa ngoại nếu cần.
+  mockDataWarningClickHouse: ClickHouse không hỗ trợ khóa ngoại. Dữ liệu mô phỏng sẽ chỉ được tạo cho bảng này.
+  dependencyError: Không thể tạo
+  tablesToPopulate: "Các bảng để điền:"
+  rows: hàng
+  usingExisting: sử dụng hiện có
+  totalRows: "Tổng cộng: {count} hàng"
+  totalRows_one: "Tổng cộng: {count} hàng"
+  totalCount: "Tổng số:"
+  rowsSelected: "{count} hàng đã được chọn"
+  rowsSelected_one: "Đã chọn hàng {count}"
+  searchMatchFound: "Trận đấu {current} của {total}"
+  noSearchMatches: Không tìm thấy kết quả phù hợp
+  cellInteractionHint: Bấm để sao chép ô, bấm đúp để sao chép hàng, bấm chuột phải để có thêm tùy chọn
+  tablePagination: Phân trang bảng
+  previousPage: Đi tới trang trước
+  nextPage: Chuyển đến trang tiếp theo
+  goToPage: "Tới trang {page}"
+  currentPage: "Trang {page}, trang hiện tại"
+  integerType: Kiểu số nguyên
+  decimalType: Kiểu thập phân
+  booleanType: kiểu Boolean
+  dateType: Loại ngày
+  dateTimeType: Loại ngày giờ
+  uuidType: loại UUID
+  binaryType: Kiểu nhị phân
+  arrayType: Kiểu mảng
+  textType: Kiểu văn bản
+  dataType: Kiểu dữ liệu
+  primaryKey: Khóa chính
+  foreignKey: Khóa ngoại
+  delete: Xóa bỏ
+  deleteRowConfirmTitle: Xóa hàng?
+  deleteRowConfirmTitle_other: Xóa hàng?
+  deleteRowConfirmDescription: "Bạn có chắc chắn muốn xóa {count} hàng không? Không thể hoàn tác hành động này."
+  deleteRowConfirmDescription_one: "Bạn có chắc chắn muốn xóa hàng {count} không? Không thể hoàn tác hành động này."

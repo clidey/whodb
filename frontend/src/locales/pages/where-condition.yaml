@@ -522,3 +522,478 @@ zh_TW:
   moreConditions: "+{count}更多"
   addAnother: 新增條件
   addToPage: 新增到頁面
+
+bg_BG:
+  field: Поле
+  operator: Оператор
+  value: Стойност
+  whereCondition: Къде състояние
+  enterFilterValue: Въведете стойност на филтъра
+  cancel: Отказ
+  update: Актуализация
+  add: Добавете
+  addCondition: Добавяне на условие
+  saveChanges: Запазване на промените
+  removeCondition: Премахване на условие
+  editCondition: Редактиране на условие
+  deleteCondition: Изтриване на условие
+  manageWhereConditions: Управление на условията за къде
+  conditionsTitle: Условия
+  editingCondition: Състояние на редактиране
+  conditionNumber: "Състояние {index}"
+  conditionCount: "{count} Условия"
+  conditionCount_one: "{count} Състояние"
+  tenPlusConditions: 10+ условия
+  moreConditions: "+{count} още"
+  addAnother: Добавяне на условие
+  addToPage: Добавяне към страницата
+
+bn_BD:
+  field: মাঠ
+  operator: অপারেটর
+  value: মান
+  whereCondition: যেখানে শর্ত
+  enterFilterValue: ফিল্টার মান লিখুন
+  cancel: বাতিল করুন
+  update: আপডেট
+  add: যোগ করুন
+  addCondition: শর্ত যোগ করুন
+  saveChanges: পরিবর্তনগুলি সংরক্ষণ করুন
+  removeCondition: শর্ত সরান
+  editCondition: শর্ত সম্পাদনা করুন
+  deleteCondition: শর্ত মুছুন
+  manageWhereConditions: যেখানে শর্তাবলী পরিচালনা করুন
+  conditionsTitle: শর্তাবলী
+  editingCondition: সম্পাদনার শর্ত
+  conditionNumber: "অবস্থা {index}"
+  conditionCount: "{count} শর্ত"
+  conditionCount_one: "{count} শর্ত"
+  tenPlusConditions: 10+ শর্ত
+  moreConditions: "+{count} আরও"
+  addAnother: শর্ত যোগ করুন
+  addToPage: পৃষ্ঠায় যোগ করুন
+
+ca_ES:
+  field: Camp
+  operator: Operador
+  value: Valor
+  whereCondition: On condició
+  enterFilterValue: Introduïu el valor del filtre
+  cancel: Cancel·la
+  update: Actualització
+  add: Afegeix
+  addCondition: Afegeix una condició
+  saveChanges: Desa els canvis
+  removeCondition: Elimina la condició
+  editCondition: Edita la condició
+  deleteCondition: Suprimeix la condició
+  manageWhereConditions: Gestiona les condicions d'on
+  conditionsTitle: Condicions
+  editingCondition: Condició d'edició
+  conditionNumber: Condició [[0]]]
+  conditionCount: "[[0]]] Condicions"
+  conditionCount_one: "[[0]]] Condició"
+  tenPlusConditions: Més de 10 condicions
+  moreConditions: +[[0]]] més
+  addAnother: Afegeix una condició
+  addToPage: Afegeix a la pàgina
+
+cs_CZ:
+  field: Pole
+  operator: Operátor
+  value: Hodnota
+  whereCondition: Kde podmínka
+  enterFilterValue: Zadejte hodnotu filtru
+  cancel: Zrušit
+  update: Aktualizovat
+  add: Přidat
+  addCondition: Přidat podmínku
+  saveChanges: Uložit změny
+  removeCondition: Odebrat podmínku
+  editCondition: Upravit podmínku
+  deleteCondition: Smazat podmínku
+  manageWhereConditions: Spravovat podmínky Kde
+  conditionsTitle: Podmínky
+  editingCondition: Editační podmínka
+  conditionNumber: "Stav {index}"
+  conditionCount: "{count} Podmínky"
+  conditionCount_one: "{count} Stav"
+  tenPlusConditions: 10+ podmínek
+  moreConditions: "+{count} další"
+  addAnother: Přidat podmínku
+  addToPage: Přidat na stránku
+
+da_DK:
+  field: Felt
+  operator: Operatør
+  value: Værdi
+  whereCondition: Hvor tilstand
+  enterFilterValue: Indtast filterværdi
+  cancel: Ophæve
+  update: Opdatering
+  add: Tilføje
+  addCondition: Tilføj tilstand
+  saveChanges: Gem ændringer
+  removeCondition: Fjern tilstand
+  editCondition: Rediger tilstand
+  deleteCondition: Slet tilstand
+  manageWhereConditions: Administrer Hvor-betingelser
+  conditionsTitle: Forhold
+  editingCondition: Redigeringstilstand
+  conditionNumber: "Tilstand {index}"
+  conditionCount: "{count} Betingelser"
+  conditionCount_one: "{count} Stand"
+  tenPlusConditions: 10+ betingelser
+  moreConditions: "+{count} mere"
+  addAnother: Tilføj tilstand
+  addToPage: Tilføj til side
+
+fa_IR:
+  field: میدان
+  operator: اپراتور
+  value: ارزش
+  whereCondition: شرایط کجا
+  enterFilterValue: مقدار فیلتر را وارد کنید
+  cancel: لغو کنید
+  update: به روز رسانی
+  add: اضافه کنید
+  addCondition: اضافه کردن شرط
+  saveChanges: ذخیره تغییرات
+  removeCondition: حذف شرط
+  editCondition: وضعیت ویرایش
+  deleteCondition: شرط حذف
+  manageWhereConditions: شرایط کجا را مدیریت کنید
+  conditionsTitle: شرایط
+  editingCondition: شرایط ویرایش
+  conditionNumber: "وضعیت {index}"
+  conditionCount: "{count} شرایط"
+  conditionCount_one: "{count} وضعیت"
+  tenPlusConditions: 10+ شرایط
+  moreConditions: "+{count} بیشتر"
+  addAnother: اضافه کردن شرط
+  addToPage: افزودن به صفحه
+
+hi_IN:
+  field: मैदान
+  operator: संचालिका
+  value: कीमत
+  whereCondition: जहां हालत
+  enterFilterValue: फ़िल्टर मान दर्ज करें
+  cancel: रद्द करना
+  update: अद्यतन
+  add: जोड़ना
+  addCondition: शर्त जोड़ें
+  saveChanges: परिवर्तनों को सुरक्षित करें
+  removeCondition: शर्त हटाएँ
+  editCondition: स्थिति संपादित करें
+  deleteCondition: शर्त हटाएँ
+  manageWhereConditions: जहां स्थितियाँ प्रबंधित करें
+  conditionsTitle: स्थितियाँ
+  editingCondition: संपादन शर्त
+  conditionNumber: "शर्त {index}"
+  conditionCount: "{count} शर्तें"
+  conditionCount_one: "{count} शर्त"
+  tenPlusConditions: 10+ शर्तें
+  moreConditions: "+{count} और अधिक"
+  addAnother: शर्त जोड़ें
+  addToPage: पेज में जोड़ें
+
+hr_HR:
+  field: Polje
+  operator: Operater
+  value: Vrijednost
+  whereCondition: Gdje stanje
+  enterFilterValue: Unesite vrijednost filtra
+  cancel: Otkazati
+  update: Ažurirati
+  add: Dodati
+  addCondition: Dodaj uvjet
+  saveChanges: Spremi promjene
+  removeCondition: Ukloni stanje
+  editCondition: Uredi uvjet
+  deleteCondition: Izbriši uvjet
+  manageWhereConditions: Upravljajte uvjetima gdje
+  conditionsTitle: Uvjeti
+  editingCondition: Uvjet za uređivanje
+  conditionNumber: "Stanje {index}"
+  conditionCount: "{count} Uvjeti"
+  conditionCount_one: "{count} Stanje"
+  tenPlusConditions: 10+ uvjeta
+  moreConditions: "+{count} više"
+  addAnother: Dodaj uvjet
+  addToPage: Dodaj na stranicu
+
+hu_HU:
+  field: Mező
+  operator: Operátor
+  value: Érték
+  whereCondition: Hol állapot
+  enterFilterValue: Adja meg a szűrő értékét
+  cancel: Mégsem
+  update: Frissítés
+  add: Hozzáadás
+  addCondition: Feltétel hozzáadása
+  saveChanges: Módosítások mentése
+  removeCondition: Feltétel eltávolítása
+  editCondition: Állapot szerkesztése
+  deleteCondition: Feltétel törlése
+  manageWhereConditions: A Hol feltételek kezelése
+  conditionsTitle: Körülmények
+  editingCondition: Szerkesztési állapot
+  conditionNumber: "Állapot {index}"
+  conditionCount: "{count} Feltételek"
+  conditionCount_one: "{count} Állapot"
+  tenPlusConditions: 10+ feltételek
+  moreConditions: "+{count} még"
+  addAnother: Feltétel hozzáadása
+  addToPage: Hozzáadás az oldalhoz
+
+id_ID:
+  field: Bidang
+  operator: Operator
+  value: Nilai
+  whereCondition: Kondisi dimana
+  enterFilterValue: Masukkan nilai filter
+  cancel: Membatalkan
+  update: Memperbarui
+  add: Menambahkan
+  addCondition: Tambahkan Kondisi
+  saveChanges: Simpan Perubahan
+  removeCondition: Hapus Kondisi
+  editCondition: Sunting Kondisi
+  deleteCondition: Hapus Kondisi
+  manageWhereConditions: Kelola Kondisi Dimana
+  conditionsTitle: Kondisi
+  editingCondition: Kondisi Pengeditan
+  conditionNumber: "Kondisi {index}"
+  conditionCount: "{count} Kondisi"
+  conditionCount_one: "{count} Kondisi"
+  tenPlusConditions: 10+ Ketentuan
+  moreConditions: "+{count} lagi"
+  addAnother: Tambahkan Kondisi
+  addToPage: Tambahkan ke Halaman
+
+ms_MY:
+  field: Padang
+  operator: Operator
+  value: Nilai
+  whereCondition: Di mana keadaan
+  enterFilterValue: Masukkan nilai penapis
+  cancel: Batal
+  update: Kemas kini
+  add: Tambah
+  addCondition: Tambah Syarat
+  saveChanges: Simpan Perubahan
+  removeCondition: Keluarkan Keadaan
+  editCondition: Edit Syarat
+  deleteCondition: Padam Keadaan
+  manageWhereConditions: Urus Di Mana Syarat
+  conditionsTitle: syarat
+  editingCondition: Keadaan Suntingan
+  conditionNumber: "Keadaan {index}"
+  conditionCount: "{count} Syarat"
+  conditionCount_one: "{count} Keadaan"
+  tenPlusConditions: 10+ Syarat
+  moreConditions: "+{count} lagi"
+  addAnother: Tambah Syarat
+  addToPage: Tambahkan pada Halaman
+
+nb_NO:
+  field: Felt
+  operator: Operatør
+  value: Verdi
+  whereCondition: Hvor tilstand
+  enterFilterValue: Angi filterverdi
+  cancel: Kansellere
+  update: Oppdater
+  add: Legge til
+  addCondition: Legg til tilstand
+  saveChanges: Lagre endringer
+  removeCondition: Fjern tilstand
+  editCondition: Rediger tilstand
+  deleteCondition: Slett tilstand
+  manageWhereConditions: Administrer hvor-forhold
+  conditionsTitle: Forhold
+  editingCondition: Redigeringstilstand
+  conditionNumber: "Tilstand {index}"
+  conditionCount: "{count} Betingelser"
+  conditionCount_one: "{count} Tilstand"
+  tenPlusConditions: 10+ betingelser
+  moreConditions: "+{count} til"
+  addAnother: Legg til tilstand
+  addToPage: Legg til side
+
+sw_KE:
+  field: Shamba
+  operator: Opereta
+  value: Thamani
+  whereCondition: Hali ya wapi
+  enterFilterValue: Weka thamani ya kichujio
+  cancel: Ghairi
+  update: Sasisha
+  add: Ongeza
+  addCondition: Ongeza Hali
+  saveChanges: Hifadhi Mabadiliko
+  removeCondition: Ondoa Hali
+  editCondition: Hariri Hali
+  deleteCondition: Futa Hali
+  manageWhereConditions: Dhibiti Masharti ya wapi
+  conditionsTitle: Masharti
+  editingCondition: Hali ya Kuhariri
+  conditionNumber: "Hali {index}"
+  conditionCount: "{count} Masharti"
+  conditionCount_one: "{count} Hali"
+  tenPlusConditions: 10+ Masharti
+  moreConditions: +[[0]]] zaidi
+  addAnother: Ongeza Hali
+  addToPage: Ongeza kwenye Ukurasa
+
+ta_IN:
+  field: களம்
+  operator: ஆபரேட்டர்
+  value: மதிப்பு
+  whereCondition: எங்கே நிலை
+  enterFilterValue: வடிகட்டி மதிப்பை உள்ளிடவும்
+  cancel: ரத்து செய்
+  update: புதுப்பிக்கவும்
+  add: சேர்
+  addCondition: நிபந்தனையைச் சேர்க்கவும்
+  saveChanges: மாற்றங்களைச் சேமிக்கவும்
+  removeCondition: நிபந்தனையை அகற்று
+  editCondition: நிபந்தனையைத் திருத்தவும்
+  deleteCondition: நிபந்தனையை நீக்கு
+  manageWhereConditions: எங்கே நிபந்தனைகளை நிர்வகிக்கவும்
+  conditionsTitle: நிபந்தனைகள்
+  editingCondition: திருத்தும் நிலை
+  conditionNumber: "நிபந்தனை {index}"
+  conditionCount: "{count} நிபந்தனைகள்"
+  conditionCount_one: "{count} நிபந்தனை"
+  tenPlusConditions: 10+ நிபந்தனைகள்
+  moreConditions: "+{count} மேலும்"
+  addAnother: நிபந்தனையைச் சேர்க்கவும்
+  addToPage: பக்கத்தில் சேர்க்கவும்
+
+th_TH:
+  field: สนาม
+  operator: ผู้ดำเนินการ
+  value: ค่า
+  whereCondition: สภาพไหน.
+  enterFilterValue: ป้อนค่าตัวกรอง
+  cancel: ยกเลิก
+  update: อัปเดต
+  add: เพิ่ม
+  addCondition: เพิ่มเงื่อนไข
+  saveChanges: บันทึกการเปลี่ยนแปลง
+  removeCondition: ลบเงื่อนไข
+  editCondition: แก้ไขสภาพ
+  deleteCondition: ลบเงื่อนไข
+  manageWhereConditions: จัดการเงื่อนไขที่ไหน
+  conditionsTitle: เงื่อนไข
+  editingCondition: แก้ไขสภาพ
+  conditionNumber: "สภาพ {index}"
+  conditionCount: "{count} เงื่อนไข"
+  conditionCount_one: "{count} สภาพ"
+  tenPlusConditions: 10+ เงื่อนไข
+  moreConditions: "+{count} เพิ่มเติม"
+  addAnother: เพิ่มเงื่อนไข
+  addToPage: เพิ่มไปที่เพจ
+
+tr_TR:
+  field: Alan
+  operator: Operatör
+  value: Değer
+  whereCondition: Nerede koşul
+  enterFilterValue: Filtre değerini girin
+  cancel: İptal etmek
+  update: Güncelleme
+  add: Eklemek
+  addCondition: Koşul Ekle
+  saveChanges: Değişiklikleri Kaydet
+  removeCondition: Durumu Kaldır
+  editCondition: Koşulu Düzenle
+  deleteCondition: Koşulu Sil
+  manageWhereConditions: Nerede Koşulları Yönetin
+  conditionsTitle: Koşullar
+  editingCondition: Düzenleme Koşulu
+  conditionNumber: "Koşul {index}"
+  conditionCount: "{count} Koşullar"
+  conditionCount_one: "{count} Koşul"
+  tenPlusConditions: 10+ Koşul
+  moreConditions: "+{count} daha fazla"
+  addAnother: Koşul Ekle
+  addToPage: Sayfaya Ekle
+
+uk_UA:
+  field: Поле
+  operator: Оператор
+  value: Значення
+  whereCondition: Де стан
+  enterFilterValue: Введіть значення фільтра
+  cancel: Скасувати
+  update: оновлення
+  add: додати
+  addCondition: Додати умову
+  saveChanges: Зберегти зміни
+  removeCondition: Видалити умову
+  editCondition: Редагувати умову
+  deleteCondition: Видалити умову
+  manageWhereConditions: Керуйте умовами де
+  conditionsTitle: Умови
+  editingCondition: Умова редагування
+  conditionNumber: "Стан {index}"
+  conditionCount: "{count} Умови"
+  conditionCount_one: "{count} Стан"
+  tenPlusConditions: 10+ Умов
+  moreConditions: "+{count} більше"
+  addAnother: Додати умову
+  addToPage: Додати на сторінку
+
+ur_PK:
+  field: میدان
+  operator: آپریٹر
+  value: قدر
+  whereCondition: جہاں کی حالت
+  enterFilterValue: فلٹر ویلیو درج کریں۔
+  cancel: منسوخ کریں۔
+  update: اپڈیٹ کریں۔
+  add: شامل کریں۔
+  addCondition: شرط شامل کریں۔
+  saveChanges: تبدیلیاں محفوظ کریں۔
+  removeCondition: حالت کو ہٹا دیں۔
+  editCondition: حالت میں ترمیم کریں۔
+  deleteCondition: شرط کو حذف کریں۔
+  manageWhereConditions: جہاں کے حالات کا نظم کریں۔
+  conditionsTitle: شرائط
+  editingCondition: ترمیم کی حالت
+  conditionNumber: "حالت {index}"
+  conditionCount: "{count} شرائط"
+  conditionCount_one: "{count} حالت"
+  tenPlusConditions: 10+ شرائط
+  moreConditions: "+{count} مزید"
+  addAnother: شرط شامل کریں۔
+  addToPage: صفحہ میں شامل کریں۔
+
+vi_VN:
+  field: Cánh đồng
+  operator: Toán tử
+  value: Giá trị
+  whereCondition: Điều kiện ở đâu
+  enterFilterValue: Nhập giá trị bộ lọc
+  cancel: Hủy bỏ
+  update: Cập nhật
+  add: Thêm vào
+  addCondition: Thêm điều kiện
+  saveChanges: Lưu thay đổi
+  removeCondition: Xóa điều kiện
+  editCondition: Chỉnh sửa điều kiện
+  deleteCondition: Xóa điều kiện
+  manageWhereConditions: Quản lý điều kiện ở đâu
+  conditionsTitle: Điều kiện
+  editingCondition: Điều kiện chỉnh sửa
+  conditionNumber: "Điều kiện {index}"
+  conditionCount: "{count} Điều kiện"
+  conditionCount_one: "{count} Tình trạng"
+  tenPlusConditions: Hơn 10 điều kiện
+  moreConditions: "+{count} thêm"
+  addAnother: Thêm điều kiện
+  addToPage: Thêm vào trang

@@ -81,3 +81,79 @@ zh_CN:
 zh_TW:
   download: 下載
   layout: 佈局
+
+bg_BG:
+  download: Изтегляне
+  layout: Оформление
+
+bn_BD:
+  download: ডাউনলোড করুন
+  layout: লেআউট
+
+ca_ES:
+  download: Download
+  layout: Disseny
+
+cs_CZ:
+  download: Stáhnout
+  layout: Rozložení
+
+da_DK:
+  download: Download
+  layout: Layout
+
+fa_IR:
+  download: دانلود کنید
+  layout: طرح بندی
+
+hi_IN:
+  download: डाउनलोड करना
+  layout: लेआउट
+
+hr_HR:
+  download: preuzimanje
+  layout: Izgled
+
+hu_HU:
+  download: Letöltés
+  layout: Elrendezés
+
+id_ID:
+  download: Unduh
+  layout: Tata Letak
+
+ms_MY:
+  download: Muat turun
+  layout: Susun atur
+
+nb_NO:
+  download: Last ned
+  layout: Oppsett
+
+sw_KE:
+  download: Pakua
+  layout: Mpangilio
+
+ta_IN:
+  download: பதிவிறக்கவும்
+  layout: தளவமைப்பு
+
+th_TH:
+  download: ดาวน์โหลด
+  layout: เค้าโครง
+
+tr_TR:
+  download: İndirmek
+  layout: Düzen
+
+uk_UA:
+  download: Завантажити
+  layout: Макет
+
+ur_PK:
+  download: ڈاؤن لوڈ کریں۔
+  layout: لے آؤٹ
+
+vi_VN:
+  download: Tải xuống
+  layout: Cách trình bày

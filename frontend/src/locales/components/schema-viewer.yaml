@@ -207,3 +207,193 @@ zh_TW:
   searchPlaceholder: 搜尋表
   searchAriaLabel: 搜尋表
   noResults: 沒有找到桌子
+
+bg_BG:
+  title: Схема
+  columns: Колони
+  indexes: Индекси
+  relationships: Връзки
+  refresh: Опресняване
+  searchPlaceholder: Таблици за търсене
+  searchAriaLabel: Таблици за търсене
+  noResults: Няма намерени маси
+
+bn_BD:
+  title: স্কিমা
+  columns: কলাম
+  indexes: সূচক
+  relationships: সম্পর্ক
+  refresh: রিফ্রেশ
+  searchPlaceholder: অনুসন্ধান সারণী
+  searchAriaLabel: অনুসন্ধান সারণী
+  noResults: কোন টেবিল পাওয়া যায়নি
+
+ca_ES:
+  title: Esquema
+  columns: Columnes
+  indexes: Índexs
+  relationships: Relacions
+  refresh: Actualitza
+  searchPlaceholder: Cerca taules
+  searchAriaLabel: Cerca taules
+  noResults: No s'han trobat taules
+
+cs_CZ:
+  title: Schéma
+  columns: Sloupce
+  indexes: Indexy
+  relationships: Vztahy
+  refresh: Obnovit
+  searchPlaceholder: Hledat tabulky
+  searchAriaLabel: Hledat tabulky
+  noResults: Nebyly nalezeny žádné tabulky
+
+da_DK:
+  title: Skema
+  columns: Kolonner
+  indexes: Indekser
+  relationships: Relationer
+  refresh: Opfriske
+  searchPlaceholder: Søg i tabeller
+  searchAriaLabel: Søg i tabeller
+  noResults: Ingen tabeller fundet
+
+fa_IR:
+  title: طرحواره
+  columns: ستون ها
+  indexes: شاخص ها
+  relationships: روابط
+  refresh: تازه کردن
+  searchPlaceholder: جداول جستجو
+  searchAriaLabel: جداول جستجو
+  noResults: هیچ جدولی پیدا نشد
+
+hi_IN:
+  title: योजना
+  columns: कॉलम
+  indexes: इंडेक्स
+  relationships: रिश्ते
+  refresh: ताज़ा करना
+  searchPlaceholder: तालिकाएँ खोजें
+  searchAriaLabel: तालिकाएँ खोजें
+  noResults: कोई टेबल नहीं मिली
+
+hr_HR:
+  title: Shema
+  columns: Stupci
+  indexes: Indeksi
+  relationships: Odnosi
+  refresh: Osvježiti
+  searchPlaceholder: Pretraži tablice
+  searchAriaLabel: Pretraži tablice
+  noResults: Nije pronađen nijedan stol
+
+hu_HU:
+  title: Séma
+  columns: Oszlopok
+  indexes: Indexek
+  relationships: Kapcsolatok
+  refresh: Frissítés
+  searchPlaceholder: Keresés a táblázatokban
+  searchAriaLabel: Keresés a táblázatokban
+  noResults: Nem található táblázat
+
+id_ID:
+  title: Skema
+  columns: Kolom
+  indexes: Indeks
+  relationships: Hubungan
+  refresh: Menyegarkan
+  searchPlaceholder: Tabel Pencarian
+  searchAriaLabel: Tabel Pencarian
+  noResults: Tidak ada tabel yang ditemukan
+
+ms_MY:
+  title: Skema
+  columns: Lajur
+  indexes: Indeks
+  relationships: Perhubungan
+  refresh: Segarkan semula
+  searchPlaceholder: Cari Jadual
+  searchAriaLabel: Cari Jadual
+  noResults: Tiada jadual ditemui
+
+nb_NO:
+  title: Skjema
+  columns: Kolonner
+  indexes: Indekser
+  relationships: Relasjoner
+  refresh: Forfriske
+  searchPlaceholder: Søk i tabeller
+  searchAriaLabel: Søk i tabeller
+  noResults: Ingen tabeller funnet
+
+sw_KE:
+  title: Schema
+  columns: Safu
+  indexes: Fahirisi
+  relationships: Mahusiano
+  refresh: Onyesha upya
+  searchPlaceholder: Tafuta Majedwali
+  searchAriaLabel: Tafuta Majedwali
+  noResults: Hakuna majedwali yaliyopatikana
+
+ta_IN:
+  title: திட்டம்
+  columns: நெடுவரிசைகள்
+  indexes: குறியீடுகள்
+  relationships: உறவுகள்
+  refresh: புதுப்பிக்கவும்
+  searchPlaceholder: தேடல் அட்டவணைகள்
+  searchAriaLabel: தேடல் அட்டவணைகள்
+  noResults: அட்டவணைகள் இல்லை
+
+th_TH:
+  title: สคีมา
+  columns: คอลัมน์
+  indexes: ดัชนี
+  relationships: ความสัมพันธ์
+  refresh: รีเฟรช
+  searchPlaceholder: ค้นหาตาราง
+  searchAriaLabel: ค้นหาตาราง
+  noResults: ไม่พบตาราง
+
+tr_TR:
+  title: Şema
+  columns: Sütunlar
+  indexes: Dizinler
+  relationships: İlişkiler
+  refresh: Yenile
+  searchPlaceholder: Tablolarda Ara
+  searchAriaLabel: Tablolarda Ara
+  noResults: Tablo bulunamadı
+
+uk_UA:
+  title: Схема
+  columns: Стовпці
+  indexes: Індекси
+  relationships: стосунки
+  refresh: Оновити
+  searchPlaceholder: Таблиці пошуку
+  searchAriaLabel: Таблиці пошуку
+  noResults: Столики не знайдено
+
+ur_PK:
+  title: سکیما
+  columns: کالم
+  indexes: اشاریہ جات
+  relationships: رشتے
+  refresh: ریفریش کریں۔
+  searchPlaceholder: میزیں تلاش کریں۔
+  searchAriaLabel: میزیں تلاش کریں۔
+  noResults: کوئی میزیں نہیں ملیں۔
+
+vi_VN:
+  title: Lược đồ
+  columns: Cột
+  indexes: Chỉ mục
+  relationships: Mối quan hệ
+  refresh: Làm cho khỏe lại
+  searchPlaceholder: Tìm kiếm bảng
+  searchAriaLabel: Tìm kiếm bảng
+  noResults: Không tìm thấy bảng nào

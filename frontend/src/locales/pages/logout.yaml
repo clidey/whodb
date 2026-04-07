@@ -123,3 +123,117 @@ zh_TW:
   loggingOut: 註銷
   success: 退出成功
   error: 登出時出錯
+
+bg_BG:
+  title: Изход
+  loggingOut: Излизане
+  success: Излязохте успешно
+  error: Грешка при излизане
+
+bn_BD:
+  title: লগআউট
+  loggingOut: লগ আউট
+  success: সফলভাবে লগ আউট হয়েছে
+  error: লগ আউট করার সময় ত্রুটি৷
+
+ca_ES:
+  title: Tanca la sessió
+  loggingOut: Tancament de sessió
+  success: S'ha tancat la sessió correctament
+  error: Error en tancar la sessió
+
+cs_CZ:
+  title: Odhlášení
+  loggingOut: Odhlášení
+  success: Úspěšně odhlášeno
+  error: Chyba při odhlašování
+
+da_DK:
+  title: Log ud
+  loggingOut: Logger ud
+  success: Logget ud
+  error: Fejl ved at logge ud
+
+fa_IR:
+  title: خروج از سیستم
+  loggingOut: خروج از سیستم
+  success: با موفقیت از سیستم خارج شد
+  error: خطا هنگام خروج
+
+hi_IN:
+  title: लॉग आउट
+  loggingOut: लॉग आउट करना
+  success: सफलतापूर्वक लॉग आउट हो गया
+  error: लॉग आउट करने में त्रुटि
+
+hr_HR:
+  title: Odjava
+  loggingOut: Odjava
+  success: Uspješno odjavljen
+  error: Greška pri odjavljivanju
+
+hu_HU:
+  title: Kijelentkezés
+  loggingOut: Kijelentkezés
+  success: Sikeresen kijelentkezett
+  error: Hiba a kijelentkezéskor
+
+id_ID:
+  title: Keluar
+  loggingOut: Keluar
+  success: Berhasil Keluar
+  error: Kesalahan saat keluar
+
+ms_MY:
+  title: Log keluar
+  loggingOut: Log Keluar
+  success: Berjaya Log Keluar
+  error: Ralat Log Keluar
+
+nb_NO:
+  title: Logg ut
+  loggingOut: Logger ut
+  success: Logget ut vellykket
+  error: Feil ved utlogging
+
+sw_KE:
+  title: Ondoka
+  loggingOut: Kuingia Nje
+  success: Umetoka nje kwa Mafanikio
+  error: Hitilafu katika Kuondoka
+
+ta_IN:
+  title: வெளியேறு
+  loggingOut: வெளியேறுகிறது
+  success: வெற்றிகரமாக வெளியேறியது
+  error: வெளியேறுவதில் பிழை
+
+th_TH:
+  title: ออกจากระบบ
+  loggingOut: ออกจากระบบ
+  success: ออกจากระบบเรียบร้อยแล้ว
+  error: เกิดข้อผิดพลาดในการออกจากระบบ
+
+tr_TR:
+  title: Oturumu kapat
+  loggingOut: Oturumu Kapatma
+  success: Başarıyla Oturum Kapatıldı
+  error: Oturum Kapatma Hatası
+
+uk_UA:
+  title: Вийти
+  loggingOut: Вихід із системи
+  success: Вийшов успішно
+  error: Помилка виходу
+
+ur_PK:
+  title: لاگ آؤٹ
+  loggingOut: لاگ آؤٹ ہو رہا ہے۔
+  success: کامیابی سے لاگ آؤٹ ہو گیا۔
+  error: لاگ آؤٹ کرنے میں خرابی۔
+
+vi_VN:
+  title: Đăng xuất
+  loggingOut: Đăng xuất
+  success: Đăng xuất thành công
+  error: Lỗi đăng xuất

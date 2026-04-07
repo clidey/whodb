@@ -186,3 +186,174 @@ zh_TW:
   noNodesTitle: 未選擇節點
   noNodesDescription: "選擇左側的 {storageUnit} 將它們加入圖表。"
   createButton: "創建{storageUnit}"
+
+bg_BG:
+  title: Графика
+  searchPlaceholder: Таблици за търсене
+  searchAriaLabel: Таблици за търсене
+  noItems: Няма артикули
+  noNodesTitle: Няма избрани възли
+  noNodesDescription: "Изберете {storageUnit} отляво, за да ги добавите към графиката."
+  createButton: "Създаване на {storageUnit}"
+
+bn_BD:
+  title: গ্রাফ
+  searchPlaceholder: অনুসন্ধান সারণী
+  searchAriaLabel: অনুসন্ধান সারণী
+  noItems: কোন আইটেম নেই
+  noNodesTitle: কোনো নোড নির্বাচন করা হয়নি
+  noNodesDescription: "তাদের গ্রাফে যুক্ত করতে বাম দিকে {storageUnit} নির্বাচন করুন।"
+  createButton: "তৈরি করুন {storageUnit}"
+
+ca_ES:
+  title: Gràfic
+  searchPlaceholder: Cerca taules
+  searchAriaLabel: Cerca taules
+  noItems: No hi ha articles
+  noNodesTitle: No s'han seleccionat cap node
+  noNodesDescription: "Seleccioneu {storageUnit} a l'esquerra per afegir-los al gràfic."
+  createButton: Crea [[0]]]
+
+cs_CZ:
+  title: Graf
+  searchPlaceholder: Hledat tabulky
+  searchAriaLabel: Hledat tabulky
+  noItems: Žádné položky
+  noNodesTitle: Nejsou vybrány žádné uzly
+  noNodesDescription: "Vyberte {storageUnit} na levé straně a přidejte je do grafu."
+  createButton: "Vytvořit {storageUnit}"
+
+da_DK:
+  title: Kurve
+  searchPlaceholder: Søg i tabeller
+  searchAriaLabel: Søg i tabeller
+  noItems: Ingen varer
+  noNodesTitle: Ingen noder valgt
+  noNodesDescription: "Vælg {storageUnit} til venstre for at tilføje dem til grafen."
+  createButton: "Opret {storageUnit}"
+
+fa_IR:
+  title: نمودار
+  searchPlaceholder: جداول جستجو
+  searchAriaLabel: جداول جستجو
+  noItems: هیچ موردی وجود ندارد
+  noNodesTitle: هیچ گرهی انتخاب نشد
+  noNodesDescription: "{storageUnit} را در سمت چپ انتخاب کنید تا آنها را به نمودار اضافه کنید."
+  createButton: "ایجاد {storageUnit}"
+
+hi_IN:
+  title: ग्राफ़
+  searchPlaceholder: तालिकाएँ खोजें
+  searchAriaLabel: तालिकाएँ खोजें
+  noItems: कोई आइटम नहीं
+  noNodesTitle: कोई नोड चयनित नहीं
+  noNodesDescription: "उन्हें ग्राफ़ में जोड़ने के लिए बाईं ओर {storageUnit} का चयन करें।"
+  createButton: "{storageUnit} बनाएं"
+
+hr_HR:
+  title: Grafikon
+  searchPlaceholder: Pretraži tablice
+  searchAriaLabel: Pretraži tablice
+  noItems: Nema predmeta
+  noNodesTitle: Nema odabranih čvorova
+  noNodesDescription: "Odaberite {storageUnit} s lijeve strane kako biste ih dodali na grafikon."
+  createButton: "Napravi {storageUnit}"
+
+hu_HU:
+  title: Grafikon
+  searchPlaceholder: Keresés a táblázatokban
+  searchAriaLabel: Keresés a táblázatokban
+  noItems: Nincsenek tételek
+  noNodesTitle: Nincsenek kiválasztva csomópontok
+  noNodesDescription: "Válassza a {storageUnit} lehetőséget a bal oldalon, hogy hozzáadja őket a diagramhoz."
+  createButton: "Létrehozása {storageUnit}"
+
+id_ID:
+  title: Grafik
+  searchPlaceholder: Tabel Pencarian
+  searchAriaLabel: Tabel Pencarian
+  noItems: Tidak ada Item
+  noNodesTitle: Tidak Ada Node yang Dipilih
+  noNodesDescription: "Pilih {storageUnit} di sebelah kiri untuk menambahkannya ke grafik."
+  createButton: "Buat {storageUnit}"
+
+ms_MY:
+  title: Graf
+  searchPlaceholder: Cari Jadual
+  searchAriaLabel: Cari Jadual
+  noItems: Tiada Item
+  noNodesTitle: Tiada Nod Dipilih
+  noNodesDescription: "Pilih {storageUnit} di sebelah kiri untuk menambahkannya pada graf."
+  createButton: "Buat {storageUnit}"
+
+nb_NO:
+  title: Kurve
+  searchPlaceholder: Søk i tabeller
+  searchAriaLabel: Søk i tabeller
+  noItems: Ingen varer
+  noNodesTitle: Ingen noder valgt
+  noNodesDescription: "Velg {storageUnit} til venstre for å legge dem til grafen."
+  createButton: "Opprett {storageUnit}"
+
+sw_KE:
+  title: Grafu
+  searchPlaceholder: Tafuta Majedwali
+  searchAriaLabel: Tafuta Majedwali
+  noItems: Hakuna Vipengee
+  noNodesTitle: Hakuna Nodi Zilizochaguliwa
+  noNodesDescription: "Chagua {storageUnit} upande wa kushoto ili kuziongeza kwenye grafu."
+  createButton: "Unda {storageUnit}"
+
+ta_IN:
+  title: வரைபடம்
+  searchPlaceholder: தேடல் அட்டவணைகள்
+  searchAriaLabel: தேடல் அட்டவணைகள்
+  noItems: பொருட்கள் இல்லை
+  noNodesTitle: முனைகள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை
+  noNodesDescription: "வரைபடத்தில் சேர்க்க இடதுபுறத்தில் உள்ள {storageUnit} ஐத் தேர்ந்தெடுக்கவும்."
+  createButton: "உருவாக்கவும் {storageUnit}"
+
+th_TH:
+  title: กราฟ
+  searchPlaceholder: ค้นหาตาราง
+  searchAriaLabel: ค้นหาตาราง
+  noItems: ไม่มีรายการ
+  noNodesTitle: ไม่ได้เลือกโหนด
+  noNodesDescription: "เลือก {storageUnit} ทางด้านซ้ายเพื่อเพิ่มลงในกราฟ"
+  createButton: "สร้าง {storageUnit}"
+
+tr_TR:
+  title: Grafik
+  searchPlaceholder: Tablolarda Ara
+  searchAriaLabel: Tablolarda Ara
+  noItems: Ürün Yok
+  noNodesTitle: Hiçbir Düğüm Seçilmedi
+  noNodesDescription: "Bunları grafiğe eklemek için soldaki {storageUnit} öğesini seçin."
+  createButton: "{storageUnit} oluştur"
+
+uk_UA:
+  title: Графік
+  searchPlaceholder: Таблиці пошуку
+  searchAriaLabel: Таблиці пошуку
+  noItems: Немає предметів
+  noNodesTitle: Вузли не вибрано
+  noNodesDescription: "Виберіть {storageUnit} ліворуч, щоб додати їх до графіка."
+  createButton: "Створити {storageUnit}"
+
+ur_PK:
+  title: گراف
+  searchPlaceholder: میزیں تلاش کریں۔
+  searchAriaLabel: میزیں تلاش کریں۔
+  noItems: کوئی آئٹمز نہیں۔
+  noNodesTitle: کوئی نوڈس منتخب نہیں کیا گیا۔
+  noNodesDescription: "انہیں گراف میں شامل کرنے کے لیے بائیں جانب {storageUnit} کو منتخب کریں۔"
+  createButton: "بنائیں {storageUnit}"
+
+vi_VN:
+  title: đồ thị
+  searchPlaceholder: Tìm kiếm bảng
+  searchAriaLabel: Tìm kiếm bảng
+  noItems: Không có mục nào
+  noNodesTitle: Không có nút nào được chọn
+  noNodesDescription: "Chọn {storageUnit} ở bên trái để thêm chúng vào biểu đồ."
+  createButton: "Tạo {storageUnit}"

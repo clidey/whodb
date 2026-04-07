@@ -858,3 +858,782 @@ zh_TW:
   import: 導入數據
   executeQuery: 執行查詢
   clearEditor: 清除編輯器/輸入
+
+bg_BG:
+  title: Клавишни комбинации
+  shortcuts: Преки пътища
+  hint: натиснете ? за отваряне
+  categoryGlobal: Глобален
+  categoryNavigation: Навигация
+  categoryTableNavigation: Навигация в таблица
+  categoryTableSelection: Избор на таблица
+  categoryTableActions: Действия на таблицата
+  categoryEditor: Редактор на заявки
+  showShortcuts: Показване на клавишни комбинации
+  commandPalette: Отворете командната палитра
+  closeDialogs: Затваряне на диалогови прозорци/листове
+  toggleSidebar: Превключване на страничната лента
+  navFirst: Отидете на първия изглед (чат или таблици)
+  navSecond: Отидете на втори изглед
+  navThird: Отидете на трети изглед
+  navFourth: Отидете на четвъртия изглед (ако е наличен)
+  moveDown: Преминете към следващия ред
+  moveUp: Преминаване към предишния ред
+  moveFirst: Преминете към първия ред
+  moveLast: Преминаване към последния ред
+  pageDown: Скочете надолу от видимите редове
+  pageUp: Скочете нагоре от видимите редове
+  nextPage: Отидете на следващата страница
+  prevPage: Отидете на предишната страница
+  toggleSelect: Превключване на избора на ред
+  extendSelectDown: Разширете селекцията надолу
+  extendSelectUp: Разширете селекцията нагоре
+  selectAll: Изберете/отменете избора на всички редове
+  editRow: Редактиране на фокусирания ред
+  deleteRow: Изтриване на фокусирания ред
+  deleteRowAlt: Изтриване на фокусирания ред
+  editRowAlt: Редактиране на фокусирания ред
+  mockData: Генерирайте фиктивни данни
+  refresh: Обновяване на таблицата
+  export: Експортиране на данни
+  import: Импортиране на данни
+  executeQuery: Изпълнение на заявка
+  clearEditor: Изчистване на редактора/въведеното
+
+bn_BD:
+  title: কীবোর্ড শর্টকাট
+  shortcuts: শর্টকাট
+  hint: চাপুন? খুলতে
+  categoryGlobal: গ্লোবাল
+  categoryNavigation: নেভিগেশন
+  categoryTableNavigation: টেবিল নেভিগেশন
+  categoryTableSelection: টেবিল নির্বাচন
+  categoryTableActions: সারণী কর্ম
+  categoryEditor: প্রশ্ন সম্পাদক
+  showShortcuts: কীবোর্ড শর্টকাট দেখান
+  commandPalette: কমান্ড প্যালেট খুলুন
+  closeDialogs: ডায়ালগ/শীট বন্ধ করুন
+  toggleSidebar: সাইডবার টগল করুন
+  navFirst: প্রথম দর্শনে যান (চ্যাট বা টেবিল)
+  navSecond: দ্বিতীয় দৃশ্যে যান
+  navThird: তৃতীয় দৃশ্যে যান
+  navFourth: চতুর্থ ভিউতে যান (যদি পাওয়া যায়)
+  moveDown: পরবর্তী সারিতে যান
+  moveUp: আগের সারিতে যান
+  moveFirst: প্রথম সারিতে যান
+  moveLast: শেষ সারিতে যান
+  pageDown: দৃশ্যমান সারি দ্বারা নিচে লাফ
+  pageUp: দৃশ্যমান সারি দ্বারা লাফ
+  nextPage: পরবর্তী পৃষ্ঠায় যান
+  prevPage: আগের পৃষ্ঠায় যান
+  toggleSelect: সারি নির্বাচন টগল করুন
+  extendSelectDown: নির্বাচন নিচে প্রসারিত করুন
+  extendSelectUp: নির্বাচন আপ প্রসারিত
+  selectAll: সমস্ত সারি নির্বাচন/নির্বাচন করুন
+  editRow: ফোকাসড সারি সম্পাদনা করুন
+  deleteRow: ফোকাস করা সারি মুছুন
+  deleteRowAlt: ফোকাস করা সারি মুছুন
+  editRowAlt: ফোকাসড সারি সম্পাদনা করুন
+  mockData: মক ডেটা জেনারেট করুন
+  refresh: টেবিল রিফ্রেশ করুন
+  export: ডেটা রপ্তানি করুন
+  import: ডেটা আমদানি করুন
+  executeQuery: ক্যোয়ারী চালান
+  clearEditor: সম্পাদক/ইনপুট সাফ করুন
+
+ca_ES:
+  title: Keyboard Shortcuts
+  shortcuts: Dreceres
+  hint: Press ? to open
+  categoryGlobal: Global
+  categoryNavigation: Navigation
+  categoryTableNavigation: Table Navigation
+  categoryTableSelection: Table Selection
+  categoryTableActions: Table Actions
+  categoryEditor: Query Editor
+  showShortcuts: Show keyboard shortcuts
+  commandPalette: Obre la paleta d'ordres
+  closeDialogs: Tanca els diàlegs/fulls
+  toggleSidebar: Toggle sidebar
+  navFirst: Go to first view (Chat or Tables)
+  navSecond: Go to second view
+  navThird: Go to third view
+  navFourth: Vés a la quarta vista (si està disponible)
+  moveDown: Move to next row
+  moveUp: Move to previous row
+  moveFirst: Move to first row
+  moveLast: Mou a l'última fila
+  pageDown: Salta cap avall per files visibles
+  pageUp: Salta per files visibles
+  nextPage: Aneu a la pàgina següent
+  prevPage: Go to previous page
+  toggleSelect: Canvia la selecció de fila
+  extendSelectDown: Amplieu la selecció cap avall
+  extendSelectUp: Amplieu la selecció
+  selectAll: Seleccioneu/desseleccioneu totes les files
+  editRow: Edita la fila enfocada
+  deleteRow: Delete focused row
+  deleteRowAlt: Delete focused row
+  editRowAlt: Edita la fila enfocada
+  mockData: Generar dades simulades
+  refresh: Refresh table
+  export: Exportar dades
+  import: Import data
+  executeQuery: Execute query
+  clearEditor: Clear editor/input
+
+cs_CZ:
+  title: Klávesové zkratky
+  shortcuts: Zkratky
+  hint: Stiskněte tlačítko ? otevřít
+  categoryGlobal: Globální
+  categoryNavigation: Navigace
+  categoryTableNavigation: Navigace v tabulce
+  categoryTableSelection: Výběr stolu
+  categoryTableActions: Akce tabulky
+  categoryEditor: Editor dotazů
+  showShortcuts: Zobrazit klávesové zkratky
+  commandPalette: Otevřete paletu příkazů
+  closeDialogs: Zavřete dialogy/listy
+  toggleSidebar: Přepnout postranní panel
+  navFirst: Přejít na první zobrazení (chat nebo tabulky)
+  navSecond: Přejít na druhý pohled
+  navThird: Přejít na třetí pohled
+  navFourth: Přejít na čtvrté zobrazení (pokud je k dispozici)
+  moveDown: Přejít na další řádek
+  moveUp: Přejít na předchozí řádek
+  moveFirst: Přejděte na první řádek
+  moveLast: Přejít na poslední řádek
+  pageDown: Skok dolů po viditelných řádcích
+  pageUp: Skok nahoru po viditelných řádcích
+  nextPage: Přejít na další stránku
+  prevPage: Přejít na předchozí stránku
+  toggleSelect: Přepnout výběr řádku
+  extendSelectDown: Rozšířit výběr dolů
+  extendSelectUp: Rozšířit výběr nahoru
+  selectAll: Vybrat/zrušit výběr všech řádků
+  editRow: Upravit zaměřený řádek
+  deleteRow: Smazat vybraný řádek
+  deleteRowAlt: Smazat vybraný řádek
+  editRowAlt: Upravit zaměřený řádek
+  mockData: Generovat falešná data
+  refresh: Obnovit tabulku
+  export: Export dat
+  import: Importujte data
+  executeQuery: Provést dotaz
+  clearEditor: Vymazat editor/vstup
+
+da_DK:
+  title: Tastaturgenveje
+  shortcuts: Genveje
+  hint: Tryk på ? at åbne
+  categoryGlobal: Global
+  categoryNavigation: Navigation
+  categoryTableNavigation: Tabelnavigation
+  categoryTableSelection: Udvalg af bord
+  categoryTableActions: Tabel handlinger
+  categoryEditor: Forespørgselseditor
+  showShortcuts: Vis tastaturgenveje
+  commandPalette: Åbn kommandopaletten
+  closeDialogs: Luk dialoger/ark
+  toggleSidebar: Skift sidebjælke
+  navFirst: Gå til første visning (chat eller tabeller)
+  navSecond: Gå til anden visning
+  navThird: Gå til tredje visning
+  navFourth: Gå til fjerde visning (hvis tilgængelig)
+  moveDown: Flyt til næste række
+  moveUp: Flyt til forrige række
+  moveFirst: Flyt til første række
+  moveLast: Flyt til sidste række
+  pageDown: Hop ned efter synlige rækker
+  pageUp: Hop op ad synlige rækker
+  nextPage: Gå til næste side
+  prevPage: Gå til forrige side
+  toggleSelect: Skift rækkevalg
+  extendSelectDown: Udvid valget ned
+  extendSelectUp: Udvid udvalget op
+  selectAll: Vælg/fravælg alle rækker
+  editRow: Rediger fokuseret række
+  deleteRow: Slet fokuseret række
+  deleteRowAlt: Slet fokuseret række
+  editRowAlt: Rediger fokuseret række
+  mockData: Generer mock data
+  refresh: Opdater tabellen
+  export: Eksporter data
+  import: Importer data
+  executeQuery: Udfør forespørgsel
+  clearEditor: Ryd editor/input
+
+fa_IR:
+  title: میانبرهای صفحه کلید
+  shortcuts: میانبرها
+  hint: فشار دهید؟ برای باز کردن
+  categoryGlobal: جهانی
+  categoryNavigation: ناوبری
+  categoryTableNavigation: ناوبری جدول
+  categoryTableSelection: انتخاب جدول
+  categoryTableActions: اقدامات جدول
+  categoryEditor: ویرایشگر پرس و جو
+  showShortcuts: نمایش میانبرهای صفحه کلید
+  commandPalette: پالت فرمان را باز کنید
+  closeDialogs: پنجره ها/صفحه ها را ببندید
+  toggleSidebar: نوار کناری را تغییر دهید
+  navFirst: رفتن به نمای اول (چت یا جداول)
+  navSecond: به نمای دوم بروید
+  navThird: به نمای سوم بروید
+  navFourth: رفتن به نمای چهارم (در صورت موجود بودن)
+  moveDown: به ردیف بعدی بروید
+  moveUp: به ردیف قبلی بروید
+  moveFirst: به ردیف اول حرکت کنید
+  moveLast: به ردیف آخر بروید
+  pageDown: پرش به پایین توسط ردیف های قابل مشاهده
+  pageUp: پرش به بالا توسط ردیف های قابل مشاهده
+  nextPage: به صفحه بعد بروید
+  prevPage: برو به صفحه قبل
+  toggleSelect: انتخاب ردیف را تغییر دهید
+  extendSelectDown: گسترش انتخاب به پایین
+  extendSelectUp: گسترش انتخاب به بالا
+  selectAll: همه سطرها را انتخاب/لغو انتخاب کنید
+  editRow: ویرایش ردیف متمرکز
+  deleteRow: حذف ردیف متمرکز
+  deleteRowAlt: حذف ردیف متمرکز
+  editRowAlt: ویرایش ردیف متمرکز
+  mockData: داده های ساختگی تولید کنید
+  refresh: تازه کردن جدول
+  export: صادرات داده ها
+  import: داده ها را وارد کنید
+  executeQuery: پرس و جو را اجرا کنید
+  clearEditor: ویرایشگر/ورودی را پاک کنید
+
+hi_IN:
+  title: कुंजीपटल अल्प मार्ग
+  shortcuts: शॉर्टकट
+  hint: प्रेस ? को खोलने के लिए
+  categoryGlobal: वैश्विक
+  categoryNavigation: मार्गदर्शन
+  categoryTableNavigation: टेबल नेविगेशन
+  categoryTableSelection: तालिका चयन
+  categoryTableActions: तालिका क्रियाएँ
+  categoryEditor: प्रश्न संपादक
+  showShortcuts: कुंजीपटल शॉर्टकट दिखाएँ
+  commandPalette: कमांड पैलेट खोलें
+  closeDialogs: संवाद/पत्रक बंद करें
+  toggleSidebar: साइडबार टॉगल करें
+  navFirst: पहले दृश्य पर जाएँ (चैट या टेबल्स)
+  navSecond: दूसरे दृश्य पर जाएँ
+  navThird: तीसरे दृश्य पर जाएँ
+  navFourth: चौथे दृश्य पर जाएँ (यदि उपलब्ध हो)
+  moveDown: अगली पंक्ति में जाएँ
+  moveUp: पिछली पंक्ति में जाएँ
+  moveFirst: पहली पंक्ति में जाएँ
+  moveLast: अंतिम पंक्ति पर जाएँ
+  pageDown: दृश्यमान पंक्तियों से नीचे कूदें
+  pageUp: दृश्यमान पंक्तियों द्वारा ऊपर कूदें
+  nextPage: अगले पृष्ठ पर जाएँ
+  prevPage: पिछले पृष्ठ पर जाएं
+  toggleSelect: पंक्ति चयन टॉगल करें
+  extendSelectDown: चयन को नीचे बढ़ाएँ
+  extendSelectUp: चयन को ऊपर बढ़ाएँ
+  selectAll: सभी पंक्तियों का चयन/चयन रद्द करें
+  editRow: केंद्रित पंक्ति संपादित करें
+  deleteRow: फ़ोकस की गई पंक्ति हटाएँ
+  deleteRowAlt: फ़ोकस की गई पंक्ति हटाएँ
+  editRowAlt: केंद्रित पंक्ति संपादित करें
+  mockData: नकली डेटा जनरेट करें
+  refresh: तालिका ताज़ा करें
+  export: डेटा निर्यात करें
+  import: डेटा आयात करें
+  executeQuery: क्वेरी को निष्पादित करें
+  clearEditor: संपादक/इनपुट साफ़ करें
+
+hr_HR:
+  title: Tipkovnički prečaci
+  shortcuts: Prečaci
+  hint: Pritisnite ? otvoriti
+  categoryGlobal: Globalno
+  categoryNavigation: Navigacija
+  categoryTableNavigation: Navigacija tablicom
+  categoryTableSelection: Odabir tablice
+  categoryTableActions: Radnje tablice
+  categoryEditor: Uređivač upita
+  showShortcuts: Prikaži tipkovničke prečace
+  commandPalette: Otvorite paletu naredbi
+  closeDialogs: Zatvori dijaloge/listove
+  toggleSidebar: Uključi/isključi bočnu traku
+  navFirst: Idi na prvi prikaz (Chat ili Stolovi)
+  navSecond: Idi na drugi pogled
+  navThird: Idi na treći pogled
+  navFourth: Idi na četvrti prikaz (ako je dostupan)
+  moveDown: Prijeđi na sljedeći red
+  moveUp: Prelazak na prethodni red
+  moveFirst: Prijeđi u prvi red
+  moveLast: Prijeđi na zadnji red
+  pageDown: Skočite dolje za vidljive redove
+  pageUp: Skočite gore za vidljive redove
+  nextPage: Idi na sljedeću stranicu
+  prevPage: Idi na prethodnu stranicu
+  toggleSelect: Uključi/isključi odabir retka
+  extendSelectDown: Proširi odabir prema dolje
+  extendSelectUp: Proširi odabir prema gore
+  selectAll: Odaberite/poništite odabir svih redaka
+  editRow: Uredi fokusirani redak
+  deleteRow: Izbriši fokusirani redak
+  deleteRowAlt: Izbriši fokusirani red
+  editRowAlt: Uredi fokusirani redak
+  mockData: Generirajte lažne podatke
+  refresh: Osvježi tablicu
+  export: Izvoz podataka
+  import: Uvoz podataka
+  executeQuery: Izvrši upit
+  clearEditor: Očisti uređivač/unos
+
+hu_HU:
+  title: Billentyűparancsok
+  shortcuts: Parancsikonok
+  hint: Nyomja meg a ? kinyitni
+  categoryGlobal: Globális
+  categoryNavigation: Navigáció
+  categoryTableNavigation: Táblázat navigáció
+  categoryTableSelection: Táblázat kiválasztása
+  categoryTableActions: Táblázat műveletek
+  categoryEditor: Lekérdezésszerkesztő
+  showShortcuts: Billentyűparancsok megjelenítése
+  commandPalette: Nyissa meg a parancspalettát
+  closeDialogs: Zárja be a párbeszédpaneleket/lapokat
+  toggleSidebar: Oldalsáv váltása
+  navFirst: Ugrás az első nézetre (csevegés vagy asztalok)
+  navSecond: Ugrás a második nézethez
+  navThird: Ugrás a harmadik nézetre
+  navFourth: Ugrás a negyedik nézetre (ha elérhető)
+  moveDown: Ugrás a következő sorra
+  moveUp: Ugrás az előző sorra
+  moveFirst: Ugrás az első sorba
+  moveLast: Ugrás az utolsó sorra
+  pageDown: Ugrás lefelé a látható sorokkal
+  pageUp: Ugrás felfelé a látható sorokkal
+  nextPage: Ugrás a következő oldalra
+  prevPage: Ugrás az előző oldalra
+  toggleSelect: Sorválasztás váltása
+  extendSelectDown: A kijelölés kiterjesztése lefelé
+  extendSelectUp: A választék kiterjesztése
+  selectAll: Minden sor kijelölése/kijelölésének törlése
+  editRow: Fókuszált sor szerkesztése
+  deleteRow: Fókuszált sor törlése
+  deleteRowAlt: Fókuszált sor törlése
+  editRowAlt: Fókuszált sor szerkesztése
+  mockData: Hamis adatok generálása
+  refresh: Táblázat frissítése
+  export: Adatok exportálása
+  import: Adatok importálása
+  executeQuery: Lekérdezés végrehajtása
+  clearEditor: Szerkesztő/bevitel törlése
+
+id_ID:
+  title: Pintasan Papan Ketik
+  shortcuts: Jalan pintas
+  hint: Tekan ? untuk membuka
+  categoryGlobal: Global
+  categoryNavigation: Navigasi
+  categoryTableNavigation: Navigasi Tabel
+  categoryTableSelection: Pemilihan Meja
+  categoryTableActions: Tindakan Tabel
+  categoryEditor: Editor Kueri
+  showShortcuts: Tampilkan pintasan keyboard
+  commandPalette: Buka palet perintah
+  closeDialogs: Tutup dialog/lembar
+  toggleSidebar: Alihkan bilah sisi
+  navFirst: Pergi ke tampilan pertama (Obrolan atau Tabel)
+  navSecond: Pergi ke tampilan kedua
+  navThird: Pergi ke tampilan ketiga
+  navFourth: Pergi ke tampilan keempat (jika tersedia)
+  moveDown: Pindah ke baris berikutnya
+  moveUp: Pindah ke baris sebelumnya
+  moveFirst: Pindah ke baris pertama
+  moveLast: Pindah ke baris terakhir
+  pageDown: Lompat ke bawah menurut baris yang terlihat
+  pageUp: Lompat ke baris yang terlihat
+  nextPage: Buka halaman berikutnya
+  prevPage: Buka halaman sebelumnya
+  toggleSelect: Alihkan pilihan baris
+  extendSelectDown: Perluas pilihan ke bawah
+  extendSelectUp: Perluas pilihan ke atas
+  selectAll: Pilih/batalkan pilihan semua baris
+  editRow: Edit baris terfokus
+  deleteRow: Hapus baris fokus
+  deleteRowAlt: Hapus baris fokus
+  editRowAlt: Edit baris terfokus
+  mockData: Hasilkan data tiruan
+  refresh: Segarkan tabel
+  export: Ekspor data
+  import: Impor data
+  executeQuery: Jalankan kueri
+  clearEditor: Hapus editor/masukan
+
+ms_MY:
+  title: Pintasan Papan Kekunci
+  shortcuts: Jalan pintas
+  hint: Tekan ? untuk membuka
+  categoryGlobal: Global
+  categoryNavigation: Navigasi
+  categoryTableNavigation: Navigasi Jadual
+  categoryTableSelection: Pemilihan Jadual
+  categoryTableActions: Tindakan Jadual
+  categoryEditor: Editor Pertanyaan
+  showShortcuts: Tunjukkan pintasan papan kekunci
+  commandPalette: Buka palet arahan
+  closeDialogs: Tutup dialog/helaian
+  toggleSidebar: Togol bar sisi
+  navFirst: Pergi ke paparan pertama (Sembang atau Jadual)
+  navSecond: Pergi ke paparan kedua
+  navThird: Pergi ke paparan ketiga
+  navFourth: Pergi ke paparan keempat (jika ada)
+  moveDown: Beralih ke baris seterusnya
+  moveUp: Beralih ke baris sebelumnya
+  moveFirst: Beralih ke baris pertama
+  moveLast: Beralih ke baris terakhir
+  pageDown: Lompat ke bawah mengikut baris yang kelihatan
+  pageUp: Lompat ke atas mengikut baris yang kelihatan
+  nextPage: Pergi ke halaman seterusnya
+  prevPage: Pergi ke halaman sebelumnya
+  toggleSelect: Togol pemilihan baris
+  extendSelectDown: Panjangkan pilihan ke bawah
+  extendSelectUp: Panjangkan pemilihan ke atas
+  selectAll: Pilih/nyahpilih semua baris
+  editRow: Edit baris fokus
+  deleteRow: Padamkan baris fokus
+  deleteRowAlt: Padamkan baris fokus
+  editRowAlt: Edit baris fokus
+  mockData: Hasilkan data olok-olok
+  refresh: Muat semula jadual
+  export: Eksport data
+  import: Import data
+  executeQuery: Laksanakan pertanyaan
+  clearEditor: Kosongkan editor/input
+
+nb_NO:
+  title: Tastatursnarveier
+  shortcuts: Snarveier
+  hint: Trykk på ? å åpne
+  categoryGlobal: Global
+  categoryNavigation: Navigasjon
+  categoryTableNavigation: Tabellnavigering
+  categoryTableSelection: Utvalg av tabell
+  categoryTableActions: Tabellhandlinger
+  categoryEditor: Spørringsredaktør
+  showShortcuts: Vis hurtigtaster
+  commandPalette: Åpne kommandopaletten
+  closeDialogs: Lukk dialoger/ark
+  toggleSidebar: Bytt sidefelt
+  navFirst: Gå til første visning (chat eller tabeller)
+  navSecond: Gå til andre visning
+  navThird: Gå til tredje visning
+  navFourth: Gå til fjerde visning (hvis tilgjengelig)
+  moveDown: Flytt til neste rad
+  moveUp: Flytt til forrige rad
+  moveFirst: Flytt til første rad
+  moveLast: Flytt til siste rad
+  pageDown: Hopp ned etter synlige rader
+  pageUp: Hopp opp etter synlige rader
+  nextPage: Gå til neste side
+  prevPage: Gå til forrige side
+  toggleSelect: Bytt radvalg
+  extendSelectDown: Utvid utvalget nedover
+  extendSelectUp: Utvid utvalget opp
+  selectAll: Velg/fravelg alle rader
+  editRow: Rediger fokusert rad
+  deleteRow: Slett fokusert rad
+  deleteRowAlt: Slett fokusert rad
+  editRowAlt: Rediger fokusert rad
+  mockData: Generer falske data
+  refresh: Oppdater tabellen
+  export: Eksporter data
+  import: Importer data
+  executeQuery: Utfør spørringen
+  clearEditor: Slett editor/inndata
+
+sw_KE:
+  title: Njia za mkato za Kibodi
+  shortcuts: Njia za mkato
+  hint: Bonyeza? kufungua
+  categoryGlobal: Ulimwenguni
+  categoryNavigation: Urambazaji
+  categoryTableNavigation: Urambazaji wa Jedwali
+  categoryTableSelection: Uteuzi wa Jedwali
+  categoryTableActions: Vitendo vya Jedwali
+  categoryEditor: Mhariri wa Maswali
+  showShortcuts: Onyesha njia za mkato za kibodi
+  commandPalette: Fungua palette ya amri
+  closeDialogs: Funga mazungumzo/laha
+  toggleSidebar: Geuza utepe
+  navFirst: Nenda kwenye mwonekano wa kwanza (Sogoa au Majedwali)
+  navSecond: Nenda kwa mtazamo wa pili
+  navThird: Nenda kwa mtazamo wa tatu
+  navFourth: Nenda kwa mwonekano wa nne (ikiwa unapatikana)
+  moveDown: Nenda kwenye safu mlalo inayofuata
+  moveUp: Nenda kwenye safu mlalo iliyotangulia
+  moveFirst: Nenda kwenye safu mlalo ya kwanza
+  moveLast: Sogeza hadi safu mlalo ya mwisho
+  pageDown: Rukia chini kwa safu mlalo zinazoonekana
+  pageUp: Rukia juu kwa safu mlalo zinazoonekana
+  nextPage: Nenda kwenye ukurasa unaofuata
+  prevPage: Nenda kwenye ukurasa uliopita
+  toggleSelect: Geuza uteuzi wa safu mlalo
+  extendSelectDown: Panua uteuzi chini
+  extendSelectUp: Ongeza uteuzi
+  selectAll: Chagua/acha kuchagua safu mlalo zote
+  editRow: Badilisha safu iliyolengwa
+  deleteRow: Futa safu mlalo iliyolengwa
+  deleteRowAlt: Futa safu mlalo iliyolengwa
+  editRowAlt: Badilisha safu iliyolengwa
+  mockData: Tengeneza data ya kejeli
+  refresh: Onyesha upya jedwali
+  export: Hamisha data
+  import: Ingiza data
+  executeQuery: Tekeleza swali
+  clearEditor: Futa kihariri/ingizo
+
+ta_IN:
+  title: விசைப்பலகை குறுக்குவழிகள்
+  shortcuts: குறுக்குவழிகள்
+  hint: அழுத்தவா ? திறக்க
+  categoryGlobal: உலகளாவிய
+  categoryNavigation: வழிசெலுத்தல்
+  categoryTableNavigation: அட்டவணை வழிசெலுத்தல்
+  categoryTableSelection: அட்டவணை தேர்வு
+  categoryTableActions: அட்டவணை நடவடிக்கைகள்
+  categoryEditor: வினவல் ஆசிரியர்
+  showShortcuts: விசைப்பலகை குறுக்குவழிகளைக் காட்டு
+  commandPalette: கட்டளை தட்டு திறக்கவும்
+  closeDialogs: உரையாடல்கள்/தாள்களை மூடு
+  toggleSidebar: பக்கப்பட்டியை நிலைமாற்று
+  navFirst: முதல் பார்வைக்குச் செல்லவும் (அரட்டை அல்லது அட்டவணைகள்)
+  navSecond: இரண்டாவது பார்வைக்குச் செல்லவும்
+  navThird: மூன்றாவது பார்வைக்குச் செல்லவும்
+  navFourth: நான்காவது பார்வைக்குச் செல்லவும் (கிடைத்தால்)
+  moveDown: அடுத்த வரிசைக்குச் செல்லவும்
+  moveUp: முந்தைய வரிசைக்கு நகர்த்தவும்
+  moveFirst: முதல் வரிசைக்கு நகர்த்தவும்
+  moveLast: கடைசி வரிசைக்கு நகர்த்தவும்
+  pageDown: தெரியும் வரிசைகள் மூலம் கீழே செல்லவும்
+  pageUp: தெரியும் வரிசைகள் மூலம் மேலே செல்லவும்
+  nextPage: அடுத்த பக்கத்திற்குச் செல்லவும்
+  prevPage: முந்தைய பக்கத்திற்குச் செல்லவும்
+  toggleSelect: வரிசை தேர்வை நிலைமாற்று
+  extendSelectDown: தேர்வை கீழே நீட்டிக்கவும்
+  extendSelectUp: தேர்வை நீட்டிக்கவும்
+  selectAll: அனைத்து வரிசைகளையும் தேர்ந்தெடு/தேர்வுநீக்கு
+  editRow: கவனம் செலுத்திய வரிசையைத் திருத்தவும்
+  deleteRow: கவனம் செலுத்திய வரிசையை நீக்கு
+  deleteRowAlt: கவனம் செலுத்திய வரிசையை நீக்கு
+  editRowAlt: கவனம் செலுத்திய வரிசையைத் திருத்தவும்
+  mockData: போலி தரவை உருவாக்கவும்
+  refresh: அட்டவணையைப் புதுப்பிக்கவும்
+  export: தரவு ஏற்றுமதி
+  import: தரவை இறக்குமதி செய்யவும்
+  executeQuery: வினவலை இயக்கவும்
+  clearEditor: எடிட்டர்/உள்ளீட்டை அழிக்கவும்
+
+th_TH:
+  title: แป้นพิมพ์ลัด
+  shortcuts: ทางลัด
+  hint: กด ? เพื่อเปิด
+  categoryGlobal: ทั่วโลก
+  categoryNavigation: การนำทาง
+  categoryTableNavigation: การนำทางตาราง
+  categoryTableSelection: การเลือกตาราง
+  categoryTableActions: การกระทำของตาราง
+  categoryEditor: ตัวแก้ไขแบบสอบถาม
+  showShortcuts: แสดงแป้นพิมพ์ลัด
+  commandPalette: เปิดชุดคำสั่ง
+  closeDialogs: ปิดกล่องโต้ตอบ/ชีต
+  toggleSidebar: สลับแถบด้านข้าง
+  navFirst: ไปที่มุมมองแรก (แชทหรือตาราง)
+  navSecond: ไปที่มุมมองที่สอง
+  navThird: ไปที่มุมมองที่สาม
+  navFourth: ไปที่มุมมองที่สี่ (ถ้ามี)
+  moveDown: ย้ายไปที่แถวถัดไป
+  moveUp: ย้ายไปยังแถวก่อนหน้า
+  moveFirst: ย้ายไปแถวแรก
+  moveLast: ย้ายไปที่แถวสุดท้าย
+  pageDown: กระโดดลงตามแถวที่มองเห็นได้
+  pageUp: กระโดดขึ้นไปตามแถวที่มองเห็นได้
+  nextPage: ไปที่หน้าถัดไป
+  prevPage: ไปที่หน้าก่อนหน้า
+  toggleSelect: สลับการเลือกแถว
+  extendSelectDown: ขยายการเลือกลง
+  extendSelectUp: ขยายการเลือกขึ้น
+  selectAll: เลือก/ยกเลิกการเลือกแถวทั้งหมด
+  editRow: แก้ไขแถวที่โฟกัส
+  deleteRow: ลบแถวที่โฟกัส
+  deleteRowAlt: ลบแถวที่โฟกัส
+  editRowAlt: แก้ไขแถวที่โฟกัส
+  mockData: สร้างข้อมูลจำลอง
+  refresh: รีเฟรชตาราง
+  export: ส่งออกข้อมูล
+  import: นำเข้าข้อมูล
+  executeQuery: ดำเนินการสอบถาม
+  clearEditor: ล้างตัวแก้ไข/อินพุต
+
+tr_TR:
+  title: Klavye Kısayolları
+  shortcuts: Kısayollar
+  hint: Basmak ? açmak
+  categoryGlobal: Küresel
+  categoryNavigation: Navigasyon
+  categoryTableNavigation: Tabloda Gezinme
+  categoryTableSelection: Tablo Seçimi
+  categoryTableActions: Tablo Eylemleri
+  categoryEditor: Sorgu Düzenleyici
+  showShortcuts: Klavye kısayollarını göster
+  commandPalette: Komut paletini aç
+  closeDialogs: Diyalogları/sayfaları kapat
+  toggleSidebar: Kenar çubuğunu aç/kapat
+  navFirst: İlk görünüme git (Sohbet veya Tablolar)
+  navSecond: İkinci görünüme git
+  navThird: Üçüncü görünüme git
+  navFourth: Dördüncü görünüme git (varsa)
+  moveDown: Sonraki satıra git
+  moveUp: Önceki satıra git
+  moveFirst: İlk satıra git
+  moveLast: Son satıra git
+  pageDown: Görünür satırlara göre aşağı atla
+  pageUp: Görünür satırlara göre yukarı atla
+  nextPage: Sonraki sayfaya git
+  prevPage: Önceki sayfaya git
+  toggleSelect: Satır seçimini değiştir
+  extendSelectDown: Seçimi aşağı doğru genişlet
+  extendSelectUp: Seçimi yukarı genişlet
+  selectAll: Tüm satırları seç/seçimini kaldır
+  editRow: Odaklanılan satırı düzenleyin
+  deleteRow: Odaklanılan satırı sil
+  deleteRowAlt: Odaklanılan satırı sil
+  editRowAlt: Odaklanılan satırı düzenleyin
+  mockData: Sahte veriler oluştur
+  refresh: Tabloyu yenile
+  export: Verileri dışa aktar
+  import: Verileri içe aktar
+  executeQuery: Sorguyu yürüt
+  clearEditor: Düzenleyiciyi/girdiyi temizle
+
+uk_UA:
+  title: Комбінації клавіш
+  shortcuts: Ярлики
+  hint: Натисніть ? щоб відкрити
+  categoryGlobal: Глобальний
+  categoryNavigation: Навігація
+  categoryTableNavigation: Навігація по таблиці
+  categoryTableSelection: Вибір таблиці
+  categoryTableActions: Дії таблиці
+  categoryEditor: Редактор запитів
+  showShortcuts: Показати комбінації клавіш
+  commandPalette: Відкрити панель команд
+  closeDialogs: Закрити діалоги/аркуші
+  toggleSidebar: Перемкнути бічну панель
+  navFirst: Перейти до першого перегляду (чат або таблиці)
+  navSecond: Перейти до другого перегляду
+  navThird: Перейти до третього перегляду
+  navFourth: Перейти до четвертого перегляду (якщо доступно)
+  moveDown: Перейти до наступного рядка
+  moveUp: Перейти до попереднього рядка
+  moveFirst: Перейти до першого ряду
+  moveLast: Перейти до останнього рядка
+  pageDown: Стрибайте вниз за видимі ряди
+  pageUp: Стрибайте вгору за видимі ряди
+  nextPage: Перейти до наступної сторінки
+  prevPage: Перейти на попередню сторінку
+  toggleSelect: Перемкнути вибір рядка
+  extendSelectDown: Розширити виділення вниз
+  extendSelectUp: Розширити виділення вгору
+  selectAll: Виберіть/скасуйте вибір усіх рядків
+  editRow: Редагувати виділений рядок
+  deleteRow: Видалити виділений рядок
+  deleteRowAlt: Видалити виділений рядок
+  editRowAlt: Редагувати виділений рядок
+  mockData: Створити макет даних
+  refresh: Оновити таблицю
+  export: Експорт даних
+  import: Імпорт даних
+  executeQuery: Виконати запит
+  clearEditor: Очистити редактор/введення
+
+ur_PK:
+  title: کی بورڈ شارٹ کٹس
+  shortcuts: شارٹ کٹس
+  hint: دبائیں؟ کھولنے کے لیے
+  categoryGlobal: عالمی
+  categoryNavigation: نیویگیشن
+  categoryTableNavigation: ٹیبل نیویگیشن
+  categoryTableSelection: ٹیبل کا انتخاب
+  categoryTableActions: ٹیبل ایکشنز
+  categoryEditor: سوال ایڈیٹر
+  showShortcuts: کی بورڈ شارٹ کٹ دکھائیں۔
+  commandPalette: کمانڈ پیلیٹ کھولیں۔
+  closeDialogs: ڈائیلاگ/شیٹس بند کریں۔
+  toggleSidebar: سائڈبار کو ٹوگل کریں۔
+  navFirst: پہلے منظر پر جائیں (چیٹ یا میزیں)
+  navSecond: دوسرے منظر پر جائیں۔
+  navThird: تیسرے نقطہ نظر پر جائیں۔
+  navFourth: چوتھے منظر پر جائیں (اگر دستیاب ہو)
+  moveDown: اگلی قطار میں جائیں۔
+  moveUp: پچھلی قطار میں جائیں۔
+  moveFirst: پہلی قطار میں جائیں۔
+  moveLast: آخری قطار میں جائیں۔
+  pageDown: دکھائی دینے والی قطاروں سے نیچے کودیں۔
+  pageUp: دکھائی دینے والی قطاروں سے اوپر جائیں۔
+  nextPage: اگلے صفحے پر جائیں۔
+  prevPage: پچھلے صفحے پر جائیں۔
+  toggleSelect: قطار کا انتخاب ٹوگل کریں۔
+  extendSelectDown: انتخاب کو نیچے کی طرف بڑھائیں۔
+  extendSelectUp: انتخاب کو بڑھا دیں۔
+  selectAll: تمام قطاروں کو منتخب/غیر منتخب کریں۔
+  editRow: فوکس شدہ قطار میں ترمیم کریں۔
+  deleteRow: فوکس شدہ قطار کو حذف کریں۔
+  deleteRowAlt: فوکس شدہ قطار کو حذف کریں۔
+  editRowAlt: فوکس شدہ قطار میں ترمیم کریں۔
+  mockData: فرضی ڈیٹا تیار کریں۔
+  refresh: ٹیبل ریفریش کریں۔
+  export: ڈیٹا ایکسپورٹ کریں۔
+  import: ڈیٹا درآمد کریں۔
+  executeQuery: استفسار پر عمل کریں۔
+  clearEditor: ایڈیٹر/ان پٹ صاف کریں۔
+
+vi_VN:
+  title: Phím tắt
+  shortcuts: Phím tắt
+  hint: Nhấn ? mở
+  categoryGlobal: Toàn cầu
+  categoryNavigation: Điều hướng
+  categoryTableNavigation: Điều hướng bảng
+  categoryTableSelection: Lựa chọn bảng
+  categoryTableActions: Hành động trên bảng
+  categoryEditor: Trình soạn thảo truy vấn
+  showShortcuts: Hiển thị phím tắt
+  commandPalette: Mở bảng lệnh
+  closeDialogs: Đóng hộp thoại/trang tính
+  toggleSidebar: Chuyển đổi thanh bên
+  navFirst: Chuyển đến chế độ xem đầu tiên (Trò chuyện hoặc Bảng)
+  navSecond: Chuyển sang chế độ xem thứ hai
+  navThird: Chuyển đến chế độ xem thứ ba
+  navFourth: Chuyển đến chế độ xem thứ tư (nếu có)
+  moveDown: Di chuyển đến hàng tiếp theo
+  moveUp: Di chuyển đến hàng trước
+  moveFirst: Di chuyển đến hàng đầu tiên
+  moveLast: Di chuyển đến hàng cuối cùng
+  pageDown: Nhảy xuống theo hàng có thể nhìn thấy
+  pageUp: Nhảy lên theo hàng có thể nhìn thấy
+  nextPage: Chuyển đến trang tiếp theo
+  prevPage: Đi tới trang trước
+  toggleSelect: Chuyển đổi lựa chọn hàng
+  extendSelectDown: Mở rộng lựa chọn xuống
+  extendSelectUp: Mở rộng lựa chọn lên
+  selectAll: Chọn/bỏ chọn tất cả các hàng
+  editRow: Chỉnh sửa hàng tập trung
+  deleteRow: Xóa hàng tập trung
+  deleteRowAlt: Xóa hàng tập trung
+  editRowAlt: Chỉnh sửa hàng tập trung
+  mockData: Tạo dữ liệu giả
+  refresh: Làm mới bảng
+  export: Xuất dữ liệu
+  import: Nhập dữ liệu
+  executeQuery: Thực hiện truy vấn
+  clearEditor: Xóa trình soạn thảo/đầu vào

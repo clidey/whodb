@@ -81,3 +81,79 @@ zh_CN:
 zh_TW:
   tip: 提示
   close: 關閉
+
+bg_BG:
+  tip: съвет
+  close: затвори
+
+bn_BD:
+  tip: টিপ
+  close: বন্ধ
+
+ca_ES:
+  tip: Consell
+  close: Tancar
+
+cs_CZ:
+  tip: Tip
+  close: Blízko
+
+da_DK:
+  tip: Tip
+  close: Tæt
+
+fa_IR:
+  tip: نکته
+  close: بستن
+
+hi_IN:
+  tip: बख्शीश
+  close: बंद करना
+
+hr_HR:
+  tip: Savjet
+  close: Zatvoriti
+
+hu_HU:
+  tip: Tipp
+  close: Közeli
+
+id_ID:
+  tip: Tip
+  close: Menutup
+
+ms_MY:
+  tip: Petua
+  close: tutup
+
+nb_NO:
+  tip: Tupp
+  close: Lukke
+
+sw_KE:
+  tip: Kidokezo
+  close: Funga
+
+ta_IN:
+  tip: உதவிக்குறிப்பு
+  close: மூடு
+
+th_TH:
+  tip: เคล็ดลับ
+  close: ปิด
+
+tr_TR:
+  tip: Uç
+  close: Kapalı
+
+uk_UA:
+  tip: Підказка
+  close: Закрити
+
+ur_PK:
+  tip: ٹپ
+  close: بند
+
+vi_VN:
+  tip: Mẹo
+  close: Đóng

@@ -123,3 +123,117 @@ zh_TW:
   unknownError: 發生未知錯誤。
   copySuccess: Copied to Clipboard
   copyLabel: 複製錯誤訊息
+
+bg_BG:
+  title: Грешка
+  unknownError: Възникна неизвестна грешка.
+  copySuccess: Копирано в клипборда
+  copyLabel: Копиране на съобщение за грешка
+
+bn_BD:
+  title: ত্রুটি
+  unknownError: একটি অজানা ত্রুটি ঘটেছে.
+  copySuccess: ক্লিপবোর্ডে কপি করা হয়েছে
+  copyLabel: কপি ত্রুটি বার্তা
+
+ca_ES:
+  title: Error
+  unknownError: An unknown error occurred.
+  copySuccess: S'ha copiat al porta-retalls
+  copyLabel: Copia el missatge d'error
+
+cs_CZ:
+  title: Chyba
+  unknownError: Došlo k neznámé chybě.
+  copySuccess: Zkopírováno do schránky
+  copyLabel: Kopírovat chybovou zprávu
+
+da_DK:
+  title: Fejl
+  unknownError: Der opstod en ukendt fejl.
+  copySuccess: Kopieret til udklipsholder
+  copyLabel: Kopiér fejlmeddelelse
+
+fa_IR:
+  title: خطا
+  unknownError: یک خطای ناشناخته رخ داد.
+  copySuccess: در کلیپ بورد کپی شد
+  copyLabel: کپی پیغام خطا
+
+hi_IN:
+  title: गलती
+  unknownError: एक अज्ञात त्रुटि हुई।
+  copySuccess: क्लिपबोर्ड पर कॉपी किया गया
+  copyLabel: त्रुटि संदेश कॉपी करें
+
+hr_HR:
+  title: Greška
+  unknownError: Došlo je do nepoznate pogreške.
+  copySuccess: Kopirano u međuspremnik
+  copyLabel: Kopiraj poruku o pogrešci
+
+hu_HU:
+  title: Hiba
+  unknownError: Ismeretlen hiba történt.
+  copySuccess: Vágólapra másolva
+  copyLabel: Hibaüzenet másolása
+
+id_ID:
+  title: Kesalahan
+  unknownError: Terjadi kesalahan yang tidak diketahui.
+  copySuccess: Disalin ke Papan Klip
+  copyLabel: Salin Pesan Kesalahan
+
+ms_MY:
+  title: ralat
+  unknownError: Ralat tidak diketahui berlaku.
+  copySuccess: Disalin ke Papan Klip
+  copyLabel: Salin Mesej Ralat
+
+nb_NO:
+  title: Feil
+  unknownError: Det oppstod en ukjent feil.
+  copySuccess: Kopiert til utklippstavlen
+  copyLabel: Kopier feilmelding
+
+sw_KE:
+  title: Hitilafu
+  unknownError: Hitilafu isiyojulikana imetokea.
+  copySuccess: Imenakiliwa kwenye Ubao wa kunakili
+  copyLabel: Nakili Ujumbe wa Hitilafu
+
+ta_IN:
+  title: பிழை
+  unknownError: அறியப்படாத பிழை ஏற்பட்டது.
+  copySuccess: கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது
+  copyLabel: பிழைச் செய்தியை நகலெடுக்கவும்
+
+th_TH:
+  title: ข้อผิดพลาด
+  unknownError: เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ
+  copySuccess: คัดลอกไปยังคลิปบอร์ดแล้ว
+  copyLabel: คัดลอกข้อความแสดงข้อผิดพลาด
+
+tr_TR:
+  title: Hata
+  unknownError: Bilinmeyen bir hata oluştu.
+  copySuccess: Panoya kopyalandı
+  copyLabel: Hata Mesajını Kopyala
+
+uk_UA:
+  title: Помилка
+  unknownError: Сталася невідома помилка.
+  copySuccess: Скопійовано в буфер обміну
+  copyLabel: Копіювати повідомлення про помилку
+
+ur_PK:
+  title: خرابی
+  unknownError: ایک نامعلوم خرابی پیش آگئی۔
+  copySuccess: کلپ بورڈ پر کاپی کیا گیا۔
+  copyLabel: غلطی کا پیغام کاپی کریں۔
+
+vi_VN:
+  title: Lỗi
+  unknownError: Đã xảy ra lỗi không xác định.
+  copySuccess: Đã sao chép vào Clipboard
+  copyLabel: Sao chép thông báo lỗi

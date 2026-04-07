@@ -690,3 +690,630 @@ zh_TW:
   addPage: 新增頁面
   confirmExecutionTitle: 確認執行
   confirmExecutionDescription: 此查詢將修改您的資料庫。 此操作無法撤銷。
+
+bg_BG:
+  title: Запитване
+  clear: ясно
+  copyCode: Копиране на код
+  queryHistory: История на заявките
+  addCell: Добавяне на нова клетка
+  clearEditor: Изчистете редактора
+  deleteCell: Изтрийте клетката
+  deleteCellTitle: Изтриване на клетка?
+  deleteCellDescription: Сигурни ли сте, че искате да изтриете тази клетка? Това действие не може да бъде отменено.
+  noHistoryTitle: Все още няма история
+  noHistoryDescription: Изпълнете заявка, за да видите историята си
+  success: Успех
+  error: Грешка
+  copyToClipboard: Копиране в клипборда
+  copied: Копирано!
+  cloneToEditor: Клониране в редактор
+  run: Бягай
+  clearHistory: Изчистване на историята
+  clearHistoryTitle: Изчистване на хронологията на заявките
+  clearHistoryDescription: Сигурни ли сте, че искате да изчистите цялата хронология на заявките? Това действие не може да бъде отменено.
+  cancel: Отказ
+  deletePage: "Изтриване на {pageName}?"
+  deletePageDescription: "Това действие не може да бъде отменено. Това ще изтрие за постоянно „{pageName}“ и ще премахне данните от него."
+  continue: Продължи
+  doubleClickEdit: Кликнете два пъти за редактиране
+  deletePageButton: Изтриване на страница
+  options: Опции
+  executeQuery: Изпълнение на заявка
+  addPage: Добавяне на страница
+  confirmExecutionTitle: Потвърждаване на изпълнението
+  confirmExecutionDescription: Тази заявка ще промени вашата база данни. Това действие не може да бъде отменено.
+
+bn_BD:
+  title: প্রশ্ন
+  clear: পরিষ্কার
+  copyCode: কোড কপি করুন
+  queryHistory: ক্যোয়ারী ইতিহাস
+  addCell: একটি নতুন সেল যোগ করুন
+  clearEditor: সম্পাদককে সাফ করুন
+  deleteCell: সেল মুছে দিন
+  deleteCellTitle: সেল মুছবেন?
+  deleteCellDescription: আপনি কি এই সেলটি মুছতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷
+  noHistoryTitle: কোন ইতিহাস এখনো
+  noHistoryDescription: আপনার ইতিহাস দেখতে একটি ক্যোয়ারী চালান
+  success: সফলতা
+  error: ত্রুটি
+  copyToClipboard: ক্লিপবোর্ডে কপি করুন
+  copied: অনুলিপি করা হয়েছে!
+  cloneToEditor: ক্লোন টু এডিটর
+  run: চালান
+  clearHistory: ইতিহাস সাফ করুন
+  clearHistoryTitle: ক্যোয়ারী ইতিহাস সাফ করুন
+  clearHistoryDescription: আপনি কি নিশ্চিত যে আপনি সমস্ত ক্যোয়ারী ইতিহাস সাফ করতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷
+  cancel: বাতিল করুন
+  deletePage: "মুছবেন {pageName}?"
+  deletePageDescription: "এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷ এটি স্থায়ীভাবে \"{pageName}\" মুছে ফেলবে এবং এর ডেটা মুছে ফেলবে।"
+  continue: চালিয়ে যান
+  doubleClickEdit: সম্পাদনা করতে ডাবল ক্লিক করুন
+  deletePageButton: পৃষ্ঠা মুছুন
+  options: অপশন
+  executeQuery: কোয়েরি চালান
+  addPage: পৃষ্ঠা যোগ করুন
+  confirmExecutionTitle: এক্সিকিউশন নিশ্চিত করুন
+  confirmExecutionDescription: এই প্রশ্নটি আপনার ডাটাবেস পরিবর্তন করবে। এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷
+
+ca_ES:
+  title: Consulta
+  clear: Clar
+  copyCode: Copia el codi
+  queryHistory: Historial de consultes
+  addCell: Afegeix una nova cel·la
+  clearEditor: Esborra l'editor
+  deleteCell: Esborra la cel·la
+  deleteCellTitle: Vols suprimir la cel·la?
+  deleteCellDescription: Esteu segur que voleu suprimir aquesta cel·la? Aquesta acció no es pot desfer.
+  noHistoryTitle: Encara no hi ha història
+  noHistoryDescription: Executeu una consulta per veure el vostre historial
+  success: Èxit
+  error: Error
+  copyToClipboard: Copia al porta-retalls
+  copied: Copiat!
+  cloneToEditor: Clonar a l'editor
+  run: Corre
+  clearHistory: Esborra l'historial
+  clearHistoryTitle: Esborra l'historial de consultes
+  clearHistoryDescription: Esteu segur que voleu esborrar tot l'historial de consultes? Aquesta acció no es pot desfer.
+  cancel: Cancel·la
+  deletePage: Vols suprimir [[0]]]?
+  deletePageDescription: "Aquesta acció no es pot desfer. Això suprimirà permanentment \"{pageName}\" i se n'eliminarà les dades."
+  continue: Continua
+  doubleClickEdit: Feu doble clic per editar
+  deletePageButton: Suprimeix la pàgina
+  options: Opcions
+  executeQuery: Executar la consulta
+  addPage: Afegeix pàgina
+  confirmExecutionTitle: Confirmeu l'execució
+  confirmExecutionDescription: Aquesta consulta modificarà la vostra base de dades. Aquesta acció no es pot desfer.
+
+cs_CZ:
+  title: Dotaz
+  clear: Jasný
+  copyCode: Kopírovat kód
+  queryHistory: Historie dotazů
+  addCell: Přidat novou buňku
+  clearEditor: Vymažte Editor
+  deleteCell: Smazat buňku
+  deleteCellTitle: Smazat buňku?
+  deleteCellDescription: Opravdu chcete smazat tuto buňku? Tuto akci nelze vrátit zpět.
+  noHistoryTitle: Zatím žádná historie
+  noHistoryDescription: Spuštěním dotazu zobrazíte svou historii
+  success: Úspěch
+  error: Chyba
+  copyToClipboard: Kopírovat do schránky
+  copied: Zkopírováno!
+  cloneToEditor: Klonovat do editoru
+  run: Běh
+  clearHistory: Vymazat historii
+  clearHistoryTitle: Vymazat historii dotazů
+  clearHistoryDescription: Opravdu chcete vymazat celou historii dotazů? Tuto akci nelze vrátit zpět.
+  cancel: Zrušit
+  deletePage: "Smazat {pageName}?"
+  deletePageDescription: "Tuto akci nelze vrátit zpět. Tím trvale smažete „{pageName}“ a odstraníte jeho data."
+  continue: Pokračovat
+  doubleClickEdit: Dvojitým kliknutím upravíte
+  deletePageButton: Smazat stránku
+  options: Možnosti
+  executeQuery: Provést dotaz
+  addPage: Přidat stránku
+  confirmExecutionTitle: Potvrďte provedení
+  confirmExecutionDescription: Tento dotaz upraví vaši databázi. Tuto akci nelze vrátit zpět.
+
+da_DK:
+  title: Forespørgsel
+  clear: Klar
+  copyCode: Kopiér kode
+  queryHistory: Forespørgselshistorik
+  addCell: Tilføj en ny celle
+  clearEditor: Ryd editoren
+  deleteCell: Slet cellen
+  deleteCellTitle: Vil du slette celle?
+  deleteCellDescription: Er du sikker på, at du vil slette denne celle? Denne handling kan ikke fortrydes.
+  noHistoryTitle: Ingen historie endnu
+  noHistoryDescription: Kør en forespørgsel for at se din historie
+  success: Succes
+  error: Fejl
+  copyToClipboard: Kopiér til udklipsholder
+  copied: Kopieret!
+  cloneToEditor: Klon til editor
+  run: Løbe
+  clearHistory: Ryd historik
+  clearHistoryTitle: Ryd forespørgselshistorik
+  clearHistoryDescription: Er du sikker på, at du vil rydde al forespørgselshistorik? Denne handling kan ikke fortrydes.
+  cancel: Ophæve
+  deletePage: "Vil du slette {pageName}?"
+  deletePageDescription: "Denne handling kan ikke fortrydes. Dette vil permanent slette \"{pageName}\" og fjerne dets data."
+  continue: Fortsætte
+  doubleClickEdit: Dobbeltklik for at redigere
+  deletePageButton: Slet side
+  options: Valgmuligheder
+  executeQuery: Udfør forespørgsel
+  addPage: Tilføj side
+  confirmExecutionTitle: Bekræft udførelse
+  confirmExecutionDescription: Denne forespørgsel vil ændre din database. Denne handling kan ikke fortrydes.
+
+fa_IR:
+  title: پرس و جو
+  clear: پاک کردن
+  copyCode: کد را کپی کنید
+  queryHistory: تاریخچه پرس و جو
+  addCell: یک سلول جدید اضافه کنید
+  clearEditor: ویرایشگر را پاک کنید
+  deleteCell: سلول را حذف کنید
+  deleteCellTitle: سلول حذف شود؟
+  deleteCellDescription: آیا مطمئن هستید که می خواهید این سلول را حذف کنید؟ این عمل قابل لغو نیست.
+  noHistoryTitle: هنوز تاریخچه ای وجود ندارد
+  noHistoryDescription: برای مشاهده تاریخچه خود یک پرس و جو انجام دهید
+  success: موفقیت
+  error: خطا
+  copyToClipboard: در کلیپ بورد کپی کنید
+  copied: کپی شده!
+  cloneToEditor: شبیه سازی به ویرایشگر
+  run: اجرا کنید
+  clearHistory: پاک کردن تاریخچه
+  clearHistoryTitle: پاک کردن تاریخچه پرس و جو
+  clearHistoryDescription: آیا مطمئن هستید که می خواهید تمام سابقه پرس و جو را پاک کنید؟ این عمل قابل لغو نیست.
+  cancel: لغو کنید
+  deletePage: "{pageName} حذف شود؟"
+  deletePageDescription: "این عمل قابل لغو نیست. با این کار «{pageName}» برای همیشه حذف می‌شود و داده‌های آن حذف می‌شود."
+  continue: ادامه دهید
+  doubleClickEdit: برای ویرایش دوبار کلیک کنید
+  deletePageButton: حذف صفحه
+  options: گزینه ها
+  executeQuery: Query را اجرا کنید
+  addPage: افزودن صفحه
+  confirmExecutionTitle: تایید اجرا
+  confirmExecutionDescription: این پرس و جو پایگاه داده شما را تغییر می دهد. این عمل قابل لغو نیست.
+
+hi_IN:
+  title: सवाल
+  clear: स्पष्ट
+  copyCode: कोड कॉपी करें
+  queryHistory: क्वेरी इतिहास
+  addCell: एक नया सेल जोड़ें
+  clearEditor: संपादक साफ़ करें
+  deleteCell: सेल हटाएँ
+  deleteCellTitle: सेल हटाएं?
+  deleteCellDescription: क्या आप वाकई इस सेल को हटाना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।
+  noHistoryTitle: अभी तक कोई इतिहास नहीं
+  noHistoryDescription: अपना इतिहास देखने के लिए एक क्वेरी चलाएँ
+  success: सफलता
+  error: गलती
+  copyToClipboard: क्लिपबोर्ड पर कॉपी करें
+  copied: नकल की गई!
+  cloneToEditor: संपादक का क्लोन
+  run: दौड़ना
+  clearHistory: इतिहास मिटा दें
+  clearHistoryTitle: क्वेरी इतिहास साफ़ करें
+  clearHistoryDescription: क्या आप वाकई सभी क्वेरी इतिहास साफ़ करना चाहते हैं? इस एक्शन को वापस नहीं किया जा सकता।
+  cancel: रद्द करना
+  deletePage: "{pageName} हटाएं?"
+  deletePageDescription: "इस एक्शन को वापस नहीं किया जा सकता। यह \"{pageName}\" को स्थायी रूप से हटा देगा और उसका डेटा हटा देगा।"
+  continue: जारी रखना
+  doubleClickEdit: संपादित करने के लिए डबल क्लिक करें
+  deletePageButton: पृष्ठ हटाएँ
+  options: विकल्प
+  executeQuery: क्वेरी को निष्पादित करें
+  addPage: पृष्ठ जोड़ें
+  confirmExecutionTitle: निष्पादन की पुष्टि करें
+  confirmExecutionDescription: यह क्वेरी आपके डेटाबेस को संशोधित करेगी. इस एक्शन को वापस नहीं किया जा सकता।
+
+hr_HR:
+  title: Upit
+  clear: Jasan
+  copyCode: Kopiraj kod
+  queryHistory: Povijest upita
+  addCell: Dodajte novu ćeliju
+  clearEditor: Očistite uređivač
+  deleteCell: Izbriši ćeliju
+  deleteCellTitle: Izbrisati ćeliju?
+  deleteCellDescription: Jeste li sigurni da želite izbrisati ovu ćeliju? Ova se radnja ne može poništiti.
+  noHistoryTitle: Još nema povijesti
+  noHistoryDescription: Pokrenite upit da biste vidjeli svoju povijest
+  success: Uspjeh
+  error: Greška
+  copyToClipboard: Kopiraj u međuspremnik
+  copied: Kopirano!
+  cloneToEditor: Kloniraj u Editor
+  run: Trčanje
+  clearHistory: Obriši povijest
+  clearHistoryTitle: Obriši povijest upita
+  clearHistoryDescription: Jeste li sigurni da želite izbrisati svu povijest upita? Ova se radnja ne može poništiti.
+  cancel: Otkazati
+  deletePage: "Izbrisati {pageName}?"
+  deletePageDescription: "Ova se radnja ne može poništiti. Ovo će trajno izbrisati \"{pageName}\" i ukloniti njegove podatke."
+  continue: Nastaviti
+  doubleClickEdit: Dvaput kliknite za uređivanje
+  deletePageButton: Izbriši stranicu
+  options: Mogućnosti
+  executeQuery: Izvrši upit
+  addPage: Dodaj stranicu
+  confirmExecutionTitle: Potvrdi izvršenje
+  confirmExecutionDescription: Ovaj će upit izmijeniti vašu bazu podataka. Ova se radnja ne može poništiti.
+
+hu_HU:
+  title: Lekérdezés
+  clear: Világos
+  copyCode: Kód másolása
+  queryHistory: Lekérdezési előzmények
+  addCell: Új cella hozzáadása
+  clearEditor: Törölje a Szerkesztőt
+  deleteCell: Törölje a cellát
+  deleteCellTitle: Törli a cellát?
+  deleteCellDescription: Biztosan törli ezt a cellát? Ez a művelet nem vonható vissza.
+  noHistoryTitle: Még nincs előzmény
+  noHistoryDescription: Futtasson le egy lekérdezést az előzmények megtekintéséhez
+  success: Siker
+  error: Hiba
+  copyToClipboard: Másolás a vágólapra
+  copied: Másolva!
+  cloneToEditor: Klónozás a szerkesztőbe
+  run: Fut
+  clearHistory: Törölje az előzményeket
+  clearHistoryTitle: Lekérdezési előzmények törlése
+  clearHistoryDescription: Biztosan törli az összes lekérdezési előzményt? Ez a művelet nem vonható vissza.
+  cancel: Mégsem
+  deletePage: "Törli a következőt: {pageName}?"
+  deletePageDescription: "Ez a művelet nem vonható vissza. Ezzel véglegesen törli a következőt: {pageName}, és eltávolítja az adatait."
+  continue: Folytatás
+  doubleClickEdit: Kattintson duplán a szerkesztéshez
+  deletePageButton: Oldal törlése
+  options: Opciók
+  executeQuery: Lekérdezés végrehajtása
+  addPage: Oldal hozzáadása
+  confirmExecutionTitle: Végrehajtás megerősítése
+  confirmExecutionDescription: Ez a lekérdezés módosítja az adatbázist. Ez a művelet nem vonható vissza.
+
+id_ID:
+  title: Pertanyaan
+  clear: Jernih
+  copyCode: Salin Kode
+  queryHistory: Riwayat Kueri
+  addCell: Tambahkan Sel Baru
+  clearEditor: Hapus Editor
+  deleteCell: Hapus Sel
+  deleteCellTitle: Hapus Sel?
+  deleteCellDescription: Apakah Anda yakin ingin menghapus sel ini? Tindakan ini tidak dapat dibatalkan.
+  noHistoryTitle: Belum Ada Sejarah
+  noHistoryDescription: Jalankan Kueri untuk Melihat Riwayat Anda
+  success: Kesuksesan
+  error: Kesalahan
+  copyToClipboard: Salin ke Papan Klip
+  copied: Disalin!
+  cloneToEditor: Kloning ke Editor
+  run: Berlari
+  clearHistory: Hapus Riwayat
+  clearHistoryTitle: Hapus Riwayat Kueri
+  clearHistoryDescription: Apakah Anda yakin ingin menghapus semua riwayat kueri? Tindakan ini tidak dapat dibatalkan.
+  cancel: Membatalkan
+  deletePage: "Hapus {pageName}?"
+  deletePageDescription: "Tindakan ini tidak dapat dibatalkan. Ini akan menghapus \"{pageName}\" secara permanen dan menghapus datanya."
+  continue: Melanjutkan
+  doubleClickEdit: Klik dua kali untuk mengedit
+  deletePageButton: Hapus halaman
+  options: Pilihan
+  executeQuery: Jalankan Kueri
+  addPage: Tambahkan Halaman
+  confirmExecutionTitle: Konfirmasi Eksekusi
+  confirmExecutionDescription: Kueri ini akan mengubah database Anda. Tindakan ini tidak dapat dibatalkan.
+
+ms_MY:
+  title: Pertanyaan
+  clear: Jelas
+  copyCode: Salin Kod
+  queryHistory: Sejarah Pertanyaan
+  addCell: Tambah Sel Baharu
+  clearEditor: Kosongkan Editor
+  deleteCell: Padamkan Sel
+  deleteCellTitle: Padamkan Sel?
+  deleteCellDescription: Adakah anda pasti mahu memadamkan sel ini? Tindakan ini tidak boleh dibuat asal.
+  noHistoryTitle: Belum Ada Sejarah
+  noHistoryDescription: Jalankan Pertanyaan untuk Melihat Sejarah Anda
+  success: Kejayaan
+  error: ralat
+  copyToClipboard: Salin ke Papan Klip
+  copied: disalin!
+  cloneToEditor: Klon kepada Editor
+  run: Lari
+  clearHistory: Kosongkan Sejarah
+  clearHistoryTitle: Kosongkan Sejarah Pertanyaan
+  clearHistoryDescription: Adakah anda pasti mahu mengosongkan semua sejarah pertanyaan? Tindakan ini tidak boleh dibuat asal.
+  cancel: Batal
+  deletePage: "Padam {pageName}?"
+  deletePageDescription: "Tindakan ini tidak boleh dibuat asal. Ini akan memadamkan \"{pageName}\" secara kekal dan mengalih keluar datanya."
+  continue: teruskan
+  doubleClickEdit: Klik dua kali untuk mengedit
+  deletePageButton: Padam halaman
+  options: Pilihan
+  executeQuery: Laksanakan Pertanyaan
+  addPage: Tambah Halaman
+  confirmExecutionTitle: Sahkan Pelaksanaan
+  confirmExecutionDescription: Pertanyaan ini akan mengubah suai pangkalan data anda. Tindakan ini tidak boleh dibuat asal.
+
+nb_NO:
+  title: Spørsmål
+  clear: Klar
+  copyCode: Kopier kode
+  queryHistory: Spørringshistorikk
+  addCell: Legg til en ny celle
+  clearEditor: Tøm redigeringsprogrammet
+  deleteCell: Slett cellen
+  deleteCellTitle: Vil du slette celle?
+  deleteCellDescription: Er du sikker på at du vil slette denne cellen? Denne handlingen kan ikke angres.
+  noHistoryTitle: Ingen historie ennå
+  noHistoryDescription: Kjør en spørring for å se loggen din
+  success: Suksess
+  error: Feil
+  copyToClipboard: Kopier til utklippstavlen
+  copied: Kopiert!
+  cloneToEditor: Klon til redaktør
+  run: Løp
+  clearHistory: Tøm historikk
+  clearHistoryTitle: Tøm spørrelogg
+  clearHistoryDescription: Er du sikker på at du vil slette hele søkeloggen? Denne handlingen kan ikke angres.
+  cancel: Kansellere
+  deletePage: "Vil du slette {pageName}?"
+  deletePageDescription: "Denne handlingen kan ikke angres. Dette vil permanent slette «{pageName}» og fjerne dataene."
+  continue: Fortsette
+  doubleClickEdit: Dobbeltklikk for å redigere
+  deletePageButton: Slett siden
+  options: Alternativer
+  executeQuery: Utfør spørring
+  addPage: Legg til side
+  confirmExecutionTitle: Bekreft utførelse
+  confirmExecutionDescription: Denne spørringen vil endre databasen din. Denne handlingen kan ikke angres.
+
+sw_KE:
+  title: Hoja
+  clear: Wazi
+  copyCode: Nakili Kanuni
+  queryHistory: Historia ya Maswali
+  addCell: Ongeza Kisanduku Kipya
+  clearEditor: Futa Mhariri
+  deleteCell: Futa Kisanduku
+  deleteCellTitle: Ungependa kufuta Kisanduku?
+  deleteCellDescription: Je, una uhakika unataka kufuta kisanduku hiki? Kitendo hiki hakiwezi kutenduliwa.
+  noHistoryTitle: Bado Hakuna Historia
+  noHistoryDescription: Endesha Swala ili Kuona Historia Yako
+  success: Mafanikio
+  error: Hitilafu
+  copyToClipboard: Nakili kwenye Ubao wa kunakili
+  copied: Imenakiliwa!
+  cloneToEditor: Karibu na Mhariri
+  run: Kimbia
+  clearHistory: Futa Historia
+  clearHistoryTitle: Futa Historia ya Maswali
+  clearHistoryDescription: Je, una uhakika unataka kufuta historia yote ya hoja? Kitendo hiki hakiwezi kutenduliwa.
+  cancel: Ghairi
+  deletePage: "Ungependa kufuta {pageName}?"
+  deletePageDescription: "Kitendo hiki hakiwezi kutenduliwa. Hii itafuta kabisa \"{pageName}\" na kuondoa data yake."
+  continue: Endelea
+  doubleClickEdit: Bofya mara mbili ili kuhariri
+  deletePageButton: Futa ukurasa
+  options: Chaguo
+  executeQuery: Tekeleza Hoja
+  addPage: Ongeza Ukurasa
+  confirmExecutionTitle: Thibitisha Utekelezaji
+  confirmExecutionDescription: Hoja hii itarekebisha hifadhidata yako. Kitendo hiki hakiwezi kutenduliwa.
+
+ta_IN:
+  title: வினவு
+  clear: தெளிவு
+  copyCode: நகல் குறியீடு
+  queryHistory: வினவல் வரலாறு
+  addCell: புதிய கலத்தைச் சேர்க்கவும்
+  clearEditor: எடிட்டரை அழிக்கவும்
+  deleteCell: கலத்தை நீக்கு
+  deleteCellTitle: கலத்தை நீக்கவா?
+  deleteCellDescription: இந்தக் கலத்தை நிச்சயமாக நீக்க விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.
+  noHistoryTitle: இன்னும் வரலாறு இல்லை
+  noHistoryDescription: உங்கள் வரலாற்றைக் காண வினவலை இயக்கவும்
+  success: வெற்றி
+  error: பிழை
+  copyToClipboard: கிளிப்போர்டுக்கு நகலெடுக்கவும்
+  copied: நகலெடுக்கப்பட்டது!
+  cloneToEditor: எடிட்டருக்கு குளோன்
+  run: ஓடவும்
+  clearHistory: தெளிவான வரலாறு
+  clearHistoryTitle: வினவல் வரலாற்றை அழிக்கவும்
+  clearHistoryDescription: அனைத்து வினவல் வரலாற்றையும் நிச்சயமாக அழிக்க விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.
+  cancel: ரத்து செய்
+  deletePage: "{pageName} நீக்கவா?"
+  deletePageDescription: "இந்தச் செயலைச் செயல்தவிர்க்க முடியாது. இது \"{pageName}\" ஐ நிரந்தரமாக நீக்கி அதன் தரவை அகற்றும்."
+  continue: தொடரவும்
+  doubleClickEdit: திருத்த இருமுறை கிளிக் செய்யவும்
+  deletePageButton: பக்கத்தை நீக்கு
+  options: விருப்பங்கள்
+  executeQuery: வினவலை இயக்கவும்
+  addPage: பக்கத்தைச் சேர்
+  confirmExecutionTitle: செயல்படுத்துவதை உறுதிப்படுத்தவும்
+  confirmExecutionDescription: இந்த வினவல் உங்கள் தரவுத்தளத்தை மாற்றும். இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.
+
+th_TH:
+  title: แบบสอบถาม
+  clear: ชัดเจน
+  copyCode: คัดลอกรหัส
+  queryHistory: ประวัติการค้นหา
+  addCell: เพิ่มเซลล์ใหม่
+  clearEditor: ล้างตัวแก้ไข
+  deleteCell: ลบเซลล์
+  deleteCellTitle: ลบเซลล์ใช่ไหม
+  deleteCellDescription: คุณแน่ใจหรือไม่ว่าต้องการลบเซลล์นี้ การดำเนินการนี้ไม่สามารถยกเลิกได้
+  noHistoryTitle: ยังไม่มีประวัติ
+  noHistoryDescription: เรียกใช้แบบสอบถามเพื่อดูประวัติของคุณ
+  success: ความสำเร็จ
+  error: ข้อผิดพลาด
+  copyToClipboard: คัดลอกไปยังคลิปบอร์ด
+  copied: คัดลอก!
+  cloneToEditor: โคลนเพื่อแก้ไข
+  run: วิ่ง
+  clearHistory: ล้างประวัติ
+  clearHistoryTitle: ล้างประวัติการค้นหา
+  clearHistoryDescription: คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการค้นหาทั้งหมด การดำเนินการนี้ไม่สามารถยกเลิกได้
+  cancel: ยกเลิก
+  deletePage: "ลบ {pageName}?"
+  deletePageDescription: "การดำเนินการนี้ไม่สามารถยกเลิกได้ การดำเนินการนี้จะลบ \"{pageName}\" อย่างถาวรและลบข้อมูลออก"
+  continue: ดำเนินการต่อ
+  doubleClickEdit: ดับเบิลคลิกเพื่อแก้ไข
+  deletePageButton: ลบเพจ
+  options: ตัวเลือก
+  executeQuery: ดำเนินการค้นหา
+  addPage: เพิ่มหน้า
+  confirmExecutionTitle: ยืนยันการดำเนินการ
+  confirmExecutionDescription: แบบสอบถามนี้จะแก้ไขฐานข้อมูลของคุณ การดำเนินการนี้ไม่สามารถยกเลิกได้
+
+tr_TR:
+  title: Sorgu
+  clear: Temizlemek
+  copyCode: Kodu Kopyala
+  queryHistory: Sorgu Geçmişi
+  addCell: Yeni Hücre Ekle
+  clearEditor: Düzenleyiciyi Temizle
+  deleteCell: Hücreyi Sil
+  deleteCellTitle: Hücre Silinsin mi?
+  deleteCellDescription: Bu hücreyi silmek istediğinizden emin misiniz? Bu eylem geri alınamaz.
+  noHistoryTitle: Henüz Geçmiş Yok
+  noHistoryDescription: Geçmişinizi Görmek İçin Sorgu Çalıştırın
+  success: Başarı
+  error: Hata
+  copyToClipboard: Panoya kopyala
+  copied: Kopyalandı!
+  cloneToEditor: Düzenleyiciye Klonla
+  run: Koşmak
+  clearHistory: Geçmişi Temizle
+  clearHistoryTitle: Sorgu Geçmişini Temizle
+  clearHistoryDescription: Tüm sorgu geçmişini temizlemek istediğinizden emin misiniz? Bu eylem geri alınamaz.
+  cancel: İptal etmek
+  deletePage: "{pageName} silinsin mi?"
+  deletePageDescription: "Bu eylem geri alınamaz. Bu, \"{pageName}\" dosyasını kalıcı olarak silecek ve verilerini kaldıracaktır."
+  continue: Devam etmek
+  doubleClickEdit: Düzenlemek için çift tıklayın
+  deletePageButton: Sayfayı sil
+  options: Seçenekler
+  executeQuery: Sorguyu Yürüt
+  addPage: Sayfa Ekle
+  confirmExecutionTitle: Yürütmeyi Onayla
+  confirmExecutionDescription: Bu sorgu veritabanınızı değiştirecek. Bu eylem geri alınamaz.
+
+uk_UA:
+  title: Запит
+  clear: ясно
+  copyCode: Копіювати код
+  queryHistory: Історія запитів
+  addCell: Додайте нову комірку
+  clearEditor: Очистіть редактор
+  deleteCell: Видалити комірку
+  deleteCellTitle: Видалити клітинку?
+  deleteCellDescription: Ви впевнені, що бажаєте видалити цю клітинку? Цю дію не можна скасувати.
+  noHistoryTitle: Історії ще немає
+  noHistoryDescription: Виконайте запит, щоб переглянути свою історію
+  success: Успіх
+  error: Помилка
+  copyToClipboard: Копіювати в буфер обміну
+  copied: Скопійовано!
+  cloneToEditor: Клонувати в редактор
+  run: бігти
+  clearHistory: Очистити історію
+  clearHistoryTitle: Очистити історію запитів
+  clearHistoryDescription: Ви впевнені, що бажаєте очистити всю історію запитів? Цю дію не можна скасувати.
+  cancel: Скасувати
+  deletePage: "Видалити {pageName}?"
+  deletePageDescription: "Цю дію не можна скасувати. Це призведе до остаточного видалення \"{pageName}\" і видалення його даних."
+  continue: Продовжити
+  doubleClickEdit: Двічі клацніть, щоб редагувати
+  deletePageButton: Видалити сторінку
+  options: Опції
+  executeQuery: Виконати запит
+  addPage: Додати сторінку
+  confirmExecutionTitle: Підтвердити виконання
+  confirmExecutionDescription: Цей запит змінить вашу базу даних. Цю дію не можна скасувати.
+
+ur_PK:
+  title: استفسار
+  clear: صاف
+  copyCode: کوڈ کاپی کریں۔
+  queryHistory: استفسار کی تاریخ
+  addCell: ایک نیا سیل شامل کریں۔
+  clearEditor: ایڈیٹر کو صاف کریں۔
+  deleteCell: سیل کو حذف کریں۔
+  deleteCellTitle: سیل کو حذف کریں؟
+  deleteCellDescription: کیا آپ واقعی اس سیل کو حذف کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔
+  noHistoryTitle: ابھی تک کوئی تاریخ نہیں۔
+  noHistoryDescription: اپنی تاریخ دیکھنے کے لیے ایک سوال چلائیں۔
+  success: کامیابی
+  error: خرابی
+  copyToClipboard: کلپ بورڈ پر کاپی کریں۔
+  copied: کاپی کیا گیا!
+  cloneToEditor: کلون ٹو ایڈیٹر
+  run: دوڑو
+  clearHistory: تاریخ صاف کریں۔
+  clearHistoryTitle: استفسار کی تاریخ صاف کریں۔
+  clearHistoryDescription: کیا آپ واقعی تمام استفسار کی سرگزشت کو صاف کرنا چاہتے ہیں؟ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔
+  cancel: منسوخ کریں۔
+  deletePage: "حذف کریں {pageName}؟"
+  deletePageDescription: "اس کارروائی کو کالعدم نہیں کیا جا سکتا۔ یہ \"{pageName}\" کو مستقل طور پر حذف کر دے گا اور اس کا ڈیٹا ہٹا دے گا۔"
+  continue: جاری رکھیں
+  doubleClickEdit: ترمیم کرنے کے لیے ڈبل کلک کریں۔
+  deletePageButton: صفحہ حذف کریں۔
+  options: اختیارات
+  executeQuery: استفسار پر عمل کریں۔
+  addPage: صفحہ شامل کریں۔
+  confirmExecutionTitle: عملدرآمد کی تصدیق کریں۔
+  confirmExecutionDescription: یہ استفسار آپ کے ڈیٹا بیس میں ترمیم کرے گا۔ اس کارروائی کو کالعدم نہیں کیا جا سکتا۔
+
+vi_VN:
+  title: Truy vấn
+  clear: Thông thoáng
+  copyCode: Sao chép mã
+  queryHistory: Lịch sử truy vấn
+  addCell: Thêm một ô mới
+  clearEditor: Xóa trình chỉnh sửa
+  deleteCell: Xóa ô
+  deleteCellTitle: Xóa ô?
+  deleteCellDescription: Bạn có chắc chắn muốn xóa ô này không? Không thể hoàn tác hành động này.
+  noHistoryTitle: Chưa có lịch sử
+  noHistoryDescription: Chạy truy vấn để xem lịch sử của bạn
+  success: Thành công
+  error: Lỗi
+  copyToClipboard: Sao chép vào Clipboard
+  copied: Đã sao chép!
+  cloneToEditor: Sao chép vào Trình chỉnh sửa
+  run: Chạy
+  clearHistory: Xóa lịch sử
+  clearHistoryTitle: Xóa lịch sử truy vấn
+  clearHistoryDescription: Bạn có chắc chắn muốn xóa tất cả lịch sử truy vấn không? Không thể hoàn tác hành động này.
+  cancel: Hủy bỏ
+  deletePage: "Xóa {pageName}?"
+  deletePageDescription: "Không thể hoàn tác hành động này. Thao tác này sẽ xóa vĩnh viễn \"{pageName}\" và xóa dữ liệu của nó."
+  continue: Tiếp tục
+  doubleClickEdit: Nhấp đúp chuột để chỉnh sửa
+  deletePageButton: Xóa trang
+  options: Tùy chọn
+  executeQuery: Thực hiện truy vấn
+  addPage: Thêm trang
+  confirmExecutionTitle: Xác nhận thực hiện
+  confirmExecutionDescription: Truy vấn này sẽ sửa đổi cơ sở dữ liệu của bạn. Không thể hoàn tác hành động này.

@@ -81,3 +81,79 @@ zh_CN:
 zh_TW:
   enterValidNumber: 請輸入大於0的數字
   exceedsMaxPageSize: "頁面大小不能超過 {max}"
+
+bg_BG:
+  enterValidNumber: Моля, въведете число, по-голямо от 0
+  exceedsMaxPageSize: "Размерът на страницата не може да надвишава {max}"
+
+bn_BD:
+  enterValidNumber: অনুগ্রহ করে 0 এর থেকে বড় একটি সংখ্যা লিখুন
+  exceedsMaxPageSize: "পৃষ্ঠার আকার {max} অতিক্রম করা যাবে না"
+
+ca_ES:
+  enterValidNumber: Introduïu un número superior a 0
+  exceedsMaxPageSize: "La mida de la pàgina no pot superar {max}"
+
+cs_CZ:
+  enterValidNumber: Zadejte číslo větší než 0
+  exceedsMaxPageSize: "Velikost stránky nesmí překročit {max}"
+
+da_DK:
+  enterValidNumber: Indtast venligst et tal større end 0
+  exceedsMaxPageSize: "Sidestørrelsen må ikke overstige {max}"
+
+fa_IR:
+  enterValidNumber: لطفا یک عدد بزرگتر از 0 وارد کنید
+  exceedsMaxPageSize: "اندازه صفحه نباید بیشتر از {max} باشد"
+
+hi_IN:
+  enterValidNumber: कृपया 0 से बड़ी संख्या दर्ज करें
+  exceedsMaxPageSize: "पृष्ठ का आकार {max} से अधिक नहीं हो सकता"
+
+hr_HR:
+  enterValidNumber: Unesite broj veći od 0
+  exceedsMaxPageSize: "Veličina stranice ne smije premašiti {max}"
+
+hu_HU:
+  enterValidNumber: Kérjük, adjon meg 0-nál nagyobb számot
+  exceedsMaxPageSize: "Az oldal mérete nem haladhatja meg a {max}"
+
+id_ID:
+  enterValidNumber: Silakan masukkan angka yang lebih besar dari 0
+  exceedsMaxPageSize: "Ukuran halaman tidak boleh melebihi {max}"
+
+ms_MY:
+  enterValidNumber: Sila masukkan nombor yang lebih besar daripada 0
+  exceedsMaxPageSize: "Saiz halaman tidak boleh melebihi {max}"
+
+nb_NO:
+  enterValidNumber: Vennligst skriv inn et tall som er større enn 0
+  exceedsMaxPageSize: "Sidestørrelsen kan ikke overstige {max}"
+
+sw_KE:
+  enterValidNumber: Tafadhali weka nambari kubwa kuliko 0
+  exceedsMaxPageSize: "Ukubwa wa ukurasa hauwezi kuzidi {max}"
+
+ta_IN:
+  enterValidNumber: 0 ஐ விட அதிகமான எண்ணை உள்ளிடவும்
+  exceedsMaxPageSize: "பக்க அளவு {max} ஐ விட அதிகமாக இருக்கக்கூடாது"
+
+th_TH:
+  enterValidNumber: โปรดป้อนตัวเลขที่มากกว่า 0
+  exceedsMaxPageSize: "ขนาดหน้าต้องไม่เกิน {max}"
+
+tr_TR:
+  enterValidNumber: Lütfen 0'dan büyük bir sayı girin
+  exceedsMaxPageSize: "Sayfa boyutu {max} değerini aşamaz"
+
+uk_UA:
+  enterValidNumber: Будь ласка, введіть число більше 0
+  exceedsMaxPageSize: "Розмір сторінки не може перевищувати {max}"
+
+ur_PK:
+  enterValidNumber: براہ کرم 0 سے بڑا نمبر درج کریں۔
+  exceedsMaxPageSize: "صفحہ کا سائز {max} سے زیادہ نہیں ہو سکتا"
+
+vi_VN:
+  enterValidNumber: Vui lòng nhập số lớn hơn 0
+  exceedsMaxPageSize: "Kích thước trang không được vượt quá {max}"
