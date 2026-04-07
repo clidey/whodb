@@ -29,7 +29,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	duckdbDriver "github.com/marcboeker/go-duckdb/v2"
+	duckdbDriver "github.com/duckdb/duckdb-go/v2"
 	"gorm.io/gorm"
 )
 

@@ -36,11 +36,19 @@ RUN apk add --no-cache \
 	ca-certificates \
 	curl
 
-# DuckDB's pre-built static library references glibc-specific symbols unavailable in musl.
-# Build a static compat library so the linker deduplicates across CGO packages.
-RUN printf '#include <stddef.h>\nint __res_init(void) { return 0; }\nint backtrace(void **b, int s) { return 0; }\nchar **backtrace_symbols(void *const *b, int s) { return NULL; }\nvoid backtrace_symbols_fd(void *const *b, int s, int fd) {}\nint malloc_trim(size_t pad) { return 0; }\n' \
-    | gcc -c -x c - -o /tmp/duckdb_musl_compat.o \
-    && ar rcs /usr/lib/libduckdb_musl_compat.a /tmp/duckdb_musl_compat.o
+# Download official musl-compiled DuckDB shared library.
+# Native musl build — no glibc stubs or compatibility hacks needed.
+ARG TARGETARCH
+RUN DUCKDB_VERSION=v1.5.1 && \
+    if [ "$TARGETARCH" = "amd64" ]; then DUCKDB_ARCH="linux-amd64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then DUCKDB_ARCH="linux-arm64"; \
+    else echo "Unsupported architecture: $TARGETARCH" && exit 1; fi && \
+    mkdir -p /usr/local/include && \
+    curl -L -o /tmp/libduckdb-musl.zip \
+        "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-${DUCKDB_ARCH}-musl.zip" && \
+    unzip -j /tmp/libduckdb-musl.zip libduckdb.so -d /usr/local/lib/ && \
+    unzip -j /tmp/libduckdb-musl.zip duckdb.h -d /usr/local/include/ && \
+    rm /tmp/libduckdb-musl.zip
 
 WORKDIR /app
 
@@ -56,8 +64,8 @@ ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
 RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
-	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
-	CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod -trimpath \
+	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -L/usr/local/lib -lduckdb" \
+	CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags "prod duckdb_use_lib" -trimpath \
 	-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
 	-o /core ./cmd/whodb
 
@@ -81,6 +89,7 @@ FROM alpine:3.23
 RUN apk add --no-cache ca-certificates libgcc libstdc++
 WORKDIR /app
 COPY --from=backend-stage /core /core
+COPY --from=backend-stage /usr/local/lib/libduckdb.so /usr/local/lib/libduckdb.so
 # Copy BAML musl library and set path via env var
 # (BAML Go client's isMusl() is not implemented, so we must use BAML_LIBRARY_PATH)
 COPY --from=backend-stage /baml-lib/libbaml_cffi.so /usr/local/lib/libbaml_cffi.so
