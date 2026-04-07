@@ -13,3 +13,323 @@ en_US:
   switchFailed: Failed to switch profile
   switchFailedWithError: "Failed to switch profile: {error}"
   logout: Logout
+
+ar_AE:
+  serverDownTitle: الخادم غير متاح
+  serverDownMessage: "الخادم {appName} غير قابل للوصول حاليًا. يرجى التحقق من الاتصال الخاص بك."
+  serverDownRetrying: جارٍ محاولة إعادة الاتصال...
+  databaseDownTitle: تم فقد اتصال قاعدة البيانات
+  databaseDownMessage: اتصال قاعدة البيانات غير متوفر. يمكنك التبديل إلى ملف تعريف آخر أو تسجيل الخروج.
+  databaseDownRetrying: جارٍ محاولة إعادة الاتصال...
+  selectProfile: حدد ملف التعريف
+  selectProfilePlaceholder: اختيار ملف تعريف...
+  switchProfile: تبديل الملف الشخصي
+  switching: التبديل...
+  switchSuccessful: تم تبديل الملف الشخصي بنجاح
+  switchFailed: فشل في تبديل الملف الشخصي
+  switchFailedWithError: "فشل في تبديل الملف الشخصي: {error}"
+  logout: تسجيل الخروج
+
+de_DE:
+  serverDownTitle: Server nicht verfügbar
+  serverDownMessage: "Der {appName}-Server ist derzeit nicht erreichbar. Bitte überprüfen Sie Ihre Verbindung."
+  serverDownRetrying: Es wird versucht, die Verbindung wiederherzustellen...
+  databaseDownTitle: Datenbankverbindung verloren
+  databaseDownMessage: Die Datenbankverbindung ist nicht verfügbar. Sie können zu einem anderen Profil wechseln oder sich abmelden.
+  databaseDownRetrying: Es wird versucht, die Verbindung wiederherzustellen...
+  selectProfile: Wählen Sie Profil
+  selectProfilePlaceholder: Wählen Sie ein Profil...
+  switchProfile: Profil wechseln
+  switching: Wechsel...
+  switchSuccessful: Profil erfolgreich gewechselt
+  switchFailed: Profilwechsel fehlgeschlagen
+  switchFailedWithError: "Profilwechsel fehlgeschlagen: {error}"
+  logout: Abmelden
+
+el_GR:
+  serverDownTitle: Μη διαθέσιμος διακομιστής
+  serverDownMessage: "Ο διακομιστής {appName} δεν είναι προσβάσιμος αυτήν τη στιγμή. Ελέγξτε τη σύνδεσή σας."
+  serverDownRetrying: Προσπάθεια επανασύνδεσης...
+  databaseDownTitle: Χάθηκε η σύνδεση βάσης δεδομένων
+  databaseDownMessage: Η σύνδεση της βάσης δεδομένων δεν είναι διαθέσιμη. Μπορείτε να μεταβείτε σε άλλο προφίλ ή να αποσυνδεθείτε.
+  databaseDownRetrying: Προσπάθεια επανασύνδεσης...
+  selectProfile: Επιλέξτε Προφίλ
+  selectProfilePlaceholder: Επιλέξτε προφίλ...
+  switchProfile: Εναλλαγή προφίλ
+  switching: Εναλλαγή...
+  switchSuccessful: Επιτυχής αλλαγή προφίλ
+  switchFailed: Αποτυχία αλλαγής προφίλ
+  switchFailedWithError: "Αποτυχία αλλαγής προφίλ: {error}"
+  logout: Αποσύνδεση
+
+en_GB:
+  serverDownTitle: Server Unavailable
+  serverDownMessage: "The {appName} server is currently unreachable. Please check your connection."
+  serverDownRetrying: Attempting to reconnect...
+  databaseDownTitle: Database Connection Lost
+  databaseDownMessage: The database connection is unavailable. You can switch to another profile or logout.
+  databaseDownRetrying: Attempting to reconnect...
+  selectProfile: Select Profile
+  selectProfilePlaceholder: Choose a profile...
+  switchProfile: Switch Profile
+  switching: Switching...
+  switchSuccessful: Successfully switched profile
+  switchFailed: Failed to switch profile
+  switchFailedWithError: "Failed to switch profile: {error}"
+  logout: Logout
+
+es_ES:
+  serverDownTitle: Servidor no disponible
+  serverDownMessage: "Actualmente no se puede acceder al servidor {appName}. Por favor verifique su conexión."
+  serverDownRetrying: Intentando volver a conectar...
+  databaseDownTitle: Conexión de base de datos perdida
+  databaseDownMessage: La conexión a la base de datos no está disponible. Puede cambiar a otro perfil o cerrar sesión.
+  databaseDownRetrying: Intentando volver a conectar...
+  selectProfile: Seleccionar perfil
+  selectProfilePlaceholder: Elige un perfil...
+  switchProfile: Cambiar perfil
+  switching: Traspuesta...
+  switchSuccessful: Perfil cambiado exitosamente
+  switchFailed: No se pudo cambiar de perfil
+  switchFailedWithError: "No se pudo cambiar el perfil: {error}"
+  logout: Cerrar sesión
+
+fi_FI:
+  serverDownTitle: Palvelin ei ole käytettävissä
+  serverDownMessage: "Palvelimeen {appName} ei tällä hetkellä saada yhteyttä. Tarkista yhteys."
+  serverDownRetrying: Yritetään muodostaa yhteys uudelleen...
+  databaseDownTitle: Tietokantayhteys katkesi
+  databaseDownMessage: Tietokantayhteys ei ole käytettävissä. Voit vaihtaa toiseen profiiliin tai kirjautua ulos.
+  databaseDownRetrying: Yritetään muodostaa yhteys uudelleen...
+  selectProfile: Valitse Profiili
+  selectProfilePlaceholder: Valitse profiili...
+  switchProfile: Vaihda profiilia
+  switching: Vaihdetaan...
+  switchSuccessful: Profiilin vaihto onnistui
+  switchFailed: Profiilin vaihto epäonnistui
+  switchFailedWithError: "Profiilin vaihto epäonnistui: {error}"
+  logout: Kirjaudu ulos
+
+fr_FR:
+  serverDownTitle: Serveur indisponible
+  serverDownMessage: "Le serveur {appName} est actuellement inaccessible. Veuillez vérifier votre connexion."
+  serverDownRetrying: Tentative de reconnexion...
+  databaseDownTitle: Connexion à la base de données perdue
+  databaseDownMessage: La connexion à la base de données n'est pas disponible. Vous pouvez passer à un autre profil ou vous déconnecter.
+  databaseDownRetrying: Tentative de reconnexion...
+  selectProfile: Sélectionnez un profil
+  selectProfilePlaceholder: Choisissez un profil...
+  switchProfile: Changer de profil
+  switching: Commutation...
+  switchSuccessful: Changement de profil réussi
+  switchFailed: Échec du changement de profil
+  switchFailedWithError: "Échec du changement de profil : {error}"
+  logout: Déconnexion
+
+it_IT:
+  serverDownTitle: Server non disponibile
+  serverDownMessage: "Il server {appName} è attualmente irraggiungibile. Per favore controlla la tua connessione."
+  serverDownRetrying: Tentativo di riconnessione...
+  databaseDownTitle: Connessione al database persa
+  databaseDownMessage: La connessione al database non è disponibile. Puoi passare a un altro profilo o disconnetterti.
+  databaseDownRetrying: Tentativo di riconnessione...
+  selectProfile: Seleziona Profilo
+  selectProfilePlaceholder: Scegli un profilo...
+  switchProfile: Cambia profilo
+  switching: Commutazione...
+  switchSuccessful: Cambio profilo riuscito
+  switchFailed: Impossibile cambiare profilo
+  switchFailedWithError: "Impossibile cambiare profilo: {error}"
+  logout: Esci
+
+iw_IL:
+  serverDownTitle: השרת לא זמין
+  serverDownMessage: "כרגע לא ניתן להגיע לשרת {appName}. אנא בדוק את החיבור שלך."
+  serverDownRetrying: מנסה להתחבר מחדש...
+  databaseDownTitle: אבד החיבור למסד הנתונים
+  databaseDownMessage: חיבור מסד הנתונים אינו זמין. אתה יכול לעבור לפרופיל אחר או להתנתק.
+  databaseDownRetrying: מנסה להתחבר מחדש...
+  selectProfile: בחר פרופיל
+  selectProfilePlaceholder: בחר פרופיל...
+  switchProfile: החלף פרופיל
+  switching: מחליף...
+  switchSuccessful: הפרופיל עבר בהצלחה
+  switchFailed: החלפת פרופיל נכשלה
+  switchFailedWithError: "החלפת פרופיל נכשלה: {error}"
+  logout: התנתק
+
+ja_JP:
+  serverDownTitle: サーバーが利用できません
+  serverDownMessage: "{appName} サーバーは現在アクセスできません。 接続を確認してください。"
+  serverDownRetrying: 再接続しようとしています...
+  databaseDownTitle: データベース接続が失われました
+  databaseDownMessage: データベース接続が利用できません。 別のプロファイルに切り替えたり、ログアウトしたりできます。
+  databaseDownRetrying: 再接続しようとしています...
+  selectProfile: プロファイルの選択
+  selectProfilePlaceholder: プロフィールを選択してください...
+  switchProfile: プロファイルの切り替え
+  switching: 切り替え中...
+  switchSuccessful: プロファイルが正常に切り替えられました
+  switchFailed: プロファイルの切り替えに失敗しました
+  switchFailedWithError: "プロファイルの切り替えに失敗しました: {error}"
+  logout: ログアウト
+
+ko_KR:
+  serverDownTitle: 서버를 사용할 수 없음
+  serverDownMessage: "현재 {appName} 서버에 연결할 수 없습니다. 연결을 확인해주세요."
+  serverDownRetrying: 다시 연결을 시도하는 중...
+  databaseDownTitle: 데이터베이스 연결이 끊어졌습니다.
+  databaseDownMessage: 데이터베이스 연결을 사용할 수 없습니다. 다른 프로필로 전환하거나 로그아웃할 수 있습니다.
+  databaseDownRetrying: 다시 연결을 시도하는 중...
+  selectProfile: 프로필 선택
+  selectProfilePlaceholder: 프로필을 선택하세요...
+  switchProfile: 프로필 전환
+  switching: 전환 중...
+  switchSuccessful: 프로필을 전환했습니다.
+  switchFailed: 프로필을 전환하지 못했습니다.
+  switchFailedWithError: "프로필을 전환하지 못했습니다: {error}"
+  logout: 로그아웃
+
+nl_NL:
+  serverDownTitle: Server niet beschikbaar
+  serverDownMessage: "De {appName}-server is momenteel niet bereikbaar. Controleer uw verbinding."
+  serverDownRetrying: Proberen opnieuw verbinding te maken...
+  databaseDownTitle: Databaseverbinding verbroken
+  databaseDownMessage: De databaseverbinding is niet beschikbaar. U kunt overschakelen naar een ander profiel of uitloggen.
+  databaseDownRetrying: Proberen opnieuw verbinding te maken...
+  selectProfile: Selecteer Profiel
+  selectProfilePlaceholder: Kies een profiel...
+  switchProfile: Profiel wisselen
+  switching: Overstappen...
+  switchSuccessful: Profiel gewijzigd
+  switchFailed: Kan profiel niet wijzigen
+  switchFailedWithError: "Kan niet van profiel wisselen: {error}"
+  logout: Uitloggen
+
+pl_PL:
+  serverDownTitle: Serwer niedostępny
+  serverDownMessage: "Serwer {appName} jest obecnie nieosiągalny. Sprawdź swoje połączenie."
+  serverDownRetrying: Próba ponownego połączenia...
+  databaseDownTitle: Utracono połączenie z bazą danych
+  databaseDownMessage: Połączenie z bazą danych jest niedostępne. Możesz przełączyć się na inny profil lub się wylogować.
+  databaseDownRetrying: Próba ponownego połączenia...
+  selectProfile: Wybierz opcję Profil
+  selectProfilePlaceholder: Wybierz profil...
+  switchProfile: Zmień profil
+  switching: Przełączanie...
+  switchSuccessful: Pomyślnie zmieniono profil
+  switchFailed: Nie udało się przełączyć profilu
+  switchFailedWithError: "Nie udało się przełączyć profilu: {error}"
+  logout: Wyloguj się
+
+pt_BR:
+  serverDownTitle: Servidor indisponível
+  serverDownMessage: "O servidor {appName} está inacessível no momento. Por favor, verifique sua conexão."
+  serverDownRetrying: Tentando reconectar...
+  databaseDownTitle: Conexão com o banco de dados perdida
+  databaseDownMessage: A conexão com o banco de dados não está disponível. Você pode mudar para outro perfil ou sair.
+  databaseDownRetrying: Tentando reconectar...
+  selectProfile: Selecione o perfil
+  selectProfilePlaceholder: Escolha um perfil...
+  switchProfile: Trocar perfil
+  switching: Trocando...
+  switchSuccessful: Perfil trocado com sucesso
+  switchFailed: Falha ao mudar de perfil
+  switchFailedWithError: "Falha ao mudar de perfil: {error}"
+  logout: Sair
+
+ro_RO:
+  serverDownTitle: Server indisponibil
+  serverDownMessage: Serverul [[0]]] este momentan inaccesibil. Vă rugăm să vă verificați conexiunea.
+  serverDownRetrying: Se încearcă reconectarea...
+  databaseDownTitle: S-a pierdut conexiunea la baza de date
+  databaseDownMessage: Conexiunea la baza de date nu este disponibilă. Puteți trece la alt profil sau puteți să vă deconectați.
+  databaseDownRetrying: Se încearcă reconectarea...
+  selectProfile: Selectați Profil
+  selectProfilePlaceholder: Alege un profil...
+  switchProfile: Schimbați profil
+  switching: Se comută...
+  switchSuccessful: Profilul a fost schimbat cu succes
+  switchFailed: Schimbarea profilului a eșuat
+  switchFailedWithError: "Schimbarea profilului a eșuat: {error}"
+  logout: Deconectare
+
+ru_RU:
+  serverDownTitle: Сервер недоступен
+  serverDownMessage: "Сервер {appName} в настоящее время недоступен. Пожалуйста, проверьте ваше соединение."
+  serverDownRetrying: Попытка восстановить соединение...
+  databaseDownTitle: Соединение с базой данных потеряно
+  databaseDownMessage: Соединение с базой данных недоступно. Вы можете переключиться на другой профиль или выйти из системы.
+  databaseDownRetrying: Попытка восстановить соединение...
+  selectProfile: Выберите профиль
+  selectProfilePlaceholder: Выберите профиль...
+  switchProfile: Переключить профиль
+  switching: Переключение...
+  switchSuccessful: Профиль успешно переключен
+  switchFailed: Не удалось переключить профиль
+  switchFailedWithError: "Не удалось переключить профиль: {error}"
+  logout: Выход из системы
+
+sk_SK:
+  serverDownTitle: Server je nedostupný
+  serverDownMessage: "Server {appName} je momentálne nedostupný. Skontrolujte svoje pripojenie."
+  serverDownRetrying: Prebieha pokus o opätovné pripojenie...
+  databaseDownTitle: Pripojenie k databáze sa stratilo
+  databaseDownMessage: Pripojenie k databáze je nedostupné. Môžete prepnúť na iný profil alebo sa odhlásiť.
+  databaseDownRetrying: Prebieha pokus o opätovné pripojenie...
+  selectProfile: Vyberte položku Profil
+  selectProfilePlaceholder: Vyberte profil...
+  switchProfile: Prepnúť profil
+  switching: Prepínanie...
+  switchSuccessful: Profil bol úspešne prepnutý
+  switchFailed: Prepnutie profilu zlyhalo
+  switchFailedWithError: "Nepodarilo sa prepnúť profil: {error}"
+  logout: Odhlásiť sa
+
+sv_SE:
+  serverDownTitle: Servern är inte tillgänglig
+  serverDownMessage: "{appName}-servern är för närvarande inte tillgänglig. Kontrollera din anslutning."
+  serverDownRetrying: Försöker återansluta...
+  databaseDownTitle: Databasanslutning förlorad
+  databaseDownMessage: Databasanslutningen är inte tillgänglig. Du kan byta till en annan profil eller logga ut.
+  databaseDownRetrying: Försöker återansluta...
+  selectProfile: Välj Profil
+  selectProfilePlaceholder: Välj en profil...
+  switchProfile: Byt profil
+  switching: Växlande...
+  switchSuccessful: Profilen har bytts
+  switchFailed: Det gick inte att byta profil
+  switchFailedWithError: "Det gick inte att byta profil: {error}"
+  logout: Utloggning
+
+zh_CN:
+  serverDownTitle: 服务器不可用
+  serverDownMessage: "{appName} 服务器当前无法访问。 请检查您的连接。"
+  serverDownRetrying: 正在尝试重新连接...
+  databaseDownTitle: 数据库连接丢失
+  databaseDownMessage: 数据库连接不可用。 您可以切换到另一个配置文件或注销。
+  databaseDownRetrying: 正在尝试重新连接...
+  selectProfile: 选择个人资料
+  selectProfilePlaceholder: 选择个人资料...
+  switchProfile: 开关配置文件
+  switching: 交换...
+  switchSuccessful: 已成功切换个人资料
+  switchFailed: 切换配置文件失败
+  switchFailedWithError: "切换配置文件失败：{error}"
+  logout: 退出
+
+zh_TW:
+  serverDownTitle: 伺服器不可用
+  serverDownMessage: "{appName} 伺服器目前無法存取。 請檢查您的連線。"
+  serverDownRetrying: 正在嘗試重新連線...
+  databaseDownTitle: 資料庫連線遺失
+  databaseDownMessage: 資料庫連線不可用。 您可以切換到另一個設定檔或登出。
+  databaseDownRetrying: 正在嘗試重新連線...
+  selectProfile: 選擇個人資料
+  selectProfilePlaceholder: 選擇個人資料...
+  switchProfile: 開關設定檔
+  switching: 交換...
+  switchSuccessful: 已成功切換個人資料
+  switchFailed: 切換設定檔失敗
+  switchFailedWithError: "切換設定檔失敗：{error}"
+  logout: 退出

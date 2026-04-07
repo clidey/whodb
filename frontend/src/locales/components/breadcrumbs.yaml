@@ -1,3 +1,83 @@
 en_US:
   home: Home
   back: Back
+
+ar_AE:
+  home: بيت
+  back: خلف
+
+de_DE:
+  home: Heim
+  back: Zurück
+
+el_GR:
+  home: Σπίτι
+  back: Πίσω
+
+en_GB:
+  home: Home
+  back: Back
+
+es_ES:
+  home: Hogar
+  back: Atrás
+
+fi_FI:
+  home: Kotiin
+  back: Takaisin
+
+fr_FR:
+  home: Maison
+  back: Dos
+
+it_IT:
+  home: Casa
+  back: Indietro
+
+iw_IL:
+  home: בַּיִת
+  back: בְּחֲזָרָה
+
+ja_JP:
+  home: 家
+  back: 戻る
+
+ko_KR:
+  home: 집
+  back: 뒤쪽에
+
+nl_NL:
+  home: Thuis
+  back: Rug
+
+pl_PL:
+  home: Dom
+  back: Z powrotem
+
+pt_BR:
+  home: Lar
+  back: Voltar
+
+ro_RO:
+  home: Acasă
+  back: Spate
+
+ru_RU:
+  home: Дом
+  back: Назад
+
+sk_SK:
+  home: Domov
+  back: Späť
+
+sv_SE:
+  home: Hem
+  back: Tillbaka
+
+zh_CN:
+  home: 家
+  back: 后退
+
+zh_TW:
+  home: 家
+  back: 後退

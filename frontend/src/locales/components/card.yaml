@@ -3,3 +3,123 @@ en_US:
   collapse: Collapse
   close: Close
   details: Card Details
+
+ar_AE:
+  expand: يوسع
+  collapse: ينهار
+  close: يغلق
+  details: تفاصيل البطاقة
+
+de_DE:
+  expand: Expandieren
+  collapse: Zusammenbruch
+  close: Schließen
+  details: Kartendetails
+
+el_GR:
+  expand: Διαστέλλω
+  collapse: Κατάρρευση
+  close: Κοντά
+  details: Στοιχεία κάρτας
+
+en_GB:
+  expand: Expand
+  collapse: Collapse
+  close: Close
+  details: Card Details
+
+es_ES:
+  expand: Expandir
+  collapse: Colapsar
+  close: Cerca
+  details: Detalles de la tarjeta
+
+fi_FI:
+  expand: Laajentaa
+  collapse: Romahdus
+  close: Lähellä
+  details: Kortin tiedot
+
+fr_FR:
+  expand: Développer
+  collapse: Effondrement
+  close: Fermer
+  details: Détails de la carte
+
+it_IT:
+  expand: Espandere
+  collapse: Crollo
+  close: Vicina
+  details: Dettagli della carta
+
+iw_IL:
+  expand: לְהַרְחִיב
+  collapse: הִתמוֹטְטוּת
+  close: לִסְגוֹר
+  details: פרטי כרטיס
+
+ja_JP:
+  expand: 拡大する
+  collapse: 崩壊
+  close: 近い
+  details: カード詳細
+
+ko_KR:
+  expand: 확장하다
+  collapse: 무너지다
+  close: 닫다
+  details: 카드 세부정보
+
+nl_NL:
+  expand: Uitbreiden
+  collapse: Instorten
+  close: Dichtbij
+  details: Kaartgegevens
+
+pl_PL:
+  expand: Zwiększać
+  collapse: Zawalić się
+  close: Zamknąć
+  details: Szczegóły karty
+
+pt_BR:
+  expand: Expandir
+  collapse: Colapso
+  close: Fechar
+  details: Detalhes do cartão
+
+ro_RO:
+  expand: Extinde
+  collapse: Colaps
+  close: Aproape
+  details: Detalii card
+
+ru_RU:
+  expand: Расширять
+  collapse: Крах
+  close: Закрывать
+  details: Детали карты
+
+sk_SK:
+  expand: Rozbaliť
+  collapse: kolaps
+  close: Zavrieť
+  details: Podrobnosti karty
+
+sv_SE:
+  expand: Expandera
+  collapse: Kollapsa
+  close: Nära
+  details: Kortdetaljer
+
+zh_CN:
+  expand: 扩张
+  collapse: 坍塌
+  close: 关闭
+  details: 卡详情
+
+zh_TW:
+  expand: 擴張
+  collapse: 坍塌
+  close: 關閉
+  details: 卡詳情

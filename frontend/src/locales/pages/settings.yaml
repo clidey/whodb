@@ -45,3 +45,963 @@ en_US:
   disableAnimations: Disable Animations
   disableAnimationsEnabled: Animations are disabled
   disableAnimationsDisabled: Animations are enabled
+
+ar_AE:
+  title: إعدادات
+  telemetryTitle: القياس عن بعد ومقاييس الأداء
+  telemetryDescription: "نحن نستخدم هذه المعلومات فقط لتحسين أداء {appName}."
+  dataCollectionDetails: "للحصول على تفاصيل حول البيانات التي نجمعها، وكيفية جمعها وتخزينها واستخدامها، يرجى الرجوع إلى {privacyPolicyLink}."
+  privacyPolicy: سياسة الخصوصية
+  posthogInfo: "{appName} يستخدم Posthog لجمع هذه البيانات وإدارتها. يمكن العثور على مزيد من المعلومات حول هذه الأداة على Github."
+  sensitiveDataInfo: لقد اتخذنا تدابير لتنقيح أكبر قدر ممكن من المعلومات الحساسة وسنقوم بتقييمها باستمرار للتأكد من أنها تناسب احتياجاتك واحتياجاتنا دون التضحية بأي شيء.
+  contactUsInfo: "إذا كنت تعرف أداة قد تخدمنا بشكل أفضل، فنحن نحب أن نسمع منك! ما عليك سوى التواصل عبر خيار \"اتصل بنا\" الموجود في الزاوية اليسرى السفلية من الشاشة."
+  enableTelemetry: تم تمكين القياس عن بعد
+  disableTelemetry: تم تعطيل القياس عن بعد
+  eeNoTelemetry: "{appName} لا تقوم المؤسسة بجمع قياسات الأداء ومقاييس الأداء."
+  personalizeTitle: إضفاء الطابع الشخصي على تجربتك
+  personalizeDescription: "اصنع {appName} خاصتك عن طريق تخصيص مظهر واجهة {appName} ومظهرها"
+  storageUnitView: العرض الافتراضي لوحدة التخزين
+  list: قائمة
+  card: بطاقة
+  fontSize: حجم الخط
+  small: صغير
+  medium: واسطة
+  large: كبير
+  borderRadius: نصف قطر الحدود
+  none: لا أحد
+  spacing: تباعد
+  compact: مدمج
+  comfortable: مريح
+  spacious: فسيحة
+  whereConditionMode: حيث وضع الشرط
+  popover: بوبوفر
+  sheet: ملزمة
+  defaultPageSize: حجم الصفحة الافتراضي
+  custom: مخصص
+  language: لغة
+  selectView: حدد طريقة عرض
+  selectFontSize: حدد حجم الخط
+  selectBorderRadius: حدد نصف قطر الحدود
+  selectSpacing: حدد التباعد
+  selectMode: حدد الوضع
+  selectPageSize: حدد حجم الصفحة
+  selectLanguage: اختر اللغة
+  databaseSchemaTerminology: تسمية قاعدة البيانات/المخطط
+  databaseSchemaTerminologyDatabase: قاعدة البيانات
+  databaseSchemaTerminologySchema: مخطط
+  selectDatabaseSchemaTerminology: حدد التسمية
+  disableAnimations: تعطيل الرسوم المتحركة
+  disableAnimationsEnabled: تم تعطيل الرسوم المتحركة
+  disableAnimationsDisabled: تم تمكين الرسوم المتحركة
+
+de_DE:
+  title: Einstellungen
+  telemetryTitle: Telemetrie und Leistungsmetriken
+  telemetryDescription: "Wir verwenden diese Informationen ausschließlich zur Verbesserung der Leistung von {appName}."
+  dataCollectionDetails: "Einzelheiten darüber, welche Daten wir erfassen, wie sie erfasst, gespeichert und genutzt werden, finden Sie in unserem {privacyPolicyLink}."
+  privacyPolicy: Datenschutzrichtlinie
+  posthogInfo: "{appName} nutzt Posthog, um diese Daten zu sammeln und zu verwalten. Weitere Informationen zu diesem Tool finden Sie auf Github."
+  sensitiveDataInfo: Wir haben Maßnahmen ergriffen, um so viele vertrauliche Informationen wie möglich zu schwärzen, und werden diese kontinuierlich überprüfen, um sicherzustellen, dass sie Ihren und unseren Bedürfnissen entsprechen, ohne dass Abstriche gemacht werden müssen.
+  contactUsInfo: Wenn Sie ein Tool kennen, das uns besser helfen könnte, würden wir uns freuen, von Ihnen zu hören! Kontaktieren Sie uns einfach über die Option „Kontakt“ in der unteren linken Ecke des Bildschirms.
+  enableTelemetry: Telemetrie ist aktiviert
+  disableTelemetry: Telemetrie ist deaktiviert
+  eeNoTelemetry: "{appName} Enterprise erfasst keine Telemetrie- und Leistungsmetriken."
+  personalizeTitle: Personalisieren Sie Ihr Erlebnis
+  personalizeDescription: "Machen Sie {appName} zu Ihrem eigenen, indem Sie das Erscheinungsbild und die Haptik der {appName}-Benutzeroberfläche anpassen"
+  storageUnitView: Standardansicht der Speichereinheit
+  list: Liste
+  card: Karte
+  fontSize: Schriftgröße
+  small: Klein
+  medium: Medium
+  large: Groß
+  borderRadius: Grenzradius
+  none: Keiner
+  spacing: Abstand
+  compact: Kompakt
+  comfortable: Komfortabel
+  spacious: Geräumig
+  whereConditionMode: Wo Bedingungsmodus
+  popover: Popover
+  sheet: Blatt
+  defaultPageSize: Standardseitengröße
+  custom: Brauch
+  language: Sprache
+  selectView: Wählen Sie eine Ansicht aus
+  selectFontSize: Wählen Sie Schriftgröße
+  selectBorderRadius: Wählen Sie Randradius aus
+  selectSpacing: Wählen Sie Abstand
+  selectMode: Wählen Sie Modus
+  selectPageSize: Wählen Sie Seitengröße
+  selectLanguage: Wählen Sie Sprache aus
+  databaseSchemaTerminology: Datenbank-/Schemabezeichnung
+  databaseSchemaTerminologyDatabase: Datenbank
+  databaseSchemaTerminologySchema: Schema
+  selectDatabaseSchemaTerminology: Wählen Sie Etikett aus
+  disableAnimations: Animationen deaktivieren
+  disableAnimationsEnabled: Animationen sind deaktiviert
+  disableAnimationsDisabled: Animationen sind aktiviert
+
+el_GR:
+  title: Ρυθμίσεις
+  telemetryTitle: Τηλεμετρία και μετρήσεις απόδοσης
+  telemetryDescription: "Χρησιμοποιούμε αυτές τις πληροφορίες αποκλειστικά για να βελτιώσουμε την απόδοση του {appName}."
+  dataCollectionDetails: "Για λεπτομέρειες σχετικά με τα δεδομένα που συλλέγουμε, πώς συλλέγονται, αποθηκεύονται και χρησιμοποιούνται, ανατρέξτε στο {privacyPolicyLink} μας."
+  privacyPolicy: Πολιτική Απορρήτου
+  posthogInfo: "Ο {appName} χρησιμοποιεί το Posthog για τη συλλογή και διαχείριση αυτών των δεδομένων. Περισσότερες πληροφορίες σχετικά με αυτό το εργαλείο μπορείτε να βρείτε στο Github του."
+  sensitiveDataInfo: Έχουμε λάβει μέτρα για να διαγράψουμε όσες ευαίσθητες πληροφορίες μπορούμε και θα αξιολογούμε συνεχώς για να βεβαιωθούμε ότι ταιριάζουν στις δικές σας και στις ανάγκες μας χωρίς να θυσιάζουμε τίποτα.
+  contactUsInfo: "Εάν γνωρίζετε κάποιο εργαλείο που θα μπορούσε να μας εξυπηρετήσει καλύτερα, θα θέλαμε να σας ακούσουμε! Απλώς επικοινωνήστε μέσω της επιλογής \"Επικοινωνήστε μαζί μας\" στην κάτω αριστερή γωνία της οθόνης."
+  enableTelemetry: Η τηλεμετρία είναι ενεργοποιημένη
+  disableTelemetry: Η τηλεμετρία είναι απενεργοποιημένη
+  eeNoTelemetry: "{appName} Η επιχείρηση δεν συλλέγει μετρήσεις τηλεμετρίας και απόδοσης."
+  personalizeTitle: Εξατομικεύστε την εμπειρία σας
+  personalizeDescription: "Κάντε το {appName} δικό σας προσαρμόζοντας την εμφάνιση και την αίσθηση της διεπαφής {appName}"
+  storageUnitView: Προεπιλεγμένη προβολή μονάδας αποθήκευσης
+  list: Λίστα
+  card: Κάρτα
+  fontSize: Μέγεθος γραμματοσειράς
+  small: Μικρό
+  medium: Μέσον
+  large: Μεγάλο
+  borderRadius: Ακτίνα συνόρων
+  none: Κανένας
+  spacing: Διάστημα
+  compact: Συμπαγής
+  comfortable: Ανετος
+  spacious: Ευρύχωρος
+  whereConditionMode: Όπου Κατάσταση Λειτουργία
+  popover: Ποπόβερ
+  sheet: Σεντόνι
+  defaultPageSize: Προεπιλεγμένο μέγεθος σελίδας
+  custom: Εθιμο
+  language: Γλώσσα
+  selectView: Επιλέξτε μια Προβολή
+  selectFontSize: Επιλέξτε Μέγεθος γραμματοσειράς
+  selectBorderRadius: Επιλέξτε Border Radius
+  selectSpacing: Επιλέξτε Διάστημα
+  selectMode: Επιλέξτε Λειτουργία
+  selectPageSize: Επιλέξτε Μέγεθος σελίδας
+  selectLanguage: Επιλέξτε Γλώσσα
+  databaseSchemaTerminology: Βάση δεδομένων/Ετικέτα σχήματος
+  databaseSchemaTerminologyDatabase: Βάση δεδομένων
+  databaseSchemaTerminologySchema: Σχήμα
+  selectDatabaseSchemaTerminology: Επιλέξτε Ετικέτα
+  disableAnimations: Απενεργοποίηση κινούμενων εικόνων
+  disableAnimationsEnabled: Οι κινούμενες εικόνες είναι απενεργοποιημένες
+  disableAnimationsDisabled: Τα κινούμενα σχέδια είναι ενεργοποιημένα
+
+en_GB:
+  title: Settings
+  telemetryTitle: Telemetry and Performance Metrics
+  telemetryDescription: "We use this information solely to enhance the performance of {appName}."
+  dataCollectionDetails: "For details on what data we collect, how it's collected, stored, and used, please refer to our {privacyPolicyLink}."
+  privacyPolicy: Privacy Policy
+  posthogInfo: "{appName} uses Posthog to collect and manage this data. More information about this tool can be found on its Github."
+  sensitiveDataInfo: We have taken measures to redact as much sensitive information as we can and will continuously evaluate to make sure that it fits yours and our needs without sacrificing anything.
+  contactUsInfo: "If you know of a tool that might serve us better, we'd love to hear from you! Just reach out via the \"Contact Us\" option in the bottom left corner of the screen."
+  enableTelemetry: Telemetry is enabled
+  disableTelemetry: Telemetry is disabled
+  eeNoTelemetry: "{appName} Enterprise does not collect telemetry and performance metrics."
+  personalizeTitle: Personalise Your Experience
+  personalizeDescription: "Make {appName} your own by customising the appearance and feel of the {appName} interface"
+  storageUnitView: Storage Unit Default View
+  list: List
+  card: Card
+  fontSize: Font Size
+  small: Small
+  medium: Medium
+  large: Large
+  borderRadius: Border Radius
+  none: None
+  spacing: Spacing
+  compact: Compact
+  comfortable: Comfortable
+  spacious: Spacious
+  whereConditionMode: Where Condition Mode
+  popover: Popover
+  sheet: Sheet
+  defaultPageSize: Default Page Size
+  custom: Custom
+  language: Language
+  selectView: Select a View
+  selectFontSize: Select Font Size
+  selectBorderRadius: Select Border Radius
+  selectSpacing: Select Spacing
+  selectMode: Select Mode
+  selectPageSize: Select Page Size
+  selectLanguage: Select Language
+  databaseSchemaTerminology: Database/Schema Label
+  databaseSchemaTerminologyDatabase: Database
+  databaseSchemaTerminologySchema: Schema
+  selectDatabaseSchemaTerminology: Select Label
+  disableAnimations: Disable Animations
+  disableAnimationsEnabled: Animations are disabled
+  disableAnimationsDisabled: Animations are enabled
+
+es_ES:
+  title: Ajustes
+  telemetryTitle: Telemetría y métricas de rendimiento
+  telemetryDescription: "Utilizamos esta información únicamente para mejorar el rendimiento de {appName}."
+  dataCollectionDetails: "Para obtener detalles sobre qué datos recopilamos, cómo se recopilan, almacenan y utilizan, consulte nuestro {privacyPolicyLink}."
+  privacyPolicy: política de privacidad
+  posthogInfo: "{appName} utiliza Posthog para recopilar y gestionar estos datos. Puede encontrar más información sobre esta herramienta en su Github."
+  sensitiveDataInfo: Hemos tomado medidas para redactar la mayor cantidad de información confidencial posible y la evaluaremos continuamente para asegurarnos de que se ajuste a sus necesidades y a las nuestras sin sacrificar nada.
+  contactUsInfo: "Si conoce alguna herramienta que pueda servirnos mejor, ¡nos encantaría saber de usted! Simplemente comuníquese a través de la opción \"Contáctenos\" en la esquina inferior izquierda de la pantalla."
+  enableTelemetry: La telemetría está habilitada.
+  disableTelemetry: La telemetría está deshabilitada
+  eeNoTelemetry: "{appName} Enterprise no recopila telemetría ni métricas de rendimiento."
+  personalizeTitle: Personaliza tu experiencia
+  personalizeDescription: "Haz tuyo {appName} personalizando la apariencia de la interfaz {appName}"
+  storageUnitView: Vista predeterminada de la unidad de almacenamiento
+  list: Lista
+  card: Tarjeta
+  fontSize: Tamaño de fuente
+  small: Pequeña
+  medium: Medio
+  large: Grande
+  borderRadius: Radio del borde
+  none: Ninguna
+  spacing: Espaciado
+  compact: Compacto
+  comfortable: Cómoda
+  spacious: Espaciosa
+  whereConditionMode: Donde modo de condición
+  popover: popover
+  sheet: Hoja
+  defaultPageSize: Tamaño de página predeterminado
+  custom: Costumbre
+  language: Idioma
+  selectView: Seleccione una vista
+  selectFontSize: Seleccionar tamaño de fuente
+  selectBorderRadius: Seleccionar radio de borde
+  selectSpacing: Seleccionar espaciado
+  selectMode: Seleccionar modo
+  selectPageSize: Seleccionar tamaño de página
+  selectLanguage: Seleccionar idioma
+  databaseSchemaTerminology: Etiqueta de base de datos/esquema
+  databaseSchemaTerminologyDatabase: Base de datos
+  databaseSchemaTerminologySchema: Esquema
+  selectDatabaseSchemaTerminology: Seleccionar etiqueta
+  disableAnimations: Deshabilitar animaciones
+  disableAnimationsEnabled: Las animaciones están deshabilitadas.
+  disableAnimationsDisabled: Las animaciones están habilitadas.
+
+fi_FI:
+  title: Asetukset
+  telemetryTitle: Telemetria ja suorituskykymittarit
+  telemetryDescription: "Käytämme näitä tietoja ainoastaan ​​parantaaksemme {appName}:n suorituskykyä."
+  dataCollectionDetails: "Lisätietoja keräämistämme tiedoista, niiden keräämisestä, tallentamisesta ja käytöstä saat osoitteesta {privacyPolicyLink}."
+  privacyPolicy: Tietosuojakäytäntö
+  posthogInfo: "{appName} käyttää Posthogia näiden tietojen keräämiseen ja hallintaan. Lisätietoja tästä työkalusta löytyy sen Githubista."
+  sensitiveDataInfo: Olemme ryhtyneet toimiin poistaaksemme niin paljon arkaluontoisia tietoja kuin pystymme ja arvioimme jatkuvasti varmistaaksemme, että ne sopivat sinun ja tarpeisiimme tinkimättä mistään.
+  contactUsInfo: "Jos tiedät työkalun, joka voisi palvella meitä paremmin, kuulemme mielellämme sinusta! Ota yhteyttä käyttämällä \"Ota yhteyttä\" -vaihtoehtoa näytön vasemmassa alakulmassa."
+  enableTelemetry: Telemetria on käytössä
+  disableTelemetry: Telemetria ei ole käytössä
+  eeNoTelemetry: "{appName} Yritys ei kerää telemetria- ja suorituskykymittareita."
+  personalizeTitle: Mukauta kokemuksesi
+  personalizeDescription: "Tee {appName} omasi muokkaamalla {appName}-käyttöliittymän ulkoasua ja tuntumaa"
+  storageUnitView: Tallennusyksikön oletusnäkymä
+  list: Lista
+  card: Kortti
+  fontSize: Fontin koko
+  small: Pieni
+  medium: Keskikokoinen
+  large: Suuri
+  borderRadius: Reunan säde
+  none: Ei mitään
+  spacing: Välit
+  compact: Kompakti
+  comfortable: Mukava
+  spacious: Tilava
+  whereConditionMode: Missä kuntotila
+  popover: Popover
+  sheet: Arkki
+  defaultPageSize: Sivun oletuskoko
+  custom: Mukautettu
+  language: Kieli
+  selectView: Valitse näkymä
+  selectFontSize: Valitse Fonttikoko
+  selectBorderRadius: Valitse Reunuksen säde
+  selectSpacing: Valitse Välilyönti
+  selectMode: Valitse Tila
+  selectPageSize: Valitse Sivun koko
+  selectLanguage: Valitse Kieli
+  databaseSchemaTerminology: Tietokanta/Schema Label
+  databaseSchemaTerminologyDatabase: Tietokanta
+  databaseSchemaTerminologySchema: Kaavio
+  selectDatabaseSchemaTerminology: Valitse Label
+  disableAnimations: Poista animaatiot käytöstä
+  disableAnimationsEnabled: Animaatiot on poistettu käytöstä
+  disableAnimationsDisabled: Animaatiot ovat käytössä
+
+fr_FR:
+  title: Paramètres
+  telemetryTitle: Télémétrie et mesures de performances
+  telemetryDescription: "Nous utilisons ces informations uniquement pour améliorer les performances de {appName}."
+  dataCollectionDetails: "Pour plus de détails sur les données que nous collectons, comment elles sont collectées, stockées et utilisées, veuillez vous référer à notre {privacyPolicyLink}."
+  privacyPolicy: politique de confidentialité
+  posthogInfo: "{appName} utilise Posthog pour collecter et gérer ces données. Plus d’informations sur cet outil peuvent être trouvées sur son Github."
+  sensitiveDataInfo: Nous avons pris des mesures pour supprimer autant d'informations sensibles que possible et nous les évaluerons continuellement pour nous assurer qu'elles correspondent à vos besoins et à nos besoins sans rien sacrifier.
+  contactUsInfo: Si vous connaissez un outil qui pourrait mieux nous servir, nous serions ravis de vous entendre ! Contactez-nous simplement via l'option « Contactez-nous » dans le coin inférieur gauche de l'écran.
+  enableTelemetry: La télémétrie est activée
+  disableTelemetry: La télémétrie est désactivée
+  eeNoTelemetry: "{appName} Enterprise ne collecte pas de mesures de télémétrie ni de performances."
+  personalizeTitle: Personnalisez votre expérience
+  personalizeDescription: "Personnalisez {appName} en personnalisant l'apparence et la convivialité de l'interface {appName}"
+  storageUnitView: Vue par défaut de l'unité de stockage
+  list: Liste
+  card: Carte
+  fontSize: Taille de la police
+  small: Petite
+  medium: Moyen
+  large: Grande
+  borderRadius: Rayon de frontière
+  none: Aucune
+  spacing: Espacement
+  compact: Compacte
+  comfortable: Confortable
+  spacious: Spacieuse
+  whereConditionMode: Où Mode Condition
+  popover: Popover
+  sheet: Feuille
+  defaultPageSize: Taille de page par défaut
+  custom: Coutume
+  language: Langue
+  selectView: Sélectionnez une vue
+  selectFontSize: Sélectionnez la taille de la police
+  selectBorderRadius: Sélectionnez le rayon de la bordure
+  selectSpacing: Sélectionnez l'espacement
+  selectMode: Sélectionner le mode
+  selectPageSize: Sélectionnez la taille de la page
+  selectLanguage: Sélectionnez la langue
+  databaseSchemaTerminology: Étiquette de base de données/schéma
+  databaseSchemaTerminologyDatabase: Base de données
+  databaseSchemaTerminologySchema: Schéma
+  selectDatabaseSchemaTerminology: Sélectionner une étiquette
+  disableAnimations: Désactiver les animations
+  disableAnimationsEnabled: Les animations sont désactivées
+  disableAnimationsDisabled: Les animations sont activées
+
+it_IT:
+  title: Impostazioni
+  telemetryTitle: Telemetria e metriche delle prestazioni
+  telemetryDescription: "Utilizziamo queste informazioni esclusivamente per migliorare le prestazioni di {appName}."
+  dataCollectionDetails: "Per dettagli su quali dati raccogliamo, come vengono raccolti, archiviati e utilizzati, fare riferimento al nostro {privacyPolicyLink}."
+  privacyPolicy: politica sulla riservatezza
+  posthogInfo: "{appName} utilizza Posthog per raccogliere e gestire questi dati. Maggiori informazioni su questo strumento possono essere trovate sul suo Github."
+  sensitiveDataInfo: Abbiamo adottato misure per oscurare quante più informazioni sensibili possibile e valuteremo continuamente per assicurarci che soddisfino le tue e le nostre esigenze senza sacrificare nulla.
+  contactUsInfo: "Se conosci uno strumento che potrebbe servirci meglio, ci piacerebbe sentire la tua opinione! Basta contattarci tramite l'opzione \"Contattaci\" nell'angolo in basso a sinistra dello schermo."
+  enableTelemetry: La telemetria è abilitata
+  disableTelemetry: La telemetria è disabilitata
+  eeNoTelemetry: "{appName} Enterprise non raccoglie dati di telemetria e parametri prestazionali."
+  personalizeTitle: Personalizza la tua esperienza
+  personalizeDescription: "Personalizza {appName} personalizzando l'aspetto dell'interfaccia {appName}."
+  storageUnitView: Visualizzazione predefinita dell'unità di archiviazione
+  list: Lista
+  card: Carta
+  fontSize: Dimensione carattere
+  small: Piccola
+  medium: Medio
+  large: Grande
+  borderRadius: Raggio del confine
+  none: Nessuno
+  spacing: Spaziatura
+  compact: Compatto
+  comfortable: Comoda
+  spacious: Spaziosa
+  whereConditionMode: Modalità Condizione Dove
+  popover: Popover
+  sheet: Foglio
+  defaultPageSize: Dimensioni pagina predefinite
+  custom: Costume
+  language: Lingua
+  selectView: Seleziona una vista
+  selectFontSize: Seleziona Dimensione carattere
+  selectBorderRadius: Seleziona Raggio del bordo
+  selectSpacing: Seleziona Spaziatura
+  selectMode: Seleziona Modalità
+  selectPageSize: Seleziona la dimensione della pagina
+  selectLanguage: Seleziona lingua
+  databaseSchemaTerminology: Etichetta database/schema
+  databaseSchemaTerminologyDatabase: Banca dati
+  databaseSchemaTerminologySchema: Schema
+  selectDatabaseSchemaTerminology: Seleziona Etichetta
+  disableAnimations: Disabilita animazioni
+  disableAnimationsEnabled: Le animazioni sono disabilitate
+  disableAnimationsDisabled: Le animazioni sono abilitate
+
+iw_IL:
+  title: הגדרות
+  telemetryTitle: טלמטריה ומדדי ביצועים
+  telemetryDescription: "אנו משתמשים במידע זה אך ורק כדי לשפר את הביצועים של {appName}."
+  dataCollectionDetails: "לפרטים על אילו נתונים אנו אוספים, כיצד הם נאספים, מאוחסנים ומשתמשים בהם, עיין ב-{privacyPolicyLink} שלנו."
+  privacyPolicy: מדיניות פרטיות
+  posthogInfo: "{appName} משתמש ב-Posthog כדי לאסוף ולנהל את הנתונים האלה. מידע נוסף על כלי זה ניתן למצוא ב- Github שלו."
+  sensitiveDataInfo: נקטנו באמצעים כדי לבטל מידע רגיש ככל שנוכל ונבצע הערכה מתמדת כדי לוודא שהוא מתאים לצרכיך ולצרכים שלנו מבלי להקריב דבר.
+  contactUsInfo: "אם אתם מכירים כלי שעשוי לשרת אותנו טוב יותר, נשמח לשמוע מכם! פשוט צור קשר דרך האפשרות \"צור קשר\" בפינה השמאלית התחתונה של המסך."
+  enableTelemetry: טלמטריה מופעלת
+  disableTelemetry: הטלמטריה מושבתת
+  eeNoTelemetry: "{appName} Enterprise לא אוספת מדדי טלמטריה וביצועים."
+  personalizeTitle: התאם אישית את החוויה שלך
+  personalizeDescription: "הפוך את {appName} לשלך על ידי התאמה אישית של המראה והתחושה של ממשק {appName}"
+  storageUnitView: תצוגת ברירת מחדל של יחידת אחסון
+  list: רְשִׁימָה
+  card: כַּרְטִיס
+  fontSize: גודל גופן
+  small: קָטָן
+  medium: בֵּינוֹנִי
+  large: גָדוֹל
+  borderRadius: רדיוס הגבול
+  none: אַף לֹא אֶחָד
+  spacing: מרווחים
+  compact: קוֹמפָּקטִי
+  comfortable: נוֹחַ
+  spacious: מְרוּוָח
+  whereConditionMode: איפה מצב מצב
+  popover: פופ-אובר
+  sheet: דַף
+  defaultPageSize: גודל עמוד ברירת מחדל
+  custom: מִנְהָג
+  language: שָׂפָה
+  selectView: בחר תצוגה
+  selectFontSize: בחר גודל גופן
+  selectBorderRadius: בחר רדיוס גבול
+  selectSpacing: בחר מרווח
+  selectMode: בחר מצב
+  selectPageSize: בחר גודל עמוד
+  selectLanguage: בחר שפה
+  databaseSchemaTerminology: מסד נתונים/תווית סכימה
+  databaseSchemaTerminologyDatabase: מסד נתונים
+  databaseSchemaTerminologySchema: סכֵימָה
+  selectDatabaseSchemaTerminology: בחר תווית
+  disableAnimations: השבת אנימציות
+  disableAnimationsEnabled: אנימציות מושבתות
+  disableAnimationsDisabled: אנימציות מופעלות
+
+ja_JP:
+  title: 設定
+  telemetryTitle: テレメトリとパフォーマンスのメトリクス
+  telemetryDescription: "この情報は、{appName} のパフォーマンスを向上させるためにのみ使用されます。"
+  dataCollectionDetails: "当社が収集するデータ、その収集、保存、使用方法の詳細については、{privacyPolicyLink} を参照してください。"
+  privacyPolicy: プライバシーポリシー
+  posthogInfo: "{appName} は Posthog を使用してこのデータを収集および管理します。 このツールの詳細については、Github を参照してください。"
+  sensitiveDataInfo: 当社は、できる限り機密情報を編集するための措置を講じており、何も犠牲にすることなく、お客様と当社のニーズに適合しているかどうかを継続的に評価していきます。
+  contactUsInfo: 私たちの役に立ちそうなツールをご存知でしたら、ぜひご連絡ください。 画面の左下隅にある「お問い合わせ」オプションからご連絡ください。
+  enableTelemetry: テレメトリが有効になっています
+  disableTelemetry: テレメトリーが無効になっています
+  eeNoTelemetry: "{appName} Enterprise はテレメトリとパフォーマンス メトリックを収集しません。"
+  personalizeTitle: エクスペリエンスをパーソナライズする
+  personalizeDescription: "{appName} インターフェイスの外観と感触をカスタマイズして、{appName} を自分のものにしましょう"
+  storageUnitView: ストレージユニットのデフォルトビュー
+  list: リスト
+  card: カード
+  fontSize: フォントサイズ
+  small: 小さい
+  medium: 中くらい
+  large: 大きい
+  borderRadius: 境界半径
+  none: なし
+  spacing: 間隔
+  compact: コンパクト
+  comfortable: 快適
+  spacious: 広々とした
+  whereConditionMode: Where 条件モード
+  popover: ポップオーバー
+  sheet: シート
+  defaultPageSize: デフォルトのページサイズ
+  custom: カスタム
+  language: 言語
+  selectView: ビューを選択してください
+  selectFontSize: フォントサイズの選択
+  selectBorderRadius: 境界線の半径を選択してください
+  selectSpacing: 間隔の選択
+  selectMode: モードの選択
+  selectPageSize: ページサイズの選択
+  selectLanguage: 言語の選択
+  databaseSchemaTerminology: データベース/スキーマラベル
+  databaseSchemaTerminologyDatabase: データベース
+  databaseSchemaTerminologySchema: スキーマ
+  selectDatabaseSchemaTerminology: ラベルの選択
+  disableAnimations: アニメーションを無効にする
+  disableAnimationsEnabled: アニメーションは無効になっています
+  disableAnimationsDisabled: アニメーションが有効になっています
+
+ko_KR:
+  title: 설정
+  telemetryTitle: 원격 측정 및 성능 측정항목
+  telemetryDescription: "우리는 이 정보를 {appName}의 성능을 향상시키기 위해서만 사용합니다."
+  dataCollectionDetails: "당사가 수집하는 데이터, 수집, 저장 및 사용 방법에 대한 자세한 내용은 {privacyPolicyLink}을 참조하세요."
+  privacyPolicy: 개인 정보 보호 정책
+  posthogInfo: "{appName}는 Posthog를 사용하여 이 데이터를 수집하고 관리합니다. 이 도구에 대한 자세한 내용은 Github에서 확인할 수 있습니다."
+  sensitiveDataInfo: 우리는 가능한 한 많은 민감한 정보를 수정하기 위한 조치를 취했으며, 아무것도 희생하지 않고 귀하와 우리의 요구에 맞는지 확인하기 위해 지속적으로 평가할 것입니다.
+  contactUsInfo: "우리에게 더 나은 서비스를 제공할 수 있는 도구를 알고 계시다면 귀하의 의견을 듣고 싶습니다! 화면 왼쪽 하단에 있는 \"문의하기\" 옵션을 통해 문의하세요."
+  enableTelemetry: 원격 측정이 활성화되었습니다.
+  disableTelemetry: 원격 측정이 비활성화되었습니다.
+  eeNoTelemetry: "{appName} 기업은 원격 측정 및 성능 지표를 수집하지 않습니다."
+  personalizeTitle: 귀하의 경험을 개인화하십시오
+  personalizeDescription: "{appName} 인터페이스의 모양과 느낌을 사용자 정의하여 {appName}을 자신만의 것으로 만드세요."
+  storageUnitView: 스토리지 유닛 기본 보기
+  list: 목록
+  card: 카드
+  fontSize: 글꼴 크기
+  small: 작은
+  medium: 중간
+  large: 크기가 큰
+  borderRadius: 테두리 반경
+  none: 없음
+  spacing: 간격
+  compact: 콤팩트
+  comfortable: 편안한
+  spacious: 넓다
+  whereConditionMode: Where 조건 모드
+  popover: 팝오버
+  sheet: 시트
+  defaultPageSize: 기본 페이지 크기
+  custom: 관습
+  language: 언어
+  selectView: 보기 선택
+  selectFontSize: 글꼴 크기 선택
+  selectBorderRadius: 테두리 반경 선택
+  selectSpacing: 간격 선택
+  selectMode: 모드 선택
+  selectPageSize: 페이지 크기 선택
+  selectLanguage: 언어 선택
+  databaseSchemaTerminology: 데이터베이스/스키마 레이블
+  databaseSchemaTerminologyDatabase: 데이터 베이스
+  databaseSchemaTerminologySchema: 개요
+  selectDatabaseSchemaTerminology: 라벨 선택
+  disableAnimations: 애니메이션 비활성화
+  disableAnimationsEnabled: 애니메이션이 비활성화되었습니다.
+  disableAnimationsDisabled: 애니메이션이 활성화되었습니다.
+
+nl_NL:
+  title: Instellingen
+  telemetryTitle: Telemetrie en prestatiestatistieken
+  telemetryDescription: "We gebruiken deze informatie uitsluitend om de prestaties van {appName} te verbeteren."
+  dataCollectionDetails: "Voor details over welke gegevens we verzamelen, hoe deze worden verzameld, opgeslagen en gebruikt, verwijzen wij u naar onze {privacyPolicyLink}."
+  privacyPolicy: Privacybeleid
+  posthogInfo: "{appName} gebruikt Posthog om deze gegevens te verzamelen en te beheren. Meer informatie over deze tool is te vinden op zijn Github."
+  sensitiveDataInfo: We hebben maatregelen genomen om zoveel mogelijk gevoelige informatie te redigeren als we kunnen en zullen voortdurend evalueren om er zeker van te zijn dat deze aansluit bij uw en onze behoeften, zonder iets op te offeren.
+  contactUsInfo: Als u een tool kent die ons beter van dienst kan zijn, horen wij dat graag van u! Neem gewoon contact op via de optie 'Contact met ons opnemen' in de linkerbenedenhoek van het scherm.
+  enableTelemetry: Telemetrie is ingeschakeld
+  disableTelemetry: Telemetrie is uitgeschakeld
+  eeNoTelemetry: "{appName} Enterprise verzamelt geen telemetrie- en prestatiestatistieken."
+  personalizeTitle: Personaliseer uw ervaring
+  personalizeDescription: "Maak {appName} uw eigen door het uiterlijk en gevoel van de {appName}-interface aan te passen"
+  storageUnitView: Standaardweergave opslageenheid
+  list: Lijst
+  card: Kaart
+  fontSize: Lettergrootte
+  small: Klein
+  medium: Medium
+  large: Groot
+  borderRadius: Grensradius
+  none: Geen
+  spacing: Afstand
+  compact: Compact
+  comfortable: Comfortabel
+  spacious: Ruim
+  whereConditionMode: Waar Conditiemodus
+  popover: Pop-over
+  sheet: Laken
+  defaultPageSize: Standaard paginaformaat
+  custom: Aangepast
+  language: Taal
+  selectView: Selecteer een weergave
+  selectFontSize: Selecteer Lettergrootte
+  selectBorderRadius: Selecteer Randradius
+  selectSpacing: Selecteer Afstand
+  selectMode: Selecteer Modus
+  selectPageSize: Selecteer Paginaformaat
+  selectLanguage: Selecteer Taal
+  databaseSchemaTerminology: Database-/schemalabel
+  databaseSchemaTerminologyDatabase: Database
+  databaseSchemaTerminologySchema: Schema
+  selectDatabaseSchemaTerminology: Selecteer Etiket
+  disableAnimations: Schakel animaties uit
+  disableAnimationsEnabled: Animaties zijn uitgeschakeld
+  disableAnimationsDisabled: Animaties zijn ingeschakeld
+
+pl_PL:
+  title: Ustawienia
+  telemetryTitle: Dane telemetryczne i wydajnościowe
+  telemetryDescription: "Używamy tych informacji wyłącznie w celu poprawy wydajności {appName}."
+  dataCollectionDetails: "Szczegółowe informacje na temat tego, jakie dane zbieramy, w jaki sposób są gromadzone, przechowywane i wykorzystywane, można znaleźć w naszych {privacyPolicyLink}."
+  privacyPolicy: Polityka prywatności
+  posthogInfo: "{appName} używa Posthog do gromadzenia tych danych i zarządzania nimi. Więcej informacji na temat tego narzędzia można znaleźć na jego Githubie."
+  sensitiveDataInfo: Podjęliśmy działania, aby zredagować jak najwięcej poufnych informacji i będziemy stale oceniać, aby upewnić się, że odpowiadają one Twoim i naszym potrzebom, nie poświęcając niczego.
+  contactUsInfo: Jeśli znasz narzędzie, które mogłoby nam lepiej służyć, chętnie się z Tobą skontaktujemy! Wystarczy, że skontaktujesz się z nami za pomocą opcji „Skontaktuj się z nami” w lewym dolnym rogu ekranu.
+  enableTelemetry: Telemetria jest włączona
+  disableTelemetry: Telemetria jest wyłączona
+  eeNoTelemetry: "{appName} Przedsiębiorstwo nie gromadzi danych telemetrycznych ani wskaźników wydajności."
+  personalizeTitle: Spersonalizuj swoje doświadczenie
+  personalizeDescription: "Uczyń {appName} swoim własnym, dostosowując wygląd i sposób działania interfejsu {appName}."
+  storageUnitView: Widok domyślny jednostki pamięci
+  list: Lista
+  card: Karta
+  fontSize: Rozmiar czcionki
+  small: Mały
+  medium: Średni
+  large: Duży
+  borderRadius: Promień granicy
+  none: Nic
+  spacing: Rozstaw
+  compact: Kompaktowy
+  comfortable: Wygodny
+  spacious: Przestronny
+  whereConditionMode: Gdzie Tryb warunku
+  popover: Popover
+  sheet: Arkusz
+  defaultPageSize: Domyślny rozmiar strony
+  custom: Zwyczaj
+  language: Język
+  selectView: Wybierz widok
+  selectFontSize: Wybierz Rozmiar czcionki
+  selectBorderRadius: Wybierz Promień obramowania
+  selectSpacing: Wybierz opcję Odstępy
+  selectMode: Wybierz Tryb
+  selectPageSize: Wybierz Rozmiar strony
+  selectLanguage: Wybierz Język
+  databaseSchemaTerminology: Etykieta bazy danych/schematu
+  databaseSchemaTerminologyDatabase: Baza danych
+  databaseSchemaTerminologySchema: Schemat
+  selectDatabaseSchemaTerminology: Wybierz Etykietę
+  disableAnimations: Wyłącz animacje
+  disableAnimationsEnabled: Animacje są wyłączone
+  disableAnimationsDisabled: Animacje są włączone
+
+pt_BR:
+  title: Configurações
+  telemetryTitle: Telemetria e métricas de desempenho
+  telemetryDescription: "Usamos essas informações apenas para melhorar o desempenho de {appName}."
+  dataCollectionDetails: "Para obter detalhes sobre quais dados coletamos, como são coletados, armazenados e usados, consulte nosso {privacyPolicyLink}."
+  privacyPolicy: política de Privacidade
+  posthogInfo: "{appName} usa Posthog para coletar e gerenciar esses dados. Mais informações sobre esta ferramenta podem ser encontradas em seu Github."
+  sensitiveDataInfo: Tomamos medidas para redigir o máximo possível de informações confidenciais e avaliaremos continuamente para garantir que elas atendam às suas e às nossas necessidades, sem sacrificar nada.
+  contactUsInfo: Se você conhece uma ferramenta que possa nos servir melhor, adoraríamos ouvir sua opinião! Basta entrar em contato através da opção “Fale Conosco” no canto inferior esquerdo da tela.
+  enableTelemetry: A telemetria está ativada
+  disableTelemetry: A telemetria está desativada
+  eeNoTelemetry: "{appName} A empresa não coleta métricas de telemetria e desempenho."
+  personalizeTitle: Personalize sua experiência
+  personalizeDescription: "Personalize o {appName} personalizando a aparência da interface do {appName}"
+  storageUnitView: Visualização padrão da unidade de armazenamento
+  list: Lista
+  card: Cartão
+  fontSize: Tamanho da fonte
+  small: Pequena
+  medium: Média
+  large: Grande
+  borderRadius: Raio da Fronteira
+  none: Nenhum
+  spacing: Espaçamento
+  compact: Compactar
+  comfortable: Confortável
+  spacious: Espaçosa
+  whereConditionMode: Onde modo de condição
+  popover: Popover
+  sheet: Folha
+  defaultPageSize: Tamanho de página padrão
+  custom: Personalizada
+  language: Linguagem
+  selectView: Selecione uma visualização
+  selectFontSize: Selecione o tamanho da fonte
+  selectBorderRadius: Selecione o raio da borda
+  selectSpacing: Selecione Espaçamento
+  selectMode: Selecione o modo
+  selectPageSize: Selecione o tamanho da página
+  selectLanguage: Selecione o idioma
+  databaseSchemaTerminology: Rótulo de banco de dados/esquema
+  databaseSchemaTerminologyDatabase: Banco de dados
+  databaseSchemaTerminologySchema: Esquema
+  selectDatabaseSchemaTerminology: Selecione o rótulo
+  disableAnimations: Desativar animações
+  disableAnimationsEnabled: As animações estão desativadas
+  disableAnimationsDisabled: As animações estão habilitadas
+
+ro_RO:
+  title: Setări
+  telemetryTitle: Telemetrie și valori de performanță
+  telemetryDescription: "Folosim aceste informații numai pentru a îmbunătăți performanța {appName}."
+  dataCollectionDetails: "Pentru detalii despre datele pe care le colectăm, cum sunt colectate, stocate și utilizate, vă rugăm să consultați {privacyPolicyLink}-ul nostru."
+  privacyPolicy: Politica de confidențialitate
+  posthogInfo: "{appName} folosește Posthog pentru a colecta și a gestiona aceste date. Mai multe informații despre acest instrument pot fi găsite pe Github-ul său."
+  sensitiveDataInfo: Am luat măsuri pentru a redacta cât mai multe informații sensibile posibil și vom evalua continuu pentru a ne asigura că se potrivesc nevoilor tale și ale noastre fără a sacrifica nimic.
+  contactUsInfo: Dacă cunoașteți un instrument care ne-ar putea servi mai bine, ne-ar plăcea să auzim de la dvs.! Doar contactați-ne prin opțiunea „Contactați-ne” din colțul din stânga jos al ecranului.
+  enableTelemetry: Telemetria este activată
+  disableTelemetry: Telemetria este dezactivată
+  eeNoTelemetry: "{appName} Enterprise nu colectează valori de telemetrie și performanță."
+  personalizeTitle: Personalizați-vă experiența
+  personalizeDescription: "Creați {appName} al dvs. personalizând aspectul și senzația interfeței {appName}."
+  storageUnitView: Vizualizare implicită a unității de stocare
+  list: Listă
+  card: Card
+  fontSize: Dimensiunea fontului
+  small: Mic
+  medium: Mediu
+  large: Mare
+  borderRadius: Raza de frontieră
+  none: Nici unul
+  spacing: Spațiere
+  compact: Compact
+  comfortable: Confortabil
+  spacious: Spațios
+  whereConditionMode: Unde Modul Condiție
+  popover: Popover
+  sheet: foaie
+  defaultPageSize: Dimensiunea implicită a paginii
+  custom: Personalizat
+  language: Limbă
+  selectView: Selectați o vizualizare
+  selectFontSize: Selectați Dimensiunea fontului
+  selectBorderRadius: Selectați Raza chenarului
+  selectSpacing: Selectați Spațiere
+  selectMode: Selectați Modul
+  selectPageSize: Selectați Dimensiunea paginii
+  selectLanguage: Selectați Limbă
+  databaseSchemaTerminology: Etichetă bază de date/schemă
+  databaseSchemaTerminologyDatabase: Baza de date
+  databaseSchemaTerminologySchema: Schemă
+  selectDatabaseSchemaTerminology: Selectați Etichetă
+  disableAnimations: Dezactivați animațiile
+  disableAnimationsEnabled: Animațiile sunt dezactivate
+  disableAnimationsDisabled: Animațiile sunt activate
+
+ru_RU:
+  title: Настройки
+  telemetryTitle: Телеметрия и показатели производительности
+  telemetryDescription: "Мы используем эту информацию исключительно для повышения производительности {appName}."
+  dataCollectionDetails: "Подробную информацию о том, какие данные мы собираем, как они собираются, хранятся и используются, можно найти в нашем {privacyPolicyLink}."
+  privacyPolicy: политика конфиденциальности
+  posthogInfo: "{appName} использует Posthog для сбора и управления этими данными. Более подробную информацию об этом инструменте можно найти на Github."
+  sensitiveDataInfo: Мы приняли меры по удалению как можно большего количества конфиденциальной информации и будем постоянно оценивать ее, чтобы убедиться, что она соответствует вашим и нашим потребностям, не жертвуя ничем.
+  contactUsInfo: Если вы знаете инструмент, который мог бы нам помочь лучше, мы будем рады услышать ваше мнение! Просто свяжитесь с нами через опцию «Свяжитесь с нами» в левом нижнем углу экрана.
+  enableTelemetry: Телеметрия включена
+  disableTelemetry: Телеметрия отключена
+  eeNoTelemetry: "{appName} Enterprise не собирает данные телеметрии и производительности."
+  personalizeTitle: Персонализируйте свой опыт
+  personalizeDescription: "Сделайте {appName} своим собственным, настроив внешний вид и интерфейс {appName}"
+  storageUnitView: Вид единицы хранения по умолчанию
+  list: Список
+  card: Карта
+  fontSize: Размер шрифта
+  small: Маленький
+  medium: Середина
+  large: Большой
+  borderRadius: Граница радиуса
+  none: Никто
+  spacing: Расстояние
+  compact: Компактный
+  comfortable: Комфортный
+  spacious: Просторный
+  whereConditionMode: Где режим условия
+  popover: Поповер
+  sheet: Лист
+  defaultPageSize: Размер страницы по умолчанию
+  custom: Обычай
+  language: Язык
+  selectView: Выберите вид
+  selectFontSize: Выберите размер шрифта
+  selectBorderRadius: Выберите радиус границы
+  selectSpacing: Выберите интервал
+  selectMode: Выберите режим
+  selectPageSize: Выберите размер страницы
+  selectLanguage: Выберите язык
+  databaseSchemaTerminology: Метка базы данных/схемы
+  databaseSchemaTerminologyDatabase: База данных
+  databaseSchemaTerminologySchema: Схема
+  selectDatabaseSchemaTerminology: Выберите ярлык
+  disableAnimations: Отключить анимацию
+  disableAnimationsEnabled: Анимации отключены
+  disableAnimationsDisabled: Анимации включены
+
+sk_SK:
+  title: Nastavenia
+  telemetryTitle: Telemetria a metriky výkonu
+  telemetryDescription: "Tieto informácie používame výhradne na zvýšenie výkonu {appName}."
+  dataCollectionDetails: "Podrobnosti o tom, aké údaje zhromažďujeme, ako sa zhromažďujú, uchovávajú a používajú, nájdete v našom {privacyPolicyLink}."
+  privacyPolicy: Zásady ochrany osobných údajov
+  posthogInfo: "{appName} používa Posthog na zhromažďovanie a správu týchto údajov. Viac informácií o tomto nástroji nájdete na jeho Github."
+  sensitiveDataInfo: Prijali sme opatrenia na odstránenie čo najväčšieho množstva citlivých informácií a budeme ich priebežne vyhodnocovať, aby sme sa uistili, že vyhovujú vašim a našim potrebám bez toho, aby sme čokoľvek obetovali.
+  contactUsInfo: Ak poznáte nástroj, ktorý by nám mohol slúžiť lepšie, budeme radi, ak sa ozvete! Stačí sa na nás obrátiť prostredníctvom možnosti „Kontaktujte nás“ v ľavom dolnom rohu obrazovky.
+  enableTelemetry: Telemetria je povolená
+  disableTelemetry: Telemetria je zakázaná
+  eeNoTelemetry: "{appName} Enterprise nezhromažďuje telemetrické a výkonnostné metriky."
+  personalizeTitle: Prispôsobte si svoj zážitok
+  personalizeDescription: "Prispôsobte si {appName} podľa seba prispôsobením vzhľadu a prostredia rozhrania {appName}"
+  storageUnitView: Predvolené zobrazenie úložnej jednotky
+  list: Zoznam
+  card: kard
+  fontSize: Veľkosť písma
+  small: Malý
+  medium: Stredná
+  large: Veľký
+  borderRadius: Polomer okraja
+  none: žiadne
+  spacing: Medzery
+  compact: Kompaktný
+  comfortable: Pohodlné
+  spacious: Priestranný
+  whereConditionMode: Kde režim stavu
+  popover: Popover
+  sheet: List
+  defaultPageSize: Predvolená veľkosť strany
+  custom: Vlastné
+  language: Jazyk
+  selectView: Vyberte zobrazenie
+  selectFontSize: Vyberte Veľkosť písma
+  selectBorderRadius: Vyberte Polomer okraja
+  selectSpacing: Vyberte položku Medzery
+  selectMode: Vyberte položku Režim
+  selectPageSize: Vyberte Veľkosť strany
+  selectLanguage: Vyberte Jazyk
+  databaseSchemaTerminology: Štítok databázy/schémy
+  databaseSchemaTerminologyDatabase: Databáza
+  databaseSchemaTerminologySchema: Schéma
+  selectDatabaseSchemaTerminology: Vyberte položku Štítok
+  disableAnimations: Zakázať animácie
+  disableAnimationsEnabled: Animácie sú zakázané
+  disableAnimationsDisabled: Animácie sú povolené
+
+sv_SE:
+  title: Inställningar
+  telemetryTitle: Telemetri och prestandamått
+  telemetryDescription: "Vi använder denna information enbart för att förbättra prestandan för {appName}."
+  dataCollectionDetails: "För detaljer om vilken data vi samlar in, hur den samlas in, lagras och används, se vår {privacyPolicyLink}."
+  privacyPolicy: Sekretesspolicy
+  posthogInfo: "{appName} använder Posthog för att samla in och hantera denna data. Mer information om detta verktyg finns på dess Github."
+  sensitiveDataInfo: Vi har vidtagit åtgärder för att redigera så mycket känslig information som vi kan och kommer kontinuerligt att utvärdera för att säkerställa att den passar dina och våra behov utan att offra något.
+  contactUsInfo: "Om du känner till ett verktyg som kan tjäna oss bättre, vill vi gärna höra från dig! Kontakta oss via alternativet \"Kontakta oss\" i det nedre vänstra hörnet av skärmen."
+  enableTelemetry: Telemetri är aktiverat
+  disableTelemetry: Telemetri är inaktiverat
+  eeNoTelemetry: "{appName} Enterprise samlar inte in telemetri och prestandamått."
+  personalizeTitle: Anpassa din upplevelse
+  personalizeDescription: "Gör {appName} till din egen genom att anpassa utseendet och känslan i gränssnittet {appName}"
+  storageUnitView: Lagringsenhet Standardvy
+  list: Lista
+  card: Kort
+  fontSize: Fontstorlek
+  small: Små
+  medium: Medium
+  large: Stor
+  borderRadius: Gränsradie
+  none: Ingen
+  spacing: Mellanrum
+  compact: Kompakt
+  comfortable: Bekväm
+  spacious: Rymlig
+  whereConditionMode: Där tillståndsläge
+  popover: Popover
+  sheet: Ark
+  defaultPageSize: Standard sidstorlek
+  custom: Beställnings
+  language: Språk
+  selectView: Välj en vy
+  selectFontSize: Välj Teckenstorlek
+  selectBorderRadius: Välj kantradie
+  selectSpacing: Välj mellanrum
+  selectMode: Välj Läge
+  selectPageSize: Välj Sidstorlek
+  selectLanguage: Välj Språk
+  databaseSchemaTerminology: Databas/Schema Label
+  databaseSchemaTerminologyDatabase: Databas
+  databaseSchemaTerminologySchema: Schema
+  selectDatabaseSchemaTerminology: Välj Etikett
+  disableAnimations: Inaktivera animationer
+  disableAnimationsEnabled: Animationer är inaktiverade
+  disableAnimationsDisabled: Animationer är aktiverade
+
+zh_CN:
+  title: 设置
+  telemetryTitle: 遥测和性能指标
+  telemetryDescription: "我们仅使用此信息来增强 {appName} 的性能。"
+  dataCollectionDetails: "有关我们收集哪些数据、如何收集、存储和使用这些数据的详细信息，请参阅我们的 {privacyPolicyLink}。"
+  privacyPolicy: 隐私政策
+  posthogInfo: "{appName} 使用 Posthog 来收集和管理这些数据。 有关此工具的更多信息可以在其 Github 上找到。"
+  sensitiveDataInfo: 我们已采取措施尽可能多地编辑敏感信息，并将不断评估以确保它适合您和我们的需求，而不会牺牲任何内容。
+  contactUsInfo: 如果您知道可以更好地为我们服务的工具，我们很乐意听取您的意见！ 只需通过屏幕左下角的“联系我们”选项即可联系我们。
+  enableTelemetry: 遥测已启用
+  disableTelemetry: 遥测已禁用
+  eeNoTelemetry: "{appName} Enterprise 不收集遥测和性能指标。"
+  personalizeTitle: 个性化您的体验
+  personalizeDescription: "通过自定义 {appName} 界面的外观和感觉，打造您自己的 {appName}"
+  storageUnitView: 存储单元默认视图
+  list: 列表
+  card: 卡片
+  fontSize: 字体大小
+  small: 小的
+  medium: 中等的
+  large: 大的
+  borderRadius: 边界半径
+  none: 没有任何
+  spacing: 间距
+  compact: 袖珍的
+  comfortable: 舒服的
+  spacious: 宽敞
+  whereConditionMode: Where 条件模式
+  popover: 弹出窗口
+  sheet: 床单
+  defaultPageSize: 默认页面大小
+  custom: 风俗
+  language: 语言
+  selectView: 选择一个视图
+  selectFontSize: 选择字体大小
+  selectBorderRadius: 选择边框半径
+  selectSpacing: 选择间距
+  selectMode: 选择模式
+  selectPageSize: 选择页面尺寸
+  selectLanguage: 选择语言
+  databaseSchemaTerminology: 数据库/模式标签
+  databaseSchemaTerminologyDatabase: 数据库
+  databaseSchemaTerminologySchema: 模式
+  selectDatabaseSchemaTerminology: 选择标签
+  disableAnimations: 禁用动画
+  disableAnimationsEnabled: 动画被禁用
+  disableAnimationsDisabled: 动画已启用
+
+zh_TW:
+  title: 設定
+  telemetryTitle: 遙測和性能指標
+  telemetryDescription: "我們僅使用此資訊來增強 {appName} 的效能。"
+  dataCollectionDetails: "有關我們收集哪些資料、如何收集、儲存和使用這些資料的詳細信息，請參閱我們的 {privacyPolicyLink}。"
+  privacyPolicy: 隱私權政策
+  posthogInfo: "{appName} 使用 Posthog 來收集和管理這些資料。 有關此工具的更多資訊可以在其 Github 上找到。"
+  sensitiveDataInfo: 我們已採取措施盡可能編輯敏感訊息，並將不斷評估以確保它適合您和我們的需求，而不會犧牲任何內容。
+  contactUsInfo: 如果您知道可以更好地為我們服務的工具，我們很樂意聽取您的意見！ 只需透過螢幕左下角的「聯絡我們」選項即可聯絡我們。
+  enableTelemetry: 遙測已啟用
+  disableTelemetry: 遙測已停用
+  eeNoTelemetry: "{appName} Enterprise 不收集遙測和效能指標。"
+  personalizeTitle: 個人化您的體驗
+  personalizeDescription: "透過自訂 {appName} 介面的外觀和感覺，打造您自己的 {appName}"
+  storageUnitView: 儲存單元預設視圖
+  list: 清單
+  card: 卡片
+  fontSize: 字體大小
+  small: 小的
+  medium: 中等的
+  large: 大的
+  borderRadius: 邊界半徑
+  none: 沒有任何
+  spacing: 間距
+  compact: 袖珍的
+  comfortable: 舒服的
+  spacious: 寬敞
+  whereConditionMode: Where 條件模式
+  popover: 彈出視窗
+  sheet: 床單
+  defaultPageSize: 預設頁面大小
+  custom: 風俗
+  language: 語言
+  selectView: 選擇一個視圖
+  selectFontSize: 選擇字體大小
+  selectBorderRadius: 選擇邊框半徑
+  selectSpacing: 選擇間距
+  selectMode: 選擇模式
+  selectPageSize: 選擇頁面尺寸
+  selectLanguage: Select Language
+  databaseSchemaTerminology: 資料庫/模式標籤
+  databaseSchemaTerminologyDatabase: 資料庫
+  databaseSchemaTerminologySchema: 模式
+  selectDatabaseSchemaTerminology: Select Label
+  disableAnimations: 停用動畫
+  disableAnimationsEnabled: 動畫被禁用
+  disableAnimationsDisabled: Animations are enabled

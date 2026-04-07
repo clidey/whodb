@@ -55,3 +55,1003 @@ en_US:
   nameRequired: Display name is required
   regionRequired: Region is required
   profileRequired: Profile name is required
+
+ar_AE:
+  addProvider: أضف حساب AWS
+  editProvider: تحرير حساب AWS
+  detectedProfiles: ملفات تعريف AWS المكتشفة
+  clickToAutofill: انقر فوق ملف تعريف لملء النموذج تلقائيًا
+  defaultAwsName: أوس الافتراضية
+  awsProfileName: "أوس ({name})"
+  profileSourceTooltip: "تم العثور عليه في {source}"
+  defaultProfileName: تقصير
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: البيئة مختلفة
+  authTypeSso: الدخول الموحد
+  authTypeAssumeRole: تفترض الدور
+  authTypeStatic: ثابت
+  authTypeEnvironment: بيئة
+  displayName: اسم العرض
+  namePlaceholder: على سبيل المثال، إنتاج AWS
+  awsRegion: منطقة أوس
+  selectRegion: اختر المنطقة
+  customRegion: المنطقة المخصصة...
+  customRegionPlaceholder: على سبيل المثال، us-gov-west-1
+  profileName: اسم الملف الشخصي
+  profilePlaceholder: على سبيل المثال، الإنتاج
+  profileDesc: اتركه فارغًا لاستخدام سلسلة بيانات الاعتماد الافتراضية (env vars، ~/.aws/credentials، IAM role)
+  resourceDiscovery: اكتشاف الموارد
+  rdsLabel: قواعد بيانات RDS
+  rdsDesc: مثيلات PostgreSQL وMySQL وMariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: مجموعات ريديس
+  documentdbLabel: DocumentDB
+  documentdbDesc: مجموعات متوافقة مع MongoDB
+  testConnection: اتصال الاختبار
+  testing: اختبار...
+  connectionSuccessful: تم الاتصال بنجاح
+  connectionFailed: فشل اختبار الاتصال
+  testFailed: "فشل الاختبار: {error}"
+  saveBeforeTest: احفظ الموفر قبل الاختبار
+  cancel: يلغي
+  save: يحفظ
+  add: يضيف
+  saving: توفير...
+  providerAdded: تمت إضافة حساب AWS بنجاح
+  providerUpdated: تم تحديث حساب AWS بنجاح
+  operationFailed: "فشلت العملية: {error}"
+  unknownError: حدث خطأ غير معروف
+  nameRequired: اسم العرض مطلوب
+  regionRequired: المنطقة مطلوبة
+  profileRequired: اسم الملف الشخصي مطلوب
+
+de_DE:
+  addProvider: AWS-Konto hinzufügen
+  editProvider: Bearbeiten Sie das AWS-Konto
+  detectedProfiles: Erkannte AWS-Profile
+  clickToAutofill: Klicken Sie auf ein Profil, um das Formular automatisch auszufüllen
+  defaultAwsName: Standard-AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Gefunden in {source}"
+  defaultProfileName: Standard
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Umgebungsvariablen
+  authTypeSso: SSO
+  authTypeAssumeRole: Rolle übernehmen
+  authTypeStatic: Statisch
+  authTypeEnvironment: Umfeld
+  displayName: Anzeigename
+  namePlaceholder: z. B. Produktions-AWS
+  awsRegion: AWS-Region
+  selectRegion: Region auswählen
+  customRegion: Benutzerdefinierte Region...
+  customRegionPlaceholder: z. B. us-gov-west-1
+  profileName: Profilname
+  profilePlaceholder: z.B. Produktion
+  profileDesc: Lassen Sie das Feld leer, um die Standard-Anmeldeinformationskette zu verwenden (Umgebungsvariablen, ~/.aws/credentials, IAM-Rolle).
+  resourceDiscovery: Ressourcenerkennung
+  rdsLabel: RDS-Datenbanken
+  rdsDesc: PostgreSQL-, MySQL- und MariaDB-Instanzen
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Redis-Cluster
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB-kompatible Cluster
+  testConnection: Testverbindung
+  testing: Testen...
+  connectionSuccessful: Verbindung erfolgreich
+  connectionFailed: Verbindungstest fehlgeschlagen
+  testFailed: "Test fehlgeschlagen: {error}"
+  saveBeforeTest: Speichern Sie den Anbieter vor dem Testen
+  cancel: Stornieren
+  save: Speichern
+  add: Hinzufügen
+  saving: Sparen...
+  providerAdded: AWS-Konto erfolgreich hinzugefügt
+  providerUpdated: AWS-Konto erfolgreich aktualisiert
+  operationFailed: "Vorgang fehlgeschlagen: {error}"
+  unknownError: Es ist ein unbekannter Fehler aufgetreten
+  nameRequired: Anzeigename ist erforderlich
+  regionRequired: Region ist erforderlich
+  profileRequired: Profilname ist erforderlich
+
+el_GR:
+  addProvider: Προσθήκη λογαριασμού AWS
+  editProvider: Επεξεργασία λογαριασμού AWS
+  detectedProfiles: Εντοπίστηκαν προφίλ AWS
+  clickToAutofill: Κάντε κλικ σε ένα προφίλ για αυτόματη συμπλήρωση της φόρμας
+  defaultAwsName: Προεπιλεγμένο AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Βρέθηκε σε {source}"
+  defaultProfileName: αθέτηση
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Βαρ
+  authTypeSso: SSO
+  authTypeAssumeRole: Ανάληψη ρόλου
+  authTypeStatic: Στατικός
+  authTypeEnvironment: Περιβάλλο
+  displayName: Εμφανιζόμενο όνομα
+  namePlaceholder: π.χ. Παραγωγή AWS
+  awsRegion: Περιφέρεια AWS
+  selectRegion: Επιλέξτε περιοχή
+  customRegion: Προσαρμοσμένη περιοχή...
+  customRegionPlaceholder: π.χ., us-gov-west-1
+  profileName: Όνομα προφίλ
+  profilePlaceholder: π.χ. παραγωγή
+  profileDesc: Αφήστε κενό για να χρησιμοποιήσετε την προεπιλεγμένη αλυσίδα διαπιστευτηρίων (env vars, ~/.aws/credentials, ρόλος IAM)
+  resourceDiscovery: Ανακάλυψη πόρων
+  rdsLabel: Βάσεις δεδομένων RDS
+  rdsDesc: Στιγμιότυπα PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Συστάδες Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: Συμπλέγματα συμβατά με MongoDB
+  testConnection: Δοκιμή σύνδεσης
+  testing: Δοκιμές...
+  connectionSuccessful: Επιτυχής σύνδεση
+  connectionFailed: Η δοκιμή σύνδεσης απέτυχε
+  testFailed: "Η δοκιμή απέτυχε: {error}"
+  saveBeforeTest: Αποθηκεύστε τον πάροχο πριν από τη δοκιμή
+  cancel: Ματαίωση
+  save: Εκτός
+  add: Προσθέτω
+  saving: Οικονομία...
+  providerAdded: Ο λογαριασμός AWS προστέθηκε με επιτυχία
+  providerUpdated: Ο λογαριασμός AWS ενημερώθηκε με επιτυχία
+  operationFailed: "Η λειτουργία απέτυχε: {error}"
+  unknownError: Παρουσιάστηκε άγνωστο σφάλμα
+  nameRequired: Απαιτείται εμφανιζόμενο όνομα
+  regionRequired: Απαιτείται περιοχή
+  profileRequired: Απαιτείται όνομα προφίλ
+
+en_GB:
+  addProvider: Add AWS Account
+  editProvider: Edit AWS Account
+  detectedProfiles: Detected AWS Profiles
+  clickToAutofill: Click a profile to auto-fill the form
+  defaultAwsName: Default AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Found in {source}"
+  defaultProfileName: default
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Environment vars
+  authTypeSso: SSO
+  authTypeAssumeRole: Assume Role
+  authTypeStatic: Static
+  authTypeEnvironment: Environment
+  displayName: Display Name
+  namePlaceholder: e.g., Production AWS
+  awsRegion: AWS Region
+  selectRegion: Select region
+  customRegion: Custom region...
+  customRegionPlaceholder: e.g., us-gov-west-1
+  profileName: Profile Name
+  profilePlaceholder: e.g., production
+  profileDesc: Leave empty to use the default credential chain (env vars, ~/.aws/credentials, IAM role)
+  resourceDiscovery: Resource Discovery
+  rdsLabel: RDS Databases
+  rdsDesc: PostgreSQL, MySQL, MariaDB instances
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Redis clusters
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB-compatible clusters
+  testConnection: Test Connection
+  testing: Testing...
+  connectionSuccessful: Connection successful
+  connectionFailed: Connection test failed
+  testFailed: "Test failed: {error}"
+  saveBeforeTest: Save the provider before testing
+  cancel: Cancel
+  save: Save
+  add: Add
+  saving: Saving...
+  providerAdded: AWS account added successfully
+  providerUpdated: AWS account updated successfully
+  operationFailed: "Operation failed: {error}"
+  unknownError: Unknown error occurred
+  nameRequired: Display name is required
+  regionRequired: Region is required
+  profileRequired: Profile name is required
+
+es_ES:
+  addProvider: Agregar cuenta de AWS
+  editProvider: Editar cuenta de AWS
+  detectedProfiles: Perfiles de AWS detectados
+  clickToAutofill: Haga clic en un perfil para completar automáticamente el formulario
+  defaultAwsName: AWS predeterminado
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Encontrado en {source}"
+  defaultProfileName: por defecto
+  sourceCredentials: ~/.aws/credenciales
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: variables de entorno
+  authTypeSso: SSO
+  authTypeAssumeRole: Asumir rol
+  authTypeStatic: Estática
+  authTypeEnvironment: Ambiente
+  displayName: Nombre para mostrar
+  namePlaceholder: por ejemplo, producción AWS
+  awsRegion: Región de AWS
+  selectRegion: Seleccionar región
+  customRegion: Región personalizada...
+  customRegionPlaceholder: por ejemplo, us-gov-west-1
+  profileName: Nombre del perfil
+  profilePlaceholder: por ejemplo, producción
+  profileDesc: Déjelo vacío para usar la cadena de credenciales predeterminada (env vars, ~/.aws/credentials, rol de IAM)
+  resourceDiscovery: Descubrimiento de recursos
+  rdsLabel: Bases de datos RDS
+  rdsDesc: Instancias de PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Clústeres de Redis
+  documentdbLabel: DocumentoDB
+  documentdbDesc: Clústeres compatibles con MongoDB
+  testConnection: Conexión de prueba
+  testing: Pruebas...
+  connectionSuccessful: Conexión exitosa
+  connectionFailed: La prueba de conexión falló
+  testFailed: "Prueba fallida: {error}"
+  saveBeforeTest: Guarde el proveedor antes de realizar la prueba.
+  cancel: Cancelar
+  save: Ahorrar
+  add: Agregar
+  saving: Ahorro...
+  providerAdded: Cuenta de AWS agregada exitosamente
+  providerUpdated: Cuenta de AWS actualizada correctamente
+  operationFailed: "Operación fallida: {error}"
+  unknownError: Se produjo un error desconocido
+  nameRequired: El nombre para mostrar es obligatorio
+  regionRequired: Se requiere región
+  profileRequired: El nombre del perfil es obligatorio.
+
+fi_FI:
+  addProvider: Lisää AWS-tili
+  editProvider: Muokkaa AWS-tiliä
+  detectedProfiles: Havaittu AWS-profiileja
+  clickToAutofill: Napsauta profiilia täyttääksesi lomakkeen automaattisesti
+  defaultAwsName: Oletus-AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Löytyi {source}"
+  defaultProfileName: oletuksena
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Ympäristö vars
+  authTypeSso: SSO
+  authTypeAssumeRole: Ota rooli
+  authTypeStatic: Staattinen
+  authTypeEnvironment: Ympäristö
+  displayName: Näyttönimi
+  namePlaceholder: esim. tuotanto AWS
+  awsRegion: AWS-alue
+  selectRegion: Valitse alue
+  customRegion: Muokattu alue...
+  customRegionPlaceholder: esim. us-gov-west-1
+  profileName: Profiilin nimi
+  profilePlaceholder: esim. tuotanto
+  profileDesc: Jätä tyhjäksi, jos haluat käyttää oletustunnisteketjua (env vars, ~/.aws/credentials, IAM-rooli)
+  resourceDiscovery: Resurssien löytäminen
+  rdsLabel: RDS-tietokannat
+  rdsDesc: PostgreSQL-, MySQL-, MariaDB-esiintymät
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Redis-klusterit
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB-yhteensopivat klusterit
+  testConnection: Testaa yhteys
+  testing: Testaus...
+  connectionSuccessful: Yhteys onnistui
+  connectionFailed: Yhteystesti epäonnistui
+  testFailed: "Testi epäonnistui: {error}"
+  saveBeforeTest: Tallenna palveluntarjoaja ennen testausta
+  cancel: Peruuttaa
+  save: Tallentaa
+  add: Lisätä
+  saving: Tallennetaan...
+  providerAdded: AWS-tili lisätty onnistuneesti
+  providerUpdated: AWS-tilin päivitys onnistui
+  operationFailed: "Toiminto epäonnistui: {error}"
+  unknownError: Tapahtui tuntematon virhe
+  nameRequired: Näyttönimi vaaditaan
+  regionRequired: Alue vaaditaan
+  profileRequired: Profiilin nimi vaaditaan
+
+fr_FR:
+  addProvider: Ajouter un compte AWS
+  editProvider: Modifier le compte AWS
+  detectedProfiles: Profils AWS détectés
+  clickToAutofill: Cliquez sur un profil pour remplir automatiquement le formulaire
+  defaultAwsName: AWS par défaut
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Trouvé dans {source}"
+  defaultProfileName: défaut
+  sourceCredentials: ~/.aws/informations d'identification
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Vars d'environnement
+  authTypeSso: SSO
+  authTypeAssumeRole: Assumer un rôle
+  authTypeStatic: Statique
+  authTypeEnvironment: Environnement
+  displayName: Nom d'affichage
+  namePlaceholder: par exemple, Production AWS
+  awsRegion: Région AWS
+  selectRegion: Sélectionnez une région
+  customRegion: Région personnalisée...
+  customRegionPlaceholder: par exemple, us-gov-west-1
+  profileName: Nom du profil
+  profilePlaceholder: par exemple, la production
+  profileDesc: Laissez vide pour utiliser la chaîne d'informations d'identification par défaut (vars d'environnement, ~/.aws/credentials, rôle IAM)
+  resourceDiscovery: Découverte des ressources
+  rdsLabel: Bases de données RDS
+  rdsDesc: Instances PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ÉlastiCache
+  elasticacheDesc: Clusters Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: Clusters compatibles MongoDB
+  testConnection: Tester la connexion
+  testing: Essai...
+  connectionSuccessful: Connexion réussie
+  connectionFailed: Le test de connexion a échoué
+  testFailed: "Échec du test : {error}"
+  saveBeforeTest: Enregistrez le fournisseur avant de tester
+  cancel: Annuler
+  save: Sauvegarder
+  add: Ajouter
+  saving: Économie...
+  providerAdded: Compte AWS ajouté avec succès
+  providerUpdated: Compte AWS mis à jour avec succès
+  operationFailed: "Échec de l'opération : {error}"
+  unknownError: Une erreur inconnue s'est produite
+  nameRequired: Le nom d’affichage est requis
+  regionRequired: La région est obligatoire
+  profileRequired: Le nom du profil est requis
+
+it_IT:
+  addProvider: Aggiungi un account AWS
+  editProvider: Modifica account AWS
+  detectedProfiles: Profili AWS rilevati
+  clickToAutofill: Fai clic su un profilo per compilare automaticamente il modulo
+  defaultAwsName: AWS predefinito
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Trovato in {source}"
+  defaultProfileName: predefinita
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Variabile ambiente
+  authTypeSso: SSO
+  authTypeAssumeRole: Assumi il ruolo
+  authTypeStatic: Statica
+  authTypeEnvironment: Ambiente
+  displayName: Nome da visualizzare
+  namePlaceholder: ad esempio, Produzione AWS
+  awsRegion: Regione AWS
+  selectRegion: Seleziona regione
+  customRegion: Regione personalizzata...
+  customRegionPlaceholder: ad esempio us-gov-west-1
+  profileName: Nome del profilo
+  profilePlaceholder: ad esempio, la produzione
+  profileDesc: Lascia vuoto per utilizzare la catena di credenziali predefinita (env vars, ~/.aws/credentials, ruolo IAM)
+  resourceDiscovery: Scoperta delle risorse
+  rdsLabel: Database RDS
+  rdsDesc: Istanze PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Cluster Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: Cluster compatibili con MongoDB
+  testConnection: Prova connessione
+  testing: Prova...
+  connectionSuccessful: Connessione riuscita
+  connectionFailed: Il test di connessione è fallito
+  testFailed: "Test fallito: {error}"
+  saveBeforeTest: Salva il provider prima del test
+  cancel: Cancellare
+  save: Salva
+  add: Aggiungere
+  saving: Risparmio...
+  providerAdded: Account AWS aggiunto correttamente
+  providerUpdated: Account AWS aggiornato correttamente
+  operationFailed: "Operazione non riuscita: {error}"
+  unknownError: Si è verificato un errore sconosciuto
+  nameRequired: Il nome visualizzato è obbligatorio
+  regionRequired: La regione è obbligatoria
+  profileRequired: Il nome del profilo è obbligatorio
+
+iw_IL:
+  addProvider: הוסף חשבון AWS
+  editProvider: ערוך חשבון AWS
+  detectedProfiles: זוהו פרופילי AWS
+  clickToAutofill: לחץ על פרופיל כדי למלא את הטופס באופן אוטומטי
+  defaultAwsName: ברירת המחדל של AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "נמצא ב-{source}"
+  defaultProfileName: בְּרִירַת מֶחדָל
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: סביבה vars
+  authTypeSso: SSO
+  authTypeAssumeRole: קבל תפקיד
+  authTypeStatic: סטָטִי
+  authTypeEnvironment: סְבִיבָה
+  displayName: שם תצוגה
+  namePlaceholder: למשל, Production AWS
+  awsRegion: אזור AWS
+  selectRegion: בחר אזור
+  customRegion: אזור מותאם אישית...
+  customRegionPlaceholder: למשל, us-gov-west-1
+  profileName: שם פרופיל
+  profilePlaceholder: למשל, ייצור
+  profileDesc: השאר ריק כדי להשתמש בשרשרת ברירת המחדל של פרטי הכניסה (env vars, ~/.aws/credentials, תפקיד IAM)
+  resourceDiscovery: גילוי משאבים
+  rdsLabel: מסדי נתונים של RDS
+  rdsDesc: מופעי PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: אשכולות Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: אשכולות תואמי MongoDB
+  testConnection: בדיקת חיבור
+  testing: בּוֹחֵן...
+  connectionSuccessful: החיבור הצליח
+  connectionFailed: בדיקת החיבור נכשלה
+  testFailed: "הבדיקה נכשלה: {error}"
+  saveBeforeTest: שמור את הספק לפני הבדיקה
+  cancel: לְבַטֵל
+  save: לְהַצִיל
+  add: לְהוֹסִיף
+  saving: חִסָכוֹן...
+  providerAdded: חשבון AWS נוסף בהצלחה
+  providerUpdated: חשבון AWS עודכן בהצלחה
+  operationFailed: "הפעולה נכשלה: {error}"
+  unknownError: אירעה שגיאה לא ידועה
+  nameRequired: נדרש שם תצוגה
+  regionRequired: אזור נדרש
+  profileRequired: נדרש שם פרופיל
+
+ja_JP:
+  addProvider: AWSアカウントを追加
+  editProvider: AWSアカウントの編集
+  detectedProfiles: 検出された AWS プロファイル
+  clickToAutofill: プロフィールをクリックしてフォームに自動入力します
+  defaultAwsName: デフォルトのAWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "{source} で見つかりました"
+  defaultProfileName: デフォルト
+  sourceCredentials: ~/.aws/認証情報
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: 環境変数
+  authTypeSso: SSO
+  authTypeAssumeRole: 役割を引き受ける
+  authTypeStatic: 静的
+  authTypeEnvironment: 環境
+  displayName: 表示名
+  namePlaceholder: "例: 本番環境の AWS"
+  awsRegion: AWS リージョン
+  selectRegion: 地域を選択してください
+  customRegion: カスタム領域...
+  customRegionPlaceholder: "例: us-gov-west-1"
+  profileName: プロファイル名
+  profilePlaceholder: "例: 生産"
+  profileDesc: デフォルトの認証情報チェーン (環境変数、~/.aws/credentials、IAM ロール) を使用するには、空のままにします。
+  resourceDiscovery: リソースの発見
+  rdsLabel: RDS データベース
+  rdsDesc: PostgreSQL、MySQL、MariaDB インスタンス
+  elasticacheLabel: Elastiキャッシュ
+  elasticacheDesc: Redis クラスター
+  documentdbLabel: ドキュメントDB
+  documentdbDesc: MongoDB 互換クラスター
+  testConnection: テスト接続
+  testing: テスト中...
+  connectionSuccessful: 接続成功
+  connectionFailed: 接続テストに失敗しました
+  testFailed: "テストが失敗しました: {error}"
+  saveBeforeTest: テスト前にプロバイダーを保存する
+  cancel: キャンセル
+  save: 保存
+  add: 追加
+  saving: 保存中...
+  providerAdded: AWS アカウントが正常に追加されました
+  providerUpdated: AWS アカウントが正常に更新されました
+  operationFailed: "操作が失敗しました: {error}"
+  unknownError: 不明なエラーが発生しました
+  nameRequired: 表示名は必須です
+  regionRequired: 地域は必須です
+  profileRequired: プロファイル名は必須です
+
+ko_KR:
+  addProvider: AWS 계정 추가
+  editProvider: AWS 계정 편집
+  detectedProfiles: 감지된 AWS 프로필
+  clickToAutofill: 프로필을 클릭하면 양식이 자동으로 완성됩니다.
+  defaultAwsName: 기본 AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "{source}에서 발견됨"
+  defaultProfileName: 기본
+  sourceCredentials: ~/.aws/자격 증명
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: 환경 변수
+  authTypeSso: SSO
+  authTypeAssumeRole: 역할을 맡다
+  authTypeStatic: 공전
+  authTypeEnvironment: 환경
+  displayName: 표시 이름
+  namePlaceholder: "예: 프로덕션 AWS"
+  awsRegion: AWS 지역
+  selectRegion: 지역 선택
+  customRegion: 맞춤 지역...
+  customRegionPlaceholder: "예: us-gov-west-1"
+  profileName: 프로필 이름
+  profilePlaceholder: "예: 생산"
+  profileDesc: 기본 자격 증명 체인(env vars, ~/.aws/credentials, IAM 역할)을 사용하려면 비워 두세요.
+  resourceDiscovery: 자원 발견
+  rdsLabel: RDS 데이터베이스
+  rdsDesc: PostgreSQL, MySQL, MariaDB 인스턴스
+  elasticacheLabel: 엘라스티캐시
+  elasticacheDesc: Redis 클러스터
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB 호환 클러스터
+  testConnection: 연결 테스트
+  testing: 테스트 중...
+  connectionSuccessful: 연결 성공
+  connectionFailed: 연결 테스트 실패
+  testFailed: "테스트 실패: {error}"
+  saveBeforeTest: 테스트하기 전에 공급자를 저장하십시오.
+  cancel: 취소
+  save: 구하다
+  add: 추가하다
+  saving: 절약...
+  providerAdded: AWS 계정이 성공적으로 추가되었습니다.
+  providerUpdated: AWS 계정이 성공적으로 업데이트되었습니다.
+  operationFailed: "작업 실패: {error}"
+  unknownError: 알 수 없는 오류가 발생했습니다.
+  nameRequired: 표시 이름은 필수 항목입니다.
+  regionRequired: 지역은 필수 항목입니다.
+  profileRequired: 프로필 이름은 필수 항목입니다.
+
+nl_NL:
+  addProvider: AWS-account toevoegen
+  editProvider: Bewerk AWS-account
+  detectedProfiles: Gedetecteerde AWS-profielen
+  clickToAutofill: Klik op een profiel om het formulier automatisch in te vullen
+  defaultAwsName: Standaard AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Gevonden in {source}"
+  defaultProfileName: standaard
+  sourceCredentials: ~/.aws/referenties
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Omgeving var
+  authTypeSso: SSO
+  authTypeAssumeRole: Rol aannemen
+  authTypeStatic: Statisch
+  authTypeEnvironment: Omgeving
+  displayName: Weergavenaam
+  namePlaceholder: bijvoorbeeld Productie AWS
+  awsRegion: AWS-regio
+  selectRegion: Selecteer regio
+  customRegion: Aangepaste regio...
+  customRegionPlaceholder: bijvoorbeeld us-gov-west-1
+  profileName: Profielnaam
+  profilePlaceholder: bijvoorbeeld productie
+  profileDesc: Laat dit leeg om de standaard-referentieketen te gebruiken (env vars, ~/.aws/credentials, IAM-rol)
+  resourceDiscovery: Ontdekking van bronnen
+  rdsLabel: RDS-databases
+  rdsDesc: PostgreSQL-, MySQL-, MariaDB-instanties
+  elasticacheLabel: Elastiekache
+  elasticacheDesc: Redis-clusters
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB-compatibele clusters
+  testConnection: Verbinding testen
+  testing: Testen...
+  connectionSuccessful: Verbinding succesvol
+  connectionFailed: Verbindingstest mislukt
+  testFailed: "Test mislukt: {error}"
+  saveBeforeTest: Sla de provider op voordat u gaat testen
+  cancel: Annuleren
+  save: Redden
+  add: Toevoegen
+  saving: Besparing...
+  providerAdded: AWS-account succesvol toegevoegd
+  providerUpdated: AWS-account is succesvol bijgewerkt
+  operationFailed: "Bewerking mislukt: {error}"
+  unknownError: Er is een onbekende fout opgetreden
+  nameRequired: Weergavenaam is vereist
+  regionRequired: Regio is vereist
+  profileRequired: Profielnaam is vereist
+
+pl_PL:
+  addProvider: Dodaj konto AWS
+  editProvider: Edytuj konto AWS
+  detectedProfiles: Wykryto profile AWS
+  clickToAutofill: Kliknij profil, aby automatycznie wypełnić formularz
+  defaultAwsName: Domyślny AWS
+  awsProfileName: "AWS-a ({name})"
+  profileSourceTooltip: "Znaleziono w {source}"
+  defaultProfileName: domyślny
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Odmiany środowiska
+  authTypeSso: Jednokrotne logowanie
+  authTypeAssumeRole: Przyjmij rolę
+  authTypeStatic: Statyczny
+  authTypeEnvironment: Środowisko
+  displayName: Nazwa wyświetlana
+  namePlaceholder: np. produkcyjny AWS
+  awsRegion: Regionu AWS
+  selectRegion: Wybierz region
+  customRegion: Niestandardowy region...
+  customRegionPlaceholder: np. us-gov-west-1
+  profileName: Nazwa profilu
+  profilePlaceholder: np. produkcja
+  profileDesc: Pozostaw puste, aby użyć domyślnego łańcucha danych uwierzytelniających (env vars, ~/.aws/credentials, rola IAM)
+  resourceDiscovery: Odkrycie zasobów
+  rdsLabel: Bazy danych RDS
+  rdsDesc: Instancje PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Klastry Redisa
+  documentdbLabel: DokumentDB
+  documentdbDesc: Klastry kompatybilne z MongoDB
+  testConnection: Połączenie testowe
+  testing: Testowanie...
+  connectionSuccessful: Połączenie pomyślne
+  connectionFailed: Test połączenia nie powiódł się
+  testFailed: "Test nie powiódł się: {error}"
+  saveBeforeTest: Zapisz dostawcę przed testowaniem
+  cancel: Anulować
+  save: Ratować
+  add: Dodać
+  saving: Oszczędność...
+  providerAdded: Konto AWS zostało pomyślnie dodane
+  providerUpdated: Konto AWS zostało pomyślnie zaktualizowane
+  operationFailed: "Operacja nie powiodła się: {error}"
+  unknownError: Wystąpił nieznany błąd
+  nameRequired: Nazwa wyświetlana jest wymagana
+  regionRequired: Region jest wymagany
+  profileRequired: Nazwa profilu jest wymagana
+
+pt_BR:
+  addProvider: Adicionar conta AWS
+  editProvider: Editar conta AWS
+  detectedProfiles: Perfis AWS detectados
+  clickToAutofill: Clique em um perfil para preencher automaticamente o formulário
+  defaultAwsName: AWS padrão
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Encontrado em {source}"
+  defaultProfileName: padrão
+  sourceCredentials: ~/.aws/credenciais
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Variações de ambiente
+  authTypeSso: SSO
+  authTypeAssumeRole: Assuma o papel
+  authTypeStatic: Estática
+  authTypeEnvironment: Ambiente
+  displayName: Nome de exibição
+  namePlaceholder: por exemplo, produção AWS
+  awsRegion: Região AWS
+  selectRegion: Selecione a região
+  customRegion: Região personalizada...
+  customRegionPlaceholder: por exemplo, us-gov-west-1
+  profileName: Nome do perfil
+  profilePlaceholder: por exemplo, produção
+  profileDesc: Deixe em branco para usar a cadeia de credenciais padrão (env vars, ~/.aws/credentials, função IAM)
+  resourceDiscovery: Descoberta de recursos
+  rdsLabel: Bancos de dados RDS
+  rdsDesc: Instâncias PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Clusters Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: Clusters compatíveis com MongoDB
+  testConnection: Conexão de teste
+  testing: Testando...
+  connectionSuccessful: Conexão bem-sucedida
+  connectionFailed: Falha no teste de conexão
+  testFailed: "Falha no teste: {error}"
+  saveBeforeTest: Salve o provedor antes de testar
+  cancel: Cancelar
+  save: Salvar
+  add: Adicionar
+  saving: Salvando...
+  providerAdded: Conta AWS adicionada com sucesso
+  providerUpdated: Conta AWS atualizada com sucesso
+  operationFailed: "Falha na operação: {error}"
+  unknownError: Ocorreu um erro desconhecido
+  nameRequired: O nome de exibição é obrigatório
+  regionRequired: A região é obrigatória
+  profileRequired: O nome do perfil é obrigatório
+
+ro_RO:
+  addProvider: Adăugați un cont AWS
+  editProvider: Editați contul AWS
+  detectedProfiles: Profiluri AWS detectate
+  clickToAutofill: Faceți clic pe un profil pentru a completa automat formularul
+  defaultAwsName: AWS implicit
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: Găsit în [[0]]]
+  defaultProfileName: implicit
+  sourceCredentials: ~/.aws/acreditări
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Mediu vars
+  authTypeSso: SSO
+  authTypeAssumeRole: Asumați-vă rolul
+  authTypeStatic: Static
+  authTypeEnvironment: Mediu
+  displayName: Numele de afișare
+  namePlaceholder: de exemplu, AWS de producție
+  awsRegion: Regiunea AWS
+  selectRegion: Selectați regiunea
+  customRegion: Regiune personalizată...
+  customRegionPlaceholder: de exemplu, us-gov-west-1
+  profileName: Nume profil
+  profilePlaceholder: de exemplu, producția
+  profileDesc: Lăsați necompletat pentru a utiliza lanțul de acreditări implicit (env vars, ~/.aws/credentials, rol IAM)
+  resourceDiscovery: Descoperirea resurselor
+  rdsLabel: Baze de date RDS
+  rdsDesc: Instanțele PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: clustere Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: Clustere compatibile cu MongoDB
+  testConnection: Testează conexiunea
+  testing: Testare...
+  connectionSuccessful: Conexiune reușită
+  connectionFailed: Testul de conectare a eșuat
+  testFailed: "Testul a eșuat: [[0]]]"
+  saveBeforeTest: Salvați furnizorul înainte de testare
+  cancel: Anula
+  save: Salva
+  add: Adăuga
+  saving: Economisire...
+  providerAdded: Contul AWS a fost adăugat cu succes
+  providerUpdated: Contul AWS a fost actualizat cu succes
+  operationFailed: "Operațiunea eșuată: [[0]]]"
+  unknownError: A apărut o eroare necunoscută
+  nameRequired: Numele afișat este obligatoriu
+  regionRequired: Regiunea este obligatorie
+  profileRequired: Numele profilului este obligatoriu
+
+ru_RU:
+  addProvider: Добавить учетную запись AWS
+  editProvider: Изменить учетную запись AWS
+  detectedProfiles: Обнаруженные профили AWS
+  clickToAutofill: Нажмите на профиль, чтобы автоматически заполнить форму.
+  defaultAwsName: AWS по умолчанию
+  awsProfileName: "АВС ({name})"
+  profileSourceTooltip: "Найдено в {source}"
+  defaultProfileName: по умолчанию
+  sourceCredentials: ~/.aws/учетные данные
+  sourceConfig: ~/.aws/конфигурация
+  sourceEnvironment: Варианты среды
+  authTypeSso: система единого входа
+  authTypeAssumeRole: Принять на себя роль
+  authTypeStatic: Статический
+  authTypeEnvironment: Среда
+  displayName: Отображаемое имя
+  namePlaceholder: например, производственная AWS
+  awsRegion: Регион AWS
+  selectRegion: Выберите регион
+  customRegion: Пользовательский регион...
+  customRegionPlaceholder: например, us-gov-west-1
+  profileName: Имя профиля
+  profilePlaceholder: например, производство
+  profileDesc: Оставьте пустым, чтобы использовать цепочку учетных данных по умолчанию (env vars, ~/.aws/credentials, роль IAM).
+  resourceDiscovery: Обнаружение ресурсов
+  rdsLabel: Базы данных RDS
+  rdsDesc: Экземпляры PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: Эластикэш
+  elasticacheDesc: Кластеры Redis
+  documentdbLabel: ДокументБД
+  documentdbDesc: MongoDB-совместимые кластеры
+  testConnection: Тестовое соединение
+  testing: Тестирование...
+  connectionSuccessful: Соединение успешно
+  connectionFailed: Проверка соединения не удалась
+  testFailed: "Тест не пройден: {error}"
+  saveBeforeTest: Сохраните поставщика перед тестированием
+  cancel: Отмена
+  save: Сохранять
+  add: Добавлять
+  saving: Сохранение...
+  providerAdded: Аккаунт AWS успешно добавлен
+  providerUpdated: Аккаунт AWS успешно обновлен
+  operationFailed: "Операция не удалась: {error}"
+  unknownError: Произошла неизвестная ошибка
+  nameRequired: Требуется отображаемое имя.
+  regionRequired: Требуется регион
+  profileRequired: Укажите имя профиля.
+
+sk_SK:
+  addProvider: Pridať účet AWS
+  editProvider: Upraviť účet AWS
+  detectedProfiles: Zistené profily AWS
+  clickToAutofill: Kliknutím na profil automaticky vyplníte formulár
+  defaultAwsName: Predvolené AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Nájdené v {source}"
+  defaultProfileName: predvolená
+  sourceCredentials: ~/.aws/poverenia
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Prostredie var
+  authTypeSso: SSO
+  authTypeAssumeRole: Prevziať rolu
+  authTypeStatic: Statické
+  authTypeEnvironment: Životné prostredie
+  displayName: Zobrazovaný názov
+  namePlaceholder: napr. Production AWS
+  awsRegion: Región AWS
+  selectRegion: Vyberte región
+  customRegion: Vlastný región...
+  customRegionPlaceholder: napr. us-gov-west-1
+  profileName: Názov profilu
+  profilePlaceholder: napr. výroba
+  profileDesc: Ak chcete použiť predvolený reťazec poverení, nechajte prázdne (env vars, ~/.aws/credentials, rola IAM)
+  resourceDiscovery: Zisťovanie zdrojov
+  rdsLabel: RDS databázy
+  rdsDesc: Inštancie PostgreSQL, MySQL, MariaDB
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Klastre Redis
+  documentdbLabel: DocumentDB
+  documentdbDesc: Klastre kompatibilné s MongoDB
+  testConnection: Test pripojenia
+  testing: Testuje sa...
+  connectionSuccessful: Pripojenie úspešné
+  connectionFailed: Test pripojenia zlyhal
+  testFailed: "Test zlyhal: {error}"
+  saveBeforeTest: Pred testovaním uložte poskytovateľa
+  cancel: Zrušiť
+  save: Uložiť
+  add: Pridať
+  saving: Ukladá sa...
+  providerAdded: Účet AWS bol úspešne pridaný
+  providerUpdated: Účet AWS bol úspešne aktualizovaný
+  operationFailed: "Operácia zlyhala: {error}"
+  unknownError: Vyskytla sa neznáma chyba
+  nameRequired: Vyžaduje sa zobrazovaný názov
+  regionRequired: Región je povinný údaj
+  profileRequired: Vyžaduje sa názov profilu
+
+sv_SE:
+  addProvider: Lägg till AWS-konto
+  editProvider: Redigera AWS-konto
+  detectedProfiles: Upptäckte AWS-profiler
+  clickToAutofill: Klicka på en profil för att automatiskt fylla i formuläret
+  defaultAwsName: Standard AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "Hittade i {source}"
+  defaultProfileName: standard
+  sourceCredentials: ~/.aws/credentials
+  sourceConfig: ~/.aws/config
+  sourceEnvironment: Miljö vars
+  authTypeSso: SSO
+  authTypeAssumeRole: Ta rollen
+  authTypeStatic: Statisk
+  authTypeEnvironment: Miljö
+  displayName: Visningsnamn
+  namePlaceholder: t.ex. Production AWS
+  awsRegion: AWS-regionen
+  selectRegion: Välj region
+  customRegion: Anpassad region...
+  customRegionPlaceholder: t.ex. us-gov-west-1
+  profileName: Profilnamn
+  profilePlaceholder: t.ex. produktion
+  profileDesc: Lämna tomt för att använda standardinloggningskedjan (env vars, ~/.aws/credentials, IAM-roll)
+  resourceDiscovery: Resursupptäckt
+  rdsLabel: RDS-databaser
+  rdsDesc: PostgreSQL, MySQL, MariaDB-instanser
+  elasticacheLabel: ElastiCache
+  elasticacheDesc: Redis kluster
+  documentdbLabel: DocumentDB
+  documentdbDesc: MongoDB-kompatibla kluster
+  testConnection: Testa anslutningen
+  testing: Testning...
+  connectionSuccessful: Anslutningen lyckades
+  connectionFailed: Anslutningstest misslyckades
+  testFailed: "Testet misslyckades: {error}"
+  saveBeforeTest: Spara leverantören innan du testar
+  cancel: Avboka
+  save: Spara
+  add: Tillägga
+  saving: Sparande...
+  providerAdded: AWS-konto har lagts till
+  providerUpdated: AWS-kontot har uppdaterats
+  operationFailed: "Åtgärden misslyckades: {error}"
+  unknownError: Okänt fel uppstod
+  nameRequired: Visningsnamn krävs
+  regionRequired: Region krävs
+  profileRequired: Profilnamn krävs
+
+zh_CN:
+  addProvider: 添加 AWS 账户
+  editProvider: 编辑 AWS 账户
+  detectedProfiles: 检测到的 AWS 配置文件
+  clickToAutofill: 单击个人资料即可自动填写表格
+  defaultAwsName: 默认 AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "发现于 {source}"
+  defaultProfileName: 默认
+  sourceCredentials: 〜/.aws/凭证
+  sourceConfig: 〜/.aws/config
+  sourceEnvironment: 环境变量
+  authTypeSso: 单点登录
+  authTypeAssumeRole: 承担角色
+  authTypeStatic: 静止的
+  authTypeEnvironment: 环境
+  displayName: 显示名称
+  namePlaceholder: 例如，生产 AWS
+  awsRegion: AWS 区域
+  selectRegion: 选择地区
+  customRegion: 自定义区域...
+  customRegionPlaceholder: 例如，us-gov-west-1
+  profileName: 个人资料名称
+  profilePlaceholder: 例如，生产
+  profileDesc: 留空以使用默认凭证链（环境变量、~/.aws/credentials、IAM 角色）
+  resourceDiscovery: 资源发现
+  rdsLabel: RDS数据库
+  rdsDesc: PostgreSQL、MySQL、MariaDB 实例
+  elasticacheLabel: 弹性缓存
+  elasticacheDesc: Redis集群
+  documentdbLabel: 文档数据库
+  documentdbDesc: MongoDB 兼容集群
+  testConnection: 测试连接
+  testing: 测试...
+  connectionSuccessful: 连接成功
+  connectionFailed: 连接测试失败
+  testFailed: "测试失败：{error}"
+  saveBeforeTest: 测试前保存提供者
+  cancel: 取消
+  save: 节省
+  add: 添加
+  saving: 保存...
+  providerAdded: AWS账户添加成功
+  providerUpdated: AWS 账户更新成功
+  operationFailed: "操作失败：{error}"
+  unknownError: 发生未知错误
+  nameRequired: 显示名称为必填项
+  regionRequired: 地区为必填项
+  profileRequired: 个人资料名称为必填项
+
+zh_TW:
+  addProvider: 新增 AWS 帳戶
+  editProvider: 編輯 AWS 帳戶
+  detectedProfiles: 偵測到的 AWS 設定檔
+  clickToAutofill: 點擊個人資料即可自動填寫表格
+  defaultAwsName: 預設 AWS
+  awsProfileName: "AWS ({name})"
+  profileSourceTooltip: "發現於 {source}"
+  defaultProfileName: 預設
+  sourceCredentials: 〜/.aws/憑證
+  sourceConfig: 〜/.aws/config
+  sourceEnvironment: 環境變數
+  authTypeSso: 單一登入
+  authTypeAssumeRole: 承擔角色
+  authTypeStatic: 靜止的
+  authTypeEnvironment: 環境
+  displayName: 顯示名稱
+  namePlaceholder: 例如，生產 AWS
+  awsRegion: AWS 區域
+  selectRegion: 選擇地區
+  customRegion: 自訂區域...
+  customRegionPlaceholder: 例如，us-gov-west-1
+  profileName: 個人資料名稱
+  profilePlaceholder: 例如，生產
+  profileDesc: 留空以使用預設憑證鏈（環境變數、~/.aws/credentials、IAM 角色）
+  resourceDiscovery: 資源發現
+  rdsLabel: RDS資料庫
+  rdsDesc: PostgreSQL、MySQL、MariaDB 實例
+  elasticacheLabel: 彈性緩存
+  elasticacheDesc: Redis集群
+  documentdbLabel: 文件資料庫
+  documentdbDesc: MongoDB 相容集群
+  testConnection: 測試連接
+  testing: 測試...
+  connectionSuccessful: 連線成功
+  connectionFailed: 連線測試失敗
+  testFailed: "測試失敗：{error}"
+  saveBeforeTest: 測試前保存提供者
+  cancel: 取消
+  save: 節省
+  add: 添加
+  saving: 儲存...
+  providerAdded: AWS帳戶新增成功
+  providerUpdated: AWS 帳號更新成功
+  operationFailed: "操作失敗：{error}"
+  unknownError: 發生未知錯誤
+  nameRequired: 顯示名稱為必填項
+  regionRequired: 地區為必填項
+  profileRequired: 個人資料名稱為必填項

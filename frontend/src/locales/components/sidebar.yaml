@@ -23,3 +23,523 @@ en_US:
   errorSigningIn: "Error Signing You In:"
   updateAvailable: "Update available: {version}"
   sslSecured: "SSL: {mode}"
+
+ar_AE:
+  mainNavigation: الملاحة الرئيسية
+  profile: حساب تعريفي
+  selectProfile: حدد ملف التعريف
+  searchProfile: بحث في الملف الشخصي...
+  addAnotherProfile: أضف ملفًا شخصيًا آخر
+  database: قاعدة البيانات
+  selectDatabase: حدد قاعدة البيانات
+  searchDatabase: البحث في قاعدة البيانات...
+  schema: مخطط
+  selectSchema: حدد المخطط
+  searchSchema: مخطط البحث...
+  chat: محادثة
+  graph: رسم بياني
+  scratchpad: المسودة
+  contactUs: اتصل بنا
+  settings: إعدادات
+  logOutProfile: تسجيل الخروج من الملف الشخصي
+  moreLogoutOptions: المزيد من خيارات تسجيل الخروج
+  logoutAllProfiles: تسجيل الخروج من جميع الملفات الشخصية
+  version: "إصدار:"
+  databaseLogin: تسجيل الدخول إلى قاعدة البيانات
+  errorSigningIn: "حدث خطأ أثناء تسجيل الدخول:"
+  updateAvailable: "التحديث متاح: {version}"
+  sslSecured: "طبقة المقابس الآمنة: {mode}"
+
+de_DE:
+  mainNavigation: Hauptnavigation
+  profile: Profil
+  selectProfile: Wählen Sie Profil
+  searchProfile: Suchprofil...
+  addAnotherProfile: Fügen Sie ein weiteres Profil hinzu
+  database: Datenbank
+  selectDatabase: Wählen Sie Datenbank aus
+  searchDatabase: Datenbank durchsuchen...
+  schema: Schema
+  selectSchema: Wählen Sie Schema aus
+  searchSchema: Suchschema...
+  chat: Chatten
+  graph: Graph
+  scratchpad: Notizblock
+  contactUs: Kontaktieren Sie uns
+  settings: Einstellungen
+  logOutProfile: Profil abmelden
+  moreLogoutOptions: Weitere Abmeldeoptionen
+  logoutAllProfiles: Alle Profile abmelden
+  version: "Version:"
+  databaseLogin: Datenbankanmeldung
+  errorSigningIn: "Fehler bei der Anmeldung:"
+  updateAvailable: "Update verfügbar: {version}"
+  sslSecured: "SSL: {mode}"
+
+el_GR:
+  mainNavigation: Κύρια πλοήγηση
+  profile: Προφίλ
+  selectProfile: Επιλέξτε Προφίλ
+  searchProfile: Αναζήτηση προφίλ...
+  addAnotherProfile: Προσθήκη άλλου προφίλ
+  database: Βάση δεδομένων
+  selectDatabase: Επιλέξτε Βάση δεδομένων
+  searchDatabase: Αναζήτηση στη βάση δεδομένων...
+  schema: Σχήμα
+  selectSchema: Επιλέξτε Σχήμα
+  searchSchema: Σχήμα αναζήτησης...
+  chat: Κουβέντα
+  graph: Γραφική παράσταση
+  scratchpad: Scratchpad
+  contactUs: Επικοινωνήστε μαζί μας
+  settings: Ρυθμίσεις
+  logOutProfile: Προφίλ αποσύνδεσης
+  moreLogoutOptions: Περισσότερες επιλογές αποσύνδεσης
+  logoutAllProfiles: Αποσύνδεση όλων των προφίλ
+  version: "Εκδοχή:"
+  databaseLogin: Είσοδος βάσης δεδομένων
+  errorSigningIn: "Σφάλμα κατά τη σύνδεσή σας:"
+  updateAvailable: "Διαθέσιμη ενημέρωση: {version}"
+  sslSecured: "SSL: {mode}"
+
+en_GB:
+  mainNavigation: Main navigation
+  profile: Profile
+  selectProfile: Select Profile
+  searchProfile: Search Profile...
+  addAnotherProfile: Add Another Profile
+  database: Database
+  selectDatabase: Select Database
+  searchDatabase: Search Database...
+  schema: Schema
+  selectSchema: Select Schema
+  searchSchema: Search Schema...
+  chat: Chat
+  graph: Graph
+  scratchpad: Scratchpad
+  contactUs: Contact Us
+  settings: Settings
+  logOutProfile: Log Out Profile
+  moreLogoutOptions: More Logout Options
+  logoutAllProfiles: Logout All Profiles
+  version: "Version:"
+  databaseLogin: Database Login
+  errorSigningIn: "Error Signing You In:"
+  updateAvailable: "Update available: {version}"
+  sslSecured: "SSL: {mode}"
+
+es_ES:
+  mainNavigation: Navegación principal
+  profile: Perfil
+  selectProfile: Seleccionar perfil
+  searchProfile: Buscar perfil...
+  addAnotherProfile: Agregar otro perfil
+  database: Base de datos
+  selectDatabase: Seleccionar base de datos
+  searchDatabase: Buscar base de datos...
+  schema: Esquema
+  selectSchema: Seleccionar esquema
+  searchSchema: Esquema de búsqueda...
+  chat: Charlar
+  graph: Gráfico
+  scratchpad: Bloc de notas
+  contactUs: Contacta con nosotras
+  settings: Ajustes
+  logOutProfile: Cerrar sesión perfil
+  moreLogoutOptions: Más opciones de cierre de sesión
+  logoutAllProfiles: Cerrar sesión en todos los perfiles
+  version: "Versión:"
+  databaseLogin: Iniciar sesión en la base de datos
+  errorSigningIn: "Error al iniciar sesión:"
+  updateAvailable: "Actualización disponible: {version}"
+  sslSecured: "SSL: {mode}"
+
+fi_FI:
+  mainNavigation: Päänavigointi
+  profile: Profiili
+  selectProfile: Valitse Profiili
+  searchProfile: Hae profiilia...
+  addAnotherProfile: Lisää toinen profiili
+  database: Tietokanta
+  selectDatabase: Valitse Tietokanta
+  searchDatabase: Hae tietokannasta...
+  schema: Kaavio
+  selectSchema: Valitse Schema
+  searchSchema: Hakukaavio...
+  chat: Chat
+  graph: Kaavio
+  scratchpad: Scratchpad
+  contactUs: Ota yhteyttä
+  settings: Asetukset
+  logOutProfile: Kirjaudu ulos profiili
+  moreLogoutOptions: Lisää uloskirjautumisvaihtoehtoja
+  logoutAllProfiles: Kirjaudu ulos kaikista profiileista
+  version: "Versio:"
+  databaseLogin: Kirjautuminen tietokantaan
+  errorSigningIn: "Virhe kirjautuessasi sisään:"
+  updateAvailable: "Päivitys saatavilla: {version}"
+  sslSecured: "SSL: {mode}"
+
+fr_FR:
+  mainNavigation: Navigation principale
+  profile: Profil
+  selectProfile: Sélectionnez un profil
+  searchProfile: Rechercher un profil...
+  addAnotherProfile: Ajouter un autre profil
+  database: Base de données
+  selectDatabase: Sélectionnez la base de données
+  searchDatabase: Rechercher dans la base de données...
+  schema: Schéma
+  selectSchema: Sélectionnez un schéma
+  searchSchema: Schéma de recherche...
+  chat: Chatte
+  graph: Graphique
+  scratchpad: Bloc-notes
+  contactUs: Contactez-nous
+  settings: Paramètres
+  logOutProfile: Déconnexion du profil
+  moreLogoutOptions: Plus d'options de déconnexion
+  logoutAllProfiles: Se déconnecter de tous les profils
+  version: "Version:"
+  databaseLogin: Connexion à la base de données
+  errorSigningIn: "Erreur lors de votre connexion :"
+  updateAvailable: "Mise à jour disponible : {version}"
+  sslSecured: "SSL : {mode}"
+
+it_IT:
+  mainNavigation: Navigazione principale
+  profile: Profilo
+  selectProfile: Seleziona Profilo
+  searchProfile: Cerca profilo...
+  addAnotherProfile: Aggiungi un altro profilo
+  database: Banca dati
+  selectDatabase: Seleziona Banca dati
+  searchDatabase: Cerca nel database...
+  schema: Schema
+  selectSchema: Seleziona Schema
+  searchSchema: Cerca schema...
+  chat: Chiacchierata
+  graph: Grafico
+  scratchpad: Blocco note
+  contactUs: Contattaci
+  settings: Impostazioni
+  logOutProfile: Esci dal profilo
+  moreLogoutOptions: Altre opzioni di disconnessione
+  logoutAllProfiles: Esci da tutti i profili
+  version: "Versione:"
+  databaseLogin: Accesso al database
+  errorSigningIn: "Errore durante l'accesso:"
+  updateAvailable: "Aggiornamento disponibile: {version}"
+  sslSecured: "SSL: {mode}"
+
+iw_IL:
+  mainNavigation: ניווט ראשי
+  profile: פּרוֹפִיל
+  selectProfile: בחר פרופיל
+  searchProfile: חפש בפרופיל...
+  addAnotherProfile: הוסף עוד פרופיל
+  database: מסד נתונים
+  selectDatabase: בחר מסד נתונים
+  searchDatabase: חפש במסד נתונים...
+  schema: סכֵימָה
+  selectSchema: בחר סכימה
+  searchSchema: חיפוש סכימה...
+  chat: לְשׂוֹחֵחַ
+  graph: גרָף
+  scratchpad: פנקס גירוד
+  contactUs: צור קשר
+  settings: הגדרות
+  logOutProfile: התנתק פרופיל
+  moreLogoutOptions: אפשרויות התנתקות נוספות
+  logoutAllProfiles: התנתק מכל הפרופילים
+  version: "גִרְסָה:"
+  databaseLogin: כניסה למסד נתונים
+  errorSigningIn: "שגיאה בהכנסתך:"
+  updateAvailable: "עדכון זמין: {version}"
+  sslSecured: "SSL: {mode}"
+
+ja_JP:
+  mainNavigation: メインナビゲーション
+  profile: プロフィール
+  selectProfile: プロファイルの選択
+  searchProfile: プロフィールを検索...
+  addAnotherProfile: 別のプロファイルを追加する
+  database: データベース
+  selectDatabase: データベースの選択
+  searchDatabase: データベースを検索...
+  schema: スキーマ
+  selectSchema: スキーマの選択
+  searchSchema: スキーマを検索...
+  chat: チャット
+  graph: グラフ
+  scratchpad: スクラッチパッド
+  contactUs: お問い合わせ
+  settings: 設定
+  logOutProfile: ログアウトプロファイル
+  moreLogoutOptions: その他のログアウト オプション
+  logoutAllProfiles: すべてのプロファイルをログアウトする
+  version: "バージョン:"
+  databaseLogin: データベースへのログイン
+  errorSigningIn: "サインイン時のエラー:"
+  updateAvailable: "利用可能なアップデート: {version}"
+  sslSecured: "SSL: {mode}"
+
+ko_KR:
+  mainNavigation: 메인 네비게이션
+  profile: 윤곽
+  selectProfile: 프로필 선택
+  searchProfile: 프로필 검색...
+  addAnotherProfile: 다른 프로필 추가
+  database: 데이터 베이스
+  selectDatabase: 데이터베이스 선택
+  searchDatabase: 데이터베이스 검색...
+  schema: 개요
+  selectSchema: 스키마 선택
+  searchSchema: 스키마 검색...
+  chat: 채팅
+  graph: 그래프
+  scratchpad: 스크래치패드
+  contactUs: 문의하기
+  settings: 설정
+  logOutProfile: 로그아웃 프로필
+  moreLogoutOptions: 추가 로그아웃 옵션
+  logoutAllProfiles: 모든 프로필 로그아웃
+  version: "버전:"
+  databaseLogin: 데이터베이스 로그인
+  errorSigningIn: "로그인 오류:"
+  updateAvailable: "업데이트 가능: {version}"
+  sslSecured: "SSL: {mode}"
+
+nl_NL:
+  mainNavigation: Hoofdnavigatie
+  profile: Profiel
+  selectProfile: Selecteer Profiel
+  searchProfile: Profiel zoeken...
+  addAnotherProfile: Voeg nog een profiel toe
+  database: Database
+  selectDatabase: Selecteer Database
+  searchDatabase: Database zoeken...
+  schema: Schema
+  selectSchema: Selecteer Schema
+  searchSchema: Zoekschema...
+  chat: Chatten
+  graph: Grafiek
+  scratchpad: Kladblok
+  contactUs: Neem contact met ons op
+  settings: Instellingen
+  logOutProfile: Uitloggen profiel
+  moreLogoutOptions: Meer uitlogopties
+  logoutAllProfiles: Meld u af bij alle profielen
+  version: "Versie:"
+  databaseLogin: Database-aanmelding
+  errorSigningIn: "Fout bij aanmelden:"
+  updateAvailable: "Update beschikbaar: {version}"
+  sslSecured: "SSL: {mode}"
+
+pl_PL:
+  mainNavigation: Główna nawigacja
+  profile: Profil
+  selectProfile: Wybierz opcję Profil
+  searchProfile: Wyszukaj profil...
+  addAnotherProfile: Dodaj kolejny profil
+  database: Baza danych
+  selectDatabase: Wybierz opcję Baza danych
+  searchDatabase: Przeszukaj bazę danych...
+  schema: Schemat
+  selectSchema: Wybierz Schemat
+  searchSchema: Wyszukaj schemat...
+  chat: Pogawędzić
+  graph: Wykres
+  scratchpad: Brudnopis
+  contactUs: Skontaktuj się z nami
+  settings: Ustawienia
+  logOutProfile: Wyloguj się z profilu
+  moreLogoutOptions: Więcej opcji wylogowania
+  logoutAllProfiles: Wyloguj się ze wszystkich profili
+  version: "Wersja:"
+  databaseLogin: Logowanie do bazy danych
+  errorSigningIn: "Błąd podczas logowania:"
+  updateAvailable: "Dostępna aktualizacja: {version}"
+  sslSecured: "SSL: {mode}"
+
+pt_BR:
+  mainNavigation: Navegação principal
+  profile: Perfil
+  selectProfile: Selecione o perfil
+  searchProfile: Pesquisar perfil...
+  addAnotherProfile: Adicionar outro perfil
+  database: Banco de dados
+  selectDatabase: Selecione banco de dados
+  searchDatabase: Pesquisar banco de dados...
+  schema: Esquema
+  selectSchema: Selecione o esquema
+  searchSchema: Esquema de pesquisa...
+  chat: Bater papo
+  graph: Gráfico
+  scratchpad: Bloco de notas
+  contactUs: Contate-nos
+  settings: Configurações
+  logOutProfile: Sair do perfil
+  moreLogoutOptions: Mais opções de logout
+  logoutAllProfiles: Sair de todos os perfis
+  version: "Versão:"
+  databaseLogin: Login do banco de dados
+  errorSigningIn: "Erro ao fazer login:"
+  updateAvailable: "Atualização disponível: {version}"
+  sslSecured: "SSL: {mode}"
+
+ro_RO:
+  mainNavigation: Navigație principală
+  profile: Profil
+  selectProfile: Selectați Profil
+  searchProfile: Căutați profil...
+  addAnotherProfile: Adăugați un alt profil
+  database: Baza de date
+  selectDatabase: Selectați Baza de date
+  searchDatabase: Căutați în baza de date...
+  schema: Schemă
+  selectSchema: Selectați Schema
+  searchSchema: Schema de căutare...
+  chat: Chat
+  graph: Grafic
+  scratchpad: Scratchpad
+  contactUs: Contactaţi-ne
+  settings: Setări
+  logOutProfile: Profil de deconectare
+  moreLogoutOptions: Mai multe opțiuni de deconectare
+  logoutAllProfiles: Deconectați toate profilurile
+  version: "Versiune:"
+  databaseLogin: Conectare la baza de date
+  errorSigningIn: "Eroare la conectare:"
+  updateAvailable: "Actualizare disponibilă: [[0]]]"
+  sslSecured: "SSL: [[0]]]"
+
+ru_RU:
+  mainNavigation: Основная навигация
+  profile: Профиль
+  selectProfile: Выберите профиль
+  searchProfile: Поиск профиля...
+  addAnotherProfile: Добавить еще один профиль
+  database: База данных
+  selectDatabase: Выберите базу данных
+  searchDatabase: Поиск в базе данных...
+  schema: Схема
+  selectSchema: Выберите схему
+  searchSchema: Схема поиска...
+  chat: Чат
+  graph: График
+  scratchpad: Блокнот
+  contactUs: Связаться с нами
+  settings: Настройки
+  logOutProfile: Выйти из профиля
+  moreLogoutOptions: Дополнительные параметры выхода из системы
+  logoutAllProfiles: Выход из всех профилей
+  version: "Версия:"
+  databaseLogin: Вход в базу данных
+  errorSigningIn: "Ошибка при входе в систему:"
+  updateAvailable: "Доступно обновление: {version}"
+  sslSecured: "SSL: {mode}"
+
+sk_SK:
+  mainNavigation: Hlavná navigácia
+  profile: Profil
+  selectProfile: Vyberte položku Profil
+  searchProfile: Hľadať v profile...
+  addAnotherProfile: Pridať ďalší profil
+  database: Databáza
+  selectDatabase: Vyberte položku Databáza
+  searchDatabase: Hľadať v databáze...
+  schema: Schéma
+  selectSchema: Vyberte položku Schéma
+  searchSchema: Hľadať v schéme...
+  chat: Chat
+  graph: Graf
+  scratchpad: Zápisník
+  contactUs: Kontaktujte nás
+  settings: Nastavenia
+  logOutProfile: Odhlásiť sa z profilu
+  moreLogoutOptions: Ďalšie možnosti odhlásenia
+  logoutAllProfiles: Odhlásiť všetky profily
+  version: "Verzia:"
+  databaseLogin: Prihlásenie do databázy
+  errorSigningIn: "Chyba pri prihlasovaní:"
+  updateAvailable: "Dostupná aktualizácia: {version}"
+  sslSecured: "SSL: {mode}"
+
+sv_SE:
+  mainNavigation: Huvudnavigering
+  profile: Profil
+  selectProfile: Välj Profil
+  searchProfile: Sök profil...
+  addAnotherProfile: Lägg till ytterligare en profil
+  database: Databas
+  selectDatabase: Välj Databas
+  searchDatabase: Sök i databasen...
+  schema: Schema
+  selectSchema: Välj Schema
+  searchSchema: Sök schema...
+  chat: Chatta
+  graph: Graf
+  scratchpad: Scratchpad
+  contactUs: Kontakta oss
+  settings: Inställningar
+  logOutProfile: Logga ut profil
+  moreLogoutOptions: Fler utloggningsalternativ
+  logoutAllProfiles: Logga ut alla profiler
+  version: "Version:"
+  databaseLogin: Databasinloggning
+  errorSigningIn: "Fel när du loggade in dig:"
+  updateAvailable: "Uppdatering tillgänglig: {version}"
+  sslSecured: "SSL: {mode}"
+
+zh_CN:
+  mainNavigation: 主导航
+  profile: 轮廓
+  selectProfile: 选择个人资料
+  searchProfile: 搜索个人资料...
+  addAnotherProfile: 添加另一个个人资料
+  database: 数据库
+  selectDatabase: 选择数据库
+  searchDatabase: 搜索数据库...
+  schema: 模式
+  selectSchema: 选择架构
+  searchSchema: 搜索架构...
+  chat: 聊天
+  graph: 图形
+  scratchpad: 便签本
+  contactUs: 联系我们
+  settings: 设置
+  logOutProfile: 注销个人资料
+  moreLogoutOptions: 更多注销选项
+  logoutAllProfiles: 注销所有配置文件
+  version: 版本：
+  databaseLogin: 数据库登录
+  errorSigningIn: 您登录时出错：
+  updateAvailable: "可用更新：{version}"
+  sslSecured: "SSL：{mode}"
+
+zh_TW:
+  mainNavigation: 主導航
+  profile: 輪廓
+  selectProfile: 選擇個人資料
+  searchProfile: 搜尋個人資料...
+  addAnotherProfile: 新增另一個個人資料
+  database: 資料庫
+  selectDatabase: 選擇資料庫
+  searchDatabase: 搜尋資料庫...
+  schema: 模式
+  selectSchema: 選擇架構
+  searchSchema: 搜尋架構...
+  chat: 聊天
+  graph: 圖形
+  scratchpad: 便籤本
+  contactUs: 聯絡我們
+  settings: 設定
+  logOutProfile: 註銷個人資料
+  moreLogoutOptions: 更多註銷選項
+  logoutAllProfiles: 註銷所有設定檔
+  version: 版本：
+  databaseLogin: 資料庫登入
+  errorSigningIn: 您登入時發生錯誤：
+  updateAvailable: "可用更新：{version}"
+  sslSecured: "SSL：{mode}"

@@ -2,3 +2,103 @@ en_US:
   port: "Port:"
   lastLoggedIn: "Last Logged In:"
   profileInfo: Profile information for {profileId}
+
+ar_AE:
+  port: "ميناء:"
+  lastLoggedIn: "آخر تسجيل دخول:"
+  profileInfo: "معلومات الملف الشخصي لـ {profileId}"
+
+de_DE:
+  port: "Hafen:"
+  lastLoggedIn: "Zuletzt angemeldet:"
+  profileInfo: "Profilinformationen für {profileId}"
+
+el_GR:
+  port: "Λιμάνι:"
+  lastLoggedIn: "Τελευταία σύνδεση:"
+  profileInfo: "Πληροφορίες προφίλ για {profileId}"
+
+en_GB:
+  port: "Port:"
+  lastLoggedIn: "Last Logged In:"
+  profileInfo: "Profile information for {profileId}"
+
+es_ES:
+  port: "Puerto:"
+  lastLoggedIn: "Último inicio de sesión:"
+  profileInfo: "Información de perfil para {profileId}"
+
+fi_FI:
+  port: "Portti:"
+  lastLoggedIn: "Viimeksi kirjautunut:"
+  profileInfo: "Profiilitiedot: {profileId}"
+
+fr_FR:
+  port: "Port:"
+  lastLoggedIn: "Dernière connexion :"
+  profileInfo: "Informations de profil pour {profileId}"
+
+it_IT:
+  port: "Porta:"
+  lastLoggedIn: "Ultimo accesso:"
+  profileInfo: "Informazioni sul profilo per {profileId}"
+
+iw_IL:
+  port: "נָמָל:"
+  lastLoggedIn: "מחובר לאחרונה:"
+  profileInfo: "פרטי פרופיל עבור {profileId}"
+
+ja_JP:
+  port: ポート：
+  lastLoggedIn: "最終ログイン日:"
+  profileInfo: "{profileId} のプロフィール情報"
+
+ko_KR:
+  port: "포트:"
+  lastLoggedIn: "마지막 로그인:"
+  profileInfo: "{profileId}에 대한 프로필 정보"
+
+nl_NL:
+  port: "Haven:"
+  lastLoggedIn: "Laatst ingelogd:"
+  profileInfo: "Profielinformatie voor {profileId}"
+
+pl_PL:
+  port: "Port:"
+  lastLoggedIn: "Ostatnio zalogowany:"
+  profileInfo: "Informacje o profilu dla {profileId}"
+
+pt_BR:
+  port: "Porta:"
+  lastLoggedIn: "Último login:"
+  profileInfo: "Informações de perfil para {profileId}"
+
+ro_RO:
+  port: "Port:"
+  lastLoggedIn: "Ultima conectare:"
+  profileInfo: "Informații de profil pentru {profileId}"
+
+ru_RU:
+  port: "Порт:"
+  lastLoggedIn: "Последний вход в систему:"
+  profileInfo: "Информация профиля для {profileId}"
+
+sk_SK:
+  port: "Port:"
+  lastLoggedIn: "Naposledy prihlásený:"
+  profileInfo: "Informácie o profile pre {profileId}"
+
+sv_SE:
+  port: "Hamn:"
+  lastLoggedIn: "Senast inloggad:"
+  profileInfo: "Profilinformation för {profileId}"
+
+zh_CN:
+  port: 港口：
+  lastLoggedIn: 上次登录：
+  profileInfo: "{profileId} 的个人资料信息"
+
+zh_TW:
+  port: 港口：
+  lastLoggedIn: 上次登入：
+  profileInfo: "{profileId} 的個人資料訊息"

@@ -33,3 +33,723 @@ en_US:
   createSuccessMessage: "{storageUnit} Created Successfully!"
   actionsColumn: Actions
   close: Close
+
+ar_AE:
+  title: الجداول
+  search: يبحث
+  searchPlaceholder: أدخل قيمة التصفية...
+  scratchpad: المسودة
+  cardView: عرض البطاقة
+  listView: عرض القائمة
+  describe: معلومات
+  data: بيانات
+  sampledSchemaBadge: المخطط المستنتج من العينة
+  create: يخلق
+  createTitle: "إنشاء {storageUnit}"
+  columnsTitle: أعمدة
+  nameLabel: اسم
+  namePlaceholder: أدخل الاسم...
+  fieldNameLabel: اسم الحقل
+  fieldNamePlaceholder: أدخل اسم الحقل
+  fieldTypeLabel: نوع الحقل
+  fieldTypePlaceholder: حدد النوع
+  searchTypePlaceholder: نوع البحث...
+  fieldLengthLabel: طول
+  fieldLengthPlaceholder: على سبيل المثال، 255
+  fieldPrecisionLabel: دقة
+  fieldScaleLabel: حجم
+  modifiersLabel: المعدلات
+  primaryModifier: أساسي
+  nullableModifier: لاغية
+  removeField: يزيل
+  addField: إضافة حقل
+  createButton: يخلق
+  nameRequired: الاسم مطلوب
+  fieldsCannotBeEmpty: لا يمكن أن تكون الحقول فارغة
+  createSuccessMessage: "{storageUnit} تم الإنشاء بنجاح!"
+  actionsColumn: الإجراءات
+  close: يغلق
+
+de_DE:
+  title: Tische
+  search: Suchen
+  searchPlaceholder: Filterwert eingeben...
+  scratchpad: Notizblock
+  cardView: Kartenansicht
+  listView: Listenansicht
+  describe: Info
+  data: Daten
+  sampledSchemaBadge: Aus Beispiel abgeleitetes Schema
+  create: Erstellen
+  createTitle: "Erstellen Sie ein {storageUnit}"
+  columnsTitle: Spalten
+  nameLabel: Name
+  namePlaceholder: Namen eingeben...
+  fieldNameLabel: Feldname
+  fieldNamePlaceholder: Geben Sie den Feldnamen ein
+  fieldTypeLabel: Feldtyp
+  fieldTypePlaceholder: Wählen Sie Typ aus
+  searchTypePlaceholder: Suchtyp...
+  fieldLengthLabel: Länge
+  fieldLengthPlaceholder: z.B. 255
+  fieldPrecisionLabel: Präzision
+  fieldScaleLabel: Skala
+  modifiersLabel: Modifikatoren
+  primaryModifier: Primär
+  nullableModifier: Nullbar
+  removeField: Entfernen
+  addField: Feld hinzufügen
+  createButton: Erstellen
+  nameRequired: Name ist erforderlich
+  fieldsCannotBeEmpty: Felder dürfen nicht leer sein
+  createSuccessMessage: "{storageUnit} Erfolgreich erstellt!"
+  actionsColumn: Aktionen
+  close: Schließen
+
+el_GR:
+  title: Πίνακες
+  search: Ερευνα
+  searchPlaceholder: Εισαγάγετε την τιμή φίλτρου...
+  scratchpad: Scratchpad
+  cardView: Προβολή κάρτας
+  listView: Προβολή λίστας
+  describe: Πληροφορίες
+  data: Δεδομένα
+  sampledSchemaBadge: Σχήμα που προκύπτει από το δείγμα
+  create: Δημιουργώ
+  createTitle: "Δημιουργήστε ένα {storageUnit}"
+  columnsTitle: Στήλες
+  nameLabel: Ονομα
+  namePlaceholder: Εισαγάγετε Όνομα...
+  fieldNameLabel: Όνομα πεδίου
+  fieldNamePlaceholder: Εισαγάγετε Όνομα πεδίου
+  fieldTypeLabel: Τύπος πεδίου
+  fieldTypePlaceholder: Επιλέξτε Τύπος
+  searchTypePlaceholder: Τύπος αναζήτησης...
+  fieldLengthLabel: Μήκος
+  fieldLengthPlaceholder: π.χ. 255
+  fieldPrecisionLabel: Ακρίβεια
+  fieldScaleLabel: Κλίμακα
+  modifiersLabel: Τροποποιητές
+  primaryModifier: Πρωταρχικός
+  nullableModifier: Μηδενικό
+  removeField: Αφαιρώ
+  addField: Προσθήκη πεδίου
+  createButton: Δημιουργώ
+  nameRequired: Το όνομα είναι υποχρεωτικό
+  fieldsCannotBeEmpty: Τα πεδία δεν μπορούν να είναι άδεια
+  createSuccessMessage: "{storageUnit} Δημιουργήθηκε με επιτυχία!"
+  actionsColumn: Δράσεις
+  close: Κοντά
+
+en_GB:
+  title: Tables
+  search: Search
+  searchPlaceholder: Enter Filter Value...
+  scratchpad: Scratchpad
+  cardView: Card View
+  listView: List View
+  describe: Info
+  data: Data
+  sampledSchemaBadge: Schema inferred from sample
+  create: Create
+  createTitle: "Create a {storageUnit}"
+  columnsTitle: Columns
+  nameLabel: Name
+  namePlaceholder: Enter Name...
+  fieldNameLabel: Field Name
+  fieldNamePlaceholder: Enter Field Name
+  fieldTypeLabel: Field Type
+  fieldTypePlaceholder: Select Type
+  searchTypePlaceholder: Search Type...
+  fieldLengthLabel: Length
+  fieldLengthPlaceholder: e.g., 255
+  fieldPrecisionLabel: Precision
+  fieldScaleLabel: Scale
+  modifiersLabel: Modifiers
+  primaryModifier: Primary
+  nullableModifier: Nullable
+  removeField: Remove
+  addField: Add Field
+  createButton: Create
+  nameRequired: Name Is Required
+  fieldsCannotBeEmpty: Fields Cannot Be Empty
+  createSuccessMessage: "{storageUnit} Created Successfully!"
+  actionsColumn: Actions
+  close: Close
+
+es_ES:
+  title: Mesas
+  search: Buscar
+  searchPlaceholder: Introduzca el valor del filtro...
+  scratchpad: Bloc de notas
+  cardView: Vista de tarjeta
+  listView: Vista de lista
+  describe: Información
+  data: Datos
+  sampledSchemaBadge: Esquema inferido de la muestra.
+  create: Crear
+  createTitle: "Crear un {storageUnit}"
+  columnsTitle: columnas
+  nameLabel: Nombre
+  namePlaceholder: Introduzca nombre...
+  fieldNameLabel: Nombre del campo
+  fieldNamePlaceholder: Introduzca el nombre del campo
+  fieldTypeLabel: Tipo de campo
+  fieldTypePlaceholder: Seleccionar tipo
+  searchTypePlaceholder: Tipo de búsqueda...
+  fieldLengthLabel: Longitud
+  fieldLengthPlaceholder: por ejemplo, 255
+  fieldPrecisionLabel: Precisión
+  fieldScaleLabel: Escala
+  modifiersLabel: Modificadoras
+  primaryModifier: Primaria
+  nullableModifier: Anulable
+  removeField: Eliminar
+  addField: Agregar campo
+  createButton: Crear
+  nameRequired: El nombre es obligatorio
+  fieldsCannotBeEmpty: Los campos no pueden estar vacíos
+  createSuccessMessage: "{storageUnit} ¡Creado con éxito!"
+  actionsColumn: Comportamiento
+  close: Cerca
+
+fi_FI:
+  title: Taulukot
+  search: Haku
+  searchPlaceholder: Anna suodattimen arvo...
+  scratchpad: Scratchpad
+  cardView: Korttinäkymä
+  listView: Luettelonäkymä
+  describe: Tiedot
+  data: Data
+  sampledSchemaBadge: Kaavio päätelty näytteestä
+  create: Luoda
+  createTitle: "Luo {storageUnit}"
+  columnsTitle: Sarakkeet
+  nameLabel: Nimi
+  namePlaceholder: Anna nimi...
+  fieldNameLabel: Kentän nimi
+  fieldNamePlaceholder: Anna kentän nimi
+  fieldTypeLabel: Kentän tyyppi
+  fieldTypePlaceholder: Valitse Tyyppi
+  searchTypePlaceholder: Hakutyyppi...
+  fieldLengthLabel: Pituus
+  fieldLengthPlaceholder: esim. 255
+  fieldPrecisionLabel: Tarkkuus
+  fieldScaleLabel: Mittakaava
+  modifiersLabel: Muokkaimet
+  primaryModifier: Ensisijainen
+  nullableModifier: Nollattavissa
+  removeField: Poistaa
+  addField: Lisää kenttä
+  createButton: Luoda
+  nameRequired: Nimi on pakollinen
+  fieldsCannotBeEmpty: Kentät eivät voi olla tyhjiä
+  createSuccessMessage: "{storageUnit} Luotu onnistuneesti!"
+  actionsColumn: Toiminnot
+  close: Lähellä
+
+fr_FR:
+  title: Tableaux
+  search: Recherche
+  searchPlaceholder: Entrez la valeur du filtre...
+  scratchpad: Bloc-notes
+  cardView: Vue Carte
+  listView: Vue en liste
+  describe: Informations
+  data: Données
+  sampledSchemaBadge: Schéma déduit de l'échantillon
+  create: Créer
+  createTitle: "Créer un {storageUnit}"
+  columnsTitle: Colonnes
+  nameLabel: Nom
+  namePlaceholder: Entrez le nom...
+  fieldNameLabel: Nom du champ
+  fieldNamePlaceholder: Entrez le nom du champ
+  fieldTypeLabel: Type de champ
+  fieldTypePlaceholder: Sélectionnez le type
+  searchTypePlaceholder: Type de recherche...
+  fieldLengthLabel: Longueur
+  fieldLengthPlaceholder: par exemple, 255
+  fieldPrecisionLabel: Précision
+  fieldScaleLabel: Échelle
+  modifiersLabel: Modificatrices
+  primaryModifier: Primaire
+  nullableModifier: Nullable
+  removeField: Retirer
+  addField: Ajouter un champ
+  createButton: Créer
+  nameRequired: Le nom est requis
+  fieldsCannotBeEmpty: Les champs ne peuvent pas être vides
+  createSuccessMessage: "{storageUnit} Création réussie !"
+  actionsColumn: Actes
+  close: Fermer
+
+it_IT:
+  title: Tabelle
+  search: Ricerca
+  searchPlaceholder: Inserisci il valore del filtro...
+  scratchpad: Blocco note
+  cardView: Visualizzazione scheda
+  listView: Visualizzazione elenco
+  describe: Informazioni
+  data: Dati
+  sampledSchemaBadge: Schema dedotto dal campione
+  create: Creare
+  createTitle: "Crea un {storageUnit}"
+  columnsTitle: Colonne
+  nameLabel: Nome
+  namePlaceholder: Inserisci il nome...
+  fieldNameLabel: Nome del campo
+  fieldNamePlaceholder: Inserisci il nome del campo
+  fieldTypeLabel: Tipo di campo
+  fieldTypePlaceholder: Seleziona Tipo
+  searchTypePlaceholder: Cerca tipo...
+  fieldLengthLabel: Lunghezza
+  fieldLengthPlaceholder: ad esempio, 255
+  fieldPrecisionLabel: Precisione
+  fieldScaleLabel: Scala
+  modifiersLabel: Modificatrici
+  primaryModifier: Primario
+  nullableModifier: Nullabile
+  removeField: Rimuovere
+  addField: Aggiungi campo
+  createButton: Creare
+  nameRequired: Il nome è obbligatorio
+  fieldsCannotBeEmpty: I campi non possono essere vuoti
+  createSuccessMessage: "{storageUnit} Creato con successo!"
+  actionsColumn: Azioni
+  close: Vicina
+
+iw_IL:
+  title: טבלאות
+  search: לְחַפֵּשׂ
+  searchPlaceholder: הזן ערך מסנן...
+  scratchpad: פנקס גירוד
+  cardView: תצוגת כרטיסים
+  listView: תצוגת רשימה
+  describe: מידע
+  data: נְתוּנִים
+  sampledSchemaBadge: סכימה המסיקה ממדגם
+  create: לִיצוֹר
+  createTitle: "צור {storageUnit}"
+  columnsTitle: עמודות
+  nameLabel: שֵׁם
+  namePlaceholder: הזן שם...
+  fieldNameLabel: שם שדה
+  fieldNamePlaceholder: הזן את שם השדה
+  fieldTypeLabel: סוג שדה
+  fieldTypePlaceholder: בחר סוג
+  searchTypePlaceholder: סוג חיפוש...
+  fieldLengthLabel: מֶשֶׁך
+  fieldLengthPlaceholder: למשל, 255
+  fieldPrecisionLabel: דִיוּק
+  fieldScaleLabel: סוּלָם
+  modifiersLabel: משנה
+  primaryModifier: יְסוֹדִי
+  nullableModifier: ניתן לבטל
+  removeField: לְהַסִיר
+  addField: הוסף שדה
+  createButton: לִיצוֹר
+  nameRequired: שם נדרש
+  fieldsCannotBeEmpty: שדות לא יכולים להיות ריקים
+  createSuccessMessage: "{storageUnit} נוצר בהצלחה!"
+  actionsColumn: פעולות
+  close: לִסְגוֹר
+
+ja_JP:
+  title: テーブル
+  search: 検索
+  searchPlaceholder: フィルタ値を入力してください...
+  scratchpad: スクラッチパッド
+  cardView: カードビュー
+  listView: リストビュー
+  describe: 情報
+  data: データ
+  sampledSchemaBadge: サンプルから推測されたスキーマ
+  create: 作成する
+  createTitle: "{storageUnit} を作成します"
+  columnsTitle: コラム
+  nameLabel: 名前
+  namePlaceholder: 名前を入力してください...
+  fieldNameLabel: フィールド名
+  fieldNamePlaceholder: フィールド名を入力してください
+  fieldTypeLabel: フィールドタイプ
+  fieldTypePlaceholder: タイプの選択
+  searchTypePlaceholder: 検索タイプ...
+  fieldLengthLabel: 長さ
+  fieldLengthPlaceholder: "例: 255"
+  fieldPrecisionLabel: 精度
+  fieldScaleLabel: 規模
+  modifiersLabel: 修飾子
+  primaryModifier: 主要な
+  nullableModifier: Null可能
+  removeField: 取り除く
+  addField: フィールドの追加
+  createButton: 作成する
+  nameRequired: 名前は必須です
+  fieldsCannotBeEmpty: フィールドを空にすることはできません
+  createSuccessMessage: "{storageUnit} が正常に作成されました!"
+  actionsColumn: アクション
+  close: 近い
+
+ko_KR:
+  title: 테이블
+  search: 찾다
+  searchPlaceholder: 필터 값 입력...
+  scratchpad: 스크래치패드
+  cardView: 카드 보기
+  listView: 목록 보기
+  describe: 정보
+  data: 데이터
+  sampledSchemaBadge: 샘플에서 추론된 스키마
+  create: 만들다
+  createTitle: "{storageUnit} 생성"
+  columnsTitle: 열
+  nameLabel: 이름
+  namePlaceholder: 이름을 입력하세요...
+  fieldNameLabel: 필드 이름
+  fieldNamePlaceholder: 필드 이름을 입력하세요
+  fieldTypeLabel: 필드 유형
+  fieldTypePlaceholder: 유형 선택
+  searchTypePlaceholder: 검색 유형...
+  fieldLengthLabel: 길이
+  fieldLengthPlaceholder: "예: 255"
+  fieldPrecisionLabel: 정도
+  fieldScaleLabel: 규모
+  modifiersLabel: 수정자
+  primaryModifier: 주요한
+  nullableModifier: 널 입력 가능
+  removeField: 제거하다
+  addField: 필드 추가
+  createButton: 만들다
+  nameRequired: 이름은 필수입니다
+  fieldsCannotBeEmpty: 필드는 비워둘 수 없습니다.
+  createSuccessMessage: "{storageUnit} 성공적으로 생성되었습니다!"
+  actionsColumn: 행위
+  close: 닫다
+
+nl_NL:
+  title: Tafels
+  search: Zoekopdracht
+  searchPlaceholder: Filterwaarde invoeren...
+  scratchpad: Kladblok
+  cardView: Kaartweergave
+  listView: Lijstweergave
+  describe: Info
+  data: Gegevens
+  sampledSchemaBadge: Schema afgeleid uit voorbeeld
+  create: Creëren
+  createTitle: "Maak een {storageUnit}"
+  columnsTitle: Kolommen
+  nameLabel: Naam
+  namePlaceholder: Naam invoeren...
+  fieldNameLabel: Veldnaam
+  fieldNamePlaceholder: Voer veldnaam in
+  fieldTypeLabel: Veldtype
+  fieldTypePlaceholder: Selecteer Type
+  searchTypePlaceholder: Zoektype...
+  fieldLengthLabel: Lengte
+  fieldLengthPlaceholder: bijvoorbeeld 255
+  fieldPrecisionLabel: Precisie
+  fieldScaleLabel: Schaal
+  modifiersLabel: Modificatoren
+  primaryModifier: Primair
+  nullableModifier: Nulleerbaar
+  removeField: Verwijderen
+  addField: Veld toevoegen
+  createButton: Creëren
+  nameRequired: Naam is vereist
+  fieldsCannotBeEmpty: Velden mogen niet leeg zijn
+  createSuccessMessage: "{storageUnit} Succesvol aangemaakt!"
+  actionsColumn: Acties
+  close: Dichtbij
+
+pl_PL:
+  title: Stoły
+  search: Szukaj
+  searchPlaceholder: Wprowadź wartość filtra...
+  scratchpad: Brudnopis
+  cardView: Widok karty
+  listView: Widok listy
+  describe: Informacje
+  data: Dane
+  sampledSchemaBadge: Schemat wywnioskowany z próbki
+  create: Tworzyć
+  createTitle: "Utwórz {storageUnit}"
+  columnsTitle: Kolumny
+  nameLabel: Nazwa
+  namePlaceholder: Wpisz nazwę...
+  fieldNameLabel: Nazwa pola
+  fieldNamePlaceholder: Wprowadź nazwę pola
+  fieldTypeLabel: Typ pola
+  fieldTypePlaceholder: Wybierz Typ
+  searchTypePlaceholder: Typ wyszukiwania...
+  fieldLengthLabel: Długość
+  fieldLengthPlaceholder: np. 255
+  fieldPrecisionLabel: Precyzja
+  fieldScaleLabel: Skala
+  modifiersLabel: Modyfikatory
+  primaryModifier: Podstawowy
+  nullableModifier: Możliwość wartości null
+  removeField: Usunąć
+  addField: Dodaj pole
+  createButton: Tworzyć
+  nameRequired: Imię i nazwisko jest wymagane
+  fieldsCannotBeEmpty: Pola nie mogą być puste
+  createSuccessMessage: "{storageUnit} Utworzono pomyślnie!"
+  actionsColumn: Działania
+  close: Zamknąć
+
+pt_BR:
+  title: Tabelas
+  search: Procurar
+  searchPlaceholder: Insira o valor do filtro...
+  scratchpad: Bloco de notas
+  cardView: Visualização de cartão
+  listView: Visualização de lista
+  describe: Informações
+  data: Dadas
+  sampledSchemaBadge: Esquema inferido da amostra
+  create: Criar
+  createTitle: "Crie um {storageUnit}"
+  columnsTitle: Colunas
+  nameLabel: Nome
+  namePlaceholder: Digite o nome...
+  fieldNameLabel: Nome do campo
+  fieldNamePlaceholder: Insira o nome do campo
+  fieldTypeLabel: Tipo de campo
+  fieldTypePlaceholder: Selecione o tipo
+  searchTypePlaceholder: Tipo de pesquisa...
+  fieldLengthLabel: Comprimento
+  fieldLengthPlaceholder: por exemplo, 255
+  fieldPrecisionLabel: Precisão
+  fieldScaleLabel: Escala
+  modifiersLabel: Modificadoras
+  primaryModifier: Primária
+  nullableModifier: Anulável
+  removeField: Remover
+  addField: Adicionar campo
+  createButton: Criar
+  nameRequired: O nome é obrigatório
+  fieldsCannotBeEmpty: Os campos não podem ficar vazios
+  createSuccessMessage: "{storageUnit} Criado com sucesso!"
+  actionsColumn: Ações
+  close: Fechar
+
+ro_RO:
+  title: Mesele
+  search: Căutare
+  searchPlaceholder: Introduceți valoarea filtrului...
+  scratchpad: Scratchpad
+  cardView: Vizualizare card
+  listView: Vizualizare listă
+  describe: Info
+  data: Date
+  sampledSchemaBadge: Schemă dedusă din eșantion
+  create: Crea
+  createTitle: Creați un [[0]]]
+  columnsTitle: Coloane
+  nameLabel: Nume
+  namePlaceholder: Introduceți numele...
+  fieldNameLabel: Nume câmp
+  fieldNamePlaceholder: Introduceți numele câmpului
+  fieldTypeLabel: Tip câmp
+  fieldTypePlaceholder: Selectați Tip
+  searchTypePlaceholder: Tip de căutare...
+  fieldLengthLabel: Lungime
+  fieldLengthPlaceholder: de exemplu, 255
+  fieldPrecisionLabel: Precizie
+  fieldScaleLabel: Scară
+  modifiersLabel: Modificatori
+  primaryModifier: Primar
+  nullableModifier: Nulăbil
+  removeField: Elimina
+  addField: Adăugați câmp
+  createButton: Crea
+  nameRequired: Numele este obligatoriu
+  fieldsCannotBeEmpty: Câmpurile nu pot fi goale
+  createSuccessMessage: "{storageUnit} Creat cu succes!"
+  actionsColumn: Acțiuni
+  close: Aproape
+
+ru_RU:
+  title: Таблицы
+  search: Поиск
+  searchPlaceholder: Введите значение фильтра...
+  scratchpad: Блокнот
+  cardView: Просмотр карты
+  listView: Просмотр списка
+  describe: Информация
+  data: Данные
+  sampledSchemaBadge: Схема, выведенная из образца
+  create: Создавать
+  createTitle: "Создайте {storageUnit}"
+  columnsTitle: Столбцы
+  nameLabel: Имя
+  namePlaceholder: Введите имя...
+  fieldNameLabel: Имя поля
+  fieldNamePlaceholder: Введите имя поля
+  fieldTypeLabel: Тип поля
+  fieldTypePlaceholder: Выберите тип
+  searchTypePlaceholder: Тип поиска...
+  fieldLengthLabel: Длина
+  fieldLengthPlaceholder: например, 255
+  fieldPrecisionLabel: Точность
+  fieldScaleLabel: Шкала
+  modifiersLabel: Модификаторы
+  primaryModifier: Начальный
+  nullableModifier: Обнуляемый
+  removeField: Удалять
+  addField: Добавить поле
+  createButton: Создавать
+  nameRequired: Имя обязательно
+  fieldsCannotBeEmpty: Поля не могут быть пустыми
+  createSuccessMessage: "{storageUnit} Создано успешно!"
+  actionsColumn: Действия
+  close: Закрывать
+
+sk_SK:
+  title: Tabuľky
+  search: Hľadať
+  searchPlaceholder: Zadajte hodnotu filtra...
+  scratchpad: Zápisník
+  cardView: Zobrazenie karty
+  listView: Zobrazenie zoznamu
+  describe: Info
+  data: Údaje
+  sampledSchemaBadge: Schéma odvodená zo vzorky
+  create: Vytvorte
+  createTitle: "Vytvorte {storageUnit}"
+  columnsTitle: Stĺpce
+  nameLabel: Meno
+  namePlaceholder: Zadajte meno...
+  fieldNameLabel: Názov poľa
+  fieldNamePlaceholder: Zadajte názov poľa
+  fieldTypeLabel: Typ poľa
+  fieldTypePlaceholder: Vyberte Typ
+  searchTypePlaceholder: Typ vyhľadávania...
+  fieldLengthLabel: Dĺžka
+  fieldLengthPlaceholder: napr. 255
+  fieldPrecisionLabel: Presnosť
+  fieldScaleLabel: Mierka
+  modifiersLabel: Modifikátory
+  primaryModifier: Primárne
+  nullableModifier: S možnosťou nulovania
+  removeField: Odstrániť
+  addField: Pridať pole
+  createButton: Vytvorte
+  nameRequired: Meno je povinné
+  fieldsCannotBeEmpty: Polia nemôžu byť prázdne
+  createSuccessMessage: "{storageUnit} Úspešne vytvorené!"
+  actionsColumn: Akcie
+  close: Zavrieť
+
+sv_SE:
+  title: Tabeller
+  search: Söka
+  searchPlaceholder: Ange filtervärde...
+  scratchpad: Scratchpad
+  cardView: Kortvy
+  listView: Listvy
+  describe: Info
+  data: Data
+  sampledSchemaBadge: Schema härledd från prov
+  create: Skapa
+  createTitle: "Skapa en {storageUnit}"
+  columnsTitle: Kolumner
+  nameLabel: Namn
+  namePlaceholder: Ange namn...
+  fieldNameLabel: Fältnamn
+  fieldNamePlaceholder: Ange fältnamn
+  fieldTypeLabel: Fälttyp
+  fieldTypePlaceholder: Välj Typ
+  searchTypePlaceholder: Söktyp...
+  fieldLengthLabel: Längd
+  fieldLengthPlaceholder: t.ex. 255
+  fieldPrecisionLabel: Precision
+  fieldScaleLabel: Skala
+  modifiersLabel: Modifierare
+  primaryModifier: Primär
+  nullableModifier: Nullbar
+  removeField: Ta bort
+  addField: Lägg till fält
+  createButton: Skapa
+  nameRequired: Namn krävs
+  fieldsCannotBeEmpty: Fälten får inte vara tomma
+  createSuccessMessage: "{storageUnit} Skapat framgångsrikt!"
+  actionsColumn: Åtgärder
+  close: Nära
+
+zh_CN:
+  title: 表格
+  search: 搜索
+  searchPlaceholder: 输入过滤值...
+  scratchpad: 便签本
+  cardView: 卡片视图
+  listView: 列表视图
+  describe: 信息
+  data: 数据
+  sampledSchemaBadge: 从样本推断的架构
+  create: 创造
+  createTitle: "创建一个 {storageUnit}"
+  columnsTitle: 专栏
+  nameLabel: 姓名
+  namePlaceholder: 输入姓名...
+  fieldNameLabel: 字段名称
+  fieldNamePlaceholder: 输入字段名称
+  fieldTypeLabel: 字段类型
+  fieldTypePlaceholder: 选择类型
+  searchTypePlaceholder: 搜索类型...
+  fieldLengthLabel: 长度
+  fieldLengthPlaceholder: 例如，255
+  fieldPrecisionLabel: 精确
+  fieldScaleLabel: 规模
+  modifiersLabel: 修饰符
+  primaryModifier: 基本的
+  nullableModifier: 可空
+  removeField: 消除
+  addField: 添加字段
+  createButton: 创造
+  nameRequired: 姓名为必填项
+  fieldsCannotBeEmpty: 字段不能为空
+  createSuccessMessage: "{storageUnit} 创建成功！"
+  actionsColumn: 行动
+  close: 关闭
+
+zh_TW:
+  title: 表格
+  search: 搜尋
+  searchPlaceholder: 輸入過濾值...
+  scratchpad: 便籤本
+  cardView: 卡片視圖
+  listView: 清單視圖
+  describe: 資訊
+  data: 數據
+  sampledSchemaBadge: 從樣本推斷的架構
+  create: 創造
+  createTitle: "創建一個 {storageUnit}"
+  columnsTitle: 專欄
+  nameLabel: 姓名
+  namePlaceholder: 輸入姓名...
+  fieldNameLabel: 欄位名稱
+  fieldNamePlaceholder: 輸入欄位名稱
+  fieldTypeLabel: 字段類型
+  fieldTypePlaceholder: 選擇類型
+  searchTypePlaceholder: 搜尋類型...
+  fieldLengthLabel: 長度
+  fieldLengthPlaceholder: 例如，255
+  fieldPrecisionLabel: 精確
+  fieldScaleLabel: 規模
+  modifiersLabel: 修飾符
+  primaryModifier: 基本的
+  nullableModifier: 可空
+  removeField: 消除
+  addField: 新增字段
+  createButton: 創造
+  nameRequired: 姓名為必填項
+  fieldsCannotBeEmpty: 欄位不能為空
+  createSuccessMessage: "{storageUnit} 創建成功！"
+  actionsColumn: 行動
+  close: 關閉

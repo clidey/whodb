@@ -3,3 +3,123 @@ en_US:
   loggingOut: Logging Out
   success: Logged Out Successfully
   error: Error Logging Out
+
+ar_AE:
+  title: تسجيل الخروج
+  loggingOut: تسجيل الخروج
+  success: تم تسجيل الخروج بنجاح
+  error: خطأ في تسجيل الخروج
+
+de_DE:
+  title: Abmelden
+  loggingOut: Abmelden
+  success: Erfolgreich abgemeldet
+  error: Fehler beim Abmelden
+
+el_GR:
+  title: Αποσύνδεση
+  loggingOut: Αποσύνδεση
+  success: Αποσυνδεθείτε με επιτυχία
+  error: Σφάλμα κατά την αποσύνδεση
+
+en_GB:
+  title: Logout
+  loggingOut: Logging Out
+  success: Logged Out Successfully
+  error: Error Logging Out
+
+es_ES:
+  title: Cerrar sesión
+  loggingOut: Cerrar sesión
+  success: Cerró sesión exitosamente
+  error: Error al cerrar sesión
+
+fi_FI:
+  title: Kirjaudu ulos
+  loggingOut: Uloskirjautuminen
+  success: Uloskirjautuminen onnistui
+  error: Virhe kirjautuessa ulos
+
+fr_FR:
+  title: Déconnexion
+  loggingOut: Déconnexion
+  success: Déconnexion réussie
+  error: Erreur de déconnexion
+
+it_IT:
+  title: Esci
+  loggingOut: Disconnessione
+  success: Disconnesso con successo
+  error: Errore durante la disconnessione
+
+iw_IL:
+  title: התנתק
+  loggingOut: יציאה
+  success: התנתק בהצלחה
+  error: שגיאה ביציאה
+
+ja_JP:
+  title: ログアウト
+  loggingOut: ログアウトする
+  success: 正常にログアウトしました
+  error: ログアウトエラー
+
+ko_KR:
+  title: 로그아웃
+  loggingOut: 로그아웃
+  success: 성공적으로 로그아웃되었습니다
+  error: 로그아웃하는 동안 오류가 발생했습니다.
+
+nl_NL:
+  title: Uitloggen
+  loggingOut: Uitloggen
+  success: Succesvol uitgelogd
+  error: Fout bij uitloggen
+
+pl_PL:
+  title: Wyloguj się
+  loggingOut: Wylogowanie
+  success: Wylogowano pomyślnie
+  error: Błąd wylogowania
+
+pt_BR:
+  title: Sair
+  loggingOut: Saindo
+  success: Desconectado com sucesso
+  error: Erro ao sair
+
+ro_RO:
+  title: Deconectare
+  loggingOut: Deconectare
+  success: Deconectat cu succes
+  error: Eroare la deconectare
+
+ru_RU:
+  title: Выход из системы
+  loggingOut: Выход из системы
+  success: Вышел из системы успешно
+  error: Ошибка выхода из системы
+
+sk_SK:
+  title: Odhlásiť sa
+  loggingOut: Odhlásenie
+  success: Úspešné odhlásenie
+  error: Chyba pri odhlasovaní
+
+sv_SE:
+  title: Utloggning
+  loggingOut: Loggar ut
+  success: Loggade ut framgångsrikt
+  error: Fel vid utloggning
+
+zh_CN:
+  title: 退出
+  loggingOut: 注销
+  success: 退出成功
+  error: 注销时出错
+
+zh_TW:
+  title: 退出
+  loggingOut: 註銷
+  success: 退出成功
+  error: 登出時出錯

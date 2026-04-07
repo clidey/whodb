@@ -3,3 +3,123 @@ en_US:
   unknownError: An unknown error occurred.
   copySuccess: Copied to Clipboard
   copyLabel: Copy Error Message
+
+ar_AE:
+  title: خطأ
+  unknownError: حدث خطأ غير معروف.
+  copySuccess: تم النسخ إلى الحافظة
+  copyLabel: نسخ رسالة الخطأ
+
+de_DE:
+  title: Fehler
+  unknownError: Es ist ein unbekannter Fehler aufgetreten.
+  copySuccess: In die Zwischenablage kopiert
+  copyLabel: Fehlermeldung kopieren
+
+el_GR:
+  title: Σφάλμα
+  unknownError: Παρουσιάστηκε άγνωστο σφάλμα.
+  copySuccess: Αντιγράφηκε στο Πρόχειρο
+  copyLabel: Αντιγραφή μηνύματος λάθους
+
+en_GB:
+  title: Error
+  unknownError: An unknown error occurred.
+  copySuccess: Copied to Clipboard
+  copyLabel: Copy Error Message
+
+es_ES:
+  title: Error
+  unknownError: Se produjo un error desconocido.
+  copySuccess: Copiada al portapapeles
+  copyLabel: Copiar mensaje de error
+
+fi_FI:
+  title: Virhe
+  unknownError: Tapahtui tuntematon virhe.
+  copySuccess: Kopioitu leikepöydälle
+  copyLabel: Kopioi virheilmoitus
+
+fr_FR:
+  title: Erreur
+  unknownError: Une erreur inconnue s'est produite.
+  copySuccess: Copié dans le Presse-papiers
+  copyLabel: Copier le message d'erreur
+
+it_IT:
+  title: Errore
+  unknownError: Si è verificato un errore sconosciuto.
+  copySuccess: Copiato negli Appunti
+  copyLabel: Copia messaggio di errore
+
+iw_IL:
+  title: שְׁגִיאָה
+  unknownError: אירעה שגיאה לא ידועה.
+  copySuccess: הועתק ללוח
+  copyLabel: העתק הודעת שגיאה
+
+ja_JP:
+  title: エラー
+  unknownError: 不明なエラーが発生しました。
+  copySuccess: クリップボードにコピーされました
+  copyLabel: コピーエラーメッセージ
+
+ko_KR:
+  title: 오류
+  unknownError: 알 수 없는 오류가 발생했습니다.
+  copySuccess: 클립보드에 복사됨
+  copyLabel: 오류 메시지 복사
+
+nl_NL:
+  title: Fout
+  unknownError: Er is een onbekende fout opgetreden.
+  copySuccess: Gekopieerd naar klembord
+  copyLabel: Kopieer foutmelding
+
+pl_PL:
+  title: Błąd
+  unknownError: Wystąpił nieznany błąd.
+  copySuccess: Skopiowano do schowka
+  copyLabel: Skopiuj komunikat o błędzie
+
+pt_BR:
+  title: Erro
+  unknownError: Ocorreu um erro desconhecido.
+  copySuccess: Copiado para a área de transferência
+  copyLabel: Mensagem de erro de cópia
+
+ro_RO:
+  title: Eroare
+  unknownError: A apărut o eroare necunoscută.
+  copySuccess: Copiat în Clipboard
+  copyLabel: Copiați mesajul de eroare
+
+ru_RU:
+  title: Ошибка
+  unknownError: Произошла неизвестная ошибка.
+  copySuccess: Скопировано в буфер обмена
+  copyLabel: Копирование сообщения об ошибке
+
+sk_SK:
+  title: Chyba
+  unknownError: Vyskytla sa neznáma chyba.
+  copySuccess: Skopírované do schránky
+  copyLabel: Kopírovať chybové hlásenie
+
+sv_SE:
+  title: Fel
+  unknownError: Ett okänt fel uppstod.
+  copySuccess: Kopierade till Urklipp
+  copyLabel: Kopiera felmeddelande
+
+zh_CN:
+  title: 错误
+  unknownError: 发生未知错误。
+  copySuccess: 已复制到剪贴板
+  copyLabel: 复制错误消息
+
+zh_TW:
+  title: 錯誤
+  unknownError: 發生未知錯誤。
+  copySuccess: Copied to Clipboard
+  copyLabel: 複製錯誤訊息

@@ -1,3 +1,83 @@
 en_US:
   tip: Tip
   close: Close
+
+ar_AE:
+  tip: نصيحة
+  close: يغلق
+
+de_DE:
+  tip: Tipp
+  close: Schließen
+
+el_GR:
+  tip: Ακρο
+  close: Κοντά
+
+en_GB:
+  tip: Tip
+  close: Close
+
+es_ES:
+  tip: Consejo
+  close: Cerca
+
+fi_FI:
+  tip: Kärki
+  close: Lähellä
+
+fr_FR:
+  tip: Conseil
+  close: Fermer
+
+it_IT:
+  tip: Mancia
+  close: Vicina
+
+iw_IL:
+  tip: עֵצָה
+  close: לִסְגוֹר
+
+ja_JP:
+  tip: ヒント
+  close: 近い
+
+ko_KR:
+  tip: 팁
+  close: 닫다
+
+nl_NL:
+  tip: Tip
+  close: Dichtbij
+
+pl_PL:
+  tip: Wskazówka
+  close: Zamknąć
+
+pt_BR:
+  tip: Dica
+  close: Fechar
+
+ro_RO:
+  tip: Sfat
+  close: Aproape
+
+ru_RU:
+  tip: Кончик
+  close: Закрывать
+
+sk_SK:
+  tip: Tip
+  close: Zavrieť
+
+sv_SE:
+  tip: Dricks
+  close: Nära
+
+zh_CN:
+  tip: 提示
+  close: 关闭
+
+zh_TW:
+  tip: 提示
+  close: 關閉

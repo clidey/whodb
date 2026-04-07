@@ -3,3 +3,123 @@ en_US:
   message: We collect anonymous usage analytics, redacted session replay, and error reports through PostHog to keep {appName} fast and reliable. You can turn this off now or at any time from Settings.
   accept: Keep Enabled
   decline: Disable Telemetry
+
+ar_AE:
+  title: تم تمكين القياس عن بعد
+  message: "نحن نجمع تحليلات استخدام مجهولة المصدر، وإعادة تشغيل الجلسة المنقحة، وتقارير الأخطاء من خلال PostHog للحفاظ على {appName} سريعًا وموثوقًا. يمكنك إيقاف هذا الآن أو في أي وقت من الإعدادات."
+  accept: حافظ على التمكين
+  decline: تعطيل القياس عن بعد
+
+de_DE:
+  title: Telemetrie ist aktiviert
+  message: "Wir sammeln anonyme Nutzungsanalysen, redigierte Sitzungswiedergaben und Fehlerberichte über PostHog, um {appName} schnell und zuverlässig zu halten. Sie können dies jetzt oder jederzeit in den Einstellungen deaktivieren."
+  accept: Aktiviert bleiben
+  decline: Telemetrie deaktivieren
+
+el_GR:
+  title: Η τηλεμετρία είναι ενεργοποιημένη
+  message: "Συλλέγουμε ανώνυμα αναλυτικά στοιχεία χρήσης, ανανεωμένη επανάληψη περιόδων σύνδεσης και αναφορές σφαλμάτων μέσω του PostHog για να διατηρήσουμε το {appName} γρήγορο και αξιόπιστο. Μπορείτε να το απενεργοποιήσετε τώρα ή ανά πάσα στιγμή από τις Ρυθμίσεις."
+  accept: Διατήρηση ενεργοποιημένη
+  decline: Απενεργοποιήστε την τηλεμετρία
+
+en_GB:
+  title: Telemetry Is Enabled
+  message: "We collect anonymous usage analytics, redacted session replay, and error reports through PostHog to keep {appName} fast and reliable. You can turn this off now or at any time from Settings."
+  accept: Keep Enabled
+  decline: Disable Telemetry
+
+es_ES:
+  title: La telemetría está habilitada
+  message: "Recopilamos análisis de uso anónimos, reproducciones de sesiones redactadas e informes de errores a través de PostHog para mantener {appName} rápido y confiable. Puedes desactivar esto ahora o en cualquier momento desde Configuración."
+  accept: Mantener habilitada
+  decline: Desactivar telemetría
+
+fi_FI:
+  title: Telemetria on käytössä
+  message: "Keräämme anonyymejä käyttöanalyysejä, muokattuja istunnon toistoja ja virheraportteja PostHogin kautta, jotta {appName} pysyy nopeana ja luotettavana. Voit poistaa tämän käytöstä nyt tai milloin tahansa asetuksista."
+  accept: Pidä käytössä
+  decline: Poista telemetria käytöstä
+
+fr_FR:
+  title: La télémétrie est activée
+  message: "Nous collectons des analyses d'utilisation anonymes, des rediffusions de sessions expurgées et des rapports d'erreurs via PostHog pour que {appName} soit rapide et fiable. Vous pouvez désactiver cette option maintenant ou à tout moment depuis les paramètres."
+  accept: Garder activé
+  decline: Désactiver la télémétrie
+
+it_IT:
+  title: La telemetria è abilitata
+  message: "Raccogliamo analisi anonime sull'utilizzo, replay di sessioni oscurate e segnalazioni di errori tramite PostHog per mantenere {appName} veloce e affidabile. Puoi disattivarlo ora o in qualsiasi momento dalle Impostazioni."
+  accept: Mantieni abilitato
+  decline: Disabilita telemetria
+
+iw_IL:
+  title: טלמטריה מופעלת
+  message: "אנו אוספים ניתוחי שימוש אנונימיים, שידור חוזר של הפעלה מחדש ודוחות שגיאות דרך PostHog כדי לשמור על {appName} מהיר ואמין. אתה יכול לכבות את זה עכשיו או בכל עת מההגדרות."
+  accept: השאר מופעל
+  decline: השבת את הטלמטריה
+
+ja_JP:
+  title: テレメトリが有効になっています
+  message: "{appName} の高速性と信頼性を維持するために、PostHog を通じて匿名の使用状況分析、編集されたセッション リプレイ、エラー レポートを収集します。 これは今すぐオフにすることも、[設定] からいつでもオフにすることができます。"
+  accept: 有効のままにする
+  decline: テレメトリを無効にする
+
+ko_KR:
+  title: 원격 측정이 활성화되었습니다
+  message: "{appName}을(를) 빠르고 안정적으로 유지하기 위해 PostHog를 통해 익명 사용 분석, 수정된 세션 재생 및 오류 보고서를 수집합니다. 지금 또는 언제든지 설정에서 이 기능을 끌 수 있습니다."
+  accept: 활성화 상태 유지
+  decline: 원격 측정 비활성화
+
+nl_NL:
+  title: Telemetrie is ingeschakeld
+  message: "We verzamelen anonieme gebruiksanalyses, geredigeerde sessieherhalingen en foutrapporten via PostHog om {appName} snel en betrouwbaar te houden. Je kunt dit nu of op elk gewenst moment uitschakelen via Instellingen."
+  accept: Blijf ingeschakeld
+  decline: Telemetrie uitschakelen
+
+pl_PL:
+  title: Telemetria jest włączona
+  message: "Zbieramy anonimowe analizy użytkowania, zredagowane powtórki sesji i raporty o błędach za pośrednictwem PostHog, aby {appName} był szybki i niezawodny. Możesz wyłączyć tę opcję teraz lub w dowolnym momencie w Ustawieniach."
+  accept: Zachowaj włączone
+  decline: Wyłącz telemetrię
+
+pt_BR:
+  title: A telemetria está habilitada
+  message: "Coletamos análises de uso anônimas, reprodução de sessões editadas e relatórios de erros por meio do PostHog para manter {appName} rápido e confiável. Você pode desativar isso agora ou a qualquer momento em Configurações."
+  accept: Manter ativado
+  decline: Desativar telemetria
+
+ro_RO:
+  title: Telemetria este activată
+  message: "Colectăm analize anonime privind utilizarea, redarea sesiunii redactate și rapoarte de eroare prin PostHog pentru a menține {appName} rapid și fiabil. Puteți dezactiva acest lucru acum sau oricând din Setări."
+  accept: Păstrați activat
+  decline: Dezactivați telemetria
+
+ru_RU:
+  title: Телеметрия включена
+  message: "Мы собираем анонимную аналитику использования, отредактированные повторы сеансов и отчеты об ошибках через PostHog, чтобы обеспечить {appName} быстротой и надежностью. Вы можете отключить это сейчас или в любое время в настройках."
+  accept: Оставить включенным
+  decline: Отключить телеметрию
+
+sk_SK:
+  title: Telemetria je povolená
+  message: "Prostredníctvom PostHog zhromažďujeme anonymné analýzy používania, revidované záznamy relácií a chybové hlásenia, aby sme udržali {appName} rýchly a spoľahlivý. Môžete to vypnúť teraz alebo kedykoľvek v Nastaveniach."
+  accept: Ponechať povolené
+  decline: Zakázať telemetriu
+
+sv_SE:
+  title: Telemetri är aktiverat
+  message: "Vi samlar in anonym användningsanalys, redigerad sessionsuppspelning och felrapporter via PostHog för att hålla {appName} snabb och pålitlig. Du kan stänga av detta nu eller när som helst från Inställningar."
+  accept: Håll aktiverat
+  decline: Inaktivera telemetri
+
+zh_CN:
+  title: 遥测已启用
+  message: "我们通过 PostHog 收集匿名使用分析、经过编辑的会话重播和错误报告，以保持 {appName} 快速可靠。 您可以立即或随时从“设置”中关闭此功能。"
+  accept: 保持启用状态
+  decline: 禁用遥测
+
+zh_TW:
+  title: Telemetry Is Enabled
+  message: "我們透過 PostHog 收集匿名使用分析、經過編輯的會話重播和錯誤報告，以保持 {appName} 快速可靠。 您可以立即或隨時從「設定」關閉此功能。"
+  accept: Keep Enabled
+  decline: Disable Telemetry

@@ -38,3 +38,823 @@ en_US:
   import: Import data
   executeQuery: Execute query
   clearEditor: Clear editor/input
+
+ar_AE:
+  title: اختصارات لوحة المفاتيح
+  shortcuts: الاختصارات
+  hint: يضعط ؟ لفتح
+  categoryGlobal: عالمي
+  categoryNavigation: ملاحة
+  categoryTableNavigation: التنقل في الجدول
+  categoryTableSelection: اختيار الجدول
+  categoryTableActions: إجراءات الجدول
+  categoryEditor: محرر الاستعلام
+  showShortcuts: إظهار اختصارات لوحة المفاتيح
+  commandPalette: افتح لوحة الأوامر
+  closeDialogs: إغلاق مربعات الحوار/الأوراق
+  toggleSidebar: تبديل الشريط الجانبي
+  navFirst: الذهاب إلى العرض الأول (الدردشة أو الجداول)
+  navSecond: انتقل إلى العرض الثاني
+  navThird: انتقل إلى العرض الثالث
+  navFourth: انتقل إلى العرض الرابع (إن وجد)
+  moveDown: الانتقال إلى الصف التالي
+  moveUp: الانتقال إلى الصف السابق
+  moveFirst: الانتقال إلى الصف الأول
+  moveLast: الانتقال إلى الصف الأخير
+  pageDown: القفز إلى أسفل من خلال الصفوف المرئية
+  pageUp: القفز للأعلى حسب الصفوف المرئية
+  nextPage: انتقل إلى الصفحة التالية
+  prevPage: انتقل إلى الصفحة السابقة
+  toggleSelect: تبديل اختيار الصف
+  extendSelectDown: توسيع التحديد لأسفل
+  extendSelectUp: توسيع التحديد لأعلى
+  selectAll: تحديد/إلغاء تحديد كافة الصفوف
+  editRow: تحرير الصف الذي تم التركيز عليه
+  deleteRow: حذف الصف الذي تم التركيز عليه
+  deleteRowAlt: حذف الصف الذي تم التركيز عليه
+  editRowAlt: تحرير الصف الذي تم التركيز عليه
+  mockData: توليد بيانات وهمية
+  refresh: تحديث الجدول
+  export: تصدير البيانات
+  import: استيراد البيانات
+  executeQuery: تنفيذ الاستعلام
+  clearEditor: مسح المحرر/الإدخال
+
+de_DE:
+  title: Tastaturkürzel
+  shortcuts: Verknüpfungen
+  hint: Drücken Sie ? zu öffnen
+  categoryGlobal: Global
+  categoryNavigation: Navigation
+  categoryTableNavigation: Tabellennavigation
+  categoryTableSelection: Tischauswahl
+  categoryTableActions: Tabellenaktionen
+  categoryEditor: Abfrageeditor
+  showShortcuts: Tastaturkürzel anzeigen
+  commandPalette: Befehlspalette öffnen
+  closeDialogs: Schließen Sie Dialoge/Blätter
+  toggleSidebar: Seitenleiste umschalten
+  navFirst: Zur ersten Ansicht gehen (Chat oder Tabellen)
+  navSecond: Gehen Sie zur zweiten Ansicht
+  navThird: Gehen Sie zur dritten Ansicht
+  navFourth: Zur vierten Ansicht gehen (falls verfügbar)
+  moveDown: Zur nächsten Zeile wechseln
+  moveUp: Zur vorherigen Zeile wechseln
+  moveFirst: Gehen Sie in die erste Reihe
+  moveLast: Zur letzten Zeile wechseln
+  pageDown: Springe um sichtbare Zeilen nach unten
+  pageUp: Springe um sichtbare Zeilen nach oben
+  nextPage: Gehen Sie zur nächsten Seite
+  prevPage: Gehen Sie zur vorherigen Seite
+  toggleSelect: Zeilenauswahl umschalten
+  extendSelectDown: Auswahl nach unten erweitern
+  extendSelectUp: Auswahl nach oben erweitern
+  selectAll: Alle Zeilen auswählen/abwählen
+  editRow: Fokussierte Zeile bearbeiten
+  deleteRow: Fokussierte Zeile löschen
+  deleteRowAlt: Fokussierte Zeile löschen
+  editRowAlt: Fokussierte Zeile bearbeiten
+  mockData: Generieren Sie Scheindaten
+  refresh: Tabelle aktualisieren
+  export: Daten exportieren
+  import: Daten importieren
+  executeQuery: Abfrage ausführen
+  clearEditor: Klarer Editor/Eingabe
+
+el_GR:
+  title: Συντομεύσεις πληκτρολογίου
+  shortcuts: Συντομεύσεις
+  hint: Πατήστε ? να ανοίξει
+  categoryGlobal: Καθολικός
+  categoryNavigation: Πλοήγηση
+  categoryTableNavigation: Πλοήγηση σε πίνακα
+  categoryTableSelection: Επιλογή πίνακα
+  categoryTableActions: Ενέργειες πίνακα
+  categoryEditor: Επεξεργαστής ερωτημάτων
+  showShortcuts: Εμφάνιση συντομεύσεων πληκτρολογίου
+  commandPalette: Ανοίξτε την παλέτα εντολών
+  closeDialogs: Κλείσιμο διαλόγων/φύλλων
+  toggleSidebar: Εναλλαγή πλευρικής γραμμής
+  navFirst: Μετάβαση στην πρώτη προβολή (Συζήτηση ή Πίνακες)
+  navSecond: Μετάβαση στη δεύτερη προβολή
+  navThird: Μετάβαση στην τρίτη προβολή
+  navFourth: Μετάβαση στην τέταρτη προβολή (αν είναι διαθέσιμη)
+  moveDown: Μετακίνηση στην επόμενη σειρά
+  moveUp: Μετακίνηση στην προηγούμενη σειρά
+  moveFirst: Μετακίνηση στην πρώτη σειρά
+  moveLast: Μετακίνηση στην τελευταία σειρά
+  pageDown: Μετάβαση προς τα κάτω κατά ορατές σειρές
+  pageUp: Μετάβαση προς τα επάνω κατά ορατές σειρές
+  nextPage: Μεταβείτε στην επόμενη σελίδα
+  prevPage: Μεταβείτε στην προηγούμενη σελίδα
+  toggleSelect: Εναλλαγή επιλογής σειράς
+  extendSelectDown: Επέκταση επιλογής προς τα κάτω
+  extendSelectUp: Επέκταση της επιλογής προς τα πάνω
+  selectAll: Επιλέξτε/αποεπιλέξτε όλες τις σειρές
+  editRow: Επεξεργασία εστιασμένης σειράς
+  deleteRow: Διαγραφή εστιασμένης σειράς
+  deleteRowAlt: Διαγραφή εστιασμένης σειράς
+  editRowAlt: Επεξεργασία εστιασμένης σειράς
+  mockData: Δημιουργία εικονικών δεδομένων
+  refresh: Ανανέωση πίνακα
+  export: Εξαγωγή δεδομένων
+  import: Εισαγωγή δεδομένων
+  executeQuery: Εκτέλεση ερωτήματος
+  clearEditor: Διαγραφή επεξεργαστή/εισόδου
+
+en_GB:
+  title: Keyboard Shortcuts
+  shortcuts: Shortcuts
+  hint: Press ? to open
+  categoryGlobal: Global
+  categoryNavigation: Navigation
+  categoryTableNavigation: Table Navigation
+  categoryTableSelection: Table Selection
+  categoryTableActions: Table Actions
+  categoryEditor: Query Editor
+  showShortcuts: Show keyboard shortcuts
+  commandPalette: Open command palette
+  closeDialogs: Close dialogs/sheets
+  toggleSidebar: Toggle sidebar
+  navFirst: Go to first view (Chat or Tables)
+  navSecond: Go to second view
+  navThird: Go to third view
+  navFourth: Go to fourth view (if available)
+  moveDown: Move to next row
+  moveUp: Move to previous row
+  moveFirst: Move to first row
+  moveLast: Move to last row
+  pageDown: Jump down by visible rows
+  pageUp: Jump up by visible rows
+  nextPage: Go to next page
+  prevPage: Go to previous page
+  toggleSelect: Toggle row selection
+  extendSelectDown: Extend selection down
+  extendSelectUp: Extend selection up
+  selectAll: Select/deselect all rows
+  editRow: Edit focused row
+  deleteRow: Delete focused row
+  deleteRowAlt: Delete focused row
+  editRowAlt: Edit focused row
+  mockData: Generate mock data
+  refresh: Refresh table
+  export: Export data
+  import: Import data
+  executeQuery: Execute query
+  clearEditor: Clear editor/input
+
+es_ES:
+  title: Atajos de teclado
+  shortcuts: Atajos
+  hint: Prensa ? abrir
+  categoryGlobal: Global
+  categoryNavigation: Navegación
+  categoryTableNavigation: Navegación de tabla
+  categoryTableSelection: Selección de mesa
+  categoryTableActions: Acciones de tabla
+  categoryEditor: Editor de consultas
+  showShortcuts: Mostrar atajos de teclado
+  commandPalette: Abrir paleta de comandos
+  closeDialogs: Cerrar cuadros de diálogo/hojas
+  toggleSidebar: Alternar barra lateral
+  navFirst: Ir a la primera vista (Chat o Mesas)
+  navSecond: Ir a la segunda vista
+  navThird: Ir a la tercera vista
+  navFourth: Ir a la cuarta vista (si está disponible)
+  moveDown: Pasar a la siguiente fila
+  moveUp: Ir a la fila anterior
+  moveFirst: Pasar a la primera fila
+  moveLast: Pasar a la última fila
+  pageDown: Saltar hacia abajo por filas visibles
+  pageUp: Saltar por filas visibles
+  nextPage: Ir a la página siguiente
+  prevPage: Ir a la página anterior
+  toggleSelect: Alternar selección de fila
+  extendSelectDown: Ampliar selección hacia abajo
+  extendSelectUp: Ampliar selección hacia arriba
+  selectAll: Seleccionar/deseleccionar todas las filas
+  editRow: Editar fila enfocada
+  deleteRow: Eliminar fila enfocada
+  deleteRowAlt: Eliminar fila enfocada
+  editRowAlt: Editar fila enfocada
+  mockData: Generar datos simulados
+  refresh: Actualizar tabla
+  export: Exportar datos
+  import: Importar datos
+  executeQuery: Ejecutar consulta
+  clearEditor: Borrar editor/entrada
+
+fi_FI:
+  title: Pikanäppäimet
+  shortcuts: Pikanäppäimet
+  hint: Paina ? avata
+  categoryGlobal: Maailmanlaajuinen
+  categoryNavigation: Navigointi
+  categoryTableNavigation: Taulukkonavigointi
+  categoryTableSelection: Taulukon valinta
+  categoryTableActions: Taulukon toiminnot
+  categoryEditor: Kyselyeditori
+  showShortcuts: Näytä pikanäppäimet
+  commandPalette: Avaa komentopaletti
+  closeDialogs: Sulje valintaikkunat/taulukot
+  toggleSidebar: Vaihda sivupalkki
+  navFirst: Go to first view (Chat or Tables)
+  navSecond: Siirry toiseen näkymään
+  navThird: Siirry kolmanteen näkymään
+  navFourth: Siirry neljänteen näkymään (jos saatavilla)
+  moveDown: Siirry seuraavalle riville
+  moveUp: Siirry edelliselle riville
+  moveFirst: Siirry ensimmäiselle riville
+  moveLast: Siirry viimeiselle riville
+  pageDown: Hyppää alas näkyvien rivien mukaan
+  pageUp: Hyppää ylös näkyvien rivien verran
+  nextPage: Siirry seuraavalle sivulle
+  prevPage: Siirry edelliselle sivulle
+  toggleSelect: Vaihda rivin valintaa
+  extendSelectDown: Laajenna valikoimaa alaspäin
+  extendSelectUp: Laajenna valikoimaa
+  selectAll: Valitse kaikki rivit/poista valinnat
+  editRow: Muokkaa kohdistettua riviä
+  deleteRow: Poista kohdistettu rivi
+  deleteRowAlt: Poista kohdistettu rivi
+  editRowAlt: Muokkaa kohdistettua riviä
+  mockData: Luo valedataa
+  refresh: Päivitä taulukko
+  export: Vie tiedot
+  import: Tuo tiedot
+  executeQuery: Suorita kysely
+  clearEditor: Tyhjennä editori/syöttö
+
+fr_FR:
+  title: Raccourcis clavier
+  shortcuts: Raccourcis
+  hint: Presse ? ouvrir
+  categoryGlobal: Mondiale
+  categoryNavigation: Navigation
+  categoryTableNavigation: Navigation dans les tableaux
+  categoryTableSelection: Sélection de tableaux
+  categoryTableActions: Actions du tableau
+  categoryEditor: Éditeur de requête
+  showShortcuts: Afficher les raccourcis clavier
+  commandPalette: Ouvrir la palette de commandes
+  closeDialogs: Fermer les boîtes de dialogue/feuilles
+  toggleSidebar: Basculer la barre latérale
+  navFirst: Accédez à la première vue (Chat ou Tables)
+  navSecond: Aller à la deuxième vue
+  navThird: Aller à la troisième vue
+  navFourth: Aller à la quatrième vue (si disponible)
+  moveDown: Passer à la ligne suivante
+  moveUp: Passer à la ligne précédente
+  moveFirst: Passer à la première ligne
+  moveLast: Passer à la dernière ligne
+  pageDown: Descendre par lignes visibles
+  pageUp: Sauter par lignes visibles
+  nextPage: Aller à la page suivante
+  prevPage: Aller à la page précédente
+  toggleSelect: Basculer la sélection de ligne
+  extendSelectDown: Étendre la sélection vers le bas
+  extendSelectUp: Étendre la sélection vers le haut
+  selectAll: Sélectionner/désélectionner toutes les lignes
+  editRow: Modifier la ligne ciblée
+  deleteRow: Supprimer la ligne ciblée
+  deleteRowAlt: Supprimer la ligne ciblée
+  editRowAlt: Modifier la ligne ciblée
+  mockData: Générer des données fictives
+  refresh: Actualiser le tableau
+  export: Exporter des données
+  import: Importer des données
+  executeQuery: Exécuter la requête
+  clearEditor: Effacer l'éditeur/la saisie
+
+it_IT:
+  title: Scorciatoie da tastiera
+  shortcuts: Scorciatoie
+  hint: Premere ? aprire
+  categoryGlobal: Globale
+  categoryNavigation: Navigazione
+  categoryTableNavigation: Navigazione nella tabella
+  categoryTableSelection: Selezione della tabella
+  categoryTableActions: Azioni della tabella
+  categoryEditor: Editor di query
+  showShortcuts: Mostra scorciatoie da tastiera
+  commandPalette: Apri la tavolozza dei comandi
+  closeDialogs: Chiudi finestre di dialogo/fogli
+  toggleSidebar: Attiva/disattiva la barra laterale
+  navFirst: Vai alla prima visualizzazione (Chat o Tavoli)
+  navSecond: Vai alla seconda visualizzazione
+  navThird: Vai alla terza visualizzazione
+  navFourth: Vai alla quarta visualizzazione (se disponibile)
+  moveDown: Passa alla riga successiva
+  moveUp: Passa alla riga precedente
+  moveFirst: Passa alla prima riga
+  moveLast: Passa all'ultima riga
+  pageDown: Salta giù per file visibili
+  pageUp: Salta per righe visibili
+  nextPage: Vai alla pagina successiva
+  prevPage: Vai alla pagina precedente
+  toggleSelect: Attiva/disattiva la selezione della riga
+  extendSelectDown: Estendi la selezione verso il basso
+  extendSelectUp: Estendi la selezione verso l'alto
+  selectAll: Seleziona/deseleziona tutte le righe
+  editRow: Modifica la riga focalizzata
+  deleteRow: Elimina la riga selezionata
+  deleteRowAlt: Elimina la riga selezionata
+  editRowAlt: Modifica la riga focalizzata
+  mockData: Genera dati fittizi
+  refresh: Aggiorna tabella
+  export: Esporta dati
+  import: Importa dati
+  executeQuery: Esegui interrogazione
+  clearEditor: Cancella editor/input
+
+iw_IL:
+  title: קיצורי מקלדת
+  shortcuts: קיצורי דרך
+  hint: לחץ על? לפתוח
+  categoryGlobal: גלוֹבָּלִי
+  categoryNavigation: ניווט
+  categoryTableNavigation: ניווט בטבלה
+  categoryTableSelection: בחירת טבלה
+  categoryTableActions: פעולות טבלה
+  categoryEditor: עורך שאילתות
+  showShortcuts: הצג קיצורי מקשים
+  commandPalette: פתח את לוח הפקודות
+  closeDialogs: סגור דיאלוגים/גליונות
+  toggleSidebar: החלף את סרגל הצד
+  navFirst: עבור לתצוגה הראשונה (צ'אט או טבלאות)
+  navSecond: עבור לתצוגה שנייה
+  navThird: עבור לתצוגה שלישית
+  navFourth: עבור לתצוגה רביעית (אם זמין)
+  moveDown: עבור לשורה הבאה
+  moveUp: עבור לשורה הקודמת
+  moveFirst: עבור לשורה הראשונה
+  moveLast: עבור לשורה האחרונה
+  pageDown: קפוץ למטה לפי שורות גלויות
+  pageUp: קפוץ למעלה לפי שורות גלויות
+  nextPage: עבור לדף הבא
+  prevPage: עבור לדף הקודם
+  toggleSelect: החלף את בחירת השורה
+  extendSelectDown: הרחב את הבחירה למטה
+  extendSelectUp: הרחב את הבחירה למעלה
+  selectAll: בחר/בטל את הבחירה בכל השורות
+  editRow: ערוך שורה ממוקדת
+  deleteRow: מחק שורה ממוקדת
+  deleteRowAlt: מחק שורה ממוקדת
+  editRowAlt: ערוך שורה ממוקדת
+  mockData: צור נתונים מדומים
+  refresh: רענון טבלה
+  export: ייצוא נתונים
+  import: ייבוא ​​נתונים
+  executeQuery: בצע שאילתה
+  clearEditor: נקה עורך/קלט
+
+ja_JP:
+  title: キーボードショートカット
+  shortcuts: ショートカット
+  hint: プレス ？ 開く
+  categoryGlobal: グローバル
+  categoryNavigation: ナビゲーション
+  categoryTableNavigation: テーブルナビゲーション
+  categoryTableSelection: テーブルの選択
+  categoryTableActions: テーブルアクション
+  categoryEditor: クエリエディタ
+  showShortcuts: キーボード ショートカットを表示する
+  commandPalette: コマンドパレットを開く
+  closeDialogs: ダイアログ/シートを閉じる
+  toggleSidebar: サイドバーの切り替え
+  navFirst: 最初のビュー (チャットまたはテーブル) に移動します
+  navSecond: 2 番目のビューに移動
+  navThird: 3 番目のビューに移動
+  navFourth: 4 番目のビューに移動します (利用可能な場合)
+  moveDown: 次の行に移動
+  moveUp: 前の行に移動
+  moveFirst: 最初の行に移動
+  moveLast: 最後の行に移動
+  pageDown: 表示されている行ごとに下にジャンプします
+  pageUp: 表示されている行ごとにジャンプします
+  nextPage: 次のページへ
+  prevPage: 前のページに戻る
+  toggleSelect: 行選択の切り替え
+  extendSelectDown: 選択範囲を下に拡張
+  extendSelectUp: 選択範囲を上に拡張
+  selectAll: すべての行を選択/選択解除
+  editRow: フォーカスされた行を編集する
+  deleteRow: フォーカスされた行を削除する
+  deleteRowAlt: フォーカスされた行を削除する
+  editRowAlt: フォーカスされた行を編集する
+  mockData: モックデータを生成する
+  refresh: テーブルを更新する
+  export: データのエクスポート
+  import: データのインポート
+  executeQuery: クエリの実行
+  clearEditor: エディター/入力をクリアします
+
+ko_KR:
+  title: 키보드 단축키
+  shortcuts: 단축키
+  hint: 누르다 ? 열다
+  categoryGlobal: 글로벌
+  categoryNavigation: 항해
+  categoryTableNavigation: 테이블 탐색
+  categoryTableSelection: 테이블 선택
+  categoryTableActions: 테이블 작업
+  categoryEditor: 쿼리 편집기
+  showShortcuts: 키보드 단축키 표시
+  commandPalette: 명령 팔레트 열기
+  closeDialogs: 대화상자/시트 닫기
+  toggleSidebar: 사이드바 전환
+  navFirst: 첫 번째 보기로 이동(채팅 또는 테이블)
+  navSecond: 두 번째 보기로 이동
+  navThird: 세 번째 보기로 이동
+  navFourth: 네 번째 보기로 이동(사용 가능한 경우)
+  moveDown: 다음 행으로 이동
+  moveUp: 이전 행으로 이동
+  moveFirst: 첫 번째 행으로 이동
+  moveLast: 마지막 행으로 이동
+  pageDown: 보이는 행만큼 아래로 점프
+  pageUp: 보이는 행으로 점프
+  nextPage: 다음 페이지로 이동
+  prevPage: 이전 페이지로 이동
+  toggleSelect: 행 선택 전환
+  extendSelectDown: 선택 항목을 아래로 확장
+  extendSelectUp: 선택 항목을 위로 확장
+  selectAll: 모든 행 선택/선택 취소
+  editRow: 초점이 맞춰진 행 수정
+  deleteRow: 집중된 행 삭제
+  deleteRowAlt: 집중된 행 삭제
+  editRowAlt: 초점이 맞춰진 행 수정
+  mockData: 모의 데이터 생성
+  refresh: 테이블 새로 고침
+  export: 데이터 내보내기
+  import: 데이터 가져오기
+  executeQuery: 쿼리 실행
+  clearEditor: 편집기/입력 지우기
+
+nl_NL:
+  title: Sneltoetsen
+  shortcuts: Snelkoppelingen
+  hint: Druk op ? openen
+  categoryGlobal: Globaal
+  categoryNavigation: Navigatie
+  categoryTableNavigation: Tabelnavigatie
+  categoryTableSelection: Tabelselectie
+  categoryTableActions: Tabelacties
+  categoryEditor: Query-editor
+  showShortcuts: Sneltoetsen weergeven
+  commandPalette: Open het opdrachtpalet
+  closeDialogs: Dialoogvensters/bladen sluiten
+  toggleSidebar: Zijbalk schakelen
+  navFirst: Naar eerste weergave gaan (Chat of Tabellen)
+  navSecond: Ga naar de tweede weergave
+  navThird: Ga naar de derde weergave
+  navFourth: Ga naar de vierde weergave (indien beschikbaar)
+  moveDown: Ga naar de volgende rij
+  moveUp: Ga naar de vorige rij
+  moveFirst: Ga naar de eerste rij
+  moveLast: Ga naar de laatste rij
+  pageDown: Spring naar beneden bij zichtbare rijen
+  pageUp: Spring omhoog bij zichtbare rijen
+  nextPage: Ga naar de volgende pagina
+  prevPage: Ga naar de vorige pagina
+  toggleSelect: Schakel rijselectie in
+  extendSelectDown: Breid de selectie naar beneden uit
+  extendSelectUp: Breid de selectie naar boven uit
+  selectAll: Selecteer/deselecteer alle rijen
+  editRow: Bewerk de gefocuste rij
+  deleteRow: Gerichte rij verwijderen
+  deleteRowAlt: Gerichte rij verwijderen
+  editRowAlt: Bewerk de gefocuste rij
+  mockData: Genereer nepgegevens
+  refresh: Tabel vernieuwen
+  export: Gegevens exporteren
+  import: Gegevens importeren
+  executeQuery: Vraag uitvoeren
+  clearEditor: Duidelijke editor/invoer
+
+pl_PL:
+  title: Skróty klawiaturowe
+  shortcuts: Skróty
+  hint: Naciskać ? otworzyć
+  categoryGlobal: Światowy
+  categoryNavigation: Nawigacja
+  categoryTableNavigation: Nawigacja po tabeli
+  categoryTableSelection: Wybór stołu
+  categoryTableActions: Działania na stole
+  categoryEditor: Edytor zapytań
+  showShortcuts: Pokaż skróty klawiaturowe
+  commandPalette: Otwórz paletę poleceń
+  closeDialogs: Zamknij okna dialogowe/arkusze
+  toggleSidebar: Przełącz pasek boczny
+  navFirst: Przejdź do pierwszego widoku (czat lub stoły)
+  navSecond: Przejdź do drugiego widoku
+  navThird: Przejdź do trzeciego widoku
+  navFourth: Przejdź do czwartego widoku (jeśli jest dostępny)
+  moveDown: Przejdź do następnego rzędu
+  moveUp: Przejdź do poprzedniego wiersza
+  moveFirst: Przejdź do pierwszego rzędu
+  moveLast: Przejdź do ostatniego rzędu
+  pageDown: Zeskocz na dół po widocznych rzędach
+  pageUp: Podskocz po widocznych rzędach
+  nextPage: Przejdź do następnej strony
+  prevPage: Przejdź do poprzedniej strony
+  toggleSelect: Przełącz wybór wiersza
+  extendSelectDown: Rozszerz zaznaczenie w dół
+  extendSelectUp: Rozszerz zaznaczenie w górę
+  selectAll: Zaznacz/odznacz wszystkie wiersze
+  editRow: Edytuj wybrany wiersz
+  deleteRow: Usuń zaznaczony wiersz
+  deleteRowAlt: Usuń zaznaczony wiersz
+  editRowAlt: Edytuj wybrany wiersz
+  mockData: Wygeneruj próbne dane
+  refresh: Odśwież tabelę
+  export: Eksportuj dane
+  import: Importuj dane
+  executeQuery: Wykonaj zapytanie
+  clearEditor: Wyczyść edytor/wejście
+
+pt_BR:
+  title: Atalhos de teclado
+  shortcuts: Atalhos
+  hint: Imprensa ? abrir
+  categoryGlobal: Global
+  categoryNavigation: Navegação
+  categoryTableNavigation: Navegação na tabela
+  categoryTableSelection: Seleção de mesa
+  categoryTableActions: Ações de tabela
+  categoryEditor: Editor de consultas
+  showShortcuts: Mostrar atalhos de teclado
+  commandPalette: Abrir paleta de comandos
+  closeDialogs: Fechar caixas de diálogo/planilhas
+  toggleSidebar: Alternar barra lateral
+  navFirst: Ir para a primeira visualização (Bate-papo ou Mesas)
+  navSecond: Ir para a segunda visualização
+  navThird: Ir para a terceira visualização
+  navFourth: Vá para a quarta visualização (se disponível)
+  moveDown: Mover para a próxima linha
+  moveUp: Mover para a linha anterior
+  moveFirst: Mover para a primeira linha
+  moveLast: Mover para a última linha
+  pageDown: Pule para baixo pelas linhas visíveis
+  pageUp: Saltar pelas linhas visíveis
+  nextPage: Ir para a próxima página
+  prevPage: Ir para a página anterior
+  toggleSelect: Alternar seleção de linha
+  extendSelectDown: Estender seleção para baixo
+  extendSelectUp: Estender seleção para cima
+  selectAll: Marcar/desmarcar todas as linhas
+  editRow: Editar linha em foco
+  deleteRow: Excluir linha em foco
+  deleteRowAlt: Excluir linha em foco
+  editRowAlt: Editar linha em foco
+  mockData: Gerar dados simulados
+  refresh: Atualizar tabela
+  export: Exportar dados
+  import: Importar dados
+  executeQuery: Executar consulta
+  clearEditor: Limpar editor/entrada
+
+ro_RO:
+  title: Comenzi rapide de la tastatură
+  shortcuts: Comenzi rapide
+  hint: Apăsați? a deschide
+  categoryGlobal: Global
+  categoryNavigation: Navigare
+  categoryTableNavigation: Navigare pe tabel
+  categoryTableSelection: Selectarea tabelului
+  categoryTableActions: Acțiuni de masă
+  categoryEditor: Editor de interogări
+  showShortcuts: Afișează comenzile rapide de la tastatură
+  commandPalette: Deschideți paleta de comenzi
+  closeDialogs: Închide casetele de dialog/foile
+  toggleSidebar: Comutați bara laterală
+  navFirst: Accesați prima vizualizare (Chat sau Mese)
+  navSecond: Accesați a doua vizualizare
+  navThird: Accesați a treia vizualizare
+  navFourth: Accesați a patra vizualizare (dacă este disponibilă)
+  moveDown: Treceți la rândul următor
+  moveUp: Treceți la rândul anterior
+  moveFirst: Treceți la primul rând
+  moveLast: Treceți la ultimul rând
+  pageDown: Sari în jos după rândurile vizibile
+  pageUp: Sari în sus de rândurile vizibile
+  nextPage: Mergeți la pagina următoare
+  prevPage: Mergeți la pagina anterioară
+  toggleSelect: Comutați selecția rândului
+  extendSelectDown: Extindeți selecția în jos
+  extendSelectUp: Extinde selecția în sus
+  selectAll: Selectați/deselectați toate rândurile
+  editRow: Editați rândul focalizat
+  deleteRow: Ștergeți rândul focalizat
+  deleteRowAlt: Ștergeți rândul focalizat
+  editRowAlt: Editați rândul focalizat
+  mockData: Generați date simulate
+  refresh: Actualizează tabelul
+  export: Exportați date
+  import: Importă date
+  executeQuery: Executați interogarea
+  clearEditor: Ștergeți editorul/intrarea
+
+ru_RU:
+  title: Сочетания клавиш
+  shortcuts: Ярлыки
+  hint: Нажимать ? открыть
+  categoryGlobal: Глобальный
+  categoryNavigation: Навигация
+  categoryTableNavigation: Таблица навигации
+  categoryTableSelection: Выбор стола
+  categoryTableActions: Действия с таблицей
+  categoryEditor: Редактор запросов
+  showShortcuts: Показать сочетания клавиш
+  commandPalette: Открыть палитру команд
+  closeDialogs: Закрыть диалоги/листы
+  toggleSidebar: Переключить боковую панель
+  navFirst: Перейти к первому просмотру (Чат или Таблицы)
+  navSecond: Перейти ко второму просмотру
+  navThird: Перейти к третьему виду
+  navFourth: Перейти к четвертому виду (если доступно)
+  moveDown: Перейти к следующей строке
+  moveUp: Перейти к предыдущей строке
+  moveFirst: Перейти в первую строку
+  moveLast: Перейти к последней строке
+  pageDown: Перейти вниз по видимым строкам
+  pageUp: Перейти вверх по видимым строкам
+  nextPage: Перейти на следующую страницу
+  prevPage: Перейти на предыдущую страницу
+  toggleSelect: Переключить выбор строки
+  extendSelectDown: Расширить выделение вниз
+  extendSelectUp: Расширить выбор вверх
+  selectAll: Выбрать/отменить выбор всех строк
+  editRow: Изменить выделенную строку
+  deleteRow: Удалить выделенную строку
+  deleteRowAlt: Удалить выделенную строку
+  editRowAlt: Изменить выделенную строку
+  mockData: Создать макет данных
+  refresh: Обновить таблицу
+  export: Экспортировать данные
+  import: Импортировать данные
+  executeQuery: Выполнить запрос
+  clearEditor: Очистить редактор/ввод
+
+sk_SK:
+  title: Klávesové skratky
+  shortcuts: Skratky
+  hint: Stlačte tlačidlo ? otvoriť
+  categoryGlobal: globálne
+  categoryNavigation: Navigácia
+  categoryTableNavigation: Navigácia v tabuľke
+  categoryTableSelection: Výber tabuľky
+  categoryTableActions: Akcie tabuľky
+  categoryEditor: Editor dotazov
+  showShortcuts: Zobraziť klávesové skratky
+  commandPalette: Otvorte paletu príkazov
+  closeDialogs: Zatvorte dialógové okná/hárky
+  toggleSidebar: Prepnúť bočný panel
+  navFirst: Prejsť na prvé zobrazenie (rozhovor alebo tabuľky)
+  navSecond: Prejsť na druhý pohľad
+  navThird: Prejdite na tretie zobrazenie
+  navFourth: Prejsť na štvrté zobrazenie (ak je k dispozícii)
+  moveDown: Prejsť na ďalší riadok
+  moveUp: Prejsť na predchádzajúci riadok
+  moveFirst: Presuňte sa na prvý riadok
+  moveLast: Prejsť na posledný riadok
+  pageDown: Skočte nadol po viditeľných riadkoch
+  pageUp: Skočte nahor po viditeľných riadkoch
+  nextPage: Prejdite na ďalšiu stránku
+  prevPage: Prejsť na predchádzajúcu stránku
+  toggleSelect: Prepnúť výber riadkov
+  extendSelectDown: Rozšírte výber nadol
+  extendSelectUp: Rozšírte výber nahor
+  selectAll: Vybrať/zrušiť výber všetkých riadkov
+  editRow: Upraviť zameraný riadok
+  deleteRow: Odstrániť zameraný riadok
+  deleteRowAlt: Odstrániť zameraný riadok
+  editRowAlt: Upraviť zameraný riadok
+  mockData: Generovať falošné údaje
+  refresh: Obnoviť tabuľku
+  export: Exportovať údaje
+  import: Importujte údaje
+  executeQuery: Vykonajte dotaz
+  clearEditor: Vymazať editor/vstup
+
+sv_SE:
+  title: Kortkommandon
+  shortcuts: Genvägar
+  hint: Tryck på ? att öppna
+  categoryGlobal: Global
+  categoryNavigation: Navigering
+  categoryTableNavigation: Tabellnavigering
+  categoryTableSelection: Tabellval
+  categoryTableActions: Tabellåtgärder
+  categoryEditor: Frågeredigerare
+  showShortcuts: Visa kortkommandon
+  commandPalette: Öppna kommandopaletten
+  closeDialogs: Stäng dialoger/ark
+  toggleSidebar: Växla sidofältet
+  navFirst: Gå till första vyn (chatt eller tabeller)
+  navSecond: Gå till andra vyn
+  navThird: Gå till tredje vyn
+  navFourth: Gå till fjärde vyn (om tillgänglig)
+  moveDown: Flytta till nästa rad
+  moveUp: Flytta till föregående rad
+  moveFirst: Flytta till första raden
+  moveLast: Flytta till sista raden
+  pageDown: Hoppa ner efter synliga rader
+  pageUp: Hoppa upp efter synliga rader
+  nextPage: Gå till nästa sida
+  prevPage: Gå till föregående sida
+  toggleSelect: Växla radval
+  extendSelectDown: Utöka urvalet nedåt
+  extendSelectUp: Utöka urvalet uppåt
+  selectAll: Markera/avmarkera alla rader
+  editRow: Redigera fokuserad rad
+  deleteRow: Ta bort fokuserad rad
+  deleteRowAlt: Ta bort fokuserad rad
+  editRowAlt: Redigera fokuserad rad
+  mockData: Generera skendata
+  refresh: Uppdatera tabellen
+  export: Exportera data
+  import: Importera data
+  executeQuery: Utför fråga
+  clearEditor: Rensa editor/inmatning
+
+zh_CN:
+  title: 键盘快捷键
+  shortcuts: 快捷方式
+  hint: 按 ？ 打开
+  categoryGlobal: 全球的
+  categoryNavigation: 导航
+  categoryTableNavigation: 表格导航
+  categoryTableSelection: 餐桌选择
+  categoryTableActions: 表操作
+  categoryEditor: 查询编辑器
+  showShortcuts: 显示键盘快捷键
+  commandPalette: 打开命令面板
+  closeDialogs: 关闭对话框/工作表
+  toggleSidebar: 切换侧边栏
+  navFirst: 转到第一个视图（聊天或表格）
+  navSecond: 转到第二个视图
+  navThird: 转到第三个视图
+  navFourth: 转到第四个视图（如果可用）
+  moveDown: 移至下一行
+  moveUp: 移至上一行
+  moveFirst: 移至第一行
+  moveLast: 移至最后一行
+  pageDown: 按可见行向下跳转
+  pageUp: 按可见行跳转
+  nextPage: 转到下一页
+  prevPage: 转到上一页
+  toggleSelect: 切换行选择
+  extendSelectDown: 向下扩展选择
+  extendSelectUp: 向上扩展选择
+  selectAll: 选择/取消选择所有行
+  editRow: 编辑焦点行
+  deleteRow: 删除焦点行
+  deleteRowAlt: 删除焦点行
+  editRowAlt: 编辑焦点行
+  mockData: 生成模拟数据
+  refresh: 刷新表
+  export: 导出数据
+  import: 导入数据
+  executeQuery: 执行查询
+  clearEditor: 清除编辑器/输入
+
+zh_TW:
+  title: 鍵盤快速鍵
+  shortcuts: 快速方式
+  hint: 按 ？ 打開
+  categoryGlobal: 全球的
+  categoryNavigation: 導航
+  categoryTableNavigation: 表格導航
+  categoryTableSelection: 餐桌選擇
+  categoryTableActions: 表操作
+  categoryEditor: 查詢編輯器
+  showShortcuts: 顯示鍵盤快速鍵
+  commandPalette: 打開命令面板
+  closeDialogs: 關閉對話框/工作表
+  toggleSidebar: 切換側邊欄
+  navFirst: 轉到第一個視圖（聊天或表格）
+  navSecond: 轉到第二個視圖
+  navThird: 轉到第三個視圖
+  navFourth: 轉到第四個視圖（如果可用）
+  moveDown: 移至下一行
+  moveUp: 移至上一行
+  moveFirst: 移至第一行
+  moveLast: 移至最後一行
+  pageDown: 按可見行向下跳轉
+  pageUp: 按可見行跳轉
+  nextPage: 轉到下一頁
+  prevPage: 前往上一頁
+  toggleSelect: 切換行選擇
+  extendSelectDown: 向下擴展選擇
+  extendSelectUp: 向上擴展選擇
+  selectAll: 選擇/取消選擇所有行
+  editRow: 編輯焦點行
+  deleteRow: 刪除焦點行
+  deleteRowAlt: 刪除焦點行
+  editRowAlt: 編輯焦點行
+  mockData: 產生模擬數據
+  refresh: 重新整理表
+  export: 匯出數據
+  import: 導入數據
+  executeQuery: 執行查詢
+  clearEditor: 清除編輯器/輸入

@@ -5,3 +5,163 @@ en_US:
   finish: Finish
   close: Close
   back: Back
+
+ar_AE:
+  next: التالي
+  previous: سابق
+  skip: يتخطى
+  finish: ينهي
+  close: يغلق
+  back: خلف
+
+de_DE:
+  next: Nächste
+  previous: Vorherige
+  skip: Überspringen
+  finish: Beenden
+  close: Schließen
+  back: Zurück
+
+el_GR:
+  next: Επόμενος
+  previous: Προηγούμενος
+  skip: Παραλείπω
+  finish: Φινίρισμα
+  close: Κοντά
+  back: Πίσω
+
+en_GB:
+  next: Next
+  previous: Previous
+  skip: Skip
+  finish: Finish
+  close: Close
+  back: Back
+
+es_ES:
+  next: Próxima
+  previous: Previa
+  skip: Saltar
+  finish: Finalizar
+  close: Cerca
+  back: Atrás
+
+fi_FI:
+  next: Seuraavaksi
+  previous: Edellinen
+  skip: Ohita
+  finish: Valmis
+  close: Lähellä
+  back: Takaisin
+
+fr_FR:
+  next: Suivante
+  previous: Précédente
+  skip: Sauter
+  finish: Finition
+  close: Fermer
+  back: Dos
+
+it_IT:
+  next: Prossima
+  previous: Precedente
+  skip: Saltare
+  finish: Fine
+  close: Vicina
+  back: Indietro
+
+iw_IL:
+  next: הַבָּא
+  previous: קוֹדֵם
+  skip: לְדַלֵג
+  finish: סִיוּם
+  close: לִסְגוֹר
+  back: בְּחֲזָרָה
+
+ja_JP:
+  next: 次
+  previous: 前の
+  skip: スキップ
+  finish: 仕上げる
+  close: 近い
+  back: 戻る
+
+ko_KR:
+  next: 다음
+  previous: 이전의
+  skip: 건너뛰다
+  finish: 마치다
+  close: 닫다
+  back: 뒤쪽에
+
+nl_NL:
+  next: Volgende
+  previous: Vorig
+  skip: Overslaan
+  finish: Finish
+  close: Dichtbij
+  back: Rug
+
+pl_PL:
+  next: Następny
+  previous: Poprzedni
+  skip: Pominąć
+  finish: Skończyć
+  close: Zamknąć
+  back: Z powrotem
+
+pt_BR:
+  next: Próxima
+  previous: Anterior
+  skip: Pular
+  finish: Terminar
+  close: Fechar
+  back: Voltar
+
+ro_RO:
+  next: Următorul
+  previous: Anterior
+  skip: Sari peste
+  finish: Termina
+  close: Aproape
+  back: Spate
+
+ru_RU:
+  next: Следующий
+  previous: Предыдущий
+  skip: Пропускать
+  finish: Заканчивать
+  close: Закрывать
+  back: Назад
+
+sk_SK:
+  next: Ďalej
+  previous: Predchádzajúce
+  skip: Preskočiť
+  finish: Dokončiť
+  close: Zavrieť
+  back: Späť
+
+sv_SE:
+  next: Nästa
+  previous: Tidigare
+  skip: Hoppa
+  finish: Avsluta
+  close: Nära
+  back: Tillbaka
+
+zh_CN:
+  next: 下一个
+  previous: 以前的
+  skip: 跳过
+  finish: 结束
+  close: 关闭
+  back: 后退
+
+zh_TW:
+  next: 下一個
+  previous: 以前的
+  skip: 跳過
+  finish: 結束
+  close: 關閉
+  back: 後退

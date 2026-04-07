@@ -1,3 +1,83 @@
 en_US:
   enterValidNumber: Please enter a number greater than 0
   exceedsMaxPageSize: "Page size cannot exceed {max}"
+
+ar_AE:
+  enterValidNumber: الرجاء إدخال رقم أكبر من 0
+  exceedsMaxPageSize: "لا يمكن أن يتجاوز حجم الصفحة {max}"
+
+de_DE:
+  enterValidNumber: Bitte geben Sie eine Zahl größer als 0 ein
+  exceedsMaxPageSize: "Die Seitengröße darf {max} nicht überschreiten."
+
+el_GR:
+  enterValidNumber: Εισαγάγετε έναν αριθμό μεγαλύτερο από 0
+  exceedsMaxPageSize: "Το μέγεθος της σελίδας δεν μπορεί να υπερβαίνει το {max}"
+
+en_GB:
+  enterValidNumber: Please enter a number greater than 0
+  exceedsMaxPageSize: "Page size cannot exceed {max}"
+
+es_ES:
+  enterValidNumber: Por favor introduce un número mayor que 0
+  exceedsMaxPageSize: "El tamaño de la página no puede exceder {max}"
+
+fi_FI:
+  enterValidNumber: Anna numero, joka on suurempi kuin 0
+  exceedsMaxPageSize: "Sivun koko ei saa ylittää {max}"
+
+fr_FR:
+  enterValidNumber: Veuillez saisir un nombre supérieur à 0
+  exceedsMaxPageSize: "La taille de la page ne peut pas dépasser {max}"
+
+it_IT:
+  enterValidNumber: Inserisci un numero maggiore di 0
+  exceedsMaxPageSize: "La dimensione della pagina non può superare {max}"
+
+iw_IL:
+  enterValidNumber: נא להזין מספר גדול מ-0
+  exceedsMaxPageSize: "גודל העמוד לא יכול לעלות על {max}"
+
+ja_JP:
+  enterValidNumber: 0 より大きい数値を入力してください
+  exceedsMaxPageSize: "ページ サイズは {max} を超えることはできません"
+
+ko_KR:
+  enterValidNumber: 0보다 큰 숫자를 입력하세요.
+  exceedsMaxPageSize: "페이지 크기는 {max}을(를) 초과할 수 없습니다."
+
+nl_NL:
+  enterValidNumber: Voer een getal groter dan 0 in
+  exceedsMaxPageSize: "Paginagrootte mag niet groter zijn dan {max}"
+
+pl_PL:
+  enterValidNumber: Proszę wprowadzić liczbę większą niż 0
+  exceedsMaxPageSize: "Rozmiar strony nie może przekraczać {max}"
+
+pt_BR:
+  enterValidNumber: Por favor insira um número maior que 0
+  exceedsMaxPageSize: "O tamanho da página não pode exceder {max}"
+
+ro_RO:
+  enterValidNumber: Vă rugăm să introduceți un număr mai mare decât 0
+  exceedsMaxPageSize: "Dimensiunea paginii nu poate depăși {max}"
+
+ru_RU:
+  enterValidNumber: Пожалуйста, введите число больше 0
+  exceedsMaxPageSize: "Размер страницы не может превышать {max}"
+
+sk_SK:
+  enterValidNumber: Zadajte číslo väčšie ako 0
+  exceedsMaxPageSize: "Veľkosť stránky nemôže prekročiť {max}"
+
+sv_SE:
+  enterValidNumber: Ange ett nummer som är större än 0
+  exceedsMaxPageSize: "Sidstorleken får inte överstiga {max}"
+
+zh_CN:
+  enterValidNumber: 请输入大于0的数字
+  exceedsMaxPageSize: "页面大小不能超过 {max}"
+
+zh_TW:
+  enterValidNumber: 請輸入大於0的數字
+  exceedsMaxPageSize: "頁面大小不能超過 {max}"

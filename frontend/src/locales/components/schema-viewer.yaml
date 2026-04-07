@@ -7,3 +7,203 @@ en_US:
   searchPlaceholder: Search Tables
   searchAriaLabel: Search Tables
   noResults: No tables found
+
+ar_AE:
+  title: مخطط
+  columns: أعمدة
+  indexes: الفهارس
+  relationships: العلاقات
+  refresh: ينعش
+  searchPlaceholder: جداول البحث
+  searchAriaLabel: جداول البحث
+  noResults: لم يتم العثور على جداول
+
+de_DE:
+  title: Schema
+  columns: Spalten
+  indexes: Indizes
+  relationships: Beziehungen
+  refresh: Aktualisieren
+  searchPlaceholder: Suchtabellen
+  searchAriaLabel: Suchtabellen
+  noResults: Keine Tische gefunden
+
+el_GR:
+  title: Σχήμα
+  columns: Στήλες
+  indexes: Ευρετήρια
+  relationships: Σχέσεις
+  refresh: Φρεσκάρω
+  searchPlaceholder: Αναζήτηση πινάκων
+  searchAriaLabel: Αναζήτηση πινάκων
+  noResults: Δεν βρέθηκαν πίνακες
+
+en_GB:
+  title: Schema
+  columns: Columns
+  indexes: Indexes
+  relationships: Relationships
+  refresh: Refresh
+  searchPlaceholder: Search Tables
+  searchAriaLabel: Search Tables
+  noResults: No tables found
+
+es_ES:
+  title: Esquema
+  columns: columnas
+  indexes: Índices
+  relationships: Relaciones
+  refresh: Refrescar
+  searchPlaceholder: Buscar tablas
+  searchAriaLabel: Buscar tablas
+  noResults: No se encontraron tablas
+
+fi_FI:
+  title: Kaavio
+  columns: Sarakkeet
+  indexes: Indeksit
+  relationships: Suhteet
+  refresh: Päivitä
+  searchPlaceholder: Etsi taulukoita
+  searchAriaLabel: Etsi taulukoita
+  noResults: Pöytiä ei löytynyt
+
+fr_FR:
+  title: Schéma
+  columns: Colonnes
+  indexes: Index
+  relationships: Relations
+  refresh: Rafraîchir
+  searchPlaceholder: Rechercher des tableaux
+  searchAriaLabel: Rechercher des tableaux
+  noResults: Aucune table trouvée
+
+it_IT:
+  title: Schema
+  columns: Colonne
+  indexes: Indici
+  relationships: Relazioni
+  refresh: Aggiorna
+  searchPlaceholder: Cerca tabelle
+  searchAriaLabel: Cerca tabelle
+  noResults: Nessuna tabella trovata
+
+iw_IL:
+  title: סכֵימָה
+  columns: עמודות
+  indexes: אינדקסים
+  relationships: מערכות יחסים
+  refresh: לְרַעֲנֵן
+  searchPlaceholder: חפש בטבלאות
+  searchAriaLabel: חפש בטבלאות
+  noResults: לא נמצאו טבלאות
+
+ja_JP:
+  title: スキーマ
+  columns: コラム
+  indexes: インデックス
+  relationships: 人間関係
+  refresh: リフレッシュ
+  searchPlaceholder: 検索テーブル
+  searchAriaLabel: 検索テーブル
+  noResults: テーブルが見つかりません
+
+ko_KR:
+  title: 개요
+  columns: 열
+  indexes: 인덱스
+  relationships: 관계
+  refresh: 새로 고치다
+  searchPlaceholder: 테이블 검색
+  searchAriaLabel: 테이블 검색
+  noResults: 테이블을 찾을 수 없습니다.
+
+nl_NL:
+  title: Schema
+  columns: Kolommen
+  indexes: Indexen
+  relationships: Relaties
+  refresh: Vernieuwen
+  searchPlaceholder: Zoek tabellen
+  searchAriaLabel: Zoek tabellen
+  noResults: Geen tabellen gevonden
+
+pl_PL:
+  title: Schemat
+  columns: Kolumny
+  indexes: Indeksy
+  relationships: Relacje
+  refresh: Odświeżać
+  searchPlaceholder: Przeszukaj tabele
+  searchAriaLabel: Przeszukaj tabele
+  noResults: Nie znaleziono żadnych tabel
+
+pt_BR:
+  title: Esquema
+  columns: Colunas
+  indexes: Índices
+  relationships: Relacionamentos
+  refresh: Atualizar
+  searchPlaceholder: Pesquisar tabelas
+  searchAriaLabel: Pesquisar tabelas
+  noResults: Nenhuma tabela encontrada
+
+ro_RO:
+  title: Schemă
+  columns: Coloane
+  indexes: Indici
+  relationships: Relații
+  refresh: Reîmprospăta
+  searchPlaceholder: Căutați în tabele
+  searchAriaLabel: Căutați în tabele
+  noResults: Nu s-au găsit tabele
+
+ru_RU:
+  title: Схема
+  columns: Столбцы
+  indexes: Индексы
+  relationships: Отношения
+  refresh: Обновить
+  searchPlaceholder: Поиск по таблицам
+  searchAriaLabel: Поиск по таблицам
+  noResults: Таблицы не найдены
+
+sk_SK:
+  title: Schéma
+  columns: Stĺpce
+  indexes: Indexy
+  relationships: Vzťahy
+  refresh: Obnoviť
+  searchPlaceholder: Prehľadávať tabuľky
+  searchAriaLabel: Prehľadávať tabuľky
+  noResults: Nenašli sa žiadne tabuľky
+
+sv_SE:
+  title: Schema
+  columns: Kolumner
+  indexes: Index
+  relationships: Relationer
+  refresh: Uppdatera
+  searchPlaceholder: Sök tabeller
+  searchAriaLabel: Sök tabeller
+  noResults: Inga tabeller hittades
+
+zh_CN:
+  title: 模式
+  columns: 专栏
+  indexes: 索引
+  relationships: 人际关系
+  refresh: 刷新
+  searchPlaceholder: 搜索表
+  searchAriaLabel: 搜索表
+  noResults: 没有找到桌子
+
+zh_TW:
+  title: 模式
+  columns: 專欄
+  indexes: 索引
+  relationships: 人際關係
+  refresh: 重新整理
+  searchPlaceholder: 搜尋表
+  searchAriaLabel: 搜尋表
+  noResults: 沒有找到桌子

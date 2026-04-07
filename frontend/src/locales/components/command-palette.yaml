@@ -14,3 +14,343 @@ en_US:
   toggleSidebar: Toggle Sidebar
   disconnect: Disconnect
   sortByColumn: Sort by {column}
+
+ar_AE:
+  searchPlaceholder: اكتب أمرًا أو ابحث...
+  noResults: لم يتم العثور على نتائج.
+  navigation: ملاحة
+  actions: الإجراءات
+  sortBy: فرز حسب
+  goToChat: اذهب إلى الدردشة
+  goToStorageUnits: انتقل إلى وحدات التخزين
+  goToGraph: انتقل إلى الرسم البياني
+  goToScratchpad: انتقل إلى المسودة
+  refreshData: تحديث البيانات
+  exportData: تصدير البيانات
+  importData: استيراد البيانات
+  toggleSidebar: تبديل الشريط الجانبي
+  disconnect: قطع الاتصال
+  sortByColumn: "الترتيب حسب {column}"
+
+de_DE:
+  searchPlaceholder: Geben Sie einen Befehl ein oder suchen Sie...
+  noResults: Keine Ergebnisse gefunden.
+  navigation: Navigation
+  actions: Aktionen
+  sortBy: Sortieren nach
+  goToChat: Gehen Sie zum Chat
+  goToStorageUnits: Gehen Sie zu Lagereinheiten
+  goToGraph: Gehen Sie zu Diagramm
+  goToScratchpad: Gehen Sie zu Scratchpad
+  refreshData: Daten aktualisieren
+  exportData: Daten exportieren
+  importData: Daten importieren
+  toggleSidebar: Seitenleiste umschalten
+  disconnect: Trennen
+  sortByColumn: "Sortieren nach {column}"
+
+el_GR:
+  searchPlaceholder: Πληκτρολογήστε μια εντολή ή αναζητήστε...
+  noResults: Δεν βρέθηκαν αποτελέσματα.
+  navigation: Πλοήγηση
+  actions: Δράσεις
+  sortBy: Ταξινόμηση κατά
+  goToChat: Μεταβείτε στο Chat
+  goToStorageUnits: Μεταβείτε στις μονάδες αποθήκευσης
+  goToGraph: Μεταβείτε στο Γράφημα
+  goToScratchpad: Μεταβείτε στο Scratchpad
+  refreshData: Ανανέωση δεδομένων
+  exportData: Εξαγωγή δεδομένων
+  importData: Εισαγωγή δεδομένων
+  toggleSidebar: Εναλλαγή πλευρικής γραμμής
+  disconnect: Αποσυνδέω
+  sortByColumn: "Ταξινόμηση κατά {column}"
+
+en_GB:
+  searchPlaceholder: Type a command or search...
+  noResults: No results found.
+  navigation: Navigation
+  actions: Actions
+  sortBy: Sort By
+  goToChat: Go to Chat
+  goToStorageUnits: Go to Storage Units
+  goToGraph: Go to Graph
+  goToScratchpad: Go to Scratchpad
+  refreshData: Refresh Data
+  exportData: Export Data
+  importData: Import Data
+  toggleSidebar: Toggle Sidebar
+  disconnect: Disconnect
+  sortByColumn: "Sort by {column}"
+
+es_ES:
+  searchPlaceholder: Escribe un comando o busca...
+  noResults: No se encontraron resultados.
+  navigation: Navegación
+  actions: Comportamiento
+  sortBy: Ordenar por
+  goToChat: Ir al chat
+  goToStorageUnits: Ir a Unidades de Almacenamiento
+  goToGraph: Ir al gráfico
+  goToScratchpad: Ir al bloc de notas
+  refreshData: Actualizar datos
+  exportData: Exportar datos
+  importData: Importar datos
+  toggleSidebar: Alternar barra lateral
+  disconnect: Desconectar
+  sortByColumn: "Ordenar por {column}"
+
+fi_FI:
+  searchPlaceholder: Kirjoita komento tai hae...
+  noResults: Tuloksia ei löytynyt.
+  navigation: Navigointi
+  actions: Toiminnot
+  sortBy: Lajitteluperuste
+  goToChat: Siirry Chatiin
+  goToStorageUnits: Siirry kohtaan Tallennusyksiköt
+  goToGraph: Siirry Grafiin
+  goToScratchpad: Siirry Scratchpadiin
+  refreshData: Päivitä tiedot
+  exportData: Vie tiedot
+  importData: Tuo tiedot
+  toggleSidebar: Vaihda sivupalkki
+  disconnect: Katkaise yhteys
+  sortByColumn: "Lajitteluperuste {column}"
+
+fr_FR:
+  searchPlaceholder: Tapez une commande ou recherchez...
+  noResults: Aucun résultat trouvé.
+  navigation: Navigation
+  actions: Actes
+  sortBy: Trier par
+  goToChat: Aller au chat
+  goToStorageUnits: Aller aux unités de stockage
+  goToGraph: Aller au graphique
+  goToScratchpad: Aller au Bloc-notes
+  refreshData: Actualiser les données
+  exportData: Exporter des données
+  importData: Importer des données
+  toggleSidebar: Basculer la barre latérale
+  disconnect: Déconnecter
+  sortByColumn: "Trier par {column}"
+
+it_IT:
+  searchPlaceholder: Digita un comando o cerca...
+  noResults: Nessun risultato trovato
+  navigation: Navigazione
+  actions: Azioni
+  sortBy: Ordina per
+  goToChat: Vai alla chat
+  goToStorageUnits: Vai a Unità di stoccaggio
+  goToGraph: Vai al grafico
+  goToScratchpad: Vai a Blocco note
+  refreshData: Aggiorna dati
+  exportData: Esporta dati
+  importData: Importa dati
+  toggleSidebar: Attiva/disattiva la barra laterale
+  disconnect: Disconnetti
+  sortByColumn: "Ordina per {column}"
+
+iw_IL:
+  searchPlaceholder: הקלד פקודה או חיפוש...
+  noResults: לא נמצאו תוצאות.
+  navigation: ניווט
+  actions: פעולות
+  sortBy: מיין לפי
+  goToChat: עבור אל צ'אט
+  goToStorageUnits: עבור אל יחידות אחסון
+  goToGraph: עבור אל גרף
+  goToScratchpad: עבור אל Scratchpad
+  refreshData: רענן נתונים
+  exportData: ייצוא נתונים
+  importData: ייבוא ​​נתונים
+  toggleSidebar: החלף את הסרגל הצידי
+  disconnect: לְנַתֵק
+  sortByColumn: "מיין לפי {column}"
+
+ja_JP:
+  searchPlaceholder: コマンドを入力するか検索...
+  noResults: 結果が見つかりませんでした。
+  navigation: ナビゲーション
+  actions: アクション
+  sortBy: 並べ替え
+  goToChat: チャットに行く
+  goToStorageUnits: ストレージユニットに移動
+  goToGraph: グラフに移動
+  goToScratchpad: スクラッチパッドに移動
+  refreshData: データを更新する
+  exportData: データのエクスポート
+  importData: データのインポート
+  toggleSidebar: サイドバーの切り替え
+  disconnect: 切断する
+  sortByColumn: "{column} で並べ替え"
+
+ko_KR:
+  searchPlaceholder: 명령을 입력하거나 검색하세요...
+  noResults: 검색된 결과가 없습니다.
+  navigation: 항해
+  actions: 행위
+  sortBy: 정렬 기준
+  goToChat: 채팅으로 이동
+  goToStorageUnits: 저장 장치로 이동
+  goToGraph: 그래프로 이동
+  goToScratchpad: 스크래치패드로 이동
+  refreshData: 데이터 새로 고침
+  exportData: 데이터 내보내기
+  importData: 데이터 가져오기
+  toggleSidebar: 사이드바 전환
+  disconnect: 연결 끊기
+  sortByColumn: "{column} 기준으로 정렬"
+
+nl_NL:
+  searchPlaceholder: Typ een opdracht of zoek...
+  noResults: Geen resultaten gevonden.
+  navigation: Navigatie
+  actions: Acties
+  sortBy: Sorteer op
+  goToChat: Ga naar Chatten
+  goToStorageUnits: Ga naar Opslageenheden
+  goToGraph: Ga naar Grafiek
+  goToScratchpad: Ga naar Kladblok
+  refreshData: Gegevens vernieuwen
+  exportData: Gegevens exporteren
+  importData: Gegevens importeren
+  toggleSidebar: Schakel zijbalk in
+  disconnect: Verbreek de verbinding
+  sortByColumn: "Sorteren op {column}"
+
+pl_PL:
+  searchPlaceholder: Wpisz polecenie lub wyszukaj...
+  noResults: Nie znaleziono żadnych wyników.
+  navigation: Nawigacja
+  actions: Działania
+  sortBy: Sortuj według
+  goToChat: Przejdź do czatu
+  goToStorageUnits: Przejdź do Jednostki magazynowe
+  goToGraph: Przejdź do Wykresu
+  goToScratchpad: Przejdź do Scratchpada
+  refreshData: Odśwież dane
+  exportData: Eksportuj dane
+  importData: Importuj dane
+  toggleSidebar: Przełącz pasek boczny
+  disconnect: Odłączyć
+  sortByColumn: "Sortuj według {column}"
+
+pt_BR:
+  searchPlaceholder: Digite um comando ou pesquise...
+  noResults: Nenhum resultado encontrado.
+  navigation: Navegação
+  actions: Ações
+  sortBy: Ordenar por
+  goToChat: Vá para o bate-papo
+  goToStorageUnits: Vá para Unidades de Armazenamento
+  goToGraph: Ir para o gráfico
+  goToScratchpad: Vá para o Bloco de notas
+  refreshData: Atualizar dados
+  exportData: Exportar dados
+  importData: Importar dados
+  toggleSidebar: Alternar barra lateral
+  disconnect: Desconectar
+  sortByColumn: "Classificar por {column}"
+
+ro_RO:
+  searchPlaceholder: Tastați o comandă sau căutați...
+  noResults: Nu s-au găsit rezultate.
+  navigation: Navigare
+  actions: Acțiuni
+  sortBy: Filtrează după
+  goToChat: Accesați Chat
+  goToStorageUnits: Accesați Unitățile de depozitare
+  goToGraph: Mergeți la Grafic
+  goToScratchpad: Accesați Scratchpad
+  refreshData: Actualizează datele
+  exportData: Exportați date
+  importData: Importați date
+  toggleSidebar: Comutați bara laterală
+  disconnect: Deconecta
+  sortByColumn: "Sortați după {column}"
+
+ru_RU:
+  searchPlaceholder: Введите команду или выполните поиск...
+  noResults: Результаты не найдены.
+  navigation: Навигация
+  actions: Действия
+  sortBy: Сортировать по
+  goToChat: Перейти в чат
+  goToStorageUnits: Перейти к единицам хранения
+  goToGraph: Перейти к графику
+  goToScratchpad: Перейти в Электронный блокнот
+  refreshData: Обновить данные
+  exportData: Экспортировать данные
+  importData: Импортировать данные
+  toggleSidebar: Переключить боковую панель
+  disconnect: Отключить
+  sortByColumn: "Сортировать по {column}"
+
+sk_SK:
+  searchPlaceholder: Zadajte príkaz alebo hľadajte...
+  noResults: Nenašli sa žiadne výsledky.
+  navigation: Navigácia
+  actions: Akcie
+  sortBy: Zoradiť podľa
+  goToChat: Prejdite na Chat
+  goToStorageUnits: Prejdite na Úložné jednotky
+  goToGraph: Prejdite na Graf
+  goToScratchpad: Prejdite do aplikácie Scratchpad
+  refreshData: Obnoviť údaje
+  exportData: Exportovať údaje
+  importData: Importovať údaje
+  toggleSidebar: Prepnúť bočný panel
+  disconnect: Odpojiť
+  sortByColumn: "Zoradiť podľa {column}"
+
+sv_SE:
+  searchPlaceholder: Skriv ett kommando eller sök...
+  noResults: Inga resultat hittades.
+  navigation: Navigering
+  actions: Åtgärder
+  sortBy: Sortera efter
+  goToChat: Gå till Chatt
+  goToStorageUnits: Gå till Storage Units
+  goToGraph: Gå till Graph
+  goToScratchpad: Gå till Scratchpad
+  refreshData: Uppdatera data
+  exportData: Exportera data
+  importData: Importera data
+  toggleSidebar: Växla sidofält
+  disconnect: Koppla från
+  sortByColumn: "Sortera efter {column}"
+
+zh_CN:
+  searchPlaceholder: 输入命令或搜索...
+  noResults: 没有找到结果。
+  navigation: 导航
+  actions: 行动
+  sortBy: 排序方式
+  goToChat: 去聊天
+  goToStorageUnits: 前往存储单元
+  goToGraph: 转到图表
+  goToScratchpad: 前往便签本
+  refreshData: 刷新数据
+  exportData: 导出数据
+  importData: 导入数据
+  toggleSidebar: 切换侧边栏
+  disconnect: 断开
+  sortByColumn: "按 {column} 排序"
+
+zh_TW:
+  searchPlaceholder: 輸入命令或搜尋...
+  noResults: 沒有找到結果。
+  navigation: 導航
+  actions: 行動
+  sortBy: 排序方式
+  goToChat: 去聊天
+  goToStorageUnits: 前往儲存單元
+  goToGraph: 轉到圖表
+  goToScratchpad: 前往便籤本
+  refreshData: 重新整理數據
+  exportData: 匯出數據
+  importData: 導入數據
+  toggleSidebar: 切換側邊欄
+  disconnect: 斷開
+  sortByColumn: "按 {column} 排序"

@@ -6,3 +6,183 @@ en_US:
   noNodesTitle: No Nodes Selected
   noNodesDescription: Select {storageUnit} on the left to add them to the graph.
   createButton: Create {storageUnit}
+
+ar_AE:
+  title: رسم بياني
+  searchPlaceholder: جداول البحث
+  searchAriaLabel: جداول البحث
+  noItems: لا توجد عناصر
+  noNodesTitle: لم يتم تحديد أي عقد
+  noNodesDescription: "حدد {storageUnit} على اليسار لإضافتها إلى الرسم البياني."
+  createButton: "إنشاء {storageUnit}"
+
+de_DE:
+  title: Graph
+  searchPlaceholder: Suchtabellen
+  searchAriaLabel: Suchtabellen
+  noItems: Keine Artikel
+  noNodesTitle: Keine Knoten ausgewählt
+  noNodesDescription: "Wählen Sie links {storageUnit} aus, um sie dem Diagramm hinzuzufügen."
+  createButton: "Erstellen Sie {storageUnit}"
+
+el_GR:
+  title: Γραφική παράσταση
+  searchPlaceholder: Αναζήτηση πινάκων
+  searchAriaLabel: Αναζήτηση πινάκων
+  noItems: Δεν υπάρχουν αντικείμενα
+  noNodesTitle: Δεν επιλέχθηκαν κόμβοι
+  noNodesDescription: "Επιλέξτε {storageUnit} στα αριστερά για να τα προσθέσετε στο γράφημα."
+  createButton: "Δημιουργία {storageUnit}"
+
+en_GB:
+  title: Graph
+  searchPlaceholder: Search Tables
+  searchAriaLabel: Search Tables
+  noItems: No Items
+  noNodesTitle: No Nodes Selected
+  noNodesDescription: "Select {storageUnit} on the left to add them to the graph."
+  createButton: "Create {storageUnit}"
+
+es_ES:
+  title: Gráfico
+  searchPlaceholder: Buscar tablas
+  searchAriaLabel: Buscar tablas
+  noItems: Sin artículos
+  noNodesTitle: No hay nodos seleccionados
+  noNodesDescription: "Seleccione {storageUnit} a la izquierda para agregarlas al gráfico."
+  createButton: "Crear {storageUnit}"
+
+fi_FI:
+  title: Kaavio
+  searchPlaceholder: Etsi taulukoita
+  searchAriaLabel: Etsi taulukoita
+  noItems: Ei kohteita
+  noNodesTitle: Ei valittuja solmuja
+  noNodesDescription: Valitse [[0]]] vasemmalta lisätäksesi ne kaavioon.
+  createButton: "Luo {storageUnit}"
+
+fr_FR:
+  title: Graphique
+  searchPlaceholder: Rechercher des tableaux
+  searchAriaLabel: Rechercher des tableaux
+  noItems: Aucun article
+  noNodesTitle: Aucun nœud sélectionné
+  noNodesDescription: "Sélectionnez {storageUnit} sur la gauche pour les ajouter au graphique."
+  createButton: "Créer {storageUnit}"
+
+it_IT:
+  title: Grafico
+  searchPlaceholder: Cerca tabelle
+  searchAriaLabel: Cerca tabelle
+  noItems: Nessun articolo
+  noNodesTitle: Nessun nodo selezionato
+  noNodesDescription: "Seleziona {storageUnit} a sinistra per aggiungerli al grafico."
+  createButton: "Crea {storageUnit}"
+
+iw_IL:
+  title: גרָף
+  searchPlaceholder: חפש בטבלאות
+  searchAriaLabel: חפש בטבלאות
+  noItems: אין פריטים
+  noNodesTitle: לא נבחרו צמתים
+  noNodesDescription: "בחר {storageUnit} בצד שמאל כדי להוסיף אותם לתרשים."
+  createButton: "צור {storageUnit}"
+
+ja_JP:
+  title: グラフ
+  searchPlaceholder: 検索テーブル
+  searchAriaLabel: 検索テーブル
+  noItems: アイテムがありません
+  noNodesTitle: ノードが選択されていません
+  noNodesDescription: "左側の {storageUnit} を選択してグラフに追加します。"
+  createButton: "{storageUnit} を作成します"
+
+ko_KR:
+  title: 그래프
+  searchPlaceholder: 테이블 검색
+  searchAriaLabel: 테이블 검색
+  noItems: 항목 없음
+  noNodesTitle: 선택한 노드가 없습니다.
+  noNodesDescription: "그래프에 추가하려면 왼쪽의 {storageUnit}을 선택하세요."
+  createButton: "{storageUnit} 생성"
+
+nl_NL:
+  title: Grafiek
+  searchPlaceholder: Zoek tabellen
+  searchAriaLabel: Zoek tabellen
+  noItems: Geen artikelen
+  noNodesTitle: Geen knooppunten geselecteerd
+  noNodesDescription: "Selecteer {storageUnit} aan de linkerkant om ze aan de grafiek toe te voegen."
+  createButton: "Maak {storageUnit}"
+
+pl_PL:
+  title: Wykres
+  searchPlaceholder: Przeszukaj tabele
+  searchAriaLabel: Przeszukaj tabele
+  noItems: Brak przedmiotów
+  noNodesTitle: Nie wybrano żadnych węzłów
+  noNodesDescription: "Wybierz {storageUnit} po lewej stronie, aby dodać je do wykresu."
+  createButton: "Utwórz {storageUnit}"
+
+pt_BR:
+  title: Gráfico
+  searchPlaceholder: Pesquisar tabelas
+  searchAriaLabel: Pesquisar tabelas
+  noItems: Nenhum item
+  noNodesTitle: Nenhum nó selecionado
+  noNodesDescription: "Selecione {storageUnit} à esquerda para adicioná-los ao gráfico."
+  createButton: "Criar {storageUnit}"
+
+ro_RO:
+  title: Grafic
+  searchPlaceholder: Căutați în tabele
+  searchAriaLabel: Căutați în tabele
+  noItems: Fără articole
+  noNodesTitle: Nu au fost selectate noduri
+  noNodesDescription: "Selectați {storageUnit} din stânga pentru a le adăuga la grafic."
+  createButton: "Creați {storageUnit}"
+
+ru_RU:
+  title: График
+  searchPlaceholder: Поиск по таблицам
+  searchAriaLabel: Поиск по таблицам
+  noItems: Нет товаров
+  noNodesTitle: Узлы не выбраны
+  noNodesDescription: "Выберите {storageUnit} слева, чтобы добавить их на график."
+  createButton: "Создать {storageUnit}"
+
+sk_SK:
+  title: Graf
+  searchPlaceholder: Prehľadávať tabuľky
+  searchAriaLabel: Prehľadávať tabuľky
+  noItems: Žiadne položky
+  noNodesTitle: Nie sú vybraté žiadne uzly
+  noNodesDescription: "Ak ich chcete pridať do grafu, vyberte {storageUnit} vľavo."
+  createButton: "Vytvoriť {storageUnit}"
+
+sv_SE:
+  title: Graf
+  searchPlaceholder: Sök tabeller
+  searchAriaLabel: Sök tabeller
+  noItems: Inga föremål
+  noNodesTitle: Inga noder valda
+  noNodesDescription: "Välj {storageUnit} till vänster för att lägga till dem i grafen."
+  createButton: "Skapa {storageUnit}"
+
+zh_CN:
+  title: 图形
+  searchPlaceholder: 搜索表
+  searchAriaLabel: 搜索表
+  noItems: 没有商品
+  noNodesTitle: 未选择节点
+  noNodesDescription: "选择左侧的 {storageUnit} 将它们添加到图表中。"
+  createButton: "创建{storageUnit}"
+
+zh_TW:
+  title: 圖形
+  searchPlaceholder: 搜尋表
+  searchAriaLabel: 搜尋表
+  noItems: 沒有商品
+  noNodesTitle: 未選擇節點
+  noNodesDescription: "選擇左側的 {storageUnit} 將它們加入圖表。"
+  createButton: "創建{storageUnit}"

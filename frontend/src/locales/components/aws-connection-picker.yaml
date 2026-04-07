@@ -27,3 +27,563 @@ en_US:
   helpElasticacheDesc: Redis clusters
   helpDocumentdbDesc: MongoDB-compatible clusters
   helpCredentialNote: "Note: {appName} discovers connection endpoints from AWS but cannot access database passwords. You'll need to enter credentials when connecting."
+
+ar_AE:
+  connectAwsAccount: قم بتوصيل حساب AWS لاكتشاف قواعد البيانات
+  addAwsAccount: أضف حساب AWS
+  awsConnections: اتصالات AWS
+  refresh: ينعش
+  addProvider: إضافة موفر
+  noDiscoveredConnections: لم يتم اكتشاف أي قواعد بيانات. أضف حساب AWS لاكتشاف مثيلات RDS وElastiCache وDocumentDB تلقائيًا.
+  refreshPartialError: تعذر اكتشاف بعض خدمات AWS. تحقق من أذونات IAM.
+  clickToFillForm: انقر فوق اتصال لملء نموذج تسجيل الدخول أعلاه
+  connectionSelected: تم تحميل الإعدادات - أدخل بيانات الاعتماد الخاصة بك
+  proxy: الوكيل
+  readOnly: للقراءة فقط
+  unreachable: لا يمكن الوصول إليه
+  unreachableTooltip: لا يستطيع WhoDB الوصول إلى نقطة النهاية هذه. تأكد من أن WhoDB لديه حق الوصول إلى الشبكة (نفس VPC أو النظير أو النفق).
+  helpLabel: كيفية إعداد خدمة AWS
+  helpTitle: اكتشاف قاعدة بيانات AWS
+  helpIntro: "يمكن لـ {appName} اكتشاف قواعد بيانات AWS الخاصة بك تلقائيًا. أضف حساب AWS للبدء."
+  helpAuthMethods: "طرق المصادقة:"
+  helpAuthDefault: تقصير
+  helpAuthDefaultDesc: يستخدم ~/.aws/credentials، أو env vars، أو دور IAM
+  helpAuthProfile: حساب تعريفي
+  helpAuthProfileDesc: يستخدم ملف تعريف مسمى من ~/.aws/credentials
+  helpServices: "الخدمات المدعومة:"
+  helpRdsDesc: بوستجري إس كيو إل، ماي إس كيو إل، ماريا دي بي
+  helpElasticacheDesc: مجموعات ريديس
+  helpDocumentdbDesc: مجموعات متوافقة مع MongoDB
+  helpCredentialNote: "ملاحظة: يكتشف {appName} نقاط نهاية الاتصال من AWS ولكن لا يمكنه الوصول إلى كلمات مرور قاعدة البيانات. ستحتاج إلى إدخال بيانات الاعتماد عند الاتصال."
+
+de_DE:
+  connectAwsAccount: Verbinden Sie ein AWS-Konto, um Datenbanken zu entdecken
+  addAwsAccount: AWS-Konto hinzufügen
+  awsConnections: AWS-Verbindungen
+  refresh: Aktualisieren
+  addProvider: Anbieter hinzufügen
+  noDiscoveredConnections: Keine Datenbanken entdeckt. Fügen Sie ein AWS-Konto hinzu, um RDS-, ElastiCache- und DocumentDB-Instanzen automatisch zu erkennen.
+  refreshPartialError: Einige AWS-Dienste konnten nicht erkannt werden. Überprüfen Sie die IAM-Berechtigungen.
+  clickToFillForm: Klicken Sie auf eine Verbindung, um das Anmeldeformular oben auszufüllen
+  connectionSelected: Einstellungen geladen – geben Sie Ihre Anmeldeinformationen ein
+  proxy: Stellvertreterin
+  readOnly: Schreibgeschützt
+  unreachable: Unerreichbar
+  unreachableTooltip: WhoDB kann diesen Endpunkt nicht erreichen. Stellen Sie sicher, dass WhoDB über Netzwerkzugriff verfügt (gleiche VPC, gleiches Peering oder denselben Tunnel).
+  helpLabel: So richten Sie AWS ein
+  helpTitle: AWS-Datenbankerkennung
+  helpIntro: "{appName} kann Ihre AWS-Datenbanken automatisch erkennen. Fügen Sie ein AWS-Konto hinzu, um loszulegen."
+  helpAuthMethods: "Authentifizierungsmethoden:"
+  helpAuthDefault: Standard
+  helpAuthDefaultDesc: verwendet ~/.aws/credentials, Env-Variablen oder die IAM-Rolle
+  helpAuthProfile: Profil
+  helpAuthProfileDesc: verwendet ein benanntes Profil aus ~/.aws/credentials
+  helpServices: "Unterstützte Dienste:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Redis-Cluster
+  helpDocumentdbDesc: MongoDB-kompatible Cluster
+  helpCredentialNote: "Hinweis: {appName} erkennt Verbindungsendpunkte von AWS, kann jedoch nicht auf Datenbankkennwörter zugreifen. Beim Herstellen der Verbindung müssen Sie Anmeldeinformationen eingeben."
+
+el_GR:
+  connectAwsAccount: Συνδέστε έναν λογαριασμό AWS για να ανακαλύψετε βάσεις δεδομένων
+  addAwsAccount: Προσθήκη λογαριασμού AWS
+  awsConnections: Συνδέσεις AWS
+  refresh: Φρεσκάρω
+  addProvider: Προσθήκη παρόχου
+  noDiscoveredConnections: Δεν ανακαλύφθηκαν βάσεις δεδομένων. Προσθέστε έναν λογαριασμό AWS για αυτόματη ανακάλυψη παρουσιών RDS, ElastiCache και DocumentDB.
+  refreshPartialError: Δεν ήταν δυνατή η ανακάλυψη ορισμένων υπηρεσιών AWS. Ελέγξτε τα δικαιώματα IAM.
+  clickToFillForm: Κάντε κλικ σε μια σύνδεση για να συμπληρώσετε την παραπάνω φόρμα σύνδεσης
+  connectionSelected: Φορτώθηκαν οι ρυθμίσεις — εισαγάγετε τα διαπιστευτήριά σας
+  proxy: Πληρεξούσιο
+  readOnly: Μόνο για ανάγνωση
+  unreachable: Απρόσιτος
+  unreachableTooltip: Το WhoDB δεν μπορεί να φτάσει σε αυτό το τελικό σημείο. Βεβαιωθείτε ότι το WhoDB έχει πρόσβαση στο δίκτυο (ίδιο VPC, peering ή σήραγγα).
+  helpLabel: Πώς να ρυθμίσετε το AWS
+  helpTitle: Ανακάλυψη βάσεων δεδομένων AWS
+  helpIntro: "Ο {appName} μπορεί να ανακαλύψει αυτόματα τις βάσεις δεδομένων AWS σας. Προσθέστε έναν λογαριασμό AWS για να ξεκινήσετε."
+  helpAuthMethods: "Μέθοδοι ελέγχου ταυτότητας:"
+  helpAuthDefault: Αθέτηση
+  helpAuthDefaultDesc: χρησιμοποιεί ~/.aws/credentials, env vars ή ρόλο IAM
+  helpAuthProfile: Προφίλ
+  helpAuthProfileDesc: χρησιμοποιεί ένα επώνυμο προφίλ από ~/.aws/credentials
+  helpServices: "Υποστηριζόμενες υπηρεσίες:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Συστάδες Redis
+  helpDocumentdbDesc: Συμπλέγματα συμβατά με MongoDB
+  helpCredentialNote: "Σημείωση: Το {appName} ανακαλύπτει τελικά σημεία σύνδεσης από το AWS αλλά δεν μπορεί να έχει πρόσβαση σε κωδικούς πρόσβασης βάσης δεδομένων. Θα χρειαστεί να εισαγάγετε διαπιστευτήρια κατά τη σύνδεση."
+
+en_GB:
+  connectAwsAccount: Connect an AWS account to discover databases
+  addAwsAccount: Add AWS Account
+  awsConnections: AWS Connections
+  refresh: Refresh
+  addProvider: Add Provider
+  noDiscoveredConnections: No databases discovered. Add an AWS account to auto-discover RDS, ElastiCache, and DocumentDB instances.
+  refreshPartialError: Some AWS services could not be discovered. Check IAM permissions.
+  clickToFillForm: Click a connection to fill the login form above
+  connectionSelected: Settings loaded — enter your credentials
+  proxy: Proxy
+  readOnly: Read-Only
+  unreachable: Unreachable
+  unreachableTooltip: WhoDB cannot reach this endpoint. Ensure WhoDB has network access (same VPC, peering, or tunnel).
+  helpLabel: How to set up AWS
+  helpTitle: AWS Database Discovery
+  helpIntro: "{appName} can automatically discover your AWS databases. Add an AWS account to get started."
+  helpAuthMethods: "Authentication Methods:"
+  helpAuthDefault: Default
+  helpAuthDefaultDesc: uses ~/.aws/credentials, env vars, or IAM role
+  helpAuthProfile: Profile
+  helpAuthProfileDesc: uses a named profile from ~/.aws/credentials
+  helpServices: "Supported Services:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Redis clusters
+  helpDocumentdbDesc: MongoDB-compatible clusters
+  helpCredentialNote: "Note: {appName} discovers connection endpoints from AWS but cannot access database passwords. You'll need to enter credentials when connecting."
+
+es_ES:
+  connectAwsAccount: Conecte una cuenta de AWS para descubrir bases de datos
+  addAwsAccount: Agregar cuenta de AWS
+  awsConnections: Conexiones de AWS
+  refresh: Refrescar
+  addProvider: Agregar proveedor
+  noDiscoveredConnections: No se descubrieron bases de datos. Agregue una cuenta de AWS para descubrir automáticamente instancias de RDS, ElastiCache y DocumentDB.
+  refreshPartialError: No se pudieron descubrir algunos servicios de AWS. Verifique los permisos de IAM.
+  clickToFillForm: Haga clic en una conexión para completar el formulario de inicio de sesión de arriba
+  connectionSelected: "Configuración cargada: ingrese sus credenciales"
+  proxy: Apoderada
+  readOnly: Sólo lectura
+  unreachable: Inalcanzable
+  unreachableTooltip: WhoDB no puede llegar a este punto final. Asegúrese de que WhoDB tenga acceso a la red (la misma VPC, emparejamiento o túnel).
+  helpLabel: Cómo configurar AWS
+  helpTitle: Descubrimiento de bases de datos de AWS
+  helpIntro: "{appName} puede descubrir automáticamente sus bases de datos de AWS. Agregue una cuenta de AWS para comenzar."
+  helpAuthMethods: "Métodos de autenticación:"
+  helpAuthDefault: Por defecto
+  helpAuthDefaultDesc: utiliza ~/.aws/credentials, env vars o función IAM
+  helpAuthProfile: Perfil
+  helpAuthProfileDesc: utiliza un perfil con nombre de ~/.aws/credentials
+  helpServices: "Servicios compatibles:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Clústeres de Redis
+  helpDocumentdbDesc: Clústeres compatibles con MongoDB
+  helpCredentialNote: "Nota: {appName} descubre puntos finales de conexión de AWS pero no puede acceder a las contraseñas de la base de datos. Deberá ingresar las credenciales al conectarse."
+
+fi_FI:
+  connectAwsAccount: Yhdistä AWS-tili löytääksesi tietokantoja
+  addAwsAccount: Lisää AWS-tili
+  awsConnections: AWS-yhteydet
+  refresh: Päivitä
+  addProvider: Lisää palveluntarjoaja
+  noDiscoveredConnections: Tietokantoja ei löytynyt. Lisää AWS-tili RDS-, ElastiCache- ja DocumentDB-esiintymien automaattiseen löytämiseen.
+  refreshPartialError: Joitakin AWS-palveluita ei voitu löytää. Tarkista IAM-oikeudet.
+  clickToFillForm: Napsauta yhteyttä täyttääksesi yllä olevan kirjautumislomakkeen
+  connectionSelected: Asetukset ladattu — anna kirjautumistietosi
+  proxy: Välityspalvelin
+  readOnly: Vain luku
+  unreachable: tavoittamaton
+  unreachableTooltip: "WhoDB ei voi saavuttaa tätä päätepistettä. Varmista, että WhoDB:llä on verkkoyhteys (sama VPC, peering tai tunneli)."
+  helpLabel: Kuinka ottaa AWS käyttöön
+  helpTitle: AWS-tietokannan etsintä
+  helpIntro: "{appName} voi löytää automaattisesti AWS-tietokantosi. Aloita lisäämällä AWS-tili."
+  helpAuthMethods: "Todennusmenetelmät:"
+  helpAuthDefault: Oletus
+  helpAuthDefaultDesc: käyttää ~/.aws/credentials-, env vars- tai IAM-roolia
+  helpAuthProfile: Profiili
+  helpAuthProfileDesc: käyttää nimettyä profiilia osoitteesta ~/.aws/credentials
+  helpServices: "Tuetut palvelut:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Redis-klusterit
+  helpDocumentdbDesc: MongoDB-yhteensopivat klusterit
+  helpCredentialNote: "Huomautus: {appName} löytää yhteyden päätepisteet AWS:stä, mutta ei voi käyttää tietokannan salasanoja. Sinun on syötettävä tunnistetiedot muodostaessasi yhteyttä."
+
+fr_FR:
+  connectAwsAccount: Connectez un compte AWS pour découvrir des bases de données
+  addAwsAccount: Ajouter un compte AWS
+  awsConnections: Connexions AWS
+  refresh: Rafraîchir
+  addProvider: Ajouter un fournisseur
+  noDiscoveredConnections: Aucune base de données découverte. Ajoutez un compte AWS pour découvrir automatiquement les instances RDS, ElastiCache et DocumentDB.
+  refreshPartialError: Certains services AWS n'ont pas pu être découverts. Vérifiez les autorisations IAM.
+  clickToFillForm: Cliquez sur une connexion pour remplir le formulaire de connexion ci-dessus
+  connectionSelected: Paramètres chargés - entrez vos informations d'identification
+  proxy: Procuration
+  readOnly: Lecture seule
+  unreachable: Injoignable
+  unreachableTooltip: WhoDB ne peut pas atteindre ce point de terminaison. Assurez-vous que WhoDB dispose d'un accès au réseau (même VPC, peering ou tunnel).
+  helpLabel: Comment configurer AWS
+  helpTitle: Découverte de base de données AWS
+  helpIntro: "{appName} peut découvrir automatiquement vos bases de données AWS. Ajoutez un compte AWS pour commencer."
+  helpAuthMethods: "Méthodes d'authentification :"
+  helpAuthDefault: Défaut
+  helpAuthDefaultDesc: utilise ~/.aws/credentials, des variables d'environnement ou un rôle IAM
+  helpAuthProfile: Profil
+  helpAuthProfileDesc: utilise un profil nommé de ~/.aws/credentials
+  helpServices: "Services pris en charge :"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Clusters Redis
+  helpDocumentdbDesc: Clusters compatibles MongoDB
+  helpCredentialNote: "Remarque : {appName} découvre les points de terminaison de connexion à partir d'AWS mais ne peut pas accéder aux mots de passe de la base de données. Vous devrez saisir vos informations d'identification lors de la connexion."
+
+it_IT:
+  connectAwsAccount: Connetti un account AWS per scoprire i database
+  addAwsAccount: Aggiungi un account AWS
+  awsConnections: Connessioni AWS
+  refresh: Aggiorna
+  addProvider: Aggiungi fornitore
+  noDiscoveredConnections: Nessun database scoperto. Aggiungi un account AWS per individuare automaticamente le istanze RDS, ElastiCache e DocumentDB.
+  refreshPartialError: Impossibile individuare alcuni servizi AWS. Controlla le autorizzazioni IAM.
+  clickToFillForm: Fare clic su una connessione per compilare il modulo di accesso sopra
+  connectionSelected: "Impostazioni caricate: inserisci le tue credenziali"
+  proxy: Procura
+  readOnly: Sola lettura
+  unreachable: Irraggiungibile
+  unreachableTooltip: WhoDB non può raggiungere questo endpoint. Assicurati che WhoDB abbia accesso alla rete (stesso VPC, peering o tunnel).
+  helpLabel: Come configurare AWS
+  helpTitle: Individuazione del database AWS
+  helpIntro: "{appName} può rilevare automaticamente i tuoi database AWS. Aggiungi un account AWS per iniziare."
+  helpAuthMethods: "Metodi di autenticazione:"
+  helpAuthDefault: Predefinita
+  helpAuthDefaultDesc: utilizza ~/.aws/credentials, env vars o il ruolo IAM
+  helpAuthProfile: Profilo
+  helpAuthProfileDesc: utilizza un profilo denominato da ~/.aws/credentials
+  helpServices: "Servizi supportati:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Cluster Redis
+  helpDocumentdbDesc: Cluster compatibili con MongoDB
+  helpCredentialNote: "Nota: {appName} rileva gli endpoint di connessione da AWS ma non può accedere alle password del database. Dovrai inserire le credenziali durante la connessione."
+
+iw_IL:
+  connectAwsAccount: חבר חשבון AWS כדי לגלות מסדי נתונים
+  addAwsAccount: הוסף חשבון AWS
+  awsConnections: חיבורי AWS
+  refresh: לְרַעֲנֵן
+  addProvider: הוסף ספק
+  noDiscoveredConnections: לא התגלו מסדי נתונים. הוסף חשבון AWS כדי לגלות אוטומטית מופעי RDS, ElastiCache ו-DocumentDB.
+  refreshPartialError: לא ניתן היה לגלות חלק משירותי AWS. בדוק את הרשאות IAM.
+  clickToFillForm: לחץ על חיבור כדי למלא את טופס ההתחברות למעלה
+  connectionSelected: הגדרות נטענו - הזן את האישורים שלך
+  proxy: פרוקסי
+  readOnly: לקריאה בלבד
+  unreachable: בלתי ניתן להשגה
+  unreachableTooltip: WhoDB לא יכול להגיע לנקודת קצה זו. ודא של-WhoDB יש גישה לרשת (אותו VPC, הצצה או מנהרה).
+  helpLabel: כיצד להגדיר AWS
+  helpTitle: גילוי מסדי נתונים של AWS
+  helpIntro: "{appName} יכול לגלות אוטומטית את מסדי הנתונים של AWS שלך. הוסף חשבון AWS כדי להתחיל."
+  helpAuthMethods: "שיטות אימות:"
+  helpAuthDefault: בְּרִירַת מֶחדָל
+  helpAuthDefaultDesc: משתמש ב-~/.aws/credentials, env vars או תפקיד IAM
+  helpAuthProfile: פּרוֹפִיל
+  helpAuthProfileDesc: משתמש בפרופיל בעל שם מ-~/.aws/credentials
+  helpServices: "שירותים נתמכים:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: אשכולות Redis
+  helpDocumentdbDesc: אשכולות תואמי MongoDB
+  helpCredentialNote: "הערה: {appName} מגלה נקודות קצה של חיבור מ-AWS אך אינו יכול לגשת לסיסמאות של מסד נתונים. יהיה עליך להזין אישורים בעת החיבור."
+
+ja_JP:
+  connectAwsAccount: AWS アカウントに接続してデータベースを検出する
+  addAwsAccount: AWSアカウントを追加
+  awsConnections: AWS接続
+  refresh: リフレッシュ
+  addProvider: プロバイダーの追加
+  noDiscoveredConnections: データベースが見つかりませんでした。 RDS、ElastiCache、DocumentDB インスタンスを自動検出するには、AWS アカウントを追加します。
+  refreshPartialError: 一部の AWS サービスが検出できませんでした。 IAM権限を確認してください。
+  clickToFillForm: 接続をクリックして上のログイン フォームに入力します
+  connectionSelected: 設定が読み込まれました — 資格情報を入力してください
+  proxy: プロキシ
+  readOnly: 読み取り専用
+  unreachable: 到達不能
+  unreachableTooltip: WhoDB はこのエンドポイントに到達できません。 WhoDB にネットワーク アクセス (同じ VPC、ピアリング、またはトンネル) があることを確認します。
+  helpLabel: AWSの設定方法
+  helpTitle: AWS データベースの検出
+  helpIntro: "{appName} は AWS データベースを自動的に検出できます。 開始するには、AWS アカウントを追加してください。"
+  helpAuthMethods: "認証方法:"
+  helpAuthDefault: デフォルト
+  helpAuthDefaultDesc: ~/.aws/credentials、環境変数、または IAM ロールを使用します
+  helpAuthProfile: プロフィール
+  helpAuthProfileDesc: ~/.aws/credentials の名前付きプロファイルを使用します
+  helpServices: "サポートされているサービス:"
+  helpRdsDesc: PostgreSQL、MySQL、MariaDB
+  helpElasticacheDesc: Redis クラスター
+  helpDocumentdbDesc: MongoDB 互換クラスター
+  helpCredentialNote: "注: {appName} は AWS から接続エンドポイントを検出しますが、データベースのパスワードにはアクセスできません。 接続時に資格情報を入力する必要があります。"
+
+ko_KR:
+  connectAwsAccount: AWS 계정을 연결하여 데이터베이스 검색
+  addAwsAccount: AWS 계정 추가
+  awsConnections: AWS 연결
+  refresh: 새로 고치다
+  addProvider: 공급자 추가
+  noDiscoveredConnections: 검색된 데이터베이스가 없습니다. RDS, ElastiCache 및 DocumentDB 인스턴스를 자동 검색하려면 AWS 계정을 추가하세요.
+  refreshPartialError: 일부 AWS 서비스를 검색할 수 없습니다. IAM 권한을 확인하세요.
+  clickToFillForm: 위의 로그인 양식을 작성하려면 연결을 클릭하세요.
+  connectionSelected: 설정 로드됨 - 자격 증명을 입력하세요
+  proxy: 대리
+  readOnly: 읽기 전용
+  unreachable: 연결할 수 없음
+  unreachableTooltip: WhoDB는 이 끝점에 도달할 수 없습니다. WhoDB에 네트워크 액세스 권한(동일한 VPC, 피어링 또는 터널)이 있는지 확인하세요.
+  helpLabel: AWS를 설정하는 방법
+  helpTitle: AWS 데이터베이스 검색
+  helpIntro: "{appName}은(는) AWS 데이터베이스를 자동으로 검색할 수 있습니다. 시작하려면 AWS 계정을 추가하세요."
+  helpAuthMethods: "인증 방법:"
+  helpAuthDefault: 기본
+  helpAuthDefaultDesc: ~/.aws/credentials, env vars 또는 IAM 역할을 사용합니다.
+  helpAuthProfile: 윤곽
+  helpAuthProfileDesc: ~/.aws/credentials의 명명된 프로필을 사용합니다.
+  helpServices: "지원되는 서비스:"
+  helpRdsDesc: 포스트그레SQL, MySQL, 마리아DB
+  helpElasticacheDesc: Redis 클러스터
+  helpDocumentdbDesc: MongoDB 호환 클러스터
+  helpCredentialNote: "참고: {appName}은 AWS에서 연결 엔드포인트를 검색하지만 데이터베이스 비밀번호에 액세스할 수 없습니다. 연결할 때 자격 증명을 입력해야 합니다."
+
+nl_NL:
+  connectAwsAccount: Verbind een AWS-account om databases te ontdekken
+  addAwsAccount: AWS-account toevoegen
+  awsConnections: AWS-verbindingen
+  refresh: Vernieuwen
+  addProvider: Aanbieder toevoegen
+  noDiscoveredConnections: Geen databases ontdekt. Voeg een AWS-account toe om RDS-, ElastiCache- en DocumentDB-instanties automatisch te ontdekken.
+  refreshPartialError: Sommige AWS-services konden niet worden ontdekt. Controleer IAM-rechten.
+  clickToFillForm: Klik op een verbinding om het bovenstaande inlogformulier in te vullen
+  connectionSelected: "Instellingen geladen: voer uw inloggegevens in"
+  proxy: Volmacht
+  readOnly: Alleen-lezen
+  unreachable: Onbereikbaar
+  unreachableTooltip: WhoDB kan dit eindpunt niet bereiken. Zorg ervoor dat WhoDB netwerktoegang heeft (dezelfde VPC, peering of tunnel).
+  helpLabel: Hoe AWS in te stellen
+  helpTitle: AWS-databasedetectie
+  helpIntro: "{appName} kan uw AWS-databases automatisch ontdekken. Voeg een AWS-account toe om aan de slag te gaan."
+  helpAuthMethods: "Authenticatiemethoden:"
+  helpAuthDefault: Standaard
+  helpAuthDefaultDesc: gebruikt ~/.aws/credentials, env vars of IAM-rol
+  helpAuthProfile: Profiel
+  helpAuthProfileDesc: gebruikt een benoemd profiel uit ~/.aws/credentials
+  helpServices: "Ondersteunde services:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Redis-clusters
+  helpDocumentdbDesc: MongoDB-compatibele clusters
+  helpCredentialNote: "Opmerking: {appName} ontdekt verbindingseindpunten van AWS, maar heeft geen toegang tot databasewachtwoorden. U moet inloggegevens invoeren wanneer u verbinding maakt."
+
+pl_PL:
+  connectAwsAccount: Połącz konto AWS, aby odkrywać bazy danych
+  addAwsAccount: Dodaj konto AWS
+  awsConnections: Połączenia AWS-a
+  refresh: Odświeżać
+  addProvider: Dodaj dostawcę
+  noDiscoveredConnections: Nie odkryto żadnych baz danych. Dodaj konto AWS, aby automatycznie wykrywać instancje RDS, ElastiCache i DocumentDB.
+  refreshPartialError: Nie udało się wykryć niektórych usług AWS. Sprawdź uprawnienia IAM.
+  clickToFillForm: Kliknij połączenie, aby wypełnić powyższy formularz logowania
+  connectionSelected: Ustawienia zostały załadowane — wprowadź swoje dane uwierzytelniające
+  proxy: Pełnomocnik
+  readOnly: Tylko do odczytu
+  unreachable: Nieosiągalny
+  unreachableTooltip: WhoDB nie może dotrzeć do tego punktu końcowego. Upewnij się, że WhoDB ma dostęp do sieci (ta sama VPC, peering lub tunel).
+  helpLabel: Jak skonfigurować AWS
+  helpTitle: Odkrywanie bazy danych AWS
+  helpIntro: "{appName} może automatycznie wykryć Twoje bazy danych AWS. Aby rozpocząć, dodaj konto AWS."
+  helpAuthMethods: "Metody uwierzytelniania:"
+  helpAuthDefault: Domyślny
+  helpAuthDefaultDesc: używa ~/.aws/credentials, env vars lub roli IAM
+  helpAuthProfile: Profil
+  helpAuthProfileDesc: używa nazwanego profilu z ~/.aws/credentials
+  helpServices: "Obsługiwane usługi:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Klastry Redisa
+  helpDocumentdbDesc: Klastry kompatybilne z MongoDB
+  helpCredentialNote: "Uwaga: {appName} wykrywa punkty końcowe połączenia z AWS, ale nie może uzyskać dostępu do haseł do bazy danych. Podczas łączenia będziesz musiał wprowadzić dane uwierzytelniające."
+
+pt_BR:
+  connectAwsAccount: Conecte uma conta AWS para descobrir bancos de dados
+  addAwsAccount: Adicionar conta AWS
+  awsConnections: Conexões AWS
+  refresh: Atualizar
+  addProvider: Adicionar provedor
+  noDiscoveredConnections: Nenhum banco de dados descoberto. Adicione uma conta da AWS para descobrir automaticamente instâncias RDS, ElastiCache e DocumentDB.
+  refreshPartialError: Alguns serviços da AWS não puderam ser descobertos. Verifique as permissões do IAM.
+  clickToFillForm: Clique em uma conexão para preencher o formulário de login acima
+  connectionSelected: Configurações carregadas – insira suas credenciais
+  proxy: Procurador
+  readOnly: Somente leitura
+  unreachable: Inacessível
+  unreachableTooltip: WhoDB não pode alcançar este endpoint. Certifique-se de que WhoDB tenha acesso à rede (mesma VPC, peering ou túnel).
+  helpLabel: Como configurar AWS
+  helpTitle: Descoberta de banco de dados AWS
+  helpIntro: "{appName} pode descobrir automaticamente seus bancos de dados AWS. Adicione uma conta AWS para começar."
+  helpAuthMethods: "Métodos de autenticação:"
+  helpAuthDefault: Padrão
+  helpAuthDefaultDesc: usa ~/.aws/credentials, env vars ou função IAM
+  helpAuthProfile: Perfil
+  helpAuthProfileDesc: usa um perfil nomeado de ~/.aws/credentials
+  helpServices: "Serviços suportados:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Clusters Redis
+  helpDocumentdbDesc: Clusters compatíveis com MongoDB
+  helpCredentialNote: "Observação: {appName} descobre endpoints de conexão da AWS, mas não consegue acessar senhas de banco de dados. Você precisará inserir credenciais ao se conectar."
+
+ro_RO:
+  connectAwsAccount: Conectați un cont AWS pentru a descoperi baze de date
+  addAwsAccount: Adăugați un cont AWS
+  awsConnections: Conexiuni AWS
+  refresh: Reîmprospăta
+  addProvider: Adăugați furnizorul
+  noDiscoveredConnections: Nu au fost descoperite baze de date. Adăugați un cont AWS pentru a descoperi automat instanțe RDS, ElastiCache și DocumentDB.
+  refreshPartialError: Unele servicii AWS nu au putut fi descoperite. Verificați permisiunile IAM.
+  clickToFillForm: Faceți clic pe o conexiune pentru a completa formularul de conectare de mai sus
+  connectionSelected: Setări încărcate — introduceți acreditările dvs
+  proxy: Proxy
+  readOnly: Numai citire
+  unreachable: Inaccesibil
+  unreachableTooltip: WhoDB nu poate ajunge la acest punct final. Asigurați-vă că WhoDB are acces la rețea (același VPC, peering sau tunel).
+  helpLabel: Cum se configurează AWS
+  helpTitle: AWS Database Discovery
+  helpIntro: "{appName} vă poate descoperi automat bazele de date AWS. Adăugați un cont AWS pentru a începe."
+  helpAuthMethods: "Metode de autentificare:"
+  helpAuthDefault: Implicit
+  helpAuthDefaultDesc: folosește ~/.aws/credentials, env vars sau rol IAM
+  helpAuthProfile: Profil
+  helpAuthProfileDesc: folosește un profil numit din ~/.aws/credentials
+  helpServices: "Servicii suportate:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: clustere Redis
+  helpDocumentdbDesc: Clustere compatibile cu MongoDB
+  helpCredentialNote: "Notă: {appName} descoperă punctele finale de conectare din AWS, dar nu poate accesa parolele bazei de date. Va trebui să introduceți acreditările atunci când vă conectați."
+
+ru_RU:
+  connectAwsAccount: Подключите учетную запись AWS для обнаружения баз данных
+  addAwsAccount: Добавить учетную запись AWS
+  awsConnections: Подключения к AWS
+  refresh: Обновить
+  addProvider: Добавить поставщика
+  noDiscoveredConnections: Базы данных не обнаружены. Добавьте учетную запись AWS для автоматического обнаружения экземпляров RDS, ElastiCache и DocumentDB.
+  refreshPartialError: Некоторые сервисы AWS не удалось обнаружить. Проверьте разрешения IAM.
+  clickToFillForm: Нажмите на соединение, чтобы заполнить форму входа выше.
+  connectionSelected: Настройки загружены — введите свои учетные данные
+  proxy: Прокси
+  readOnly: Только чтение
+  unreachable: недостижимый
+  unreachableTooltip: WhoDB не может достичь этой конечной точки. Убедитесь, что WhoDB имеет доступ к сети (тот же VPC, пиринг или туннель).
+  helpLabel: Как настроить АВС
+  helpTitle: Обнаружение базы данных AWS
+  helpIntro: "{appName} может автоматически обнаруживать ваши базы данных AWS. Добавьте учетную запись AWS, чтобы начать."
+  helpAuthMethods: "Методы аутентификации:"
+  helpAuthDefault: По умолчанию
+  helpAuthDefaultDesc: использует ~/.aws/credentials, переменные среды или роль IAM
+  helpAuthProfile: Профиль
+  helpAuthProfileDesc: использует именованный профиль из ~/.aws/credentials
+  helpServices: "Поддерживаемые услуги:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB.
+  helpElasticacheDesc: Кластеры Redis
+  helpDocumentdbDesc: MongoDB-совместимые кластеры
+  helpCredentialNote: "Примечание. {appName} обнаруживает конечные точки подключения от AWS, но не может получить доступ к паролям базы данных. При подключении вам потребуется ввести учетные данные."
+
+sk_SK:
+  connectAwsAccount: Pripojte účet AWS a objavte databázy
+  addAwsAccount: Pridajte účet AWS
+  awsConnections: Pripojenia AWS
+  refresh: Obnoviť
+  addProvider: Pridať poskytovateľa
+  noDiscoveredConnections: Nenašli sa žiadne databázy. Pridajte účet AWS na automatické objavovanie inštancií RDS, ElastiCache a DocumentDB.
+  refreshPartialError: Niektoré služby AWS sa nepodarilo objaviť. Skontrolujte povolenia IAM.
+  clickToFillForm: Kliknutím na pripojenie vyplňte vyššie uvedený prihlasovací formulár
+  connectionSelected: Načítané nastavenia – zadajte svoje poverenia
+  proxy: Proxy
+  readOnly: Iba na čítanie
+  unreachable: Nedosiahnuteľný
+  unreachableTooltip: WhoDB nemôže dosiahnuť tento koncový bod. Uistite sa, že WhoDB má sieťový prístup (rovnaký VPC, partnerský vzťah alebo tunel).
+  helpLabel: Ako nastaviť AWS
+  helpTitle: Zisťovanie databázy AWS
+  helpIntro: "{appName} môže automaticky objaviť vaše databázy AWS. Začnite pridaním účtu AWS."
+  helpAuthMethods: "Spôsoby overenia:"
+  helpAuthDefault: Predvolené
+  helpAuthDefaultDesc: používa ~/.aws/predentials, env vars alebo rolu IAM
+  helpAuthProfile: Profil
+  helpAuthProfileDesc: používa pomenovaný profil z ~/.aws/credentials
+  helpServices: "Podporované služby:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Klastre Redis
+  helpDocumentdbDesc: Klastre kompatibilné s MongoDB
+  helpCredentialNote: "Poznámka: {appName} zisťuje koncové body pripojenia z AWS, ale nemôže získať prístup k heslám databázy. Pri pripájaní budete musieť zadať poverenia."
+
+sv_SE:
+  connectAwsAccount: Anslut ett AWS-konto för att upptäcka databaser
+  addAwsAccount: Lägg till AWS-konto
+  awsConnections: AWS-anslutningar
+  refresh: Uppdatera
+  addProvider: Lägg till leverantör
+  noDiscoveredConnections: Inga databaser upptäcktes. Lägg till ett AWS-konto för att automatiskt upptäcka RDS-, ElastiCache- och DocumentDB-instanser.
+  refreshPartialError: Vissa AWS-tjänster kunde inte upptäckas. Kontrollera IAM-behörigheter.
+  clickToFillForm: Klicka på en anslutning för att fylla i inloggningsformuläret ovan
+  connectionSelected: Inställningar laddade – ange dina referenser
+  proxy: Ombud
+  readOnly: Skrivskyddad
+  unreachable: Otillgänglig
+  unreachableTooltip: WhoDB kan inte nå denna slutpunkt. Se till att WhoDB har nätverksåtkomst (samma VPC, peering eller tunnel).
+  helpLabel: Hur man ställer in AWS
+  helpTitle: AWS Databas Discovery
+  helpIntro: "{appName} kan automatiskt upptäcka dina AWS-databaser. Lägg till ett AWS-konto för att komma igång."
+  helpAuthMethods: "Autentiseringsmetoder:"
+  helpAuthDefault: Standard
+  helpAuthDefaultDesc: använder ~/.aws/credentials, env vars eller IAM-roll
+  helpAuthProfile: Profil
+  helpAuthProfileDesc: använder en namngiven profil från ~/.aws/credentials
+  helpServices: "Tjänster som stöds:"
+  helpRdsDesc: PostgreSQL, MySQL, MariaDB
+  helpElasticacheDesc: Redis kluster
+  helpDocumentdbDesc: MongoDB-kompatibla kluster
+  helpCredentialNote: "Obs: {appName} upptäcker anslutningsändpunkter från AWS men kan inte komma åt databaslösenord. Du måste ange autentiseringsuppgifter när du ansluter."
+
+zh_CN:
+  connectAwsAccount: 连接 AWS 账户以发现数据库
+  addAwsAccount: 添加 AWS 账户
+  awsConnections: AWS 连接
+  refresh: 刷新
+  addProvider: 添加提供商
+  noDiscoveredConnections: 未发现数据库。 添加 AWS 账户以自动发现 RDS、ElastiCache 和 DocumentDB 实例。
+  refreshPartialError: 无法发现某些 AWS 服务。 检查 IAM 权限。
+  clickToFillForm: 单击连接以填写上面的登录表单
+  connectionSelected: 设置已加载 - 输入您的凭据
+  proxy: 代理人
+  readOnly: 只读
+  unreachable: 无法到达
+  unreachableTooltip: WhoDB 无法到达此端点。 确保 WhoDB 具有网络访问权限（同一 VPC、对等互连或隧道）。
+  helpLabel: 如何设置AWS
+  helpTitle: AWS 数据库发现
+  helpIntro: "{appName} 可以自动发现您的 AWS 数据库。 添加 AWS 账户以开始使用。"
+  helpAuthMethods: 认证方式：
+  helpAuthDefault: 默认
+  helpAuthDefaultDesc: 使用 ~/.aws/credentials、环境变量或 IAM 角色
+  helpAuthProfile: 轮廓
+  helpAuthProfileDesc: 使用 ~/.aws/credentials 中的命名配置文件
+  helpServices: 支持的服务：
+  helpRdsDesc: PostgreSQL、MySQL、MariaDB
+  helpElasticacheDesc: Redis集群
+  helpDocumentdbDesc: MongoDB 兼容集群
+  helpCredentialNote: "注意：{appName} 发现来自 AWS 的连接终端节点，但无法访问数据库密码。 连接时您需要输入凭据。"
+
+zh_TW:
+  connectAwsAccount: 連接 AWS 帳戶以發現資料庫
+  addAwsAccount: 新增 AWS 帳戶
+  awsConnections: AWS 連線
+  refresh: 重新整理
+  addProvider: 新增提供者
+  noDiscoveredConnections: 未發現資料庫。 新增 AWS 帳戶以自動發現 RDS、ElastiCache 和 DocumentDB 實例。
+  refreshPartialError: 無法發現某些 AWS 服務。 檢查 IAM 權限。
+  clickToFillForm: 點擊連接以填寫上面的登入表單
+  connectionSelected: 設定已載入 - 輸入您的憑證
+  proxy: 代理人
+  readOnly: 只讀
+  unreachable: 無法到達
+  unreachableTooltip: WhoDB 無法到達此端點。 確保 WhoDB 具有網路存取權限（同一 VPC、對等互連或隧道）。
+  helpLabel: 如何設定AWS
+  helpTitle: AWS 資料庫發現
+  helpIntro: "{appName} 可以自動發現您的 AWS 資料庫。 新增 AWS 帳戶以開始使用。"
+  helpAuthMethods: 認證方式：
+  helpAuthDefault: 預設
+  helpAuthDefaultDesc: 使用 ~/.aws/credentials、環境變數或 IAM 角色
+  helpAuthProfile: 輪廓
+  helpAuthProfileDesc: 使用 ~/.aws/credentials 中的命名設定檔
+  helpServices: 支援的服務：
+  helpRdsDesc: PostgreSQL、MySQL、MariaDB
+  helpElasticacheDesc: Redis集群
+  helpDocumentdbDesc: MongoDB 相容集群
+  helpCredentialNote: "注意：{appName} 發現來自 AWS 的連線終端節點，但無法存取資料庫密碼。 連線時您需要輸入憑證。"

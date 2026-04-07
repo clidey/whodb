@@ -1,2 +1,62 @@
 en_US:
   skipToContent: Skip to main content
+
+ar_AE:
+  skipToContent: انتقل إلى المحتوى الرئيسي
+
+de_DE:
+  skipToContent: Zum Hauptinhalt springen
+
+el_GR:
+  skipToContent: Μετάβαση στο κύριο περιεχόμενο
+
+en_GB:
+  skipToContent: Skip to main content
+
+es_ES:
+  skipToContent: Saltar al contenido principal
+
+fi_FI:
+  skipToContent: Siirry pääsisältöön
+
+fr_FR:
+  skipToContent: Passer au contenu principal
+
+it_IT:
+  skipToContent: Passa al contenuto principale
+
+iw_IL:
+  skipToContent: דלג לתוכן הראשי
+
+ja_JP:
+  skipToContent: メインコンテンツにスキップ
+
+ko_KR:
+  skipToContent: 주요 콘텐츠로 건너뛰기
+
+nl_NL:
+  skipToContent: Ga naar de hoofdinhoud
+
+pl_PL:
+  skipToContent: Przejdź do głównej treści
+
+pt_BR:
+  skipToContent: Pular para o conteúdo principal
+
+ro_RO:
+  skipToContent: Treci la conținutul principal
+
+ru_RU:
+  skipToContent: Перейти к основному содержанию
+
+sk_SK:
+  skipToContent: Preskočiť na hlavný obsah
+
+sv_SE:
+  skipToContent: Hoppa till huvudinnehållet
+
+zh_CN:
+  skipToContent: 跳至主要内容
+
+zh_TW:
+  skipToContent: 跳至主要內容

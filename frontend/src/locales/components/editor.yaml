@@ -6,3 +6,183 @@ en_US:
   showPreview: Show Preview
   hidePreview: Hide Preview
   runQuery: Run query
+
+ar_AE:
+  confirmOperationTitle: تأكيد العملية
+  confirmOperationDescription: سيقوم هذا الاستعلام بتعديل البيانات أو المخطط. هل أنت متأكد أنك تريد تنفيذ ذلك؟ لا يمكن التراجع عن هذا الإجراء.
+  cancel: يلغي
+  executeQuery: تنفيذ الاستعلام
+  showPreview: عرض المعاينة
+  hidePreview: إخفاء المعاينة
+  runQuery: تشغيل الاستعلام
+
+de_DE:
+  confirmOperationTitle: Bestätigen Sie den Vorgang
+  confirmOperationDescription: Diese Abfrage ändert Daten oder Schema. Sind Sie sicher, dass Sie es ausführen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+  cancel: Stornieren
+  executeQuery: Abfrage ausführen
+  showPreview: Vorschau anzeigen
+  hidePreview: Vorschau ausblenden
+  runQuery: Abfrage ausführen
+
+el_GR:
+  confirmOperationTitle: Επιβεβαιώστε τη λειτουργία
+  confirmOperationDescription: Αυτό το ερώτημα θα τροποποιήσει δεδομένα ή σχήμα. Είστε βέβαιοι ότι θέλετε να το εκτελέσετε; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.
+  cancel: Ματαίωση
+  executeQuery: Εκτέλεση ερωτήματος
+  showPreview: Εμφάνιση προεπισκόπησης
+  hidePreview: Απόκρυψη προεπισκόπησης
+  runQuery: Εκτέλεση ερωτήματος
+
+en_GB:
+  confirmOperationTitle: Confirm Operation
+  confirmOperationDescription: This query will modify data or schema. Are you sure you want to execute it? This action cannot be undone.
+  cancel: Cancel
+  executeQuery: Execute Query
+  showPreview: Show Preview
+  hidePreview: Hide Preview
+  runQuery: Run query
+
+es_ES:
+  confirmOperationTitle: Confirmar operación
+  confirmOperationDescription: Esta consulta modificará los datos o el esquema. ¿Estás seguro de que quieres ejecutarlo? Esta acción no se puede deshacer.
+  cancel: Cancelar
+  executeQuery: Ejecutar consulta
+  showPreview: Mostrar vista previa
+  hidePreview: Ocultar vista previa
+  runQuery: Ejecutar consulta
+
+fi_FI:
+  confirmOperationTitle: Vahvista toiminta
+  confirmOperationDescription: Tämä kysely muuttaa tietoja tai kaaviota. Oletko varma, että haluat suorittaa sen? Tätä toimintoa ei voi kumota.
+  cancel: Peruuttaa
+  executeQuery: Suorita kysely
+  showPreview: Näytä esikatselu
+  hidePreview: Piilota esikatselu
+  runQuery: Suorita kysely
+
+fr_FR:
+  confirmOperationTitle: Confirmer l'opération
+  confirmOperationDescription: Cette requête modifiera les données ou le schéma. Etes-vous sûr de vouloir l'exécuter ? Cette action ne peut pas être annulée.
+  cancel: Annuler
+  executeQuery: Exécuter la requête
+  showPreview: Afficher l'aperçu
+  hidePreview: Masquer l'aperçu
+  runQuery: Exécuter une requête
+
+it_IT:
+  confirmOperationTitle: Conferma l'operazione
+  confirmOperationDescription: Questa query modificherà i dati o lo schema. Sei sicuro di volerlo eseguire? Questa azione non può essere annullata.
+  cancel: Cancellare
+  executeQuery: Esegui interrogazione
+  showPreview: Mostra anteprima
+  hidePreview: Nascondi anteprima
+  runQuery: Esegui interrogazione
+
+iw_IL:
+  confirmOperationTitle: אשר את הפעולה
+  confirmOperationDescription: שאילתה זו תשנה נתונים או סכימה. האם אתה בטוח שאתה רוצה לבצע את זה? לא ניתן לבטל פעולה זו.
+  cancel: לְבַטֵל
+  executeQuery: בצע שאילתה
+  showPreview: הצג תצוגה מקדימה
+  hidePreview: הסתר תצוגה מקדימה
+  runQuery: הפעל שאילתה
+
+ja_JP:
+  confirmOperationTitle: 動作確認
+  confirmOperationDescription: このクエリはデータまたはスキーマを変更します。 本当に実行してもよろしいですか? この操作は元に戻すことができません。
+  cancel: キャンセル
+  executeQuery: クエリの実行
+  showPreview: プレビューを表示
+  hidePreview: プレビューを非表示にする
+  runQuery: クエリの実行
+
+ko_KR:
+  confirmOperationTitle: 작동 확인
+  confirmOperationDescription: 이 쿼리는 데이터나 스키마를 수정합니다. 정말로 실행하시겠습니까? 이 작업은 취소할 수 없습니다.
+  cancel: 취소
+  executeQuery: 쿼리 실행
+  showPreview: 미리보기 표시
+  hidePreview: 미리보기 숨기기
+  runQuery: 쿼리 실행
+
+nl_NL:
+  confirmOperationTitle: Bevestig de bewerking
+  confirmOperationDescription: Met deze query worden gegevens of schema gewijzigd. Weet u zeker dat u het wilt uitvoeren? Deze actie kan niet ongedaan worden gemaakt.
+  cancel: Annuleren
+  executeQuery: Query uitvoeren
+  showPreview: Voorbeeld tonen
+  hidePreview: Voorbeeld verbergen
+  runQuery: Query uitvoeren
+
+pl_PL:
+  confirmOperationTitle: Potwierdź operację
+  confirmOperationDescription: To zapytanie zmodyfikuje dane lub schemat. Czy na pewno chcesz to wykonać? Tej akcji nie można cofnąć.
+  cancel: Anulować
+  executeQuery: Wykonaj zapytanie
+  showPreview: Pokaż podgląd
+  hidePreview: Ukryj podgląd
+  runQuery: Uruchom zapytanie
+
+pt_BR:
+  confirmOperationTitle: Confirmar operação
+  confirmOperationDescription: Esta consulta modificará dados ou esquema. Tem certeza de que deseja executá-lo? Esta ação não pode ser desfeita.
+  cancel: Cancelar
+  executeQuery: Executar consulta
+  showPreview: Mostrar visualização
+  hidePreview: Ocultar visualização
+  runQuery: Executar consulta
+
+ro_RO:
+  confirmOperationTitle: Confirmați operațiunea
+  confirmOperationDescription: Această interogare va modifica datele sau schema. Sunteți sigur că doriți să o executați? Această acțiune nu poate fi anulată.
+  cancel: Anula
+  executeQuery: Executați interogarea
+  showPreview: Afișează previzualizarea
+  hidePreview: Ascunde previzualizarea
+  runQuery: Rulați interogarea
+
+ru_RU:
+  confirmOperationTitle: Подтвердить операцию
+  confirmOperationDescription: Этот запрос изменит данные или схему. Вы уверены, что хотите его выполнить? Это действие невозможно отменить.
+  cancel: Отмена
+  executeQuery: Выполнить запрос
+  showPreview: Показать предварительный просмотр
+  hidePreview: Скрыть предварительный просмотр
+  runQuery: Запустить запрос
+
+sk_SK:
+  confirmOperationTitle: Potvrďte operáciu
+  confirmOperationDescription: Tento dotaz upraví údaje alebo schému. Ste si istý, že to chcete vykonať? Túto akciu nie je možné vrátiť späť.
+  cancel: Zrušiť
+  executeQuery: Vykonať dotaz
+  showPreview: Zobraziť ukážku
+  hidePreview: Skryť ukážku
+  runQuery: Spustiť dotaz
+
+sv_SE:
+  confirmOperationTitle: Bekräfta drift
+  confirmOperationDescription: Den här frågan kommer att ändra data eller schema. Är du säker på att du vill köra den? Denna åtgärd kan inte ångras.
+  cancel: Avboka
+  executeQuery: Kör fråga
+  showPreview: Visa förhandsgranskning
+  hidePreview: Dölj förhandsgranskning
+  runQuery: Kör fråga
+
+zh_CN:
+  confirmOperationTitle: 确认操作
+  confirmOperationDescription: 此查询将修改数据或架构。 您确定要执行它吗？ 此操作无法撤消。
+  cancel: 取消
+  executeQuery: 执行查询
+  showPreview: 显示预览
+  hidePreview: 隐藏预览
+  runQuery: 运行查询
+
+zh_TW:
+  confirmOperationTitle: 確認操作
+  confirmOperationDescription: 此查詢將修改資料或架構。 您確定要執行它嗎？ 此操作無法撤銷。
+  cancel: 取消
+  executeQuery: 執行查詢
+  showPreview: 顯示預覽
+  hidePreview: 隱藏預覽
+  runQuery: 執行查詢

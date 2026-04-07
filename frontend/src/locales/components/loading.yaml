@@ -1,3 +1,83 @@
 en_US:
   loading: Loading...
   pleaseWait: Please Wait
+
+ar_AE:
+  loading: تحميل...
+  pleaseWait: انتظر من فضلك
+
+de_DE:
+  loading: Laden...
+  pleaseWait: Bitte warten
+
+el_GR:
+  loading: Φόρτωση...
+  pleaseWait: Παρακαλώ περιμένετε
+
+en_GB:
+  loading: Loading...
+  pleaseWait: Please Wait
+
+es_ES:
+  loading: Cargando...
+  pleaseWait: Espere por favor
+
+fi_FI:
+  loading: Ladataan...
+  pleaseWait: Odota
+
+fr_FR:
+  loading: Chargement...
+  pleaseWait: S'il vous plaît, attendez
+
+it_IT:
+  loading: Caricamento...
+  pleaseWait: Attendere prego
+
+iw_IL:
+  loading: טְעִינָה...
+  pleaseWait: אנא המתן
+
+ja_JP:
+  loading: 読み込み中...
+  pleaseWait: お待ちください
+
+ko_KR:
+  loading: 로드 중...
+  pleaseWait: 기다리세요
+
+nl_NL:
+  loading: Laden...
+  pleaseWait: Wacht alstublieft
+
+pl_PL:
+  loading: Załadunek...
+  pleaseWait: Proszę czekać
+
+pt_BR:
+  loading: Carregando...
+  pleaseWait: Por favor, aguarde
+
+ro_RO:
+  loading: Încărcare...
+  pleaseWait: Va rugam asteptati
+
+ru_RU:
+  loading: Загрузка...
+  pleaseWait: Пожалуйста, подождите
+
+sk_SK:
+  loading: Načítava sa...
+  pleaseWait: Čakajte prosím
+
+sv_SE:
+  loading: Belastning...
+  pleaseWait: Vänligen vänta
+
+zh_CN:
+  loading: 加载中...
+  pleaseWait: 请稍等
+
+zh_TW:
+  loading: 載入中...
+  pleaseWait: 請稍等

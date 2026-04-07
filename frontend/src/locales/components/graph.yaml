@@ -1,3 +1,83 @@
 en_US:
   download: Download
   layout: Layout
+
+ar_AE:
+  download: تحميل
+  layout: تَخطِيط
+
+de_DE:
+  download: Herunterladen
+  layout: Layout
+
+el_GR:
+  download: Λήψη
+  layout: Σχέδιο
+
+en_GB:
+  download: Download
+  layout: Layout
+
+es_ES:
+  download: Descargar
+  layout: Disposición
+
+fi_FI:
+  download: Lataa
+  layout: Layout
+
+fr_FR:
+  download: Télécharger
+  layout: Mise en page
+
+it_IT:
+  download: Scaricamento
+  layout: Disposizione
+
+iw_IL:
+  download: הורד
+  layout: מַעֲרָך
+
+ja_JP:
+  download: ダウンロード
+  layout: レイアウト
+
+ko_KR:
+  download: 다운로드
+  layout: 공들여 나열한 것
+
+nl_NL:
+  download: Downloaden
+  layout: Indeling
+
+pl_PL:
+  download: Pobierać
+  layout: Układ
+
+pt_BR:
+  download: Download
+  layout: Disposição
+
+ro_RO:
+  download: Descărcați
+  layout: Aspect
+
+ru_RU:
+  download: Скачать
+  layout: Макет
+
+sk_SK:
+  download: Stiahnuť
+  layout: Rozloženie
+
+sv_SE:
+  download: Ladda ner
+  layout: Layout
+
+zh_CN:
+  download: 下载
+  layout: 布局
+
+zh_TW:
+  download: 下載
+  layout: 佈局

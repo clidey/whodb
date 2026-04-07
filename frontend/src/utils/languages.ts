@@ -30,13 +30,13 @@ export type SupportedLanguage =
     | 'nl_NL'
     | 'pl_PL'
     | 'pt_BR'
-    | 'pt_PT'
+    // | 'pt_PT'  // TODO: Google Translate doesn't differentiate PT-BR vs PT-PT — add back when we have distinct translations
     | 'ro_RO'
     | 'ru_RU'
     | 'sk_SK'
     | 'sv_SE'
     | 'zh_CN'
-    | 'zh_HK'
+    // | 'zh_HK'  // TODO: Google Translate has no zh-HK variant (produces same as zh-TW) — add back when we have distinct translations
     | 'zh_TW';
 
 export const DEFAULT_LANGUAGE: SupportedLanguage = 'en_US';
@@ -57,13 +57,13 @@ export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, string> = {
     nl_NL: 'Nederlands',
     pl_PL: 'Polski',
     pt_BR: 'Português (Brasil)',
-    pt_PT: 'Português (Portugal)',
+    // pt_PT: 'Português (Portugal)',  // TODO: add back when we have distinct translations
     ro_RO: 'Română',
     ru_RU: 'Русский',
     sk_SK: 'Slovenčina',
     sv_SE: 'Svenska',
     zh_CN: '中文 (简体)',
-    zh_HK: '中文 (香港)',
+    // zh_HK: '中文 (香港)',  // TODO: add back when we have distinct translations
     zh_TW: '中文 (繁體)',
 };
 

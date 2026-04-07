@@ -58,3 +58,1223 @@ en_US:
   advancedFields.debug: Debug
   advancedFields.urlParams: URL Params
   advancedFields.dnsEnabled: DNS Enabled
+
+ar_AE:
+  enterHostName: أدخل اسم المضيف
+  advancedFields.region: منطقة
+  noConnectionsTitle: لا توجد اتصالات متاحة
+  noConnectionsDescription: تم تعطيل نموذج الاتصال اليدوي لهذا النشر. يرجى تكوين اتصالات قاعدة البيانات عبر متغيرات البيئة أو موفري السحابة، أو اتصل بالمسؤول.
+  loggingIn: تسجيل الدخول
+  title: تسجيل الدخول
+  databaseType: نوع قاعدة البيانات
+  hostName: اسم المضيف
+  hostNameOrUrl: اسم المضيف (أو الصق عنوان URL للاتصال)
+  username: اسم المستخدم
+  enterUsername: أدخل اسم المستخدم
+  password: كلمة المرور
+  enterPassword: أدخل كلمة المرور
+  database: قاعدة البيانات
+  selectOrEnterDatabasePath: حدد أو أدخل مسار ملف قاعدة البيانات
+  browseForSqliteFile: تصفح بحثًا عن ملف SQLite
+  selectDatabase: حدد قاعدة البيانات
+  enterDatabase: أدخل قاعدة البيانات
+  enterSearchPath: أدخل اسم المخطط
+  advancedButton: متقدم
+  lessAdvancedButton: أقل تقدما
+  loginButton: تسجيل الدخول
+  availableProfiles: الملفات الشخصية المتاحة
+  selectProfile: حدد ملفًا شخصيًا
+  allFieldsRequired: جميع الحقول مطلوبة
+  selectProfileRequired: حدد ملفًا شخصيًا
+  loginSuccessful: تم تسجيل الدخول بنجاح
+  loginFailed: فشل تسجيل الدخول
+  loginFailedWithError: "فشل تسجيل الدخول: {error}"
+  sampleDatabaseNotFound: لم يتم العثور على نموذج قاعدة البيانات
+  welcomeToWhodb: "مرحبًا بك في {appName}"
+  failedToSelectDatabaseFile: فشل في تحديد ملف قاعدة البيانات
+  failedToParseCredentials: فشل تحليل بيانات الاعتماد من URL
+  urlParseWarning: لم نتمكن من استخراج جميع التفاصيل المطلوبة (المضيف أو اسم المستخدم أو كلمة المرور أو قاعدة البيانات) من عنوان URL هذا. الرجاء إدخال المعلومات يدويا.
+  tryWhodb: "حاول {appName}"
+  noSetupRequired: لا يلزم الإعداد
+  experienceDescription: "استمتع بتجربة قوة {appName} من خلال نماذج قاعدة البيانات التفاعلية الخاصة بنا. استكشف جميع الميزات ببيانات حقيقية."
+  whatsIncluded: ما هو مدرج
+  aiChatAssistant: مساعد الدردشة بالذكاء الاصطناعي
+  aiChatDescription: الاستعلام باللغة الطبيعية
+  visualSchema: المخطط البصري
+  visualSchemaDescription: عرض الرسم البياني التفاعلي
+  dataGrid: شبكة البيانات
+  dataGridDescription: تحرير مثل جدول البيانات
+  sqlEditor: محرر SQL
+  sqlEditorDescription: أدوات استعلام قوية
+  getStarted: ابدأ
+  quickStartFooter: يستغرق أقل من دقيقة • لا حاجة لبطاقة الائتمان
+  version: إصدار
+  advancedFields.port: ميناء
+  advancedFields.parseTime: تحليل الوقت
+  advancedFields.loc: موقع
+  advancedFields.allowClearTextPasswords: السماح بكلمات مرور نصية واضحة
+  advancedFields.searchPath: مسار البحث (المخطط)
+  advancedFields.httpProtocol: بروتوكول HTTP
+  advancedFields.readonly: للقراءة فقط
+  advancedFields.debug: تصحيح
+  advancedFields.urlParams: معلمات URL
+  advancedFields.dnsEnabled: تمكين DNS
+
+de_DE:
+  enterHostName: Geben Sie den Hostnamen ein
+  advancedFields.region: Region
+  noConnectionsTitle: Keine Verbindungen vorhanden
+  noConnectionsDescription: Das manuelle Verbindungsformular ist für diese Bereitstellung deaktiviert. Bitte konfigurieren Sie Datenbankverbindungen über Umgebungsvariablen oder Cloud-Anbieter oder wenden Sie sich an Ihren Administrator.
+  loggingIn: Anmelden
+  title: Login
+  databaseType: Datenbanktyp
+  hostName: Hostname
+  hostNameOrUrl: Hostname (oder Verbindungs-URL einfügen)
+  username: Benutzername
+  enterUsername: Geben Sie den Benutzernamen ein
+  password: Passwort
+  enterPassword: Geben Sie das Passwort ein
+  database: Datenbank
+  selectOrEnterDatabasePath: Wählen Sie den Datenbankdateipfad aus oder geben Sie ihn ein
+  browseForSqliteFile: Suchen Sie nach SQLite-Datei
+  selectDatabase: Wählen Sie Datenbank aus
+  enterDatabase: Geben Sie Datenbank ein
+  enterSearchPath: Geben Sie den Schemanamen ein
+  advancedButton: Fortschrittlich
+  lessAdvancedButton: Weniger fortgeschritten
+  loginButton: Login
+  availableProfiles: Verfügbare Profile
+  selectProfile: Wählen Sie ein Profil aus
+  allFieldsRequired: Alle Felder sind Pflichtfelder
+  selectProfileRequired: Wählen Sie ein Profil aus
+  loginSuccessful: Anmeldung erfolgreich
+  loginFailed: Fehler bei der Anmeldung
+  loginFailedWithError: "Anmeldung fehlgeschlagen: {error}"
+  sampleDatabaseNotFound: Beispieldatenbank nicht gefunden
+  welcomeToWhodb: "Willkommen bei {appName}"
+  failedToSelectDatabaseFile: Datenbankdatei konnte nicht ausgewählt werden
+  failedToParseCredentials: Anmeldeinformationen von der URL konnten nicht analysiert werden
+  urlParseWarning: Wir konnten nicht alle erforderlichen Details (Host, Benutzername, Passwort oder Datenbank) aus dieser URL extrahieren. Bitte geben Sie die Informationen manuell ein.
+  tryWhodb: "Versuchen Sie es mit {appName}"
+  noSetupRequired: Keine Einrichtung erforderlich
+  experienceDescription: "Erleben Sie die Leistungsfähigkeit von {appName} mit unserer interaktiven Beispieldatenbank. Entdecken Sie alle Funktionen mit echten Daten."
+  whatsIncluded: Was ist im Lieferumfang enthalten?
+  aiChatAssistant: KI-Chat-Assistent
+  aiChatDescription: Abfrage in natürlicher Sprache
+  visualSchema: Visuelles Schema
+  visualSchemaDescription: Interaktive Diagrammansicht
+  dataGrid: Datenraster
+  dataGridDescription: Bearbeiten Sie wie eine Tabellenkalkulation
+  sqlEditor: SQL-Editor
+  sqlEditorDescription: Leistungsstarke Abfragetools
+  getStarted: Legen Sie los
+  quickStartFooter: Dauert weniger als eine Minute. • Keine Kreditkarte erforderlich
+  version: Version
+  advancedFields.port: Hafen
+  advancedFields.parseTime: Analysezeit
+  advancedFields.loc: Standort
+  advancedFields.allowClearTextPasswords: Erlauben Sie Klartext-Passwörter
+  advancedFields.searchPath: Suchpfad (Schema)
+  advancedFields.httpProtocol: HTTP-Protokoll
+  advancedFields.readonly: Schreibgeschützt
+  advancedFields.debug: Debuggen
+  advancedFields.urlParams: URL-Parameter
+  advancedFields.dnsEnabled: DNS aktiviert
+
+el_GR:
+  enterHostName: Εισαγάγετε Όνομα κεντρικού υπολογιστή
+  advancedFields.region: Περιοχή
+  noConnectionsTitle: Δεν υπάρχουν διαθέσιμες συνδέσεις
+  noConnectionsDescription: Η φόρμα μη αυτόματης σύνδεσης είναι απενεργοποιημένη για αυτήν την ανάπτυξη. Διαμορφώστε τις συνδέσεις βάσης δεδομένων μέσω μεταβλητών περιβάλλοντος ή παρόχων cloud ή επικοινωνήστε με τον διαχειριστή σας.
+  loggingIn: Σύνδεση
+  title: Σύνδεση
+  databaseType: Τύπος βάσης δεδομένων
+  hostName: Όνομα κεντρικού υπολογιστή
+  hostNameOrUrl: Όνομα κεντρικού υπολογιστή (ή Επικόλληση διεύθυνσης URL σύνδεσης)
+  username: Όνομα χρήστη
+  enterUsername: Εισαγάγετε Όνομα χρήστη
+  password: Σύνθημα
+  enterPassword: Εισαγάγετε τον κωδικό πρόσβασης
+  database: Βάση δεδομένων
+  selectOrEnterDatabasePath: Επιλέξτε ή Εισαγάγετε τη διαδρομή αρχείου βάσης δεδομένων
+  browseForSqliteFile: Αναζητήστε το αρχείο SQLite
+  selectDatabase: Επιλέξτε Βάση δεδομένων
+  enterDatabase: Εισαγάγετε τη βάση δεδομένων
+  enterSearchPath: Εισαγάγετε Όνομα σχήματος
+  advancedButton: Προχωρημένος
+  lessAdvancedButton: Λιγότερο προχωρημένο
+  loginButton: Σύνδεση
+  availableProfiles: Διαθέσιμα Προφίλ
+  selectProfile: Επιλέξτε ένα προφίλ
+  allFieldsRequired: Όλα τα πεδία είναι υποχρεωτικά
+  selectProfileRequired: Επιλέξτε ένα προφίλ
+  loginSuccessful: Επιτυχής σύνδεση
+  loginFailed: Η σύνδεση απέτυχε
+  loginFailedWithError: "Η σύνδεση απέτυχε: {error}"
+  sampleDatabaseNotFound: Δείγμα βάσης δεδομένων δεν βρέθηκε
+  welcomeToWhodb: "Καλώς ήρθατε στο {appName}"
+  failedToSelectDatabaseFile: Αποτυχία επιλογής αρχείου βάσης δεδομένων
+  failedToParseCredentials: Η ανάλυση των διαπιστευτηρίων από τη διεύθυνση URL απέτυχε
+  urlParseWarning: Δεν ήταν δυνατή η εξαγωγή όλων των απαιτούμενων στοιχείων (κεντρικός υπολογιστής, όνομα χρήστη, κωδικός πρόσβασης ή βάση δεδομένων) από αυτήν τη διεύθυνση URL. Εισαγάγετε τις πληροφορίες χειροκίνητα.
+  tryWhodb: "Δοκιμάστε το {appName}"
+  noSetupRequired: Δεν απαιτείται εγκατάσταση
+  experienceDescription: "Ζήστε τη δύναμη του {appName} με τη διαδραστική βάση δεδομένων δειγμάτων μας. Εξερευνήστε όλες τις λειτουργίες με πραγματικά δεδομένα."
+  whatsIncluded: Τι Περιλαμβάνεται
+  aiChatAssistant: Βοηθός συνομιλίας AI
+  aiChatDescription: Ερώτημα στη φυσική γλώσσα
+  visualSchema: Οπτικό σχήμα
+  visualSchemaDescription: Διαδραστική προβολή γραφήματος
+  dataGrid: Πλέγμα Δεδομένων
+  dataGridDescription: Επεξεργασία σαν υπολογιστικό φύλλο
+  sqlEditor: Επεξεργαστής SQL
+  sqlEditorDescription: Ισχυρά Εργαλεία Ερωτήσεων
+  getStarted: Ξεκινήστε
+  quickStartFooter: Διαρκεί λιγότερο από ένα λεπτό • Δεν απαιτείται πιστωτική κάρτα
+  version: Εκδοχή
+  advancedFields.port: Λιμάνι
+  advancedFields.parseTime: Ανάλυση χρόνου
+  advancedFields.loc: Τοποθεσία
+  advancedFields.allowClearTextPasswords: Επιτρέψτε κωδικούς πρόσβασης καθαρού κειμένου
+  advancedFields.searchPath: Διαδρομή αναζήτησης (Σχήμα)
+  advancedFields.httpProtocol: Πρωτόκολλο HTTP
+  advancedFields.readonly: Μόνο για ανάγνωση
+  advancedFields.debug: Εντοπισμός σφαλμάτων
+  advancedFields.urlParams: Παράμετροι URL
+  advancedFields.dnsEnabled: Ενεργοποιημένο DNS
+
+en_GB:
+  enterHostName: Enter Host Name
+  advancedFields.region: Region
+  noConnectionsTitle: No connections available
+  noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or cloud providers, or contact your administrator.
+  loggingIn: Logging In
+  title: Login
+  databaseType: Database Type
+  hostName: Host Name
+  hostNameOrUrl: Host Name (or Paste Connection URL)
+  username: Username
+  enterUsername: Enter Username
+  password: Password
+  enterPassword: Enter Password
+  database: Database
+  selectOrEnterDatabasePath: Select or Enter Database File Path
+  browseForSqliteFile: Browse for SQLite File
+  selectDatabase: Select Database
+  enterDatabase: Enter Database
+  enterSearchPath: Enter Schema Name
+  advancedButton: Advanced
+  lessAdvancedButton: Less Advanced
+  loginButton: Login
+  availableProfiles: Available Profiles
+  selectProfile: Select a Profile
+  allFieldsRequired: All Fields Are Required
+  selectProfileRequired: Select a Profile
+  loginSuccessful: Login Successful
+  loginFailed: Login Failed
+  loginFailedWithError: "Login Failed: {error}"
+  sampleDatabaseNotFound: Sample Database Not Found
+  welcomeToWhodb: "Welcome to {appName}"
+  failedToSelectDatabaseFile: Failed to Select Database File
+  failedToParseCredentials: Failed to Parse Credentials from URL
+  urlParseWarning: We could not extract all required details (host, username, password, or database) from this URL. Please enter the information manually.
+  tryWhodb: "Try {appName}"
+  noSetupRequired: No Setup Required
+  experienceDescription: "Experience the power of {appName} with our interactive sample database. Explore all features with real data."
+  whatsIncluded: What's Included
+  aiChatAssistant: AI Chat Assistant
+  aiChatDescription: Query in Natural Language
+  visualSchema: Visual Schema
+  visualSchemaDescription: Interactive Graph View
+  dataGrid: Data Grid
+  dataGridDescription: Edit Like a Spreadsheet
+  sqlEditor: SQL Editor
+  sqlEditorDescription: Powerful Query Tools
+  getStarted: Get Started
+  quickStartFooter: Takes less than a minute • No credit card required
+  version: Version
+  advancedFields.port: Port
+  advancedFields.parseTime: Parse Time
+  advancedFields.loc: Location
+  advancedFields.allowClearTextPasswords: Allow clear text passwords
+  advancedFields.searchPath: Search Path (Schema)
+  advancedFields.httpProtocol: HTTP Protocol
+  advancedFields.readonly: Readonly
+  advancedFields.debug: Debug
+  advancedFields.urlParams: URL Params
+  advancedFields.dnsEnabled: DNS Enabled
+
+es_ES:
+  enterHostName: Introduzca el nombre del host
+  advancedFields.region: Región
+  noConnectionsTitle: No hay conexiones disponibles
+  noConnectionsDescription: El formulario de conexión manual está deshabilitado para esta implementación. Configure las conexiones de la base de datos a través de variables de entorno o proveedores de nube, o comuníquese con su administrador.
+  loggingIn: Iniciar sesión
+  title: Acceso
+  databaseType: Tipo de base de datos
+  hostName: Nombre del anfitrión
+  hostNameOrUrl: Nombre del host (o pegar URL de conexión)
+  username: Nombre de usuario
+  enterUsername: Ingrese el nombre de usuario
+  password: Contraseña
+  enterPassword: Ingrese la contraseña
+  database: Base de datos
+  selectOrEnterDatabasePath: Seleccione o ingrese la ruta del archivo de base de datos
+  browseForSqliteFile: Buscar archivo SQLite
+  selectDatabase: Seleccionar base de datos
+  enterDatabase: Ingresar a la base de datos
+  enterSearchPath: Introduzca el nombre del esquema
+  advancedButton: Avanzada
+  lessAdvancedButton: Menos avanzado
+  loginButton: Acceso
+  availableProfiles: Perfiles disponibles
+  selectProfile: Seleccione un perfil
+  allFieldsRequired: Todos los campos son obligatorios
+  selectProfileRequired: Seleccione un perfil
+  loginSuccessful: Inicio de sesión exitosa
+  loginFailed: Error de inicio de sesion
+  loginFailedWithError: "Error de inicio de sesión: {error}"
+  sampleDatabaseNotFound: Base de datos de muestra no encontrada
+  welcomeToWhodb: "Bienvenido a {appName}"
+  failedToSelectDatabaseFile: No se pudo seleccionar el archivo de base de datos
+  failedToParseCredentials: No se pudieron analizar las credenciales de la URL
+  urlParseWarning: No pudimos extraer todos los detalles requeridos (host, nombre de usuario, contraseña o base de datos) de esta URL. Por favor ingrese la información manualmente.
+  tryWhodb: "Prueba {appName}"
+  noSetupRequired: No se requiere configuración
+  experienceDescription: "Experimente el poder de {appName} con nuestra base de datos de muestra interactiva. Explore todas las funciones con datos reales."
+  whatsIncluded: Qué está incluido
+  aiChatAssistant: Asistente de chat de IA
+  aiChatDescription: Consulta en lenguaje natural
+  visualSchema: Esquema visual
+  visualSchemaDescription: Vista de gráfico interactivo
+  dataGrid: Cuadrícula de datos
+  dataGridDescription: Editar como una hoja de cálculo
+  sqlEditor: Editor SQL
+  sqlEditorDescription: Potentes herramientas de consulta
+  getStarted: Empezar
+  quickStartFooter: Tarda menos de un minuto • No se requiere tarjeta de crédito
+  version: Versión
+  advancedFields.port: Puerto
+  advancedFields.parseTime: Tiempo de análisis
+  advancedFields.loc: Ubicación
+  advancedFields.allowClearTextPasswords: Permitir contraseñas de texto claro
+  advancedFields.searchPath: Ruta de búsqueda (esquema)
+  advancedFields.httpProtocol: Protocolo HTTP
+  advancedFields.readonly: Sólo lectura
+  advancedFields.debug: Depurar
+  advancedFields.urlParams: Parámetros de URL
+  advancedFields.dnsEnabled: DNS habilitado
+
+fi_FI:
+  enterHostName: Anna isäntänimi
+  advancedFields.region: Alue
+  noConnectionsTitle: Ei yhteyksiä saatavilla
+  noConnectionsDescription: Manuaalinen yhteyslomake on poistettu käytöstä tässä käyttöönotossa. Määritä tietokantayhteydet ympäristömuuttujien tai pilvipalveluntarjoajien kautta tai ota yhteyttä järjestelmänvalvojaan.
+  loggingIn: Kirjautuminen sisään
+  title: Kirjaudu sisään
+  databaseType: Tietokannan tyyppi
+  hostName: Isäntänimi
+  hostNameOrUrl: Isäntänimi (tai liitä yhteyden URL-osoite)
+  username: Käyttäjätunnus
+  enterUsername: Anna käyttäjätunnus
+  password: Salasana
+  enterPassword: Anna salasana
+  database: Tietokanta
+  selectOrEnterDatabasePath: Valitse tai anna tietokantatiedoston polku
+  browseForSqliteFile: Selaa SQLite-tiedostoa
+  selectDatabase: Valitse Tietokanta
+  enterDatabase: Siirry tietokantaan
+  enterSearchPath: Anna skeeman nimi
+  advancedButton: Edistynyt
+  lessAdvancedButton: Vähemmän edistynyt
+  loginButton: Kirjaudu sisään
+  availableProfiles: Käytettävissä olevat profiilit
+  selectProfile: Valitse profiili
+  allFieldsRequired: Kaikki kentät ovat pakollisia
+  selectProfileRequired: Valitse profiili
+  loginSuccessful: Kirjautuminen onnistui
+  loginFailed: Kirjautuminen epäonnistui
+  loginFailedWithError: "Kirjautuminen epäonnistui: {error}"
+  sampleDatabaseNotFound: Esimerkkitietokantaa ei löydy
+  welcomeToWhodb: "Tervetuloa {appName}"
+  failedToSelectDatabaseFile: Tietokantatiedoston valitseminen epäonnistui
+  failedToParseCredentials: Valtuustietojen jäsentäminen URL-osoitteesta epäonnistui
+  urlParseWarning: Emme voineet poimia kaikkia vaadittuja tietoja (isäntä, käyttäjätunnus, salasana tai tietokanta) tästä URL-osoitteesta. Anna tiedot manuaalisesti.
+  tryWhodb: "Kokeile {appName}"
+  noSetupRequired: Ei vaadi asennusta
+  experienceDescription: "Koe {appName}:n teho interaktiivisen näytetietokantaamme avulla. Tutustu kaikkiin ominaisuuksiin todellisella tiedolla."
+  whatsIncluded: Mitä sisältyy
+  aiChatAssistant: AI Chat Assistant
+  aiChatDescription: Kysely luonnollisella kielellä
+  visualSchema: Visuaalinen kaavio
+  visualSchemaDescription: Interaktiivinen kaavionäkymä
+  dataGrid: Data Grid
+  dataGridDescription: Muokkaa kuten laskentataulukkoa
+  sqlEditor: SQL-editori
+  sqlEditorDescription: Tehokkaat kyselytyökalut
+  getStarted: Aloita
+  quickStartFooter: Kestää alle minuutin • Luottokorttia ei tarvita
+  version: Versio
+  advancedFields.port: Portti
+  advancedFields.parseTime: Jäsennysaika
+  advancedFields.loc: Sijainti
+  advancedFields.allowClearTextPasswords: Salli selkeät salasanat
+  advancedFields.searchPath: Hakupolku (kaavio)
+  advancedFields.httpProtocol: HTTP-protokolla
+  advancedFields.readonly: Vain luku
+  advancedFields.debug: Debug
+  advancedFields.urlParams: URL-parametrit
+  advancedFields.dnsEnabled: DNS käytössä
+
+fr_FR:
+  enterHostName: Entrez le nom d'hôte
+  advancedFields.region: Région
+  noConnectionsTitle: Aucune connexion disponible
+  noConnectionsDescription: Le formulaire de connexion manuelle est désactivé pour ce déploiement. Veuillez configurer les connexions à la base de données via des variables d'environnement ou des fournisseurs de cloud, ou contactez votre administrateur.
+  loggingIn: Connexion
+  title: Se connecter
+  databaseType: Type de base de données
+  hostName: Nom d'hôte
+  hostNameOrUrl: Nom d'hôte (ou Coller l'URL de connexion)
+  username: Nom d'utilisateur
+  enterUsername: Entrez le nom d'utilisateur
+  password: Mot de passe
+  enterPassword: Entrez le mot de passe
+  database: Base de données
+  selectOrEnterDatabasePath: Sélectionnez ou entrez le chemin du fichier de base de données
+  browseForSqliteFile: Rechercher un fichier SQLite
+  selectDatabase: Sélectionnez la base de données
+  enterDatabase: Entrer dans la base de données
+  enterSearchPath: Entrez le nom du schéma
+  advancedButton: Avancée
+  lessAdvancedButton: Moins avancé
+  loginButton: Se connecter
+  availableProfiles: Profils disponibles
+  selectProfile: Sélectionnez un profil
+  allFieldsRequired: Tous les champs sont obligatoires
+  selectProfileRequired: Sélectionnez un profil
+  loginSuccessful: Connexion réussie
+  loginFailed: La connexion a échoué
+  loginFailedWithError: "Échec de la connexion : {error}"
+  sampleDatabaseNotFound: Exemple de base de données introuvable
+  welcomeToWhodb: "Bienvenue sur {appName}"
+  failedToSelectDatabaseFile: Échec de la sélection du fichier de base de données
+  failedToParseCredentials: Échec de l'analyse des informations d'identification à partir de l'URL
+  urlParseWarning: Nous n'avons pas pu extraire tous les détails requis (hôte, nom d'utilisateur, mot de passe ou base de données) de cette URL. Veuillez saisir les informations manuellement.
+  tryWhodb: "Essayez {appName}"
+  noSetupRequired: Aucune configuration requise
+  experienceDescription: "Découvrez la puissance de {appName} avec notre base de données d'échantillons interactive. Explorez toutes les fonctionnalités avec des données réelles."
+  whatsIncluded: Ce qui est inclus
+  aiChatAssistant: Assistant de discussion IA
+  aiChatDescription: Requête en langage naturel
+  visualSchema: Schéma visuel
+  visualSchemaDescription: Vue graphique interactive
+  dataGrid: Grille de données
+  dataGridDescription: Modifier comme une feuille de calcul
+  sqlEditor: Éditeur SQL
+  sqlEditorDescription: Outils de requête puissants
+  getStarted: Commencer
+  quickStartFooter: Prend moins d'une minute • Aucune carte de crédit requise
+  version: Version
+  advancedFields.port: Port
+  advancedFields.parseTime: Temps d'analyse
+  advancedFields.loc: Emplacement
+  advancedFields.allowClearTextPasswords: Autoriser les mots de passe en texte clair
+  advancedFields.searchPath: Chemin de recherche (schéma)
+  advancedFields.httpProtocol: Protocole HTTP
+  advancedFields.readonly: Lecture seule
+  advancedFields.debug: Déboguer
+  advancedFields.urlParams: Paramètres d'URL
+  advancedFields.dnsEnabled: DNS activé
+
+it_IT:
+  enterHostName: Inserisci il nome host
+  advancedFields.region: Regione
+  noConnectionsTitle: Nessuna connessione disponibile
+  noConnectionsDescription: Il modulo di connessione manuale è disabilitato per questa distribuzione. Configura le connessioni al database tramite variabili di ambiente o provider cloud oppure contatta l'amministratore.
+  loggingIn: Accesso
+  title: Login
+  databaseType: Tipo di banca dati
+  hostName: Nome dell'ospite
+  hostNameOrUrl: Nome host (o incolla URL di connessione)
+  username: Nome utente
+  enterUsername: Inserisci il nome utente
+  password: Password
+  enterPassword: Inserisci la password
+  database: Banca dati
+  selectOrEnterDatabasePath: Selezionare o immettere il percorso del file del database
+  browseForSqliteFile: Cerca il file SQLite
+  selectDatabase: Seleziona Banca dati
+  enterDatabase: Entra nella banca dati
+  enterSearchPath: Immettere il nome dello schema
+  advancedButton: Avanzato
+  lessAdvancedButton: Meno avanzato
+  loginButton: Login
+  availableProfiles: Profili disponibili
+  selectProfile: Seleziona un profilo
+  allFieldsRequired: Tutti i campi sono obbligatori
+  selectProfileRequired: Seleziona un profilo
+  loginSuccessful: Accesso riuscito
+  loginFailed: Accesso non riuscito
+  loginFailedWithError: "Accesso non riuscito: {error}"
+  sampleDatabaseNotFound: Database di esempio non trovato
+  welcomeToWhodb: "Benvenuto in {appName}"
+  failedToSelectDatabaseFile: Impossibile selezionare il file di database
+  failedToParseCredentials: Impossibile analizzare le credenziali dall'URL
+  urlParseWarning: Non siamo riusciti a estrarre tutti i dettagli richiesti (host, nome utente, password o database) da questo URL. Si prega di inserire le informazioni manualmente.
+  tryWhodb: "Prova {appName}"
+  noSetupRequired: Nessuna configurazione richiesta
+  experienceDescription: "Sperimenta la potenza di {appName} con il nostro database di esempio interattivo. Esplora tutte le funzionalità con dati reali."
+  whatsIncluded: Cosa è incluso
+  aiChatAssistant: Assistente chat AI
+  aiChatDescription: Interrogazione in linguaggio naturale
+  visualSchema: Schema visivo
+  visualSchemaDescription: Visualizzazione grafica interattiva
+  dataGrid: Griglia dati
+  dataGridDescription: Modifica come un foglio di calcolo
+  sqlEditor: Editor SQL
+  sqlEditorDescription: Potenti strumenti di query
+  getStarted: Inizia
+  quickStartFooter: Richiede meno di un minuto • Non è richiesta la carta di credito
+  version: Versione
+  advancedFields.port: Porta
+  advancedFields.parseTime: Analizzare il tempo
+  advancedFields.loc: Posizione
+  advancedFields.allowClearTextPasswords: Consenti password in chiaro
+  advancedFields.searchPath: Percorso di ricerca (schema)
+  advancedFields.httpProtocol: Protocollo HTTP
+  advancedFields.readonly: Sola lettura
+  advancedFields.debug: Debug
+  advancedFields.urlParams: Parametri URL
+  advancedFields.dnsEnabled: DNS abilitato
+
+iw_IL:
+  enterHostName: הזן את שם המארח
+  advancedFields.region: אֵזוֹר
+  noConnectionsTitle: אין חיבורים זמינים
+  noConnectionsDescription: טופס חיבור ידני מושבת עבור פריסה זו. אנא הגדר חיבורי מסד נתונים באמצעות משתני סביבה או ספקי ענן, או פנה למנהל המערכת שלך.
+  loggingIn: התחברות
+  title: כְּנִיסָה לַמַעֲרֶכֶת
+  databaseType: סוג מסד נתונים
+  hostName: שם מארח
+  hostNameOrUrl: שם מארח (או הדבק כתובת URL של חיבור)
+  username: שם משתמש
+  enterUsername: הזן שם משתמש
+  password: סִיסמָה
+  enterPassword: הזן סיסמה
+  database: מסד נתונים
+  selectOrEnterDatabasePath: בחר או הזן נתיב קובץ מסד נתונים
+  browseForSqliteFile: חפש קובץ SQLite
+  selectDatabase: בחר מסד נתונים
+  enterDatabase: היכנס למסד נתונים
+  enterSearchPath: הזן שם סכימה
+  advancedButton: מִתקַדֵם
+  lessAdvancedButton: פחות מתקדם
+  loginButton: כְּנִיסָה לַמַעֲרֶכֶת
+  availableProfiles: פרופילים זמינים
+  selectProfile: בחר פרופיל
+  allFieldsRequired: כל השדות נדרשים
+  selectProfileRequired: בחר פרופיל
+  loginSuccessful: הכניסה מוצלחת
+  loginFailed: הכניסה נכשלה
+  loginFailedWithError: "הכניסה נכשלה: {error}"
+  sampleDatabaseNotFound: מסד נתונים לדוגמה לא נמצא
+  welcomeToWhodb: "ברוכים הבאים אל {appName}"
+  failedToSelectDatabaseFile: בחירת קובץ מסד הנתונים נכשלה
+  failedToParseCredentials: ניתוח האישורים מכתובת האתר נכשל
+  urlParseWarning: לא הצלחנו לחלץ את כל הפרטים הנדרשים (מארח, שם משתמש, סיסמה או מסד נתונים) מכתובת האתר הזו. נא להזין את המידע באופן ידני.
+  tryWhodb: "נסה את {appName}"
+  noSetupRequired: אין צורך בהגדרה
+  experienceDescription: "חווה את העוצמה של {appName} עם מסד הנתונים האינטראקטיבי לדוגמה שלנו. חקור את כל התכונות עם נתונים אמיתיים."
+  whatsIncluded: מה כלול
+  aiChatAssistant: עוזר צ'אט בינה מלאכותית
+  aiChatDescription: שאילתה בשפה טבעית
+  visualSchema: סכימה חזותית
+  visualSchemaDescription: תצוגת גרף אינטראקטיבית
+  dataGrid: רשת נתונים
+  dataGridDescription: ערוך כמו גיליון אלקטרוני
+  sqlEditor: עורך SQL
+  sqlEditorDescription: כלי שאילתה רבי עוצמה
+  getStarted: התחל
+  quickStartFooter: לוקח פחות מדקה • אין צורך בכרטיס אשראי
+  version: גִרְסָה
+  advancedFields.port: נָמָל
+  advancedFields.parseTime: זמן ניתוח
+  advancedFields.loc: מִקוּם
+  advancedFields.allowClearTextPasswords: אפשר סיסמאות טקסט ברור
+  advancedFields.searchPath: נתיב חיפוש (סכימה)
+  advancedFields.httpProtocol: פרוטוקול HTTP
+  advancedFields.readonly: לקריאה בלבד
+  advancedFields.debug: לְנַפּוֹת
+  advancedFields.urlParams: פרמטרים של כתובת URL
+  advancedFields.dnsEnabled: DNS מופעל
+
+ja_JP:
+  enterHostName: ホスト名を入力してください
+  advancedFields.region: 地域
+  noConnectionsTitle: 利用可能な接続がありません
+  noConnectionsDescription: この展開では手動接続フォームが無効になっています。 環境変数またはクラウドプロバイダーを介してデータベース接続を構成するか、管理者に問い合わせてください。
+  loggingIn: ログインする
+  title: ログイン
+  databaseType: データベースの種類
+  hostName: ホスト名
+  hostNameOrUrl: ホスト名 (または接続 URL を貼り付け)
+  username: ユーザー名
+  enterUsername: ユーザー名を入力してください
+  password: パスワード
+  enterPassword: パスワードを入力してください
+  database: データベース
+  selectOrEnterDatabasePath: データベース ファイル パスを選択または入力します
+  browseForSqliteFile: SQLite ファイルを参照する
+  selectDatabase: データベースの選択
+  enterDatabase: データベースに入る
+  enterSearchPath: スキーマ名を入力してください
+  advancedButton: 高度な
+  lessAdvancedButton: それほど高度ではない
+  loginButton: ログイン
+  availableProfiles: 利用可能なプロファイル
+  selectProfile: プロファイルを選択してください
+  allFieldsRequired: すべてのフィールドは必須です
+  selectProfileRequired: プロファイルを選択してください
+  loginSuccessful: ログイン成功
+  loginFailed: ログインに失敗しました
+  loginFailedWithError: "ログイン失敗: {error}"
+  sampleDatabaseNotFound: サンプルデータベースが見つかりません
+  welcomeToWhodb: "{appName} へようこそ"
+  failedToSelectDatabaseFile: データベース ファイルの選択に失敗しました
+  failedToParseCredentials: URL からの資格情報の解析に失敗しました
+  urlParseWarning: この URL から必要な詳細 (ホスト、ユーザー名、パスワード、またはデータベース) をすべて抽出できませんでした。 情報を手動で入力してください。
+  tryWhodb: "{appName} を試してください"
+  noSetupRequired: セットアップは不要です
+  experienceDescription: "インタラクティブなサンプル データベースで {appName} の威力を体験してください。 実際のデータを使用してすべての機能を調べます。"
+  whatsIncluded: 含まれるもの
+  aiChatAssistant: AIチャットアシスタント
+  aiChatDescription: 自然言語でのクエリ
+  visualSchema: ビジュアルスキーマ
+  visualSchemaDescription: インタラクティブなグラフビュー
+  dataGrid: データグリッド
+  dataGridDescription: スプレッドシートのように編集する
+  sqlEditor: SQLエディタ
+  sqlEditorDescription: 強力なクエリツール
+  getStarted: 始めましょう
+  quickStartFooter: 所要時間は 1 分未満です。クレジット カードは必要ありません。
+  version: バージョン
+  advancedFields.port: ポート
+  advancedFields.parseTime: 解析時間
+  advancedFields.loc: 位置
+  advancedFields.allowClearTextPasswords: クリアテキストのパスワードを許可する
+  advancedFields.searchPath: 検索パス (スキーマ)
+  advancedFields.httpProtocol: HTTPプロトコル
+  advancedFields.readonly: 読み取り専用
+  advancedFields.debug: デバッグ
+  advancedFields.urlParams: URLパラメータ
+  advancedFields.dnsEnabled: DNSが有効になっています
+
+ko_KR:
+  enterHostName: 호스트 이름을 입력하세요
+  advancedFields.region: 지역
+  noConnectionsTitle: 사용 가능한 연결이 없습니다.
+  noConnectionsDescription: 이 배포에서는 수동 연결 양식이 비활성화되었습니다. 환경 변수 또는 클라우드 공급자를 통해 데이터베이스 연결을 구성하거나 관리자에게 문의하세요.
+  loggingIn: 로그인
+  title: 로그인
+  databaseType: 데이터베이스 유형
+  hostName: 호스트 이름
+  hostNameOrUrl: 호스트 이름(또는 연결 URL 붙여넣기)
+  username: 사용자 이름
+  enterUsername: 사용자 이름을 입력하세요
+  password: 비밀번호
+  enterPassword: 비밀번호 입력
+  database: 데이터 베이스
+  selectOrEnterDatabasePath: 데이터베이스 파일 경로 선택 또는 입력
+  browseForSqliteFile: SQLite 파일 찾아보기
+  selectDatabase: 데이터베이스 선택
+  enterDatabase: 데이터베이스 입력
+  enterSearchPath: 스키마 이름 입력
+  advancedButton: 고급의
+  lessAdvancedButton: 덜 고급
+  loginButton: 로그인
+  availableProfiles: 사용 가능한 프로필
+  selectProfile: 프로필 선택
+  allFieldsRequired: 모든 필드는 필수입니다
+  selectProfileRequired: 프로필 선택
+  loginSuccessful: 로그인 성공
+  loginFailed: 로그인 실패
+  loginFailedWithError: "로그인 실패: {error}"
+  sampleDatabaseNotFound: 샘플 데이터베이스를 찾을 수 없음
+  welcomeToWhodb: "{appName}에 오신 것을 환영합니다"
+  failedToSelectDatabaseFile: 데이터베이스 파일을 선택하지 못했습니다.
+  failedToParseCredentials: URL에서 자격 증명을 구문 분석하지 못했습니다.
+  urlParseWarning: 이 URL에서 모든 필수 세부정보(호스트, 사용자 이름, 비밀번호 또는 데이터베이스)를 추출할 수 없습니다. 정보를 수동으로 입력해 주세요.
+  tryWhodb: "{appName}을 시도해 보세요"
+  noSetupRequired: 설정이 필요하지 않습니다
+  experienceDescription: "대화형 샘플 데이터베이스를 통해 {appName}의 강력한 기능을 경험해 보세요. 실제 데이터로 모든 기능을 살펴보세요."
+  whatsIncluded: 무엇이 포함되어 있나요?
+  aiChatAssistant: AI 채팅 도우미
+  aiChatDescription: 자연어로 쿼리하기
+  visualSchema: 시각적 스키마
+  visualSchemaDescription: 대화형 그래프 보기
+  dataGrid: 데이터 그리드
+  dataGridDescription: 스프레드시트처럼 편집
+  sqlEditor: SQL 편집기
+  sqlEditorDescription: 강력한 쿼리 도구
+  getStarted: 시작하기
+  quickStartFooter: 1분 미만 소요 • 신용카드 불필요
+  version: 버전
+  advancedFields.port: 포트
+  advancedFields.parseTime: 구문 분석 시간
+  advancedFields.loc: 위치
+  advancedFields.allowClearTextPasswords: 일반 텍스트 비밀번호 허용
+  advancedFields.searchPath: 검색 경로(스키마)
+  advancedFields.httpProtocol: HTTP 프로토콜
+  advancedFields.readonly: 읽기 전용
+  advancedFields.debug: 디버그
+  advancedFields.urlParams: URL 매개변수
+  advancedFields.dnsEnabled: DNS 활성화됨
+
+nl_NL:
+  enterHostName: Voer de hostnaam in
+  advancedFields.region: Regio
+  noConnectionsTitle: Geen verbindingen beschikbaar
+  noConnectionsDescription: Het handmatige verbindingsformulier is uitgeschakeld voor deze implementatie. Configureer databaseverbindingen via omgevingsvariabelen of cloudproviders, of neem contact op met uw beheerder.
+  loggingIn: Inloggen
+  title: Login
+  databaseType: Databasetype
+  hostName: Hostnaam
+  hostNameOrUrl: Hostnaam (of plak verbindings-URL)
+  username: Gebruikersnaam
+  enterUsername: Voer gebruikersnaam in
+  password: Wachtwoord
+  enterPassword: Voer wachtwoord in
+  database: Database
+  selectOrEnterDatabasePath: Selecteer of voer het databasebestandspad in
+  browseForSqliteFile: Blader naar SQLite-bestand
+  selectDatabase: Selecteer Database
+  enterDatabase: Voer Database in
+  enterSearchPath: Voer Schemanaam in
+  advancedButton: Geavanceerd
+  lessAdvancedButton: Minder geavanceerd
+  loginButton: Login
+  availableProfiles: Beschikbare profielen
+  selectProfile: Selecteer een profiel
+  allFieldsRequired: Alle velden zijn verplicht
+  selectProfileRequired: Selecteer een profiel
+  loginSuccessful: Inloggen succesvol
+  loginFailed: Inloggen mislukt
+  loginFailedWithError: "Inloggen mislukt: {error}"
+  sampleDatabaseNotFound: Voorbeelddatabase niet gevonden
+  welcomeToWhodb: "Welkom bij {appName}"
+  failedToSelectDatabaseFile: Kan databasebestand niet selecteren
+  failedToParseCredentials: Kan de inloggegevens van de URL niet parseren
+  urlParseWarning: We konden niet alle vereiste gegevens (host, gebruikersnaam, wachtwoord of database) uit deze URL halen. Voer de gegevens handmatig in.
+  tryWhodb: "Probeer {appName}"
+  noSetupRequired: Geen installatie vereist
+  experienceDescription: "Ervaar de kracht van {appName} met onze interactieve voorbeelddatabase. Ontdek alle functies met echte gegevens."
+  whatsIncluded: Wat is inbegrepen
+  aiChatAssistant: AI-chatassistent
+  aiChatDescription: Zoekopdracht in natuurlijke taal
+  visualSchema: Visueel schema
+  visualSchemaDescription: Interactieve grafiekweergave
+  dataGrid: Gegevensraster
+  dataGridDescription: Bewerken als een spreadsheet
+  sqlEditor: SQL-editor
+  sqlEditorDescription: Krachtige zoekhulpmiddelen
+  getStarted: Aan de slag
+  quickStartFooter: Duurt minder dan een minuut • Geen creditcard vereist
+  version: Versie
+  advancedFields.port: Haven
+  advancedFields.parseTime: Parseertijd
+  advancedFields.loc: Locatie
+  advancedFields.allowClearTextPasswords: Sta wachtwoorden in leesbare tekst toe
+  advancedFields.searchPath: Zoekpad (schema)
+  advancedFields.httpProtocol: HTTP-protocol
+  advancedFields.readonly: Alleen-lezen
+  advancedFields.debug: Foutopsporing
+  advancedFields.urlParams: URL-parameters
+  advancedFields.dnsEnabled: DNS ingeschakeld
+
+pl_PL:
+  enterHostName: Wprowadź nazwę hosta
+  advancedFields.region: Region
+  noConnectionsTitle: Brak dostępnych połączeń
+  noConnectionsDescription: Formularz połączenia ręcznego jest wyłączony dla tego wdrożenia. Skonfiguruj połączenia z bazą danych za pomocą zmiennych środowiskowych lub dostawców usług w chmurze albo skontaktuj się z administratorem.
+  loggingIn: Logowanie
+  title: Login
+  databaseType: Typ bazy danych
+  hostName: Nazwa hosta
+  hostNameOrUrl: Nazwa hosta (lub wklej adres URL połączenia)
+  username: Nazwa użytkownika
+  enterUsername: Wprowadź nazwę użytkownika
+  password: Hasło
+  enterPassword: Wprowadź hasło
+  database: Baza danych
+  selectOrEnterDatabasePath: Wybierz lub wprowadź ścieżkę pliku bazy danych
+  browseForSqliteFile: Wyszukaj plik SQLite
+  selectDatabase: Wybierz opcję Baza danych
+  enterDatabase: Wejdź do bazy danych
+  enterSearchPath: Wprowadź nazwę schematu
+  advancedButton: Zaawansowany
+  lessAdvancedButton: Mniej zaawansowane
+  loginButton: Login
+  availableProfiles: Dostępne profile
+  selectProfile: Wybierz profil
+  allFieldsRequired: Wszystkie pola są wymagane
+  selectProfileRequired: Wybierz profil
+  loginSuccessful: Logowanie powiodło się
+  loginFailed: Logowanie nie powiodło się
+  loginFailedWithError: "Logowanie nie powiodło się: {error}"
+  sampleDatabaseNotFound: Nie znaleziono przykładowej bazy danych
+  welcomeToWhodb: "Witamy w {appName}"
+  failedToSelectDatabaseFile: Nie udało się wybrać pliku bazy danych
+  failedToParseCredentials: Nie udało się przeanalizować danych uwierzytelniających z adresu URL
+  urlParseWarning: Nie mogliśmy wyodrębnić wszystkich wymaganych szczegółów (hosta, nazwy użytkownika, hasła lub bazy danych) z tego adresu URL. Proszę wprowadzić informacje ręcznie.
+  tryWhodb: "Spróbuj {appName}"
+  noSetupRequired: Nie wymaga konfiguracji
+  experienceDescription: "Poznaj moc {appName} dzięki naszej interaktywnej bazie danych próbek. Przeglądaj wszystkie funkcje na podstawie prawdziwych danych."
+  whatsIncluded: Co jest wliczone w cenę
+  aiChatAssistant: Asystent czatu AI
+  aiChatDescription: Zapytanie w języku naturalnym
+  visualSchema: Schemat wizualny
+  visualSchemaDescription: Interaktywny widok wykresu
+  dataGrid: Siatka danych
+  dataGridDescription: Edytuj jak arkusz kalkulacyjny
+  sqlEditor: Edytor SQL
+  sqlEditorDescription: Potężne narzędzia do wysyłania zapytań
+  getStarted: Rozpocznij
+  quickStartFooter: Zajmuje mniej niż minutę • Nie jest wymagana karta kredytowa
+  version: Wersja
+  advancedFields.port: Port
+  advancedFields.parseTime: Czas analizy
+  advancedFields.loc: Lokalizacja
+  advancedFields.allowClearTextPasswords: Zezwalaj na hasła w postaci zwykłego tekstu
+  advancedFields.searchPath: Ścieżka wyszukiwania (schemat)
+  advancedFields.httpProtocol: Protokół HTTP
+  advancedFields.readonly: Tylko do odczytu
+  advancedFields.debug: Odpluskwić
+  advancedFields.urlParams: Parametry adresu URL
+  advancedFields.dnsEnabled: Włączono DNS
+
+pt_BR:
+  enterHostName: Digite o nome do host
+  advancedFields.region: Região
+  noConnectionsTitle: Nenhuma conexão disponível
+  noConnectionsDescription: O formulário de conexão manual está desabilitado para esta implantação. Configure conexões de banco de dados por meio de variáveis ​​de ambiente ou provedores de nuvem ou entre em contato com seu administrador.
+  loggingIn: Fazendo login
+  title: Conecte-se
+  databaseType: Tipo de banco de dados
+  hostName: Nome do anfitrião
+  hostNameOrUrl: Nome do host (ou colar URL de conexão)
+  username: Nome de usuário
+  enterUsername: Digite o nome de usuário
+  password: Senha
+  enterPassword: Digite a senha
+  database: Banco de dados
+  selectOrEnterDatabasePath: Selecione ou insira o caminho do arquivo de banco de dados
+  browseForSqliteFile: Procure o arquivo SQLite
+  selectDatabase: Selecione banco de dados
+  enterDatabase: Entrar no banco de dados
+  enterSearchPath: Insira o nome do esquema
+  advancedButton: Avançada
+  lessAdvancedButton: Menos avançado
+  loginButton: Conecte-se
+  availableProfiles: Perfis disponíveis
+  selectProfile: Selecione um perfil
+  allFieldsRequired: Todos os campos são obrigatórios
+  selectProfileRequired: Selecione um perfil
+  loginSuccessful: Login bem-sucedido
+  loginFailed: Falha no login
+  loginFailedWithError: "Falha no login: {error}"
+  sampleDatabaseNotFound: Banco de dados de amostra não encontrado
+  welcomeToWhodb: "Bem vindo a {appName}"
+  failedToSelectDatabaseFile: Falha ao selecionar arquivo de banco de dados
+  failedToParseCredentials: Falha ao analisar credenciais do URL
+  urlParseWarning: Não foi possível extrair todos os detalhes necessários (host, nome de usuário, senha ou banco de dados) deste URL. Insira as informações manualmente.
+  tryWhodb: "Experimente {appName}"
+  noSetupRequired: Nenhuma configuração necessária
+  experienceDescription: "Experimente o poder do {appName} com nosso banco de dados de amostras interativo. Explore todos os recursos com dados reais."
+  whatsIncluded: O que está incluído
+  aiChatAssistant: Assistente de bate-papo com IA
+  aiChatDescription: Consulta em linguagem natural
+  visualSchema: Esquema Visual
+  visualSchemaDescription: Visualização de gráfico interativo
+  dataGrid: Grade de dados
+  dataGridDescription: Edite como uma planilha
+  sqlEditor: Editor SQL
+  sqlEditorDescription: Ferramentas de consulta poderosas
+  getStarted: Comece
+  quickStartFooter: Leva menos de um minuto • Não é necessário cartão de crédito
+  version: Versão
+  advancedFields.port: Porta
+  advancedFields.parseTime: Tempo de análise
+  advancedFields.loc: Localização
+  advancedFields.allowClearTextPasswords: Permitir senhas em texto não criptografado
+  advancedFields.searchPath: Caminho de pesquisa (esquema)
+  advancedFields.httpProtocol: Protocolo HTTP
+  advancedFields.readonly: Somente leitura
+  advancedFields.debug: Depurar
+  advancedFields.urlParams: Parâmetros de URL
+  advancedFields.dnsEnabled: DNS ativado
+
+ro_RO:
+  enterHostName: Introduceți numele gazdei
+  advancedFields.region: Regiune
+  noConnectionsTitle: Nu există conexiuni disponibile
+  noConnectionsDescription: Formularul de conectare manuală este dezactivat pentru această implementare. Vă rugăm să configurați conexiunile la baza de date prin variabile de mediu sau furnizori de cloud sau contactați administratorul.
+  loggingIn: Conectare
+  title: Log in
+  databaseType: Tipul bazei de date
+  hostName: Nume gazdă
+  hostNameOrUrl: Nume gazdă (sau inserați adresa URL a conexiunii)
+  username: Nume de utilizator
+  enterUsername: Introduceți numele de utilizator
+  password: Parolă
+  enterPassword: Introduceți parola
+  database: Baza de date
+  selectOrEnterDatabasePath: Selectați sau introduceți calea fișierului bazei de date
+  browseForSqliteFile: Căutați fișierul SQLite
+  selectDatabase: Selectați Baza de date
+  enterDatabase: Intrați în baza de date
+  enterSearchPath: Introduceți numele schemei
+  advancedButton: Avansat
+  lessAdvancedButton: Mai puțin avansat
+  loginButton: Log in
+  availableProfiles: Profiluri disponibile
+  selectProfile: Selectați un profil
+  allFieldsRequired: Toate câmpurile sunt obligatorii
+  selectProfileRequired: Selectați un profil
+  loginSuccessful: Conectare reușită
+  loginFailed: Autentificare eșuată
+  loginFailedWithError: "Conectare eșuată: {error}"
+  sampleDatabaseNotFound: Exemplu de bază de date nu a fost găsită
+  welcomeToWhodb: Bun venit la [[0]]]
+  failedToSelectDatabaseFile: Nu s-a putut selecta fișierul bazei de date
+  failedToParseCredentials: Nu s-a putut analiza acreditările din URL
+  urlParseWarning: Nu am putut extrage toate detaliile necesare (gazdă, nume de utilizator, parolă sau bază de date) din această adresă URL. Vă rugăm să introduceți informațiile manual.
+  tryWhodb: Încercați [[0]]]
+  noSetupRequired: Nu este necesară nicio configurare
+  experienceDescription: "Experimentați puterea {appName} cu baza noastră de date interactivă. Explorați toate funcțiile cu date reale."
+  whatsIncluded: Ce este inclus
+  aiChatAssistant: Asistent de chat AI
+  aiChatDescription: Interogare în limbaj natural
+  visualSchema: Schema vizuală
+  visualSchemaDescription: Vizualizare grafică interactivă
+  dataGrid: Grila de date
+  dataGridDescription: Editați ca o foaie de calcul
+  sqlEditor: SQL Editor
+  sqlEditorDescription: Instrumente puternice de interogare
+  getStarted: Începeți
+  quickStartFooter: Durează mai puțin de un minut • Nu este necesar un card de credit
+  version: Versiune
+  advancedFields.port: Port
+  advancedFields.parseTime: Analizați timpul
+  advancedFields.loc: Locaţie
+  advancedFields.allowClearTextPasswords: Permite parole cu text clar
+  advancedFields.searchPath: Cale de căutare (schemă)
+  advancedFields.httpProtocol: Protocolul HTTP
+  advancedFields.readonly: Numai citire
+  advancedFields.debug: Depanați
+  advancedFields.urlParams: Parametri URL
+  advancedFields.dnsEnabled: DNS activat
+
+ru_RU:
+  enterHostName: Введите имя хоста
+  advancedFields.region: Область
+  noConnectionsTitle: Нет доступных подключений
+  noConnectionsDescription: Форма подключения вручную для этого развертывания отключена. Настройте подключения к базе данных с помощью переменных среды или поставщиков облачных услуг или обратитесь к своему администратору.
+  loggingIn: Вход в систему
+  title: Авторизоваться
+  databaseType: Тип базы данных
+  hostName: Имя хоста
+  hostNameOrUrl: Имя хоста (или URL-адрес вставки соединения)
+  username: Имя пользователя
+  enterUsername: Введите имя пользователя
+  password: Пароль
+  enterPassword: Введите пароль
+  database: База данных
+  selectOrEnterDatabasePath: Выберите или введите путь к файлу базы данных
+  browseForSqliteFile: Найдите файл SQLite
+  selectDatabase: Выберите базу данных
+  enterDatabase: Войти в базу данных
+  enterSearchPath: Введите имя схемы
+  advancedButton: Передовой
+  lessAdvancedButton: Менее продвинутый
+  loginButton: Авторизоваться
+  availableProfiles: Доступные профили
+  selectProfile: Выберите профиль
+  allFieldsRequired: Все поля обязательны для заполнения
+  selectProfileRequired: Выберите профиль
+  loginSuccessful: Вход успешен
+  loginFailed: Ошибка входа
+  loginFailedWithError: "Ошибка входа: {error}"
+  sampleDatabaseNotFound: Пример базы данных не найден
+  welcomeToWhodb: "Добро пожаловать в {appName}"
+  failedToSelectDatabaseFile: Не удалось выбрать файл базы данных
+  failedToParseCredentials: Не удалось проанализировать учетные данные по URL-адресу.
+  urlParseWarning: Нам не удалось извлечь все необходимые данные (хост, имя пользователя, пароль или базу данных) из этого URL-адреса. Пожалуйста, введите информацию вручную.
+  tryWhodb: "Попробуйте {appName}"
+  noSetupRequired: Настройка не требуется
+  experienceDescription: "Испытайте мощь {appName} с помощью нашей интерактивной базы данных. Исследуйте все функции на реальных данных."
+  whatsIncluded: Что включено
+  aiChatAssistant: AI-помощник в чате
+  aiChatDescription: Запрос на естественном языке
+  visualSchema: Визуальная схема
+  visualSchemaDescription: Интерактивный график
+  dataGrid: Сетка данных
+  dataGridDescription: Редактировать как электронную таблицу
+  sqlEditor: SQL-редактор
+  sqlEditorDescription: Мощные инструменты запросов
+  getStarted: Начать
+  quickStartFooter: Займет меньше минуты • Кредитная карта не требуется.
+  version: Версия
+  advancedFields.port: Порт
+  advancedFields.parseTime: Время анализа
+  advancedFields.loc: Расположение
+  advancedFields.allowClearTextPasswords: Разрешить использование паролей в виде открытого текста
+  advancedFields.searchPath: Путь поиска (схема)
+  advancedFields.httpProtocol: HTTP-протокол
+  advancedFields.readonly: Только чтение
+  advancedFields.debug: Отлаживать
+  advancedFields.urlParams: Параметры URL-адреса
+  advancedFields.dnsEnabled: DNS включен
+
+sk_SK:
+  enterHostName: Zadajte názov hostiteľa
+  advancedFields.region: región
+  noConnectionsTitle: Nie sú dostupné žiadne spojenia
+  noConnectionsDescription: Manuálny formulár pripojenia je pre toto nasadenie zakázaný. Nakonfigurujte pripojenia k databáze prostredníctvom premenných prostredia alebo poskytovateľov cloudu alebo kontaktujte svojho správcu.
+  loggingIn: Prihlasovanie
+  title: Prihláste sa
+  databaseType: Typ databázy
+  hostName: Názov hostiteľa
+  hostNameOrUrl: Názov hostiteľa (alebo prilepte adresu URL pripojenia)
+  username: Používateľské meno
+  enterUsername: Zadajte Používateľské meno
+  password: heslo
+  enterPassword: Zadajte heslo
+  database: Databáza
+  selectOrEnterDatabasePath: Vyberte alebo zadajte cestu k súboru databázy
+  browseForSqliteFile: Vyhľadajte súbor SQLite
+  selectDatabase: Vyberte položku Databáza
+  enterDatabase: Zadajte databázu
+  enterSearchPath: Zadajte názov schémy
+  advancedButton: Pokročilé
+  lessAdvancedButton: Menej pokročilé
+  loginButton: Prihláste sa
+  availableProfiles: Dostupné profily
+  selectProfile: Vyberte profil
+  allFieldsRequired: Všetky polia sú povinné
+  selectProfileRequired: Vyberte profil
+  loginSuccessful: Prihlásenie bolo úspešné
+  loginFailed: Prihlásenie zlyhalo
+  loginFailedWithError: "Prihlásenie zlyhalo: {error}"
+  sampleDatabaseNotFound: Vzorová databáza sa nenašla
+  welcomeToWhodb: "Vitajte v {appName}"
+  failedToSelectDatabaseFile: Nepodarilo sa vybrať databázový súbor
+  failedToParseCredentials: Nepodarilo sa analyzovať poverenia z adresy URL
+  urlParseWarning: Z tejto adresy URL sa nám nepodarilo extrahovať všetky požadované podrobnosti (hostiteľ, používateľské meno, heslo alebo databáza). Zadajte informácie ručne.
+  tryWhodb: "Skúste {appName}"
+  noSetupRequired: Nevyžaduje sa žiadne nastavenie
+  experienceDescription: "Vyskúšajte silu {appName} s našou interaktívnou vzorovou databázou. Preskúmajte všetky funkcie so skutočnými údajmi."
+  whatsIncluded: Čo je zahrnuté
+  aiChatAssistant: AI chat asistent
+  aiChatDescription: Dopyt v prirodzenom jazyku
+  visualSchema: Vizuálna schéma
+  visualSchemaDescription: Interaktívne zobrazenie grafu
+  dataGrid: Dátová mriežka
+  dataGridDescription: Upraviť ako tabuľku
+  sqlEditor: SQL Editor
+  sqlEditorDescription: Výkonné dopytovacie nástroje
+  getStarted: Začíname
+  quickStartFooter: Trvá menej ako minútu • Nevyžaduje sa žiadna kreditná karta
+  version: Verzia
+  advancedFields.port: Port
+  advancedFields.parseTime: Analyzovať čas
+  advancedFields.loc: Poloha
+  advancedFields.allowClearTextPasswords: Povoliť heslá vo forme čistého textu
+  advancedFields.searchPath: Vyhľadávacia cesta (schéma)
+  advancedFields.httpProtocol: Protokol HTTP
+  advancedFields.readonly: Iba na čítanie
+  advancedFields.debug: Debug
+  advancedFields.urlParams: Parametre adresy URL
+  advancedFields.dnsEnabled: DNS povolené
+
+sv_SE:
+  enterHostName: Ange värdnamn
+  advancedFields.region: Område
+  noConnectionsTitle: Inga anslutningar tillgängliga
+  noConnectionsDescription: Manuell anslutningsformulär är inaktiverat för denna distribution. Vänligen konfigurera databasanslutningar via miljövariabler eller molnleverantörer, eller kontakta din administratör.
+  loggingIn: Loggar in
+  title: Inloggning
+  databaseType: Databastyp
+  hostName: Värdnamn
+  hostNameOrUrl: Värdnamn (eller klistra in anslutningsadress)
+  username: Användarnamn
+  enterUsername: Ange användarnamn
+  password: Lösenord
+  enterPassword: Ange lösenord
+  database: Databas
+  selectOrEnterDatabasePath: Välj eller ange sökväg till databasfil
+  browseForSqliteFile: Bläddra efter SQLite-fil
+  selectDatabase: Välj Databas
+  enterDatabase: Gå in i databasen
+  enterSearchPath: Ange Schema Name
+  advancedButton: Avancerad
+  lessAdvancedButton: Mindre avancerad
+  loginButton: Inloggning
+  availableProfiles: Tillgängliga profiler
+  selectProfile: Välj en profil
+  allFieldsRequired: Alla fält är obligatoriska
+  selectProfileRequired: Välj en profil
+  loginSuccessful: Inloggningen lyckades
+  loginFailed: Inloggning misslyckades
+  loginFailedWithError: "Inloggning misslyckades: {error}"
+  sampleDatabaseNotFound: Exempeldatabas hittades inte
+  welcomeToWhodb: "Välkommen till {appName}"
+  failedToSelectDatabaseFile: Det gick inte att välja databasfil
+  failedToParseCredentials: Det gick inte att analysera inloggningsuppgifter från URL
+  urlParseWarning: Vi kunde inte extrahera alla nödvändiga detaljer (värd, användarnamn, lösenord eller databas) från denna URL. Ange informationen manuellt.
+  tryWhodb: "Prova {appName}"
+  noSetupRequired: Ingen installation krävs
+  experienceDescription: "Upplev kraften i {appName} med vår interaktiva exempeldatabas. Utforska alla funktioner med riktig data."
+  whatsIncluded: Vad som ingår
+  aiChatAssistant: AI Chat Assistant
+  aiChatDescription: Fråga på naturligt språk
+  visualSchema: Visuellt schema
+  visualSchemaDescription: Interaktiv grafvy
+  dataGrid: Data Grid
+  dataGridDescription: Redigera som ett kalkylblad
+  sqlEditor: SQL Editor
+  sqlEditorDescription: Kraftfulla frågeverktyg
+  getStarted: Kom igång
+  quickStartFooter: Tar mindre än en minut • Inget kreditkort krävs
+  version: Version
+  advancedFields.port: Hamn
+  advancedFields.parseTime: Analystid
+  advancedFields.loc: Plats
+  advancedFields.allowClearTextPasswords: Tillåt lösenord med klartext
+  advancedFields.searchPath: Sökväg (schema)
+  advancedFields.httpProtocol: HTTP-protokoll
+  advancedFields.readonly: Skrivskyddad
+  advancedFields.debug: Felsök
+  advancedFields.urlParams: URL-parametrar
+  advancedFields.dnsEnabled: DNS aktiverad
+
+zh_CN:
+  enterHostName: 输入主机名
+  advancedFields.region: 地区
+  noConnectionsTitle: 没有可用的连接
+  noConnectionsDescription: 此部署禁用手动连接表单。 请通过环境变量或云提供商配置数据库连接，或联系您的管理员。
+  loggingIn: 登录
+  title: 登录
+  databaseType: 数据库类型
+  hostName: 主机名
+  hostNameOrUrl: 主机名（或粘贴连接 URL）
+  username: 用户名
+  enterUsername: 输入用户名
+  password: 密码
+  enterPassword: 输入密码
+  database: 数据库
+  selectOrEnterDatabasePath: 选择或输入数据库文件路径
+  browseForSqliteFile: 浏览 SQLite 文件
+  selectDatabase: 选择数据库
+  enterDatabase: 输入数据库
+  enterSearchPath: 输入架构名称
+  advancedButton: 先进的
+  lessAdvancedButton: 不太先进
+  loginButton: 登录
+  availableProfiles: 可用的配置文件
+  selectProfile: 选择个人资料
+  allFieldsRequired: 所有字段均为必填
+  selectProfileRequired: 选择个人资料
+  loginSuccessful: 登录成功
+  loginFailed: 登录失败
+  loginFailedWithError: "登录失败：{error}"
+  sampleDatabaseNotFound: 未找到示例数据库
+  welcomeToWhodb: "欢迎来到{appName}"
+  failedToSelectDatabaseFile: 无法选择数据库文件
+  failedToParseCredentials: 无法从 URL 解析凭据
+  urlParseWarning: 我们无法从此 URL 提取所有必需的详细信息（主机、用户名、密码或数据库）。 请手动输入信息。
+  tryWhodb: "尝试{appName}"
+  noSetupRequired: 无需设置
+  experienceDescription: "通过我们的交互式示例数据库体验 {appName} 的强大功能。 用真实数据探索所有功能。"
+  whatsIncluded: 包含什么
+  aiChatAssistant: 人工智能聊天助手
+  aiChatDescription: 自然语言查询
+  visualSchema: 视觉图式
+  visualSchemaDescription: 交互式图表视图
+  dataGrid: 数据网格
+  dataGridDescription: 像电子表格一样编辑
+  sqlEditor: SQL编辑器
+  sqlEditorDescription: 强大的查询工具
+  getStarted: 开始使用
+  quickStartFooter: 仅需不到一分钟 • 无需信用卡
+  version: 版本
+  advancedFields.port: 港口
+  advancedFields.parseTime: 解析时间
+  advancedFields.loc: 地点
+  advancedFields.allowClearTextPasswords: 允许明文密码
+  advancedFields.searchPath: 搜索路径（架构）
+  advancedFields.httpProtocol: HTTP协议
+  advancedFields.readonly: 只读
+  advancedFields.debug: 调试
+  advancedFields.urlParams: 网址参数
+  advancedFields.dnsEnabled: 启用 DNS
+
+zh_TW:
+  enterHostName: 輸入主機名稱
+  advancedFields.region: 地區
+  noConnectionsTitle: 沒有可用的連接
+  noConnectionsDescription: 此部署會停用手動連線表單。 請透過環境變數或雲端提供者配置資料庫連接，或聯絡您的管理員。
+  loggingIn: 登入
+  title: 登入
+  databaseType: 資料庫類型
+  hostName: 主機名稱
+  hostNameOrUrl: 主機名稱（或貼上連線 URL）
+  username: 使用者名稱
+  enterUsername: 輸入使用者名稱
+  password: 密碼
+  enterPassword: 輸入密碼
+  database: 資料庫
+  selectOrEnterDatabasePath: 選擇或輸入資料庫檔案路徑
+  browseForSqliteFile: 瀏覽 SQLite 文件
+  selectDatabase: 選擇資料庫
+  enterDatabase: 輸入資料庫
+  enterSearchPath: 輸入架構名稱
+  advancedButton: 先進的
+  lessAdvancedButton: 不太先進
+  loginButton: 登入
+  availableProfiles: 可用的設定檔
+  selectProfile: 選擇個人資料
+  allFieldsRequired: 所有欄位均為必填
+  selectProfileRequired: 選擇個人資料
+  loginSuccessful: 登入成功
+  loginFailed: 登入失敗
+  loginFailedWithError: "登入失敗：{error}"
+  sampleDatabaseNotFound: 未找到範例資料庫
+  welcomeToWhodb: "歡迎來到{appName}"
+  failedToSelectDatabaseFile: 無法選擇資料庫文件
+  failedToParseCredentials: 無法從 URL 解析憑證
+  urlParseWarning: 我們無法從此 URL 提取所有必需的詳細資訊（主機、使用者名稱、密碼或資料庫）。 請手動輸入資訊。
+  tryWhodb: "嘗試{appName}"
+  noSetupRequired: 無需設定
+  experienceDescription: "透過我們的互動式範例資料庫體驗 {appName} 的強大功能。 用真實數據探索所有功能。"
+  whatsIncluded: 包含什麼
+  aiChatAssistant: 人工智慧聊天助手
+  aiChatDescription: 自然語言查詢
+  visualSchema: 視覺圖式
+  visualSchemaDescription: 互動式圖表視圖
+  dataGrid: 資料網格
+  dataGridDescription: 像電子表格一樣編輯
+  sqlEditor: SQL編輯器
+  sqlEditorDescription: 強大的查詢工具
+  getStarted: 開始使用
+  quickStartFooter: 只需不到一分鐘 • 無需信用卡
+  version: 版本
+  advancedFields.port: 港口
+  advancedFields.parseTime: 解析時間
+  advancedFields.loc: 地點
+  advancedFields.allowClearTextPasswords: 允許明文密碼
+  advancedFields.searchPath: 搜尋路徑（架構）
+  advancedFields.httpProtocol: HTTP協定
+  advancedFields.readonly: 只讀
+  advancedFields.debug: 偵錯
+  advancedFields.urlParams: URL Params
+  advancedFields.dnsEnabled: 啟用 DNS

@@ -25,3 +25,563 @@ en_US:
   ollamaDocsText: Check our documentation for more information on how to setup Ollama.
   unableToConnect: Unable to Connect to the Model
   tokenRequired: Token is required to connect to the provider
+
+ar_AE:
+  title: مساعد الذكاء الاصطناعي
+  generate: يولد
+  clear: واضح
+  placeholder: اسأل الذكاء الاصطناعي...
+  addExternalModel: إضافة مزود خارجي
+  modelType: نوع المزود
+  selectProvider: حدد الموفر
+  name: الاسم (اختياري)
+  token: رمز مميز
+  cancel: يلغي
+  submit: يُقدِّم
+  localSetup: الإعداد المحلي
+  downloadingModel: تحميل نموذج اولاما
+  docs: المستندات
+  addProvider: إضافة مزود
+  selectModel: حدد النموذج
+  deleteProvider: حذف الموفر
+  deleteProviderConfirm: هل أنت متأكد أنك تريد حذف هذا الموفر؟ لا يمكن التراجع عن هذا الإجراء.
+  delete: يمسح
+  newChat: مسح الدردشة
+  ollamaSetupText: انتقل إلى <0>Ollama</0> واتبع تعليمات التثبيت.
+  ollamaDownloadText: بمجرد التثبيت، قم بتثبيت النموذج المطلوب الذي ترغب في استخدامه. في هذا الدليل، سوف نستخدم <0>Llama3.1 8b</0>. لتثبيت هذا النموذج، قم بتشغيل
+  ollamaRunCommand: أولاما تشغيل اللاما3.1
+  ollamaDocsText: راجع وثائقنا للحصول على مزيد من المعلومات حول كيفية إعداد Olma.
+  unableToConnect: غير قادر على الاتصال بالنموذج
+  tokenRequired: الرمز المميز مطلوب للاتصال بالموفر
+
+de_DE:
+  title: KI-Assistent
+  generate: Erzeugen
+  clear: Klar
+  placeholder: Fragen Sie AI...
+  addExternalModel: Externen Anbieter hinzufügen
+  modelType: Anbietertyp
+  selectProvider: Wählen Sie Anbieter aus
+  name: Name (optional)
+  token: Token
+  cancel: Stornieren
+  submit: Einreichen
+  localSetup: Lokales Setup
+  downloadingModel: Herunterladen des Ollama-Modells
+  docs: Dokumente
+  addProvider: Fügen Sie einen Anbieter hinzu
+  selectModel: Wählen Sie Modell aus
+  deleteProvider: Anbieter löschen
+  deleteProviderConfirm: Sind Sie sicher, dass Sie diesen Anbieter löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+  delete: Löschen
+  newChat: Chat löschen
+  ollamaSetupText: Gehen Sie zu <0>Ollama</0> und befolgen Sie die Installationsanweisungen.
+  ollamaDownloadText: "Installieren Sie nach der Installation das gewünschte Modell, das Sie verwenden möchten. In dieser Anleitung verwenden wir <0>Llama3.1 8b</0>. Um dieses Modell zu installieren, führen Sie Folgendes aus:"
+  ollamaRunCommand: olama run llama3.1
+  ollamaDocsText: Weitere Informationen zur Einrichtung von Ollama finden Sie in unserer Dokumentation.
+  unableToConnect: Es kann keine Verbindung zum Modell hergestellt werden
+  tokenRequired: Für die Verbindung zum Anbieter ist ein Token erforderlich
+
+el_GR:
+  title: Βοηθός AI
+  generate: Παράγω
+  clear: Σαφής
+  placeholder: Ρωτήστε το AI...
+  addExternalModel: Προσθήκη εξωτερικού παρόχου
+  modelType: Τύπος παρόχου
+  selectProvider: Επιλέξτε Πάροχος
+  name: Όνομα (Προαιρετικό)
+  token: Ενδειξη
+  cancel: Ματαίωση
+  submit: Υποτάσσομαι
+  localSetup: Τοπική εγκατάσταση
+  downloadingModel: Λήψη του μοντέλου Olama
+  docs: Έγγραφα
+  addProvider: Προσθέστε έναν πάροχο
+  selectModel: Επιλέξτε Μοντέλο
+  deleteProvider: Διαγραφή παρόχου
+  deleteProviderConfirm: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτόν τον πάροχο; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.
+  delete: Διαγράφω
+  newChat: Εκκαθάριση συνομιλίας
+  ollamaSetupText: Μεταβείτε στο <0>Ollama</0> και ακολουθήστε τις οδηγίες εγκατάστασης.
+  ollamaDownloadText: Μόλις εγκατασταθεί, εγκαταστήστε το επιθυμητό μοντέλο που θέλετε να χρησιμοποιήσετε. Σε αυτόν τον οδηγό, θα χρησιμοποιήσουμε το <0>Llama3.1 8b</0>. Για να εγκαταστήσετε αυτό το μοντέλο, εκτελέστε
+  ollamaRunCommand: olama τρέχει llama3.1
+  ollamaDocsText: Ελέγξτε την τεκμηρίωσή μας για περισσότερες πληροφορίες σχετικά με τον τρόπο ρύθμισης του Ollama.
+  unableToConnect: Δεν είναι δυνατή η σύνδεση με το μοντέλο
+  tokenRequired: Απαιτείται διακριτικό για σύνδεση με τον πάροχο
+
+en_GB:
+  title: AI Assistant
+  generate: Generate
+  clear: Clear
+  placeholder: Ask AI...
+  addExternalModel: Add External Provider
+  modelType: Provider Type
+  selectProvider: Select Provider
+  name: Name (Optional)
+  token: Token
+  cancel: Cancel
+  submit: Submit
+  localSetup: Local Setup
+  downloadingModel: Downloading the Ollama Model
+  docs: Docs
+  addProvider: Add a provider
+  selectModel: Select Model
+  deleteProvider: Delete Provider
+  deleteProviderConfirm: Are you sure you want to delete this provider? This action cannot be undone.
+  delete: Delete
+  newChat: Clear Chat
+  ollamaSetupText: Go to <0>Ollama</0> and follow the installation instructions.
+  ollamaDownloadText: Once installed, install the desired model you would like to use. In this guide, we will use <0>Llama3.1 8b</0>. To install this model, run
+  ollamaRunCommand: ollama run llama3.1
+  ollamaDocsText: Check our documentation for more information on how to setup Ollama.
+  unableToConnect: Unable to Connect to the Model
+  tokenRequired: Token is required to connect to the provider
+
+es_ES:
+  title: Asistente de IA
+  generate: Generar
+  clear: Clara
+  placeholder: Pregúntale a la IA...
+  addExternalModel: Agregar proveedor externo
+  modelType: Tipo de proveedor
+  selectProvider: Seleccionar Proveedor
+  name: Nombre (opcional)
+  token: Simbólica
+  cancel: Cancelar
+  submit: Entregar
+  localSetup: Configuración local
+  downloadingModel: Descargando el Modelo Ollama
+  docs: Documentos
+  addProvider: Agregar un proveedor
+  selectModel: Seleccionar modelo
+  deleteProvider: Eliminar proveedor
+  deleteProviderConfirm: ¿Está seguro de que desea eliminar este proveedor? Esta acción no se puede deshacer.
+  delete: Borrar
+  newChat: Borrar chat
+  ollamaSetupText: Vaya a <0>Ollama</0> y siga las instrucciones de instalación.
+  ollamaDownloadText: Una vez instalado, instale el modelo que desee utilizar. En esta guía, usaremos <0>Llama3.1 8b</0>. Para instalar este modelo, ejecute
+  ollamaRunCommand: ollama corre llama3.1
+  ollamaDocsText: Consulte nuestra documentación para obtener más información sobre cómo configurar Ollama.
+  unableToConnect: No se puede conectar con el modelo
+  tokenRequired: Se requiere token para conectarse al proveedor
+
+fi_FI:
+  title: AI Assistant
+  generate: Luo
+  clear: Selkeä
+  placeholder: Kysy AI...
+  addExternalModel: Lisää ulkoinen toimittaja
+  modelType: Palveluntarjoajan tyyppi
+  selectProvider: Valitse Palveluntarjoaja
+  name: Nimi (valinnainen)
+  token: Token
+  cancel: Peruuttaa
+  submit: Lähetä
+  localSetup: Paikallinen asennus
+  downloadingModel: Ollama-mallin lataaminen
+  docs: Asiakirjat
+  addProvider: Lisää palveluntarjoaja
+  selectModel: Valitse Malli
+  deleteProvider: Poista palveluntarjoaja
+  deleteProviderConfirm: Haluatko varmasti poistaa tämän palveluntarjoajan? Tätä toimintoa ei voi kumota.
+  delete: Poistaa
+  newChat: Tyhjennä Chat
+  ollamaSetupText: Siirry kohtaan <0>Ollama</0> ja seuraa asennusohjeita.
+  ollamaDownloadText: Kun olet asentanut, asenna haluamasi malli, jota haluat käyttää. Tässä oppaassa käytämme <0>Llama3.1 8b</0>. Asenna tämä malli suorittamalla
+  ollamaRunCommand: ollama run llama3.1
+  ollamaDocsText: Katso dokumentaatiomme saadaksesi lisätietoja Ollaman määrittämisestä.
+  unableToConnect: Ei voida muodostaa yhteyttä malliin
+  tokenRequired: Token tarvitaan yhteyden muodostamiseen palveluntarjoajaan
+
+fr_FR:
+  title: Assistant IA
+  generate: Générer
+  clear: Claire
+  placeholder: Demandez à l'IA...
+  addExternalModel: Ajouter un fournisseur externe
+  modelType: Type de fournisseur
+  selectProvider: Sélectionnez le fournisseur
+  name: Nom (facultatif)
+  token: Jeton
+  cancel: Annuler
+  submit: Soumettre
+  localSetup: Configuration locale
+  downloadingModel: Téléchargement du modèle Ollama
+  docs: Documents
+  addProvider: Ajouter un fournisseur
+  selectModel: Sélectionnez le modèle
+  deleteProvider: Supprimer le fournisseur
+  deleteProviderConfirm: Êtes-vous sûr de vouloir supprimer ce fournisseur ? Cette action ne peut pas être annulée.
+  delete: Supprimer
+  newChat: Effacer le chat
+  ollamaSetupText: Accédez à <0>Ollama</0> et suivez les instructions d'installation.
+  ollamaDownloadText: Une fois installé, installez le modèle souhaité que vous souhaitez utiliser. Dans ce guide, nous utiliserons <0>Llama3.1 8b</0>. Pour installer ce modèle, exécutez
+  ollamaRunCommand: ollama exécute lama3.1
+  ollamaDocsText: Consultez notre documentation pour plus d'informations sur la configuration d'Ollama.
+  unableToConnect: Impossible de se connecter au modèle
+  tokenRequired: Un jeton est requis pour se connecter au fournisseur
+
+it_IT:
+  title: Assistente AI
+  generate: Generare
+  clear: Chiara
+  placeholder: Chiedi all'AI...
+  addExternalModel: Aggiungi fornitore esterno
+  modelType: Tipo di fornitore
+  selectProvider: Seleziona Fornitore
+  name: Nome (facoltativo)
+  token: Gettone
+  cancel: Cancellare
+  submit: Invia
+  localSetup: Configurazione locale
+  downloadingModel: Download del modello Ollama
+  docs: Documenti
+  addProvider: Aggiungi un fornitore
+  selectModel: Seleziona modello
+  deleteProvider: Elimina fornitore
+  deleteProviderConfirm: Sei sicuro di voler eliminare questo fornitore? Questa azione non può essere annullata.
+  delete: Eliminare
+  newChat: Cancella chat
+  ollamaSetupText: Vai su <0>Ollama</0> e segui le istruzioni di installazione.
+  ollamaDownloadText: Una volta installato, installa il modello desiderato che desideri utilizzare. In questa guida utilizzeremo <0>Llama3.1 8b</0>. Per installare questo modello, esegui
+  ollamaRunCommand: ollama esegue llama3.1
+  ollamaDocsText: Consulta la nostra documentazione per ulteriori informazioni su come configurare Ollama.
+  unableToConnect: Impossibile connettersi al modello
+  tokenRequired: Il token è necessario per connettersi al provider
+
+iw_IL:
+  title: עוזר AI
+  generate: לִיצוֹר
+  clear: בָּרוּר
+  placeholder: תשאל AI...
+  addExternalModel: הוסף ספק חיצוני
+  modelType: סוג ספק
+  selectProvider: בחר ספק
+  name: שם (אופציונלי)
+  token: אֲסִימוֹן
+  cancel: לְבַטֵל
+  submit: לְהַגִישׁ
+  localSetup: הגדרה מקומית
+  downloadingModel: הורדת מודל אולמה
+  docs: מסמכים
+  addProvider: הוסף ספק
+  selectModel: בחר דגם
+  deleteProvider: מחק ספק
+  deleteProviderConfirm: האם אתה בטוח שברצונך למחוק את הספק הזה? לא ניתן לבטל פעולה זו.
+  delete: לִמְחוֹק
+  newChat: נקה צ'אט
+  ollamaSetupText: עבור אל <0>Ollama</0> ופעל לפי הוראות ההתקנה.
+  ollamaDownloadText: לאחר ההתקנה, התקן את הדגם הרצוי בו תרצה להשתמש. במדריך זה, נשתמש ב-<0>Llama3.1 8b</0>. כדי להתקין דגם זה, הפעל
+  ollamaRunCommand: ollama run llama3.1
+  ollamaDocsText: עיין בתיעוד שלנו למידע נוסף על אופן הגדרת Ollama.
+  unableToConnect: לא ניתן להתחבר לדגם
+  tokenRequired: נדרש אסימון כדי להתחבר לספק
+
+ja_JP:
+  title: AIアシスタント
+  generate: 生成する
+  clear: クリア
+  placeholder: AIに聞いてみると…
+  addExternalModel: 外部プロバイダーの追加
+  modelType: プロバイダーの種類
+  selectProvider: プロバイダーの選択
+  name: 名前 (オプション)
+  token: トークン
+  cancel: キャンセル
+  submit: 提出する
+  localSetup: ローカルセットアップ
+  downloadingModel: Ollama モデルのダウンロード
+  docs: ドキュメント
+  addProvider: プロバイダーを追加する
+  selectModel: モデルの選択
+  deleteProvider: プロバイダーの削除
+  deleteProviderConfirm: このプロバイダーを削除してもよろしいですか? この操作は元に戻すことができません。
+  delete: 消去
+  newChat: チャットをクリアする
+  ollamaSetupText: <0>Ollama</0> に移動し、インストール手順に従います。
+  ollamaDownloadText: インストールしたら、使用したいモデルをインストールします。 このガイドでは、<0>Llama3.1 8b</0> を使用します。 このモデルをインストールするには、次のコマンドを実行します。
+  ollamaRunCommand: オラマはラマ3.1を実行します
+  ollamaDocsText: Ollama のセットアップ方法の詳細については、ドキュメントを参照してください。
+  unableToConnect: モデルに接続できません
+  tokenRequired: プロバイダーに接続するにはトークンが必要です
+
+ko_KR:
+  title: AI 어시스턴트
+  generate: 생성하다
+  clear: 분명한
+  placeholder: AI에게 물어보세요...
+  addExternalModel: 외부 공급자 추가
+  modelType: 제공자 유형
+  selectProvider: 제공업체 선택
+  name: 이름(선택사항)
+  token: 토큰
+  cancel: 취소
+  submit: 제출하다
+  localSetup: 로컬 설정
+  downloadingModel: Ollama 모델 다운로드
+  docs: 문서
+  addProvider: 제공업체 추가
+  selectModel: 모델 선택
+  deleteProvider: 공급자 삭제
+  deleteProviderConfirm: 이 제공업체를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.
+  delete: 삭제
+  newChat: 채팅 지우기
+  ollamaSetupText: <0>Ollama</0>로 이동하여 설치 지침을 따르세요.
+  ollamaDownloadText: 설치가 완료되면 사용하려는 원하는 모델을 설치하십시오. 이 가이드에서는 <0>Llama3.1 8b</0>를 사용합니다. 이 모델을 설치하려면 다음을 실행하세요.
+  ollamaRunCommand: 올라마 런 라마3.1
+  ollamaDocsText: Ollama 설정 방법에 대한 자세한 내용은 설명서를 확인하세요.
+  unableToConnect: 모델에 연결할 수 없습니다
+  tokenRequired: 공급자에 연결하려면 토큰이 필요합니다.
+
+nl_NL:
+  title: AI-assistent
+  generate: Genereer
+  clear: Duidelijk
+  placeholder: Vraag AI...
+  addExternalModel: Externe provider toevoegen
+  modelType: Type aanbieder
+  selectProvider: Selecteer Aanbieder
+  name: Naam (optioneel)
+  token: Token
+  cancel: Annuleren
+  submit: Indienen
+  localSetup: Lokale installatie
+  downloadingModel: Het Ollama-model downloaden
+  docs: Documenten
+  addProvider: Voeg een aanbieder toe
+  selectModel: Selecteer Model
+  deleteProvider: Aanbieder verwijderen
+  deleteProviderConfirm: Weet u zeker dat u deze aanbieder wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+  delete: Verwijderen
+  newChat: Chat wissen
+  ollamaSetupText: Ga naar <0>Ollama</0> en volg de installatie-instructies.
+  ollamaDownloadText: Eenmaal geïnstalleerd, installeert u het gewenste model dat u wilt gebruiken. In deze handleiding gebruiken we <0>Llama3.1 8b</0>. Om dit model te installeren, voert u uit
+  ollamaRunCommand: ollama run lama3.1
+  ollamaDocsText: Bekijk onze documentatie voor meer informatie over het instellen van Ollama.
+  unableToConnect: Kan geen verbinding maken met het model
+  tokenRequired: Token is vereist om verbinding te maken met de provider
+
+pl_PL:
+  title: Asystent AI
+  generate: Spowodować
+  clear: Jasne
+  placeholder: Zapytaj AI...
+  addExternalModel: Dodaj dostawcę zewnętrznego
+  modelType: Typ dostawcy
+  selectProvider: Wybierz dostawcę
+  name: Imię (opcjonalnie)
+  token: Znak
+  cancel: Anulować
+  submit: Składać
+  localSetup: Konfiguracja lokalna
+  downloadingModel: Pobieranie modelu Ollama
+  docs: Dokumenty
+  addProvider: Dodaj dostawcę
+  selectModel: Wybierz Model
+  deleteProvider: Usuń dostawcę
+  deleteProviderConfirm: Czy na pewno chcesz usunąć tego dostawcę? Tej akcji nie można cofnąć.
+  delete: Usuwać
+  newChat: Wyczyść czat
+  ollamaSetupText: Przejdź do <0>Ollama</0> i postępuj zgodnie z instrukcjami instalacji.
+  ollamaDownloadText: Po zainstalowaniu zainstaluj żądany model, którego chcesz używać. W tym przewodniku będziemy używać <0>Llama3.1 8b</0>. Aby zainstalować ten model, uruchom
+  ollamaRunCommand: ollama biegnij lama3.1
+  ollamaDocsText: Sprawdź naszą dokumentację, aby uzyskać więcej informacji na temat konfiguracji Ollama.
+  unableToConnect: Nie można połączyć się z modelem
+  tokenRequired: Aby połączyć się z dostawcą, wymagany jest token
+
+pt_BR:
+  title: Assistente de IA
+  generate: Gerar
+  clear: Clara
+  placeholder: Pergunte à IA...
+  addExternalModel: Adicionar provedor externo
+  modelType: Tipo de provedor
+  selectProvider: Selecione o provedor
+  name: Nome (opcional)
+  token: Símbolo
+  cancel: Cancelar
+  submit: Enviar
+  localSetup: Configuração local
+  downloadingModel: Baixando o modelo Ollama
+  docs: Documentos
+  addProvider: Adicionar um provedor
+  selectModel: Selecione o modelo
+  deleteProvider: Excluir provedor
+  deleteProviderConfirm: Tem certeza de que deseja excluir este provedor? Esta ação não pode ser desfeita.
+  delete: Excluir
+  newChat: Limpar bate-papo
+  ollamaSetupText: Vá para <0>Ollama</0> e siga as instruções de instalação.
+  ollamaDownloadText: Depois de instalado, instale o modelo desejado que você gostaria de usar. Neste guia, usaremos <0>Llama3.1 8b</0>. Para instalar este modelo, execute
+  ollamaRunCommand: ollama corre lhama3.1
+  ollamaDocsText: Verifique nossa documentação para obter mais informações sobre como configurar o Ollama.
+  unableToConnect: Não é possível conectar-se ao modelo
+  tokenRequired: O token é necessário para se conectar ao provedor
+
+ro_RO:
+  title: Asistent AI
+  generate: Genera
+  clear: Clar
+  placeholder: Întrebați AI...
+  addExternalModel: Adăugați un furnizor extern
+  modelType: Tip de furnizor
+  selectProvider: Selectați Furnizor
+  name: Nume (Opțional)
+  token: Jeton
+  cancel: Anula
+  submit: Trimiteți
+  localSetup: Configurare locală
+  downloadingModel: Descărcarea modelului Ollama
+  docs: Docs
+  addProvider: Adăugați un furnizor
+  selectModel: Selectați Model
+  deleteProvider: Ștergeți furnizorul
+  deleteProviderConfirm: Sigur doriți să ștergeți acest furnizor? Această acțiune nu poate fi anulată.
+  delete: Şterge
+  newChat: Ștergeți chatul
+  ollamaSetupText: Accesați <0>Ollama</0> și urmați instrucțiunile de instalare.
+  ollamaDownloadText: Odată instalat, instalați modelul dorit pe care doriți să îl utilizați. În acest ghid, vom folosi <0>Llama3.1 8b</0>. Pentru a instala acest model, rulați
+  ollamaRunCommand: ollama alerga llama3.1
+  ollamaDocsText: Consultați documentația noastră pentru mai multe informații despre cum să configurați Ollama.
+  unableToConnect: Nu se poate conecta la model
+  tokenRequired: Tokenul este necesar pentru a vă conecta la furnizor
+
+ru_RU:
+  title: ИИ-помощник
+  generate: Генерировать
+  clear: Прозрачный
+  placeholder: Спроси у ИИ...
+  addExternalModel: Добавить внешнего поставщика
+  modelType: Тип поставщика
+  selectProvider: Выберите поставщика
+  name: Имя (необязательно)
+  token: Токен
+  cancel: Отмена
+  submit: Представлять на рассмотрение
+  localSetup: Локальная установка
+  downloadingModel: Загрузка модели Олламы
+  docs: Документы
+  addProvider: Добавить провайдера
+  selectModel: Выберите модель
+  deleteProvider: Удалить поставщика
+  deleteProviderConfirm: Вы уверены, что хотите удалить этого провайдера? Это действие невозможно отменить.
+  delete: Удалить
+  newChat: Очистить чат
+  ollamaSetupText: Перейдите в <0>Ollama</0> и следуйте инструкциям по установке.
+  ollamaDownloadText: После установки установите нужную модель, которую вы хотите использовать. В этом руководстве мы будем использовать <0>Llama3.1 8b</0>. Чтобы установить эту модель, запустите
+  ollamaRunCommand: оллама беги лама3.1
+  ollamaDocsText: Дополнительную информацию о настройке Ollama можно найти в нашей документации.
+  unableToConnect: Невозможно подключиться к модели
+  tokenRequired: Токен необходим для подключения к провайдеру
+
+sk_SK:
+  title: Asistent AI
+  generate: Generovať
+  clear: Jasné
+  placeholder: Opýtajte sa AI...
+  addExternalModel: Pridať externého poskytovateľa
+  modelType: Typ poskytovateľa
+  selectProvider: Vyberte poskytovateľa
+  name: Meno (voliteľné)
+  token: Token
+  cancel: Zrušiť
+  submit: Odoslať
+  localSetup: Miestne nastavenie
+  downloadingModel: Sťahovanie modelu Ollama
+  docs: Docs
+  addProvider: Pridajte poskytovateľa
+  selectModel: Vyberte Model
+  deleteProvider: Odstrániť poskytovateľa
+  deleteProviderConfirm: Naozaj chcete odstrániť tohto poskytovateľa? Túto akciu nie je možné vrátiť späť.
+  delete: Odstrániť
+  newChat: Vymazať rozhovor
+  ollamaSetupText: Prejdite na stránku <0>Ollama</0> a postupujte podľa pokynov na inštaláciu.
+  ollamaDownloadText: Po inštalácii nainštalujte požadovaný model, ktorý chcete použiť. V tejto príručke budeme používať <0>Llama3.1 8b</0>. Ak chcete nainštalovať tento model, spustite
+  ollamaRunCommand: ollama run lama3.1
+  ollamaDocsText: Viac informácií o nastavení Ollama nájdete v našej dokumentácii.
+  unableToConnect: Nedá sa pripojiť k modelu
+  tokenRequired: Na pripojenie k poskytovateľovi je potrebný token
+
+sv_SE:
+  title: AI-assistent
+  generate: Generera
+  clear: Rensa
+  placeholder: Fråga AI...
+  addExternalModel: Lägg till extern leverantör
+  modelType: Typ av leverantör
+  selectProvider: Välj Provider
+  name: Namn (valfritt)
+  token: Tecken
+  cancel: Avboka
+  submit: Överlämna
+  localSetup: Lokal inställning
+  downloadingModel: Ladda ner Ollama-modellen
+  docs: Dokument
+  addProvider: Lägg till en leverantör
+  selectModel: Välj modell
+  deleteProvider: Ta bort leverantör
+  deleteProviderConfirm: Är du säker på att du vill ta bort den här leverantören? Denna åtgärd kan inte ångras.
+  delete: Radera
+  newChat: Rensa chatt
+  ollamaSetupText: Gå till <0>Ollama</0> och följ installationsinstruktionerna.
+  ollamaDownloadText: När du har installerat den installerar du den modell du vill använda. I den här guiden kommer vi att använda <0>Llama3.1 8b</0>. För att installera den här modellen, kör
+  ollamaRunCommand: ollama run llama3.1
+  ollamaDocsText: Se vår dokumentation för mer information om hur du ställer in Ollama.
+  unableToConnect: Det går inte att ansluta till modellen
+  tokenRequired: Token krävs för att ansluta till leverantören
+
+zh_CN:
+  title: 人工智能助手
+  generate: 产生
+  clear: 清除
+  placeholder: 问人工智能...
+  addExternalModel: 添加外部提供商
+  modelType: 提供商类型
+  selectProvider: 选择提供商
+  name: 姓名（可选）
+  token: 代币
+  cancel: 取消
+  submit: 提交
+  localSetup: 本地设置
+  downloadingModel: 下载 Ollama 模型
+  docs: 文档
+  addProvider: 添加提供商
+  selectModel: 选择型号
+  deleteProvider: 删除提供商
+  deleteProviderConfirm: 您确定要删除该提供商吗？ 此操作无法撤消。
+  delete: 删除
+  newChat: 清除聊天
+  ollamaSetupText: 转到<0>Ollama</0>并按照安装说明进行操作。
+  ollamaDownloadText: 安装后，安装您想要使用的所需型号。 在本指南中，我们将使用<0>Llama3.1 8b</0>。 要安装此模型，请运行
+  ollamaRunCommand: llama 运行 llama3.1
+  ollamaDocsText: 请查看我们的文档，了解有关如何设置 Ollama 的更多信息。
+  unableToConnect: 无法连接到模型
+  tokenRequired: 连接到提供商需要令牌
+
+zh_TW:
+  title: 人工智慧助手
+  generate: 產生
+  clear: 清除
+  placeholder: 問人工智慧...
+  addExternalModel: 新增外部提供者
+  modelType: 提供者類型
+  selectProvider: 選擇提供者
+  name: 姓名（可選）
+  token: 代幣
+  cancel: 取消
+  submit: 提交
+  localSetup: 本地設定
+  downloadingModel: 下載 Ollama 模型
+  docs: 文件
+  addProvider: 新增提供者
+  selectModel: 選擇型號
+  deleteProvider: 刪除提供者
+  deleteProviderConfirm: 您確定要刪除該提供者嗎？ 此操作無法撤銷。
+  delete: 刪除
+  newChat: 清除聊天
+  ollamaSetupText: 前往<0>Ollama</0>並按照安裝說明進行操作。
+  ollamaDownloadText: 安裝後，安裝您想要使用的所需型號。 在本指南中，我們將使用<0>Llama3.1 8b</0>。 若要安裝此模型，請執行
+  ollamaRunCommand: llama 運行 llama3.1
+  ollamaDocsText: 請查看我們的文檔，以了解有關如何設定 Ollama 的更多資訊。
+  unableToConnect: 無法連接到模型
+  tokenRequired: 連接到提供商需要令牌

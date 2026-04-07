@@ -22,3 +22,503 @@ en_US:
   moreConditions: +{count} more
   addAnother: Add Condition
   addToPage: Add to Page
+
+ar_AE:
+  field: مجال
+  operator: المشغل
+  value: قيمة
+  whereCondition: حيث الشرط
+  enterFilterValue: أدخل قيمة التصفية
+  cancel: يلغي
+  update: تحديث
+  add: يضيف
+  addCondition: إضافة شرط
+  saveChanges: حفظ التغييرات
+  removeCondition: إزالة الشرط
+  editCondition: تحرير الشرط
+  deleteCondition: حذف الشرط
+  manageWhereConditions: إدارة حيث الشروط
+  conditionsTitle: شروط
+  editingCondition: شرط التحرير
+  conditionNumber: "الحالة {index}"
+  conditionCount: "{count} الشروط"
+  conditionCount_one: "{count} الحالة"
+  tenPlusConditions: 10+ الشروط
+  moreConditions: "+{count} المزيد"
+  addAnother: إضافة شرط
+  addToPage: أضف إلى الصفحة
+
+de_DE:
+  field: Feld
+  operator: Operatorin
+  value: Wert
+  whereCondition: Wo Zustand
+  enterFilterValue: Geben Sie den Filterwert ein
+  cancel: Stornieren
+  update: Aktualisieren
+  add: Hinzufügen
+  addCondition: Bedingung hinzufügen
+  saveChanges: Änderungen speichern
+  removeCondition: Bedingung entfernen
+  editCondition: Bedingung bearbeiten
+  deleteCondition: Bedingung löschen
+  manageWhereConditions: Wo-Bedingungen verwalten
+  conditionsTitle: Bedingungen
+  editingCondition: Bedingung bearbeiten
+  conditionNumber: "Bedingung {index}"
+  conditionCount: "{count} Bedingungen"
+  conditionCount_one: "{count} Bedingung"
+  tenPlusConditions: 10+ Bedingungen
+  moreConditions: "+{count} mehr"
+  addAnother: Bedingung hinzufügen
+  addToPage: Zur Seite hinzufügen
+
+el_GR:
+  field: Πεδίο
+  operator: Χειριστής
+  value: Αξία
+  whereCondition: Όπου προϋπόθεση
+  enterFilterValue: Εισαγάγετε την τιμή του φίλτρου
+  cancel: Ματαίωση
+  update: Εκσυγχρονίζω
+  add: Προσθέτω
+  addCondition: Προσθήκη συνθήκης
+  saveChanges: Αποθήκευση αλλαγών
+  removeCondition: Κατάργηση Συνθήκης
+  editCondition: Επεξεργασία συνθήκης
+  deleteCondition: Συνθήκη διαγραφής
+  manageWhereConditions: Διαχείριση Όπου Συνθήκες
+  conditionsTitle: Συνθήκες
+  editingCondition: Συνθήκη επεξεργασίας
+  conditionNumber: "Κατάσταση {index}"
+  conditionCount: "{count} Προϋποθέσεις"
+  conditionCount_one: "{count} Κατάσταση"
+  tenPlusConditions: 10+ Προϋποθέσεις
+  moreConditions: "+{count} ακόμη"
+  addAnother: Προσθήκη συνθήκης
+  addToPage: Προσθήκη στη Σελίδα
+
+en_GB:
+  field: Field
+  operator: Operator
+  value: Value
+  whereCondition: Where condition
+  enterFilterValue: Enter filter value
+  cancel: Cancel
+  update: Update
+  add: Add
+  addCondition: Add Condition
+  saveChanges: Save Changes
+  removeCondition: Remove Condition
+  editCondition: Edit Condition
+  deleteCondition: Delete Condition
+  manageWhereConditions: Manage Where Conditions
+  conditionsTitle: Conditions
+  editingCondition: Editing Condition
+  conditionNumber: "Condition {index}"
+  conditionCount: "{count} Conditions"
+  conditionCount_one: "{count} Condition"
+  tenPlusConditions: 10+ Conditions
+  moreConditions: "+{count} more"
+  addAnother: Add Condition
+  addToPage: Add to Page
+
+es_ES:
+  field: Campo
+  operator: Operadora
+  value: Valor
+  whereCondition: donde condición
+  enterFilterValue: Introduzca el valor del filtro
+  cancel: Cancelar
+  update: Actualizar
+  add: Agregar
+  addCondition: Agregar condición
+  saveChanges: Guardar cambios
+  removeCondition: Eliminar condición
+  editCondition: Editar condición
+  deleteCondition: Eliminar condición
+  manageWhereConditions: Administrar condiciones de dónde
+  conditionsTitle: Condiciones
+  editingCondition: Condición de edición
+  conditionNumber: "Condición {index}"
+  conditionCount: "{count} Condiciones"
+  conditionCount_one: "{count} Condición"
+  tenPlusConditions: Más de 10 condiciones
+  moreConditions: "+{count} más"
+  addAnother: Agregar condición
+  addToPage: Agregar a la página
+
+fi_FI:
+  field: Ala
+  operator: Operaattori
+  value: Arvo
+  whereCondition: Missä kunnossa
+  enterFilterValue: Anna suodattimen arvo
+  cancel: Peruuttaa
+  update: Päivittää
+  add: Lisätä
+  addCondition: Lisää kunto
+  saveChanges: Tallenna muutokset
+  removeCondition: Poista ehto
+  editCondition: Muokkaa ehtoa
+  deleteCondition: Poista ehto
+  manageWhereConditions: Hallitse missä olosuhteita
+  conditionsTitle: ehdot
+  editingCondition: Muokkaustilanne
+  conditionNumber: "Kunto {index}"
+  conditionCount: "{count} Ehdot"
+  conditionCount_one: "{count} Kunto"
+  tenPlusConditions: 10+ ehtoja
+  moreConditions: "+{count} lisää"
+  addAnother: Lisää kunto
+  addToPage: Lisää sivulle
+
+fr_FR:
+  field: Champ
+  operator: Opératrice
+  value: Valeur
+  whereCondition: Où condition
+  enterFilterValue: Entrez la valeur du filtre
+  cancel: Annuler
+  update: Mise à jour
+  add: Ajouter
+  addCondition: Ajouter une condition
+  saveChanges: Enregistrer les modifications
+  removeCondition: Supprimer la condition
+  editCondition: Modifier la condition
+  deleteCondition: Supprimer la condition
+  manageWhereConditions: Gérer les conditions de localisation
+  conditionsTitle: Conditions
+  editingCondition: Condition d'édition
+  conditionNumber: "État {index}"
+  conditionCount: "{count} Conditions"
+  conditionCount_one: "{count} État"
+  tenPlusConditions: 10+ conditions
+  moreConditions: "+{count} plus"
+  addAnother: Ajouter une condition
+  addToPage: Ajouter à la page
+
+it_IT:
+  field: Campo
+  operator: Operatrice
+  value: Valore
+  whereCondition: Dove condizione
+  enterFilterValue: Inserisci il valore del filtro
+  cancel: Cancellare
+  update: Aggiornamento
+  add: Aggiungere
+  addCondition: Aggiungi condizione
+  saveChanges: Salva modifiche
+  removeCondition: Rimuovi condizione
+  editCondition: Modifica condizione
+  deleteCondition: Elimina condizione
+  manageWhereConditions: Gestisci le condizioni di dove
+  conditionsTitle: Condizioni
+  editingCondition: Condizione di modifica
+  conditionNumber: "Condizione {index}"
+  conditionCount: "{count} Condizioni"
+  conditionCount_one: "{count} Condizione"
+  tenPlusConditions: 10+ condizioni
+  moreConditions: "+{count} altro"
+  addAnother: Aggiungi condizione
+  addToPage: Aggiungi alla pagina
+
+iw_IL:
+  field: שָׂדֶה
+  operator: מַפעִיל
+  value: עֵרֶך
+  whereCondition: איפה מצב
+  enterFilterValue: הזן ערך מסנן
+  cancel: לְבַטֵל
+  update: לְעַדְכֵּן
+  add: לְהוֹסִיף
+  addCondition: הוסף מצב
+  saveChanges: שמור שינויים
+  removeCondition: הסר מצב
+  editCondition: ערוך מצב
+  deleteCondition: מחק מצב
+  manageWhereConditions: נהל איפה תנאים
+  conditionsTitle: תנאים
+  editingCondition: מצב עריכה
+  conditionNumber: "מצב {index}"
+  conditionCount: "{count} תנאים"
+  conditionCount_one: "{count} מצב"
+  tenPlusConditions: 10+ תנאים
+  moreConditions: "+{count} נוספים"
+  addAnother: הוסף מצב
+  addToPage: הוסף לדף
+
+ja_JP:
+  field: 分野
+  operator: オペレーター
+  value: 価値
+  whereCondition: どこの条件
+  enterFilterValue: フィルター値を入力してください
+  cancel: キャンセル
+  update: アップデート
+  add: 追加
+  addCondition: 条件の追加
+  saveChanges: 変更を保存
+  removeCondition: 条件の削除
+  editCondition: 条件の編集
+  deleteCondition: 条件の削除
+  manageWhereConditions: 場所の条件を管理する
+  conditionsTitle: 条件
+  editingCondition: 編集条件
+  conditionNumber: "条件 {index}"
+  conditionCount: "{count} 条件"
+  conditionCount_one: "{count} 状態"
+  tenPlusConditions: 10以上の条件
+  moreConditions: "+{count} 詳細"
+  addAnother: 条件の追加
+  addToPage: ページに追加
+
+ko_KR:
+  field: 필드
+  operator: 연산자
+  value: 값
+  whereCondition: 조건
+  enterFilterValue: 필터 값을 입력하세요
+  cancel: 취소
+  update: 업데이트
+  add: 추가하다
+  addCondition: 조건 추가
+  saveChanges: 변경 사항 저장
+  removeCondition: 조건 제거
+  editCondition: 조건 편집
+  deleteCondition: 조건 삭제
+  manageWhereConditions: 위치 조건 관리
+  conditionsTitle: 정황
+  editingCondition: 편집 조건
+  conditionNumber: "조건 {index}"
+  conditionCount: "{count} 조건"
+  conditionCount_one: "{count} 조건"
+  tenPlusConditions: 10개 이상의 조건
+  moreConditions: "+{count} 더보기"
+  addAnother: 조건 추가
+  addToPage: 페이지에 추가
+
+nl_NL:
+  field: Veld
+  operator: Exploitant
+  value: Waarde
+  whereCondition: Waar staat
+  enterFilterValue: Voer de filterwaarde in
+  cancel: Annuleren
+  update: Update
+  add: Toevoegen
+  addCondition: Voorwaarde toevoegen
+  saveChanges: Wijzigingen opslaan
+  removeCondition: Voorwaarde verwijderen
+  editCondition: Voorwaarde bewerken
+  deleteCondition: Voorwaarde verwijderen
+  manageWhereConditions: Beheer waar-voorwaarden
+  conditionsTitle: Voorwaarden
+  editingCondition: Voorwaarde bewerken
+  conditionNumber: "Conditie {index}"
+  conditionCount: "{count} Voorwaarden"
+  conditionCount_one: "{count} Conditie"
+  tenPlusConditions: 10+ voorwaarden
+  moreConditions: "+{count} meer"
+  addAnother: Voorwaarde toevoegen
+  addToPage: Toevoegen aan pagina
+
+pl_PL:
+  field: Pole
+  operator: Operator
+  value: Wartość
+  whereCondition: Gdzie warunek
+  enterFilterValue: Wprowadź wartość filtra
+  cancel: Anulować
+  update: Aktualizacja
+  add: Dodać
+  addCondition: Dodaj warunek
+  saveChanges: Zapisz zmiany
+  removeCondition: Usuń warunek
+  editCondition: Edytuj warunek
+  deleteCondition: Usuń warunek
+  manageWhereConditions: Zarządzaj warunkami gdzie
+  conditionsTitle: Warunki
+  editingCondition: Warunek edycji
+  conditionNumber: "Warunek {index}"
+  conditionCount: "{count} Warunki"
+  conditionCount_one: "{count} Warunek"
+  tenPlusConditions: Ponad 10 warunków
+  moreConditions: "+{count} więcej"
+  addAnother: Dodaj warunek
+  addToPage: Dodaj do strony
+
+pt_BR:
+  field: Campo
+  operator: Operadora
+  value: Valor
+  whereCondition: Onde condição
+  enterFilterValue: Insira o valor do filtro
+  cancel: Cancelar
+  update: Atualizar
+  add: Adicionar
+  addCondition: Adicionar condição
+  saveChanges: Salvar alterações
+  removeCondition: Remover condição
+  editCondition: Editar condição
+  deleteCondition: Excluir condição
+  manageWhereConditions: Gerencie as condições de onde
+  conditionsTitle: Condições
+  editingCondition: Condição de edição
+  conditionNumber: "Condição {index}"
+  conditionCount: "{count} Condições"
+  conditionCount_one: "{count} Condição"
+  tenPlusConditions: Mais de 10 condições
+  moreConditions: "+{count} mais"
+  addAnother: Adicionar condição
+  addToPage: Adicionar à página
+
+ro_RO:
+  field: Domeniu
+  operator: Operator
+  value: Valoare
+  whereCondition: Unde condiție
+  enterFilterValue: Introduceți valoarea filtrului
+  cancel: Anula
+  update: Actualizare
+  add: Adăuga
+  addCondition: Adăugați o condiție
+  saveChanges: Salvați modificările
+  removeCondition: Eliminați condiția
+  editCondition: Editați condiția
+  deleteCondition: Șterge condiția
+  manageWhereConditions: Gestionați condițiile unde
+  conditionsTitle: Condiții
+  editingCondition: Condiție de editare
+  conditionNumber: "Stare {index}"
+  conditionCount: "[[0]]] Condiții"
+  conditionCount_one: "[[0]]] Condiție"
+  tenPlusConditions: 10+ condiții
+  moreConditions: +[[0]]] mai multe
+  addAnother: Adăugați o condiție
+  addToPage: Adăugați la pagină
+
+ru_RU:
+  field: Поле
+  operator: Оператор
+  value: Ценить
+  whereCondition: Где состояние
+  enterFilterValue: Введите значение фильтра
+  cancel: Отмена
+  update: Обновлять
+  add: Добавлять
+  addCondition: Добавить условие
+  saveChanges: Сохранить изменения
+  removeCondition: Удалить условие
+  editCondition: Редактировать условие
+  deleteCondition: Удалить условие
+  manageWhereConditions: Управляйте условиями
+  conditionsTitle: Условия
+  editingCondition: Редактирование условия
+  conditionNumber: "Условие {index}"
+  conditionCount: "{count} Условия"
+  conditionCount_one: "{count} Условие"
+  tenPlusConditions: 10+ условий
+  moreConditions: "+{count} ещё"
+  addAnother: Добавить условие
+  addToPage: Добавить на страницу
+
+sk_SK:
+  field: Pole
+  operator: Operátor
+  value: Hodnota
+  whereCondition: Kde stav
+  enterFilterValue: Zadajte hodnotu filtra
+  cancel: Zrušiť
+  update: Aktualizovať
+  add: Pridať
+  addCondition: Pridať podmienku
+  saveChanges: Uložiť zmeny
+  removeCondition: Odstrániť podmienku
+  editCondition: Upraviť podmienku
+  deleteCondition: Odstrániť podmienku
+  manageWhereConditions: Spravujte podmienky Kde
+  conditionsTitle: Podmienky
+  editingCondition: Podmienka úpravy
+  conditionNumber: "Stav {index}"
+  conditionCount: "{count} Podmienky"
+  conditionCount_one: "{count} Stav"
+  tenPlusConditions: 10+ podmienok
+  moreConditions: "+{count} ďalšie"
+  addAnother: Pridať podmienku
+  addToPage: Pridať na stránku
+
+sv_SE:
+  field: Fält
+  operator: Operatör
+  value: Värde
+  whereCondition: Där skick
+  enterFilterValue: Ange filtervärde
+  cancel: Avboka
+  update: Uppdatera
+  add: Tillägga
+  addCondition: Lägg till skick
+  saveChanges: Spara ändringar
+  removeCondition: Ta bort skick
+  editCondition: Redigera villkor
+  deleteCondition: Ta bort villkor
+  manageWhereConditions: Hantera var villkor
+  conditionsTitle: Villkor
+  editingCondition: Redigeringsvillkor
+  conditionNumber: "Skick {index}"
+  conditionCount: "{count} Villkor"
+  conditionCount_one: "{count} Skick"
+  tenPlusConditions: 10+ villkor
+  moreConditions: "+{count} till"
+  addAnother: Lägg till skick
+  addToPage: Lägg till på sidan
+
+zh_CN:
+  field: 场地
+  operator: 操作员
+  value: 价值
+  whereCondition: 哪里条件
+  enterFilterValue: 输入过滤值
+  cancel: 取消
+  update: 更新
+  add: 添加
+  addCondition: 添加条件
+  saveChanges: 保存更改
+  removeCondition: 删除条件
+  editCondition: 编辑条件
+  deleteCondition: 删除条件
+  manageWhereConditions: 管理Where条件
+  conditionsTitle: 状况
+  editingCondition: 编辑条件
+  conditionNumber: "条件 {index}"
+  conditionCount: "{count} 条件"
+  conditionCount_one: "{count} 条件"
+  tenPlusConditions: 10+条件
+  moreConditions: "+{count}更多"
+  addAnother: 添加条件
+  addToPage: 添加到页面
+
+zh_TW:
+  field: 場地
+  operator: 操作員
+  value: 價值
+  whereCondition: 哪裡條件
+  enterFilterValue: 輸入過濾值
+  cancel: 取消
+  update: 更新
+  add: 添加
+  addCondition: 新增條件
+  saveChanges: 儲存變更
+  removeCondition: 刪除條件
+  editCondition: 編輯條件
+  deleteCondition: 刪除條件
+  manageWhereConditions: 管理Where條件
+  conditionsTitle: 狀況
+  editingCondition: 編輯條件
+  conditionNumber: "條件 {index}"
+  conditionCount: "{count} 條件"
+  conditionCount_one: "{count} 條件"
+  tenPlusConditions: 10+條件
+  moreConditions: "+{count}更多"
+  addAnother: 新增條件
+  addToPage: 新增到頁面
