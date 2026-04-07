@@ -2,7 +2,7 @@ en_US:
   title: Settings
   telemetryTitle: Telemetry and Performance Metrics
   telemetryDescription: We use this information solely to enhance the performance of {appName}.
-  dataCollectionDetails: "For details on what data we collect, how it's collected, stored, and used, please refer to our {privacyPolicyLink}."
+  dataCollectionDetails: For details on what data we collect, how it's collected, stored, and used, please refer to our {privacyPolicyLink}.
   privacyPolicy: Privacy Policy
   posthogInfo: "{appName} uses Posthog to collect and manage this data. More information about this tool can be found on its Github."
   sensitiveDataInfo: We have taken measures to redact as much sensitive information as we can and will continuously evaluate to make sure that it fits yours and our needs without sacrificing anything.
@@ -11,7 +11,7 @@ en_US:
   disableTelemetry: Telemetry is disabled
   eeNoTelemetry: "{appName} Enterprise does not collect telemetry and performance metrics."
   personalizeTitle: Personalize Your Experience
-  personalizeDescription: "Make {appName} your own by customizing the appearance and feel of the {appName} interface"
+  personalizeDescription: Make {appName} your own by customizing the appearance and feel of the {appName} interface
   storageUnitView: Storage Unit Default View
   list: List
   card: Card

@@ -19,7 +19,7 @@ import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
-import {featureFlags, getAppName} from "@/config/features";
+import {getAppName} from "@/config/features";
 import {useTranslation} from "@/hooks/use-translation";
 import {
     Input,
@@ -279,21 +279,19 @@ export const SettingsPage: FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {featureFlags.advancedDatabases && (
-                            <div className="flex justify-between">
-                                <Label>{t('language')}</Label>
-                                <Select value={language} onValueChange={handleLanguageChange}>
-                                    <SelectTrigger id="language" className="w-[200px]">
-                                        <SelectValue placeholder={t('selectLanguage')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
-                                            <SelectItem key={code} value={code} data-value={code}>{name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                        <div className="flex justify-between">
+                            <Label>{t('language')}</Label>
+                            <Select value={language} onValueChange={handleLanguageChange}>
+                                <SelectTrigger id="language" className="w-[200px]">
+                                    <SelectValue placeholder={t('selectLanguage')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+                                        <SelectItem key={code} value={code} data-value={code}>{name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {cloudProvidersEnabled && (
                             <>
                                 <Separator className="my-6" />

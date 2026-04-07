@@ -7,13 +7,3 @@ en_US:
   searchPlaceholder: Search Tables
   searchAriaLabel: Search Tables
   noResults: No tables found
-
-es_ES:
-  title: Esquema
-  columns: Columnas
-  indexes: Índices
-  relationships: Relaciones
-  refresh: Actualizar
-  searchPlaceholder: Buscar tablas...
-  searchAriaLabel: Buscar tablas
-  noResults: No se encontraron tablas

@@ -1,4 +1,6 @@
 en_US:
+  enterHostName: Enter Host Name
+  advancedFields.region: Region
   noConnectionsTitle: No connections available
   noConnectionsDescription: Manual connection form is disabled for this deployment. Please configure database connections via environment variables or cloud providers, or contact your administrator.
   loggingIn: Logging In
@@ -6,7 +8,6 @@ en_US:
   databaseType: Database Type
   hostName: Host Name
   hostNameOrUrl: Host Name (or Paste Connection URL)
-  enterHostName: Enter Host Name
   username: Username
   enterUsername: Enter Username
   password: Password

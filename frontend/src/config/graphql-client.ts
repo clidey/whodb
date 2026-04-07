@@ -53,7 +53,7 @@ const getTranslator = async (): Promise<TranslatorFn> => {
         cachedTranslationsPromise = loadTranslations('config/graphql-client', language);
     }
     const translations = await cachedTranslationsPromise;
-    return (key: GraphQLClientTranslationKey) => getTranslation(translations, key);
+    return (key: GraphQLClientTranslationKey) => getTranslation(translations, key, language);
 };
 
 const redirectToLoginWithMessage = async (

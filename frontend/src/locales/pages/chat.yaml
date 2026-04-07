@@ -22,8 +22,6 @@ en_US:
   newPagePlaceholder: Enter Page Name
   createNewPage: Create New Page
   cancel: Cancel
-
-  # Chat History Sidebar
   chatHistory: Chat History
   newChat: New Chat
   deleteChat: Delete Chat
@@ -32,26 +30,21 @@ en_US:
   continue: Continue
   doubleClickEdit: Double-click to edit
   messageCount: "{count} messages"
+  messageCount_one: "{count} message"
   noMessages: No messages yet
-
-  # SQL Confirmation
   confirmExecutionTitle: Confirm Execution
   confirmExecutionDescription: This operation will modify your database. Review and confirm to proceed.
   showQuery: Show Query
   hideQuery: Hide Query
-  yes: Yes
-  no: No
+  "yes": "Yes"
+  "no": "No"
   executing: Executing...
   queryCancelled: Query Cancelled
-
-  # Accessibility
   sendMessage: Send message
   showTable: Show as table
   showCode: Show as code
   showChart: Show Chart
   actions: Actions
-
-  # Thinking phrases - shown while AI is processing
   thinking0: Thinking
   thinking1: Pondering life's mysteries
   thinking2: Consulting the cloud oracles
@@ -67,7 +60,7 @@ en_US:
   thinking12: Loading witty comeback
   thinking13: Downloading some wisdom
   thinking14: Cooking up some data stew
-  thinking15: "Doing AI things\u2122"
+  thinking15: Doing AI things™
   thinking16: Hacking the mainframe (for fun)
   thinking17: Staring into the digital abyss
   thinking18: Flipping a quantum coin
@@ -77,8 +70,6 @@ en_US:
   thinking22: Simulating deep thought
   thinking23: Rewiring my circuits
   thinking24: Polishing my crystal processor
-
-  # Chat example prompts
   example0: Get summary of all the purchase orders
   example1: List all customers who made a purchase in the last month
   example2: Show the top 10 customers by total spend

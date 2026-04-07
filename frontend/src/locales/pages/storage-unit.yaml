@@ -9,7 +9,7 @@ en_US:
   data: Data
   sampledSchemaBadge: Schema inferred from sample
   create: Create
-  createTitle: "Create a {storageUnit}"
+  createTitle: Create a {storageUnit}
   columnsTitle: Columns
   nameLabel: Name
   namePlaceholder: Enter Name...

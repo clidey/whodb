@@ -1,6 +1,7 @@
 en_US:
   title: Export Data
   selectedRows: You are about to export {count} selected rows.
+  selectedRows_one: You are about to export {count} selected row.
   allData: You are about to export all data from the table. This may take some time for large tables.
   allDataRawQuery: You are about to export the results of your query.
   format: Format

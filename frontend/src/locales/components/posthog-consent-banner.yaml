@@ -1,5 +1,5 @@
 en_US:
   title: Telemetry Is Enabled
-  message: "We collect anonymous usage analytics, redacted session replay, and error reports through PostHog to keep {appName} fast and reliable. You can turn this off now or at any time from Settings."
+  message: We collect anonymous usage analytics, redacted session replay, and error reports through PostHog to keep {appName} fast and reliable. You can turn this off now or at any time from Settings.
   accept: Keep Enabled
   decline: Disable Telemetry

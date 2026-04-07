@@ -1,74 +1,57 @@
 en_US:
-  # Toast messages
   copiedToClipboard: Copied to Clipboard
   rowCopiedToClipboard: Row Copied to Clipboard
   rowUpdated: Row Updated
   errorUpdatingRow: Error Updating Row
-  deletingRow: Deleting Row...
   deletingRows: Deleting Rows...
+  deletingRows_one: Deleting Row...
   unableToDeleteRow: "Unable to Delete the Row: {message}"
   rowDeleted: Row Deleted
   copiedCellToClipboard: Copied Cell to Clipboard
-  maximumRowCount: "Maximum Row Count Is {max}"
+  maximumRowCount: Maximum Row Count Is {max}
   storageUnitRequired: Storage Unit Is Required for Mock Data Generation
-  rowCountExceedsMax: "Row Count Cannot Exceed {max}"
+  rowCountExceedsMax: Row Count Cannot Exceed {max}
   rowCountMustBePositive: Row Count Must Be At Least 1
-  successfullyGenerated: "Successfully Generated {count} Rows"
+  successfullyGenerated: Successfully Generated {count} Rows
+  successfullyGenerated_one: Successfully Generated {count} Row
   failedToMockData: Failed to Mock Data
   mockDataNotAllowed: Mock Data Generation Is Not Allowed for This Table
   mockDataFailed: "Failed to Mock Data: {message}"
-
-  # Context menu - Cell actions
   copyCell: Copy Cell
   searchForEntity: Search for Entity
   copyRow: Copy Row
   deselectRow: Deselect Row
   selectRow: Select Row
   editRow: Edit Row
-
-  # Context menu - Export submenu
   export: Export
   exportAllAsCsv: Export All as CSV
   exportAllAsExcel: Export All as Excel
   exportSelectedAsCsv: Export Selected as CSV
   exportSelectedAsExcel: Export Selected as Excel
-
-  # Context menu - Other actions
   mockData: Mock Data
   moreActions: More Actions
   deleteRow: Delete Row
+  deleteRow_other: Delete Rows
   openInGraph: Open in Graph
-
-  # Context menu - Table header actions
   exportData: Export Data
   refreshData: Refresh Data
   selectAll: Select All
   deselectAll: Deselect All
   columnStatistics: Column Statistics
   schemaInformation: Schema Information
-
-  # Empty state
   noDataAvailable: No Data Available
   noDataAvailableDescription: Try adjusting your filters or adding a new row.
-
-  # Table header tooltip
   rightClickForOptions: Right-Click for Table Options
-
-  # Export button
-  exportSelected: "Export {count} Selected"
+  exportSelected: Export {count} Selected
   exportAll: Export All
   importData: Import
-
-  # Edit row sheet
   editRowTitle: Edit Row
   cancel: Cancel
   update: Update
   typeHint: "{type}"
-
-  # Mock data sheet
   mockDataTitle: Mock Data
   numberOfRows: "Number of Rows (max: {max})"
-  enterNumberOfRows: "Enter Number of Rows (1-{max})"
+  enterNumberOfRows: Enter Number of Rows (1-{max})
   method: Method
   methodNormal: Normal
   dataHandling: Data Handling
@@ -81,41 +64,28 @@ en_US:
   fkVarietyNormal: Normal (1:20 ratio)
   fkVarietyLow: Low (1:50 ratio)
   generate: Generate
-
-  # Mock data confirmation
-  overwriteConfirmation: "Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone."
+  overwriteConfirmation: Are you sure you want to overwrite all existing data in {storageUnit}? This action cannot be undone.
   yesOverwrite: Yes, Overwrite
-
-  # Mock data alert
   mockDataNote: Note
   mockDataWarning: Mock data generation will populate foreign key parent tables as needed.
   mockDataWarningClickHouse: ClickHouse does not support foreign keys. Mock data will be generated for this table only.
-
   dependencyError: Cannot Generate
   tablesToPopulate: "Tables to populate:"
   rows: rows
   usingExisting: using existing
   totalRows: "Total: {count} rows"
-
-  # Total count
+  totalRows_one: "Total: {count} row"
   totalCount: "Total Count:"
-
-  # Accessibility announcements
-  noRowsSelected: No rows selected
-  oneRowSelected: 1 row selected
   rowsSelected: "{count} rows selected"
-  searchMatchFound: "Match {current} of {total}"
+  rowsSelected_one: "{count} row selected"
+  searchMatchFound: Match {current} of {total}
   noSearchMatches: No matches found
   cellInteractionHint: Click to copy cell, double-click to copy row, right-click for more options
-
-  # Pagination
   tablePagination: Table pagination
   previousPage: Go to previous page
   nextPage: Go to next page
-  goToPage: "Go to page {page}"
-  currentPage: "Page {page}, current page"
-
-  # Column type aria-labels
+  goToPage: Go to page {page}
+  currentPage: Page {page}, current page
   integerType: Integer type
   decimalType: Decimal type
   booleanType: Boolean type
@@ -126,15 +96,10 @@ en_US:
   arrayType: Array type
   textType: Text type
   dataType: Data type
-
-  # Key indicators
   primaryKey: Primary key
   foreignKey: Foreign key
-
-  # Context menu shortcuts
   delete: Delete
-
-  # Delete confirmation dialog
   deleteRowConfirmTitle: Delete Row?
-  deleteRowConfirmDescription: Are you sure you want to delete this row? This action cannot be undone.
-  deleteRowsConfirmDescription: "Are you sure you want to delete {count} rows? This action cannot be undone."
+  deleteRowConfirmTitle_other: Delete Rows?
+  deleteRowConfirmDescription: Are you sure you want to delete {count} rows? This action cannot be undone.
+  deleteRowConfirmDescription_one: Are you sure you want to delete {count} row? This action cannot be undone.

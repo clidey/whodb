@@ -3,9 +3,3 @@ en_US:
   collapse: Collapse
   close: Close
   details: Card Details
-
-es_ES:
-  expand: Expandir
-  collapse: Contraer
-  close: Cerrar
-  details: Detalles de la Tarjeta

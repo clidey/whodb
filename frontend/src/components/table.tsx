@@ -473,7 +473,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     // Delete logic, adapted from explore-storage-unit.tsx
     const doDeleteRows = useCallback(async (indexesToDelete: number[]) => {
         let unableToDeleteAll = false;
-        toast.info(indexesToDelete.length === 1 ? t('deletingRow') : t('deletingRows'));
+        toast.info(t('deletingRows', { count: indexesToDelete.length }));
         for (const index of indexesToDelete) {
             const row = rows[index];
             if (!row) continue;
@@ -1898,18 +1898,16 @@ export const StorageUnitTable: FC<TableProps> = ({
             <AlertDialog open={pendingDeleteIndexes != null} onOpenChange={(open) => { if (!open) handleCancelDelete(); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>{t('deleteRowConfirmTitle')}</AlertDialogTitle>
+                        <AlertDialogTitle>{t('deleteRowConfirmTitle', { count: pendingDeleteIndexes?.length ?? 1 })}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {pendingDeleteIndexes && pendingDeleteIndexes.length > 1
-                                ? t('deleteRowsConfirmDescription', { count: pendingDeleteIndexes.length })
-                                : t('deleteRowConfirmDescription')}
+                            {t('deleteRowConfirmDescription', { count: pendingDeleteIndexes?.length ?? 1 })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={handleCancelDelete}>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction asChild>
                             <Button variant="destructive" onClick={handleConfirmDelete}>
-                                {t('deleteRow')}
+                                {t('deleteRow', { count: pendingDeleteIndexes?.length ?? 1 })}
                             </Button>
                         </AlertDialogAction>
                     </AlertDialogFooter>

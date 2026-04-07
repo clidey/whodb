@@ -19,11 +19,13 @@ en_US:
 
   envDefined: Environment
   resourcesDiscovered: "{count} resources"
+  resourcesDiscovered_one: "{count} resource"
   lastDiscovery: "Last: {time}"
 
   providerRemoved: "Removed {name}"
   removeFailed: "Failed to remove: {error}"
   refreshComplete: "Found {count} resources"
+  refreshComplete_one: "Found {count} resource"
   refreshFailed: "Refresh failed: {error}"
   unknownError: Unknown error
 

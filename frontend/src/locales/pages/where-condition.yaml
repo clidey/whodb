@@ -1,14 +1,9 @@
 en_US:
-  # Form labels
   field: Field
   operator: Operator
   value: Value
   whereCondition: Where condition
-
-  # Placeholders
   enterFilterValue: Enter filter value
-
-  # Buttons
   cancel: Cancel
   update: Update
   add: Add
@@ -17,15 +12,13 @@ en_US:
   removeCondition: Remove Condition
   editCondition: Edit Condition
   deleteCondition: Delete Condition
-
-  # Sheet
   manageWhereConditions: Manage Where Conditions
   conditionsTitle: Conditions
   editingCondition: Editing Condition
-  conditionNumber: "Condition {index}"
-  conditionCountSingular: "{count} Condition"
-  conditionCountPlural: "{count} Conditions"
-  tenPlusConditions: "10+ Conditions"
-  moreConditions: "+{count} more"
+  conditionNumber: Condition {index}
+  conditionCount: "{count} Conditions"
+  conditionCount_one: "{count} Condition"
+  tenPlusConditions: 10+ Conditions
+  moreConditions: +{count} more
   addAnother: Add Condition
   addToPage: Add to Page
