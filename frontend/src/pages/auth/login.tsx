@@ -27,7 +27,8 @@ import {
 } from '@graphql';
 import camelCase from "lodash/camelCase";
 import classNames from "classnames";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {FC, ReactElement, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {getComponent} from "../../config/component-registry";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
 import {
@@ -175,6 +176,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string>();
+    const [missingDriver, setMissingDriver] = useState<string | null>(null);
     const [advancedForm, setAdvancedForm] = useState<Record<string, string>>(
         databaseType.extra ?? {}
     );
@@ -266,6 +268,14 @@ export const LoginForm: FC<LoginFormProps> = ({
             },
             onError(error) {
                 setIsAutoLoggingIn(false);
+
+                // Check if a JDBC bridge driver needs to be installed
+                const driverMatch = error.message?.match(/driver_not_installed:(\w+)/);
+                if (driverMatch) {
+                    setMissingDriver(driverMatch[1]);
+                    return;
+                }
+
                 // Check if this is a network error (server down)
                 const isNetworkError = error.message?.toLowerCase().includes('network') ||
                                       error.message?.toLowerCase().includes('fetch') ||
@@ -1187,6 +1197,22 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </Card>
                 )
             }
+        {(() => {
+            const DriverInstallDialog = getComponent('driver-install-dialog') as React.LazyExoticComponent<FC<{driverName: string; onInstalled: () => void; onCancel: () => void}>> | undefined;
+            if (!DriverInstallDialog || !missingDriver) return null;
+            return (
+                <Suspense fallback={null}>
+                    <DriverInstallDialog
+                        driverName={missingDriver}
+                        onInstalled={() => {
+                            setMissingDriver(null);
+                            handleSubmit();
+                        }}
+                        onCancel={() => setMissingDriver(null)}
+                    />
+                </Suspense>
+            );
+        })()}
         </div>
     );
 };

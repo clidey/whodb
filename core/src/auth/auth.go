@@ -218,6 +218,16 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
+// additionalAllowedOps holds operation names registered by extensions (e.g. EE)
+// that should be allowed without authentication.
+var additionalAllowedOps []string
+
+// RegisterAllowedOperation adds a GraphQL operation name to the unauthenticated allowlist.
+// It must be called during init(), before the HTTP server starts.
+func RegisterAllowedOperation(opName string) {
+	additionalAllowedOps = append(additionalAllowedOps, opName)
+}
+
 func isAllowed(r *http.Request, body []byte) bool {
 	if r.Method != http.MethodPost {
 		return false
@@ -241,6 +251,11 @@ func isAllowed(r *http.Request, body []byte) bool {
 		"RefreshCloudProvider", "RemoveCloudProvider", "UpdateAWSProvider",
 		"GenerateRDSAuthToken":
 		return true
+	}
+	for _, op := range additionalAllowedOps {
+		if query.OperationName == op {
+			return true
+		}
 	}
 	return false
 }
