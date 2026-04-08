@@ -28,7 +28,7 @@ const eeExists = fs.existsSync(eeDir);
 const eeModulePlugin = () => ({
   name: 'ee-module-fallback',
   resolveId(id: string) {
-    if (id.startsWith('@ee/') && !eeExists) {
+    if (id.startsWith('@ee/') && (!eeExists || process.env.VITE_BUILD_EDITION !== 'ee')) {
       // Return a virtual module ID for missing EE modules
       return '\0virtual:ee-fallback:' + id;
     }
@@ -113,7 +113,7 @@ export default defineConfig(async () => {
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      ...(eeExists ? { '@ee': eeDir } : {}),
+      ...(eeExists && process.env.VITE_BUILD_EDITION === 'ee' ? { '@ee': eeDir } : {}),
       // Dynamic GraphQL import based on build edition
       '@graphql': process.env.VITE_BUILD_EDITION === 'ee' 
         ? path.resolve(__dirname, '../ee/frontend/src/generated/graphql.tsx')
@@ -126,6 +126,10 @@ export default defineConfig(async () => {
       '@codemirror/autocomplete': path.resolve(__dirname, './node_modules/@codemirror/autocomplete'),
       '@codemirror/view': path.resolve(__dirname, './node_modules/@codemirror/view'),
       '@codemirror/state': path.resolve(__dirname, './node_modules/@codemirror/state'),
+      'react-syntax-highlighter': path.resolve(__dirname, './node_modules/react-syntax-highlighter'),
+      'recharts': path.resolve(__dirname, './node_modules/recharts'),
+      'react-grid-layout': path.resolve(__dirname, './node_modules/react-grid-layout'),
+      'react-resizable': path.resolve(__dirname, './node_modules/react-resizable'),
     },
   },
   server: {
@@ -138,7 +142,7 @@ export default defineConfig(async () => {
       },
     },
   },
-    publicDir: eeExists ? path.resolve(__dirname, '../ee/frontend/public') : undefined,
+    publicDir: (eeExists && process.env.VITE_BUILD_EDITION === 'ee') ? path.resolve(__dirname, '../ee/frontend/public') : undefined,
   build: {
     outDir: 'build',
     sourcemap: process.env.NODE_ENV === 'production' ? 'hidden' : true,

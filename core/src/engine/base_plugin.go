@@ -139,3 +139,4 @@ func (b *BasePlugin) GetDatabaseMetadata() *DatabaseMetadata {
 func (b *BasePlugin) GetSSLStatus(_ *PluginConfig) (*SSLStatus, error) {
 	return nil, nil
 }
+

@@ -59,16 +59,19 @@ func (e *Engine) RegistryPlugin(plugin *Plugin) {
 }
 
 // Choose returns the plugin that matches the given database type, or nil if not found.
+// If multiple plugins are registered for the same type, the last one wins — this allows
+// EE to override CE plugins by registering after CE initialization.
 func (e *Engine) Choose(databaseType DatabaseType) *Plugin {
 	// resolve databases from their name to their underlying type
 	resolvedType := resolvePluginType(databaseType)
 
+	var found *Plugin
 	for _, plugin := range e.Plugins {
 		if strings.EqualFold(string(plugin.Type), string(resolvedType)) {
-			return plugin
+			found = plugin
 		}
 	}
-	return nil
+	return found
 }
 
 // resolvePluginType maps display database types to their underlying plugin types.

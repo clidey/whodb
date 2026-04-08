@@ -23,3 +23,7 @@ en_US:
   errorSigningIn: "Error Signing You In:"
   updateAvailable: "Update available: {version}"
   sslSecured: "SSL: {mode}"
+  navAIChat: Chat
+  navExplorer: Explorer
+  navGraph: Graph
+  navScratchpad: Scratchpad

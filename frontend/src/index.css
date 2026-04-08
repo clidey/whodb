@@ -72,6 +72,23 @@ body {
   --primary: #8EBFFB;
   --muted: oklch(0.269 0 0);
   --icon-foreground: #8EBFFB;
+
+  /* Deep navy background — matches the sidebar gradient palette */
+  --background: oklch(0.10 0.022 250);
+  --card: oklch(0.12 0.020 250);
+  --popover: oklch(0.12 0.020 250);
+
+  /* Sub-sidebar panels (chat history, graph filter, schema viewer, etc.)
+     Slightly lighter than the content background and navy-tinted so they
+     harmonise with the main sidebar gradient (#080e1e → #050911). */
+  --sidebar: oklch(0.16 0.018 250);
+  --sidebar-accent: oklch(0.20 0.016 250);
+  --sidebar-border: oklch(1 0 0 / 0.06);
+}
+
+/* Smooth theme transition on the root element */
+html {
+  transition: background 0.25s ease, background-color 0.25s ease;
 }
 
 .bg-icon {

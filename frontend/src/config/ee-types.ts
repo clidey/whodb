@@ -77,6 +77,7 @@ export interface FeatureFlags {
     sampleDatabaseTour: boolean; // Show sample database tour on login page
     autoStartTourOnLogin: boolean; // Auto-start tour when logging in with sample database
     sqlAgent: boolean; // SQL Agent with planning, thinking, and tool use
+    platformMode: boolean; // Install + platform mode layout (Apps, Ontology, Transform, Ingestion)
 }
 
 // Settings defaults that can be overridden by EE

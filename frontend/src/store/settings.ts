@@ -37,6 +37,8 @@ type ISettingsState = {
     appTheme: 'default';
     /** OS override for keyboard shortcuts. Undefined means use system detection. */
     os: 'linux' | 'macos' | 'windows' | undefined;
+    /** Platform mode — enables the full Palantir-style platform layout. Requires WhoDB to be installed. */
+    platformMode: boolean;
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -69,6 +71,7 @@ const getInitialState = (): ISettingsState => {
         disableAnimations: eeSettingsDefaults.disableAnimations ?? false,
         appTheme: 'default',
         os: undefined,
+        platformMode: false,
     };
 };
 
@@ -120,6 +123,9 @@ export const settingsSlice = createSlice({
         },
         setOS: (state, action: PayloadAction<ISettingsState["os"]>) => {
             state.os = action.payload;
+        },
+        setPlatformMode: (state, action: PayloadAction<boolean>) => {
+            state.platformMode = action.payload;
         },
     },
 });

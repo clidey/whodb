@@ -16,10 +16,11 @@
 
 import {Toaster} from "@clidey/ux";
 import {useUpdateSettingsMutation} from '@graphql';
-import {useCallback, useEffect} from "react";
-import {Route, Routes} from "react-router-dom";
+import {FC, useCallback, useEffect} from "react";
+import {Outlet, Route, Routes} from "react-router-dom";
 import {getStoredConsentState, optInUser, optOutUser, resetAnalyticsIdentity} from "./config/posthog";
 import {getRoutes, PrivateRoute, PublicRoutes} from './config/routes';
+import {getEEWrapper} from './config/route-registry';
 import {NavigateToDefault} from "./pages/chat/default-chat-route";
 import {useAppDispatch, useAppSelector} from "./store/hooks";
 import {SettingsActions} from "./store/settings";
@@ -33,6 +34,13 @@ import {healthCheckService} from "./services/health-check";
 import {ServerDownOverlay, DatabaseDownOverlay} from "./components/health/health-overlays";
 import {HealthActions} from "./store/health";
 
+/** Wraps all authenticated routes with the EE provider (if registered), or renders an Outlet directly. */
+const EERoutesWrapper: FC = () => {
+    const EEWrapper = getEEWrapper();
+    if (EEWrapper) return <EEWrapper><Outlet /></EEWrapper>;
+    return <Outlet />;
+};
+
 export const App = () => {
     const [updateSettings] = useUpdateSettingsMutation();
     const dispatch = useAppDispatch();
@@ -40,6 +48,11 @@ export const App = () => {
 
   // Apply UI customization settings
   useThemeCustomization();
+
+  const platformMode = useAppSelector(state => state.settings.platformMode);
+  useEffect(() => {
+    document.documentElement.classList.toggle('platform-mode', platformMode);
+  }, [platformMode]);
 
   // Setup desktop menu and keyboard shortcuts
   useDesktopMenu();
@@ -125,7 +138,7 @@ export const App = () => {
 
   return (
     <TourProvider>
-      <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
+      <div className="h-[100vh] w-[100vw] bg-background" id="whodb-app-container">
         <Toaster />
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
@@ -133,10 +146,12 @@ export const App = () => {
         <DatabaseDownOverlay />
         <Routes>
           <Route path="/" element={<PrivateRoute />}>
-            {getRoutes().map(route => (
-              <Route key={route.path} path={route.path} element={route.component} />
-            ))}
-            <Route path="/" element={<NavigateToDefault />} />
+            <Route path="/" element={<EERoutesWrapper />}>
+              {getRoutes().map(route => (
+                <Route key={route.path} path={route.path} element={route.component} />
+              ))}
+              <Route path="/" element={<NavigateToDefault />} />
+            </Route>
           </Route>
           <Route path={PublicRoutes.Login.path} element={PublicRoutes.Login.component} />
         </Routes>

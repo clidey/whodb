@@ -126,6 +126,8 @@ export interface LoginFormProps {
     // Optionally override container className
     className?: string;
     advancedDirection?: "horizontal" | "vertical";
+    // Optionally override the submit button label (defaults to locale loginButton)
+    submitLabel?: string;
 }
 
 export const LoginForm: FC<LoginFormProps> = ({
@@ -133,6 +135,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     hideHeader = false,
     className = "",
     advancedDirection = "horizontal",
+    submitLabel,
 }) => {
     const { t } = useTranslation('pages/login');
     const appName = getAppName();
@@ -1045,7 +1048,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     </Button>
                     {advancedDirection === "horizontal" && (
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
+                            <CheckCircleIcon className="w-4 h-4" /> {submitLabel ?? t('loginButton')}
                         </Button>
                     )}
                     </>}
@@ -1056,7 +1059,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     })}>
                         {!disableCredentialForm && <>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
+                            <CheckCircleIcon className="w-4 h-4" /> {submitLabel ?? t('loginButton')}
                         </Button>
                         </>}
                     </div>
@@ -1079,7 +1082,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                             />
                             <Button onClick={() => handleLoginWithProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithProfileEnabled ? "default" : "secondary"} disabled={!loginWithProfileEnabled}>
-                                <CheckCircleIcon className="w-4 h-4" /> {t('loginButton')}
+                                <CheckCircleIcon className="w-4 h-4" /> {submitLabel ?? t('loginButton')}
                             </Button>
                         </div>
                     </>

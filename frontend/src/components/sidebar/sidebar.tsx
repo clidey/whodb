@@ -46,8 +46,7 @@ import {
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
-import classNames from "classnames";
-import {FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {FC, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
@@ -63,8 +62,8 @@ import {
     databaseSupportsScratchpad,
     databaseTypesThatUseDatabaseInsteadOfSchema
 } from "../../utils/database-features";
-import {isEEFeatureEnabled} from "../../utils/ee-loader";
-import {getDatabaseStorageUnitLabel, isNoSQL} from "../../utils/functions";
+import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
+import {isNoSQL} from "../../utils/functions";
 import {isAwsHostname} from "../../utils/cloud-connection-prefill";
 import {
     ArrowLeftStartOnRectangleIcon,
@@ -78,7 +77,6 @@ import {
     TableCellsIcon
 } from "../heroicons";
 import {Icons} from "../icons";
-import {Loading} from "../loading";
 import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
 import {useProfileSwitch} from "@/hooks/use-profile-switch";
 
@@ -92,6 +90,77 @@ function getProfileLabel(profile: LocalLoginProfile) {
 function getProfileIcon(profile: LocalLoginProfile) {
     return (Icons.Logos as Record<string, ReactElement>)[profile.Type];
 }
+
+/** Section header shown above each navigation group in the sidebar. */
+export const NavSectionHeader: FC<{ label: string; open: boolean; disabled?: boolean }> = ({ label, open, disabled }) => {
+    if (!open) return <div className="h-4" />;
+    return (
+        <div className="flex items-center gap-2 px-1 pt-5 pb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-600 select-none">
+                {label}
+            </span>
+            {disabled && (
+                <span className="text-[9px] uppercase tracking-wider text-neutral-700 border border-neutral-800 rounded px-1 py-0.5 leading-none">
+                    Soon
+                </span>
+            )}
+        </div>
+    );
+};
+
+/** A single navigation item with active-state styling. */
+export const NavItem: FC<{
+    icon: React.ReactNode;
+    label: string;
+    path: string;
+    pathname: string;
+    open: boolean;
+    tooltip: string;
+    disabled?: boolean;
+}> = ({ icon, label, path, pathname, open, tooltip, disabled }) => {
+    const isActive = pathname === path;
+
+    if (disabled) {
+        return (
+            <SidebarMenuItem>
+                <SidebarMenuButton tooltip={tooltip} className="opacity-35 cursor-not-allowed pointer-events-none">
+                    <span className="text-neutral-600">{icon}</span>
+                    {open && <span className="text-neutral-600 text-sm">{label}</span>}
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        );
+    }
+
+    return (
+        <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={tooltip}>
+                <Link
+                    to={path}
+                    className={cn(
+                        "flex items-center gap-2 transition-all duration-150",
+                        isActive
+                            ? "text-blue-300 font-medium"
+                            : "text-neutral-500 hover:text-neutral-200"
+                    )}
+                >
+                    <span className={cn(
+                        "flex-shrink-0",
+                        isActive ? "text-blue-400" : "text-neutral-600"
+                    )}>{icon}</span>
+                    {open && <span className="text-sm">{label}</span>}
+                    {open && isActive && (
+                        <span className="ml-auto w-1 h-1 rounded-full bg-blue-400" />
+                    )}
+                </Link>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+    );
+};
+
+// Load EE sidebar nav at module level — handles install + platform mode layout
+const EESidebarNav = isEEFeatureEnabled('platformMode')
+    ? loadEEComponent(() => import('@ee/components/sidebar-nav').then(m => ({ default: m.EESidebarNav })), null)
+    : null;
 
 export const Sidebar: FC = () => {
     const { t } = useTranslation('components/sidebar');
@@ -179,7 +248,7 @@ export const Sidebar: FC = () => {
             label: db,
         }));
     }, [availableDatabases?.Database]);
-    
+
     const handleDatabaseChange = useCallback((value: string) => {
         if (value === "") {
             return;
@@ -209,38 +278,6 @@ export const Sidebar: FC = () => {
         dispatch(DatabaseActions.setSchema(value));
     }, [dispatch, navigate, pathname]);
 
-    // Sidebar routes
-    const sidebarRoutes = useMemo(() => {
-        if (!current) return [];
-        const routes = [
-            {
-                title: getDatabaseStorageUnitLabel(current.Type),
-                icon: <TableCellsIcon className="w-4 h-4" />,
-                path: InternalRoutes.Dashboard.StorageUnit.path,
-            },
-            {
-                title: t('graph'),
-                icon: <RectangleGroupIcon className="w-4 h-4" />,
-                path: InternalRoutes.Graph.path,
-            },
-        ];
-        if (!isNoSQL(current.Type)) {
-            routes.unshift({
-                title: t('chat'),
-                icon: <SparklesIcon className="w-4 h-4" />,
-                path: InternalRoutes.Chat.path,
-            });
-        }
-        if (databaseSupportsScratchpad(current.Type)) {
-            routes.push({
-                title: t('scratchpad'),
-                icon: <CommandLineIcon className="w-4 h-4" />,
-                path: InternalRoutes.RawExecute.path,
-            });
-        }
-        return routes;
-    }, [current, t]);
-
     // Logout logic
     const handleLogout = useCallback(() => {
         navigate(InternalRoutes.Logout.path);
@@ -254,8 +291,6 @@ export const Sidebar: FC = () => {
         }, 100);
     }, []);
 
-    const loading = availableDatabasesLoading || availableSchemasLoading;
-
     // Compute the label for the database dropdown based on the database type and user terminology preference
     const databaseDropdownLabel = useMemo(() => {
         // For databases where database=schema (MySQL, MariaDB, ClickHouse, MongoDB, Redis), allow user to choose terminology
@@ -265,6 +300,55 @@ export const Sidebar: FC = () => {
         // For all other databases, use "Database"
         return t('database');
     }, [current?.Type, databaseSchemaTerminology, t]);
+
+    // Pre-render the dropdowns so EE component can place them without duplicating logic
+    const dropdownsJSX: ReactNode = (
+        <>
+            <SearchSelect
+                label={t('profile')}
+                options={profileOptions}
+                value={currentProfileOption?.value}
+                onChange={handleProfileChange}
+                placeholder={t('selectProfile')}
+                searchPlaceholder={t('searchProfile')}
+                onlyIcon={false}
+                extraOptions={!isEmbedded ? (
+                    <CommandItem key="__add__" value="__add__" onSelect={handleAddProfile}>
+                        <span className="flex items-center gap-sm text-green-500">
+                            <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
+                            {t('addAnotherProfile')}
+                        </span>
+                    </CommandItem>
+                ) : undefined}
+                side="left" align="start"
+                buttonProps={{ "data-testid": "sidebar-profile", "data-collapsed": !open }}
+            />
+            {databaseSupportsDatabaseSwitching(current?.Type) && (
+                <SearchSelect
+                    label={databaseDropdownLabel}
+                    options={databaseOptions}
+                    value={current?.Database}
+                    onChange={handleDatabaseChange}
+                    placeholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('selectSchema') : t('selectDatabase')}
+                    searchPlaceholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('searchSchema') : t('searchDatabase')}
+                    side="left" align="start"
+                    buttonProps={{ "data-testid": "sidebar-database" }}
+                />
+            )}
+            {databaseSupportsSchema(current?.Type) && !pathname.includes(InternalRoutes.RawExecute.path) && (
+                <SearchSelect
+                    label={t('schema')}
+                    options={schemaOptions}
+                    value={schema}
+                    onChange={handleSchemaChange}
+                    placeholder={t('selectSchema')}
+                    searchPlaceholder={t('searchSchema')}
+                    side="left" align="start"
+                    buttonProps={{ "data-testid": "sidebar-schema" }}
+                />
+            )}
+        </>
+    );
 
     useEffect(() => {
         if (pathname.includes(InternalRoutes.Dashboard.ExploreStorageUnit.path) && open) {
@@ -318,7 +402,11 @@ export const Sidebar: FC = () => {
 
     return (
         <nav className="dark" aria-label={t('mainNavigation')}>
-            <SidebarComponent variant="sidebar" collapsible="icon" className="dark:group-data-[side=left]:border-r-neutral-800 z-[50]">
+            <SidebarComponent
+                variant="sidebar"
+                collapsible="icon"
+                className="dark:group-data-[side=left]:border-r-neutral-800/40 z-[50] dark:[&>[data-sidebar=sidebar]]:bg-gradient-to-b dark:[&>[data-sidebar=sidebar]]:from-[#080e1e] dark:[&>[data-sidebar=sidebar]]:via-[#060b17] dark:[&>[data-sidebar=sidebar]]:to-[#050911]"
+            >
                 <SidebarHeader className={cn({
                     "ml-4": open,
                 })}>
@@ -326,8 +414,8 @@ export const Sidebar: FC = () => {
                         <div className={cn("flex items-center gap-sm mt-2", {
                             "hidden": !open,
                         })}>
-                            {extensions.Logo ?? (!isEEMode && <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
-                            {open && <span className="text-3xl font-bold" data-testid="app-name">{getAppName()}</span>}
+                            {extensions.Logo ?? <img src={logoImage} alt="clidey logo" className="w-auto h-6" />}
+                            {open && <span className="text-lg font-bold" data-testid="app-name">{getAppName()}</span>}
                         </div>
                         <SidebarTrigger className="px-0" />
                     </div>
@@ -335,136 +423,45 @@ export const Sidebar: FC = () => {
                 <SidebarContent className={cn("mt-8 mb-16 overflow-y-auto", {
                     "mx-4": open,
                 })}>
-                    {loading ? (
-                        <div className="flex justify-center items-center h-full">
-                            <Loading size="lg" />
-                        </div>
-                    ) : (
-                        <SidebarGroup className="grow">
-                            <div className="flex flex-col gap-lg">
-                                {/* Profile Select */}
-                                <div className="flex flex-col gap-sm w-full">
-                                    <h2 className={cn("text-sm", !open &&  "hidden")}>{t('profile')}</h2>
-                                    <SearchSelect
-                                        label={t('profile')}
-                                        options={profileOptions}
-                                        value={currentProfileOption?.value}
-                                        onChange={handleProfileChange}
-                                        placeholder={t('selectProfile')}
-                                        searchPlaceholder={t('searchProfile')}
-                                        onlyIcon={!open}
-                                        extraOptions={!isEmbedded ? (
-                                            <CommandItem
-                                                key="__add__"
-                                                value="__add__"
-                                                onSelect={handleAddProfile}
-                                            >
-                                                <span className="flex items-center gap-sm text-green-500">
-                                                    <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
-                                                    {t('addAnotherProfile')}
-                                                </span>
-                                            </CommandItem>
-                                        ) : undefined}
-                                        side="left" align="start"
-                                        buttonProps={{
-                                            "data-testid": "sidebar-profile",
-                                            "data-collapsed": !open,
-                                        }}
-                                    />
-                                </div>
-                                {databaseSupportsDatabaseSwitching(current?.Type) && (
-                                    <div className={cn("flex flex-col gap-sm w-full", {
-                                        "opacity-0 pointer-events-none": !open,
-                                    })}>
-                                        <h2 className="text-sm" data-testid="sidebar-database-label">{databaseDropdownLabel}</h2>
-                                        <SearchSelect
-                                            label={databaseDropdownLabel}
-                                            options={databaseOptions}
-                                            value={current?.Database}
-                                            onChange={handleDatabaseChange}
-                                            placeholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('selectSchema') : t('selectDatabase')}
-                                            searchPlaceholder={databaseSchemaTerminology === 'schema' && databaseTypesThatUseDatabaseInsteadOfSchema(current?.Type) ? t('searchSchema') : t('searchDatabase')}
-                                            side="left" align="start"
-                                            buttonProps={{
-                                                "data-testid": "sidebar-database",
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                                {databaseSupportsSchema(current?.Type) && (
-                                    <div className={cn("flex flex-col gap-sm w-full", {
-                                        "opacity-0 pointer-events-none": !open || pathname.includes(InternalRoutes.RawExecute.path),
-                                    })}>
-                                        <h2 className="text-sm">{t('schema')}</h2>
-                                        <SearchSelect
-                                            label={t('schema')}
-                                            options={schemaOptions}
-                                            value={schema}
-                                            onChange={handleSchemaChange}
-                                            placeholder={t('selectSchema')}
-                                            searchPlaceholder={t('searchSchema')}
-                                            side="left" align="start"
-                                            buttonProps={{
-                                                "data-testid": "sidebar-schema",
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            
-                            {/* Main navigation */}
-                            <SidebarMenu className="grow mt-8 gap-4">
-                                {sidebarRoutes.map(route => (
-                                    <SidebarMenuItem key={route.title}>
-                                        <SidebarMenuButton asChild tooltip={route.title}>
-                                            <Link
-                                                to={route.path}
-                                                className={classNames("flex items-center gap-2", {
-                                                    "font-bold": pathname === route.path,
-                                                })}
-                                            >
-                                                {route.icon}
-                                                {open && <span>{route.title}</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
+                    <SidebarGroup className="grow">
+                        <SidebarMenu className="gap-0">
 
-                                <SidebarSeparator className={cn("my-2", {
-                                    "mx-0": !open,
-                                })} />
+                            {EESidebarNav ? (
+                                <Suspense fallback={null}>
+                                    <EESidebarNav open={open} pathname={pathname} dropdowns={dropdownsJSX} />
+                                </Suspense>
+                            ) : (
+                                <>
+                                    {/* CE CLASSIC LAYOUT */}
+                                    {open && (
+                                        <div className="flex flex-col gap-sm mb-4">
+                                            {dropdownsJSX}
+                                        </div>
+                                    )}
+                                    {current != null && !isNoSQL(current.Type) && (
+                                        <NavItem icon={<SparklesIcon className="w-4 h-4" />} label={t('navAIChat')} path={InternalRoutes.Chat.path} pathname={pathname} open={open} tooltip={t('navAIChat')} />
+                                    )}
+                                    <NavItem icon={<TableCellsIcon className="w-4 h-4" />} label={t('navExplorer')} path={InternalRoutes.Dashboard.StorageUnit.path} pathname={pathname} open={open} tooltip={t('navExplorer')} />
+                                    <NavItem icon={<RectangleGroupIcon className="w-4 h-4" />} label={t('navGraph')} path={InternalRoutes.Graph.path} pathname={pathname} open={open} tooltip={t('navGraph')} />
+                                    {databaseSupportsScratchpad(current?.Type) && (
+                                        <NavItem icon={<CommandLineIcon className="w-4 h-4" />} label={t('navScratchpad')} path={InternalRoutes.RawExecute.path} pathname={pathname} open={open} tooltip={t('navScratchpad')} />
+                                    )}
+                                </>
+                            )}
 
-                                {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton asChild tooltip={t('contactUs')}>
-                                            <Link
-                                                to={InternalRoutes.ContactUs.path}
-                                                className={classNames("flex items-center gap-2", {
-                                                    "font-bold": pathname === InternalRoutes.ContactUs.path,
-                                                })}
-                                            >
-                                                <QuestionMarkCircleIcon className="w-4 h-4" />
-                                                {open && <span>{t('contactUs')}</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                )}
-                                {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton asChild tooltip={t('settings')}>
-                                            <Link
-                                                to={InternalRoutes.Settings.path}
-                                                className={classNames("flex items-center gap-2", {
-                                                    "font-bold": pathname === InternalRoutes.Settings.path,
-                                                })}
-                                            >
-                                                <CogIcon className="w-4 h-4" />
-                                                {open && <span>{t('settings')}</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                )}
-                                <div className="grow" />
+                            <SidebarSeparator className={cn("my-4", { "mx-0": !open })} />
+
+                            {/* Settings / Contact Us */}
+                            {isEEFeatureEnabled('contactUsPage') && InternalRoutes.ContactUs && (
+                                <NavItem icon={<QuestionMarkCircleIcon className="w-4 h-4" />} label={t('contactUs')} path={InternalRoutes.ContactUs.path} pathname={pathname} open={open} tooltip={t('contactUs')} />
+                            )}
+                            {isEEFeatureEnabled('settingsPage') && InternalRoutes.Settings && (
+                                <NavItem icon={<CogIcon className="w-4 h-4" />} label={t('settings')} path={InternalRoutes.Settings.path} pathname={pathname} open={open} tooltip={t('settings')} />
+                            )}
+
+                            <div className="grow" />
+
+                                {/* Logout */}
                                 {!isEmbedded && (
                                     <SidebarMenuItem className="flex justify-between items-center w-full">
                                         {/* Logout Profile button */}
@@ -502,7 +499,6 @@ export const Sidebar: FC = () => {
                                 )}
                             </SidebarMenu>
                         </SidebarGroup>
-                    )}
                 </SidebarContent>
                 <div className={cn("absolute right-4 bottom-4 text-xs text-muted-foreground", {
                     "hidden": !open,

@@ -16,11 +16,11 @@
 
 /**
  * EE Import Configuration
- * This file handles conditional imports for Enterprise Edition features
+ * This file handles conditional imports for Enterprise Edition features.
  *
- * IMPORTANT: This module uses top-level await to ensure EE settings are loaded
- * synchronously before Redux store initialization. Do not import this module
- * from any code that runs before the store is created.
+ * NO top-level await — this module is synchronous so it does not block
+ * the ES module graph.  All async EE work is deferred to initEE(), which
+ * is called once from index.tsx before root.render().
  */
 
 import { EEComponentTypes, SettingsDefaults } from './ee-types';
@@ -28,47 +28,51 @@ import { EEComponentTypes, SettingsDefaults } from './ee-types';
 // Check if we're in EE mode
 export const isEEMode = import.meta.env.VITE_BUILD_EDITION === 'ee';
 
-// Export properly typed components
+// Export properly typed components (populated lazily by initEE)
 export const EEComponents: EEComponentTypes = {
     AnalyzeGraph: null,
     LineChart: null,
     PieChart: null,
 };
 
-// Load EE settings FIRST using top-level await before exporting
-// This ensures eeSettingsDefaults is populated before any consumer can access it
-let settingsDefaults: SettingsDefaults = {};
+// Mutable defaults — populated by initEE() before root.render() in EE mode.
+// In CE mode this stays empty ({}) which is correct.
+export let eeSettingsDefaults: SettingsDefaults = {};
 
-if (isEEMode) {
+/**
+ * Async EE initialisation. Must be awaited in index.tsx before root.render()
+ * so that EE routes and settings are ready for the first render.
+ *
+ * In CE mode this is a no-op and resolves immediately.
+ */
+export async function initEE(): Promise<void> {
+    if (import.meta.env.VITE_BUILD_EDITION !== 'ee') {
+        return;
+    }
+
+    // Load EE config (settings defaults)
     try {
-        // Top-level await - blocks module initialization until config is loaded
         const eeConfig = await import('@ee/config');
         if (eeConfig?.eeSettingsDefaults) {
-            settingsDefaults = eeConfig.eeSettingsDefaults;
+            eeSettingsDefaults = eeConfig.eeSettingsDefaults;
         }
     } catch (error) {
         console.warn('EE config could not be loaded:', error);
     }
-}
 
-// Export AFTER loading
-export const eeSettingsDefaults: SettingsDefaults = settingsDefaults;
+    // Register EE routes before the first render
+    try {
+        await import('@ee/routes');
+    } catch (error) {
+        console.warn('EE routes could not be loaded:', error);
+    }
 
-// Load EE components asynchronously (they're not needed at module initialization)
-if (isEEMode) {
-    const loadEEComponents = async () => {
-        try {
-            // Load all EE exports at once
-            const eeModule: Record<string, unknown> = await import('@ee/index').catch(() => null) as Record<string, unknown>;
-            if (eeModule) {
-                if (eeModule.AnalyzeGraph) EEComponents.AnalyzeGraph = eeModule.AnalyzeGraph as EEComponentTypes['AnalyzeGraph'];
-                if (eeModule.LineChart) EEComponents.LineChart = eeModule.LineChart as EEComponentTypes['LineChart'];
-                if (eeModule.PieChart) EEComponents.PieChart = eeModule.PieChart as EEComponentTypes['PieChart'];
-            }
-        } catch (error) {
-            console.warn('EE components could not be loaded:', error);
+    // Load EE components (fire-and-forget — not needed for first render)
+    import('@ee/index').then((eeModule: Record<string, unknown>) => {
+        if (eeModule) {
+            if (eeModule.AnalyzeGraph) EEComponents.AnalyzeGraph = eeModule.AnalyzeGraph as EEComponentTypes['AnalyzeGraph'];
+            if (eeModule.LineChart) EEComponents.LineChart = eeModule.LineChart as EEComponentTypes['LineChart'];
+            if (eeModule.PieChart) EEComponents.PieChart = eeModule.PieChart as EEComponentTypes['PieChart'];
         }
-    };
-
-    loadEEComponents();
+    }).catch(() => null);
 }

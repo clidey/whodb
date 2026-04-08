@@ -28,7 +28,7 @@ import {PostHogProvider} from 'posthog-js/react';
 import type {PostHog} from 'posthog-js';
 import {initPosthog} from "./config/posthog";
 import {ThemeProvider} from '@clidey/ux'
-import {isEEMode} from './config/ee-imports';
+import {initEE, isEEMode} from './config/ee-imports';
 import {isDesktopApp} from './utils/external-links';
 import {PosthogConsentBanner} from './components/analytics/posthog-consent-banner';
 import {ErrorBoundary} from './components/error-boundary';
@@ -90,18 +90,29 @@ const AppWithProviders = () => {
 // Use BrowserRouter for web version
 const Router = isDesktopApp() ? HashRouter : BrowserRouter;
 
-root.render(
-  <React.StrictMode>
-    <Router>
-      <ApolloProvider client={graphqlClient}>
-        <Provider store={reduxStore}>
-          <PersistGate loading={null} persistor={reduxStorePersistor}>
-            <ErrorBoundary>
-              <AppWithProviders />
-            </ErrorBoundary>
-          </PersistGate>
-        </Provider>
-      </ApolloProvider>
-    </Router>
-  </React.StrictMode>
-);
+// Initialise EE (no-op in CE) then mount React.
+// Using a plain async function avoids top-level await in this module,
+// which was causing Vite to defer execution of the entire module body.
+initEE().then(() => {
+    root.render(
+      <React.StrictMode>
+        <Router>
+          <ApolloProvider client={graphqlClient}>
+            <Provider store={reduxStore}>
+              <PersistGate loading={null} persistor={reduxStorePersistor}>
+                <ErrorBoundary>
+                  <AppWithProviders />
+                </ErrorBoundary>
+              </PersistGate>
+            </Provider>
+          </ApolloProvider>
+        </Router>
+      </React.StrictMode>
+    );
+}).catch((err) => {
+    console.error('Failed to initialise app:', err);
+    const rootEl = document.getElementById('root');
+    if (rootEl) {
+        rootEl.innerHTML = '<div style="padding:20px;color:red">Failed to start: ' + String(err) + '</div>';
+    }
+});

@@ -17,7 +17,7 @@
 import {Button, ModeToggle, SidebarProvider, Tooltip, TooltipContent, TooltipTrigger} from "@clidey/ux";
 import classNames from "classnames";
 import {AnimatePresence, motion} from "framer-motion";
-import {FC, ReactNode} from "react";
+import {FC, ReactNode, useCallback, useState} from "react";
 import {twMerge} from "tailwind-merge";
 import {IInternalRoute} from "../config/routes";
 import {useAppSelector} from "../store/hooks";
@@ -126,8 +126,34 @@ const KeyboardShortcutsHint: FC = () => {
     );
 };
 
+const MAIN_SIDEBAR_PREF_KEY = 'whodb-main-sidebar-open';
+
+/**
+ * Determines the initial open state for the main sidebar.
+ * On pages without a sub-sidebar: always open.
+ * On pages with a sub-sidebar: use the persisted user preference (default closed).
+ */
+function getMainSidebarDefaultOpen(hasSubSidebar: boolean): boolean {
+    if (!hasSubSidebar) return true;
+    const stored = localStorage.getItem(MAIN_SIDEBAR_PREF_KEY);
+    return stored !== null ? stored === 'true' : false;
+}
+
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
+    const hasSubSidebar = props.sidebar != null;
+
+    const [mainSidebarOpen, setMainSidebarOpen] = useState(() =>
+        getMainSidebarDefaultOpen(hasSubSidebar)
+    );
+
+    const handleMainSidebarChange = useCallback((open: boolean) => {
+        setMainSidebarOpen(open);
+        // Persist the preference so it survives navigation on sub-sidebar pages
+        if (hasSubSidebar) {
+            localStorage.setItem(MAIN_SIDEBAR_PREF_KEY, String(open));
+        }
+    }, [hasSubSidebar]);
 
     // Fetch database metadata when logged in - this populates Redux store
     // for utilities like getDatabaseOperators and getDatabaseTypeDefinitions
@@ -136,7 +162,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <Container>
             <div className="flex flex-row grow">
-                <SidebarProvider defaultOpen={props.sidebar == null}>
+                <SidebarProvider open={mainSidebarOpen} onOpenChange={handleMainSidebarChange}>
                     <Sidebar />
                 </SidebarProvider>
                 {props.sidebar && <SidebarProvider>

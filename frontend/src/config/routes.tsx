@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-import { FC, lazy, ReactNode, Suspense } from "react";
+import { FC, lazy, Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
 import { LogoutPage } from "../pages/auth/logout";
-import { isEEFeatureEnabled, loadEEComponent } from "../utils/ee-loader";
 import { LoadingPage } from "../components/loading";
+import { IInternalRoute, getEERoutes } from "./route-registry";
 
-// Lazy load heavy components
+// Re-export IInternalRoute so existing imports from this file continue to work.
+export type { IInternalRoute };
+
+// Lazy load heavy CE components
 const LoginPage = lazy(() => import("../pages/auth/login").then(m => ({ default: m.LoginPage })));
 const GraphPage = lazy(() => import("../pages/graph/graph").then(m => ({ default: m.GraphPage })));
 const ExploreStorageUnit = lazy(() => import("../pages/storage-unit/explore-storage-unit").then(m => ({ default: m.ExploreStorageUnit })));
@@ -30,10 +33,6 @@ const RawExecutePage = lazy(() => import("../pages/raw-execute/raw-execute").the
 const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m.ChatPage })));
 const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
-const SQLAgentPage = isEEFeatureEnabled('sqlAgent') ? loadEEComponent(
-    () => import('@ee/pages/sql-agent/sql-agent').then(m => ({ default: m.SQLAgentPage })),
-    null
-) : null;
 
 // Wrapper component for lazy loaded routes
 const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
@@ -41,13 +40,6 @@ const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Com
     <Component />
   </Suspense>
 );
-
-export type IInternalRoute = {
-    name: string;
-    path: string;
-    component: ReactNode;
-    public?: boolean;
-}
 
 export const PublicRoutes = {
     Login: {
@@ -60,7 +52,7 @@ export const PublicRoutes = {
 export const InternalRoutes = {
     Dashboard: {
         StorageUnit: {
-            name: "Storage Unit", // should update on the page
+            name: "Storage Unit",
             path: "/storage-unit",
             component: <LazyRoute component={StorageUnitPage} />,
         },
@@ -83,29 +75,23 @@ export const InternalRoutes = {
     Chat: {
         name: "Chat",
         path: "/chat",
-        component: SQLAgentPage
-            ? <Suspense fallback={<LoadingPage />}><SQLAgentPage /></Suspense>
-            : <LazyRoute component={ChatPage} />,
+        component: <LazyRoute component={ChatPage} />,
+    },
+    Settings: {
+        name: "Settings",
+        path: "/settings",
+        component: <LazyRoute component={SettingsPage} />,
+    },
+    ContactUs: {
+        name: "Contact Us",
+        path: "/contact-us",
+        component: <LazyRoute component={ContactUsPage} />,
     },
     Logout: {
         name: "Logout",
         path: "/logout",
         component: <LogoutPage />,
     },
-    ...(isEEFeatureEnabled('settingsPage') ? {
-        Settings: {
-            name: "Settings",
-            path: "/settings",
-            component: <LazyRoute component={SettingsPage} />
-        }
-    } : {}),
-    ...(isEEFeatureEnabled('contactUsPage') ? {
-        ContactUs: {
-            name: "Contact Us",
-            path: "/contact-us",
-            component: <LazyRoute component={ContactUsPage} />
-        }
-    } : {})
 }
 
 export const PrivateRoute: FC = () => {
@@ -117,18 +103,23 @@ export const PrivateRoute: FC = () => {
 }
 
 export const getRoutes = (): IInternalRoute[] => {
-    const allRoutes: IInternalRoute[] = [];
-    const currentRoutes = Object.values(InternalRoutes);
-    while (currentRoutes.length > 0) {
-        const currentRoute = currentRoutes.shift();
-        if (currentRoute == null) {
-            continue;
+    // Collect CE routes
+    const ceRoutes: IInternalRoute[] = [];
+    const queue = Object.values(InternalRoutes) as any[];
+    while (queue.length > 0) {
+        const current = queue.shift();
+        if (current == null) continue;
+        if ("path" in current) {
+            ceRoutes.push(current);
+        } else {
+            queue.push(...Object.values(current));
         }
-        if ("path" in currentRoute) {
-            allRoutes.push(currentRoute);
-            continue;
-        }
-        currentRoutes.push(...Object.values((currentRoute)));
     }
-    return allRoutes;
+
+    // Merge: EE routes override CE routes with the same path
+    const routeMap = new Map<string, IInternalRoute>();
+    for (const r of ceRoutes) routeMap.set(r.path, r);
+    for (const r of getEERoutes()) routeMap.set(r.path, r);
+
+    return Array.from(routeMap.values()).filter(r => r.component != null);
 }
