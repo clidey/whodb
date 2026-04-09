@@ -59,6 +59,7 @@ type MainModel struct {
 	statusMessage string
 	viewHistory   []ViewMode
 
+	// Concrete view references — used by existing code and tests.
 	connectionView *ConnectionView
 	browserView    *BrowserView
 	editorView     *EditorView
@@ -69,6 +70,9 @@ type MainModel struct {
 	columnsView    *ColumnsView
 	chatView       *ChatView
 	schemaView     *SchemaView
+
+	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
+	panes map[ViewMode]Pane
 }
 
 func NewMainModel() *MainModel {
@@ -110,6 +114,19 @@ func NewMainModel() *MainModel {
 	m.chatView = NewChatView(m)
 	m.schemaView = NewSchemaView(m)
 
+	m.panes = map[ViewMode]Pane{
+		ViewConnection: m.connectionView,
+		ViewBrowser:    m.browserView,
+		ViewEditor:     m.editorView,
+		ViewResults:    m.resultsView,
+		ViewHistory:    m.historyView,
+		ViewExport:     m.exportView,
+		ViewWhere:      m.whereView,
+		ViewColumns:    m.columnsView,
+		ViewChat:       m.chatView,
+		ViewSchema:     m.schemaView,
+	}
+
 	return m
 }
 
@@ -132,6 +149,13 @@ func (m *MainModel) Init() tea.Cmd {
 	if m.err != nil {
 		return nil
 	}
+
+	// Apply saved theme
+	themeName := m.config.GetThemeName()
+	if t := styles.GetThemeByName(themeName); t != nil {
+		styles.SetTheme(t)
+	}
+
 	cmds := []tea.Cmd{m.spinner.Tick}
 	if m.mode == ViewBrowser && m.dbManager.GetCurrentConnection() != nil {
 		cmds = append(cmds, m.browserView.loadTables())
@@ -206,6 +230,9 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			// Otherwise fall through to let view handle it
+
+		case "ctrl+t":
+			return m.cycleTheme()
 
 		case "tab", "shift+tab":
 			// Let connection view handle Tab for its own navigation
@@ -350,11 +377,6 @@ func (m *MainModel) renderStatusBar() string {
 	// Spinner when loading
 	if m.isLoading() {
 		parts = append(parts, m.spinner.View())
-	}
-
-	// Transient status message
-	if m.statusMessage != "" {
-		parts = append(parts, styles.RenderOk(m.statusMessage))
 	}
 
 	sep := styles.RenderMuted(" • ")
@@ -502,6 +524,7 @@ func (m *MainModel) renderHelpOverlay() string {
 			Keys.ConnectionList.New,
 			Keys.ConnectionList.DeleteConn,
 			Keys.ConnectionList.Connect,
+			Keys.Global.CycleTheme,
 			Keys.ConnectionList.QuitEsc,
 		))
 
@@ -667,6 +690,11 @@ func (m *MainModel) renderViewIndicator() string {
 		result += part
 	}
 
+	// Append transient status message to the indicator bar (avoids extra line)
+	if m.statusMessage != "" {
+		result += "  " + styles.RenderOk(m.statusMessage)
+	}
+
 	return result
 }
 
@@ -696,9 +724,59 @@ func (m *MainModel) onViewEnter(mode ViewMode) {
 	}
 }
 
+// ContentHeight returns the number of rows available for view content,
+// accounting for the view indicator and status bar lines rendered by MainModel.
+func (m *MainModel) ContentHeight() int {
+	if m.height <= 0 {
+		return 20 // sane default before first WindowSizeMsg
+	}
+	overhead := lipgloss.Height(m.renderViewIndicator()) + 1 // indicator + newline
+	if bar := m.renderStatusBar(); bar != "" {
+		overhead += lipgloss.Height(bar) + 1 // status bar + newline
+	}
+	h := m.height - overhead
+	if h < 3 {
+		h = 3
+	}
+	return h
+}
+
 // SpinnerView returns the current spinner frame for use in loading indicators.
 func (m *MainModel) SpinnerView() string {
 	return m.spinner.View()
+}
+
+// cycleTheme switches to the next built-in theme and persists the choice.
+func (m *MainModel) cycleTheme() (tea.Model, tea.Cmd) {
+	themes := styles.ListThemes()
+	current := m.config.GetThemeName()
+
+	nextIndex := 0
+	for i, name := range themes {
+		if name == current {
+			nextIndex = (i + 1) % len(themes)
+			break
+		}
+	}
+
+	next := themes[nextIndex]
+	if t := styles.GetThemeByName(next); t != nil {
+		styles.SetTheme(t)
+		m.config.SetThemeName(next)
+		m.config.Save()
+		return m, m.SetStatus("Theme: " + next)
+	}
+	return m, nil
+}
+
+// GetPane returns the Pane for the given ViewMode.
+func (m *MainModel) GetPane(mode ViewMode) Pane {
+	return m.panes[mode]
+}
+
+// ActivePane returns the Pane for the currently active view.
+func (m *MainModel) ActivePane() Pane {
+	return m.panes[m.mode]
 }
 
 func renderError(message string) string {

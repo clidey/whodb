@@ -39,6 +39,8 @@ type EditorView struct {
 	selectedSuggestion  int
 	cursorPos           int
 	lastText            string
+	width               int
+	height              int
 	lastWidth           int
 	lastHeight          int
 	suggestionHeight    int

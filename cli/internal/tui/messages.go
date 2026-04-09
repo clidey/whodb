@@ -119,6 +119,11 @@ type schemaLoadedMsg struct {
 // statusMessageTimeoutMsg is sent to auto-dismiss transient status messages
 type statusMessageTimeoutMsg struct{}
 
+// themeChangedMsg is sent when the theme is switched via Ctrl+T
+type themeChangedMsg struct {
+	themeName string
+}
+
 // tableWithColumns pairs a storage unit with its column metadata
 type tableWithColumns struct {
 	StorageUnit engine.StorageUnit

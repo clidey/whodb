@@ -32,6 +32,8 @@ import (
 
 type ExportView struct {
 	parent           *MainModel
+	width            int
+	height           int
 	filenameInput    textinput.Model
 	selectedFormat   int
 	selectedDelim    int

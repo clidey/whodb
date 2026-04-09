@@ -35,6 +35,7 @@ type ColumnsView struct {
 	schema        string
 	tableName     string
 	scrollOffset  int
+	width         int
 	height        int
 }
 

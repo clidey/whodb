@@ -472,9 +472,9 @@ func (v *ConnectionView) View() string {
 		Keys.Global.Quit,
 	)
 
-	// Measure chrome: title + subtitle + help + padding(2) + view indicator(2) + separators(2)
-	chromeHeight := lipgloss.Height(title) + lipgloss.Height(subtitle) + lipgloss.Height(helpText) + 6
-	listHeight := v.parent.height - chromeHeight
+	// Measure chrome within this view: title + subtitle + help + padding(2) + separators(2)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(subtitle) + lipgloss.Height(helpText) + 4
+	listHeight := v.parent.ContentHeight() - chromeHeight
 	if listHeight < 3 {
 		listHeight = 3
 	}
@@ -536,26 +536,43 @@ func (v *ConnectionView) renderForm() string {
 	// Build form body for the viewport
 	var body strings.Builder
 
-	// Database Type (index 7)
-	dbTypeLabel := "Database Type:"
+	// Database Type (index 7) — rendered inline like the other fields.
+	// Type options wrap to multiple lines to stay within viewport width.
+	// The label is written as plain text (not RenderKey) to avoid a viewport
+	// bug where ANSI-styled text on the first visible line gets misaligned.
 	if v.focusIndex == 7 {
-		dbTypeLabel = styles.RenderKey("▶ " + dbTypeLabel)
+		body.WriteString("▶ Database Type:")
 	} else {
-		dbTypeLabel = "  " + dbTypeLabel
+		body.WriteString("  Database Type:")
 	}
-	body.WriteString(dbTypeLabel)
 	body.WriteString("\n  ")
+	maxTypeWidth := v.width - 8 // account for padding
+	if maxTypeWidth < 20 {
+		maxTypeWidth = 20
+	}
+	lineWidth := 0
 	for i, dbType := range v.dbTypes {
+		var part string
 		if i == v.dbTypeIndex {
 			if v.focusIndex == 7 {
-				body.WriteString(styles.ActiveListItemStyle.Render(" " + dbType + " "))
+				part = styles.ActiveListItemStyle.Render(dbType)
 			} else {
-				body.WriteString(styles.RenderKey("[" + dbType + "]"))
+				part = styles.RenderKey(dbType)
 			}
 		} else {
-			body.WriteString(styles.RenderMuted(" " + dbType + " "))
+			part = styles.RenderMuted(dbType)
 		}
-		body.WriteString(" ")
+		partWidth := lipgloss.Width(part)
+		sep := "  "
+		if i > 0 && lineWidth+2+partWidth > maxTypeWidth {
+			body.WriteString("\n  ")
+			lineWidth = 0
+		} else if i > 0 {
+			body.WriteString(sep)
+			lineWidth += 2
+		}
+		body.WriteString(part)
+		lineWidth += partWidth
 	}
 	body.WriteString("\n\n")
 
@@ -593,6 +610,7 @@ func (v *ConnectionView) renderForm() string {
 			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
 			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
 			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
+			Keys.Global.CycleTheme.Help().Key, Keys.Global.CycleTheme.Help().Desc,
 			Keys.Global.Back.Help().Key, Keys.Global.Back.Help().Desc,
 			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
@@ -601,6 +619,7 @@ func (v *ConnectionView) renderForm() string {
 			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
 			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
 			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
+			Keys.Global.CycleTheme.Help().Key, Keys.Global.CycleTheme.Help().Desc,
 			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
 	}
@@ -611,12 +630,12 @@ func (v *ConnectionView) renderForm() string {
 		errorBlock = styles.RenderErrorBox(v.connError.Error()) + "\n"
 	}
 
-	// Measure chrome height: title + error + help + padding(2) + view indicator(2) + separators(1)
-	chromeHeight := lipgloss.Height(title) + lipgloss.Height(errorBlock) + lipgloss.Height(helpText) + 5
+	// Measure chrome within this view: title + error + help + padding(2) + separators(1)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(errorBlock) + lipgloss.Height(helpText) + 3
 
 	// Size viewport to fill remaining space
 	if v.formReady {
-		vpHeight := v.height - chromeHeight
+		vpHeight := v.parent.ContentHeight() - chromeHeight
 		if vpHeight < 3 {
 			vpHeight = 3
 		}
@@ -625,18 +644,34 @@ func (v *ConnectionView) renderForm() string {
 		v.formViewport.SetContent(body.String())
 	}
 
-	var b strings.Builder
-	b.WriteString(title)
-	b.WriteString(errorBlock)
-	if v.formReady {
-		b.WriteString(v.formViewport.View())
-	} else {
-		b.WriteString(body.String())
+	// Build output with manual left-padding instead of lipgloss.Padding,
+	// which miscalculates widths when combining styled title with viewport output.
+	pad := "  "
+	var out strings.Builder
+	out.WriteString("\n") // top padding
+	for _, line := range strings.Split(title, "\n") {
+		out.WriteString(pad)
+		out.WriteString(line)
+		out.WriteString("\n")
 	}
-	b.WriteString("\n")
-	b.WriteString(helpText)
-
-	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	out.WriteString(errorBlock)
+	var content string
+	if v.formReady {
+		content = v.formViewport.View()
+	} else {
+		content = body.String()
+	}
+	for _, line := range strings.Split(content, "\n") {
+		out.WriteString(pad)
+		out.WriteString(line)
+		out.WriteString("\n")
+	}
+	for _, line := range strings.Split(helpText, "\n") {
+		out.WriteString(pad)
+		out.WriteString(line)
+		out.WriteString("\n")
+	}
+	return out.String()
 }
 
 func (v *ConnectionView) refreshList() {

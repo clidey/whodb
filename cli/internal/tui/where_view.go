@@ -37,6 +37,8 @@ type WhereCondition struct {
 
 type WhereView struct {
 	parent        *MainModel
+	width         int
+	height        int
 	conditions    []WhereCondition
 	currentField  string
 	currentOp     string

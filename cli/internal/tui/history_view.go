@@ -58,6 +58,8 @@ func (i historyItem) FilterValue() string {
 type HistoryView struct {
 	parent          *MainModel
 	list            list.Model
+	width           int
+	height          int
 	confirmingClear bool
 	executing       bool
 	queryCancel     context.CancelFunc

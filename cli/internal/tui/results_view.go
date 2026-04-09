@@ -46,6 +46,7 @@ type ResultsView struct {
 	whereCondition  *model.WhereCondition
 	visibleColumns  []string
 	width           int
+	height          int
 	editingPageSize bool
 	pageSizeInput   textinput.Model
 	loading         bool

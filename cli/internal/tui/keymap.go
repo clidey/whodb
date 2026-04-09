@@ -21,10 +21,11 @@ import (
 
 // GlobalKeys contains keybindings used across multiple views
 type GlobalKeys struct {
-	Quit     key.Binding
-	Help     key.Binding
-	NextView key.Binding
-	Back     key.Binding
+	Quit       key.Binding
+	Help       key.Binding
+	NextView   key.Binding
+	Back       key.Binding
+	CycleTheme key.Binding
 }
 
 // BrowserKeys contains keybindings for the browser view
@@ -201,6 +202,10 @@ var Keys = Keymap{
 		Back: key.NewBinding(
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "back"),
+		),
+		CycleTheme: key.NewBinding(
+			key.WithKeys("ctrl+t"),
+			key.WithHelp("ctrl+t", "cycle theme"),
 		),
 	},
 	Browser: BrowserKeys{
