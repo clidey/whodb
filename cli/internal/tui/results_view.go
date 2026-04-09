@@ -51,6 +51,7 @@ type ResultsView struct {
 	pageSizeInput   textinput.Model
 	loading         bool
 	goToBottom      bool // Flag to set cursor at bottom after loading
+	compact         bool
 }
 
 // Available page sizes for cycling
@@ -135,8 +136,8 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			v.whereCondition = nil
 			return v, nil
 		}
-		// Handle initial table load (Schema/TableName provided)
-		if msg.Schema != "" && msg.TableName != "" {
+		// Handle initial table load (TableName provided; schema may be empty for SQLite)
+		if msg.TableName != "" {
 			v.schema = msg.Schema
 			v.tableName = msg.TableName
 			v.query = ""
@@ -223,7 +224,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Results.Where):
 			// WHERE conditions are only available when viewing table data
-			if v.schema != "" && v.tableName != "" {
+			if v.tableName != "" {
 				columns, err := v.parent.dbManager.GetColumns(v.schema, v.tableName)
 				if err != nil {
 					v.parent.err = err
@@ -236,7 +237,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Results.Columns):
 			// Column selection is only available when viewing table data
-			if v.schema != "" && v.tableName != "" {
+			if v.tableName != "" {
 				columns, err := v.parent.dbManager.GetColumns(v.schema, v.tableName)
 				if err != nil {
 					v.parent.err = err
@@ -248,7 +249,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			}
 
 		case key.Matches(msg, Keys.Results.Export):
-			if v.schema != "" && v.tableName != "" {
+			if v.tableName != "" {
 				// Export table data
 				v.parent.exportView.SetExportData(v.schema, v.tableName)
 				v.parent.PushView(ViewExport)
@@ -364,59 +365,61 @@ func (v *ResultsView) View() string {
 		}
 	}
 
-	b.WriteString("\n\n")
+	if !v.compact {
+		b.WriteString("\n\n")
 
-	// Show different help based on whether export/where/columns is available
-	// Also show appropriate back target (editor for query results, browser for table data)
-	backTarget := "browser"
-	if v.query != "" {
-		backTarget = "editor"
-	}
-
-	if v.schema != "" && v.tableName != "" {
-		whereLabel := "where"
-		conditionCount := v.countWhereConditions()
-		if conditionCount > 0 {
-			whereLabel = fmt.Sprintf("where (%d)", conditionCount)
+		// Show different help based on whether export/where/columns is available
+		// Also show appropriate back target (editor for query results, browser for table data)
+		backTarget := "browser"
+		if v.query != "" {
+			backTarget = "editor"
 		}
 
-		columnsLabel := "columns"
-		if v.results != nil && len(v.results.Columns) > 0 {
-			selectedCount := len(v.visibleColumns)
-			if selectedCount == 0 {
-				selectedCount = len(v.results.Columns)
+		if v.tableName != "" {
+			whereLabel := "where"
+			conditionCount := v.countWhereConditions()
+			if conditionCount > 0 {
+				whereLabel = fmt.Sprintf("where (%d)", conditionCount)
 			}
-			columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
-		}
 
-		// Use static bindings for most items, but dynamic labels for where/columns/back
-		b.WriteString(styles.RenderHelp(
-			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
-			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
-			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
-			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
-			"scroll", "trackpad/mouse",
-			Keys.Results.Where.Help().Key, whereLabel,
-			Keys.Results.Columns.Help().Key, columnsLabel,
-			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
-			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
-			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
-			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
-			Keys.Global.Back.Help().Key, backTarget,
-		))
-	} else {
-		b.WriteString(styles.RenderHelp(
-			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
-			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
-			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
-			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
-			"scroll", "trackpad/mouse",
-			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
-			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
-			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
-			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
-			Keys.Global.Back.Help().Key, backTarget,
-		))
+			columnsLabel := "columns"
+			if v.results != nil && len(v.results.Columns) > 0 {
+				selectedCount := len(v.visibleColumns)
+				if selectedCount == 0 {
+					selectedCount = len(v.results.Columns)
+				}
+				columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
+			}
+
+			// Use static bindings for most items, but dynamic labels for where/columns/back
+			b.WriteString(styles.RenderHelp(
+				Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+				Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
+				"scroll", "trackpad/mouse",
+				Keys.Results.Where.Help().Key, whereLabel,
+				Keys.Results.Columns.Help().Key, columnsLabel,
+				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+				Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+				Keys.Global.Back.Help().Key, backTarget,
+			))
+		} else {
+			b.WriteString(styles.RenderHelp(
+				Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+				Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
+				"scroll", "trackpad/mouse",
+				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+				Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+				Keys.Global.Back.Help().Key, backTarget,
+			))
+		}
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())

@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -28,6 +29,7 @@ import (
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/internal/history"
+	"github.com/clidey/whodb/cli/internal/tui/layout"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -73,6 +75,11 @@ type MainModel struct {
 
 	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
 	panes map[ViewMode]Pane
+
+	// Split-pane layout state (active only when connected).
+	activeLayout   layout.LayoutName
+	layoutRoot     *layout.Container
+	focusedPaneIdx int
 }
 
 func NewMainModel() *MainModel {
@@ -142,6 +149,7 @@ func NewMainModelWithConnection(conn *config.Connection) *MainModel {
 	}
 
 	m.mode = ViewBrowser
+	// Layout will be initialized on first WindowSizeMsg (width not known yet)
 	return m
 }
 
@@ -216,6 +224,11 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.schemaView, _ = m.schemaView.Update(msg)
 		m.exportView, _ = m.exportView.Update(msg)
 		m.whereView, _ = m.whereView.Update(msg)
+
+		// Rebuild layout on resize if connected
+		if m.dbManager.GetCurrentConnection() != nil && m.layoutRoot == nil {
+			m.initLayout()
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -234,10 +247,74 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+t":
 			return m.cycleTheme()
 
+		case "ctrl+l":
+			if m.dbManager.GetCurrentConnection() != nil {
+				return m.cycleLayout()
+			}
+
+		case "alt+1":
+			if m.useMultiPane() {
+				m.focusPaneByIndex(0)
+				return m, nil
+			}
+		case "alt+2":
+			if m.useMultiPane() {
+				m.focusPaneByIndex(1)
+				return m, nil
+			}
+		case "alt+3":
+			if m.useMultiPane() {
+				m.focusPaneByIndex(2)
+				return m, nil
+			}
+
+		case "alt+left":
+			if m.useMultiPane() && m.layoutRoot != nil {
+				m.layoutRoot.AdjustRatio(-0.05)
+				return m, nil
+			}
+		case "alt+right":
+			if m.useMultiPane() && m.layoutRoot != nil {
+				m.layoutRoot.AdjustRatio(0.05)
+				return m, nil
+			}
+
+		case "ctrl+h":
+			// Global shortcut: open History from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewHistory {
+				// In multi-pane, switch to single-pane History
+				if m.useMultiPane() {
+					m.activeLayout = layout.LayoutSingle
+					m.rebuildLayout()
+				}
+				m.PushView(ViewHistory)
+				return m, nil
+			}
+
+		case "ctrl+a":
+			// Global shortcut: open AI Chat from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
+				if m.useMultiPane() {
+					m.activeLayout = layout.LayoutSingle
+					m.rebuildLayout()
+				}
+				m.PushView(ViewChat)
+				return m, m.chatView.Init()
+			}
+
 		case "tab", "shift+tab":
 			// Let connection view handle Tab for its own navigation
 			if m.mode == ViewConnection {
 				return m.updateConnectionView(msg)
+			}
+			// In multi-pane mode, Tab cycles pane focus
+			if m.useMultiPane() {
+				if msg.String() == "tab" {
+					m.focusNextPane()
+				} else {
+					m.focusPrevPane()
+				}
+				return m, nil
 			}
 			if msg.String() == "tab" {
 				return m.handleTabSwitch()
@@ -245,6 +322,28 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		}
+	}
+
+	// Route async completion messages to their target view regardless of focus.
+	// This is critical for multi-pane mode where the focused pane may not be the
+	// one that initiated the async operation.
+	switch msg.(type) {
+	case PageLoadedMsg:
+		return m.updateResultsView(msg)
+	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg:
+		return m.updateEditorView(msg)
+	case tablesLoadedMsg:
+		return m.updateBrowserView(msg)
+	case chatResponseMsg, modelsLoadedMsg:
+		return m.updateChatView(msg)
+	case HistoryQueryMsg:
+		return m.updateHistoryView(msg)
+	case exportResultMsg:
+		return m.updateExportView(msg)
+	case schemaLoadedMsg:
+		return m.updateSchemaView(msg)
+	case connectionResultMsg:
+		return m.updateConnectionView(msg)
 	}
 
 	switch m.mode {
@@ -286,27 +385,40 @@ func (m *MainModel) View() string {
 	viewIndicator := m.renderViewIndicator()
 
 	var content string
-	switch m.mode {
-	case ViewConnection:
-		content = m.connectionView.View()
-	case ViewBrowser:
-		content = m.browserView.View()
-	case ViewEditor:
-		content = m.editorView.View()
-	case ViewResults:
-		content = m.resultsView.View()
-	case ViewHistory:
-		content = m.historyView.View()
-	case ViewExport:
-		content = m.exportView.View()
-	case ViewWhere:
-		content = m.whereView.View()
-	case ViewColumns:
-		content = m.columnsView.View()
-	case ViewChat:
-		content = m.chatView.View()
-	case ViewSchema:
-		content = m.schemaView.View()
+
+	if m.useMultiPane() && m.layoutRoot != nil {
+		// Multi-pane layout rendering (reserve 2 rows for the global help bar)
+		helpBarHeight := 2
+		contentH := m.layoutContentHeight() - helpBarHeight
+		if contentH < MinPaneHeight {
+			contentH = MinPaneHeight
+		}
+		m.layoutRoot.Layout(0, 0, m.width, contentH)
+		content = m.layoutRoot.View() + "\n" + m.renderGlobalHelpBar()
+	} else {
+		// Single-pane rendering (original behavior)
+		switch m.mode {
+		case ViewConnection:
+			content = m.connectionView.View()
+		case ViewBrowser:
+			content = m.browserView.View()
+		case ViewEditor:
+			content = m.editorView.View()
+		case ViewResults:
+			content = m.resultsView.View()
+		case ViewHistory:
+			content = m.historyView.View()
+		case ViewExport:
+			content = m.exportView.View()
+		case ViewWhere:
+			content = m.whereView.View()
+		case ViewColumns:
+			content = m.columnsView.View()
+		case ViewChat:
+			content = m.chatView.View()
+		case ViewSchema:
+			content = m.schemaView.View()
+		}
 	}
 
 	// Add status bar between view indicator and content (only when connected)
@@ -630,7 +742,185 @@ func (m *MainModel) updateSchemaView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// renderGlobalHelpBar renders a context-sensitive help bar at the bottom of
+// multi-pane layouts, showing shortcuts for the focused pane + global shortcuts.
+func (m *MainModel) renderGlobalHelpBar() string {
+	pane := m.ActivePane()
+	var bindings []key.Binding
+	if pane != nil {
+		bindings = append(bindings, pane.HelpBindings()...)
+	}
+	// Add global multi-pane shortcuts
+	bindings = append(bindings,
+		Keys.Global.NextView,
+		Keys.Browser.History,
+		Keys.Browser.AIChat,
+		Keys.Global.CycleLayout,
+		Keys.Global.CycleTheme,
+		Keys.Browser.Disconnect,
+		Keys.Global.Quit,
+	)
+	return " " + RenderBindingHelp(bindings...)
+}
+
+// initLayout sets up the initial layout based on terminal width.
+// Called when a database connection is established.
+func (m *MainModel) initLayout() {
+	m.activeLayout = layout.AutoLayout(m.width)
+	m.focusedPaneIdx = 0
+	m.rebuildLayout()
+}
+
+// useMultiPane returns true when the layout engine should render connected views.
+// Returns false for modal/overlay views (Export, Where, Columns, Schema, History, Chat)
+// which render full-screen on top of the layout.
+func (m *MainModel) useMultiPane() bool {
+	if m.dbManager.GetCurrentConnection() == nil {
+		return false
+	}
+	if m.activeLayout == layout.LayoutSingle {
+		return false
+	}
+	// Only render multi-pane for the views that are IN the layout
+	switch m.mode {
+	case ViewBrowser, ViewEditor, ViewResults:
+		return true
+	default:
+		return false
+	}
+}
+
+// rebuildLayout creates a new layout tree for the current activeLayout.
+func (m *MainModel) rebuildLayout() {
+	// Reset compact mode on all layout views
+	m.browserView.SetCompact(false)
+	m.editorView.SetCompact(false)
+	m.resultsView.SetCompact(false)
+
+	if m.activeLayout == layout.LayoutSingle {
+		m.layoutRoot = nil
+		return
+	}
+
+	// Enable compact mode (suppresses per-pane help text)
+	m.browserView.SetCompact(true)
+	m.editorView.SetCompact(true)
+	m.resultsView.SetCompact(true)
+
+	m.layoutRoot = layout.BuildLayout(m.activeLayout, layout.Panes{
+		Browser: m.browserView,
+		Editor:  m.editorView,
+		Results: m.resultsView,
+	})
+	m.updateLayoutFocus()
+}
+
+// updateLayoutFocus marks the correct leaf as focused in the layout tree.
+func (m *MainModel) updateLayoutFocus() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	for i, leaf := range leaves {
+		leaf.SetFocused(i == m.focusedPaneIdx)
+	}
+}
+
+// layoutContentHeight returns the height available for layout content
+// (terminal height minus the view indicator and status bar).
+func (m *MainModel) layoutContentHeight() int {
+	overhead := 1 // view indicator line
+	if bar := m.renderStatusBar(); bar != "" {
+		overhead += 1 + strings.Count(bar, "\n")
+	}
+	h := m.height - overhead
+	if h < MinPaneHeight {
+		h = MinPaneHeight
+	}
+	return h
+}
+
+// MinPaneHeight is imported from the layout package for convenience.
+const MinPaneHeight = 4
+
+// cycleLayout switches to the next layout preset and rebuilds.
+func (m *MainModel) cycleLayout() (tea.Model, tea.Cmd) {
+	m.activeLayout = layout.NextLayout(m.activeLayout)
+	m.focusedPaneIdx = 0
+	m.rebuildLayout()
+	return m, m.SetStatus("Layout: " + string(m.activeLayout))
+}
+
+// focusNextPane cycles focus to the next pane in the layout.
+func (m *MainModel) focusNextPane() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if len(leaves) == 0 {
+		return
+	}
+	m.focusedPaneIdx = (m.focusedPaneIdx + 1) % len(leaves)
+	m.updateLayoutFocus()
+
+	// Update m.mode to match the focused pane's view type
+	m.syncModeFromFocusedPane()
+}
+
+// focusPrevPane cycles focus to the previous pane in the layout.
+func (m *MainModel) focusPrevPane() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if len(leaves) == 0 {
+		return
+	}
+	m.focusedPaneIdx--
+	if m.focusedPaneIdx < 0 {
+		m.focusedPaneIdx = len(leaves) - 1
+	}
+	m.updateLayoutFocus()
+	m.syncModeFromFocusedPane()
+}
+
+// focusPaneByIndex focuses a specific pane (0-indexed).
+func (m *MainModel) focusPaneByIndex(idx int) {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if idx < 0 || idx >= len(leaves) {
+		return
+	}
+	m.focusedPaneIdx = idx
+	m.updateLayoutFocus()
+	m.syncModeFromFocusedPane()
+}
+
+// syncModeFromFocusedPane updates m.mode to match the focused pane's content.
+func (m *MainModel) syncModeFromFocusedPane() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if m.focusedPaneIdx >= len(leaves) {
+		return
+	}
+	content := leaves[m.focusedPaneIdx].Content()
+	switch content {
+	case m.browserView:
+		m.mode = ViewBrowser
+	case m.editorView:
+		m.mode = ViewEditor
+	case m.resultsView:
+		m.mode = ViewResults
+	}
+}
+
 func (m *MainModel) renderViewIndicator() string {
+	// Only show main navigable views — modal views (Export, Where, Columns, Schema)
+	// are contextual actions, not top-level tabs.
 	views := []struct {
 		mode ViewMode
 		name string
@@ -641,42 +931,21 @@ func (m *MainModel) renderViewIndicator() string {
 		{ViewResults, "Results"},
 		{ViewHistory, "History"},
 		{ViewChat, "Chat"},
-		{ViewExport, "Export"},
-		{ViewWhere, "Where"},
-		{ViewColumns, "Columns"},
-		{ViewSchema, "Schema"},
-	}
-
-	// Define which views are tab-accessible
-	tabbableViews := map[ViewMode]bool{
-		ViewBrowser: true,
-		ViewEditor:  true,
-		ViewResults: true,
-		ViewHistory: true,
-		ViewChat:    true,
 	}
 
 	var parts []string
 	for _, view := range views {
 		if view.mode == m.mode {
-			// Current view: white background with black text
 			activeStyle := styles.BaseStyle.
 				Foreground(styles.Background).
 				Background(styles.Foreground).
 				Padding(0, 1)
 			parts = append(parts, activeStyle.Render(view.name))
-		} else if tabbableViews[view.mode] {
-			// Tab-accessible views: normal white text
+		} else {
 			inactiveStyle := styles.BaseStyle.
 				Foreground(styles.Foreground).
 				Padding(0, 1)
 			parts = append(parts, inactiveStyle.Render(view.name))
-		} else {
-			// Non-tabbable views: dimmed gray text
-			dimmedStyle := styles.BaseStyle.
-				Foreground(styles.Muted).
-				Padding(0, 1)
-			parts = append(parts, dimmedStyle.Render(view.name))
 		}
 	}
 
@@ -688,6 +957,12 @@ func (m *MainModel) renderViewIndicator() string {
 			result += separator
 		}
 		result += part
+	}
+
+	// Show layout name when in multi-pane mode
+	if m.useMultiPane() {
+		layoutLabel := styles.MutedStyle.Render("[" + string(m.activeLayout) + "]")
+		result += "  " + layoutLabel
 	}
 
 	// Append transient status message to the indicator bar (avoids extra line)

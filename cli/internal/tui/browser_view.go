@@ -51,6 +51,7 @@ type BrowserView struct {
 	filteredTables      []engine.StorageUnit
 	retryPrompt         RetryPrompt
 	lastRefreshed       time.Time
+	compact             bool
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -313,9 +314,30 @@ func (v *BrowserView) View() string {
 
 	var b strings.Builder
 
-	title := fmt.Sprintf("Connected to: %s@%s/%s", conn.Type, conn.Host, conn.Database)
+	// Build connection title — for file-based DBs (SQLite, DuckDB) show just the path
+	var title string
+	isFileDB := conn.Host == conn.Database
 	if conn.Name != "" {
-		title = fmt.Sprintf("Connected to: %s (%s@%s/%s)", conn.Name, conn.Type, conn.Host, conn.Database)
+		if isFileDB {
+			title = fmt.Sprintf("Connected to: %s (%s)", conn.Name, conn.Database)
+		} else {
+			title = fmt.Sprintf("Connected to: %s (%s@%s/%s)", conn.Name, conn.Type, conn.Host, conn.Database)
+		}
+	} else {
+		if isFileDB {
+			title = fmt.Sprintf("Connected to: %s", conn.Database)
+		} else {
+			title = fmt.Sprintf("Connected to: %s@%s/%s", conn.Type, conn.Host, conn.Database)
+		}
+	}
+	// Truncate to pane width
+	if v.width > 4 && lipgloss.Width(title) > v.width-4 {
+		runes := []rune(title)
+		maxW := v.width - 7 // leave room for "..."
+		for lipgloss.Width(string(runes)) > maxW && len(runes) > 0 {
+			runes = runes[:len(runes)-1]
+		}
+		title = string(runes) + "..."
 	}
 	b.WriteString(styles.RenderTitle(title))
 	b.WriteString("\n")
@@ -390,41 +412,43 @@ func (v *BrowserView) View() string {
 		b.WriteString(v.renderTablesGrid())
 	}
 
-	b.WriteString("\n\n")
+	if !v.compact {
+		b.WriteString("\n\n")
 
-	if v.schemaSelecting {
-		b.WriteString(RenderBindingHelp(
-			Keys.SchemaSelect.NavLeft,
-			Keys.SchemaSelect.SelectSchema,
-			Keys.Global.Back,
-		))
-	} else if v.filtering {
-		b.WriteString(RenderBindingHelp(
-			Keys.Filter.CancelFilter,
-			Keys.Filter.ApplyFilter,
-		))
-	} else {
-		bindings := []key.Binding{
-			Keys.Browser.Up,
-			Keys.Browser.Down,
-			Keys.Browser.Left,
-			Keys.Browser.Right,
-			Keys.Browser.Select,
-			Keys.Browser.Filter,
+		if v.schemaSelecting {
+			b.WriteString(RenderBindingHelp(
+				Keys.SchemaSelect.NavLeft,
+				Keys.SchemaSelect.SelectSchema,
+				Keys.Global.Back,
+			))
+		} else if v.filtering {
+			b.WriteString(RenderBindingHelp(
+				Keys.Filter.CancelFilter,
+				Keys.Filter.ApplyFilter,
+			))
+		} else {
+			bindings := []key.Binding{
+				Keys.Browser.Up,
+				Keys.Browser.Down,
+				Keys.Browser.Left,
+				Keys.Browser.Right,
+				Keys.Browser.Select,
+				Keys.Browser.Filter,
+			}
+			if len(v.schemas) > 1 {
+				bindings = append(bindings, Keys.Browser.Schema)
+			}
+			bindings = append(bindings,
+				Keys.Browser.Editor,
+				Keys.Browser.AIChat,
+				Keys.Browser.History,
+				Keys.Browser.Refresh,
+				Keys.Global.NextView,
+				Keys.Browser.Disconnect,
+				Keys.Global.Quit,
+			)
+			b.WriteString(RenderBindingHelp(bindings...))
 		}
-		if len(v.schemas) > 1 {
-			bindings = append(bindings, Keys.Browser.Schema)
-		}
-		bindings = append(bindings,
-			Keys.Browser.Editor,
-			Keys.Browser.AIChat,
-			Keys.Browser.History,
-			Keys.Browser.Refresh,
-			Keys.Global.NextView,
-			Keys.Browser.Disconnect,
-			Keys.Global.Quit,
-		)
-		b.WriteString(RenderBindingHelp(bindings...))
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())

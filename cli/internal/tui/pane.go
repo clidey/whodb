@@ -16,7 +16,10 @@
 
 package tui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 // Pane is the interface that all TUI views implement for polymorphic layout
 // dispatch. It enables the layout engine to treat views interchangeably
@@ -45,6 +48,12 @@ type Pane interface {
 
 	// OnBlur is called when the pane loses keyboard focus.
 	OnBlur()
+
+	// SetCompact enables compact mode (suppresses help text in multi-pane layout).
+	SetCompact(compact bool)
+
+	// HelpBindings returns the key bindings to display in the global help bar.
+	HelpBindings() []key.Binding
 }
 
 // PaneID identifies a pane slot within a layout.

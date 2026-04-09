@@ -232,6 +232,7 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			return v, nil
 		}
 		v.parent.mode = ViewBrowser
+		v.parent.initLayout()
 		conn := v.parent.dbManager.GetCurrentConnection()
 		connDesc := ""
 		if conn != nil {
@@ -379,6 +380,7 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			v.connecting = false
 		} else {
 			v.parent.mode = ViewBrowser
+			v.parent.initLayout()
 			conn := v.parent.dbManager.GetCurrentConnection()
 			connDesc := ""
 			if conn != nil {

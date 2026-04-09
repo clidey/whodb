@@ -50,6 +50,7 @@ type EditorView struct {
 	retryPrompt RetryPrompt
 	// Debounce autocomplete - sequence ID to detect stale debounce messages
 	autocompleteSeqID int
+	compact           bool
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -317,15 +318,17 @@ func (v *EditorView) View() string {
 	b.WriteString("\n")
 	b.WriteString(v.renderSuggestionArea())
 
-	b.WriteString("\n\n")
-	b.WriteString(RenderBindingHelp(
-		Keys.Editor.Execute,
-		Keys.Editor.Autocomplete,
-		Keys.Editor.Clear,
-		Keys.Global.NextView,
-		Keys.Global.Back,
-		Keys.Global.Quit,
-	))
+	if !v.compact {
+		b.WriteString("\n\n")
+		b.WriteString(RenderBindingHelp(
+			Keys.Editor.Execute,
+			Keys.Editor.Autocomplete,
+			Keys.Editor.Clear,
+			Keys.Global.NextView,
+			Keys.Global.Back,
+			Keys.Global.Quit,
+		))
+	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }

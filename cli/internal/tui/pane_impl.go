@@ -16,7 +16,11 @@
 
 package tui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/clidey/whodb/cli/pkg/styles"
+)
 
 // Compile-time interface compliance checks.
 var (
@@ -36,178 +40,149 @@ var (
 // BrowserView
 // ---------------------------------------------------------------------------
 
-func (v *BrowserView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
+func (v *BrowserView) UpdatePane(msg tea.Msg) tea.Cmd { _, cmd := v.Update(msg); return cmd }
 func (v *BrowserView) SetDimensions(width, height int) {
 	v.width = width
 	v.height = height
+	columnWidth := 25
+	available := width - 8
+	v.columnsPerRow = clamp(available/columnWidth, 1, 6)
+	v.filterInput.Width = clamp(width-20, 15, 50)
 }
-
-func (v *BrowserView) Focusable() bool { return true }
-func (v *BrowserView) OnFocus()        {}
-func (v *BrowserView) OnBlur()         {}
+func (v *BrowserView) Focusable() bool   { return true }
+func (v *BrowserView) OnFocus()          {}
+func (v *BrowserView) OnBlur()           {}
+func (v *BrowserView) SetCompact(c bool) { v.compact = c }
+func (v *BrowserView) HelpBindings() []key.Binding {
+	bindings := []key.Binding{
+		Keys.Browser.Up, Keys.Browser.Down, Keys.Browser.Left, Keys.Browser.Right,
+		Keys.Browser.Select, Keys.Browser.Filter,
+	}
+	if len(v.schemas) > 1 {
+		bindings = append(bindings, Keys.Browser.Schema)
+	}
+	bindings = append(bindings,
+		Keys.Browser.Editor, Keys.Browser.History, Keys.Browser.Refresh,
+	)
+	return bindings
+}
 
 // ---------------------------------------------------------------------------
 // ConnectionView
 // ---------------------------------------------------------------------------
 
-func (v *ConnectionView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *ConnectionView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *ConnectionView) Focusable() bool { return true }
-func (v *ConnectionView) OnFocus()        {}
-func (v *ConnectionView) OnBlur()         {}
+func (v *ConnectionView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ConnectionView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ConnectionView) Focusable() bool                 { return true }
+func (v *ConnectionView) OnFocus()                        {}
+func (v *ConnectionView) OnBlur()                         {}
+func (v *ConnectionView) SetCompact(bool)                 {}
+func (v *ConnectionView) HelpBindings() []key.Binding     { return nil }
 
 // ---------------------------------------------------------------------------
 // EditorView
 // ---------------------------------------------------------------------------
 
-func (v *EditorView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
+func (v *EditorView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *EditorView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *EditorView) Focusable() bool                 { return true }
+func (v *EditorView) OnFocus()                        { v.textarea.Focus() }
+func (v *EditorView) OnBlur()                         { v.textarea.Blur() }
+func (v *EditorView) SetCompact(c bool)               { v.compact = c }
+func (v *EditorView) HelpBindings() []key.Binding {
+	return []key.Binding{
+		key.NewBinding(key.WithKeys(styles.KeyExecute), key.WithHelp(styles.KeyExecute, styles.KeyExecuteDesc)),
+		Keys.Editor.Clear,
+		Keys.Global.Back,
+	}
 }
-
-func (v *EditorView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *EditorView) Focusable() bool { return true }
-func (v *EditorView) OnFocus()        { v.textarea.Focus() }
-func (v *EditorView) OnBlur()         { v.textarea.Blur() }
 
 // ---------------------------------------------------------------------------
 // ResultsView
 // ---------------------------------------------------------------------------
 
-func (v *ResultsView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
+func (v *ResultsView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ResultsView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ResultsView) Focusable() bool                 { return true }
+func (v *ResultsView) OnFocus()                        {}
+func (v *ResultsView) OnBlur()                         {}
+func (v *ResultsView) SetCompact(c bool)               { v.compact = c }
+func (v *ResultsView) HelpBindings() []key.Binding {
+	return []key.Binding{
+		Keys.Results.NextPage, Keys.Results.ColLeft,
+		Keys.Results.Where, Keys.Results.Columns, Keys.Results.Export,
+		Keys.Results.PageSize, Keys.Global.Back,
+	}
 }
-
-func (v *ResultsView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *ResultsView) Focusable() bool { return true }
-func (v *ResultsView) OnFocus()        {}
-func (v *ResultsView) OnBlur()         {}
 
 // ---------------------------------------------------------------------------
 // HistoryView
 // ---------------------------------------------------------------------------
 
-func (v *HistoryView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *HistoryView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *HistoryView) Focusable() bool { return true }
-func (v *HistoryView) OnFocus()        { v.refreshList() }
-func (v *HistoryView) OnBlur()         {}
+func (v *HistoryView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *HistoryView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *HistoryView) Focusable() bool                 { return true }
+func (v *HistoryView) OnFocus()                        { v.refreshList() }
+func (v *HistoryView) OnBlur()                         {}
+func (v *HistoryView) SetCompact(bool)                 {}
+func (v *HistoryView) HelpBindings() []key.Binding     { return nil }
 
 // ---------------------------------------------------------------------------
 // ExportView
 // ---------------------------------------------------------------------------
 
-func (v *ExportView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *ExportView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *ExportView) Focusable() bool { return true }
-func (v *ExportView) OnFocus()        {}
-func (v *ExportView) OnBlur()         {}
+func (v *ExportView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ExportView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ExportView) Focusable() bool                 { return true }
+func (v *ExportView) OnFocus()                        {}
+func (v *ExportView) OnBlur()                         {}
+func (v *ExportView) SetCompact(bool)                 {}
+func (v *ExportView) HelpBindings() []key.Binding     { return nil }
 
 // ---------------------------------------------------------------------------
 // WhereView
 // ---------------------------------------------------------------------------
 
-func (v *WhereView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *WhereView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *WhereView) Focusable() bool { return true }
-func (v *WhereView) OnFocus()        {}
-func (v *WhereView) OnBlur()         {}
+func (v *WhereView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *WhereView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *WhereView) Focusable() bool                 { return true }
+func (v *WhereView) OnFocus()                        {}
+func (v *WhereView) OnBlur()                         {}
+func (v *WhereView) SetCompact(bool)                 {}
+func (v *WhereView) HelpBindings() []key.Binding     { return nil }
 
 // ---------------------------------------------------------------------------
 // ColumnsView
 // ---------------------------------------------------------------------------
 
-func (v *ColumnsView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *ColumnsView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *ColumnsView) Focusable() bool { return true }
-func (v *ColumnsView) OnFocus()        {}
-func (v *ColumnsView) OnBlur()         {}
+func (v *ColumnsView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ColumnsView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ColumnsView) Focusable() bool                 { return true }
+func (v *ColumnsView) OnFocus()                        {}
+func (v *ColumnsView) OnBlur()                         {}
+func (v *ColumnsView) SetCompact(bool)                 {}
+func (v *ColumnsView) HelpBindings() []key.Binding     { return nil }
 
 // ---------------------------------------------------------------------------
 // ChatView
 // ---------------------------------------------------------------------------
 
-func (v *ChatView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *ChatView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *ChatView) Focusable() bool { return true }
-func (v *ChatView) OnFocus()        {}
-func (v *ChatView) OnBlur()         {}
+func (v *ChatView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ChatView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ChatView) Focusable() bool                 { return true }
+func (v *ChatView) OnFocus()                        {}
+func (v *ChatView) OnBlur()                         {}
+func (v *ChatView) SetCompact(bool)                 {}
+func (v *ChatView) HelpBindings() []key.Binding     { return nil }
 
 // ---------------------------------------------------------------------------
 // SchemaView
 // ---------------------------------------------------------------------------
 
-func (v *SchemaView) UpdatePane(msg tea.Msg) tea.Cmd {
-	_, cmd := v.Update(msg)
-	return cmd
-}
-
-func (v *SchemaView) SetDimensions(width, height int) {
-	v.width = width
-	v.height = height
-}
-
-func (v *SchemaView) Focusable() bool { return true }
-func (v *SchemaView) OnFocus()        {}
-func (v *SchemaView) OnBlur()         {}
+func (v *SchemaView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *SchemaView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *SchemaView) Focusable() bool                 { return true }
+func (v *SchemaView) OnFocus()                        {}
+func (v *SchemaView) OnBlur()                         {}
+func (v *SchemaView) SetCompact(bool)                 {}
+func (v *SchemaView) HelpBindings() []key.Binding     { return nil }

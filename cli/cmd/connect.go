@@ -74,11 +74,19 @@ Usage modes:
   # SQLite example (no password)
   whodb-cli connect --type sqlite --host ./app.db --database ./app.db --name app-sqlite`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// If all required parameters are provided, connect directly
-		if dbType != "" && username != "" && database != "" {
+		// If type and database are provided, connect directly.
+		// Username is optional for file-based databases (SQLite, DuckDB) and
+		// some NoSQL databases (Redis, MongoDB).
+		if dbType != "" && database != "" {
 			// Use defaults if not provided
 			if host == "" {
-				host = "localhost"
+				normalizedCheck := strings.ToLower(dbType)
+				if normalizedCheck == "sqlite3" || normalizedCheck == "sqlite" || normalizedCheck == "duckdb" {
+					// File-based databases use the database path as host
+					host = database
+				} else {
+					host = "localhost"
+				}
 			}
 			if port == 0 {
 				port = getDefaultPort(dbType)
@@ -89,26 +97,29 @@ Usage modes:
 			// Normalize database type to match plugin names
 			normalizedType := normalizeDBType(dbType)
 
-			// Secure password prompt when using flags interactively
+			// Secure password prompt — skip for databases that don't need credentials
 			var password string
-			if term.IsTerminal(int(os.Stdin.Fd())) {
-				fmt.Fprint(os.Stderr, "Password: ")
-				b, err := term.ReadPassword(int(os.Stdin.Fd()))
-				fmt.Fprintln(os.Stderr)
-				if err == nil {
-					password = string(b)
-				}
-			} else {
-				// Non-TTY: only read from stdin when --password is provided
-				if passwordFromStdin {
-					fi, _ := os.Stdin.Stat()
-					if (fi.Mode() & os.ModeCharDevice) == 0 {
-						r := bufio.NewReader(os.Stdin)
-						line, _ := r.ReadString('\n')
-						password = strings.Trim(line, "\r\n")
+			needsPassword := username != ""
+			if needsPassword {
+				if term.IsTerminal(int(os.Stdin.Fd())) {
+					fmt.Fprint(os.Stderr, "Password: ")
+					b, err := term.ReadPassword(int(os.Stdin.Fd()))
+					fmt.Fprintln(os.Stderr)
+					if err == nil {
+						password = string(b)
 					}
 				} else {
-					return fmt.Errorf("stdin is not a TTY. Use --password and pipe the password on stdin, or run interactively without piping")
+					// Non-TTY: only read from stdin when --password is provided
+					if passwordFromStdin {
+						fi, _ := os.Stdin.Stat()
+						if (fi.Mode() & os.ModeCharDevice) == 0 {
+							r := bufio.NewReader(os.Stdin)
+							line, _ := r.ReadString('\n')
+							password = strings.Trim(line, "\r\n")
+						}
+					} else {
+						return fmt.Errorf("stdin is not a TTY. Use --password and pipe the password on stdin, or run interactively without piping")
+					}
 				}
 			}
 
