@@ -25,6 +25,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -82,6 +84,19 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		appVersion = "dev"
 	}
 	log.Alwaysf("Starting WhoDB %s (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", appVersion, log.GetLevel())
+
+	mode := "server"
+	if env.GetIsDesktopMode() {
+		mode = "desktop"
+	} else if env.GetIsCLIMode() {
+		mode = "cli"
+	}
+	pluginNames := make([]string, 0, len(engine.RegisteredPlugins()))
+	for _, p := range engine.RegisteredPlugins() {
+		pluginNames = append(pluginNames, string(p.Type))
+	}
+	log.Alwaysf("  go=%s os=%s arch=%s mode=%s plugins=[%s]",
+		runtime.Version(), runtime.GOOS, runtime.GOARCH, mode, strings.Join(pluginNames, ", "))
 
 	settingsCfg := settings.Get()
 
