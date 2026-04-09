@@ -77,7 +77,11 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	PopulateActiveDatabases()
 
 	defer log.CloseLogFile()
-	log.Alwaysf("Starting WhoDB... (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", log.GetLevel())
+	appVersion := env.ApplicationVersion
+	if appVersion == "" {
+		appVersion = "dev"
+	}
+	log.Alwaysf("Starting WhoDB %s (log level: %s, set WHODB_LOG_LEVEL=warn or WHODB_LOG_LEVEL=error for quieter output)", appVersion, log.GetLevel())
 
 	settingsCfg := settings.Get()
 
