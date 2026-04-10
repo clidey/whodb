@@ -247,6 +247,17 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			}
 			return v, nil
 
+		case tea.KeyCtrlF:
+			// Format/prettify the SQL in the textarea
+			text := v.textarea.Value()
+			if text != "" {
+				formatted := formatSQL(text)
+				v.textarea.SetValue(formatted)
+				v.showSuggestions = false
+				v.refreshLayout()
+			}
+			return v, nil
+
 		}
 
 	}
@@ -296,8 +307,14 @@ func (v *EditorView) View() string {
 	b.WriteString("\n")
 
 	if v.err != nil {
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderErrorBox(v.err.Error()))
+		b.WriteString("\n")
+		if v.compact {
+			// Inline error in compact/pane mode to avoid overflow
+			b.WriteString(styles.RenderError(v.err.Error()))
+		} else {
+			b.WriteString("\n")
+			b.WriteString(styles.RenderErrorBox(v.err.Error()))
+		}
 	}
 
 	// Show retry prompt for timed out queries
@@ -323,6 +340,7 @@ func (v *EditorView) View() string {
 		b.WriteString(RenderBindingHelp(
 			Keys.Editor.Execute,
 			Keys.Editor.Autocomplete,
+			Keys.Editor.Format,
 			Keys.Editor.Clear,
 			Keys.Global.NextView,
 			Keys.Global.Back,
@@ -424,7 +442,11 @@ func (v *EditorView) applyWindowSize(width, height int) {
 
 	v.suggestionHeight = v.computeSuggestionHeight(height)
 
-	overhead := 14
+	// Title (2) + padding (4) + error/retry/running status
+	overhead := 6
+	if !v.compact {
+		overhead += 4 // help footer
+	}
 	if v.err != nil {
 		overhead += 4
 	}

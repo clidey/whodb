@@ -83,15 +83,20 @@ func (v *ConnectionView) HelpBindings() []key.Binding     { return nil }
 // EditorView
 // ---------------------------------------------------------------------------
 
-func (v *EditorView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
-func (v *EditorView) SetDimensions(width, height int) { v.width = width; v.height = height }
-func (v *EditorView) Focusable() bool                 { return true }
-func (v *EditorView) OnFocus()                        { v.textarea.Focus() }
-func (v *EditorView) OnBlur()                         { v.textarea.Blur() }
-func (v *EditorView) SetCompact(c bool)               { v.compact = c }
+func (v *EditorView) UpdatePane(msg tea.Msg) tea.Cmd { _, cmd := v.Update(msg); return cmd }
+func (v *EditorView) SetDimensions(width, height int) {
+	v.width = width
+	v.height = height
+	v.applyWindowSize(width, height)
+}
+func (v *EditorView) Focusable() bool   { return true }
+func (v *EditorView) OnFocus()          { v.textarea.Focus() }
+func (v *EditorView) OnBlur()           { v.textarea.Blur() }
+func (v *EditorView) SetCompact(c bool) { v.compact = c }
 func (v *EditorView) HelpBindings() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(key.WithKeys(styles.KeyExecute), key.WithHelp(styles.KeyExecute, styles.KeyExecuteDesc)),
+		Keys.Editor.Format,
 		Keys.Editor.Clear,
 		Keys.Global.Back,
 	}

@@ -19,6 +19,7 @@ package tui
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -37,13 +38,15 @@ const (
 	suggestionTypeMixed    suggestionType = "mixed"
 	suggestionTypeFunction suggestionType = "function"
 	suggestionTypeSnippet  suggestionType = "snippet"
+	suggestionTypeOperator suggestionType = "operator"
 )
 
 type suggestion struct {
-	label  string
-	typ    suggestionType
-	detail string
-	apply  string
+	label    string
+	typ      suggestionType
+	detail   string
+	apply    string
+	priority int // lower = higher rank (0=columns, 1=tables, 2=operators, 3=functions, 4=keywords, 5=snippets)
 }
 
 type sqlContext struct {
@@ -118,9 +121,14 @@ func (v *EditorView) computeSuggestionHeight(totalHeight int) int {
 		return 0
 	}
 
-	// Leave room for title, spacing, and help footer (~20 lines previously)
-	available := totalHeight - 20 - 8 // reserve at least 8 lines for the textarea
-	if available <= 0 {
+	// Reserve space for title (2), textarea (min 5), help (2 if not compact)
+	minTextarea := 5
+	overhead := 4 // title + spacing
+	if !v.compact {
+		overhead += 4 // help footer
+	}
+	available := totalHeight - overhead - minTextarea
+	if available < minSuggestionHeight {
 		return 0
 	}
 
@@ -128,10 +136,6 @@ func (v *EditorView) computeSuggestionHeight(totalHeight int) int {
 	if height > maxSuggestionHeight {
 		height = maxSuggestionHeight
 	}
-	if height < minSuggestionHeight {
-		height = available
-	}
-
 	return height
 }
 
@@ -160,10 +164,9 @@ func (v *EditorView) updateAutocomplete(text string, pos int) {
 	// Filter suggestions by token (empty token shows all)
 	v.filterSuggestions(getLastWord(beforeCursor))
 
-	// Show suggestions if we have any and we're in a meaningful context
-	// Don't show for keywords-only context unless user is typing something
+	// Show suggestions if we have any and context is meaningful
 	if len(v.filteredSuggestions) > 0 {
-		// Show if we have a token being typed OR if we're in a context that expects something specific
+		// Show suggestions when typing a token, or when in any non-default context
 		if token != "" || ctx.contextType != suggestionTypeKeyword {
 			v.showSuggestions = true
 			if v.selectedSuggestion >= len(v.filteredSuggestions) {
@@ -206,7 +209,9 @@ func (v *EditorView) loadSuggestionsForContext(ctx sqlContext, fullText string) 
 		if ctx.schema != "" {
 			v.addTableSuggestions(ctx.schema)
 		} else {
-			// No schema specified, show schemas
+			// Always show tables from current schema
+			v.addTableSuggestions(v.getCurrentSchema())
+			// Also show schemas if available (for schema.table completion)
 			schemas, _ := v.parent.dbManager.GetSchemas()
 			for _, s := range schemas {
 				v.allSuggestions = append(v.allSuggestions, suggestion{
@@ -230,12 +235,17 @@ func (v *EditorView) loadSuggestionsForContext(ctx sqlContext, fullText string) 
 		// Add SQL functions
 		v.addFunctionSuggestions()
 
+	case suggestionTypeOperator:
+		// After a column name in WHERE — suggest comparison operators
+		v.addOperatorSuggestions()
+
 	case suggestionTypeMixed:
 		// After WHERE/ON - show everything
 		v.addMixedSuggestions(ctx, fullText)
 
 	default:
-		// Default: keywords + functions + snippets
+		// Default: tables + keywords + functions + snippets
+		v.addTableSuggestions(v.getCurrentSchema())
 		v.addKeywordSuggestions()
 		v.addFunctionSuggestions()
 		v.addSnippetSuggestions()
@@ -250,10 +260,11 @@ func (v *EditorView) addTableSuggestions(schema string) {
 
 	for _, unit := range units {
 		v.allSuggestions = append(v.allSuggestions, suggestion{
-			label:  unit.Name,
-			typ:    suggestionTypeTable,
-			detail: "Table",
-			apply:  unit.Name,
+			label:    unit.Name,
+			typ:      suggestionTypeTable,
+			detail:   "Table",
+			apply:    unit.Name,
+			priority: 1,
 		})
 	}
 }
@@ -320,10 +331,11 @@ func (v *EditorView) addUnqualifiedColumnSuggestions(ctx sqlContext) {
 
 		for _, col := range columns {
 			v.allSuggestions = append(v.allSuggestions, suggestion{
-				label:  col.Name,
-				typ:    suggestionTypeColumn,
-				detail: col.Type,
-				apply:  col.Name,
+				label:    col.Name,
+				typ:      suggestionTypeColumn,
+				detail:   col.Type,
+				apply:    col.Name,
+				priority: 0,
 			})
 		}
 	} else {
@@ -355,7 +367,12 @@ func (v *EditorView) addUnqualifiedColumnSuggestions(ctx sqlContext) {
 }
 
 func (v *EditorView) addMixedSuggestions(ctx sqlContext, fullText string) {
-	// Add aliases and table names
+	// If no tables in query yet, add available table names from schema
+	if len(ctx.tablesInQuery) == 0 {
+		v.addTableSuggestions(v.getCurrentSchema())
+	}
+
+	// Add aliases and table names from query
 	for _, t := range ctx.tablesInQuery {
 		if t.alias != "" {
 			v.allSuggestions = append(v.allSuggestions, suggestion{
@@ -408,15 +425,17 @@ func (v *EditorView) addMixedSuggestions(ctx sqlContext, fullText string) {
 			})
 			// Add unqualified
 			v.allSuggestions = append(v.allSuggestions, suggestion{
-				label:  col.Name,
-				typ:    suggestionTypeColumn,
-				detail: col.Type,
-				apply:  col.Name,
+				label:    col.Name,
+				typ:      suggestionTypeColumn,
+				detail:   col.Type,
+				apply:    col.Name,
+				priority: 0,
 			})
 		}
 	}
 
-	// Add functions and snippets
+	// Add keywords, functions and snippets
+	v.addKeywordSuggestions()
 	v.addFunctionSuggestions()
 	v.addSnippetSuggestions()
 }
@@ -493,6 +512,37 @@ func (v *EditorView) addSnippetSuggestions() {
 	}
 }
 
+func (v *EditorView) addOperatorSuggestions() {
+	operators := []struct {
+		label  string
+		detail string
+		apply  string
+	}{
+		{"=", "Equal", "= "},
+		{"!=", "Not equal", "!= "},
+		{"<>", "Not equal", "<> "},
+		{">", "Greater than", "> "},
+		{"<", "Less than", "< "},
+		{">=", "Greater or equal", ">= "},
+		{"<=", "Less or equal", "<= "},
+		{"LIKE", "Pattern match", "LIKE "},
+		{"NOT LIKE", "Negated pattern", "NOT LIKE "},
+		{"IN", "In set", "IN ()"},
+		{"NOT IN", "Not in set", "NOT IN ()"},
+		{"BETWEEN", "Range", "BETWEEN  AND "},
+		{"IS NULL", "Is null", "IS NULL"},
+		{"IS NOT NULL", "Is not null", "IS NOT NULL"},
+	}
+	for _, op := range operators {
+		v.allSuggestions = append(v.allSuggestions, suggestion{
+			label:  op.label,
+			typ:    suggestionTypeOperator,
+			detail: op.detail,
+			apply:  op.apply,
+		})
+	}
+}
+
 func (v *EditorView) getCurrentSchema() string {
 	// Use the schema selected in browser view if available
 	if v.parent.browserView.currentSchema != "" {
@@ -511,27 +561,47 @@ func (v *EditorView) filterSuggestions(prefix string) {
 	if prefix == "" {
 		v.filteredSuggestions = make([]suggestion, len(v.allSuggestions))
 		copy(v.filteredSuggestions, v.allSuggestions)
-		return
-	}
+	} else {
+		v.filteredSuggestions = []suggestion{}
+		lowerPrefix := strings.ToLower(prefix)
 
-	v.filteredSuggestions = []suggestion{}
-	lowerPrefix := strings.ToLower(prefix)
-
-	for _, sug := range v.allSuggestions {
-		// Check if label starts with prefix (for simple matches)
-		if strings.HasPrefix(strings.ToLower(sug.label), lowerPrefix) {
-			v.filteredSuggestions = append(v.filteredSuggestions, sug)
-			continue
-		}
-
-		// For qualified names (table.column), also check the part after the dot
-		if strings.Contains(sug.label, ".") {
-			parts := strings.Split(sug.label, ".")
-			if len(parts) > 1 && strings.HasPrefix(strings.ToLower(parts[len(parts)-1]), lowerPrefix) {
+		for _, sug := range v.allSuggestions {
+			// Check if label starts with prefix (for simple matches)
+			if strings.HasPrefix(strings.ToLower(sug.label), lowerPrefix) {
 				v.filteredSuggestions = append(v.filteredSuggestions, sug)
+				continue
+			}
+
+			// For qualified names (table.column), also check the part after the dot
+			if strings.Contains(sug.label, ".") {
+				parts := strings.Split(sug.label, ".")
+				if len(parts) > 1 && strings.HasPrefix(strings.ToLower(parts[len(parts)-1]), lowerPrefix) {
+					v.filteredSuggestions = append(v.filteredSuggestions, sug)
+				}
 			}
 		}
 	}
+
+	// Assign priority by type for sorting (lower = shown first)
+	for i := range v.filteredSuggestions {
+		switch v.filteredSuggestions[i].typ {
+		case suggestionTypeColumn:
+			v.filteredSuggestions[i].priority = 0
+		case suggestionTypeTable, suggestionTypeSchema:
+			v.filteredSuggestions[i].priority = 1
+		case suggestionTypeOperator:
+			v.filteredSuggestions[i].priority = 2
+		case suggestionTypeFunction:
+			v.filteredSuggestions[i].priority = 3
+		case suggestionTypeKeyword:
+			v.filteredSuggestions[i].priority = 4
+		case suggestionTypeSnippet:
+			v.filteredSuggestions[i].priority = 5
+		}
+	}
+	sort.SliceStable(v.filteredSuggestions, func(i, j int) bool {
+		return v.filteredSuggestions[i].priority < v.filteredSuggestions[j].priority
+	})
 }
 
 func (v *EditorView) renderAutocompletePanel() string {
@@ -698,33 +768,46 @@ func (v *EditorView) parseSQLContext(text string, pos int) sqlContext {
 		}
 	}
 
-	// Check if in SELECT clause with tables (expecting columns)
 	lastSelect := strings.LastIndex(beforeUpper, "SELECT")
 	lastFrom := strings.LastIndex(beforeUpper, "FROM")
+	lastWhere := strings.LastIndex(beforeUpper, "WHERE")
+	lastOn := strings.LastIndex(beforeUpper, " ON ")
 
-	// Also check in full text to see if there's a FROM clause anywhere
+	// Check WHERE/ON context FIRST (takes precedence over SELECT column context)
+	if ((lastWhere > -1 && lastWhere > lastFrom) || (lastOn > -1)) && len(tablesInQuery) > 0 {
+		// Check if cursor is right after a column name (space after identifier)
+		// Pattern: "WHERE column_name " or "AND column_name " — suggest operators
+		operatorPattern := regexp.MustCompile(`(?i)\b(?:WHERE|AND|OR|ON)\s+[\w.]+\s+$`)
+		if operatorPattern.MatchString(beforeCursor) {
+			return sqlContext{
+				contextType:   suggestionTypeOperator,
+				tablesInQuery: tablesInQuery,
+			}
+		}
+		return sqlContext{
+			contextType:   suggestionTypeMixed,
+			tablesInQuery: tablesInQuery,
+		}
+	}
+
+	// Check if in SELECT clause
 	fullTextUpper := strings.ToUpper(text)
 	hasFromInQuery := strings.Contains(fullTextUpper, "FROM")
 
-	// If we're after SELECT and have tables in query (from parsing full text), suggest columns
-	if lastSelect > -1 && len(tablesInQuery) > 0 {
-		// Check if we're between SELECT and FROM, or after FROM with tables
-		if (lastFrom > lastSelect) || (lastFrom == -1 && hasFromInQuery) {
+	if lastSelect > -1 {
+		// After SELECT with tables → suggest columns
+		if len(tablesInQuery) > 0 && ((lastFrom > lastSelect) || (lastFrom == -1 && hasFromInQuery)) {
 			return sqlContext{
 				contextType:   suggestionTypeColumn,
 				tablesInQuery: tablesInQuery,
 			}
 		}
-	}
-
-	// Check if in WHERE/ON clause (expecting columns)
-	lastWhere := strings.LastIndex(beforeUpper, "WHERE")
-	lastOn := strings.LastIndex(beforeUpper, " ON ")
-
-	if ((lastWhere > -1 && lastWhere > lastFrom) || (lastOn > -1)) && len(tablesInQuery) > 0 {
-		return sqlContext{
-			contextType:   suggestionTypeMixed,
-			tablesInQuery: tablesInQuery,
+		// After SELECT without tables → suggest functions, keywords, table names
+		if lastFrom == -1 || lastFrom < lastSelect {
+			return sqlContext{
+				contextType:   suggestionTypeMixed,
+				tablesInQuery: tablesInQuery,
+			}
 		}
 	}
 

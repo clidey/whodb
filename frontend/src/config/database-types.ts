@@ -53,6 +53,10 @@ export interface TypeDefinition {
     defaultPrecision?: number;
     /** Type category for grouping and icon selection */
     category: TypeCategory;
+    /** Function to wrap INSERT values (e.g. "TO_BITMAP") — aggregate types only */
+    insertFunc?: string;
+    /** Required table key model (e.g. "AGGREGATE") — aggregate types only */
+    tableModel?: string;
 }
 
 /**
