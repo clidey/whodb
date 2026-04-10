@@ -47,6 +47,8 @@ const (
 	ViewChat
 	ViewSchema
 	ViewImport
+	ViewBookmarks
+	ViewJSON
 )
 
 type MainModel struct {
@@ -74,6 +76,8 @@ type MainModel struct {
 	chatView       *ChatView
 	schemaView     *SchemaView
 	importView     *ImportView
+	bookmarksView  *BookmarksView
+	jsonViewer     *JSONViewer
 
 	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
 	panes map[ViewMode]Pane
@@ -123,6 +127,8 @@ func NewMainModel() *MainModel {
 	m.chatView = NewChatView(m)
 	m.schemaView = NewSchemaView(m)
 	m.importView = NewImportView(m)
+	m.bookmarksView = NewBookmarksView(m)
+	m.jsonViewer = NewJSONViewer(m)
 
 	m.panes = map[ViewMode]Pane{
 		ViewConnection: m.connectionView,
@@ -136,6 +142,8 @@ func NewMainModel() *MainModel {
 		ViewChat:       m.chatView,
 		ViewSchema:     m.schemaView,
 		ViewImport:     m.importView,
+		ViewBookmarks:  m.bookmarksView,
+		ViewJSON:       m.jsonViewer,
 	}
 
 	return m
@@ -228,6 +236,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.schemaView, _ = m.schemaView.Update(msg)
 		m.exportView, _ = m.exportView.Update(msg)
 		m.whereView, _ = m.whereView.Update(msg)
+		m.jsonViewer, _ = m.jsonViewer.Update(msg)
 
 		// Rebuild layout on resize if connected
 		if m.dbManager.GetCurrentConnection() != nil && m.layoutRoot == nil {
@@ -306,6 +315,24 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+		case "ctrl+b":
+			// Global shortcut: open Bookmarks from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewBookmarks {
+				if m.useMultiPane() {
+					m.activeLayout = layout.LayoutSingle
+					m.rebuildLayout()
+				}
+				m.bookmarksView.editorQuery = m.editorView.textarea.Value()
+				m.PushView(ViewBookmarks)
+				return m, nil
+			}
+
+		case "ctrl+y":
+			// Global shortcut: toggle read-only mode
+			if m.dbManager.GetCurrentConnection() != nil {
+				return m.toggleReadOnly()
+			}
+
 		case "ctrl+a":
 			// Global shortcut: open AI Chat from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
@@ -347,7 +374,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateResultsView(msg)
 	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg, externalEditorResultMsg:
 		return m.updateEditorView(msg)
-	case tablesLoadedMsg:
+	case tablesLoadedMsg, escConfirmTimeoutMsg:
 		return m.updateBrowserView(msg)
 	case chatResponseMsg, modelsLoadedMsg:
 		return m.updateChatView(msg)
@@ -386,9 +413,25 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateSchemaView(msg)
 	case ViewImport:
 		return m.updateImportView(msg)
+	case ViewBookmarks:
+		return m.updateBookmarksView(msg)
+	case ViewJSON:
+		return m.updateJSONViewer(msg)
 	}
 
 	return m, nil
+}
+
+func (m *MainModel) updateJSONViewer(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.jsonViewer, cmd = m.jsonViewer.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateBookmarksView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.bookmarksView, cmd = m.bookmarksView.Update(msg)
+	return m, cmd
 }
 
 func (m *MainModel) updateImportView(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -445,6 +488,10 @@ func (m *MainModel) View() string {
 			content = m.schemaView.View()
 		case ViewImport:
 			content = m.importView.View()
+		case ViewBookmarks:
+			content = m.bookmarksView.View()
+		case ViewJSON:
+			content = m.jsonViewer.View()
 		}
 	}
 
@@ -504,6 +551,11 @@ func (m *MainModel) renderStatusBar() string {
 
 	var parts []string
 
+	// Read-only badge (shown first for visibility)
+	if m.config.GetReadOnly() {
+		parts = append(parts, styles.RenderErr("[READ-ONLY]"))
+	}
+
 	// Connection info (always kept)
 	connInfo := fmt.Sprintf("%s@%s/%s", conn.Type, conn.Host, conn.Database)
 	parts = append(parts, styles.RenderMuted(connInfo))
@@ -538,7 +590,7 @@ func (m *MainModel) renderStatusBar() string {
 // isHelpSafe returns true if it's safe to show help (no active text input)
 func (m *MainModel) isHelpSafe() bool {
 	switch m.mode {
-	case ViewResults, ViewHistory, ViewColumns, ViewSchema:
+	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks:
 		// These views don't have text input
 		return true
 	case ViewBrowser:
@@ -589,6 +641,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		b.WriteString(RenderBindingHelp(
 			Keys.Results.NextPage,
 			Keys.Results.ColLeft,
+			Keys.Results.ViewCell,
 			Keys.Results.Where,
 			Keys.Results.Columns,
 			Keys.Results.Export,
@@ -665,6 +718,17 @@ func (m *MainModel) renderHelpOverlay() string {
 			Keys.ConnectionList.Connect,
 			Keys.Global.CycleTheme,
 			Keys.ConnectionList.QuitEsc,
+		))
+
+	case ViewBookmarks:
+		b.WriteString(styles.RenderKey("Bookmarks\n\n"))
+		b.WriteString(RenderBindingHelp(
+			Keys.Bookmarks.Up,
+			Keys.Bookmarks.Down,
+			Keys.Bookmarks.Load,
+			Keys.Bookmarks.Save,
+			Keys.Bookmarks.Delete,
+			Keys.Global.Back,
 		))
 
 	default:
@@ -783,6 +847,7 @@ func (m *MainModel) renderGlobalHelpBar() string {
 		Keys.Browser.History,
 		Keys.Browser.AIChat,
 		Keys.Global.Import,
+		Keys.Global.ReadOnly,
 		Keys.Global.CycleLayout,
 		Keys.Global.CycleTheme,
 		Keys.Browser.Disconnect,
@@ -1070,6 +1135,19 @@ func (m *MainModel) cycleTheme() (tea.Model, tea.Cmd) {
 		return m, m.SetStatus("Theme: " + next)
 	}
 	return m, nil
+}
+
+// toggleReadOnly flips read-only mode on/off, persists the setting, and shows a status message.
+func (m *MainModel) toggleReadOnly() (tea.Model, tea.Cmd) {
+	newState := !m.config.GetReadOnly()
+	m.config.SetReadOnly(newState)
+	m.config.Save()
+
+	label := "OFF"
+	if newState {
+		label = "ON"
+	}
+	return m, m.SetStatus("Read-only: " + label)
 }
 
 // GetPane returns the Pane for the given ViewMode.

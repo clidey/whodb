@@ -28,6 +28,7 @@ type GlobalKeys struct {
 	CycleTheme  key.Binding
 	CycleLayout key.Binding
 	Import      key.Binding
+	ReadOnly    key.Binding
 }
 
 // BrowserKeys contains keybindings for the browser view
@@ -53,6 +54,7 @@ type EditorKeys struct {
 	Clear        key.Binding
 	Format       key.Binding
 	OpenEditor   key.Binding
+	Bookmarks    key.Binding
 	NewTab       key.Binding
 	CloseTab     key.Binding
 	PrevTab      key.Binding
@@ -72,6 +74,7 @@ type ResultsKeys struct {
 	Export     key.Binding
 	PageSize   key.Binding
 	CustomSize key.Binding
+	ViewCell   key.Binding
 }
 
 // HistoryKeys contains keybindings for the history view
@@ -166,6 +169,15 @@ type FilterKeys struct {
 	ApplyFilter  key.Binding
 }
 
+// BookmarksKeys contains keybindings for the bookmarks view
+type BookmarksKeys struct {
+	Up     key.Binding
+	Down   key.Binding
+	Load   key.Binding
+	Save   key.Binding
+	Delete key.Binding
+}
+
 // SchemaSelectKeys contains keybindings for schema selection (browser)
 type SchemaSelectKeys struct {
 	NavLeft      key.Binding
@@ -190,6 +202,7 @@ type Keymap struct {
 	ConnectionForm ConnectionFormKeys
 	Filter         FilterKeys
 	SchemaSelect   SchemaSelectKeys
+	Bookmarks      BookmarksKeys
 }
 
 // Keys is the top-level keymap containing all keybindings
@@ -222,6 +235,10 @@ var Keys = Keymap{
 		Import: key.NewBinding(
 			key.WithKeys("ctrl+g"),
 			key.WithHelp("ctrl+g", "import"),
+		),
+		ReadOnly: key.NewBinding(
+			key.WithKeys("ctrl+y"),
+			key.WithHelp("ctrl+y", "read-only"),
 		),
 	},
 	Browser: BrowserKeys{
@@ -295,6 +312,10 @@ var Keys = Keymap{
 			key.WithKeys("ctrl+o"),
 			key.WithHelp("ctrl+o", "open $EDITOR"),
 		),
+		Bookmarks: key.NewBinding(
+			key.WithKeys("ctrl+b"),
+			key.WithHelp("ctrl+b", "bookmarks"),
+		),
 		NewTab: key.NewBinding(
 			key.WithKeys("ctrl+n"),
 			key.WithHelp("ctrl+n", "new tab"),
@@ -356,6 +377,10 @@ var Keys = Keymap{
 		CustomSize: key.NewBinding(
 			key.WithKeys("S"),
 			key.WithHelp("shift+s", "custom size"),
+		),
+		ViewCell: key.NewBinding(
+			key.WithKeys("z"),
+			key.WithHelp("z", "view cell"),
 		),
 	},
 	History: HistoryKeys{
@@ -596,6 +621,28 @@ var Keys = Keymap{
 		SelectSchema: key.NewBinding(
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "select schema"),
+		),
+	},
+	Bookmarks: BookmarksKeys{
+		Up: key.NewBinding(
+			key.WithKeys("up", "k"),
+			key.WithHelp("↑/k", "up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys("down", "j"),
+			key.WithHelp("↓/j", "down"),
+		),
+		Load: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "load"),
+		),
+		Save: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("[s]", "save current"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("[d]", "delete"),
 		),
 	},
 }

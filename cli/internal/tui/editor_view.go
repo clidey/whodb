@@ -428,6 +428,7 @@ func (v *EditorView) View() string {
 			Keys.Editor.Autocomplete,
 			Keys.Editor.Format,
 			Keys.Editor.OpenEditor,
+			Keys.Editor.Bookmarks,
 			Keys.Editor.NewTab,
 		}
 		if len(v.buffers) > 1 {

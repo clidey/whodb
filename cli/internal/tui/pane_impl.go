@@ -35,6 +35,8 @@ var (
 	_ Pane = (*ChatView)(nil)
 	_ Pane = (*SchemaView)(nil)
 	_ Pane = (*ImportView)(nil)
+	_ Pane = (*BookmarksView)(nil)
+	_ Pane = (*JSONViewer)(nil)
 )
 
 // ---------------------------------------------------------------------------
@@ -99,6 +101,7 @@ func (v *EditorView) HelpBindings() []key.Binding {
 		key.NewBinding(key.WithKeys(styles.KeyExecute), key.WithHelp(styles.KeyExecute, styles.KeyExecuteDesc)),
 		Keys.Editor.Format,
 		Keys.Editor.OpenEditor,
+		Keys.Editor.Bookmarks,
 		Keys.Editor.NewTab,
 	}
 	if len(v.buffers) > 1 {
@@ -121,8 +124,8 @@ func (v *ResultsView) SetCompact(c bool)               { v.compact = c }
 func (v *ResultsView) HelpBindings() []key.Binding {
 	return []key.Binding{
 		Keys.Results.NextPage, Keys.Results.ColLeft,
-		Keys.Results.Where, Keys.Results.Columns, Keys.Results.Export,
-		Keys.Results.PageSize, Keys.Global.Back,
+		Keys.Results.ViewCell, Keys.Results.Where, Keys.Results.Columns,
+		Keys.Results.Export, Keys.Results.PageSize, Keys.Global.Back,
 	}
 }
 
@@ -209,3 +212,27 @@ func (v *ImportView) OnFocus()                        {}
 func (v *ImportView) OnBlur()                         {}
 func (v *ImportView) SetCompact(bool)                 {}
 func (v *ImportView) HelpBindings() []key.Binding     { return nil }
+
+// ---------------------------------------------------------------------------
+// JSONViewer
+// ---------------------------------------------------------------------------
+
+func (v *JSONViewer) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *JSONViewer) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *JSONViewer) Focusable() bool                 { return true }
+func (v *JSONViewer) OnFocus()                        {}
+func (v *JSONViewer) OnBlur()                         {}
+func (v *JSONViewer) SetCompact(bool)                 {}
+func (v *JSONViewer) HelpBindings() []key.Binding     { return nil }
+
+// ---------------------------------------------------------------------------
+// BookmarksView
+// ---------------------------------------------------------------------------
+
+func (v *BookmarksView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *BookmarksView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *BookmarksView) Focusable() bool                 { return true }
+func (v *BookmarksView) OnFocus()                        {}
+func (v *BookmarksView) OnBlur()                         {}
+func (v *BookmarksView) SetCompact(bool)                 {}
+func (v *BookmarksView) HelpBindings() []key.Binding     { return nil }

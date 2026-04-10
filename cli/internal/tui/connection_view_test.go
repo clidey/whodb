@@ -63,9 +63,9 @@ func TestNewConnectionView_NoConnections(t *testing.T) {
 		t.Fatal("NewConnectionView returned nil")
 	}
 
-	// With no saved connections, should start in form mode
-	if v.mode != "form" {
-		t.Errorf("Expected mode 'form' with no connections, got '%s'", v.mode)
+	// With no saved connections, should start in form mode (unless Docker containers are detected)
+	if v.mode != "form" && v.mode != "list" {
+		t.Errorf("Expected mode 'form' or 'list', got '%s'", v.mode)
 	}
 
 	// Database type selector should be focused first
@@ -723,9 +723,9 @@ func TestGetVisibleFields_AllTypes(t *testing.T) {
 		expected []int
 	}{
 		{"Postgres", []int{0, 1, 2, 3, 4, 5, 6}},
-		{"MySQL", []int{0, 1, 2, 3, 4, 5, 6}},
-		{"MariaDB", []int{0, 1, 2, 3, 4, 5, 6}},
-		{"ClickHouse", []int{0, 1, 2, 3, 4, 5, 6}},
+		{"MySQL", []int{0, 1, 2, 3, 4, 5}},
+		{"MariaDB", []int{0, 1, 2, 3, 4, 5}},
+		{"ClickHouse", []int{0, 1, 2, 3, 4, 5}},
 		{"Sqlite3", []int{0, 5}},
 		{"MongoDB", []int{0, 1, 2, 3, 4, 5}},
 		{"Redis", []int{0, 1, 2, 4, 5}},
@@ -991,8 +991,16 @@ func TestConnectionView_RefreshList(t *testing.T) {
 	v.refreshList()
 
 	items := v.list.Items()
-	if len(items) != 1 {
-		t.Errorf("Expected 1 item after refresh, got %d", len(items))
+	// At least 1 saved connection; may also include Docker-detected containers
+	found := false
+	for _, item := range items {
+		if ci, ok := item.(connectionItem); ok && ci.conn.Name == "new-conn" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected 'new-conn' in refreshed list, got %d items", len(items))
 	}
 }
 

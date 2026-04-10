@@ -31,6 +31,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/internal/config"
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
+	"github.com/clidey/whodb/cli/internal/docker"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -40,10 +41,16 @@ type connectionItem struct {
 }
 
 func (i connectionItem) Title() string { return i.conn.Name }
+
+// ConnectionSourceDocker identifies a connection detected from a running Docker container.
+const ConnectionSourceDocker = "docker"
+
 func (i connectionItem) Description() string {
 	desc := fmt.Sprintf("%s@%s", i.conn.Type, i.conn.Host)
 	if i.source == dbmgr.ConnectionSourceEnv {
 		desc += " (env)"
+	} else if i.source == ConnectionSourceDocker {
+		desc += " (docker)"
 	}
 	return desc
 }
@@ -103,6 +110,19 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	var items []list.Item
 	for _, info := range parent.dbManager.ListConnectionsWithSource() {
 		items = append(items, connectionItem{conn: info.Connection, source: info.Source})
+	}
+
+	// Append running Docker database containers as connection options
+	for _, c := range docker.DetectContainers() {
+		items = append(items, connectionItem{
+			conn: config.Connection{
+				Name: c.Name,
+				Type: c.Type,
+				Host: "localhost",
+				Port: c.Port,
+			},
+			source: ConnectionSourceDocker,
+		})
 	}
 
 	l := list.New(items, connectionDelegate{}, 0, 0)
@@ -277,6 +297,13 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.ConnectionList.Connect):
 			if item, ok := v.list.SelectedItem().(connectionItem); ok {
+				// Docker containers: open form pre-filled so user can add credentials
+				if item.source == ConnectionSourceDocker {
+					v.mode = "form"
+					v.resetForm()
+					v.prefillFromConnection(item.conn)
+					return v, nil
+				}
 				v.connecting = true
 				v.connError = nil
 				conn := item.conn
@@ -667,6 +694,17 @@ func (v *ConnectionView) refreshList() {
 	for _, info := range v.parent.dbManager.ListConnectionsWithSource() {
 		items = append(items, connectionItem{conn: info.Connection, source: info.Source})
 	}
+	for _, c := range docker.DetectContainers() {
+		items = append(items, connectionItem{
+			conn: config.Connection{
+				Name: c.Name,
+				Type: c.Type,
+				Host: "localhost",
+				Port: c.Port,
+			},
+			source: ConnectionSourceDocker,
+		})
+	}
 	v.list.SetItems(items)
 }
 
@@ -781,6 +819,38 @@ func (v *ConnectionView) resetForm() {
 	v.onDbTypeChanged()
 }
 
+// prefillFromConnection populates the form fields from a Connection (e.g. Docker-detected).
+func (v *ConnectionView) prefillFromConnection(conn config.Connection) {
+	// Set database type
+	for i, t := range v.dbTypes {
+		if strings.EqualFold(t, conn.Type) {
+			v.dbTypeIndex = i
+			break
+		}
+	}
+	v.onDbTypeChanged()
+
+	if conn.Name != "" {
+		v.inputs[0].SetValue(conn.Name)
+	}
+	if conn.Host != "" {
+		v.inputs[1].SetValue(conn.Host)
+	}
+	if conn.Port > 0 {
+		v.inputs[2].SetValue(strconv.Itoa(conn.Port))
+	}
+	if conn.Username != "" {
+		v.inputs[3].SetValue(conn.Username)
+	}
+	if conn.Database != "" {
+		v.inputs[5].SetValue(conn.Database)
+	}
+
+	// Focus on the first empty required field (usually username or database)
+	v.focusIndex = 3 // username
+	v.inputs[3].Focus()
+}
+
 func (v *ConnectionView) updatePortPlaceholder() {
 	defaultPort := v.getDefaultPort(v.dbTypes[v.dbTypeIndex])
 	v.inputs[2].Placeholder = strconv.Itoa(defaultPort)
@@ -818,9 +888,11 @@ func getVisibleFields(dbType string) []int {
 		return []int{0, 1, 2, 4, 5} // all except username, schema
 	case "ElasticSearch":
 		return []int{0, 1, 2, 3, 4} // all except database, schema
+	case "Postgres":
+		return []int{0, 1, 2, 3, 4, 5, 6} // all fields including schema
 	default:
-		// Postgres, MySQL, MariaDB, ClickHouse
-		return []int{0, 1, 2, 3, 4, 5, 6}
+		// MySQL, MariaDB, ClickHouse — no schema field
+		return []int{0, 1, 2, 3, 4, 5}
 	}
 }
 

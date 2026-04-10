@@ -52,6 +52,7 @@ type BrowserView struct {
 	retryPrompt         RetryPrompt
 	lastRefreshed       time.Time
 	compact             bool
+	escConfirm          bool // true when waiting for second Esc to disconnect
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -77,6 +78,10 @@ func NewBrowserView(parent *MainModel) *BrowserView {
 
 func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case escConfirmTimeoutMsg:
+		v.escConfirm = false
+		return v, nil
+
 	case tablesLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
@@ -155,6 +160,11 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Any key other than Esc cancels the disconnect confirmation
+		if v.escConfirm && !key.Matches(msg, Keys.Browser.Disconnect) {
+			v.escConfirm = false
+		}
+
 		// Handle retry prompt for timed out requests
 		if v.retryPrompt.IsActive() {
 			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
@@ -295,9 +305,24 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Browser.Disconnect):
 			if v.parent.dbManager.GetCurrentConnection() != nil {
-				v.parent.mode = ViewConnection
-				v.parent.dbManager.Disconnect()
-				v.parent.viewHistory = nil
+				if v.escConfirm {
+					// Second press — actually disconnect
+					v.escConfirm = false
+					v.parent.mode = ViewConnection
+					v.parent.dbManager.Disconnect()
+					v.parent.activeLayout = ""
+					v.parent.layoutRoot = nil
+					v.parent.viewHistory = nil
+					return v, nil
+				}
+				// First press — show confirmation
+				v.escConfirm = true
+				return v, tea.Batch(
+					v.parent.SetStatus("Press Esc again to disconnect"),
+					tea.Tick(3*time.Second, func(time.Time) tea.Msg {
+						return escConfirmTimeoutMsg{}
+					}),
+				)
 			}
 			return v, nil
 		}

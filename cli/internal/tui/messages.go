@@ -124,6 +124,9 @@ type themeChangedMsg struct {
 	themeName string
 }
 
+// escConfirmTimeoutMsg resets the Esc-to-disconnect confirmation after a timeout.
+type escConfirmTimeoutMsg struct{}
+
 // tableWithColumns pairs a storage unit with its column metadata
 type tableWithColumns struct {
 	StorageUnit engine.StorageUnit

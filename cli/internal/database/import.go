@@ -215,6 +215,10 @@ func (m *Manager) ImportData(schema, tableName string, headers []string, rows []
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {

@@ -54,6 +54,40 @@ type ConnectionSourceInfo struct {
 // DefaultCacheTTL is the default time-to-live for cached metadata
 const DefaultCacheTTL = 5 * time.Minute
 
+// ErrReadOnly is returned when a mutation query is blocked by read-only mode.
+var ErrReadOnly = fmt.Errorf("query blocked: read-only mode is enabled")
+
+// mutationKeywords are SQL keywords that indicate a write operation.
+var mutationKeywords = map[string]bool{
+	"INSERT":   true,
+	"UPDATE":   true,
+	"DELETE":   true,
+	"DROP":     true,
+	"ALTER":    true,
+	"CREATE":   true,
+	"TRUNCATE": true,
+	"GRANT":    true,
+	"REVOKE":   true,
+}
+
+// IsMutationQuery returns true if the query starts with a mutation keyword
+// (INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, GRANT, REVOKE).
+func IsMutationQuery(query string) bool {
+	trimmed := strings.TrimSpace(query)
+	if trimmed == "" {
+		return false
+	}
+	// Extract the first word
+	end := strings.IndexAny(trimmed, " \t\n\r;(")
+	var firstWord string
+	if end == -1 {
+		firstWord = trimmed
+	} else {
+		firstWord = trimmed[:end]
+	}
+	return mutationKeywords[strings.ToUpper(firstWord)]
+}
+
 // MetadataCache provides thread-safe caching for database metadata
 // to reduce network calls during autocomplete operations.
 type MetadataCache struct {
@@ -480,6 +514,10 @@ func (m *Manager) ExecuteQuery(query string) (*engine.GetRowsResult, error) {
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 
 	plugin := m.engine.Choose(dbType)
@@ -546,6 +584,10 @@ func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*e
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {
@@ -567,6 +609,10 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {
@@ -584,6 +630,10 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query string, params []any) (*engine.GetRowsResult, error) {
 	if m.currentConnection == nil {
 		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
 	}
 
 	dbType := engine.DatabaseType(m.currentConnection.Type)
