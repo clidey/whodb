@@ -313,6 +313,10 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 					v.parent.activeLayout = ""
 					v.parent.layoutRoot = nil
 					v.parent.viewHistory = nil
+					// Reset connection view state so it doesn't show stale "Connecting..."
+					v.parent.connectionView.connecting = false
+					v.parent.connectionView.connError = nil
+					v.parent.connectionView.refreshList()
 					return v, nil
 				}
 				// First press — show confirmation
