@@ -195,6 +195,17 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			return v, v.executeQuery()
 		}
 
+		// Ctrl+X to run EXPLAIN on current query
+		if msg.String() == "ctrl+x" {
+			query := v.textarea.Value()
+			if query != "" {
+				v.parent.explainView.query = query
+				v.parent.PushView(ViewExplain)
+				return v, v.runExplain(query)
+			}
+			return v, nil
+		}
+
 		// Ctrl+Space to manually trigger autocomplete
 		// Ctrl+@ is how Ctrl+Space is typically represented in terminals (ASCII 0)
 		if msg.Type == tea.KeyCtrlAt {
@@ -425,6 +436,7 @@ func (v *EditorView) View() string {
 		b.WriteString("\n\n")
 		bindings := []key.Binding{
 			Keys.Editor.Execute,
+			Keys.Editor.Explain,
 			Keys.Editor.Autocomplete,
 			Keys.Editor.Format,
 			Keys.Editor.OpenEditor,
@@ -691,4 +703,24 @@ func (v *EditorView) openExternalEditor() tea.Cmd {
 		}
 		return externalEditorResultMsg{content: string(data)}
 	})
+}
+
+// runExplain returns a tea.Cmd that executes EXPLAIN on the given query
+// and sends the result as an explainResultMsg.
+func (v *EditorView) runExplain(query string) tea.Cmd {
+	mgr := v.parent.dbManager
+	return func() tea.Msg {
+		result, err := mgr.ExecuteExplain(query)
+		if err != nil {
+			return explainResultMsg{query: query, err: err}
+		}
+
+		// Flatten result rows into a single plan string
+		var lines []string
+		for _, row := range result.Rows {
+			lines = append(lines, strings.Join(row, " "))
+		}
+		plan := strings.Join(lines, "\n")
+		return explainResultMsg{query: query, plan: plan}
+	}
 }

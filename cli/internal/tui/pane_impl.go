@@ -38,6 +38,8 @@ var (
 	_ Pane = (*BookmarksView)(nil)
 	_ Pane = (*JSONViewer)(nil)
 	_ Pane = (*CmdLogView)(nil)
+	_ Pane = (*ExplainView)(nil)
+	_ Pane = (*ERDView)(nil)
 )
 
 // ---------------------------------------------------------------------------
@@ -100,6 +102,7 @@ func (v *EditorView) SetCompact(c bool) { v.compact = c }
 func (v *EditorView) HelpBindings() []key.Binding {
 	bindings := []key.Binding{
 		key.NewBinding(key.WithKeys(styles.KeyExecute), key.WithHelp(styles.KeyExecute, styles.KeyExecuteDesc)),
+		Keys.Editor.Explain,
 		Keys.Editor.Format,
 		Keys.Editor.OpenEditor,
 		Keys.Editor.Bookmarks,
@@ -249,3 +252,40 @@ func (v *CmdLogView) OnFocus()                        {}
 func (v *CmdLogView) OnBlur()                         {}
 func (v *CmdLogView) SetCompact(bool)                 {}
 func (v *CmdLogView) HelpBindings() []key.Binding     { return nil }
+
+// ---------------------------------------------------------------------------
+// ExplainView
+// ---------------------------------------------------------------------------
+
+func (v *ExplainView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ExplainView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ExplainView) Focusable() bool                 { return true }
+func (v *ExplainView) OnFocus()                        {}
+func (v *ExplainView) OnBlur()                         {}
+func (v *ExplainView) SetCompact(bool)                 {}
+func (v *ExplainView) HelpBindings() []key.Binding     { return nil }
+
+// ---------------------------------------------------------------------------
+// ERDView
+// ---------------------------------------------------------------------------
+
+// UpdatePane wraps the ERDView's Update method for polymorphic dispatch.
+func (v *ERDView) UpdatePane(msg tea.Msg) tea.Cmd { _, cmd := v.Update(msg); return cmd }
+
+// SetDimensions sets the available width and height for the ERD view.
+func (v *ERDView) SetDimensions(width, height int) { v.width = width; v.height = height }
+
+// Focusable returns true because the ERD view can receive keyboard focus.
+func (v *ERDView) Focusable() bool { return true }
+
+// OnFocus is called when the ERD view gains keyboard focus.
+func (v *ERDView) OnFocus() {}
+
+// OnBlur is called when the ERD view loses keyboard focus.
+func (v *ERDView) OnBlur() {}
+
+// SetCompact is a no-op for the ERD view (it has its own zoom toggle).
+func (v *ERDView) SetCompact(bool) {}
+
+// HelpBindings returns the key bindings to display in the global help bar.
+func (v *ERDView) HelpBindings() []key.Binding { return nil }
