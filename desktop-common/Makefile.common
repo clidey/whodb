@@ -558,7 +558,7 @@ server-all: server-amd64 server-arm64 server-riscv64 server-armv6 server-armv7
 
 # Install Wails CLI
 install-wails:
-	go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+	go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 
 # Check Wails dependencies
 doctor:

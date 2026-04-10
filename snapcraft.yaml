@@ -454,7 +454,7 @@ parts:
       - -**/*.pyc
     override-build: |
       # Install Wails (required by Makefile)
-      go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+      go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
       export PATH=$PATH:$HOME/go/bin
 
       # Get version from SNAPCRAFT_PROJECT_VERSION (set by CI) or .snap_version file
