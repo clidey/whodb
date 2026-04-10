@@ -107,7 +107,8 @@ function protectPlaceholders(text) {
 
 function restorePlaceholders(text, placeholders) {
     if (placeholders.length === 0) return text;
-    return text.replace(/\[\[\[\s*(\d+)\s*\]\]\]/g, (_match, idx) => {
+    // Match 2-3 brackets on each side — Google Translate sometimes drops one
+    return text.replace(/\[{2,3}\s*(\d+)\s*\]{2,3}/g, (_match, idx) => {
         return placeholders[parseInt(idx)] ?? _match;
     });
 }
@@ -126,21 +127,8 @@ function formatYamlKey(key) {
 }
 
 function formatYamlValue(val) {
-    const str = String(val);
-    if (str === '') return '""';
-    if (YAML_KEYWORDS.has(str)) return `"${str}"`;
-    // Quote if value contains YAML-special characters
-    if (
-        /^[-?:,\[{}#&*!|>'"@%`\]]/.test(str) ||
-        str.includes(': ') || str.includes(' #') ||
-        /[{}\[\]]/.test(str) ||
-        /^\s|\s$/.test(str) ||
-        str.endsWith(':')
-    ) {
-        const escaped = str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        return `"${escaped}"`;
-    }
-    return str;
+    const escaped = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${escaped}"`;
 }
 
 function buildYamlBlock(locale, translations) {
