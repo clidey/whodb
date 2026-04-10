@@ -83,7 +83,9 @@ jobs:
 
       - name: Install Wails CLI
         if: matrix.enabled != false
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+        run: |
+          WAILS_VERSION=$(grep 'github.com/wailsapp/wails/v2' desktop-common/go.mod | awk '{print $2}')
+          go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
 
       # Windows AMD64 Build
       - name: Build Windows AMD64

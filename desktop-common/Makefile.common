@@ -556,9 +556,10 @@ server-all: server-amd64 server-arm64 server-riscv64 server-armv6 server-armv7
 	@echo "✅ All server binaries built successfully"
 	@ls -lh $(SERVER_BUILD_DIR)/
 
-# Install Wails CLI
+# Install Wails CLI — version derived from desktop-common/go.mod
+WAILS_VERSION := $(shell grep 'github.com/wailsapp/wails/v2' $(dir $(lastword $(MAKEFILE_LIST)))go.mod | awk '{print $$2}')
 install-wails:
-	go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+	go install github.com/wailsapp/wails/v2/cmd/wails@$(WAILS_VERSION)
 
 # Check Wails dependencies
 doctor:
