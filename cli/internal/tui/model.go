@@ -46,6 +46,7 @@ const (
 	ViewColumns
 	ViewChat
 	ViewSchema
+	ViewImport
 )
 
 type MainModel struct {
@@ -72,6 +73,7 @@ type MainModel struct {
 	columnsView    *ColumnsView
 	chatView       *ChatView
 	schemaView     *SchemaView
+	importView     *ImportView
 
 	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
 	panes map[ViewMode]Pane
@@ -120,6 +122,7 @@ func NewMainModel() *MainModel {
 	m.columnsView = NewColumnsView(m)
 	m.chatView = NewChatView(m)
 	m.schemaView = NewSchemaView(m)
+	m.importView = NewImportView(m)
 
 	m.panes = map[ViewMode]Pane{
 		ViewConnection: m.connectionView,
@@ -132,6 +135,7 @@ func NewMainModel() *MainModel {
 		ViewColumns:    m.columnsView,
 		ViewChat:       m.chatView,
 		ViewSchema:     m.schemaView,
+		ViewImport:     m.importView,
 	}
 
 	return m
@@ -291,6 +295,17 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+		case "ctrl+i":
+			// Global shortcut: open Import wizard
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewImport {
+				if m.useMultiPane() {
+					m.activeLayout = layout.LayoutSingle
+					m.rebuildLayout()
+				}
+				m.PushView(ViewImport)
+				return m, nil
+			}
+
 		case "ctrl+a":
 			// Global shortcut: open AI Chat from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
@@ -344,6 +359,8 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateSchemaView(msg)
 	case connectionResultMsg:
 		return m.updateConnectionView(msg)
+	case importResultMsg, importPreviewMsg:
+		return m.updateImportView(msg)
 	}
 
 	switch m.mode {
@@ -367,9 +384,17 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateChatView(msg)
 	case ViewSchema:
 		return m.updateSchemaView(msg)
+	case ViewImport:
+		return m.updateImportView(msg)
 	}
 
 	return m, nil
+}
+
+func (m *MainModel) updateImportView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.importView, cmd = m.importView.Update(msg)
+	return m, cmd
 }
 
 func (m *MainModel) View() string {
@@ -418,6 +443,8 @@ func (m *MainModel) View() string {
 			content = m.chatView.View()
 		case ViewSchema:
 			content = m.schemaView.View()
+		case ViewImport:
+			content = m.importView.View()
 		}
 	}
 

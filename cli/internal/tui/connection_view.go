@@ -548,33 +548,19 @@ func (v *ConnectionView) renderForm() string {
 		body.WriteString("  Database Type:")
 	}
 	body.WriteString("\n  ")
-	maxTypeWidth := v.width - 8 // account for padding
-	if maxTypeWidth < 20 {
-		maxTypeWidth = 20
-	}
-	lineWidth := 0
 	for i, dbType := range v.dbTypes {
-		var part string
+		if i > 0 {
+			body.WriteString("  ")
+		}
 		if i == v.dbTypeIndex {
 			if v.focusIndex == 7 {
-				part = styles.ActiveListItemStyle.Render(dbType)
+				body.WriteString(styles.ActiveListItemStyle.Render(dbType))
 			} else {
-				part = styles.RenderKey(dbType)
+				body.WriteString(styles.RenderKey(dbType))
 			}
 		} else {
-			part = styles.RenderMuted(dbType)
+			body.WriteString(styles.RenderMuted(dbType))
 		}
-		partWidth := lipgloss.Width(part)
-		sep := "  "
-		if i > 0 && lineWidth+2+partWidth > maxTypeWidth {
-			body.WriteString("\n  ")
-			lineWidth = 0
-		} else if i > 0 {
-			body.WriteString(sep)
-			lineWidth += 2
-		}
-		body.WriteString(part)
-		lineWidth += partWidth
 	}
 	body.WriteString("\n\n")
 

@@ -34,6 +34,7 @@ var (
 	_ Pane = (*ColumnsView)(nil)
 	_ Pane = (*ChatView)(nil)
 	_ Pane = (*SchemaView)(nil)
+	_ Pane = (*ImportView)(nil)
 )
 
 // ---------------------------------------------------------------------------
@@ -196,3 +197,15 @@ func (v *SchemaView) OnFocus()                        {}
 func (v *SchemaView) OnBlur()                         {}
 func (v *SchemaView) SetCompact(bool)                 {}
 func (v *SchemaView) HelpBindings() []key.Binding     { return nil }
+
+// ---------------------------------------------------------------------------
+// ImportView
+// ---------------------------------------------------------------------------
+
+func (v *ImportView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *ImportView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *ImportView) Focusable() bool                 { return true }
+func (v *ImportView) OnFocus()                        {}
+func (v *ImportView) OnBlur()                         {}
+func (v *ImportView) SetCompact(bool)                 {}
+func (v *ImportView) HelpBindings() []key.Binding     { return nil }
