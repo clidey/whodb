@@ -295,7 +295,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-		case "ctrl+i":
+		case "ctrl+g":
 			// Global shortcut: open Import wizard
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewImport {
 				if m.useMultiPane() {
@@ -782,6 +782,7 @@ func (m *MainModel) renderGlobalHelpBar() string {
 		Keys.Global.NextView,
 		Keys.Browser.History,
 		Keys.Browser.AIChat,
+		Keys.Global.Import,
 		Keys.Global.CycleLayout,
 		Keys.Global.CycleTheme,
 		Keys.Browser.Disconnect,

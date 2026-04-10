@@ -27,6 +27,7 @@ type GlobalKeys struct {
 	Back        key.Binding
 	CycleTheme  key.Binding
 	CycleLayout key.Binding
+	Import      key.Binding
 }
 
 // BrowserKeys contains keybindings for the browser view
@@ -217,6 +218,10 @@ var Keys = Keymap{
 		CycleLayout: key.NewBinding(
 			key.WithKeys("ctrl+l"),
 			key.WithHelp("ctrl+l", "cycle layout"),
+		),
+		Import: key.NewBinding(
+			key.WithKeys("ctrl+g"),
+			key.WithHelp("ctrl+g", "import"),
 		),
 	},
 	Browser: BrowserKeys{
