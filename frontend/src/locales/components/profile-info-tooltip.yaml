@@ -49,7 +49,7 @@ iw_IL:
   profileInfo: "פרטי פרופיל עבור {profileId}"
 
 ja_JP:
-  port: ポート：
+  port: "ポート："
   lastLoggedIn: "最終ログイン日:"
   profileInfo: "{profileId} のプロフィール情報"
 
@@ -94,13 +94,13 @@ sv_SE:
   profileInfo: "Profilinformation för {profileId}"
 
 zh_CN:
-  port: 港口：
-  lastLoggedIn: 上次登录：
+  port: "港口："
+  lastLoggedIn: "上次登录："
   profileInfo: "{profileId} 的个人资料信息"
 
 zh_TW:
-  port: 港口：
-  lastLoggedIn: 上次登入：
+  port: "港口："
+  lastLoggedIn: "上次登入："
   profileInfo: "{profileId} 的個人資料訊息"
 
 bg_BG:
@@ -206,7 +206,7 @@ af_ZA:
 am_ET:
   port: "ወደብ፡"
   lastLoggedIn: "መጨረሻ የገባበት፡"
-  profileInfo: "የመገለጫ መረጃ ለ[[0]]]"
+  profileInfo: "የመገለጫ መረጃ ለ{profileId}"
 
 az_AZ:
   port: "Liman:"
@@ -226,7 +226,7 @@ gu_IN:
 ha_NG:
   port: "Port:"
   lastLoggedIn: "Shigar Ƙarshe:"
-  profileInfo: "Bayanan martaba don [[0]]"
+  profileInfo: "Bayanan martaba don {profileId}"
 
 ka_GE:
   port: "პორტი:"
@@ -301,9 +301,9 @@ tl_PH:
 uz_UZ:
   port: "Port:"
   lastLoggedIn: "Oxirgi marta kirgan:"
-  profileInfo: "[[0]]] uchun profil maʼlumotlari"
+  profileInfo: "{profileId} uchun profil maʼlumotlari"
 
 yo_NG:
   port: "Ibudo:"
   lastLoggedIn: "Wọle kẹhin:"
-  profileInfo: "Alaye profaili fun [[0]]]"
+  profileInfo: "Alaye profaili fun {profileId}"

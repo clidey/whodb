@@ -107,8 +107,8 @@ function protectPlaceholders(text) {
 
 function restorePlaceholders(text, placeholders) {
     if (placeholders.length === 0) return text;
-    // Match 2-3 brackets on each side — Google Translate sometimes drops one
-    return text.replace(/\[{2,3}\s*(\d+)\s*\]{2,3}/g, (_match, idx) => {
+    // Match 1-3 brackets/parens on each side — Google Translate mangles these
+    return text.replace(/[\[(]{1,3}\s*(\d+)\s*[\])]{1,3}/g, (_match, idx) => {
         return placeholders[parseInt(idx)] ?? _match;
     });
 }
