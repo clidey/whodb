@@ -359,6 +359,8 @@ type TypeDefinition struct {
 	DefaultLength    *int         `json:"defaultLength,omitempty"`
 	DefaultPrecision *int         `json:"defaultPrecision,omitempty"`
 	Category         TypeCategory `json:"category"`
+	InsertFunc       *string      `json:"insertFunc,omitempty"`
+	TableModel       *string      `json:"tableModel,omitempty"`
 }
 
 type UpdateInfo struct {

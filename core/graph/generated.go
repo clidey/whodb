@@ -305,7 +305,9 @@ type ComplexityRoot struct {
 		HasLength        func(childComplexity int) int
 		HasPrecision     func(childComplexity int) int
 		ID               func(childComplexity int) int
+		InsertFunc       func(childComplexity int) int
 		Label            func(childComplexity int) int
+		TableModel       func(childComplexity int) int
 	}
 
 	UpdateInfo struct {
@@ -1630,12 +1632,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TypeDefinition.ID(childComplexity), true
+	case "TypeDefinition.insertFunc":
+		if e.ComplexityRoot.TypeDefinition.InsertFunc == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TypeDefinition.InsertFunc(childComplexity), true
 	case "TypeDefinition.label":
 		if e.ComplexityRoot.TypeDefinition.Label == nil {
 			break
 		}
 
 		return e.ComplexityRoot.TypeDefinition.Label(childComplexity), true
+	case "TypeDefinition.tableModel":
+		if e.ComplexityRoot.TypeDefinition.TableModel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TypeDefinition.TableModel(childComplexity), true
 
 	case "UpdateInfo.currentVersion":
 		if e.ComplexityRoot.UpdateInfo.CurrentVersion == nil {
@@ -3589,6 +3603,10 @@ func (ec *executionContext) fieldContext_DatabaseMetadata_typeDefinitions(_ cont
 				return ec.fieldContext_TypeDefinition_defaultPrecision(ctx, field)
 			case "category":
 				return ec.fieldContext_TypeDefinition_category(ctx, field)
+			case "insertFunc":
+				return ec.fieldContext_TypeDefinition_insertFunc(ctx, field)
+			case "tableModel":
+				return ec.fieldContext_TypeDefinition_tableModel(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TypeDefinition", field.Name)
 		},
@@ -8567,6 +8585,64 @@ func (ec *executionContext) fieldContext_TypeDefinition_category(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _TypeDefinition_insertFunc(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_insertFunc,
+		func(ctx context.Context) (any, error) {
+			return obj.InsertFunc, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_insertFunc(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypeDefinition_tableModel(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TypeDefinition_tableModel,
+		func(ctx context.Context) (any, error) {
+			return obj.TableModel, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TypeDefinition_tableModel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypeDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateInfo_currentVersion(ctx context.Context, field graphql.CollectedField, obj *model.UpdateInfo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13352,6 +13428,10 @@ func (ec *executionContext) _TypeDefinition(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "insertFunc":
+			out.Values[i] = ec._TypeDefinition_insertFunc(ctx, field, obj)
+		case "tableModel":
+			out.Values[i] = ec._TypeDefinition_tableModel(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

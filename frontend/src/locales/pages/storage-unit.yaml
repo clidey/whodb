@@ -25,6 +25,7 @@ en_US:
   modifiersLabel: Modifiers
   primaryModifier: Primary
   nullableModifier: Nullable
+  aggregateKeyHint: This type creates an Aggregate Key table. Non-aggregate columns become dimension keys.
   removeField: Remove
   addField: Add Field
   createButton: Create

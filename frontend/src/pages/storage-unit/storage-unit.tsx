@@ -39,6 +39,7 @@ import {
     VirtualizedTableBody
 } from '@clidey/ux';
 import {TypeSelector} from "../../components/type-selector";
+import {findTypeDefinition} from "../../utils/database-data-types";
 import {
     DatabaseType,
     RecordInput,
@@ -488,6 +489,17 @@ export const StorageUnitPage: FC = () => {
                                                     "data-testid": `field-type-${index}`,
                                                 }}
                                             />
+
+                                            {(() => {
+                                                const typeDef = current?.Type && field.Value
+                                                    ? findTypeDefinition(field.Value, current.Type)
+                                                    : undefined;
+                                                return typeDef?.tableModel ? (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {t('aggregateKeyHint')}
+                                                    </p>
+                                                ) : null;
+                                            })()}
 
                                             {showModifiers && (
                                                 <>
