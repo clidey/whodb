@@ -26,10 +26,9 @@ import (
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // ExportData exports MongoDB collection data to tabular format
@@ -269,34 +268,34 @@ func (p *MongoDBPlugin) formatBSONValue(val any) string {
 		strVal = fmt.Sprintf("%g", v)
 	case time.Time:
 		strVal = v.Format(time.RFC3339)
-	case primitive.DateTime:
+	case bson.DateTime:
 		strVal = v.Time().Format(time.RFC3339)
-	case primitive.Timestamp:
+	case bson.Timestamp:
 		strVal = fmt.Sprintf("Timestamp(%d,%d)", v.T, v.I)
-	case primitive.ObjectID:
+	case bson.ObjectID:
 		strVal = v.Hex()
-	case primitive.Binary:
+	case bson.Binary:
 		strVal = fmt.Sprintf("Binary(subtype:%d,len:%d)", v.Subtype, len(v.Data))
-	case primitive.Regex:
+	case bson.Regex:
 		strVal = fmt.Sprintf("/%s/%s", v.Pattern, v.Options)
-	case primitive.DBPointer:
+	case bson.DBPointer:
 		strVal = fmt.Sprintf("DBPointer(%s,%s)", v.DB, v.Pointer.Hex())
-	case primitive.JavaScript:
+	case bson.JavaScript:
 		strVal = string(v)
-	case primitive.Symbol:
+	case bson.Symbol:
 		strVal = string(v)
-	case primitive.CodeWithScope:
+	case bson.CodeWithScope:
 		scopeJSON, _ := json.Marshal(v.Scope)
 		strVal = fmt.Sprintf("CodeWithScope(%s, %s)", v.Code, string(scopeJSON))
-	case primitive.Decimal128:
+	case bson.Decimal128:
 		strVal = v.String()
-	case primitive.MinKey:
+	case bson.MinKey:
 		strVal = "MinKey"
-	case primitive.MaxKey:
+	case bson.MaxKey:
 		strVal = "MaxKey"
-	case primitive.Null:
+	case bson.Null:
 		strVal = "null"
-	case primitive.Undefined:
+	case bson.Undefined:
 		strVal = "undefined"
 	case []any, bson.A:
 		// Convert arrays to JSON

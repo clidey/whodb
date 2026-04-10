@@ -25,9 +25,8 @@ import (
 	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
@@ -272,7 +271,7 @@ func inferMongoDBType(value any) string {
 	}
 
 	switch value.(type) {
-	case primitive.ObjectID:
+	case bson.ObjectID:
 		return "ObjectId"
 	case string:
 		return "string"
@@ -282,7 +281,7 @@ func inferMongoDBType(value any) string {
 		return "double"
 	case bool:
 		return "bool"
-	case primitive.DateTime:
+	case bson.DateTime:
 		return "date"
 	case []any:
 		return "array"

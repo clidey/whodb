@@ -18,43 +18,41 @@ package mongodb
 
 import (
 	"testing"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestParseMongoDBJsonSchema(t *testing.T) {
 	// Test schema matching the validated_products collection
-	schema := bson.M{
+	schema := map[string]any{
 		"bsonType": "object",
-		"required": bson.A{"name", "price", "status", "category"},
-		"properties": bson.M{
-			"name": bson.M{
+		"required": []any{"name", "price", "status", "category"},
+		"properties": map[string]any{
+			"name": map[string]any{
 				"bsonType":  "string",
 				"maxLength": float64(100),
 			},
-			"price": bson.M{
+			"price": map[string]any{
 				"bsonType": "double",
 				"minimum":  float64(0),
 				"maximum":  float64(99999.99),
 			},
-			"status": bson.M{
+			"status": map[string]any{
 				"bsonType": "string",
-				"enum":     bson.A{"active", "inactive", "discontinued"},
+				"enum":     []any{"active", "inactive", "discontinued"},
 			},
-			"category": bson.M{
+			"category": map[string]any{
 				"bsonType": "string",
-				"enum":     bson.A{"electronics", "clothing", "food", "other"},
+				"enum":     []any{"electronics", "clothing", "food", "other"},
 			},
-			"stock_quantity": bson.M{
+			"stock_quantity": map[string]any{
 				"bsonType": "int",
 				"minimum":  float64(0),
 				"maximum":  float64(10000),
 			},
-			"description": bson.M{
+			"description": map[string]any{
 				"bsonType":  "string",
 				"maxLength": float64(500),
 			},
-			"rating": bson.M{
+			"rating": map[string]any{
 				"bsonType": "double",
 				"minimum":  float64(0),
 				"maximum":  float64(5),
@@ -170,16 +168,16 @@ func TestParseMongoDBJsonSchema(t *testing.T) {
 }
 
 func TestParseMongoDBJsonSchemaEmptySchema(t *testing.T) {
-	constraints := parseMongoDBJsonSchema(bson.M{})
+	constraints := parseMongoDBJsonSchema(map[string]any{})
 	if len(constraints) != 0 {
 		t.Errorf("expected empty constraints for empty schema, got %v", constraints)
 	}
 }
 
 func TestParseMongoDBJsonSchemaNoProperties(t *testing.T) {
-	schema := bson.M{
+	schema := map[string]any{
 		"bsonType": "object",
-		"required": bson.A{"field1"},
+		"required": []any{"field1"},
 	}
 	constraints := parseMongoDBJsonSchema(schema)
 	if len(constraints) != 0 {
@@ -190,15 +188,15 @@ func TestParseMongoDBJsonSchemaNoProperties(t *testing.T) {
 // TestParseMongoDBJsonSchemaInt32Values verifies that int32 values (as MongoDB
 // actually stores integer literals in $jsonSchema) are correctly converted.
 func TestParseMongoDBJsonSchemaInt32Values(t *testing.T) {
-	schema := bson.M{
+	schema := map[string]any{
 		"bsonType": "object",
-		"properties": bson.M{
-			"rating": bson.M{
+		"properties": map[string]any{
+			"rating": map[string]any{
 				"bsonType": "double",
 				"minimum":  int32(0),
 				"maximum":  int32(5),
 			},
-			"name": bson.M{
+			"name": map[string]any{
 				"bsonType":  "string",
 				"maxLength": int32(100),
 			},
