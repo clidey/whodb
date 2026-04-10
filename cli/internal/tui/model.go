@@ -50,6 +50,8 @@ const (
 	ViewBookmarks
 	ViewJSON
 	ViewCmdLog
+	ViewExplain
+	ViewERD
 )
 
 type MainModel struct {
@@ -80,6 +82,8 @@ type MainModel struct {
 	bookmarksView  *BookmarksView
 	jsonViewer     *JSONViewer
 	cmdLogView     *CmdLogView
+	explainView    *ExplainView
+	erdView        *ERDView
 
 	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
 	panes map[ViewMode]Pane
@@ -133,6 +137,8 @@ func NewMainModel() *MainModel {
 	m.bookmarksView = NewBookmarksView(m)
 	m.jsonViewer = NewJSONViewer(m)
 	m.cmdLogView = NewCmdLogView(m)
+	m.explainView = NewExplainView(m)
+	m.erdView = NewERDView(m)
 
 	m.panes = map[ViewMode]Pane{
 		ViewConnection: m.connectionView,
@@ -149,6 +155,8 @@ func NewMainModel() *MainModel {
 		ViewBookmarks:  m.bookmarksView,
 		ViewJSON:       m.jsonViewer,
 		ViewCmdLog:     m.cmdLogView,
+		ViewExplain:    m.explainView,
+		ViewERD:        m.erdView,
 	}
 
 	return m
@@ -243,6 +251,8 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.whereView, _ = m.whereView.Update(msg)
 		m.jsonViewer, _ = m.jsonViewer.Update(msg)
 		m.cmdLogView, _ = m.cmdLogView.Update(msg)
+		m.explainView, _ = m.explainView.Update(msg)
+		m.erdView, _ = m.erdView.Update(msg)
 
 		// Rebuild layout on resize if connected
 		if m.dbManager.GetCurrentConnection() != nil && m.layoutRoot == nil {
@@ -343,6 +353,16 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+		case "ctrl+k":
+			// Global shortcut: open ER diagram
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewERD {
+				m.suspendLayout()
+				m.erdView.loading = true
+				m.erdView.err = nil
+				m.PushView(ViewERD)
+				return m, m.erdView.loadERDData()
+			}
+
 		case "ctrl+a":
 			// Global shortcut: open AI Chat from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
@@ -352,6 +372,10 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "tab", "shift+tab":
+			// Let modal views handle Tab themselves (e.g., ERD table cycling)
+			if m.mode == ViewERD {
+				return m.updateERDView(msg)
+			}
 			// Let connection view handle Tab for its own navigation
 			if m.mode == ViewConnection {
 				return m.updateConnectionView(msg)
@@ -395,6 +419,10 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateConnectionView(msg)
 	case importResultMsg, importPreviewMsg:
 		return m.updateImportView(msg)
+	case explainResultMsg:
+		return m.updateExplainView(msg)
+	case erdDataLoadedMsg:
+		return m.updateERDView(msg)
 	}
 
 	switch m.mode {
@@ -426,6 +454,10 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateJSONViewer(msg)
 	case ViewCmdLog:
 		return m.updateCmdLogView(msg)
+	case ViewExplain:
+		return m.updateExplainView(msg)
+	case ViewERD:
+		return m.updateERDView(msg)
 	}
 
 	return m, nil
@@ -440,6 +472,18 @@ func (m *MainModel) updateJSONViewer(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *MainModel) updateCmdLogView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.cmdLogView, cmd = m.cmdLogView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateExplainView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.explainView, cmd = m.explainView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateERDView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.erdView, cmd = m.erdView.Update(msg)
 	return m, cmd
 }
 
@@ -509,6 +553,10 @@ func (m *MainModel) View() string {
 			content = m.jsonViewer.View()
 		case ViewCmdLog:
 			content = m.cmdLogView.View()
+		case ViewExplain:
+			content = m.explainView.View()
+		case ViewERD:
+			content = m.erdView.View()
 		}
 	}
 
@@ -552,7 +600,8 @@ func (m *MainModel) isLoading() bool {
 		m.schemaView.loading ||
 		m.historyView.executing ||
 		m.connectionView.connecting ||
-		m.resultsView.loading
+		m.resultsView.loading ||
+		m.erdView.loading
 }
 
 // renderStatusBar renders the persistent status bar shown when connected.
@@ -607,7 +656,7 @@ func (m *MainModel) renderStatusBar() string {
 // isHelpSafe returns true if it's safe to show help (no active text input)
 func (m *MainModel) isHelpSafe() bool {
 	switch m.mode {
-	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks, ViewCmdLog:
+	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks, ViewCmdLog, ViewExplain, ViewERD:
 		// These views don't have text input
 		return true
 	case ViewBrowser:
@@ -748,6 +797,17 @@ func (m *MainModel) renderHelpOverlay() string {
 			Keys.Global.Back,
 		))
 
+	case ViewERD:
+		b.WriteString(styles.RenderKey("ER Diagram\n\n"))
+		b.WriteString(RenderBindingHelp(
+			Keys.ERD.NextTable,
+			Keys.ERD.PrevTable,
+			Keys.ERD.ToggleZoom,
+			Keys.ERD.ScrollUp,
+			Keys.ERD.ScrollDown,
+			Keys.Global.Back,
+		))
+
 	default:
 		b.WriteString("No help available for this view\n")
 	}
@@ -864,6 +924,7 @@ func (m *MainModel) renderGlobalHelpBar() string {
 		Keys.Browser.History,
 		Keys.Browser.AIChat,
 		Keys.Global.CmdLog,
+		Keys.Global.ERDiagram,
 		Keys.Global.Import,
 		Keys.Global.ReadOnly,
 		Keys.Global.CycleLayout,

@@ -30,6 +30,7 @@ type GlobalKeys struct {
 	Import      key.Binding
 	ReadOnly    key.Binding
 	CmdLog      key.Binding
+	ERDiagram   key.Binding
 }
 
 // BrowserKeys contains keybindings for the browser view
@@ -56,6 +57,7 @@ type EditorKeys struct {
 	Format       key.Binding
 	OpenEditor   key.Binding
 	Bookmarks    key.Binding
+	Explain      key.Binding
 	NewTab       key.Binding
 	CloseTab     key.Binding
 	PrevTab      key.Binding
@@ -179,6 +181,15 @@ type BookmarksKeys struct {
 	Delete key.Binding
 }
 
+// ERDKeys contains keybindings for the ER diagram view
+type ERDKeys struct {
+	NextTable  key.Binding
+	PrevTable  key.Binding
+	ToggleZoom key.Binding
+	ScrollUp   key.Binding
+	ScrollDown key.Binding
+}
+
 // SchemaSelectKeys contains keybindings for schema selection (browser)
 type SchemaSelectKeys struct {
 	NavLeft      key.Binding
@@ -204,6 +215,7 @@ type Keymap struct {
 	Filter         FilterKeys
 	SchemaSelect   SchemaSelectKeys
 	Bookmarks      BookmarksKeys
+	ERD            ERDKeys
 }
 
 // Keys is the top-level keymap containing all keybindings
@@ -244,6 +256,10 @@ var Keys = Keymap{
 		CmdLog: key.NewBinding(
 			key.WithKeys("ctrl+d"),
 			key.WithHelp("ctrl+d", "command log"),
+		),
+		ERDiagram: key.NewBinding(
+			key.WithKeys("ctrl+k"),
+			key.WithHelp("ctrl+k", "ER diagram"),
 		),
 	},
 	Browser: BrowserKeys{
@@ -320,6 +336,10 @@ var Keys = Keymap{
 		Bookmarks: key.NewBinding(
 			key.WithKeys("ctrl+b"),
 			key.WithHelp("ctrl+b", "bookmarks"),
+		),
+		Explain: key.NewBinding(
+			key.WithKeys("ctrl+x"),
+			key.WithHelp("ctrl+x", "explain"),
 		),
 		NewTab: key.NewBinding(
 			key.WithKeys("ctrl+n"),
@@ -648,6 +668,28 @@ var Keys = Keymap{
 		Delete: key.NewBinding(
 			key.WithKeys("d"),
 			key.WithHelp("[d]", "delete"),
+		),
+	},
+	ERD: ERDKeys{
+		NextTable: key.NewBinding(
+			key.WithKeys("tab"),
+			key.WithHelp("tab", "next table"),
+		),
+		PrevTable: key.NewBinding(
+			key.WithKeys("shift+tab"),
+			key.WithHelp("shift+tab", "prev table"),
+		),
+		ToggleZoom: key.NewBinding(
+			key.WithKeys("z"),
+			key.WithHelp("[z]", "toggle zoom"),
+		),
+		ScrollUp: key.NewBinding(
+			key.WithKeys("up", "k"),
+			key.WithHelp("↑/k", "scroll up"),
+		),
+		ScrollDown: key.NewBinding(
+			key.WithKeys("down", "j"),
+			key.WithHelp("↓/j", "scroll down"),
 		),
 	},
 }

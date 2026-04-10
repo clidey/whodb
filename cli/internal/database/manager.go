@@ -695,6 +695,30 @@ func runWithContext[T any](ctx context.Context, fn func() (T, error)) (T, error)
 	}
 }
 
+// ExecuteExplain prepends the appropriate EXPLAIN prefix for the current
+// database type and executes the resulting query. The raw result is returned
+// so callers can display the plan output.
+func (m *Manager) ExecuteExplain(query string) (*engine.GetRowsResult, error) {
+	if m.currentConnection == nil {
+		return nil, fmt.Errorf("not connected to any database")
+	}
+
+	dbType := strings.ToLower(m.currentConnection.Type)
+	var explainQuery string
+	switch dbType {
+	case "postgres":
+		explainQuery = "EXPLAIN ANALYZE " + query
+	case "mysql", "mariadb", "sqlite3":
+		explainQuery = "EXPLAIN " + query
+	case "clickhouse":
+		explainQuery = "EXPLAIN PIPELINE " + query
+	default:
+		explainQuery = "EXPLAIN " + query
+	}
+
+	return m.ExecuteQuery(explainQuery)
+}
+
 // ExecuteQueryWithContext executes a query with context support for cancellation and timeout.
 // If the context is cancelled or times out, the function returns immediately with ctx.Err().
 // Note: The underlying database operation may continue running; only the wait is cancelled.
