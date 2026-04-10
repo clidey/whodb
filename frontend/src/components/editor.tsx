@@ -29,16 +29,18 @@ import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
 import {useApolloClient} from "@apollo/client";
-import { BUILD_EDITION } from '@/config/edition';
 import { useTranslation } from "@/hooks/use-translation";
 
+// Extension autocomplete — set via registerEditorExtensions()
 let createSQLAutocomplete: ((options: { apolloClient: any; defaultSchema?: string }) => any[]) | undefined;
 
-if (BUILD_EDITION === 'ee') {
-    import('@ee/components/editor-autocomplete').then(module => {
-        createSQLAutocomplete = module.createSQLAutocomplete;
-    }).catch(() => {});
-}
+export const registerEditorExtensions = (fns: {
+    createSQLAutocomplete?: (options: { apolloClient: any; defaultSchema?: string }) => any[];
+}) => {
+    if (fns.createSQLAutocomplete) {
+        createSQLAutocomplete = fns.createSQLAutocomplete;
+    }
+};
 import { useAppSelector } from "@/store/hooks";
 import { matchesShortcut, SHORTCUTS } from "@/utils/shortcuts";
 import { Tip } from "./tip";

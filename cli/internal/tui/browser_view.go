@@ -51,6 +51,8 @@ type BrowserView struct {
 	filteredTables      []engine.StorageUnit
 	retryPrompt         RetryPrompt
 	lastRefreshed       time.Time
+	compact             bool
+	escConfirm          bool // true when waiting for second Esc to disconnect
 }
 
 func NewBrowserView(parent *MainModel) *BrowserView {
@@ -76,6 +78,10 @@ func NewBrowserView(parent *MainModel) *BrowserView {
 
 func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case escConfirmTimeoutMsg:
+		v.escConfirm = false
+		return v, nil
+
 	case tablesLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
@@ -154,6 +160,11 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// Any key other than Esc cancels the disconnect confirmation
+		if v.escConfirm && !key.Matches(msg, Keys.Browser.Disconnect) {
+			v.escConfirm = false
+		}
+
 		// Handle retry prompt for timed out requests
 		if v.retryPrompt.IsActive() {
 			result, handled := v.retryPrompt.HandleKeyMsg(msg.String())
@@ -294,9 +305,28 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Browser.Disconnect):
 			if v.parent.dbManager.GetCurrentConnection() != nil {
-				v.parent.mode = ViewConnection
-				v.parent.dbManager.Disconnect()
-				v.parent.viewHistory = nil
+				if v.escConfirm {
+					// Second press — actually disconnect
+					v.escConfirm = false
+					v.parent.mode = ViewConnection
+					v.parent.dbManager.Disconnect()
+					v.parent.activeLayout = ""
+					v.parent.layoutRoot = nil
+					v.parent.viewHistory = nil
+					// Reset connection view state so it doesn't show stale "Connecting..."
+					v.parent.connectionView.connecting = false
+					v.parent.connectionView.connError = nil
+					v.parent.connectionView.refreshList()
+					return v, nil
+				}
+				// First press — show confirmation
+				v.escConfirm = true
+				return v, tea.Batch(
+					v.parent.SetStatus("Press Esc again to disconnect"),
+					tea.Tick(3*time.Second, func(time.Time) tea.Msg {
+						return escConfirmTimeoutMsg{}
+					}),
+				)
 			}
 			return v, nil
 		}
@@ -313,9 +343,30 @@ func (v *BrowserView) View() string {
 
 	var b strings.Builder
 
-	title := fmt.Sprintf("Connected to: %s@%s/%s", conn.Type, conn.Host, conn.Database)
+	// Build connection title — for file-based DBs (SQLite, DuckDB) show just the path
+	var title string
+	isFileDB := conn.Host == conn.Database
 	if conn.Name != "" {
-		title = fmt.Sprintf("Connected to: %s (%s@%s/%s)", conn.Name, conn.Type, conn.Host, conn.Database)
+		if isFileDB {
+			title = fmt.Sprintf("Connected to: %s (%s)", conn.Name, conn.Database)
+		} else {
+			title = fmt.Sprintf("Connected to: %s (%s@%s/%s)", conn.Name, conn.Type, conn.Host, conn.Database)
+		}
+	} else {
+		if isFileDB {
+			title = fmt.Sprintf("Connected to: %s", conn.Database)
+		} else {
+			title = fmt.Sprintf("Connected to: %s@%s/%s", conn.Type, conn.Host, conn.Database)
+		}
+	}
+	// Truncate to pane width
+	if v.width > 4 && lipgloss.Width(title) > v.width-4 {
+		runes := []rune(title)
+		maxW := v.width - 7 // leave room for "..."
+		for lipgloss.Width(string(runes)) > maxW && len(runes) > 0 {
+			runes = runes[:len(runes)-1]
+		}
+		title = string(runes) + "..."
 	}
 	b.WriteString(styles.RenderTitle(title))
 	b.WriteString("\n")
@@ -390,41 +441,43 @@ func (v *BrowserView) View() string {
 		b.WriteString(v.renderTablesGrid())
 	}
 
-	b.WriteString("\n\n")
+	if !v.compact {
+		b.WriteString("\n\n")
 
-	if v.schemaSelecting {
-		b.WriteString(RenderBindingHelp(
-			Keys.SchemaSelect.NavLeft,
-			Keys.SchemaSelect.SelectSchema,
-			Keys.Global.Back,
-		))
-	} else if v.filtering {
-		b.WriteString(RenderBindingHelp(
-			Keys.Filter.CancelFilter,
-			Keys.Filter.ApplyFilter,
-		))
-	} else {
-		bindings := []key.Binding{
-			Keys.Browser.Up,
-			Keys.Browser.Down,
-			Keys.Browser.Left,
-			Keys.Browser.Right,
-			Keys.Browser.Select,
-			Keys.Browser.Filter,
+		if v.schemaSelecting {
+			b.WriteString(RenderBindingHelpWidth(v.width,
+				Keys.SchemaSelect.NavLeft,
+				Keys.SchemaSelect.SelectSchema,
+				Keys.Global.Back,
+			))
+		} else if v.filtering {
+			b.WriteString(RenderBindingHelpWidth(v.width,
+				Keys.Filter.CancelFilter,
+				Keys.Filter.ApplyFilter,
+			))
+		} else {
+			bindings := []key.Binding{
+				Keys.Browser.Up,
+				Keys.Browser.Down,
+				Keys.Browser.Left,
+				Keys.Browser.Right,
+				Keys.Browser.Select,
+				Keys.Browser.Filter,
+			}
+			if len(v.schemas) > 1 {
+				bindings = append(bindings, Keys.Browser.Schema)
+			}
+			bindings = append(bindings,
+				Keys.Browser.Editor,
+				Keys.Browser.AIChat,
+				Keys.Browser.History,
+				Keys.Browser.Refresh,
+				Keys.Global.NextView,
+				Keys.Browser.Disconnect,
+				Keys.Global.Quit,
+			)
+			b.WriteString(RenderBindingHelpWidth(v.width, bindings...))
 		}
-		if len(v.schemas) > 1 {
-			bindings = append(bindings, Keys.Browser.Schema)
-		}
-		bindings = append(bindings,
-			Keys.Browser.Editor,
-			Keys.Browser.AIChat,
-			Keys.Browser.History,
-			Keys.Browser.Refresh,
-			Keys.Global.NextView,
-			Keys.Browser.Disconnect,
-			Keys.Global.Quit,
-		)
-		b.WriteString(RenderBindingHelp(bindings...))
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())

@@ -3,3 +3,369 @@ en_US:
   loggingOut: Logging Out
   success: Logged Out Successfully
   error: Error Logging Out
+
+ar_AE:
+  title: تسجيل الخروج
+  loggingOut: تسجيل الخروج
+  success: تم تسجيل الخروج بنجاح
+  error: خطأ في تسجيل الخروج
+
+de_DE:
+  title: Abmelden
+  loggingOut: Abmelden
+  success: Erfolgreich abgemeldet
+  error: Fehler beim Abmelden
+
+el_GR:
+  title: Αποσύνδεση
+  loggingOut: Αποσύνδεση
+  success: Αποσυνδεθείτε με επιτυχία
+  error: Σφάλμα κατά την αποσύνδεση
+
+en_GB:
+  title: Logout
+  loggingOut: Logging Out
+  success: Logged Out Successfully
+  error: Error Logging Out
+
+es_ES:
+  title: Cerrar sesión
+  loggingOut: Cerrar sesión
+  success: Cerró sesión exitosamente
+  error: Error al cerrar sesión
+
+fi_FI:
+  title: Kirjaudu ulos
+  loggingOut: Uloskirjautuminen
+  success: Uloskirjautuminen onnistui
+  error: Virhe kirjautuessa ulos
+
+fr_FR:
+  title: Déconnexion
+  loggingOut: Déconnexion
+  success: Déconnexion réussie
+  error: Erreur de déconnexion
+
+it_IT:
+  title: Esci
+  loggingOut: Disconnessione
+  success: Disconnesso con successo
+  error: Errore durante la disconnessione
+
+iw_IL:
+  title: התנתק
+  loggingOut: יציאה
+  success: התנתק בהצלחה
+  error: שגיאה ביציאה
+
+ja_JP:
+  title: ログアウト
+  loggingOut: ログアウトする
+  success: 正常にログアウトしました
+  error: ログアウトエラー
+
+ko_KR:
+  title: 로그아웃
+  loggingOut: 로그아웃
+  success: 성공적으로 로그아웃되었습니다
+  error: 로그아웃하는 동안 오류가 발생했습니다.
+
+nl_NL:
+  title: Uitloggen
+  loggingOut: Uitloggen
+  success: Succesvol uitgelogd
+  error: Fout bij uitloggen
+
+pl_PL:
+  title: Wyloguj się
+  loggingOut: Wylogowanie
+  success: Wylogowano pomyślnie
+  error: Błąd wylogowania
+
+pt_BR:
+  title: Sair
+  loggingOut: Saindo
+  success: Desconectado com sucesso
+  error: Erro ao sair
+
+ro_RO:
+  title: Deconectare
+  loggingOut: Deconectare
+  success: Deconectat cu succes
+  error: Eroare la deconectare
+
+ru_RU:
+  title: Выход из системы
+  loggingOut: Выход из системы
+  success: Вышел из системы успешно
+  error: Ошибка выхода из системы
+
+sk_SK:
+  title: Odhlásiť sa
+  loggingOut: Odhlásenie
+  success: Úspešné odhlásenie
+  error: Chyba pri odhlasovaní
+
+sv_SE:
+  title: Utloggning
+  loggingOut: Loggar ut
+  success: Loggade ut framgångsrikt
+  error: Fel vid utloggning
+
+zh_CN:
+  title: 退出
+  loggingOut: 注销
+  success: 退出成功
+  error: 注销时出错
+
+zh_TW:
+  title: 退出
+  loggingOut: 註銷
+  success: 退出成功
+  error: 登出時出錯
+
+bg_BG:
+  title: Изход
+  loggingOut: Излизане
+  success: Излязохте успешно
+  error: Грешка при излизане
+
+bn_BD:
+  title: লগআউট
+  loggingOut: লগ আউট
+  success: সফলভাবে লগ আউট হয়েছে
+  error: লগ আউট করার সময় ত্রুটি৷
+
+ca_ES:
+  title: Tanca la sessió
+  loggingOut: Tancament de sessió
+  success: S'ha tancat la sessió correctament
+  error: Error en tancar la sessió
+
+cs_CZ:
+  title: Odhlášení
+  loggingOut: Odhlášení
+  success: Úspěšně odhlášeno
+  error: Chyba při odhlašování
+
+da_DK:
+  title: Log ud
+  loggingOut: Logger ud
+  success: Logget ud
+  error: Fejl ved at logge ud
+
+fa_IR:
+  title: خروج از سیستم
+  loggingOut: خروج از سیستم
+  success: با موفقیت از سیستم خارج شد
+  error: خطا هنگام خروج
+
+hi_IN:
+  title: लॉग आउट
+  loggingOut: लॉग आउट करना
+  success: सफलतापूर्वक लॉग आउट हो गया
+  error: लॉग आउट करने में त्रुटि
+
+hr_HR:
+  title: Odjava
+  loggingOut: Odjava
+  success: Uspješno odjavljen
+  error: Greška pri odjavljivanju
+
+hu_HU:
+  title: Kijelentkezés
+  loggingOut: Kijelentkezés
+  success: Sikeresen kijelentkezett
+  error: Hiba a kijelentkezéskor
+
+id_ID:
+  title: Keluar
+  loggingOut: Keluar
+  success: Berhasil Keluar
+  error: Kesalahan saat keluar
+
+ms_MY:
+  title: Log keluar
+  loggingOut: Log Keluar
+  success: Berjaya Log Keluar
+  error: Ralat Log Keluar
+
+nb_NO:
+  title: Logg ut
+  loggingOut: Logger ut
+  success: Logget ut vellykket
+  error: Feil ved utlogging
+
+sw_KE:
+  title: Ondoka
+  loggingOut: Kuingia Nje
+  success: Umetoka nje kwa Mafanikio
+  error: Hitilafu katika Kuondoka
+
+ta_IN:
+  title: வெளியேறு
+  loggingOut: வெளியேறுகிறது
+  success: வெற்றிகரமாக வெளியேறியது
+  error: வெளியேறுவதில் பிழை
+
+th_TH:
+  title: ออกจากระบบ
+  loggingOut: ออกจากระบบ
+  success: ออกจากระบบเรียบร้อยแล้ว
+  error: เกิดข้อผิดพลาดในการออกจากระบบ
+
+tr_TR:
+  title: Oturumu kapat
+  loggingOut: Oturumu Kapatma
+  success: Başarıyla Oturum Kapatıldı
+  error: Oturum Kapatma Hatası
+
+uk_UA:
+  title: Вийти
+  loggingOut: Вихід із системи
+  success: Вийшов успішно
+  error: Помилка виходу
+
+ur_PK:
+  title: لاگ آؤٹ
+  loggingOut: لاگ آؤٹ ہو رہا ہے۔
+  success: کامیابی سے لاگ آؤٹ ہو گیا۔
+  error: لاگ آؤٹ کرنے میں خرابی۔
+
+vi_VN:
+  title: Đăng xuất
+  loggingOut: Đăng xuất
+  success: Đăng xuất thành công
+  error: Lỗi đăng xuất
+
+af_ZA:
+  title: "Teken uit"
+  loggingOut: "Meld af"
+  success: "Suksesvol afgemeld"
+  error: "Fout met afmeld"
+
+am_ET:
+  title: "ውጣ"
+  loggingOut: "መውጣት"
+  success: "በተሳካ ሁኔታ ወጥቷል።"
+  error: "የመውጣት ስህተት"
+
+az_AZ:
+  title: "Çıxın"
+  loggingOut: "Çıxış"
+  success: "Uğurla Çıxıldı"
+  error: "Çıxış xətası"
+
+et_EE:
+  title: "Väljalogimine"
+  loggingOut: "Väljalogimine"
+  success: "Edukalt välja logitud"
+  error: "Viga väljalogimisel"
+
+gu_IN:
+  title: "લોગઆઉટ"
+  loggingOut: "લૉગ આઉટ"
+  success: "સફળતાપૂર્વક લૉગ આઉટ થયું"
+  error: "લોગ આઉટ કરવામાં ભૂલ"
+
+ha_NG:
+  title: "Fita"
+  loggingOut: "Fita"
+  success: "An Shiga Cikin Nasara"
+  error: "Kuskuren Fitarwa"
+
+ka_GE:
+  title: "გამოსვლა"
+  loggingOut: "გამოსვლა"
+  success: "წარმატებით გამოვიდა"
+  error: "შეცდომა გამოსვლისას"
+
+km_KH:
+  title: "ចេញ"
+  loggingOut: "ចេញ"
+  success: "ចេញដោយជោគជ័យ"
+  error: "កំហុសក្នុងការចេញ"
+
+kn_IN:
+  title: "ಲಾಗ್ಔಟ್"
+  loggingOut: "ಲಾಗ್ ಔಟ್ ಆಗುತ್ತಿದೆ"
+  success: "ಯಶಸ್ವಿಯಾಗಿ ಲಾಗ್ ಔಟ್ ಮಾಡಲಾಗಿದೆ"
+  error: "ಲಾಗ್ ಔಟ್ ಮಾಡುವಲ್ಲಿ ದೋಷ"
+
+lt_LT:
+  title: "Atsijungti"
+  loggingOut: "Atsijungimas"
+  success: "Sėkmingai atsijungta"
+  error: "Klaida atsijungiant"
+
+lv_LV:
+  title: "Atteikties"
+  loggingOut: "Atteikšanās"
+  success: "Veiksmīgi atteicies"
+  error: "Kļūda izejot"
+
+ml_IN:
+  title: "പുറത്തുകടക്കുക"
+  loggingOut: "ലോഗ് ഔട്ട് ചെയ്യുന്നു"
+  success: "ലോഗ് ഔട്ട് ചെയ്‌തു"
+  error: "ലോഗ് ഔട്ട് ചെയ്യുന്നതിൽ പിശക്"
+
+mr_IN:
+  title: "लॉगआउट करा"
+  loggingOut: "लॉग आउट करत आहे"
+  success: "यशस्वीरित्या लॉग आउट केले"
+  error: "लॉग आउट करताना त्रुटी"
+
+ne_NP:
+  title: "लगआउट"
+  loggingOut: "लग आउट गर्दै"
+  success: "सफलतापूर्वक लग आउट भयो"
+  error: "लग आउट गर्दा त्रुटि"
+
+pa_IN:
+  title: "ਲਾਗਆਉਟ"
+  loggingOut: "ਲੌਗ ਆਉਟ ਹੋ ਰਿਹਾ ਹੈ"
+  success: "ਸਫਲਤਾਪੂਰਵਕ ਲੌਗ ਆਉਟ ਹੋਇਆ"
+  error: "ਲੌਗ ਆਉਟ ਕਰਨ ਵਿੱਚ ਤਰੁੱਟੀ"
+
+si_LK:
+  title: "පිටවීම"
+  loggingOut: "ලොග් අවුට් වීම"
+  success: "සාර්ථකව ලොග් අවුට් විය"
+  error: "ලොග් අවුට් වීමේ දෝෂයකි"
+
+sl_SI:
+  title: "Odjava"
+  loggingOut: "Odjava"
+  success: "Uspešno odjavljen"
+  error: "Napaka pri odjavi"
+
+sr_RS:
+  title: "Одјава"
+  loggingOut: "Одјава"
+  success: "Успешно одјављен"
+  error: "Грешка при одјављивању"
+
+te_IN:
+  title: "లాగ్అవుట్"
+  loggingOut: "లాగ్ అవుట్ అవుతోంది"
+  success: "విజయవంతంగా లాగ్ అవుట్ చేయబడింది"
+  error: "లాగ్ అవుట్ చేయడంలో లోపం"
+
+tl_PH:
+  title: "Mag-logout"
+  loggingOut: "Nagla-log Out"
+  success: "Matagumpay na Naka-log Out"
+  error: "Error sa Pag-log Out"
+
+uz_UZ:
+  title: "Chiqish"
+  loggingOut: "Chiqish"
+  success: "Hisobdan muvaffaqiyatli chiqdi"
+  error: "Chiqishda xato"
+
+yo_NG:
+  title: "Jade jade"
+  loggingOut: "Wọle Jade"
+  success: "Wọle Jade ni aṣeyọri"
+  error: "Aṣiṣe Wọle Jade"

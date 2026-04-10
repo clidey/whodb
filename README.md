@@ -382,7 +382,7 @@ To enable natural language queries:
 
 ```bash
 cd core
-go run .
+go run ./cmd/whodb
 ```
 
 The backend will start on `http://localhost:8080`

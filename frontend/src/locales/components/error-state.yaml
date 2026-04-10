@@ -3,3 +3,369 @@ en_US:
   unknownError: An unknown error occurred.
   copySuccess: Copied to Clipboard
   copyLabel: Copy Error Message
+
+ar_AE:
+  title: خطأ
+  unknownError: حدث خطأ غير معروف.
+  copySuccess: تم النسخ إلى الحافظة
+  copyLabel: نسخ رسالة الخطأ
+
+de_DE:
+  title: Fehler
+  unknownError: Es ist ein unbekannter Fehler aufgetreten.
+  copySuccess: In die Zwischenablage kopiert
+  copyLabel: Fehlermeldung kopieren
+
+el_GR:
+  title: Σφάλμα
+  unknownError: Παρουσιάστηκε άγνωστο σφάλμα.
+  copySuccess: Αντιγράφηκε στο Πρόχειρο
+  copyLabel: Αντιγραφή μηνύματος λάθους
+
+en_GB:
+  title: Error
+  unknownError: An unknown error occurred.
+  copySuccess: Copied to Clipboard
+  copyLabel: Copy Error Message
+
+es_ES:
+  title: Error
+  unknownError: Se produjo un error desconocido.
+  copySuccess: Copiada al portapapeles
+  copyLabel: Copiar mensaje de error
+
+fi_FI:
+  title: Virhe
+  unknownError: Tapahtui tuntematon virhe.
+  copySuccess: Kopioitu leikepöydälle
+  copyLabel: Kopioi virheilmoitus
+
+fr_FR:
+  title: Erreur
+  unknownError: Une erreur inconnue s'est produite.
+  copySuccess: Copié dans le Presse-papiers
+  copyLabel: Copier le message d'erreur
+
+it_IT:
+  title: Errore
+  unknownError: Si è verificato un errore sconosciuto.
+  copySuccess: Copiato negli Appunti
+  copyLabel: Copia messaggio di errore
+
+iw_IL:
+  title: שְׁגִיאָה
+  unknownError: אירעה שגיאה לא ידועה.
+  copySuccess: הועתק ללוח
+  copyLabel: העתק הודעת שגיאה
+
+ja_JP:
+  title: エラー
+  unknownError: 不明なエラーが発生しました。
+  copySuccess: クリップボードにコピーされました
+  copyLabel: コピーエラーメッセージ
+
+ko_KR:
+  title: 오류
+  unknownError: 알 수 없는 오류가 발생했습니다.
+  copySuccess: 클립보드에 복사됨
+  copyLabel: 오류 메시지 복사
+
+nl_NL:
+  title: Fout
+  unknownError: Er is een onbekende fout opgetreden.
+  copySuccess: Gekopieerd naar klembord
+  copyLabel: Kopieer foutmelding
+
+pl_PL:
+  title: Błąd
+  unknownError: Wystąpił nieznany błąd.
+  copySuccess: Skopiowano do schowka
+  copyLabel: Skopiuj komunikat o błędzie
+
+pt_BR:
+  title: Erro
+  unknownError: Ocorreu um erro desconhecido.
+  copySuccess: Copiado para a área de transferência
+  copyLabel: Mensagem de erro de cópia
+
+ro_RO:
+  title: Eroare
+  unknownError: A apărut o eroare necunoscută.
+  copySuccess: Copiat în Clipboard
+  copyLabel: Copiați mesajul de eroare
+
+ru_RU:
+  title: Ошибка
+  unknownError: Произошла неизвестная ошибка.
+  copySuccess: Скопировано в буфер обмена
+  copyLabel: Копирование сообщения об ошибке
+
+sk_SK:
+  title: Chyba
+  unknownError: Vyskytla sa neznáma chyba.
+  copySuccess: Skopírované do schránky
+  copyLabel: Kopírovať chybové hlásenie
+
+sv_SE:
+  title: Fel
+  unknownError: Ett okänt fel uppstod.
+  copySuccess: Kopierade till Urklipp
+  copyLabel: Kopiera felmeddelande
+
+zh_CN:
+  title: 错误
+  unknownError: 发生未知错误。
+  copySuccess: 已复制到剪贴板
+  copyLabel: 复制错误消息
+
+zh_TW:
+  title: 錯誤
+  unknownError: 發生未知錯誤。
+  copySuccess: Copied to Clipboard
+  copyLabel: 複製錯誤訊息
+
+bg_BG:
+  title: Грешка
+  unknownError: Възникна неизвестна грешка.
+  copySuccess: Копирано в клипборда
+  copyLabel: Копиране на съобщение за грешка
+
+bn_BD:
+  title: ত্রুটি
+  unknownError: একটি অজানা ত্রুটি ঘটেছে.
+  copySuccess: ক্লিপবোর্ডে কপি করা হয়েছে
+  copyLabel: কপি ত্রুটি বার্তা
+
+ca_ES:
+  title: Error
+  unknownError: An unknown error occurred.
+  copySuccess: S'ha copiat al porta-retalls
+  copyLabel: Copia el missatge d'error
+
+cs_CZ:
+  title: Chyba
+  unknownError: Došlo k neznámé chybě.
+  copySuccess: Zkopírováno do schránky
+  copyLabel: Kopírovat chybovou zprávu
+
+da_DK:
+  title: Fejl
+  unknownError: Der opstod en ukendt fejl.
+  copySuccess: Kopieret til udklipsholder
+  copyLabel: Kopiér fejlmeddelelse
+
+fa_IR:
+  title: خطا
+  unknownError: یک خطای ناشناخته رخ داد.
+  copySuccess: در کلیپ بورد کپی شد
+  copyLabel: کپی پیغام خطا
+
+hi_IN:
+  title: गलती
+  unknownError: एक अज्ञात त्रुटि हुई।
+  copySuccess: क्लिपबोर्ड पर कॉपी किया गया
+  copyLabel: त्रुटि संदेश कॉपी करें
+
+hr_HR:
+  title: Greška
+  unknownError: Došlo je do nepoznate pogreške.
+  copySuccess: Kopirano u međuspremnik
+  copyLabel: Kopiraj poruku o pogrešci
+
+hu_HU:
+  title: Hiba
+  unknownError: Ismeretlen hiba történt.
+  copySuccess: Vágólapra másolva
+  copyLabel: Hibaüzenet másolása
+
+id_ID:
+  title: Kesalahan
+  unknownError: Terjadi kesalahan yang tidak diketahui.
+  copySuccess: Disalin ke Papan Klip
+  copyLabel: Salin Pesan Kesalahan
+
+ms_MY:
+  title: ralat
+  unknownError: Ralat tidak diketahui berlaku.
+  copySuccess: Disalin ke Papan Klip
+  copyLabel: Salin Mesej Ralat
+
+nb_NO:
+  title: Feil
+  unknownError: Det oppstod en ukjent feil.
+  copySuccess: Kopiert til utklippstavlen
+  copyLabel: Kopier feilmelding
+
+sw_KE:
+  title: Hitilafu
+  unknownError: Hitilafu isiyojulikana imetokea.
+  copySuccess: Imenakiliwa kwenye Ubao wa kunakili
+  copyLabel: Nakili Ujumbe wa Hitilafu
+
+ta_IN:
+  title: பிழை
+  unknownError: அறியப்படாத பிழை ஏற்பட்டது.
+  copySuccess: கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது
+  copyLabel: பிழைச் செய்தியை நகலெடுக்கவும்
+
+th_TH:
+  title: ข้อผิดพลาด
+  unknownError: เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ
+  copySuccess: คัดลอกไปยังคลิปบอร์ดแล้ว
+  copyLabel: คัดลอกข้อความแสดงข้อผิดพลาด
+
+tr_TR:
+  title: Hata
+  unknownError: Bilinmeyen bir hata oluştu.
+  copySuccess: Panoya kopyalandı
+  copyLabel: Hata Mesajını Kopyala
+
+uk_UA:
+  title: Помилка
+  unknownError: Сталася невідома помилка.
+  copySuccess: Скопійовано в буфер обміну
+  copyLabel: Копіювати повідомлення про помилку
+
+ur_PK:
+  title: خرابی
+  unknownError: ایک نامعلوم خرابی پیش آگئی۔
+  copySuccess: کلپ بورڈ پر کاپی کیا گیا۔
+  copyLabel: غلطی کا پیغام کاپی کریں۔
+
+vi_VN:
+  title: Lỗi
+  unknownError: Đã xảy ra lỗi không xác định.
+  copySuccess: Đã sao chép vào Clipboard
+  copyLabel: Sao chép thông báo lỗi
+
+af_ZA:
+  title: "Fout"
+  unknownError: "'n Onbekende fout het voorgekom."
+  copySuccess: "Gekopieer na knipbord"
+  copyLabel: "Kopieer foutboodskap"
+
+am_ET:
+  title: "ስህተት"
+  unknownError: "ያልታወቀ ስህተት ተከስቷል።"
+  copySuccess: "ወደ ቅንጥብ ሰሌዳ ተቀድቷል።"
+  copyLabel: "የስህተት መልእክት ቅዳ"
+
+az_AZ:
+  title: "Xəta"
+  unknownError: "Naməlum xəta baş verdi."
+  copySuccess: "Buferə kopyalandı"
+  copyLabel: "Xəta Mesajını Kopyalayın"
+
+et_EE:
+  title: "Viga"
+  unknownError: "Ilmnes tundmatu viga."
+  copySuccess: "Kopeeriti lõikelauale"
+  copyLabel: "Kopeeri veateade"
+
+gu_IN:
+  title: "ભૂલ"
+  unknownError: "એક અજાણી ભૂલ આવી."
+  copySuccess: "ક્લિપબોર્ડ પર કૉપિ કરી"
+  copyLabel: "ભૂલ સંદેશની નકલ કરો"
+
+ha_NG:
+  title: "Kuskure"
+  unknownError: "An sami kuskuren da ba a sani ba."
+  copySuccess: "An kwafi zuwa Clipboard"
+  copyLabel: "Kwafi Saƙon Kuskure"
+
+ka_GE:
+  title: "შეცდომა"
+  unknownError: "მოხდა უცნობი შეცდომა."
+  copySuccess: "კოპირებულია ბუფერში"
+  copyLabel: "შეცდომის შეტყობინების კოპირება"
+
+km_KH:
+  title: "កំហុស"
+  unknownError: "កំហុសមិនស្គាល់បានកើតឡើង។"
+  copySuccess: "បានចម្លងទៅក្ដារតម្បៀតខ្ទាស់"
+  copyLabel: "ចម្លងសារកំហុស"
+
+kn_IN:
+  title: "ದೋಷ"
+  unknownError: "ಅಜ್ಞಾತ ದೋಷ ಸಂಭವಿಸಿದೆ."
+  copySuccess: "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ"
+  copyLabel: "ದೋಷ ಸಂದೇಶವನ್ನು ನಕಲಿಸಿ"
+
+lt_LT:
+  title: "Klaida"
+  unknownError: "Įvyko nežinoma klaida."
+  copySuccess: "Nukopijuota į mainų sritį"
+  copyLabel: "Nukopijuokite klaidos pranešimą"
+
+lv_LV:
+  title: "Kļūda"
+  unknownError: "Radās nezināma kļūda."
+  copySuccess: "Kopēts starpliktuvē"
+  copyLabel: "Kopēt kļūdas ziņojumu"
+
+ml_IN:
+  title: "പിശക്"
+  unknownError: "ഒരു അജ്ഞാത പിശക് സംഭവിച്ചു."
+  copySuccess: "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി"
+  copyLabel: "പിശക് സന്ദേശം പകർത്തുക"
+
+mr_IN:
+  title: "त्रुटी"
+  unknownError: "एक अज्ञात त्रुटी आली."
+  copySuccess: "क्लिपबोर्डवर कॉपी केले"
+  copyLabel: "एरर मेसेज कॉपी करा"
+
+ne_NP:
+  title: "त्रुटि"
+  unknownError: "एउटा अज्ञात त्रुटि भयो।"
+  copySuccess: "क्लिपबोर्डमा प्रतिलिपि गरियो"
+  copyLabel: "त्रुटि सन्देश प्रतिलिपि गर्नुहोस्"
+
+pa_IN:
+  title: "ਗਲਤੀ"
+  unknownError: "ਇੱਕ ਅਗਿਆਤ ਤਰੁੱਟੀ ਆਈ ਹੈ।"
+  copySuccess: "ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ ਗਿਆ"
+  copyLabel: "ਗਲਤੀ ਸੁਨੇਹਾ ਕਾਪੀ ਕਰੋ"
+
+si_LK:
+  title: "දෝෂයකි"
+  unknownError: "නොදන්නා දෝෂයක් සිදු විය."
+  copySuccess: "පසුරු පුවරුවට පිටපත් කර ඇත"
+  copyLabel: "දෝෂ පණිවිඩය පිටපත් කරන්න"
+
+sl_SI:
+  title: "Napaka"
+  unknownError: "Prišlo je do neznane napake."
+  copySuccess: "Kopirano v odložišče"
+  copyLabel: "Kopiraj sporočilo o napaki"
+
+sr_RS:
+  title: "Грешка"
+  unknownError: "Дошло је до непознате грешке."
+  copySuccess: "Копирано у међуспремник"
+  copyLabel: "Копирај поруку о грешци"
+
+te_IN:
+  title: "లోపం"
+  unknownError: "తెలియని లోపం సంభవించింది."
+  copySuccess: "క్లిప్‌బోర్డ్‌కి కాపీ చేయబడింది"
+  copyLabel: "దోష సందేశాన్ని కాపీ చేయండి"
+
+tl_PH:
+  title: "Error"
+  unknownError: "May naganap na hindi kilalang error."
+  copySuccess: "Kinopya sa Clipboard"
+  copyLabel: "Kopyahin ang Error Message"
+
+uz_UZ:
+  title: "Xato"
+  unknownError: "Noma'lum xatolik yuz berdi."
+  copySuccess: "Buferga nusxalandi"
+  copyLabel: "Xato xabarini nusxalash"
+
+yo_NG:
+  title: "Asise"
+  unknownError: "Aṣiṣe aimọ kan ṣẹlẹ."
+  copySuccess: "Ti daakọ si Agekuru"
+  copyLabel: "Daakọ Ifiranṣẹ Aṣiṣe"

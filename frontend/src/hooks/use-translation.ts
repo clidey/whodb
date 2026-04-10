@@ -16,7 +16,7 @@
 
 import { type ReactNode, useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
-import { loadTranslationsSync, getTranslation } from '@/utils/i18n';
+import { loadTranslationsSync, getTranslation, getPluralCategory } from '@/utils/i18n';
 
 /**
  * Hook for loading and using translations from YAML locale files.
@@ -25,13 +25,15 @@ import { loadTranslationsSync, getTranslation } from '@/utils/i18n';
  * @param componentPath - Path to the YAML file relative to locales directory (e.g., "components/sidebar")
  * @returns Object containing:
  *   - t: Translation function that accepts a key and optional interpolation params
- *   - isLoading: Whether translations are currently being loaded
  *   - language: The current language code
  *
  * @example
  * ```tsx
  * const { t } = useTranslation('components/sidebar');
  * return <span>{t('menuItem')}</span>;
+ *
+ * // Pluralization: automatically selects key_one / key_other etc.
+ * t('rowCount', { count: 5 })  // uses rowCount_other for English
  * ```
  */
 export const useTranslation = (componentPath: string) => {
@@ -39,25 +41,23 @@ export const useTranslation = (componentPath: string) => {
     const [translations, setTranslations] = useState<Record<string, string>>(() =>
         loadTranslationsSync(componentPath, language)
     );
-    const [isLoading, setIsLoading] = useState(false);
-
     useEffect(() => {
         setTranslations(loadTranslationsSync(componentPath, language));
     }, [componentPath, language]);
 
     /**
-     * Translates a key with optional interpolation.
+     * Translates a key with optional interpolation and automatic pluralization.
+     *
      * - String/number params: returns a string (e.g., `t('greeting', { name: 'Alice' })`)
-     * - ReactNode params (JSX elements): returns ReactNode, allowing translated strings
-     *   to contain embedded components like links that translators can freely reorder.
+     * - ReactNode params (JSX elements): returns ReactNode
+     * - Numeric `count` param: selects plural form via `key_one`, `key_other`, etc.
      *
      * @example
      * ```tsx
-     * // String interpolation → string
-     * t('greeting', { name: 'Alice' })
-     *
-     * // JSX interpolation → ReactNode
-     * t('details', { link: <a href="/privacy">Privacy Policy</a> })
+     * t('greeting', { name: 'Alice' })                         // string interpolation
+     * t('details', { link: <a href="/privacy">Policy</a> })    // JSX interpolation
+     * t('rowCount', { count: 1 })                               // → "1 row" (key_one)
+     * t('rowCount', { count: 5 })                               // → "5 rows" (key_other)
      * ```
      */
     const t: {
@@ -67,7 +67,7 @@ export const useTranslation = (componentPath: string) => {
         (key: string, params: Record<string, ReactNode>): ReactNode;
     } = (key: string, fallbackOrParams?: string | Record<string, any>): any => {
         if (typeof fallbackOrParams !== 'object' || fallbackOrParams === null) {
-            return getTranslation(translations, key, fallbackOrParams);
+            return getTranslation(translations, key, language, fallbackOrParams);
         }
 
         const hasJsx = Object.values(fallbackOrParams).some(
@@ -75,11 +75,24 @@ export const useTranslation = (componentPath: string) => {
         );
 
         if (!hasJsx) {
-            return getTranslation(translations, key, fallbackOrParams);
+            return getTranslation(translations, key, language, fallbackOrParams);
         }
 
-        // JSX interpolation: split template on {placeholders} and interleave with ReactNode values
-        const template = translations[key] || key;
+        // JSX interpolation path — also handles pluralization
+        let resolvedKey = key;
+        if (typeof fallbackOrParams.count === 'number') {
+            const category = getPluralCategory(language, fallbackOrParams.count);
+            const pluralKey = `${key}_${category}`;
+            if (translations[pluralKey]) {
+                resolvedKey = pluralKey;
+            }
+        }
+
+        const template = translations[resolvedKey] || resolvedKey;
+        if (!template.includes('{')) {
+            return template;
+        }
+
         const parts: ReactNode[] = [];
         let lastIndex = 0;
         const regex = /\{(\w+)\}/g;
@@ -100,5 +113,5 @@ export const useTranslation = (componentPath: string) => {
         return parts;
     };
 
-    return { t, isLoading, language };
+    return { t, language };
 };

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import {FC, useCallback, useEffect, useMemo} from "react";
+import {FC, Suspense, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
-import {isEEMode} from "@/config/ee-imports";
 import {getAppName} from "@/config/features";
 import {useTranslation} from "@/hooks/use-translation";
 import {
@@ -38,6 +37,7 @@ import {type SupportedLanguage, SUPPORTED_LANGUAGES} from "@/utils/languages";
 import {ExternalLink} from "../../utils/external-links";
 import {usePageSize} from "../../hooks/use-page-size";
 import {AwsProvidersSection} from "../../components/aws";
+import {getComponent} from "../../config/component-registry";
 import {useSettingsConfigQuery} from "@graphql";
 
 export const SettingsPage: FC = () => {
@@ -131,14 +131,7 @@ export const SettingsPage: FC = () => {
                         </p>
                     </div>
                     <div className="flex flex-col gap-xl py-6">
-                        {isEEMode ? (
-                            <div className="flex flex-col gap-sm">
-                                <h3 className="text-base">
-                                    {t('eeNoTelemetry', { appName })}
-                                </h3>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4">
                                 <h3 className="text-base">
                                     {t('telemetryDescription', { appName })}&nbsp;
                                     {t('dataCollectionDetails', {
@@ -161,7 +154,6 @@ export const SettingsPage: FC = () => {
                                 </div>
                                 <Separator className="mt-4" />
                             </div>
-                        )}
                         <div className="flex flex-col gap-sm mb-2">
                             <p className="text-lg font-bold">
                                 {t('personalizeTitle')}
@@ -288,27 +280,37 @@ export const SettingsPage: FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {isEEMode && (
-                            <div className="flex justify-between">
-                                <Label>{t('language')}</Label>
-                                <Select value={language} onValueChange={handleLanguageChange}>
-                                    <SelectTrigger id="language" className="w-[200px]">
-                                        <SelectValue placeholder={t('selectLanguage')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
-                                            <SelectItem key={code} value={code} data-value={code}>{name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                        <div className="flex justify-between">
+                            <Label>{t('language')}</Label>
+                            <Select value={language} onValueChange={handleLanguageChange}>
+                                <SelectTrigger id="language" className="w-[200px]">
+                                    <SelectValue placeholder={t('selectLanguage')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+                                        <SelectItem key={code} value={code} data-value={code}>{name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {cloudProvidersEnabled && (
                             <>
                                 <Separator className="my-6" />
                                 <AwsProvidersSection />
                             </>
                         )}
+                        {(() => {
+                            const BridgeDriverPanel = getComponent('bridge-driver-panel');
+                            if (!BridgeDriverPanel) return null;
+                            return (
+                                <>
+                                    <Separator className="my-6" />
+                                    <Suspense fallback={null}>
+                                        <BridgeDriverPanel />
+                                    </Suspense>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

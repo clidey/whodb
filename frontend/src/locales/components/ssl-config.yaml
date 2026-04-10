@@ -33,3 +33,2077 @@ en_US:
   modes.enabled.description: Enable TLS with certificate verification
   modes.insecure.label: Insecure
   modes.insecure.description: Enable TLS, skip certificate verification
+
+ar_AE:
+  sslMode: وضع SSL
+  selectMode: حدد وضع SSL
+  caCertificate: شهادة كاليفورنيا
+  clientCertificate: شهادة العميل
+  clientKey: مفتاح العميل الخاص
+  serverName: تجاوز اسم الخادم
+  serverNamePlaceholder: اسم المضيف للتحقق من الشهادة
+  optional: خياري
+  pasteContent: لصق بيم
+  chooseFile: اختر ملف
+  switchToPaste: قم بالتبديل للصق محتوى الشهادة
+  switchToFile: قم بالتبديل إلى منتقي الملفات
+  fileReadError: فشل في قراءة الملف
+  clear: واضح
+  contentLoaded: تم تحميل الشهادة
+  httpWarning: "تحذير: أنت تستخدم اتصالاً غير آمن (HTTP). سيتم إرسال بيانات الشهادة بشكل غير مشفر."
+  privateKeyHttpWarning: لا ينبغي تحميل المفاتيح الخاصة عبر اتصالات غير آمنة.
+  systemCaOnly: تستخدم قاعدة البيانات هذه شهادات النظام CA للتحقق. تحميل CA المخصص غير مدعوم.
+  modes.disabled.label: عاجز
+  modes.disabled.description: لا يوجد تشفير SSL/TLS
+  modes.preferred.label: المفضل
+  modes.preferred.description: استخدم TLS إذا كان الخادم يدعمه
+  modes.required.label: مطلوب
+  modes.required.description: يتطلب TLS، تخطي التحقق من الشهادة
+  modes.verify-ca.label: التحقق من المرجع المصدق
+  modes.verify-ca.description: التحقق من شهادة الخادم مقابل CA
+  modes.verify-identity.label: التحقق من الهوية
+  modes.verify-identity.description: تحقق من CA واسم مضيف الخادم
+  modes.enabled.label: ممكّن
+  modes.enabled.description: تمكين TLS مع التحقق من الشهادة
+  modes.insecure.label: غير آمن
+  modes.insecure.description: تمكين TLS، تخطي التحقق من الشهادة
+
+de_DE:
+  sslMode: SSL-Modus
+  selectMode: Wählen Sie SSL-Modus
+  caCertificate: CA-Zertifikat
+  clientCertificate: Kundenzertifikat
+  clientKey: Privater Clientschlüssel
+  serverName: Überschreibung des Servernamens
+  serverNamePlaceholder: Hostname für die Zertifikatsüberprüfung
+  optional: optional
+  pasteContent: PEM einfügen
+  chooseFile: Wählen Sie Datei
+  switchToPaste: Wechseln Sie zum Einfügen des Zertifikatsinhalts
+  switchToFile: Wechseln Sie zur Dateiauswahl
+  fileReadError: Datei konnte nicht gelesen werden
+  clear: Klar
+  contentLoaded: Zertifikat geladen
+  httpWarning: "Warnung: Sie verwenden eine unsichere (HTTP-)Verbindung. Die Zertifikatsdaten werden unverschlüsselt übertragen."
+  privateKeyHttpWarning: Private Schlüssel sollten nicht über unsichere Verbindungen hochgeladen werden.
+  systemCaOnly: Diese Datenbank verwendet System-CA-Zertifikate zur Überprüfung. Der benutzerdefinierte CA-Upload wird nicht unterstützt.
+  modes.disabled.label: Deaktiviert
+  modes.disabled.description: Keine SSL/TLS-Verschlüsselung
+  modes.preferred.label: Bevorzugt
+  modes.preferred.description: Verwenden Sie TLS, wenn der Server dies unterstützt
+  modes.required.label: Erforderlich
+  modes.required.description: TLS erforderlich, Zertifikatsüberprüfung überspringen
+  modes.verify-ca.label: CA überprüfen
+  modes.verify-ca.description: Überprüfen Sie das Serverzertifikat anhand der Zertifizierungsstelle
+  modes.verify-identity.label: Identität überprüfen
+  modes.verify-identity.description: Überprüfen Sie den CA- und Server-Hostnamen
+  modes.enabled.label: Ermöglicht
+  modes.enabled.description: Aktivieren Sie TLS mit Zertifikatsüberprüfung
+  modes.insecure.label: Unsicher
+  modes.insecure.description: TLS aktivieren, Zertifikatsüberprüfung überspringen
+
+el_GR:
+  sslMode: Λειτουργία SSL
+  selectMode: Επιλέξτε Λειτουργία SSL
+  caCertificate: Πιστοποιητικό ΑΠ
+  clientCertificate: Πιστοποιητικό Πελάτη
+  clientKey: Ιδιωτικό κλειδί πελάτη
+  serverName: Παράκαμψη ονόματος διακομιστή
+  serverNamePlaceholder: όνομα κεντρικού υπολογιστή για επαλήθευση πιστοποιητικού
+  optional: προαιρετικός
+  pasteContent: Επικόλληση PEM
+  chooseFile: Επιλέξτε Αρχείο
+  switchToPaste: Εναλλαγή σε επικόλληση περιεχομένου πιστοποιητικού
+  switchToFile: Μετάβαση στο εργαλείο επιλογής αρχείων
+  fileReadError: Αποτυχία ανάγνωσης του αρχείου
+  clear: Σαφής
+  contentLoaded: Φορτώθηκε το πιστοποιητικό
+  httpWarning: "Προειδοποίηση: Χρησιμοποιείτε μη ασφαλή σύνδεση (HTTP). Τα δεδομένα του πιστοποιητικού θα μεταδοθούν χωρίς κρυπτογράφηση."
+  privateKeyHttpWarning: Τα ιδιωτικά κλειδιά δεν πρέπει να μεταφορτώνονται μέσω μη ασφαλών συνδέσεων.
+  systemCaOnly: Αυτή η βάση δεδομένων χρησιμοποιεί πιστοποιητικά CA συστήματος για επαλήθευση. Η προσαρμοσμένη μεταφόρτωση CA δεν υποστηρίζεται.
+  modes.disabled.label: Ανάπηρος
+  modes.disabled.description: Χωρίς κρυπτογράφηση SSL/TLS
+  modes.preferred.label: Προνομιούχος
+  modes.preferred.description: Χρησιμοποιήστε το TLS εάν το υποστηρίζει ο διακομιστής
+  modes.required.label: Υποχρεούμαι
+  modes.required.description: Απαιτείται TLS, παράβλεψη επαλήθευσης πιστοποιητικού
+  modes.verify-ca.label: Επαλήθευση CA
+  modes.verify-ca.description: Επαληθεύστε το πιστοποιητικό διακομιστή έναντι CA
+  modes.verify-identity.label: Επαλήθευση ταυτότητας
+  modes.verify-identity.description: Επαληθεύστε CA και όνομα κεντρικού υπολογιστή διακομιστή
+  modes.enabled.label: Ενεργοποιήθηκε
+  modes.enabled.description: Ενεργοποίηση TLS με επαλήθευση πιστοποιητικού
+  modes.insecure.label: Ανασφαλής
+  modes.insecure.description: Ενεργοποίηση TLS, παράβλεψη επαλήθευσης πιστοποιητικού
+
+en_GB:
+  sslMode: SSL Mode
+  selectMode: Select SSL Mode
+  caCertificate: CA Certificate
+  clientCertificate: Client Certificate
+  clientKey: Client Private Key
+  serverName: Server Name Override
+  serverNamePlaceholder: hostname for certificate verification
+  optional: optional
+  pasteContent: Paste PEM
+  chooseFile: Choose File
+  switchToPaste: Switch to paste certificate content
+  switchToFile: Switch to file picker
+  fileReadError: Failed to read file
+  clear: Clear
+  contentLoaded: Certificate loaded
+  httpWarning: "Warning: You are using an insecure (HTTP) connection. Certificate data will be transmitted unencrypted."
+  privateKeyHttpWarning: Private keys should not be uploaded over insecure connections.
+  systemCaOnly: This database uses system CA certificates for verification. Custom CA upload is not supported.
+  modes.disabled.label: Disabled
+  modes.disabled.description: No SSL/TLS encryption
+  modes.preferred.label: Preferred
+  modes.preferred.description: Use TLS if server supports it
+  modes.required.label: Required
+  modes.required.description: Require TLS, skip certificate verification
+  modes.verify-ca.label: Verify CA
+  modes.verify-ca.description: Verify server certificate against CA
+  modes.verify-identity.label: Verify Identity
+  modes.verify-identity.description: Verify CA and server hostname
+  modes.enabled.label: Enabled
+  modes.enabled.description: Enable TLS with certificate verification
+  modes.insecure.label: Insecure
+  modes.insecure.description: Enable TLS, skip certificate verification
+
+es_ES:
+  sslMode: Modo SSL
+  selectMode: Seleccione el modo SSL
+  caCertificate: Certificado de CA
+  clientCertificate: Certificado de cliente
+  clientKey: Clave privada del cliente
+  serverName: Anulación del nombre del servidor
+  serverNamePlaceholder: hostname for certificate verification
+  optional: opcional
+  pasteContent: Pegar PEM
+  chooseFile: Elija archivo
+  switchToPaste: Switch to paste certificate content
+  switchToFile: Cambiar al selector de archivos
+  fileReadError: No se pudo leer el archivo
+  clear: Clara
+  contentLoaded: Certificado cargado
+  httpWarning: "Advertencia: estás utilizando una conexión no segura (HTTP). Los datos del certificado se transmitirán sin cifrar."
+  privateKeyHttpWarning: Las claves privadas no deben cargarse a través de conexiones inseguras.
+  systemCaOnly: Esta base de datos utiliza certificados de CA del sistema para su verificación. Custom CA upload is not supported.
+  modes.disabled.label: Desactivada
+  modes.disabled.description: Sin cifrado SSL/TLS
+  modes.preferred.label: Privilegiada
+  modes.preferred.description: Utilice TLS si el servidor lo admite
+  modes.required.label: Requerida
+  modes.required.description: Require TLS, skip certificate verification
+  modes.verify-ca.label: Verificar CA
+  modes.verify-ca.description: Verificar el certificado del servidor contra CA
+  modes.verify-identity.label: Verificar identidad
+  modes.verify-identity.description: Verifique la CA y el nombre de host del servidor
+  modes.enabled.label: Activada
+  modes.enabled.description: Habilite TLS con verificación de certificado
+  modes.insecure.label: Insegura
+  modes.insecure.description: Habilite TLS, omita la verificación del certificado
+
+fi_FI:
+  sslMode: SSL-tila
+  selectMode: Valitse SSL-tila
+  caCertificate: CA-sertifikaatti
+  clientCertificate: Asiakasvarmenne
+  clientKey: Asiakkaan yksityinen avain
+  serverName: Palvelimen nimen ohitus
+  serverNamePlaceholder: isäntänimi varmenteen vahvistamista varten
+  optional: valinnainen
+  pasteContent: Liitä PEM
+  chooseFile: Valitse Tiedosto
+  switchToPaste: Vaihda liittämään varmenteen sisältö
+  switchToFile: Vaihda tiedostovalitsimeen
+  fileReadError: Tiedoston lukeminen epäonnistui
+  clear: Selkeä
+  contentLoaded: Varmenne ladattu
+  httpWarning: "Varoitus: Käytät suojaamatonta (HTTP) yhteyttä. Varmennetiedot lähetetään salaamattomana."
+  privateKeyHttpWarning: Yksityisiä avaimia ei saa ladata suojaamattomien yhteyksien kautta.
+  systemCaOnly: Tämä tietokanta käyttää järjestelmän CA-varmenteita varmentamiseen. Mukautettua CA-lähetystä ei tueta.
+  modes.disabled.label: Ei käytössä
+  modes.disabled.description: Ei SSL/TLS-salausta
+  modes.preferred.label: Suositeltava
+  modes.preferred.description: "Käytä TLS:ää, jos palvelin tukee sitä"
+  modes.required.label: Pakollinen
+  modes.required.description: Vaadi TLS, ohita varmenteen vahvistus
+  modes.verify-ca.label: Vahvista CA
+  modes.verify-ca.description: "Tarkista palvelimen varmenne CA:ta vastaan"
+  modes.verify-identity.label: Vahvista henkilöllisyys
+  modes.verify-identity.description: Tarkista CA ja palvelimen isäntänimi
+  modes.enabled.label: Käytössä
+  modes.enabled.description: Ota TLS käyttöön varmenteen vahvistuksella
+  modes.insecure.label: Epävarma
+  modes.insecure.description: Ota TLS käyttöön, ohita varmenteen vahvistus
+
+fr_FR:
+  sslMode: Mode SSL
+  selectMode: Sélectionnez le mode SSL
+  caCertificate: Certificat d'autorité de certification
+  clientCertificate: Certificat client
+  clientKey: Clé privée du client
+  serverName: Remplacement du nom du serveur
+  serverNamePlaceholder: nom d'hôte pour la vérification du certificat
+  optional: facultative
+  pasteContent: Coller PEM
+  chooseFile: Choisir un fichier
+  switchToPaste: Passer à coller le contenu du certificat
+  switchToFile: Passer au sélecteur de fichiers
+  fileReadError: Échec de la lecture du fichier
+  clear: Claire
+  contentLoaded: Certificat chargé
+  httpWarning: "Avertissement : Vous utilisez une connexion non sécurisée (HTTP). Les données du certificat seront transmises en clair."
+  privateKeyHttpWarning: Les clés privées ne doivent pas être téléchargées via des connexions non sécurisées.
+  systemCaOnly: Cette base de données utilise des certificats CA système pour la vérification. Le téléchargement d’autorité de certification personnalisé n’est pas pris en charge.
+  modes.disabled.label: Désactivé
+  modes.disabled.description: Pas de cryptage SSL/TLS
+  modes.preferred.label: Préférée
+  modes.preferred.description: Utilisez TLS si le serveur le prend en charge
+  modes.required.label: Requis
+  modes.required.description: Exiger TLS, ignorer la vérification du certificat
+  modes.verify-ca.label: Vérifier l'autorité de certification
+  modes.verify-ca.description: Vérifier le certificat du serveur auprès de l'autorité de certification
+  modes.verify-identity.label: Vérifier l'identité
+  modes.verify-identity.description: Vérifier l'autorité de certification et le nom d'hôte du serveur
+  modes.enabled.label: Activé
+  modes.enabled.description: Activer TLS avec la vérification du certificat
+  modes.insecure.label: Précaire
+  modes.insecure.description: Activer TLS, ignorer la vérification du certificat
+
+it_IT:
+  sslMode: Modalità SSL
+  selectMode: Seleziona la modalità SSL
+  caCertificate: Certificato CA
+  clientCertificate: Certificato cliente
+  clientKey: Chiave privata del cliente
+  serverName: Sostituzione del nome del server
+  serverNamePlaceholder: nome host per la verifica del certificato
+  optional: opzionale
+  pasteContent: Incolla PEM
+  chooseFile: Scegli File
+  switchToPaste: Passa a incollare il contenuto del certificato
+  switchToFile: Passa al selettore file
+  fileReadError: Impossibile leggere il file
+  clear: Chiara
+  contentLoaded: Certificato caricato
+  httpWarning: "Avviso: stai utilizzando una connessione non sicura (HTTP). I dati del certificato verranno trasmessi in chiaro."
+  privateKeyHttpWarning: Le chiavi private non devono essere caricate su connessioni non sicure.
+  systemCaOnly: Questo database utilizza i certificati CA di sistema per la verifica. Il caricamento CA personalizzato non è supportato.
+  modes.disabled.label: Disabilitata
+  modes.disabled.description: Nessuna crittografia SSL/TLS
+  modes.preferred.label: Preferito
+  modes.preferred.description: Utilizza TLS se il server lo supporta
+  modes.required.label: Necessaria
+  modes.required.description: Richiedi TLS, salta la verifica del certificato
+  modes.verify-ca.label: Verifica CA
+  modes.verify-ca.description: Verificare il certificato del server rispetto alla CA
+  modes.verify-identity.label: Verifica identità
+  modes.verify-identity.description: Verificare la CA e il nome host del server
+  modes.enabled.label: Abilitata
+  modes.enabled.description: Abilita TLS con la verifica del certificato
+  modes.insecure.label: Insicura
+  modes.insecure.description: Abilita TLS, salta la verifica del certificato
+
+iw_IL:
+  sslMode: מצב SSL
+  selectMode: בחר במצב SSL
+  caCertificate: תעודת CA
+  clientCertificate: תעודת לקוח
+  clientKey: מפתח פרטי ללקוח
+  serverName: עקיפה של שם שרת
+  serverNamePlaceholder: שם מארח לאימות אישור
+  optional: אופציונלי
+  pasteContent: הדבק PEM
+  chooseFile: בחר קובץ
+  switchToPaste: עבור להדבקת תוכן אישור
+  switchToFile: עבור לבורר הקבצים
+  fileReadError: קריאת הקובץ נכשלה
+  clear: בָּרוּר
+  contentLoaded: האישור נטען
+  httpWarning: "אזהרה: אתה משתמש בחיבור לא מאובטח (HTTP). נתוני האישור ישודרו ללא מוצפן."
+  privateKeyHttpWarning: אין להעלות מפתחות פרטיים דרך חיבורים לא מאובטחים.
+  systemCaOnly: מסד נתונים זה משתמש בתעודות CA של המערכת לצורך אימות. העלאת CA מותאמת אישית אינה נתמכת.
+  modes.disabled.label: נָכֶה
+  modes.disabled.description: אין הצפנת SSL/TLS
+  modes.preferred.label: מועדף
+  modes.preferred.description: השתמש ב-TLS אם השרת תומך בכך
+  modes.required.label: דָרוּשׁ
+  modes.required.description: דרוש TLS, דלג על אימות אישור
+  modes.verify-ca.label: אמת CA
+  modes.verify-ca.description: אמת את אישור השרת מול CA
+  modes.verify-identity.label: אמת זהות
+  modes.verify-identity.description: אמת את CA ואת שם המארח של השרת
+  modes.enabled.label: מופעל
+  modes.enabled.description: אפשר TLS עם אימות אישור
+  modes.insecure.label: לֹא בָּטוּחַ
+  modes.insecure.description: אפשר TLS, דלג על אימות אישור
+
+ja_JP:
+  sslMode: SSLモード
+  selectMode: SSLモードの選択
+  caCertificate: CA証明書
+  clientCertificate: クライアント証明書
+  clientKey: クライアント秘密鍵
+  serverName: サーバー名のオーバーライド
+  serverNamePlaceholder: 証明書検証用のホスト名
+  optional: オプション
+  pasteContent: PEM を貼り付ける
+  chooseFile: ファイルを選択
+  switchToPaste: 証明書の内容を貼り付けるように切り替えます
+  switchToFile: ファイルピッカーに切り替える
+  fileReadError: ファイルの読み取りに失敗しました
+  clear: クリア
+  contentLoaded: 証明書がロードされました
+  httpWarning: "警告: 安全でない (HTTP) 接続を使用しています。 証明書データは暗号化されずに送信されます。"
+  privateKeyHttpWarning: 秘密キーは、安全でない接続を介してアップロードしないでください。
+  systemCaOnly: このデータベースは検証にシステム CA 証明書を使用します。 カスタム CA のアップロードはサポートされていません。
+  modes.disabled.label: 無効
+  modes.disabled.description: SSL/TLS暗号化なし
+  modes.preferred.label: 好ましい
+  modes.preferred.description: サーバーがサポートしている場合は TLS を使用します
+  modes.required.label: 必須
+  modes.required.description: TLS を要求し、証明書の検証をスキップします
+  modes.verify-ca.label: CA の検証
+  modes.verify-ca.description: サーバー証明書を CA に対して検証する
+  modes.verify-identity.label: 本人確認
+  modes.verify-identity.description: CA とサーバーのホスト名を確認する
+  modes.enabled.label: 有効
+  modes.enabled.description: 証明書検証で TLS を有効にする
+  modes.insecure.label: 不安
+  modes.insecure.description: TLS を有効にし、証明書の検証をスキップします
+
+ko_KR:
+  sslMode: SSL 모드
+  selectMode: SSL 모드 선택
+  caCertificate: CA 인증서
+  clientCertificate: 클라이언트 인증서
+  clientKey: 클라이언트 개인 키
+  serverName: 서버 이름 재정의
+  serverNamePlaceholder: 인증서 확인을 위한 호스트 이름
+  optional: 선택 과목
+  pasteContent: PEM 붙여넣기
+  chooseFile: 파일 선택
+  switchToPaste: 인증서 내용 붙여넣기로 전환
+  switchToFile: 파일 선택기로 전환
+  fileReadError: 파일을 읽지 못했습니다.
+  clear: 분명한
+  contentLoaded: 인증서가 로드됨
+  httpWarning: "경고: 안전하지 않은(HTTP) 연결을 사용하고 있습니다. 인증서 데이터는 암호화되지 않은 상태로 전송됩니다."
+  privateKeyHttpWarning: 개인 키는 안전하지 않은 연결을 통해 업로드하면 안 됩니다.
+  systemCaOnly: 이 데이터베이스는 확인을 위해 시스템 CA 인증서를 사용합니다. 사용자 정의 CA 업로드는 지원되지 않습니다.
+  modes.disabled.label: 장애가 있는
+  modes.disabled.description: SSL/TLS 암호화 없음
+  modes.preferred.label: 우선의
+  modes.preferred.description: 서버가 지원하는 경우 TLS 사용
+  modes.required.label: 필수의
+  modes.required.description: TLS 필요, 인증서 확인 건너뛰기
+  modes.verify-ca.label: CA 확인
+  modes.verify-ca.description: CA에 대해 서버 인증서 확인
+  modes.verify-identity.label: 신원 확인
+  modes.verify-identity.description: CA 및 서버 호스트 이름 확인
+  modes.enabled.label: 활성화됨
+  modes.enabled.description: 인증서 확인으로 TLS 활성화
+  modes.insecure.label: 불안정한
+  modes.insecure.description: TLS 활성화, 인증서 확인 건너뛰기
+
+nl_NL:
+  sslMode: SSL-modus
+  selectMode: Selecteer SSL-modus
+  caCertificate: CA-certificaat
+  clientCertificate: Klantcertificaat
+  clientKey: Privésleutel van klant
+  serverName: Servernaam overschrijven
+  serverNamePlaceholder: hostnaam voor certificaatverificatie
+  optional: optioneel
+  pasteContent: PEM plakken
+  chooseFile: Kies Bestand
+  switchToPaste: Schakel over naar het plakken van certificaatinhoud
+  switchToFile: Schakel over naar de bestandskiezer
+  fileReadError: Kan het bestand niet lezen
+  clear: Duidelijk
+  contentLoaded: Certificaat geladen
+  httpWarning: "Waarschuwing: U gebruikt een onveilige (HTTP) verbinding. Certificaatgegevens worden onversleuteld verzonden."
+  privateKeyHttpWarning: Privésleutels mogen niet via onveilige verbindingen worden geüpload.
+  systemCaOnly: Deze database gebruikt systeem-CA-certificaten voor verificatie. Aangepaste CA-upload wordt niet ondersteund.
+  modes.disabled.label: Gehandicapt
+  modes.disabled.description: Geen SSL/TLS-codering
+  modes.preferred.label: Voorkeur
+  modes.preferred.description: Gebruik TLS als de server dit ondersteunt
+  modes.required.label: Vereist
+  modes.required.description: TLS vereisen, certificaatverificatie overslaan
+  modes.verify-ca.label: CA verifiëren
+  modes.verify-ca.description: Verifieer het servercertificaat tegen CA
+  modes.verify-identity.label: Identiteit verifiëren
+  modes.verify-identity.description: Controleer CA en serverhostnaam
+  modes.enabled.label: Ingeschakeld
+  modes.enabled.description: Schakel TLS in met certificaatverificatie
+  modes.insecure.label: Onzeker
+  modes.insecure.description: Schakel TLS in, sla certificaatverificatie over
+
+pl_PL:
+  sslMode: Tryb SSL
+  selectMode: Wybierz Tryb SSL
+  caCertificate: Certyfikat CA
+  clientCertificate: Certyfikat Klienta
+  clientKey: Klucz prywatny klienta
+  serverName: Zastąpienie nazwy serwera
+  serverNamePlaceholder: nazwa hosta do weryfikacji certyfikatu
+  optional: fakultatywny
+  pasteContent: Wklej PEM
+  chooseFile: Wybierz Plik
+  switchToPaste: Przełącz, aby wkleić treść certyfikatu
+  switchToFile: Przełącz na selektor plików
+  fileReadError: Nie udało się odczytać pliku
+  clear: Jasne
+  contentLoaded: Certyfikat załadowany
+  httpWarning: "Ostrzeżenie: używasz niezabezpieczonego połączenia (HTTP). Dane certyfikatu będą przesyłane w postaci niezaszyfrowanej."
+  privateKeyHttpWarning: Kluczy prywatnych nie należy przesyłać przez niezabezpieczone połączenia.
+  systemCaOnly: Ta baza danych wykorzystuje do weryfikacji systemowe certyfikaty CA. Przesyłanie niestandardowego urzędu certyfikacji nie jest obsługiwane.
+  modes.disabled.label: Wyłączony
+  modes.disabled.description: Brak szyfrowania SSL/TLS
+  modes.preferred.label: Preferowane
+  modes.preferred.description: Użyj protokołu TLS, jeśli serwer go obsługuje
+  modes.required.label: Wymagany
+  modes.required.description: Wymagaj TLS, pomiń weryfikację certyfikatu
+  modes.verify-ca.label: Zweryfikuj urząd certyfikacji
+  modes.verify-ca.description: Sprawdź certyfikat serwera w stosunku do urzędu certyfikacji
+  modes.verify-identity.label: Zweryfikuj tożsamość
+  modes.verify-identity.description: Sprawdź urząd certyfikacji i nazwę hosta serwera
+  modes.enabled.label: Włączony
+  modes.enabled.description: Włącz TLS z weryfikacją certyfikatu
+  modes.insecure.label: Niepewny
+  modes.insecure.description: Włącz TLS, pomiń weryfikację certyfikatu
+
+pt_BR:
+  sslMode: Modo SSL
+  selectMode: Selecione o modo SSL
+  caCertificate: Certificado CA
+  clientCertificate: Certificado de cliente
+  clientKey: Chave privada do cliente
+  serverName: Substituição de nome de servidor
+  serverNamePlaceholder: nome do host para verificação de certificado
+  optional: opcional
+  pasteContent: Colar PEM
+  chooseFile: Escolha arquivo
+  switchToPaste: Alternar para colar o conteúdo do certificado
+  switchToFile: Mudar para o seletor de arquivos
+  fileReadError: Falha ao ler o arquivo
+  clear: Clara
+  contentLoaded: Certificado carregado
+  httpWarning: "Aviso: você está usando uma conexão insegura (HTTP). Os dados do certificado serão transmitidos sem criptografia."
+  privateKeyHttpWarning: As chaves privadas não devem ser carregadas em conexões inseguras.
+  systemCaOnly: Este banco de dados usa certificados de CA do sistema para verificação. O upload de CA personalizado não é compatível.
+  modes.disabled.label: Desabilitada
+  modes.disabled.description: Sem criptografia SSL/TLS
+  modes.preferred.label: Preferida
+  modes.preferred.description: Use TLS se o servidor suportar
+  modes.required.label: Obrigatória
+  modes.required.description: Exigir TLS, ignorar a verificação do certificado
+  modes.verify-ca.label: Verifique a autoridade de certificação
+  modes.verify-ca.description: Verifique o certificado do servidor em relação à CA
+  modes.verify-identity.label: Verifique a identidade
+  modes.verify-identity.description: Verifique a CA e o nome do host do servidor
+  modes.enabled.label: Habilitada
+  modes.enabled.description: Habilite TLS com verificação de certificado
+  modes.insecure.label: Insegura
+  modes.insecure.description: Ative o TLS, ignore a verificação do certificado
+
+ro_RO:
+  sslMode: Modul SSL
+  selectMode: Selectați modul SSL
+  caCertificate: Certificat CA
+  clientCertificate: Certificat de client
+  clientKey: Cheie privată a clientului
+  serverName: Înlocuirea numelui serverului
+  serverNamePlaceholder: numele gazdă pentru verificarea certificatului
+  optional: opțional
+  pasteContent: Lipiți PEM
+  chooseFile: Alegeți Fișier
+  switchToPaste: Comutați la lipirea conținutului certificatului
+  switchToFile: Comutați la selectorul de fișiere
+  fileReadError: Nu s-a putut citi fișierul
+  clear: Clar
+  contentLoaded: Certificat încărcat
+  httpWarning: "Avertisment: utilizați o conexiune nesigură (HTTP). Datele certificatului vor fi transmise necriptate."
+  privateKeyHttpWarning: Cheile private nu trebuie încărcate prin conexiuni nesigure.
+  systemCaOnly: Această bază de date utilizează certificate CA de sistem pentru verificare. Încărcarea CA personalizată nu este acceptată.
+  modes.disabled.label: Dezactivat
+  modes.disabled.description: Fără criptare SSL/TLS
+  modes.preferred.label: Preferat
+  modes.preferred.description: Utilizați TLS dacă serverul îl acceptă
+  modes.required.label: Necesar
+  modes.required.description: Solicitați TLS, omiteți verificarea certificatului
+  modes.verify-ca.label: Verificați CA
+  modes.verify-ca.description: Verificați certificatul serverului față de CA
+  modes.verify-identity.label: Verificați identitatea
+  modes.verify-identity.description: Verificați CA și numele de gazdă a serverului
+  modes.enabled.label: Activat
+  modes.enabled.description: Activați TLS cu verificarea certificatului
+  modes.insecure.label: Nesigur
+  modes.insecure.description: Activați TLS, omiteți verificarea certificatului
+
+ru_RU:
+  sslMode: SSL-режим
+  selectMode: Выберите режим SSL
+  caCertificate: Сертификат ЦС
+  clientCertificate: Сертификат клиента
+  clientKey: Закрытый ключ клиента
+  serverName: Переопределение имени сервера
+  serverNamePlaceholder: имя хоста для проверки сертификата
+  optional: необязательный
+  pasteContent: Вставить ПЕМ
+  chooseFile: Выберите файл
+  switchToPaste: Переключиться на вставку содержимого сертификата
+  switchToFile: Переключиться на выбор файлов
+  fileReadError: Не удалось прочитать файл
+  clear: Прозрачный
+  contentLoaded: Сертификат загружен
+  httpWarning: "Внимание: вы используете небезопасное (HTTP) соединение. Данные сертификата будут передаваться в незашифрованном виде."
+  privateKeyHttpWarning: Закрытые ключи не следует загружать через небезопасные соединения.
+  systemCaOnly: Эта база данных использует для проверки сертификаты ЦС системы. Загрузка пользовательского центра сертификации не поддерживается.
+  modes.disabled.label: Неполноценный
+  modes.disabled.description: Нет шифрования SSL/TLS
+  modes.preferred.label: Предпочтительный
+  modes.preferred.description: Используйте TLS, если сервер его поддерживает.
+  modes.required.label: Необходимый
+  modes.required.description: Требовать TLS, пропустить проверку сертификата
+  modes.verify-ca.label: Подтвердить ЦС
+  modes.verify-ca.description: Проверка сертификата сервера на соответствие CA
+  modes.verify-identity.label: Подтвердить личность
+  modes.verify-identity.description: Проверьте центр сертификации и имя хоста сервера.
+  modes.enabled.label: Включено
+  modes.enabled.description: Включить TLS с проверкой сертификата
+  modes.insecure.label: Ненадежный
+  modes.insecure.description: Включить TLS, пропустить проверку сертификата
+
+sk_SK:
+  sslMode: Režim SSL
+  selectMode: Vyberte režim SSL
+  caCertificate: Certifikát CA
+  clientCertificate: Klientsky certifikát
+  clientKey: Súkromný kľúč klienta
+  serverName: Prepísanie názvu servera
+  serverNamePlaceholder: názov hostiteľa na overenie certifikátu
+  optional: voliteľné
+  pasteContent: Prilepte PEM
+  chooseFile: Vyberte Súbor
+  switchToPaste: Prepnúť na prilepenie obsahu certifikátu
+  switchToFile: Prepnúť na výber súborov
+  fileReadError: Súbor sa nepodarilo prečítať
+  clear: Jasné
+  contentLoaded: Certifikát načítaný
+  httpWarning: "Upozornenie: Používate nezabezpečené pripojenie (HTTP). Údaje certifikátu sa budú prenášať nešifrovane."
+  privateKeyHttpWarning: Súkromné ​​kľúče by sa nemali odovzdávať cez nezabezpečené pripojenia.
+  systemCaOnly: Táto databáza používa na overenie systémové certifikáty CA. Vlastné nahrávanie CA nie je podporované.
+  modes.disabled.label: Zakázané
+  modes.disabled.description: Žiadne šifrovanie SSL/TLS
+  modes.preferred.label: Preferované
+  modes.preferred.description: Použite TLS, ak to server podporuje
+  modes.required.label: Povinné
+  modes.required.description: Vyžadovať TLS, preskočiť overenie certifikátu
+  modes.verify-ca.label: Overte CA
+  modes.verify-ca.description: Overte certifikát servera voči CA
+  modes.verify-identity.label: Overiť identitu
+  modes.verify-identity.description: Overte CA a názov hostiteľa servera
+  modes.enabled.label: Povolené
+  modes.enabled.description: Povoliť TLS s overením certifikátu
+  modes.insecure.label: Neistý
+  modes.insecure.description: Povoliť TLS, preskočiť overenie certifikátu
+
+sv_SE:
+  sslMode: SSL-läge
+  selectMode: Välj SSL-läge
+  caCertificate: CA-certifikat
+  clientCertificate: Kundcertifikat
+  clientKey: Kundens privata nyckel
+  serverName: Åsidosätt servernamn
+  serverNamePlaceholder: värdnamn för certifikatverifiering
+  optional: frivillig
+  pasteContent: Klistra in PEM
+  chooseFile: Välj Arkiv
+  switchToPaste: Byt till att klistra in certifikatinnehåll
+  switchToFile: Byt till filväljare
+  fileReadError: Det gick inte att läsa filen
+  clear: Rensa
+  contentLoaded: Certifikatet laddat
+  httpWarning: "Varning: Du använder en osäker (HTTP) anslutning. Certifikatdata kommer att överföras okrypterat."
+  privateKeyHttpWarning: Privata nycklar ska inte laddas upp via osäkra anslutningar.
+  systemCaOnly: Denna databas använder systemets CA-certifikat för verifiering. Anpassad CA-uppladdning stöds inte.
+  modes.disabled.label: Inaktiverad
+  modes.disabled.description: Ingen SSL/TLS-kryptering
+  modes.preferred.label: Föredraget
+  modes.preferred.description: Använd TLS om servern stöder det
+  modes.required.label: Nödvändig
+  modes.required.description: Kräv TLS, hoppa över certifikatverifiering
+  modes.verify-ca.label: Verifiera CA
+  modes.verify-ca.description: Verifiera servercertifikatet mot CA
+  modes.verify-identity.label: Verifiera identitet
+  modes.verify-identity.description: Verifiera CA och serverns värdnamn
+  modes.enabled.label: Aktiverad
+  modes.enabled.description: Aktivera TLS med certifikatverifiering
+  modes.insecure.label: Osäker
+  modes.insecure.description: Aktivera TLS, hoppa över certifikatverifiering
+
+zh_CN:
+  sslMode: SSL模式
+  selectMode: 选择 SSL 模式
+  caCertificate: CA证书
+  clientCertificate: 客户证书
+  clientKey: 客户端私钥
+  serverName: 服务器名称覆盖
+  serverNamePlaceholder: 用于证书验证的主机名
+  optional: 选修的
+  pasteContent: 粘贴PEM
+  chooseFile: 选择文件
+  switchToPaste: 切换到粘贴证书内容
+  switchToFile: 切换到文件选择器
+  fileReadError: 读取文件失败
+  clear: 清除
+  contentLoaded: 证书已加载
+  httpWarning: 警告：您正在使用不安全的 (HTTP) 连接。 证书数据将以未加密的方式传输。
+  privateKeyHttpWarning: 不应通过不安全的连接上传私钥。
+  systemCaOnly: 该数据库使用系统CA证书进行验证。 不支持自定义 CA 上传。
+  modes.disabled.label: 残疾人
+  modes.disabled.description: 无 SSL/TLS 加密
+  modes.preferred.label: 首选
+  modes.preferred.description: 如果服务器支持，请使用 TLS
+  modes.required.label: 必需的
+  modes.required.description: 需要 TLS，跳过证书验证
+  modes.verify-ca.label: 验证CA
+  modes.verify-ca.description: 根据 CA 验证服务器证书
+  modes.verify-identity.label: 验证身份
+  modes.verify-identity.description: 验证 CA 和服务器主机名
+  modes.enabled.label: 启用
+  modes.enabled.description: 启用 TLS 并进行证书验证
+  modes.insecure.label: 不安全感
+  modes.insecure.description: 启用 TLS，跳过证书验证
+
+zh_TW:
+  sslMode: SSL模式
+  selectMode: 選擇 SSL 模式
+  caCertificate: CA憑證
+  clientCertificate: 客戶證書
+  clientKey: 客戶端私鑰
+  serverName: 伺服器名稱覆蓋
+  serverNamePlaceholder: 用於憑證驗證的主機名
+  optional: 選修的
+  pasteContent: 貼上PEM
+  chooseFile: 選擇文件
+  switchToPaste: 切換到貼上證書內容
+  switchToFile: 切換到文件選擇器
+  fileReadError: 讀取文件失敗
+  clear: 清除
+  contentLoaded: 證書已載入
+  httpWarning: 警告：您正在使用不安全的 (HTTP) 連線。 證書資料將以未加密的方式傳輸。
+  privateKeyHttpWarning: 不應透過不安全的連線上傳私鑰。
+  systemCaOnly: 此資料庫使用系統CA憑證進行驗證。 不支援自訂 CA 上傳。
+  modes.disabled.label: 殘障人士
+  modes.disabled.description: 無 SSL/TLS 加密
+  modes.preferred.label: 首選
+  modes.preferred.description: 如果伺服器支援，請使用 TLS
+  modes.required.label: 必需的
+  modes.required.description: 需要 TLS，跳過憑證驗證
+  modes.verify-ca.label: 驗證CA
+  modes.verify-ca.description: 根據 CA 驗證伺服器憑證
+  modes.verify-identity.label: 驗證身份
+  modes.verify-identity.description: 驗證 CA 和伺服器主機名
+  modes.enabled.label: 啟用
+  modes.enabled.description: 啟用 TLS 並進行憑證驗證
+  modes.insecure.label: 不安全感
+  modes.insecure.description: 啟用 TLS，跳過憑證驗證
+
+bg_BG:
+  sslMode: SSL режим
+  selectMode: Изберете SSL режим
+  caCertificate: CA сертификат
+  clientCertificate: Клиентски сертификат
+  clientKey: Частен ключ на клиента
+  serverName: Замяна на името на сървъра
+  serverNamePlaceholder: име на хост за проверка на сертификата
+  optional: по желание
+  pasteContent: Поставете PEM
+  chooseFile: Изберете Файл
+  switchToPaste: Превключване към поставяне на съдържание на сертификат
+  switchToFile: Превключване към инструмента за избор на файлове
+  fileReadError: Неуспешно четене на файла
+  clear: ясно
+  contentLoaded: Сертификатът е зареден
+  httpWarning: "Предупреждение: Използвате несигурна (HTTP) връзка. Данните от сертификата ще се предават некриптирани."
+  privateKeyHttpWarning: Частните ключове не трябва да се качват през незащитени връзки.
+  systemCaOnly: Тази база данни използва системни CA сертификати за проверка. Персонализирано качване на CA не се поддържа.
+  modes.disabled.label: Забранено
+  modes.disabled.description: Няма SSL/TLS криптиране
+  modes.preferred.label: Предпочитан
+  modes.preferred.description: Използвайте TLS, ако сървърът го поддържа
+  modes.required.label: Задължително
+  modes.required.description: Изискване на TLS, пропускане на проверката на сертификата
+  modes.verify-ca.label: Проверете CA
+  modes.verify-ca.description: Проверете сертификата на сървъра срещу CA
+  modes.verify-identity.label: Потвърдете самоличността
+  modes.verify-identity.description: Проверете CA и името на хоста на сървъра
+  modes.enabled.label: Активирано
+  modes.enabled.description: Активирайте TLS с проверка на сертификата
+  modes.insecure.label: Несигурен
+  modes.insecure.description: Активирайте TLS, пропуснете проверката на сертификата
+
+bn_BD:
+  sslMode: SSL মোড
+  selectMode: SSL মোড নির্বাচন করুন
+  caCertificate: CA সার্টিফিকেট
+  clientCertificate: ক্লায়েন্ট সার্টিফিকেট
+  clientKey: ক্লায়েন্ট প্রাইভেট কী
+  serverName: সার্ভারের নাম ওভাররাইড
+  serverNamePlaceholder: সার্টিফিকেট যাচাইয়ের জন্য হোস্টনাম
+  optional: ঐচ্ছিক
+  pasteContent: PEM পেস্ট করুন
+  chooseFile: ফাইল নির্বাচন করুন
+  switchToPaste: শংসাপত্রের সামগ্রী পেস্ট করতে স্যুইচ করুন
+  switchToFile: ফাইল পিকারে স্যুইচ করুন
+  fileReadError: ফাইল পড়তে ব্যর্থ হয়েছে
+  clear: পরিষ্কার
+  contentLoaded: শংসাপত্র লোড হয়েছে
+  httpWarning: "সতর্কতা: আপনি একটি অনিরাপদ (HTTP) সংযোগ ব্যবহার করছেন৷ শংসাপত্রের ডেটা এনক্রিপ্ট ছাড়াই প্রেরণ করা হবে।"
+  privateKeyHttpWarning: ব্যক্তিগত কীগুলি অনিরাপদ সংযোগগুলিতে আপলোড করা উচিত নয়৷
+  systemCaOnly: এই ডাটাবেস যাচাইয়ের জন্য সিস্টেম CA শংসাপত্র ব্যবহার করে। কাস্টম CA আপলোড সমর্থিত নয়৷
+  modes.disabled.label: অক্ষম
+  modes.disabled.description: কোন SSL/TLS এনক্রিপশন নেই
+  modes.preferred.label: পছন্দের
+  modes.preferred.description: সার্ভার সমর্থন করলে TLS ব্যবহার করুন
+  modes.required.label: প্রয়োজন
+  modes.required.description: TLS প্রয়োজন, শংসাপত্র যাচাইকরণ এড়িয়ে যান
+  modes.verify-ca.label: CA যাচাই করুন
+  modes.verify-ca.description: CA এর বিরুদ্ধে সার্ভার সার্টিফিকেট যাচাই করুন
+  modes.verify-identity.label: পরিচয় যাচাই করুন
+  modes.verify-identity.description: CA এবং সার্ভার হোস্টনাম যাচাই করুন
+  modes.enabled.label: সক্রিয়
+  modes.enabled.description: শংসাপত্র যাচাইকরণের সাথে TLS সক্ষম করুন৷
+  modes.insecure.label: অনিরাপদ
+  modes.insecure.description: TLS সক্ষম করুন, শংসাপত্র যাচাইকরণ এড়িয়ে যান
+
+ca_ES:
+  sslMode: Mode SSL
+  selectMode: Seleccioneu el mode SSL
+  caCertificate: Certificat CA
+  clientCertificate: Certificat de client
+  clientKey: Clau privada del client
+  serverName: Substitució del nom del servidor
+  serverNamePlaceholder: nom d'amfitrió per a la verificació del certificat
+  optional: opcional
+  pasteContent: Enganxeu PEM
+  chooseFile: Trieu Fitxer
+  switchToPaste: Canvia a enganxar el contingut del certificat
+  switchToFile: Canvia al selector de fitxers
+  fileReadError: No s'ha pogut llegir el fitxer
+  clear: Clar
+  contentLoaded: Certificate loaded
+  httpWarning: "Avís: esteu utilitzant una connexió insegura (HTTP). Les dades del certificat es transmetran sense xifrar."
+  privateKeyHttpWarning: Les claus privades no s'han de penjar a través de connexions insegures.
+  systemCaOnly: Aquesta base de dades utilitza certificats CA del sistema per a la verificació. No s'admet la càrrega de CA personalitzada.
+  modes.disabled.label: Inhabilitat
+  modes.disabled.description: No hi ha xifratge SSL/TLS
+  modes.preferred.label: Preferent
+  modes.preferred.description: Utilitzeu TLS si el servidor ho admet
+  modes.required.label: Obligatori
+  modes.required.description: Requereix TLS, omet la verificació del certificat
+  modes.verify-ca.label: Verifiqueu CA
+  modes.verify-ca.description: Verifiqueu el certificat del servidor amb CA
+  modes.verify-identity.label: Verificar la identitat
+  modes.verify-identity.description: Verifiqueu la CA i el nom d'amfitrió del servidor
+  modes.enabled.label: Habilitat
+  modes.enabled.description: Activa TLS amb la verificació del certificat
+  modes.insecure.label: Insegur
+  modes.insecure.description: Activa TLS, salta la verificació del certificat
+
+cs_CZ:
+  sslMode: Režim SSL
+  selectMode: Vyberte režim SSL
+  caCertificate: Certifikát CA
+  clientCertificate: Klientský certifikát
+  clientKey: Soukromý klíč klienta
+  serverName: Přepsání názvu serveru
+  serverNamePlaceholder: název hostitele pro ověření certifikátu
+  optional: volitelný
+  pasteContent: Vložit PEM
+  chooseFile: Vyberte Soubor
+  switchToPaste: Přepněte na vložení obsahu certifikátu
+  switchToFile: Přepnout na výběr souborů
+  fileReadError: Soubor se nepodařilo přečíst
+  clear: Jasný
+  contentLoaded: Certifikát načten
+  httpWarning: "Upozornění: Používáte nezabezpečené připojení (HTTP). Data certifikátu budou přenášena nešifrovaně."
+  privateKeyHttpWarning: Soukromé klíče by se neměly nahrávat přes nezabezpečená připojení.
+  systemCaOnly: Tato databáze používá k ověření systémové certifikáty CA. Vlastní nahrávání CA není podporováno.
+  modes.disabled.label: Zakázáno
+  modes.disabled.description: Žádné šifrování SSL/TLS
+  modes.preferred.label: Preferováno
+  modes.preferred.description: Použijte TLS, pokud jej server podporuje
+  modes.required.label: Požadovaný
+  modes.required.description: Vyžadovat TLS, přeskočit ověření certifikátu
+  modes.verify-ca.label: Ověřte CA
+  modes.verify-ca.description: Ověřte certifikát serveru vůči CA
+  modes.verify-identity.label: Ověřte identitu
+  modes.verify-identity.description: Ověřte CA a název hostitele serveru
+  modes.enabled.label: Povoleno
+  modes.enabled.description: Povolit TLS s ověřením certifikátu
+  modes.insecure.label: Nejistý
+  modes.insecure.description: Povolit TLS, přeskočit ověření certifikátu
+
+da_DK:
+  sslMode: SSL-tilstand
+  selectMode: Vælg SSL-tilstand
+  caCertificate: CA-certifikat
+  clientCertificate: Kundecertifikat
+  clientKey: Klient privat nøgle
+  serverName: Tilsidesættelse af servernavn
+  serverNamePlaceholder: værtsnavn til certifikatbekræftelse
+  optional: valgfri
+  pasteContent: Indsæt PEM
+  chooseFile: Vælg Fil
+  switchToPaste: Skift til at indsætte certifikatindhold
+  switchToFile: Skift til filvælger
+  fileReadError: Filen kunne ikke læses
+  clear: Klar
+  contentLoaded: Certifikatet er indlæst
+  httpWarning: "Advarsel: Du bruger en usikker (HTTP) forbindelse. Certifikatdata vil blive transmitteret ukrypteret."
+  privateKeyHttpWarning: Private nøgler bør ikke uploades via usikre forbindelser.
+  systemCaOnly: Denne database bruger system-CA-certifikater til verifikation. Brugerdefineret CA-upload understøttes ikke.
+  modes.disabled.label: Handicappet
+  modes.disabled.description: Ingen SSL/TLS-kryptering
+  modes.preferred.label: Foretrukken
+  modes.preferred.description: Brug TLS, hvis serveren understøtter det
+  modes.required.label: Påkrævet
+  modes.required.description: Kræv TLS, spring certifikatbekræftelse over
+  modes.verify-ca.label: Bekræft CA
+  modes.verify-ca.description: Bekræft servercertifikatet mod CA
+  modes.verify-identity.label: Bekræft identitet
+  modes.verify-identity.description: Bekræft CA og serverens værtsnavn
+  modes.enabled.label: Aktiveret
+  modes.enabled.description: Aktiver TLS med certifikatbekræftelse
+  modes.insecure.label: Usikker
+  modes.insecure.description: Aktiver TLS, spring certifikatbekræftelse over
+
+fa_IR:
+  sslMode: حالت SSL
+  selectMode: حالت SSL را انتخاب کنید
+  caCertificate: گواهی CA
+  clientCertificate: گواهی مشتری
+  clientKey: کلید خصوصی مشتری
+  serverName: نادیده گرفتن نام سرور
+  serverNamePlaceholder: نام میزبان برای تأیید گواهی
+  optional: اختیاری
+  pasteContent: PEM را بچسبانید
+  chooseFile: فایل را انتخاب کنید
+  switchToPaste: به جای‌گذاری محتوای گواهی تغییر دهید
+  switchToFile: به انتخابگر فایل بروید
+  fileReadError: فایل خوانده نشد
+  clear: پاک کردن
+  contentLoaded: گواهی بارگیری شد
+  httpWarning: "هشدار: شما از یک اتصال ناامن (HTTP) استفاده می کنید. داده های گواهی بدون رمز ارسال می شود."
+  privateKeyHttpWarning: کلیدهای خصوصی نباید از طریق اتصالات ناامن آپلود شوند.
+  systemCaOnly: این پایگاه داده از گواهینامه های CA سیستم برای تأیید استفاده می کند. آپلود CA سفارشی پشتیبانی نمی شود.
+  modes.disabled.label: از کار افتاده است
+  modes.disabled.description: بدون رمزگذاری SSL/TLS
+  modes.preferred.label: ترجیح داده شده است
+  modes.preferred.description: اگر سرور از آن پشتیبانی می کند از TLS استفاده کنید
+  modes.required.label: مورد نیاز
+  modes.required.description: نیاز به TLS، رد شدن از تأیید گواهی
+  modes.verify-ca.label: CA را تأیید کنید
+  modes.verify-ca.description: تأیید گواهی سرور در برابر CA
+  modes.verify-identity.label: تایید هویت
+  modes.verify-identity.description: CA و نام میزبان سرور را تأیید کنید
+  modes.enabled.label: فعال شد
+  modes.enabled.description: TLS را با تأیید گواهی فعال کنید
+  modes.insecure.label: ناامن
+  modes.insecure.description: TLS را فعال کنید، تأیید گواهی را رد کنید
+
+hi_IN:
+  sslMode: एसएसएल मोड
+  selectMode: एसएसएल मोड का चयन करें
+  caCertificate: सीए प्रमाणपत्र
+  clientCertificate: ग्राहक प्रमाणपत्र
+  clientKey: ग्राहक निजी कुंजी
+  serverName: सर्वर नाम ओवरराइड
+  serverNamePlaceholder: प्रमाणपत्र सत्यापन के लिए होस्टनाम
+  optional: वैकल्पिक
+  pasteContent: पीईएम चिपकाएँ
+  chooseFile: फाइलें चुनें
+  switchToPaste: प्रमाणपत्र सामग्री चिपकाने पर स्विच करें
+  switchToFile: फ़ाइल पिकर पर स्विच करें
+  fileReadError: फ़ाइल पढ़ने में विफल
+  clear: स्पष्ट
+  contentLoaded: प्रमाणपत्र लोड किया गया
+  httpWarning: "चेतावनी: आप एक असुरक्षित (HTTP) कनेक्शन का उपयोग कर रहे हैं। प्रमाणपत्र डेटा अनएन्क्रिप्टेड प्रसारित किया जाएगा।"
+  privateKeyHttpWarning: असुरक्षित कनेक्शन पर निजी कुंजियाँ अपलोड नहीं की जानी चाहिए।
+  systemCaOnly: यह डेटाबेस सत्यापन के लिए सिस्टम CA प्रमाणपत्र का उपयोग करता है। कस्टम CA अपलोड समर्थित नहीं है.
+  modes.disabled.label: अक्षम
+  modes.disabled.description: कोई एसएसएल/टीएलएस एन्क्रिप्शन नहीं
+  modes.preferred.label: पसंदीदा
+  modes.preferred.description: यदि सर्वर इसका समर्थन करता है तो टीएलएस का उपयोग करें
+  modes.required.label: आवश्यक
+  modes.required.description: टीएलएस की आवश्यकता है, प्रमाणपत्र सत्यापन छोड़ें
+  modes.verify-ca.label: सीए को सत्यापित करें
+  modes.verify-ca.description: CA के विरुद्ध सर्वर प्रमाणपत्र सत्यापित करें
+  modes.verify-identity.label: पहचान सत्यापित करें
+  modes.verify-identity.description: सीए और सर्वर होस्टनाम सत्यापित करें
+  modes.enabled.label: सक्रिय
+  modes.enabled.description: प्रमाणपत्र सत्यापन के साथ टीएलएस सक्षम करें
+  modes.insecure.label: असुरक्षित
+  modes.insecure.description: टीएलएस सक्षम करें, प्रमाणपत्र सत्यापन छोड़ें
+
+hr_HR:
+  sslMode: SSL način
+  selectMode: Odaberite SSL način
+  caCertificate: CA certifikat
+  clientCertificate: Certifikat klijenta
+  clientKey: Privatni ključ klijenta
+  serverName: Nadjačavanje naziva poslužitelja
+  serverNamePlaceholder: naziv hosta za provjeru certifikata
+  optional: neobavezan
+  pasteContent: Zalijepite PEM
+  chooseFile: Odaberite Datoteka
+  switchToPaste: Prijeđi na lijepljenje sadržaja certifikata
+  switchToFile: Prebaci se na birač datoteka
+  fileReadError: Neuspješno čitanje datoteke
+  clear: Jasan
+  contentLoaded: Certifikat je učitan
+  httpWarning: "Upozorenje: koristite nesigurnu (HTTP) vezu. Podaci certifikata prenosit će se nekriptirani."
+  privateKeyHttpWarning: Privatni ključevi ne bi se trebali učitavati preko nesigurnih veza.
+  systemCaOnly: Ova baza podataka koristi CA certifikate sustava za provjeru. Prilagođeni CA prijenos nije podržan.
+  modes.disabled.label: Onesposobljeno
+  modes.disabled.description: Nema SSL/TLS enkripcije
+  modes.preferred.label: Preferirano
+  modes.preferred.description: Koristite TLS ako ga poslužitelj podržava
+  modes.required.label: Potreban
+  modes.required.description: Zahtijevaj TLS, preskoči provjeru certifikata
+  modes.verify-ca.label: Potvrdite CA
+  modes.verify-ca.description: Provjerite poslužiteljski certifikat protiv CA
+  modes.verify-identity.label: Potvrdite identitet
+  modes.verify-identity.description: Provjerite CA i naziv hosta poslužitelja
+  modes.enabled.label: Omogućeno
+  modes.enabled.description: Omogući TLS s provjerom certifikata
+  modes.insecure.label: Nesiguran
+  modes.insecure.description: Omogući TLS, preskoči provjeru certifikata
+
+hu_HU:
+  sslMode: SSL mód
+  selectMode: Válassza az SSL módot
+  caCertificate: CA tanúsítvány
+  clientCertificate: Ügyféltanúsítvány
+  clientKey: Ügyfél privát kulcsa
+  serverName: Szervernév felülírása
+  serverNamePlaceholder: gazdagépnév a tanúsítvány ellenőrzéséhez
+  optional: választható
+  pasteContent: Illessze be a PEM-et
+  chooseFile: Válassza a Fájl lehetőséget
+  switchToPaste: Váltson a tanúsítvány tartalmának beillesztésére
+  switchToFile: Váltás a fájlválasztóra
+  fileReadError: Nem sikerült beolvasni a fájlt
+  clear: Világos
+  contentLoaded: Tanúsítvány betöltve
+  httpWarning: "Figyelmeztetés: Nem biztonságos (HTTP) kapcsolatot használ. A tanúsítvány adatai titkosítatlanul kerülnek továbbításra."
+  privateKeyHttpWarning: A privát kulcsokat nem szabad nem biztonságos kapcsolatokon keresztül feltölteni.
+  systemCaOnly: Ez az adatbázis rendszer CA-tanúsítványokat használ az ellenőrzéshez. Az egyéni CA-feltöltés nem támogatott.
+  modes.disabled.label: Letiltva
+  modes.disabled.description: Nincs SSL/TLS titkosítás
+  modes.preferred.label: Előnyben részesített
+  modes.preferred.description: Használja a TLS-t, ha a szerver támogatja
+  modes.required.label: Kívánt
+  modes.required.description: TLS megkövetelése, hagyja ki a tanúsítvány ellenőrzését
+  modes.verify-ca.label: Ellenőrizze a CA
+  modes.verify-ca.description: Ellenőrizze a kiszolgáló tanúsítványát a CA ellen
+  modes.verify-identity.label: Igazolja személyazonosságát
+  modes.verify-identity.description: Ellenőrizze a CA és a kiszolgáló gazdagépnevét
+  modes.enabled.label: Engedélyezve
+  modes.enabled.description: TLS engedélyezése a tanúsítvány ellenőrzésével
+  modes.insecure.label: Bizonytalan
+  modes.insecure.description: Engedélyezze a TLS-t, hagyja ki a tanúsítvány ellenőrzését
+
+id_ID:
+  sslMode: Modus SSL
+  selectMode: Pilih Mode SSL
+  caCertificate: Sertifikat CA
+  clientCertificate: Sertifikat Klien
+  clientKey: Kunci Pribadi Klien
+  serverName: Penggantian Nama Server
+  serverNamePlaceholder: nama host untuk verifikasi sertifikat
+  optional: opsional
+  pasteContent: Tempel PEM
+  chooseFile: Pilih File
+  switchToPaste: Beralih untuk menempelkan konten sertifikat
+  switchToFile: Beralih ke pemilih file
+  fileReadError: Gagal membaca file
+  clear: Jernih
+  contentLoaded: Sertifikat dimuat
+  httpWarning: "Peringatan: Anda menggunakan koneksi (HTTP) yang tidak aman. Data sertifikat akan dikirimkan tanpa terenkripsi."
+  privateKeyHttpWarning: Kunci pribadi tidak boleh diunggah melalui koneksi yang tidak aman.
+  systemCaOnly: Basis data ini menggunakan sertifikat CA sistem untuk verifikasi. Unggahan CA khusus tidak didukung.
+  modes.disabled.label: Dengan disabilitas
+  modes.disabled.description: Tidak ada enkripsi SSL/TLS
+  modes.preferred.label: Lebih disukai
+  modes.preferred.description: Gunakan TLS jika server mendukungnya
+  modes.required.label: Diperlukan
+  modes.required.description: Memerlukan TLS, lewati verifikasi sertifikat
+  modes.verify-ca.label: Verifikasi CA
+  modes.verify-ca.description: Verifikasi sertifikat server terhadap CA
+  modes.verify-identity.label: Verifikasi Identitas
+  modes.verify-identity.description: Verifikasi CA dan nama host server
+  modes.enabled.label: Diaktifkan
+  modes.enabled.description: Aktifkan TLS dengan verifikasi sertifikat
+  modes.insecure.label: Merasa tidak aman
+  modes.insecure.description: Aktifkan TLS, lewati verifikasi sertifikat
+
+ms_MY:
+  sslMode: Mod SSL
+  selectMode: Pilih Mod SSL
+  caCertificate: Sijil CA
+  clientCertificate: Sijil Pelanggan
+  clientKey: Kunci Peribadi Pelanggan
+  serverName: Ganti Nama Pelayan
+  serverNamePlaceholder: nama hos untuk pengesahan sijil
+  optional: pilihan
+  pasteContent: Tampal PEM
+  chooseFile: Pilih Fail
+  switchToPaste: Tukar kepada tampal kandungan sijil
+  switchToFile: Tukar kepada pemilih fail
+  fileReadError: Gagal membaca fail
+  clear: Jelas
+  contentLoaded: Sijil dimuatkan
+  httpWarning: "Amaran: Anda menggunakan sambungan tidak selamat (HTTP). Data sijil akan dihantar tanpa disulitkan."
+  privateKeyHttpWarning: Kunci peribadi tidak boleh dimuat naik melalui sambungan yang tidak selamat.
+  systemCaOnly: Pangkalan data ini menggunakan sijil CA sistem untuk pengesahan. Muat naik CA tersuai tidak disokong.
+  modes.disabled.label: Dilumpuhkan
+  modes.disabled.description: Tiada penyulitan SSL/TLS
+  modes.preferred.label: Diutamakan
+  modes.preferred.description: Gunakan TLS jika pelayan menyokongnya
+  modes.required.label: Diperlukan
+  modes.required.description: Memerlukan TLS, langkau pengesahan sijil
+  modes.verify-ca.label: Sahkan CA
+  modes.verify-ca.description: Sahkan sijil pelayan terhadap CA
+  modes.verify-identity.label: Sahkan Identiti
+  modes.verify-identity.description: Sahkan CA dan nama hos pelayan
+  modes.enabled.label: Didayakan
+  modes.enabled.description: Dayakan TLS dengan pengesahan sijil
+  modes.insecure.label: tidak selamat
+  modes.insecure.description: Dayakan TLS, langkau pengesahan sijil
+
+nb_NO:
+  sslMode: SSL-modus
+  selectMode: Velg SSL-modus
+  caCertificate: CA-sertifikat
+  clientCertificate: Klientsertifikat
+  clientKey: Klient privat nøkkel
+  serverName: Overstyring av servernavn
+  serverNamePlaceholder: vertsnavn for sertifikatverifisering
+  optional: valgfri
+  pasteContent: Lim inn PEM
+  chooseFile: Velg Fil
+  switchToPaste: Bytt til å lime inn sertifikatinnhold
+  switchToFile: Bytt til filvelger
+  fileReadError: Kunne ikke lese filen
+  clear: Klar
+  contentLoaded: Sertifikatet er lastet
+  httpWarning: "Advarsel: Du bruker en usikker (HTTP) tilkobling. Sertifikatdata vil bli overført ukryptert."
+  privateKeyHttpWarning: Private nøkler skal ikke lastes opp over usikre tilkoblinger.
+  systemCaOnly: Denne databasen bruker system-CA-sertifikater for verifisering. Tilpasset CA-opplasting støttes ikke.
+  modes.disabled.label: Funksjonshemmet
+  modes.disabled.description: Ingen SSL/TLS-kryptering
+  modes.preferred.label: Foretrukket
+  modes.preferred.description: Bruk TLS hvis serveren støtter det
+  modes.required.label: Obligatorisk
+  modes.required.description: Krev TLS, hopp over sertifikatverifisering
+  modes.verify-ca.label: Bekreft CA
+  modes.verify-ca.description: Bekreft serversertifikatet mot CA
+  modes.verify-identity.label: Bekreft identitet
+  modes.verify-identity.description: Bekreft CA og serverens vertsnavn
+  modes.enabled.label: Aktivert
+  modes.enabled.description: Aktiver TLS med sertifikatverifisering
+  modes.insecure.label: Utrygg
+  modes.insecure.description: Aktiver TLS, hopp over sertifikatverifisering
+
+sw_KE:
+  sslMode: Njia ya SSL
+  selectMode: Chagua Njia ya SSL
+  caCertificate: Cheti cha CA
+  clientCertificate: Cheti cha Mteja
+  clientKey: Ufunguo wa Kibinafsi wa Mteja
+  serverName: Kubatilisha Jina la Seva
+  serverNamePlaceholder: jina la mwenyeji kwa uthibitishaji wa cheti
+  optional: hiari
+  pasteContent: Bandika PEM
+  chooseFile: Chagua Faili
+  switchToPaste: Badili ili ubandike maudhui ya cheti
+  switchToFile: Badili hadi kiteua faili
+  fileReadError: Imeshindwa kusoma faili
+  clear: Wazi
+  contentLoaded: Cheti kimepakiwa
+  httpWarning: "Onyo: Unatumia muunganisho usio salama (HTTP). Data ya cheti itatumwa bila kusimba."
+  privateKeyHttpWarning: Funguo za faragha hazipaswi kupakiwa kupitia miunganisho isiyo salama.
+  systemCaOnly: Hifadhidata hii hutumia vyeti vya CA vya mfumo kwa uthibitishaji. Upakiaji maalum wa CA hautumiki.
+  modes.disabled.label: Imezimwa
+  modes.disabled.description: Hakuna usimbaji fiche wa SSL/TLS
+  modes.preferred.label: Inapendekezwa
+  modes.preferred.description: Tumia TLS ikiwa seva inaiunga mkono
+  modes.required.label: Inahitajika
+  modes.required.description: Inahitaji TLS, ruka uthibitishaji wa cheti
+  modes.verify-ca.label: Thibitisha CA
+  modes.verify-ca.description: Thibitisha cheti cha seva dhidi ya CA
+  modes.verify-identity.label: Thibitisha Utambulisho
+  modes.verify-identity.description: Thibitisha CA na jina la mpangishi wa seva
+  modes.enabled.label: Imewashwa
+  modes.enabled.description: Washa TLS na uthibitishaji wa cheti
+  modes.insecure.label: Kutokujiamini
+  modes.insecure.description: Washa TLS, ruka uthibitishaji wa cheti
+
+ta_IN:
+  sslMode: SSL பயன்முறை
+  selectMode: SSL பயன்முறையைத் தேர்ந்தெடுக்கவும்
+  caCertificate: CA சான்றிதழ்
+  clientCertificate: வாடிக்கையாளர் சான்றிதழ்
+  clientKey: கிளையண்ட் தனிப்பட்ட விசை
+  serverName: சேவையக பெயர் மேலெழுதுதல்
+  serverNamePlaceholder: சான்றிதழ் சரிபார்ப்புக்கான ஹோஸ்ட்பெயர்
+  optional: விருப்பமானது
+  pasteContent: PEM ஐ ஒட்டவும்
+  chooseFile: கோப்பைத் தேர்ந்தெடுக்கவும்
+  switchToPaste: சான்றிதழ் உள்ளடக்கத்தை ஒட்டுவதற்கு மாறவும்
+  switchToFile: கோப்பு தேர்விக்கு மாறவும்
+  fileReadError: கோப்பைப் படிக்க முடியவில்லை
+  clear: தெளிவு
+  contentLoaded: சான்றிதழ் ஏற்றப்பட்டது
+  httpWarning: "எச்சரிக்கை: நீங்கள் பாதுகாப்பற்ற (HTTP) இணைப்பைப் பயன்படுத்துகிறீர்கள். சான்றிதழ் தரவு மறைகுறியாக்கப்படாமல் அனுப்பப்படும்."
+  privateKeyHttpWarning: பாதுகாப்பற்ற இணைப்புகளில் தனிப்பட்ட விசைகள் பதிவேற்றப்படக் கூடாது.
+  systemCaOnly: இந்த தரவுத்தளம் சரிபார்ப்பிற்காக கணினி CA சான்றிதழ்களைப் பயன்படுத்துகிறது. தனிப்பயன் CA பதிவேற்றம் ஆதரிக்கப்படவில்லை.
+  modes.disabled.label: முடக்கப்பட்டது
+  modes.disabled.description: SSL/TLS குறியாக்கம் இல்லை
+  modes.preferred.label: விருப்பமானது
+  modes.preferred.description: சேவையகம் ஆதரிக்கும் பட்சத்தில் TLSஐப் பயன்படுத்தவும்
+  modes.required.label: தேவை
+  modes.required.description: TLS தேவை, சான்றிதழ் சரிபார்ப்பைத் தவிர்க்கவும்
+  modes.verify-ca.label: CA ஐ சரிபார்க்கவும்
+  modes.verify-ca.description: CA க்கு எதிராக சர்வர் சான்றிதழை சரிபார்க்கவும்
+  modes.verify-identity.label: அடையாளத்தை சரிபார்க்கவும்
+  modes.verify-identity.description: CA மற்றும் சர்வர் ஹோஸ்ட்பெயரை சரிபார்க்கவும்
+  modes.enabled.label: இயக்கப்பட்டது
+  modes.enabled.description: சான்றிதழ் சரிபார்ப்புடன் TLSஐ இயக்கவும்
+  modes.insecure.label: பாதுகாப்பற்றது
+  modes.insecure.description: TLSஐ இயக்கவும், சான்றிதழ் சரிபார்ப்பை தவிர்க்கவும்
+
+th_TH:
+  sslMode: โหมด SSL
+  selectMode: เลือกโหมด SSL
+  caCertificate: ใบรับรองแคลิฟอร์เนีย
+  clientCertificate: ใบรับรองลูกค้า
+  clientKey: รหัสส่วนตัวของลูกค้า
+  serverName: การแทนที่ชื่อเซิร์ฟเวอร์
+  serverNamePlaceholder: ชื่อโฮสต์สำหรับการตรวจสอบใบรับรอง
+  optional: ไม่จำเป็น
+  pasteContent: วาง PEM
+  chooseFile: เลือกไฟล์
+  switchToPaste: สลับเพื่อวางเนื้อหาใบรับรอง
+  switchToFile: เปลี่ยนไปใช้ตัวเลือกไฟล์
+  fileReadError: ไม่สามารถอ่านไฟล์ได้
+  clear: ชัดเจน
+  contentLoaded: โหลดใบรับรองแล้ว
+  httpWarning: "คำเตือน: คุณกำลังใช้การเชื่อมต่อที่ไม่ปลอดภัย (HTTP) ข้อมูลใบรับรองจะถูกส่งโดยไม่มีการเข้ารหัส"
+  privateKeyHttpWarning: ไม่ควรอัปโหลดคีย์ส่วนตัวผ่านการเชื่อมต่อที่ไม่ปลอดภัย
+  systemCaOnly: ฐานข้อมูลนี้ใช้ใบรับรอง CA ของระบบสำหรับการตรวจสอบ ไม่รองรับการอัปโหลด CA แบบกำหนดเอง
+  modes.disabled.label: พิการ
+  modes.disabled.description: ไม่มีการเข้ารหัส SSL/TLS
+  modes.preferred.label: ที่ต้องการ
+  modes.preferred.description: ใช้ TLS หากเซิร์ฟเวอร์รองรับ
+  modes.required.label: ที่จำเป็น
+  modes.required.description: ต้องใช้ TLS ข้ามการตรวจสอบใบรับรอง
+  modes.verify-ca.label: ตรวจสอบแคลิฟอร์เนีย
+  modes.verify-ca.description: ตรวจสอบใบรับรองเซิร์ฟเวอร์กับ CA
+  modes.verify-identity.label: ยืนยันตัวตน
+  modes.verify-identity.description: ตรวจสอบ CA และชื่อโฮสต์ของเซิร์ฟเวอร์
+  modes.enabled.label: เปิดใช้งานแล้ว
+  modes.enabled.description: เปิดใช้งาน TLS ด้วยการตรวจสอบใบรับรอง
+  modes.insecure.label: ไม่ปลอดภัย
+  modes.insecure.description: เปิดใช้งาน TLS ข้ามการตรวจสอบใบรับรอง
+
+tr_TR:
+  sslMode: SSL Modu
+  selectMode: SSL Modunu Seçin
+  caCertificate: CA Sertifikası
+  clientCertificate: Müşteri Sertifikası
+  clientKey: İstemci Özel Anahtarı
+  serverName: Sunucu Adını Geçersiz Kılma
+  serverNamePlaceholder: Sertifika doğrulaması için ana bilgisayar adı
+  optional: isteğe bağlı
+  pasteContent: PEM'i yapıştırın
+  chooseFile: Dosya Seç
+  switchToPaste: Sertifika içeriğini yapıştırmaya geç
+  switchToFile: Dosya seçiciye geç
+  fileReadError: Dosya okunamadı
+  clear: Temizlemek
+  contentLoaded: Sertifika yüklendi
+  httpWarning: "Uyarı: Güvenli olmayan (HTTP) bir bağlantı kullanıyorsunuz. Sertifika verileri şifrelenmeden iletilecektir."
+  privateKeyHttpWarning: Özel anahtarlar güvenli olmayan bağlantılar üzerinden yüklenmemelidir.
+  systemCaOnly: Bu veritabanı doğrulama için sistem CA sertifikalarını kullanır. Özel CA yüklemesi desteklenmez.
+  modes.disabled.label: Engelli
+  modes.disabled.description: SSL/TLS şifrelemesi yok
+  modes.preferred.label: Tercih edilen
+  modes.preferred.description: Sunucu destekliyorsa TLS'yi kullanın
+  modes.required.label: Gerekli
+  modes.required.description: TLS'yi zorunlu tutun, sertifika doğrulamasını atlayın
+  modes.verify-ca.label: CA'yı doğrulayın
+  modes.verify-ca.description: Sunucu sertifikasını CA'ya göre doğrulayın
+  modes.verify-identity.label: Kimliği Doğrula
+  modes.verify-identity.description: CA'yı ve sunucu ana bilgisayar adını doğrulayın
+  modes.enabled.label: Etkinleştirilmiş
+  modes.enabled.description: Sertifika doğrulamayla TLS'yi etkinleştirin
+  modes.insecure.label: Güvensiz
+  modes.insecure.description: TLS'yi etkinleştirin, sertifika doğrulamasını atlayın
+
+uk_UA:
+  sslMode: Режим SSL
+  selectMode: Виберіть режим SSL
+  caCertificate: Сертифікат CA
+  clientCertificate: Сертифікат клієнта
+  clientKey: Приватний ключ клієнта
+  serverName: Перевизначення імені сервера
+  serverNamePlaceholder: ім'я хоста для перевірки сертифіката
+  optional: необов'язковий
+  pasteContent: Вставте PEM
+  chooseFile: Виберіть Файл
+  switchToPaste: Перейти до вставлення вмісту сертифіката
+  switchToFile: Перейти до засобу вибору файлів
+  fileReadError: Не вдалося прочитати файл
+  clear: ясно
+  contentLoaded: Сертифікат завантажено
+  httpWarning: "Попередження: Ви використовуєте незахищене (HTTP) з’єднання. Дані сертифіката будуть передані незашифрованими."
+  privateKeyHttpWarning: Приватні ключі не слід завантажувати через незахищені з’єднання.
+  systemCaOnly: Ця база даних використовує системні сертифікати ЦС для перевірки. Спеціальне завантаження ЦС не підтримується.
+  modes.disabled.label: Вимкнено
+  modes.disabled.description: Без шифрування SSL/TLS
+  modes.preferred.label: Бажано
+  modes.preferred.description: Використовуйте TLS, якщо сервер його підтримує
+  modes.required.label: Обов'язковий
+  modes.required.description: Вимагати TLS, пропустити перевірку сертифіката
+  modes.verify-ca.label: Підтвердити CA
+  modes.verify-ca.description: Перевірте сертифікат сервера щодо CA
+  modes.verify-identity.label: Підтвердити особу
+  modes.verify-identity.description: Перевірте ЦС і ім’я хоста сервера
+  modes.enabled.label: Увімкнено
+  modes.enabled.description: Увімкніть TLS із перевіркою сертифіката
+  modes.insecure.label: Невпевнений
+  modes.insecure.description: Увімкнути TLS, пропустити перевірку сертифіката
+
+ur_PK:
+  sslMode: SSL موڈ
+  selectMode: SSL موڈ کو منتخب کریں۔
+  caCertificate: CA سرٹیفکیٹ
+  clientCertificate: کلائنٹ سرٹیفکیٹ
+  clientKey: کلائنٹ کی نجی کلید
+  serverName: سرور کا نام اوور رائیڈ
+  serverNamePlaceholder: سرٹیفکیٹ کی تصدیق کے لیے میزبان نام
+  optional: اختیاری
+  pasteContent: پی ای ایم پیسٹ کریں۔
+  chooseFile: فائل کا انتخاب کریں۔
+  switchToPaste: سرٹیفکیٹ کے مواد کو پیسٹ کرنے پر سوئچ کریں۔
+  switchToFile: فائل چننے والے پر سوئچ کریں۔
+  fileReadError: فائل پڑھنے میں ناکام
+  clear: صاف
+  contentLoaded: سرٹیفکیٹ لوڈ ہو گیا۔
+  httpWarning: "انتباہ: آپ ایک غیر محفوظ (HTTP) کنکشن استعمال کر رہے ہیں۔ سرٹیفکیٹ ڈیٹا بغیر خفیہ کے منتقل کیا جائے گا۔"
+  privateKeyHttpWarning: پرائیویٹ کیز کو غیر محفوظ کنکشنز پر اپ لوڈ نہیں کیا جانا چاہیے۔
+  systemCaOnly: یہ ڈیٹا بیس تصدیق کے لیے سسٹم CA سرٹیفکیٹ استعمال کرتا ہے۔ حسب ضرورت CA اپ لوڈ تعاون یافتہ نہیں ہے۔
+  modes.disabled.label: معذور
+  modes.disabled.description: کوئی SSL/TLS خفیہ کاری نہیں۔
+  modes.preferred.label: ترجیح دی گئی۔
+  modes.preferred.description: اگر سرور اس کی حمایت کرتا ہے تو TLS استعمال کریں۔
+  modes.required.label: درکار ہے۔
+  modes.required.description: TLS کی ضرورت ہے، سرٹیفکیٹ کی توثیق کو چھوڑ دیں۔
+  modes.verify-ca.label: CA کی تصدیق کریں۔
+  modes.verify-ca.description: CA کے خلاف سرور سرٹیفکیٹ کی تصدیق کریں۔
+  modes.verify-identity.label: شناخت کی تصدیق کریں۔
+  modes.verify-identity.description: CA اور سرور کے میزبان نام کی تصدیق کریں۔
+  modes.enabled.label: فعال
+  modes.enabled.description: سرٹیفکیٹ کی تصدیق کے ساتھ TLS کو فعال کریں۔
+  modes.insecure.label: غیر محفوظ
+  modes.insecure.description: TLS کو فعال کریں، سرٹیفکیٹ کی توثیق کو چھوڑ دیں۔
+
+vi_VN:
+  sslMode: Chế độ SSL
+  selectMode: Chọn Chế độ SSL
+  caCertificate: Chứng chỉ CA
+  clientCertificate: Chứng chỉ khách hàng
+  clientKey: Khóa riêng của khách hàng
+  serverName: Ghi đè tên máy chủ
+  serverNamePlaceholder: tên máy chủ để xác minh chứng chỉ
+  optional: không bắt buộc
+  pasteContent: Dán PEM
+  chooseFile: Chọn tệp
+  switchToPaste: Chuyển sang dán nội dung chứng chỉ
+  switchToFile: Chuyển sang bộ chọn tập tin
+  fileReadError: Không đọc được tập tin
+  clear: Thông thoáng
+  contentLoaded: Đã tải chứng chỉ
+  httpWarning: "Cảnh báo: Bạn đang sử dụng kết nối không an toàn (HTTP). Dữ liệu chứng chỉ sẽ được truyền không được mã hóa."
+  privateKeyHttpWarning: Khóa riêng không được tải lên qua các kết nối không an toàn.
+  systemCaOnly: Cơ sở dữ liệu này sử dụng chứng chỉ CA hệ thống để xác minh. Tải lên CA tùy chỉnh không được hỗ trợ.
+  modes.disabled.label: Tàn tật
+  modes.disabled.description: Không có mã hóa SSL/TLS
+  modes.preferred.label: Ưu tiên
+  modes.preferred.description: Sử dụng TLS nếu máy chủ hỗ trợ nó
+  modes.required.label: Yêu cầu
+  modes.required.description: Yêu cầu TLS, bỏ qua xác minh chứng chỉ
+  modes.verify-ca.label: Xác minh CA
+  modes.verify-ca.description: Xác minh chứng chỉ máy chủ với CA
+  modes.verify-identity.label: Xác minh danh tính
+  modes.verify-identity.description: Xác minh CA và tên máy chủ của máy chủ
+  modes.enabled.label: Đã bật
+  modes.enabled.description: Kích hoạt TLS với xác minh chứng chỉ
+  modes.insecure.label: không an toàn
+  modes.insecure.description: Kích hoạt TLS, bỏ qua xác minh chứng chỉ
+
+af_ZA:
+  sslMode: "SSL-modus"
+  selectMode: "Kies SSL-modus"
+  caCertificate: "CA-sertifikaat"
+  clientCertificate: "Kliënt Sertifikaat"
+  clientKey: "Kliënt Privaat Sleutel"
+  serverName: "Bedienernaam ignoreer"
+  serverNamePlaceholder: "gasheernaam vir sertifikaatverifikasie"
+  optional: "opsioneel"
+  pasteContent: "Plak PEM"
+  chooseFile: "Kies Lêer"
+  switchToPaste: "Skakel oor na plak sertifikaatinhoud"
+  switchToFile: "Skakel oor na lêerkieser"
+  fileReadError: "Kon nie lêer lees nie"
+  clear: "Duidelik"
+  contentLoaded: "Sertifikaat gelaai"
+  httpWarning: "Waarskuwing: Jy gebruik 'n onveilige (HTTP) verbinding. Sertifikaatdata sal ongeënkripteer versend word."
+  privateKeyHttpWarning: "Privaat sleutels moet nie oor onveilige verbindings opgelaai word nie."
+  systemCaOnly: "Hierdie databasis gebruik stelsel CA-sertifikate vir verifikasie. Gepasmaakte CA-oplaai word nie ondersteun nie."
+  modes.disabled.label: "Gestrem"
+  modes.disabled.description: "Geen SSL/TLS-enkripsie nie"
+  modes.preferred.label: "Verkies"
+  modes.preferred.description: "Gebruik TLS as bediener dit ondersteun"
+  modes.required.label: "Vereis"
+  modes.required.description: "Vereis TLS, slaan sertifikaatverifikasie oor"
+  modes.verify-ca.label: "Verifieer CA"
+  modes.verify-ca.description: "Verifieer bedienersertifikaat teen CA"
+  modes.verify-identity.label: "Verifieer identiteit"
+  modes.verify-identity.description: "Verifieer CA en bedienergasheernaam"
+  modes.enabled.label: "Geaktiveer"
+  modes.enabled.description: "Aktiveer TLS met sertifikaatverifikasie"
+  modes.insecure.label: "Onseker"
+  modes.insecure.description: "Aktiveer TLS, slaan sertifikaatverifikasie oor"
+
+am_ET:
+  sslMode: "SSL ሁነታ"
+  selectMode: "SSL ሁነታን ይምረጡ"
+  caCertificate: "የCA ሰርተፍኬት"
+  clientCertificate: "የደንበኛ የምስክር ወረቀት"
+  clientKey: "የደንበኛ የግል ቁልፍ"
+  serverName: "የአገልጋይ ስም መሻር"
+  serverNamePlaceholder: "የአስተናጋጅ ስም የምስክር ወረቀት ማረጋገጫ"
+  optional: "አማራጭ"
+  pasteContent: "PEM ለጥፍ"
+  chooseFile: "ፋይል ይምረጡ"
+  switchToPaste: "ወደ የምስክር ወረቀት ይዘት ይቀይሩ"
+  switchToFile: "ወደ ፋይል መራጭ ቀይር"
+  fileReadError: "ፋይል ማንበብ አልተሳካም።"
+  clear: "ግልጽ"
+  contentLoaded: "የምስክር ወረቀት ተጭኗል"
+  httpWarning: "ማስጠንቀቂያ፡ ደህንነቱ ያልተጠበቀ (ኤችቲቲፒ) ግንኙነት እየተጠቀሙ ነው። የምስክር ወረቀት ውሂብ ሳይመሰጠር ይተላለፋል።"
+  privateKeyHttpWarning: "ደህንነቱ ባልተጠበቀ ግንኙነት የግል ቁልፎች መጫን የለባቸውም።"
+  systemCaOnly: "ይህ ዳታቤዝ ለማረጋገጫ የስርዓት CA የምስክር ወረቀቶችን ይጠቀማል። ብጁ CA ሰቀላ አይደገፍም።"
+  modes.disabled.label: "ተሰናክሏል።"
+  modes.disabled.description: "ምንም SSL/TLS ምስጠራ የለም።"
+  modes.preferred.label: "ተመራጭ"
+  modes.preferred.description: "አገልጋይ የሚደግፈው ከሆነ TLS ይጠቀሙ"
+  modes.required.label: "ያስፈልጋል"
+  modes.required.description: "TLS ጠይቅ፣ የምስክር ወረቀት ማረጋገጫ ዝለል"
+  modes.verify-ca.label: "CA ያረጋግጡ"
+  modes.verify-ca.description: "የአገልጋይ የምስክር ወረቀት ከCA ጋር ያረጋግጡ"
+  modes.verify-identity.label: "ማንነትን ያረጋግጡ"
+  modes.verify-identity.description: "CA እና የአገልጋይ አስተናጋጅ ስም ያረጋግጡ"
+  modes.enabled.label: "ነቅቷል"
+  modes.enabled.description: "በሰርቲፊኬት ማረጋገጫ TLSን አንቃ"
+  modes.insecure.label: "አስተማማኝ ያልሆነ"
+  modes.insecure.description: "TLS ን አንቃ፣ የእውቅና ማረጋገጫን ዝለል"
+
+az_AZ:
+  sslMode: "SSL rejimi"
+  selectMode: "SSL rejimini seçin"
+  caCertificate: "CA Sertifikatı"
+  clientCertificate: "Müştəri Sertifikatı"
+  clientKey: "Müştəri Şəxsi Açarı"
+  serverName: "Server adının dəyişdirilməsi"
+  serverNamePlaceholder: "sertifikatın yoxlanılması üçün host adı"
+  optional: "isteğe bağlıdır"
+  pasteContent: "PEM-i yapışdırın"
+  chooseFile: "Fayl seçin"
+  switchToPaste: "Sertifikat məzmununu yapışdırmağa keçin"
+  switchToFile: "Fayl seçiciyə keçin"
+  fileReadError: "Faylı oxumaq alınmadı"
+  clear: "Təmiz"
+  contentLoaded: "Sertifikat yükləndi"
+  httpWarning: "Xəbərdarlıq: Siz etibarlı olmayan (HTTP) bağlantıdan istifadə edirsiniz. Sertifikat məlumatları şifrələnmədən ötürüləcək."
+  privateKeyHttpWarning: "Şəxsi açarlar etibarlı olmayan bağlantılar üzərində yüklənməməlidir."
+  systemCaOnly: "Bu verilənlər bazası yoxlama üçün sistem CA sertifikatlarından istifadə edir. Fərdi CA yükləməsi dəstəklənmir."
+  modes.disabled.label: "Əlil"
+  modes.disabled.description: "SSL/TLS şifrələməsi yoxdur"
+  modes.preferred.label: "Üstünlük verilir"
+  modes.preferred.description: "Server onu dəstəkləyirsə TLS-dən istifadə edin"
+  modes.required.label: "Tələb olunur"
+  modes.required.description: "TLS tələb edin, sertifikat yoxlamasını keçin"
+  modes.verify-ca.label: "CA-nı yoxlayın"
+  modes.verify-ca.description: "CA ilə server sertifikatını yoxlayın"
+  modes.verify-identity.label: "Şəxsiyyəti Doğrulayın"
+  modes.verify-identity.description: "CA və server host adını yoxlayın"
+  modes.enabled.label: "Aktivdir"
+  modes.enabled.description: "Sertifikat doğrulaması ilə TLS-i aktiv edin"
+  modes.insecure.label: "Etibarsız"
+  modes.insecure.description: "TLS-ni aktivləşdirin, sertifikat doğrulamasını keçin"
+
+et_EE:
+  sslMode: "SSL-režiim"
+  selectMode: "Valige SSL-režiim"
+  caCertificate: "CA sertifikaat"
+  clientCertificate: "Kliendi sertifikaat"
+  clientKey: "Kliendi privaatvõti"
+  serverName: "Serveri nime alistamine"
+  serverNamePlaceholder: "hostinimi sertifikaadi kinnitamiseks"
+  optional: "valikuline"
+  pasteContent: "Kleepige PEM"
+  chooseFile: "Valige Fail"
+  switchToPaste: "Lülituge sertifikaadi sisu kleepimisele"
+  switchToFile: "Lülituge failivalijale"
+  fileReadError: "Faili lugemine nurjus"
+  clear: "Selge"
+  contentLoaded: "Sertifikaat on laaditud"
+  httpWarning: "Hoiatus: kasutate ebaturvalist (HTTP) ühendust. Sertifikaadi andmed edastatakse krüptimata."
+  privateKeyHttpWarning: "Privaatvõtmeid ei tohiks ebaturvaliste ühenduste kaudu üles laadida."
+  systemCaOnly: "See andmebaas kasutab kontrollimiseks süsteemi CA sertifikaate. Kohandatud CA üleslaadimist ei toetata."
+  modes.disabled.label: "Keelatud"
+  modes.disabled.description: "SSL/TLS krüptimist pole"
+  modes.preferred.label: "Eelistatud"
+  modes.preferred.description: "Kasutage TLS-i, kui server seda toetab"
+  modes.required.label: "Nõutav"
+  modes.required.description: "Nõua TLS-i, jätke sertifikaadi kinnitamine vahele"
+  modes.verify-ca.label: "Kinnitage CA"
+  modes.verify-ca.description: "Kontrollige serveri sertifikaati CA vastu"
+  modes.verify-identity.label: "Kinnitage identiteet"
+  modes.verify-identity.description: "Kinnitage CA ja serveri hostinimi"
+  modes.enabled.label: "Lubatud"
+  modes.enabled.description: "Luba TLS sertifikaadi kinnitamisega"
+  modes.insecure.label: "Ebakindel"
+  modes.insecure.description: "Lubage TLS, jätke sertifikaadi kinnitamine vahele"
+
+gu_IN:
+  sslMode: "SSL મોડ"
+  selectMode: "SSL મોડ પસંદ કરો"
+  caCertificate: "CA પ્રમાણપત્ર"
+  clientCertificate: "ક્લાયન્ટ પ્રમાણપત્ર"
+  clientKey: "ક્લાયન્ટ ખાનગી કી"
+  serverName: "સર્વર નામ ઓવરરાઇડ"
+  serverNamePlaceholder: "પ્રમાણપત્ર ચકાસણી માટે હોસ્ટનામ"
+  optional: "વૈકલ્પિક"
+  pasteContent: "PEM પેસ્ટ કરો"
+  chooseFile: "ફાઇલ પસંદ કરો"
+  switchToPaste: "પ્રમાણપત્ર સામગ્રી પેસ્ટ પર સ્વિચ કરો"
+  switchToFile: "ફાઇલ પીકર પર સ્વિચ કરો"
+  fileReadError: "ફાઇલ વાંચવામાં નિષ્ફળ"
+  clear: "સાફ કરો"
+  contentLoaded: "પ્રમાણપત્ર લોડ કર્યું"
+  httpWarning: "ચેતવણી: તમે અસુરક્ષિત (HTTP) કનેક્શનનો ઉપયોગ કરી રહ્યાં છો. પ્રમાણપત્ર ડેટા એનક્રિપ્ટ વિના ટ્રાન્સમિટ કરવામાં આવશે."
+  privateKeyHttpWarning: "અસુરક્ષિત કનેક્શન્સ પર ખાનગી કી અપલોડ થવી જોઈએ નહીં."
+  systemCaOnly: "આ ડેટાબેઝ ચકાસણી માટે સિસ્ટમ CA પ્રમાણપત્રોનો ઉપયોગ કરે છે. કસ્ટમ CA અપલોડ સમર્થિત નથી."
+  modes.disabled.label: "અક્ષમ"
+  modes.disabled.description: "કોઈ SSL/TLS એન્ક્રિપ્શન નથી"
+  modes.preferred.label: "પ્રિફર્ડ"
+  modes.preferred.description: "જો સર્વર તેને સપોર્ટ કરતું હોય તો TLS નો ઉપયોગ કરો"
+  modes.required.label: "જરૂરી છે"
+  modes.required.description: "TLS આવશ્યક છે, પ્રમાણપત્રની ચકાસણી છોડો"
+  modes.verify-ca.label: "CA ચકાસો"
+  modes.verify-ca.description: "CA સામે સર્વર પ્રમાણપત્ર ચકાસો"
+  modes.verify-identity.label: "ઓળખ ચકાસો"
+  modes.verify-identity.description: "CA અને સર્વર હોસ્ટનામ ચકાસો"
+  modes.enabled.label: "સક્ષમ"
+  modes.enabled.description: "પ્રમાણપત્ર ચકાસણી સાથે TLS સક્ષમ કરો"
+  modes.insecure.label: "અસુરક્ષિત"
+  modes.insecure.description: "TLS સક્ષમ કરો, પ્રમાણપત્ર ચકાસણી છોડો"
+
+ha_NG:
+  sslMode: "Yanayin SSL"
+  selectMode: "Zaɓi Yanayin SSL"
+  caCertificate: "CA Certificate"
+  clientCertificate: "Takaddar abokin ciniki"
+  clientKey: "Maɓallin Keɓaɓɓen Abokin ciniki"
+  serverName: "An soke Sunan uwar garken"
+  serverNamePlaceholder: "sunan mai masauki don tabbatar da takaddun shaida"
+  optional: "na zaɓi"
+  pasteContent: "Manna PEM"
+  chooseFile: "Zaɓi Fayil"
+  switchToPaste: "Canja zuwa manna abun ciki na takaddun shaida"
+  switchToFile: "Canja zuwa mai ɗaukar fayil"
+  fileReadError: "An kasa karanta fayil"
+  clear: "Share"
+  contentLoaded: "An ɗora takaddun shaida"
+  httpWarning: "Gargaɗi: Kuna amfani da haɗin da ba shi da tsaro (HTTP). Za a watsa bayanan takaddun shaida ba tare da ɓoyewa ba."
+  privateKeyHttpWarning: "Kada a loda maɓallai masu zaman kansu akan hanyoyin haɗin kai marasa tsaro."
+  systemCaOnly: "Wannan bayanan yana amfani da takaddun shaida na tsarin CA don tabbatarwa. Canjin CA na al'ada baya tallafawa."
+  modes.disabled.label: "An kashe"
+  modes.disabled.description: "Babu boye-boye SSL/TLS"
+  modes.preferred.label: "An fi so"
+  modes.preferred.description: "Yi amfani da TLS idan uwar garken tana goyan bayan sa"
+  modes.required.label: "Da ake bukata"
+  modes.required.description: "Ana buƙatar TLS, tsallake tabbaci na takaddun shaida"
+  modes.verify-ca.label: "Tabbatar da CA"
+  modes.verify-ca.description: "Tabbatar da takardar shaidar uwar garken akan CA"
+  modes.verify-identity.label: "Tabbatar da Identity"
+  modes.verify-identity.description: "Tabbatar da CA da sunan uwar garken"
+  modes.enabled.label: "An kunna"
+  modes.enabled.description: "Kunna TLS tare da tabbatar da takaddun shaida"
+  modes.insecure.label: "Rashin tsaro"
+  modes.insecure.description: "Kunna TLS, tsallake takaddun shaida"
+
+ka_GE:
+  sslMode: "SSL რეჟიმი"
+  selectMode: "აირჩიეთ SSL რეჟიმი"
+  caCertificate: "CA სერთიფიკატი"
+  clientCertificate: "კლიენტის სერთიფიკატი"
+  clientKey: "კლიენტის პირადი გასაღები"
+  serverName: "სერვერის სახელის გადაფარვა"
+  serverNamePlaceholder: "ჰოსტის სახელი სერტიფიკატის გადამოწმებისთვის"
+  optional: "სურვილისამებრ"
+  pasteContent: "ჩასვით PEM"
+  chooseFile: "აირჩიეთ ფაილი"
+  switchToPaste: "გადართეთ სერტიფიკატის კონტენტზე ჩასმა"
+  switchToFile: "ფაილის ამომრჩეველზე გადართვა"
+  fileReadError: "ფაილის წაკითხვა ვერ მოხერხდა"
+  clear: "წმინდა"
+  contentLoaded: "სერთიფიკატი ჩაიტვირთა"
+  httpWarning: "გაფრთხილება: თქვენ იყენებთ დაუცველ (HTTP) კავშირს. სერტიფიკატის მონაცემები გადაეცემა დაშიფრული სახით."
+  privateKeyHttpWarning: "პირადი გასაღებები არ უნდა აიტვირთოს დაუცველ კავშირებზე."
+  systemCaOnly: "ეს მონაცემთა ბაზა იყენებს სისტემის CA სერთიფიკატებს გადამოწმებისთვის. მორგებული CA ატვირთვა არ არის მხარდაჭერილი."
+  modes.disabled.label: "გამორთულია"
+  modes.disabled.description: "არ არის SSL/TLS დაშიფვრა"
+  modes.preferred.label: "სასურველია"
+  modes.preferred.description: "გამოიყენეთ TLS, თუ სერვერი მხარს უჭერს მას"
+  modes.required.label: "საჭირო"
+  modes.required.description: "მოითხოვეთ TLS, გამოტოვეთ სერტიფიკატის დადასტურება"
+  modes.verify-ca.label: "დაადასტურეთ CA"
+  modes.verify-ca.description: "გადაამოწმეთ სერვერის სერთიფიკატი CA-სთან მიმართებაში"
+  modes.verify-identity.label: "გადაამოწმეთ პირადობა"
+  modes.verify-identity.description: "გადაამოწმეთ CA და სერვერის ჰოსტის სახელი"
+  modes.enabled.label: "ჩართულია"
+  modes.enabled.description: "ჩართეთ TLS სერტიფიკატის დადასტურებით"
+  modes.insecure.label: "დაუცველი"
+  modes.insecure.description: "ჩართეთ TLS, გამოტოვეთ სერტიფიკატის დადასტურება"
+
+km_KH:
+  sslMode: "របៀប SSL"
+  selectMode: "ជ្រើសរើសរបៀប SSL"
+  caCertificate: "វិញ្ញាបនបត្រ CA"
+  clientCertificate: "វិញ្ញាបនបត្រអតិថិជន"
+  clientKey: "កូនសោឯកជនរបស់អតិថិជន"
+  serverName: "បដិសេធឈ្មោះម៉ាស៊ីនមេ"
+  serverNamePlaceholder: "ឈ្មោះម៉ាស៊ីនសម្រាប់ការផ្ទៀងផ្ទាត់វិញ្ញាបនបត្រ"
+  optional: "ស្រេចចិត្ត"
+  pasteContent: "បិទភ្ជាប់ PEM"
+  chooseFile: "ជ្រើសរើសឯកសារ"
+  switchToPaste: "ប្តូរទៅបិទភ្ជាប់ខ្លឹមសារវិញ្ញាបនបត្រ"
+  switchToFile: "ប្តូរទៅកម្មវិធីជ្រើសរើសឯកសារ"
+  fileReadError: "បរាជ័យក្នុងការអានឯកសារ"
+  clear: "ច្បាស់"
+  contentLoaded: "បាន​ផ្ទុក​វិញ្ញាបនបត្រ"
+  httpWarning: "ការព្រមាន៖ អ្នកកំពុងប្រើការតភ្ជាប់មិនសុវត្ថិភាព (HTTP)។ ទិន្នន័យវិញ្ញាបនបត្រនឹងត្រូវបានបញ្ជូនដោយមិនបានអ៊ិនគ្រីប។"
+  privateKeyHttpWarning: "សោឯកជនមិនគួរត្រូវបានផ្ទុកឡើងលើការតភ្ជាប់ដែលមិនមានសុវត្ថិភាពទេ។"
+  systemCaOnly: "មូលដ្ឋានទិន្នន័យនេះប្រើវិញ្ញាបនបត្រ CA ប្រព័ន្ធសម្រាប់ការផ្ទៀងផ្ទាត់។ ការអាប់ឡូត CA ផ្ទាល់ខ្លួនមិនត្រូវបានគាំទ្រទេ។"
+  modes.disabled.label: "ពិការ"
+  modes.disabled.description: "គ្មានការអ៊ិនគ្រីប SSL/TLS ទេ។"
+  modes.preferred.label: "ពេញចិត្ត"
+  modes.preferred.description: "ប្រើ TLS ប្រសិនបើម៉ាស៊ីនមេគាំទ្រវា។"
+  modes.required.label: "ទាមទារ"
+  modes.required.description: "ទាមទារ TLS រំលងការផ្ទៀងផ្ទាត់វិញ្ញាបនបត្រ"
+  modes.verify-ca.label: "ផ្ទៀងផ្ទាត់ CA"
+  modes.verify-ca.description: "ផ្ទៀងផ្ទាត់វិញ្ញាបនបត្រម៉ាស៊ីនមេប្រឆាំងនឹង CA"
+  modes.verify-identity.label: "ផ្ទៀងផ្ទាត់អត្តសញ្ញាណ"
+  modes.verify-identity.description: "ផ្ទៀងផ្ទាត់ CA និងឈ្មោះម៉ាស៊ីនមេ"
+  modes.enabled.label: "បានបើក"
+  modes.enabled.description: "បើកដំណើរការ TLS ជាមួយនឹងការផ្ទៀងផ្ទាត់វិញ្ញាបនបត្រ"
+  modes.insecure.label: "អសន្តិសុខ"
+  modes.insecure.description: "បើកដំណើរការ TLS រំលងការផ្ទៀងផ្ទាត់វិញ្ញាបនបត្រ"
+
+kn_IN:
+  sslMode: "SSL ಮೋಡ್"
+  selectMode: "SSL ಮೋಡ್ ಆಯ್ಕೆಮಾಡಿ"
+  caCertificate: "CA ಪ್ರಮಾಣಪತ್ರ"
+  clientCertificate: "ಗ್ರಾಹಕ ಪ್ರಮಾಣಪತ್ರ"
+  clientKey: "ಕ್ಲೈಂಟ್ ಖಾಸಗಿ ಕೀ"
+  serverName: "ಸರ್ವರ್ ಹೆಸರು ಅತಿಕ್ರಮಣ"
+  serverNamePlaceholder: "ಪ್ರಮಾಣಪತ್ರ ಪರಿಶೀಲನೆಗಾಗಿ ಹೋಸ್ಟ್ ಹೆಸರು"
+  optional: "ಐಚ್ಛಿಕ"
+  pasteContent: "PEM ಅನ್ನು ಅಂಟಿಸಿ"
+  chooseFile: "ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ"
+  switchToPaste: "ಪ್ರಮಾಣಪತ್ರದ ವಿಷಯವನ್ನು ಅಂಟಿಸಲು ಬದಲಿಸಿ"
+  switchToFile: "ಫೈಲ್ ಪಿಕ್ಕರ್‌ಗೆ ಬದಲಿಸಿ"
+  fileReadError: "ಫೈಲ್ ಓದಲು ವಿಫಲವಾಗಿದೆ"
+  clear: "ತೆರವುಗೊಳಿಸಿ"
+  contentLoaded: "ಪ್ರಮಾಣಪತ್ರವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಿದೆ"
+  httpWarning: "ಎಚ್ಚರಿಕೆ: ನೀವು ಅಸುರಕ್ಷಿತ (HTTP) ಸಂಪರ್ಕವನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ. ಪ್ರಮಾಣಪತ್ರ ಡೇಟಾವನ್ನು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡದೆ ರವಾನಿಸಲಾಗುತ್ತದೆ."
+  privateKeyHttpWarning: "ಅಸುರಕ್ಷಿತ ಸಂಪರ್ಕಗಳ ಮೇಲೆ ಖಾಸಗಿ ಕೀಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಬಾರದು."
+  systemCaOnly: "ಈ ಡೇಟಾಬೇಸ್ ಪರಿಶೀಲನೆಗಾಗಿ ಸಿಸ್ಟಮ್ CA ಪ್ರಮಾಣಪತ್ರಗಳನ್ನು ಬಳಸುತ್ತದೆ. ಕಸ್ಟಮ್ CA ಅಪ್‌ಲೋಡ್ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ."
+  modes.disabled.label: "ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  modes.disabled.description: "ಯಾವುದೇ SSL/TLS ಎನ್‌ಕ್ರಿಪ್ಶನ್ ಇಲ್ಲ"
+  modes.preferred.label: "ಆದ್ಯತೆ"
+  modes.preferred.description: "ಸರ್ವರ್ ಬೆಂಬಲಿಸಿದರೆ TLS ಬಳಸಿ"
+  modes.required.label: "ಅಗತ್ಯವಿದೆ"
+  modes.required.description: "TLS ಅಗತ್ಯವಿದೆ, ಪ್ರಮಾಣಪತ್ರ ಪರಿಶೀಲನೆಯನ್ನು ಬಿಟ್ಟುಬಿಡಿ"
+  modes.verify-ca.label: "CA ಅನ್ನು ಪರಿಶೀಲಿಸಿ"
+  modes.verify-ca.description: "CA ವಿರುದ್ಧ ಸರ್ವರ್ ಪ್ರಮಾಣಪತ್ರವನ್ನು ಪರಿಶೀಲಿಸಿ"
+  modes.verify-identity.label: "ಗುರುತನ್ನು ಪರಿಶೀಲಿಸಿ"
+  modes.verify-identity.description: "CA ಮತ್ತು ಸರ್ವರ್ ಹೋಸ್ಟ್ ಹೆಸರನ್ನು ಪರಿಶೀಲಿಸಿ"
+  modes.enabled.label: "ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  modes.enabled.description: "ಪ್ರಮಾಣಪತ್ರ ಪರಿಶೀಲನೆಯೊಂದಿಗೆ TLS ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"
+  modes.insecure.label: "ಅಸುರಕ್ಷಿತ"
+  modes.insecure.description: "TLS ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ, ಪ್ರಮಾಣಪತ್ರ ಪರಿಶೀಲನೆಯನ್ನು ಬಿಟ್ಟುಬಿಡಿ"
+
+lt_LT:
+  sslMode: "SSL režimas"
+  selectMode: "Pasirinkite SSL režimą"
+  caCertificate: "CA sertifikatas"
+  clientCertificate: "Kliento sertifikatas"
+  clientKey: "Kliento privatus raktas"
+  serverName: "Serverio pavadinimo nepaisymas"
+  serverNamePlaceholder: "pagrindinio kompiuterio pavadinimas sertifikato patvirtinimui"
+  optional: "neprivaloma"
+  pasteContent: "Įklijuokite PEM"
+  chooseFile: "Pasirinkite Failas"
+  switchToPaste: "Perjunkite į sertifikato turinio įklijavimą"
+  switchToFile: "Perjunkite į failų rinkiklį"
+  fileReadError: "Nepavyko nuskaityti failo"
+  clear: "Aišku"
+  contentLoaded: "Sertifikatas įkeltas"
+  httpWarning: "Įspėjimas: naudojate nesaugų (HTTP) ryšį. Sertifikato duomenys bus perduodami nešifruoti."
+  privateKeyHttpWarning: "Privatūs raktai neturėtų būti įkeliami naudojant nesaugius ryšius."
+  systemCaOnly: "Ši duomenų bazė patikrinimui naudoja sistemos CA sertifikatus. Pasirinktinis CA įkėlimas nepalaikomas."
+  modes.disabled.label: "Išjungta"
+  modes.disabled.description: "Nėra SSL/TLS šifravimo"
+  modes.preferred.label: "Pageidautina"
+  modes.preferred.description: "Naudokite TLS, jei serveris jį palaiko"
+  modes.required.label: "Privaloma"
+  modes.required.description: "Reikalauti TLS, praleisti sertifikato patvirtinimą"
+  modes.verify-ca.label: "Patvirtinti CA"
+  modes.verify-ca.description: "Patikrinkite serverio sertifikatą pagal CA"
+  modes.verify-identity.label: "Patvirtinkite tapatybę"
+  modes.verify-identity.description: "Patikrinkite CA ir serverio pagrindinio kompiuterio pavadinimą"
+  modes.enabled.label: "Įjungta"
+  modes.enabled.description: "Įgalinti TLS su sertifikato patvirtinimu"
+  modes.insecure.label: "Nesaugus"
+  modes.insecure.description: "Įgalinti TLS, praleisti sertifikato tikrinimą"
+
+lv_LV:
+  sslMode: "SSL režīms"
+  selectMode: "Izvēlieties SSL režīms"
+  caCertificate: "CA sertifikāts"
+  clientCertificate: "Klienta sertifikāts"
+  clientKey: "Klienta privātā atslēga"
+  serverName: "Servera nosaukuma ignorēšana"
+  serverNamePlaceholder: "resursdatora nosaukums sertifikāta pārbaudei"
+  optional: "pēc izvēles"
+  pasteContent: "Ielīmējiet PEM"
+  chooseFile: "Izvēlieties Fails"
+  switchToPaste: "Pārslēdzieties uz sertifikāta satura ielīmēšanu"
+  switchToFile: "Pārslēdzieties uz failu atlasītāju"
+  fileReadError: "Neizdevās nolasīt failu"
+  clear: "Skaidrs"
+  contentLoaded: "Sertifikāts ir ielādēts"
+  httpWarning: "Brīdinājums: jūs izmantojat nedrošu (HTTP) savienojumu. Sertifikāta dati tiks pārsūtīti nešifrēti."
+  privateKeyHttpWarning: "Privātās atslēgas nedrīkst augšupielādēt, izmantojot nedrošus savienojumus."
+  systemCaOnly: "Šī datu bāze pārbaudei izmanto sistēmas CA sertifikātus. Pielāgota CA augšupielāde netiek atbalstīta."
+  modes.disabled.label: "Atspējots"
+  modes.disabled.description: "Nav SSL/TLS šifrēšanas"
+  modes.preferred.label: "Vēlams"
+  modes.preferred.description: "Izmantojiet TLS, ja serveris to atbalsta"
+  modes.required.label: "Obligāti"
+  modes.required.description: "Pieprasīt TLS, izlaidiet sertifikāta verifikāciju"
+  modes.verify-ca.label: "Pārbaudiet CA"
+  modes.verify-ca.description: "Pārbaudiet servera sertifikātu pret CA"
+  modes.verify-identity.label: "Apstipriniet identitāti"
+  modes.verify-identity.description: "Pārbaudiet CA un servera resursdatora nosaukumu"
+  modes.enabled.label: "Iespējots"
+  modes.enabled.description: "Iespējot TLS ar sertifikāta verifikāciju"
+  modes.insecure.label: "Nedrošs"
+  modes.insecure.description: "Iespējot TLS, izlaist sertifikāta verifikāciju"
+
+ml_IN:
+  sslMode: "SSL മോഡ്"
+  selectMode: "SSL മോഡ് തിരഞ്ഞെടുക്കുക"
+  caCertificate: "CA സർട്ടിഫിക്കറ്റ്"
+  clientCertificate: "ക്ലയൻ്റ് സർട്ടിഫിക്കറ്റ്"
+  clientKey: "ക്ലയൻ്റ് സ്വകാര്യ കീ"
+  serverName: "സെർവർ പേര് ഓവർറൈഡ്"
+  serverNamePlaceholder: "സർട്ടിഫിക്കറ്റ് പരിശോധനയ്ക്കുള്ള ഹോസ്റ്റ്നാമം"
+  optional: "ഓപ്ഷണൽ"
+  pasteContent: "PEM ഒട്ടിക്കുക"
+  chooseFile: "ഫയൽ തിരഞ്ഞെടുക്കുക"
+  switchToPaste: "സർട്ടിഫിക്കറ്റ് ഉള്ളടക്കം ഒട്ടിക്കാൻ മാറുക"
+  switchToFile: "ഫയൽ പിക്കറിലേക്ക് മാറുക"
+  fileReadError: "ഫയൽ വായിക്കുന്നതിൽ പരാജയപ്പെട്ടു"
+  clear: "ക്ലിയർ"
+  contentLoaded: "സർട്ടിഫിക്കറ്റ് ലോഡ് ചെയ്തു"
+  httpWarning: "മുന്നറിയിപ്പ്: നിങ്ങൾ ഒരു സുരക്ഷിതമല്ലാത്ത (HTTP) കണക്ഷനാണ് ഉപയോഗിക്കുന്നത്. സർട്ടിഫിക്കറ്റ് ഡാറ്റ എൻക്രിപ്റ്റ് ചെയ്യാതെ കൈമാറും."
+  privateKeyHttpWarning: "സുരക്ഷിതമല്ലാത്ത കണക്ഷനുകളിൽ സ്വകാര്യ കീകൾ അപ്‌ലോഡ് ചെയ്യാൻ പാടില്ല."
+  systemCaOnly: "ഈ ഡാറ്റാബേസ് സ്ഥിരീകരണത്തിനായി സിസ്റ്റം CA സർട്ടിഫിക്കറ്റുകൾ ഉപയോഗിക്കുന്നു. ഇഷ്‌ടാനുസൃത CA അപ്‌ലോഡ് പിന്തുണയ്ക്കുന്നില്ല."
+  modes.disabled.label: "അപ്രാപ്തമാക്കി"
+  modes.disabled.description: "SSL/TLS എൻക്രിപ്ഷൻ ഇല്ല"
+  modes.preferred.label: "മുൻഗണന"
+  modes.preferred.description: "സെർവർ പിന്തുണയ്ക്കുന്നുവെങ്കിൽ TLS ഉപയോഗിക്കുക"
+  modes.required.label: "ആവശ്യമാണ്"
+  modes.required.description: "TLS ആവശ്യമാണ്, സർട്ടിഫിക്കറ്റ് പരിശോധന ഒഴിവാക്കുക"
+  modes.verify-ca.label: "CA പരിശോധിക്കുക"
+  modes.verify-ca.description: "സിഎയ്‌ക്കെതിരായ സെർവർ സർട്ടിഫിക്കറ്റ് പരിശോധിക്കുക"
+  modes.verify-identity.label: "ഐഡൻ്റിറ്റി സ്ഥിരീകരിക്കുക"
+  modes.verify-identity.description: "CA, സെർവർ ഹോസ്റ്റ്നാമം എന്നിവ പരിശോധിക്കുക"
+  modes.enabled.label: "പ്രവർത്തനക്ഷമമാക്കി"
+  modes.enabled.description: "സർട്ടിഫിക്കറ്റ് പരിശോധനയ്‌ക്കൊപ്പം TLS പ്രവർത്തനക്ഷമമാക്കുക"
+  modes.insecure.label: "അരക്ഷിതാവസ്ഥ"
+  modes.insecure.description: "TLS പ്രവർത്തനക്ഷമമാക്കുക, സർട്ടിഫിക്കറ്റ് പരിശോധന ഒഴിവാക്കുക"
+
+mr_IN:
+  sslMode: "SSL मोड"
+  selectMode: "SSL मोड निवडा"
+  caCertificate: "CA प्रमाणपत्र"
+  clientCertificate: "क्लायंट प्रमाणपत्र"
+  clientKey: "क्लायंट खाजगी की"
+  serverName: "सर्व्हरचे नाव ओव्हरराइड"
+  serverNamePlaceholder: "प्रमाणपत्र पडताळणीसाठी होस्टनाव"
+  optional: "पर्यायी"
+  pasteContent: "PEM पेस्ट करा"
+  chooseFile: "फाइल निवडा"
+  switchToPaste: "प्रमाणपत्र सामग्री पेस्ट करण्यासाठी स्विच करा"
+  switchToFile: "फाइल पिकरवर स्विच करा"
+  fileReadError: "फाइल वाचण्यात अयशस्वी"
+  clear: "साफ"
+  contentLoaded: "प्रमाणपत्र लोड केले"
+  httpWarning: "चेतावणी: तुम्ही असुरक्षित (HTTP) कनेक्शन वापरत आहात. प्रमाणपत्र डेटा एन्क्रिप्ट न करता प्रसारित केला जाईल."
+  privateKeyHttpWarning: "असुरक्षित कनेक्शनवर खाजगी की अपलोड केल्या जाऊ नयेत."
+  systemCaOnly: "हा डेटाबेस पडताळणीसाठी सिस्टम CA प्रमाणपत्रे वापरतो. सानुकूल CA अपलोड समर्थित नाही."
+  modes.disabled.label: "अक्षम"
+  modes.disabled.description: "SSL/TLS एन्क्रिप्शन नाही"
+  modes.preferred.label: "प्राधान्य दिले"
+  modes.preferred.description: "सर्व्हरने समर्थन दिल्यास TLS वापरा"
+  modes.required.label: "आवश्यक आहे"
+  modes.required.description: "TLS आवश्यक आहे, प्रमाणपत्र पडताळणी वगळा"
+  modes.verify-ca.label: "CA सत्यापित करा"
+  modes.verify-ca.description: "CA विरुद्ध सर्व्हर प्रमाणपत्र सत्यापित करा"
+  modes.verify-identity.label: "ओळख सत्यापित करा"
+  modes.verify-identity.description: "CA आणि सर्व्हर होस्टनाव सत्यापित करा"
+  modes.enabled.label: "सक्षम केले"
+  modes.enabled.description: "प्रमाणपत्र पडताळणीसह TLS सक्षम करा"
+  modes.insecure.label: "असुरक्षित"
+  modes.insecure.description: "TLS सक्षम करा, प्रमाणपत्र पडताळणी वगळा"
+
+ne_NP:
+  sslMode: "SSL मोड"
+  selectMode: "SSL मोड चयन गर्नुहोस्"
+  caCertificate: "CA प्रमाणपत्र"
+  clientCertificate: "ग्राहक प्रमाणपत्र"
+  clientKey: "ग्राहक निजी कुञ्जी"
+  serverName: "सर्भर नाम ओभरराइड"
+  serverNamePlaceholder: "प्रमाणपत्र प्रमाणिकरणको लागि होस्टनाम"
+  optional: "वैकल्पिक"
+  pasteContent: "PEM टाँस्नुहोस्"
+  chooseFile: "फाइल छान्नुहोस्"
+  switchToPaste: "प्रमाणपत्र सामग्री टाँस्न स्विच गर्नुहोस्"
+  switchToFile: "फाइल पिकरमा स्विच गर्नुहोस्"
+  fileReadError: "फाइल पढ्न असफल भयो"
+  clear: "खाली गर्नुहोस्"
+  contentLoaded: "प्रमाणपत्र लोड भयो"
+  httpWarning: "चेतावनी: तपाईं असुरक्षित (HTTP) जडान प्रयोग गर्दै हुनुहुन्छ। प्रमाणपत्र डाटा गुप्तिकरण नगरी पठाइनेछ।"
+  privateKeyHttpWarning: "निजी कुञ्जीहरू असुरक्षित जडानहरूमा अपलोड गर्नु हुँदैन।"
+  systemCaOnly: "यो डाटाबेसले प्रमाणिकरणको लागि प्रणाली CA प्रमाणपत्रहरू प्रयोग गर्दछ। अनुकूलन CA अपलोड समर्थित छैन।"
+  modes.disabled.label: "असक्षम"
+  modes.disabled.description: "कुनै SSL/TLS इन्क्रिप्सन छैन"
+  modes.preferred.label: "रुचाइएको"
+  modes.preferred.description: "यदि सर्भरले समर्थन गर्छ भने TLS प्रयोग गर्नुहोस्"
+  modes.required.label: "आवश्यक छ"
+  modes.required.description: "TLS आवश्यक छ, प्रमाणपत्र प्रमाणीकरण छोड्नुहोस्"
+  modes.verify-ca.label: "CA प्रमाणित गर्नुहोस्"
+  modes.verify-ca.description: "CA विरुद्ध सर्भर प्रमाणपत्र प्रमाणित गर्नुहोस्"
+  modes.verify-identity.label: "पहिचान प्रमाणित गर्नुहोस्"
+  modes.verify-identity.description: "CA र सर्भर होस्टनाम प्रमाणित गर्नुहोस्"
+  modes.enabled.label: "सक्षम गरियो"
+  modes.enabled.description: "प्रमाणपत्र प्रमाणीकरणको साथ TLS सक्षम गर्नुहोस्"
+  modes.insecure.label: "असुरक्षित"
+  modes.insecure.description: "TLS सक्षम गर्नुहोस्, प्रमाणपत्र प्रमाणीकरण छोड्नुहोस्"
+
+pa_IN:
+  sslMode: "SSL ਮੋਡ"
+  selectMode: "SSL ਮੋਡ ਚੁਣੋ"
+  caCertificate: "CA ਸਰਟੀਫਿਕੇਟ"
+  clientCertificate: "ਕਲਾਇੰਟ ਸਰਟੀਫਿਕੇਟ"
+  clientKey: "ਕਲਾਇੰਟ ਪ੍ਰਾਈਵੇਟ ਕੁੰਜੀ"
+  serverName: "ਸਰਵਰ ਨਾਮ ਓਵਰਰਾਈਡ"
+  serverNamePlaceholder: "ਸਰਟੀਫਿਕੇਟ ਤਸਦੀਕ ਲਈ ਹੋਸਟਨਾਮ"
+  optional: "ਵਿਕਲਪਿਕ"
+  pasteContent: "PEM ਪੇਸਟ ਕਰੋ"
+  chooseFile: "ਫਾਈਲ ਚੁਣੋ"
+  switchToPaste: "ਸਰਟੀਫਿਕੇਟ ਸਮੱਗਰੀ ਪੇਸਟ ਕਰਨ ਲਈ ਸਵਿਚ ਕਰੋ"
+  switchToFile: "ਫ਼ਾਈਲ ਚੋਣਕਾਰ 'ਤੇ ਸਵਿਚ ਕਰੋ"
+  fileReadError: "ਫ਼ਾਈਲ ਪੜ੍ਹਨ ਵਿੱਚ ਅਸਫਲ"
+  clear: "ਸਾਫ਼"
+  contentLoaded: "ਸਰਟੀਫਿਕੇਟ ਲੋਡ ਕੀਤਾ ਗਿਆ"
+  httpWarning: "ਚੇਤਾਵਨੀ: ਤੁਸੀਂ ਇੱਕ ਅਸੁਰੱਖਿਅਤ (HTTP) ਕੁਨੈਕਸ਼ਨ ਵਰਤ ਰਹੇ ਹੋ। ਪ੍ਰਮਾਣ-ਪੱਤਰ ਡੇਟਾ ਨੂੰ ਬਿਨਾਂ ਏਨਕ੍ਰਿਪਟ ਕੀਤੇ ਪ੍ਰਸਾਰਿਤ ਕੀਤਾ ਜਾਵੇਗਾ।"
+  privateKeyHttpWarning: "ਅਸੁਰੱਖਿਅਤ ਕਨੈਕਸ਼ਨਾਂ 'ਤੇ ਪ੍ਰਾਈਵੇਟ ਕੁੰਜੀਆਂ ਨੂੰ ਅਪਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾਣਾ ਚਾਹੀਦਾ ਹੈ।"
+  systemCaOnly: "ਇਹ ਡੇਟਾਬੇਸ ਤਸਦੀਕ ਲਈ ਸਿਸਟਮ CA ਸਰਟੀਫਿਕੇਟ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ। ਕਸਟਮ CA ਅੱਪਲੋਡ ਸਮਰਥਿਤ ਨਹੀਂ ਹੈ।"
+  modes.disabled.label: "ਅਯੋਗ"
+  modes.disabled.description: "ਕੋਈ SSL/TLS ਇਨਕ੍ਰਿਪਸ਼ਨ ਨਹੀਂ"
+  modes.preferred.label: "ਤਰਜੀਹੀ"
+  modes.preferred.description: "ਜੇਕਰ ਸਰਵਰ ਇਸਦਾ ਸਮਰਥਨ ਕਰਦਾ ਹੈ ਤਾਂ TLS ਦੀ ਵਰਤੋਂ ਕਰੋ"
+  modes.required.label: "ਲੋੜੀਂਦਾ ਹੈ"
+  modes.required.description: "TLS ਦੀ ਲੋੜ ਹੈ, ਸਰਟੀਫਿਕੇਟ ਪੁਸ਼ਟੀਕਰਨ ਛੱਡੋ"
+  modes.verify-ca.label: "CA ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ"
+  modes.verify-ca.description: "CA ਦੇ ਵਿਰੁੱਧ ਸਰਵਰ ਸਰਟੀਫਿਕੇਟ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ"
+  modes.verify-identity.label: "ਪਛਾਣ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ"
+  modes.verify-identity.description: "CA ਅਤੇ ਸਰਵਰ ਹੋਸਟਨਾਮ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ"
+  modes.enabled.label: "ਸਮਰਥਿਤ"
+  modes.enabled.description: "ਪ੍ਰਮਾਣ-ਪੱਤਰ ਪੁਸ਼ਟੀਕਰਨ ਨਾਲ TLS ਨੂੰ ਸਮਰੱਥ ਬਣਾਓ"
+  modes.insecure.label: "ਅਸੁਰੱਖਿਅਤ"
+  modes.insecure.description: "TLS ਨੂੰ ਚਾਲੂ ਕਰੋ, ਪ੍ਰਮਾਣ-ਪੱਤਰ ਪੁਸ਼ਟੀਕਰਨ ਛੱਡੋ"
+
+si_LK:
+  sslMode: "SSL මාදිලිය"
+  selectMode: "SSL මාදිලිය තෝරන්න"
+  caCertificate: "CA සහතිකය"
+  clientCertificate: "සේවාලාභී සහතිකය"
+  clientKey: "සේවාදායකයාගේ පුද්ගලික යතුර"
+  serverName: "සේවාදායකයේ නම අභිබවා යාම"
+  serverNamePlaceholder: "සහතික සත්‍යාපනය සඳහා සත්කාරක නාමය"
+  optional: "විකල්ප"
+  pasteContent: "PEM අලවන්න"
+  chooseFile: "ගොනුව තෝරන්න"
+  switchToPaste: "සහතික අන්තර්ගතය ඇලවීමට මාරු වන්න"
+  switchToFile: "ගොනු පිකර් වෙත මාරු වන්න"
+  fileReadError: "ගොනුව කියවීමට අසමත් විය"
+  clear: "පැහැදිලියි"
+  contentLoaded: "සහතිකය පටවා ඇත"
+  httpWarning: "අවවාදයයි: ඔබ අනාරක්ෂිත (HTTP) සම්බන්ධතාවයක් භාවිතා කරයි. සහතික දත්ත සංකේතනය නොකර සම්ප්‍රේෂණය කෙරේ."
+  privateKeyHttpWarning: "අනාරක්ෂිත සම්බන්ධතා හරහා පුද්ගලික යතුරු උඩුගත නොකළ යුතුය."
+  systemCaOnly: "මෙම දත්ත සමුදාය සත්‍යාපනය සඳහා පද්ධති CA සහතික භාවිතා කරයි. අභිරුචි CA උඩුගත කිරීම සඳහා සහය නොදක්වයි."
+  modes.disabled.label: "ආබාධිතයි"
+  modes.disabled.description: "SSL/TLS සංකේතනය නැත"
+  modes.preferred.label: "මනාපය"
+  modes.preferred.description: "සේවාදායකය එයට සහය දක්වන්නේ නම් TLS භාවිතා කරන්න"
+  modes.required.label: "අවශ්යයි"
+  modes.required.description: "TLS අවශ්‍යයි, සහතික සත්‍යාපනය මඟ හරින්න"
+  modes.verify-ca.label: "CA තහවුරු කරන්න"
+  modes.verify-ca.description: "CA ට එරෙහිව සේවාදායක සහතිකය තහවුරු කරන්න"
+  modes.verify-identity.label: "අනන්‍යතාවය තහවුරු කරන්න"
+  modes.verify-identity.description: "CA සහ සේවාදායක සත්කාරක නාමය තහවුරු කරන්න"
+  modes.enabled.label: "සබල කර ඇත"
+  modes.enabled.description: "සහතික සත්‍යාපනය සමඟ TLS සබල කරන්න"
+  modes.insecure.label: "අනාරක්ෂිතයි"
+  modes.insecure.description: "TLS සබල කරන්න, සහතික සත්‍යාපනය මඟ හරින්න"
+
+sl_SI:
+  sslMode: "Način SSL"
+  selectMode: "Izberite način SSL"
+  caCertificate: "CA certifikat"
+  clientCertificate: "Potrdilo stranke"
+  clientKey: "Zasebni ključ odjemalca"
+  serverName: "Preglasitev imena strežnika"
+  serverNamePlaceholder: "ime gostitelja za preverjanje potrdila"
+  optional: "izbirno"
+  pasteContent: "Prilepite PEM"
+  chooseFile: "Izberite Datoteka"
+  switchToPaste: "Preklopite na lepljenje vsebine potrdila"
+  switchToFile: "Preklopite na izbirnik datotek"
+  fileReadError: "Branje datoteke ni uspelo"
+  clear: "jasno"
+  contentLoaded: "Certifikat naložen"
+  httpWarning: "Opozorilo: Uporabljate nezaščiteno (HTTP) povezavo. Podatki potrdila bodo poslani nešifrirani."
+  privateKeyHttpWarning: "Zasebnih ključev ne smete nalagati prek nevarnih povezav."
+  systemCaOnly: "Ta baza podatkov za preverjanje uporablja sistemska potrdila CA. Nalaganje CA po meri ni podprto."
+  modes.disabled.label: "Onemogočen"
+  modes.disabled.description: "Brez šifriranja SSL/TLS"
+  modes.preferred.label: "Prednostno"
+  modes.preferred.description: "Uporabite TLS, če ga strežnik podpira"
+  modes.required.label: "Obvezno"
+  modes.required.description: "Zahtevaj TLS, preskoči preverjanje potrdila"
+  modes.verify-ca.label: "Preverite CA"
+  modes.verify-ca.description: "Preverite potrdilo strežnika s CA"
+  modes.verify-identity.label: "Preveri identiteto"
+  modes.verify-identity.description: "Preverite CA in ime gostitelja strežnika"
+  modes.enabled.label: "Omogočeno"
+  modes.enabled.description: "Omogoči TLS s preverjanjem potrdila"
+  modes.insecure.label: "Negotovo"
+  modes.insecure.description: "Omogoči TLS, preskoči preverjanje potrdila"
+
+sr_RS:
+  sslMode: "ССЛ Моде"
+  selectMode: "Изаберите ССЛ режим"
+  caCertificate: "ЦА сертификат"
+  clientCertificate: "Цлиент Цертифицате"
+  clientKey: "Приватни кључ клијента"
+  serverName: "Замена имена сервера"
+  serverNamePlaceholder: "име хоста за верификацију сертификата"
+  optional: "опционо"
+  pasteContent: "Залепите ПЕМ"
+  chooseFile: "Изаберите Филе"
+  switchToPaste: "Пребаците се на лепљење садржаја сертификата"
+  switchToFile: "Пребаците се на бирач датотека"
+  fileReadError: "Читање датотеке није успело"
+  clear: "Јасно"
+  contentLoaded: "Сертификат је учитан"
+  httpWarning: "Упозорење: користите несигурну (ХТТП) везу. Подаци о сертификату ће се преносити нешифровани."
+  privateKeyHttpWarning: "Приватни кључеви не би требало да се отпремају преко несигурних веза."
+  systemCaOnly: "Ова база података користи системске ЦА сертификате за верификацију. Прилагођено отпремање ЦА није подржано."
+  modes.disabled.label: "Онемогућено"
+  modes.disabled.description: "Нема ССЛ/ТЛС енкрипције"
+  modes.preferred.label: "Пожељно"
+  modes.preferred.description: "Користите ТЛС ако га сервер подржава"
+  modes.required.label: "Обавезно"
+  modes.required.description: "Захтевај ТЛС, прескочи верификацију сертификата"
+  modes.verify-ca.label: "Верифи ЦА"
+  modes.verify-ca.description: "Проверите сертификат сервера у односу на ЦА"
+  modes.verify-identity.label: "Верифи Идентити"
+  modes.verify-identity.description: "Проверите ЦА и име хоста сервера"
+  modes.enabled.label: "Омогућено"
+  modes.enabled.description: "Омогућите ТЛС са верификацијом сертификата"
+  modes.insecure.label: "Несигуран"
+  modes.insecure.description: "Омогућите ТЛС, прескочите верификацију сертификата"
+
+te_IN:
+  sslMode: "SSL మోడ్"
+  selectMode: "SSL మోడ్‌ని ఎంచుకోండి"
+  caCertificate: "CA సర్టిఫికేట్"
+  clientCertificate: "క్లయింట్ సర్టిఫికేట్"
+  clientKey: "క్లయింట్ ప్రైవేట్ కీ"
+  serverName: "సర్వర్ పేరు ఓవర్‌రైడ్"
+  serverNamePlaceholder: "సర్టిఫికేట్ ధృవీకరణ కోసం హోస్ట్ పేరు"
+  optional: "ఐచ్ఛికం"
+  pasteContent: "PEMని అతికించండి"
+  chooseFile: "ఫైల్‌ని ఎంచుకోండి"
+  switchToPaste: "సర్టిఫికేట్ కంటెంట్‌ను అతికించడానికి మారండి"
+  switchToFile: "ఫైల్ పికర్‌కి మారండి"
+  fileReadError: "ఫైల్‌ని చదవడంలో విఫలమైంది"
+  clear: "క్లియర్"
+  contentLoaded: "సర్టిఫికేట్ లోడ్ చేయబడింది"
+  httpWarning: "హెచ్చరిక: మీరు అసురక్షిత (HTTP) కనెక్షన్‌ని ఉపయోగిస్తున్నారు. సర్టిఫికేట్ డేటా గుప్తీకరించబడకుండా ప్రసారం చేయబడుతుంది."
+  privateKeyHttpWarning: "అసురక్షిత కనెక్షన్‌లపై ప్రైవేట్ కీలను అప్‌లోడ్ చేయకూడదు."
+  systemCaOnly: "ఈ డేటాబేస్ ధృవీకరణ కోసం సిస్టమ్ CA ప్రమాణపత్రాలను ఉపయోగిస్తుంది. అనుకూల CA అప్‌లోడ్‌కు మద్దతు లేదు."
+  modes.disabled.label: "వికలాంగుడు"
+  modes.disabled.description: "SSL/TLS ఎన్‌క్రిప్షన్ లేదు"
+  modes.preferred.label: "ప్రాధాన్యత ఇవ్వబడింది"
+  modes.preferred.description: "సర్వర్ మద్దతు ఇస్తే TLSని ఉపయోగించండి"
+  modes.required.label: "అవసరం"
+  modes.required.description: "TLS అవసరం, సర్టిఫికేట్ ధృవీకరణను దాటవేయండి"
+  modes.verify-ca.label: "CAని ధృవీకరించండి"
+  modes.verify-ca.description: "CAకి వ్యతిరేకంగా సర్వర్ ప్రమాణపత్రాన్ని ధృవీకరించండి"
+  modes.verify-identity.label: "గుర్తింపును ధృవీకరించండి"
+  modes.verify-identity.description: "CA మరియు సర్వర్ హోస్ట్ పేరును ధృవీకరించండి"
+  modes.enabled.label: "ప్రారంభించబడింది"
+  modes.enabled.description: "ప్రమాణపత్ర ధృవీకరణతో TLSని ప్రారంభించండి"
+  modes.insecure.label: "అభద్రత"
+  modes.insecure.description: "TLSని ప్రారంభించండి, సర్టిఫికేట్ ధృవీకరణను దాటవేయండి"
+
+tl_PH:
+  sslMode: "SSL Mode"
+  selectMode: "Piliin ang SSL Mode"
+  caCertificate: "Sertipiko ng CA"
+  clientCertificate: "Sertipiko ng Kliyente"
+  clientKey: "Pribadong Key ng Kliyente"
+  serverName: "Override ng Pangalan ng Server"
+  serverNamePlaceholder: "hostname para sa pag-verify ng certificate"
+  optional: "opsyonal"
+  pasteContent: "Idikit ang PEM"
+  chooseFile: "Piliin ang File"
+  switchToPaste: "Lumipat upang i-paste ang nilalaman ng certificate"
+  switchToFile: "Lumipat sa tagapili ng file"
+  fileReadError: "Nabigong basahin ang file"
+  clear: "Maaliwalas"
+  contentLoaded: "Na-load ang certificate"
+  httpWarning: "Babala: Gumagamit ka ng koneksyon na hindi secure (HTTP). Ang data ng sertipiko ay ipapadala nang hindi naka-encrypt."
+  privateKeyHttpWarning: "Hindi dapat i-upload ang mga pribadong key sa mga hindi secure na koneksyon."
+  systemCaOnly: "Ang database na ito ay gumagamit ng system CA certificates para sa pag-verify. Hindi sinusuportahan ang custom na pag-upload ng CA."
+  modes.disabled.label: "Hindi pinagana"
+  modes.disabled.description: "Walang SSL/TLS encryption"
+  modes.preferred.label: "Mas gusto"
+  modes.preferred.description: "Gamitin ang TLS kung sinusuportahan ito ng server"
+  modes.required.label: "Kinakailangan"
+  modes.required.description: "Mangangailangan ng TLS, laktawan ang pag-verify ng certificate"
+  modes.verify-ca.label: "I-verify ang CA"
+  modes.verify-ca.description: "I-verify ang certificate ng server laban sa CA"
+  modes.verify-identity.label: "I-verify ang Pagkakakilanlan"
+  modes.verify-identity.description: "I-verify ang CA at server hostname"
+  modes.enabled.label: "Pinagana"
+  modes.enabled.description: "Paganahin ang TLS na may pag-verify ng certificate"
+  modes.insecure.label: "Insecure"
+  modes.insecure.description: "Paganahin ang TLS, laktawan ang pag-verify ng certificate"
+
+uz_UZ:
+  sslMode: "SSL rejimi"
+  selectMode: "SSL rejimini tanlang"
+  caCertificate: "CA sertifikati"
+  clientCertificate: "Mijoz sertifikati"
+  clientKey: "Mijoz shaxsiy kaliti"
+  serverName: "Server nomini bekor qilish"
+  serverNamePlaceholder: "sertifikatni tekshirish uchun xost nomi"
+  optional: "ixtiyoriy"
+  pasteContent: "PEM-ni joylashtiring"
+  chooseFile: "Faylni tanlang"
+  switchToPaste: "Sertifikat tarkibini joylashtirishga o‘tish"
+  switchToFile: "Fayl tanlashga o'tish"
+  fileReadError: "Faylni o‘qib bo‘lmadi"
+  clear: "Toza"
+  contentLoaded: "Sertifikat yuklandi"
+  httpWarning: "Ogohlantirish: Siz xavfsiz (HTTP) ulanishdan foydalanyapsiz. Sertifikat ma'lumotlari shifrlanmagan holda uzatiladi."
+  privateKeyHttpWarning: "Shaxsiy kalitlarni xavfsiz ulanishlar orqali yuklamaslik kerak."
+  systemCaOnly: "Ushbu ma'lumotlar bazasi tekshirish uchun tizim CA sertifikatlaridan foydalanadi. Maxsus CA yuklash qo‘llab-quvvatlanmaydi."
+  modes.disabled.label: "O'chirilgan"
+  modes.disabled.description: "SSL/TLS shifrlash yo'q"
+  modes.preferred.label: "Afzal"
+  modes.preferred.description: "Agar server qo'llab-quvvatlasa, TLS dan foydalaning"
+  modes.required.label: "Majburiy"
+  modes.required.description: "TLS talab qiling, sertifikat tekshiruvini oʻtkazib yuboring"
+  modes.verify-ca.label: "CAni tasdiqlang"
+  modes.verify-ca.description: "CA bilan server sertifikatini tasdiqlang"
+  modes.verify-identity.label: "Shaxsni tasdiqlang"
+  modes.verify-identity.description: "CA va server host nomini tekshiring"
+  modes.enabled.label: "Yoqilgan"
+  modes.enabled.description: "Sertifikat tekshiruvi bilan TLSni yoqing"
+  modes.insecure.label: "Ishonchsiz"
+  modes.insecure.description: "TLSni yoqing, sertifikat tekshiruvini oʻtkazib yuboring"
+
+yo_NG:
+  sslMode: "Ipo SSL"
+  selectMode: "Yan Ipo SSL"
+  caCertificate: "CA Ijẹrisi"
+  clientCertificate: "Iwe-ẹri Onibara"
+  clientKey: "Bọtini Ikọkọ Onibara"
+  serverName: "Orukọ olupin Dari"
+  serverNamePlaceholder: "ogun orukọ fun ijẹrisi ijẹrisi"
+  optional: "iyan"
+  pasteContent: "Lẹẹmọ PEM"
+  chooseFile: "Yan Faili"
+  switchToPaste: "Yipada si lẹẹmọ akoonu ijẹrisi"
+  switchToFile: "Yipada si oluyan faili"
+  fileReadError: "O kuna lati ka faili"
+  clear: "Ko o"
+  contentLoaded: "Iwe-ẹri ti kojọpọ"
+  httpWarning: "Ikilọ: O nlo asopọ ti ko ni aabo (HTTP). Awọn data ijẹrisi yoo jẹ gbigbe laiṣiparọ."
+  privateKeyHttpWarning: "Awọn bọtini ikọkọ ko yẹ ki o gbejade lori awọn asopọ ti ko ni aabo."
+  systemCaOnly: "Aaye data yii nlo awọn iwe-ẹri CA eto fun ijẹrisi. Ikojọpọ CA aṣa ko ni atilẹyin."
+  modes.disabled.label: "Alaabo"
+  modes.disabled.description: "Ko si SSL/TLS ìsekóòdù"
+  modes.preferred.label: "Ayanfẹ"
+  modes.preferred.description: "Lo TLS ti olupin ba ṣe atilẹyin"
+  modes.required.label: "Ti beere fun"
+  modes.required.description: "Beere TLS, fo ijẹrisi ijẹrisi"
+  modes.verify-ca.label: "Ṣe idaniloju CA"
+  modes.verify-ca.description: "Daju ijẹrisi olupin lodi si CA"
+  modes.verify-identity.label: "Jẹrisi Idanimọ"
+  modes.verify-identity.description: "Daju CA ati olupin olupin"
+  modes.enabled.label: "Ti ṣiṣẹ"
+  modes.enabled.description: "Mu TLS ṣiṣẹ pẹlu ijẹrisi ijẹrisi"
+  modes.insecure.label: "Ailewu"
+  modes.insecure.description: "Mu TLS ṣiṣẹ, fo ijẹrisi ijẹrisi"

@@ -1,3 +1,247 @@
 en_US:
   loading: Loading...
   pleaseWait: Please Wait
+
+ar_AE:
+  loading: تحميل...
+  pleaseWait: انتظر من فضلك
+
+de_DE:
+  loading: Laden...
+  pleaseWait: Bitte warten
+
+el_GR:
+  loading: Φόρτωση...
+  pleaseWait: Παρακαλώ περιμένετε
+
+en_GB:
+  loading: Loading...
+  pleaseWait: Please Wait
+
+es_ES:
+  loading: Cargando...
+  pleaseWait: Espere por favor
+
+fi_FI:
+  loading: Ladataan...
+  pleaseWait: Odota
+
+fr_FR:
+  loading: Chargement...
+  pleaseWait: S'il vous plaît, attendez
+
+it_IT:
+  loading: Caricamento...
+  pleaseWait: Attendere prego
+
+iw_IL:
+  loading: טְעִינָה...
+  pleaseWait: אנא המתן
+
+ja_JP:
+  loading: 読み込み中...
+  pleaseWait: お待ちください
+
+ko_KR:
+  loading: 로드 중...
+  pleaseWait: 기다리세요
+
+nl_NL:
+  loading: Laden...
+  pleaseWait: Wacht alstublieft
+
+pl_PL:
+  loading: Załadunek...
+  pleaseWait: Proszę czekać
+
+pt_BR:
+  loading: Carregando...
+  pleaseWait: Por favor, aguarde
+
+ro_RO:
+  loading: Încărcare...
+  pleaseWait: Va rugam asteptati
+
+ru_RU:
+  loading: Загрузка...
+  pleaseWait: Пожалуйста, подождите
+
+sk_SK:
+  loading: Načítava sa...
+  pleaseWait: Čakajte prosím
+
+sv_SE:
+  loading: Belastning...
+  pleaseWait: Vänligen vänta
+
+zh_CN:
+  loading: 加载中...
+  pleaseWait: 请稍等
+
+zh_TW:
+  loading: 載入中...
+  pleaseWait: 請稍等
+
+bg_BG:
+  loading: Зареждане...
+  pleaseWait: Моля изчакайте
+
+bn_BD:
+  loading: লোড হচ্ছে...
+  pleaseWait: অপেক্ষা করুন
+
+ca_ES:
+  loading: Carregant...
+  pleaseWait: Si us plau, espereu
+
+cs_CZ:
+  loading: Načítání...
+  pleaseWait: Prosím čekejte
+
+da_DK:
+  loading: Indlæser...
+  pleaseWait: Vent venligst
+
+fa_IR:
+  loading: در حال بارگیری...
+  pleaseWait: لطفا صبر کنید
+
+hi_IN:
+  loading: लोड हो रहा है...
+  pleaseWait: कृपया प्रतीक्षा करें
+
+hr_HR:
+  loading: Učitavanje...
+  pleaseWait: Molimo pričekajte
+
+hu_HU:
+  loading: Terhelés...
+  pleaseWait: Kérem, várjon
+
+id_ID:
+  loading: Memuat...
+  pleaseWait: Harap tunggu
+
+ms_MY:
+  loading: Memuatkan...
+  pleaseWait: Sila Tunggu
+
+nb_NO:
+  loading: Laster inn...
+  pleaseWait: Vennligst vent
+
+sw_KE:
+  loading: Inapakia...
+  pleaseWait: Tafadhali Subiri
+
+ta_IN:
+  loading: ஏற்றுகிறது...
+  pleaseWait: தயவுசெய்து காத்திருங்கள்
+
+th_TH:
+  loading: กำลังโหลด...
+  pleaseWait: โปรดรอ
+
+tr_TR:
+  loading: Yükleniyor...
+  pleaseWait: Lütfen bekleyin
+
+uk_UA:
+  loading: Завантаження...
+  pleaseWait: Будь ласка, зачекайте
+
+ur_PK:
+  loading: لوڈ ہو رہا ہے...
+  pleaseWait: برائے مہربانی انتظار کریں۔
+
+vi_VN:
+  loading: Đang tải...
+  pleaseWait: Vui lòng chờ
+
+af_ZA:
+  loading: "Laai tans..."
+  pleaseWait: "Wag asseblief"
+
+am_ET:
+  loading: "በመጫን ላይ..."
+  pleaseWait: "እባክህ ጠብቅ"
+
+az_AZ:
+  loading: "Yüklənir..."
+  pleaseWait: "Zəhmət olmasa gözləyin"
+
+et_EE:
+  loading: "Laadimine..."
+  pleaseWait: "Palun oodake"
+
+gu_IN:
+  loading: "લોડ કરી રહ્યું છે..."
+  pleaseWait: "કૃપા કરીને રાહ જુઓ"
+
+ha_NG:
+  loading: "Ana lodawa..."
+  pleaseWait: "Don Allah jira"
+
+ka_GE:
+  loading: "იტვირთება..."
+  pleaseWait: "გთხოვთ დაელოდეთ"
+
+km_KH:
+  loading: "កំពុង​ផ្ទុក..."
+  pleaseWait: "សូមរង់ចាំ"
+
+kn_IN:
+  loading: "ಲೋಡ್ ಆಗುತ್ತಿದೆ..."
+  pleaseWait: "ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ"
+
+lt_LT:
+  loading: "Įkeliama..."
+  pleaseWait: "Prašome palaukti"
+
+lv_LV:
+  loading: "Notiek ielāde..."
+  pleaseWait: "Lūdzu, uzgaidiet"
+
+ml_IN:
+  loading: "ലോഡ് ചെയ്യുന്നു..."
+  pleaseWait: "കാത്തിരിക്കൂ"
+
+mr_IN:
+  loading: "लोड करत आहे..."
+  pleaseWait: "कृपया प्रतीक्षा करा"
+
+ne_NP:
+  loading: "लोड गर्दै..."
+  pleaseWait: "कृपया प्रतीक्षा गर्नुहोस्"
+
+pa_IN:
+  loading: "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ..."
+  pleaseWait: "ਕ੍ਰਿਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ"
+
+si_LK:
+  loading: "පූරණය වෙමින්..."
+  pleaseWait: "කරුණාකර රැඳී සිටින්න"
+
+sl_SI:
+  loading: "Nalaganje..."
+  pleaseWait: "prosim počakajte"
+
+sr_RS:
+  loading: "Учитавање..."
+  pleaseWait: "Молим сачекајте"
+
+te_IN:
+  loading: "లోడ్ అవుతోంది..."
+  pleaseWait: "దయచేసి వేచి ఉండండి"
+
+tl_PH:
+  loading: "Naglo-load..."
+  pleaseWait: "Mangyaring Maghintay"
+
+uz_UZ:
+  loading: "Yuklanmoqda..."
+  pleaseWait: "Iltimos kuting"
+
+yo_NG:
+  loading: "Nkojọpọ..."
+  pleaseWait: "Jọwọ duro"

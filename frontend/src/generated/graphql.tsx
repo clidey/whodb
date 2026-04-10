@@ -701,7 +701,9 @@ export type TypeDefinition = {
   hasLength: Scalars['Boolean']['output'];
   hasPrecision: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
+  insertFunc?: Maybe<Scalars['String']['output']>;
   label: Scalars['String']['output'];
+  tableModel?: Maybe<Scalars['String']['output']>;
 };
 
 export type UpdateInfo = {

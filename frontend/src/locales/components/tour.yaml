@@ -5,3 +5,491 @@ en_US:
   finish: Finish
   close: Close
   back: Back
+
+ar_AE:
+  next: التالي
+  previous: سابق
+  skip: يتخطى
+  finish: ينهي
+  close: يغلق
+  back: خلف
+
+de_DE:
+  next: Nächste
+  previous: Vorherige
+  skip: Überspringen
+  finish: Beenden
+  close: Schließen
+  back: Zurück
+
+el_GR:
+  next: Επόμενος
+  previous: Προηγούμενος
+  skip: Παραλείπω
+  finish: Φινίρισμα
+  close: Κοντά
+  back: Πίσω
+
+en_GB:
+  next: Next
+  previous: Previous
+  skip: Skip
+  finish: Finish
+  close: Close
+  back: Back
+
+es_ES:
+  next: Próxima
+  previous: Previa
+  skip: Saltar
+  finish: Finalizar
+  close: Cerca
+  back: Atrás
+
+fi_FI:
+  next: Seuraavaksi
+  previous: Edellinen
+  skip: Ohita
+  finish: Valmis
+  close: Lähellä
+  back: Takaisin
+
+fr_FR:
+  next: Suivante
+  previous: Précédente
+  skip: Sauter
+  finish: Finition
+  close: Fermer
+  back: Dos
+
+it_IT:
+  next: Prossima
+  previous: Precedente
+  skip: Saltare
+  finish: Fine
+  close: Vicina
+  back: Indietro
+
+iw_IL:
+  next: הַבָּא
+  previous: קוֹדֵם
+  skip: לְדַלֵג
+  finish: סִיוּם
+  close: לִסְגוֹר
+  back: בְּחֲזָרָה
+
+ja_JP:
+  next: 次
+  previous: 前の
+  skip: スキップ
+  finish: 仕上げる
+  close: 近い
+  back: 戻る
+
+ko_KR:
+  next: 다음
+  previous: 이전의
+  skip: 건너뛰다
+  finish: 마치다
+  close: 닫다
+  back: 뒤쪽에
+
+nl_NL:
+  next: Volgende
+  previous: Vorig
+  skip: Overslaan
+  finish: Finish
+  close: Dichtbij
+  back: Rug
+
+pl_PL:
+  next: Następny
+  previous: Poprzedni
+  skip: Pominąć
+  finish: Skończyć
+  close: Zamknąć
+  back: Z powrotem
+
+pt_BR:
+  next: Próxima
+  previous: Anterior
+  skip: Pular
+  finish: Terminar
+  close: Fechar
+  back: Voltar
+
+ro_RO:
+  next: Următorul
+  previous: Anterior
+  skip: Sari peste
+  finish: Termina
+  close: Aproape
+  back: Spate
+
+ru_RU:
+  next: Следующий
+  previous: Предыдущий
+  skip: Пропускать
+  finish: Заканчивать
+  close: Закрывать
+  back: Назад
+
+sk_SK:
+  next: Ďalej
+  previous: Predchádzajúce
+  skip: Preskočiť
+  finish: Dokončiť
+  close: Zavrieť
+  back: Späť
+
+sv_SE:
+  next: Nästa
+  previous: Tidigare
+  skip: Hoppa
+  finish: Avsluta
+  close: Nära
+  back: Tillbaka
+
+zh_CN:
+  next: 下一个
+  previous: 以前的
+  skip: 跳过
+  finish: 结束
+  close: 关闭
+  back: 后退
+
+zh_TW:
+  next: 下一個
+  previous: 以前的
+  skip: 跳過
+  finish: 結束
+  close: 關閉
+  back: 後退
+
+bg_BG:
+  next: Следваща
+  previous: Предишен
+  skip: Пропускане
+  finish: Завършете
+  close: затвори
+  back: Назад
+
+bn_BD:
+  next: পরবর্তী
+  previous: আগের
+  skip: এড়িয়ে যান
+  finish: শেষ করুন
+  close: বন্ধ
+  back: ব্যাক
+
+ca_ES:
+  next: A continuació
+  previous: Anterior
+  skip: Saltar
+  finish: Acabar
+  close: Tancar
+  back: Enrere
+
+cs_CZ:
+  next: Další
+  previous: Předchozí
+  skip: Přeskočit
+  finish: Dokončit
+  close: Blízko
+  back: Zadní
+
+da_DK:
+  next: Næste
+  previous: Tidligere
+  skip: Springe
+  finish: Slutte
+  close: Tæt
+  back: Tilbage
+
+fa_IR:
+  next: بعدی
+  previous: قبلی
+  skip: پرش کنید
+  finish: پایان
+  close: بستن
+  back: برگشت
+
+hi_IN:
+  next: अगला
+  previous: पहले का
+  skip: छोडना
+  finish: खत्म करना
+  close: बंद करना
+  back: पीछे
+
+hr_HR:
+  next: Sljedeći
+  previous: Prethodno
+  skip: Preskočiti
+  finish: Završiti
+  close: Zatvoriti
+  back: Nazad
+
+hu_HU:
+  next: Következő
+  previous: Előző
+  skip: Kihagyás
+  finish: Befejezés
+  close: Közeli
+  back: Vissza
+
+id_ID:
+  next: Berikutnya
+  previous: Sebelumnya
+  skip: Melewati
+  finish: Menyelesaikan
+  close: Menutup
+  back: Kembali
+
+ms_MY:
+  next: Seterusnya
+  previous: Sebelumnya
+  skip: Langkau
+  finish: Selesai
+  close: tutup
+  back: belakang
+
+nb_NO:
+  next: Neste
+  previous: Tidligere
+  skip: Hopp over
+  finish: Fullfør
+  close: Lukke
+  back: Tilbake
+
+sw_KE:
+  next: Inayofuata
+  previous: Iliyotangulia
+  skip: Ruka
+  finish: Maliza
+  close: Funga
+  back: Nyuma
+
+ta_IN:
+  next: அடுத்து
+  previous: முந்தைய
+  skip: தவிர்க்கவும்
+  finish: முடிக்கவும்
+  close: மூடு
+  back: மீண்டும்
+
+th_TH:
+  next: ต่อไป
+  previous: ก่อนหน้า
+  skip: ข้าม
+  finish: เสร็จ
+  close: ปิด
+  back: กลับ
+
+tr_TR:
+  next: Sonraki
+  previous: Öncesi
+  skip: Atlamak
+  finish: Sona ermek
+  close: Kapalı
+  back: Geri
+
+uk_UA:
+  next: Далі
+  previous: Попередній
+  skip: Пропустити
+  finish: Закінчити
+  close: Закрити
+  back: Назад
+
+ur_PK:
+  next: اگلا
+  previous: پچھلا
+  skip: چھوڑیں۔
+  finish: ختم کرنا
+  close: بند
+  back: پیچھے
+
+vi_VN:
+  next: Kế tiếp
+  previous: Trước
+  skip: Nhảy
+  finish: Hoàn thành
+  close: Đóng
+  back: Mặt sau
+
+af_ZA:
+  next: "Volgende"
+  previous: "Vorige"
+  skip: "Slaan oor"
+  finish: "Voltooi"
+  close: "Maak toe"
+  back: "Terug"
+
+am_ET:
+  next: "ቀጥሎ"
+  previous: "ቀዳሚ"
+  skip: "ዝለል"
+  finish: "ጨርስ"
+  close: "ገጠመ"
+  back: "ተመለስ"
+
+az_AZ:
+  next: "Sonrakı"
+  previous: "Əvvəlki"
+  skip: "Keç"
+  finish: "Bitir"
+  close: "Bağlayın"
+  back: "Geri"
+
+et_EE:
+  next: "Edasi"
+  previous: "Eelmine"
+  skip: "Jäta vahele"
+  finish: "Lõpeta"
+  close: "Sule"
+  back: "Tagasi"
+
+gu_IN:
+  next: "આગળ"
+  previous: "ગત"
+  skip: "છોડો"
+  finish: "સમાપ્ત કરો"
+  close: "બંધ કરો"
+  back: "પાછળ"
+
+ha_NG:
+  next: "Na gaba"
+  previous: "A baya"
+  skip: "Tsallake"
+  finish: "Gama"
+  close: "Kusa"
+  back: "Baya"
+
+ka_GE:
+  next: "შემდეგი"
+  previous: "წინა"
+  skip: "გამოტოვება"
+  finish: "დასრულება"
+  close: "დახურვა"
+  back: "უკან"
+
+km_KH:
+  next: "បន្ទាប់"
+  previous: "មុន"
+  skip: "រំលង"
+  finish: "បញ្ចប់"
+  close: "បិទ"
+  back: "ត្រឡប់មកវិញ"
+
+kn_IN:
+  next: "ಮುಂದೆ"
+  previous: "ಹಿಂದಿನ"
+  skip: "ಬಿಟ್ಟುಬಿಡಿ"
+  finish: "ಮುಗಿಸು"
+  close: "ಮುಚ್ಚಿ"
+  back: "ಹಿಂದೆ"
+
+lt_LT:
+  next: "Kitas"
+  previous: "Ankstesnis"
+  skip: "Praleisti"
+  finish: "Baigti"
+  close: "Uždaryti"
+  back: "Atgal"
+
+lv_LV:
+  next: "Tālāk"
+  previous: "Iepriekšējais"
+  skip: "Izlaist"
+  finish: "Pabeigt"
+  close: "Aizvērt"
+  back: "Atpakaļ"
+
+ml_IN:
+  next: "അടുത്തത്"
+  previous: "മുമ്പത്തെ"
+  skip: "ഒഴിവാക്കുക"
+  finish: "പൂർത്തിയാക്കുക"
+  close: "അടയ്ക്കുക"
+  back: "തിരികെ"
+
+mr_IN:
+  next: "पुढे"
+  previous: "मागील"
+  skip: "वगळा"
+  finish: "समाप्त करा"
+  close: "बंद करा"
+  back: "मागे"
+
+ne_NP:
+  next: "अर्को"
+  previous: "अघिल्लो"
+  skip: "छोड्नुहोस्"
+  finish: "समाप्त गर्नुहोस्"
+  close: "बन्द गर्नुहोस्"
+  back: "पछाडि"
+
+pa_IN:
+  next: "ਅਗਲਾ"
+  previous: "ਪਿਛਲਾ"
+  skip: "ਛੱਡੋ"
+  finish: "ਸਮਾਪਤ"
+  close: "ਬੰਦ ਕਰੋ"
+  back: "ਵਾਪਸ"
+
+si_LK:
+  next: "ඊළඟ"
+  previous: "පෙර"
+  skip: "මඟ හරින්න"
+  finish: "අවසන් කරන්න"
+  close: "වසන්න"
+  back: "ආපසු"
+
+sl_SI:
+  next: "Naprej"
+  previous: "Prejšnja"
+  skip: "Preskoči"
+  finish: "Končaj"
+  close: "Zapri"
+  back: "Nazaj"
+
+sr_RS:
+  next: "Следеће"
+  previous: "Претходно"
+  skip: "Скип"
+  finish: "Заврши"
+  close: "Затвори"
+  back: "Назад"
+
+te_IN:
+  next: "తదుపరి"
+  previous: "మునుపటి"
+  skip: "దాటవేయి"
+  finish: "ముగించు"
+  close: "మూసివేయి"
+  back: "వెనుకకు"
+
+tl_PH:
+  next: "Susunod"
+  previous: "Nakaraang"
+  skip: "Laktawan"
+  finish: "Tapusin"
+  close: "Isara"
+  back: "Bumalik"
+
+uz_UZ:
+  next: "Keyingisi"
+  previous: "Oldingi"
+  skip: "Oʻtkazib yuborish"
+  finish: "Tugatish"
+  close: "Yopish"
+  back: "Orqaga"
+
+yo_NG:
+  next: "Itele"
+  previous: "Ti tẹlẹ"
+  skip: "Rekọja"
+  finish: "Pari"
+  close: "Sunmọ"
+  back: "Pada"

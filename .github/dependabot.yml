@@ -19,14 +19,6 @@ updates:
       interval: "daily"
 
   - package-ecosystem: "gomod"
-    directory: "/ee-stub"
-#    multi-ecosystem-group: "all-go"
-#    patterns: ["*"]
-#    open-pull-requests-limit: 20
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "gomod"
     directory: "/desktop-ce"
 #    multi-ecosystem-group: "all-go"
 #    patterns: ["*"]

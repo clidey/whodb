@@ -1,14 +1,25 @@
-/**
- * Edition configuration for determining which GraphQL types to use
+/*
+ * Copyright 2026 Clidey, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-// Get edition from environment variable or default to 'ce'
-export const BUILD_EDITION = (import.meta.env.VITE_BUILD_EDITION as 'ce' | 'ee') || 'ce';
+let currentEdition: string = 'ce';
 
-// Helper to check if we're running in EE mode
-export const isEnterpriseEdition = () => BUILD_EDITION === 'ee';
+export const getEdition = (): string => currentEdition;
 
-// Helper to get edition-specific paths
-export const getEditionPath = (basePath: string) => {
-  return `${basePath}/${BUILD_EDITION}`;
+export const setEdition = (edition: string) => {
+    currentEdition = edition;
 };
+
+export const isEnterpriseEdition = (): boolean => currentEdition !== 'ce';

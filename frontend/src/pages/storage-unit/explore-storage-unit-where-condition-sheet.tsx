@@ -188,7 +188,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
         } else if (totalConditions > 10) {
             return t('tenPlusConditions');
         } else {
-            return t(totalConditions === 1 ? 'conditionCountSingular' : 'conditionCountPlural', { count: totalConditions });
+            return t('conditionCount', { count: totalConditions });
         }
     };
 

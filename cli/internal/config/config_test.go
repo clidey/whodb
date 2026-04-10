@@ -469,3 +469,151 @@ func TestPageSizeAccessors(t *testing.T) {
 		t.Errorf("Expected default page size 50 for negative, got %d", cfg.GetPageSize())
 	}
 }
+
+func TestReadOnlyAccessors(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// Default is false
+	if cfg.GetReadOnly() {
+		t.Error("Expected default ReadOnly to be false")
+	}
+
+	// Enable
+	cfg.SetReadOnly(true)
+	if !cfg.GetReadOnly() {
+		t.Error("Expected ReadOnly to be true after SetReadOnly(true)")
+	}
+
+	// Disable
+	cfg.SetReadOnly(false)
+	if cfg.GetReadOnly() {
+		t.Error("Expected ReadOnly to be false after SetReadOnly(false)")
+	}
+}
+
+func TestReadOnly_SaveAndLoad(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	resetConfigDir()
+	defer resetConfigDir()
+
+	cfg := DefaultConfig()
+	cfg.SetReadOnly(true)
+
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	loaded, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	if !loaded.GetReadOnly() {
+		t.Error("Expected ReadOnly to be true after reload")
+	}
+}
+
+func TestAddSavedQuery(t *testing.T) {
+	cfg := DefaultConfig()
+
+	cfg.AddSavedQuery("q1", "SELECT 1")
+
+	queries := cfg.GetSavedQueries()
+	if len(queries) != 1 {
+		t.Fatalf("Expected 1 saved query, got %d", len(queries))
+	}
+	if queries[0].Name != "q1" || queries[0].Query != "SELECT 1" {
+		t.Errorf("Unexpected query: %+v", queries[0])
+	}
+}
+
+func TestAddSavedQuery_Update(t *testing.T) {
+	cfg := DefaultConfig()
+
+	cfg.AddSavedQuery("q1", "SELECT 1")
+	cfg.AddSavedQuery("q1", "SELECT 2")
+
+	queries := cfg.GetSavedQueries()
+	if len(queries) != 1 {
+		t.Fatalf("Expected 1 saved query after update, got %d", len(queries))
+	}
+	if queries[0].Query != "SELECT 2" {
+		t.Errorf("Expected updated query 'SELECT 2', got '%s'", queries[0].Query)
+	}
+}
+
+func TestDeleteSavedQuery(t *testing.T) {
+	cfg := DefaultConfig()
+
+	cfg.AddSavedQuery("q1", "SELECT 1")
+	cfg.AddSavedQuery("q2", "SELECT 2")
+
+	deleted := cfg.DeleteSavedQuery("q1")
+	if !deleted {
+		t.Error("Expected DeleteSavedQuery to return true")
+	}
+
+	queries := cfg.GetSavedQueries()
+	if len(queries) != 1 {
+		t.Fatalf("Expected 1 saved query after deletion, got %d", len(queries))
+	}
+	if queries[0].Name != "q2" {
+		t.Errorf("Expected remaining query 'q2', got '%s'", queries[0].Name)
+	}
+}
+
+func TestDeleteSavedQuery_NotFound(t *testing.T) {
+	cfg := DefaultConfig()
+
+	deleted := cfg.DeleteSavedQuery("nonexistent")
+	if deleted {
+		t.Error("Expected DeleteSavedQuery to return false for nonexistent query")
+	}
+}
+
+func TestGetSavedQueries_Empty(t *testing.T) {
+	cfg := DefaultConfig()
+
+	queries := cfg.GetSavedQueries()
+	if queries != nil {
+		t.Errorf("Expected nil saved queries from default config, got %v", queries)
+	}
+}
+
+func TestSavedQueries_SaveAndLoad(t *testing.T) {
+	tempDir := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	resetConfigDir()
+	defer resetConfigDir()
+
+	cfg := DefaultConfig()
+	cfg.AddSavedQuery("my query", "SELECT * FROM users")
+	cfg.AddSavedQuery("another", "INSERT INTO logs VALUES (1)")
+
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	loaded, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	queries := loaded.GetSavedQueries()
+	if len(queries) != 2 {
+		t.Fatalf("Expected 2 saved queries after reload, got %d", len(queries))
+	}
+	if queries[0].Name != "my query" || queries[0].Query != "SELECT * FROM users" {
+		t.Errorf("Unexpected first query after reload: %+v", queries[0])
+	}
+	if queries[1].Name != "another" || queries[1].Query != "INSERT INTO logs VALUES (1)" {
+		t.Errorf("Unexpected second query after reload: %+v", queries[1])
+	}
+}

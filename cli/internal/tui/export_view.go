@@ -32,6 +32,8 @@ import (
 
 type ExportView struct {
 	parent           *MainModel
+	width            int
+	height           int
 	filenameInput    textinput.Model
 	selectedFormat   int
 	selectedDelim    int
@@ -504,7 +506,7 @@ func (v *ExportView) View() string {
 	b.WriteString("\n\n")
 
 	// Help text
-	b.WriteString(RenderBindingHelp(
+	b.WriteString(RenderBindingHelpWidth(v.width,
 		Keys.Export.Prev,
 		Keys.Export.Next,
 		Keys.Export.OptionLeft,

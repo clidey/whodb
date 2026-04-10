@@ -286,6 +286,8 @@ type TypeDefinition {
   defaultLength: Int
   defaultPrecision: Int
   category: TypeCategory!
+  insertFunc: String
+  tableModel: String
 }
 
 type Capabilities {

@@ -58,6 +58,8 @@ func (i historyItem) FilterValue() string {
 type HistoryView struct {
 	parent          *MainModel
 	list            list.Model
+	width           int
+	height          int
 	confirmingClear bool
 	executing       bool
 	queryCancel     context.CancelFunc
@@ -246,7 +248,7 @@ func (v *HistoryView) View() string {
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(RenderBindingHelp(
+	b.WriteString(RenderBindingHelpWidth(v.width,
 		Keys.Browser.Up,
 		Keys.Browser.Down,
 		Keys.History.Edit,

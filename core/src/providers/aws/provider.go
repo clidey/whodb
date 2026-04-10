@@ -31,12 +31,12 @@
 //   - default: AWS SDK default credential chain (env → shared config → IAM role)
 //   - profile: Named AWS profile from ~/.aws/credentials
 //
-// # Extension Points for EE
+// # Extension Points
 //
-// The package provides extension points for Enterprise Edition to add support
+// The package provides extension points to add support
 // for additional database types without modifying CE code:
-//   - SetRDSEngineMapper: Add mappings for Oracle, SQL Server RDS engines
-//   - SetDiscoveryExtension: Add discovery for DynamoDB
+//   - SetRDSEngineMapper: Add mappings for additional RDS engines
+//   - SetDiscoveryExtension: Add discovery for additional services
 package aws
 
 import (
@@ -65,7 +65,7 @@ const maxPaginationPages = 1000
 // DiscoveryExtension discovers additional database connections.
 type DiscoveryExtension func(ctx context.Context, p *Provider) ([]providers.DiscoveredConnection, error)
 
-// discoveryExtensions allows EE to register additional discovery functions.
+// discoveryExtensions allows extensions to register additional discovery functions.
 var discoveryExtensions []DiscoveryExtension
 
 // SetDiscoveryExtension registers an additional discovery function.
@@ -74,7 +74,7 @@ func SetDiscoveryExtension(ext DiscoveryExtension) {
 }
 
 // GetAWSConfig returns the provider's AWS configuration.
-// Used by EE extensions that need direct AWS SDK access.
+// Used by extensions that need direct AWS SDK access.
 func (p *Provider) GetAWSConfig() aws.Config {
 	return p.awsConfig
 }

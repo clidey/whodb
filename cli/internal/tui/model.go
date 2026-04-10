@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -28,6 +29,7 @@ import (
 	"github.com/clidey/whodb/cli/internal/config"
 	"github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/internal/history"
+	"github.com/clidey/whodb/cli/internal/tui/layout"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
 
@@ -44,6 +46,10 @@ const (
 	ViewColumns
 	ViewChat
 	ViewSchema
+	ViewImport
+	ViewBookmarks
+	ViewJSON
+	ViewCmdLog
 )
 
 type MainModel struct {
@@ -59,6 +65,7 @@ type MainModel struct {
 	statusMessage string
 	viewHistory   []ViewMode
 
+	// Concrete view references — used by existing code and tests.
 	connectionView *ConnectionView
 	browserView    *BrowserView
 	editorView     *EditorView
@@ -69,6 +76,19 @@ type MainModel struct {
 	columnsView    *ColumnsView
 	chatView       *ChatView
 	schemaView     *SchemaView
+	importView     *ImportView
+	bookmarksView  *BookmarksView
+	jsonViewer     *JSONViewer
+	cmdLogView     *CmdLogView
+
+	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
+	panes map[ViewMode]Pane
+
+	// Split-pane layout state (active only when connected).
+	activeLayout   layout.LayoutName
+	savedLayout    layout.LayoutName // saved when opening a modal, restored on pop
+	layoutRoot     *layout.Container
+	focusedPaneIdx int
 }
 
 func NewMainModel() *MainModel {
@@ -109,6 +129,27 @@ func NewMainModel() *MainModel {
 	m.columnsView = NewColumnsView(m)
 	m.chatView = NewChatView(m)
 	m.schemaView = NewSchemaView(m)
+	m.importView = NewImportView(m)
+	m.bookmarksView = NewBookmarksView(m)
+	m.jsonViewer = NewJSONViewer(m)
+	m.cmdLogView = NewCmdLogView(m)
+
+	m.panes = map[ViewMode]Pane{
+		ViewConnection: m.connectionView,
+		ViewBrowser:    m.browserView,
+		ViewEditor:     m.editorView,
+		ViewResults:    m.resultsView,
+		ViewHistory:    m.historyView,
+		ViewExport:     m.exportView,
+		ViewWhere:      m.whereView,
+		ViewColumns:    m.columnsView,
+		ViewChat:       m.chatView,
+		ViewSchema:     m.schemaView,
+		ViewImport:     m.importView,
+		ViewBookmarks:  m.bookmarksView,
+		ViewJSON:       m.jsonViewer,
+		ViewCmdLog:     m.cmdLogView,
+	}
 
 	return m
 }
@@ -125,6 +166,7 @@ func NewMainModelWithConnection(conn *config.Connection) *MainModel {
 	}
 
 	m.mode = ViewBrowser
+	// Layout will be initialized on first WindowSizeMsg (width not known yet)
 	return m
 }
 
@@ -132,6 +174,13 @@ func (m *MainModel) Init() tea.Cmd {
 	if m.err != nil {
 		return nil
 	}
+
+	// Apply saved theme
+	themeName := m.config.GetThemeName()
+	if t := styles.GetThemeByName(themeName); t != nil {
+		styles.SetTheme(t)
+	}
+
 	cmds := []tea.Cmd{m.spinner.Tick}
 	if m.mode == ViewBrowser && m.dbManager.GetCurrentConnection() != nil {
 		cmds = append(cmds, m.browserView.loadTables())
@@ -192,6 +241,13 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.schemaView, _ = m.schemaView.Update(msg)
 		m.exportView, _ = m.exportView.Update(msg)
 		m.whereView, _ = m.whereView.Update(msg)
+		m.jsonViewer, _ = m.jsonViewer.Update(msg)
+		m.cmdLogView, _ = m.cmdLogView.Update(msg)
+
+		// Rebuild layout on resize if connected
+		if m.dbManager.GetCurrentConnection() != nil && m.layoutRoot == nil {
+			m.initLayout()
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -207,10 +263,107 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			// Otherwise fall through to let view handle it
 
+		case "ctrl+t":
+			return m.cycleTheme()
+
+		case "ctrl+l":
+			if m.dbManager.GetCurrentConnection() != nil {
+				return m.cycleLayout()
+			}
+
+		case "alt+1":
+			if m.useMultiPane() {
+				m.focusPaneByIndex(0)
+				return m, nil
+			}
+		case "alt+2":
+			if m.useMultiPane() {
+				m.focusPaneByIndex(1)
+				return m, nil
+			}
+		case "alt+3":
+			if m.useMultiPane() {
+				m.focusPaneByIndex(2)
+				return m, nil
+			}
+
+		case "alt+left":
+			if m.useMultiPane() && m.layoutRoot != nil {
+				m.layoutRoot.AdjustRatio(-0.05)
+				return m, nil
+			}
+		case "alt+right":
+			if m.useMultiPane() && m.layoutRoot != nil {
+				m.layoutRoot.AdjustRatio(0.05)
+				return m, nil
+			}
+
+		case "ctrl+h":
+			// Global shortcut: open History from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewHistory {
+				m.suspendLayout()
+				m.PushView(ViewHistory)
+				return m, nil
+			}
+
+		case "ctrl+g":
+			// Global shortcut: open Import wizard
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewImport {
+				m.suspendLayout()
+				m.PushView(ViewImport)
+				return m, nil
+			}
+
+		case "ctrl+b":
+			// Global shortcut: open Bookmarks from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewBookmarks {
+				m.suspendLayout()
+				m.bookmarksView.editorQuery = m.editorView.textarea.Value()
+				m.PushView(ViewBookmarks)
+				return m, nil
+			}
+
+		case "ctrl+y":
+			// Global shortcut: toggle read-only mode
+			if m.dbManager.GetCurrentConnection() != nil {
+				return m.toggleReadOnly()
+			}
+
+		case "ctrl+d":
+			// Global shortcut: toggle command log view
+			if m.dbManager.GetCurrentConnection() != nil {
+				if m.mode == ViewCmdLog {
+					if !m.PopView() {
+						m.mode = ViewBrowser
+					}
+					return m, nil
+				}
+				m.suspendLayout()
+				m.PushView(ViewCmdLog)
+				return m, nil
+			}
+
+		case "ctrl+a":
+			// Global shortcut: open AI Chat from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
+				m.suspendLayout()
+				m.PushView(ViewChat)
+				return m, m.chatView.Init()
+			}
+
 		case "tab", "shift+tab":
 			// Let connection view handle Tab for its own navigation
 			if m.mode == ViewConnection {
 				return m.updateConnectionView(msg)
+			}
+			// In multi-pane mode, Tab cycles pane focus
+			if m.useMultiPane() {
+				if msg.String() == "tab" {
+					m.focusNextPane()
+				} else {
+					m.focusPrevPane()
+				}
+				return m, nil
 			}
 			if msg.String() == "tab" {
 				return m.handleTabSwitch()
@@ -218,6 +371,30 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		}
+	}
+
+	// Route async completion messages to their target view regardless of focus.
+	// This is critical for multi-pane mode where the focused pane may not be the
+	// one that initiated the async operation.
+	switch msg.(type) {
+	case PageLoadedMsg:
+		return m.updateResultsView(msg)
+	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg, externalEditorResultMsg:
+		return m.updateEditorView(msg)
+	case tablesLoadedMsg, escConfirmTimeoutMsg:
+		return m.updateBrowserView(msg)
+	case chatResponseMsg, modelsLoadedMsg:
+		return m.updateChatView(msg)
+	case HistoryQueryMsg:
+		return m.updateHistoryView(msg)
+	case exportResultMsg:
+		return m.updateExportView(msg)
+	case schemaLoadedMsg:
+		return m.updateSchemaView(msg)
+	case connectionResultMsg:
+		return m.updateConnectionView(msg)
+	case importResultMsg, importPreviewMsg:
+		return m.updateImportView(msg)
 	}
 
 	switch m.mode {
@@ -241,9 +418,41 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateChatView(msg)
 	case ViewSchema:
 		return m.updateSchemaView(msg)
+	case ViewImport:
+		return m.updateImportView(msg)
+	case ViewBookmarks:
+		return m.updateBookmarksView(msg)
+	case ViewJSON:
+		return m.updateJSONViewer(msg)
+	case ViewCmdLog:
+		return m.updateCmdLogView(msg)
 	}
 
 	return m, nil
+}
+
+func (m *MainModel) updateJSONViewer(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.jsonViewer, cmd = m.jsonViewer.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateCmdLogView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.cmdLogView, cmd = m.cmdLogView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateBookmarksView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.bookmarksView, cmd = m.bookmarksView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateImportView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.importView, cmd = m.importView.Update(msg)
+	return m, cmd
 }
 
 func (m *MainModel) View() string {
@@ -259,27 +468,48 @@ func (m *MainModel) View() string {
 	viewIndicator := m.renderViewIndicator()
 
 	var content string
-	switch m.mode {
-	case ViewConnection:
-		content = m.connectionView.View()
-	case ViewBrowser:
-		content = m.browserView.View()
-	case ViewEditor:
-		content = m.editorView.View()
-	case ViewResults:
-		content = m.resultsView.View()
-	case ViewHistory:
-		content = m.historyView.View()
-	case ViewExport:
-		content = m.exportView.View()
-	case ViewWhere:
-		content = m.whereView.View()
-	case ViewColumns:
-		content = m.columnsView.View()
-	case ViewChat:
-		content = m.chatView.View()
-	case ViewSchema:
-		content = m.schemaView.View()
+
+	if m.useMultiPane() && m.layoutRoot != nil {
+		// Multi-pane layout rendering (reserve 2 rows for the global help bar)
+		helpBarHeight := 2
+		contentH := m.layoutContentHeight() - helpBarHeight
+		if contentH < MinPaneHeight {
+			contentH = MinPaneHeight
+		}
+		m.layoutRoot.Layout(0, 0, m.width, contentH)
+		content = m.layoutRoot.View() + "\n" + m.renderGlobalHelpBar()
+	} else {
+		// Single-pane rendering (original behavior)
+		switch m.mode {
+		case ViewConnection:
+			content = m.connectionView.View()
+		case ViewBrowser:
+			content = m.browserView.View()
+		case ViewEditor:
+			content = m.editorView.View()
+		case ViewResults:
+			content = m.resultsView.View()
+		case ViewHistory:
+			content = m.historyView.View()
+		case ViewExport:
+			content = m.exportView.View()
+		case ViewWhere:
+			content = m.whereView.View()
+		case ViewColumns:
+			content = m.columnsView.View()
+		case ViewChat:
+			content = m.chatView.View()
+		case ViewSchema:
+			content = m.schemaView.View()
+		case ViewImport:
+			content = m.importView.View()
+		case ViewBookmarks:
+			content = m.bookmarksView.View()
+		case ViewJSON:
+			content = m.jsonViewer.View()
+		case ViewCmdLog:
+			content = m.cmdLogView.View()
+		}
 	}
 
 	// Add status bar between view indicator and content (only when connected)
@@ -338,6 +568,11 @@ func (m *MainModel) renderStatusBar() string {
 
 	var parts []string
 
+	// Read-only badge (shown first for visibility)
+	if m.config.GetReadOnly() {
+		parts = append(parts, styles.RenderErr("[READ-ONLY]"))
+	}
+
 	// Connection info (always kept)
 	connInfo := fmt.Sprintf("%s@%s/%s", conn.Type, conn.Host, conn.Database)
 	parts = append(parts, styles.RenderMuted(connInfo))
@@ -350,11 +585,6 @@ func (m *MainModel) renderStatusBar() string {
 	// Spinner when loading
 	if m.isLoading() {
 		parts = append(parts, m.spinner.View())
-	}
-
-	// Transient status message
-	if m.statusMessage != "" {
-		parts = append(parts, styles.RenderOk(m.statusMessage))
 	}
 
 	sep := styles.RenderMuted(" • ")
@@ -377,7 +607,7 @@ func (m *MainModel) renderStatusBar() string {
 // isHelpSafe returns true if it's safe to show help (no active text input)
 func (m *MainModel) isHelpSafe() bool {
 	switch m.mode {
-	case ViewResults, ViewHistory, ViewColumns, ViewSchema:
+	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks, ViewCmdLog:
 		// These views don't have text input
 		return true
 	case ViewBrowser:
@@ -428,6 +658,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		b.WriteString(RenderBindingHelp(
 			Keys.Results.NextPage,
 			Keys.Results.ColLeft,
+			Keys.Results.ViewCell,
 			Keys.Results.Where,
 			Keys.Results.Columns,
 			Keys.Results.Export,
@@ -502,7 +733,19 @@ func (m *MainModel) renderHelpOverlay() string {
 			Keys.ConnectionList.New,
 			Keys.ConnectionList.DeleteConn,
 			Keys.ConnectionList.Connect,
+			Keys.Global.CycleTheme,
 			Keys.ConnectionList.QuitEsc,
+		))
+
+	case ViewBookmarks:
+		b.WriteString(styles.RenderKey("Bookmarks\n\n"))
+		b.WriteString(RenderBindingHelp(
+			Keys.Bookmarks.Up,
+			Keys.Bookmarks.Down,
+			Keys.Bookmarks.Load,
+			Keys.Bookmarks.Save,
+			Keys.Bookmarks.Delete,
+			Keys.Global.Back,
 		))
 
 	default:
@@ -521,7 +764,7 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 	}
 
 	// Define explicit tab order for tabbable views
-	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewHistory, ViewChat}
+	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewChat}
 
 	// Find current position in tab order
 	currentIndex := -1
@@ -607,7 +850,206 @@ func (m *MainModel) updateSchemaView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// renderGlobalHelpBar renders a context-sensitive help bar at the bottom of
+// multi-pane layouts, showing shortcuts for the focused pane + global shortcuts.
+func (m *MainModel) renderGlobalHelpBar() string {
+	pane := m.ActivePane()
+	var bindings []key.Binding
+	if pane != nil {
+		bindings = append(bindings, pane.HelpBindings()...)
+	}
+	// Add global multi-pane shortcuts
+	bindings = append(bindings,
+		Keys.Global.NextView,
+		Keys.Browser.History,
+		Keys.Browser.AIChat,
+		Keys.Global.CmdLog,
+		Keys.Global.Import,
+		Keys.Global.ReadOnly,
+		Keys.Global.CycleLayout,
+		Keys.Global.CycleTheme,
+		Keys.Browser.Disconnect,
+		Keys.Global.Quit,
+	)
+	return " " + RenderBindingHelpWidth(m.width, bindings...)
+}
+
+// initLayout sets up the initial layout based on terminal width.
+// Called when a database connection is established.
+func (m *MainModel) initLayout() {
+	m.activeLayout = layout.AutoLayout(m.width)
+	m.focusedPaneIdx = 0
+	m.rebuildLayout()
+}
+
+// useMultiPane returns true when the layout engine should render connected views.
+// Returns false for modal/overlay views (Export, Where, Columns, Schema, History, Chat)
+// which render full-screen on top of the layout.
+func (m *MainModel) useMultiPane() bool {
+	if m.dbManager.GetCurrentConnection() == nil {
+		return false
+	}
+	if m.activeLayout == layout.LayoutSingle {
+		return false
+	}
+	// Only render multi-pane for the views that are IN the layout
+	switch m.mode {
+	case ViewBrowser, ViewEditor, ViewResults:
+		return true
+	default:
+		return false
+	}
+}
+
+// rebuildLayout creates a new layout tree for the current activeLayout.
+func (m *MainModel) rebuildLayout() {
+	// Reset compact mode on all layout views
+	m.browserView.SetCompact(false)
+	m.editorView.SetCompact(false)
+	m.resultsView.SetCompact(false)
+
+	if m.activeLayout == layout.LayoutSingle {
+		m.layoutRoot = nil
+		return
+	}
+
+	// Enable compact mode (suppresses per-pane help text)
+	m.browserView.SetCompact(true)
+	m.editorView.SetCompact(true)
+	m.resultsView.SetCompact(true)
+
+	m.layoutRoot = layout.BuildLayout(m.activeLayout, layout.Panes{
+		Browser: m.browserView,
+		Editor:  m.editorView,
+		Results: m.resultsView,
+	})
+	m.updateLayoutFocus()
+}
+
+// updateLayoutFocus marks the correct leaf as focused in the layout tree.
+func (m *MainModel) updateLayoutFocus() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	for i, leaf := range leaves {
+		leaf.SetFocused(i == m.focusedPaneIdx)
+	}
+}
+
+// layoutContentHeight returns the height available for layout content
+// (terminal height minus the view indicator and status bar).
+func (m *MainModel) layoutContentHeight() int {
+	overhead := 1 // view indicator line
+	if bar := m.renderStatusBar(); bar != "" {
+		overhead += 1 + strings.Count(bar, "\n")
+	}
+	h := m.height - overhead
+	if h < MinPaneHeight {
+		h = MinPaneHeight
+	}
+	return h
+}
+
+// MinPaneHeight is imported from the layout package for convenience.
+const MinPaneHeight = 4
+
+// cycleLayout switches to the next layout preset and rebuilds.
+func (m *MainModel) cycleLayout() (tea.Model, tea.Cmd) {
+	m.activeLayout = layout.NextLayout(m.activeLayout)
+	m.focusedPaneIdx = 0
+	m.rebuildLayout()
+	return m, m.SetStatus("Layout: " + string(m.activeLayout))
+}
+
+// focusNextPane cycles focus to the next pane in the layout.
+func (m *MainModel) focusNextPane() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if len(leaves) == 0 {
+		return
+	}
+	m.focusedPaneIdx = (m.focusedPaneIdx + 1) % len(leaves)
+	m.updateLayoutFocus()
+
+	// Update m.mode to match the focused pane's view type
+	m.syncModeFromFocusedPane()
+}
+
+// focusPrevPane cycles focus to the previous pane in the layout.
+func (m *MainModel) focusPrevPane() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if len(leaves) == 0 {
+		return
+	}
+	m.focusedPaneIdx--
+	if m.focusedPaneIdx < 0 {
+		m.focusedPaneIdx = len(leaves) - 1
+	}
+	m.updateLayoutFocus()
+	m.syncModeFromFocusedPane()
+}
+
+// focusPaneByIndex focuses a specific pane (0-indexed).
+func (m *MainModel) focusPaneByIndex(idx int) {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if idx < 0 || idx >= len(leaves) {
+		return
+	}
+	m.focusedPaneIdx = idx
+	m.updateLayoutFocus()
+	m.syncModeFromFocusedPane()
+}
+
+// syncModeFromFocusedPane updates m.mode to match the focused pane's content.
+func (m *MainModel) syncModeFromFocusedPane() {
+	if m.layoutRoot == nil {
+		return
+	}
+	leaves := m.layoutRoot.Leaves()
+	if m.focusedPaneIdx >= len(leaves) {
+		return
+	}
+	content := leaves[m.focusedPaneIdx].Content()
+	switch content {
+	case m.browserView:
+		m.mode = ViewBrowser
+	case m.editorView:
+		m.mode = ViewEditor
+	case m.resultsView:
+		m.mode = ViewResults
+	}
+}
+
+// suspendLayout saves the current layout and switches to single-pane for a modal view.
+func (m *MainModel) suspendLayout() {
+	if m.useMultiPane() {
+		m.savedLayout = m.activeLayout
+		m.activeLayout = layout.LayoutSingle
+		m.rebuildLayout()
+	}
+}
+
+// restoreLayout restores the layout saved by suspendLayout.
+func (m *MainModel) restoreLayout() {
+	if m.savedLayout != "" {
+		m.activeLayout = m.savedLayout
+		m.savedLayout = ""
+		m.rebuildLayout()
+	}
+}
+
 func (m *MainModel) renderViewIndicator() string {
+	// Only show main navigable views — contextual actions (History, Export,
+	// Where, Columns, etc.) are accessible via shortcuts, not the tab bar.
 	views := []struct {
 		mode ViewMode
 		name string
@@ -616,44 +1058,22 @@ func (m *MainModel) renderViewIndicator() string {
 		{ViewBrowser, "Browser"},
 		{ViewEditor, "Editor"},
 		{ViewResults, "Results"},
-		{ViewHistory, "History"},
 		{ViewChat, "Chat"},
-		{ViewExport, "Export"},
-		{ViewWhere, "Where"},
-		{ViewColumns, "Columns"},
-		{ViewSchema, "Schema"},
-	}
-
-	// Define which views are tab-accessible
-	tabbableViews := map[ViewMode]bool{
-		ViewBrowser: true,
-		ViewEditor:  true,
-		ViewResults: true,
-		ViewHistory: true,
-		ViewChat:    true,
 	}
 
 	var parts []string
 	for _, view := range views {
 		if view.mode == m.mode {
-			// Current view: white background with black text
 			activeStyle := styles.BaseStyle.
 				Foreground(styles.Background).
 				Background(styles.Foreground).
 				Padding(0, 1)
 			parts = append(parts, activeStyle.Render(view.name))
-		} else if tabbableViews[view.mode] {
-			// Tab-accessible views: normal white text
+		} else {
 			inactiveStyle := styles.BaseStyle.
 				Foreground(styles.Foreground).
 				Padding(0, 1)
 			parts = append(parts, inactiveStyle.Render(view.name))
-		} else {
-			// Non-tabbable views: dimmed gray text
-			dimmedStyle := styles.BaseStyle.
-				Foreground(styles.Muted).
-				Padding(0, 1)
-			parts = append(parts, dimmedStyle.Render(view.name))
 		}
 	}
 
@@ -665,6 +1085,17 @@ func (m *MainModel) renderViewIndicator() string {
 			result += separator
 		}
 		result += part
+	}
+
+	// Show layout name when in multi-pane mode
+	if m.useMultiPane() {
+		layoutLabel := styles.MutedStyle.Render("[" + string(m.activeLayout) + "]")
+		result += "  " + layoutLabel
+	}
+
+	// Append transient status message to the indicator bar (avoids extra line)
+	if m.statusMessage != "" {
+		result += "  " + styles.RenderOk(m.statusMessage)
 	}
 
 	return result
@@ -685,6 +1116,8 @@ func (m *MainModel) PopView() bool {
 	}
 	m.mode = m.viewHistory[len(m.viewHistory)-1]
 	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
+	// Restore multi-pane layout if we're returning to a layout-compatible view
+	m.restoreLayout()
 	return true
 }
 
@@ -696,9 +1129,72 @@ func (m *MainModel) onViewEnter(mode ViewMode) {
 	}
 }
 
+// ContentHeight returns the number of rows available for view content,
+// accounting for the view indicator and status bar lines rendered by MainModel.
+func (m *MainModel) ContentHeight() int {
+	if m.height <= 0 {
+		return 20 // sane default before first WindowSizeMsg
+	}
+	overhead := lipgloss.Height(m.renderViewIndicator()) + 1 // indicator + newline
+	if bar := m.renderStatusBar(); bar != "" {
+		overhead += lipgloss.Height(bar) + 1 // status bar + newline
+	}
+	h := m.height - overhead
+	if h < 3 {
+		h = 3
+	}
+	return h
+}
+
 // SpinnerView returns the current spinner frame for use in loading indicators.
 func (m *MainModel) SpinnerView() string {
 	return m.spinner.View()
+}
+
+// cycleTheme switches to the next built-in theme and persists the choice.
+func (m *MainModel) cycleTheme() (tea.Model, tea.Cmd) {
+	themes := styles.ListThemes()
+	current := m.config.GetThemeName()
+
+	nextIndex := 0
+	for i, name := range themes {
+		if name == current {
+			nextIndex = (i + 1) % len(themes)
+			break
+		}
+	}
+
+	next := themes[nextIndex]
+	if t := styles.GetThemeByName(next); t != nil {
+		styles.SetTheme(t)
+		m.config.SetThemeName(next)
+		m.config.Save()
+		return m, m.SetStatus("Theme: " + next)
+	}
+	return m, nil
+}
+
+// toggleReadOnly flips read-only mode on/off, persists the setting, and shows a status message.
+func (m *MainModel) toggleReadOnly() (tea.Model, tea.Cmd) {
+	newState := !m.config.GetReadOnly()
+	m.config.SetReadOnly(newState)
+	m.config.Save()
+
+	label := "OFF"
+	if newState {
+		label = "ON"
+	}
+	return m, m.SetStatus("Read-only: " + label)
+}
+
+// GetPane returns the Pane for the given ViewMode.
+func (m *MainModel) GetPane(mode ViewMode) Pane {
+	return m.panes[mode]
+}
+
+// ActivePane returns the Pane for the currently active view.
+func (m *MainModel) ActivePane() Pane {
+	return m.panes[m.mode]
 }
 
 func renderError(message string) string {

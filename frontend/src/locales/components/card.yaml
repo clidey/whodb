@@ -4,8 +4,368 @@ en_US:
   close: Close
   details: Card Details
 
+ar_AE:
+  expand: يوسع
+  collapse: ينهار
+  close: يغلق
+  details: تفاصيل البطاقة
+
+de_DE:
+  expand: Expandieren
+  collapse: Zusammenbruch
+  close: Schließen
+  details: Kartendetails
+
+el_GR:
+  expand: Διαστέλλω
+  collapse: Κατάρρευση
+  close: Κοντά
+  details: Στοιχεία κάρτας
+
+en_GB:
+  expand: Expand
+  collapse: Collapse
+  close: Close
+  details: Card Details
+
 es_ES:
   expand: Expandir
-  collapse: Contraer
-  close: Cerrar
-  details: Detalles de la Tarjeta
+  collapse: Colapsar
+  close: Cerca
+  details: Detalles de la tarjeta
+
+fi_FI:
+  expand: Laajentaa
+  collapse: Romahdus
+  close: Lähellä
+  details: Kortin tiedot
+
+fr_FR:
+  expand: Développer
+  collapse: Effondrement
+  close: Fermer
+  details: Détails de la carte
+
+it_IT:
+  expand: Espandere
+  collapse: Crollo
+  close: Vicina
+  details: Dettagli della carta
+
+iw_IL:
+  expand: לְהַרְחִיב
+  collapse: הִתמוֹטְטוּת
+  close: לִסְגוֹר
+  details: פרטי כרטיס
+
+ja_JP:
+  expand: 拡大する
+  collapse: 崩壊
+  close: 近い
+  details: カード詳細
+
+ko_KR:
+  expand: 확장하다
+  collapse: 무너지다
+  close: 닫다
+  details: 카드 세부정보
+
+nl_NL:
+  expand: Uitbreiden
+  collapse: Instorten
+  close: Dichtbij
+  details: Kaartgegevens
+
+pl_PL:
+  expand: Zwiększać
+  collapse: Zawalić się
+  close: Zamknąć
+  details: Szczegóły karty
+
+pt_BR:
+  expand: Expandir
+  collapse: Colapso
+  close: Fechar
+  details: Detalhes do cartão
+
+ro_RO:
+  expand: Extinde
+  collapse: Colaps
+  close: Aproape
+  details: Detalii card
+
+ru_RU:
+  expand: Расширять
+  collapse: Крах
+  close: Закрывать
+  details: Детали карты
+
+sk_SK:
+  expand: Rozbaliť
+  collapse: kolaps
+  close: Zavrieť
+  details: Podrobnosti karty
+
+sv_SE:
+  expand: Expandera
+  collapse: Kollapsa
+  close: Nära
+  details: Kortdetaljer
+
+zh_CN:
+  expand: 扩张
+  collapse: 坍塌
+  close: 关闭
+  details: 卡详情
+
+zh_TW:
+  expand: 擴張
+  collapse: 坍塌
+  close: 關閉
+  details: 卡詳情
+
+bg_BG:
+  expand: Разширяване
+  collapse: Свиване
+  close: затвори
+  details: Подробности за картата
+
+bn_BD:
+  expand: প্রসারিত করুন
+  collapse: সঙ্কুচিত
+  close: বন্ধ
+  details: কার্ডের বিবরণ
+
+ca_ES:
+  expand: Ampliar
+  collapse: Col·lapse
+  close: Tancar
+  details: Detalls de la targeta
+
+cs_CZ:
+  expand: Rozšířit
+  collapse: Kolaps
+  close: Blízko
+  details: Podrobnosti karty
+
+da_DK:
+  expand: Udvide
+  collapse: Bryde sammen
+  close: Tæt
+  details: Kortdetaljer
+
+fa_IR:
+  expand: گسترش دهید
+  collapse: فرو ریختن
+  close: بستن
+  details: مشخصات کارت
+
+hi_IN:
+  expand: बढ़ाना
+  collapse: गिर जाना
+  close: बंद करना
+  details: कार्ड विवरण
+
+hr_HR:
+  expand: Proširiti
+  collapse: Kolaps
+  close: Zatvoriti
+  details: Podaci o kartici
+
+hu_HU:
+  expand: Bontsa ki
+  collapse: Összeomlás
+  close: Közeli
+  details: Kártya részletei
+
+id_ID:
+  expand: Memperluas
+  collapse: Runtuh
+  close: Menutup
+  details: Detail Kartu
+
+ms_MY:
+  expand: Kembangkan
+  collapse: Runtuh
+  close: tutup
+  details: Butiran Kad
+
+nb_NO:
+  expand: Utvide
+  collapse: Kollapse
+  close: Lukke
+  details: Kortdetaljer
+
+sw_KE:
+  expand: Panua
+  collapse: Kunja
+  close: Funga
+  details: Maelezo ya Kadi
+
+ta_IN:
+  expand: விரிவாக்கு
+  collapse: சுருக்கு
+  close: மூடு
+  details: அட்டை விவரங்கள்
+
+th_TH:
+  expand: ขยาย
+  collapse: ทรุด
+  close: ปิด
+  details: รายละเอียดบัตร
+
+tr_TR:
+  expand: Genişletmek
+  collapse: Yıkılmak
+  close: Kapalı
+  details: Kart Detayları
+
+uk_UA:
+  expand: Розгорнути
+  collapse: Згорнути
+  close: Закрити
+  details: Реквізити картки
+
+ur_PK:
+  expand: پھیلائیں۔
+  collapse: سمٹنا
+  close: بند
+  details: کارڈ کی تفصیلات
+
+vi_VN:
+  expand: Mở rộng
+  collapse: Sụp đổ
+  close: Đóng
+  details: Chi tiết thẻ
+
+af_ZA:
+  expand: "Brei uit"
+  collapse: "Ineenstort"
+  close: "Maak toe"
+  details: "Kaartbesonderhede"
+
+am_ET:
+  expand: "ዘርጋ"
+  collapse: "ሰብስብ"
+  close: "ገጠመ"
+  details: "የካርድ ዝርዝሮች"
+
+az_AZ:
+  expand: "Genişləndirin"
+  collapse: "Yıxılma"
+  close: "Bağlayın"
+  details: "Kart Təfərrüatları"
+
+et_EE:
+  expand: "Laienda"
+  collapse: "Ahenda"
+  close: "Sule"
+  details: "Kaardi üksikasjad"
+
+gu_IN:
+  expand: "વિસ્તૃત કરો"
+  collapse: "સંકુચિત કરો"
+  close: "બંધ કરો"
+  details: "કાર્ડ વિગતો"
+
+ha_NG:
+  expand: "Fadada"
+  collapse: "Rushewa"
+  close: "Kusa"
+  details: "Cikakken Bayani"
+
+ka_GE:
+  expand: "გაფართოება"
+  collapse: "კოლაფსი"
+  close: "დახურვა"
+  details: "ბარათის დეტალები"
+
+km_KH:
+  expand: "ពង្រីក"
+  collapse: "ដួលរលំ"
+  close: "បិទ"
+  details: "ព័ត៌មានលម្អិតអំពីកាត"
+
+kn_IN:
+  expand: "ವಿಸ್ತರಿಸು"
+  collapse: "ಕುಗ್ಗಿಸು"
+  close: "ಮುಚ್ಚಿ"
+  details: "ಕಾರ್ಡ್ ವಿವರಗಳು"
+
+lt_LT:
+  expand: "Išskleisti"
+  collapse: "Sutraukti"
+  close: "Uždaryti"
+  details: "Kortelės detalės"
+
+lv_LV:
+  expand: "Izvērst"
+  collapse: "Sakļaut"
+  close: "Aizvērt"
+  details: "Kartes informācija"
+
+ml_IN:
+  expand: "വികസിപ്പിക്കുക"
+  collapse: "ചുരുക്കുക"
+  close: "അടയ്ക്കുക"
+  details: "കാർഡ് വിശദാംശങ്ങൾ"
+
+mr_IN:
+  expand: "विस्तृत करा"
+  collapse: "संकुचित करा"
+  close: "बंद करा"
+  details: "कार्ड तपशील"
+
+ne_NP:
+  expand: "विस्तार गर्नुहोस्"
+  collapse: "संक्षिप्त गर्नुहोस्"
+  close: "बन्द गर्नुहोस्"
+  details: "कार्ड विवरणहरू"
+
+pa_IN:
+  expand: "ਫੈਲਾਓ"
+  collapse: "ਸਮੇਟਣਾ"
+  close: "ਬੰਦ ਕਰੋ"
+  details: "ਕਾਰਡ ਦੇ ਵੇਰਵੇ"
+
+si_LK:
+  expand: "පුළුල් කරන්න"
+  collapse: "හකුළන්න"
+  close: "වසන්න"
+  details: "කාඩ්පත් විස්තර"
+
+sl_SI:
+  expand: "Razširi"
+  collapse: "Strni"
+  close: "Zapri"
+  details: "Podrobnosti kartice"
+
+sr_RS:
+  expand: "Прошири"
+  collapse: "Колапс"
+  close: "Затвори"
+  details: "Детаљи картице"
+
+te_IN:
+  expand: "విస్తరించు"
+  collapse: "కుదించు"
+  close: "మూసివేయి"
+  details: "కార్డ్ వివరాలు"
+
+tl_PH:
+  expand: "Palawakin"
+  collapse: "I-collapse"
+  close: "Isara"
+  details: "Mga Detalye ng Card"
+
+uz_UZ:
+  expand: "Kengaytirish"
+  collapse: "Yiqilish"
+  close: "Yopish"
+  details: "Karta tafsilotlari"
+
+yo_NG:
+  expand: "Faagun"
+  collapse: "Kọlulẹ"
+  close: "Sunmọ"
+  details: "Awọn alaye kaadi"

@@ -35,27 +35,16 @@ export function isNumeric(str: string) {
     return !isNaN(Number(str));
 }
 
-// Initialize EE NoSQL check function
-let isEENoSQLDatabase: ((databaseType: string) => boolean) | null = null;
-
-// Load EE NoSQL check if available
-if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
-    import('@ee/index').then((eeModule) => {
-        if (eeModule?.isEENoSQLDatabase) {
-            isEENoSQLDatabase = eeModule.isEENoSQLDatabase;
-        }
-    }).catch(() => {
-        // EE module not available, continue with CE functionality
-    });
-}
+// Extension NoSQL check function — set via registerDatabaseFunctions()
+let isExtNoSQLDatabase: ((databaseType: string) => boolean) | null = null;
 
 /**
  * Determines if a database type is a NoSQL database.
  * @param databaseType - The database type string to check
- * @returns True for MongoDB, Redis, ElasticSearch, and EE NoSQL databases
+ * @returns True for MongoDB, Redis, ElasticSearch, and extension NoSQL databases
  */
 export function isNoSQL(databaseType: string) {
-    if (isEENoSQLDatabase && isEENoSQLDatabase(databaseType)) {
+    if (isExtNoSQLDatabase && isExtNoSQLDatabase(databaseType)) {
         return true;
     }
 
@@ -69,18 +58,20 @@ export function isNoSQL(databaseType: string) {
     return false;
 }
 
-// Initialize EE storage label function
-let getEEDatabaseStorageUnitLabel: ((databaseType: string | undefined, singular: boolean) => string | null) | null = null;
+// Extension storage label function — set via registerDatabaseFunctions()
+let getExtDatabaseStorageUnitLabel: ((databaseType: string | undefined, singular: boolean) => string | null) | null = null;
 
-// Load EE function if available
-if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
-    import('@ee/index').then((eeModule) => {
-        if (eeModule?.getEEDatabaseStorageUnitLabel) {
-            getEEDatabaseStorageUnitLabel = eeModule.getEEDatabaseStorageUnitLabel;
-        }
-    }).catch(() => {
-        // EE module not available, continue with CE functionality
-    });
+/** Register extension utility functions. */
+export function registerDatabaseFunctions(fns: {
+    isExtNoSQLDatabase?: (databaseType: string) => boolean;
+    getExtDatabaseStorageUnitLabel?: (databaseType: string | undefined, singular: boolean) => string | null;
+}) {
+    if (fns.isExtNoSQLDatabase) {
+        isExtNoSQLDatabase = fns.isExtNoSQLDatabase;
+    }
+    if (fns.getExtDatabaseStorageUnitLabel) {
+        getExtDatabaseStorageUnitLabel = fns.getExtDatabaseStorageUnitLabel;
+    }
 }
 
 /**
@@ -90,10 +81,10 @@ if (import.meta.env.VITE_BUILD_EDITION === 'ee') {
  * @returns The label (e.g., "Tables", "Collections", "Indices")
  */
 export function getDatabaseStorageUnitLabel(databaseType: string | undefined, singular: boolean = false) {
-    if (getEEDatabaseStorageUnitLabel) {
-        const eeLabel = getEEDatabaseStorageUnitLabel(databaseType, singular);
-        if (eeLabel !== null) {
-            return eeLabel;
+    if (getExtDatabaseStorageUnitLabel) {
+        const extLabel = getExtDatabaseStorageUnitLabel(databaseType, singular);
+        if (extLabel !== null) {
+            return extLabel;
         }
     }
 

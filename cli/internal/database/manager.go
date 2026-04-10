@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
+	tunnelpkg "github.com/clidey/whodb/cli/internal/ssh"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
@@ -36,6 +37,19 @@ import (
 	"github.com/clidey/whodb/core/src/types"
 	"github.com/xuri/excelize/v2"
 )
+
+// MaxQueryLogEntries is the maximum number of entries kept in the query log.
+const MaxQueryLogEntries = 100
+
+// QueryLogEntry records metadata about a single query execution.
+type QueryLogEntry struct {
+	Query     string
+	Timestamp time.Time
+	Duration  time.Duration
+	Success   bool
+	Error     string
+	RowCount  int
+}
 
 type Connection = config.Connection
 
@@ -53,6 +67,40 @@ type ConnectionSourceInfo struct {
 
 // DefaultCacheTTL is the default time-to-live for cached metadata
 const DefaultCacheTTL = 5 * time.Minute
+
+// ErrReadOnly is returned when a mutation query is blocked by read-only mode.
+var ErrReadOnly = fmt.Errorf("query blocked: read-only mode is enabled")
+
+// mutationKeywords are SQL keywords that indicate a write operation.
+var mutationKeywords = map[string]bool{
+	"INSERT":   true,
+	"UPDATE":   true,
+	"DELETE":   true,
+	"DROP":     true,
+	"ALTER":    true,
+	"CREATE":   true,
+	"TRUNCATE": true,
+	"GRANT":    true,
+	"REVOKE":   true,
+}
+
+// IsMutationQuery returns true if the query starts with a mutation keyword
+// (INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, GRANT, REVOKE).
+func IsMutationQuery(query string) bool {
+	trimmed := strings.TrimSpace(query)
+	if trimmed == "" {
+		return false
+	}
+	// Extract the first word
+	end := strings.IndexAny(trimmed, " \t\n\r;(")
+	var firstWord string
+	if end == -1 {
+		firstWord = trimmed
+	} else {
+		firstWord = trimmed[:end]
+	}
+	return mutationKeywords[strings.ToUpper(firstWord)]
+}
 
 // MetadataCache provides thread-safe caching for database metadata
 // to reduce network calls during autocomplete operations.
@@ -175,6 +223,8 @@ type Manager struct {
 	currentConnection *Connection
 	config            *config.Config
 	cache             *MetadataCache
+	queryLog          []QueryLogEntry
+	tunnel            *tunnelpkg.Tunnel
 }
 
 func (m *Manager) buildCredentials(conn *Connection) *engine.Credentials {
@@ -298,6 +348,40 @@ func (m *Manager) ResolveConnection(name string) (*Connection, string, error) {
 }
 
 func (m *Manager) Connect(conn *Connection) error {
+	// Stop any existing tunnel from a previous connection
+	if m.tunnel != nil {
+		m.tunnel.Stop()
+		m.tunnel = nil
+	}
+
+	// Start SSH tunnel if configured
+	if conn.SSHHost != "" {
+		sshPort := conn.SSHPort
+		if sshPort == 0 {
+			sshPort = 22
+		}
+
+		tunnel, err := tunnelpkg.NewTunnel(
+			conn.SSHHost, sshPort, conn.SSHUser,
+			conn.SSHKeyFile, conn.SSHPassword,
+			conn.Host, conn.Port,
+		)
+		if err != nil {
+			return fmt.Errorf("SSH tunnel setup failed: %w", err)
+		}
+
+		if err := tunnel.Start(); err != nil {
+			tunnel.Stop()
+			return fmt.Errorf("SSH tunnel failed to start: %w", err)
+		}
+
+		m.tunnel = tunnel
+
+		// Redirect the database connection through the tunnel
+		conn.Host = "127.0.0.1"
+		conn.Port = tunnel.LocalPort()
+	}
+
 	dbType := engine.DatabaseType(conn.Type)
 
 	credentials := m.buildCredentials(conn)
@@ -305,12 +389,20 @@ func (m *Manager) Connect(conn *Connection) error {
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {
 		// Don't expose database type in error for security
+		if m.tunnel != nil {
+			m.tunnel.Stop()
+			m.tunnel = nil
+		}
 		return fmt.Errorf("unsupported database type")
 	}
 
 	pluginConfig := engine.NewPluginConfig(credentials)
 	if !plugin.IsAvailable(context.Background(), pluginConfig) {
 		// Don't expose connection details in error message for security
+		if m.tunnel != nil {
+			m.tunnel.Stop()
+			m.tunnel = nil
+		}
 		return fmt.Errorf("cannot connect to database. please check your credentials and ensure the database is accessible")
 	}
 
@@ -323,6 +415,10 @@ func (m *Manager) Connect(conn *Connection) error {
 func (m *Manager) Disconnect() error {
 	m.cache.Clear()
 	m.currentConnection = nil
+	if m.tunnel != nil {
+		m.tunnel.Stop()
+		m.tunnel = nil
+	}
 	return nil
 }
 
@@ -335,6 +431,52 @@ func (m *Manager) InvalidateCache() {
 // GetCache returns the metadata cache (primarily for testing)
 func (m *Manager) GetCache() *MetadataCache {
 	return m.cache
+}
+
+// logQuery records a query execution in the in-memory log.
+// It trims the log to MaxQueryLogEntries when it exceeds the limit.
+func (m *Manager) logQuery(query string, start time.Time, result *engine.GetRowsResult, err error) {
+	entry := QueryLogEntry{
+		Query:     query,
+		Timestamp: start,
+		Duration:  time.Since(start),
+		Success:   err == nil,
+	}
+	if err != nil {
+		entry.Error = err.Error()
+	}
+	if result != nil {
+		entry.RowCount = len(result.Rows)
+	}
+	m.queryLog = append(m.queryLog, entry)
+	if len(m.queryLog) > MaxQueryLogEntries {
+		m.queryLog = m.queryLog[len(m.queryLog)-MaxQueryLogEntries:]
+	}
+}
+
+// logOperation logs a non-query operation (schema/table/column fetches).
+func (m *Manager) logOperation(operation string, start time.Time, count int, err error) {
+	entry := QueryLogEntry{
+		Query:     operation,
+		Timestamp: start,
+		Duration:  time.Since(start),
+		Success:   err == nil,
+		RowCount:  count,
+	}
+	if err != nil {
+		entry.Error = err.Error()
+	}
+	m.queryLog = append(m.queryLog, entry)
+	if len(m.queryLog) > MaxQueryLogEntries {
+		m.queryLog = m.queryLog[len(m.queryLog)-MaxQueryLogEntries:]
+	}
+}
+
+// GetQueryLog returns a copy of the query log entries.
+func (m *Manager) GetQueryLog() []QueryLogEntry {
+	out := make([]QueryLogEntry, len(m.queryLog))
+	copy(out, m.queryLog)
+	return out
 }
 
 func (m *Manager) GetCurrentConnection() *Connection {
@@ -435,7 +577,9 @@ func (m *Manager) GetSchemas() ([]string, error) {
 
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
+	start := time.Now()
 	schemas, err := plugin.GetAllSchemas(pluginConfig)
+	m.logOperation("GetSchemas()", start, len(schemas), err)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +609,9 @@ func (m *Manager) GetStorageUnits(schema string) ([]engine.StorageUnit, error) {
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
+	start := time.Now()
 	tables, err := plugin.GetStorageUnits(pluginConfig, schema)
+	m.logOperation(fmt.Sprintf("GetStorageUnits(%s)", schema), start, len(tables), err)
 	if err != nil {
 		return nil, err
 	}
@@ -480,6 +626,10 @@ func (m *Manager) ExecuteQuery(query string) (*engine.GetRowsResult, error) {
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 
 	plugin := m.engine.Choose(dbType)
@@ -490,7 +640,10 @@ func (m *Manager) ExecuteQuery(query string) (*engine.GetRowsResult, error) {
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.RawExecute(pluginConfig, query)
+	start := time.Now()
+	result, err := plugin.RawExecute(pluginConfig, query)
+	m.logQuery(query, start, result, err)
+	return result, err
 }
 
 func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereCondition, pageSize, pageOffset int) (*engine.GetRowsResult, error) {
@@ -508,10 +661,14 @@ func (m *Manager) GetRows(schema, storageUnit string, where *model.WhereConditio
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
+	query := fmt.Sprintf("GetRows(%s.%s, page=%d, offset=%d)", schema, storageUnit, pageSize, pageOffset)
+	start := time.Now()
+	result, err := plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
 		Schema: schema, StorageUnit: storageUnit, Where: where,
 		PageSize: pageSize, PageOffset: pageOffset,
 	})
+	m.logQuery(query, start, result, err)
+	return result, err
 }
 
 // runWithContext runs fn in a goroutine and returns its result, or ctx.Err() if the
@@ -546,6 +703,10 @@ func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*e
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {
@@ -555,9 +716,12 @@ func (m *Manager) ExecuteQueryWithContext(ctx context.Context, query string) (*e
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
+	start := time.Now()
+	result, err := runWithContext(ctx, func() (*engine.GetRowsResult, error) {
 		return plugin.RawExecute(pluginConfig, query)
 	})
+	m.logQuery(query, start, result, err)
+	return result, err
 }
 
 // ExecuteQueryWithParams executes a parameterized query against the current database.
@@ -567,6 +731,10 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {
@@ -575,7 +743,10 @@ func (m *Manager) ExecuteQueryWithParams(query string, params []any) (*engine.Ge
 
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
-	return plugin.RawExecute(pluginConfig, query, params...)
+	start := time.Now()
+	result, err := plugin.RawExecute(pluginConfig, query, params...)
+	m.logQuery(query, start, result, err)
+	return result, err
 }
 
 // ExecuteQueryWithContextAndParams executes a parameterized query with context support.
@@ -586,6 +757,10 @@ func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query st
 		return nil, fmt.Errorf("not connected to any database")
 	}
 
+	if m.config.GetReadOnly() && IsMutationQuery(query) {
+		return nil, ErrReadOnly
+	}
+
 	dbType := engine.DatabaseType(m.currentConnection.Type)
 	plugin := m.engine.Choose(dbType)
 	if plugin == nil {
@@ -595,9 +770,12 @@ func (m *Manager) ExecuteQueryWithContextAndParams(ctx context.Context, query st
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
+	start := time.Now()
+	result, err := runWithContext(ctx, func() (*engine.GetRowsResult, error) {
 		return plugin.RawExecute(pluginConfig, query, params...)
 	})
+	m.logQuery(query, start, result, err)
+	return result, err
 }
 
 // GetRowsWithContext fetches rows with context support for cancellation and timeout.
@@ -617,12 +795,15 @@ func (m *Manager) GetRowsWithContext(ctx context.Context, schema, storageUnit st
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	return runWithContext(ctx, func() (*engine.GetRowsResult, error) {
+	start := time.Now()
+	result, err := runWithContext(ctx, func() (*engine.GetRowsResult, error) {
 		return plugin.GetRows(pluginConfig, &engine.GetRowsRequest{
 			Schema: schema, StorageUnit: storageUnit, Where: where,
 			PageSize: pageSize, PageOffset: pageOffset,
 		})
 	})
+	m.logQuery(fmt.Sprintf("GetRows(%s.%s, page=%d, offset=%d)", schema, storageUnit, pageSize, pageOffset), start, result, err)
+	return result, err
 }
 
 // GetSchemasWithContext fetches schemas with context support for cancellation and timeout.
@@ -640,9 +821,12 @@ func (m *Manager) GetSchemasWithContext(ctx context.Context) ([]string, error) {
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	return runWithContext(ctx, func() ([]string, error) {
+	start := time.Now()
+	result, err := runWithContext(ctx, func() ([]string, error) {
 		return plugin.GetAllSchemas(pluginConfig)
 	})
+	m.logOperation("GetSchemas()", start, len(result), err)
+	return result, err
 }
 
 // GetStorageUnitsWithContext fetches storage units with context support for cancellation and timeout.
@@ -660,9 +844,12 @@ func (m *Manager) GetStorageUnitsWithContext(ctx context.Context, schema string)
 	credentials := m.buildCredentials(m.currentConnection)
 	pluginConfig := engine.NewPluginConfig(credentials)
 
-	return runWithContext(ctx, func() ([]engine.StorageUnit, error) {
+	start := time.Now()
+	result, err := runWithContext(ctx, func() ([]engine.StorageUnit, error) {
 		return plugin.GetStorageUnits(pluginConfig, schema)
 	})
+	m.logOperation(fmt.Sprintf("GetStorageUnits(%s)", schema), start, len(result), err)
+	return result, err
 }
 
 // GetConfig returns the manager's configuration
@@ -690,7 +877,9 @@ func (m *Manager) GetColumns(schema, storageUnit string) ([]engine.Column, error
 	credentials := m.buildCredentials(m.currentConnection)
 
 	pluginConfig := engine.NewPluginConfig(credentials)
+	start := time.Now()
 	columns, err := plugin.GetColumnsForTable(pluginConfig, schema, storageUnit)
+	m.logOperation(fmt.Sprintf("GetColumns(%s.%s)", schema, storageUnit), start, len(columns), err)
 	if err != nil {
 		return nil, err
 	}
@@ -701,6 +890,11 @@ func (m *Manager) GetColumns(schema, storageUnit string) ([]engine.Column, error
 }
 
 func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) error {
+	start := time.Now()
+	defer func() {
+		m.logOperation(fmt.Sprintf("ExportToCSV(%s.%s → %s)", schema, storageUnit, filepath.Base(filename)), start, 0, nil)
+	}()
+
 	if m.currentConnection == nil {
 		return fmt.Errorf("not connected to any database")
 	}
@@ -775,6 +969,11 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 }
 
 func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
+	start := time.Now()
+	defer func() {
+		m.logOperation(fmt.Sprintf("ExportToExcel(%s.%s → %s)", schema, storageUnit, filepath.Base(filename)), start, 0, nil)
+	}()
+
 	if m.currentConnection == nil {
 		return fmt.Errorf("not connected to any database")
 	}
@@ -852,6 +1051,11 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 }
 
 func (m *Manager) ExportResultsToCSV(result *engine.GetRowsResult, filename, delimiter string) error {
+	start := time.Now()
+	defer func() {
+		m.logOperation(fmt.Sprintf("ExportResultsToCSV(→ %s)", filepath.Base(filename)), start, 0, nil)
+	}()
+
 	if result == nil {
 		return fmt.Errorf("no results to export")
 	}
@@ -908,6 +1112,11 @@ func (m *Manager) ExportResultsToCSV(result *engine.GetRowsResult, filename, del
 }
 
 func (m *Manager) ExportResultsToExcel(result *engine.GetRowsResult, filename string) error {
+	start := time.Now()
+	defer func() {
+		m.logOperation(fmt.Sprintf("ExportResultsToExcel(→ %s)", filepath.Base(filename)), start, 0, nil)
+	}()
+
 	if result == nil {
 		return fmt.Errorf("no results to export")
 	}

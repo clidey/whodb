@@ -18,7 +18,8 @@ import { FC, lazy, ReactNode, Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
 import { LogoutPage } from "../pages/auth/logout";
-import { isEEFeatureEnabled, loadEEComponent } from "../utils/ee-loader";
+import { getComponent } from "./component-registry";
+import { featureFlags } from "./features";
 import { LoadingPage } from "../components/loading";
 
 // Lazy load heavy components
@@ -30,10 +31,7 @@ const RawExecutePage = lazy(() => import("../pages/raw-execute/raw-execute").the
 const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m.ChatPage })));
 const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
-const SQLAgentPage = isEEFeatureEnabled('sqlAgent') ? loadEEComponent(
-    () => import('@ee/pages/sql-agent/sql-agent').then(m => ({ default: m.SQLAgentPage })),
-    null
-) : null;
+const SQLAgentPage = getComponent('sql-agent') ?? null;
 
 // Wrapper component for lazy loaded routes
 const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
@@ -92,14 +90,14 @@ export const InternalRoutes = {
         path: "/logout",
         component: <LogoutPage />,
     },
-    ...(isEEFeatureEnabled('settingsPage') ? {
+    ...(featureFlags.settingsPage ? {
         Settings: {
             name: "Settings",
             path: "/settings",
             component: <LazyRoute component={SettingsPage} />
         }
     } : {}),
-    ...(isEEFeatureEnabled('contactUsPage') ? {
+    ...(featureFlags.contactUsPage ? {
         ContactUs: {
             name: "Contact Us",
             path: "/contact-us",

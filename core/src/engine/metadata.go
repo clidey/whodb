@@ -40,6 +40,9 @@ type TypeDefinition struct {
 	DefaultLength    *int         // Default length for types with HasLength
 	DefaultPrecision *int         // Default precision for types with HasPrecision
 	Category         TypeCategory // Type category for grouping
+	InsertFunc       string       // Function to wrap INSERT values (e.g. "TO_BITMAP"), empty for normal types
+	TableModel       string       // Required table key model (e.g. "AGGREGATE"), empty for normal types
+	DDLSuffix        string       // Appended after type in CREATE TABLE (e.g. "BITMAP_UNION"), empty for normal types
 }
 
 // Capabilities declares which optional features a plugin supports.

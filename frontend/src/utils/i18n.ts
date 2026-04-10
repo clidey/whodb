@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-import yaml from 'js-yaml';
-import {isEEMode} from '@/config/ee-imports';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '@/utils/languages';
 
-type TranslationCache = Record<string, Record<string, any>>;
+type TranslationMap = Record<string, string>;
+type TranslationCache = Record<string, TranslationMap>;
+type ParsedYaml = Record<string, TranslationMap>;
 
 const translationCache: TranslationCache = {};
 
 // Import all YAML files using Vite's import.meta.glob
-const ceModules = import.meta.glob<string>('/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
-const eeModules = import.meta.glob<string>('../../../ee/frontend/src/locales/**/*.yaml', { query: '?raw', import: 'default', eager: true });
+// The yamlPlugin in vite.config.ts transforms these to pre-parsed JSON at build time.
+const ceModules = import.meta.glob<ParsedYaml>('/src/locales/**/*.yaml', { import: 'default', eager: true });
+
+// Extension locale modules — populated by registerLocaleModules()
+let extensionModules: Record<string, ParsedYaml> = {};
+
+/** Register additional locale modules (called by extensions at boot). */
+export const registerLocaleModules = (modules: Record<string, ParsedYaml>) => {
+    extensionModules = { ...extensionModules, ...modules };
+};
 
 // Helper function to find module by component path
-const findModule = (modules: Record<string, string>, componentPath: string): string | undefined => {
+const findModule = (modules: Record<string, ParsedYaml>, componentPath: string): ParsedYaml | undefined => {
     // Try exact match first
     for (const key in modules) {
         if (key.endsWith(`/${componentPath}.yaml`)) {
@@ -37,10 +45,29 @@ const findModule = (modules: Record<string, string>, componentPath: string): str
     return undefined;
 };
 
+/**
+ * Cached Intl.PluralRules instances per locale.
+ * Constructing PluralRules loads CLDR data internally — one instance per locale is sufficient.
+ */
+const pluralRulesCache = new Map<string, Intl.PluralRules>();
+
+/**
+ * Returns the CLDR plural category for a given count and locale.
+ * Categories: "zero" | "one" | "two" | "few" | "many" | "other"
+ */
+export const getPluralCategory = (locale: string, count: number): Intl.LDMLPluralRule => {
+    let rules = pluralRulesCache.get(locale);
+    if (!rules) {
+        rules = new Intl.PluralRules(locale.replace('_', '-'));
+        pluralRulesCache.set(locale, rules);
+    }
+    return rules.select(count);
+};
+
 export const loadTranslationsSync = (
     componentPath: string,
     language: SupportedLanguage
-): Record<string, string> => {
+): TranslationMap => {
     const cacheKey = `${componentPath}-${language}`;
 
     if (translationCache[cacheKey]) {
@@ -48,32 +75,26 @@ export const loadTranslationsSync = (
     }
 
     try {
-        let translations: Record<string, string> | undefined;
+        let translations: TranslationMap | undefined;
 
         // Load CE locale files as the base
-        const ceContent = findModule(ceModules, componentPath);
-        if (ceContent) {
-            const parsed = yaml.load(ceContent) as Record<string, Record<string, string>>;
-            translations = parsed[language] || parsed[DEFAULT_LANGUAGE];
+        const ceParsed = findModule(ceModules, componentPath);
+        if (ceParsed) {
+            translations = ceParsed[language] || ceParsed[DEFAULT_LANGUAGE];
         }
 
-        // In EE mode, merge EE keys on top of CE (EE overrides individual keys)
-        if (isEEMode) {
-            const eeContent = findModule(eeModules, componentPath);
-            if (eeContent) {
-                const parsed = yaml.load(eeContent) as Record<string, Record<string, string>>;
-                const eeTranslations = parsed[language];
-                if (eeTranslations) {
-                    translations = { ...translations, ...eeTranslations };
-                }
+        // Merge extension translations on top (overrides CE keys if present)
+        const extParsed = findModule(extensionModules, componentPath);
+        if (extParsed) {
+            const extTranslations = extParsed[language] || extParsed[DEFAULT_LANGUAGE];
+            if (extTranslations) {
+                translations = { ...translations, ...extTranslations };
             }
         }
 
         if (!translations) {
             console.error(`Translation file not found for ${componentPath}`, {
                 availableCE: Object.keys(ceModules),
-                availableEE: Object.keys(eeModules),
-                isEEMode,
                 language
             });
             return {};
@@ -90,18 +111,41 @@ export const loadTranslationsSync = (
 export const loadTranslations = async (
     componentPath: string,
     language: SupportedLanguage
-): Promise<Record<string, string>> => {
+): Promise<TranslationMap> => {
     return loadTranslationsSync(componentPath, language);
 };
 
+/**
+ * Resolves a translation key, handling pluralization and interpolation.
+ *
+ * Pluralization: when `params` contains a numeric `count` property, the function
+ * looks up `key_<category>` (e.g. `key_one`, `key_other`) using Intl.PluralRules
+ * for the given locale. Falls back to the base `key` if no plural form is found.
+ *
+ * Interpolation: `{placeholder}` tokens in the template are replaced with
+ * corresponding values from `params`.
+ */
 export const getTranslation = (
-    translations: Record<string, string>,
+    translations: TranslationMap,
     key: string,
+    language: SupportedLanguage,
     fallbackOrParams?: string | Record<string, any>
 ): string => {
-    const template = translations[key] || (typeof fallbackOrParams === 'string' ? fallbackOrParams : key);
+    let resolvedKey = key;
 
-    if (typeof fallbackOrParams === 'object' && fallbackOrParams !== null) {
+    // Pluralization: if params has a numeric `count`, resolve the plural form
+    if (typeof fallbackOrParams === 'object' && fallbackOrParams !== null && typeof fallbackOrParams.count === 'number') {
+        const category = getPluralCategory(language, fallbackOrParams.count);
+        const pluralKey = `${key}_${category}`;
+        if (translations[pluralKey]) {
+            resolvedKey = pluralKey;
+        }
+    }
+
+    const template = translations[resolvedKey] || (typeof fallbackOrParams === 'string' ? fallbackOrParams : resolvedKey);
+
+    // Skip regex when the template has no placeholders
+    if (typeof fallbackOrParams === 'object' && fallbackOrParams !== null && template.includes('{')) {
         return template.replace(/\{(\w+)\}/g, (match, paramKey) => {
             return String(fallbackOrParams[paramKey] ?? match);
         });

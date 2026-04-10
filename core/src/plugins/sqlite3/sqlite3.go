@@ -542,11 +542,81 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
 
-		// For raw SQL, we default to non-strict behavior for backward compatibility
-		// since we can't reliably determine table strictness from arbitrary queries
-		return p.ConvertRawToRows(rows)
+		// Detect datetime columns that go-sqlite3 auto-parses into time.Time.
+		// The driver silently destroys non-datetime text in these columns
+		// (returns zero time.Time instead of the original string on parse failure).
+		columnTypes, err := rows.ColumnTypes()
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+
+		var datetimeIndexes []int
+		for i, ct := range columnTypes {
+			switch strings.ToUpper(ct.DatabaseTypeName()) {
+			case "DATE", "DATETIME", "TIMESTAMP":
+				datetimeIndexes = append(datetimeIndexes, i)
+			}
+		}
+
+		// No datetime columns — use the base ConvertRawToRows directly
+		if len(datetimeIndexes) == 0 {
+			defer rows.Close()
+			return p.GormPlugin.ConvertRawToRows(rows)
+		}
+
+		// Save column names and original types before closing first result set
+		columns, err := rows.Columns()
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+		origTypes := make([]string, len(columnTypes))
+		for i, ct := range columnTypes {
+			origTypes[i] = ct.DatabaseTypeName()
+		}
+		rows.Close()
+
+		// Re-execute with CAST(col AS TEXT) for datetime columns to bypass
+		// go-sqlite3's datetime parsing. CAST expressions have no declared type
+		// (sqlite3_column_decltype returns NULL), so the driver returns raw strings.
+		// This is the same technique used in GetRows for non-STRICT tables.
+		builder := gorm_plugin.NewSQLBuilder(db, p)
+		dtSet := make(map[int]bool, len(datetimeIndexes))
+		for _, idx := range datetimeIndexes {
+			dtSet[idx] = true
+		}
+		selects := make([]string, len(columns))
+		for i, col := range columns {
+			quoted := builder.QuoteIdentifier(col)
+			if dtSet[i] {
+				selects[i] = fmt.Sprintf("CAST(%s AS TEXT) AS %s", quoted, quoted)
+			} else {
+				selects[i] = quoted
+			}
+		}
+		castQuery := fmt.Sprintf("SELECT %s FROM (%s)", strings.Join(selects, ", "), query)
+
+		castRows, err := db.Raw(castQuery, params...).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer castRows.Close()
+
+		result, err := p.GormPlugin.ConvertRawToRows(castRows)
+		if err != nil {
+			return nil, err
+		}
+
+		// Restore original column types that were lost by the CAST expressions
+		for i, origType := range origTypes {
+			if i < len(result.Columns) {
+				result.Columns[i].Type = origType
+			}
+		}
+
+		return result, nil
 	})
 }
 
@@ -653,6 +723,7 @@ func (p *Sqlite3Plugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult,
 		result.Rows = append(result.Rows, row)
 	}
 
+	result.TotalCount = int64(len(result.Rows))
 	return result, nil
 }
 
@@ -694,6 +765,10 @@ func (p *Sqlite3Plugin) NormalizeType(typeName string) string {
 // GetMaxBulkInsertParameters returns 999 for SQLite.
 func (p *Sqlite3Plugin) GetMaxBulkInsertParameters() int {
 	return 999
+}
+
+func init() {
+	engine.RegisterPlugin(NewSqlite3Plugin())
 }
 
 func NewSqlite3Plugin() *engine.Plugin {

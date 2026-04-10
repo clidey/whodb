@@ -337,12 +337,12 @@ When a user selects a discovered cloud connection, the frontend prefills the log
 │  │ DatabaseTypeB → { "TLS": "true" }   (conditional on meta)   │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 │                         ▼                                        │
-│              merge at runtime (if EE loaded)                     │
+│              merge at runtime (if extensions loaded)                     │
 │                         ▼                                        │
-│  eePrefillRules (@ee/utils/cloud-prefill-rules.ts)               │
+│  extensionPrefillRules               │
 │  ┌─────────────────────────────────────────────────────────────┐ │
-│  │ EEDatabaseTypeA → { "EE Setting": "value" }                 │ │
-│  │ EEDatabaseTypeB → { ... }                                   │ │
+│  │ ExtensionDatabaseTypeA → { "Custom Setting": "value" }                 │ │
+│  │ CustomDatabaseTypeB → { ... }                                   │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 │                         ▼                                        │
 │              prefillRules (combined)                             │
@@ -356,7 +356,6 @@ When a user selects a discovered cloud connection, the frontend prefills the log
 | Component | Location |
 |-----------|----------|
 | CE Prefill Logic | `frontend/src/utils/cloud-connection-prefill.ts` |
-| EE Prefill Rules | `ee/frontend/src/utils/cloud-prefill-rules.ts` |
 | Picker Component | `frontend/src/components/aws/aws-connection-picker.tsx` |
 
 ### Adding a New Prefill Rule (CE)
@@ -376,14 +375,12 @@ const basePrefillRules: Record<string, PrefillRule> = {
 };
 ```
 
-### Adding a New Prefill Rule (EE)
+### Adding a New Prefill Rule (Extension)
 
-Edit `ee/frontend/src/utils/cloud-prefill-rules.ts`:
 
 ```typescript
 export const eePrefillRules: Record<string, PrefillRule> = {
-    // EE-only database types
-    EEDatabaseType: () => ({ "EE Setting": "value" }),
+    CustomDatabaseType: () => ({ "Custom Setting": "value" }),
 
     // Conditional based on metadata
     AnotherEEType: (_, meta) => {
@@ -425,7 +422,7 @@ The backend exposes these metadata keys for prefill decisions:
 ### Design Principles
 
 1. **CE defines base rules** - Common database types in `basePrefillRules`
-2. **EE extends, never modifies** - EE rules merge with CE, don't replace
+2. **Extensions merge with base rules, don't replace
 3. **Rules are per-DatabaseType** - Each database type has explicit rules
 4. **Metadata-driven** - Rules can inspect discovery metadata for conditional logic
 5. **No provider knowledge in rules** - Rules don't know about AWS/GCP, only DatabaseType

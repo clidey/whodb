@@ -7,11 +7,6 @@ on:
         description: 'Version to build'
         required: true
         type: string
-      edition:
-        description: 'Edition to build (ce or ee)'
-        required: false
-        type: string
-        default: 'ce'
       platforms:
         description: 'Platforms to build (comma-separated: windows-amd64,windows-arm64)'
         required: false
@@ -71,11 +66,11 @@ jobs:
         if: matrix.enabled != false
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
+          go-version-file: 'desktop-ce/go.mod'
           cache: true
           cache-dependency-path: |
-            desktop-${{ inputs.edition }}/go.sum
-            desktop-${{ inputs.edition }}/go.mod
+            desktop-ce/go.sum
+            desktop-ce/go.mod
             core/go.sum
             core/go.mod
 
@@ -83,7 +78,7 @@ jobs:
         if: matrix.enabled != false
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: frontend-build-${{ inputs.edition }}
+          name: frontend-build
           path: frontend/build
 
       - name: Install Wails CLI
@@ -93,7 +88,7 @@ jobs:
       # Windows AMD64 Build
       - name: Build Windows AMD64
         if: matrix.arch == 'amd64' && matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         shell: pwsh
         env:
           GOARCH: ${{ matrix.arch }}
@@ -123,7 +118,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Windows ARM64 build is temporarily disabled due to toolchain issues"
-          New-Item -ItemType Directory -Force -Path "./desktop-${{ inputs.edition }}/build/windows/arm64"
+          New-Item -ItemType Directory -Force -Path "./desktop-ce/build/windows/arm64"
 
       - name: Upload Windows artifacts
         if: matrix.enabled != false && (matrix.arch != 'arm64')
@@ -131,5 +126,5 @@ jobs:
         with:
           name: desktop-windows-${{ matrix.arch }}
           path: |
-            desktop-${{ inputs.edition }}/build/
+            desktop-ce/build/
           retention-days: 1

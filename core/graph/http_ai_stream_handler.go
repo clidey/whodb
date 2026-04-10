@@ -21,14 +21,14 @@ package graph
 import "net/http"
 
 // AIChatStreamHandlerFunc is the type for the AI chat stream handler
-// EE can override this by registering its own implementation
+// Can be overridden by registering a custom implementation
 type AIChatStreamHandlerFunc func(w http.ResponseWriter, r *http.Request)
 
 // registeredAIChatStreamHandler holds the handler implementation
-// Default is nil, will be set by CE or EE implementations
+// Default is nil, set by init() in the handler implementation
 var registeredAIChatStreamHandler AIChatStreamHandlerFunc
 
-// RegisterAIChatStreamHandler allows CE/EE implementations to register their handler
+// RegisterAIChatStreamHandler registers the handler implementation
 func RegisterAIChatStreamHandler(handler AIChatStreamHandlerFunc) {
 	registeredAIChatStreamHandler = handler
 }

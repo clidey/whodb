@@ -46,10 +46,12 @@ type ResultsView struct {
 	whereCondition  *model.WhereCondition
 	visibleColumns  []string
 	width           int
+	height          int
 	editingPageSize bool
 	pageSizeInput   textinput.Model
 	loading         bool
 	goToBottom      bool // Flag to set cursor at bottom after loading
+	compact         bool
 }
 
 // Available page sizes for cycling
@@ -134,8 +136,8 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			v.whereCondition = nil
 			return v, nil
 		}
-		// Handle initial table load (Schema/TableName provided)
-		if msg.Schema != "" && msg.TableName != "" {
+		// Handle initial table load (TableName provided; schema may be empty for SQLite)
+		if msg.TableName != "" {
 			v.schema = msg.Schema
 			v.tableName = msg.TableName
 			v.query = ""
@@ -222,7 +224,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Results.Where):
 			// WHERE conditions are only available when viewing table data
-			if v.schema != "" && v.tableName != "" {
+			if v.tableName != "" {
 				columns, err := v.parent.dbManager.GetColumns(v.schema, v.tableName)
 				if err != nil {
 					v.parent.err = err
@@ -235,7 +237,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Results.Columns):
 			// Column selection is only available when viewing table data
-			if v.schema != "" && v.tableName != "" {
+			if v.tableName != "" {
 				columns, err := v.parent.dbManager.GetColumns(v.schema, v.tableName)
 				if err != nil {
 					v.parent.err = err
@@ -247,7 +249,7 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			}
 
 		case key.Matches(msg, Keys.Results.Export):
-			if v.schema != "" && v.tableName != "" {
+			if v.tableName != "" {
 				// Export table data
 				v.parent.exportView.SetExportData(v.schema, v.tableName)
 				v.parent.PushView(ViewExport)
@@ -280,6 +282,18 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			v.pageSizeInput.SetValue("")
 			v.pageSizeInput.Focus()
 			return v, nil
+
+		case key.Matches(msg, Keys.Results.ViewCell):
+			if v.results != nil {
+				pageRows := v.currentPageRows()
+				cursor := v.table.Cursor()
+				if cursor >= 0 && cursor < len(pageRows) {
+					colName, cellValue := v.selectedCell(pageRows, cursor)
+					v.parent.jsonViewer.SetContent(colName, cellValue)
+					v.parent.PushView(ViewJSON)
+					return v, nil
+				}
+			}
 
 		case key.Matches(msg, Keys.Results.Down):
 			// Check if at bottom of current page - auto-paginate to next
@@ -363,59 +377,63 @@ func (v *ResultsView) View() string {
 		}
 	}
 
-	b.WriteString("\n\n")
+	if !v.compact {
+		b.WriteString("\n\n")
 
-	// Show different help based on whether export/where/columns is available
-	// Also show appropriate back target (editor for query results, browser for table data)
-	backTarget := "browser"
-	if v.query != "" {
-		backTarget = "editor"
-	}
-
-	if v.schema != "" && v.tableName != "" {
-		whereLabel := "where"
-		conditionCount := v.countWhereConditions()
-		if conditionCount > 0 {
-			whereLabel = fmt.Sprintf("where (%d)", conditionCount)
+		// Show different help based on whether export/where/columns is available
+		// Also show appropriate back target (editor for query results, browser for table data)
+		backTarget := "browser"
+		if v.query != "" {
+			backTarget = "editor"
 		}
 
-		columnsLabel := "columns"
-		if v.results != nil && len(v.results.Columns) > 0 {
-			selectedCount := len(v.visibleColumns)
-			if selectedCount == 0 {
-				selectedCount = len(v.results.Columns)
+		if v.tableName != "" {
+			whereLabel := "where"
+			conditionCount := v.countWhereConditions()
+			if conditionCount > 0 {
+				whereLabel = fmt.Sprintf("where (%d)", conditionCount)
 			}
-			columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
-		}
 
-		// Use static bindings for most items, but dynamic labels for where/columns/back
-		b.WriteString(styles.RenderHelp(
-			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
-			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
-			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
-			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
-			"scroll", "trackpad/mouse",
-			Keys.Results.Where.Help().Key, whereLabel,
-			Keys.Results.Columns.Help().Key, columnsLabel,
-			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
-			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
-			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
-			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
-			Keys.Global.Back.Help().Key, backTarget,
-		))
-	} else {
-		b.WriteString(styles.RenderHelp(
-			Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
-			Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
-			Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
-			Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
-			"scroll", "trackpad/mouse",
-			Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
-			Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
-			Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
-			Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
-			Keys.Global.Back.Help().Key, backTarget,
-		))
+			columnsLabel := "columns"
+			if v.results != nil && len(v.results.Columns) > 0 {
+				selectedCount := len(v.visibleColumns)
+				if selectedCount == 0 {
+					selectedCount = len(v.results.Columns)
+				}
+				columnsLabel = fmt.Sprintf("columns (%d/%d)", selectedCount, len(v.results.Columns))
+			}
+
+			// Use static bindings for most items, but dynamic labels for where/columns/back
+			b.WriteString(styles.RenderHelp(
+				Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+				Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
+				"scroll", "trackpad/mouse",
+				Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
+				Keys.Results.Where.Help().Key, whereLabel,
+				Keys.Results.Columns.Help().Key, columnsLabel,
+				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+				Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+				Keys.Global.Back.Help().Key, backTarget,
+			))
+		} else {
+			b.WriteString(styles.RenderHelp(
+				Keys.Results.Up.Help().Key, Keys.Results.Up.Help().Desc,
+				Keys.Results.Down.Help().Key, Keys.Results.Down.Help().Desc,
+				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
+				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
+				"scroll", "trackpad/mouse",
+				Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
+				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
+				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
+				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
+				Keys.Results.CustomSize.Help().Key, Keys.Results.CustomSize.Help().Desc,
+				Keys.Global.Back.Help().Key, backTarget,
+			))
+		}
 	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
@@ -720,4 +738,44 @@ func (v *ResultsView) paginationString(totalCols, visibleCols, rowCount int) str
 		return fmt.Sprintf("%d rows (%d/%d)", rowCount, page, totalPages)
 	}
 	return fmt.Sprintf("%d rows (pg %d)", rowCount, page)
+}
+
+// selectedCell returns the column name and cell value for the first visible
+// column of the given row. The table cursor selects the row; the first column
+// in the visible window is used since the bubbles table does not track a
+// horizontal cell cursor.
+func (v *ResultsView) selectedCell(pageRows [][]string, cursor int) (string, string) {
+	// Build the same column/index mapping used by updateTable
+	var columnIndices []int
+	var columnsToDisplay []engine.Column
+	if len(v.visibleColumns) > 0 {
+		for _, visibleCol := range v.visibleColumns {
+			for idx, col := range v.results.Columns {
+				if col.Name == visibleCol {
+					columnsToDisplay = append(columnsToDisplay, col)
+					columnIndices = append(columnIndices, idx)
+					break
+				}
+			}
+		}
+	} else {
+		columnsToDisplay = v.results.Columns
+		columnIndices = make([]int, len(columnsToDisplay))
+		for i := range columnIndices {
+			columnIndices[i] = i
+		}
+	}
+
+	if v.columnOffset >= len(columnsToDisplay) {
+		return "", ""
+	}
+
+	col := columnsToDisplay[v.columnOffset]
+	dataIdx := columnIndices[v.columnOffset]
+
+	row := pageRows[cursor]
+	if dataIdx < len(row) {
+		return col.Name, row[dataIdx]
+	}
+	return col.Name, ""
 }

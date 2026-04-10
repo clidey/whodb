@@ -2,3 +2,308 @@ en_US:
   sessionExpired: Session expired. Please login again.
   autoLoginSuccess: Automatically re-authenticated
   autoLoginFailed: Auto-login failed. Please login manually.
+
+ar_AE:
+  sessionExpired: انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.
+  autoLoginSuccess: إعادة المصادقة تلقائيا
+  autoLoginFailed: فشل تسجيل الدخول التلقائي. الرجاء تسجيل الدخول يدويا.
+
+de_DE:
+  sessionExpired: Sitzung abgelaufen. Bitte melden Sie sich erneut an.
+  autoLoginSuccess: Automatisch erneut authentifiziert
+  autoLoginFailed: Die automatische Anmeldung ist fehlgeschlagen. Bitte melden Sie sich manuell an.
+
+el_GR:
+  sessionExpired: Η συνεδρία έληξε. Παρακαλώ συνδεθείτε ξανά.
+  autoLoginSuccess: Αυτόματος εκ νέου έλεγχος ταυτότητας
+  autoLoginFailed: Η αυτόματη σύνδεση απέτυχε. Παρακαλούμε συνδεθείτε με μη αυτόματο τρόπο.
+
+en_GB:
+  sessionExpired: Session expired. Please login again.
+  autoLoginSuccess: Automatically re-authenticated
+  autoLoginFailed: Auto-login failed. Please login manually.
+
+es_ES:
+  sessionExpired: La sesión expiró. Por favor inicie sesión nuevamente.
+  autoLoginSuccess: Reautenticado automáticamente
+  autoLoginFailed: Error al iniciar sesión automáticamente. Por favor inicie sesión manualmente.
+
+fi_FI:
+  sessionExpired: Istunto vanhentunut. Kirjaudu uudelleen.
+  autoLoginSuccess: Todennetaan automaattisesti uudelleen
+  autoLoginFailed: Automaattinen kirjautuminen epäonnistui. Kirjaudu sisään manuaalisesti.
+
+fr_FR:
+  sessionExpired: Session expirée. Veuillez vous reconnecter.
+  autoLoginSuccess: Ré-authentifié automatiquement
+  autoLoginFailed: La connexion automatique a échoué. Veuillez vous connecter manuellement.
+
+it_IT:
+  sessionExpired: Sessione scaduta. Effettua nuovamente l'accesso.
+  autoLoginSuccess: Riautenticato automaticamente
+  autoLoginFailed: Accesso automatico non riuscito. Effettua il login manualmente.
+
+iw_IL:
+  sessionExpired: פג תוקף ההפעלה. אנא התחבר שוב.
+  autoLoginSuccess: מאומת מחדש אוטומטית
+  autoLoginFailed: הכניסה האוטומטית נכשלה. אנא התחבר באופן ידני.
+
+ja_JP:
+  sessionExpired: セッションの有効期限が切れました。 再度ログインしてください。
+  autoLoginSuccess: 自動的に再認証される
+  autoLoginFailed: 自動ログインに失敗しました。 手動でログインしてください。
+
+ko_KR:
+  sessionExpired: 세션이 만료되었습니다. 다시 로그인해주세요.
+  autoLoginSuccess: 자동으로 재인증됨
+  autoLoginFailed: 자동 로그인에 실패했습니다. 수동으로 로그인해주세요.
+
+nl_NL:
+  sessionExpired: Sessie verlopen. Log opnieuw in.
+  autoLoginSuccess: Automatisch opnieuw geverifieerd
+  autoLoginFailed: Automatisch inloggen mislukt. Gelieve handmatig in te loggen.
+
+pl_PL:
+  sessionExpired: Sesja wygasła. Proszę zalogować się ponownie.
+  autoLoginSuccess: Automatyczne ponowne uwierzytelnienie
+  autoLoginFailed: Automatyczne logowanie nie powiodło się. Proszę zalogować się ręcznie.
+
+pt_BR:
+  sessionExpired: A sessão expirou. Faça login novamente.
+  autoLoginSuccess: Reautenticado automaticamente
+  autoLoginFailed: Falha no login automático. Faça login manualmente.
+
+ro_RO:
+  sessionExpired: Sesiunea a expirat. Vă rugăm să vă conectați din nou.
+  autoLoginSuccess: Reautentificat automat
+  autoLoginFailed: Conectarea automată a eșuat. Vă rugăm să vă conectați manual.
+
+ru_RU:
+  sessionExpired: Сессия истекла. Пожалуйста, войдите снова.
+  autoLoginSuccess: Автоматическая повторная аутентификация
+  autoLoginFailed: Не удалось выполнить автоматический вход. Пожалуйста, войдите вручную.
+
+sk_SK:
+  sessionExpired: Platnosť relácie vypršala. Prihláste sa znova.
+  autoLoginSuccess: Automaticky znovu overené
+  autoLoginFailed: Automatické prihlásenie zlyhalo. Prosím prihláste sa manuálne.
+
+sv_SE:
+  sessionExpired: Sessionen har löpt ut. Vänligen logga in igen.
+  autoLoginSuccess: Automatiskt omautentiserat
+  autoLoginFailed: Automatisk inloggning misslyckades. Logga in manuellt.
+
+zh_CN:
+  sessionExpired: 会话已过期。 请重新登录。
+  autoLoginSuccess: 自动重新验证
+  autoLoginFailed: 自动登录失败。 请手动登录。
+
+zh_TW:
+  sessionExpired: 會話已過期。 請重新登入。
+  autoLoginSuccess: 自動重新驗證
+  autoLoginFailed: 自動登入失敗。 請手動登入。
+
+bg_BG:
+  sessionExpired: Сесията е изтекла. Моля, влезте отново.
+  autoLoginSuccess: Автоматично повторно удостоверяване
+  autoLoginFailed: Неуспешно автоматично влизане. Моля, влезте ръчно.
+
+bn_BD:
+  sessionExpired: সেশনের মেয়াদ শেষ। আবার লগইন করুন.
+  autoLoginSuccess: স্বয়ংক্রিয়ভাবে পুনরায় প্রমাণীকরণ
+  autoLoginFailed: স্বয়ংক্রিয় লগইন ব্যর্থ হয়েছে৷ ম্যানুয়ালি লগইন করুন.
+
+ca_ES:
+  sessionExpired: Session expired. Please login again.
+  autoLoginSuccess: S'ha tornat a autenticar automàticament
+  autoLoginFailed: L'inici de sessió automàtic ha fallat. Si us plau, inicieu sessió manualment.
+
+cs_CZ:
+  sessionExpired: Platnost relace vypršela. Přihlaste se prosím znovu.
+  autoLoginSuccess: Automaticky znovu ověřeno
+  autoLoginFailed: Automatické přihlášení se nezdařilo. Přihlaste se prosím ručně.
+
+da_DK:
+  sessionExpired: Session udløb. Log venligst på igen.
+  autoLoginSuccess: Automatisk gengodkendt
+  autoLoginFailed: Automatisk login mislykkedes. Log venligst ind manuelt.
+
+fa_IR:
+  sessionExpired: جلسه منقضی شد لطفا دوباره وارد شوید.
+  autoLoginSuccess: به طور خودکار دوباره احراز هویت شد
+  autoLoginFailed: ورود خودکار انجام نشد. لطفا به صورت دستی وارد شوید
+
+hi_IN:
+  sessionExpired: सत्र समाप्त हुआ। कृपया फिर भाग लें।
+  autoLoginSuccess: स्वचालित रूप से पुनः प्रमाणित
+  autoLoginFailed: स्वतः लॉगिन विफल. कृपया मैन्युअल रूप से लॉगिन करें.
+
+hr_HR:
+  sessionExpired: Sesija je istekla. Molimo prijavite se ponovo.
+  autoLoginSuccess: Automatski ponovno autentificiran
+  autoLoginFailed: Automatska prijava nije uspjela. Molimo prijavite se ručno.
+
+hu_HU:
+  sessionExpired: A munkamenet lejárt. Kérjük, jelentkezzen be újra.
+  autoLoginSuccess: Automatikusan újrahitelesítve
+  autoLoginFailed: Az automatikus bejelentkezés sikertelen. Kérjük, jelentkezzen be manuálisan.
+
+id_ID:
+  sessionExpired: Sesi berakhir. Silakan masuk kembali.
+  autoLoginSuccess: Diautentikasi ulang secara otomatis
+  autoLoginFailed: Gagal masuk otomatis. Silakan masuk secara manual.
+
+ms_MY:
+  sessionExpired: Sesi tamat tempoh. Sila log masuk semula.
+  autoLoginSuccess: Disahkan semula secara automatik
+  autoLoginFailed: Log masuk automatik gagal. Sila log masuk secara manual.
+
+nb_NO:
+  sessionExpired: Økten er utløpt. Vennligst logg på igjen.
+  autoLoginSuccess: Automatisk re-autentisert
+  autoLoginFailed: Automatisk pålogging mislyktes. Vennligst logg inn manuelt.
+
+sw_KE:
+  sessionExpired: Kipindi kimekwisha. Tafadhali ingia tena.
+  autoLoginSuccess: Imethibitishwa upya kiotomatiki
+  autoLoginFailed: Kuingia kiotomatiki kumeshindwa. Tafadhali ingia wewe mwenyewe.
+
+ta_IN:
+  sessionExpired: அமர்வு காலாவதியானது. மீண்டும் உள்நுழையவும்.
+  autoLoginSuccess: தானாகவே மீண்டும் அங்கீகரிக்கப்பட்டது
+  autoLoginFailed: தானியங்கு உள்நுழைவு தோல்வியடைந்தது. கைமுறையாக உள்நுழையவும்.
+
+th_TH:
+  sessionExpired: เซสชั่นหมดอายุแล้ว กรุณาเข้าสู่ระบบอีกครั้ง
+  autoLoginSuccess: ตรวจสอบความถูกต้องอีกครั้งโดยอัตโนมัติ
+  autoLoginFailed: การเข้าสู่ระบบอัตโนมัติล้มเหลว กรุณาเข้าสู่ระบบด้วยตนเอง
+
+tr_TR:
+  sessionExpired: Oturumun süresi doldu. Lütfen tekrar giriş yapın.
+  autoLoginSuccess: Otomatik olarak yeniden kimlik doğrulaması yapıldı
+  autoLoginFailed: Otomatik oturum açma başarısız oldu. Lütfen manuel olarak giriş yapın.
+
+uk_UA:
+  sessionExpired: Сеанс закінчився. Увійдіть ще раз.
+  autoLoginSuccess: Автоматична повторна автентифікація
+  autoLoginFailed: Помилка автоматичного входу. Будь ласка, увійдіть вручну.
+
+ur_PK:
+  sessionExpired: سیشن ختم ہو گیا۔ براہ کرم دوبارہ لاگ ان کریں۔
+  autoLoginSuccess: خودکار طور پر دوبارہ تصدیق شدہ
+  autoLoginFailed: خودکار لاگ ان ناکام ہوگیا۔ براہ کرم دستی طور پر لاگ ان کریں۔
+
+vi_VN:
+  sessionExpired: Phiên đã hết hạn. Vui lòng đăng nhập lại.
+  autoLoginSuccess: Tự động xác thực lại
+  autoLoginFailed: Tự động đăng nhập không thành công. Vui lòng đăng nhập thủ công.
+
+af_ZA:
+  sessionExpired: "Sessie het verval. Meld asseblief weer aan."
+  autoLoginSuccess: "Outomaties herverifieer"
+  autoLoginFailed: "Outo-aanmelding het misluk. Meld asseblief handmatig aan."
+
+am_ET:
+  sessionExpired: "ክፍለ ጊዜው አልፎበታል። እባክዎ እንደገና ይግቡ።"
+  autoLoginSuccess: "በራስ ሰር ዳግም የተረጋገጠ"
+  autoLoginFailed: "ራስ-ሰር መግባት አልተሳካም። እባኮትን በእጅ ይግቡ።"
+
+az_AZ:
+  sessionExpired: "Sessiyanın vaxtı bitdi. Zəhmət olmasa yenidən daxil olun."
+  autoLoginSuccess: "Avtomatik olaraq yenidən təsdiqlənir"
+  autoLoginFailed: "Avtomatik giriş uğursuz oldu. Zəhmət olmasa əl ilə daxil olun."
+
+et_EE:
+  sessionExpired: "Seanss aegus. Palun logi uuesti sisse."
+  autoLoginSuccess: "Automaatselt uuesti autentitud"
+  autoLoginFailed: "Automaatne sisselogimine ebaõnnestus. Palun logige sisse käsitsi."
+
+gu_IN:
+  sessionExpired: "સત્ર સમાપ્ત થયું. કૃપા કરીને ફરી લોગિન કરો."
+  autoLoginSuccess: "આપમેળે ફરીથી પ્રમાણિત"
+  autoLoginFailed: "સ્વતઃ લૉગિન નિષ્ફળ થયું. કૃપા કરીને મેન્યુઅલી લોગિન કરો."
+
+ha_NG:
+  sessionExpired: "Zaman ya kare. Da fatan za a sake shiga"
+  autoLoginSuccess: "An sake inganta ta atomatik"
+  autoLoginFailed: "Shiga ta atomatik ya kasa. Da fatan za a shiga da hannu."
+
+ka_GE:
+  sessionExpired: "სესიას ვადა ამოეწურა. გთხოვთ შეხვიდეთ ხელახლა."
+  autoLoginSuccess: "ავტომატური ხელახალი ავტორიზაცია"
+  autoLoginFailed: "ავტომატური შესვლა ვერ მოხერხდა. გთხოვთ შეხვიდეთ ხელით."
+
+km_KH:
+  sessionExpired: "វគ្គ​បាន​ផុត​កំណត់។ សូមចូលម្តងទៀត។"
+  autoLoginSuccess: "ផ្ទៀងផ្ទាត់ឡើងវិញដោយស្វ័យប្រវត្តិ"
+  autoLoginFailed: "ការចូលដោយស្វ័យប្រវត្តិបានបរាជ័យ។ សូមចូលដោយដៃ។"
+
+kn_IN:
+  sessionExpired: "ಸೆಷನ್ ಅವಧಿ ಮೀರಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಲಾಗಿನ್ ಮಾಡಿ."
+  autoLoginSuccess: "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮರು-ದೃಢೀಕರಿಸಲಾಗಿದೆ"
+  autoLoginFailed: "ಸ್ವಯಂ ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಹಸ್ತಚಾಲಿತವಾಗಿ ಲಾಗಿನ್ ಮಾಡಿ."
+
+lt_LT:
+  sessionExpired: "Sesija baigėsi. Prašome prisijungti dar kartą."
+  autoLoginSuccess: "Automatiškai iš naujo autentifikuota"
+  autoLoginFailed: "Automatinis prisijungimas nepavyko. Prašome prisijungti rankiniu būdu."
+
+lv_LV:
+  sessionExpired: "Sesija beidzās. Lūdzu, piesakieties vēlreiz."
+  autoLoginSuccess: "Automātiski atkārtoti autentificēts"
+  autoLoginFailed: "Automātiskā pieteikšanās neizdevās. Lūdzu, piesakieties manuāli."
+
+ml_IN:
+  sessionExpired: "സെഷൻ കാലഹരണപ്പെട്ടു. ദയവായി വീണ്ടും ലോഗിൻ ചെയ്യുക."
+  autoLoginSuccess: "യാന്ത്രികമായി വീണ്ടും പ്രാമാണീകരിച്ചു"
+  autoLoginFailed: "യാന്ത്രിക-ലോഗിൻ പരാജയപ്പെട്ടു. ദയവായി സ്വമേധയാ ലോഗിൻ ചെയ്യുക."
+
+mr_IN:
+  sessionExpired: "सत्र कालबाह्य झाले. कृपया पुन्हा लॉगिन करा."
+  autoLoginSuccess: "स्वयंचलितपणे पुन्हा प्रमाणीकृत"
+  autoLoginFailed: "स्वयं-लॉगिन अयशस्वी. कृपया व्यक्तिचलितपणे लॉगिन करा."
+
+ne_NP:
+  sessionExpired: "सत्रको म्याद सकियो। कृपया फेरि लगइन गर्नुहोस्।"
+  autoLoginSuccess: "स्वचालित रूपमा पुन: प्रमाणीकरण"
+  autoLoginFailed: "स्वतः लगइन असफल भयो। कृपया म्यानुअल रूपमा लगइन गर्नुहोस्।"
+
+pa_IN:
+  sessionExpired: "ਸੈਸ਼ਨ ਦੀ ਮਿਆਦ ਪੁੱਗ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਲੌਗਇਨ ਕਰੋ।"
+  autoLoginSuccess: "ਸਵੈਚਲਿਤ ਤੌਰ 'ਤੇ ਮੁੜ-ਪ੍ਰਮਾਣਿਤ ਕੀਤਾ ਗਿਆ"
+  autoLoginFailed: "ਆਟੋ-ਲੌਗਇਨ ਅਸਫਲ ਰਿਹਾ। ਕਿਰਪਾ ਕਰਕੇ ਹੱਥੀਂ ਲੌਗਇਨ ਕਰੋ।"
+
+si_LK:
+  sessionExpired: "සැසිය කල් ඉකුත් විය. කරුණාකර නැවත පිවිසෙන්න."
+  autoLoginSuccess: "ස්වයංක්‍රීයව නැවත සත්‍යාපනය කර ඇත"
+  autoLoginFailed: "ස්වයංක්‍රීය පුරනය වීම අසාර්ථක විය. කරුණාකර අතින් පුරනය වන්න."
+
+sl_SI:
+  sessionExpired: "Seja je potekla. Prosimo, prijavite se znova."
+  autoLoginSuccess: "Samodejno ponovno overjeno"
+  autoLoginFailed: "Samodejna prijava ni uspela. Prijavite se ročno."
+
+sr_RS:
+  sessionExpired: "Сесија је истекла. Молимо пријавите се поново."
+  autoLoginSuccess: "Аутоматски поново аутентификован"
+  autoLoginFailed: "Аутоматско пријављивање није успело. Молимо пријавите се ручно."
+
+te_IN:
+  sessionExpired: "సెషన్ గడువు ముగిసింది. దయచేసి మళ్లీ లాగిన్ చేయండి."
+  autoLoginSuccess: "స్వయంచాలకంగా తిరిగి ప్రామాణీకరించబడింది"
+  autoLoginFailed: "స్వీయ-లాగిన్ విఫలమైంది. దయచేసి మాన్యువల్‌గా లాగిన్ చేయండి."
+
+tl_PH:
+  sessionExpired: "Nag-expire na ang session. Mangyaring mag-login muli."
+  autoLoginSuccess: "Awtomatikong muling napatotohanan"
+  autoLoginFailed: "Nabigo ang auto-login. Mangyaring mag-login nang manu-mano."
+
+uz_UZ:
+  sessionExpired: "Seans muddati tugadi. Iltimos, qayta kiring."
+  autoLoginSuccess: "Avtomatik qayta autentifikatsiya qilingan"
+  autoLoginFailed: "Avtomatik kirish amalga oshmadi. Iltimos, qo'lda tizimga kiring."
+
+yo_NG:
+  sessionExpired: "Akoko ti pari. Jọwọ buwolu wọle lẹẹkansi."
+  autoLoginSuccess: "Laifọwọyi tun-ifọwọsi"
+  autoLoginFailed: "Iwọle laifọwọyi kuna. Jọwọ buwolu wọle pẹlu ọwọ."

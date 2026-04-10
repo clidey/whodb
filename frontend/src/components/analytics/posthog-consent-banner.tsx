@@ -19,8 +19,7 @@ import {Button, cn} from '@clidey/ux';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {SettingsActions} from '../../store/settings';
 import {getStoredConsentState, optInUser, optOutUser} from '../../config/posthog';
-import {isEEMode} from '../../config/ee-imports';
-import {getAppName} from '../../config/features';
+import {featureFlags, getAppName} from '../../config/features';
 import {useTranslation} from '../../hooks/use-translation';
 
 export const PosthogConsentBanner = () => {
@@ -31,7 +30,7 @@ export const PosthogConsentBanner = () => {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        if (isEEMode) {
+        if (!featureFlags.settingsPage) {
             setVisible(false);
             return;
         }

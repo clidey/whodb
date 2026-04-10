@@ -2,6 +2,246 @@ en_US:
   tip: Tip
   close: Close
 
+ar_AE:
+  tip: نصيحة
+  close: يغلق
+
+de_DE:
+  tip: Tipp
+  close: Schließen
+
+el_GR:
+  tip: Ακρο
+  close: Κοντά
+
+en_GB:
+  tip: Tip
+  close: Close
+
 es_ES:
   tip: Consejo
-  close: Cerrar
+  close: Cerca
+
+fi_FI:
+  tip: Kärki
+  close: Lähellä
+
+fr_FR:
+  tip: Conseil
+  close: Fermer
+
+it_IT:
+  tip: Mancia
+  close: Vicina
+
+iw_IL:
+  tip: עֵצָה
+  close: לִסְגוֹר
+
+ja_JP:
+  tip: ヒント
+  close: 近い
+
+ko_KR:
+  tip: 팁
+  close: 닫다
+
+nl_NL:
+  tip: Tip
+  close: Dichtbij
+
+pl_PL:
+  tip: Wskazówka
+  close: Zamknąć
+
+pt_BR:
+  tip: Dica
+  close: Fechar
+
+ro_RO:
+  tip: Sfat
+  close: Aproape
+
+ru_RU:
+  tip: Кончик
+  close: Закрывать
+
+sk_SK:
+  tip: Tip
+  close: Zavrieť
+
+sv_SE:
+  tip: Dricks
+  close: Nära
+
+zh_CN:
+  tip: 提示
+  close: 关闭
+
+zh_TW:
+  tip: 提示
+  close: 關閉
+
+bg_BG:
+  tip: съвет
+  close: затвори
+
+bn_BD:
+  tip: টিপ
+  close: বন্ধ
+
+ca_ES:
+  tip: Consell
+  close: Tancar
+
+cs_CZ:
+  tip: Tip
+  close: Blízko
+
+da_DK:
+  tip: Tip
+  close: Tæt
+
+fa_IR:
+  tip: نکته
+  close: بستن
+
+hi_IN:
+  tip: बख्शीश
+  close: बंद करना
+
+hr_HR:
+  tip: Savjet
+  close: Zatvoriti
+
+hu_HU:
+  tip: Tipp
+  close: Közeli
+
+id_ID:
+  tip: Tip
+  close: Menutup
+
+ms_MY:
+  tip: Petua
+  close: tutup
+
+nb_NO:
+  tip: Tupp
+  close: Lukke
+
+sw_KE:
+  tip: Kidokezo
+  close: Funga
+
+ta_IN:
+  tip: உதவிக்குறிப்பு
+  close: மூடு
+
+th_TH:
+  tip: เคล็ดลับ
+  close: ปิด
+
+tr_TR:
+  tip: Uç
+  close: Kapalı
+
+uk_UA:
+  tip: Підказка
+  close: Закрити
+
+ur_PK:
+  tip: ٹپ
+  close: بند
+
+vi_VN:
+  tip: Mẹo
+  close: Đóng
+
+af_ZA:
+  tip: "Wenk"
+  close: "Maak toe"
+
+am_ET:
+  tip: "ጠቃሚ ምክር"
+  close: "ገጠመ"
+
+az_AZ:
+  tip: "İpucu"
+  close: "Bağlayın"
+
+et_EE:
+  tip: "Vihje"
+  close: "Sule"
+
+gu_IN:
+  tip: "ટીપ"
+  close: "બંધ કરો"
+
+ha_NG:
+  tip: "Tukwici"
+  close: "Kusa"
+
+ka_GE:
+  tip: "რჩევა"
+  close: "დახურვა"
+
+km_KH:
+  tip: "ព័ត៌មានជំនួយ"
+  close: "បិទ"
+
+kn_IN:
+  tip: "ಸಲಹೆ"
+  close: "ಮುಚ್ಚಿ"
+
+lt_LT:
+  tip: "Patarimas"
+  close: "Uždaryti"
+
+lv_LV:
+  tip: "Padoms"
+  close: "Aizvērt"
+
+ml_IN:
+  tip: "നുറുങ്ങ്"
+  close: "അടയ്ക്കുക"
+
+mr_IN:
+  tip: "टीप"
+  close: "बंद करा"
+
+ne_NP:
+  tip: "टिप"
+  close: "बन्द गर्नुहोस्"
+
+pa_IN:
+  tip: "ਟਿਪ"
+  close: "ਬੰਦ ਕਰੋ"
+
+si_LK:
+  tip: "ඉඟිය"
+  close: "වසන්න"
+
+sl_SI:
+  tip: "Namig"
+  close: "Zapri"
+
+sr_RS:
+  tip: "Савет"
+  close: "Затвори"
+
+te_IN:
+  tip: "చిట్కా"
+  close: "మూసివేయి"
+
+tl_PH:
+  tip: "Tip"
+  close: "Isara"
+
+uz_UZ:
+  tip: "Maslahat"
+  close: "Yopish"
+
+yo_NG:
+  tip: "Imọran"
+  close: "Sunmọ"

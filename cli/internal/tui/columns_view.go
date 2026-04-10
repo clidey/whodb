@@ -35,6 +35,7 @@ type ColumnsView struct {
 	schema        string
 	tableName     string
 	scrollOffset  int
+	width         int
 	height        int
 }
 
@@ -201,7 +202,7 @@ func (v *ColumnsView) View() string {
 	if len(v.columns) == 0 {
 		b.WriteString(styles.RenderMuted("No columns"))
 		b.WriteString("\n\n")
-		b.WriteString(RenderBindingHelp(Keys.Global.Back))
+		b.WriteString(RenderBindingHelpWidth(v.width, Keys.Global.Back))
 		return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 	}
 
@@ -252,7 +253,7 @@ func (v *ColumnsView) View() string {
 
 	// Fixed footer
 	b.WriteString("\n\n")
-	b.WriteString(RenderBindingHelp(
+	b.WriteString(RenderBindingHelpWidth(v.width,
 		Keys.Columns.Up,
 		Keys.Columns.Down,
 		Keys.Columns.Toggle,

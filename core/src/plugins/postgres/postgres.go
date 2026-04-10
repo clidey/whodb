@@ -174,6 +174,10 @@ func (p *PostgresPlugin) IsArrayType(columnType string) bool {
 	return strings.HasPrefix(columnType, "_")
 }
 
+func init() {
+	engine.RegisterPlugin(NewPostgresPlugin())
+}
+
 func NewPostgresPlugin() *engine.Plugin {
 	plugin := &PostgresPlugin{}
 	plugin.Type = engine.DatabaseType_Postgres

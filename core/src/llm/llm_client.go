@@ -35,7 +35,7 @@ func init() {
 }
 
 // RegisterGenericProviders registers generic AI providers from environment configuration.
-// This is called by the env package after parsing generic provider configs and by EE providers.
+// Called after parsing generic provider configs.
 // It registers the provider with both the LLM provider system (for backend operations)
 // and the env.GenericProviders list (for frontend display).
 func RegisterGenericProviders(name string, providerId string, models []string, clientType string, baseURL string, apiKey string) {

@@ -11,7 +11,6 @@ desktop-ce/              # CE desktop app
   wails.json            # Wails config
   frontend/dist/        # Built frontend (copied during build)
 
-ee/desktop/             # EE desktop app (same structure)
 
 desktop-common/         # Shared desktop code
   app.go               # Wails App struct, window management, menus
@@ -23,7 +22,6 @@ desktop-common/         # Shared desktop code
 
 Desktop builds use separate workspace files to resolve dependencies correctly:
 - `go.work.desktop-ce` - CE desktop workspace
-- `ee/go.work.desktop` - EE desktop workspace
 
 ## Development Commands
 
@@ -32,11 +30,8 @@ Desktop builds use separate workspace files to resolve dependencies correctly:
 cd desktop-ce && make dev          # Development mode with hot reload
 cd desktop-ce && make build        # Build for current platform
 
-# EE Desktop
-cd ee/desktop && make dev
-cd ee/desktop && make build
 
-# Cross-platform builds (from desktop-ce or ee/desktop)
+# Cross-platform builds (from desktop-ce)
 make build-windows    # Windows AMD64
 make build-mac        # macOS (universal binary)
 make build-linux      # Linux AMD64
@@ -45,7 +40,7 @@ make build-all        # All platforms
 
 ## Build Process
 
-1. `make prepare` - Cleans artifacts, builds frontend via `pnpm run build:ce` (or `build:ee`)
+1. `make prepare` - Cleans artifacts, builds frontend via `pnpm run build`
 2. Copies `frontend/build/*` to `desktop-*/frontend/dist/`
 3. Wails embeds `frontend/dist` via `//go:embed all:frontend/dist/*`
 4. Wails builds native app with embedded assets
@@ -70,12 +65,11 @@ if env.IsDesktopApp() {
 
 ## Makefile Variables
 
-Each edition's Makefile sets these before including `Makefile.common`:
+Each app's Makefile sets these before including `Makefile.common`:
 ```makefile
-EDITION := ce                    # or "ee"
 PKG_ID := com.clidey.whodb.ce   # Bundle ID
 GOWORK := go.work.desktop-ce     # Workspace file
-BUILD_TAGS :=                    # Empty for CE, "-tags ee" for EE
+BUILD_TAGS :=                    # Empty (controlled by entry points, not tags)
 FRONTEND_BUILD_CMD := build:ce   # Frontend build script
 APP_NAME := WhoDB.app            # macOS app name
 ```

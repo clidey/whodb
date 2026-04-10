@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {isEEMode} from "@/config/ee-imports";
 import {
     Alert,
     AlertDescription,
@@ -72,8 +71,9 @@ import {InternalRoutes} from "../../config/routes";
 import {HoudiniActions} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
-import {isEEFeatureEnabled, loadEEComponent} from "../../utils/ee-loader";
+import {featureFlags} from "../../config/features";
 import {chooseRandomItems} from "../../utils/functions";
+import {getComponent} from "../../config/component-registry";
 import {databaseSupportsScratchpad, databaseTypesThatUseDatabaseInsteadOfSchema} from "../../utils/database-features";
 import {useNavigate} from "react-router-dom";
 import {useChatExamples} from "./examples";
@@ -82,16 +82,9 @@ import {addAuthHeader, isDesktopScheme} from "../../utils/auth-headers";
 import {matchesShortcut, SHORTCUTS} from "../../utils/shortcuts";
 import {useContainerWidth} from "../../hooks/use-container-width";
 
-// Lazy load chart components if EE is enabled
-const LineChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
-    () => import('@ee/components/charts/line-chart').then(m => ({ default: m.LineChart })),
-    () => null
-) : () => null;
-
-const PieChart = isEEFeatureEnabled('dataVisualization') ? loadEEComponent(
-    () => import('@ee/components/charts/pie-chart').then(m => ({ default: m.PieChart })),
-    () => null
-) : () => null;
+// Chart components from the component registry
+const LineChart = getComponent('line-chart');
+const PieChart = getComponent('pie-chart');
 
 const THINKING_PHRASES_COUNT = 25;
 
@@ -446,7 +439,7 @@ export const ChatPage: FC = () => {
         const shouldTryTitle = hasDefaultName;
 
         setLoading(true);
-        loadingPhraseRef.current = isEEMode ? thinkingPhrases[0] : chooseRandomItems(thinkingPhrases)[0];
+        loadingPhraseRef.current = chooseRandomItems(thinkingPhrases)[0];
         dispatch(HoudiniActions.addChatMessage({ Type: "message", Text: sanitizedQuery, isUserInput: true, RequiresConfirmation: false }));
         setQuery("");
 
@@ -1000,7 +993,7 @@ export const ChatPage: FC = () => {
                                                         <ErrorState error={chat.Text.replace(/^ERROR:\s*/i, "")} />
                                                     </div>
                                                 );
-                                            } else if (isEEFeatureEnabled('dataVisualization') && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
+                                            } else if (featureFlags.dataVisualization && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
                                                 return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}

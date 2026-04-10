@@ -226,11 +226,12 @@ export function forEachDatabase(categoryFilter, testFn, options = {}) {
 
         test.beforeEach(async ({ whodb, page }) => {
           if (navigateToStorageUnit) {
+            const navTimeout = dbConfig.navigationTimeout || TIMEOUT.NAVIGATION;
             await page.goto(`${BASE_URL}/storage-unit`);
             await page
               .locator('[data-testid="storage-unit-card"]')
               .first()
-              .waitFor({ timeout: TIMEOUT.NAVIGATION });
+              .waitFor({ timeout: navTimeout });
           }
         });
 

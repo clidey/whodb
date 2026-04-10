@@ -20,6 +20,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -46,10 +47,22 @@ func (ds *DateTimeString) Scan(value any) error {
 		str := fmt.Sprintf("%v", v)
 		*ds = DateTimeString(str)
 	default:
-		// For any other type (including time.Time), convert to string
-		// This handles the case where the SQLite driver has already parsed the datetime
-		str := fmt.Sprintf("%v", value)
-		*ds = DateTimeString(str)
+		// Handle time.Time from go-sqlite3's datetime auto-parsing.
+		// The driver parses datetime strings into time.Time before our scanner sees them,
+		// so we format back without the "+0000 UTC" suffix that fmt.Sprintf produces.
+		// Zero time (from failed parse of non-datetime text) is treated as empty.
+		if t, ok := value.(time.Time); ok {
+			if t.IsZero() {
+				*ds = ""
+			} else if t.Nanosecond() > 0 {
+				*ds = DateTimeString(t.Format("2006-01-02 15:04:05.999999999"))
+			} else {
+				*ds = DateTimeString(t.Format("2006-01-02 15:04:05"))
+			}
+		} else {
+			str := fmt.Sprintf("%v", value)
+			*ds = DateTimeString(str)
+		}
 	}
 	return nil
 }

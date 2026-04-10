@@ -20,14 +20,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clidey/whodb/cli/pkg/styles"
 )
+
+// queryBuffer holds the content of one editor tab.
+type queryBuffer struct {
+	name string
+	text string
+}
 
 type EditorView struct {
 	parent              *MainModel
@@ -39,6 +48,8 @@ type EditorView struct {
 	selectedSuggestion  int
 	cursorPos           int
 	lastText            string
+	width               int
+	height              int
 	lastWidth           int
 	lastHeight          int
 	suggestionHeight    int
@@ -48,6 +59,10 @@ type EditorView struct {
 	retryPrompt RetryPrompt
 	// Debounce autocomplete - sequence ID to detect stale debounce messages
 	autocompleteSeqID int
+	compact           bool
+	// Multi-tab query buffers
+	buffers   []queryBuffer
+	activeTab int
 }
 
 func NewEditorView(parent *MainModel) *EditorView {
@@ -64,6 +79,8 @@ func NewEditorView(parent *MainModel) *EditorView {
 		allSuggestions:      []suggestion{},
 		filteredSuggestions: []suggestion{},
 		selectedSuggestion:  0,
+		buffers:             []queryBuffer{{name: "Query 1", text: ""}},
+		activeTab:           0,
 	}
 }
 
@@ -123,6 +140,17 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		if msg.SeqID == v.autocompleteSeqID {
 			v.updateAutocomplete(msg.Text, msg.Pos)
 		}
+		return v, nil
+
+	case externalEditorResultMsg:
+		if msg.err != nil {
+			v.err = msg.err
+		} else {
+			v.textarea.SetValue(strings.TrimRight(msg.content, "\n"))
+			v.showSuggestions = false
+			v.err = nil
+		}
+		v.refreshLayout()
 		return v, nil
 
 	case tea.WindowSizeMsg:
@@ -244,8 +272,61 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			}
 			return v, nil
 
-		}
+		case tea.KeyRight:
+			// Accept ghost text when cursor is at end of text
+			text := v.textarea.Value()
+			li := v.textarea.LineInfo()
+			atEnd := v.textarea.Line() == strings.Count(text, "\n") &&
+				li.ColumnOffset >= len([]rune(strings.Split(text, "\n")[v.textarea.Line()]))
+			if atEnd && v.acceptGhostText() {
+				v.refreshLayout()
+				return v, nil
+			}
+			// Fall through to let textarea handle normal right-arrow
 
+		case tea.KeyCtrlF:
+			// Format/prettify the SQL in the textarea
+			text := v.textarea.Value()
+			if text != "" {
+				formatted := formatSQL(text)
+				v.textarea.SetValue(formatted)
+				v.showSuggestions = false
+				v.refreshLayout()
+			}
+			return v, nil
+
+		case tea.KeyCtrlO:
+			// Open current query in external editor
+			return v, v.openExternalEditor()
+
+		case tea.KeyCtrlN:
+			// New query tab
+			v.addTab()
+			v.refreshLayout()
+			return v, nil
+
+		case tea.KeyCtrlW:
+			// Close current query tab
+			v.closeTab()
+			v.refreshLayout()
+			return v, nil
+
+		case tea.KeyShiftLeft, tea.KeyCtrlPgUp:
+			// Switch to previous editor tab
+			if len(v.buffers) > 1 && v.activeTab > 0 {
+				v.switchToTab(v.activeTab - 1)
+				v.refreshLayout()
+				return v, nil
+			}
+
+		case tea.KeyShiftRight, tea.KeyCtrlPgDown:
+			// Switch to next editor tab
+			if len(v.buffers) > 1 && v.activeTab < len(v.buffers)-1 {
+				v.switchToTab(v.activeTab + 1)
+				v.refreshLayout()
+				return v, nil
+			}
+		}
 	}
 
 	// Only schedule debounce for actual key events, not spinner ticks etc.
@@ -280,7 +361,20 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 func (v *EditorView) View() string {
 	var b strings.Builder
 
-	b.WriteString(styles.RenderTitle("SQL Editor"))
+	// Render tab bar if multiple buffers exist
+	if len(v.buffers) > 1 {
+		for i, buf := range v.buffers {
+			if i == v.activeTab {
+				b.WriteString(styles.ActiveListItemStyle.Render(buf.name))
+			} else {
+				b.WriteString(styles.RenderMuted(" " + buf.name + " "))
+			}
+			b.WriteString(" ")
+		}
+		b.WriteString("\n")
+	} else {
+		b.WriteString(styles.RenderTitle("SQL Editor"))
+	}
 	b.WriteString("\n\n")
 
 	// Show loading indicator when query is running
@@ -290,11 +384,23 @@ func (v *EditorView) View() string {
 	}
 
 	b.WriteString(v.textarea.View())
+
+	// Ghost text: show dimmed completion from history
+	ghost := v.getGhostText()
+	if ghost != "" {
+		b.WriteString("  " + styles.MutedStyle.Render(ghost))
+	}
 	b.WriteString("\n")
 
 	if v.err != nil {
-		b.WriteString("\n\n")
-		b.WriteString(styles.RenderErrorBox(v.err.Error()))
+		b.WriteString("\n")
+		if v.compact {
+			// Inline error in compact/pane mode to avoid overflow
+			b.WriteString(styles.RenderError(v.err.Error()))
+		} else {
+			b.WriteString("\n")
+			b.WriteString(styles.RenderErrorBox(v.err.Error()))
+		}
 	}
 
 	// Show retry prompt for timed out queries
@@ -315,15 +421,27 @@ func (v *EditorView) View() string {
 	b.WriteString("\n")
 	b.WriteString(v.renderSuggestionArea())
 
-	b.WriteString("\n\n")
-	b.WriteString(RenderBindingHelp(
-		Keys.Editor.Execute,
-		Keys.Editor.Autocomplete,
-		Keys.Editor.Clear,
-		Keys.Global.NextView,
-		Keys.Global.Back,
-		Keys.Global.Quit,
-	))
+	if !v.compact {
+		b.WriteString("\n\n")
+		bindings := []key.Binding{
+			Keys.Editor.Execute,
+			Keys.Editor.Autocomplete,
+			Keys.Editor.Format,
+			Keys.Editor.OpenEditor,
+			Keys.Editor.Bookmarks,
+			Keys.Editor.NewTab,
+		}
+		if len(v.buffers) > 1 {
+			bindings = append(bindings, Keys.Editor.PrevTab, Keys.Editor.NextTab, Keys.Editor.CloseTab)
+		}
+		bindings = append(bindings,
+			Keys.Editor.Clear,
+			Keys.Global.NextView,
+			Keys.Global.Back,
+			Keys.Global.Quit,
+		)
+		b.WriteString(RenderBindingHelpWidth(v.width, bindings...))
+	}
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }
@@ -419,7 +537,11 @@ func (v *EditorView) applyWindowSize(width, height int) {
 
 	v.suggestionHeight = v.computeSuggestionHeight(height)
 
-	overhead := 14
+	// Title (2) + padding (4) + error/retry/running status
+	overhead := 6
+	if !v.compact {
+		overhead += 4 // help footer
+	}
 	if v.err != nil {
 		overhead += 4
 	}
@@ -436,8 +558,137 @@ func (v *EditorView) applyWindowSize(width, height int) {
 	v.textarea.SetHeight(targetHeight)
 }
 
+// getGhostText returns the remaining text from a matching history entry,
+// or empty string if no match. Only shows on a single-line query.
+func (v *EditorView) getGhostText() string {
+	text := v.textarea.Value()
+	if text == "" || strings.Contains(text, "\n") {
+		return ""
+	}
+	// Don't show ghost when autocomplete is active
+	if v.showSuggestions {
+		return ""
+	}
+	match := v.parent.histMgr.SearchByPrefix(text)
+	if match == nil {
+		return ""
+	}
+	// Return only the suffix beyond what's already typed
+	return match.Query[len(text):]
+}
+
+// acceptGhostText fills in the ghost text from history.
+func (v *EditorView) acceptGhostText() bool {
+	ghost := v.getGhostText()
+	if ghost == "" {
+		return false
+	}
+	match := v.parent.histMgr.SearchByPrefix(v.textarea.Value())
+	if match == nil {
+		return false
+	}
+	v.textarea.SetValue(match.Query)
+	v.showSuggestions = false
+	return true
+}
+
+// saveCurrentBuffer stores the textarea content into the active buffer.
+func (v *EditorView) saveCurrentBuffer() {
+	if v.activeTab >= 0 && v.activeTab < len(v.buffers) {
+		v.buffers[v.activeTab].text = v.textarea.Value()
+	}
+}
+
+// switchToTab saves the current buffer and switches to the given tab index.
+func (v *EditorView) switchToTab(idx int) {
+	if idx < 0 || idx >= len(v.buffers) {
+		return
+	}
+	v.saveCurrentBuffer()
+	v.activeTab = idx
+	v.textarea.SetValue(v.buffers[idx].text)
+	v.showSuggestions = false
+}
+
+// addTab creates a new empty buffer and switches to it.
+func (v *EditorView) addTab() {
+	v.saveCurrentBuffer()
+	name := fmt.Sprintf("Query %d", len(v.buffers)+1)
+	v.buffers = append(v.buffers, queryBuffer{name: name, text: ""})
+	v.activeTab = len(v.buffers) - 1
+	v.textarea.SetValue("")
+	v.showSuggestions = false
+}
+
+// closeTab removes the active tab. If it's the last tab, creates a new empty one.
+func (v *EditorView) closeTab() {
+	if len(v.buffers) <= 1 {
+		// Reset the only tab instead of removing it
+		v.buffers[0].text = ""
+		v.textarea.SetValue("")
+		v.showSuggestions = false
+		return
+	}
+	v.buffers = append(v.buffers[:v.activeTab], v.buffers[v.activeTab+1:]...)
+	if v.activeTab >= len(v.buffers) {
+		v.activeTab = len(v.buffers) - 1
+	}
+	v.textarea.SetValue(v.buffers[v.activeTab].text)
+	v.showSuggestions = false
+}
+
 func (v *EditorView) refreshLayout() {
 	if v.lastWidth > 0 && v.lastHeight > 0 {
 		v.applyWindowSize(v.lastWidth, v.lastHeight)
 	}
+}
+
+// externalEditorResultMsg is sent when the external editor process completes.
+type externalEditorResultMsg struct {
+	content string
+	err     error
+}
+
+// openExternalEditor writes the current textarea content to a temp file,
+// opens it in $EDITOR/$VISUAL/vi, and reads back the result.
+func (v *EditorView) openExternalEditor() tea.Cmd {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+	}
+	if editor == "" {
+		editor = "vi"
+	}
+
+	// Write current content to temp file
+	tmpFile, err := os.CreateTemp("", "whodb-query-*.sql")
+	if err != nil {
+		return func() tea.Msg {
+			return externalEditorResultMsg{err: fmt.Errorf("failed to create temp file: %w", err)}
+		}
+	}
+
+	content := v.textarea.Value()
+	if _, err := tmpFile.WriteString(content); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpFile.Name())
+		return func() tea.Msg {
+			return externalEditorResultMsg{err: fmt.Errorf("failed to write temp file: %w", err)}
+		}
+	}
+	tmpFile.Close()
+	tmpPath := tmpFile.Name()
+
+	c := exec.Command(editor, tmpPath)
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		defer os.Remove(tmpPath)
+		if err != nil {
+			return externalEditorResultMsg{err: fmt.Errorf("editor exited with error: %w", err)}
+		}
+		data, readErr := os.ReadFile(tmpPath)
+		if readErr != nil {
+			return externalEditorResultMsg{err: fmt.Errorf("failed to read back file: %w", readErr)}
+		}
+		return externalEditorResultMsg{content: string(data)}
+	})
 }

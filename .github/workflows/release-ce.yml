@@ -81,6 +81,11 @@ on:
         required: false
         type: boolean
         default: false
+      deploy-npm:
+        description: 'Publish to npm registry (@clidey/whodb-cli)'
+        required: false
+        type: boolean
+        default: false
       publish-github-release:
         description: 'Publish GitHub release to production (leave unchecked to keep as draft)'
         required: false
@@ -110,6 +115,7 @@ jobs:
       # deploy-appimage: ${{ steps.calc.outputs.deploy-appimage }}  # DISABLED
       deploy-linux-terminal: ${{ steps.calc.outputs.deploy-linux-terminal }}
       deploy-cli: ${{ steps.calc.outputs.deploy-cli }}
+      deploy-npm: ${{ steps.calc.outputs.deploy-npm }}
       publish-github-release: ${{ steps.calc.outputs.publish-github-release }}
       release-notes: ${{ steps.release_notes.outputs.notes }}
 
@@ -153,6 +159,7 @@ jobs:
           deploy-appimage: 'false'  # DISABLED: AppImage requires system WebKit2GTK
           deploy-linux-terminal: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-linux-terminal) && 'true' || 'false') }}
           deploy-cli: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-cli) && 'true' || 'false') }}
+          deploy-npm: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.deploy-npm) && 'true' || 'false') }}
           publish-github-release: ${{ github.event_name == 'push' && 'true' || (fromJSON(inputs.publish-github-release) && 'true' || 'false') }}
 
       - name: Extract release notes from PR
@@ -224,7 +231,6 @@ jobs:
     uses: ./.github/workflows/_build-frontend.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
     secrets: inherit
 
   # Step 2b: Build platform artifacts in parallel (only what's selected)
@@ -235,7 +241,6 @@ jobs:
     uses: ./.github/workflows/_build-docker.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
     secrets: inherit
 
   build-windows:
@@ -245,7 +250,6 @@ jobs:
     uses: ./.github/workflows/_build-windows.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
       platforms: 'windows-amd64,windows-arm64'
     secrets: inherit
 
@@ -256,7 +260,6 @@ jobs:
     uses: ./.github/workflows/_build-apple.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
-      edition: 'ce'
     secrets: inherit
 
   build-snap:
@@ -276,7 +279,6 @@ jobs:
   #   uses: ./.github/workflows/_build-appimage.yml
   #   with:
   #     version: ${{ needs.calculate-version.outputs.version }}
-  #     edition: 'ce'
   #   secrets: inherit
 
   build-linux-terminal:
@@ -291,7 +293,7 @@ jobs:
   build-cli:
     name: Build CLI
     needs: [ calculate-version ]
-    if: needs.calculate-version.outputs.deploy-cli == 'true'
+    if: needs.calculate-version.outputs.deploy-cli == 'true' || needs.calculate-version.outputs.deploy-npm == 'true'
     uses: ./.github/workflows/_build-cli.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}
@@ -624,15 +626,14 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Deploy to npm (after CLI build and GitHub release)
+  # Step 7: Deploy to npm (after CLI build; does not require GitHub release)
   deploy-npm:
     name: Deploy npm
-    needs: [ calculate-version, build-cli, create-github-release ]
+    needs: [ calculate-version, build-cli ]
     if: |
       always() &&
-      needs.calculate-version.outputs.deploy-cli == 'true' &&
-      needs.build-cli.result == 'success' &&
-      needs.create-github-release.result == 'success'
+      needs.calculate-version.outputs.deploy-npm == 'true' &&
+      needs.build-cli.result == 'success'
     uses: ./.github/workflows/_deploy-npm.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}

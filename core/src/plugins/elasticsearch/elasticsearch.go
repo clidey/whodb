@@ -227,6 +227,10 @@ func (p *ElasticSearchPlugin) GetDatabaseMetadata() *engine.DatabaseMetadata {
 	}
 }
 
+func init() {
+	engine.RegisterPlugin(NewElasticSearchPlugin())
+}
+
 func NewElasticSearchPlugin() *engine.Plugin {
 	return &engine.Plugin{
 		Type:            engine.DatabaseType_ElasticSearch,

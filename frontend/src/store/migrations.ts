@@ -16,6 +16,7 @@
 
 import { IAIModelType } from './ai-models';
 import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-helper';
+import { featureFlags } from '../config/features';
 
 // Define the old database state structure for migration purposes
 interface OldDatabaseState {
@@ -222,12 +223,12 @@ function clearChatStateV2(): void {
 }
 
 /**
- * Apply EE settings defaults to persisted settings in EE mode
+ * Apply extension settings defaults
  */
 function applyEESettingsDefaultsV4(): void {
   try {
-    // Only run in EE mode
-    if (import.meta.env.VITE_BUILD_EDITION !== 'ee') {
+    // Only run when settings page is hidden (extended mode)
+    if (featureFlags.settingsPage) {
       return;
     }
 
@@ -239,7 +240,7 @@ function applyEESettingsDefaultsV4(): void {
     const settingsState = JSON.parse(persistedSettingsState);
     let needsUpdate = false;
 
-    // Update whereConditionMode to EE default ('sheet')
+    // Update whereConditionMode to extension default ('sheet')
     if (settingsState.whereConditionMode) {
       try {
         const whereConditionMode = JSON.parse(settingsState.whereConditionMode);
@@ -248,17 +249,17 @@ function applyEESettingsDefaultsV4(): void {
           needsUpdate = true;
         }
       } catch (e) {
-        // If parsing fails, set to EE default
+        // If parsing fails, set to extension default
         settingsState.whereConditionMode = JSON.stringify('sheet');
         needsUpdate = true;
       }
     } else {
-      // Initialize with EE default if missing
+      // Initialize with extension default if missing
       settingsState.whereConditionMode = JSON.stringify('sheet');
       needsUpdate = true;
     }
 
-    // Update disableAnimations to EE default (true)
+    // Update disableAnimations to extension default (true)
     if (settingsState.disableAnimations) {
       try {
         const disableAnimations = JSON.parse(settingsState.disableAnimations);
@@ -267,12 +268,12 @@ function applyEESettingsDefaultsV4(): void {
           needsUpdate = true;
         }
       } catch (e) {
-        // If parsing fails, set to EE default
+        // If parsing fails, set to extension default
         settingsState.disableAnimations = JSON.stringify(true);
         needsUpdate = true;
       }
     } else {
-      // Initialize with EE default if missing
+      // Initialize with extension default if missing
       settingsState.disableAnimations = JSON.stringify(true);
       needsUpdate = true;
     }
@@ -281,7 +282,7 @@ function applyEESettingsDefaultsV4(): void {
       localStorage.setItem('persist:settings', JSON.stringify(settingsState));
     }
   } catch (error) {
-    console.error('Error applying EE settings defaults:', error);
+    console.error('Error applying settings defaults:', error);
   }
 }
 

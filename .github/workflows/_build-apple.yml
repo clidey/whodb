@@ -7,11 +7,6 @@ on:
         description: 'Version to build'
         required: true
         type: string
-      edition:
-        description: 'Edition to build (ce or ee)'
-        required: false
-        type: string
-        default: 'ce'
       platforms:
         description: 'Platforms to build (comma-separated, e.g., darwin-universal)'
         required: false
@@ -69,11 +64,11 @@ jobs:
         if: matrix.enabled != false
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version-file: 'desktop-${{ inputs.edition }}/go.mod'
+          go-version-file: 'desktop-ce/go.mod'
           cache: true
           cache-dependency-path: |
-            desktop-${{ inputs.edition }}/go.sum
-            desktop-${{ inputs.edition }}/go.mod
+            desktop-ce/go.sum
+            desktop-ce/go.mod
             core/go.sum
             core/go.mod
 
@@ -81,7 +76,7 @@ jobs:
         if: matrix.enabled != false
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: frontend-build-${{ inputs.edition }}
+          name: frontend-build
           path: frontend/build
 
       - name: Install Wails CLI
@@ -159,13 +154,13 @@ jobs:
           fi
 
           echo "📝 Saving provisioning profile for post-build signing..."
-          mkdir -p desktop-${{ inputs.edition }}/build/darwin
-          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-${{ inputs.edition }}/build/darwin/embedded.provisionprofile
+          mkdir -p desktop-ce/build/darwin
+          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode -o desktop-ce/build/darwin/embedded.provisionprofile
           echo "✅ Provisioning profile saved"
 
       - name: Clean previous macOS build
         if: matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           echo "Cleaning previous build to ensure bundle ID changes take effect..."
           rm -rf build/darwin/universal build/darwin/amd64 build/darwin/arm64 build/dmgroot || true
@@ -174,7 +169,7 @@ jobs:
 
       - name: Prepare MAS entitlements and provisioning profile
         if: matrix.build-type == 'mas' && matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           echo "Preparing MAS-specific entitlements..."
           mkdir -p build/darwin
@@ -183,7 +178,7 @@ jobs:
 
       - name: Verify entitlements before build
         if: matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           echo "Checking for entitlements.plist before build..."
           ls -la build/darwin/ || echo "build/darwin doesn't exist"
@@ -196,12 +191,12 @@ jobs:
 
       - name: Build macOS
         if: matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: make ci-build-prod-mac VERSION=${{ inputs.version }}
 
       - name: Bundle BAML native library
         if: matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           APP_PATH="build/darwin/universal/WhoDB.app"
           FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
@@ -241,7 +236,7 @@ jobs:
 
       - name: Verify entitlements after build
         if: matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           echo "Checking for entitlements.plist after build..."
           ls -la build/darwin/ || echo "build/darwin doesn't exist"
@@ -257,7 +252,7 @@ jobs:
         if: matrix.build-type == 'dmg' && matrix.enabled != false
         env:
           APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           APP_PATH="build/darwin/universal/WhoDB.app"
 
@@ -390,7 +385,7 @@ jobs:
 
       - name: Patch Bundle ID, Embed Profile, and Sign (MAS)
         if: matrix.build-type == 'mas' && matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           APP_PATH="build/darwin/universal/WhoDB.app"
 
@@ -532,7 +527,7 @@ jobs:
 
       - name: Create macOS DMG
         if: matrix.build-type == 'dmg' && matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: make dmg-mac-only VERSION=${{ inputs.version }}
 
       - name: Sign and Notarize DMG
@@ -542,7 +537,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           # Validate all required credentials
           if [ -z "$APPLE_DEVELOPER_ID_APPLICATION" ]; then
@@ -576,7 +571,7 @@ jobs:
 
       - name: Cleanup build artifacts before upload
         if: matrix.enabled != false
-        working-directory: ./desktop-${{ inputs.edition }}
+        working-directory: ./desktop-ce
         run: |
           echo "Cleaning up intermediate build files..."
           rm -rf build/dmgroot
@@ -590,7 +585,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-dmg
-          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.dmg
+          path: desktop-ce/build/darwin/universal/*.dmg
           retention-days: 1
 
       - name: Upload macOS App Bundle (DMG)
@@ -598,7 +593,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-app
-          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
+          path: desktop-ce/build/darwin/universal/*.app
           retention-days: 1
 
       # Upload MAS artifacts (only for MAS builds)
@@ -607,7 +602,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-mas-app
-          path: desktop-${{ inputs.edition }}/build/darwin/universal/*.app
+          path: desktop-ce/build/darwin/universal/*.app
           retention-days: 1
 
       - name: Upload macOS MAS Entitlements
@@ -615,7 +610,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: desktop-darwin-entitlements
-          path: desktop-${{ inputs.edition }}/build/darwin/entitlements.plist
+          path: desktop-ce/build/darwin/entitlements.plist
           retention-days: 1
 
       # Cleanup keychain

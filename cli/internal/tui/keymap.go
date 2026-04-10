@@ -21,10 +21,15 @@ import (
 
 // GlobalKeys contains keybindings used across multiple views
 type GlobalKeys struct {
-	Quit     key.Binding
-	Help     key.Binding
-	NextView key.Binding
-	Back     key.Binding
+	Quit        key.Binding
+	Help        key.Binding
+	NextView    key.Binding
+	Back        key.Binding
+	CycleTheme  key.Binding
+	CycleLayout key.Binding
+	Import      key.Binding
+	ReadOnly    key.Binding
+	CmdLog      key.Binding
 }
 
 // BrowserKeys contains keybindings for the browser view
@@ -48,6 +53,13 @@ type EditorKeys struct {
 	Execute      key.Binding
 	Autocomplete key.Binding
 	Clear        key.Binding
+	Format       key.Binding
+	OpenEditor   key.Binding
+	Bookmarks    key.Binding
+	NewTab       key.Binding
+	CloseTab     key.Binding
+	PrevTab      key.Binding
+	NextTab      key.Binding
 }
 
 // ResultsKeys contains keybindings for the results view
@@ -63,6 +75,7 @@ type ResultsKeys struct {
 	Export     key.Binding
 	PageSize   key.Binding
 	CustomSize key.Binding
+	ViewCell   key.Binding
 }
 
 // HistoryKeys contains keybindings for the history view
@@ -157,6 +170,15 @@ type FilterKeys struct {
 	ApplyFilter  key.Binding
 }
 
+// BookmarksKeys contains keybindings for the bookmarks view
+type BookmarksKeys struct {
+	Up     key.Binding
+	Down   key.Binding
+	Load   key.Binding
+	Save   key.Binding
+	Delete key.Binding
+}
+
 // SchemaSelectKeys contains keybindings for schema selection (browser)
 type SchemaSelectKeys struct {
 	NavLeft      key.Binding
@@ -181,6 +203,7 @@ type Keymap struct {
 	ConnectionForm ConnectionFormKeys
 	Filter         FilterKeys
 	SchemaSelect   SchemaSelectKeys
+	Bookmarks      BookmarksKeys
 }
 
 // Keys is the top-level keymap containing all keybindings
@@ -201,6 +224,26 @@ var Keys = Keymap{
 		Back: key.NewBinding(
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "back"),
+		),
+		CycleTheme: key.NewBinding(
+			key.WithKeys("ctrl+t"),
+			key.WithHelp("ctrl+t", "cycle theme"),
+		),
+		CycleLayout: key.NewBinding(
+			key.WithKeys("ctrl+l"),
+			key.WithHelp("ctrl+l", "cycle layout"),
+		),
+		Import: key.NewBinding(
+			key.WithKeys("ctrl+g"),
+			key.WithHelp("ctrl+g", "import"),
+		),
+		ReadOnly: key.NewBinding(
+			key.WithKeys("ctrl+y"),
+			key.WithHelp("ctrl+y", "read-only"),
+		),
+		CmdLog: key.NewBinding(
+			key.WithKeys("ctrl+d"),
+			key.WithHelp("ctrl+d", "command log"),
 		),
 	},
 	Browser: BrowserKeys{
@@ -266,6 +309,34 @@ var Keys = Keymap{
 			key.WithKeys("ctrl+l"),
 			key.WithHelp("ctrl+l", "clear"),
 		),
+		Format: key.NewBinding(
+			key.WithKeys("ctrl+f"),
+			key.WithHelp("ctrl+f", "format SQL"),
+		),
+		OpenEditor: key.NewBinding(
+			key.WithKeys("ctrl+o"),
+			key.WithHelp("ctrl+o", "open $EDITOR"),
+		),
+		Bookmarks: key.NewBinding(
+			key.WithKeys("ctrl+b"),
+			key.WithHelp("ctrl+b", "bookmarks"),
+		),
+		NewTab: key.NewBinding(
+			key.WithKeys("ctrl+n"),
+			key.WithHelp("ctrl+n", "new tab"),
+		),
+		CloseTab: key.NewBinding(
+			key.WithKeys("ctrl+w"),
+			key.WithHelp("ctrl+w", "close tab"),
+		),
+		PrevTab: key.NewBinding(
+			key.WithKeys("shift+left"),
+			key.WithHelp("shift+←", "prev tab"),
+		),
+		NextTab: key.NewBinding(
+			key.WithKeys("shift+right"),
+			key.WithHelp("shift+→", "next tab"),
+		),
 	},
 	Results: ResultsKeys{
 		Up: key.NewBinding(
@@ -311,6 +382,10 @@ var Keys = Keymap{
 		CustomSize: key.NewBinding(
 			key.WithKeys("S"),
 			key.WithHelp("shift+s", "custom size"),
+		),
+		ViewCell: key.NewBinding(
+			key.WithKeys("z"),
+			key.WithHelp("z", "view cell"),
 		),
 	},
 	History: HistoryKeys{
@@ -553,6 +628,28 @@ var Keys = Keymap{
 			key.WithHelp("enter", "select schema"),
 		),
 	},
+	Bookmarks: BookmarksKeys{
+		Up: key.NewBinding(
+			key.WithKeys("up", "k"),
+			key.WithHelp("↑/k", "up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys("down", "j"),
+			key.WithHelp("↓/j", "down"),
+		),
+		Load: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "load"),
+		),
+		Save: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("[s]", "save current"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("[d]", "delete"),
+		),
+	},
 }
 
 // RenderBindingHelp renders help text for the given key bindings
@@ -563,4 +660,13 @@ func RenderBindingHelp(bindings ...key.Binding) string {
 		pairs = append(pairs, h.Key, h.Desc)
 	}
 	return styles.RenderHelp(pairs...)
+}
+
+func RenderBindingHelpWidth(width int, bindings ...key.Binding) string {
+	var pairs []string
+	for _, b := range bindings {
+		h := b.Help()
+		pairs = append(pairs, h.Key, h.Desc)
+	}
+	return styles.RenderHelpWidth(width, pairs...)
 }

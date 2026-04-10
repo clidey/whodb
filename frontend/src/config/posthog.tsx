@@ -15,7 +15,7 @@
  */
 
 import type {PostHog} from 'posthog-js';
-import {isEEMode} from './ee-imports';
+import {featureFlags} from './features';
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
 
@@ -31,7 +31,7 @@ let cachedDistinctId: string | null = null;
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
 const apiHost = "https://us.i.posthog.com";
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
-const getBuildEdition = () => import.meta.env.VITE_BUILD_EDITION ?? 'ce';
+const getBuildEdition = () => 'ce';
 const isE2ETest = () => import.meta.env.VITE_E2E_TEST === 'true';
 
 const getStoredConsent = (): ConsentState => {
@@ -167,7 +167,7 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
     if (initPromise) {
         return initPromise;
     }
-    if (isEEMode) {
+    if (!featureFlags.sampleDatabaseTour) {
         return null;
     }
     if (isE2ETest()) {

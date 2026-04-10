@@ -77,7 +77,6 @@ WhoDB uses unified SSL mode names across all databases:
 | Redis | `disabled`, `enabled`, `insecure` |
 | Elasticsearch | `disabled`, `enabled`, `insecure` |
 
-> **Note**: EE databases (Oracle, MSSQL, etc.) have SSL mode documentation in `ee/CLAUDE.md`.
 
 ## Mode Aliasing
 
@@ -142,7 +141,7 @@ var databaseSSLModes = map[engine.DatabaseType][]SSLModeInfo{
 }
 ```
 
-**For EE databases** - Call in `ee/core/src/plugins/init.go`:
+Register in the plugin package init():
 
 ```go
 func registerEESSLModes() {
@@ -170,7 +169,7 @@ var sslModeAliases = map[engine.DatabaseType]map[string]SSLMode{
 }
 ```
 
-**For EE** - Call in init:
+Register in init():
 
 ```go
 ssl.RegisterSSLModeAliases(ee_engine.DatabaseType_NewDB, map[string]ssl.SSLMode{
@@ -370,7 +369,7 @@ SHOW SESSION STATUS LIKE 'Ssl_cipher';
 - [ ] Logging added for SSL operations
 - [ ] Backend builds: `cd core && go build .`
 - [ ] Frontend type checks: `cd frontend && ./node_modules/.bin/tsc --noEmit`
-- [ ] EE builds (if applicable): `go build -tags ee ./core`
+- [ ] Extension builds pass
 
 ## Frontend Integration
 

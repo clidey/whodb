@@ -1,2 +1,185 @@
 en_US:
   skipToContent: Skip to main content
+
+ar_AE:
+  skipToContent: انتقل إلى المحتوى الرئيسي
+
+de_DE:
+  skipToContent: Zum Hauptinhalt springen
+
+el_GR:
+  skipToContent: Μετάβαση στο κύριο περιεχόμενο
+
+en_GB:
+  skipToContent: Skip to main content
+
+es_ES:
+  skipToContent: Saltar al contenido principal
+
+fi_FI:
+  skipToContent: Siirry pääsisältöön
+
+fr_FR:
+  skipToContent: Passer au contenu principal
+
+it_IT:
+  skipToContent: Passa al contenuto principale
+
+iw_IL:
+  skipToContent: דלג לתוכן הראשי
+
+ja_JP:
+  skipToContent: メインコンテンツにスキップ
+
+ko_KR:
+  skipToContent: 주요 콘텐츠로 건너뛰기
+
+nl_NL:
+  skipToContent: Ga naar de hoofdinhoud
+
+pl_PL:
+  skipToContent: Przejdź do głównej treści
+
+pt_BR:
+  skipToContent: Pular para o conteúdo principal
+
+ro_RO:
+  skipToContent: Treci la conținutul principal
+
+ru_RU:
+  skipToContent: Перейти к основному содержанию
+
+sk_SK:
+  skipToContent: Preskočiť na hlavný obsah
+
+sv_SE:
+  skipToContent: Hoppa till huvudinnehållet
+
+zh_CN:
+  skipToContent: 跳至主要内容
+
+zh_TW:
+  skipToContent: 跳至主要內容
+
+bg_BG:
+  skipToContent: Преминете към основното съдържание
+
+bn_BD:
+  skipToContent: প্রধান বিষয়বস্তু এড়িয়ে যান
+
+ca_ES:
+  skipToContent: Skip to main content
+
+cs_CZ:
+  skipToContent: Přejít na hlavní obsah
+
+da_DK:
+  skipToContent: Spring til hovedindhold
+
+fa_IR:
+  skipToContent: به محتوای اصلی بروید
+
+hi_IN:
+  skipToContent: मुख्य सामग्री पर जाएँ
+
+hr_HR:
+  skipToContent: Prijeđi na glavni sadržaj
+
+hu_HU:
+  skipToContent: Ugrás a fő tartalomhoz
+
+id_ID:
+  skipToContent: Lompat ke konten utama
+
+ms_MY:
+  skipToContent: Langkau ke kandungan utama
+
+nb_NO:
+  skipToContent: Gå til hovedinnhold
+
+sw_KE:
+  skipToContent: Ruka hadi kwa yaliyomo kuu
+
+ta_IN:
+  skipToContent: முக்கிய உள்ளடக்கத்திற்கு செல்க
+
+th_TH:
+  skipToContent: ข้ามไปที่เนื้อหาหลัก
+
+tr_TR:
+  skipToContent: Ana içeriğe atla
+
+uk_UA:
+  skipToContent: Перейти до основного вмісту
+
+ur_PK:
+  skipToContent: مرکزی مواد پر جائیں۔
+
+vi_VN:
+  skipToContent: Chuyển đến nội dung chính
+
+af_ZA:
+  skipToContent: "Slaan oor na hoofinhoud"
+
+am_ET:
+  skipToContent: "ወደ ዋናው ይዘት ዝለል"
+
+az_AZ:
+  skipToContent: "Əsas məzmuna keçin"
+
+et_EE:
+  skipToContent: "Mine põhisisu juurde"
+
+gu_IN:
+  skipToContent: "મુખ્ય સામગ્રી પર જાઓ"
+
+ha_NG:
+  skipToContent: "Tsallake zuwa babban abun ciki"
+
+ka_GE:
+  skipToContent: "გადადით მთავარ შინაარსზე"
+
+km_KH:
+  skipToContent: "រំលងទៅមាតិកាសំខាន់"
+
+kn_IN:
+  skipToContent: "ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ"
+
+lt_LT:
+  skipToContent: "Pereiti prie pagrindinio turinio"
+
+lv_LV:
+  skipToContent: "Pāriet uz galveno saturu"
+
+ml_IN:
+  skipToContent: "പ്രധാന ഉള്ളടക്കത്തിലേക്ക് പോകുക"
+
+mr_IN:
+  skipToContent: "मुख्य सामग्रीवर जा"
+
+ne_NP:
+  skipToContent: "मुख्य सामग्रीमा जानुहोस्"
+
+pa_IN:
+  skipToContent: "ਮੁੱਖ ਸਮੱਗਰੀ 'ਤੇ ਜਾਓ"
+
+si_LK:
+  skipToContent: "ප්‍රධාන අන්තර්ගතය වෙත යන්න"
+
+sl_SI:
+  skipToContent: "Preskoči na glavno vsebino"
+
+sr_RS:
+  skipToContent: "Пређи на главни садржај"
+
+te_IN:
+  skipToContent: "ప్రధాన కంటెంట్‌కి దాటవేయండి"
+
+tl_PH:
+  skipToContent: "Lumaktaw sa pangunahing nilalaman"
+
+uz_UZ:
+  skipToContent: "Asosiy tarkibga o'tish"
+
+yo_NG:
+  skipToContent: "Rekọja si akoonu akọkọ"

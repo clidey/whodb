@@ -1,8 +1,7 @@
 {
   "all": true,
   "include": [
-    "src/**/*.{js,jsx,ts,tsx}",
-    "../ee/frontend/src/**/*.{js,jsx,ts,tsx}"
+    "src/**/*.{js,jsx,ts,tsx}"
   ],
   "exclude": [
     "**/*.d.ts",

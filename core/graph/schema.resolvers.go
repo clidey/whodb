@@ -1075,7 +1075,7 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 		plugin := src.MainEngine.Choose(engine.DatabaseType(config.Credentials.Type))
 
 		if plugin != nil {
-			// Create a context with 5 second timeout (Oracle connections can take 3-8s)
+			// Create a context with 5 second timeout
 			healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
 
@@ -1660,7 +1660,7 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 	// Convert engine.TypeDefinition to model.TypeDefinition
 	typeDefinitions := make([]*model.TypeDefinition, 0, len(metadata.TypeDefinitions))
 	for _, td := range metadata.TypeDefinitions {
-		typeDefinitions = append(typeDefinitions, &model.TypeDefinition{
+		def := &model.TypeDefinition{
 			ID:               td.ID,
 			Label:            td.Label,
 			HasLength:        td.HasLength,
@@ -1668,7 +1668,14 @@ func (r *queryResolver) DatabaseMetadata(ctx context.Context) (*model.DatabaseMe
 			DefaultLength:    td.DefaultLength,
 			DefaultPrecision: td.DefaultPrecision,
 			Category:         model.TypeCategory(td.Category),
-		})
+		}
+		if td.InsertFunc != "" {
+			def.InsertFunc = &td.InsertFunc
+		}
+		if td.TableModel != "" {
+			def.TableModel = &td.TableModel
+		}
+		typeDefinitions = append(typeDefinitions, def)
 	}
 
 	// Convert map[string]string to []*model.Record

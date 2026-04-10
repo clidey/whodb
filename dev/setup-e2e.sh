@@ -148,12 +148,12 @@ else
         fi
         echo "🔧 Building EE test binary with coverage..."
         cd "$PROJECT_ROOT/core"
-        GOWORK="$PROJECT_ROOT/ee/go.work" go test -tags ee -coverpkg=./...,../ee/... -c -o server.test
+        GOWORK="$PROJECT_ROOT/ee/go.work" go test -coverpkg=./...,../ee/... -c -o server.test ./cmd/whodb
         echo "✅ EE test binary built successfully"
     else
         echo "🔧 Building CE test binary with coverage..."
         cd "$PROJECT_ROOT/core"
-        go test -coverpkg=./... -c -o server.test
+        go test -coverpkg=./... -c -o server.test ./cmd/whodb
         echo "✅ CE test binary built successfully"
     fi
 fi
@@ -401,6 +401,11 @@ if [ "$EDITION" = "ee" ]; then
     if [ -f "$EE_SETUP_SCRIPT" ]; then
         echo "🔧 Running EE-specific setup..."
         bash "$EE_SETUP_SCRIPT"
+        # If the bridge is running, set the URL so the test server can find it
+        if nc -z localhost 8089 2>/dev/null; then
+            export WHODB_BRIDGE_URL="http://localhost:8089"
+            echo "   JDBC Bridge detected at $WHODB_BRIDGE_URL"
+        fi
     else
         echo "⚠️ EE setup script not found, continuing with CE only"
     fi
@@ -431,6 +436,7 @@ mkdir -p "$PROJECT_ROOT/frontend/e2e/logs"
 ENVIRONMENT=dev \
     WHODB_LOG_LEVEL="${WHODB_LOG_LEVEL:-error}" \
     WHODB_DISABLE_MOCK_DATA_GENERATION='DEPARTMENTS' \
+    WHODB_BRIDGE_URL="${WHODB_BRIDGE_URL:-}" \
     stdbuf -oL -eL ./server.test -test.run=^TestMain$ -test.coverprofile=coverage.out \
     > "$PROJECT_ROOT/frontend/e2e/logs/backend.log" 2>&1 &
 TEST_SERVER_PID=$!

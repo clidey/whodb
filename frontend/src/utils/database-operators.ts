@@ -20,7 +20,7 @@ import { reduxStore } from '../store';
 /**
  * Get valid operators for a database type from the backend-driven Redux store.
  *
- * @param databaseType The database type (can be CE or EE type)
+ * @param databaseType The database type (can be any registered type)
  * @returns Array of valid operators for the database
  */
 export function getDatabaseOperators(databaseType: DatabaseType | string): string[] {

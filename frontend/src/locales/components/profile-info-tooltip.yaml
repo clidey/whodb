@@ -2,3 +2,308 @@ en_US:
   port: "Port:"
   lastLoggedIn: "Last Logged In:"
   profileInfo: Profile information for {profileId}
+
+ar_AE:
+  port: "ميناء:"
+  lastLoggedIn: "آخر تسجيل دخول:"
+  profileInfo: "معلومات الملف الشخصي لـ {profileId}"
+
+de_DE:
+  port: "Hafen:"
+  lastLoggedIn: "Zuletzt angemeldet:"
+  profileInfo: "Profilinformationen für {profileId}"
+
+el_GR:
+  port: "Λιμάνι:"
+  lastLoggedIn: "Τελευταία σύνδεση:"
+  profileInfo: "Πληροφορίες προφίλ για {profileId}"
+
+en_GB:
+  port: "Port:"
+  lastLoggedIn: "Last Logged In:"
+  profileInfo: "Profile information for {profileId}"
+
+es_ES:
+  port: "Puerto:"
+  lastLoggedIn: "Último inicio de sesión:"
+  profileInfo: "Información de perfil para {profileId}"
+
+fi_FI:
+  port: "Portti:"
+  lastLoggedIn: "Viimeksi kirjautunut:"
+  profileInfo: "Profiilitiedot: {profileId}"
+
+fr_FR:
+  port: "Port:"
+  lastLoggedIn: "Dernière connexion :"
+  profileInfo: "Informations de profil pour {profileId}"
+
+it_IT:
+  port: "Porta:"
+  lastLoggedIn: "Ultimo accesso:"
+  profileInfo: "Informazioni sul profilo per {profileId}"
+
+iw_IL:
+  port: "נָמָל:"
+  lastLoggedIn: "מחובר לאחרונה:"
+  profileInfo: "פרטי פרופיל עבור {profileId}"
+
+ja_JP:
+  port: "ポート："
+  lastLoggedIn: "最終ログイン日:"
+  profileInfo: "{profileId} のプロフィール情報"
+
+ko_KR:
+  port: "포트:"
+  lastLoggedIn: "마지막 로그인:"
+  profileInfo: "{profileId}에 대한 프로필 정보"
+
+nl_NL:
+  port: "Haven:"
+  lastLoggedIn: "Laatst ingelogd:"
+  profileInfo: "Profielinformatie voor {profileId}"
+
+pl_PL:
+  port: "Port:"
+  lastLoggedIn: "Ostatnio zalogowany:"
+  profileInfo: "Informacje o profilu dla {profileId}"
+
+pt_BR:
+  port: "Porta:"
+  lastLoggedIn: "Último login:"
+  profileInfo: "Informações de perfil para {profileId}"
+
+ro_RO:
+  port: "Port:"
+  lastLoggedIn: "Ultima conectare:"
+  profileInfo: "Informații de profil pentru {profileId}"
+
+ru_RU:
+  port: "Порт:"
+  lastLoggedIn: "Последний вход в систему:"
+  profileInfo: "Информация профиля для {profileId}"
+
+sk_SK:
+  port: "Port:"
+  lastLoggedIn: "Naposledy prihlásený:"
+  profileInfo: "Informácie o profile pre {profileId}"
+
+sv_SE:
+  port: "Hamn:"
+  lastLoggedIn: "Senast inloggad:"
+  profileInfo: "Profilinformation för {profileId}"
+
+zh_CN:
+  port: "港口："
+  lastLoggedIn: "上次登录："
+  profileInfo: "{profileId} 的个人资料信息"
+
+zh_TW:
+  port: "港口："
+  lastLoggedIn: "上次登入："
+  profileInfo: "{profileId} 的個人資料訊息"
+
+bg_BG:
+  port: "Порт:"
+  lastLoggedIn: "Последно влизане:"
+  profileInfo: "Информация за потребителския профил за {profileId}"
+
+bn_BD:
+  port: "বন্দর:"
+  lastLoggedIn: "সর্বশেষ লগ ইন:"
+  profileInfo: "{profileId} এর প্রোফাইল তথ্য"
+
+ca_ES:
+  port: "Port:"
+  lastLoggedIn: "Last Logged In:"
+  profileInfo: "Informació del perfil de {profileId}"
+
+cs_CZ:
+  port: "Přístav:"
+  lastLoggedIn: "Naposledy přihlášen:"
+  profileInfo: "Informace o profilu pro {profileId}"
+
+da_DK:
+  port: "Havn:"
+  lastLoggedIn: "Sidst logget ind:"
+  profileInfo: "Profiloplysninger for {profileId}"
+
+fa_IR:
+  port: "بندر:"
+  lastLoggedIn: "آخرین ورود:"
+  profileInfo: "اطلاعات نمایه {profileId}"
+
+hi_IN:
+  port: "पत्तन:"
+  lastLoggedIn: "अंतिम बार लॉग इन किया गया:"
+  profileInfo: "{profileId} के लिए प्रोफ़ाइल जानकारी"
+
+hr_HR:
+  port: "Luka:"
+  lastLoggedIn: "Zadnja prijava:"
+  profileInfo: "Informacije o profilu za {profileId}"
+
+hu_HU:
+  port: "Kikötő:"
+  lastLoggedIn: "Utoljára bejelentkezve:"
+  profileInfo: "{profileId} profilinformációi"
+
+id_ID:
+  port: "Pelabuhan:"
+  lastLoggedIn: "Terakhir Masuk:"
+  profileInfo: "Informasi profil untuk {profileId}"
+
+ms_MY:
+  port: "Pelabuhan:"
+  lastLoggedIn: "Log Masuk Terakhir:"
+  profileInfo: "Maklumat profil untuk {profileId}"
+
+nb_NO:
+  port: "Havn:"
+  lastLoggedIn: "Sist pålogget:"
+  profileInfo: "Profilinformasjon for {profileId}"
+
+sw_KE:
+  port: "Bandari:"
+  lastLoggedIn: "Mara ya Mwisho Kuingia:"
+  profileInfo: "Maelezo ya wasifu wa {profileId}"
+
+ta_IN:
+  port: "துறைமுகம்:"
+  lastLoggedIn: "கடைசியாக உள்நுழைந்தது:"
+  profileInfo: "{profileId}க்கான சுயவிவரத் தகவல்"
+
+th_TH:
+  port: "ท่าเรือ:"
+  lastLoggedIn: "เข้าสู่ระบบครั้งล่าสุด:"
+  profileInfo: "ข้อมูลโปรไฟล์สำหรับ {profileId}"
+
+tr_TR:
+  port: "Liman:"
+  lastLoggedIn: "Son Giriş:"
+  profileInfo: "{profileId} için profil bilgileri"
+
+uk_UA:
+  port: "Порт:"
+  lastLoggedIn: "Останній вхід:"
+  profileInfo: "Інформація профілю для {profileId}"
+
+ur_PK:
+  port: "پورٹ:"
+  lastLoggedIn: "آخری بار لاگ ان ہوا:"
+  profileInfo: "پروفائل کی معلومات {profileId}"
+
+vi_VN:
+  port: "Cảng:"
+  lastLoggedIn: "Đăng nhập lần cuối:"
+  profileInfo: "Thông tin hồ sơ cho {profileId}"
+
+af_ZA:
+  port: "Poort:"
+  lastLoggedIn: "Laas aangemeld:"
+  profileInfo: "Profielinligting vir {profileId}"
+
+am_ET:
+  port: "ወደብ፡"
+  lastLoggedIn: "መጨረሻ የገባበት፡"
+  profileInfo: "የመገለጫ መረጃ ለ{profileId}"
+
+az_AZ:
+  port: "Liman:"
+  lastLoggedIn: "Son Giriş:"
+  profileInfo: "{profileId} üçün profil məlumatı"
+
+et_EE:
+  port: "Port:"
+  lastLoggedIn: "Viimati sisse logitud:"
+  profileInfo: "{profileId} profiiliteave"
+
+gu_IN:
+  port: "પોર્ટ:"
+  lastLoggedIn: "છેલ્લે લૉગ ઇન થયું:"
+  profileInfo: "{profileId} માટે પ્રોફાઇલ માહિતી"
+
+ha_NG:
+  port: "Port:"
+  lastLoggedIn: "Shigar Ƙarshe:"
+  profileInfo: "Bayanan martaba don {profileId}"
+
+ka_GE:
+  port: "პორტი:"
+  lastLoggedIn: "ბოლოს შესული:"
+  profileInfo: "პროფილის ინფორმაცია {profileId}-ისთვის"
+
+km_KH:
+  port: "ច្រក៖"
+  lastLoggedIn: "ចូលចុងក្រោយ៖"
+  profileInfo: "ព័ត៌មានប្រវត្តិរូបសម្រាប់ {profileId}"
+
+kn_IN:
+  port: "ಬಂದರು:"
+  lastLoggedIn: "ಕೊನೆಯ ಲಾಗ್ ಇನ್:"
+  profileInfo: "{profileId} ಗಾಗಿ ಪ್ರೊಫೈಲ್ ಮಾಹಿತಿ"
+
+lt_LT:
+  port: "Uostas:"
+  lastLoggedIn: "Paskutinį kartą prisijungęs:"
+  profileInfo: "{profileId} profilio informacija"
+
+lv_LV:
+  port: "Ports:"
+  lastLoggedIn: "Pēdējā pieteikšanās:"
+  profileInfo: "Profila informācija {profileId}"
+
+ml_IN:
+  port: "തുറമുഖം:"
+  lastLoggedIn: "അവസാനം ലോഗിൻ ചെയ്തത്:"
+  profileInfo: "{profileId} എന്നതിനായുള്ള പ്രൊഫൈൽ വിവരങ്ങൾ"
+
+mr_IN:
+  port: "बंदर:"
+  lastLoggedIn: "शेवटचे लॉग इन:"
+  profileInfo: "{profileId} साठी प्रोफाइल माहिती"
+
+ne_NP:
+  port: "पोर्ट:"
+  lastLoggedIn: "पछिल्लो पटक लग इन:"
+  profileInfo: "{profileId} को लागि प्रोफाइल जानकारी"
+
+pa_IN:
+  port: "ਪੋਰਟ:"
+  lastLoggedIn: "ਆਖਰੀ ਵਾਰ ਲੌਗ ਇਨ ਕੀਤਾ:"
+  profileInfo: "{profileId} ਲਈ ਪ੍ਰੋਫਾਈਲ ਜਾਣਕਾਰੀ"
+
+si_LK:
+  port: "වරාය:"
+  lastLoggedIn: "අවසන් වරට පුරනය වූයේ:"
+  profileInfo: "{profileId} සඳහා පැතිකඩ තොරතුරු"
+
+sl_SI:
+  port: "vrata:"
+  lastLoggedIn: "Zadnja prijava:"
+  profileInfo: "Informacije o profilu za {profileId}"
+
+sr_RS:
+  port: "Порт:"
+  lastLoggedIn: "Последњи пут пријављен:"
+  profileInfo: "Информације о профилу за {profileId}"
+
+te_IN:
+  port: "పోర్ట్:"
+  lastLoggedIn: "చివరిగా లాగిన్ చేసినది:"
+  profileInfo: "{profileId} కోసం ప్రొఫైల్ సమాచారం"
+
+tl_PH:
+  port: "Port:"
+  lastLoggedIn: "Huling Naka-log in:"
+  profileInfo: "Impormasyon ng profile para sa {profileId}"
+
+uz_UZ:
+  port: "Port:"
+  lastLoggedIn: "Oxirgi marta kirgan:"
+  profileInfo: "{profileId} uchun profil maʼlumotlari"
+
+yo_NG:
+  port: "Ibudo:"
+  lastLoggedIn: "Wọle kẹhin:"
+  profileInfo: "Alaye profaili fun {profileId}"

@@ -21,16 +21,6 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN pnpm install
 COPY ./frontend/ ./
 
-# Create empty EE modules for Vite to resolve during CE build
-RUN mkdir -p ee/frontend/src/components/theme ee/frontend/src/components/charts ee/frontend/src/pages/raw-execute ee/frontend/src && \
-    echo "export default {}; export const LineChart = () => null;" > ee/frontend/src/components/charts/line-chart.tsx && \
-    echo "export default {}; export const PieChart = () => null;" > ee/frontend/src/components/charts/pie-chart.tsx && \
-    echo "export default {}; export const AnalyzeGraph = () => null;" > ee/frontend/src/pages/raw-execute/analyze-view.tsx && \
-    echo "export default {};" > ee/frontend/src/index.ts && \
-    echo "export default {}; export const eeDatabaseTypes = []; export const eeFeatures = {};" > ee/frontend/src/config.ts && \
-    echo "export default {};" > ee/frontend/src/components/export.ts && \
-    echo "export default {}; export const EEIcons = { Logos: {} };" > ee/frontend/src/icons.tsx
-
 ARG VERSION=dev
 ENV VITE_APP_VERSION=${VERSION}
 RUN pnpm run build
@@ -44,37 +34,47 @@ RUN apk add --no-cache \
 	musl-dev \
 	git \
 	ca-certificates \
-	curl
+	curl \
+	binutils
 
-# DuckDB's pre-built static library references glibc-specific symbols unavailable in musl.
-# Build a static compat library so the linker deduplicates across CGO packages.
-RUN printf '#include <stddef.h>\nint __res_init(void) { return 0; }\nint backtrace(void **b, int s) { return 0; }\nchar **backtrace_symbols(void *const *b, int s) { return NULL; }\nvoid backtrace_symbols_fd(void *const *b, int s, int fd) {}\nint malloc_trim(size_t pad) { return 0; }\n' \
-    | gcc -c -x c - -o /tmp/duckdb_musl_compat.o \
-    && ar rcs /usr/lib/libduckdb_musl_compat.a /tmp/duckdb_musl_compat.o
+# Download official musl-compiled DuckDB shared library.
+# Native musl build — no glibc stubs or compatibility hacks needed.
+# Extract DuckDB version from go.mod: duckdb-go/v2 v2.XYYYZ.0 → vX.YY.Z
+COPY ./core/go.mod /tmp/go.mod
+ARG TARGETARCH
+RUN ENCODED=$(grep 'github.com/duckdb/duckdb-go/v2 ' /tmp/go.mod | awk '{print $2}' | sed 's/v2\.//;s/\.0$//') && \
+    MAJOR=$((ENCODED / 10000)) && MINOR=$(( (ENCODED % 10000) / 100 )) && PATCH=$((ENCODED % 100)) && \
+    DUCKDB_VERSION="v${MAJOR}.${MINOR}.${PATCH}" && \
+    echo "DuckDB version: $DUCKDB_VERSION" && \
+    if [ "$TARGETARCH" = "amd64" ]; then DUCKDB_ARCH="linux-amd64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then DUCKDB_ARCH="linux-arm64"; \
+    else echo "Unsupported architecture: $TARGETARCH" && exit 1; fi && \
+    mkdir -p /usr/local/include && \
+    curl -L -o /tmp/libduckdb-musl.zip \
+        "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-${DUCKDB_ARCH}-musl.zip" && \
+    unzip -j /tmp/libduckdb-musl.zip libduckdb.so -d /usr/local/lib/ && \
+    unzip -j /tmp/libduckdb-musl.zip duckdb.h -d /usr/local/include/ && \
+    strip --strip-debug /usr/local/lib/libduckdb.so && \
+    rm /tmp/libduckdb-musl.zip
 
 WORKDIR /app
 
-# Copy ee-stub for CE builds (provides stub packages for EE imports)
-COPY ./ee-stub/ ./ee-stub/
-
-# Copy core module files and fix replace path for Docker context
+# Copy core module files
 COPY ./core/go.mod ./core/go.sum ./
-RUN sed -i 's|../ee-stub|./ee-stub|g' go.mod
 RUN go mod download
 COPY ./core/ ./
 
+COPY --from=build-stage /app/build/ ./cmd/whodb/build/
 
-COPY --from=build-stage /app/build/ ./build/
-
-# Build backend with version and environment
+# Build CE backend from the new entry point
 ARG VERSION
 ARG TARGETARCH
 ARG PLATFORM
 RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
-	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
-	CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags prod -trimpath \
+	CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -L/usr/local/lib -lduckdb" \
+	CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -tags "prod duckdb_use_lib" -trimpath \
 	-ldflags="-s -w -X github.com/clidey/whodb/core/src/env.ApplicationVersion=${VERSION} -X github.com/clidey/whodb/core/src/env.ApplicationEnvironment=${PLATFORM}-${TARGETARCH}" \
-	-o /core
+	-o /core ./cmd/whodb
 
 # Pre-download BAML native library for the target architecture (musl for Alpine)
 # Extract BAML version from go.mod to stay in sync
@@ -96,6 +96,7 @@ FROM alpine:3.23
 RUN apk add --no-cache ca-certificates libgcc libstdc++
 WORKDIR /app
 COPY --from=backend-stage /core /core
+COPY --from=backend-stage /usr/local/lib/libduckdb.so /usr/local/lib/libduckdb.so
 # Copy BAML musl library and set path via env var
 # (BAML Go client's isMusl() is not implemented, so we must use BAML_LIBRARY_PATH)
 COPY --from=backend-stage /baml-lib/libbaml_cffi.so /usr/local/lib/libbaml_cffi.so

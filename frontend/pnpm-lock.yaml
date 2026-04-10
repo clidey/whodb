@@ -74,9 +74,6 @@ importers:
       html-to-image:
         specifier: 1.11.13
         version: 1.11.13
-      js-yaml:
-        specifier: 4.1.1
-        version: 4.1.1
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -156,6 +153,9 @@ importers:
       baseline-browser-mapping:
         specifier: 2.10.0
         version: 2.10.0
+      js-yaml:
+        specifier: 4.1.1
+        version: 4.1.1
       nyc:
         specifier: 17.1.0
         version: 17.1.0

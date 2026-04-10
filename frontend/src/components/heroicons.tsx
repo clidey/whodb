@@ -15,7 +15,7 @@
  */
 
 // Centralized heroicons imports from @heroicons/react
-// This allows for easy override in EE version
+// This allows for easy override by extensions
 
 import {
   AdjustmentsHorizontalIcon as AdjustmentsHorizontalIconCE,
@@ -92,81 +92,83 @@ import {
   Squares2X2Icon as Squares2X2IconCE,
 } from '@heroicons/react/24/outline';
 
-// EE may provide overrides for selected icons. In CE builds this should resolve
-// to a stub that exports a default empty object.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import EEOverridesDefault from '@ee/heroicons';
-const EEOverrides: Record<string, any> = (EEOverridesDefault as any) || {};
+// Extensions may provide overrides for selected icons via registerHeroiconOverrides().
+let iconOverrides: Record<string, any> = {};
 
-export const AdjustmentsHorizontalIcon = EEOverrides.AdjustmentsHorizontalIcon ?? AdjustmentsHorizontalIconCE;
-export const ChevronUpDownIcon = EEOverrides.ChevronUpDownIcon ?? ChevronUpDownIconCE;
-export const ArrowDownCircleIcon = EEOverrides.ArrowDownCircleIcon ?? ArrowDownCircleIconCE;
-export const ArrowDownTrayIcon = EEOverrides.ArrowDownTrayIcon ?? ArrowDownTrayIconCE;
-export const ArrowLeftStartOnRectangleIcon = EEOverrides.ArrowLeftStartOnRectangleIcon ?? ArrowLeftStartOnRectangleIconCE;
-export const ArrowPathIcon = EEOverrides.ArrowPathIcon ?? ArrowPathIconCE;
-export const ArrowPathRoundedSquareIcon = EEOverrides.ArrowPathRoundedSquareIcon ?? ArrowPathRoundedSquareIconCE;
-export const ArrowTopRightOnSquareIcon = EEOverrides.ArrowTopRightOnSquareIcon ?? ArrowTopRightOnSquareIconCE;
-export const ArrowUpCircleIcon = EEOverrides.ArrowUpCircleIcon ?? ArrowUpCircleIconCE;
-export const BanknotesIcon = EEOverrides.BanknotesIcon ?? BanknotesIconCE;
-export const BellAlertIcon = EEOverrides.BellAlertIcon ?? BellAlertIconCE;
-export const BookOpenIcon = EEOverrides.BookOpenIcon ?? BookOpenIconCE;
-export const BuildingStorefrontIcon = EEOverrides.BuildingStorefrontIcon ?? BuildingStorefrontIconCE;
-export const CalculatorIcon = EEOverrides.CalculatorIcon ?? CalculatorIconCE;
-export const CalendarIcon = EEOverrides.CalendarIcon ?? CalendarIconCE;
-export const ChartBarIcon = EEOverrides.ChartBarIcon ?? ChartBarIconCE;
-export const ChatBubbleLeftRightIcon = EEOverrides.ChatBubbleLeftRightIcon ?? ChatBubbleLeftRightIconCE;
-export const CheckCircleIcon = EEOverrides.CheckCircleIcon ?? CheckCircleIconCE;
-export const ChevronDownIcon = EEOverrides.ChevronDownIcon ?? ChevronDownIconCE;
-export const ChevronRightIcon = EEOverrides.ChevronRightIcon ?? ChevronRightIconCE;
-export const ChevronUpIcon = EEOverrides.ChevronUpIcon ?? ChevronUpIconCE;
-export const CircleStackIcon = EEOverrides.CircleStackIcon ?? CircleStackIconCE;
-export const ClipboardDocumentIcon = EEOverrides.ClipboardDocumentIcon ?? ClipboardDocumentIconCE;
-export const CloudIcon = EEOverrides.CloudIcon ?? CloudIconCE;
-export const ClipboardIcon = EEOverrides.ClipboardIcon ?? ClipboardIconCE;
-export const ClockIcon = EEOverrides.ClockIcon ?? ClockIconCE;
-export const CogIcon = EEOverrides.CogIcon ?? CogIconCE;
-export const CodeBracketIcon = EEOverrides.CodeBracketIcon ?? CodeBracketIconCE;
-export const CommandLineIcon = EEOverrides.CommandLineIcon ?? CommandLineIconCE;
-export const CursorArrowRaysIcon = EEOverrides.CursorArrowRaysIcon ?? CursorArrowRaysIconCE;
-export const DocumentDuplicateIcon = EEOverrides.DocumentDuplicateIcon ?? DocumentDuplicateIconCE;
-export const DocumentIcon = EEOverrides.DocumentIcon ?? DocumentIconCE;
-export const DocumentTextIcon = EEOverrides.DocumentTextIcon ?? DocumentTextIconCE;
-export const EllipsisHorizontalIcon = EEOverrides.EllipsisHorizontalIcon ?? EllipsisHorizontalIconCE;
-export const EllipsisVerticalIcon = EEOverrides.EllipsisVerticalIcon ?? EllipsisVerticalIconCE;
-export const EnvelopeIcon = EEOverrides.EnvelopeIcon ?? EnvelopeIconCE;
-export const ExclamationCircleIcon = EEOverrides.ExclamationCircleIcon ?? ExclamationCircleIconCE;
-export const EyeIcon = EEOverrides.EyeIcon ?? EyeIconCE;
-export const EyeSlashIcon = EEOverrides.EyeSlashIcon ?? EyeSlashIconCE;
-export const FolderIcon = EEOverrides.FolderIcon ?? FolderIconCE;
-export const GlobeAltIcon = EEOverrides.GlobeAltIcon ?? GlobeAltIconCE;
-export const HashtagIcon = EEOverrides.HashtagIcon ?? HashtagIconCE;
-export const HomeIcon = EEOverrides.HomeIcon ?? HomeIconCE;
-export const InformationCircleIcon = EEOverrides.InformationCircleIcon ?? InformationCircleIconCE;
-export const KeyIcon = EEOverrides.KeyIcon ?? KeyIconCE;
-export const LinkIcon = EEOverrides.LinkIcon ?? LinkIconCE;
-export const LockClosedIcon = EEOverrides.LockClosedIcon ?? LockClosedIconCE;
-export const ListBulletIcon = EEOverrides.ListBulletIcon ?? ListBulletIconCE;
-export const MagnifyingGlassIcon = EEOverrides.MagnifyingGlassIcon ?? MagnifyingGlassIconCE;
-export const PencilIcon = EEOverrides.PencilIcon ?? PencilIconCE;
-export const PencilSquareIcon = EEOverrides.PencilSquareIcon ?? PencilSquareIconCE;
-export const PlayIcon = EEOverrides.PlayIcon ?? PlayIconCE;
-export const PlusCircleIcon = EEOverrides.PlusCircleIcon ?? PlusCircleIconCE;
-export const PlusIcon = EEOverrides.PlusIcon ?? PlusIconCE;
-export const PresentationChartBarIcon = EEOverrides.PresentationChartBarIcon ?? PresentationChartBarIconCE;
-export const PresentationChartLineIcon = EEOverrides.PresentationChartLineIcon ?? PresentationChartLineIconCE;
-export const QuestionMarkCircleIcon = EEOverrides.QuestionMarkCircleIcon ?? QuestionMarkCircleIconCE;
-export const RectangleGroupIcon = EEOverrides.RectangleGroupIcon ?? RectangleGroupIconCE;
-export const ShareIcon = EEOverrides.ShareIcon ?? ShareIconCE;
-export const ShieldCheckIcon = EEOverrides.ShieldCheckIcon ?? ShieldCheckIconCE;
-export const ShoppingBagIcon = EEOverrides.ShoppingBagIcon ?? ShoppingBagIconCE;
-export const SparklesIcon = EEOverrides.SparklesIcon ?? SparklesIconCE;
-export const StarIcon = EEOverrides.StarIcon ?? StarIconCE;
-export const TableCellsIcon = EEOverrides.TableCellsIcon ?? TableCellsIconCE;
-export const TrashIcon = EEOverrides.TrashIcon ?? TrashIconCE;
-export const UserGroupIcon = EEOverrides.UserGroupIcon ?? UserGroupIconCE;
-export const UsersIcon = EEOverrides.UsersIcon ?? UsersIconCE;
-export const XCircleIcon = EEOverrides.XCircleIcon ?? XCircleIconCE;
-export const XMarkIcon = EEOverrides.XMarkIcon ?? XMarkIconCE;
-export const AdjustmentsVerticalIcon = EEOverrides.AdjustmentsVerticalIcon ?? AdjustmentsVerticalIconCE;
-export const Bars3Icon = EEOverrides.Bars3Icon ?? Bars3IconCE;
-export const Squares2X2Icon = EEOverrides.Squares2X2Icon ?? Squares2X2IconCE;
+/** Register heroicon overrides. */
+export function registerHeroiconOverrides(overrides: Record<string, any>) {
+    iconOverrides = overrides;
+}
+
+export const AdjustmentsHorizontalIcon = iconOverrides.AdjustmentsHorizontalIcon ?? AdjustmentsHorizontalIconCE;
+export const ChevronUpDownIcon = iconOverrides.ChevronUpDownIcon ?? ChevronUpDownIconCE;
+export const ArrowDownCircleIcon = iconOverrides.ArrowDownCircleIcon ?? ArrowDownCircleIconCE;
+export const ArrowDownTrayIcon = iconOverrides.ArrowDownTrayIcon ?? ArrowDownTrayIconCE;
+export const ArrowLeftStartOnRectangleIcon = iconOverrides.ArrowLeftStartOnRectangleIcon ?? ArrowLeftStartOnRectangleIconCE;
+export const ArrowPathIcon = iconOverrides.ArrowPathIcon ?? ArrowPathIconCE;
+export const ArrowPathRoundedSquareIcon = iconOverrides.ArrowPathRoundedSquareIcon ?? ArrowPathRoundedSquareIconCE;
+export const ArrowTopRightOnSquareIcon = iconOverrides.ArrowTopRightOnSquareIcon ?? ArrowTopRightOnSquareIconCE;
+export const ArrowUpCircleIcon = iconOverrides.ArrowUpCircleIcon ?? ArrowUpCircleIconCE;
+export const BanknotesIcon = iconOverrides.BanknotesIcon ?? BanknotesIconCE;
+export const BellAlertIcon = iconOverrides.BellAlertIcon ?? BellAlertIconCE;
+export const BookOpenIcon = iconOverrides.BookOpenIcon ?? BookOpenIconCE;
+export const BuildingStorefrontIcon = iconOverrides.BuildingStorefrontIcon ?? BuildingStorefrontIconCE;
+export const CalculatorIcon = iconOverrides.CalculatorIcon ?? CalculatorIconCE;
+export const CalendarIcon = iconOverrides.CalendarIcon ?? CalendarIconCE;
+export const ChartBarIcon = iconOverrides.ChartBarIcon ?? ChartBarIconCE;
+export const ChatBubbleLeftRightIcon = iconOverrides.ChatBubbleLeftRightIcon ?? ChatBubbleLeftRightIconCE;
+export const CheckCircleIcon = iconOverrides.CheckCircleIcon ?? CheckCircleIconCE;
+export const ChevronDownIcon = iconOverrides.ChevronDownIcon ?? ChevronDownIconCE;
+export const ChevronRightIcon = iconOverrides.ChevronRightIcon ?? ChevronRightIconCE;
+export const ChevronUpIcon = iconOverrides.ChevronUpIcon ?? ChevronUpIconCE;
+export const CircleStackIcon = iconOverrides.CircleStackIcon ?? CircleStackIconCE;
+export const ClipboardDocumentIcon = iconOverrides.ClipboardDocumentIcon ?? ClipboardDocumentIconCE;
+export const CloudIcon = iconOverrides.CloudIcon ?? CloudIconCE;
+export const ClipboardIcon = iconOverrides.ClipboardIcon ?? ClipboardIconCE;
+export const ClockIcon = iconOverrides.ClockIcon ?? ClockIconCE;
+export const CogIcon = iconOverrides.CogIcon ?? CogIconCE;
+export const CodeBracketIcon = iconOverrides.CodeBracketIcon ?? CodeBracketIconCE;
+export const CommandLineIcon = iconOverrides.CommandLineIcon ?? CommandLineIconCE;
+export const CursorArrowRaysIcon = iconOverrides.CursorArrowRaysIcon ?? CursorArrowRaysIconCE;
+export const DocumentDuplicateIcon = iconOverrides.DocumentDuplicateIcon ?? DocumentDuplicateIconCE;
+export const DocumentIcon = iconOverrides.DocumentIcon ?? DocumentIconCE;
+export const DocumentTextIcon = iconOverrides.DocumentTextIcon ?? DocumentTextIconCE;
+export const EllipsisHorizontalIcon = iconOverrides.EllipsisHorizontalIcon ?? EllipsisHorizontalIconCE;
+export const EllipsisVerticalIcon = iconOverrides.EllipsisVerticalIcon ?? EllipsisVerticalIconCE;
+export const EnvelopeIcon = iconOverrides.EnvelopeIcon ?? EnvelopeIconCE;
+export const ExclamationCircleIcon = iconOverrides.ExclamationCircleIcon ?? ExclamationCircleIconCE;
+export const EyeIcon = iconOverrides.EyeIcon ?? EyeIconCE;
+export const EyeSlashIcon = iconOverrides.EyeSlashIcon ?? EyeSlashIconCE;
+export const FolderIcon = iconOverrides.FolderIcon ?? FolderIconCE;
+export const GlobeAltIcon = iconOverrides.GlobeAltIcon ?? GlobeAltIconCE;
+export const HashtagIcon = iconOverrides.HashtagIcon ?? HashtagIconCE;
+export const HomeIcon = iconOverrides.HomeIcon ?? HomeIconCE;
+export const InformationCircleIcon = iconOverrides.InformationCircleIcon ?? InformationCircleIconCE;
+export const KeyIcon = iconOverrides.KeyIcon ?? KeyIconCE;
+export const LinkIcon = iconOverrides.LinkIcon ?? LinkIconCE;
+export const LockClosedIcon = iconOverrides.LockClosedIcon ?? LockClosedIconCE;
+export const ListBulletIcon = iconOverrides.ListBulletIcon ?? ListBulletIconCE;
+export const MagnifyingGlassIcon = iconOverrides.MagnifyingGlassIcon ?? MagnifyingGlassIconCE;
+export const PencilIcon = iconOverrides.PencilIcon ?? PencilIconCE;
+export const PencilSquareIcon = iconOverrides.PencilSquareIcon ?? PencilSquareIconCE;
+export const PlayIcon = iconOverrides.PlayIcon ?? PlayIconCE;
+export const PlusCircleIcon = iconOverrides.PlusCircleIcon ?? PlusCircleIconCE;
+export const PlusIcon = iconOverrides.PlusIcon ?? PlusIconCE;
+export const PresentationChartBarIcon = iconOverrides.PresentationChartBarIcon ?? PresentationChartBarIconCE;
+export const PresentationChartLineIcon = iconOverrides.PresentationChartLineIcon ?? PresentationChartLineIconCE;
+export const QuestionMarkCircleIcon = iconOverrides.QuestionMarkCircleIcon ?? QuestionMarkCircleIconCE;
+export const RectangleGroupIcon = iconOverrides.RectangleGroupIcon ?? RectangleGroupIconCE;
+export const ShareIcon = iconOverrides.ShareIcon ?? ShareIconCE;
+export const ShieldCheckIcon = iconOverrides.ShieldCheckIcon ?? ShieldCheckIconCE;
+export const ShoppingBagIcon = iconOverrides.ShoppingBagIcon ?? ShoppingBagIconCE;
+export const SparklesIcon = iconOverrides.SparklesIcon ?? SparklesIconCE;
+export const StarIcon = iconOverrides.StarIcon ?? StarIconCE;
+export const TableCellsIcon = iconOverrides.TableCellsIcon ?? TableCellsIconCE;
+export const TrashIcon = iconOverrides.TrashIcon ?? TrashIconCE;
+export const UserGroupIcon = iconOverrides.UserGroupIcon ?? UserGroupIconCE;
+export const UsersIcon = iconOverrides.UsersIcon ?? UsersIconCE;
+export const XCircleIcon = iconOverrides.XCircleIcon ?? XCircleIconCE;
+export const XMarkIcon = iconOverrides.XMarkIcon ?? XMarkIconCE;
+export const AdjustmentsVerticalIcon = iconOverrides.AdjustmentsVerticalIcon ?? AdjustmentsVerticalIconCE;
+export const Bars3Icon = iconOverrides.Bars3Icon ?? Bars3IconCE;
+export const Squares2X2Icon = iconOverrides.Squares2X2Icon ?? Squares2X2IconCE;

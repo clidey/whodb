@@ -1,3 +1,247 @@
 en_US:
   download: Download
   layout: Layout
+
+ar_AE:
+  download: تحميل
+  layout: تَخطِيط
+
+de_DE:
+  download: Herunterladen
+  layout: Layout
+
+el_GR:
+  download: Λήψη
+  layout: Σχέδιο
+
+en_GB:
+  download: Download
+  layout: Layout
+
+es_ES:
+  download: Descargar
+  layout: Disposición
+
+fi_FI:
+  download: Lataa
+  layout: Layout
+
+fr_FR:
+  download: Télécharger
+  layout: Mise en page
+
+it_IT:
+  download: Scaricamento
+  layout: Disposizione
+
+iw_IL:
+  download: הורד
+  layout: מַעֲרָך
+
+ja_JP:
+  download: ダウンロード
+  layout: レイアウト
+
+ko_KR:
+  download: 다운로드
+  layout: 공들여 나열한 것
+
+nl_NL:
+  download: Downloaden
+  layout: Indeling
+
+pl_PL:
+  download: Pobierać
+  layout: Układ
+
+pt_BR:
+  download: Download
+  layout: Disposição
+
+ro_RO:
+  download: Descărcați
+  layout: Aspect
+
+ru_RU:
+  download: Скачать
+  layout: Макет
+
+sk_SK:
+  download: Stiahnuť
+  layout: Rozloženie
+
+sv_SE:
+  download: Ladda ner
+  layout: Layout
+
+zh_CN:
+  download: 下载
+  layout: 布局
+
+zh_TW:
+  download: 下載
+  layout: 佈局
+
+bg_BG:
+  download: Изтегляне
+  layout: Оформление
+
+bn_BD:
+  download: ডাউনলোড করুন
+  layout: লেআউট
+
+ca_ES:
+  download: Download
+  layout: Disseny
+
+cs_CZ:
+  download: Stáhnout
+  layout: Rozložení
+
+da_DK:
+  download: Download
+  layout: Layout
+
+fa_IR:
+  download: دانلود کنید
+  layout: طرح بندی
+
+hi_IN:
+  download: डाउनलोड करना
+  layout: लेआउट
+
+hr_HR:
+  download: preuzimanje
+  layout: Izgled
+
+hu_HU:
+  download: Letöltés
+  layout: Elrendezés
+
+id_ID:
+  download: Unduh
+  layout: Tata Letak
+
+ms_MY:
+  download: Muat turun
+  layout: Susun atur
+
+nb_NO:
+  download: Last ned
+  layout: Oppsett
+
+sw_KE:
+  download: Pakua
+  layout: Mpangilio
+
+ta_IN:
+  download: பதிவிறக்கவும்
+  layout: தளவமைப்பு
+
+th_TH:
+  download: ดาวน์โหลด
+  layout: เค้าโครง
+
+tr_TR:
+  download: İndirmek
+  layout: Düzen
+
+uk_UA:
+  download: Завантажити
+  layout: Макет
+
+ur_PK:
+  download: ڈاؤن لوڈ کریں۔
+  layout: لے آؤٹ
+
+vi_VN:
+  download: Tải xuống
+  layout: Cách trình bày
+
+af_ZA:
+  download: "Laai af"
+  layout: "Uitleg"
+
+am_ET:
+  download: "አውርድ"
+  layout: "አቀማመጥ"
+
+az_AZ:
+  download: "Yüklə"
+  layout: "Layout"
+
+et_EE:
+  download: "Laadi alla"
+  layout: "Paigutus"
+
+gu_IN:
+  download: "ડાઉનલોડ કરો"
+  layout: "લેઆઉટ"
+
+ha_NG:
+  download: "Zazzagewa"
+  layout: "Tsarin tsari"
+
+ka_GE:
+  download: "ჩამოტვირთვა"
+  layout: "განლაგება"
+
+km_KH:
+  download: "ទាញយក"
+  layout: "ប្លង់"
+
+kn_IN:
+  download: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+  layout: "ಲೇಔಟ್"
+
+lt_LT:
+  download: "Atsisiųsti"
+  layout: "Išdėstymas"
+
+lv_LV:
+  download: "Lejupielādēt"
+  layout: "Izkārtojums"
+
+ml_IN:
+  download: "ഡൗൺലോഡ് ചെയ്യുക"
+  layout: "ലേഔട്ട്"
+
+mr_IN:
+  download: "डाउनलोड करा"
+  layout: "मांडणी"
+
+ne_NP:
+  download: "डाउनलोड गर्नुहोस्"
+  layout: "लेआउट"
+
+pa_IN:
+  download: "ਡਾਊਨਲੋਡ ਕਰੋ"
+  layout: "ਖਾਕਾ"
+
+si_LK:
+  download: "බාගන්න"
+  layout: "පිරිසැලසුම"
+
+sl_SI:
+  download: "Prenos"
+  layout: "Postavitev"
+
+sr_RS:
+  download: "Преузми"
+  layout: "Лаиоут"
+
+te_IN:
+  download: "డౌన్‌లోడ్ చేయండి"
+  layout: "లేఅవుట్"
+
+tl_PH:
+  download: "I-download"
+  layout: "Layout"
+
+uz_UZ:
+  download: "Yuklab olish"
+  layout: "Tartib"
+
+yo_NG:
+  download: "Gba lati ayelujara"
+  layout: "Ìfilélẹ"

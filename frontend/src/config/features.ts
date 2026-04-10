@@ -14,12 +14,25 @@
  * limitations under the License.
  */
 
-import { reduxStore } from '../store';
-import { SettingsActions } from '../store/settings';
-import {FeatureFlags} from './ee-types';
 import { updateDocumentMeta } from './meta';
 
-// Default feature flags (all disabled for open source version)
+// Feature flags control which UI features are active.
+export interface FeatureFlags {
+    analyzeView: boolean;
+    explainView: boolean;
+    generateView: boolean;
+    customTheme: boolean;
+    dataVisualization: boolean;
+    aiChat: boolean;
+    multiProfile: boolean;
+    advancedDatabases: boolean;
+    contactUsPage: boolean;
+    settingsPage: boolean;
+    sampleDatabaseTour: boolean;
+    autoStartTourOnLogin: boolean;
+    sqlAgent: boolean;
+}
+
 const defaultFeatures: FeatureFlags = {
     analyzeView: false,
     explainView: false,
@@ -36,18 +49,6 @@ const defaultFeatures: FeatureFlags = {
     sqlAgent: false,
 };
 
-// Check if EE modules are available
-const checkEEAvailability = (): boolean => {
-    try {
-        // This will be replaced by the build system when EE is enabled
-        return import.meta.env.VITE_BUILD_EDITION === 'ee';
-    } catch {
-        return false;
-    }
-};
-
-export const isEEMode = checkEEAvailability();
-
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
 export let extensions: Record<string, any> = {};
 export let sources: Record<string, any> = {};
@@ -55,52 +56,10 @@ export let settingsDefaults: Record<string, any> = {};
 
 export const getAppName = (): string => extensions.AppName || "WhoDB";
 
+/** Initialize feature flags with defaults. */
 export const initialize = () => {
-    if (!isEEMode) {
-        featureFlags = defaultFeatures;
-        updateDocumentMeta({});
-        return;
-    }
-
-    if (isEEMode) {
-        // Set synchronous defaults for EE mode to avoid race condition
-        extensions = { AppName: "" };
-        featureFlags = {
-            analyzeView: true,
-            explainView: true,
-            generateView: true,
-            customTheme: true,
-            dataVisualization: true,
-            aiChat: true,
-            multiProfile: true,
-            advancedDatabases: true,
-            contactUsPage: false,
-            settingsPage: true,
-            sampleDatabaseTour: false,
-            autoStartTourOnLogin: false,
-            sqlAgent: true,
-        };
-
-        // Load EE config asynchronously to override defaults if needed
-        import('@ee/config.tsx').then(eeConfig => {
-            if (eeConfig?.eeFeatures) {
-                featureFlags = eeConfig.eeFeatures;
-            }
-            if (eeConfig?.eeExtensions) {
-                extensions = eeConfig.eeExtensions;
-                updateDocumentMeta(extensions);
-            }
-            if (eeConfig?.eeSources) {
-                sources = eeConfig.eeSources;
-            }
-            if (eeConfig?.eeSettingsDefaults) {
-                settingsDefaults = eeConfig.eeSettingsDefaults;
-                reduxStore.dispatch(SettingsActions.setWhereConditionMode(settingsDefaults.whereConditionMode));
-            }
-        }).catch(() => {
-            console.warn('Could not load EE feature flags');
-        });
-    }
+    featureFlags = defaultFeatures;
+    updateDocumentMeta({});
 };
 
 initialize();
