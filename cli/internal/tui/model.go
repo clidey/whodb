@@ -49,6 +49,7 @@ const (
 	ViewImport
 	ViewBookmarks
 	ViewJSON
+	ViewCmdLog
 )
 
 type MainModel struct {
@@ -78,6 +79,7 @@ type MainModel struct {
 	importView     *ImportView
 	bookmarksView  *BookmarksView
 	jsonViewer     *JSONViewer
+	cmdLogView     *CmdLogView
 
 	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
 	panes map[ViewMode]Pane
@@ -129,6 +131,7 @@ func NewMainModel() *MainModel {
 	m.importView = NewImportView(m)
 	m.bookmarksView = NewBookmarksView(m)
 	m.jsonViewer = NewJSONViewer(m)
+	m.cmdLogView = NewCmdLogView(m)
 
 	m.panes = map[ViewMode]Pane{
 		ViewConnection: m.connectionView,
@@ -144,6 +147,7 @@ func NewMainModel() *MainModel {
 		ViewImport:     m.importView,
 		ViewBookmarks:  m.bookmarksView,
 		ViewJSON:       m.jsonViewer,
+		ViewCmdLog:     m.cmdLogView,
 	}
 
 	return m
@@ -237,6 +241,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.exportView, _ = m.exportView.Update(msg)
 		m.whereView, _ = m.whereView.Update(msg)
 		m.jsonViewer, _ = m.jsonViewer.Update(msg)
+		m.cmdLogView, _ = m.cmdLogView.Update(msg)
 
 		// Rebuild layout on resize if connected
 		if m.dbManager.GetCurrentConnection() != nil && m.layoutRoot == nil {
@@ -333,6 +338,23 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.toggleReadOnly()
 			}
 
+		case "ctrl+d":
+			// Global shortcut: toggle command log view
+			if m.dbManager.GetCurrentConnection() != nil {
+				if m.mode == ViewCmdLog {
+					if !m.PopView() {
+						m.mode = ViewBrowser
+					}
+					return m, nil
+				}
+				if m.useMultiPane() {
+					m.activeLayout = layout.LayoutSingle
+					m.rebuildLayout()
+				}
+				m.PushView(ViewCmdLog)
+				return m, nil
+			}
+
 		case "ctrl+a":
 			// Global shortcut: open AI Chat from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
@@ -417,6 +439,8 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateBookmarksView(msg)
 	case ViewJSON:
 		return m.updateJSONViewer(msg)
+	case ViewCmdLog:
+		return m.updateCmdLogView(msg)
 	}
 
 	return m, nil
@@ -425,6 +449,12 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *MainModel) updateJSONViewer(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.jsonViewer, cmd = m.jsonViewer.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateCmdLogView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.cmdLogView, cmd = m.cmdLogView.Update(msg)
 	return m, cmd
 }
 
@@ -492,6 +522,8 @@ func (m *MainModel) View() string {
 			content = m.bookmarksView.View()
 		case ViewJSON:
 			content = m.jsonViewer.View()
+		case ViewCmdLog:
+			content = m.cmdLogView.View()
 		}
 	}
 
@@ -590,7 +622,7 @@ func (m *MainModel) renderStatusBar() string {
 // isHelpSafe returns true if it's safe to show help (no active text input)
 func (m *MainModel) isHelpSafe() bool {
 	switch m.mode {
-	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks:
+	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks, ViewCmdLog:
 		// These views don't have text input
 		return true
 	case ViewBrowser:
@@ -846,6 +878,7 @@ func (m *MainModel) renderGlobalHelpBar() string {
 		Keys.Global.NextView,
 		Keys.Browser.History,
 		Keys.Browser.AIChat,
+		Keys.Global.CmdLog,
 		Keys.Global.Import,
 		Keys.Global.ReadOnly,
 		Keys.Global.CycleLayout,

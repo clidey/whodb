@@ -29,6 +29,7 @@ type GlobalKeys struct {
 	CycleLayout key.Binding
 	Import      key.Binding
 	ReadOnly    key.Binding
+	CmdLog      key.Binding
 }
 
 // BrowserKeys contains keybindings for the browser view
@@ -239,6 +240,10 @@ var Keys = Keymap{
 		ReadOnly: key.NewBinding(
 			key.WithKeys("ctrl+y"),
 			key.WithHelp("ctrl+y", "read-only"),
+		),
+		CmdLog: key.NewBinding(
+			key.WithKeys("ctrl+d"),
+			key.WithHelp("ctrl+d", "command log"),
 		),
 	},
 	Browser: BrowserKeys{

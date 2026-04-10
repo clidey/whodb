@@ -69,7 +69,7 @@ func TestNewConnectionView_NoConnections(t *testing.T) {
 	}
 
 	// Database type selector should be focused first
-	if v.focusIndex != 7 {
+	if v.focusIndex != focusDBType {
 		t.Errorf("Expected focusIndex 7 (db type), got %d", v.focusIndex)
 	}
 }
@@ -268,19 +268,19 @@ func TestConnectionView_FormMode_WrapAround(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 8 // Last position (Connect button)
+	v.focusIndex = focusConnect // Last position (Connect button)
 
 	// Tab from last wraps to first (db type selector)
 	v.nextInput()
 
-	if v.focusIndex != 7 {
+	if v.focusIndex != focusDBType {
 		t.Errorf("Expected focusIndex 7 (db type) after wrap, got %d", v.focusIndex)
 	}
 
 	// Shift+Tab from db type wraps to last (connect button)
 	v.prevInput()
 
-	if v.focusIndex != 8 {
+	if v.focusIndex != focusConnect {
 		t.Errorf("Expected focusIndex 8 after backward wrap, got %d", v.focusIndex)
 	}
 }
@@ -290,7 +290,7 @@ func TestConnectionView_FormMode_DbTypeSelection(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 7 // Database type field
+	v.focusIndex = focusDBType // Database type field
 	v.dbTypeIndex = 0
 
 	// Right arrow cycles through types
@@ -315,7 +315,7 @@ func TestConnectionView_FormMode_DbTypeWrapAround(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 7
+	v.focusIndex = focusDBType
 	v.dbTypeIndex = 0
 
 	// Left from first wraps to last
@@ -356,8 +356,8 @@ func TestConnectionView_FormMode_PasswordPrompt(t *testing.T) {
 	defer cleanup()
 
 	v.mode = "form"
-	v.focusIndex = 8         // Connect button
-	v.inputs[4].SetValue("") // Empty password
+	v.focusIndex = focusConnect // Connect button
+	v.inputs[4].SetValue("")    // Empty password
 
 	// Press Enter - should show password prompt
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
@@ -408,7 +408,7 @@ func TestConnectionView_ResetForm(t *testing.T) {
 		}
 	}
 
-	if v.focusIndex != 7 {
+	if v.focusIndex != focusDBType {
 		t.Errorf("Expected focusIndex 7 (db type) after reset, got %d", v.focusIndex)
 	}
 
@@ -825,7 +825,7 @@ func TestConnectionView_NavigationSkipsHiddenFields_SQLite(t *testing.T) {
 	v.onDbTypeChanged()
 
 	// Focus order for SQLite: 7 (dbType) → 0 (name) → 5 (database) → 8 (connect) → wrap
-	v.focusIndex = 7 // Start at db type
+	v.focusIndex = focusDBType // Start at db type
 
 	// Next from dbType(7) goes to name(0)
 	v.nextInput()
@@ -841,13 +841,13 @@ func TestConnectionView_NavigationSkipsHiddenFields_SQLite(t *testing.T) {
 
 	// Next from database(5) goes to connect(8)
 	v.nextInput()
-	if v.focusIndex != 8 {
+	if v.focusIndex != focusConnect {
 		t.Errorf("Expected focusIndex 8 (connect) after Tab from database in SQLite, got %d", v.focusIndex)
 	}
 
 	// Next from connect(8) wraps to dbType(7)
 	v.nextInput()
-	if v.focusIndex != 7 {
+	if v.focusIndex != focusDBType {
 		t.Errorf("Expected focusIndex 7 (dbType) after wrap, got %d", v.focusIndex)
 	}
 }
@@ -872,13 +872,13 @@ func TestConnectionView_PrevNavigationSkipsHiddenFields_SQLite(t *testing.T) {
 
 	// Prev from name(0) goes to dbType(7)
 	v.prevInput()
-	if v.focusIndex != 7 {
+	if v.focusIndex != focusDBType {
 		t.Errorf("Expected focusIndex 7 (dbType) after Shift+Tab from name, got %d", v.focusIndex)
 	}
 
 	// Prev from dbType(7) wraps to connect(8)
 	v.prevInput()
-	if v.focusIndex != 8 {
+	if v.focusIndex != focusConnect {
 		t.Errorf("Expected focusIndex 8 (connect) after backward wrap, got %d", v.focusIndex)
 	}
 }
@@ -943,8 +943,8 @@ func TestConnectionView_PasswordPromptSkipped_SQLite(t *testing.T) {
 	v.mode = "form"
 	v.dbTypeIndex = 2 // SQLite
 	v.onDbTypeChanged()
-	v.focusIndex = 8         // Connect button
-	v.inputs[4].SetValue("") // Password empty (but hidden)
+	v.focusIndex = focusConnect // Connect button
+	v.inputs[4].SetValue("")    // Password empty (but hidden)
 
 	// Press Enter - should NOT show password prompt since password field is hidden
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
@@ -971,7 +971,7 @@ func TestConnectionView_ResetFormUpdatesVisibility(t *testing.T) {
 	}
 
 	// Focus should start on db type selector
-	if v.focusIndex != 7 {
+	if v.focusIndex != focusDBType {
 		t.Errorf("Expected focusIndex 7 (db type) after reset, got %d", v.focusIndex)
 	}
 

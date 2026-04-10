@@ -37,6 +37,7 @@ var (
 	_ Pane = (*ImportView)(nil)
 	_ Pane = (*BookmarksView)(nil)
 	_ Pane = (*JSONViewer)(nil)
+	_ Pane = (*CmdLogView)(nil)
 )
 
 // ---------------------------------------------------------------------------
@@ -236,3 +237,15 @@ func (v *BookmarksView) OnFocus()                        {}
 func (v *BookmarksView) OnBlur()                         {}
 func (v *BookmarksView) SetCompact(bool)                 {}
 func (v *BookmarksView) HelpBindings() []key.Binding     { return nil }
+
+// ---------------------------------------------------------------------------
+// CmdLogView
+// ---------------------------------------------------------------------------
+
+func (v *CmdLogView) UpdatePane(msg tea.Msg) tea.Cmd  { _, cmd := v.Update(msg); return cmd }
+func (v *CmdLogView) SetDimensions(width, height int) { v.width = width; v.height = height }
+func (v *CmdLogView) Focusable() bool                 { return true }
+func (v *CmdLogView) OnFocus()                        {}
+func (v *CmdLogView) OnBlur()                         {}
+func (v *CmdLogView) SetCompact(bool)                 {}
+func (v *CmdLogView) HelpBindings() []key.Binding     { return nil }

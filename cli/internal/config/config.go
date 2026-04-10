@@ -37,16 +37,21 @@ var (
 )
 
 type Connection struct {
-	Name      string            `json:"name"`
-	Type      string            `json:"type"`
-	Host      string            `json:"host"`
-	Port      int               `json:"port"`
-	Username  string            `json:"username"`
-	Password  string            `json:"password,omitempty"`
-	Database  string            `json:"database"`
-	Schema    string            `json:"schema,omitempty"`
-	Advanced  map[string]string `json:"advanced,omitempty"`
-	IsProfile bool              `json:"is_profile,omitempty"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Host        string            `json:"host"`
+	Port        int               `json:"port"`
+	Username    string            `json:"username"`
+	Password    string            `json:"password,omitempty"`
+	Database    string            `json:"database"`
+	Schema      string            `json:"schema,omitempty"`
+	Advanced    map[string]string `json:"advanced,omitempty"`
+	IsProfile   bool              `json:"is_profile,omitempty"`
+	SSHHost     string            `json:"ssh_host,omitempty"`
+	SSHPort     int               `json:"ssh_port,omitempty"`
+	SSHUser     string            `json:"ssh_user,omitempty"`
+	SSHKeyFile  string            `json:"ssh_key_file,omitempty"`
+	SSHPassword string            `json:"ssh_password,omitempty"`
 }
 
 type HistoryConfig struct {

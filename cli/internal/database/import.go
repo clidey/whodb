@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/xuri/excelize/v2"
@@ -211,6 +212,11 @@ func inferColumnType(colIdx int, rows [][]string) string {
 
 // ImportData imports rows into the database using the manager's current connection.
 func (m *Manager) ImportData(schema, tableName string, headers []string, rows [][]string, opts ImportOptions) (*ImportResult, error) {
+	start := time.Now()
+	defer func() {
+		m.logOperation(fmt.Sprintf("ImportData(%s, %d rows)", tableName, len(rows)), start, len(rows), nil)
+	}()
+
 	if m.currentConnection == nil {
 		return nil, fmt.Errorf("not connected to any database")
 	}
