@@ -94,12 +94,17 @@ func (v *EditorView) OnFocus()          { v.textarea.Focus() }
 func (v *EditorView) OnBlur()           { v.textarea.Blur() }
 func (v *EditorView) SetCompact(c bool) { v.compact = c }
 func (v *EditorView) HelpBindings() []key.Binding {
-	return []key.Binding{
+	bindings := []key.Binding{
 		key.NewBinding(key.WithKeys(styles.KeyExecute), key.WithHelp(styles.KeyExecute, styles.KeyExecuteDesc)),
 		Keys.Editor.Format,
-		Keys.Editor.Clear,
-		Keys.Global.Back,
+		Keys.Editor.OpenEditor,
+		Keys.Editor.NewTab,
 	}
+	if len(v.buffers) > 1 {
+		bindings = append(bindings, Keys.Editor.PrevTab, Keys.Editor.NextTab, Keys.Editor.CloseTab)
+	}
+	bindings = append(bindings, Keys.Editor.Clear, Keys.Global.Back)
+	return bindings
 }
 
 // ---------------------------------------------------------------------------

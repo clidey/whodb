@@ -51,6 +51,11 @@ type EditorKeys struct {
 	Autocomplete key.Binding
 	Clear        key.Binding
 	Format       key.Binding
+	OpenEditor   key.Binding
+	NewTab       key.Binding
+	CloseTab     key.Binding
+	PrevTab      key.Binding
+	NextTab      key.Binding
 }
 
 // ResultsKeys contains keybindings for the results view
@@ -280,6 +285,26 @@ var Keys = Keymap{
 		Format: key.NewBinding(
 			key.WithKeys("ctrl+f"),
 			key.WithHelp("ctrl+f", "format SQL"),
+		),
+		OpenEditor: key.NewBinding(
+			key.WithKeys("ctrl+o"),
+			key.WithHelp("ctrl+o", "open $EDITOR"),
+		),
+		NewTab: key.NewBinding(
+			key.WithKeys("ctrl+n"),
+			key.WithHelp("ctrl+n", "new tab"),
+		),
+		CloseTab: key.NewBinding(
+			key.WithKeys("ctrl+w"),
+			key.WithHelp("ctrl+w", "close tab"),
+		),
+		PrevTab: key.NewBinding(
+			key.WithKeys("shift+left"),
+			key.WithHelp("shift+←", "prev tab"),
+		),
+		NextTab: key.NewBinding(
+			key.WithKeys("shift+right"),
+			key.WithHelp("shift+→", "next tab"),
 		),
 	},
 	Results: ResultsKeys{
@@ -578,4 +603,13 @@ func RenderBindingHelp(bindings ...key.Binding) string {
 		pairs = append(pairs, h.Key, h.Desc)
 	}
 	return styles.RenderHelp(pairs...)
+}
+
+func RenderBindingHelpWidth(width int, bindings ...key.Binding) string {
+	var pairs []string
+	for _, b := range bindings {
+		h := b.Help()
+		pairs = append(pairs, h.Key, h.Desc)
+	}
+	return styles.RenderHelpWidth(width, pairs...)
 }

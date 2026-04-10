@@ -662,7 +662,7 @@ func (v *ChatView) View() string {
 	b.WriteString(v.input.View())
 	b.WriteString("\n\n")
 
-	b.WriteString(RenderBindingHelp(
+	b.WriteString(RenderBindingHelpWidth(v.width,
 		Keys.Chat.CycleFieldUp,
 		Keys.Chat.ChangeLeft,
 		Keys.Chat.Send,

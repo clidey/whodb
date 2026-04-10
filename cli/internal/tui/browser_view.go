@@ -416,13 +416,13 @@ func (v *BrowserView) View() string {
 		b.WriteString("\n\n")
 
 		if v.schemaSelecting {
-			b.WriteString(RenderBindingHelp(
+			b.WriteString(RenderBindingHelpWidth(v.width,
 				Keys.SchemaSelect.NavLeft,
 				Keys.SchemaSelect.SelectSchema,
 				Keys.Global.Back,
 			))
 		} else if v.filtering {
-			b.WriteString(RenderBindingHelp(
+			b.WriteString(RenderBindingHelpWidth(v.width,
 				Keys.Filter.CancelFilter,
 				Keys.Filter.ApplyFilter,
 			))
@@ -447,7 +447,7 @@ func (v *BrowserView) View() string {
 				Keys.Browser.Disconnect,
 				Keys.Global.Quit,
 			)
-			b.WriteString(RenderBindingHelp(bindings...))
+			b.WriteString(RenderBindingHelpWidth(v.width, bindings...))
 		}
 	}
 

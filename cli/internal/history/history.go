@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/clidey/whodb/cli/internal/config"
@@ -85,6 +86,24 @@ func (m *Manager) Add(query string, success bool, database string) error {
 
 func (m *Manager) GetAll() []Entry {
 	return m.entries
+}
+
+// SearchByPrefix returns the most recent successful entry whose query starts
+// with the given prefix (case-insensitive). Returns nil if no match found.
+func (m *Manager) SearchByPrefix(prefix string) *Entry {
+	if prefix == "" {
+		return nil
+	}
+	lowerPrefix := strings.ToLower(strings.TrimSpace(prefix))
+	for _, entry := range m.entries {
+		if entry.Success && strings.HasPrefix(strings.ToLower(strings.TrimSpace(entry.Query)), lowerPrefix) {
+			// Don't suggest if it's the exact same text
+			if strings.TrimSpace(strings.ToLower(entry.Query)) != lowerPrefix {
+				return &entry
+			}
+		}
+	}
+	return nil
 }
 
 func (m *Manager) Get(id string) (*Entry, error) {

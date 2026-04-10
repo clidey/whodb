@@ -464,7 +464,7 @@ func (v *ConnectionView) View() string {
 	// Render chrome first, measure heights, give remainder to list
 	title := styles.RenderTitle("Welcome to WhoDB!")
 	subtitle := styles.RenderMuted("Select an existing connection below, or create a new one with [n]")
-	helpText := RenderBindingHelp(
+	helpText := RenderBindingHelpWidth(v.parent.width,
 		Keys.ConnectionList.Up,
 		Keys.ConnectionList.Down,
 		Keys.ConnectionList.Connect,

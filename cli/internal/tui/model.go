@@ -330,7 +330,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case PageLoadedMsg:
 		return m.updateResultsView(msg)
-	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg:
+	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg, externalEditorResultMsg:
 		return m.updateEditorView(msg)
 	case tablesLoadedMsg:
 		return m.updateBrowserView(msg)
@@ -760,7 +760,7 @@ func (m *MainModel) renderGlobalHelpBar() string {
 		Keys.Browser.Disconnect,
 		Keys.Global.Quit,
 	)
-	return " " + RenderBindingHelp(bindings...)
+	return " " + RenderBindingHelpWidth(m.width, bindings...)
 }
 
 // initLayout sets up the initial layout based on terminal width.
