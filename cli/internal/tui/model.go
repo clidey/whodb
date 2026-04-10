@@ -86,6 +86,7 @@ type MainModel struct {
 
 	// Split-pane layout state (active only when connected).
 	activeLayout   layout.LayoutName
+	savedLayout    layout.LayoutName // saved when opening a modal, restored on pop
 	layoutRoot     *layout.Container
 	focusedPaneIdx int
 }
@@ -300,11 +301,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+h":
 			// Global shortcut: open History from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewHistory {
-				// In multi-pane, switch to single-pane History
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.PushView(ViewHistory)
 				return m, nil
 			}
@@ -312,10 +309,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+g":
 			// Global shortcut: open Import wizard
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewImport {
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.PushView(ViewImport)
 				return m, nil
 			}
@@ -323,10 +317,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+b":
 			// Global shortcut: open Bookmarks from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewBookmarks {
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.bookmarksView.editorQuery = m.editorView.textarea.Value()
 				m.PushView(ViewBookmarks)
 				return m, nil
@@ -347,10 +338,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					return m, nil
 				}
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.PushView(ViewCmdLog)
 				return m, nil
 			}
@@ -358,10 +346,7 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+a":
 			// Global shortcut: open AI Chat from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.PushView(ViewChat)
 				return m, m.chatView.Init()
 			}
@@ -1044,6 +1029,24 @@ func (m *MainModel) syncModeFromFocusedPane() {
 	}
 }
 
+// suspendLayout saves the current layout and switches to single-pane for a modal view.
+func (m *MainModel) suspendLayout() {
+	if m.useMultiPane() {
+		m.savedLayout = m.activeLayout
+		m.activeLayout = layout.LayoutSingle
+		m.rebuildLayout()
+	}
+}
+
+// restoreLayout restores the layout saved by suspendLayout.
+func (m *MainModel) restoreLayout() {
+	if m.savedLayout != "" {
+		m.activeLayout = m.savedLayout
+		m.savedLayout = ""
+		m.rebuildLayout()
+	}
+}
+
 func (m *MainModel) renderViewIndicator() string {
 	// Only show main navigable views — contextual actions (History, Export,
 	// Where, Columns, etc.) are accessible via shortcuts, not the tab bar.
@@ -1113,6 +1116,8 @@ func (m *MainModel) PopView() bool {
 	}
 	m.mode = m.viewHistory[len(m.viewHistory)-1]
 	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
+	// Restore multi-pane layout if we're returning to a layout-compatible view
+	m.restoreLayout()
 	return true
 }
 

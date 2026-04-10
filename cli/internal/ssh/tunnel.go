@@ -21,10 +21,12 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 // Tunnel manages an SSH tunnel that forwards local connections to a remote host
@@ -57,10 +59,15 @@ func NewTunnel(sshHost string, sshPort int, sshUser, sshKeyFile, sshPassword str
 		return nil, fmt.Errorf("no SSH authentication method available: provide a key file, password, or ensure ssh-agent is running")
 	}
 
+	hostKeyCallback, err := defaultHostKeyCallback()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load SSH known hosts: %w", err)
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            sshUser,
 		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: hostKeyCallback,
 	}
 
 	sshAddr := fmt.Sprintf("%s:%d", sshHost, sshPort)
@@ -158,6 +165,21 @@ func (t *Tunnel) forward(localConn net.Conn, remoteAddr string) {
 
 // buildAuthMethods constructs SSH authentication methods from the provided
 // credentials. It tries key file first, then SSH agent, then password.
+// defaultHostKeyCallback returns a host key callback that validates against
+// the user's ~/.ssh/known_hosts file. Returns an error if the file doesn't exist —
+// the user must have connected to the host at least once via ssh.
+func defaultHostKeyCallback() (ssh.HostKeyCallback, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("cannot determine home directory: %w", err)
+	}
+	knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
+	if _, err := os.Stat(knownHostsPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("~/.ssh/known_hosts not found — run 'ssh %s' once to add the host key", "user@host")
+	}
+	return knownhosts.New(knownHostsPath)
+}
+
 func buildAuthMethods(keyFile, password string) ([]ssh.AuthMethod, error) {
 	var methods []ssh.AuthMethod
 

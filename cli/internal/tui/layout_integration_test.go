@@ -189,13 +189,13 @@ func TestTabBarShowsOnlyMainViews(t *testing.T) {
 
 	indicator := m.renderViewIndicator()
 
-	for _, name := range []string{"Connection", "Browser", "Editor", "Results", "History", "Chat"} {
+	for _, name := range []string{"Connection", "Browser", "Editor", "Results", "Chat"} {
 		if !strings.Contains(indicator, name) {
 			t.Errorf("Tab bar should contain %q", name)
 		}
 	}
 
-	for _, name := range []string{"Export", "Where", "Columns", "Schema"} {
+	for _, name := range []string{"History", "Export", "Where", "Columns", "Schema"} {
 		if strings.Contains(indicator, name) {
 			t.Errorf("Tab bar should NOT contain modal view %q", name)
 		}
