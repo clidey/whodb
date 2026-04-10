@@ -23,6 +23,8 @@ en_US:
   errorSigningIn: "Error Signing You In:"
   updateAvailable: "Update available: {version}"
   sslSecured: "SSL: {mode}"
+  switchProfileTitle: "Switch Profile"
+  switchProfileDescription: "Choose a profile to continue, or add a new one."
 
 ar_AE:
   mainNavigation: الملاحة الرئيسية
