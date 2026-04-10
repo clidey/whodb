@@ -200,7 +200,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 	prompt.EchoMode = textinput.EchoPassword
 	prompt.EchoCharacter = '•'
 
-	dbTypes := []string{"Postgres", "MySQL", "Sqlite3", "DuckDB", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch"}
+	dbTypes := []string{"Postgres", "MySQL", "Sqlite3", "DuckDB", "MongoDB", "Redis", "MariaDB", "ClickHouse", "ElasticSearch", "TiDB"}
 
 	return &ConnectionView{
 		parent:           parent,
@@ -935,6 +935,8 @@ func (v *ConnectionView) getDefaultPort(dbType string) int {
 		return 5432
 	case "MySQL", "MariaDB":
 		return 3306
+	case "TiDB":
+		return 4000
 	case "MongoDB":
 		return 27017
 	case "Redis":
@@ -976,7 +978,7 @@ func getVisibleFields(dbType string) []int {
 	case "Postgres":
 		return []int{fieldName, fieldHost, fieldPort, fieldUsername, fieldPassword, fieldDatabase, fieldSchema}
 	default:
-		// MySQL, MariaDB, ClickHouse
+		// MySQL, MariaDB, TiDB, ClickHouse
 		return []int{fieldName, fieldHost, fieldPort, fieldUsername, fieldPassword, fieldDatabase}
 	}
 }

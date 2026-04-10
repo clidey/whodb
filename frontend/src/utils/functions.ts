@@ -100,6 +100,7 @@ export function getDatabaseStorageUnitLabel(databaseType: string | undefined, si
         case DatabaseType.MySql:
         case DatabaseType.Postgres:
         case DatabaseType.MariaDb:
+        case DatabaseType.TiDb:
         case DatabaseType.Sqlite3:
         case DatabaseType.DuckDb:
         case DatabaseType.ClickHouse:

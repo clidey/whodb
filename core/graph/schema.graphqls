@@ -9,6 +9,7 @@ enum DatabaseType {
   ClickHouse,
   DuckDB,
   Memcached,
+  TiDB,
 }
 
 scalar Upload
