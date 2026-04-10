@@ -779,7 +779,7 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 	}
 
 	// Define explicit tab order for tabbable views
-	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewHistory, ViewChat}
+	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewChat}
 
 	// Find current position in tab order
 	currentIndex := -1
@@ -1045,8 +1045,8 @@ func (m *MainModel) syncModeFromFocusedPane() {
 }
 
 func (m *MainModel) renderViewIndicator() string {
-	// Only show main navigable views — modal views (Export, Where, Columns, Schema)
-	// are contextual actions, not top-level tabs.
+	// Only show main navigable views — contextual actions (History, Export,
+	// Where, Columns, etc.) are accessible via shortcuts, not the tab bar.
 	views := []struct {
 		mode ViewMode
 		name string
@@ -1055,7 +1055,6 @@ func (m *MainModel) renderViewIndicator() string {
 		{ViewBrowser, "Browser"},
 		{ViewEditor, "Editor"},
 		{ViewResults, "Results"},
-		{ViewHistory, "History"},
 		{ViewChat, "Chat"},
 	}
 
