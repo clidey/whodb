@@ -256,6 +256,34 @@ services:
 #      - db
 
 
+  e2e_tidb:
+    image: pingcap/tidb:latest
+    ports:
+      - "4000:4000"
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD", "sh", "-c", "mysql -h 127.0.0.1 -P 4000 -u root -e 'SELECT 1' 2>/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  tidb-init:
+    image: mysql:latest
+    depends_on:
+      e2e_tidb:
+        condition: service_healthy
+    volumes:
+      - ./sample-data/tidb/data.sql:/init.sql:ro
+    entrypoint: >
+      sh -c "
+        mysql -h e2e_tidb -P 4000 -u root < /init.sql &&
+        mysql -h e2e_tidb -P 4000 -u root -e \"CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON test_db.* TO 'user'@'%'; FLUSH PRIVILEGES;\" &&
+        echo 'TiDB initialized successfully'
+      "
+    networks:
+      - db
+
   # SSL-enabled PostgreSQL for SSL E2E tests
   e2e_postgres_ssl:
     profiles: ["ssl"]
@@ -528,4 +556,5 @@ volumes:
   e2e_elasticsearch:
   e2e_elasticsearch_ssl:
   #  e2e_elasticsearch_922:
+  e2e_tidb:
   e2e_mysql_842:

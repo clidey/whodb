@@ -169,7 +169,7 @@ var connectionsAddCmd = &cobra.Command{
 	Long: `Add a new database connection.
 
 Supported database types:
-  Postgres, MySQL, MariaDB, SQLite, MongoDB, Redis, ClickHouse, ElasticSearch`,
+  Postgres, MySQL, MariaDB, TiDB, SQLite, MongoDB, Redis, ClickHouse, ElasticSearch`,
 	Example: `  # Add a PostgreSQL connection
   whodb-cli connections add --name mydb --type Postgres --host localhost --port 5432 --user admin --password secret --database myapp
 
@@ -322,7 +322,7 @@ func init() {
 
 	// Add command flags
 	connectionsAddCmd.Flags().StringVar(&connAddName, "name", "", "connection name (required)")
-	connectionsAddCmd.Flags().StringVar(&connAddType, "type", "", "database type: Postgres, MySQL, MariaDB, SQLite, MongoDB, Redis, ClickHouse, ElasticSearch (required)")
+	connectionsAddCmd.Flags().StringVar(&connAddType, "type", "", "database type: Postgres, MySQL, MariaDB, TiDB, SQLite, MongoDB, Redis, ClickHouse, ElasticSearch (required)")
 	connectionsAddCmd.Flags().StringVar(&connAddHost, "host", "", "database host")
 	connectionsAddCmd.Flags().IntVar(&connAddPort, "port", 0, "database port")
 	connectionsAddCmd.Flags().StringVar(&connAddUser, "user", "", "database username")

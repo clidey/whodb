@@ -201,6 +201,8 @@ func normalizeDBType(dbType string) string {
 		return "MySQL"
 	case "mariadb":
 		return "MariaDB"
+	case "tidb":
+		return "TiDB"
 	case "mongodb":
 		return "MongoDB"
 	case "redis":

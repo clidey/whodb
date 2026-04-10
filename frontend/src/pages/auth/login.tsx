@@ -206,7 +206,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [isFirstLogin, FIRST_LOGIN_KEY]);
 
     const handleSubmit = useCallback(() => {
-        if (([DatabaseType.MySql, DatabaseType.Postgres].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
+        if (([DatabaseType.MySql, DatabaseType.Postgres, DatabaseType.TiDb].includes(databaseType.id as DatabaseType) && (hostName.length === 0 || database.length === 0 || username.length === 0))
             || ((databaseType.id === DatabaseType.Sqlite3 || databaseType.id === DatabaseType.DuckDb) && database.length === 0)
             || ((databaseType.id === DatabaseType.MongoDb || databaseType.id === DatabaseType.Redis) && (hostName.length === 0))) {
             setIsAutoLoggingIn(false);
