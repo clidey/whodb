@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -145,7 +146,12 @@ func (p *GormPlugin) ConvertRawToRows(rows *sql.Rows) (*engine.GetRowsResult, er
 					if rawBytes == nil || len(*rawBytes) == 0 {
 						row[i] = ""
 					} else {
-						row[i] = "0x" + hex.EncodeToString(*rawBytes)
+						str := string(*rawBytes)
+						if utf8.ValidString(str) {
+							row[i] = str
+						} else {
+							row[i] = "0x" + hex.EncodeToString(*rawBytes)
+						}
 					}
 				case "GEOMETRY", "POINT", "LINESTRING", "POLYGON", "GEOGRAPHY",
 					"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON":
