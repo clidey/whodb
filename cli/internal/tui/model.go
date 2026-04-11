@@ -190,6 +190,9 @@ func (m *MainModel) Init() tea.Cmd {
 	}
 
 	cmds := []tea.Cmd{m.spinner.Tick}
+	if m.mode == ViewConnection {
+		cmds = append(cmds, m.connectionView.Init())
+	}
 	if m.mode == ViewBrowser && m.dbManager.GetCurrentConnection() != nil {
 		cmds = append(cmds, m.browserView.loadTables())
 	}
@@ -210,9 +213,15 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.mode = ViewResults
 				case ViewExport, ViewColumns, ViewChat, ViewSchema:
 					m.mode = ViewBrowser
+				case ViewConnection:
+					m.connectionView.refreshList()
+					return m, m.connectionView.pingAllConnections()
 				}
 				return m, nil
 			}
+		case tea.WindowSizeMsg:
+			m.width = msg.Width
+			m.height = msg.Height
 		}
 		return m, nil
 	}

@@ -412,6 +412,21 @@ func (m *Manager) Connect(conn *Connection) error {
 	return nil
 }
 
+// Ping checks whether a database connection is reachable without fully connecting.
+// It uses the plugin's IsAvailable method with a short timeout.
+func (m *Manager) Ping(conn *Connection) bool {
+	dbType := engine.DatabaseType(conn.Type)
+	plugin := m.engine.Choose(dbType)
+	if plugin == nil {
+		return false
+	}
+	credentials := m.buildCredentials(conn)
+	pluginConfig := engine.NewPluginConfig(credentials)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	return plugin.IsAvailable(ctx, pluginConfig)
+}
+
 func (m *Manager) Disconnect() error {
 	m.cache.Clear()
 	m.currentConnection = nil

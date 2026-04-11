@@ -56,7 +56,21 @@ func (i connectionItem) Description() string {
 }
 func (i connectionItem) FilterValue() string { return i.conn.Name }
 
-type connectionDelegate struct{}
+// connectionPingResult tracks the reachability status of a saved connection.
+type connectionPingResult struct {
+	checked bool
+	online  bool
+}
+
+// connectionPingMsg is sent when a background ping completes.
+type connectionPingMsg struct {
+	name   string
+	online bool
+}
+
+type connectionDelegate struct {
+	pingResults map[string]connectionPingResult
+}
 
 func (d connectionDelegate) Height() int                             { return 2 }
 func (d connectionDelegate) Spacing() int                            { return 1 }
@@ -73,7 +87,18 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	} else {
 		str = "  " + i.Title()
 	}
-	str += "\n  " + styles.RenderMuted(i.Description())
+
+	desc := styles.RenderMuted(i.Description())
+	if result, ok := d.pingResults[i.conn.Name]; ok && result.checked {
+		if result.online {
+			desc += " " + styles.SuccessStyle.Render("●")
+		} else {
+			desc += " " + styles.ErrorStyle.Render("●")
+		}
+	} else if i.conn.SSHHost != "" {
+		desc += " " + styles.MutedStyle.Render("○")
+	}
+	str += "\n  " + desc
 	fmt.Fprint(w, str)
 }
 
@@ -125,6 +150,8 @@ type ConnectionView struct {
 	formReady    bool
 	width        int
 	height       int
+	// Background ping status for each connection
+	pingResults map[string]connectionPingResult
 }
 
 // NewConnectionView creates a connection view initialized with saved connections
@@ -148,12 +175,14 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 		})
 	}
 
-	l := list.New(items, connectionDelegate{}, 0, 0)
+	pingResults := make(map[string]connectionPingResult)
+	l := list.New(items, connectionDelegate{pingResults: pingResults}, 0, 0)
 	l.Title = ""
 	l.SetShowTitle(false)
 	l.SetShowStatusBar(true)
+	l.SetShowHelp(false)
 	l.SetFilteringEnabled(true)
-	l.SetStatusBarItemName("connection available", "connections available")
+	l.SetStatusBarItemName("saved connection", "saved connections")
 
 	// Initialize form inputs
 	newInput := func(placeholder string, charLimit int) textinput.Model {
@@ -214,6 +243,7 @@ func NewConnectionView(parent *MainModel) *ConnectionView {
 		connecting:       false,
 		awaitingPassword: false,
 		passwordPrompt:   prompt,
+		pingResults:      pingResults,
 	}
 }
 
@@ -224,8 +254,44 @@ func (v *ConnectionView) Update(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	return v.updateList(msg)
 }
 
+// Init returns a command to start background ping checks for all connections.
+func (v *ConnectionView) Init() tea.Cmd {
+	if v.mode != "list" || len(v.list.Items()) == 0 {
+		return nil
+	}
+	return v.pingAllConnections()
+}
+
+// pingAllConnections fires background pings for every connection in the list.
+func (v *ConnectionView) pingAllConnections() tea.Cmd {
+	var cmds []tea.Cmd
+	for _, item := range v.list.Items() {
+		ci, ok := item.(connectionItem)
+		if !ok {
+			continue
+		}
+		if ci.conn.SSHHost != "" {
+			continue
+		}
+		conn := ci.conn
+		mgr := v.parent.dbManager
+		cmds = append(cmds, func() tea.Msg {
+			online := mgr.Ping(&conn)
+			return connectionPingMsg{name: conn.Name, online: online}
+		})
+	}
+	if len(cmds) == 0 {
+		return nil
+	}
+	return tea.Batch(cmds...)
+}
+
 func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	switch msg := msg.(type) {
+	case connectionPingMsg:
+		v.pingResults[msg.name] = connectionPingResult{checked: true, online: msg.online}
+		return v, nil
+
 	case connectionResultMsg:
 		v.connecting = false
 		if msg.err != nil {
@@ -242,7 +308,8 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 		return v, tea.Batch(v.parent.browserView.Init(), v.parent.SetStatus(connDesc))
 
 	case tea.WindowSizeMsg:
-		// Store dimensions; actual list sizing happens in View() using lipgloss.Height() measurements
+		v.width = msg.Width
+		v.height = msg.Height
 		return v, nil
 
 	case tea.MouseMsg:
@@ -307,7 +374,7 @@ func (v *ConnectionView) updateList(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 				v.parent.config.RemoveConnection(item.conn.Name)
 				v.parent.config.Save()
 				v.refreshList()
-				return v, nil
+				return v, v.pingAllConnections()
 			}
 
 		case key.Matches(msg, Keys.ConnectionList.QuitEsc):
@@ -338,6 +405,12 @@ func (v *ConnectionView) inputWidth() int {
 
 func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 	var cmd tea.Cmd
+
+	// Absorb ping results that arrive while in form mode
+	if pm, ok := msg.(connectionPingMsg); ok {
+		v.pingResults[pm.name] = connectionPingResult{checked: true, online: pm.online}
+		return v, nil
+	}
 
 	// Handle deferred password prompt overlay
 	if v.awaitingPassword {
@@ -407,7 +480,8 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			if len(v.parent.config.Connections) > 0 {
 				v.mode = "list"
 				v.connError = nil
-				return v, nil
+				v.refreshList()
+				return v, v.pingAllConnections()
 			}
 			return v, tea.Quit
 
@@ -489,12 +563,17 @@ func (v *ConnectionView) View() string {
 		Keys.ConnectionList.Connect,
 		Keys.ConnectionList.New,
 		Keys.ConnectionList.DeleteConn,
+		Keys.Global.CycleTheme,
 		Keys.ConnectionList.QuitEsc,
 		Keys.Global.Quit,
 	)
+	sep := styles.MutedStyle.Render("  ")
+	legend := styles.SuccessStyle.Render("●") + styles.RenderMuted(" available") + sep +
+		styles.ErrorStyle.Render("●") + styles.RenderMuted(" not available") + sep +
+		styles.MutedStyle.Render("○") + styles.RenderMuted(" inactive tunnel")
 
-	// Measure chrome within this view: title + subtitle + help + padding(2) + separators(2)
-	chromeHeight := lipgloss.Height(title) + lipgloss.Height(subtitle) + lipgloss.Height(helpText) + 4
+	// Measure chrome within this view: title + subtitle + legend + help + padding(2) + separators(3)
+	chromeHeight := lipgloss.Height(title) + lipgloss.Height(subtitle) + lipgloss.Height(helpText) + 1 + 5
 	listHeight := v.parent.ContentHeight() - chromeHeight
 	if listHeight < 3 {
 		listHeight = 3
@@ -512,17 +591,15 @@ func (v *ConnectionView) View() string {
 		b.WriteString(v.list.View())
 	}
 	b.WriteString("\n\n")
+	if v.escPressed {
+		b.WriteString(styles.RenderErr(fmt.Sprintf("Press ESC again to quit (%ds)", v.escTimeoutSecs)))
+	} else {
+		b.WriteString(legend)
+	}
+	b.WriteString("\n")
 	b.WriteString(helpText)
 
-	content := lipgloss.NewStyle().Padding(1, 2).Render(b.String())
-
-	if v.escPressed {
-		confirmMsg := fmt.Sprintf("Press ESC again to quit (%ds)", v.escTimeoutSecs)
-		confirmBox := styles.RenderErrorBox(confirmMsg)
-		return content + "\n" + confirmBox
-	}
-
-	return content
+	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }
 
 func (v *ConnectionView) renderForm() string {
@@ -661,9 +738,13 @@ func (v *ConnectionView) renderForm() string {
 
 	// Render title and help first, measure them, give remaining height to viewport
 	title := styles.RenderTitle("New Database Connection")
+	helpWidth := v.width
+	if helpWidth == 0 {
+		helpWidth = v.parent.width
+	}
 	helpText := ""
 	if len(v.parent.config.Connections) > 0 {
-		helpText = styles.RenderHelpWidth(v.width,
+		helpText = styles.RenderHelpWidth(helpWidth,
 			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
 			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
 			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
@@ -672,7 +753,7 @@ func (v *ConnectionView) renderForm() string {
 			Keys.Global.Quit.Help().Key, Keys.Global.Quit.Help().Desc,
 		)
 	} else {
-		helpText = styles.RenderHelpWidth(v.width,
+		helpText = styles.RenderHelpWidth(helpWidth,
 			Keys.ConnectionForm.Navigate.Help().Key, Keys.ConnectionForm.Navigate.Help().Desc,
 			Keys.ConnectionForm.TypeLeft.Help().Key, Keys.ConnectionForm.TypeLeft.Help().Desc,
 			Keys.ConnectionForm.ConnectForm.Help().Key, Keys.ConnectionForm.ConnectForm.Help().Desc,
@@ -748,6 +829,10 @@ func (v *ConnectionView) refreshList() {
 		})
 	}
 	v.list.SetItems(items)
+	// Reset ping results so they get refreshed
+	for k := range v.pingResults {
+		delete(v.pingResults, k)
+	}
 }
 
 // getFocusOrder returns the ordered list of focusable indices:

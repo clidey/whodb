@@ -585,11 +585,11 @@ var Keys = Keymap{
 	ConnectionList: ConnectionListKeys{
 		Up: key.NewBinding(
 			key.WithKeys("up", "k", "shift+tab"),
-			key.WithHelp("↑/k/shift+tab", "up"),
+			key.WithHelp("↑/k", "up"),
 		),
 		Down: key.NewBinding(
 			key.WithKeys("down", "j", "tab"),
-			key.WithHelp("↓/j/tab", "down"),
+			key.WithHelp("↓/j", "down"),
 		),
 		Connect: key.NewBinding(
 			key.WithKeys("enter"),
