@@ -46,6 +46,12 @@ const (
 	ViewColumns
 	ViewChat
 	ViewSchema
+	ViewImport
+	ViewBookmarks
+	ViewJSON
+	ViewCmdLog
+	ViewExplain
+	ViewERD
 )
 
 type MainModel struct {
@@ -72,12 +78,19 @@ type MainModel struct {
 	columnsView    *ColumnsView
 	chatView       *ChatView
 	schemaView     *SchemaView
+	importView     *ImportView
+	bookmarksView  *BookmarksView
+	jsonViewer     *JSONViewer
+	cmdLogView     *CmdLogView
+	explainView    *ExplainView
+	erdView        *ERDView
 
 	// panes maps each ViewMode to its Pane interface for polymorphic layout dispatch.
 	panes map[ViewMode]Pane
 
 	// Split-pane layout state (active only when connected).
 	activeLayout   layout.LayoutName
+	savedLayout    layout.LayoutName // saved when opening a modal, restored on pop
 	layoutRoot     *layout.Container
 	focusedPaneIdx int
 }
@@ -120,6 +133,12 @@ func NewMainModel() *MainModel {
 	m.columnsView = NewColumnsView(m)
 	m.chatView = NewChatView(m)
 	m.schemaView = NewSchemaView(m)
+	m.importView = NewImportView(m)
+	m.bookmarksView = NewBookmarksView(m)
+	m.jsonViewer = NewJSONViewer(m)
+	m.cmdLogView = NewCmdLogView(m)
+	m.explainView = NewExplainView(m)
+	m.erdView = NewERDView(m)
 
 	m.panes = map[ViewMode]Pane{
 		ViewConnection: m.connectionView,
@@ -132,6 +151,12 @@ func NewMainModel() *MainModel {
 		ViewColumns:    m.columnsView,
 		ViewChat:       m.chatView,
 		ViewSchema:     m.schemaView,
+		ViewImport:     m.importView,
+		ViewBookmarks:  m.bookmarksView,
+		ViewJSON:       m.jsonViewer,
+		ViewCmdLog:     m.cmdLogView,
+		ViewExplain:    m.explainView,
+		ViewERD:        m.erdView,
 	}
 
 	return m
@@ -165,6 +190,9 @@ func (m *MainModel) Init() tea.Cmd {
 	}
 
 	cmds := []tea.Cmd{m.spinner.Tick}
+	if m.mode == ViewConnection {
+		cmds = append(cmds, m.connectionView.Init())
+	}
 	if m.mode == ViewBrowser && m.dbManager.GetCurrentConnection() != nil {
 		cmds = append(cmds, m.browserView.loadTables())
 	}
@@ -185,9 +213,15 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.mode = ViewResults
 				case ViewExport, ViewColumns, ViewChat, ViewSchema:
 					m.mode = ViewBrowser
+				case ViewConnection:
+					m.connectionView.refreshList()
+					return m, m.connectionView.pingAllConnections()
 				}
 				return m, nil
 			}
+		case tea.WindowSizeMsg:
+			m.width = msg.Width
+			m.height = msg.Height
 		}
 		return m, nil
 	}
@@ -224,6 +258,10 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.schemaView, _ = m.schemaView.Update(msg)
 		m.exportView, _ = m.exportView.Update(msg)
 		m.whereView, _ = m.whereView.Update(msg)
+		m.jsonViewer, _ = m.jsonViewer.Update(msg)
+		m.cmdLogView, _ = m.cmdLogView.Update(msg)
+		m.explainView, _ = m.explainView.Update(msg)
+		m.erdView, _ = m.erdView.Update(msg)
 
 		// Rebuild layout on resize if connected
 		if m.dbManager.GetCurrentConnection() != nil && m.layoutRoot == nil {
@@ -282,27 +320,71 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+h":
 			// Global shortcut: open History from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewHistory {
-				// In multi-pane, switch to single-pane History
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.PushView(ViewHistory)
 				return m, nil
+			}
+
+		case "ctrl+g":
+			// Global shortcut: open Import wizard
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewImport {
+				m.suspendLayout()
+				m.PushView(ViewImport)
+				return m, nil
+			}
+
+		case "ctrl+b":
+			// Global shortcut: open Bookmarks from any view/pane
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewBookmarks {
+				m.suspendLayout()
+				m.bookmarksView.editorQuery = m.editorView.textarea.Value()
+				m.PushView(ViewBookmarks)
+				return m, nil
+			}
+
+		case "ctrl+y":
+			// Global shortcut: toggle read-only mode
+			if m.dbManager.GetCurrentConnection() != nil {
+				return m.toggleReadOnly()
+			}
+
+		case "ctrl+d":
+			// Global shortcut: toggle command log view
+			if m.dbManager.GetCurrentConnection() != nil {
+				if m.mode == ViewCmdLog {
+					if !m.PopView() {
+						m.mode = ViewBrowser
+					}
+					return m, nil
+				}
+				m.suspendLayout()
+				m.PushView(ViewCmdLog)
+				return m, nil
+			}
+
+		case "ctrl+k":
+			// Global shortcut: open ER diagram
+			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewERD {
+				m.suspendLayout()
+				m.erdView.loading = true
+				m.erdView.err = nil
+				m.PushView(ViewERD)
+				return m, m.erdView.loadERDData()
 			}
 
 		case "ctrl+a":
 			// Global shortcut: open AI Chat from any view/pane
 			if m.dbManager.GetCurrentConnection() != nil && m.mode != ViewChat {
-				if m.useMultiPane() {
-					m.activeLayout = layout.LayoutSingle
-					m.rebuildLayout()
-				}
+				m.suspendLayout()
 				m.PushView(ViewChat)
 				return m, m.chatView.Init()
 			}
 
 		case "tab", "shift+tab":
+			// Let modal views handle Tab themselves (e.g., ERD table cycling)
+			if m.mode == ViewERD {
+				return m.updateERDView(msg)
+			}
 			// Let connection view handle Tab for its own navigation
 			if m.mode == ViewConnection {
 				return m.updateConnectionView(msg)
@@ -330,9 +412,9 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case PageLoadedMsg:
 		return m.updateResultsView(msg)
-	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg:
+	case QueryExecutedMsg, QueryCancelledMsg, QueryTimeoutMsg, AutocompleteDebounceMsg, externalEditorResultMsg:
 		return m.updateEditorView(msg)
-	case tablesLoadedMsg:
+	case tablesLoadedMsg, escConfirmTimeoutMsg:
 		return m.updateBrowserView(msg)
 	case chatResponseMsg, modelsLoadedMsg:
 		return m.updateChatView(msg)
@@ -344,6 +426,12 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateSchemaView(msg)
 	case connectionResultMsg:
 		return m.updateConnectionView(msg)
+	case importResultMsg, importPreviewMsg:
+		return m.updateImportView(msg)
+	case explainResultMsg:
+		return m.updateExplainView(msg)
+	case erdDataLoadedMsg:
+		return m.updateERDView(msg)
 	}
 
 	switch m.mode {
@@ -367,9 +455,57 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateChatView(msg)
 	case ViewSchema:
 		return m.updateSchemaView(msg)
+	case ViewImport:
+		return m.updateImportView(msg)
+	case ViewBookmarks:
+		return m.updateBookmarksView(msg)
+	case ViewJSON:
+		return m.updateJSONViewer(msg)
+	case ViewCmdLog:
+		return m.updateCmdLogView(msg)
+	case ViewExplain:
+		return m.updateExplainView(msg)
+	case ViewERD:
+		return m.updateERDView(msg)
 	}
 
 	return m, nil
+}
+
+func (m *MainModel) updateJSONViewer(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.jsonViewer, cmd = m.jsonViewer.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateCmdLogView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.cmdLogView, cmd = m.cmdLogView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateExplainView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.explainView, cmd = m.explainView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateERDView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.erdView, cmd = m.erdView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateBookmarksView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.bookmarksView, cmd = m.bookmarksView.Update(msg)
+	return m, cmd
+}
+
+func (m *MainModel) updateImportView(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.importView, cmd = m.importView.Update(msg)
+	return m, cmd
 }
 
 func (m *MainModel) View() string {
@@ -418,6 +554,18 @@ func (m *MainModel) View() string {
 			content = m.chatView.View()
 		case ViewSchema:
 			content = m.schemaView.View()
+		case ViewImport:
+			content = m.importView.View()
+		case ViewBookmarks:
+			content = m.bookmarksView.View()
+		case ViewJSON:
+			content = m.jsonViewer.View()
+		case ViewCmdLog:
+			content = m.cmdLogView.View()
+		case ViewExplain:
+			content = m.explainView.View()
+		case ViewERD:
+			content = m.erdView.View()
 		}
 	}
 
@@ -461,7 +609,8 @@ func (m *MainModel) isLoading() bool {
 		m.schemaView.loading ||
 		m.historyView.executing ||
 		m.connectionView.connecting ||
-		m.resultsView.loading
+		m.resultsView.loading ||
+		m.erdView.loading
 }
 
 // renderStatusBar renders the persistent status bar shown when connected.
@@ -476,6 +625,11 @@ func (m *MainModel) renderStatusBar() string {
 	}
 
 	var parts []string
+
+	// Read-only badge (shown first for visibility)
+	if m.config.GetReadOnly() {
+		parts = append(parts, styles.RenderErr("[READ-ONLY]"))
+	}
 
 	// Connection info (always kept)
 	connInfo := fmt.Sprintf("%s@%s/%s", conn.Type, conn.Host, conn.Database)
@@ -511,7 +665,7 @@ func (m *MainModel) renderStatusBar() string {
 // isHelpSafe returns true if it's safe to show help (no active text input)
 func (m *MainModel) isHelpSafe() bool {
 	switch m.mode {
-	case ViewResults, ViewHistory, ViewColumns, ViewSchema:
+	case ViewResults, ViewHistory, ViewColumns, ViewSchema, ViewJSON, ViewBookmarks, ViewCmdLog, ViewExplain, ViewERD:
 		// These views don't have text input
 		return true
 	case ViewBrowser:
@@ -562,6 +716,7 @@ func (m *MainModel) renderHelpOverlay() string {
 		b.WriteString(RenderBindingHelp(
 			Keys.Results.NextPage,
 			Keys.Results.ColLeft,
+			Keys.Results.ViewCell,
 			Keys.Results.Where,
 			Keys.Results.Columns,
 			Keys.Results.Export,
@@ -640,6 +795,28 @@ func (m *MainModel) renderHelpOverlay() string {
 			Keys.ConnectionList.QuitEsc,
 		))
 
+	case ViewBookmarks:
+		b.WriteString(styles.RenderKey("Bookmarks\n\n"))
+		b.WriteString(RenderBindingHelp(
+			Keys.Bookmarks.Up,
+			Keys.Bookmarks.Down,
+			Keys.Bookmarks.Load,
+			Keys.Bookmarks.Save,
+			Keys.Bookmarks.Delete,
+			Keys.Global.Back,
+		))
+
+	case ViewERD:
+		b.WriteString(styles.RenderKey("ER Diagram\n\n"))
+		b.WriteString(RenderBindingHelp(
+			Keys.ERD.NextTable,
+			Keys.ERD.PrevTable,
+			Keys.ERD.ToggleZoom,
+			Keys.ERD.ScrollUp,
+			Keys.ERD.ScrollDown,
+			Keys.Global.Back,
+		))
+
 	default:
 		b.WriteString("No help available for this view\n")
 	}
@@ -656,7 +833,7 @@ func (m *MainModel) handleTabSwitch() (tea.Model, tea.Cmd) {
 	}
 
 	// Define explicit tab order for tabbable views
-	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewHistory, ViewChat}
+	tabOrder := []ViewMode{ViewBrowser, ViewEditor, ViewResults, ViewChat}
 
 	// Find current position in tab order
 	currentIndex := -1
@@ -755,12 +932,16 @@ func (m *MainModel) renderGlobalHelpBar() string {
 		Keys.Global.NextView,
 		Keys.Browser.History,
 		Keys.Browser.AIChat,
+		Keys.Global.CmdLog,
+		Keys.Global.ERDiagram,
+		Keys.Global.Import,
+		Keys.Global.ReadOnly,
 		Keys.Global.CycleLayout,
 		Keys.Global.CycleTheme,
 		Keys.Browser.Disconnect,
 		Keys.Global.Quit,
 	)
-	return " " + RenderBindingHelp(bindings...)
+	return " " + RenderBindingHelpWidth(m.width, bindings...)
 }
 
 // initLayout sets up the initial layout based on terminal width.
@@ -918,9 +1099,27 @@ func (m *MainModel) syncModeFromFocusedPane() {
 	}
 }
 
+// suspendLayout saves the current layout and switches to single-pane for a modal view.
+func (m *MainModel) suspendLayout() {
+	if m.useMultiPane() {
+		m.savedLayout = m.activeLayout
+		m.activeLayout = layout.LayoutSingle
+		m.rebuildLayout()
+	}
+}
+
+// restoreLayout restores the layout saved by suspendLayout.
+func (m *MainModel) restoreLayout() {
+	if m.savedLayout != "" {
+		m.activeLayout = m.savedLayout
+		m.savedLayout = ""
+		m.rebuildLayout()
+	}
+}
+
 func (m *MainModel) renderViewIndicator() string {
-	// Only show main navigable views — modal views (Export, Where, Columns, Schema)
-	// are contextual actions, not top-level tabs.
+	// Only show main navigable views — contextual actions (History, Export,
+	// Where, Columns, etc.) are accessible via shortcuts, not the tab bar.
 	views := []struct {
 		mode ViewMode
 		name string
@@ -929,7 +1128,6 @@ func (m *MainModel) renderViewIndicator() string {
 		{ViewBrowser, "Browser"},
 		{ViewEditor, "Editor"},
 		{ViewResults, "Results"},
-		{ViewHistory, "History"},
 		{ViewChat, "Chat"},
 	}
 
@@ -988,6 +1186,8 @@ func (m *MainModel) PopView() bool {
 	}
 	m.mode = m.viewHistory[len(m.viewHistory)-1]
 	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
+	// Restore multi-pane layout if we're returning to a layout-compatible view
+	m.restoreLayout()
 	return true
 }
 
@@ -1042,6 +1242,19 @@ func (m *MainModel) cycleTheme() (tea.Model, tea.Cmd) {
 		return m, m.SetStatus("Theme: " + next)
 	}
 	return m, nil
+}
+
+// toggleReadOnly flips read-only mode on/off, persists the setting, and shows a status message.
+func (m *MainModel) toggleReadOnly() (tea.Model, tea.Cmd) {
+	newState := !m.config.GetReadOnly()
+	m.config.SetReadOnly(newState)
+	m.config.Save()
+
+	label := "OFF"
+	if newState {
+		label = "ON"
+	}
+	return m, m.SetStatus("Read-only: " + label)
 }
 
 // GetPane returns the Pane for the given ViewMode.

@@ -626,14 +626,15 @@ jobs:
       stage-only: ${{ needs.calculate-version.outputs.stage-only == 'true' }}
     secrets: inherit
 
-  # Step 7: Deploy to npm (after CLI build; does not require GitHub release)
+  # Step 7: Deploy to npm (after CLI build and GitHub release)
   deploy-npm:
     name: Deploy npm
-    needs: [ calculate-version, build-cli ]
+    needs: [ calculate-version, build-cli, create-github-release ]
     if: |
       always() &&
       needs.calculate-version.outputs.deploy-npm == 'true' &&
-      needs.build-cli.result == 'success'
+      needs.build-cli.result == 'success' &&
+      needs.create-github-release.result == 'success'
     uses: ./.github/workflows/_deploy-npm.yml
     with:
       version: ${{ needs.calculate-version.outputs.version }}

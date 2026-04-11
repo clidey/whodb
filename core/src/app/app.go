@@ -95,7 +95,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	for _, p := range engine.RegisteredPlugins() {
 		pluginNames = append(pluginNames, string(p.Type))
 	}
-	log.Alwaysf("  go=%s os=%s arch=%s mode=%s plugins=[%s]",
+	log.Alwaysf("go=%s os=%s arch=%s mode=%s plugins=[%s]",
 		runtime.Version(), runtime.GOOS, runtime.GOARCH, mode, strings.Join(pluginNames, ", "))
 
 	settingsCfg := settings.Get()

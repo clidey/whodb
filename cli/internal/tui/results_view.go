@@ -283,6 +283,18 @@ func (v *ResultsView) Update(msg tea.Msg) (*ResultsView, tea.Cmd) {
 			v.pageSizeInput.Focus()
 			return v, nil
 
+		case key.Matches(msg, Keys.Results.ViewCell):
+			if v.results != nil {
+				pageRows := v.currentPageRows()
+				cursor := v.table.Cursor()
+				if cursor >= 0 && cursor < len(pageRows) {
+					colName, cellValue := v.selectedCell(pageRows, cursor)
+					v.parent.jsonViewer.SetContent(colName, cellValue)
+					v.parent.PushView(ViewJSON)
+					return v, nil
+				}
+			}
+
 		case key.Matches(msg, Keys.Results.Down):
 			// Check if at bottom of current page - auto-paginate to next
 			if v.results != nil {
@@ -398,6 +410,7 @@ func (v *ResultsView) View() string {
 				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
 				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
 				"scroll", "trackpad/mouse",
+				Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
 				Keys.Results.Where.Help().Key, whereLabel,
 				Keys.Results.Columns.Help().Key, columnsLabel,
 				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
@@ -413,6 +426,7 @@ func (v *ResultsView) View() string {
 				Keys.Results.ColLeft.Help().Key, Keys.Results.ColLeft.Help().Desc,
 				Keys.Results.ColRight.Help().Key, Keys.Results.ColRight.Help().Desc,
 				"scroll", "trackpad/mouse",
+				Keys.Results.ViewCell.Help().Key, Keys.Results.ViewCell.Help().Desc,
 				Keys.Results.Export.Help().Key, Keys.Results.Export.Help().Desc,
 				Keys.Results.NextPage.Help().Key, Keys.Results.NextPage.Help().Desc,
 				Keys.Results.PageSize.Help().Key, Keys.Results.PageSize.Help().Desc,
@@ -724,4 +738,44 @@ func (v *ResultsView) paginationString(totalCols, visibleCols, rowCount int) str
 		return fmt.Sprintf("%d rows (%d/%d)", rowCount, page, totalPages)
 	}
 	return fmt.Sprintf("%d rows (pg %d)", rowCount, page)
+}
+
+// selectedCell returns the column name and cell value for the first visible
+// column of the given row. The table cursor selects the row; the first column
+// in the visible window is used since the bubbles table does not track a
+// horizontal cell cursor.
+func (v *ResultsView) selectedCell(pageRows [][]string, cursor int) (string, string) {
+	// Build the same column/index mapping used by updateTable
+	var columnIndices []int
+	var columnsToDisplay []engine.Column
+	if len(v.visibleColumns) > 0 {
+		for _, visibleCol := range v.visibleColumns {
+			for idx, col := range v.results.Columns {
+				if col.Name == visibleCol {
+					columnsToDisplay = append(columnsToDisplay, col)
+					columnIndices = append(columnIndices, idx)
+					break
+				}
+			}
+		}
+	} else {
+		columnsToDisplay = v.results.Columns
+		columnIndices = make([]int, len(columnsToDisplay))
+		for i := range columnIndices {
+			columnIndices[i] = i
+		}
+	}
+
+	if v.columnOffset >= len(columnsToDisplay) {
+		return "", ""
+	}
+
+	col := columnsToDisplay[v.columnOffset]
+	dataIdx := columnIndices[v.columnOffset]
+
+	row := pageRows[cursor]
+	if dataIdx < len(row) {
+		return col.Name, row[dataIdx]
+	}
+	return col.Name, ""
 }

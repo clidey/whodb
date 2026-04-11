@@ -248,7 +248,7 @@ func (v *HistoryView) View() string {
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(RenderBindingHelp(
+	b.WriteString(RenderBindingHelpWidth(v.width,
 		Keys.Browser.Up,
 		Keys.Browser.Down,
 		Keys.History.Edit,

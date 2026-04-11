@@ -24,6 +24,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clidey/whodb/cli/internal/config"
+	"github.com/clidey/whodb/cli/internal/docker"
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -40,6 +41,7 @@ var (
 	schema            string
 	name              string
 	passwordFromStdin bool
+	useDocker         bool
 )
 
 var connectCmd = &cobra.Command{
@@ -74,6 +76,28 @@ Usage modes:
   # SQLite example (no password)
   whodb-cli connect --type sqlite --host ./app.db --database ./app.db --name app-sqlite`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// --docker: detect running database containers and connect to the first match
+		if useDocker {
+			containers := docker.DetectContainers()
+			if len(containers) == 0 {
+				return fmt.Errorf("no running database containers detected (is Docker running?)")
+			}
+			c := containers[0]
+			fmt.Fprintf(os.Stderr, "Detected %d container(s); connecting to %s (%s on port %d)\n", len(containers), c.Name, c.Type, c.Port)
+			conn := config.Connection{
+				Type:     c.Type,
+				Host:     "localhost",
+				Port:     c.Port,
+				Database: database,
+			}
+			m := tui.NewMainModelWithConnection(&conn)
+			p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+			if _, err := p.Run(); err != nil {
+				return fmt.Errorf("error running interactive mode: %w", err)
+			}
+			return nil
+		}
+
 		// If type and database are provided, connect directly.
 		// Username is optional for file-based databases (SQLite, DuckDB) and
 		// some NoSQL databases (Redis, MongoDB).
@@ -177,6 +201,8 @@ func normalizeDBType(dbType string) string {
 		return "MySQL"
 	case "mariadb":
 		return "MariaDB"
+	case "tidb":
+		return "TiDB"
 	case "mongodb":
 		return "MongoDB"
 	case "redis":
@@ -224,4 +250,5 @@ func init() {
 	connectCmd.Flags().StringVar(&schema, "schema", "", "preferred schema (PostgreSQL: schema name; MySQL: not needed; MongoDB: not applicable)")
 	connectCmd.Flags().StringVar(&name, "name", "", "connection name (save for later use)")
 	connectCmd.Flags().BoolVar(&passwordFromStdin, "password", false, "read password from stdin when not using a TTY")
+	connectCmd.Flags().BoolVar(&useDocker, "docker", false, "auto-detect running Docker database containers and connect to the first match")
 }

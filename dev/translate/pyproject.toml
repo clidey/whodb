@@ -1,0 +1,6 @@
+[project]
+name = "translation-tool"
+version = "0.1.0"
+description = "Detects translation drift and auto-translates missing/stale keys"
+requires-python = ">=3.12"
+dependencies = ["pyyaml>=6.0"]

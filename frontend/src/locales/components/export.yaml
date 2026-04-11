@@ -28,1135 +28,1135 @@ en_US:
   jsonDetails: Preserves nested fields without flattening
 
 ar_AE:
-  title: تصدير البيانات
+  title: "تصدير البيانات"
   selectedRows: "أنت على وشك تصدير {count} من الصفوف المحددة."
   selectedRows_one: "أنت على وشك تصدير {count} الصف المحدد."
-  allData: أنت على وشك تصدير كافة البيانات من الجدول. قد يستغرق هذا بعض الوقت بالنسبة للطاولات الكبيرة.
-  allDataRawQuery: أنت على وشك تصدير نتائج الاستعلام الخاص بك.
-  format: شكل
-  delimiter: محدد
-  delimiterHelp: اختر محددًا لا يظهر في بياناتك
-  cancel: يلغي
-  export: يصدّر
-  exportFailed: فشل التصدير
+  allData: "أنت على وشك تصدير كافة البيانات من الجدول. قد يستغرق هذا بعض الوقت بالنسبة للطاولات الكبيرة."
+  allDataRawQuery: "أنت على وشك تصدير نتائج الاستعلام الخاص بك."
+  format: "شكل"
+  delimiter: "محدد"
+  delimiterHelp: "اختر محددًا لا يظهر في بياناتك"
+  cancel: "يلغي"
+  export: "يصدّر"
+  exportFailed: "فشل التصدير"
   exportDetailsTitle: "تفاصيل التصدير:"
-  csvHeaders: تتضمن الرؤوس أسماء الأعمدة
-  csvEncoding: ترميز UTF-8
-  csvDelimiter: محدد قابل للتخصيص
-  excelFormat: تنسيق إكسل XLSX
-  excelHeaders: رؤوس منسقة مع التصميم
-  excelColumns: أعمدة ذات حجم تلقائي
-  formatCsv: CSV - القيم المفصولة بفواصل
-  formatExcel: إكسل - تنسيق XLSX
-  formatJson: JSON (NDJSON) - سطر لكل سجل
-  delimiterComma: الفاصلة (،) - ملف CSV القياسي
-  delimiterSemicolon: الفاصلة المنقوطة (;) - Excel في بعض اللغات
-  delimiterPipe: الأنبوب (|) - أقل شيوعًا في البيانات
-  jsonLineDelimited: JSON مفصولة بأسطر (مستند واحد لكل صف)
-  jsonEncoding: ترميز UTF-8
-  jsonDetails: يحافظ على الحقول المتداخلة دون التسوية
+  csvHeaders: "تتضمن الرؤوس أسماء الأعمدة"
+  csvEncoding: "ترميز UTF-8"
+  csvDelimiter: "محدد قابل للتخصيص"
+  excelFormat: "تنسيق إكسل XLSX"
+  excelHeaders: "رؤوس منسقة مع التصميم"
+  excelColumns: "أعمدة ذات حجم تلقائي"
+  formatCsv: "CSV - القيم المفصولة بفواصل"
+  formatExcel: "إكسل - تنسيق XLSX"
+  formatJson: "JSON (NDJSON) - سطر لكل سجل"
+  delimiterComma: "الفاصلة (،) - ملف CSV القياسي"
+  delimiterSemicolon: "الفاصلة المنقوطة (;) - Excel في بعض اللغات"
+  delimiterPipe: "الأنبوب (|) - أقل شيوعًا في البيانات"
+  jsonLineDelimited: "JSON مفصولة بأسطر (مستند واحد لكل صف)"
+  jsonEncoding: "ترميز UTF-8"
+  jsonDetails: "يحافظ على الحقول المتداخلة دون التسوية"
 
 de_DE:
-  title: Daten exportieren
+  title: "Daten exportieren"
   selectedRows: "Sie sind dabei, {count} ausgewählte Zeilen zu exportieren."
   selectedRows_one: "Sie sind dabei, die ausgewählte Zeile {count} zu exportieren."
-  allData: Sie sind dabei, alle Daten aus der Tabelle zu exportieren. Bei großen Tabellen kann dies einige Zeit dauern.
-  allDataRawQuery: Sie sind dabei, die Ergebnisse Ihrer Abfrage zu exportieren.
-  format: Format
-  delimiter: Trennzeichen
-  delimiterHelp: Wählen Sie ein Trennzeichen, das nicht in Ihren Daten erscheint
-  cancel: Stornieren
-  export: Export
-  exportFailed: Export fehlgeschlagen
+  allData: "Sie sind dabei, alle Daten aus der Tabelle zu exportieren. Bei großen Tabellen kann dies einige Zeit dauern."
+  allDataRawQuery: "Sie sind dabei, die Ergebnisse Ihrer Abfrage zu exportieren."
+  format: "Format"
+  delimiter: "Trennzeichen"
+  delimiterHelp: "Wählen Sie ein Trennzeichen, das nicht in Ihren Daten erscheint"
+  cancel: "Stornieren"
+  export: "Export"
+  exportFailed: "Export fehlgeschlagen"
   exportDetailsTitle: "Exportdetails:"
-  csvHeaders: Überschriften enthalten Spaltennamen
-  csvEncoding: UTF-8-Kodierung
-  csvDelimiter: Anpassbares Trennzeichen
-  excelFormat: Excel XLSX-Format
-  excelHeaders: Formatierte Header mit Styling
-  excelColumns: Automatisch angepasste Spalten
-  formatCsv: CSV – durch Kommas getrennte Werte
-  formatExcel: Excel - XLSX-Format
-  formatJson: JSON (NDJSON) – Zeile pro Datensatz
-  delimiterComma: Komma (,) – Standard-CSV
-  delimiterSemicolon: Semikolon (;) – Excel in einigen Regionen
-  delimiterPipe: Pipe (|) – In Daten seltener
-  jsonLineDelimited: Zeilengetrenntes JSON (ein Dokument pro Zeile)
-  jsonEncoding: UTF-8-Kodierung
-  jsonDetails: Behält verschachtelte Felder bei, ohne sie zu reduzieren
+  csvHeaders: "Überschriften enthalten Spaltennamen"
+  csvEncoding: "UTF-8-Kodierung"
+  csvDelimiter: "Anpassbares Trennzeichen"
+  excelFormat: "Excel XLSX-Format"
+  excelHeaders: "Formatierte Header mit Styling"
+  excelColumns: "Automatisch angepasste Spalten"
+  formatCsv: "CSV – durch Kommas getrennte Werte"
+  formatExcel: "Excel - XLSX-Format"
+  formatJson: "JSON (NDJSON) – Zeile pro Datensatz"
+  delimiterComma: "Komma (,) – Standard-CSV"
+  delimiterSemicolon: "Semikolon (;) – Excel in einigen Regionen"
+  delimiterPipe: "Pipe (|) – In Daten seltener"
+  jsonLineDelimited: "Zeilengetrenntes JSON (ein Dokument pro Zeile)"
+  jsonEncoding: "UTF-8-Kodierung"
+  jsonDetails: "Behält verschachtelte Felder bei, ohne sie zu reduzieren"
 
 el_GR:
-  title: Εξαγωγή δεδομένων
+  title: "Εξαγωγή δεδομένων"
   selectedRows: "Πρόκειται να εξαγάγετε {count} επιλεγμένες σειρές."
   selectedRows_one: "Πρόκειται να εξαγάγετε {count} επιλεγμένη σειρά."
-  allData: Πρόκειται να εξαγάγετε όλα τα δεδομένα από τον πίνακα. Αυτό μπορεί να πάρει λίγο χρόνο για μεγάλα τραπέζια.
-  allDataRawQuery: Πρόκειται να εξαγάγετε τα αποτελέσματα του ερώτημά σας.
-  format: Σχήμα και διάταξις βιβλίου
-  delimiter: Οριοθέτης
-  delimiterHelp: Επιλέξτε έναν οριοθέτη που δεν εμφανίζεται στα δεδομένα σας
-  cancel: Ματαίωση
-  export: Εξαγωγή
-  exportFailed: Η εξαγωγή απέτυχε
+  allData: "Πρόκειται να εξαγάγετε όλα τα δεδομένα από τον πίνακα. Αυτό μπορεί να πάρει λίγο χρόνο για μεγάλα τραπέζια."
+  allDataRawQuery: "Πρόκειται να εξαγάγετε τα αποτελέσματα του ερώτημά σας."
+  format: "Σχήμα και διάταξις βιβλίου"
+  delimiter: "Οριοθέτης"
+  delimiterHelp: "Επιλέξτε έναν οριοθέτη που δεν εμφανίζεται στα δεδομένα σας"
+  cancel: "Ματαίωση"
+  export: "Εξαγωγή"
+  exportFailed: "Η εξαγωγή απέτυχε"
   exportDetailsTitle: "Λεπτομέρειες εξαγωγής:"
-  csvHeaders: Οι κεφαλίδες περιλαμβάνουν ονόματα στηλών
-  csvEncoding: Κωδικοποίηση UTF-8
-  csvDelimiter: Προσαρμόσιμος οριοθέτης
-  excelFormat: Μορφή Excel XLSX
-  excelHeaders: Μορφοποιημένες κεφαλίδες με στυλ
-  excelColumns: Στήλες αυτόματου μεγέθους
-  formatCsv: CSV - Τιμές διαχωρισμένες με κόμμα
-  formatExcel: Μορφή Excel - XLSX
-  formatJson: JSON (NDJSON) - Γραμμή ανά εγγραφή
-  delimiterComma: Κόμμα (,) - Τυπικό CSV
-  delimiterSemicolon: Ερωτηματικό (;) - Excel σε ορισμένες τοπικές ρυθμίσεις
-  delimiterPipe: Pipe (|) - Λιγότερο συνηθισμένο στα δεδομένα
-  jsonLineDelimited: JSON οριοθετημένης γραμμής (ένα έγγραφο ανά σειρά)
-  jsonEncoding: Κωδικοποίηση UTF-8
-  jsonDetails: Διατηρεί ένθετα χωράφια χωρίς ισοπέδωση
+  csvHeaders: "Οι κεφαλίδες περιλαμβάνουν ονόματα στηλών"
+  csvEncoding: "Κωδικοποίηση UTF-8"
+  csvDelimiter: "Προσαρμόσιμος οριοθέτης"
+  excelFormat: "Μορφή Excel XLSX"
+  excelHeaders: "Μορφοποιημένες κεφαλίδες με στυλ"
+  excelColumns: "Στήλες αυτόματου μεγέθους"
+  formatCsv: "CSV - Τιμές διαχωρισμένες με κόμμα"
+  formatExcel: "Μορφή Excel - XLSX"
+  formatJson: "JSON (NDJSON) - Γραμμή ανά εγγραφή"
+  delimiterComma: "Κόμμα (,) - Τυπικό CSV"
+  delimiterSemicolon: "Ερωτηματικό (;) - Excel σε ορισμένες τοπικές ρυθμίσεις"
+  delimiterPipe: "Pipe (|) - Λιγότερο συνηθισμένο στα δεδομένα"
+  jsonLineDelimited: "JSON οριοθετημένης γραμμής (ένα έγγραφο ανά σειρά)"
+  jsonEncoding: "Κωδικοποίηση UTF-8"
+  jsonDetails: "Διατηρεί ένθετα χωράφια χωρίς ισοπέδωση"
 
 en_GB:
-  title: Export Data
+  title: "Export Data"
   selectedRows: "You are about to export {count} selected rows."
   selectedRows_one: "You are about to export {count} selected row."
-  allData: You are about to export all data from the table. This may take some time for large tables.
-  allDataRawQuery: You are about to export the results of your query.
-  format: Format
-  delimiter: Delimiter
-  delimiterHelp: Choose a delimiter that doesn't appear in your data
-  cancel: Cancel
-  export: Export
-  exportFailed: Export Failed
+  allData: "You are about to export all data from the table. This may take some time for large tables."
+  allDataRawQuery: "You are about to export the results of your query."
+  format: "Format"
+  delimiter: "Delimiter"
+  delimiterHelp: "Choose a delimiter that doesn't appear in your data"
+  cancel: "Cancel"
+  export: "Export"
+  exportFailed: "Export Failed"
   exportDetailsTitle: "Export Details:"
-  csvHeaders: Headers Include Column Names
-  csvEncoding: UTF-8 Encoding
-  csvDelimiter: Customizable Delimiter
-  excelFormat: Excel XLSX Format
-  excelHeaders: Formatted Headers with Styling
-  excelColumns: Auto-Sized Columns
-  formatCsv: CSV - Comma Separated Values
-  formatExcel: Excel - XLSX Format
-  formatJson: JSON (NDJSON) - Line per record
-  delimiterComma: Comma (,) - Standard CSV
-  delimiterSemicolon: Semicolon (;) - Excel in some locales
-  delimiterPipe: Pipe (|) - Less common in data
-  jsonLineDelimited: Line-delimited JSON (one document per row)
-  jsonEncoding: UTF-8 Encoding
-  jsonDetails: Preserves nested fields without flattening
+  csvHeaders: "Headers Include Column Names"
+  csvEncoding: "UTF-8 Encoding"
+  csvDelimiter: "Customizable Delimiter"
+  excelFormat: "Excel XLSX Format"
+  excelHeaders: "Formatted Headers with Styling"
+  excelColumns: "Auto-Sized Columns"
+  formatCsv: "CSV - Comma Separated Values"
+  formatExcel: "Excel - XLSX Format"
+  formatJson: "JSON (NDJSON) - Line per record"
+  delimiterComma: "Comma (,) - Standard CSV"
+  delimiterSemicolon: "Semicolon (;) - Excel in some locales"
+  delimiterPipe: "Pipe (|) - Less common in data"
+  jsonLineDelimited: "Line-delimited JSON (one document per row)"
+  jsonEncoding: "UTF-8 Encoding"
+  jsonDetails: "Preserves nested fields without flattening"
 
 es_ES:
-  title: Exportar datos
+  title: "Exportar datos"
   selectedRows: "Está a punto de exportar {count} filas seleccionadas."
   selectedRows_one: "Está a punto de exportar {count} fila seleccionada."
-  allData: Está a punto de exportar todos los datos de la tabla. Esto puede llevar algún tiempo en el caso de mesas grandes.
-  allDataRawQuery: Está a punto de exportar los resultados de su consulta.
-  format: Formato
-  delimiter: Delimitador
-  delimiterHelp: Elige un delimitador que no aparezca en tus datos
-  cancel: Cancelar
-  export: Exportar
-  exportFailed: Exportación fallida
+  allData: "Está a punto de exportar todos los datos de la tabla. Esto puede llevar algún tiempo en el caso de mesas grandes."
+  allDataRawQuery: "Está a punto de exportar los resultados de su consulta."
+  format: "Formato"
+  delimiter: "Delimitador"
+  delimiterHelp: "Elige un delimitador que no aparezca en tus datos"
+  cancel: "Cancelar"
+  export: "Exportar"
+  exportFailed: "Exportación fallida"
   exportDetailsTitle: "Detalles de exportación:"
-  csvHeaders: Los encabezados incluyen nombres de columnas
-  csvEncoding: Codificación UTF-8
-  csvDelimiter: Delimitador personalizable
-  excelFormat: Formato XLSX de Excel
-  excelHeaders: Encabezados formateados con estilo
-  excelColumns: Columnas de tamaño automático
+  csvHeaders: "Los encabezados incluyen nombres de columnas"
+  csvEncoding: "Codificación UTF-8"
+  csvDelimiter: "Delimitador personalizable"
+  excelFormat: "Formato XLSX de Excel"
+  excelHeaders: "Encabezados formateados con estilo"
+  excelColumns: "Columnas de tamaño automático"
   formatCsv: "CSV: valores separados por comas"
-  formatExcel: Excel - Formato XLSX
+  formatExcel: "Excel - Formato XLSX"
   formatJson: "JSON (NDJSON): línea por registro"
-  delimiterComma: Coma (,) - CSV estándar
-  delimiterSemicolon: Punto y coma (;) - Excel en algunas configuraciones regionales
+  delimiterComma: "Coma (,) - CSV estándar"
+  delimiterSemicolon: "Punto y coma (;) - Excel en algunas configuraciones regionales"
   delimiterPipe: "Tubería (|): menos común en datos"
-  jsonLineDelimited: JSON delimitado por líneas (un documento por fila)
-  jsonEncoding: Codificación UTF-8
-  jsonDetails: Conserva los campos anidados sin aplanarse
+  jsonLineDelimited: "JSON delimitado por líneas (un documento por fila)"
+  jsonEncoding: "Codificación UTF-8"
+  jsonDetails: "Conserva los campos anidados sin aplanarse"
 
 fi_FI:
-  title: Vie tiedot
+  title: "Vie tiedot"
   selectedRows: "Olet viemässä {count} valittua riviä."
   selectedRows_one: "Olet viemässä {count} valitun rivin."
-  allData: Olet viemässä kaikki tiedot taulukosta. Tämä voi kestää jonkin aikaa suurilla pöydillä.
-  allDataRawQuery: Olet viemässä kyselysi tuloksia.
-  format: Muoto
-  delimiter: Erotin
-  delimiterHelp: Valitse erotin, joka ei näy tiedoissasi
-  cancel: Peruuttaa
-  export: Viedä
-  exportFailed: Vienti epäonnistui
+  allData: "Olet viemässä kaikki tiedot taulukosta. Tämä voi kestää jonkin aikaa suurilla pöydillä."
+  allDataRawQuery: "Olet viemässä kyselysi tuloksia."
+  format: "Muoto"
+  delimiter: "Erotin"
+  delimiterHelp: "Valitse erotin, joka ei näy tiedoissasi"
+  cancel: "Peruuttaa"
+  export: "Viedä"
+  exportFailed: "Vienti epäonnistui"
   exportDetailsTitle: "Vie tiedot:"
-  csvHeaders: Otsikoissa on sarakkeiden nimet
-  csvEncoding: UTF-8-koodaus
-  csvDelimiter: Mukautettava erotin
-  excelFormat: Excel XLSX -muoto
-  excelHeaders: Muotoillut otsikot tyylillä
-  excelColumns: Automaattisen kokoiset sarakkeet
-  formatCsv: CSV - Pilkuilla erotetut arvot
-  formatExcel: Excel - XLSX-muoto
-  formatJson: JSON (NDJSON) - Rivi tietueita kohti
-  delimiterComma: Pilkku (,) – tavallinen CSV
-  delimiterSemicolon: Puolipiste (;) - Excel joillakin kielillä
-  delimiterPipe: Putki (|) - Harvemmin tiedoissa
-  jsonLineDelimited: Rivieroteltu JSON (yksi asiakirja riviä kohden)
-  jsonEncoding: UTF-8-koodaus
-  jsonDetails: Säilyttää sisäkkäiset kentät litistämättä
+  csvHeaders: "Otsikoissa on sarakkeiden nimet"
+  csvEncoding: "UTF-8-koodaus"
+  csvDelimiter: "Mukautettava erotin"
+  excelFormat: "Excel XLSX -muoto"
+  excelHeaders: "Muotoillut otsikot tyylillä"
+  excelColumns: "Automaattisen kokoiset sarakkeet"
+  formatCsv: "CSV - Pilkuilla erotetut arvot"
+  formatExcel: "Excel - XLSX-muoto"
+  formatJson: "JSON (NDJSON) - Rivi tietueita kohti"
+  delimiterComma: "Pilkku (,) – tavallinen CSV"
+  delimiterSemicolon: "Puolipiste (;) - Excel joillakin kielillä"
+  delimiterPipe: "Putki (|) - Harvemmin tiedoissa"
+  jsonLineDelimited: "Rivieroteltu JSON (yksi asiakirja riviä kohden)"
+  jsonEncoding: "UTF-8-koodaus"
+  jsonDetails: "Säilyttää sisäkkäiset kentät litistämättä"
 
 fr_FR:
-  title: Exporter des données
+  title: "Exporter des données"
   selectedRows: "Vous êtes sur le point d'exporter {count} lignes sélectionnées."
   selectedRows_one: "Vous êtes sur le point d'exporter {count} ligne sélectionnée."
-  allData: Vous êtes sur le point d'exporter toutes les données de la table. Cela peut prendre un certain temps pour les grandes tables.
-  allDataRawQuery: Vous êtes sur le point d'exporter les résultats de votre requête.
-  format: Format
-  delimiter: Délimiteur
-  delimiterHelp: Choisissez un délimiteur qui n'apparaît pas dans vos données
-  cancel: Annuler
-  export: Exporter
-  exportFailed: Échec de l'exportation
+  allData: "Vous êtes sur le point d'exporter toutes les données de la table. Cela peut prendre un certain temps pour les grandes tables."
+  allDataRawQuery: "Vous êtes sur le point d'exporter les résultats de votre requête."
+  format: "Format"
+  delimiter: "Délimiteur"
+  delimiterHelp: "Choisissez un délimiteur qui n'apparaît pas dans vos données"
+  cancel: "Annuler"
+  export: "Exporter"
+  exportFailed: "Échec de l'exportation"
   exportDetailsTitle: "Détails de l'exportation :"
-  csvHeaders: Les en-têtes incluent les noms de colonnes
-  csvEncoding: Encodage UTF-8
-  csvDelimiter: Délimiteur personnalisable
-  excelFormat: Format Excel XLSX
-  excelHeaders: En-têtes formatés avec style
-  excelColumns: Colonnes dimensionnées automatiquement
-  formatCsv: CSV – Valeurs séparées par des virgules
-  formatExcel: Excel-Format XLSX
-  formatJson: JSON (NDJSON) - Ligne par enregistrement
-  delimiterComma: Virgule (,) - CSV standard
-  delimiterSemicolon: Point-virgule (;) – Excel dans certaines régions
-  delimiterPipe: Pipe (|) - Moins courant dans les données
-  jsonLineDelimited: JSON délimité par des lignes (un document par ligne)
-  jsonEncoding: Encodage UTF-8
-  jsonDetails: Préserve les champs imbriqués sans les aplatir
+  csvHeaders: "Les en-têtes incluent les noms de colonnes"
+  csvEncoding: "Encodage UTF-8"
+  csvDelimiter: "Délimiteur personnalisable"
+  excelFormat: "Format Excel XLSX"
+  excelHeaders: "En-têtes formatés avec style"
+  excelColumns: "Colonnes dimensionnées automatiquement"
+  formatCsv: "CSV – Valeurs séparées par des virgules"
+  formatExcel: "Excel-Format XLSX"
+  formatJson: "JSON (NDJSON) - Ligne par enregistrement"
+  delimiterComma: "Virgule (,) - CSV standard"
+  delimiterSemicolon: "Point-virgule (;) – Excel dans certaines régions"
+  delimiterPipe: "Pipe (|) - Moins courant dans les données"
+  jsonLineDelimited: "JSON délimité par des lignes (un document par ligne)"
+  jsonEncoding: "Encodage UTF-8"
+  jsonDetails: "Préserve les champs imbriqués sans les aplatir"
 
 it_IT:
-  title: Esporta dati
+  title: "Esporta dati"
   selectedRows: "Stai per esportare le {count} righe selezionate."
   selectedRows_one: "Stai per esportare la {count} riga selezionata."
-  allData: Stai per esportare tutti i dati dalla tabella. Questa operazione potrebbe richiedere del tempo per le tabelle di grandi dimensioni.
-  allDataRawQuery: Stai per esportare i risultati della tua query.
-  format: Formato
-  delimiter: Delimitatore
-  delimiterHelp: Scegli un delimitatore che non venga visualizzato nei tuoi dati
-  cancel: Cancellare
-  export: Esportare
-  exportFailed: Esportazione non riuscita
+  allData: "Stai per esportare tutti i dati dalla tabella. Questa operazione potrebbe richiedere del tempo per le tabelle di grandi dimensioni."
+  allDataRawQuery: "Stai per esportare i risultati della tua query."
+  format: "Formato"
+  delimiter: "Delimitatore"
+  delimiterHelp: "Scegli un delimitatore che non venga visualizzato nei tuoi dati"
+  cancel: "Cancellare"
+  export: "Esportare"
+  exportFailed: "Esportazione non riuscita"
   exportDetailsTitle: "Dettagli dell'esportazione:"
-  csvHeaders: Le intestazioni includono i nomi delle colonne
-  csvEncoding: Codifica UTF-8
-  csvDelimiter: Delimitatore personalizzabile
-  excelFormat: Formato Excel XLSX
-  excelHeaders: Intestazioni formattate con stile
-  excelColumns: Colonne con ridimensionamento automatico
-  formatCsv: CSV - Valori separati da virgole
+  csvHeaders: "Le intestazioni includono i nomi delle colonne"
+  csvEncoding: "Codifica UTF-8"
+  csvDelimiter: "Delimitatore personalizzabile"
+  excelFormat: "Formato Excel XLSX"
+  excelHeaders: "Intestazioni formattate con stile"
+  excelColumns: "Colonne con ridimensionamento automatico"
+  formatCsv: "CSV - Valori separati da virgole"
   formatExcel: "Excel: formato XLSX"
-  formatJson: JSON (NDJSON) - Riga per record
-  delimiterComma: Virgola (,) - CSV standard
+  formatJson: "JSON (NDJSON) - Riga per record"
+  delimiterComma: "Virgola (,) - CSV standard"
   delimiterSemicolon: "Punto e virgola (;): Excel in alcune versioni locali"
-  delimiterPipe: Pipe (|) - Meno comune nei dati
-  jsonLineDelimited: JSON delimitato da righe (un documento per riga)
-  jsonEncoding: Codifica UTF-8
-  jsonDetails: Conserva i campi nidificati senza appiattirli
+  delimiterPipe: "Pipe (|) - Meno comune nei dati"
+  jsonLineDelimited: "JSON delimitato da righe (un documento per riga)"
+  jsonEncoding: "Codifica UTF-8"
+  jsonDetails: "Conserva i campi nidificati senza appiattirli"
 
 iw_IL:
-  title: ייצוא נתונים
+  title: "ייצוא נתונים"
   selectedRows: "אתה עומד לייצא {count} שורות נבחרות."
   selectedRows_one: "אתה עומד לייצא את השורה שנבחרה {count}."
-  allData: אתה עומד לייצא את כל הנתונים מהטבלה. זה עשוי לקחת קצת זמן עבור שולחנות גדולים.
-  allDataRawQuery: אתה עומד לייצא את תוצאות השאילתה שלך.
-  format: פוּרמָט
-  delimiter: תוחם
-  delimiterHelp: בחר מפריד שלא מופיע בנתונים שלך
-  cancel: לְבַטֵל
-  export: יְצוּא
-  exportFailed: הייצוא נכשל
+  allData: "אתה עומד לייצא את כל הנתונים מהטבלה. זה עשוי לקחת קצת זמן עבור שולחנות גדולים."
+  allDataRawQuery: "אתה עומד לייצא את תוצאות השאילתה שלך."
+  format: "פוּרמָט"
+  delimiter: "תוחם"
+  delimiterHelp: "בחר מפריד שלא מופיע בנתונים שלך"
+  cancel: "לְבַטֵל"
+  export: "יְצוּא"
+  exportFailed: "הייצוא נכשל"
   exportDetailsTitle: "פרטי ייצוא:"
-  csvHeaders: כותרות כוללות שמות עמודות
-  csvEncoding: קידוד UTF-8
-  csvDelimiter: מפריד הניתן להתאמה אישית
-  excelFormat: פורמט Excel XLSX
-  excelHeaders: כותרות מעוצבות עם סטיילינג
-  excelColumns: עמודות בגודל אוטומטי
-  formatCsv: CSV - ערכים מופרדים בפסיקים
-  formatExcel: Excel - פורמט XLSX
-  formatJson: JSON (NDJSON) - שורה לכל רשומה
-  delimiterComma: פסיק (,) - CSV רגיל
-  delimiterSemicolon: נקודה-פסיק (;) - אקסל באזורים מסוימים
-  delimiterPipe: צינור (|) - פחות נפוץ בנתונים
-  jsonLineDelimited: JSON מופרד בשורה (מסמך אחד בכל שורה)
-  jsonEncoding: קידוד UTF-8
-  jsonDetails: שומר על שדות מקוננים ללא שיטוח
+  csvHeaders: "כותרות כוללות שמות עמודות"
+  csvEncoding: "קידוד UTF-8"
+  csvDelimiter: "מפריד הניתן להתאמה אישית"
+  excelFormat: "פורמט Excel XLSX"
+  excelHeaders: "כותרות מעוצבות עם סטיילינג"
+  excelColumns: "עמודות בגודל אוטומטי"
+  formatCsv: "CSV - ערכים מופרדים בפסיקים"
+  formatExcel: "Excel - פורמט XLSX"
+  formatJson: "JSON (NDJSON) - שורה לכל רשומה"
+  delimiterComma: "פסיק (,) - CSV רגיל"
+  delimiterSemicolon: "נקודה-פסיק (;) - אקסל באזורים מסוימים"
+  delimiterPipe: "צינור (|) - פחות נפוץ בנתונים"
+  jsonLineDelimited: "JSON מופרד בשורה (מסמך אחד בכל שורה)"
+  jsonEncoding: "קידוד UTF-8"
+  jsonDetails: "שומר על שדות מקוננים ללא שיטוח"
 
 ja_JP:
-  title: データのエクスポート
+  title: "データのエクスポート"
   selectedRows: "選択した {count} 行をエクスポートしようとしています。"
   selectedRows_one: "選択した行 {count} をエクスポートしようとしています。"
-  allData: テーブルからすべてのデータをエクスポートしようとしています。 テーブルが大きい場合、これには時間がかかる場合があります。
-  allDataRawQuery: クエリの結果をエクスポートしようとしています。
-  format: 形式
-  delimiter: デリミタ
-  delimiterHelp: データに表示されない区切り文字を選択してください
-  cancel: キャンセル
-  export: 輸出
-  exportFailed: エクスポートに失敗しました
+  allData: "テーブルからすべてのデータをエクスポートしようとしています。 テーブルが大きい場合、これには時間がかかる場合があります。"
+  allDataRawQuery: "クエリの結果をエクスポートしようとしています。"
+  format: "形式"
+  delimiter: "デリミタ"
+  delimiterHelp: "データに表示されない区切り文字を選択してください"
+  cancel: "キャンセル"
+  export: "輸出"
+  exportFailed: "エクスポートに失敗しました"
   exportDetailsTitle: "エクスポートの詳細:"
-  csvHeaders: ヘッダーには列名が含まれます
-  csvEncoding: UTF-8エンコーディング
-  csvDelimiter: カスタマイズ可能な区切り文字
-  excelFormat: Excel XLSX形式
-  excelHeaders: スタイルを設定したフォーマット済みヘッダー
-  excelColumns: 自動サイズ調整された列
-  formatCsv: CSV - カンマ区切り値
-  formatExcel: Excel - XLSX 形式
-  formatJson: JSON (NDJSON) - レコードごとの行
-  delimiterComma: カンマ (,) - 標準 CSV
-  delimiterSemicolon: セミコロン (;) - 一部のロケールでは Excel
-  delimiterPipe: パイプ (|) - データではあまり一般的ではありません
-  jsonLineDelimited: 行区切りの JSON (1 行に 1 つのドキュメント)
-  jsonEncoding: UTF-8エンコーディング
-  jsonDetails: ネストされたフィールドを平坦化せずに保持します
+  csvHeaders: "ヘッダーには列名が含まれます"
+  csvEncoding: "UTF-8エンコーディング"
+  csvDelimiter: "カスタマイズ可能な区切り文字"
+  excelFormat: "Excel XLSX形式"
+  excelHeaders: "スタイルを設定したフォーマット済みヘッダー"
+  excelColumns: "自動サイズ調整された列"
+  formatCsv: "CSV - カンマ区切り値"
+  formatExcel: "Excel - XLSX 形式"
+  formatJson: "JSON (NDJSON) - レコードごとの行"
+  delimiterComma: "カンマ (,) - 標準 CSV"
+  delimiterSemicolon: "セミコロン (;) - 一部のロケールでは Excel"
+  delimiterPipe: "パイプ (|) - データではあまり一般的ではありません"
+  jsonLineDelimited: "行区切りの JSON (1 行に 1 つのドキュメント)"
+  jsonEncoding: "UTF-8エンコーディング"
+  jsonDetails: "ネストされたフィールドを平坦化せずに保持します"
 
 ko_KR:
-  title: 데이터 내보내기
+  title: "데이터 내보내기"
   selectedRows: "선택한 행 {count}개를 내보내려고 합니다."
   selectedRows_one: "{count} 선택한 행을 내보내려고 합니다."
-  allData: 테이블의 모든 데이터를 내보내려고 합니다. 큰 테이블의 경우 시간이 다소 걸릴 수 있습니다.
-  allDataRawQuery: 쿼리 결과를 내보내려고 합니다.
-  format: 체재
-  delimiter: 구분 기호
-  delimiterHelp: 데이터에 표시되지 않는 구분 기호를 선택하세요.
-  cancel: 취소
-  export: 내보내다
-  exportFailed: 내보내기 실패
+  allData: "테이블의 모든 데이터를 내보내려고 합니다. 큰 테이블의 경우 시간이 다소 걸릴 수 있습니다."
+  allDataRawQuery: "쿼리 결과를 내보내려고 합니다."
+  format: "체재"
+  delimiter: "구분 기호"
+  delimiterHelp: "데이터에 표시되지 않는 구분 기호를 선택하세요."
+  cancel: "취소"
+  export: "내보내다"
+  exportFailed: "내보내기 실패"
   exportDetailsTitle: "내보내기 세부정보:"
-  csvHeaders: 헤더에는 열 이름이 포함됩니다.
-  csvEncoding: UTF-8 인코딩
-  csvDelimiter: 사용자 정의 가능한 구분 기호
-  excelFormat: 엑셀 XLSX 형식
-  excelHeaders: 스타일이 적용된 형식화된 헤더
-  excelColumns: 자동 크기 열
-  formatCsv: CSV - 쉼표로 구분된 값
-  formatExcel: 엑셀 - XLSX 형식
-  formatJson: JSON(NDJSON) - 레코드당 줄
-  delimiterComma: 쉼표(,) - 표준 CSV
-  delimiterSemicolon: 세미콜론(;) - 일부 로캘에서는 Excel
-  delimiterPipe: 파이프(|) - 데이터에서는 덜 일반적입니다.
-  jsonLineDelimited: 줄로 구분된 JSON(행당 하나의 문서)
-  jsonEncoding: UTF-8 인코딩
-  jsonDetails: 병합하지 않고 중첩된 필드를 유지합니다.
+  csvHeaders: "헤더에는 열 이름이 포함됩니다."
+  csvEncoding: "UTF-8 인코딩"
+  csvDelimiter: "사용자 정의 가능한 구분 기호"
+  excelFormat: "엑셀 XLSX 형식"
+  excelHeaders: "스타일이 적용된 형식화된 헤더"
+  excelColumns: "자동 크기 열"
+  formatCsv: "CSV - 쉼표로 구분된 값"
+  formatExcel: "엑셀 - XLSX 형식"
+  formatJson: "JSON(NDJSON) - 레코드당 줄"
+  delimiterComma: "쉼표(,) - 표준 CSV"
+  delimiterSemicolon: "세미콜론(;) - 일부 로캘에서는 Excel"
+  delimiterPipe: "파이프(|) - 데이터에서는 덜 일반적입니다."
+  jsonLineDelimited: "줄로 구분된 JSON(행당 하나의 문서)"
+  jsonEncoding: "UTF-8 인코딩"
+  jsonDetails: "병합하지 않고 중첩된 필드를 유지합니다."
 
 nl_NL:
-  title: Gegevens exporteren
+  title: "Gegevens exporteren"
   selectedRows: "U staat op het punt {count} geselecteerde rijen te exporteren."
   selectedRows_one: "U staat op het punt de geselecteerde rij {count} te exporteren."
-  allData: U staat op het punt alle gegevens uit de tabel te exporteren. Bij grote tafels kan dit enige tijd duren.
-  allDataRawQuery: U staat op het punt de resultaten van uw zoekopdracht te exporteren.
-  format: Formaat
-  delimiter: Scheidingsteken
-  delimiterHelp: Kies een scheidingsteken dat niet in uw gegevens voorkomt
-  cancel: Annuleren
-  export: Exporteren
-  exportFailed: Exporteren mislukt
+  allData: "U staat op het punt alle gegevens uit de tabel te exporteren. Bij grote tafels kan dit enige tijd duren."
+  allDataRawQuery: "U staat op het punt de resultaten van uw zoekopdracht te exporteren."
+  format: "Formaat"
+  delimiter: "Scheidingsteken"
+  delimiterHelp: "Kies een scheidingsteken dat niet in uw gegevens voorkomt"
+  cancel: "Annuleren"
+  export: "Exporteren"
+  exportFailed: "Exporteren mislukt"
   exportDetailsTitle: "Exportdetails:"
-  csvHeaders: Kopteksten bevatten kolomnamen
-  csvEncoding: UTF-8-codering
-  csvDelimiter: Aanpasbaar scheidingsteken
-  excelFormat: Excel XLSX-formaat
-  excelHeaders: Opgemaakte headers met styling
-  excelColumns: Kolommen met automatisch formaat
-  formatCsv: CSV - Door komma's gescheiden waarden
-  formatExcel: Excel - XLSX-formaat
-  formatJson: JSON (NDJSON) - Regel per record
-  delimiterComma: Komma (,) - Standaard CSV
-  delimiterSemicolon: Puntkomma (;) - Excel in sommige landinstellingen
-  delimiterPipe: Pipe (|) - Minder gebruikelijk in gegevens
-  jsonLineDelimited: Door regels gescheiden JSON (één document per rij)
-  jsonEncoding: UTF-8-codering
-  jsonDetails: Behoudt geneste velden zonder afvlakking
+  csvHeaders: "Kopteksten bevatten kolomnamen"
+  csvEncoding: "UTF-8-codering"
+  csvDelimiter: "Aanpasbaar scheidingsteken"
+  excelFormat: "Excel XLSX-formaat"
+  excelHeaders: "Opgemaakte headers met styling"
+  excelColumns: "Kolommen met automatisch formaat"
+  formatCsv: "CSV - Door komma's gescheiden waarden"
+  formatExcel: "Excel - XLSX-formaat"
+  formatJson: "JSON (NDJSON) - Regel per record"
+  delimiterComma: "Komma (,) - Standaard CSV"
+  delimiterSemicolon: "Puntkomma (;) - Excel in sommige landinstellingen"
+  delimiterPipe: "Pipe (|) - Minder gebruikelijk in gegevens"
+  jsonLineDelimited: "Door regels gescheiden JSON (één document per rij)"
+  jsonEncoding: "UTF-8-codering"
+  jsonDetails: "Behoudt geneste velden zonder afvlakking"
 
 pl_PL:
-  title: Eksportuj dane
+  title: "Eksportuj dane"
   selectedRows: "Zamierzasz wyeksportować {count} wybranych wierszy."
   selectedRows_one: "Zamierzasz wyeksportować {count} wybrany wiersz."
-  allData: Zamierzasz wyeksportować wszystkie dane z tabeli. W przypadku dużych stołów może to zająć trochę czasu.
-  allDataRawQuery: Zamierzasz wyeksportować wyniki zapytania.
-  format: Format
-  delimiter: Ogranicznik
-  delimiterHelp: Wybierz ogranicznik, który nie pojawia się w Twoich danych
-  cancel: Anulować
-  export: Eksport
-  exportFailed: Eksport nie powiódł się
+  allData: "Zamierzasz wyeksportować wszystkie dane z tabeli. W przypadku dużych stołów może to zająć trochę czasu."
+  allDataRawQuery: "Zamierzasz wyeksportować wyniki zapytania."
+  format: "Format"
+  delimiter: "Ogranicznik"
+  delimiterHelp: "Wybierz ogranicznik, który nie pojawia się w Twoich danych"
+  cancel: "Anulować"
+  export: "Eksport"
+  exportFailed: "Eksport nie powiódł się"
   exportDetailsTitle: "Szczegóły eksportu:"
-  csvHeaders: Nagłówki zawierają nazwy kolumn
-  csvEncoding: Kodowanie UTF-8
-  csvDelimiter: Konfigurowalny ogranicznik
-  excelFormat: Format Excela XLSX
-  excelHeaders: Sformatowane nagłówki ze stylizacją
-  excelColumns: Kolumny o automatycznym rozmiarze
-  formatCsv: CSV — wartości oddzielone przecinkami
-  formatExcel: Excel — format XLSX
-  formatJson: JSON (NDJSON) — wiersz na rekord
-  delimiterComma: Przecinek (,) — standardowy plik CSV
-  delimiterSemicolon: Średnik (;) — Excel w niektórych lokalizacjach
-  delimiterPipe: Rura (|) — Rzadziej spotykana w danych
-  jsonLineDelimited: JSON rozdzielany liniami (jeden dokument w wierszu)
-  jsonEncoding: Kodowanie UTF-8
-  jsonDetails: Zachowuje zagnieżdżone pola bez spłaszczania
+  csvHeaders: "Nagłówki zawierają nazwy kolumn"
+  csvEncoding: "Kodowanie UTF-8"
+  csvDelimiter: "Konfigurowalny ogranicznik"
+  excelFormat: "Format Excela XLSX"
+  excelHeaders: "Sformatowane nagłówki ze stylizacją"
+  excelColumns: "Kolumny o automatycznym rozmiarze"
+  formatCsv: "CSV — wartości oddzielone przecinkami"
+  formatExcel: "Excel — format XLSX"
+  formatJson: "JSON (NDJSON) — wiersz na rekord"
+  delimiterComma: "Przecinek (,) — standardowy plik CSV"
+  delimiterSemicolon: "Średnik (;) — Excel w niektórych lokalizacjach"
+  delimiterPipe: "Rura (|) — Rzadziej spotykana w danych"
+  jsonLineDelimited: "JSON rozdzielany liniami (jeden dokument w wierszu)"
+  jsonEncoding: "Kodowanie UTF-8"
+  jsonDetails: "Zachowuje zagnieżdżone pola bez spłaszczania"
 
 pt_BR:
-  title: Exportar dados
+  title: "Exportar dados"
   selectedRows: "Você está prestes a exportar {count} linhas selecionadas."
   selectedRows_one: "Você está prestes a exportar {count} linha selecionada."
-  allData: Você está prestes a exportar todos os dados da tabela. Isso pode levar algum tempo para tabelas grandes.
-  allDataRawQuery: Você está prestes a exportar os resultados da sua consulta.
-  format: Formatar
-  delimiter: Delimitador
-  delimiterHelp: Escolha um delimitador que não apareça nos seus dados
-  cancel: Cancelar
-  export: Exportar
-  exportFailed: Falha na exportação
+  allData: "Você está prestes a exportar todos os dados da tabela. Isso pode levar algum tempo para tabelas grandes."
+  allDataRawQuery: "Você está prestes a exportar os resultados da sua consulta."
+  format: "Formatar"
+  delimiter: "Delimitador"
+  delimiterHelp: "Escolha um delimitador que não apareça nos seus dados"
+  cancel: "Cancelar"
+  export: "Exportar"
+  exportFailed: "Falha na exportação"
   exportDetailsTitle: "Detalhes de exportação:"
-  csvHeaders: Cabeçalhos incluem nomes de colunas
-  csvEncoding: Codificação UTF-8
-  csvDelimiter: Delimitador personalizável
-  excelFormat: Formato Excel XLSX
-  excelHeaders: Cabeçalhos formatados com estilo
-  excelColumns: Colunas dimensionadas automaticamente
-  formatCsv: CSV - Valores Separados por Vírgula
-  formatExcel: Excel - Formato XLSX
-  formatJson: JSON (NDJSON) – Linha por registro
-  delimiterComma: Vírgula (,) - CSV padrão
-  delimiterSemicolon: Ponto e vírgula (;) - Excel em algumas localidades
-  delimiterPipe: Pipe (|) - Menos comum em dados
-  jsonLineDelimited: JSON delimitado por linha (um documento por linha)
-  jsonEncoding: Codificação UTF-8
-  jsonDetails: Preserva campos aninhados sem nivelar
+  csvHeaders: "Cabeçalhos incluem nomes de colunas"
+  csvEncoding: "Codificação UTF-8"
+  csvDelimiter: "Delimitador personalizável"
+  excelFormat: "Formato Excel XLSX"
+  excelHeaders: "Cabeçalhos formatados com estilo"
+  excelColumns: "Colunas dimensionadas automaticamente"
+  formatCsv: "CSV - Valores Separados por Vírgula"
+  formatExcel: "Excel - Formato XLSX"
+  formatJson: "JSON (NDJSON) – Linha por registro"
+  delimiterComma: "Vírgula (,) - CSV padrão"
+  delimiterSemicolon: "Ponto e vírgula (;) - Excel em algumas localidades"
+  delimiterPipe: "Pipe (|) - Menos comum em dados"
+  jsonLineDelimited: "JSON delimitado por linha (um documento por linha)"
+  jsonEncoding: "Codificação UTF-8"
+  jsonDetails: "Preserva campos aninhados sem nivelar"
 
 ro_RO:
-  title: Exportați date
+  title: "Exportați date"
   selectedRows: "Sunteți pe cale să exportați {count} rânduri selectate."
   selectedRows_one: "Sunteți pe cale să exportați {count} rândul selectat."
-  allData: Sunteți pe cale să exportați toate datele din tabel. Acest lucru poate dura ceva timp pentru mese mari.
-  allDataRawQuery: Sunteți pe cale să exportați rezultatele interogării dvs.
-  format: Format
-  delimiter: Delimitator
-  delimiterHelp: Alegeți un delimitator care nu apare în datele dvs
-  cancel: Anula
-  export: Export
-  exportFailed: Export eșuat
+  allData: "Sunteți pe cale să exportați toate datele din tabel. Acest lucru poate dura ceva timp pentru mese mari."
+  allDataRawQuery: "Sunteți pe cale să exportați rezultatele interogării dvs."
+  format: "Format"
+  delimiter: "Delimitator"
+  delimiterHelp: "Alegeți un delimitator care nu apare în datele dvs"
+  cancel: "Anula"
+  export: "Export"
+  exportFailed: "Export eșuat"
   exportDetailsTitle: "Export detalii:"
-  csvHeaders: Anteturile includ numele coloanelor
-  csvEncoding: Codificare UTF-8
-  csvDelimiter: Delimitator personalizabil
-  excelFormat: Format Excel XLSX
-  excelHeaders: Anteturi formatate cu stil
-  excelColumns: Coloane dimensionate automat
-  formatCsv: CSV - Valori separate prin virgulă
-  formatExcel: Excel - Format XLSX
-  formatJson: JSON (NDJSON) - Linie per înregistrare
-  delimiterComma: Virgulă (,) - CSV standard
-  delimiterSemicolon: Punct și virgulă (;) - Excel în unele localități
-  delimiterPipe: Pipe (|) - Mai puțin frecvente în date
-  jsonLineDelimited: JSON delimitat de linii (un document pe rând)
-  jsonEncoding: Codificare UTF-8
-  jsonDetails: Păstrează câmpurile imbricate fără aplatizare
+  csvHeaders: "Anteturile includ numele coloanelor"
+  csvEncoding: "Codificare UTF-8"
+  csvDelimiter: "Delimitator personalizabil"
+  excelFormat: "Format Excel XLSX"
+  excelHeaders: "Anteturi formatate cu stil"
+  excelColumns: "Coloane dimensionate automat"
+  formatCsv: "CSV - Valori separate prin virgulă"
+  formatExcel: "Excel - Format XLSX"
+  formatJson: "JSON (NDJSON) - Linie per înregistrare"
+  delimiterComma: "Virgulă (,) - CSV standard"
+  delimiterSemicolon: "Punct și virgulă (;) - Excel în unele localități"
+  delimiterPipe: "Pipe (|) - Mai puțin frecvente în date"
+  jsonLineDelimited: "JSON delimitat de linii (un document pe rând)"
+  jsonEncoding: "Codificare UTF-8"
+  jsonDetails: "Păstrează câmpurile imbricate fără aplatizare"
 
 ru_RU:
-  title: Экспортировать данные
+  title: "Экспортировать данные"
   selectedRows: "Вы собираетесь экспортировать {count} выбранных строк."
   selectedRows_one: "Вы собираетесь экспортировать {count} выбранную строку."
-  allData: Вы собираетесь экспортировать все данные из таблицы. Для больших таблиц это может занять некоторое время.
-  allDataRawQuery: Вы собираетесь экспортировать результаты вашего запроса.
-  format: Формат
-  delimiter: Разделитель
-  delimiterHelp: Выберите разделитель, которого нет в ваших данных.
-  cancel: Отмена
-  export: Экспорт
-  exportFailed: Экспорт не выполнен
+  allData: "Вы собираетесь экспортировать все данные из таблицы. Для больших таблиц это может занять некоторое время."
+  allDataRawQuery: "Вы собираетесь экспортировать результаты вашего запроса."
+  format: "Формат"
+  delimiter: "Разделитель"
+  delimiterHelp: "Выберите разделитель, которого нет в ваших данных."
+  cancel: "Отмена"
+  export: "Экспорт"
+  exportFailed: "Экспорт не выполнен"
   exportDetailsTitle: "Детали экспорта:"
-  csvHeaders: Заголовки включают имена столбцов
-  csvEncoding: Кодировка UTF-8
-  csvDelimiter: Настраиваемый разделитель
-  excelFormat: Формат Excel XLSX
-  excelHeaders: Форматированные заголовки со стилем
-  excelColumns: Столбцы с автоматическим размером
-  formatCsv: CSV – значения, разделенные запятыми
-  formatExcel: Excel — формат XLSX
-  formatJson: JSON (NDJSON) — строка на запись
-  delimiterComma: Запятая (,) – стандартный CSV.
-  delimiterSemicolon: Точка с запятой (;) — Excel в некоторых регионах.
-  delimiterPipe: Труба (|) — реже встречается в данных.
-  jsonLineDelimited: JSON с разделителями строк (один документ в строке)
-  jsonEncoding: Кодировка UTF-8
-  jsonDetails: Сохраняет вложенные поля без выравнивания.
+  csvHeaders: "Заголовки включают имена столбцов"
+  csvEncoding: "Кодировка UTF-8"
+  csvDelimiter: "Настраиваемый разделитель"
+  excelFormat: "Формат Excel XLSX"
+  excelHeaders: "Форматированные заголовки со стилем"
+  excelColumns: "Столбцы с автоматическим размером"
+  formatCsv: "CSV – значения, разделенные запятыми"
+  formatExcel: "Excel — формат XLSX"
+  formatJson: "JSON (NDJSON) — строка на запись"
+  delimiterComma: "Запятая (,) – стандартный CSV."
+  delimiterSemicolon: "Точка с запятой (;) — Excel в некоторых регионах."
+  delimiterPipe: "Труба (|) — реже встречается в данных."
+  jsonLineDelimited: "JSON с разделителями строк (один документ в строке)"
+  jsonEncoding: "Кодировка UTF-8"
+  jsonDetails: "Сохраняет вложенные поля без выравнивания."
 
 sk_SK:
-  title: Exportovať údaje
+  title: "Exportovať údaje"
   selectedRows: "Chystáte sa exportovať {count} vybratých riadkov."
   selectedRows_one: "Chystáte sa exportovať {count} vybratý riadok."
-  allData: Chystáte sa exportovať všetky údaje z tabuľky. Pri veľkých stoloch to môže chvíľu trvať.
-  allDataRawQuery: Chystáte sa exportovať výsledky svojho dopytu.
-  format: Formátovať
-  delimiter: Delimiter
-  delimiterHelp: Vyberte oddeľovač, ktorý sa nezobrazuje vo vašich údajoch
-  cancel: Zrušiť
-  export: Exportovať
-  exportFailed: Export zlyhal
+  allData: "Chystáte sa exportovať všetky údaje z tabuľky. Pri veľkých stoloch to môže chvíľu trvať."
+  allDataRawQuery: "Chystáte sa exportovať výsledky svojho dopytu."
+  format: "Formátovať"
+  delimiter: "Delimiter"
+  delimiterHelp: "Vyberte oddeľovač, ktorý sa nezobrazuje vo vašich údajoch"
+  cancel: "Zrušiť"
+  export: "Exportovať"
+  exportFailed: "Export zlyhal"
   exportDetailsTitle: "Podrobnosti exportu:"
-  csvHeaders: Hlavičky obsahujú názvy stĺpcov
-  csvEncoding: Kódovanie UTF-8
-  csvDelimiter: Prispôsobiteľný oddeľovač
-  excelFormat: Formát Excel XLSX
-  excelHeaders: Formátované hlavičky so štýlom
-  excelColumns: Stĺpce s automatickou veľkosťou
-  formatCsv: CSV - Hodnoty oddelené čiarkou
-  formatExcel: Excel - XLSX Format
-  formatJson: JSON (NDJSON) – riadok na záznam
-  delimiterComma: Čiarka (,) – štandardný súbor CSV
-  delimiterSemicolon: Bodkočiarka (;) – Excel v niektorých jazykoch
-  delimiterPipe: Pipe (|) – Menej časté v údajoch
-  jsonLineDelimited: JSON oddelený riadkami (jeden dokument na riadok)
-  jsonEncoding: Kódovanie UTF-8
-  jsonDetails: Zachováva vnorené polia bez sploštenia
+  csvHeaders: "Hlavičky obsahujú názvy stĺpcov"
+  csvEncoding: "Kódovanie UTF-8"
+  csvDelimiter: "Prispôsobiteľný oddeľovač"
+  excelFormat: "Formát Excel XLSX"
+  excelHeaders: "Formátované hlavičky so štýlom"
+  excelColumns: "Stĺpce s automatickou veľkosťou"
+  formatCsv: "CSV - Hodnoty oddelené čiarkou"
+  formatExcel: "Excel - XLSX Format"
+  formatJson: "JSON (NDJSON) – riadok na záznam"
+  delimiterComma: "Čiarka (,) – štandardný súbor CSV"
+  delimiterSemicolon: "Bodkočiarka (;) – Excel v niektorých jazykoch"
+  delimiterPipe: "Pipe (|) – Menej časté v údajoch"
+  jsonLineDelimited: "JSON oddelený riadkami (jeden dokument na riadok)"
+  jsonEncoding: "Kódovanie UTF-8"
+  jsonDetails: "Zachováva vnorené polia bez sploštenia"
 
 sv_SE:
-  title: Exportera data
+  title: "Exportera data"
   selectedRows: "Du håller på att exportera {count} markerade rader."
   selectedRows_one: "Du håller på att exportera {count} vald rad."
-  allData: Du är på väg att exportera all data från tabellen. Detta kan ta lite tid för stora bord.
-  allDataRawQuery: Du håller på att exportera resultaten av din fråga.
-  format: Formatera
-  delimiter: Avgränsare
-  delimiterHelp: Välj en avgränsare som inte visas i dina data
-  cancel: Avboka
-  export: Exportera
-  exportFailed: Exporten misslyckades
+  allData: "Du är på väg att exportera all data från tabellen. Detta kan ta lite tid för stora bord."
+  allDataRawQuery: "Du håller på att exportera resultaten av din fråga."
+  format: "Formatera"
+  delimiter: "Avgränsare"
+  delimiterHelp: "Välj en avgränsare som inte visas i dina data"
+  cancel: "Avboka"
+  export: "Exportera"
+  exportFailed: "Exporten misslyckades"
   exportDetailsTitle: "Exportinformation:"
-  csvHeaders: Rubriker inkluderar kolumnnamn
-  csvEncoding: UTF-8-kodning
-  csvDelimiter: Anpassningsbar avgränsare
-  excelFormat: Excel XLSX-format
-  excelHeaders: Formaterade rubriker med styling
-  excelColumns: Kolumner i automatisk storlek
-  formatCsv: CSV - kommaseparerade värden
-  formatExcel: Excel - XLSX-format
-  formatJson: JSON (NDJSON) - Rad per post
-  delimiterComma: Komma (,) - Standard CSV
-  delimiterSemicolon: Semikolon (;) - Excel i vissa språk
-  delimiterPipe: Pipe (|) - Mindre vanligt i data
-  jsonLineDelimited: Radavgränsad JSON (ett dokument per rad)
-  jsonEncoding: UTF-8-kodning
-  jsonDetails: Bevarar kapslade fält utan att förenklas
+  csvHeaders: "Rubriker inkluderar kolumnnamn"
+  csvEncoding: "UTF-8-kodning"
+  csvDelimiter: "Anpassningsbar avgränsare"
+  excelFormat: "Excel XLSX-format"
+  excelHeaders: "Formaterade rubriker med styling"
+  excelColumns: "Kolumner i automatisk storlek"
+  formatCsv: "CSV - kommaseparerade värden"
+  formatExcel: "Excel - XLSX-format"
+  formatJson: "JSON (NDJSON) - Rad per post"
+  delimiterComma: "Komma (,) - Standard CSV"
+  delimiterSemicolon: "Semikolon (;) - Excel i vissa språk"
+  delimiterPipe: "Pipe (|) - Mindre vanligt i data"
+  jsonLineDelimited: "Radavgränsad JSON (ett dokument per rad)"
+  jsonEncoding: "UTF-8-kodning"
+  jsonDetails: "Bevarar kapslade fält utan att förenklas"
 
 zh_CN:
-  title: 导出数据
+  title: "导出数据"
   selectedRows: "您即将导出 {count} 选定的行。"
   selectedRows_one: "您即将导出 {count} 选定的行。"
-  allData: 您即将导出表中的所有数据。 对于大型表，这可能需要一些时间。
-  allDataRawQuery: 您即将导出查询结果。
-  format: 格式
-  delimiter: 分隔符
-  delimiterHelp: 选择数据中未出现的分隔符
-  cancel: 取消
-  export: 出口
-  exportFailed: 导出失败
-  exportDetailsTitle: 出口详情：
-  csvHeaders: 标题包括列名称
-  csvEncoding: UTF-8 编码
-  csvDelimiter: 可定制的分隔符
-  excelFormat: Excel XLSX 格式
-  excelHeaders: 带样式的格式化标题
-  excelColumns: 自动调整大小的列
-  formatCsv: CSV - 逗号分隔值
-  formatExcel: Excel - XLSX 格式
-  formatJson: JSON (NDJSON) - 每条记录行
-  delimiterComma: 逗号 (,) - 标准 CSV
-  delimiterSemicolon: 分号 (;) - Excel 在某些区域设置中
-  delimiterPipe: 管道 (|) - 在数据中不太常见
-  jsonLineDelimited: 以行分隔的 JSON（每行一个文档）
-  jsonEncoding: UTF-8 编码
-  jsonDetails: 保留嵌套字段而不展平
+  allData: "您即将导出表中的所有数据。 对于大型表，这可能需要一些时间。"
+  allDataRawQuery: "您即将导出查询结果。"
+  format: "格式"
+  delimiter: "分隔符"
+  delimiterHelp: "选择数据中未出现的分隔符"
+  cancel: "取消"
+  export: "出口"
+  exportFailed: "导出失败"
+  exportDetailsTitle: "出口详情："
+  csvHeaders: "标题包括列名称"
+  csvEncoding: "UTF-8 编码"
+  csvDelimiter: "可定制的分隔符"
+  excelFormat: "Excel XLSX 格式"
+  excelHeaders: "带样式的格式化标题"
+  excelColumns: "自动调整大小的列"
+  formatCsv: "CSV - 逗号分隔值"
+  formatExcel: "Excel - XLSX 格式"
+  formatJson: "JSON (NDJSON) - 每条记录行"
+  delimiterComma: "逗号 (,) - 标准 CSV"
+  delimiterSemicolon: "分号 (;) - Excel 在某些区域设置中"
+  delimiterPipe: "管道 (|) - 在数据中不太常见"
+  jsonLineDelimited: "以行分隔的 JSON（每行一个文档）"
+  jsonEncoding: "UTF-8 编码"
+  jsonDetails: "保留嵌套字段而不展平"
 
 zh_TW:
-  title: 匯出數據
+  title: "匯出數據"
   selectedRows: "您即將匯出 {count} 選定的行。"
   selectedRows_one: "您即將匯出 {count} 選定的行。"
-  allData: 您即將匯出表中的所有資料。 對於大型表，這可能需要一些時間。
-  allDataRawQuery: 您即將匯出查詢結果。
-  format: 格式
-  delimiter: 分隔符
-  delimiterHelp: 選擇資料中未出現的分隔符
-  cancel: 取消
-  export: 出口
-  exportFailed: 匯出失敗
-  exportDetailsTitle: 出口詳情：
-  csvHeaders: 標題包括列名稱
-  csvEncoding: UTF-8 編碼
-  csvDelimiter: 可自訂的分隔符
-  excelFormat: Excel XLSX 格式
-  excelHeaders: 帶有樣式的格式化標題
-  excelColumns: 自動調整大小的列
-  formatCsv: CSV - 逗號分隔值
-  formatExcel: Excel - XLSX 格式
-  formatJson: JSON (NDJSON) - 每筆記錄行
-  delimiterComma: 逗號 (,) - 標準 CSV
-  delimiterSemicolon: 分號 (;) - Excel 在某些區域設定中
-  delimiterPipe: 管道 (|) - 在數據中較不常見
-  jsonLineDelimited: 以行分隔的 JSON（每行一個文件）
-  jsonEncoding: UTF-8 編碼
-  jsonDetails: 保留嵌套欄位而不展平
+  allData: "您即將匯出表中的所有資料。 對於大型表，這可能需要一些時間。"
+  allDataRawQuery: "您即將匯出查詢結果。"
+  format: "格式"
+  delimiter: "分隔符"
+  delimiterHelp: "選擇資料中未出現的分隔符"
+  cancel: "取消"
+  export: "出口"
+  exportFailed: "匯出失敗"
+  exportDetailsTitle: "出口詳情："
+  csvHeaders: "標題包括列名稱"
+  csvEncoding: "UTF-8 編碼"
+  csvDelimiter: "可自訂的分隔符"
+  excelFormat: "Excel XLSX 格式"
+  excelHeaders: "帶有樣式的格式化標題"
+  excelColumns: "自動調整大小的列"
+  formatCsv: "CSV - 逗號分隔值"
+  formatExcel: "Excel - XLSX 格式"
+  formatJson: "JSON (NDJSON) - 每筆記錄行"
+  delimiterComma: "逗號 (,) - 標準 CSV"
+  delimiterSemicolon: "分號 (;) - Excel 在某些區域設定中"
+  delimiterPipe: "管道 (|) - 在數據中較不常見"
+  jsonLineDelimited: "以行分隔的 JSON（每行一個文件）"
+  jsonEncoding: "UTF-8 編碼"
+  jsonDetails: "保留嵌套欄位而不展平"
 
 bg_BG:
-  title: Експортиране на данни
+  title: "Експортиране на данни"
   selectedRows: "На път сте да експортирате {count} избрани редове."
   selectedRows_one: "На път сте да експортирате {count} избран ред."
-  allData: На път сте да експортирате всички данни от таблицата. Това може да отнеме известно време за големи маси.
-  allDataRawQuery: На път сте да експортирате резултатите от вашата заявка.
-  format: формат
-  delimiter: Разделител
-  delimiterHelp: Изберете разделител, който не се показва във вашите данни
-  cancel: Отказ
-  export: Експортиране
-  exportFailed: Неуспешно експортиране
+  allData: "На път сте да експортирате всички данни от таблицата. Това може да отнеме известно време за големи маси."
+  allDataRawQuery: "На път сте да експортирате резултатите от вашата заявка."
+  format: "формат"
+  delimiter: "Разделител"
+  delimiterHelp: "Изберете разделител, който не се показва във вашите данни"
+  cancel: "Отказ"
+  export: "Експортиране"
+  exportFailed: "Неуспешно експортиране"
   exportDetailsTitle: "Подробности за износа:"
-  csvHeaders: Заглавките включват имена на колони
-  csvEncoding: UTF-8 кодиране
-  csvDelimiter: Персонализиран разделител
-  excelFormat: Excel XLSX формат
-  excelHeaders: Форматирани заглавки със стил
-  excelColumns: Автоматично оразмерени колони
-  formatCsv: CSV – стойности, разделени със запетая
-  formatExcel: Excel - формат XLSX
-  formatJson: JSON (NDJSON) - Ред на запис
-  delimiterComma: Запетая (,) – Стандартен CSV
-  delimiterSemicolon: Точка и запетая (;) - Excel в някои локали
-  delimiterPipe: Тръбна линия (|) – По-рядко срещана в данните
-  jsonLineDelimited: Разделен с редове JSON (един документ на ред)
-  jsonEncoding: UTF-8 кодиране
-  jsonDetails: Запазва вложените полета без сплескване
+  csvHeaders: "Заглавките включват имена на колони"
+  csvEncoding: "UTF-8 кодиране"
+  csvDelimiter: "Персонализиран разделител"
+  excelFormat: "Excel XLSX формат"
+  excelHeaders: "Форматирани заглавки със стил"
+  excelColumns: "Автоматично оразмерени колони"
+  formatCsv: "CSV – стойности, разделени със запетая"
+  formatExcel: "Excel - формат XLSX"
+  formatJson: "JSON (NDJSON) - Ред на запис"
+  delimiterComma: "Запетая (,) – Стандартен CSV"
+  delimiterSemicolon: "Точка и запетая (;) - Excel в някои локали"
+  delimiterPipe: "Тръбна линия (|) – По-рядко срещана в данните"
+  jsonLineDelimited: "Разделен с редове JSON (един документ на ред)"
+  jsonEncoding: "UTF-8 кодиране"
+  jsonDetails: "Запазва вложените полета без сплескване"
 
 bn_BD:
-  title: ডেটা রপ্তানি করুন
+  title: "ডেটা রপ্তানি করুন"
   selectedRows: "আপনি {count} নির্বাচিত সারিগুলি রপ্তানি করতে চলেছেন৷"
   selectedRows_one: "আপনি {count} নির্বাচিত সারিটি রপ্তানি করতে চলেছেন৷"
-  allData: আপনি টেবিল থেকে সমস্ত ডেটা রপ্তানি করতে চলেছেন৷ বড় টেবিলের জন্য এটি কিছু সময় নিতে পারে।
-  allDataRawQuery: আপনি আপনার প্রশ্নের ফলাফল রপ্তানি করতে চলেছেন৷
-  format: বিন্যাস
-  delimiter: ডিলিমিটার
-  delimiterHelp: আপনার ডেটাতে প্রদর্শিত হবে না এমন একটি বিভাজন চয়ন করুন৷
-  cancel: বাতিল করুন
-  export: রপ্তানি
-  exportFailed: রপ্তানি ব্যর্থ হয়েছে৷
+  allData: "আপনি টেবিল থেকে সমস্ত ডেটা রপ্তানি করতে চলেছেন৷ বড় টেবিলের জন্য এটি কিছু সময় নিতে পারে।"
+  allDataRawQuery: "আপনি আপনার প্রশ্নের ফলাফল রপ্তানি করতে চলেছেন৷"
+  format: "বিন্যাস"
+  delimiter: "ডিলিমিটার"
+  delimiterHelp: "আপনার ডেটাতে প্রদর্শিত হবে না এমন একটি বিভাজন চয়ন করুন৷"
+  cancel: "বাতিল করুন"
+  export: "রপ্তানি"
+  exportFailed: "রপ্তানি ব্যর্থ হয়েছে৷"
   exportDetailsTitle: "রপ্তানির বিবরণ:"
-  csvHeaders: শিরোলেখ কলামের নাম অন্তর্ভুক্ত করে
-  csvEncoding: UTF-8 এনকোডিং
-  csvDelimiter: কাস্টমাইজেবল ডিলিমিটার
-  excelFormat: এক্সেল XLSX ফর্ম্যাট
-  excelHeaders: স্টাইলিং সহ ফরম্যাট করা হেডার
-  excelColumns: স্বয়ংক্রিয় আকারের কলাম
-  formatCsv: CSV - কমা বিভক্ত মান
-  formatExcel: এক্সেল - XLSX ফর্ম্যাট
-  formatJson: JSON (NDJSON) - রেকর্ড প্রতি লাইন
-  delimiterComma: কমা (,) - স্ট্যান্ডার্ড CSV
-  delimiterSemicolon: সেমিকোলন (;) - কিছু লোকেলে এক্সেল
-  delimiterPipe: পাইপ (|) - ডেটাতে কম সাধারণ
-  jsonLineDelimited: লাইন-ডিলিমিটেড JSON (প্রতি সারিতে একটি নথি)
-  jsonEncoding: UTF-8 এনকোডিং
-  jsonDetails: সমতল না করে নেস্টেড ক্ষেত্র সংরক্ষণ করে
+  csvHeaders: "শিরোলেখ কলামের নাম অন্তর্ভুক্ত করে"
+  csvEncoding: "UTF-8 এনকোডিং"
+  csvDelimiter: "কাস্টমাইজেবল ডিলিমিটার"
+  excelFormat: "এক্সেল XLSX ফর্ম্যাট"
+  excelHeaders: "স্টাইলিং সহ ফরম্যাট করা হেডার"
+  excelColumns: "স্বয়ংক্রিয় আকারের কলাম"
+  formatCsv: "CSV - কমা বিভক্ত মান"
+  formatExcel: "এক্সেল - XLSX ফর্ম্যাট"
+  formatJson: "JSON (NDJSON) - রেকর্ড প্রতি লাইন"
+  delimiterComma: "কমা (,) - স্ট্যান্ডার্ড CSV"
+  delimiterSemicolon: "সেমিকোলন (;) - কিছু লোকেলে এক্সেল"
+  delimiterPipe: "পাইপ (|) - ডেটাতে কম সাধারণ"
+  jsonLineDelimited: "লাইন-ডিলিমিটেড JSON (প্রতি সারিতে একটি নথি)"
+  jsonEncoding: "UTF-8 এনকোডিং"
+  jsonDetails: "সমতল না করে নেস্টেড ক্ষেত্র সংরক্ষণ করে"
 
 ca_ES:
-  title: Exportar dades
+  title: "Exportar dades"
   selectedRows: "Esteu a punt d'exportar {count} files seleccionades."
   selectedRows_one: "Esteu a punt d'exportar la {count} fila seleccionada."
-  allData: Esteu a punt d'exportar totes les dades de la taula. Això pot trigar una mica per a taules grans.
-  allDataRawQuery: Esteu a punt d'exportar els resultats de la vostra consulta.
-  format: Format
-  delimiter: Delimitador
-  delimiterHelp: Trieu un delimitador que no aparegui a les vostres dades
-  cancel: Cancel·la
-  export: Exporta
-  exportFailed: Ha fallat l'exportació
+  allData: "Esteu a punt d'exportar totes les dades de la taula. Això pot trigar una mica per a taules grans."
+  allDataRawQuery: "Esteu a punt d'exportar els resultats de la vostra consulta."
+  format: "Format"
+  delimiter: "Delimitador"
+  delimiterHelp: "Trieu un delimitador que no aparegui a les vostres dades"
+  cancel: "Cancel·la"
+  export: "Exporta"
+  exportFailed: "Ha fallat l'exportació"
   exportDetailsTitle: "Detalls de l'exportació:"
-  csvHeaders: Les capçaleres inclouen els noms de les columnes
-  csvEncoding: Codificació UTF-8
-  csvDelimiter: Delimitador personalitzable
-  excelFormat: Format Excel XLSX
-  excelHeaders: Capçaleres formatades amb estil
-  excelColumns: Columnes de mida automàtica
-  formatCsv: CSV - Valors separats per comes
-  formatExcel: Excel - Format XLSX
+  csvHeaders: "Les capçaleres inclouen els noms de les columnes"
+  csvEncoding: "Codificació UTF-8"
+  csvDelimiter: "Delimitador personalitzable"
+  excelFormat: "Format Excel XLSX"
+  excelHeaders: "Capçaleres formatades amb estil"
+  excelColumns: "Columnes de mida automàtica"
+  formatCsv: "CSV - Valors separats per comes"
+  formatExcel: "Excel - Format XLSX"
   formatJson: "JSON (NDJSON): línia per registre"
-  delimiterComma: Coma (,) - CSV estàndard
-  delimiterSemicolon: Punt i coma (;) - Excel en algunes localitzacions
-  delimiterPipe: Pipe (|) - Menys comú en dades
-  jsonLineDelimited: JSON delimitat per línies (un document per fila)
-  jsonEncoding: Codificació UTF-8
-  jsonDetails: Conserva els camps imbricats sense aplanar-los
+  delimiterComma: "Coma (,) - CSV estàndard"
+  delimiterSemicolon: "Punt i coma (;) - Excel en algunes localitzacions"
+  delimiterPipe: "Pipe (|) - Menys comú en dades"
+  jsonLineDelimited: "JSON delimitat per línies (un document per fila)"
+  jsonEncoding: "Codificació UTF-8"
+  jsonDetails: "Conserva els camps imbricats sense aplanar-los"
 
 cs_CZ:
-  title: Export dat
+  title: "Export dat"
   selectedRows: "Chystáte se exportovat {count} vybraných řádků."
   selectedRows_one: "Chystáte se exportovat {count} vybraný řádek."
-  allData: Chystáte se exportovat všechna data z tabulky. U velkých stolů to může nějakou dobu trvat.
-  allDataRawQuery: Chystáte se exportovat výsledky svého dotazu.
-  format: Formát
-  delimiter: Oddělovač
-  delimiterHelp: Vyberte oddělovač, který se ve vašich datech nezobrazuje
-  cancel: Zrušit
-  export: Vývozní
-  exportFailed: Export se nezdařil
+  allData: "Chystáte se exportovat všechna data z tabulky. U velkých stolů to může nějakou dobu trvat."
+  allDataRawQuery: "Chystáte se exportovat výsledky svého dotazu."
+  format: "Formát"
+  delimiter: "Oddělovač"
+  delimiterHelp: "Vyberte oddělovač, který se ve vašich datech nezobrazuje"
+  cancel: "Zrušit"
+  export: "Vývozní"
+  exportFailed: "Export se nezdařil"
   exportDetailsTitle: "Podrobnosti exportu:"
-  csvHeaders: Záhlaví obsahují názvy sloupců
-  csvEncoding: Kódování UTF-8
-  csvDelimiter: Přizpůsobitelný oddělovač
-  excelFormat: Formát Excel XLSX
-  excelHeaders: Formátovaná záhlaví se stylingem
-  excelColumns: Sloupce s automatickou velikostí
-  formatCsv: CSV – Hodnoty oddělené čárkami
-  formatExcel: Excel - formát XLSX
-  formatJson: JSON (NDJSON) – řádek na záznam
-  delimiterComma: Čárka (,) – standardní CSV
-  delimiterSemicolon: Středník (;) – Excel v některých národních prostředích
-  delimiterPipe: Pipe (|) – Méně časté v datech
-  jsonLineDelimited: JSON oddělený řádky (jeden dokument na řádek)
-  jsonEncoding: Kódování UTF-8
-  jsonDetails: Zachovává vnořená pole bez zploštění
+  csvHeaders: "Záhlaví obsahují názvy sloupců"
+  csvEncoding: "Kódování UTF-8"
+  csvDelimiter: "Přizpůsobitelný oddělovač"
+  excelFormat: "Formát Excel XLSX"
+  excelHeaders: "Formátovaná záhlaví se stylingem"
+  excelColumns: "Sloupce s automatickou velikostí"
+  formatCsv: "CSV – Hodnoty oddělené čárkami"
+  formatExcel: "Excel - formát XLSX"
+  formatJson: "JSON (NDJSON) – řádek na záznam"
+  delimiterComma: "Čárka (,) – standardní CSV"
+  delimiterSemicolon: "Středník (;) – Excel v některých národních prostředích"
+  delimiterPipe: "Pipe (|) – Méně časté v datech"
+  jsonLineDelimited: "JSON oddělený řádky (jeden dokument na řádek)"
+  jsonEncoding: "Kódování UTF-8"
+  jsonDetails: "Zachovává vnořená pole bez zploštění"
 
 da_DK:
-  title: Eksporter data
+  title: "Eksporter data"
   selectedRows: "Du er ved at eksportere {count} valgte rækker."
   selectedRows_one: "Du er ved at eksportere {count} valgt række."
-  allData: Du er ved at eksportere alle data fra tabellen. Dette kan tage lidt tid for store borde.
-  allDataRawQuery: Du er ved at eksportere resultaterne af din forespørgsel.
-  format: Format
-  delimiter: Afgrænsning
-  delimiterHelp: Vælg en afgrænsning, der ikke vises i dine data
-  cancel: Ophæve
-  export: Eksportere
-  exportFailed: Eksport mislykkedes
+  allData: "Du er ved at eksportere alle data fra tabellen. Dette kan tage lidt tid for store borde."
+  allDataRawQuery: "Du er ved at eksportere resultaterne af din forespørgsel."
+  format: "Format"
+  delimiter: "Afgrænsning"
+  delimiterHelp: "Vælg en afgrænsning, der ikke vises i dine data"
+  cancel: "Ophæve"
+  export: "Eksportere"
+  exportFailed: "Eksport mislykkedes"
   exportDetailsTitle: "Eksportoplysninger:"
-  csvHeaders: Overskrifter inkluderer kolonnenavne
-  csvEncoding: UTF-8-kodning
-  csvDelimiter: Tilpasset afgrænsning
-  excelFormat: Excel XLSX-format
-  excelHeaders: Formaterede overskrifter med styling
-  excelColumns: Kolonner i automatisk størrelse
-  formatCsv: CSV - kommaseparerede værdier
-  formatExcel: Excel - XLSX-format
-  formatJson: JSON (NDJSON) - Linje pr. post
-  delimiterComma: Komma (,) - Standard CSV
-  delimiterSemicolon: Semikolon (;) - Excel i nogle lokaliteter
-  delimiterPipe: Rør (|) - Mindre almindelig i data
-  jsonLineDelimited: Linjesepareret JSON (et dokument pr. række)
-  jsonEncoding: UTF-8-kodning
-  jsonDetails: Bevarer indlejrede felter uden at blive flad
+  csvHeaders: "Overskrifter inkluderer kolonnenavne"
+  csvEncoding: "UTF-8-kodning"
+  csvDelimiter: "Tilpasset afgrænsning"
+  excelFormat: "Excel XLSX-format"
+  excelHeaders: "Formaterede overskrifter med styling"
+  excelColumns: "Kolonner i automatisk størrelse"
+  formatCsv: "CSV - kommaseparerede værdier"
+  formatExcel: "Excel - XLSX-format"
+  formatJson: "JSON (NDJSON) - Linje pr. post"
+  delimiterComma: "Komma (,) - Standard CSV"
+  delimiterSemicolon: "Semikolon (;) - Excel i nogle lokaliteter"
+  delimiterPipe: "Rør (|) - Mindre almindelig i data"
+  jsonLineDelimited: "Linjesepareret JSON (et dokument pr. række)"
+  jsonEncoding: "UTF-8-kodning"
+  jsonDetails: "Bevarer indlejrede felter uden at blive flad"
 
 fa_IR:
-  title: صادرات داده ها
+  title: "صادرات داده ها"
   selectedRows: "شما در شرف صدور {count} ردیف انتخاب شده هستید."
   selectedRows_one: "شما در شرف صدور {count} ردیف انتخاب شده هستید."
-  allData: شما در شرف صدور همه داده ها از جدول هستید. این ممکن است برای میزهای بزرگ کمی طول بکشد.
-  allDataRawQuery: شما در شرف صدور نتایج جستجوی خود هستید.
-  format: قالب
-  delimiter: جدا کننده
-  delimiterHelp: جداکننده ای را انتخاب کنید که در داده های شما ظاهر نشود
-  cancel: لغو کنید
-  export: صادرات
-  exportFailed: صادرات انجام نشد
+  allData: "شما در شرف صدور همه داده ها از جدول هستید. این ممکن است برای میزهای بزرگ کمی طول بکشد."
+  allDataRawQuery: "شما در شرف صدور نتایج جستجوی خود هستید."
+  format: "قالب"
+  delimiter: "جدا کننده"
+  delimiterHelp: "جداکننده ای را انتخاب کنید که در داده های شما ظاهر نشود"
+  cancel: "لغو کنید"
+  export: "صادرات"
+  exportFailed: "صادرات انجام نشد"
   exportDetailsTitle: "جزئیات صادرات:"
-  csvHeaders: سرصفحه ها شامل نام ستون ها هستند
-  csvEncoding: رمزگذاری UTF-8
-  csvDelimiter: جداکننده قابل تنظیم
-  excelFormat: فرمت اکسل XLSX
-  excelHeaders: هدرهای قالب بندی شده با یک ظاهر طراحی شده
-  excelColumns: ستون هایی با اندازه خودکار
-  formatCsv: CSV - مقادیر جدا شده با کاما
-  formatExcel: اکسل - فرمت XLSX
-  formatJson: JSON (NDJSON) - خط در هر رکورد
-  delimiterComma: کاما (،) - CSV استاندارد
-  delimiterSemicolon: نقطه ویرگول (;) - اکسل در برخی از مناطق
-  delimiterPipe: لوله (|) - در داده ها کمتر رایج است
-  jsonLineDelimited: JSON محدود به خط (یک سند در هر ردیف)
-  jsonEncoding: رمزگذاری UTF-8
-  jsonDetails: مزارع تو در تو را بدون مسطح شدن حفظ می کند
+  csvHeaders: "سرصفحه ها شامل نام ستون ها هستند"
+  csvEncoding: "رمزگذاری UTF-8"
+  csvDelimiter: "جداکننده قابل تنظیم"
+  excelFormat: "فرمت اکسل XLSX"
+  excelHeaders: "هدرهای قالب بندی شده با یک ظاهر طراحی شده"
+  excelColumns: "ستون هایی با اندازه خودکار"
+  formatCsv: "CSV - مقادیر جدا شده با کاما"
+  formatExcel: "اکسل - فرمت XLSX"
+  formatJson: "JSON (NDJSON) - خط در هر رکورد"
+  delimiterComma: "کاما (،) - CSV استاندارد"
+  delimiterSemicolon: "نقطه ویرگول (;) - اکسل در برخی از مناطق"
+  delimiterPipe: "لوله (|) - در داده ها کمتر رایج است"
+  jsonLineDelimited: "JSON محدود به خط (یک سند در هر ردیف)"
+  jsonEncoding: "رمزگذاری UTF-8"
+  jsonDetails: "مزارع تو در تو را بدون مسطح شدن حفظ می کند"
 
 hi_IN:
-  title: डेटा निर्यात करें
+  title: "डेटा निर्यात करें"
   selectedRows: "आप {count} चयनित पंक्तियाँ निर्यात करने वाले हैं।"
   selectedRows_one: "आप चयनित पंक्ति को {count} निर्यात करने वाले हैं।"
-  allData: आप तालिका से सभी डेटा निर्यात करने वाले हैं। बड़ी तालिकाओं के लिए इसमें कुछ समय लग सकता है.
-  allDataRawQuery: आप अपनी क्वेरी के परिणाम निर्यात करने वाले हैं.
-  format: प्रारूप
-  delimiter: सीमान्तक
-  delimiterHelp: ऐसा सीमांकक चुनें जो आपके डेटा में दिखाई न दे
-  cancel: रद्द करना
-  export: निर्यात
-  exportFailed: निर्यात विफल
+  allData: "आप तालिका से सभी डेटा निर्यात करने वाले हैं। बड़ी तालिकाओं के लिए इसमें कुछ समय लग सकता है."
+  allDataRawQuery: "आप अपनी क्वेरी के परिणाम निर्यात करने वाले हैं."
+  format: "प्रारूप"
+  delimiter: "सीमान्तक"
+  delimiterHelp: "ऐसा सीमांकक चुनें जो आपके डेटा में दिखाई न दे"
+  cancel: "रद्द करना"
+  export: "निर्यात"
+  exportFailed: "निर्यात विफल"
   exportDetailsTitle: "निर्यात विवरण:"
-  csvHeaders: हेडर में कॉलम नाम शामिल हैं
-  csvEncoding: UTF-8 एन्कोडिंग
-  csvDelimiter: अनुकूलन योग्य डिलीमीटर
-  excelFormat: एक्सेल एक्सएलएसएक्स प्रारूप
-  excelHeaders: स्टाइलिंग के साथ स्वरूपित हेडर
-  excelColumns: स्वचालित आकार वाले कॉलम
-  formatCsv: सीएसवी - अल्पविराम से अलग किए गए मान
-  formatExcel: एक्सेल - एक्सएलएसएक्स प्रारूप
-  formatJson: JSON (NDJSON) - प्रति रिकॉर्ड पंक्ति
-  delimiterComma: अल्पविराम (,) - मानक सीएसवी
-  delimiterSemicolon: अर्धविराम (;) - कुछ स्थानों में एक्सेल
-  delimiterPipe: पाइप (|) - डेटा में कम आम
-  jsonLineDelimited: रेखा-सीमांकित JSON (प्रति पंक्ति एक दस्तावेज़)
-  jsonEncoding: UTF-8 एन्कोडिंग
-  jsonDetails: घोंसले वाले खेतों को बिना समतल किए सुरक्षित रखता है
+  csvHeaders: "हेडर में कॉलम नाम शामिल हैं"
+  csvEncoding: "UTF-8 एन्कोडिंग"
+  csvDelimiter: "अनुकूलन योग्य डिलीमीटर"
+  excelFormat: "एक्सेल एक्सएलएसएक्स प्रारूप"
+  excelHeaders: "स्टाइलिंग के साथ स्वरूपित हेडर"
+  excelColumns: "स्वचालित आकार वाले कॉलम"
+  formatCsv: "सीएसवी - अल्पविराम से अलग किए गए मान"
+  formatExcel: "एक्सेल - एक्सएलएसएक्स प्रारूप"
+  formatJson: "JSON (NDJSON) - प्रति रिकॉर्ड पंक्ति"
+  delimiterComma: "अल्पविराम (,) - मानक सीएसवी"
+  delimiterSemicolon: "अर्धविराम (;) - कुछ स्थानों में एक्सेल"
+  delimiterPipe: "पाइप (|) - डेटा में कम आम"
+  jsonLineDelimited: "रेखा-सीमांकित JSON (प्रति पंक्ति एक दस्तावेज़)"
+  jsonEncoding: "UTF-8 एन्कोडिंग"
+  jsonDetails: "घोंसले वाले खेतों को बिना समतल किए सुरक्षित रखता है"
 
 hr_HR:
-  title: Izvoz podataka
+  title: "Izvoz podataka"
   selectedRows: "Spremate se izvesti {count} odabranih redaka."
   selectedRows_one: "Spremate se izvesti {count} odabrani redak."
-  allData: Spremate se izvesti sve podatke iz tablice. Ovo može potrajati neko vrijeme za velike stolove.
-  allDataRawQuery: Upravo ćete izvesti rezultate svog upita.
-  format: Format
-  delimiter: Razdjelnik
-  delimiterHelp: Odaberite razdjelnik koji se ne pojavljuje u vašim podacima
-  cancel: Otkazati
-  export: Izvoz
-  exportFailed: Izvoz nije uspio
+  allData: "Spremate se izvesti sve podatke iz tablice. Ovo može potrajati neko vrijeme za velike stolove."
+  allDataRawQuery: "Upravo ćete izvesti rezultate svog upita."
+  format: "Format"
+  delimiter: "Razdjelnik"
+  delimiterHelp: "Odaberite razdjelnik koji se ne pojavljuje u vašim podacima"
+  cancel: "Otkazati"
+  export: "Izvoz"
+  exportFailed: "Izvoz nije uspio"
   exportDetailsTitle: "Pojedinosti o izvozu:"
-  csvHeaders: Zaglavlja uključuju nazive stupaca
-  csvEncoding: UTF-8 kodiranje
-  csvDelimiter: Prilagodljivi razdjelnik
-  excelFormat: Excel XLSX format
-  excelHeaders: Formatirana zaglavlja sa stilom
-  excelColumns: Stupci s automatskom veličinom
-  formatCsv: CSV - Vrijednosti odvojene zarezima
-  formatExcel: Excel - XLSX format
-  formatJson: JSON (NDJSON) - redak po zapisu
-  delimiterComma: Zarez (,) - standardni CSV
-  delimiterSemicolon: Točka i zarez (;) - Excel na nekim jezicima
-  delimiterPipe: Cjevčica (|) - Rjeđe u podacima
-  jsonLineDelimited: JSON razgraničen linijama (jedan dokument po retku)
-  jsonEncoding: UTF-8 kodiranje
-  jsonDetails: Čuva ugniježđena polja bez izravnavanja
+  csvHeaders: "Zaglavlja uključuju nazive stupaca"
+  csvEncoding: "UTF-8 kodiranje"
+  csvDelimiter: "Prilagodljivi razdjelnik"
+  excelFormat: "Excel XLSX format"
+  excelHeaders: "Formatirana zaglavlja sa stilom"
+  excelColumns: "Stupci s automatskom veličinom"
+  formatCsv: "CSV - Vrijednosti odvojene zarezima"
+  formatExcel: "Excel - XLSX format"
+  formatJson: "JSON (NDJSON) - redak po zapisu"
+  delimiterComma: "Zarez (,) - standardni CSV"
+  delimiterSemicolon: "Točka i zarez (;) - Excel na nekim jezicima"
+  delimiterPipe: "Cjevčica (|) - Rjeđe u podacima"
+  jsonLineDelimited: "JSON razgraničen linijama (jedan dokument po retku)"
+  jsonEncoding: "UTF-8 kodiranje"
+  jsonDetails: "Čuva ugniježđena polja bez izravnavanja"
 
 hu_HU:
-  title: Adatok exportálása
+  title: "Adatok exportálása"
   selectedRows: "{count} kiválasztott sor exportálására készül."
   selectedRows_one: "A {count} kiválasztott sor exportálására készül."
-  allData: Arra készül, hogy az összes adatot exportálja a táblából. Ez eltarthat egy ideig nagy asztalok esetén.
-  allDataRawQuery: A lekérdezés eredményeinek exportálására készül.
-  format: Formátum
-  delimiter: Határoló
-  delimiterHelp: Válasszon olyan határolót, amely nem jelenik meg az adatok között
-  cancel: Mégse
-  export: Export
-  exportFailed: Az exportálás sikertelen
+  allData: "Arra készül, hogy az összes adatot exportálja a táblából. Ez eltarthat egy ideig nagy asztalok esetén."
+  allDataRawQuery: "A lekérdezés eredményeinek exportálására készül."
+  format: "Formátum"
+  delimiter: "Határoló"
+  delimiterHelp: "Válasszon olyan határolót, amely nem jelenik meg az adatok között"
+  cancel: "Mégse"
+  export: "Export"
+  exportFailed: "Az exportálás sikertelen"
   exportDetailsTitle: "Exportálási részletek:"
-  csvHeaders: A fejlécek oszlopneveket tartalmaznak
-  csvEncoding: UTF-8 kódolás
-  csvDelimiter: Testreszabható határoló
-  excelFormat: Excel XLSX formátum
-  excelHeaders: Formázott fejlécek stílussal
-  excelColumns: Automatikusan méretezett oszlopok
-  formatCsv: CSV – vesszővel elválasztott értékek
-  formatExcel: Excel - XLSX formátum
-  formatJson: JSON (NDJSON) – Soronként
-  delimiterComma: Vessző (,) – Normál CSV
-  delimiterSemicolon: Pontosvessző (;) – Excel egyes nyelveken
-  delimiterPipe: Cső (|) – Ritkább az adatokban
-  jsonLineDelimited: Sorokkal elválasztott JSON (soronként egy dokumentum)
-  jsonEncoding: UTF-8 kódolás
-  jsonDetails: Megőrzi a beágyazott mezőket simítás nélkül
+  csvHeaders: "A fejlécek oszlopneveket tartalmaznak"
+  csvEncoding: "UTF-8 kódolás"
+  csvDelimiter: "Testreszabható határoló"
+  excelFormat: "Excel XLSX formátum"
+  excelHeaders: "Formázott fejlécek stílussal"
+  excelColumns: "Automatikusan méretezett oszlopok"
+  formatCsv: "CSV – vesszővel elválasztott értékek"
+  formatExcel: "Excel - XLSX formátum"
+  formatJson: "JSON (NDJSON) – Soronként"
+  delimiterComma: "Vessző (,) – Normál CSV"
+  delimiterSemicolon: "Pontosvessző (;) – Excel egyes nyelveken"
+  delimiterPipe: "Cső (|) – Ritkább az adatokban"
+  jsonLineDelimited: "Sorokkal elválasztott JSON (soronként egy dokumentum)"
+  jsonEncoding: "UTF-8 kódolás"
+  jsonDetails: "Megőrzi a beágyazott mezőket simítás nélkül"
 
 id_ID:
-  title: Ekspor Data
+  title: "Ekspor Data"
   selectedRows: "Anda akan mengekspor {count} baris yang dipilih."
   selectedRows_one: "Anda akan mengekspor {count} baris yang dipilih."
-  allData: Anda akan mengekspor semua data dari tabel. Ini mungkin memerlukan waktu untuk tabel besar.
-  allDataRawQuery: Anda akan mengekspor hasil kueri Anda.
-  format: Format
-  delimiter: Pembatas
-  delimiterHelp: Pilih pembatas yang tidak muncul di data Anda
-  cancel: Membatalkan
-  export: Ekspor
-  exportFailed: Ekspor Gagal
+  allData: "Anda akan mengekspor semua data dari tabel. Ini mungkin memerlukan waktu untuk tabel besar."
+  allDataRawQuery: "Anda akan mengekspor hasil kueri Anda."
+  format: "Format"
+  delimiter: "Pembatas"
+  delimiterHelp: "Pilih pembatas yang tidak muncul di data Anda"
+  cancel: "Membatalkan"
+  export: "Ekspor"
+  exportFailed: "Ekspor Gagal"
   exportDetailsTitle: "Detail Ekspor:"
-  csvHeaders: Header Sertakan Nama Kolom
-  csvEncoding: Pengkodean UTF-8
-  csvDelimiter: Pembatas yang Dapat Disesuaikan
-  excelFormat: Format Excel XLSX
-  excelHeaders: Header yang Diformat dengan Styling
-  excelColumns: Kolom Berukuran Otomatis
-  formatCsv: CSV - Nilai yang Dipisahkan Koma
-  formatExcel: Unggul - Format XLSX
-  formatJson: JSON (NDJSON) - Baris per catatan
-  delimiterComma: Koma (,) - CSV Standar
-  delimiterSemicolon: Titik koma (;) - Unggul di beberapa lokal
-  delimiterPipe: Pipa (|) - Kurang umum dalam data
-  jsonLineDelimited: JSON yang dibatasi baris (satu dokumen per baris)
-  jsonEncoding: Pengkodean UTF-8
-  jsonDetails: Mempertahankan bidang bersarang tanpa menjadi rata
+  csvHeaders: "Header Sertakan Nama Kolom"
+  csvEncoding: "Pengkodean UTF-8"
+  csvDelimiter: "Pembatas yang Dapat Disesuaikan"
+  excelFormat: "Format Excel XLSX"
+  excelHeaders: "Header yang Diformat dengan Styling"
+  excelColumns: "Kolom Berukuran Otomatis"
+  formatCsv: "CSV - Nilai yang Dipisahkan Koma"
+  formatExcel: "Unggul - Format XLSX"
+  formatJson: "JSON (NDJSON) - Baris per catatan"
+  delimiterComma: "Koma (,) - CSV Standar"
+  delimiterSemicolon: "Titik koma (;) - Unggul di beberapa lokal"
+  delimiterPipe: "Pipa (|) - Kurang umum dalam data"
+  jsonLineDelimited: "JSON yang dibatasi baris (satu dokumen per baris)"
+  jsonEncoding: "Pengkodean UTF-8"
+  jsonDetails: "Mempertahankan bidang bersarang tanpa menjadi rata"
 
 ms_MY:
-  title: Eksport Data
+  title: "Eksport Data"
   selectedRows: "Anda akan mengeksport {count} baris yang dipilih."
   selectedRows_one: "Anda akan mengeksport {count} baris yang dipilih."
-  allData: Anda akan mengeksport semua data daripada jadual. Ini mungkin mengambil sedikit masa untuk meja besar.
-  allDataRawQuery: Anda akan mengeksport hasil pertanyaan anda.
-  format: Format
-  delimiter: pembatas
-  delimiterHelp: Pilih pembatas yang tidak muncul dalam data anda
-  cancel: Batal
-  export: Eksport
-  exportFailed: Eksport Gagal
+  allData: "Anda akan mengeksport semua data daripada jadual. Ini mungkin mengambil sedikit masa untuk meja besar."
+  allDataRawQuery: "Anda akan mengeksport hasil pertanyaan anda."
+  format: "Format"
+  delimiter: "pembatas"
+  delimiterHelp: "Pilih pembatas yang tidak muncul dalam data anda"
+  cancel: "Batal"
+  export: "Eksport"
+  exportFailed: "Eksport Gagal"
   exportDetailsTitle: "Butiran Eksport:"
-  csvHeaders: Pengepala Sertakan Nama Lajur
-  csvEncoding: Pengekodan UTF-8
-  csvDelimiter: Pembatas Boleh Disesuaikan
-  excelFormat: Format Excel XLSX
-  excelHeaders: Pengepala Terformat dengan Penggayaan
-  excelColumns: Lajur Bersaiz Auto
-  formatCsv: CSV - Nilai Dipisahkan Koma
-  formatExcel: Excel - Format XLSX
-  formatJson: JSON (NDJSON) - Baris setiap rekod
-  delimiterComma: Koma (,) - CSV Standard
-  delimiterSemicolon: Titik bertitik (;) - Excel dalam sesetengah tempat
-  delimiterPipe: Paip (|) - Kurang biasa dalam data
-  jsonLineDelimited: JSON dibatasi baris (satu dokumen setiap baris)
-  jsonEncoding: Pengekodan UTF-8
-  jsonDetails: Memelihara padang bersarang tanpa diratakan
+  csvHeaders: "Pengepala Sertakan Nama Lajur"
+  csvEncoding: "Pengekodan UTF-8"
+  csvDelimiter: "Pembatas Boleh Disesuaikan"
+  excelFormat: "Format Excel XLSX"
+  excelHeaders: "Pengepala Terformat dengan Penggayaan"
+  excelColumns: "Lajur Bersaiz Auto"
+  formatCsv: "CSV - Nilai Dipisahkan Koma"
+  formatExcel: "Excel - Format XLSX"
+  formatJson: "JSON (NDJSON) - Baris setiap rekod"
+  delimiterComma: "Koma (,) - CSV Standard"
+  delimiterSemicolon: "Titik bertitik (;) - Excel dalam sesetengah tempat"
+  delimiterPipe: "Paip (|) - Kurang biasa dalam data"
+  jsonLineDelimited: "JSON dibatasi baris (satu dokumen setiap baris)"
+  jsonEncoding: "Pengekodan UTF-8"
+  jsonDetails: "Memelihara padang bersarang tanpa diratakan"
 
 nb_NO:
-  title: Eksporter data
+  title: "Eksporter data"
   selectedRows: "Du er i ferd med å eksportere {count} valgte rader."
   selectedRows_one: "Du er i ferd med å eksportere {count} valgt rad."
-  allData: Du er i ferd med å eksportere alle data fra tabellen. Dette kan ta litt tid for store bord.
-  allDataRawQuery: Du er i ferd med å eksportere resultatene av søket.
-  format: Format
-  delimiter: Avgrensning
-  delimiterHelp: Velg et skilletegn som ikke vises i dataene dine
-  cancel: Kansellere
-  export: Eksport
-  exportFailed: Eksporten mislyktes
+  allData: "Du er i ferd med å eksportere alle data fra tabellen. Dette kan ta litt tid for store bord."
+  allDataRawQuery: "Du er i ferd med å eksportere resultatene av søket."
+  format: "Format"
+  delimiter: "Avgrensning"
+  delimiterHelp: "Velg et skilletegn som ikke vises i dataene dine"
+  cancel: "Kansellere"
+  export: "Eksport"
+  exportFailed: "Eksporten mislyktes"
   exportDetailsTitle: "Eksportdetaljer:"
-  csvHeaders: Overskrifter inkluderer kolonnenavn
-  csvEncoding: UTF-8-koding
-  csvDelimiter: Tilpassbar skilletegn
-  excelFormat: Excel XLSX-format
-  excelHeaders: Formaterte overskrifter med styling
-  excelColumns: Kolonner med automatisk størrelse
-  formatCsv: CSV – kommadelte verdier
-  formatExcel: Excel - XLSX-format
-  formatJson: JSON (NDJSON) - Linje per post
-  delimiterComma: Komma (,) - Standard CSV
-  delimiterSemicolon: Semikolon (;) - Excel i noen lokaliteter
-  delimiterPipe: Rør (|) - Mindre vanlig i data
-  jsonLineDelimited: Linjedelt JSON (ett dokument per rad)
-  jsonEncoding: UTF-8-koding
-  jsonDetails: Bevarer nestede felt uten å flate ut
+  csvHeaders: "Overskrifter inkluderer kolonnenavn"
+  csvEncoding: "UTF-8-koding"
+  csvDelimiter: "Tilpassbar skilletegn"
+  excelFormat: "Excel XLSX-format"
+  excelHeaders: "Formaterte overskrifter med styling"
+  excelColumns: "Kolonner med automatisk størrelse"
+  formatCsv: "CSV – kommadelte verdier"
+  formatExcel: "Excel - XLSX-format"
+  formatJson: "JSON (NDJSON) - Linje per post"
+  delimiterComma: "Komma (,) - Standard CSV"
+  delimiterSemicolon: "Semikolon (;) - Excel i noen lokaliteter"
+  delimiterPipe: "Rør (|) - Mindre vanlig i data"
+  jsonLineDelimited: "Linjedelt JSON (ett dokument per rad)"
+  jsonEncoding: "UTF-8-koding"
+  jsonDetails: "Bevarer nestede felt uten å flate ut"
 
 sw_KE:
-  title: Hamisha Data
+  title: "Hamisha Data"
   selectedRows: "Unakaribia kuhamisha {count} safu mlalo zilizochaguliwa."
   selectedRows_one: "Unakaribia kuhamisha {count} safu mlalo iliyochaguliwa."
-  allData: Unakaribia kuhamisha data yote kutoka kwa jedwali. Hii inaweza kuchukua muda kwa meza kubwa.
-  allDataRawQuery: Unakaribia kuhamisha matokeo ya hoja yako.
-  format: Umbizo
-  delimiter: Delimiter
-  delimiterHelp: Chagua kikomo ambacho hakionekani kwenye data yako
-  cancel: Ghairi
-  export: Hamisha
-  exportFailed: Imeshindwa Kutuma
+  allData: "Unakaribia kuhamisha data yote kutoka kwa jedwali. Hii inaweza kuchukua muda kwa meza kubwa."
+  allDataRawQuery: "Unakaribia kuhamisha matokeo ya hoja yako."
+  format: "Umbizo"
+  delimiter: "Delimiter"
+  delimiterHelp: "Chagua kikomo ambacho hakionekani kwenye data yako"
+  cancel: "Ghairi"
+  export: "Hamisha"
+  exportFailed: "Imeshindwa Kutuma"
   exportDetailsTitle: "Maelezo ya Hamisha:"
-  csvHeaders: Vichwa Ni pamoja na Majina ya Safu wima
-  csvEncoding: UTF-8 Usimbaji
-  csvDelimiter: Delimiter inayoweza kubinafsishwa
-  excelFormat: Muundo wa Excel XLSX
-  excelHeaders: Vichwa Vilivyoumbizwa vilivyo na Mitindo
-  excelColumns: Safu Wima za Ukubwa Kiotomatiki
-  formatCsv: CSV - Thamani Zilizotenganishwa kwa Koma
-  formatExcel: Excel - Umbizo la XLSX
-  formatJson: JSON (NDJSON) - Mstari kwa kila rekodi
-  delimiterComma: Koma (,) - CSV ya Kawaida
-  delimiterSemicolon: Semicolon (;) - Excel katika baadhi ya maeneo
-  delimiterPipe: Bomba (|) - Chini ya kawaida katika data
-  jsonLineDelimited: JSON iliyotenganishwa na mstari (hati moja kwa kila safu)
-  jsonEncoding: UTF-8 Usimbaji
-  jsonDetails: Huhifadhi mashamba yaliyowekwa viota bila kujaa
+  csvHeaders: "Vichwa Ni pamoja na Majina ya Safu wima"
+  csvEncoding: "UTF-8 Usimbaji"
+  csvDelimiter: "Delimiter inayoweza kubinafsishwa"
+  excelFormat: "Muundo wa Excel XLSX"
+  excelHeaders: "Vichwa Vilivyoumbizwa vilivyo na Mitindo"
+  excelColumns: "Safu Wima za Ukubwa Kiotomatiki"
+  formatCsv: "CSV - Thamani Zilizotenganishwa kwa Koma"
+  formatExcel: "Excel - Umbizo la XLSX"
+  formatJson: "JSON (NDJSON) - Mstari kwa kila rekodi"
+  delimiterComma: "Koma (,) - CSV ya Kawaida"
+  delimiterSemicolon: "Semicolon (;) - Excel katika baadhi ya maeneo"
+  delimiterPipe: "Bomba (|) - Chini ya kawaida katika data"
+  jsonLineDelimited: "JSON iliyotenganishwa na mstari (hati moja kwa kila safu)"
+  jsonEncoding: "UTF-8 Usimbaji"
+  jsonDetails: "Huhifadhi mashamba yaliyowekwa viota bila kujaa"
 
 ta_IN:
-  title: தரவு ஏற்றுமதி
+  title: "தரவு ஏற்றுமதி"
   selectedRows: "நீங்கள் தேர்ந்தெடுத்த {count} வரிசைகளை ஏற்றுமதி செய்ய உள்ளீர்கள்."
   selectedRows_one: "நீங்கள் தேர்ந்தெடுத்த {count} வரிசையை ஏற்றுமதி செய்ய உள்ளீர்கள்."
-  allData: அட்டவணையில் இருந்து எல்லா தரவையும் ஏற்றுமதி செய்ய உள்ளீர்கள். பெரிய அட்டவணைகளுக்கு இது சிறிது நேரம் ஆகலாம்.
-  allDataRawQuery: உங்கள் வினவலின் முடிவுகளை நீங்கள் ஏற்றுமதி செய்ய உள்ளீர்கள்.
-  format: வடிவம்
-  delimiter: பிரிப்பான்
-  delimiterHelp: உங்கள் டேட்டாவில் தோன்றாத டிலிமிட்டரைத் தேர்ந்தெடுக்கவும்
-  cancel: ரத்து செய்
-  export: ஏற்றுமதி
-  exportFailed: ஏற்றுமதி தோல்வியடைந்தது
+  allData: "அட்டவணையில் இருந்து எல்லா தரவையும் ஏற்றுமதி செய்ய உள்ளீர்கள். பெரிய அட்டவணைகளுக்கு இது சிறிது நேரம் ஆகலாம்."
+  allDataRawQuery: "உங்கள் வினவலின் முடிவுகளை நீங்கள் ஏற்றுமதி செய்ய உள்ளீர்கள்."
+  format: "வடிவம்"
+  delimiter: "பிரிப்பான்"
+  delimiterHelp: "உங்கள் டேட்டாவில் தோன்றாத டிலிமிட்டரைத் தேர்ந்தெடுக்கவும்"
+  cancel: "ரத்து செய்"
+  export: "ஏற்றுமதி"
+  exportFailed: "ஏற்றுமதி தோல்வியடைந்தது"
   exportDetailsTitle: "ஏற்றுமதி விவரங்கள்:"
-  csvHeaders: தலைப்புகளில் நெடுவரிசைப் பெயர்கள் அடங்கும்
-  csvEncoding: UTF-8 குறியாக்கம்
-  csvDelimiter: தனிப்பயனாக்கக்கூடிய டிலிமிட்டர்
-  excelFormat: எக்செல் XLSX வடிவம்
-  excelHeaders: ஸ்டைலிங்குடன் வடிவமைக்கப்பட்ட தலைப்புகள்
-  excelColumns: தானியங்கு அளவிலான நெடுவரிசைகள்
-  formatCsv: CSV - கமாவால் பிரிக்கப்பட்ட மதிப்புகள்
-  formatExcel: எக்செல் - XLSX வடிவம்
-  formatJson: JSON (NDJSON) - ஒரு பதிவுக்கான வரி
-  delimiterComma: கமா (,) - நிலையான CSV
-  delimiterSemicolon: அரைப்புள்ளி (;) - சில இடங்களில் எக்செல்
-  delimiterPipe: குழாய் (|) - தரவுகளில் குறைவாகவே உள்ளது
-  jsonLineDelimited: வரியால் பிரிக்கப்பட்ட JSON (ஒரு வரிசைக்கு ஒரு ஆவணம்)
-  jsonEncoding: UTF-8 குறியாக்கம்
-  jsonDetails: கூடு கட்டப்பட்ட வயல்களை சமதளமாக்காமல் பாதுகாக்கிறது
+  csvHeaders: "தலைப்புகளில் நெடுவரிசைப் பெயர்கள் அடங்கும்"
+  csvEncoding: "UTF-8 குறியாக்கம்"
+  csvDelimiter: "தனிப்பயனாக்கக்கூடிய டிலிமிட்டர்"
+  excelFormat: "எக்செல் XLSX வடிவம்"
+  excelHeaders: "ஸ்டைலிங்குடன் வடிவமைக்கப்பட்ட தலைப்புகள்"
+  excelColumns: "தானியங்கு அளவிலான நெடுவரிசைகள்"
+  formatCsv: "CSV - கமாவால் பிரிக்கப்பட்ட மதிப்புகள்"
+  formatExcel: "எக்செல் - XLSX வடிவம்"
+  formatJson: "JSON (NDJSON) - ஒரு பதிவுக்கான வரி"
+  delimiterComma: "கமா (,) - நிலையான CSV"
+  delimiterSemicolon: "அரைப்புள்ளி (;) - சில இடங்களில் எக்செல்"
+  delimiterPipe: "குழாய் (|) - தரவுகளில் குறைவாகவே உள்ளது"
+  jsonLineDelimited: "வரியால் பிரிக்கப்பட்ட JSON (ஒரு வரிசைக்கு ஒரு ஆவணம்)"
+  jsonEncoding: "UTF-8 குறியாக்கம்"
+  jsonDetails: "கூடு கட்டப்பட்ட வயல்களை சமதளமாக்காமல் பாதுகாக்கிறது"
 
 th_TH:
-  title: ส่งออกข้อมูล
+  title: "ส่งออกข้อมูล"
   selectedRows: "คุณกำลังจะส่งออกแถวที่เลือก {count}"
   selectedRows_one: "คุณกำลังจะส่งออกแถวที่เลือก {count}"
-  allData: คุณกำลังจะส่งออกข้อมูลทั้งหมดจากตาราง อาจใช้เวลาสักระยะสำหรับโต๊ะขนาดใหญ่
-  allDataRawQuery: คุณกำลังจะส่งออกผลลัพธ์ของการสืบค้นของคุณ
-  format: รูปแบบ
-  delimiter: ตัวคั่น
-  delimiterHelp: เลือกตัวคั่นที่ไม่ปรากฏในข้อมูลของคุณ
-  cancel: ยกเลิก
-  export: ส่งออก
-  exportFailed: การส่งออกล้มเหลว
+  allData: "คุณกำลังจะส่งออกข้อมูลทั้งหมดจากตาราง อาจใช้เวลาสักระยะสำหรับโต๊ะขนาดใหญ่"
+  allDataRawQuery: "คุณกำลังจะส่งออกผลลัพธ์ของการสืบค้นของคุณ"
+  format: "รูปแบบ"
+  delimiter: "ตัวคั่น"
+  delimiterHelp: "เลือกตัวคั่นที่ไม่ปรากฏในข้อมูลของคุณ"
+  cancel: "ยกเลิก"
+  export: "ส่งออก"
+  exportFailed: "การส่งออกล้มเหลว"
   exportDetailsTitle: "รายละเอียดการส่งออก:"
-  csvHeaders: ส่วนหัวรวมชื่อคอลัมน์
-  csvEncoding: การเข้ารหัส UTF-8
-  csvDelimiter: ตัวคั่นที่ปรับแต่งได้
-  excelFormat: รูปแบบ XLSX ของ Excel
-  excelHeaders: ส่วนหัวที่จัดรูปแบบพร้อมสไตล์
-  excelColumns: คอลัมน์ขนาดอัตโนมัติ
-  formatCsv: CSV - ค่าที่คั่นด้วยเครื่องหมายจุลภาค
-  formatExcel: Excel - รูปแบบ XLSX
-  formatJson: JSON (NDJSON) - บรรทัดต่อเรกคอร์ด
-  delimiterComma: จุลภาค (,) - CSV มาตรฐาน
-  delimiterSemicolon: อัฒภาค (;) - Excel ในบางภาษา
-  delimiterPipe: ไปป์ (|) - พบได้น้อยในข้อมูล
-  jsonLineDelimited: JSON แบบคั่นด้วยบรรทัด (หนึ่งเอกสารต่อแถว)
-  jsonEncoding: การเข้ารหัส UTF-8
-  jsonDetails: รักษาเขตข้อมูลที่ซ้อนกันโดยไม่ทำให้แบน
+  csvHeaders: "ส่วนหัวรวมชื่อคอลัมน์"
+  csvEncoding: "การเข้ารหัส UTF-8"
+  csvDelimiter: "ตัวคั่นที่ปรับแต่งได้"
+  excelFormat: "รูปแบบ XLSX ของ Excel"
+  excelHeaders: "ส่วนหัวที่จัดรูปแบบพร้อมสไตล์"
+  excelColumns: "คอลัมน์ขนาดอัตโนมัติ"
+  formatCsv: "CSV - ค่าที่คั่นด้วยเครื่องหมายจุลภาค"
+  formatExcel: "Excel - รูปแบบ XLSX"
+  formatJson: "JSON (NDJSON) - บรรทัดต่อเรกคอร์ด"
+  delimiterComma: "จุลภาค (,) - CSV มาตรฐาน"
+  delimiterSemicolon: "อัฒภาค (;) - Excel ในบางภาษา"
+  delimiterPipe: "ไปป์ (|) - พบได้น้อยในข้อมูล"
+  jsonLineDelimited: "JSON แบบคั่นด้วยบรรทัด (หนึ่งเอกสารต่อแถว)"
+  jsonEncoding: "การเข้ารหัส UTF-8"
+  jsonDetails: "รักษาเขตข้อมูลที่ซ้อนกันโดยไม่ทำให้แบน"
 
 tr_TR:
-  title: Verileri Dışa Aktar
+  title: "Verileri Dışa Aktar"
   selectedRows: "Seçilen {count} satırı dışa aktarmak üzeresiniz."
   selectedRows_one: "Seçilen {count} satırı dışa aktarmak üzeresiniz."
-  allData: Tablodaki tüm verileri dışa aktarmak üzeresiniz. Büyük masalarda bu biraz zaman alabilir.
-  allDataRawQuery: Sorgunuzun sonuçlarını dışa aktarmak üzeresiniz.
-  format: Biçim
-  delimiter: Sınırlayıcı
-  delimiterHelp: Verilerinizde görünmeyen bir sınırlayıcı seçin
-  cancel: İptal etmek
-  export: İhracat
-  exportFailed: Dışa Aktarma Başarısız
+  allData: "Tablodaki tüm verileri dışa aktarmak üzeresiniz. Büyük masalarda bu biraz zaman alabilir."
+  allDataRawQuery: "Sorgunuzun sonuçlarını dışa aktarmak üzeresiniz."
+  format: "Biçim"
+  delimiter: "Sınırlayıcı"
+  delimiterHelp: "Verilerinizde görünmeyen bir sınırlayıcı seçin"
+  cancel: "İptal etmek"
+  export: "İhracat"
+  exportFailed: "Dışa Aktarma Başarısız"
   exportDetailsTitle: "İhracat Ayrıntıları:"
-  csvHeaders: Başlıklar Sütun Adlarını İçerir
-  csvEncoding: UTF-8 Kodlaması
-  csvDelimiter: Özelleştirilebilir Sınırlayıcı
-  excelFormat: Excel XLSX Formatı
-  excelHeaders: Stil İçeren Biçimlendirilmiş Başlıklar
-  excelColumns: Otomatik Boyutlandırılmış Sütunlar
-  formatCsv: CSV - Virgülle Ayrılmış Değerler
-  formatExcel: Excel - XLSX Formatı
-  formatJson: JSON (NDJSON) - Kayıt başına satır
-  delimiterComma: Virgül (,) - Standart CSV
-  delimiterSemicolon: Noktalı virgül (;) - Bazı yerel ayarlarda Excel
-  delimiterPipe: Boru (|) - Verilerde daha az yaygın
-  jsonLineDelimited: Satırla ayrılmış JSON (satır başına bir belge)
-  jsonEncoding: UTF-8 Kodlaması
-  jsonDetails: Yuvalanmış alanları düzleştirmeden korur
+  csvHeaders: "Başlıklar Sütun Adlarını İçerir"
+  csvEncoding: "UTF-8 Kodlaması"
+  csvDelimiter: "Özelleştirilebilir Sınırlayıcı"
+  excelFormat: "Excel XLSX Formatı"
+  excelHeaders: "Stil İçeren Biçimlendirilmiş Başlıklar"
+  excelColumns: "Otomatik Boyutlandırılmış Sütunlar"
+  formatCsv: "CSV - Virgülle Ayrılmış Değerler"
+  formatExcel: "Excel - XLSX Formatı"
+  formatJson: "JSON (NDJSON) - Kayıt başına satır"
+  delimiterComma: "Virgül (,) - Standart CSV"
+  delimiterSemicolon: "Noktalı virgül (;) - Bazı yerel ayarlarda Excel"
+  delimiterPipe: "Boru (|) - Verilerde daha az yaygın"
+  jsonLineDelimited: "Satırla ayrılmış JSON (satır başına bir belge)"
+  jsonEncoding: "UTF-8 Kodlaması"
+  jsonDetails: "Yuvalanmış alanları düzleştirmeden korur"
 
 uk_UA:
-  title: Експорт даних
+  title: "Експорт даних"
   selectedRows: "Ви збираєтеся експортувати {count} вибраних рядків."
   selectedRows_one: "Ви збираєтеся експортувати {count} вибраний рядок."
-  allData: Ви збираєтеся експортувати всі дані з таблиці. Для великих столів це може зайняти деякий час.
-  allDataRawQuery: Ви збираєтеся експортувати результати свого запиту.
-  format: Формат
-  delimiter: роздільник
-  delimiterHelp: Виберіть роздільник, який не відображається у ваших даних
-  cancel: Скасувати
-  export: Експорт
-  exportFailed: Помилка експорту
+  allData: "Ви збираєтеся експортувати всі дані з таблиці. Для великих столів це може зайняти деякий час."
+  allDataRawQuery: "Ви збираєтеся експортувати результати свого запиту."
+  format: "Формат"
+  delimiter: "роздільник"
+  delimiterHelp: "Виберіть роздільник, який не відображається у ваших даних"
+  cancel: "Скасувати"
+  export: "Експорт"
+  exportFailed: "Помилка експорту"
   exportDetailsTitle: "Деталі експорту:"
-  csvHeaders: Заголовки містять назви стовпців
-  csvEncoding: Кодування UTF-8
-  csvDelimiter: Настроюваний роздільник
-  excelFormat: Формат Excel XLSX
-  excelHeaders: Відформатовані заголовки зі стилями
-  excelColumns: Автоматичний розмір стовпців
-  formatCsv: CSV – значення, розділені комами
-  formatExcel: Формат Excel – XLSX
-  formatJson: JSON (NDJSON) – Рядок на запис
-  delimiterComma: Кома (,) – стандартний CSV
-  delimiterSemicolon: Крапка з комою (;) – Excel у деяких локалях
-  delimiterPipe: Трубна лінія (|) – рідше в даних
-  jsonLineDelimited: JSON із роздільниками (один документ на рядок)
-  jsonEncoding: Кодування UTF-8
-  jsonDetails: Зберігає вкладені поля без зведення
+  csvHeaders: "Заголовки містять назви стовпців"
+  csvEncoding: "Кодування UTF-8"
+  csvDelimiter: "Настроюваний роздільник"
+  excelFormat: "Формат Excel XLSX"
+  excelHeaders: "Відформатовані заголовки зі стилями"
+  excelColumns: "Автоматичний розмір стовпців"
+  formatCsv: "CSV – значення, розділені комами"
+  formatExcel: "Формат Excel – XLSX"
+  formatJson: "JSON (NDJSON) – Рядок на запис"
+  delimiterComma: "Кома (,) – стандартний CSV"
+  delimiterSemicolon: "Крапка з комою (;) – Excel у деяких локалях"
+  delimiterPipe: "Трубна лінія (|) – рідше в даних"
+  jsonLineDelimited: "JSON із роздільниками (один документ на рядок)"
+  jsonEncoding: "Кодування UTF-8"
+  jsonDetails: "Зберігає вкладені поля без зведення"
 
 ur_PK:
-  title: ڈیٹا ایکسپورٹ کریں۔
+  title: "ڈیٹا ایکسپورٹ کریں۔"
   selectedRows: "آپ {count} منتخب قطاریں برآمد کرنے والے ہیں۔"
   selectedRows_one: "آپ {count} منتخب قطار کو برآمد کرنے والے ہیں۔"
-  allData: آپ ٹیبل سے تمام ڈیٹا ایکسپورٹ کرنے والے ہیں۔ بڑی میزوں کے لیے اس میں کچھ وقت لگ سکتا ہے۔
-  allDataRawQuery: آپ اپنے استفسار کے نتائج برآمد کرنے والے ہیں۔
-  format: فارمیٹ
-  delimiter: حد بندی کرنے والا
-  delimiterHelp: ایک حد بندی کا انتخاب کریں جو آپ کے ڈیٹا میں ظاہر نہیں ہوتا ہے۔
-  cancel: منسوخ کریں۔
-  export: برآمد کریں۔
-  exportFailed: ایکسپورٹ ناکام ہو گیا۔
+  allData: "آپ ٹیبل سے تمام ڈیٹا ایکسپورٹ کرنے والے ہیں۔ بڑی میزوں کے لیے اس میں کچھ وقت لگ سکتا ہے۔"
+  allDataRawQuery: "آپ اپنے استفسار کے نتائج برآمد کرنے والے ہیں۔"
+  format: "فارمیٹ"
+  delimiter: "حد بندی کرنے والا"
+  delimiterHelp: "ایک حد بندی کا انتخاب کریں جو آپ کے ڈیٹا میں ظاہر نہیں ہوتا ہے۔"
+  cancel: "منسوخ کریں۔"
+  export: "برآمد کریں۔"
+  exportFailed: "ایکسپورٹ ناکام ہو گیا۔"
   exportDetailsTitle: "برآمد کی تفصیلات:"
-  csvHeaders: ہیڈرز میں کالم کے نام شامل ہیں۔
-  csvEncoding: UTF-8 انکوڈنگ
-  csvDelimiter: حسب ضرورت ڈیلیمیٹر
-  excelFormat: ایکسل XLSX فارمیٹ
-  excelHeaders: اسٹائل کے ساتھ فارمیٹ شدہ ہیڈرز
-  excelColumns: خودکار سائز کے کالم
-  formatCsv: CSV - کوما سے الگ کردہ اقدار
-  formatExcel: ایکسل - XLSX فارمیٹ
-  formatJson: JSON (NDJSON) - لائن فی ریکارڈ
-  delimiterComma: کوما (،) - معیاری CSV
-  delimiterSemicolon: سیمیکولن (;) - کچھ لوکلز میں ایکسل
-  delimiterPipe: پائپ (|) - ڈیٹا میں کم عام
-  jsonLineDelimited: لائن سے حد بندی JSON (ایک دستاویز فی قطار)
-  jsonEncoding: UTF-8 انکوڈنگ
-  jsonDetails: گھوںسلا کے کھیتوں کو چپٹا کیے بغیر محفوظ کرتا ہے۔
+  csvHeaders: "ہیڈرز میں کالم کے نام شامل ہیں۔"
+  csvEncoding: "UTF-8 انکوڈنگ"
+  csvDelimiter: "حسب ضرورت ڈیلیمیٹر"
+  excelFormat: "ایکسل XLSX فارمیٹ"
+  excelHeaders: "اسٹائل کے ساتھ فارمیٹ شدہ ہیڈرز"
+  excelColumns: "خودکار سائز کے کالم"
+  formatCsv: "CSV - کوما سے الگ کردہ اقدار"
+  formatExcel: "ایکسل - XLSX فارمیٹ"
+  formatJson: "JSON (NDJSON) - لائن فی ریکارڈ"
+  delimiterComma: "کوما (،) - معیاری CSV"
+  delimiterSemicolon: "سیمیکولن (;) - کچھ لوکلز میں ایکسل"
+  delimiterPipe: "پائپ (|) - ڈیٹا میں کم عام"
+  jsonLineDelimited: "لائن سے حد بندی JSON (ایک دستاویز فی قطار)"
+  jsonEncoding: "UTF-8 انکوڈنگ"
+  jsonDetails: "گھوںسلا کے کھیتوں کو چپٹا کیے بغیر محفوظ کرتا ہے۔"
 
 vi_VN:
-  title: Xuất dữ liệu
+  title: "Xuất dữ liệu"
   selectedRows: "Bạn sắp xuất {count} hàng đã chọn."
   selectedRows_one: "Bạn sắp xuất {count} hàng đã chọn."
-  allData: Bạn sắp xuất tất cả dữ liệu từ bảng. Việc này có thể mất chút thời gian đối với các bảng lớn.
-  allDataRawQuery: Bạn sắp xuất kết quả truy vấn của mình.
-  format: Định dạng
-  delimiter: Dấu phân cách
-  delimiterHelp: Chọn dấu phân cách không xuất hiện trong dữ liệu của bạn
-  cancel: Hủy bỏ
-  export: Xuất khẩu
-  exportFailed: Xuất không thành công
+  allData: "Bạn sắp xuất tất cả dữ liệu từ bảng. Việc này có thể mất chút thời gian đối với các bảng lớn."
+  allDataRawQuery: "Bạn sắp xuất kết quả truy vấn của mình."
+  format: "Định dạng"
+  delimiter: "Dấu phân cách"
+  delimiterHelp: "Chọn dấu phân cách không xuất hiện trong dữ liệu của bạn"
+  cancel: "Hủy bỏ"
+  export: "Xuất khẩu"
+  exportFailed: "Xuất không thành công"
   exportDetailsTitle: "Chi tiết xuất khẩu:"
-  csvHeaders: Tiêu đề bao gồm tên cột
-  csvEncoding: Mã hóa UTF-8
-  csvDelimiter: Dấu phân cách có thể tùy chỉnh
-  excelFormat: Định dạng Excel XLSX
-  excelHeaders: Tiêu đề được định dạng với kiểu dáng
-  excelColumns: Cột có kích thước tự động
-  formatCsv: CSV - Giá trị được phân tách bằng dấu phẩy
-  formatExcel: Excel - Định dạng XLSX
-  formatJson: JSON (NDJSON) - Dòng trên mỗi bản ghi
-  delimiterComma: Dấu phẩy (,) - CSV chuẩn
-  delimiterSemicolon: Dấu chấm phẩy (;) - Excel ở một số ngôn ngữ
-  delimiterPipe: Ống (|) - Ít phổ biến hơn trong dữ liệu
-  jsonLineDelimited: JSON được phân cách bằng dòng (một tài liệu trên mỗi hàng)
-  jsonEncoding: Mã hóa UTF-8
-  jsonDetails: Bảo tồn các trường lồng nhau mà không làm phẳng
+  csvHeaders: "Tiêu đề bao gồm tên cột"
+  csvEncoding: "Mã hóa UTF-8"
+  csvDelimiter: "Dấu phân cách có thể tùy chỉnh"
+  excelFormat: "Định dạng Excel XLSX"
+  excelHeaders: "Tiêu đề được định dạng với kiểu dáng"
+  excelColumns: "Cột có kích thước tự động"
+  formatCsv: "CSV - Giá trị được phân tách bằng dấu phẩy"
+  formatExcel: "Excel - Định dạng XLSX"
+  formatJson: "JSON (NDJSON) - Dòng trên mỗi bản ghi"
+  delimiterComma: "Dấu phẩy (,) - CSV chuẩn"
+  delimiterSemicolon: "Dấu chấm phẩy (;) - Excel ở một số ngôn ngữ"
+  delimiterPipe: "Ống (|) - Ít phổ biến hơn trong dữ liệu"
+  jsonLineDelimited: "JSON được phân cách bằng dòng (một tài liệu trên mỗi hàng)"
+  jsonEncoding: "Mã hóa UTF-8"
+  jsonDetails: "Bảo tồn các trường lồng nhau mà không làm phẳng"
 
 af_ZA:
   title: "Voer data uit"
@@ -1189,8 +1189,8 @@ af_ZA:
 
 am_ET:
   title: "ውሂብ ወደ ውጪ ላክ"
-  selectedRows: "[[0]] የተመረጡ ረድፎችን ወደ ውጭ ሊልኩ ነው።"
-  selectedRows_one: "የተመረጠውን ረድፍ [[0]] ወደ ውጭ ሊልኩ ነው።"
+  selectedRows: "{count} የተመረጡ ረድፎችን ወደ ውጭ ሊልኩ ነው።"
+  selectedRows_one: "የተመረጠውን ረድፍ {count} ወደ ውጭ ሊልኩ ነው።"
   allData: "ሁሉንም ውሂብ ከጠረጴዛው ላይ ወደ ውጭ ሊልኩ ነው። ይህ ለትልቅ ጠረጴዛዎች የተወሰነ ጊዜ ሊወስድ ይችላል."
   allDataRawQuery: "የጥያቄዎን ውጤት ወደ ውጭ ሊልኩ ነው።"
   format: "ቅርጸት"
@@ -1218,7 +1218,7 @@ am_ET:
 
 az_AZ:
   title: "Məlumatları ixrac edin"
-  selectedRows: "Siz [[0]]] seçilmiş sətirləri ixrac etmək üzrəsiniz."
+  selectedRows: "Siz {count} seçilmiş sətirləri ixrac etmək üzrəsiniz."
   selectedRows_one: "Seçilmiş {count} sıranı ixrac etmək üzrəsiniz."
   allData: "Siz cədvəldəki bütün məlumatları ixrac etmək üzrəsiniz. Böyük masalar üçün bu bir az vaxt tələb edə bilər."
   allDataRawQuery: "Sorğunuzun nəticələrini ixrac etmək üzrəsiniz."
@@ -1305,8 +1305,8 @@ gu_IN:
 
 ha_NG:
   title: "Export Data"
-  selectedRows: "Kuna shirin fitarwa [[0]] zaɓaɓɓun layuka."
-  selectedRows_one: "Kuna shirin fitarwa [[0]] jeri da aka zaɓa."
+  selectedRows: "Kuna shirin fitarwa {count} zaɓaɓɓun layuka."
+  selectedRows_one: "Kuna shirin fitarwa {count} jeri da aka zaɓa."
   allData: "Kuna shirin fitar da duk bayanai daga tebur. Wannan na iya ɗaukar ɗan lokaci don manyan tebura."
   allDataRawQuery: "Kuna gab da fitar da sakamakon tambayar ku."
   format: "Tsarin"
@@ -1740,8 +1740,8 @@ tl_PH:
 
 uz_UZ:
   title: "Ma'lumotlarni eksport qilish"
-  selectedRows: "Siz [[0]]] tanlangan qatorlarni eksport qilmoqchisiz."
-  selectedRows_one: "Siz [[0]]] tanlangan qatorni eksport qilmoqchisiz."
+  selectedRows: "Siz {count} tanlangan qatorlarni eksport qilmoqchisiz."
+  selectedRows_one: "Siz {count} tanlangan qatorni eksport qilmoqchisiz."
   allData: "Siz jadvaldagi barcha ma'lumotlarni eksport qilmoqchisiz. Bu katta stollar uchun biroz vaqt talab qilishi mumkin."
   allDataRawQuery: "Siz soʻrovingiz natijalarini eksport qilmoqchisiz."
   format: "Format"

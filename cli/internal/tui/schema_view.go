@@ -242,12 +242,12 @@ func (v *SchemaView) View() string {
 	b.WriteString("\n\n")
 
 	if v.filtering {
-		b.WriteString(RenderBindingHelp(
+		b.WriteString(RenderBindingHelpWidth(v.width,
 			Keys.Filter.CancelFilter,
 			Keys.Filter.ApplyFilter,
 		))
 	} else {
-		b.WriteString(RenderBindingHelp(
+		b.WriteString(RenderBindingHelpWidth(v.width,
 			Keys.Schema.Up,
 			Keys.Schema.Down,
 			Keys.Schema.Toggle,

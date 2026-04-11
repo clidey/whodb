@@ -4,9 +4,9 @@ This is the WhoDB desktop application built with [Wails](https://wails.io/), pro
 
 ## Prerequisites
 
-1. **Install Wails CLI:**
+1. **Install Wails CLI** (version is pinned in `desktop-common/go.mod`):
    ```bash
-   go install github.com/wailsapp/wails/v2/cmd/wails@2.11.0
+   make install-wails
    ```
 
 2. **Check dependencies:**

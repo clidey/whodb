@@ -53,6 +53,10 @@ export interface TypeDefinition {
     defaultPrecision?: number;
     /** Type category for grouping and icon selection */
     category: TypeCategory;
+    /** Function to wrap INSERT values (e.g. "TO_BITMAP") — aggregate types only */
+    insertFunc?: string;
+    /** Required table key model (e.g. "AGGREGATE") — aggregate types only */
+    tableModel?: string;
 }
 
 /**
@@ -301,6 +305,24 @@ export const baseDatabaseTypes: IDatabaseDropdownItem[] = [
         supportsDatabaseSwitching: false,
         usesSchemaForGraph: false,
         sslModes: SSL_MODES_SIMPLE,
+    },
+    {
+        id: "TiDB",
+        label: "TiDB",
+        icon: Icons.Logos.TiDB,
+        extra: {"Port": "4000", "Parse Time": "True", "Loc": "UTC", "Allow clear text passwords": "0"},
+        fields: {
+            hostname: true,
+            username: true,
+            password: true,
+            database: true,
+        },
+        supportsModifiers: true,
+        supportsScratchpad: true,
+        supportsSchema: false,
+        supportsDatabaseSwitching: true,
+        usesSchemaForGraph: false,
+        sslModes: SSL_MODES_WITH_PREFERRED,
     },
     // AWS managed database types (discovered via AWS providers, use underlying plugins)
     {

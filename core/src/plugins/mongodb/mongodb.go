@@ -23,8 +23,8 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var (
@@ -136,7 +136,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 		storageUnit := engine.StorageUnit{Name: collectionName}
 
 		if collectionType == "view" {
-			viewOn, _ := collectionInfo["options"].(bson.M)["viewOn"].(string)
+			viewOn, _ := collectionInfo["options"].(map[string]any)["viewOn"].(string)
 
 			storageUnit.Attributes = []engine.Record{
 				{Key: "Type", Value: "View"},
@@ -244,18 +244,18 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 	}
 
 	// Extract validator from collection options
-	opts, ok := collInfo["options"].(bson.M)
+	opts, ok := collInfo["options"].(map[string]any)
 	if !ok {
 		return make(map[string]map[string]any), nil
 	}
 
-	validator, ok := opts["validator"].(bson.M)
+	validator, ok := opts["validator"].(map[string]any)
 	if !ok {
 		return make(map[string]map[string]any), nil
 	}
 
 	// Extract $jsonSchema
-	jsonSchema, ok := validator["$jsonSchema"].(bson.M)
+	jsonSchema, ok := validator["$jsonSchema"].(map[string]any)
 	if !ok {
 		return make(map[string]map[string]any), nil
 	}
@@ -270,12 +270,12 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 }
 
 // parseMongoDBJsonSchema extracts constraints from a MongoDB $jsonSchema validator.
-func parseMongoDBJsonSchema(schema bson.M) map[string]map[string]any {
+func parseMongoDBJsonSchema(schema map[string]any) map[string]map[string]any {
 	constraints := make(map[string]map[string]any)
 
 	// Get required fields
 	requiredFields := make(map[string]bool)
-	if required, ok := schema["required"].(bson.A); ok {
+	if required, ok := schema["required"].([]any); ok {
 		for _, field := range required {
 			if fieldName, ok := field.(string); ok {
 				requiredFields[fieldName] = true
@@ -284,13 +284,13 @@ func parseMongoDBJsonSchema(schema bson.M) map[string]map[string]any {
 	}
 
 	// Get properties
-	properties, ok := schema["properties"].(bson.M)
+	properties, ok := schema["properties"].(map[string]any)
 	if !ok {
 		return constraints
 	}
 
 	for fieldName, fieldSchemaRaw := range properties {
-		fieldSchema, ok := fieldSchemaRaw.(bson.M)
+		fieldSchema, ok := fieldSchemaRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -306,7 +306,7 @@ func parseMongoDBJsonSchema(schema bson.M) map[string]map[string]any {
 		}
 
 		// Get enum values → check_values
-		if enum, ok := fieldSchema["enum"].(bson.A); ok {
+		if enum, ok := fieldSchema["enum"].([]any); ok {
 			values := make([]string, 0, len(enum))
 			for _, v := range enum {
 				if s, ok := v.(string); ok {

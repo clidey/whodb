@@ -37,16 +37,21 @@ var (
 )
 
 type Connection struct {
-	Name      string            `json:"name"`
-	Type      string            `json:"type"`
-	Host      string            `json:"host"`
-	Port      int               `json:"port"`
-	Username  string            `json:"username"`
-	Password  string            `json:"password,omitempty"`
-	Database  string            `json:"database"`
-	Schema    string            `json:"schema,omitempty"`
-	Advanced  map[string]string `json:"advanced,omitempty"`
-	IsProfile bool              `json:"is_profile,omitempty"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Host        string            `json:"host"`
+	Port        int               `json:"port"`
+	Username    string            `json:"username"`
+	Password    string            `json:"password,omitempty"`
+	Database    string            `json:"database"`
+	Schema      string            `json:"schema,omitempty"`
+	Advanced    map[string]string `json:"advanced,omitempty"`
+	IsProfile   bool              `json:"is_profile,omitempty"`
+	SSHHost     string            `json:"ssh_host,omitempty"`
+	SSHPort     int               `json:"ssh_port,omitempty"`
+	SSHUser     string            `json:"ssh_user,omitempty"`
+	SSHKeyFile  string            `json:"ssh_key_file,omitempty"`
+	SSHPassword string            `json:"ssh_password,omitempty"`
 }
 
 type HistoryConfig struct {
@@ -70,13 +75,21 @@ type QueryConfig struct {
 	PreferredTimeoutSeconds int `json:"preferred_timeout_seconds,omitempty"`
 }
 
+// SavedQuery represents a bookmarked SQL query.
+type SavedQuery struct {
+	Name  string `json:"name"`
+	Query string `json:"query"`
+}
+
 // CLISection is the structure stored in the "cli" section of config.json.
 type CLISection struct {
-	Connections []Connection  `json:"connections"`
-	History     HistoryConfig `json:"history"`
-	Display     DisplayConfig `json:"display"`
-	AI          AIConfig      `json:"ai"`
-	Query       QueryConfig   `json:"query"`
+	Connections  []Connection  `json:"connections"`
+	History      HistoryConfig `json:"history"`
+	Display      DisplayConfig `json:"display"`
+	AI           AIConfig      `json:"ai"`
+	Query        QueryConfig   `json:"query"`
+	SavedQueries []SavedQuery  `json:"saved_queries,omitempty"`
+	ReadOnly     bool          `json:"read_only,omitempty"`
 }
 
 type Config struct {
@@ -326,4 +339,43 @@ func (c *Config) GetThemeName() string {
 // SetThemeName updates the configured theme name and persists to disk.
 func (c *Config) SetThemeName(name string) {
 	c.Display.Theme = name
+}
+
+// AddSavedQuery adds a bookmarked query. If a query with the same name
+// already exists it is replaced.
+func (c *Config) AddSavedQuery(name, query string) {
+	for i, sq := range c.SavedQueries {
+		if sq.Name == name {
+			c.SavedQueries[i].Query = query
+			return
+		}
+	}
+	c.SavedQueries = append(c.SavedQueries, SavedQuery{Name: name, Query: query})
+}
+
+// DeleteSavedQuery removes a bookmarked query by name.
+// Returns true if a query was found and removed.
+func (c *Config) DeleteSavedQuery(name string) bool {
+	for i, sq := range c.SavedQueries {
+		if sq.Name == name {
+			c.SavedQueries = append(c.SavedQueries[:i], c.SavedQueries[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// GetSavedQueries returns all bookmarked queries.
+func (c *Config) GetSavedQueries() []SavedQuery {
+	return c.SavedQueries
+}
+
+// GetReadOnly returns whether read-only mode is enabled.
+func (c *Config) GetReadOnly() bool {
+	return c.ReadOnly
+}
+
+// SetReadOnly enables or disables read-only mode.
+func (c *Config) SetReadOnly(readOnly bool) {
+	c.ReadOnly = readOnly
 }

@@ -1,6 +1,6 @@
 ---
 name: whodb
-description: Database operations including querying, schema exploration, and data analysis. Activates for tasks involving PostgreSQL, MySQL, MariaDB, SQLite, MongoDB, Redis, Elasticsearch, or ClickHouse databases.
+description: Database operations including querying, schema exploration, and data analysis. Activates for tasks involving PostgreSQL, MySQL, MariaDB, TiDB, SQLite, MongoDB, Redis, Elasticsearch, or ClickHouse databases.
 ---
 
 # WhoDB Database Assistant

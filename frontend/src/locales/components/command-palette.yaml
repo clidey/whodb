@@ -16,666 +16,666 @@ en_US:
   sortByColumn: Sort by {column}
 
 ar_AE:
-  searchPlaceholder: اكتب أمرًا أو ابحث...
-  noResults: لم يتم العثور على نتائج.
-  navigation: ملاحة
-  actions: الإجراءات
-  sortBy: فرز حسب
-  goToChat: اذهب إلى الدردشة
-  goToStorageUnits: انتقل إلى وحدات التخزين
-  goToGraph: انتقل إلى الرسم البياني
-  goToScratchpad: انتقل إلى المسودة
-  refreshData: تحديث البيانات
-  exportData: تصدير البيانات
-  importData: استيراد البيانات
-  toggleSidebar: تبديل الشريط الجانبي
-  disconnect: قطع الاتصال
+  searchPlaceholder: "اكتب أمرًا أو ابحث..."
+  noResults: "لم يتم العثور على نتائج."
+  navigation: "ملاحة"
+  actions: "الإجراءات"
+  sortBy: "فرز حسب"
+  goToChat: "اذهب إلى الدردشة"
+  goToStorageUnits: "انتقل إلى وحدات التخزين"
+  goToGraph: "انتقل إلى الرسم البياني"
+  goToScratchpad: "انتقل إلى المسودة"
+  refreshData: "تحديث البيانات"
+  exportData: "تصدير البيانات"
+  importData: "استيراد البيانات"
+  toggleSidebar: "تبديل الشريط الجانبي"
+  disconnect: "قطع الاتصال"
   sortByColumn: "الترتيب حسب {column}"
 
 de_DE:
-  searchPlaceholder: Geben Sie einen Befehl ein oder suchen Sie...
-  noResults: Keine Ergebnisse gefunden.
-  navigation: Navigation
-  actions: Aktionen
-  sortBy: Sortieren nach
-  goToChat: Gehen Sie zum Chat
-  goToStorageUnits: Gehen Sie zu Lagereinheiten
-  goToGraph: Gehen Sie zu Diagramm
-  goToScratchpad: Gehen Sie zu Scratchpad
-  refreshData: Daten aktualisieren
-  exportData: Daten exportieren
-  importData: Daten importieren
-  toggleSidebar: Seitenleiste umschalten
-  disconnect: Trennen
+  searchPlaceholder: "Geben Sie einen Befehl ein oder suchen Sie..."
+  noResults: "Keine Ergebnisse gefunden."
+  navigation: "Navigation"
+  actions: "Aktionen"
+  sortBy: "Sortieren nach"
+  goToChat: "Gehen Sie zum Chat"
+  goToStorageUnits: "Gehen Sie zu Lagereinheiten"
+  goToGraph: "Gehen Sie zu Diagramm"
+  goToScratchpad: "Gehen Sie zu Scratchpad"
+  refreshData: "Daten aktualisieren"
+  exportData: "Daten exportieren"
+  importData: "Daten importieren"
+  toggleSidebar: "Seitenleiste umschalten"
+  disconnect: "Trennen"
   sortByColumn: "Sortieren nach {column}"
 
 el_GR:
-  searchPlaceholder: Πληκτρολογήστε μια εντολή ή αναζητήστε...
-  noResults: Δεν βρέθηκαν αποτελέσματα.
-  navigation: Πλοήγηση
-  actions: Δράσεις
-  sortBy: Ταξινόμηση κατά
-  goToChat: Μεταβείτε στο Chat
-  goToStorageUnits: Μεταβείτε στις μονάδες αποθήκευσης
-  goToGraph: Μεταβείτε στο Γράφημα
-  goToScratchpad: Μεταβείτε στο Scratchpad
-  refreshData: Ανανέωση δεδομένων
-  exportData: Εξαγωγή δεδομένων
-  importData: Εισαγωγή δεδομένων
-  toggleSidebar: Εναλλαγή πλευρικής γραμμής
-  disconnect: Αποσυνδέω
+  searchPlaceholder: "Πληκτρολογήστε μια εντολή ή αναζητήστε..."
+  noResults: "Δεν βρέθηκαν αποτελέσματα."
+  navigation: "Πλοήγηση"
+  actions: "Δράσεις"
+  sortBy: "Ταξινόμηση κατά"
+  goToChat: "Μεταβείτε στο Chat"
+  goToStorageUnits: "Μεταβείτε στις μονάδες αποθήκευσης"
+  goToGraph: "Μεταβείτε στο Γράφημα"
+  goToScratchpad: "Μεταβείτε στο Scratchpad"
+  refreshData: "Ανανέωση δεδομένων"
+  exportData: "Εξαγωγή δεδομένων"
+  importData: "Εισαγωγή δεδομένων"
+  toggleSidebar: "Εναλλαγή πλευρικής γραμμής"
+  disconnect: "Αποσυνδέω"
   sortByColumn: "Ταξινόμηση κατά {column}"
 
 en_GB:
-  searchPlaceholder: Type a command or search...
-  noResults: No results found.
-  navigation: Navigation
-  actions: Actions
-  sortBy: Sort By
-  goToChat: Go to Chat
-  goToStorageUnits: Go to Storage Units
-  goToGraph: Go to Graph
-  goToScratchpad: Go to Scratchpad
-  refreshData: Refresh Data
-  exportData: Export Data
-  importData: Import Data
-  toggleSidebar: Toggle Sidebar
-  disconnect: Disconnect
+  searchPlaceholder: "Type a command or search..."
+  noResults: "No results found."
+  navigation: "Navigation"
+  actions: "Actions"
+  sortBy: "Sort By"
+  goToChat: "Go to Chat"
+  goToStorageUnits: "Go to Storage Units"
+  goToGraph: "Go to Graph"
+  goToScratchpad: "Go to Scratchpad"
+  refreshData: "Refresh Data"
+  exportData: "Export Data"
+  importData: "Import Data"
+  toggleSidebar: "Toggle Sidebar"
+  disconnect: "Disconnect"
   sortByColumn: "Sort by {column}"
 
 es_ES:
-  searchPlaceholder: Escribe un comando o busca...
-  noResults: No se encontraron resultados.
-  navigation: Navegación
-  actions: Comportamiento
-  sortBy: Ordenar por
-  goToChat: Ir al chat
-  goToStorageUnits: Ir a Unidades de Almacenamiento
-  goToGraph: Ir al gráfico
-  goToScratchpad: Ir al bloc de notas
-  refreshData: Actualizar datos
-  exportData: Exportar datos
-  importData: Importar datos
-  toggleSidebar: Alternar barra lateral
-  disconnect: Desconectar
+  searchPlaceholder: "Escribe un comando o busca..."
+  noResults: "No se encontraron resultados."
+  navigation: "Navegación"
+  actions: "Comportamiento"
+  sortBy: "Ordenar por"
+  goToChat: "Ir al chat"
+  goToStorageUnits: "Ir a Unidades de Almacenamiento"
+  goToGraph: "Ir al gráfico"
+  goToScratchpad: "Ir al bloc de notas"
+  refreshData: "Actualizar datos"
+  exportData: "Exportar datos"
+  importData: "Importar datos"
+  toggleSidebar: "Alternar barra lateral"
+  disconnect: "Desconectar"
   sortByColumn: "Ordenar por {column}"
 
 fi_FI:
-  searchPlaceholder: Kirjoita komento tai hae...
-  noResults: Tuloksia ei löytynyt.
-  navigation: Navigointi
-  actions: Toiminnot
-  sortBy: Lajitteluperuste
-  goToChat: Siirry Chatiin
-  goToStorageUnits: Siirry kohtaan Tallennusyksiköt
-  goToGraph: Siirry Grafiin
-  goToScratchpad: Siirry Scratchpadiin
-  refreshData: Päivitä tiedot
-  exportData: Vie tiedot
-  importData: Tuo tiedot
-  toggleSidebar: Vaihda sivupalkki
-  disconnect: Katkaise yhteys
+  searchPlaceholder: "Kirjoita komento tai hae..."
+  noResults: "Tuloksia ei löytynyt."
+  navigation: "Navigointi"
+  actions: "Toiminnot"
+  sortBy: "Lajitteluperuste"
+  goToChat: "Siirry Chatiin"
+  goToStorageUnits: "Siirry kohtaan Tallennusyksiköt"
+  goToGraph: "Siirry Grafiin"
+  goToScratchpad: "Siirry Scratchpadiin"
+  refreshData: "Päivitä tiedot"
+  exportData: "Vie tiedot"
+  importData: "Tuo tiedot"
+  toggleSidebar: "Vaihda sivupalkki"
+  disconnect: "Katkaise yhteys"
   sortByColumn: "Lajitteluperuste {column}"
 
 fr_FR:
-  searchPlaceholder: Tapez une commande ou recherchez...
-  noResults: Aucun résultat trouvé.
-  navigation: Navigation
-  actions: Actes
-  sortBy: Trier par
-  goToChat: Aller au chat
-  goToStorageUnits: Aller aux unités de stockage
-  goToGraph: Aller au graphique
-  goToScratchpad: Aller au Bloc-notes
-  refreshData: Actualiser les données
-  exportData: Exporter des données
-  importData: Importer des données
-  toggleSidebar: Basculer la barre latérale
-  disconnect: Déconnecter
+  searchPlaceholder: "Tapez une commande ou recherchez..."
+  noResults: "Aucun résultat trouvé."
+  navigation: "Navigation"
+  actions: "Actes"
+  sortBy: "Trier par"
+  goToChat: "Aller au chat"
+  goToStorageUnits: "Aller aux unités de stockage"
+  goToGraph: "Aller au graphique"
+  goToScratchpad: "Aller au Bloc-notes"
+  refreshData: "Actualiser les données"
+  exportData: "Exporter des données"
+  importData: "Importer des données"
+  toggleSidebar: "Basculer la barre latérale"
+  disconnect: "Déconnecter"
   sortByColumn: "Trier par {column}"
 
 it_IT:
-  searchPlaceholder: Digita un comando o cerca...
-  noResults: Nessun risultato trovato
-  navigation: Navigazione
-  actions: Azioni
-  sortBy: Ordina per
-  goToChat: Vai alla chat
-  goToStorageUnits: Vai a Unità di stoccaggio
-  goToGraph: Vai al grafico
-  goToScratchpad: Vai a Blocco note
-  refreshData: Aggiorna dati
-  exportData: Esporta dati
-  importData: Importa dati
-  toggleSidebar: Attiva/disattiva la barra laterale
-  disconnect: Disconnetti
+  searchPlaceholder: "Digita un comando o cerca..."
+  noResults: "Nessun risultato trovato"
+  navigation: "Navigazione"
+  actions: "Azioni"
+  sortBy: "Ordina per"
+  goToChat: "Vai alla chat"
+  goToStorageUnits: "Vai a Unità di stoccaggio"
+  goToGraph: "Vai al grafico"
+  goToScratchpad: "Vai a Blocco note"
+  refreshData: "Aggiorna dati"
+  exportData: "Esporta dati"
+  importData: "Importa dati"
+  toggleSidebar: "Attiva/disattiva la barra laterale"
+  disconnect: "Disconnetti"
   sortByColumn: "Ordina per {column}"
 
 iw_IL:
-  searchPlaceholder: הקלד פקודה או חיפוש...
-  noResults: לא נמצאו תוצאות.
-  navigation: ניווט
-  actions: פעולות
-  sortBy: מיין לפי
-  goToChat: עבור אל צ'אט
-  goToStorageUnits: עבור אל יחידות אחסון
-  goToGraph: עבור אל גרף
-  goToScratchpad: עבור אל Scratchpad
-  refreshData: רענן נתונים
-  exportData: ייצוא נתונים
-  importData: ייבוא ​​נתונים
-  toggleSidebar: החלף את הסרגל הצידי
-  disconnect: לְנַתֵק
+  searchPlaceholder: "הקלד פקודה או חיפוש..."
+  noResults: "לא נמצאו תוצאות."
+  navigation: "ניווט"
+  actions: "פעולות"
+  sortBy: "מיין לפי"
+  goToChat: "עבור אל צ'אט"
+  goToStorageUnits: "עבור אל יחידות אחסון"
+  goToGraph: "עבור אל גרף"
+  goToScratchpad: "עבור אל Scratchpad"
+  refreshData: "רענן נתונים"
+  exportData: "ייצוא נתונים"
+  importData: "ייבוא ​​נתונים"
+  toggleSidebar: "החלף את הסרגל הצידי"
+  disconnect: "לְנַתֵק"
   sortByColumn: "מיין לפי {column}"
 
 ja_JP:
-  searchPlaceholder: コマンドを入力するか検索...
-  noResults: 結果が見つかりませんでした。
-  navigation: ナビゲーション
-  actions: アクション
-  sortBy: 並べ替え
-  goToChat: チャットに行く
-  goToStorageUnits: ストレージユニットに移動
-  goToGraph: グラフに移動
-  goToScratchpad: スクラッチパッドに移動
-  refreshData: データを更新する
-  exportData: データのエクスポート
-  importData: データのインポート
-  toggleSidebar: サイドバーの切り替え
-  disconnect: 切断する
+  searchPlaceholder: "コマンドを入力するか検索..."
+  noResults: "結果が見つかりませんでした。"
+  navigation: "ナビゲーション"
+  actions: "アクション"
+  sortBy: "並べ替え"
+  goToChat: "チャットに行く"
+  goToStorageUnits: "ストレージユニットに移動"
+  goToGraph: "グラフに移動"
+  goToScratchpad: "スクラッチパッドに移動"
+  refreshData: "データを更新する"
+  exportData: "データのエクスポート"
+  importData: "データのインポート"
+  toggleSidebar: "サイドバーの切り替え"
+  disconnect: "切断する"
   sortByColumn: "{column} で並べ替え"
 
 ko_KR:
-  searchPlaceholder: 명령을 입력하거나 검색하세요...
-  noResults: 검색된 결과가 없습니다.
-  navigation: 항해
-  actions: 행위
-  sortBy: 정렬 기준
-  goToChat: 채팅으로 이동
-  goToStorageUnits: 저장 장치로 이동
-  goToGraph: 그래프로 이동
-  goToScratchpad: 스크래치패드로 이동
-  refreshData: 데이터 새로 고침
-  exportData: 데이터 내보내기
-  importData: 데이터 가져오기
-  toggleSidebar: 사이드바 전환
-  disconnect: 연결 끊기
+  searchPlaceholder: "명령을 입력하거나 검색하세요..."
+  noResults: "검색된 결과가 없습니다."
+  navigation: "항해"
+  actions: "행위"
+  sortBy: "정렬 기준"
+  goToChat: "채팅으로 이동"
+  goToStorageUnits: "저장 장치로 이동"
+  goToGraph: "그래프로 이동"
+  goToScratchpad: "스크래치패드로 이동"
+  refreshData: "데이터 새로 고침"
+  exportData: "데이터 내보내기"
+  importData: "데이터 가져오기"
+  toggleSidebar: "사이드바 전환"
+  disconnect: "연결 끊기"
   sortByColumn: "{column} 기준으로 정렬"
 
 nl_NL:
-  searchPlaceholder: Typ een opdracht of zoek...
-  noResults: Geen resultaten gevonden.
-  navigation: Navigatie
-  actions: Acties
-  sortBy: Sorteer op
-  goToChat: Ga naar Chatten
-  goToStorageUnits: Ga naar Opslageenheden
-  goToGraph: Ga naar Grafiek
-  goToScratchpad: Ga naar Kladblok
-  refreshData: Gegevens vernieuwen
-  exportData: Gegevens exporteren
-  importData: Gegevens importeren
-  toggleSidebar: Schakel zijbalk in
-  disconnect: Verbreek de verbinding
+  searchPlaceholder: "Typ een opdracht of zoek..."
+  noResults: "Geen resultaten gevonden."
+  navigation: "Navigatie"
+  actions: "Acties"
+  sortBy: "Sorteer op"
+  goToChat: "Ga naar Chatten"
+  goToStorageUnits: "Ga naar Opslageenheden"
+  goToGraph: "Ga naar Grafiek"
+  goToScratchpad: "Ga naar Kladblok"
+  refreshData: "Gegevens vernieuwen"
+  exportData: "Gegevens exporteren"
+  importData: "Gegevens importeren"
+  toggleSidebar: "Schakel zijbalk in"
+  disconnect: "Verbreek de verbinding"
   sortByColumn: "Sorteren op {column}"
 
 pl_PL:
-  searchPlaceholder: Wpisz polecenie lub wyszukaj...
-  noResults: Nie znaleziono żadnych wyników.
-  navigation: Nawigacja
-  actions: Działania
-  sortBy: Sortuj według
-  goToChat: Przejdź do czatu
-  goToStorageUnits: Przejdź do Jednostki magazynowe
-  goToGraph: Przejdź do Wykresu
-  goToScratchpad: Przejdź do Scratchpada
-  refreshData: Odśwież dane
-  exportData: Eksportuj dane
-  importData: Importuj dane
-  toggleSidebar: Przełącz pasek boczny
-  disconnect: Odłączyć
+  searchPlaceholder: "Wpisz polecenie lub wyszukaj..."
+  noResults: "Nie znaleziono żadnych wyników."
+  navigation: "Nawigacja"
+  actions: "Działania"
+  sortBy: "Sortuj według"
+  goToChat: "Przejdź do czatu"
+  goToStorageUnits: "Przejdź do Jednostki magazynowe"
+  goToGraph: "Przejdź do Wykresu"
+  goToScratchpad: "Przejdź do Scratchpada"
+  refreshData: "Odśwież dane"
+  exportData: "Eksportuj dane"
+  importData: "Importuj dane"
+  toggleSidebar: "Przełącz pasek boczny"
+  disconnect: "Odłączyć"
   sortByColumn: "Sortuj według {column}"
 
 pt_BR:
-  searchPlaceholder: Digite um comando ou pesquise...
-  noResults: Nenhum resultado encontrado.
-  navigation: Navegação
-  actions: Ações
-  sortBy: Ordenar por
-  goToChat: Vá para o bate-papo
-  goToStorageUnits: Vá para Unidades de Armazenamento
-  goToGraph: Ir para o gráfico
-  goToScratchpad: Vá para o Bloco de notas
-  refreshData: Atualizar dados
-  exportData: Exportar dados
-  importData: Importar dados
-  toggleSidebar: Alternar barra lateral
-  disconnect: Desconectar
+  searchPlaceholder: "Digite um comando ou pesquise..."
+  noResults: "Nenhum resultado encontrado."
+  navigation: "Navegação"
+  actions: "Ações"
+  sortBy: "Ordenar por"
+  goToChat: "Vá para o bate-papo"
+  goToStorageUnits: "Vá para Unidades de Armazenamento"
+  goToGraph: "Ir para o gráfico"
+  goToScratchpad: "Vá para o Bloco de notas"
+  refreshData: "Atualizar dados"
+  exportData: "Exportar dados"
+  importData: "Importar dados"
+  toggleSidebar: "Alternar barra lateral"
+  disconnect: "Desconectar"
   sortByColumn: "Classificar por {column}"
 
 ro_RO:
-  searchPlaceholder: Tastați o comandă sau căutați...
-  noResults: Nu s-au găsit rezultate.
-  navigation: Navigare
-  actions: Acțiuni
-  sortBy: Filtrează după
-  goToChat: Accesați Chat
-  goToStorageUnits: Accesați Unitățile de depozitare
-  goToGraph: Mergeți la Grafic
-  goToScratchpad: Accesați Scratchpad
-  refreshData: Actualizează datele
-  exportData: Exportați date
-  importData: Importați date
-  toggleSidebar: Comutați bara laterală
-  disconnect: Deconecta
+  searchPlaceholder: "Tastați o comandă sau căutați..."
+  noResults: "Nu s-au găsit rezultate."
+  navigation: "Navigare"
+  actions: "Acțiuni"
+  sortBy: "Filtrează după"
+  goToChat: "Accesați Chat"
+  goToStorageUnits: "Accesați Unitățile de depozitare"
+  goToGraph: "Mergeți la Grafic"
+  goToScratchpad: "Accesați Scratchpad"
+  refreshData: "Actualizează datele"
+  exportData: "Exportați date"
+  importData: "Importați date"
+  toggleSidebar: "Comutați bara laterală"
+  disconnect: "Deconecta"
   sortByColumn: "Sortați după {column}"
 
 ru_RU:
-  searchPlaceholder: Введите команду или выполните поиск...
-  noResults: Результаты не найдены.
-  navigation: Навигация
-  actions: Действия
-  sortBy: Сортировать по
-  goToChat: Перейти в чат
-  goToStorageUnits: Перейти к единицам хранения
-  goToGraph: Перейти к графику
-  goToScratchpad: Перейти в Электронный блокнот
-  refreshData: Обновить данные
-  exportData: Экспортировать данные
-  importData: Импортировать данные
-  toggleSidebar: Переключить боковую панель
-  disconnect: Отключить
+  searchPlaceholder: "Введите команду или выполните поиск..."
+  noResults: "Результаты не найдены."
+  navigation: "Навигация"
+  actions: "Действия"
+  sortBy: "Сортировать по"
+  goToChat: "Перейти в чат"
+  goToStorageUnits: "Перейти к единицам хранения"
+  goToGraph: "Перейти к графику"
+  goToScratchpad: "Перейти в Электронный блокнот"
+  refreshData: "Обновить данные"
+  exportData: "Экспортировать данные"
+  importData: "Импортировать данные"
+  toggleSidebar: "Переключить боковую панель"
+  disconnect: "Отключить"
   sortByColumn: "Сортировать по {column}"
 
 sk_SK:
-  searchPlaceholder: Zadajte príkaz alebo hľadajte...
-  noResults: Nenašli sa žiadne výsledky.
-  navigation: Navigácia
-  actions: Akcie
-  sortBy: Zoradiť podľa
-  goToChat: Prejdite na Chat
-  goToStorageUnits: Prejdite na Úložné jednotky
-  goToGraph: Prejdite na Graf
-  goToScratchpad: Prejdite do aplikácie Scratchpad
-  refreshData: Obnoviť údaje
-  exportData: Exportovať údaje
-  importData: Importovať údaje
-  toggleSidebar: Prepnúť bočný panel
-  disconnect: Odpojiť
+  searchPlaceholder: "Zadajte príkaz alebo hľadajte..."
+  noResults: "Nenašli sa žiadne výsledky."
+  navigation: "Navigácia"
+  actions: "Akcie"
+  sortBy: "Zoradiť podľa"
+  goToChat: "Prejdite na Chat"
+  goToStorageUnits: "Prejdite na Úložné jednotky"
+  goToGraph: "Prejdite na Graf"
+  goToScratchpad: "Prejdite do aplikácie Scratchpad"
+  refreshData: "Obnoviť údaje"
+  exportData: "Exportovať údaje"
+  importData: "Importovať údaje"
+  toggleSidebar: "Prepnúť bočný panel"
+  disconnect: "Odpojiť"
   sortByColumn: "Zoradiť podľa {column}"
 
 sv_SE:
-  searchPlaceholder: Skriv ett kommando eller sök...
-  noResults: Inga resultat hittades.
-  navigation: Navigering
-  actions: Åtgärder
-  sortBy: Sortera efter
-  goToChat: Gå till Chatt
-  goToStorageUnits: Gå till Storage Units
-  goToGraph: Gå till Graph
-  goToScratchpad: Gå till Scratchpad
-  refreshData: Uppdatera data
-  exportData: Exportera data
-  importData: Importera data
-  toggleSidebar: Växla sidofält
-  disconnect: Koppla från
+  searchPlaceholder: "Skriv ett kommando eller sök..."
+  noResults: "Inga resultat hittades."
+  navigation: "Navigering"
+  actions: "Åtgärder"
+  sortBy: "Sortera efter"
+  goToChat: "Gå till Chatt"
+  goToStorageUnits: "Gå till Storage Units"
+  goToGraph: "Gå till Graph"
+  goToScratchpad: "Gå till Scratchpad"
+  refreshData: "Uppdatera data"
+  exportData: "Exportera data"
+  importData: "Importera data"
+  toggleSidebar: "Växla sidofält"
+  disconnect: "Koppla från"
   sortByColumn: "Sortera efter {column}"
 
 zh_CN:
-  searchPlaceholder: 输入命令或搜索...
-  noResults: 没有找到结果。
-  navigation: 导航
-  actions: 行动
-  sortBy: 排序方式
-  goToChat: 去聊天
-  goToStorageUnits: 前往存储单元
-  goToGraph: 转到图表
-  goToScratchpad: 前往便签本
-  refreshData: 刷新数据
-  exportData: 导出数据
-  importData: 导入数据
-  toggleSidebar: 切换侧边栏
-  disconnect: 断开
+  searchPlaceholder: "输入命令或搜索..."
+  noResults: "没有找到结果。"
+  navigation: "导航"
+  actions: "行动"
+  sortBy: "排序方式"
+  goToChat: "去聊天"
+  goToStorageUnits: "前往存储单元"
+  goToGraph: "转到图表"
+  goToScratchpad: "前往便签本"
+  refreshData: "刷新数据"
+  exportData: "导出数据"
+  importData: "导入数据"
+  toggleSidebar: "切换侧边栏"
+  disconnect: "断开"
   sortByColumn: "按 {column} 排序"
 
 zh_TW:
-  searchPlaceholder: 輸入命令或搜尋...
-  noResults: 沒有找到結果。
-  navigation: 導航
-  actions: 行動
-  sortBy: 排序方式
-  goToChat: 去聊天
-  goToStorageUnits: 前往儲存單元
-  goToGraph: 轉到圖表
-  goToScratchpad: 前往便籤本
-  refreshData: 重新整理數據
-  exportData: 匯出數據
-  importData: 導入數據
-  toggleSidebar: 切換側邊欄
-  disconnect: 斷開
+  searchPlaceholder: "輸入命令或搜尋..."
+  noResults: "沒有找到結果。"
+  navigation: "導航"
+  actions: "行動"
+  sortBy: "排序方式"
+  goToChat: "去聊天"
+  goToStorageUnits: "前往儲存單元"
+  goToGraph: "轉到圖表"
+  goToScratchpad: "前往便籤本"
+  refreshData: "重新整理數據"
+  exportData: "匯出數據"
+  importData: "導入數據"
+  toggleSidebar: "切換側邊欄"
+  disconnect: "斷開"
   sortByColumn: "按 {column} 排序"
 
 bg_BG:
-  searchPlaceholder: Въведете команда или потърсете...
-  noResults: Няма намерени резултати.
-  navigation: Навигация
-  actions: Действия
-  sortBy: Сортиране по
-  goToChat: Отидете на Чат
-  goToStorageUnits: Отидете на Единици за съхранение
-  goToGraph: Отидете на Graph
-  goToScratchpad: Отидете на Scratchpad
-  refreshData: Обновяване на данните
-  exportData: Експортиране на данни
-  importData: Импортиране на данни
-  toggleSidebar: Превключване на страничната лента
-  disconnect: Прекъснете връзката
+  searchPlaceholder: "Въведете команда или потърсете..."
+  noResults: "Няма намерени резултати."
+  navigation: "Навигация"
+  actions: "Действия"
+  sortBy: "Сортиране по"
+  goToChat: "Отидете на Чат"
+  goToStorageUnits: "Отидете на Единици за съхранение"
+  goToGraph: "Отидете на Graph"
+  goToScratchpad: "Отидете на Scratchpad"
+  refreshData: "Обновяване на данните"
+  exportData: "Експортиране на данни"
+  importData: "Импортиране на данни"
+  toggleSidebar: "Превключване на страничната лента"
+  disconnect: "Прекъснете връзката"
   sortByColumn: "Сортиране по {column}"
 
 bn_BD:
-  searchPlaceholder: একটি কমান্ড টাইপ করুন বা অনুসন্ধান করুন...
-  noResults: কোন ফলাফল পাওয়া যায়নি.
-  navigation: নেভিগেশন
-  actions: কর্ম
-  sortBy: অনুসারে সাজান
-  goToChat: চ্যাটে যান
-  goToStorageUnits: স্টোরেজ ইউনিটে যান
-  goToGraph: গ্রাফে যান
-  goToScratchpad: স্ক্র্যাচপ্যাডে যান
-  refreshData: ডেটা রিফ্রেশ করুন
-  exportData: ডেটা রপ্তানি করুন
-  importData: ডেটা আমদানি করুন
-  toggleSidebar: সাইডবার টগল করুন
-  disconnect: সংযোগ বিচ্ছিন্ন করুন
+  searchPlaceholder: "একটি কমান্ড টাইপ করুন বা অনুসন্ধান করুন..."
+  noResults: "কোন ফলাফল পাওয়া যায়নি."
+  navigation: "নেভিগেশন"
+  actions: "কর্ম"
+  sortBy: "অনুসারে সাজান"
+  goToChat: "চ্যাটে যান"
+  goToStorageUnits: "স্টোরেজ ইউনিটে যান"
+  goToGraph: "গ্রাফে যান"
+  goToScratchpad: "স্ক্র্যাচপ্যাডে যান"
+  refreshData: "ডেটা রিফ্রেশ করুন"
+  exportData: "ডেটা রপ্তানি করুন"
+  importData: "ডেটা আমদানি করুন"
+  toggleSidebar: "সাইডবার টগল করুন"
+  disconnect: "সংযোগ বিচ্ছিন্ন করুন"
   sortByColumn: "{column} অনুসারে সাজান"
 
 ca_ES:
-  searchPlaceholder: Escriu una ordre o cerca...
-  noResults: No s'han trobat resultats.
-  navigation: Navegació
-  actions: Accions
-  sortBy: Ordena per
-  goToChat: Vés a Xat
-  goToStorageUnits: Aneu a Unitats d'emmagatzematge
-  goToGraph: Vés a Gràfic
-  goToScratchpad: Aneu a Scratchpad
-  refreshData: Actualitzar dades
-  exportData: Exportar dades
-  importData: Importa dades
-  toggleSidebar: Commuta la barra lateral
-  disconnect: Desconnecta
-  sortByColumn: Ordena per [[0]]]
+  searchPlaceholder: "Escriu una ordre o cerca..."
+  noResults: "No s'han trobat resultats."
+  navigation: "Navegació"
+  actions: "Accions"
+  sortBy: "Ordena per"
+  goToChat: "Vés a Xat"
+  goToStorageUnits: "Aneu a Unitats d'emmagatzematge"
+  goToGraph: "Vés a Gràfic"
+  goToScratchpad: "Aneu a Scratchpad"
+  refreshData: "Actualitzar dades"
+  exportData: "Exportar dades"
+  importData: "Importa dades"
+  toggleSidebar: "Commuta la barra lateral"
+  disconnect: "Desconnecta"
+  sortByColumn: "Ordena per {column}"
 
 cs_CZ:
-  searchPlaceholder: Zadejte příkaz nebo vyhledejte...
-  noResults: Nebyly nalezeny žádné výsledky.
-  navigation: Navigace
-  actions: Akce
-  sortBy: Seřadit podle
-  goToChat: Přejděte na Chat
-  goToStorageUnits: Přejděte na Úložné jednotky
-  goToGraph: Přejděte na Graf
-  goToScratchpad: Přejděte do Zápisníku
-  refreshData: Obnovit data
-  exportData: Export dat
-  importData: Importovat data
-  toggleSidebar: Přepnout postranní panel
-  disconnect: Odpojit
+  searchPlaceholder: "Zadejte příkaz nebo vyhledejte..."
+  noResults: "Nebyly nalezeny žádné výsledky."
+  navigation: "Navigace"
+  actions: "Akce"
+  sortBy: "Seřadit podle"
+  goToChat: "Přejděte na Chat"
+  goToStorageUnits: "Přejděte na Úložné jednotky"
+  goToGraph: "Přejděte na Graf"
+  goToScratchpad: "Přejděte do Zápisníku"
+  refreshData: "Obnovit data"
+  exportData: "Export dat"
+  importData: "Importovat data"
+  toggleSidebar: "Přepnout postranní panel"
+  disconnect: "Odpojit"
   sortByColumn: "Řadit podle {column}"
 
 da_DK:
-  searchPlaceholder: Skriv en kommando eller søg...
-  noResults: Ingen resultater fundet.
-  navigation: Navigation
-  actions: Handlinger
-  sortBy: Sorter efter
-  goToChat: Gå til Chat
-  goToStorageUnits: Gå til Lagerenheder
-  goToGraph: Gå til Graph
-  goToScratchpad: Gå til Scratchpad
-  refreshData: Opdater data
-  exportData: Eksporter data
-  importData: Importer data
-  toggleSidebar: Skift sidebjælke
-  disconnect: Afbryde
+  searchPlaceholder: "Skriv en kommando eller søg..."
+  noResults: "Ingen resultater fundet."
+  navigation: "Navigation"
+  actions: "Handlinger"
+  sortBy: "Sorter efter"
+  goToChat: "Gå til Chat"
+  goToStorageUnits: "Gå til Lagerenheder"
+  goToGraph: "Gå til Graph"
+  goToScratchpad: "Gå til Scratchpad"
+  refreshData: "Opdater data"
+  exportData: "Eksporter data"
+  importData: "Importer data"
+  toggleSidebar: "Skift sidebjælke"
+  disconnect: "Afbryde"
   sortByColumn: "Sorter efter {column}"
 
 fa_IR:
-  searchPlaceholder: یک دستور تایپ کنید یا جستجو کنید...
-  noResults: هیچ نتیجه ای یافت نشد.
-  navigation: ناوبری
-  actions: اقدامات
-  sortBy: مرتب سازی بر اساس
-  goToChat: به چت بروید
-  goToStorageUnits: به Storage Units بروید
-  goToGraph: به نمودار بروید
-  goToScratchpad: به Scratchpad بروید
-  refreshData: Refresh Data
-  exportData: صادرات داده ها
-  importData: وارد کردن داده ها
-  toggleSidebar: نوار کناری را تغییر دهید
-  disconnect: قطع کن
+  searchPlaceholder: "یک دستور تایپ کنید یا جستجو کنید..."
+  noResults: "هیچ نتیجه ای یافت نشد."
+  navigation: "ناوبری"
+  actions: "اقدامات"
+  sortBy: "مرتب سازی بر اساس"
+  goToChat: "به چت بروید"
+  goToStorageUnits: "به Storage Units بروید"
+  goToGraph: "به نمودار بروید"
+  goToScratchpad: "به Scratchpad بروید"
+  refreshData: "Refresh Data"
+  exportData: "صادرات داده ها"
+  importData: "وارد کردن داده ها"
+  toggleSidebar: "نوار کناری را تغییر دهید"
+  disconnect: "قطع کن"
   sortByColumn: "مرتب سازی بر اساس {column}"
 
 hi_IN:
-  searchPlaceholder: एक कमांड टाइप करें या खोजें...
-  noResults: कोई परिणाम नहीं मिला.
-  navigation: मार्गदर्शन
-  actions: कार्रवाई
-  sortBy: इसके अनुसार क्रमबद्ध करें
-  goToChat: चैट पर जाएँ
-  goToStorageUnits: भंडारण इकाइयों पर जाएँ
-  goToGraph: ग्राफ़ पर जाएँ
-  goToScratchpad: स्क्रैचपैड पर जाएँ
-  refreshData: डेटा ताज़ा करें
-  exportData: डेटा निर्यात करें
-  importData: डेटा आयात करें
-  toggleSidebar: साइडबार टॉगल करें
-  disconnect: डिस्कनेक्ट
+  searchPlaceholder: "एक कमांड टाइप करें या खोजें..."
+  noResults: "कोई परिणाम नहीं मिला."
+  navigation: "मार्गदर्शन"
+  actions: "कार्रवाई"
+  sortBy: "इसके अनुसार क्रमबद्ध करें"
+  goToChat: "चैट पर जाएँ"
+  goToStorageUnits: "भंडारण इकाइयों पर जाएँ"
+  goToGraph: "ग्राफ़ पर जाएँ"
+  goToScratchpad: "स्क्रैचपैड पर जाएँ"
+  refreshData: "डेटा ताज़ा करें"
+  exportData: "डेटा निर्यात करें"
+  importData: "डेटा आयात करें"
+  toggleSidebar: "साइडबार टॉगल करें"
+  disconnect: "डिस्कनेक्ट"
   sortByColumn: "{column} के अनुसार क्रमबद्ध करें"
 
 hr_HR:
-  searchPlaceholder: Upišite naredbu ili pretražite...
-  noResults: Nema rezultata.
-  navigation: Navigacija
-  actions: Radnje
-  sortBy: Poredaj po
-  goToChat: Idite na Chat
-  goToStorageUnits: Idite na Jedinice za pohranu
-  goToGraph: Idite na Grafikon
-  goToScratchpad: Idite na Scratchpad
-  refreshData: Osvježi podatke
-  exportData: Izvoz podataka
-  importData: Uvoz podataka
-  toggleSidebar: Uključi/isključi bočnu traku
-  disconnect: Prekini vezu
+  searchPlaceholder: "Upišite naredbu ili pretražite..."
+  noResults: "Nema rezultata."
+  navigation: "Navigacija"
+  actions: "Radnje"
+  sortBy: "Poredaj po"
+  goToChat: "Idite na Chat"
+  goToStorageUnits: "Idite na Jedinice za pohranu"
+  goToGraph: "Idite na Grafikon"
+  goToScratchpad: "Idite na Scratchpad"
+  refreshData: "Osvježi podatke"
+  exportData: "Izvoz podataka"
+  importData: "Uvoz podataka"
+  toggleSidebar: "Uključi/isključi bočnu traku"
+  disconnect: "Prekini vezu"
   sortByColumn: "Poredaj po {column}"
 
 hu_HU:
-  searchPlaceholder: Írjon be egy parancsot vagy keressen...
-  noResults: Nincs találat.
-  navigation: Navigáció
-  actions: Akciók
-  sortBy: Rendezés alapja
-  goToChat: Menjen a Csevegésbe
-  goToStorageUnits: Lépjen a Tárolóegységek menüpontra
-  goToGraph: Lépjen a Graph elemre
-  goToScratchpad: Nyissa meg a Firkálótömböt
-  refreshData: Adatok frissítése
-  exportData: Adatok exportálása
-  importData: Adatok importálása
-  toggleSidebar: Kapcsolja be az oldalsávot
-  disconnect: Leválasztás
+  searchPlaceholder: "Írjon be egy parancsot vagy keressen..."
+  noResults: "Nincs találat."
+  navigation: "Navigáció"
+  actions: "Akciók"
+  sortBy: "Rendezés alapja"
+  goToChat: "Menjen a Csevegésbe"
+  goToStorageUnits: "Lépjen a Tárolóegységek menüpontra"
+  goToGraph: "Lépjen a Graph elemre"
+  goToScratchpad: "Nyissa meg a Firkálótömböt"
+  refreshData: "Adatok frissítése"
+  exportData: "Adatok exportálása"
+  importData: "Adatok importálása"
+  toggleSidebar: "Kapcsolja be az oldalsávot"
+  disconnect: "Leválasztás"
   sortByColumn: "Rendezés: {column}"
 
 id_ID:
-  searchPlaceholder: Ketikkan perintah atau cari...
-  noResults: Tidak ada hasil yang ditemukan.
-  navigation: Navigasi
-  actions: Tindakan
-  sortBy: Urutkan Berdasarkan
-  goToChat: Buka Obrolan
-  goToStorageUnits: Buka Unit Penyimpanan
-  goToGraph: Pergi ke Grafik
-  goToScratchpad: Pergi ke Scratchpad
-  refreshData: Segarkan Data
-  exportData: Ekspor Data
-  importData: Impor Data
-  toggleSidebar: Alihkan Bilah Sisi
-  disconnect: Memutuskan
+  searchPlaceholder: "Ketikkan perintah atau cari..."
+  noResults: "Tidak ada hasil yang ditemukan."
+  navigation: "Navigasi"
+  actions: "Tindakan"
+  sortBy: "Urutkan Berdasarkan"
+  goToChat: "Buka Obrolan"
+  goToStorageUnits: "Buka Unit Penyimpanan"
+  goToGraph: "Pergi ke Grafik"
+  goToScratchpad: "Pergi ke Scratchpad"
+  refreshData: "Segarkan Data"
+  exportData: "Ekspor Data"
+  importData: "Impor Data"
+  toggleSidebar: "Alihkan Bilah Sisi"
+  disconnect: "Memutuskan"
   sortByColumn: "Urutkan berdasarkan {column}"
 
 ms_MY:
-  searchPlaceholder: Taip arahan atau cari...
-  noResults: Tiada hasil ditemui.
-  navigation: Navigasi
-  actions: Tindakan
-  sortBy: Isih Mengikut
-  goToChat: Pergi ke Sembang
-  goToStorageUnits: Pergi ke Unit Storan
-  goToGraph: Pergi ke Graf
-  goToScratchpad: Pergi ke Pad Conteng
-  refreshData: Muat semula Data
-  exportData: Eksport Data
-  importData: Import Data
-  toggleSidebar: Togol Sidebar
-  disconnect: Putuskan sambungan
+  searchPlaceholder: "Taip arahan atau cari..."
+  noResults: "Tiada hasil ditemui."
+  navigation: "Navigasi"
+  actions: "Tindakan"
+  sortBy: "Isih Mengikut"
+  goToChat: "Pergi ke Sembang"
+  goToStorageUnits: "Pergi ke Unit Storan"
+  goToGraph: "Pergi ke Graf"
+  goToScratchpad: "Pergi ke Pad Conteng"
+  refreshData: "Muat semula Data"
+  exportData: "Eksport Data"
+  importData: "Import Data"
+  toggleSidebar: "Togol Sidebar"
+  disconnect: "Putuskan sambungan"
   sortByColumn: "Isih mengikut {column}"
 
 nb_NO:
-  searchPlaceholder: Skriv inn en kommando eller søk...
-  noResults: Ingen resultater funnet.
-  navigation: Navigasjon
-  actions: Handlinger
-  sortBy: Sorter etter
-  goToChat: Gå til Chat
-  goToStorageUnits: Gå til Lagringsenheter
-  goToGraph: Gå til Graph
-  goToScratchpad: Gå til Scratchpad
-  refreshData: Oppdater data
-  exportData: Eksporter data
-  importData: Importer data
-  toggleSidebar: Slå av sidepanel
-  disconnect: Frakople
+  searchPlaceholder: "Skriv inn en kommando eller søk..."
+  noResults: "Ingen resultater funnet."
+  navigation: "Navigasjon"
+  actions: "Handlinger"
+  sortBy: "Sorter etter"
+  goToChat: "Gå til Chat"
+  goToStorageUnits: "Gå til Lagringsenheter"
+  goToGraph: "Gå til Graph"
+  goToScratchpad: "Gå til Scratchpad"
+  refreshData: "Oppdater data"
+  exportData: "Eksporter data"
+  importData: "Importer data"
+  toggleSidebar: "Slå av sidepanel"
+  disconnect: "Frakople"
   sortByColumn: "Sorter etter {column}"
 
 sw_KE:
-  searchPlaceholder: Andika amri au utafute...
-  noResults: Hakuna matokeo yaliyopatikana.
-  navigation: Urambazaji
-  actions: Vitendo
-  sortBy: Panga Kwa
-  goToChat: Nenda kwenye Chat
-  goToStorageUnits: Nenda kwa Vitengo vya Hifadhi
-  goToGraph: Nenda kwenye Grafu
-  goToScratchpad: Nenda kwa Scratchpad
-  refreshData: Onyesha upya Data
-  exportData: Hamisha Data
-  importData: Ingiza Data
-  toggleSidebar: Geuza Upau wa kando
-  disconnect: Tenganisha
+  searchPlaceholder: "Andika amri au utafute..."
+  noResults: "Hakuna matokeo yaliyopatikana."
+  navigation: "Urambazaji"
+  actions: "Vitendo"
+  sortBy: "Panga Kwa"
+  goToChat: "Nenda kwenye Chat"
+  goToStorageUnits: "Nenda kwa Vitengo vya Hifadhi"
+  goToGraph: "Nenda kwenye Grafu"
+  goToScratchpad: "Nenda kwa Scratchpad"
+  refreshData: "Onyesha upya Data"
+  exportData: "Hamisha Data"
+  importData: "Ingiza Data"
+  toggleSidebar: "Geuza Upau wa kando"
+  disconnect: "Tenganisha"
   sortByColumn: "Panga kwa {column}"
 
 ta_IN:
-  searchPlaceholder: கட்டளையைத் தட்டச்சு செய்யவும் அல்லது தேடவும்...
-  noResults: முடிவுகள் எதுவும் கிடைக்கவில்லை.
-  navigation: வழிசெலுத்தல்
-  actions: செயல்கள்
-  sortBy: வரிசைப்படுத்து
-  goToChat: அரட்டைக்குச் செல்லவும்
-  goToStorageUnits: சேமிப்பக அலகுகளுக்குச் செல்லவும்
-  goToGraph: வரைபடத்திற்குச் செல்லவும்
-  goToScratchpad: ஸ்க்ராட்ச்பேடிற்குச் செல்லவும்
-  refreshData: தரவைப் புதுப்பிக்கவும்
-  exportData: தரவு ஏற்றுமதி
-  importData: தரவை இறக்குமதி செய்யவும்
-  toggleSidebar: பக்கப்பட்டியை மாற்று
-  disconnect: துண்டிக்கவும்
+  searchPlaceholder: "கட்டளையைத் தட்டச்சு செய்யவும் அல்லது தேடவும்..."
+  noResults: "முடிவுகள் எதுவும் கிடைக்கவில்லை."
+  navigation: "வழிசெலுத்தல்"
+  actions: "செயல்கள்"
+  sortBy: "வரிசைப்படுத்து"
+  goToChat: "அரட்டைக்குச் செல்லவும்"
+  goToStorageUnits: "சேமிப்பக அலகுகளுக்குச் செல்லவும்"
+  goToGraph: "வரைபடத்திற்குச் செல்லவும்"
+  goToScratchpad: "ஸ்க்ராட்ச்பேடிற்குச் செல்லவும்"
+  refreshData: "தரவைப் புதுப்பிக்கவும்"
+  exportData: "தரவு ஏற்றுமதி"
+  importData: "தரவை இறக்குமதி செய்யவும்"
+  toggleSidebar: "பக்கப்பட்டியை மாற்று"
+  disconnect: "துண்டிக்கவும்"
   sortByColumn: "{column} மூலம் வரிசைப்படுத்து"
 
 th_TH:
-  searchPlaceholder: พิมพ์คำสั่งหรือค้นหา...
-  noResults: ไม่พบผลลัพธ์
-  navigation: การนำทาง
-  actions: การดำเนินการ
-  sortBy: เรียงตาม
-  goToChat: ไปที่แชท
-  goToStorageUnits: ไปที่หน่วยเก็บข้อมูล
-  goToGraph: ไปที่กราฟ
-  goToScratchpad: ไปที่สแครชแพด
-  refreshData: รีเฟรชข้อมูล
-  exportData: ส่งออกข้อมูล
-  importData: นำเข้าข้อมูล
-  toggleSidebar: สลับแถบด้านข้าง
-  disconnect: ตัดการเชื่อมต่อ
+  searchPlaceholder: "พิมพ์คำสั่งหรือค้นหา..."
+  noResults: "ไม่พบผลลัพธ์"
+  navigation: "การนำทาง"
+  actions: "การดำเนินการ"
+  sortBy: "เรียงตาม"
+  goToChat: "ไปที่แชท"
+  goToStorageUnits: "ไปที่หน่วยเก็บข้อมูล"
+  goToGraph: "ไปที่กราฟ"
+  goToScratchpad: "ไปที่สแครชแพด"
+  refreshData: "รีเฟรชข้อมูล"
+  exportData: "ส่งออกข้อมูล"
+  importData: "นำเข้าข้อมูล"
+  toggleSidebar: "สลับแถบด้านข้าง"
+  disconnect: "ตัดการเชื่อมต่อ"
   sortByColumn: "จัดเรียงตาม {column}"
 
 tr_TR:
-  searchPlaceholder: Bir komut yazın veya arayın...
-  noResults: Sonuç bulunamadı.
-  navigation: Navigasyon
-  actions: Eylemler
-  sortBy: Göre sırala
-  goToChat: Sohbete Git
-  goToStorageUnits: Depolama Birimlerine Git
-  goToGraph: Grafiğe Git
-  goToScratchpad: Scratchpad'e git
-  refreshData: Verileri Yenile
-  exportData: Verileri Dışa Aktar
-  importData: Verileri İçe Aktar
-  toggleSidebar: Kenar Çubuğunu Değiştir
-  disconnect: Bağlantıyı kes
+  searchPlaceholder: "Bir komut yazın veya arayın..."
+  noResults: "Sonuç bulunamadı."
+  navigation: "Navigasyon"
+  actions: "Eylemler"
+  sortBy: "Göre sırala"
+  goToChat: "Sohbete Git"
+  goToStorageUnits: "Depolama Birimlerine Git"
+  goToGraph: "Grafiğe Git"
+  goToScratchpad: "Scratchpad'e git"
+  refreshData: "Verileri Yenile"
+  exportData: "Verileri Dışa Aktar"
+  importData: "Verileri İçe Aktar"
+  toggleSidebar: "Kenar Çubuğunu Değiştir"
+  disconnect: "Bağlantıyı kes"
   sortByColumn: "{column}'a göre sırala"
 
 uk_UA:
-  searchPlaceholder: Введіть команду або знайдіть...
-  noResults: Результатів не знайдено.
-  navigation: Навігація
-  actions: Дії
-  sortBy: Сортувати за
-  goToChat: Перейдіть до чату
-  goToStorageUnits: Перейдіть до одиниць зберігання
-  goToGraph: Перейдіть до Графіка
-  goToScratchpad: Перейдіть до Scratchpad
-  refreshData: Оновити дані
-  exportData: Експорт даних
-  importData: Імпорт даних
-  toggleSidebar: Перемкнути бічну панель
-  disconnect: Відключити
+  searchPlaceholder: "Введіть команду або знайдіть..."
+  noResults: "Результатів не знайдено."
+  navigation: "Навігація"
+  actions: "Дії"
+  sortBy: "Сортувати за"
+  goToChat: "Перейдіть до чату"
+  goToStorageUnits: "Перейдіть до одиниць зберігання"
+  goToGraph: "Перейдіть до Графіка"
+  goToScratchpad: "Перейдіть до Scratchpad"
+  refreshData: "Оновити дані"
+  exportData: "Експорт даних"
+  importData: "Імпорт даних"
+  toggleSidebar: "Перемкнути бічну панель"
+  disconnect: "Відключити"
   sortByColumn: "Сортувати за {column}"
 
 ur_PK:
-  searchPlaceholder: کمانڈ ٹائپ کریں یا تلاش کریں...
-  noResults: کوئی نتیجہ نہیں ملا۔
-  navigation: نیویگیشن
-  actions: اعمال
-  sortBy: ترتیب دیں
-  goToChat: چیٹ پر جائیں۔
-  goToStorageUnits: سٹوریج یونٹس پر جائیں۔
-  goToGraph: گراف پر جائیں۔
-  goToScratchpad: سکریچ پیڈ پر جائیں۔
-  refreshData: ڈیٹا ریفریش کریں۔
-  exportData: ڈیٹا ایکسپورٹ کریں۔
-  importData: ڈیٹا درآمد کریں۔
-  toggleSidebar: سائڈبار کو ٹوگل کریں۔
-  disconnect: منقطع کرنا
+  searchPlaceholder: "کمانڈ ٹائپ کریں یا تلاش کریں..."
+  noResults: "کوئی نتیجہ نہیں ملا۔"
+  navigation: "نیویگیشن"
+  actions: "اعمال"
+  sortBy: "ترتیب دیں"
+  goToChat: "چیٹ پر جائیں۔"
+  goToStorageUnits: "سٹوریج یونٹس پر جائیں۔"
+  goToGraph: "گراف پر جائیں۔"
+  goToScratchpad: "سکریچ پیڈ پر جائیں۔"
+  refreshData: "ڈیٹا ریفریش کریں۔"
+  exportData: "ڈیٹا ایکسپورٹ کریں۔"
+  importData: "ڈیٹا درآمد کریں۔"
+  toggleSidebar: "سائڈبار کو ٹوگل کریں۔"
+  disconnect: "منقطع کرنا"
   sortByColumn: "ترتیب دیں {column}"
 
 vi_VN:
-  searchPlaceholder: Nhập lệnh hoặc tìm kiếm...
-  noResults: Không tìm thấy kết quả nào.
-  navigation: Điều hướng
-  actions: hành động
-  sortBy: Sắp xếp theo
-  goToChat: Đi tới Trò chuyện
-  goToStorageUnits: Chuyển đến Đơn vị lưu trữ
-  goToGraph: Đi tới biểu đồ
-  goToScratchpad: Đi đến Scratchpad
-  refreshData: Làm mới dữ liệu
-  exportData: Xuất dữ liệu
-  importData: Nhập dữ liệu
-  toggleSidebar: Chuyển đổi thanh bên
-  disconnect: Ngắt kết nối
+  searchPlaceholder: "Nhập lệnh hoặc tìm kiếm..."
+  noResults: "Không tìm thấy kết quả nào."
+  navigation: "Điều hướng"
+  actions: "hành động"
+  sortBy: "Sắp xếp theo"
+  goToChat: "Đi tới Trò chuyện"
+  goToStorageUnits: "Chuyển đến Đơn vị lưu trữ"
+  goToGraph: "Đi tới biểu đồ"
+  goToScratchpad: "Đi đến Scratchpad"
+  refreshData: "Làm mới dữ liệu"
+  exportData: "Xuất dữ liệu"
+  importData: "Nhập dữ liệu"
+  toggleSidebar: "Chuyển đổi thanh bên"
+  disconnect: "Ngắt kết nối"
   sortByColumn: "Sắp xếp theo {column}"
 
 af_ZA:
@@ -710,7 +710,7 @@ am_ET:
   importData: "ውሂብ አስመጣ"
   toggleSidebar: "የጎን አሞሌን ቀይር"
   disconnect: "ግንኙነት አቋርጥ"
-  sortByColumn: "በ[[0]] ደርድር"
+  sortByColumn: "በ{column} ደርድር"
 
 az_AZ:
   searchPlaceholder: "Komanda yazın və ya axtarın..."
@@ -778,7 +778,7 @@ ha_NG:
   importData: "Shigo da Bayanai"
   toggleSidebar: "Juya Bar labarun gefe"
   disconnect: "Cire haɗin"
-  sortByColumn: "An tsara ta [[0]]"
+  sortByColumn: "An tsara ta {column}"
 
 ka_GE:
   searchPlaceholder: "ჩაწერეთ ბრძანება ან მოძებნეთ..."
@@ -1050,4 +1050,4 @@ yo_NG:
   importData: "Gbe Data wọle"
   toggleSidebar: "Yipada Pẹpẹ ẹgbẹ"
   disconnect: "Ge asopọ"
-  sortByColumn: "To nipasẹ [[0]]]"
+  sortByColumn: "To nipasẹ {column}"

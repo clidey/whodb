@@ -23,8 +23,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {
@@ -90,7 +89,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 
 	var objectIDLog string
 	switch v := objectID.(type) {
-	case primitive.ObjectID:
+	case bson.ObjectID:
 		objectIDLog = v.Hex()
 	default:
 		objectIDLog = fmt.Sprintf("%v", v)

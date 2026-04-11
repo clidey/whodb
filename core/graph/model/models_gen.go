@@ -359,6 +359,8 @@ type TypeDefinition struct {
 	DefaultLength    *int         `json:"defaultLength,omitempty"`
 	DefaultPrecision *int         `json:"defaultPrecision,omitempty"`
 	Category         TypeCategory `json:"category"`
+	InsertFunc       *string      `json:"insertFunc,omitempty"`
+	TableModel       *string      `json:"tableModel,omitempty"`
 }
 
 type UpdateInfo struct {
@@ -563,6 +565,7 @@ const (
 	DatabaseTypeClickHouse    DatabaseType = "ClickHouse"
 	DatabaseTypeDuckDb        DatabaseType = "DuckDB"
 	DatabaseTypeMemcached     DatabaseType = "Memcached"
+	DatabaseTypeTiDb          DatabaseType = "TiDB"
 )
 
 var AllDatabaseType = []DatabaseType{
@@ -576,11 +579,12 @@ var AllDatabaseType = []DatabaseType{
 	DatabaseTypeClickHouse,
 	DatabaseTypeDuckDb,
 	DatabaseTypeMemcached,
+	DatabaseTypeTiDb,
 }
 
 func (e DatabaseType) IsValid() bool {
 	switch e {
-	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch, DatabaseTypeMariaDb, DatabaseTypeClickHouse, DatabaseTypeDuckDb, DatabaseTypeMemcached:
+	case DatabaseTypePostgres, DatabaseTypeMySQL, DatabaseTypeSqlite3, DatabaseTypeMongoDb, DatabaseTypeRedis, DatabaseTypeElasticSearch, DatabaseTypeMariaDb, DatabaseTypeClickHouse, DatabaseTypeDuckDb, DatabaseTypeMemcached, DatabaseTypeTiDb:
 		return true
 	}
 	return false

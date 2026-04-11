@@ -8,353 +8,353 @@ en_US:
   createButton: Create {storageUnit}
 
 ar_AE:
-  title: رسم بياني
-  searchPlaceholder: جداول البحث
-  searchAriaLabel: جداول البحث
-  noItems: لا توجد عناصر
-  noNodesTitle: لم يتم تحديد أي عقد
+  title: "رسم بياني"
+  searchPlaceholder: "جداول البحث"
+  searchAriaLabel: "جداول البحث"
+  noItems: "لا توجد عناصر"
+  noNodesTitle: "لم يتم تحديد أي عقد"
   noNodesDescription: "حدد {storageUnit} على اليسار لإضافتها إلى الرسم البياني."
   createButton: "إنشاء {storageUnit}"
 
 de_DE:
-  title: Graph
-  searchPlaceholder: Suchtabellen
-  searchAriaLabel: Suchtabellen
-  noItems: Keine Artikel
-  noNodesTitle: Keine Knoten ausgewählt
+  title: "Graph"
+  searchPlaceholder: "Suchtabellen"
+  searchAriaLabel: "Suchtabellen"
+  noItems: "Keine Artikel"
+  noNodesTitle: "Keine Knoten ausgewählt"
   noNodesDescription: "Wählen Sie links {storageUnit} aus, um sie dem Diagramm hinzuzufügen."
   createButton: "Erstellen Sie {storageUnit}"
 
 el_GR:
-  title: Γραφική παράσταση
-  searchPlaceholder: Αναζήτηση πινάκων
-  searchAriaLabel: Αναζήτηση πινάκων
-  noItems: Δεν υπάρχουν αντικείμενα
-  noNodesTitle: Δεν επιλέχθηκαν κόμβοι
+  title: "Γραφική παράσταση"
+  searchPlaceholder: "Αναζήτηση πινάκων"
+  searchAriaLabel: "Αναζήτηση πινάκων"
+  noItems: "Δεν υπάρχουν αντικείμενα"
+  noNodesTitle: "Δεν επιλέχθηκαν κόμβοι"
   noNodesDescription: "Επιλέξτε {storageUnit} στα αριστερά για να τα προσθέσετε στο γράφημα."
   createButton: "Δημιουργία {storageUnit}"
 
 en_GB:
-  title: Graph
-  searchPlaceholder: Search Tables
-  searchAriaLabel: Search Tables
-  noItems: No Items
-  noNodesTitle: No Nodes Selected
+  title: "Graph"
+  searchPlaceholder: "Search Tables"
+  searchAriaLabel: "Search Tables"
+  noItems: "No Items"
+  noNodesTitle: "No Nodes Selected"
   noNodesDescription: "Select {storageUnit} on the left to add them to the graph."
   createButton: "Create {storageUnit}"
 
 es_ES:
-  title: Gráfico
-  searchPlaceholder: Buscar tablas
-  searchAriaLabel: Buscar tablas
-  noItems: Sin artículos
-  noNodesTitle: No hay nodos seleccionados
+  title: "Gráfico"
+  searchPlaceholder: "Buscar tablas"
+  searchAriaLabel: "Buscar tablas"
+  noItems: "Sin artículos"
+  noNodesTitle: "No hay nodos seleccionados"
   noNodesDescription: "Seleccione {storageUnit} a la izquierda para agregarlas al gráfico."
   createButton: "Crear {storageUnit}"
 
 fi_FI:
-  title: Kaavio
-  searchPlaceholder: Etsi taulukoita
-  searchAriaLabel: Etsi taulukoita
-  noItems: Ei kohteita
-  noNodesTitle: Ei valittuja solmuja
-  noNodesDescription: Valitse [[0]]] vasemmalta lisätäksesi ne kaavioon.
+  title: "Kaavio"
+  searchPlaceholder: "Etsi taulukoita"
+  searchAriaLabel: "Etsi taulukoita"
+  noItems: "Ei kohteita"
+  noNodesTitle: "Ei valittuja solmuja"
+  noNodesDescription: "Valitse {storageUnit} vasemmalta lisätäksesi ne kaavioon."
   createButton: "Luo {storageUnit}"
 
 fr_FR:
-  title: Graphique
-  searchPlaceholder: Rechercher des tableaux
-  searchAriaLabel: Rechercher des tableaux
-  noItems: Aucun article
-  noNodesTitle: Aucun nœud sélectionné
+  title: "Graphique"
+  searchPlaceholder: "Rechercher des tableaux"
+  searchAriaLabel: "Rechercher des tableaux"
+  noItems: "Aucun article"
+  noNodesTitle: "Aucun nœud sélectionné"
   noNodesDescription: "Sélectionnez {storageUnit} sur la gauche pour les ajouter au graphique."
   createButton: "Créer {storageUnit}"
 
 it_IT:
-  title: Grafico
-  searchPlaceholder: Cerca tabelle
-  searchAriaLabel: Cerca tabelle
-  noItems: Nessun articolo
-  noNodesTitle: Nessun nodo selezionato
+  title: "Grafico"
+  searchPlaceholder: "Cerca tabelle"
+  searchAriaLabel: "Cerca tabelle"
+  noItems: "Nessun articolo"
+  noNodesTitle: "Nessun nodo selezionato"
   noNodesDescription: "Seleziona {storageUnit} a sinistra per aggiungerli al grafico."
   createButton: "Crea {storageUnit}"
 
 iw_IL:
-  title: גרָף
-  searchPlaceholder: חפש בטבלאות
-  searchAriaLabel: חפש בטבלאות
-  noItems: אין פריטים
-  noNodesTitle: לא נבחרו צמתים
+  title: "גרָף"
+  searchPlaceholder: "חפש בטבלאות"
+  searchAriaLabel: "חפש בטבלאות"
+  noItems: "אין פריטים"
+  noNodesTitle: "לא נבחרו צמתים"
   noNodesDescription: "בחר {storageUnit} בצד שמאל כדי להוסיף אותם לתרשים."
   createButton: "צור {storageUnit}"
 
 ja_JP:
-  title: グラフ
-  searchPlaceholder: 検索テーブル
-  searchAriaLabel: 検索テーブル
-  noItems: アイテムがありません
-  noNodesTitle: ノードが選択されていません
+  title: "グラフ"
+  searchPlaceholder: "検索テーブル"
+  searchAriaLabel: "検索テーブル"
+  noItems: "アイテムがありません"
+  noNodesTitle: "ノードが選択されていません"
   noNodesDescription: "左側の {storageUnit} を選択してグラフに追加します。"
   createButton: "{storageUnit} を作成します"
 
 ko_KR:
-  title: 그래프
-  searchPlaceholder: 테이블 검색
-  searchAriaLabel: 테이블 검색
-  noItems: 항목 없음
-  noNodesTitle: 선택한 노드가 없습니다.
+  title: "그래프"
+  searchPlaceholder: "테이블 검색"
+  searchAriaLabel: "테이블 검색"
+  noItems: "항목 없음"
+  noNodesTitle: "선택한 노드가 없습니다."
   noNodesDescription: "그래프에 추가하려면 왼쪽의 {storageUnit}을 선택하세요."
   createButton: "{storageUnit} 생성"
 
 nl_NL:
-  title: Grafiek
-  searchPlaceholder: Zoek tabellen
-  searchAriaLabel: Zoek tabellen
-  noItems: Geen artikelen
-  noNodesTitle: Geen knooppunten geselecteerd
+  title: "Grafiek"
+  searchPlaceholder: "Zoek tabellen"
+  searchAriaLabel: "Zoek tabellen"
+  noItems: "Geen artikelen"
+  noNodesTitle: "Geen knooppunten geselecteerd"
   noNodesDescription: "Selecteer {storageUnit} aan de linkerkant om ze aan de grafiek toe te voegen."
   createButton: "Maak {storageUnit}"
 
 pl_PL:
-  title: Wykres
-  searchPlaceholder: Przeszukaj tabele
-  searchAriaLabel: Przeszukaj tabele
-  noItems: Brak przedmiotów
-  noNodesTitle: Nie wybrano żadnych węzłów
+  title: "Wykres"
+  searchPlaceholder: "Przeszukaj tabele"
+  searchAriaLabel: "Przeszukaj tabele"
+  noItems: "Brak przedmiotów"
+  noNodesTitle: "Nie wybrano żadnych węzłów"
   noNodesDescription: "Wybierz {storageUnit} po lewej stronie, aby dodać je do wykresu."
   createButton: "Utwórz {storageUnit}"
 
 pt_BR:
-  title: Gráfico
-  searchPlaceholder: Pesquisar tabelas
-  searchAriaLabel: Pesquisar tabelas
-  noItems: Nenhum item
-  noNodesTitle: Nenhum nó selecionado
+  title: "Gráfico"
+  searchPlaceholder: "Pesquisar tabelas"
+  searchAriaLabel: "Pesquisar tabelas"
+  noItems: "Nenhum item"
+  noNodesTitle: "Nenhum nó selecionado"
   noNodesDescription: "Selecione {storageUnit} à esquerda para adicioná-los ao gráfico."
   createButton: "Criar {storageUnit}"
 
 ro_RO:
-  title: Grafic
-  searchPlaceholder: Căutați în tabele
-  searchAriaLabel: Căutați în tabele
-  noItems: Fără articole
-  noNodesTitle: Nu au fost selectate noduri
+  title: "Grafic"
+  searchPlaceholder: "Căutați în tabele"
+  searchAriaLabel: "Căutați în tabele"
+  noItems: "Fără articole"
+  noNodesTitle: "Nu au fost selectate noduri"
   noNodesDescription: "Selectați {storageUnit} din stânga pentru a le adăuga la grafic."
   createButton: "Creați {storageUnit}"
 
 ru_RU:
-  title: График
-  searchPlaceholder: Поиск по таблицам
-  searchAriaLabel: Поиск по таблицам
-  noItems: Нет товаров
-  noNodesTitle: Узлы не выбраны
+  title: "График"
+  searchPlaceholder: "Поиск по таблицам"
+  searchAriaLabel: "Поиск по таблицам"
+  noItems: "Нет товаров"
+  noNodesTitle: "Узлы не выбраны"
   noNodesDescription: "Выберите {storageUnit} слева, чтобы добавить их на график."
   createButton: "Создать {storageUnit}"
 
 sk_SK:
-  title: Graf
-  searchPlaceholder: Prehľadávať tabuľky
-  searchAriaLabel: Prehľadávať tabuľky
-  noItems: Žiadne položky
-  noNodesTitle: Nie sú vybraté žiadne uzly
+  title: "Graf"
+  searchPlaceholder: "Prehľadávať tabuľky"
+  searchAriaLabel: "Prehľadávať tabuľky"
+  noItems: "Žiadne položky"
+  noNodesTitle: "Nie sú vybraté žiadne uzly"
   noNodesDescription: "Ak ich chcete pridať do grafu, vyberte {storageUnit} vľavo."
   createButton: "Vytvoriť {storageUnit}"
 
 sv_SE:
-  title: Graf
-  searchPlaceholder: Sök tabeller
-  searchAriaLabel: Sök tabeller
-  noItems: Inga föremål
-  noNodesTitle: Inga noder valda
+  title: "Graf"
+  searchPlaceholder: "Sök tabeller"
+  searchAriaLabel: "Sök tabeller"
+  noItems: "Inga föremål"
+  noNodesTitle: "Inga noder valda"
   noNodesDescription: "Välj {storageUnit} till vänster för att lägga till dem i grafen."
   createButton: "Skapa {storageUnit}"
 
 zh_CN:
-  title: 图形
-  searchPlaceholder: 搜索表
-  searchAriaLabel: 搜索表
-  noItems: 没有商品
-  noNodesTitle: 未选择节点
+  title: "图形"
+  searchPlaceholder: "搜索表"
+  searchAriaLabel: "搜索表"
+  noItems: "没有商品"
+  noNodesTitle: "未选择节点"
   noNodesDescription: "选择左侧的 {storageUnit} 将它们添加到图表中。"
   createButton: "创建{storageUnit}"
 
 zh_TW:
-  title: 圖形
-  searchPlaceholder: 搜尋表
-  searchAriaLabel: 搜尋表
-  noItems: 沒有商品
-  noNodesTitle: 未選擇節點
+  title: "圖形"
+  searchPlaceholder: "搜尋表"
+  searchAriaLabel: "搜尋表"
+  noItems: "沒有商品"
+  noNodesTitle: "未選擇節點"
   noNodesDescription: "選擇左側的 {storageUnit} 將它們加入圖表。"
   createButton: "創建{storageUnit}"
 
 bg_BG:
-  title: Графика
-  searchPlaceholder: Таблици за търсене
-  searchAriaLabel: Таблици за търсене
-  noItems: Няма артикули
-  noNodesTitle: Няма избрани възли
+  title: "Графика"
+  searchPlaceholder: "Таблици за търсене"
+  searchAriaLabel: "Таблици за търсене"
+  noItems: "Няма артикули"
+  noNodesTitle: "Няма избрани възли"
   noNodesDescription: "Изберете {storageUnit} отляво, за да ги добавите към графиката."
   createButton: "Създаване на {storageUnit}"
 
 bn_BD:
-  title: গ্রাফ
-  searchPlaceholder: অনুসন্ধান সারণী
-  searchAriaLabel: অনুসন্ধান সারণী
-  noItems: কোন আইটেম নেই
-  noNodesTitle: কোনো নোড নির্বাচন করা হয়নি
+  title: "গ্রাফ"
+  searchPlaceholder: "অনুসন্ধান সারণী"
+  searchAriaLabel: "অনুসন্ধান সারণী"
+  noItems: "কোন আইটেম নেই"
+  noNodesTitle: "কোনো নোড নির্বাচন করা হয়নি"
   noNodesDescription: "তাদের গ্রাফে যুক্ত করতে বাম দিকে {storageUnit} নির্বাচন করুন।"
   createButton: "তৈরি করুন {storageUnit}"
 
 ca_ES:
-  title: Gràfic
-  searchPlaceholder: Cerca taules
-  searchAriaLabel: Cerca taules
-  noItems: No hi ha articles
-  noNodesTitle: No s'han seleccionat cap node
+  title: "Gràfic"
+  searchPlaceholder: "Cerca taules"
+  searchAriaLabel: "Cerca taules"
+  noItems: "No hi ha articles"
+  noNodesTitle: "No s'han seleccionat cap node"
   noNodesDescription: "Seleccioneu {storageUnit} a l'esquerra per afegir-los al gràfic."
-  createButton: Crea [[0]]]
+  createButton: "Crea {storageUnit}"
 
 cs_CZ:
-  title: Graf
-  searchPlaceholder: Hledat tabulky
-  searchAriaLabel: Hledat tabulky
-  noItems: Žádné položky
-  noNodesTitle: Nejsou vybrány žádné uzly
+  title: "Graf"
+  searchPlaceholder: "Hledat tabulky"
+  searchAriaLabel: "Hledat tabulky"
+  noItems: "Žádné položky"
+  noNodesTitle: "Nejsou vybrány žádné uzly"
   noNodesDescription: "Vyberte {storageUnit} na levé straně a přidejte je do grafu."
   createButton: "Vytvořit {storageUnit}"
 
 da_DK:
-  title: Kurve
-  searchPlaceholder: Søg i tabeller
-  searchAriaLabel: Søg i tabeller
-  noItems: Ingen varer
-  noNodesTitle: Ingen noder valgt
+  title: "Kurve"
+  searchPlaceholder: "Søg i tabeller"
+  searchAriaLabel: "Søg i tabeller"
+  noItems: "Ingen varer"
+  noNodesTitle: "Ingen noder valgt"
   noNodesDescription: "Vælg {storageUnit} til venstre for at tilføje dem til grafen."
   createButton: "Opret {storageUnit}"
 
 fa_IR:
-  title: نمودار
-  searchPlaceholder: جداول جستجو
-  searchAriaLabel: جداول جستجو
-  noItems: هیچ موردی وجود ندارد
-  noNodesTitle: هیچ گرهی انتخاب نشد
+  title: "نمودار"
+  searchPlaceholder: "جداول جستجو"
+  searchAriaLabel: "جداول جستجو"
+  noItems: "هیچ موردی وجود ندارد"
+  noNodesTitle: "هیچ گرهی انتخاب نشد"
   noNodesDescription: "{storageUnit} را در سمت چپ انتخاب کنید تا آنها را به نمودار اضافه کنید."
   createButton: "ایجاد {storageUnit}"
 
 hi_IN:
-  title: ग्राफ़
-  searchPlaceholder: तालिकाएँ खोजें
-  searchAriaLabel: तालिकाएँ खोजें
-  noItems: कोई आइटम नहीं
-  noNodesTitle: कोई नोड चयनित नहीं
+  title: "ग्राफ़"
+  searchPlaceholder: "तालिकाएँ खोजें"
+  searchAriaLabel: "तालिकाएँ खोजें"
+  noItems: "कोई आइटम नहीं"
+  noNodesTitle: "कोई नोड चयनित नहीं"
   noNodesDescription: "उन्हें ग्राफ़ में जोड़ने के लिए बाईं ओर {storageUnit} का चयन करें।"
   createButton: "{storageUnit} बनाएं"
 
 hr_HR:
-  title: Grafikon
-  searchPlaceholder: Pretraži tablice
-  searchAriaLabel: Pretraži tablice
-  noItems: Nema predmeta
-  noNodesTitle: Nema odabranih čvorova
+  title: "Grafikon"
+  searchPlaceholder: "Pretraži tablice"
+  searchAriaLabel: "Pretraži tablice"
+  noItems: "Nema predmeta"
+  noNodesTitle: "Nema odabranih čvorova"
   noNodesDescription: "Odaberite {storageUnit} s lijeve strane kako biste ih dodali na grafikon."
   createButton: "Napravi {storageUnit}"
 
 hu_HU:
-  title: Grafikon
-  searchPlaceholder: Keresés a táblázatokban
-  searchAriaLabel: Keresés a táblázatokban
-  noItems: Nincsenek tételek
-  noNodesTitle: Nincsenek kiválasztva csomópontok
+  title: "Grafikon"
+  searchPlaceholder: "Keresés a táblázatokban"
+  searchAriaLabel: "Keresés a táblázatokban"
+  noItems: "Nincsenek tételek"
+  noNodesTitle: "Nincsenek kiválasztva csomópontok"
   noNodesDescription: "Válassza a {storageUnit} lehetőséget a bal oldalon, hogy hozzáadja őket a diagramhoz."
   createButton: "Létrehozása {storageUnit}"
 
 id_ID:
-  title: Grafik
-  searchPlaceholder: Tabel Pencarian
-  searchAriaLabel: Tabel Pencarian
-  noItems: Tidak ada Item
-  noNodesTitle: Tidak Ada Node yang Dipilih
+  title: "Grafik"
+  searchPlaceholder: "Tabel Pencarian"
+  searchAriaLabel: "Tabel Pencarian"
+  noItems: "Tidak ada Item"
+  noNodesTitle: "Tidak Ada Node yang Dipilih"
   noNodesDescription: "Pilih {storageUnit} di sebelah kiri untuk menambahkannya ke grafik."
   createButton: "Buat {storageUnit}"
 
 ms_MY:
-  title: Graf
-  searchPlaceholder: Cari Jadual
-  searchAriaLabel: Cari Jadual
-  noItems: Tiada Item
-  noNodesTitle: Tiada Nod Dipilih
+  title: "Graf"
+  searchPlaceholder: "Cari Jadual"
+  searchAriaLabel: "Cari Jadual"
+  noItems: "Tiada Item"
+  noNodesTitle: "Tiada Nod Dipilih"
   noNodesDescription: "Pilih {storageUnit} di sebelah kiri untuk menambahkannya pada graf."
   createButton: "Buat {storageUnit}"
 
 nb_NO:
-  title: Kurve
-  searchPlaceholder: Søk i tabeller
-  searchAriaLabel: Søk i tabeller
-  noItems: Ingen varer
-  noNodesTitle: Ingen noder valgt
+  title: "Kurve"
+  searchPlaceholder: "Søk i tabeller"
+  searchAriaLabel: "Søk i tabeller"
+  noItems: "Ingen varer"
+  noNodesTitle: "Ingen noder valgt"
   noNodesDescription: "Velg {storageUnit} til venstre for å legge dem til grafen."
   createButton: "Opprett {storageUnit}"
 
 sw_KE:
-  title: Grafu
-  searchPlaceholder: Tafuta Majedwali
-  searchAriaLabel: Tafuta Majedwali
-  noItems: Hakuna Vipengee
-  noNodesTitle: Hakuna Nodi Zilizochaguliwa
+  title: "Grafu"
+  searchPlaceholder: "Tafuta Majedwali"
+  searchAriaLabel: "Tafuta Majedwali"
+  noItems: "Hakuna Vipengee"
+  noNodesTitle: "Hakuna Nodi Zilizochaguliwa"
   noNodesDescription: "Chagua {storageUnit} upande wa kushoto ili kuziongeza kwenye grafu."
   createButton: "Unda {storageUnit}"
 
 ta_IN:
-  title: வரைபடம்
-  searchPlaceholder: தேடல் அட்டவணைகள்
-  searchAriaLabel: தேடல் அட்டவணைகள்
-  noItems: பொருட்கள் இல்லை
-  noNodesTitle: முனைகள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை
+  title: "வரைபடம்"
+  searchPlaceholder: "தேடல் அட்டவணைகள்"
+  searchAriaLabel: "தேடல் அட்டவணைகள்"
+  noItems: "பொருட்கள் இல்லை"
+  noNodesTitle: "முனைகள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை"
   noNodesDescription: "வரைபடத்தில் சேர்க்க இடதுபுறத்தில் உள்ள {storageUnit} ஐத் தேர்ந்தெடுக்கவும்."
   createButton: "உருவாக்கவும் {storageUnit}"
 
 th_TH:
-  title: กราฟ
-  searchPlaceholder: ค้นหาตาราง
-  searchAriaLabel: ค้นหาตาราง
-  noItems: ไม่มีรายการ
-  noNodesTitle: ไม่ได้เลือกโหนด
+  title: "กราฟ"
+  searchPlaceholder: "ค้นหาตาราง"
+  searchAriaLabel: "ค้นหาตาราง"
+  noItems: "ไม่มีรายการ"
+  noNodesTitle: "ไม่ได้เลือกโหนด"
   noNodesDescription: "เลือก {storageUnit} ทางด้านซ้ายเพื่อเพิ่มลงในกราฟ"
   createButton: "สร้าง {storageUnit}"
 
 tr_TR:
-  title: Grafik
-  searchPlaceholder: Tablolarda Ara
-  searchAriaLabel: Tablolarda Ara
-  noItems: Ürün Yok
-  noNodesTitle: Hiçbir Düğüm Seçilmedi
+  title: "Grafik"
+  searchPlaceholder: "Tablolarda Ara"
+  searchAriaLabel: "Tablolarda Ara"
+  noItems: "Ürün Yok"
+  noNodesTitle: "Hiçbir Düğüm Seçilmedi"
   noNodesDescription: "Bunları grafiğe eklemek için soldaki {storageUnit} öğesini seçin."
   createButton: "{storageUnit} oluştur"
 
 uk_UA:
-  title: Графік
-  searchPlaceholder: Таблиці пошуку
-  searchAriaLabel: Таблиці пошуку
-  noItems: Немає предметів
-  noNodesTitle: Вузли не вибрано
+  title: "Графік"
+  searchPlaceholder: "Таблиці пошуку"
+  searchAriaLabel: "Таблиці пошуку"
+  noItems: "Немає предметів"
+  noNodesTitle: "Вузли не вибрано"
   noNodesDescription: "Виберіть {storageUnit} ліворуч, щоб додати їх до графіка."
   createButton: "Створити {storageUnit}"
 
 ur_PK:
-  title: گراف
-  searchPlaceholder: میزیں تلاش کریں۔
-  searchAriaLabel: میزیں تلاش کریں۔
-  noItems: کوئی آئٹمز نہیں۔
-  noNodesTitle: کوئی نوڈس منتخب نہیں کیا گیا۔
+  title: "گراف"
+  searchPlaceholder: "میزیں تلاش کریں۔"
+  searchAriaLabel: "میزیں تلاش کریں۔"
+  noItems: "کوئی آئٹمز نہیں۔"
+  noNodesTitle: "کوئی نوڈس منتخب نہیں کیا گیا۔"
   noNodesDescription: "انہیں گراف میں شامل کرنے کے لیے بائیں جانب {storageUnit} کو منتخب کریں۔"
   createButton: "بنائیں {storageUnit}"
 
 vi_VN:
-  title: đồ thị
-  searchPlaceholder: Tìm kiếm bảng
-  searchAriaLabel: Tìm kiếm bảng
-  noItems: Không có mục nào
-  noNodesTitle: Không có nút nào được chọn
+  title: "đồ thị"
+  searchPlaceholder: "Tìm kiếm bảng"
+  searchAriaLabel: "Tìm kiếm bảng"
+  noItems: "Không có mục nào"
+  noNodesTitle: "Không có nút nào được chọn"
   noNodesDescription: "Chọn {storageUnit} ở bên trái để thêm chúng vào biểu đồ."
   createButton: "Tạo {storageUnit}"
 
@@ -373,8 +373,8 @@ am_ET:
   searchAriaLabel: "ሰንጠረዦችን ፈልግ"
   noItems: "ምንም እቃዎች የሉም"
   noNodesTitle: "ምንም አንጓዎች አልተመረጡም።"
-  noNodesDescription: "ወደ ግራፉ ለመጨመር [[0]]ን በግራ በኩል ይምረጡ።"
-  createButton: "ፍጠር [[0]]"
+  noNodesDescription: "ወደ ግራፉ ለመጨመር {storageUnit}ን በግራ በኩል ይምረጡ።"
+  createButton: "ፍጠር {storageUnit}"
 
 az_AZ:
   title: "Qrafik"
@@ -409,8 +409,8 @@ ha_NG:
   searchAriaLabel: "Bincika Tables"
   noItems: "Babu Abubuwa"
   noNodesTitle: "Babu Nodes da aka zaɓa"
-  noNodesDescription: "Zaɓi [[0]] a hagu don ƙara su zuwa jadawali."
-  createButton: "Ƙirƙiri [[0]]"
+  noNodesDescription: "Zaɓi {storageUnit} a hagu don ƙara su zuwa jadawali."
+  createButton: "Ƙirƙiri {storageUnit}"
 
 ka_GE:
   title: "გრაფიკი"
@@ -418,7 +418,7 @@ ka_GE:
   searchAriaLabel: "ცხრილების ძიება"
   noItems: "არ არის ელემენტი"
   noNodesTitle: "კვანძები არ არის არჩეული"
-  noNodesDescription: "აირჩიეთ [[0]]] მარცხნივ, რომ დაამატოთ ისინი გრაფიკზე."
+  noNodesDescription: "აირჩიეთ {storageUnit} მარცხნივ, რომ დაამატოთ ისინი გრაფიკზე."
   createButton: "შექმნა {storageUnit}"
 
 km_KH:
@@ -545,7 +545,7 @@ uz_UZ:
   noItems: "Elementlar yoʻq"
   noNodesTitle: "Hech qanday tugun tanlanmagan"
   noNodesDescription: "Grafikga qo'shish uchun chap tarafdagi {storageUnit} ni tanlang."
-  createButton: "Yaratish [[[0]]"
+  createButton: "Yaratish {storageUnit}"
 
 yo_NG:
   title: "Aworan"
@@ -553,5 +553,5 @@ yo_NG:
   searchAriaLabel: "Wa Awọn tabili"
   noItems: "Ko si Awọn nkan"
   noNodesTitle: "Ko si Awọn apa ti a yan"
-  noNodesDescription: "Yan [[0]] ni apa osi lati fi wọn kun aworan."
-  createButton: "Ṣẹda [[0]]"
+  noNodesDescription: "Yan {storageUnit} ni apa osi lati fi wọn kun aworan."
+  createButton: "Ṣẹda {storageUnit}"

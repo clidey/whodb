@@ -19,18 +19,17 @@ package mongodb
 import (
 	"strconv"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // normalizeMongoID converts supported ID formats to a MongoDB-friendly value.
 // Returns the original value if no conversion is possible.
 func normalizeMongoID(value any) (any, error) {
 	switch v := value.(type) {
-	case primitive.ObjectID:
+	case bson.ObjectID:
 		return v, nil
 	case string:
-		oid, err := primitive.ObjectIDFromHex(v)
+		oid, err := bson.ObjectIDFromHex(v)
 		if err != nil {
 			// Not an ObjectID, use the raw string as-is
 			return v, nil

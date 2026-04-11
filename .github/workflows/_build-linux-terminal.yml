@@ -63,14 +63,14 @@ jobs:
       - name: Download frontend build artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: frontend-build-ce
+          name: frontend-build
           path: frontend/build
 
       - name: Copy frontend to core build directory
         run: |
-          rm -rf core/build
-          mkdir -p core/build
-          cp -r frontend/build/* core/build/
+          rm -rf core/cmd/whodb/build
+          mkdir -p core/cmd/whodb/build
+          cp -r frontend/build/* core/cmd/whodb/build/
 
       - name: Add arm/riscv64 build tags to BAML client
         run: |

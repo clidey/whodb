@@ -32,6 +32,7 @@ var defaultDatabasePorts = map[engine.DatabaseType]string{
 	engine.DatabaseType_Redis:         "6379",
 	engine.DatabaseType_DuckDB:        "0", // DuckDB is file-based, no port
 	engine.DatabaseType_Memcached:     "11211",
+	engine.DatabaseType_TiDB:          "4000",
 }
 
 // additionalPorts holds ports registered by external packages
