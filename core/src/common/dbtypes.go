@@ -54,6 +54,7 @@ var (
 		"FLOAT", "DOUBLE",
 		"FLOAT32", "FLOAT64",
 		"BINARY_FLOAT", "BINARY_DOUBLE",
+		"BFLOAT16",
 	)
 
 	BoolTypes = mapset.NewSet(
