@@ -279,3 +279,23 @@ func TestIsAllowedPermitsWhitelistedOperations(t *testing.T) {
 		t.Fatalf("expected SourceFieldOptions for non-sqlite to be rejected")
 	}
 }
+
+func TestIsAllowedRejectsUpdateSettingsWithoutAuth(t *testing.T) {
+	// UpdateSettings mutates process-global runtime state and must require authentication.
+	// See https://github.com/clidey/whodb/issues/924
+	body := `{"operationName":"UpdateSettings","variables":{"newSettings":{"metricsEnabled":true}}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(body))
+	if isAllowed(req, []byte(body)) {
+		t.Fatalf("expected UpdateSettings to require authentication")
+	}
+}
+
+func TestIsAllowedPermitsSettingsConfigWithoutAuth(t *testing.T) {
+	// SettingsConfig is a read-only query and should remain publicly accessible so that
+	// the frontend can render the login page with the correct configuration.
+	body := `{"operationName":"SettingsConfig","variables":{}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(body))
+	if !isAllowed(req, []byte(body)) {
+		t.Fatalf("expected SettingsConfig query to be allowed without auth")
+	}
+}

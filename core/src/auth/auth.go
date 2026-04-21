@@ -276,7 +276,7 @@ func isAllowed(r *http.Request, body []byte) bool {
 	case "LoginSource",
 		"LoginWithSourceProfile",
 		"SourceProfiles",
-		"UpdateSettings", "SettingsConfig", "GetVersion",
+		"SettingsConfig", "GetVersion",
 		"GetAWSProviders", "GetCloudProviders", "GetCloudProvider",
 		"GetDiscoveredConnections", "GetProviderConnections", "SourceTypes",
 		"GetLocalAWSProfiles", "GetAWSRegions",
