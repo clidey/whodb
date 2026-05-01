@@ -65,6 +65,7 @@ import { useLocation } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import { useAI } from "../../components/ai";
 import { CodeEditor } from "../../components/editor";
+import { ErrorExplanation } from "../../components/error-explanation";
 import { ErrorState } from "../../components/error-state";
 import {
     ArrowPathIcon,
@@ -729,8 +730,16 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             </div>
             {
                 error != null &&
-                <div className="flex items-center justify-between mt-8" data-testid="cell-error">
-                    <ErrorState error={error} />
+                <div className="flex flex-col mt-8 gap-0" data-testid="cell-error">
+                    <div className="flex items-center justify-between">
+                        <ErrorState error={error} />
+                    </div>
+                    <ErrorExplanation
+                        error={error.message ?? String(error)}
+                        query={submittedCode}
+                        dbType={current?.Type ?? ''}
+                        schema={current?.Database ?? ''}
+                    />
                 </div>
             }
             {loading && <div className="flex justify-center items-center h-full py-2">

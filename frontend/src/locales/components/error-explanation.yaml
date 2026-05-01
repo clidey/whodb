@@ -1,0 +1,8 @@
+en_US:
+  title: AI Error Explainer
+  downloading: Downloading AI model…
+  downloadingProgress: "Downloading AI model… {progress}%"
+  generating: Analyzing error…
+  suggestedFix: "Suggested fix:"
+  unknownError: Failed to generate explanation.
+  retry: Retry

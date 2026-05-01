@@ -33,6 +33,7 @@ type ISettingsState = {
     language: SupportedLanguage;
     databaseSchemaTerminology: 'database' | 'schema';
     disableAnimations: boolean;
+    errorExplainerEnabled: boolean;
     /** Visual theme name. Currently only 'default' is supported. */
     appTheme: 'default';
     /** OS override for keyboard shortcuts. Undefined means use system detection. */
@@ -67,6 +68,7 @@ const getInitialState = (): ISettingsState => {
         databaseSchemaTerminology: 'database',  // Default to "Database" label for databases where database=schema
         // Use extension default if available, otherwise default to false (animations enabled)
         disableAnimations: settingsDefaults.disableAnimations ?? false,
+        errorExplainerEnabled: false,
         appTheme: 'default',
         os: undefined,
     };
@@ -114,6 +116,9 @@ export const settingsSlice = createSlice({
         },
         setDisableAnimations: (state, action: PayloadAction<ISettingsState["disableAnimations"]>) => {
             state.disableAnimations = action.payload;
+        },
+        setErrorExplainerEnabled: (state, action: PayloadAction<ISettingsState["errorExplainerEnabled"]>) => {
+            state.errorExplainerEnabled = action.payload;
         },
         setAppTheme: (state, action: PayloadAction<ISettingsState["appTheme"]>) => {
             state.appTheme = action.payload;

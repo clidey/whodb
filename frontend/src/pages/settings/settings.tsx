@@ -41,6 +41,7 @@ import {AwsProvidersSection} from "../../components/aws";
 import {AzureProvidersSection} from "../../components/azure";
 import {GcpProvidersSection} from "../../components/gcp";
 import {getComponent} from "../../config/component-registry";
+import {preloadModel, dispose as disposeExplainer} from "../../services/error-explainer";
 import {SettingsConfigDocument} from "@graphql";
 
 export const SettingsPage: FC = () => {
@@ -58,6 +59,7 @@ export const SettingsPage: FC = () => {
     const language = useAppSelector(state => state.settings.language);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
     const disableAnimations = useAppSelector(state => state.settings.disableAnimations);
+    const errorExplainerEnabled = useAppSelector(state => state.settings.errorExplainerEnabled);
 
     // Check if cloud providers are enabled
     const { data: settingsData } = useQuery(SettingsConfigDocument);
@@ -122,6 +124,15 @@ export const SettingsPage: FC = () => {
 
     const handleDisableAnimationsToggle = useCallback((disabled: boolean) => {
         dispatch(SettingsActions.setDisableAnimations(disabled));
+    }, [dispatch]);
+
+    const handleErrorExplainerToggle = useCallback((enabled: boolean) => {
+        dispatch(SettingsActions.setErrorExplainerEnabled(enabled));
+        if (enabled) {
+            preloadModel();
+        } else {
+            disposeExplainer();
+        }
     }, [dispatch]);
 
     return (
@@ -220,6 +231,13 @@ export const SettingsPage: FC = () => {
                         <div className="flex justify-between">
                             <Label>{disableAnimations ? t('disableAnimationsEnabled') : t('disableAnimationsDisabled')}</Label>
                             <Switch checked={disableAnimations} onCheckedChange={handleDisableAnimationsToggle}/>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex justify-between">
+                                <Label>{t('errorExplainer')}</Label>
+                                <Switch checked={errorExplainerEnabled} onCheckedChange={handleErrorExplainerToggle}/>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t('errorExplainerDescription')}</p>
                         </div>
                         <div className="flex justify-between">
                             <Label>{t('whereConditionMode')}</Label>

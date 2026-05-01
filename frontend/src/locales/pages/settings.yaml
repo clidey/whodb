@@ -41,6 +41,8 @@ en_US:
   disableAnimations: Disable Animations
   disableAnimationsEnabled: Animations are disabled
   disableAnimationsDisabled: Animations are enabled
+  errorExplainer: AI Error Explainer
+  errorExplainerDescription: Downloads an AI model (~550 MB) to explain database errors in the browser. Runs locally, nothing is sent to a server.
 
 ar_AE:
   telemetryTitle: "القياس عن بعد ومقاييس الأداء"
