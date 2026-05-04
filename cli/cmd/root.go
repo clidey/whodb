@@ -27,6 +27,7 @@ import (
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/identity"
+	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/cli/pkg/updatecheck"
 	"github.com/clidey/whodb/cli/pkg/version"
@@ -88,7 +89,10 @@ Press ? in any view for keyboard shortcuts.`,
 		return nil
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		if shouldSkipStartupSideEffects() || viper.GetBool("no-update-check") || version.Version == "dev" {
+		if viper.GetBool("no-update-check") || version.Version == "dev" {
+			return
+		}
+		if shouldSuppressInformationalOutput(cmd, output.FormatAuto) {
 			return
 		}
 		if result := updatecheck.Check(version.Version); result != nil {
