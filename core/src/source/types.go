@@ -178,6 +178,8 @@ const (
 	ConnectionFieldKindText ConnectionFieldKind = "Text"
 	// ConnectionFieldKindPassword is a secret/password input.
 	ConnectionFieldKindPassword ConnectionFieldKind = "Password"
+	// ConnectionFieldKindBoolean is a boolean toggle input.
+	ConnectionFieldKindBoolean ConnectionFieldKind = "Boolean"
 	// ConnectionFieldKindFilePath is a file path input.
 	ConnectionFieldKindFilePath ConnectionFieldKind = "FilePath"
 )
@@ -220,6 +222,16 @@ type ConnectionField struct {
 	SupportsOptions bool
 	CredentialField CredentialField
 	AdvancedKey     string
+}
+
+// ConnectionExtraField describes one advanced connection field and its default
+// presentation metadata in the source catalog.
+type ConnectionExtraField struct {
+	DefaultValue   string
+	Kind           ConnectionFieldKind
+	Required       bool
+	LabelKey       string
+	PlaceholderKey string
 }
 
 // ConnectionTransport identifies how a source is reached.

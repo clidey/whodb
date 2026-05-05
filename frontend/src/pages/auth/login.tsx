@@ -23,13 +23,9 @@ import {
     SourceProfilesDocument,
     LoginSourceDocument,
     LoginWithSourceProfileDocument,
-    SourceConnectionFieldKind,
-    SourceConnectionFieldSection,
-    SourceConnectionTransport,
     SourceHostInputMode,
     SourceHostInputUrlParser,
 } from '@graphql';
-import camelCase from "lodash/camelCase";
 import classNames from "classnames";
 import {FC, ReactElement, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {getComponent} from "../../config/component-registry";
@@ -77,7 +73,7 @@ import {
     isGcpConnection,
 } from '../../components/gcp';
 import {ConnectionPrefillData, isAwsHostname, isAzureHostname, isGcpHostname} from '../../utils/cloud-connection-prefill';
-import {SSL_KEYS, SSLConfig} from '../../components/ssl-config';
+import { SourceAdvancedFields } from '@/components/source-advanced-fields';
 import { clearGraphqlStore } from '@/config/graphql-client';
 import {
     buildRecordInputs,
@@ -86,6 +82,16 @@ import {
     createProfilePayloadFromSourceProfile,
     getValue,
 } from '../../utils/source-credentials';
+import {
+    buildSourceAdvancedSectionState,
+    canSubmitCustomConnectionForm,
+    canSubmitStandardConnectionForm,
+    findConnectionFieldByKey,
+    getPromotedConnectionFieldKeys,
+    supportsDatabaseFieldOptions,
+    usesFileTransport,
+} from '@/utils/source-connection-form';
+import { SSL_KEYS } from '@/utils/source-ssl';
 
 /**
  * URL params that are reserved for the standard login form fields and control flags.
@@ -127,44 +133,6 @@ const EMPTY_DATABASE_TYPE: SourceTypeItem = {
     fields: {},
     requiredFields: {},
 };
-
-type SourceConnectionFieldItem = NonNullable<SourceTypeItem["connectionFields"]>[number];
-
-function usesFileTransport(databaseType: SourceTypeItem): boolean {
-    return databaseType.traits?.connection.transport === SourceConnectionTransport.File;
-}
-
-function findConnectionFieldByKey(
-    databaseType: SourceTypeItem,
-    key: string
-): SourceConnectionFieldItem | undefined {
-    return databaseType.connectionFields?.find(field =>
-        field.Key.toLowerCase() === key.toLowerCase()
-    );
-}
-
-function supportsDatabaseFieldOptions(databaseType: SourceTypeItem): boolean {
-    return databaseType.connectionFields?.some(field =>
-        field.Key.toLowerCase() === "database" && field.SupportsOptions
-    ) ?? false;
-}
-
-function canSubmitDatabaseCredentials(
-    databaseType: SourceTypeItem,
-    hostName: string,
-    username: string,
-    password: string,
-    database: string
-): boolean {
-    const requiredFields = databaseType.requiredFields ?? {};
-
-    const hostnameOk = !requiredFields.hostname || hostName.length > 0;
-    const usernameOk = !requiredFields.username || username.length > 0;
-    const passwordOk = !requiredFields.password || password.length > 0;
-    const databaseOk = !requiredFields.database || database.length > 0;
-
-    return hostnameOk && usernameOk && passwordOk && databaseOk;
-}
 
 
 /**
@@ -334,7 +302,11 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [dispatch, t]);
 
     const handleSubmit = useCallback(() => {
-        if (databaseType.id === "" || !canSubmitDatabaseCredentials(databaseType, hostName, username, password, database)) {
+        const credentialsAreComplete = databaseType.customFormRenderer != null
+            ? canSubmitCustomConnectionForm(databaseType, hostName, username, password, advancedForm)
+            : canSubmitStandardConnectionForm(databaseType, hostName, username, password, database, advancedForm);
+
+        if (databaseType.id === "" || !credentialsAreComplete) {
             setIsAutoLoggingIn(false);
             return setError(t('allFieldsRequired'));
         }
@@ -959,7 +931,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             )}
             { databaseType.fields?.searchPath && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-search-path">{searchPathField?.LabelKey ? t(searchPathField.LabelKey) : t(`advancedFields.${camelCase('Search Path')}`)}</Label>
+                    <Label htmlFor="login-search-path">{t(searchPathField?.LabelKey ?? 'advancedFields.searchPath')}</Label>
                     <Input id="login-search-path" value={advancedForm['Search Path'] ?? ''} onChange={(e) => handleAdvancedForm('Search Path', e.target.value)} data-testid="search-path" placeholder={searchPathField?.PlaceholderKey ? t(searchPathField.PlaceholderKey) : t('enterSearchPath')} aria-required={searchPathField?.Required ? "true" : undefined} />
                 </div>
             )}
@@ -968,46 +940,22 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.customFormRenderer) {
-            return hostName.length > 0 || Object.keys(advancedForm).length > 0;
+            return canSubmitCustomConnectionForm(databaseType, hostName, username, password, advancedForm);
         }
-        return canSubmitDatabaseCredentials(databaseType, hostName, username, password, database);
+        return canSubmitStandardConnectionForm(databaseType, hostName, username, password, database, advancedForm);
     }, [databaseType, hostName, username, password, database, advancedForm]);
 
     const loginWithSourceProfileEnabled = useMemo(() => {
         return selectedAvailableProfile != null;
     }, [selectedAvailableProfile]);
 
-    const sslAdvancedKeys = useMemo(() => new Set<string>(Object.values(SSL_KEYS)), []);
+    const promotedConnectionFieldKeys = useMemo(() => {
+        return getPromotedConnectionFieldKeys(databaseType);
+    }, [databaseType]);
 
-    const declaredAdvancedFields = useMemo(() => {
-        return (databaseType.connectionFields ?? []).filter(field =>
-            field.Section === SourceConnectionFieldSection.Advanced &&
-            !sslAdvancedKeys.has(field.Key)
-        );
-    }, [databaseType.connectionFields, sslAdvancedKeys]);
-
-    const declaredAdvancedFieldKeys = useMemo(() => {
-        return new Set(declaredAdvancedFields.map(field => field.Key));
-    }, [declaredAdvancedFields]);
-
-    // Keys to exclude from the advanced section (SSL keys + fields promoted to the main form)
-    const excludedAdvancedKeys = useMemo(() => {
-        const excluded = new Set<string>(sslAdvancedKeys);
-        for (const field of databaseType.connectionFields ?? []) {
-            if (field.Section !== SourceConnectionFieldSection.Advanced) {
-                excluded.add(field.Key);
-            }
-        }
-        return excluded;
-    }, [databaseType.connectionFields, sslAdvancedKeys]);
-
-    const fallbackAdvancedEntries = useMemo(() => {
-        return Object.entries(advancedForm).filter(([key]) =>
-            !excludedAdvancedKeys.has(key) && !declaredAdvancedFieldKeys.has(key)
-        );
-    }, [advancedForm, declaredAdvancedFieldKeys, excludedAdvancedKeys]);
-
-    const hasAdvancedSection = declaredAdvancedFields.length > 0 || fallbackAdvancedEntries.length > 0 || (databaseType.sslModes?.length ?? 0) > 0;
+    const advancedSection = useMemo(() => {
+        return buildSourceAdvancedSectionState(databaseType, advancedForm, promotedConnectionFieldKeys);
+    }, [advancedForm, databaseType, promotedConnectionFieldKeys]);
 
     // Always show loading during auto-login, regardless of mutation or profile loading state
     // Only show form if auto-login fails (isAutoLoggingIn set to false in error handlers)
@@ -1104,45 +1052,20 @@ export const LoginForm: FC<LoginFormProps> = ({
                         </div>
                     </div>
                     {
-                        (showAdvanced && hasAdvancedSection && !databaseType.customFormRenderer) &&
+                        (showAdvanced && advancedSection.hasAdvancedSection && !databaseType.customFormRenderer) &&
                         <div className={classNames("transition-all h-full overflow-hidden flex flex-col gap-lg", {
                             "w-[350px] ml-4": advancedDirection === "horizontal",
                             "w-full": advancedDirection === "vertical",
                         })}>
-                            {declaredAdvancedFields.map(field => {
-                                const value = advancedForm[field.Key] ?? field.DefaultValue ?? "";
-                                return (
-                                <div className="flex flex-col gap-sm" key={field.Key}>
-                                    <Label htmlFor={`${field.Key}-input`}>{t(field.LabelKey)}</Label>
-                                    <Input
-                                        id={`${field.Key}-input`}
-                                        value={value}
-                                        onChange={e => handleAdvancedForm(field.Key, e.target.value)}
-                                        data-testid={`${field.Key}-input`}
-                                        type={field.Kind === SourceConnectionFieldKind.Password ? "password" : "text"}
-                                        placeholder={field.PlaceholderKey ? t(field.PlaceholderKey) : undefined}
-                                        aria-required={field.Required ? "true" : undefined}
-                                        showPasswordToggle={field.Kind === SourceConnectionFieldKind.Password && !isEmbedded}
-                                    />
-                                </div>
-                                );
-                            })}
-                            {fallbackAdvancedEntries.map(([key, value]) => (
-                                <div className="flex flex-col gap-sm" key={key}>
-                                    <Label htmlFor={`${key}-input`}>{t(`advancedFields.${camelCase(key)}`)}</Label>
-                                    <Input
-                                        id={`${key}-input`}
-                                        value={value}
-                                        onChange={e => handleAdvancedForm(key, e.target.value)}
-                                        data-testid={`${key}-input`}
-                                    />
-                                </div>
-                            ))}
-                            <SSLConfig
-                                supportsCustomCAContent={databaseType.traits?.connection.supportsCustomCAContent ?? true}
-                                sslModes={databaseType.sslModes}
+                            <SourceAdvancedFields
+                                databaseType={databaseType}
+                                advancedState={advancedSection}
                                 advancedForm={advancedForm}
                                 onAdvancedFormChange={handleAdvancedForm}
+                                translate={t}
+                                showPasswordToggle={!isEmbedded}
+                                fieldClassName="flex flex-col gap-sm"
+                                checkboxClassName="flex items-center justify-between gap-sm"
                             />
                         </div>
                     }
@@ -1153,7 +1076,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 })}>
                     {!disableCredentialForm && <>
                     <Button className={classNames({
-                        "hidden": !hasAdvancedSection || usesFileTransport(databaseType) || databaseType.customFormRenderer != null,
+                        "hidden": !advancedSection.hasAdvancedSection || usesFileTransport(databaseType) || databaseType.customFormRenderer != null,
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>

@@ -337,7 +337,7 @@ type DatabaseEntry struct {
 	ID             string
 	Label          string
 	Connector      string
-	Extra          map[string]string
+	Extra          map[string]source.ConnectionExtraField
 	Fields         FieldVisibility
 	RequiredFields FieldRequirements
 	IsAWSManaged   bool
@@ -576,12 +576,26 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 			continue
 		}
 
+		kind := source.ConnectionFieldKindText
+		labelKey := "advancedFields." + camelCaseKey(key)
+		placeholderKey := ""
+		field := entry.Extra[key]
+		if field.Kind != "" {
+			kind = field.Kind
+		}
+		if field.LabelKey != "" {
+			labelKey = field.LabelKey
+		}
+		placeholderKey = field.PlaceholderKey
+
 		fields = append(fields, source.ConnectionField{
 			Key:             key,
-			Kind:            source.ConnectionFieldKindText,
+			Kind:            kind,
 			Section:         source.ConnectionFieldSectionAdvanced,
-			LabelKey:        "advancedFields." + camelCaseKey(key),
-			DefaultValue:    entry.Extra[key],
+			Required:        field.Required,
+			LabelKey:        labelKey,
+			PlaceholderKey:  placeholderKey,
+			DefaultValue:    field.DefaultValue,
 			CredentialField: source.CredentialFieldAdvanced,
 			AdvancedKey:     key,
 		})
@@ -598,7 +612,7 @@ func buildDiscoveryPrefill(entry DatabaseEntry) source.DiscoveryPrefill {
 	return prefill
 }
 
-func orderedExtraKeys(extra map[string]string) []string {
+func orderedExtraKeys(extra map[string]source.ConnectionExtraField) []string {
 	keys := make([]string, 0, len(extra))
 	seen := map[string]bool{}
 	for _, key := range extraFieldOrder {

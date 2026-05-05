@@ -489,7 +489,9 @@ This controls the connection UI form and which fields are shown.
     ID:         engine.DatabaseType_MyNewDB,
     Label:      "My New DB",
     PluginType: engine.DatabaseType_MyNewDB,
-    Extra:      map[string]string{"Port": "5432"},
+    Extra: map[string]source.ConnectionExtraField{
+        "Port": {DefaultValue: "5432"},
+    },
     Fields: FieldVisibility{
         Hostname: true, Username: true, Password: true, Database: true,
     },
@@ -507,11 +509,18 @@ This controls the connection UI form and which fields are shown.
 | `ID` | `engine.DatabaseType` | Unique identifier — becomes the source type ID |
 | `Label` | `string` | UI display name |
 | `PluginType` | `engine.DatabaseType` | Which plugin handles this. Can differ from ID for aliases (e.g., Valkey→Redis) |
-| `Extra` | `map[string]string` | Default values for advanced fields (Port, Region, etc.) |
+| `Extra` | `map[string]source.ConnectionExtraField` | Advanced field definitions and defaults (Port, Region, etc.) |
 | `Fields` | `FieldVisibility` | Which standard fields are shown: `Hostname`, `Username`, `Password`, `Database`, `SearchPath` |
 | `RequiredFields` | `FieldRequirements` | Which fields are mandatory: `Hostname`, `Username`, `Password`, `Database` |
 | `IsAWSManaged` | `bool` | True for AWS managed services (ElastiCache, DocumentDB) |
 | `SSLModes` | `[]source.SSLModeInfo` | SSL mode options. Use `sslModesFor()` helper or define custom |
+
+`ConnectionExtraField` keeps advanced-field metadata in one place:
+
+- `DefaultValue` sets the default UI value.
+- `Kind` is optional and controls how the field renders (`Boolean`, `Password`, `FilePath`, etc.).
+- `Required` is optional and marks an advanced field as mandatory in the shared connection form.
+- `LabelKey` and `PlaceholderKey` are optional overrides for localization keys.
 
 **Wire-compatible alias pattern**: If your source is wire-compatible with an existing plugin (e.g., Valkey is Redis-compatible), set `ID` to the new name but `PluginType` to the existing plugin:
 
@@ -520,7 +529,9 @@ This controls the connection UI form and which fields are shown.
     ID:         engine.DatabaseType_Valkey,    // New unique ID
     Label:      "Valkey",
     PluginType: engine.DatabaseType_Redis,     // Reuses Redis plugin
-    Extra:      map[string]string{"Port": "6379"},
+    Extra: map[string]source.ConnectionExtraField{
+        "Port": {DefaultValue: "6379"},
+    },
     // ...
 }
 ```
@@ -652,6 +663,12 @@ en_US:
 
 Only needed if your source requires a heavily customized connection form that doesn't fit the standard field-based layout (e.g., DynamoDB's AWS region picker).
 
+For normal database sources, do not build a bespoke form first. Prefer the
+backend-declared `connectionFields` and `sslModes` contract and let the shared
+frontend connection form render it. CE login and EE platform create/edit now
+share the same advanced-field and SSL rendering path, so generic field-based
+sources should work in both places without extra frontend code.
+
 - **CE**: Register via `registerSourceTypeOverrides()` in `frontend/src/config/source-registry.ts`
 - **EE**: Register in `ee/frontend/src/config.tsx` via `eeSourceTypeOverrides` array, which is passed to `registerSourceTypeOverrides()` in `ee/frontend/src/register.ts`
 
@@ -661,6 +678,9 @@ const override: SourceTypeOverride = {
     customFormRenderer: MyNewDBLoginForm,
 };
 ```
+
+Use `customFormRenderer` only when the standard field-based flow is genuinely
+insufficient.
 
 The frontend `decorateSourceType()` function auto-derives all capability flags (`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`, `supportsDatabaseSwitching`, `supportsMockData`, etc.) from the backend contract. Do not set these manually — they come from `source.Contract.Surfaces`, `BrowsePath`, and `ObjectTypes`.
 

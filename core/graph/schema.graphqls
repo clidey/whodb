@@ -75,6 +75,7 @@ enum DataShape {
 enum SourceConnectionFieldKind {
   Text
   Password
+  Boolean
   FilePath
 }
 

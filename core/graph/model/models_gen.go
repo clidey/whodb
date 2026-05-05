@@ -1203,18 +1203,20 @@ type SourceConnectionFieldKind string
 const (
 	SourceConnectionFieldKindText     SourceConnectionFieldKind = "Text"
 	SourceConnectionFieldKindPassword SourceConnectionFieldKind = "Password"
+	SourceConnectionFieldKindBoolean  SourceConnectionFieldKind = "Boolean"
 	SourceConnectionFieldKindFilePath SourceConnectionFieldKind = "FilePath"
 )
 
 var AllSourceConnectionFieldKind = []SourceConnectionFieldKind{
 	SourceConnectionFieldKindText,
 	SourceConnectionFieldKindPassword,
+	SourceConnectionFieldKindBoolean,
 	SourceConnectionFieldKindFilePath,
 }
 
 func (e SourceConnectionFieldKind) IsValid() bool {
 	switch e {
-	case SourceConnectionFieldKindText, SourceConnectionFieldKindPassword, SourceConnectionFieldKindFilePath:
+	case SourceConnectionFieldKindText, SourceConnectionFieldKindPassword, SourceConnectionFieldKindBoolean, SourceConnectionFieldKindFilePath:
 		return true
 	}
 	return false

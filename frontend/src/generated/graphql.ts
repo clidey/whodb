@@ -823,6 +823,7 @@ export type SourceConnectionField = {
 };
 
 export enum SourceConnectionFieldKind {
+  Boolean = 'Boolean',
   FilePath = 'FilePath',
   Password = 'Password',
   Text = 'Text'

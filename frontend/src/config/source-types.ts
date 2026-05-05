@@ -185,6 +185,16 @@ export interface CustomLoginFormProps {
 }
 
 /**
+ * Stateful values exposed to custom connection forms and validators.
+ */
+export interface CustomLoginFormState {
+    hostName: string;
+    username: string;
+    password: string;
+    advancedForm: Record<string, string>;
+}
+
+/**
  * Source type item with backend-provided connection behavior and a thin
  * frontend decoration layer.
  */
@@ -245,6 +255,8 @@ export interface SourceTypeItem {
     sslModes?: SSLModeOption[];
     /** Optional custom login form renderer */
     customFormRenderer?: ComponentType<CustomLoginFormProps>;
+    /** Optional custom form submit validation */
+    customFormCanSubmit?: (state: CustomLoginFormState) => boolean;
 }
 
 /**
