@@ -39,7 +39,8 @@ Subcommands:
   list    List saved bookmarks
   save    Save a bookmark from SQL text
   load    Print a saved bookmark's SQL
-  delete  Remove a saved bookmark`,
+  delete  Remove a saved bookmark
+  search  Search saved bookmarks`,
 }
 
 var bookmarksListCmd = &cobra.Command{
@@ -213,6 +214,54 @@ var bookmarksDeleteCmd = &cobra.Command{
 	},
 }
 
+var bookmarksSearchCmd = &cobra.Command{
+	Use:           "search [name]",
+	Short:         "Search saved bookmarks`",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	Args:          cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		format, err := output.ParseFormat(bookmarkFormat)
+		if err != nil {
+			return err
+		}
+		quiet := bookmarkQuiet || shouldSuppressInformationalOutput(cmd, format)
+		out := newCommandOutput(cmd, format, quiet)
+
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return fmt.Errorf("cannot load config: %w", err)
+		}
+
+		bookmarks := cfg.GetSavedQueries()
+
+		rows := make([][]any, 0)
+		pattern := strings.ToLower(args[0])
+		for _, value := range bookmarks {
+			if strings.Contains(strings.ToLower(value.Name), pattern) ||
+				strings.Contains(strings.ToLower(value.Query), pattern) {
+				rows = append(rows, []any{value.Name, strings.ReplaceAll(value.Query, "\n", " ")})
+			}
+		}
+
+		if len(rows) == 0 {
+			out.Info("No matching bookmarks found for: %s", args[0])
+			if effectiveCommandOutputFormat(cmd, format) == output.FormatJSON {
+				return writeEmptyJSONArray(cmd)
+			}
+			return nil
+		}
+
+		return out.WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "name", Type: "string"},
+				{Name: "query", Type: "string"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(bookmarksCmd)
 
@@ -220,8 +269,9 @@ func init() {
 	bookmarksCmd.AddCommand(bookmarksSaveCmd)
 	bookmarksCmd.AddCommand(bookmarksLoadCmd)
 	bookmarksCmd.AddCommand(bookmarksDeleteCmd)
+	bookmarksCmd.AddCommand(bookmarksSearchCmd)
 
-	for _, command := range []*cobra.Command{bookmarksListCmd, bookmarksSaveCmd, bookmarksDeleteCmd} {
+	for _, command := range []*cobra.Command{bookmarksListCmd, bookmarksSaveCmd, bookmarksDeleteCmd, bookmarksSearchCmd} {
 		command.Flags().StringVarP(&bookmarkFormat, "format", "f", "table", "output format: auto, table, plain, json, ndjson, or csv")
 		command.Flags().BoolVarP(&bookmarkQuiet, "quiet", "q", false, "suppress informational messages")
 		command.RegisterFlagCompletionFunc("format", completeOutputFormats)
