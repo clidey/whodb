@@ -113,6 +113,42 @@ func TestResolveBootstrapForRedisUsesAccountSecretAndService(t *testing.T) {
 	}
 }
 
+func TestResolveBootstrapForRedisFallsBackToConnCredential(t *testing.T) {
+	clientset := fake.NewSimpleClientset(
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-db-redis-conn-credential",
+				Namespace: "ns-q4jurwf5",
+			},
+			Data: map[string][]byte{
+				"username": []byte("default"),
+				"password": []byte("redis-password"),
+				"host":     []byte("test-db-redis-redis"),
+				"port":     []byte("6379"),
+			},
+		},
+	)
+
+	resolver := &resolver{
+		kubeconfig: testKubeconfig("ns-q4jurwf5"),
+		clientset:  clientset,
+	}
+
+	result, err := resolver.ResolveBootstrap(context.Background(), BootstrapInput{
+		DBType:       "redis",
+		ResourceName: "test-db-redis",
+	})
+	if err != nil {
+		t.Fatalf("expected redis generic conn-credential bootstrap to succeed, got %v", err)
+	}
+	if result.Host != "test-db-redis-redis.ns-q4jurwf5.svc" || result.Port != "6379" {
+		t.Fatalf("expected redis host/port from conn-credential, got %q:%q", result.Host, result.Port)
+	}
+	if result.Credentials.Username != "default" || result.Credentials.Password != "redis-password" {
+		t.Fatalf("expected redis credentials from conn-credential, got %#v", result.Credentials)
+	}
+}
+
 func TestResolveBootstrapForMongoDBUsesAccountSecretAndService(t *testing.T) {
 	clientset := fake.NewSimpleClientset(
 		&corev1.Secret{

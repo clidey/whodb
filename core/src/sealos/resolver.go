@@ -331,7 +331,7 @@ func (r *resolver) resolveConnectionData(
 ) (*connectionData, error) {
 	switch spec.EngineType {
 	case string(engine.DatabaseType_Redis):
-		return r.resolveRedisConnectionData(ctx, namespace, resourceName)
+		return r.resolveRedisConnectionData(ctx, spec, namespace, resourceName)
 	case string(engine.DatabaseType_MongoDB):
 		return r.resolveMongoDBConnectionData(ctx, spec, namespace, resourceName)
 	case string(engine.DatabaseType_ClickHouse):
@@ -398,12 +398,20 @@ func (r *resolver) resolveMongoDBConnectionData(
 
 func (r *resolver) resolveRedisConnectionData(
 	ctx context.Context,
+	spec dbTypeSpec,
 	namespace string,
 	resourceName string,
 ) (*connectionData, error) {
 	secretName := resourceName + "-redis-account-default"
 	accountSecret, err := r.clientset.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			secretData, fallbackErr := r.readConnCredentialSecret(ctx, namespace, resourceName)
+			if fallbackErr != nil {
+				return nil, fallbackErr
+			}
+			return genericResolveFromSecret(spec, secretData, namespace), nil
+		}
 		return nil, fmt.Errorf("read redis account secret: %w", err)
 	}
 
