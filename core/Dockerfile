@@ -35,6 +35,8 @@ WORKDIR /app
 
 # Copy core module files
 COPY ./core/go.mod ./core/go.sum ./
+ARG GOPROXY=https://proxy.golang.org,direct
+ENV GOPROXY=${GOPROXY}
 RUN go mod download
 COPY ./core/ ./
 
@@ -55,6 +57,7 @@ RUN if [ -z "${TARGETARCH}" ] || [ -z "${PLATFORM}" ]; then echo "TARGETARCH and
 # Pre-download BAML native library for the target architecture (musl for Alpine)
 # Extract BAML version from go.mod to stay in sync
 ARG TARGETARCH
+ARG BAML_RELEASE_BASE_URL=https://github.com/boundaryml/baml/releases/download
 RUN if [ -z "$TARGETARCH" ]; then echo "TARGETARCH build arg is required" >&2; exit 1; fi && \
     BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' | sed 's/^v//') && \
     if [ "$TARGETARCH" = "amd64" ]; then \
@@ -65,8 +68,8 @@ RUN if [ -z "$TARGETARCH" ]; then echo "TARGETARCH build arg is required" >&2; e
         echo "Unsupported architecture: $TARGETARCH" && exit 1; \
     fi && \
     mkdir -p /baml-lib && \
-    curl -L -o /baml-lib/libbaml_cffi.so \
-        https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
+    curl --fail --location --retry 5 --retry-delay 3 --retry-all-errors -o /baml-lib/libbaml_cffi.so \
+        "${BAML_RELEASE_BASE_URL}/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so" && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
 FROM alpine:3.23

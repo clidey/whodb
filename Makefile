@@ -3,7 +3,9 @@ DOCKER_USERNAME ?=
 IMAGE_TAG ?= latest
 TARGETARCH ?= amd64
 PLATFORM ?= docker
-IMG ?= $(DOCKER_USERNAME)/$(SERVICE_NAME):$(IMAGE_TAG)
+GOPROXY ?= https://proxy.golang.org,direct
+BAML_RELEASE_BASE_URL ?= https://github.com/boundaryml/baml/releases/download
+IMG ?= $(if $(DOCKER_USERNAME),$(DOCKER_USERNAME)/,)$(SERVICE_NAME):$(IMAGE_TAG)
 
 .PHONY: all
 all: build
@@ -28,7 +30,11 @@ run: ## Run DataFlow dev server from host.
 
 .PHONY: docker-build
 docker-build: ## Build docker image.
-	docker buildx build -f core/Dockerfile --platform linux/$(TARGETARCH) --build-arg VERSION=$(IMAGE_TAG) --build-arg TARGETARCH=$(TARGETARCH) --build-arg PLATFORM=$(PLATFORM) -t $(IMG) .
+	docker buildx build -f core/Dockerfile --platform linux/$(TARGETARCH) --build-arg VERSION=$(IMAGE_TAG) --build-arg TARGETARCH=$(TARGETARCH) --build-arg PLATFORM=$(PLATFORM) --build-arg GOPROXY=$(GOPROXY) --build-arg BAML_RELEASE_BASE_URL=$(BAML_RELEASE_BASE_URL) -t $(IMG) .
+
+.PHONY: docker-build-no-cache
+docker-build-no-cache: ## Build docker image without cache.
+	docker buildx build --no-cache -f core/Dockerfile --platform linux/$(TARGETARCH) --build-arg VERSION=$(IMAGE_TAG) --build-arg TARGETARCH=$(TARGETARCH) --build-arg PLATFORM=$(PLATFORM) --build-arg GOPROXY=$(GOPROXY) --build-arg BAML_RELEASE_BASE_URL=$(BAML_RELEASE_BASE_URL) -t $(IMG) .
 
 .PHONY: docker-push
 docker-push: ## Push docker image.
@@ -36,4 +42,8 @@ docker-push: ## Push docker image.
 
 .PHONY: docker-build-push
 docker-build-push: ## Build and push docker image.
-	docker buildx build -f core/Dockerfile --platform linux/$(TARGETARCH) --build-arg VERSION=$(IMAGE_TAG) --build-arg TARGETARCH=$(TARGETARCH) --build-arg PLATFORM=$(PLATFORM) -t $(IMG) --push .
+	docker buildx build -f core/Dockerfile --platform linux/$(TARGETARCH) --build-arg VERSION=$(IMAGE_TAG) --build-arg TARGETARCH=$(TARGETARCH) --build-arg PLATFORM=$(PLATFORM) --build-arg GOPROXY=$(GOPROXY) --build-arg BAML_RELEASE_BASE_URL=$(BAML_RELEASE_BASE_URL) -t $(IMG) --push .
+
+.PHONY: docker-build-push-no-cache
+docker-build-push-no-cache: ## Build docker image without cache and push it.
+	docker buildx build --no-cache -f core/Dockerfile --platform linux/$(TARGETARCH) --build-arg VERSION=$(IMAGE_TAG) --build-arg TARGETARCH=$(TARGETARCH) --build-arg PLATFORM=$(PLATFORM) --build-arg GOPROXY=$(GOPROXY) --build-arg BAML_RELEASE_BASE_URL=$(BAML_RELEASE_BASE_URL) -t $(IMG) --push .
