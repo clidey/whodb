@@ -366,6 +366,57 @@ func TestResolveBootstrapForClickHouseUsesNativeServiceWhenTcpEndpointMissing(t 
 	}
 }
 
+func TestResolveBootstrapForClickHouseUsesNativeServiceWhenTcpEndpointIsTemplated(t *testing.T) {
+	clientset := fake.NewSimpleClientset(
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-house-conn-credential",
+				Namespace: "ns-admin",
+			},
+			Data: map[string][]byte{
+				"username":       []byte("admin"),
+				"admin-password": []byte("house-password"),
+				"tcpEndpoint":    []byte("test-house-zookeeper:$(SVC_PORT_tcp)"),
+			},
+		},
+		&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-house-clickhouse",
+				Namespace: "ns-admin",
+				Labels: map[string]string{
+					"app.kubernetes.io/instance": "test-house",
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				ClusterIP: "10.0.0.2",
+				Ports: []corev1.ServicePort{
+					{Name: "http", Port: 8123},
+					{Name: "tcp", Port: 9000},
+				},
+			},
+		},
+	)
+
+	resolver := &resolver{
+		kubeconfig: testKubeconfig("ns-admin"),
+		clientset:  clientset,
+	}
+
+	result, err := resolver.ResolveBootstrap(context.Background(), BootstrapInput{
+		DBType:       "clickhouse",
+		ResourceName: "test-house",
+	})
+	if err != nil {
+		t.Fatalf("expected clickhouse bootstrap to succeed, got %v", err)
+	}
+	if result.Host != "test-house-clickhouse.ns-admin.svc" || result.Port != "9000" {
+		t.Fatalf("expected clickhouse native service endpoint, got %q:%q", result.Host, result.Port)
+	}
+	if result.Credentials.Username != "admin" || result.Credentials.Password != "house-password" {
+		t.Fatalf("expected clickhouse auth from secret, got %#v", result.Credentials)
+	}
+}
+
 func TestResolveBootstrapForClickHouseFallsBackToGenericFields(t *testing.T) {
 	clientset := fake.NewSimpleClientset(
 		&corev1.Secret{
