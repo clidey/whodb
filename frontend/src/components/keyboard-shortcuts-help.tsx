@@ -159,7 +159,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                     <DialogTitle className="flex items-center gap-2">
                         {t('title')}
                     </DialogTitle>
-                    <SearchInput className="mt-2" value={searchFilter} onChange={e => setSearchFilter(e.target.value)} placeholder={t('Type a Shortcut or search...')} />
+                    <SearchInput className="mt-2" value={searchFilter} onChange={e => setSearchFilter(e.target.value)} placeholder={'Type a Shortcut or search...'} />
                 </DialogHeader>
                 <div className="mt-4">
                     {filteredShortcuts.length > 0 ?
@@ -173,7 +173,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                     : 
                     (
                         <p className="text-sm text-muted-foreground text-center py-4">
-                            {t('noShortcutsFound')}
+                            "No shortcuts found"
                         </p>
                     )}
                     
