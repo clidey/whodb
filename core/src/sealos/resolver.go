@@ -443,12 +443,16 @@ func (r *resolver) resolveClickHouseConnectionData(
 		if port == "" {
 			port = "9000"
 		}
-		return &connectionData{
-			username: username,
-			password: password,
-			host:     NormalizeSecretHost(host, namespace),
-			port:     port,
-		}, nil
+		if host != "" {
+			if _, err := strconv.Atoi(port); err == nil {
+				return &connectionData{
+					username: username,
+					password: password,
+					host:     NormalizeSecretHost(host, namespace),
+					port:     port,
+				}, nil
+			}
+		}
 	}
 
 	service, port, err := r.findServiceByPort(ctx, namespace, resourceName, 9000)

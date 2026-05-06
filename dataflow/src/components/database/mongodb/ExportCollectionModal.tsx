@@ -1,5 +1,5 @@
 import { createContext, use, useCallback, useState, type ReactNode } from 'react'
-import { Download, FileJson, FileText } from 'lucide-react'
+import { Download, FileJson, FileSpreadsheet, FileText } from 'lucide-react'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { addAuthHeader } from '@/config/auth-headers'
 import { resolveSchemaParam } from '@/utils/database-features'
@@ -15,12 +15,25 @@ import { useI18n } from '@/i18n/useI18n'
 // Constants
 // ---------------------------------------------------------------------------
 
-type CollectionExportFormat = 'json' | 'csv'
+type CollectionExportFormat = 'json' | 'csv' | 'excel'
 
 const FORMAT_OPTIONS: FormatOption<CollectionExportFormat>[] = [
   { id: 'json', label: 'JSON', icon: FileJson },
   { id: 'csv', label: 'CSV', icon: FileText },
+  { id: 'excel', label: 'Excel', icon: FileSpreadsheet },
 ]
+
+const BACKEND_FORMATS: Record<CollectionExportFormat, 'ndjson' | 'csv' | 'excel'> = {
+  json: 'ndjson',
+  csv: 'csv',
+  excel: 'excel',
+}
+
+const FORMAT_EXTENSIONS: Record<CollectionExportFormat, string> = {
+  json: 'ndjson',
+  csv: 'csv',
+  excel: 'xlsx',
+}
 
 // ---------------------------------------------------------------------------
 // Context
@@ -113,7 +126,7 @@ function ExportCollectionBridge({
       if (!connection) throw new Error(t('common.error.connectionNotFound'))
 
       const graphqlSchema = resolveSchemaParam(connection.type, databaseName)
-      const backendFormat = format === 'json' ? 'ndjson' : 'csv'
+      const backendFormat = BACKEND_FORMATS[format]
 
       const response = await fetch('/api/export', {
         method: 'POST',
@@ -138,7 +151,7 @@ function ExportCollectionBridge({
       const disposition = response.headers.get('Content-Disposition')
       const filenameMatch = disposition?.match(/filename="(.+)"/)
       const filename =
-        filenameMatch?.[1] ?? `${collectionName}_export.${format === 'json' ? 'ndjson' : 'csv'}`
+        filenameMatch?.[1] ?? `${collectionName}_export.${FORMAT_EXTENSIONS[format]}`
 
       const blob = await response.blob()
       downloadBlob(blob, filename)
@@ -153,7 +166,7 @@ function ExportCollectionBridge({
     } finally {
       actions.setSubmitting(false)
     }
-  }, [actions, collectionName, connectionId, connections, databaseName, format, t])
+  }, [actions, collectionName, connectionId, connections, databaseName, filter, format, limit, t])
 
   return (
     <ExportCollectionCtx
