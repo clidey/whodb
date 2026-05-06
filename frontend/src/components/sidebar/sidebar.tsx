@@ -69,7 +69,7 @@ import {useAppSelector} from "../../store/hooks";
 import {featureFlags} from "../../config/features";
 import {getComponent} from "../../config/component-registry";
 import { findSourceTypeItem, type SourceTypeItem } from "../../config/source-types";
-import {isAwsHostname} from "../../utils/cloud-connection-prefill";
+import {isAwsHostname, isAzureHostname, isGcpHostname} from "../../utils/cloud-connection-prefill";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
 import {
@@ -87,6 +87,8 @@ import {
 import {Icons} from "../icons";
 import {Loading} from "../loading";
 import {DatabaseIconWithBadge, isAwsConnection} from "../aws";
+import {isAzureConnection} from "../azure";
+import {isGcpConnection} from "../gcp";
 import {useProfileSwitch} from "@/hooks/use-profile-switch";
 import {buildSourceSchemaQuery} from "@/utils/source-refs";
 
@@ -191,7 +193,9 @@ export const Sidebar: FC = () => {
     const { t } = useTranslation('components/sidebar');
     const schema = useAppSelector(state => state.database.schema);
     const databaseSchemaTerminology = useAppSelector(state => state.settings.databaseSchemaTerminology);
-    const cloudProvidersEnabled = useAppSelector(state => state.settings.cloudProvidersEnabled);
+    const awsProviderEnabled = useAppSelector(state => state.settings.awsProviderEnabled);
+    const azureProviderEnabled = useAppSelector(state => state.settings.azureProviderEnabled);
+    const gcpProviderEnabled = useAppSelector(state => state.settings.gcpProviderEnabled);
     const newUIEnabled = useAppSelector(state => state.settings.newUIEnabled);
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const dispatch = useDispatch();
@@ -263,16 +267,20 @@ export const Sidebar: FC = () => {
     });
     const { items: sourceTypeItems } = useSourceTypeItems();
 
-    // Profile select logic - filter out AWS profiles when cloud providers disabled
     const profileOptions = useMemo(() => profiles
-        .filter(profile => cloudProvidersEnabled || !isAwsHostname(profile.Hostname))
+        .filter(profile => {
+            if (isAwsHostname(profile.Hostname)) return awsProviderEnabled;
+            if (isAzureHostname(profile.Hostname)) return azureProviderEnabled;
+            if (isGcpHostname(profile.Hostname)) return gcpProviderEnabled;
+            return true;
+        })
         .map(profile => ({
             value: profile.Id,
             label: getProfileLabel(profile, findSourceTypeItem(sourceTypeItems, profile.Type)),
             icon: (
                 <DatabaseIconWithBadge
                     icon={getProfileIcon(profile)}
-                    showCloudBadge={isAwsConnection(profile.Id)}
+                    showCloudBadge={isAwsConnection(profile.Id) || isAzureConnection(profile.Id) || isGcpConnection(profile.Id)}
                     sslStatus={profile.Id === current?.Id
                         ? sslStatus
                         : (profile.SSLConfigured ? { IsEnabled: true, Mode: 'configured' } : undefined)}
@@ -280,7 +288,7 @@ export const Sidebar: FC = () => {
                 />
             ),
             profile,
-        })), [profiles, current?.Id, sslStatus, cloudProvidersEnabled, sourceTypeItems]);
+        })), [profiles, current?.Id, sslStatus, awsProviderEnabled, azureProviderEnabled, gcpProviderEnabled, sourceTypeItems]);
 
     const currentProfileOption = useMemo(() => {
         if (!current) return undefined;

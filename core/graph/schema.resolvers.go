@@ -334,6 +334,11 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 		discoverDocumentDB = *input.DiscoverDocumentDb
 	}
 
+	discoverS3 := true
+	if input.DiscoverS3 != nil {
+		discoverS3 = *input.DiscoverS3
+	}
+
 	cfg := &settings.AWSProviderConfig{
 		ID:                  id,
 		Name:                input.Name,
@@ -343,6 +348,7 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
+		DiscoverS3:          discoverS3,
 	}
 
 	state, err := settings.AddAWSProvider(cfg)
@@ -389,6 +395,11 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		discoverDocumentDB = *input.DiscoverDocumentDb
 	}
 
+	discoverS3 := existing.Config.DiscoverS3
+	if input.DiscoverS3 != nil {
+		discoverS3 = *input.DiscoverS3
+	}
+
 	cfg := &settings.AWSProviderConfig{
 		ID:                  id,
 		Name:                input.Name,
@@ -398,6 +409,7 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
+		DiscoverS3:          discoverS3,
 	}
 
 	state, err := settings.UpdateAWSProvider(id, cfg)
@@ -1358,6 +1370,9 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 	return &model.SettingsConfig{
 		MetricsEnabled:        &currentSettings.MetricsEnabled,
 		CloudProvidersEnabled: env.IsAWSProviderEnabled || env.IsAzureProviderEnabled || env.IsGCPProviderEnabled,
+		AWSProviderEnabled:    env.IsAWSProviderEnabled,
+		AzureProviderEnabled:  env.IsAzureProviderEnabled,
+		GCPProviderEnabled:    env.IsGCPProviderEnabled,
 		DisableCredentialForm: env.DisableCredentialForm,
 		EnableNewUI:           env.IsNewUIEnabled,
 		MaxPageSize:           env.MaxPageSize,

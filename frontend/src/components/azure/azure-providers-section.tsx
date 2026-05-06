@@ -20,6 +20,7 @@ import { Badge, Button, cn, toast } from "@clidey/ux";
 import {
     AzureProvider,
     CloudProviderStatus,
+    CloudProviderType,
     GetAzureProvidersDocument,
     GetDiscoveredConnectionsDocument,
     RefreshAzureProviderDocument,
@@ -73,7 +74,7 @@ export const AzureProvidersSection: FC = () => {
 
     // Local state for Azure providers (separate from AWS cloud providers in Redux)
     const azureModalOpen = useAppSelector(state => state.providers.isProviderModalOpen);
-    const editingProviderId = useAppSelector(state => state.providers.editingProviderId);
+    const providerModalType = useAppSelector(state => state.providers.providerModalType);
 
     // GraphQL queries and mutations
     const { data, loading, refetch } = useQuery(GetAzureProvidersDocument);
@@ -83,11 +84,11 @@ export const AzureProvidersSection: FC = () => {
     const azureProviders: LocalAzureProvider[] = (data?.AzureProviders as LocalAzureProvider[] | undefined) ?? [];
 
     const handleAddProvider = useCallback(() => {
-        dispatch(ProvidersActions.openAddProviderModal());
+        dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Azure }));
     }, [dispatch]);
 
     const handleEditProvider = useCallback((id: string) => {
-        dispatch(ProvidersActions.openEditProviderModal({ id }));
+        dispatch(ProvidersActions.openEditProviderModal({ id, providerType: CloudProviderType.Azure }));
     }, [dispatch]);
 
     const handleRemoveProvider = useCallback(async (id: string, name: string) => {
@@ -277,7 +278,7 @@ export const AzureProvidersSection: FC = () => {
             )}
 
             <AzureProviderModal
-                open={azureModalOpen && (editingProviderId === null || editingProviderId?.startsWith('azure-'))}
+                open={azureModalOpen && providerModalType === CloudProviderType.Azure}
                 onOpenChange={handleModalOpenChange}
             />
         </div>

@@ -75,6 +75,7 @@ func stateToAWSProvider(state *settings.AWSProviderState) *model.AWSProvider {
 		DiscoverRds:         state.Config.DiscoverRDS,
 		DiscoverElastiCache: state.Config.DiscoverElastiCache,
 		DiscoverDocumentDb:  state.Config.DiscoverDocumentDB,
+		DiscoverS3:          state.Config.DiscoverS3,
 		Status:              mapCloudProviderStatus(state.Status),
 		LastDiscoveryAt:     lastDiscoveryAt,
 		DiscoveredCount:     state.DiscoveredCount,
@@ -182,6 +183,7 @@ func discoveredConnectionToModel(conn *providers.DiscoveredConnection) *model.Di
 	allowedMetadataKeys := map[string]bool{
 		"endpoint":          true,
 		"port":              true,
+		"databaseName":      true,
 		"transitEncryption": true,
 		"serverless":        true,
 		"iamAuthEnabled":    true,
@@ -194,6 +196,9 @@ func discoveredConnectionToModel(conn *providers.DiscoveredConnection) *model.Di
 		"connectivity":      true,
 		"service":           true,
 		"region":            true,
+		"bucket":            true,
+		"authMethod":        true,
+		"profileName":       true,
 		// Azure-specific metadata
 		"location":         true,
 		"resourceGroup":    true,

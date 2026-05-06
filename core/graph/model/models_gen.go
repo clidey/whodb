@@ -51,6 +51,7 @@ type AWSProvider struct {
 	DiscoverRds         bool                `json:"DiscoverRDS"`
 	DiscoverElastiCache bool                `json:"DiscoverElastiCache"`
 	DiscoverDocumentDb  bool                `json:"DiscoverDocumentDB"`
+	DiscoverS3          bool                `json:"DiscoverS3"`
 }
 
 func (AWSProvider) IsCloudProvider()                        {}
@@ -70,6 +71,7 @@ type AWSProviderInput struct {
 	DiscoverRds         *bool   `json:"DiscoverRDS,omitempty"`
 	DiscoverElastiCache *bool   `json:"DiscoverElastiCache,omitempty"`
 	DiscoverDocumentDb  *bool   `json:"DiscoverDocumentDB,omitempty"`
+	DiscoverS3          *bool   `json:"DiscoverS3,omitempty"`
 }
 
 type AWSRegion struct {
@@ -375,6 +377,9 @@ type SSLStatus struct {
 type SettingsConfig struct {
 	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
 	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
+	AWSProviderEnabled    bool  `json:"AWSProviderEnabled"`
+	AzureProviderEnabled  bool  `json:"AzureProviderEnabled"`
+	GCPProviderEnabled    bool  `json:"GCPProviderEnabled"`
 	DisableCredentialForm bool  `json:"DisableCredentialForm"`
 	EnableNewUI           bool  `json:"EnableNewUI"`
 	MaxPageSize           int   `json:"MaxPageSize"`

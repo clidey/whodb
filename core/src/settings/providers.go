@@ -50,6 +50,7 @@ type AWSProviderConfig struct {
 	DiscoverRDS         bool   `json:"discoverRDS"`
 	DiscoverElastiCache bool   `json:"discoverElastiCache"`
 	DiscoverDocumentDB  bool   `json:"discoverDocumentDB"`
+	DiscoverS3          bool   `json:"discoverS3"`
 }
 
 // AWSProviderState holds the runtime state of an AWS provider including
@@ -312,6 +313,7 @@ func configToProviderConfig(cfg *AWSProviderConfig) *awsprovider.Config {
 		DiscoverRDS:         cfg.DiscoverRDS,
 		DiscoverElastiCache: cfg.DiscoverElastiCache,
 		DiscoverDocumentDB:  cfg.DiscoverDocumentDB,
+		DiscoverS3:          cfg.DiscoverS3,
 	}
 }
 
@@ -364,6 +366,11 @@ func InitAWSProvidersFromEnv() error {
 			discoverDocumentDB = *envCfg.DiscoverDocumentDB
 		}
 
+		discoverS3 := true
+		if envCfg.DiscoverS3 != nil {
+			discoverS3 = *envCfg.DiscoverS3
+		}
+
 		cfg := &AWSProviderConfig{
 			ID:                  id,
 			Name:                name,
@@ -373,6 +380,7 @@ func InitAWSProvidersFromEnv() error {
 			DiscoverRDS:         discoverRDS,
 			DiscoverElastiCache: discoverElastiCache,
 			DiscoverDocumentDB:  discoverDocumentDB,
+			DiscoverS3:          discoverS3,
 		}
 
 		if _, err := AddAWSProvider(cfg); err != nil {

@@ -104,6 +104,7 @@ func TestStateToProviderModelsMapOptionalFields(t *testing.T) {
 			DiscoverRDS:         true,
 			DiscoverElastiCache: true,
 			DiscoverDocumentDB:  true,
+			DiscoverS3:          true,
 		},
 		Status:          "Connected",
 		LastDiscoveryAt: &discoveryTime,
@@ -118,6 +119,9 @@ func TestStateToProviderModelsMapOptionalFields(t *testing.T) {
 	}
 	if awsModel.Status != "Connected" || awsModel.Error == nil || *awsModel.Error != "warning" {
 		t.Fatalf("expected AWS status and error to be mapped, got %#v", awsModel)
+	}
+	if !awsModel.DiscoverS3 {
+		t.Fatalf("expected AWS S3 discovery flag to be mapped, got %#v", awsModel)
 	}
 
 	azureModel := stateToAzureProvider(&settings.AzureProviderState{
@@ -186,10 +190,14 @@ func TestDiscoveredConnectionToModelFiltersMetadata(t *testing.T) {
 		Region:       "us-east-1",
 		Status:       providers.ConnectionStatusAvailable,
 		Metadata: map[string]string{
-			"endpoint": "db.internal",
-			"port":     "5432",
-			"service":  "rds",
-			"secret":   "should-not-leak",
+			"endpoint":     "db.internal",
+			"port":         "5432",
+			"databaseName": "app",
+			"service":      "rds",
+			"bucket":       "reports",
+			"authMethod":   "profile",
+			"profileName":  "dev",
+			"secret":       "should-not-leak",
 		},
 	})
 
@@ -204,7 +212,13 @@ func TestDiscoveredConnectionToModelFiltersMetadata(t *testing.T) {
 	for _, record := range modelConn.Metadata {
 		metadata[record.Key] = record.Value
 	}
-	if metadata["endpoint"] != "db.internal" || metadata["port"] != "5432" || metadata["service"] != "rds" {
+	if metadata["endpoint"] != "db.internal" ||
+		metadata["port"] != "5432" ||
+		metadata["databaseName"] != "app" ||
+		metadata["service"] != "rds" ||
+		metadata["bucket"] != "reports" ||
+		metadata["authMethod"] != "profile" ||
+		metadata["profileName"] != "dev" {
 		t.Fatalf("expected allowed metadata to be preserved, got %#v", metadata)
 	}
 	if _, found := metadata["secret"]; found {

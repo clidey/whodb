@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		DiscoverDocumentDb  func(childComplexity int) int
 		DiscoverElastiCache func(childComplexity int) int
 		DiscoverRds         func(childComplexity int) int
+		DiscoverS3          func(childComplexity int) int
 		DiscoveredCount     func(childComplexity int) int
 		Error               func(childComplexity int) int
 		ID                  func(childComplexity int) int
@@ -323,9 +324,12 @@ type ComplexityRoot struct {
 	}
 
 	SettingsConfig struct {
+		AWSProviderEnabled    func(childComplexity int) int
+		AzureProviderEnabled  func(childComplexity int) int
 		CloudProvidersEnabled func(childComplexity int) int
 		DisableCredentialForm func(childComplexity int) int
 		EnableNewUI           func(childComplexity int) int
+		GCPProviderEnabled    func(childComplexity int) int
 		MaxPageSize           func(childComplexity int) int
 		MetricsEnabled        func(childComplexity int) int
 	}
@@ -668,6 +672,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AWSProvider.DiscoverRds(childComplexity), true
+	case "AWSProvider.DiscoverS3":
+		if e.ComplexityRoot.AWSProvider.DiscoverS3 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AWSProvider.DiscoverS3(childComplexity), true
 	case "AWSProvider.DiscoveredCount":
 		if e.ComplexityRoot.AWSProvider.DiscoveredCount == nil {
 			break
@@ -2053,6 +2063,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SSLStatus.Mode(childComplexity), true
 
+	case "SettingsConfig.AWSProviderEnabled":
+		if e.ComplexityRoot.SettingsConfig.AWSProviderEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SettingsConfig.AWSProviderEnabled(childComplexity), true
+	case "SettingsConfig.AzureProviderEnabled":
+		if e.ComplexityRoot.SettingsConfig.AzureProviderEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SettingsConfig.AzureProviderEnabled(childComplexity), true
 	case "SettingsConfig.CloudProvidersEnabled":
 		if e.ComplexityRoot.SettingsConfig.CloudProvidersEnabled == nil {
 			break
@@ -2071,6 +2093,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SettingsConfig.EnableNewUI(childComplexity), true
+	case "SettingsConfig.GCPProviderEnabled":
+		if e.ComplexityRoot.SettingsConfig.GCPProviderEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SettingsConfig.GCPProviderEnabled(childComplexity), true
 	case "SettingsConfig.MaxPageSize":
 		if e.ComplexityRoot.SettingsConfig.MaxPageSize == nil {
 			break
@@ -4210,6 +4238,35 @@ func (ec *executionContext) _AWSProvider_DiscoverDocumentDB(ctx context.Context,
 }
 
 func (ec *executionContext) fieldContext_AWSProvider_DiscoverDocumentDB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AWSProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AWSProvider_DiscoverS3(ctx context.Context, field graphql.CollectedField, obj *model.AWSProvider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AWSProvider_DiscoverS3,
+		func(ctx context.Context) (any, error) {
+			return obj.DiscoverS3, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AWSProvider_DiscoverS3(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AWSProvider",
 		Field:      field,
@@ -7933,6 +7990,8 @@ func (ec *executionContext) fieldContext_Mutation_AddAWSProvider(ctx context.Con
 				return ec.fieldContext_AWSProvider_DiscoverElastiCache(ctx, field)
 			case "DiscoverDocumentDB":
 				return ec.fieldContext_AWSProvider_DiscoverDocumentDB(ctx, field)
+			case "DiscoverS3":
+				return ec.fieldContext_AWSProvider_DiscoverS3(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AWSProvider", field.Name)
 		},
@@ -8000,6 +8059,8 @@ func (ec *executionContext) fieldContext_Mutation_UpdateAWSProvider(ctx context.
 				return ec.fieldContext_AWSProvider_DiscoverElastiCache(ctx, field)
 			case "DiscoverDocumentDB":
 				return ec.fieldContext_AWSProvider_DiscoverDocumentDB(ctx, field)
+			case "DiscoverS3":
+				return ec.fieldContext_AWSProvider_DiscoverS3(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AWSProvider", field.Name)
 		},
@@ -9687,6 +9748,12 @@ func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context,
 				return ec.fieldContext_SettingsConfig_MetricsEnabled(ctx, field)
 			case "CloudProvidersEnabled":
 				return ec.fieldContext_SettingsConfig_CloudProvidersEnabled(ctx, field)
+			case "AWSProviderEnabled":
+				return ec.fieldContext_SettingsConfig_AWSProviderEnabled(ctx, field)
+			case "AzureProviderEnabled":
+				return ec.fieldContext_SettingsConfig_AzureProviderEnabled(ctx, field)
+			case "GCPProviderEnabled":
+				return ec.fieldContext_SettingsConfig_GCPProviderEnabled(ctx, field)
 			case "DisableCredentialForm":
 				return ec.fieldContext_SettingsConfig_DisableCredentialForm(ctx, field)
 			case "EnableNewUI":
@@ -10934,6 +11001,93 @@ func (ec *executionContext) _SettingsConfig_CloudProvidersEnabled(ctx context.Co
 }
 
 func (ec *executionContext) fieldContext_SettingsConfig_CloudProvidersEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_AWSProviderEnabled(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SettingsConfig_AWSProviderEnabled,
+		func(ctx context.Context) (any, error) {
+			return obj.AWSProviderEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_AWSProviderEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_AzureProviderEnabled(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SettingsConfig_AzureProviderEnabled,
+		func(ctx context.Context) (any, error) {
+			return obj.AzureProviderEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_AzureProviderEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_GCPProviderEnabled(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SettingsConfig_GCPProviderEnabled,
+		func(ctx context.Context) (any, error) {
+			return obj.GCPProviderEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_GCPProviderEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SettingsConfig",
 		Field:      field,
@@ -15714,7 +15868,7 @@ func (ec *executionContext) unmarshalInputAWSProviderInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Name", "Region", "ProfileName", "DiscoverRDS", "DiscoverElastiCache", "DiscoverDocumentDB"}
+	fieldsInOrder := [...]string{"Name", "Region", "ProfileName", "DiscoverRDS", "DiscoverElastiCache", "DiscoverDocumentDB", "DiscoverS3"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15763,6 +15917,13 @@ func (ec *executionContext) unmarshalInputAWSProviderInput(ctx context.Context, 
 				return it, err
 			}
 			it.DiscoverDocumentDb = data
+		case "DiscoverS3":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("DiscoverS3"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DiscoverS3 = data
 		}
 	}
 	return it, nil
@@ -16897,6 +17058,11 @@ func (ec *executionContext) _AWSProvider(ctx context.Context, sel ast.SelectionS
 			}
 		case "DiscoverDocumentDB":
 			out.Values[i] = ec._AWSProvider_DiscoverDocumentDB(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DiscoverS3":
+			out.Values[i] = ec._AWSProvider_DiscoverS3(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -19340,6 +19506,21 @@ func (ec *executionContext) _SettingsConfig(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._SettingsConfig_MetricsEnabled(ctx, field, obj)
 		case "CloudProvidersEnabled":
 			out.Values[i] = ec._SettingsConfig_CloudProvidersEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "AWSProviderEnabled":
+			out.Values[i] = ec._SettingsConfig_AWSProviderEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "AzureProviderEnabled":
+			out.Values[i] = ec._SettingsConfig_AzureProviderEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "GCPProviderEnabled":
+			out.Values[i] = ec._SettingsConfig_GCPProviderEnabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

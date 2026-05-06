@@ -74,6 +74,9 @@ func TestMutationUpdateSettingsAndQuerySettingsConfig(t *testing.T) {
 	if !cfg.CloudProvidersEnabled || !cfg.DisableCredentialForm || !cfg.EnableNewUI || cfg.MaxPageSize != 321 {
 		t.Fatalf("expected settings config to reflect env flags, got %#v", cfg)
 	}
+	if cfg.AWSProviderEnabled || !cfg.AzureProviderEnabled || cfg.GCPProviderEnabled {
+		t.Fatalf("expected provider-specific settings to reflect env flags, got %#v", cfg)
+	}
 }
 
 func TestQueryUpdateInfoReturnsDisabledState(t *testing.T) {

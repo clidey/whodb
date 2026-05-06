@@ -62,6 +62,9 @@ export const SettingsPage: FC = () => {
     // Check if cloud providers are enabled
     const { data: settingsData } = useQuery(SettingsConfigDocument);
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
+    const awsProviderEnabled = settingsData?.SettingsConfig?.AWSProviderEnabled ?? false;
+    const azureProviderEnabled = settingsData?.SettingsConfig?.AzureProviderEnabled ?? false;
+    const gcpProviderEnabled = settingsData?.SettingsConfig?.GCPProviderEnabled ?? false;
 
     const pageSizeOptions = useMemo(() => ({
         onPageSizeChange: (size: number) => dispatch(SettingsActions.setDefaultPageSize(size)),
@@ -298,12 +301,24 @@ export const SettingsPage: FC = () => {
                         </div>
                         {cloudProvidersEnabled && (
                             <>
-                                <Separator className="my-6" />
-                                <AwsProvidersSection />
-                                <Separator className="my-6" />
-                                <AzureProvidersSection />
-                                <Separator className="my-6" />
-                                <GcpProvidersSection />
+                                {awsProviderEnabled && (
+                                    <>
+                                        <Separator className="my-6" />
+                                        <AwsProvidersSection />
+                                    </>
+                                )}
+                                {azureProviderEnabled && (
+                                    <>
+                                        <Separator className="my-6" />
+                                        <AzureProvidersSection />
+                                    </>
+                                )}
+                                {gcpProviderEnabled && (
+                                    <>
+                                        <Separator className="my-6" />
+                                        <GcpProvidersSection />
+                                    </>
+                                )}
                             </>
                         )}
                         {(() => {

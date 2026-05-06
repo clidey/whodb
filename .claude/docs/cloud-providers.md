@@ -22,7 +22,7 @@ The cloud provider system uses the **Interface + Union** pattern in GraphQL, whi
 │  │ Id, Name, Region     │       │ AWSProvider          │        │
 │  │ Status, Error        │◄──────│ + AuthMethod         │        │
 │  │ DiscoveredCount      │       │ + ProfileName        │        │
-│  │ ProviderType         │       │ + DiscoverRDS        │        │
+│  │ ProviderType         │       │ + Discovery flags    │        │
 │  └──────────────────────┘       └──────────────────────┘        │
 │           ▲                                                      │
 │           │                     ┌─────────────────┐              │
@@ -336,9 +336,10 @@ en:
 
 ## Connection Prefill Rules
 
-When a user selects a discovered cloud connection, the frontend prefills the
-login form with connection settings (hostname, port, SSL/TLS). These settings
-vary by source type.
+When a user selects a discovered cloud connection, the frontend prefills
+connection fields (hostname, database/bucket, port, and advanced settings).
+The login flow and the EE New Data Source form both use the shared prefill
+helper.
 
 ### Architecture
 
@@ -410,7 +411,7 @@ export const eePrefillRules: Record<string, PrefillRule> = {
 1. **Backend Discovery** - Provider discovers connections and populates `Metadata` map
 2. **GraphQL Response** - `DiscoveredConnection.Metadata` contains allowed keys (endpoint, port, etc.)
 3. **Frontend Prefill** - `buildConnectionPrefill(conn)` applies rules based on `SourceType`
-4. **Login Form** - Receives prefill data and populates hostname, port, and advanced settings
+4. **Connection Form** - Receives prefill data and populates hostname, database/bucket, port, and advanced settings
 
 ### PrefillRule Function Signature
 
@@ -429,6 +430,10 @@ The backend exposes these metadata keys for prefill decisions:
 |-----|-------------|
 | `endpoint` | Database hostname/endpoint |
 | `port` | Database port |
+| `databaseName` | Default database/bucket value |
+| `bucket` | S3 bucket name |
+| `authMethod` | Cloud-provider auth method |
+| `profileName` | Cloud-provider profile name |
 | `transitEncryption` | Whether TLS is enabled (for cache services) |
 | `serverless` | Whether instance is serverless |
 | `iamAuthEnabled` | Whether IAM auth is available |

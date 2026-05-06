@@ -16,8 +16,8 @@
 
 // Package aws implements the AWS connection provider for WhoDB.
 //
-// This provider discovers database resources from an AWS account (RDS, ElastiCache,
-// DocumentDB) and generates credentials that existing WhoDB plugins understand.
+// This provider discovers data resources from an AWS account (RDS, ElastiCache,
+// DocumentDB, and registered extensions) and generates credentials that existing WhoDB plugins understand.
 // The provider acts as a "credential factory" - it finds AWS databases and produces
 // standard engine.Credentials that MySQL, PostgreSQL, Redis, and MongoDB plugins
 // can use without modification.
@@ -108,6 +108,9 @@ type Config struct {
 	// DiscoverDocumentDB enables DocumentDB cluster discovery.
 	DiscoverDocumentDB bool
 
+	// DiscoverS3 enables S3 bucket discovery when an extension registers it.
+	DiscoverS3 bool
+
 	// DiscoveryTimeout overrides the default per-service discovery timeout.
 	DiscoveryTimeout time.Duration
 }
@@ -115,8 +118,8 @@ type Config struct {
 // String returns a safe string representation that excludes sensitive credentials.
 // This prevents accidental logging of AccessKeyID, SecretAccessKey, and SessionToken.
 func (c *Config) String() string {
-	return fmt.Sprintf("Config{ID:%s, Name:%s, Region:%s, AuthMethod:%s, ProfileName:%s, DiscoverRDS:%t, DiscoverElastiCache:%t, DiscoverDocumentDB:%t}",
-		c.ID, c.Name, c.Region, c.AuthMethod, c.ProfileName, c.DiscoverRDS, c.DiscoverElastiCache, c.DiscoverDocumentDB)
+	return fmt.Sprintf("Config{ID:%s, Name:%s, Region:%s, AuthMethod:%s, ProfileName:%s, DiscoverRDS:%t, DiscoverElastiCache:%t, DiscoverDocumentDB:%t, DiscoverS3:%t}",
+		c.ID, c.Name, c.Region, c.AuthMethod, c.ProfileName, c.DiscoverRDS, c.DiscoverElastiCache, c.DiscoverDocumentDB, c.DiscoverS3)
 }
 
 // Validate checks that the provider configuration has required fields.
@@ -124,7 +127,7 @@ func (c *Config) Validate() error {
 	if c.Region == "" {
 		return errors.New("aws: region is required")
 	}
-	if !c.DiscoverRDS && !c.DiscoverElastiCache && !c.DiscoverDocumentDB {
+	if !c.DiscoverRDS && !c.DiscoverElastiCache && !c.DiscoverDocumentDB && !c.DiscoverS3 {
 		log.Warnf("AWS provider %s: no discovery flags enabled", c.ID)
 	}
 	return nil
@@ -140,6 +143,7 @@ func DefaultConfig(id, name, region string) *Config {
 		DiscoverRDS:         true,
 		DiscoverElastiCache: true,
 		DiscoverDocumentDB:  true,
+		DiscoverS3:          true,
 	}
 }
 

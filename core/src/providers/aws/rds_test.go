@@ -148,6 +148,27 @@ func TestMapRDSEngine_AuroraVariants(t *testing.T) {
 	}
 }
 
+func TestMapRDSEngine_ExtensionOverridesBuiltIns(t *testing.T) {
+	previous := mapRDSEngineExtension
+	defer func() { mapRDSEngineExtension = previous }()
+
+	overrideType := engine.DatabaseType("Aurora PostgreSQL")
+	SetRDSEngineMapper(func(engineName string) (engine.DatabaseType, bool) {
+		if engineName == "aurora-postgresql" {
+			return overrideType, true
+		}
+		return "", false
+	})
+
+	dbType, ok := mapRDSEngine("aurora-postgresql")
+	if !ok {
+		t.Fatal("expected aurora-postgresql to match")
+	}
+	if dbType != overrideType {
+		t.Fatalf("expected extension override %q, got %q", overrideType, dbType)
+	}
+}
+
 func newTestRDSProvider() *Provider {
 	p, _ := New(&Config{
 		ID:          "test-rds",

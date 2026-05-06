@@ -27,6 +27,8 @@ en_US:
   rdsDesc: PostgreSQL, MySQL, MariaDB instances
   elasticacheLabel: ElastiCache
   documentdbLabel: DocumentDB
+  s3Label: S3 Buckets
+  s3Desc: Object storage buckets
 
   saveBeforeTest: Save the provider before testing
   providerAdded: AWS account added successfully
@@ -141,6 +143,8 @@ en_GB:
   rdsDesc: "PostgreSQL, MySQL, MariaDB instances"
   elasticacheLabel: "ElastiCache"
   documentdbLabel: "DocumentDB"
+  s3Label: "S3 Buckets"
+  s3Desc: "Object storage buckets"
   saveBeforeTest: "Save the provider before testing"
   providerAdded: "AWS account added successfully"
   providerUpdated: "AWS account updated successfully"

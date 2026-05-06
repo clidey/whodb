@@ -207,13 +207,16 @@ export const LoginForm: FC<LoginFormProps> = ({
     const { loading: profilesLoading, data: profiles } = useQuery(SourceProfilesDocument);
     const { data: settingsData } = useQuery(SettingsConfigDocument);
     const cloudProvidersEnabled = settingsData?.SettingsConfig?.CloudProvidersEnabled ?? false;
+    const awsProviderEnabled = settingsData?.SettingsConfig?.AWSProviderEnabled ?? false;
+    const azureProviderEnabled = settingsData?.SettingsConfig?.AzureProviderEnabled ?? false;
+    const gcpProviderEnabled = settingsData?.SettingsConfig?.GCPProviderEnabled ?? false;
     const disableCredentialForm = settingsData?.SettingsConfig?.DisableCredentialForm ?? false;
     const maxPageSize = settingsData?.SettingsConfig?.MaxPageSize ?? 10000;
     const {
         items: databaseTypeItems,
         loading: databaseTypesLoading,
         error: databaseTypesError,
-    } = useSourceTypeItems({ cloudProvidersEnabled });
+    } = useSourceTypeItems({ cloudProvidersEnabled, awsProviderEnabled });
     const [searchParams, setSearchParams] = useSearchParams();
 
     const databaseTypesLoaded = !databaseTypesLoading;
@@ -239,8 +242,11 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     useEffect(() => {
         dispatch(SettingsActions.setCloudProvidersEnabled(cloudProvidersEnabled));
+        dispatch(SettingsActions.setAWSProviderEnabled(awsProviderEnabled));
+        dispatch(SettingsActions.setAzureProviderEnabled(azureProviderEnabled));
+        dispatch(SettingsActions.setGCPProviderEnabled(gcpProviderEnabled));
         dispatch(SettingsActions.setMaxPageSize(maxPageSize));
-    }, [cloudProvidersEnabled, maxPageSize, dispatch]);
+    }, [cloudProvidersEnabled, awsProviderEnabled, azureProviderEnabled, gcpProviderEnabled, maxPageSize, dispatch]);
 
     useEffect(() => {
         if (databaseTypeItems.length === 0) {
@@ -519,6 +525,9 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (data.hostname) {
                     setHostName(data.hostname);
                 }
+                if (data.database) {
+                    setDatabase(data.database);
+                }
 
                 // Merge advanced settings
                 if (data.advanced && Object.keys(data.advanced).length > 0) {
@@ -614,14 +623,12 @@ export const LoginForm: FC<LoginFormProps> = ({
     const availableProfiles = useMemo(() => {
         return profiles?.SourceProfiles
             .filter(profile => profile.Source !== "builtin")
-            // Filter out AWS-hosted profiles when cloud providers are disabled
             .filter(profile => {
-                if (cloudProvidersEnabled) {
-                    return true;
-                }
-
                 const hostname = getValue(profile.Values, "Hostname");
-                return !isAwsHostname(hostname) && !isAzureHostname(hostname) && !isGcpHostname(hostname);
+                if (isAwsHostname(hostname)) return awsProviderEnabled;
+                if (isAzureHostname(hostname)) return azureProviderEnabled;
+                if (isGcpHostname(hostname)) return gcpProviderEnabled;
+                return true;
             })
             .map(profile => ({
                 value: profile.Id,
@@ -636,7 +643,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 ),
                 rightIcon: sources[profile.Source],
             })) ?? [];
-    }, [profiles?.SourceProfiles, cloudProvidersEnabled]);
+    }, [profiles?.SourceProfiles, awsProviderEnabled, azureProviderEnabled, gcpProviderEnabled]);
 
     const hasAvailableProfiles = availableProfiles.length > 0;
 
@@ -1123,21 +1130,33 @@ export const LoginForm: FC<LoginFormProps> = ({
                 }
                 {cloudProvidersEnabled && (
                     <>
-                        <Separator className="my-8" />
-                        <AwsConnectionPicker
-                            onSelectConnection={handleCloudConnectionPrefill}
-                            sourceTypes={databaseTypeItems}
-                        />
-                        <Separator className="my-8" />
-                        <AzureConnectionPicker
-                            onSelectConnection={handleCloudConnectionPrefill}
-                            sourceTypes={databaseTypeItems}
-                        />
-                        <Separator className="my-8" />
-                        <GcpConnectionPicker
-                            onSelectConnection={handleCloudConnectionPrefill}
-                            sourceTypes={databaseTypeItems}
-                        />
+                        {awsProviderEnabled && (
+                            <>
+                                <Separator className="my-8" />
+                                <AwsConnectionPicker
+                                    onSelectConnection={handleCloudConnectionPrefill}
+                                    sourceTypes={databaseTypeItems}
+                                />
+                            </>
+                        )}
+                        {azureProviderEnabled && (
+                            <>
+                                <Separator className="my-8" />
+                                <AzureConnectionPicker
+                                    onSelectConnection={handleCloudConnectionPrefill}
+                                    sourceTypes={databaseTypeItems}
+                                />
+                            </>
+                        )}
+                        {gcpProviderEnabled && (
+                            <>
+                                <Separator className="my-8" />
+                                <GcpConnectionPicker
+                                    onSelectConnection={handleCloudConnectionPrefill}
+                                    sourceTypes={databaseTypeItems}
+                                />
+                            </>
+                        )}
                     </>
                 )}
             </div>

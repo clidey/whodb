@@ -353,6 +353,12 @@ func isEngineHandledByDedicatedDiscovery(engineName string) bool {
 func mapRDSEngine(engineName string) (engine.DatabaseType, bool) {
 	engineName = strings.ToLower(engineName)
 
+	if mapRDSEngineExtension != nil {
+		if dbType, ok := mapRDSEngineExtension(engineName); ok {
+			return dbType, true
+		}
+	}
+
 	switch {
 	case engineName == "mysql" || strings.HasPrefix(engineName, "mysql-"):
 		return engine.DatabaseType_MySQL, true
@@ -365,10 +371,6 @@ func mapRDSEngine(engineName string) (engine.DatabaseType, bool) {
 		return engine.DatabaseType_MySQL, true
 	case strings.HasPrefix(engineName, "aurora-postgresql"):
 		return engine.DatabaseType_Postgres, true
-	}
-
-	if mapRDSEngineExtension != nil {
-		return mapRDSEngineExtension(engineName)
 	}
 
 	return "", false

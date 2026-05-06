@@ -269,8 +269,10 @@ export type SourceTypeOverride = Pick<SourceTypeItem, 'id'> &
  * Filter options for source type retrieval.
  */
 export interface SourceTypeFilterOptions {
-    /** When false, AWS managed database types (ElastiCache, DocumentDB) are excluded */
+    /** When false, all cloud-managed source types are excluded. */
     cloudProvidersEnabled?: boolean;
+    /** When false, AWS managed source types are excluded. */
+    awsProviderEnabled?: boolean;
 }
 
 /**
@@ -406,10 +408,11 @@ function filterSourceTypes(
     items: SourceTypeItem[],
     options: SourceTypeFilterOptions = {}
 ): SourceTypeItem[] {
-    const { cloudProvidersEnabled = true } = options;
+    const cloudProvidersEnabled = options.cloudProvidersEnabled ?? true;
+    const awsProviderEnabled = options.awsProviderEnabled ?? cloudProvidersEnabled;
 
     if (cloudProvidersEnabled) {
-        return items;
+        return items.filter(item => awsProviderEnabled || !item.isAwsManaged);
     }
 
     return items.filter(item => !item.isAwsManaged);

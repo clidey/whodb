@@ -48,6 +48,7 @@ import {
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
+import { useSourceTypeItems } from "@/hooks/useSourceCatalog";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 import { upsertCloudProviderCache } from "../../utils/apollo-provider-cache";
 
@@ -61,6 +62,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     onOpenChange,
 }) => {
     const { t } = useTranslation('components/aws-provider-modal');
+    const { items: sourceTypes } = useSourceTypeItems({ cloudProvidersEnabled: true });
     const dispatch = useAppDispatch();
 
     // Get editing state from Redux
@@ -92,6 +94,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const [discoverRDS, setDiscoverRDS] = useState(true);
     const [discoverElastiCache, setDiscoverElastiCache] = useState(true);
     const [discoverDocumentDB, setDiscoverDocumentDB] = useState(true);
+    const [discoverS3, setDiscoverS3] = useState(true);
 
     // GraphQL mutations - refetch providers and connections after add/update
     const [addProvider, { loading: addLoading }] = useMutation(AddAwsProviderDocument, {
@@ -114,6 +117,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const [testCredentials, { loading: testCredentialsLoading }] = useMutation(TestAwsCredentialsDocument);
 
     const loading = addLoading || updateLoading || testLoading || testCredentialsLoading;
+    const supportsS3Discovery = sourceTypes.some(item => item.id === "S3");
 
     // Reset form when modal opens/closes or editingProvider changes
     useEffect(() => {
@@ -133,6 +137,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                 setDiscoverRDS(editingProvider.DiscoverRDS);
                 setDiscoverElastiCache(editingProvider.DiscoverElastiCache);
                 setDiscoverDocumentDB(editingProvider.DiscoverDocumentDB);
+                setDiscoverS3(editingProvider.DiscoverS3);
             } else {
                 // Reset to defaults for add mode
                 setName("");
@@ -142,6 +147,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                 setDiscoverRDS(true);
                 setDiscoverElastiCache(true);
                 setDiscoverDocumentDB(true);
+                setDiscoverS3(true);
             }
         }
     }, [open, editingProvider]);
@@ -190,6 +196,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
             DiscoverRDS: discoverRDS,
             DiscoverElastiCache: discoverElastiCache,
             DiscoverDocumentDB: discoverDocumentDB,
+            DiscoverS3: discoverS3,
         };
 
         if (profileName) {
@@ -197,7 +204,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
         }
 
         return input;
-    }, [name, getEffectiveRegion, profileName, discoverRDS, discoverElastiCache, discoverDocumentDB]);
+    }, [name, getEffectiveRegion, profileName, discoverRDS, discoverElastiCache, discoverDocumentDB, discoverS3]);
 
     const handleSubmit = useCallback(async () => {
         if (!name.trim()) {
@@ -462,6 +469,19 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                                 data-testid="discover-documentdb"
                             />
                         </div>
+                        {supportsS3Discovery && (
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-sm">{t('s3Label')}</span>
+                                    <span className="text-xs text-muted-foreground">{t('s3Desc')}</span>
+                                </div>
+                                <Switch
+                                    checked={discoverS3}
+                                    onCheckedChange={setDiscoverS3}
+                                    data-testid="discover-s3"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -16,6 +16,8 @@
 
 package source
 
+import "io"
+
 // ExternalModel contains the user-selected AI model configuration for chat and
 // assistant features.
 type ExternalModel struct {
@@ -70,6 +72,15 @@ type ContentResult struct {
 	SizeBytes  int64
 	Truncated  bool
 	FileName   string
+	ModifiedAt *string
+}
+
+// ContentDownload contains a streaming content payload for a source object.
+type ContentDownload struct {
+	Reader     io.ReadCloser
+	MIMEType   string
+	FileName   string
+	SizeBytes  int64
 	ModifiedAt *string
 }
 

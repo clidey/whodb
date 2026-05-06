@@ -262,6 +262,9 @@ type GraphUnit {
 type SettingsConfig {
   MetricsEnabled: Boolean
   CloudProvidersEnabled: Boolean!
+  AWSProviderEnabled: Boolean!
+  AzureProviderEnabled: Boolean!
+  GCPProviderEnabled: Boolean!
   DisableCredentialForm: Boolean!
   EnableNewUI: Boolean!
   MaxPageSize: Int!
@@ -600,6 +603,7 @@ type AWSProvider implements CloudProvider {
   DiscoverRDS: Boolean!
   DiscoverElastiCache: Boolean!
   DiscoverDocumentDB: Boolean!
+  DiscoverS3: Boolean!
 }
 
 input AWSProviderInput {
@@ -609,6 +613,7 @@ input AWSProviderInput {
   DiscoverRDS: Boolean
   DiscoverElastiCache: Boolean
   DiscoverDocumentDB: Boolean
+  DiscoverS3: Boolean
 }
 
 # Local AWS profile discovered from ~/.aws/credentials and ~/.aws/config

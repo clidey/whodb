@@ -2,6 +2,9 @@ query SettingsConfig {
     SettingsConfig {
         MetricsEnabled
         CloudProvidersEnabled
+        AWSProviderEnabled
+        AzureProviderEnabled
+        GCPProviderEnabled
         DisableCredentialForm
         EnableNewUI
         MaxPageSize

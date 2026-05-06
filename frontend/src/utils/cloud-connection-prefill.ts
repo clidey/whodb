@@ -15,7 +15,15 @@
  */
 
 import type { SourceTypeItem } from "@/config/source-types";
-import { LocalDiscoveredConnection } from "@/store/providers";
+
+interface DiscoveredConnectionPrefillSource {
+    DatabaseType: string;
+    ProviderType?: string;
+    Metadata?: Array<{
+        Key: string;
+        Value: string;
+    }>;
+}
 
 /** Matches AWS managed database hostnames (RDS, ElastiCache, DocumentDB, Redshift, Neptune, Timestream) */
 const AWS_HOSTNAME_PATTERNS = [
@@ -69,12 +77,13 @@ export function isGcpHostname(hostname: string | undefined | null): boolean {
 export interface ConnectionPrefillData {
     databaseType: string;
     hostname: string;
+    database?: string;
     port?: string;
     advanced: Record<string, string>;
 }
 
 /** Get metadata value from a discovered connection */
-const getMetadataValue = (conn: LocalDiscoveredConnection, key: string): string | undefined => {
+const getMetadataValue = (conn: DiscoveredConnectionPrefillSource, key: string): string | undefined => {
     if (!conn?.Metadata) return undefined;
     return conn.Metadata.find(m => m.Key === key)?.Value;
 };
@@ -92,14 +101,14 @@ function providerMatches(allowedProviders: string[], providerType: string | unde
 }
 
 function conditionsMatch(
-    conn: LocalDiscoveredConnection,
+    conn: DiscoveredConnectionPrefillSource,
     conditions: NonNullable<SourceTypeItem["discoveryPrefill"]>["AdvancedDefaults"][number]["Conditions"]
 ): boolean {
     return conditions.every(condition => getMetadataValue(conn, condition.Key) === condition.Value);
 }
 
 function resolveAdvancedDefaultValue(
-    conn: LocalDiscoveredConnection,
+    conn: DiscoveredConnectionPrefillSource,
     advancedDefault: NonNullable<SourceTypeItem["discoveryPrefill"]>["AdvancedDefaults"][number]
 ): string {
     if (advancedDefault.MetadataKey) {
@@ -117,7 +126,7 @@ function resolveAdvancedDefaultValue(
 }
 
 function buildAdvancedPrefill(
-    conn: LocalDiscoveredConnection,
+    conn: DiscoveredConnectionPrefillSource,
     sourceType: SourceTypeItem | undefined
 ): Record<string, string> {
     const advanced: Record<string, string> = {};
@@ -149,15 +158,17 @@ function buildAdvancedPrefill(
  * Applies backend-owned discovery-prefill metadata from the source catalog.
  */
 export function buildConnectionPrefill(
-    conn: LocalDiscoveredConnection,
+    conn: DiscoveredConnectionPrefillSource,
     sourceType?: SourceTypeItem
 ): ConnectionPrefillData {
     const endpoint = getMetadataValue(conn, "endpoint") || "";
     const port = getMetadataValue(conn, "port");
+    const database = getMetadataValue(conn, "databaseName") || getMetadataValue(conn, "bucket");
 
     return {
         databaseType: conn.DatabaseType,
         hostname: endpoint,
+        database,
         port,
         advanced: buildAdvancedPrefill(conn, sourceType),
     };

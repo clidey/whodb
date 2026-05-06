@@ -15,7 +15,7 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo } from "react";
 import {
     Badge,
     Button,
@@ -88,6 +88,7 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
         [allConnections]
     );
     const isModalOpen = useAppSelector(state => state.providers.isProviderModalOpen);
+    const providerModalType = useAppSelector(state => state.providers.providerModalType);
 
     // GraphQL
     const { data: providersData, loading: providersLoading, refetch: refetchProviders } = useQuery(GetCloudProvidersDocument);
@@ -107,13 +108,8 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
         }
     }, [connectionsData, dispatch]);
 
-    // Track whether we initiated the add modal
-    const [gcpAddMode, setGcpAddMode] = useState(false);
-    const editingProviderId = useAppSelector(state => state.providers.editingProviderId);
-
     const handleAddProvider = useCallback(() => {
-        setGcpAddMode(true);
-        dispatch(ProvidersActions.openAddProviderModal());
+        dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Gcp }));
     }, [dispatch]);
 
     const handleRefresh = useCallback(async () => {
@@ -152,7 +148,6 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
 
     const handleModalOpenChange = useCallback((open: boolean) => {
         if (!open) {
-            setGcpAddMode(false);
             dispatch(ProvidersActions.closeProviderModal());
         }
     }, [dispatch]);
@@ -165,8 +160,7 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
         return iconMap[dbType] ?? null;
     }, []);
 
-    // Show modal if we initiated add mode and no provider is being edited
-    const showModal = isModalOpen && gcpAddMode && !editingProviderId;
+    const showModal = isModalOpen && providerModalType === CloudProviderType.Gcp;
 
     // Don't render if no GCP providers and no GCP connections
     if (gcpProviders.length === 0 && gcpConnections.length === 0) {

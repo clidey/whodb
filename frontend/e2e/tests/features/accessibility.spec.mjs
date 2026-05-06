@@ -301,7 +301,13 @@ test.describe("Accessibility (axe-core)", () => {
                 SettingsConfig: {
                   MetricsEnabled: "false",
                   CloudProvidersEnabled: true,
+                  AWSProviderEnabled: true,
+                  AzureProviderEnabled: true,
+                  GCPProviderEnabled: true,
                   DisableCredentialForm: false,
+                  EnableNewUI: true,
+                  MaxPageSize: 10000,
+                  __typename: "SettingsConfig",
                 },
               },
             }),

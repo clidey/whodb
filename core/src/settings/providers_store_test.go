@@ -27,6 +27,7 @@ import (
 
 func TestPersistedProviderConfig_DoesNotContainCredentials(t *testing.T) {
 	// Verify that persistedProviderConfig struct does not have credential fields
+	discoverS3 := true
 	cfg := persistedProviderConfig{
 		ID:                  "test-id",
 		Name:                "Test",
@@ -36,6 +37,7 @@ func TestPersistedProviderConfig_DoesNotContainCredentials(t *testing.T) {
 		DiscoverRDS:         true,
 		DiscoverElastiCache: true,
 		DiscoverDocumentDB:  true,
+		DiscoverS3:          &discoverS3,
 	}
 
 	data, err := json.Marshal(cfg)

@@ -52,14 +52,14 @@ import { getAppName } from "@/config/features";
 export type AwsConnectionPrefillData = ConnectionPrefillData;
 
 interface AwsConnectionPickerProps {
-    /** Called when user clicks a discovered connection - prefills the main login form */
+    /** Called when user clicks a discovered resource - prefills the main login form */
     onSelectConnection?: (data: AwsConnectionPrefillData) => void;
     /** Available source types used to apply backend-owned discovery-prefill metadata. */
     sourceTypes: SourceTypeItem[];
 }
 
 /**
- * A picker component for AWS-discovered database connections.
+ * A picker component for AWS-discovered source connections.
  * Shows on the login page when AWS providers are configured.
  * When a connection is clicked, it calls onSelectConnection to prefill the main login form.
  */
@@ -75,6 +75,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
     const allProviders = useAppSelector(state => state.providers.cloudProviders);
     const allConnections = useAppSelector(state => state.providers.discoveredConnections);
     const isModalOpen = useAppSelector(state => state.providers.isProviderModalOpen);
+    const providerModalType = useAppSelector(state => state.providers.providerModalType);
 
     const cloudProviders = useMemo(() =>
         allProviders.filter(p => p.ProviderType === CloudProviderType.Aws),
@@ -104,7 +105,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
     }, [connectionsData, dispatch]);
 
     const handleAddProvider = useCallback(() => {
-        dispatch(ProvidersActions.openAddProviderModal());
+        dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Aws }));
     }, [dispatch]);
 
     const handleRefresh = useCallback(async () => {
@@ -152,8 +153,9 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
     }, [dispatch]);
 
     const loading = providersLoading || connectionsLoading || refreshLoading;
+    const showModal = isModalOpen && providerModalType === CloudProviderType.Aws;
 
-    // Get database type icon
+    // Get source type icon
     const getDbIcon = useCallback((dbType: string): ReactElement | null => {
         const iconMap: Record<string, ReactElement> = Icons.Logos as Record<string, ReactElement>;
         // Normalize type name (e.g., "Postgres" -> "Postgres", "MySQL" -> "MySql")
@@ -178,7 +180,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                     {t('addAwsAccount')}
                 </Button>
                 <AwsProviderModal
-                    open={isModalOpen}
+                    open={showModal}
                     onOpenChange={handleModalOpenChange}
                 />
             </div>
@@ -219,6 +221,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                                             <li><span className="font-medium">RDS</span> – {t('helpRdsDesc')}</li>
                                             <li><span className="font-medium">ElastiCache</span> – {t('elasticacheDesc')}</li>
                                             <li><span className="font-medium">DocumentDB</span> – {t('documentdbDesc')}</li>
+                                            <li><span className="font-medium">S3</span> – {t('helpS3Desc')}</li>
                                         </ul>
                                     </div>
                                     <p className="pt-1 border-t">{t('helpCredentialNote', { appName })}</p>
@@ -306,7 +309,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
             )}
 
             <AwsProviderModal
-                open={isModalOpen}
+                open={showModal}
                 onOpenChange={handleModalOpenChange}
             />
         </div>

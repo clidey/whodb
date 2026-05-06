@@ -78,6 +78,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
 
     // Redux state
     const isModalOpen = useAppSelector(state => state.providers.isProviderModalOpen);
+    const providerModalType = useAppSelector(state => state.providers.providerModalType);
 
     // GraphQL - these operations are on the auth allowlist, so no skip needed
     const { data: providersData, loading: providersLoading, refetch: refetchProviders } = useQuery(GetAzureProvidersDocument);
@@ -100,7 +101,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
     }, [connectionsData, dispatch]);
 
     const handleAddProvider = useCallback(() => {
-        dispatch(ProvidersActions.openAddProviderModal());
+        dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Azure }));
     }, [dispatch]);
 
     const handleRefresh = useCallback(async () => {
@@ -144,6 +145,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
     }, [dispatch]);
 
     const loading = providersLoading || connectionsLoading || refreshLoading;
+    const showModal = isModalOpen && providerModalType === CloudProviderType.Azure;
 
     // Get database type icon
     const getDbIcon = useCallback((dbType: string): ReactElement | null => {
@@ -169,7 +171,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
                     {t('addAzureAccount')}
                 </Button>
                 <AzureProviderModal
-                    open={isModalOpen}
+                    open={showModal}
                     onOpenChange={handleModalOpenChange}
                 />
             </div>
@@ -288,7 +290,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
             )}
 
             <AzureProviderModal
-                open={isModalOpen}
+                open={showModal}
                 onOpenChange={handleModalOpenChange}
             />
         </div>

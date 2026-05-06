@@ -283,7 +283,7 @@ func TestInitProvidersFromEnv(t *testing.T) {
 	}
 
 	awsProviders := GetAWSProviders()
-	if len(awsProviders) != 1 || awsProviders[0].Config.ID != "aws-EnvAWS-us-west-2" || awsProviders[0].Config.DiscoverRDS || !awsProviders[0].Config.DiscoverElastiCache {
+	if len(awsProviders) != 1 || awsProviders[0].Config.ID != "aws-EnvAWS-us-west-2" || awsProviders[0].Config.DiscoverRDS || !awsProviders[0].Config.DiscoverElastiCache || !awsProviders[0].Config.DiscoverS3 {
 		t.Fatalf("unexpected AWS providers initialized from env: %#v", awsProviders)
 	}
 
