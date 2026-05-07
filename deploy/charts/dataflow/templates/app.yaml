@@ -6,6 +6,7 @@ metadata:
   name: {{ .Values.app.name }}
   annotations:
     app.sealos.io/representative-meta.forced-icon-style: fill
+    dataflow.sealos.io/health-url: {{ printf "http://%s.%s.svc.cluster.local:%v/health" (include "dataflow.fullname" .) .Release.Namespace .Values.service.port | quote }}
   namespace: {{ .Values.app.namespace }}
   labels:
     {{- include "dataflow.labels" . | nindent 4 }}
