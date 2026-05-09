@@ -173,6 +173,32 @@ WINDOWS_CERTIFICATE_PASSWORD
 2. Manual dispatch with `production` mode
 3. Enable `publish-github-release` to make release public
 
+## Platform Build Tags (ARM / RISC-V64)
+
+Some features (AI streaming, agent, app generation) depend on CGO libraries or
+platform-specific bindings that are unavailable on ARM and RISC-V64. These are
+excluded using Go build tags.
+
+**Pattern:** every file with `//go:build !arm && !riscv64` MUST have a matching
+`_unsupported.go` stub file with `//go:build arm || riscv64` that provides the
+same exported function signatures (returning HTTP 501 or no-op behavior).
+
+```
+core/graph/
+  http_ai_stream_handler.go          → http_ai_stream_unsupported.go
+  http_whodb_agent_handler.go        → http_agent_unsupported.go
+  http_app_handler.go                → http_app_handler_unsupported.go
+```
+
+**When adding a new HTTP handler with a build-tag constraint:**
+1. Create the main handler file with `//go:build !arm && !riscv64`
+2. Create a corresponding `_unsupported.go` with `//go:build arm || riscv64`
+3. The stub must define every function referenced from `SetupHTTPServer` or
+   other unconditionally-compiled code
+4. Verify with: `GOOS=linux GOARCH=riscv64 go build ./graph/`
+
+If this is missed, CI will fail on the "Build Linux Binaries" job for RISC-V64.
+
 ## Security
 
 All workflows use:
