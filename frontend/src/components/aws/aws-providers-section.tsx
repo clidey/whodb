@@ -75,6 +75,7 @@ export const AwsProvidersSection: FC = () => {
         [allProviders]
     );
     const isModalOpen = useAppSelector(state => state.providers.isProviderModalOpen);
+    const providerModalType = useAppSelector(state => state.providers.providerModalType);
 
     // GraphQL queries and mutations
     const { data, loading, refetch } = useQuery(GetCloudProvidersDocument);
@@ -89,11 +90,11 @@ export const AwsProvidersSection: FC = () => {
     }, [data, dispatch]);
 
     const handleAddProvider = useCallback(() => {
-        dispatch(ProvidersActions.openAddProviderModal());
+        dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Aws }));
     }, [dispatch]);
 
     const handleEditProvider = useCallback((id: string) => {
-        dispatch(ProvidersActions.openEditProviderModal({ id }));
+        dispatch(ProvidersActions.openEditProviderModal({ id, providerType: CloudProviderType.Aws }));
     }, [dispatch]);
 
     const handleRemoveProvider = useCallback(async (id: string, name: string) => {
@@ -149,6 +150,7 @@ export const AwsProvidersSection: FC = () => {
     }, [refetch]);
 
     const isLoading = loading || refreshLoading || removeLoading;
+    const showModal = isModalOpen && providerModalType === CloudProviderType.Aws;
 
     return (
         <div className="flex flex-col gap-4">
@@ -285,7 +287,7 @@ export const AwsProvidersSection: FC = () => {
             )}
 
             <AwsProviderModal
-                open={isModalOpen}
+                open={showModal}
                 onOpenChange={handleModalOpenChange}
             />
         </div>

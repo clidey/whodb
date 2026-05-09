@@ -23,6 +23,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
+
+	coreaudit "github.com/clidey/whodb/core/src/audit"
 )
 
 var (
@@ -47,36 +50,67 @@ func RegisterDriver(id string, connector SourceConnector) {
 
 // Open opens a source session through the registered runtime driver.
 func Open(ctx context.Context, spec TypeSpec, credentials *Credentials) (SourceSession, error) {
+	start := time.Now()
 	driversMu.RLock()
 	driver, ok := drivers[spec.DriverID]
 	driversMu.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("unsupported source driver: %s", spec.DriverID)
+		err := fmt.Errorf("unsupported source driver: %s", spec.DriverID)
+		AuditScopeFromCredentials(spec, credentials).record(ctx, "source.open_session", start, err, map[string]any{
+			"driver_id": spec.DriverID,
+		})
+		return nil, err
 	}
-	return driver.Open(ctx, spec, credentials)
+	session, err := driver.Open(ctx, spec, credentials)
+	details := map[string]any{
+		"driver_id":             spec.DriverID,
+		"has_credentials_id":    credentials != nil && credentials.ID != nil && strings.TrimSpace(*credentials.ID) != "",
+		"credential_value_keys": len(credentialsValueKeys(credentials)),
+	}
+	if credentials != nil {
+		details["source_type"] = strings.TrimSpace(credentials.SourceType)
+	}
+	AuditScopeFromCredentials(spec, credentials).record(ctx, "source.open_session", start, err, details)
+	return session, err
 }
 
 // Invalidate clears cached runtime state for one source type and credential
 // set when the owning driver supports lifecycle invalidation.
 func Invalidate(ctx context.Context, spec TypeSpec, credentials *Credentials) error {
+	start := time.Now()
 	driversMu.RLock()
 	driver, ok := drivers[spec.DriverID]
 	driversMu.RUnlock()
 	if !ok {
-		return fmt.Errorf("unsupported source driver: %s", spec.DriverID)
+		err := fmt.Errorf("unsupported source driver: %s", spec.DriverID)
+		AuditScopeFromCredentials(spec, credentials).record(ctx, "source.invalidate_session", start, err, map[string]any{
+			"driver_id": spec.DriverID,
+		})
+		return err
 	}
 
 	invalidator, ok := driver.(SessionInvalidator)
 	if !ok {
+		AuditScopeFromCredentials(spec, credentials).record(ctx, "source.invalidate_session", start, nil, map[string]any{
+			"driver_id":   spec.DriverID,
+			"supported":   false,
+			"source_type": strings.TrimSpace(spec.ID),
+		})
 		return nil
 	}
 
-	return invalidator.Invalidate(ctx, spec, credentials)
+	err := invalidator.Invalidate(ctx, spec, credentials)
+	AuditScopeFromCredentials(spec, credentials).record(ctx, "source.invalidate_session", start, err, map[string]any{
+		"driver_id": spec.DriverID,
+		"supported": true,
+	})
+	return err
 }
 
 // Shutdown releases cached runtime state for every registered source driver
 // that exposes process-wide shutdown behavior.
 func Shutdown(ctx context.Context) error {
+	start := time.Now()
 	driversMu.RLock()
 	driverList := make([]SourceConnector, 0, len(drivers))
 	for _, driver := range drivers {
@@ -93,7 +127,39 @@ func Shutdown(ctx context.Context) error {
 		shutdownErr = errors.Join(shutdownErr, shutdowner.Shutdown(ctx))
 	}
 
+	coreaudit.RecordWithContext(ctx, coreaudit.AuditEvent{
+		Timestamp: start,
+		Action:    "source.shutdown_drivers",
+		Resource: coreaudit.Resource{
+			ID:   "all",
+			Type: "source_driver",
+			Name: "all",
+		},
+		Details: map[string]any{
+			"driver_count": len(driverList),
+		},
+		Error: func() string {
+			if shutdownErr == nil {
+				return ""
+			}
+			return shutdownErr.Error()
+		}(),
+	})
+
 	return shutdownErr
+}
+
+func credentialsValueKeys(credentials *Credentials) []string {
+	if credentials == nil || len(credentials.Values) == 0 {
+		return nil
+	}
+
+	keys := make([]string, 0, len(credentials.Values))
+	for key := range credentials.Values {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+	return keys
 }
 
 // RegisterType registers or replaces one source type spec by id.

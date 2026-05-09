@@ -9,7 +9,7 @@ accounts and connect to them using the existing source catalog and plugin layer.
 
 AWS is implemented as a **Connection Provider**, not a separate source type. This means:
 
-1. **AWS discovers databases** (RDS, ElastiCache, DocumentDB)
+1. **AWS discovers source resources** (RDS, ElastiCache, DocumentDB, plus registered extensions such as S3)
 2. **AWS generates credentials** that existing connectors/plugins understand
 3. **The existing source/session flow connects** using those credentials
 
@@ -25,6 +25,7 @@ The MySQL plugin doesn't know or care if it's connecting to AWS RDS MySQL or a s
 │                             │       • RDS → MySQL/Postgres/MariaDB│
 │                             │       • ElastiCache → Redis        │
 │                             │       • DocumentDB → MongoDB       │
+│                             │       • Extensions → source types  │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -106,6 +107,7 @@ config := &aws.Config{
     DiscoverRDS:         true,
     DiscoverElastiCache: true,
     DiscoverDocumentDB:  true,
+    DiscoverS3:          true, // used when an S3 discovery extension is registered
 }
 
 provider, err := aws.New(config)
@@ -119,6 +121,10 @@ provider, err := aws.New(config)
 | `profile` | Named AWS profile | Multiple AWS accounts |
 
 No credentials are stored in config.json. For explicit access keys, set `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` env vars (picked up by the `default` chain).
+
+Discovery flags default to enabled for newly configured providers. Persisted
+provider configs that predate a newer discovery flag should be treated as if
+the new flag is enabled unless the user explicitly disables it later.
 
 ## Usage Example
 
@@ -146,6 +152,7 @@ connections, _ := registry.DiscoverAll(ctx)
 // The source login resolver maps source types to connectors/plugins:
 //   - ElastiCache → Redis plugin
 //   - DocumentDB → MongoDB plugin
+//   - S3 extension → S3 source connector
 ```
 
 ## Supported AWS Services

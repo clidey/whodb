@@ -131,11 +131,48 @@ This plugin provides the following tools:
 | Tool | Description |
 |------|-------------|
 | `whodb_connections` | List available database connections |
-| `whodb_schemas` | List schemas in a database |
-| `whodb_tables` | List tables in a schema |
+| `whodb_schemas` | List database schemas/namespaces |
+| `whodb_tables` | List tables in a schema (supports `include_columns` for inline column details) |
 | `whodb_columns` | Describe table columns and types |
-| `whodb_query` | Execute SQL queries |
-| `whodb_confirm` | Confirm pending write operations (only when confirm-writes is enabled) |
+| `whodb_query` | Execute SQL queries (security-validated, supports parameterized queries) |
+| `whodb_explain` | Run EXPLAIN for a SQL query |
+| `whodb_diff` | Compare schema metadata between two connections |
+| `whodb_erd` | Load graph/relationship metadata for a schema |
+| `whodb_audit` | Run data quality checks on one schema or table |
+| `whodb_suggestions` | Load backend-generated starter queries |
+| `whodb_confirm` | Confirm pending write operations (only with confirm-writes mode) |
+| `whodb_pending` | List pending write confirmations awaiting approval |
+
+## Security Modes
+
+By default, write operations require confirmation before executing (confirm-writes mode).
+
+| Flag | Description |
+|------|-------------|
+| *(default)* | Confirm-writes: all writes require user confirmation |
+| `--safe-mode` | Read-only + strict security (for demos and playgrounds) |
+| `--read-only` | Read-only: SELECT, SHOW, DESCRIBE, EXPLAIN only |
+| `--allow-write` | Full write access without confirmation (use with caution) |
+| `--security=strict` | Blocks dangerous functions (pg_read_file, COPY, LOAD_FILE, etc.) |
+| `--security=standard` | Basic validation (default) |
+| `--security=minimal` | Only blocks DELETE without WHERE (when writes allowed) |
+
+Additional options:
+
+| Flag | Description |
+|------|-------------|
+| `--timeout=30s` | Query timeout duration |
+| `--max-rows=100` | Limit rows returned per query (0 = unlimited) |
+| `--allow-drop` | Allow DROP/TRUNCATE even with `--allow-write` |
+| `--allow-multi-statement` | Allow multiple SQL statements in one query |
+| `--tools=schemas,tables` | Comma-separated list of tools to enable (default: all) |
+| `--disable-tools=query` | Comma-separated list of tools to disable |
+| `--default-connection=prod` | Set default connection (no access restriction) |
+| `--allowed-connections=prod,staging` | Restrict access to listed connections only |
+| `--transport=http` | Run as HTTP service instead of stdio |
+| `--host=localhost` | Bind address (HTTP mode only) |
+| `--port=3000` | Listen port (HTTP mode only) |
+| `--no-analytics` | Disable anonymous usage analytics |
 
 ## Skills
 

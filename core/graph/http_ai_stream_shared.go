@@ -64,13 +64,13 @@ func SetupSSEHeaders(w http.ResponseWriter) http.Flusher {
 
 // BuildObjectDetails builds the browse-object schema string for BAML context.
 // It fetches column metadata concurrently to avoid N+1 query latency.
-func BuildObjectDetails(ctx context.Context, session source.SourceSession, parent *source.ObjectRef, kind source.ObjectKind) (string, error) {
-	browser, ok := session.(source.SourceBrowser)
+func BuildObjectDetails(ctx context.Context, scope source.AuditScope, session source.SourceSession, parent *source.ObjectRef, kind source.ObjectKind) (string, error) {
+	browser, ok := source.AsSourceBrowser(scope, session)
 	if !ok {
 		return "", errors.New("source browsing is not supported")
 	}
 
-	reader, ok := session.(source.TabularReader)
+	reader, ok := source.AsTabularReader(scope, session)
 	if !ok {
 		return "", errors.New("source rows are not supported")
 	}

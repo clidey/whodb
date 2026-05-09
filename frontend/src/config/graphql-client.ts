@@ -31,7 +31,7 @@ import {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
 import {withBasePath} from '../utils/base-path';
-import {isAwsHostname} from '../utils/cloud-connection-prefill';
+import {isAwsHostname, isAzureHostname, isGcpHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslationsSync} from '../utils/i18n';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 import {clearSourceSessionMetadata} from '../utils/source-session-metadata-cache';
@@ -115,6 +115,10 @@ const errorLink = onError(({error}) => {
 });
 
 function fallbackAutoLogin() {
+    if (window.location.pathname.startsWith(withBasePath('/login'))) {
+        return;
+    }
+
     // @ts-ignore
     const authState = reduxStore.getState().auth;
     const currentProfile = authState.current;
@@ -122,9 +126,7 @@ function fallbackAutoLogin() {
     if (currentProfile) {
         void handleAutoLogin(currentProfile);
     } else {
-        if (!window.location.pathname.startsWith(withBasePath('/login'))) {
-            redirectToLoginWithMessage('sessionExpired');
-        }
+        redirectToLoginWithMessage('sessionExpired');
     }
 }
 
@@ -134,9 +136,14 @@ function fallbackAutoLogin() {
 async function handleAutoLogin(currentProfile: LocalLoginProfile) {
     const t = getTranslator();
     try {
-        // Don't auto-login to AWS connections when cloud providers are disabled
-        const cloudProvidersEnabled = reduxStore.getState().settings.cloudProvidersEnabled;
-        if (isAwsHostname(currentProfile.Hostname) && !cloudProvidersEnabled) {
+        const settings = reduxStore.getState().settings;
+        if (isAwsHostname(currentProfile.Hostname) && !settings.awsProviderEnabled) {
+            return;
+        }
+        if (isAzureHostname(currentProfile.Hostname) && !settings.azureProviderEnabled) {
+            return;
+        }
+        if (isGcpHostname(currentProfile.Hostname) && !settings.gcpProviderEnabled) {
             return;
         }
 

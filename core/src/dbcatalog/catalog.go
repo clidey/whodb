@@ -19,6 +19,7 @@
 package dbcatalog
 
 import (
+	"maps"
 	"strconv"
 	"strings"
 
@@ -51,7 +52,7 @@ type ConnectableDatabase struct {
 	ID             engine.DatabaseType
 	Label          string
 	PluginType     engine.DatabaseType
-	Extra          map[string]string
+	Extra          map[string]source.ConnectionExtraField
 	Fields         FieldVisibility
 	RequiredFields FieldRequirements
 	IsAWSManaged   bool
@@ -63,7 +64,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_Postgres,
 		Label:      "Postgres",
 		PluginType: engine.DatabaseType_Postgres,
-		Extra:      map[string]string{"Port": "5432"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "5432"}},
 		Fields: FieldVisibility{
 			Hostname:   true,
 			Username:   true,
@@ -78,11 +79,11 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_MySQL,
 		Label:      "MySQL",
 		PluginType: engine.DatabaseType_MySQL,
-		Extra: map[string]string{
-			"Port":                       "3306",
-			"Parse Time":                 "True",
-			"Loc":                        "UTC",
-			"Allow clear text passwords": "0",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":                       {DefaultValue: "3306"},
+			"Parse Time":                 {DefaultValue: "True"},
+			"Loc":                        {DefaultValue: "UTC"},
+			"Allow clear text passwords": {DefaultValue: "0"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -97,11 +98,11 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_MariaDB,
 		Label:      "MariaDB",
 		PluginType: engine.DatabaseType_MariaDB,
-		Extra: map[string]string{
-			"Port":                       "3306",
-			"Parse Time":                 "True",
-			"Loc":                        "UTC",
-			"Allow clear text passwords": "0",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":                       {DefaultValue: "3306"},
+			"Parse Time":                 {DefaultValue: "True"},
+			"Loc":                        {DefaultValue: "UTC"},
+			"Allow clear text passwords": {DefaultValue: "0"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -116,7 +117,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_CockroachDB,
 		Label:      "CockroachDB",
 		PluginType: engine.DatabaseType_CockroachDB,
-		Extra:      map[string]string{"Port": "26257"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "26257"}},
 		Fields: FieldVisibility{
 			Hostname:   true,
 			Username:   true,
@@ -131,7 +132,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_Sqlite3,
 		Label:      "Sqlite3",
 		PluginType: engine.DatabaseType_Sqlite3,
-		Extra:      map[string]string{},
+		Extra:      map[string]source.ConnectionExtraField{},
 		Fields: FieldVisibility{
 			Database: true,
 		},
@@ -141,10 +142,10 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_MongoDB,
 		Label:      "MongoDB",
 		PluginType: engine.DatabaseType_MongoDB,
-		Extra: map[string]string{
-			"Port":        "27017",
-			"URL Params":  "?",
-			"DNS Enabled": "false",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":        {DefaultValue: "27017"},
+			"URL Params":  {DefaultValue: "?"},
+			"DNS Enabled": {DefaultValue: "false"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -159,7 +160,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_Redis,
 		Label:      "Redis",
 		PluginType: engine.DatabaseType_Redis,
-		Extra:      map[string]string{"Port": "6379"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "6379"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -172,7 +173,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_ElasticSearch,
 		Label:      "ElasticSearch",
 		PluginType: engine.DatabaseType_ElasticSearch,
-		Extra:      map[string]string{"Port": "9200"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "9200"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -185,11 +186,11 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_ClickHouse,
 		Label:      "ClickHouse",
 		PluginType: engine.DatabaseType_ClickHouse,
-		Extra: map[string]string{
-			"Port":          "9000",
-			"HTTP Protocol": "disable",
-			"Readonly":      "disable",
-			"Debug":         "disable",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":          {DefaultValue: "9000"},
+			"HTTP Protocol": {DefaultValue: "disable"},
+			"Readonly":      {DefaultValue: "disable"},
+			"Debug":         {DefaultValue: "disable"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -204,7 +205,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_DuckDB,
 		Label:      "DuckDB",
 		PluginType: engine.DatabaseType_DuckDB,
-		Extra:      map[string]string{},
+		Extra:      map[string]source.ConnectionExtraField{},
 		Fields: FieldVisibility{
 			Database: true,
 		},
@@ -214,7 +215,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_Memcached,
 		Label:      "Memcached",
 		PluginType: engine.DatabaseType_Memcached,
-		Extra:      map[string]string{"Port": "11211"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "11211"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -227,11 +228,11 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_TiDB,
 		Label:      "TiDB",
 		PluginType: engine.DatabaseType_TiDB,
-		Extra: map[string]string{
-			"Port":                       "4000",
-			"Parse Time":                 "True",
-			"Loc":                        "UTC",
-			"Allow clear text passwords": "0",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":                       {DefaultValue: "4000"},
+			"Parse Time":                 {DefaultValue: "True"},
+			"Loc":                        {DefaultValue: "UTC"},
+			"Allow clear text passwords": {DefaultValue: "0"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -246,7 +247,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_Valkey,
 		Label:      "Valkey",
 		PluginType: engine.DatabaseType_Redis,
-		Extra:      map[string]string{"Port": "6379"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "6379"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -259,7 +260,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_Dragonfly,
 		Label:      "Dragonfly",
 		PluginType: engine.DatabaseType_Redis,
-		Extra:      map[string]string{"Port": "6379"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "6379"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -272,7 +273,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_OpenSearch,
 		Label:      "OpenSearch",
 		PluginType: engine.DatabaseType_ElasticSearch,
-		Extra:      map[string]string{"Port": "9200"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "9200"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -285,7 +286,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_YugabyteDB,
 		Label:      "YugabyteDB",
 		PluginType: engine.DatabaseType_YugabyteDB,
-		Extra:      map[string]string{"Port": "5433"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "5433"}},
 		Fields: FieldVisibility{
 			Hostname:   true,
 			Username:   true,
@@ -300,7 +301,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_QuestDB,
 		Label:      "QuestDB",
 		PluginType: engine.DatabaseType_QuestDB,
-		Extra:      map[string]string{"Port": "8812"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "8812"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -314,10 +315,10 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_FerretDB,
 		Label:      "FerretDB",
 		PluginType: engine.DatabaseType_MongoDB,
-		Extra: map[string]string{
-			"Port":        "27017",
-			"URL Params":  "?",
-			"DNS Enabled": "false",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":        {DefaultValue: "27017"},
+			"URL Params":  {DefaultValue: "?"},
+			"DNS Enabled": {DefaultValue: "false"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -332,9 +333,9 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_ElastiCache,
 		Label:      "ElastiCache",
 		PluginType: engine.DatabaseType_Redis,
-		Extra: map[string]string{
-			"Port": "6379",
-			"TLS":  "true",
+		Extra: map[string]source.ConnectionExtraField{
+			"Port": {DefaultValue: "6379"},
+			"TLS":  {DefaultValue: "true"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -349,7 +350,7 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_DocumentDB,
 		Label:      "DocumentDB",
 		PluginType: engine.DatabaseType_MongoDB,
-		Extra:      map[string]string{"Port": "27017"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "27017"}},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,
@@ -425,7 +426,7 @@ func DefaultPort(id string) (int, bool) {
 		return 0, false
 	}
 
-	return parsePort(entry.Extra["Port"])
+	return parsePort(entry.Extra["Port"].DefaultValue)
 }
 
 // IsNetworkDatabase reports whether the database connects via a hostname.
@@ -437,10 +438,7 @@ func IsNetworkDatabase(id string) bool {
 func cloneEntry(entry ConnectableDatabase) ConnectableDatabase {
 	cloned := entry
 	if entry.Extra != nil {
-		cloned.Extra = make(map[string]string, len(entry.Extra))
-		for key, value := range entry.Extra {
-			cloned.Extra[key] = value
-		}
+		cloned.Extra = maps.Clone(entry.Extra)
 	}
 	if entry.SSLModes != nil {
 		cloned.SSLModes = append([]source.SSLModeInfo(nil), entry.SSLModes...)

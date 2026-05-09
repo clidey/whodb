@@ -492,6 +492,7 @@ export const ChatPage: FC = () => {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             let streamingText = '';
             let currentEventType = '';
             let addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
@@ -503,8 +504,11 @@ export const ChatPage: FC = () => {
                     break;
                 }
 
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                // Buffer partial SSE lines across reads so frames split across
+                // chunk boundaries are reassembled before parsing.
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() ?? '';
 
                 for (const line of lines) {
                     if (line.startsWith('event: ')) {

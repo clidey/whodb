@@ -1,10 +1,10 @@
 en_US:
   cloudConnection: Cloud connection
   title: AWS Accounts
-  description: Connect AWS accounts to auto-discover RDS, ElastiCache, and DocumentDB instances.
+  description: Connect AWS accounts to auto-discover RDS, ElastiCache, DocumentDB, and S3 resources.
 
   noProviders: No AWS accounts configured
-  addFirstProvider: Add your first AWS account to discover databases
+  addFirstProvider: Add your first AWS account to discover sources
 
 
 
@@ -35,9 +35,9 @@ el_GR:
 en_GB:
   cloudConnection: "Cloud connection"
   title: "AWS Accounts"
-  description: "Connect AWS accounts to auto-discover RDS, ElastiCache, and DocumentDB instances."
+  description: "Connect AWS accounts to auto-discover RDS, ElastiCache, DocumentDB, and S3 resources."
   noProviders: "No AWS accounts configured"
-  addFirstProvider: "Add your first AWS account to discover databases"
+  addFirstProvider: "Add your first AWS account to discover sources"
 
 es_ES:
   cloudConnection: "Conexión a la nube"

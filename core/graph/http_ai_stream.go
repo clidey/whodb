@@ -61,7 +61,8 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 		SendSSEError(w, flusher, "No source session available")
 		return
 	}
-	queryRunner, ok := session.(source.QueryRunner)
+	auditScope := sourceAuditScopeFromContext(r.Context(), spec)
+	queryRunner, ok := source.AsQueryRunner(auditScope, session)
 	if !ok {
 		SendSSEError(w, flusher, "Source queries are not supported")
 		return
@@ -79,7 +80,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	// Build object details for the selected chat scope.
 	log.Debugf("AI Chat Stream: Building object details for ref=%+v", req.Ref)
 	resolvedRef := sourceRefFromInput(req.Ref)
-	tableDetails, err := BuildObjectDetails(r.Context(), session, resolvedRef, spec.Contract.DefaultObjectKind)
+	tableDetails, err := BuildObjectDetails(r.Context(), auditScope, session, resolvedRef, spec.Contract.DefaultObjectKind)
 	if err != nil {
 		log.Debugf("AI Chat Stream: BuildObjectDetails failed: %v", err)
 		SendSSEError(w, flusher, "Failed to get table info: "+err.Error())

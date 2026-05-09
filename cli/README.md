@@ -895,7 +895,7 @@ Write and execute SQL queries with schema-aware autocomplete.
 | `Ctrl+Space` (`Ctrl+@`)     | Trigger autocomplete |
 | `↑/↓` or `Ctrl+P/N`         | Navigate suggestions |
 | `Enter`                     | Accept suggestion    |
-| `Ctrl+L`                    | Clear editor         |
+| `Alt+L`                    | Clear editor         |
 | `Tab`                       | Next view            |
 | `Esc`                       | Back to browser      |
 

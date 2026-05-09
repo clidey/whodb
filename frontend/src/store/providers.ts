@@ -20,6 +20,7 @@ import {
   AzureProvider,
   GcpProvider,
   CloudProviderStatus,
+  CloudProviderType,
   GetDiscoveredConnectionsQuery,
 } from '@graphql';
 
@@ -51,6 +52,8 @@ export interface IProvidersState {
   isProviderModalOpen: boolean;
   /** UI state: Provider being edited (null for add mode) */
   editingProviderId: string | null;
+  /** UI state: Provider type for the active add/edit modal */
+  providerModalType: CloudProviderType | null;
   /** Loading state for provider operations */
   isLoading: boolean;
   /** Error message from last operation */
@@ -62,6 +65,7 @@ const initialState: IProvidersState = {
   discoveredConnections: [],
   isProviderModalOpen: false,
   editingProviderId: null,
+  providerModalType: null,
   isLoading: false,
   error: null,
 };
@@ -168,18 +172,20 @@ export const providersSlice = createSlice({
     /**
      * Open the provider modal for adding a new provider.
      */
-    openAddProviderModal: (state) => {
+    openAddProviderModal: (state, action: PayloadAction<{ providerType: CloudProviderType }>) => {
       state.isProviderModalOpen = true;
       state.editingProviderId = null;
+      state.providerModalType = action.payload.providerType;
       state.error = null;
     },
 
     /**
      * Open the provider modal for editing an existing provider.
      */
-    openEditProviderModal: (state, action: PayloadAction<{ id: string }>) => {
+    openEditProviderModal: (state, action: PayloadAction<{ id: string; providerType: CloudProviderType }>) => {
       state.isProviderModalOpen = true;
       state.editingProviderId = action.payload.id;
+      state.providerModalType = action.payload.providerType;
       state.error = null;
     },
 
@@ -189,6 +195,7 @@ export const providersSlice = createSlice({
     closeProviderModal: (state) => {
       state.isProviderModalOpen = false;
       state.editingProviderId = null;
+      state.providerModalType = null;
     },
 
     /**
@@ -213,6 +220,7 @@ export const providersSlice = createSlice({
       state.discoveredConnections = [];
       state.isProviderModalOpen = false;
       state.editingProviderId = null;
+      state.providerModalType = null;
       state.isLoading = false;
       state.error = null;
     },

@@ -22,10 +22,12 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/audit"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/importer"
@@ -36,27 +38,58 @@ import (
 )
 
 func performSourceLogin(ctx context.Context, credentials *source.Credentials, profileSource string) (*model.StatusResponse, error) {
+	start := time.Now()
+	hasProfileID := credentials.ID != nil && strings.TrimSpace(*credentials.ID) != ""
+	resource := audit.SourceResource(credentials.SourceType, credentials.ID)
+	recordAudit := func(err error) {
+		details := map[string]any{
+			"source_type":        credentials.SourceType,
+			"profile_id_present": hasProfileID,
+			"profile_source":     profileSource,
+		}
+		severity := audit.SeverityInfo
+		if err != nil {
+			severity = audit.SeverityWarn
+			details["error"] = err.Error()
+		}
+
+		audit.RecordWithContext(ctx, audit.AuditEvent{
+			Timestamp: start,
+			Action:    "login.source",
+			Severity:  severity,
+			Resource:  resource,
+			Details:   details,
+			Duration:  time.Since(start),
+		})
+	}
+
 	if env.DisableCredentialForm {
 		log.WithField("sourceType", credentials.SourceType).Error("Login with credentials is disabled; use preconfigured connections")
-		return nil, errors.New("login with credentials is disabled; use preconfigured connections")
+		err := errors.New("login with credentials is disabled; use preconfigured connections")
+		recordAudit(err)
+		return nil, err
 	}
 
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
 	if !ok {
-		return nil, errors.New("unauthorized")
+		err := errors.New("unauthorized")
+		recordAudit(err)
+		return nil, err
 	}
 	session, err := source.Open(ctx, spec, credentials)
 	if err != nil {
+		recordAudit(err)
 		return nil, err
 	}
-	availability, ok := session.(source.AvailabilityChecker)
+	availability, ok := source.AsAvailabilityChecker(source.AuditScopeFromCredentials(spec, credentials), session)
 	if !ok {
-		return nil, errors.New("unauthorized")
+		err := errors.New("unauthorized")
+		recordAudit(err)
+		return nil, err
 	}
 
 	identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
 	hasIdentity := identity != "" && identity != "disabled"
-	hasProfileID := credentials.ID != nil && strings.TrimSpace(*credentials.ID) != ""
 
 	if hasIdentity {
 		properties := map[string]any{
@@ -78,7 +111,9 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 				"profile_source":     profileSource,
 			})
 		}
-		return nil, errors.New("unauthorized")
+		err := errors.New("unauthorized")
+		recordAudit(err)
+		return nil, err
 	}
 
 	resp, err := auth.LoginSource(ctx, credentials)
@@ -91,6 +126,7 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 				"profile_source":     profileSource,
 			})
 		}
+		recordAudit(err)
 		return nil, err
 	}
 
@@ -120,6 +156,7 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 		})
 	}
 
+	recordAudit(nil)
 	return resp, nil
 }
 
@@ -232,16 +269,17 @@ func importPreviewForRef(ctx context.Context, file graphql.Upload, options model
 		return preview, nil
 	}
 
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
+	scope := sourceAuditScopeFromContext(ctx, spec)
 	resolvedRef := sourceRefFromInput(ref)
 	if resolvedRef == nil {
 		return preview, nil
 	}
 
-	reader, ok := session.(source.TabularReader)
+	reader, ok := source.AsTabularReader(scope, session)
 	if !ok {
 		return nil, errors.New("source columns are not supported")
 	}
@@ -292,16 +330,17 @@ func importColumnMappingPreviewModel(mappings []*model.ImportColumnMapping) []*m
 }
 
 func importSourceObjectFile(ctx context.Context, input model.ImportFileInput) (*model.ImportResult, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
+	scope := sourceAuditScopeFromContext(ctx, spec)
 	resolvedRef := sourceRefFromInput(input.Ref)
 	if resolvedRef == nil {
 		return importResult(false, importValidationInvalidOptions), nil
 	}
 
-	dataImporter, ok := session.(source.DataImporter)
+	dataImporter, ok := source.AsDataImporter(scope, session)
 	if !ok {
 		return nil, errors.New("source import is not supported")
 	}
@@ -353,13 +392,14 @@ func generateMockDataForRef(ctx context.Context, input model.MockDataGenerationI
 	if err != nil {
 		return nil, err
 	}
+	scope := sourceAuditScopeFromContext(ctx, spec)
 	resolvedRef := sourceRefFromInput(input.Ref)
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
 		return nil, errors.New("mock data generation is not allowed for this table")
 	}
 
-	manager, ok := session.(source.MockDataManager)
+	manager, ok := source.AsMockDataManager(scope, session)
 	if !ok {
 		return nil, errors.New("mock data generation is not supported")
 	}
@@ -399,6 +439,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	if err != nil {
 		return nil, err
 	}
+	scope := sourceAuditScopeFromContext(ctx, spec)
 	resolvedRef := sourceRefFromInput(&ref)
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
@@ -406,7 +447,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
 	}
 
-	manager, ok := session.(source.MockDataManager)
+	manager, ok := source.AsMockDataManager(scope, session)
 	if !ok {
 		errMsg := "mock data dependency analysis is not supported"
 		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
@@ -447,11 +488,11 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 }
 
 func sourceQuerySuggestionsForRef(ctx context.Context, ref *model.SourceObjectRefInput) ([]*model.SourceQuerySuggestion, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	suggester, ok := session.(source.QuerySuggester)
+	suggester, ok := source.AsQuerySuggester(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source query suggestions are not supported")
 	}

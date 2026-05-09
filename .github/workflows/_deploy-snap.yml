@@ -24,11 +24,15 @@ jobs:
     environment: deploy-snap
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
         with:
           egress-policy: block
           allowed-endpoints: >
             api.snapcraft.io:443
+            archive.ubuntu.com:80
+            archive.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            azure.archive.ubuntu.com:443
             canonical-bos01.cdn.snapcraftcontent.com:443
             canonical-lgw01.cdn.snapcraftcontent.com:443
             dashboard.snapcraft.io:443
@@ -36,6 +40,8 @@ jobs:
             deb.debian.org:80
             github.com:443
             login.ubuntu.com:443
+            security.ubuntu.com:80
+            security.ubuntu.com:443
             storage.snapcraftcontent.com:443
 
       - name: Checkout for scripts
@@ -50,13 +56,15 @@ jobs:
           echo "  Channel: ${{ inputs.channel }}"
 
       - name: Download snap amd64 artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
+          digest-mismatch: warn
           name: snap-package-amd64
 
       - name: Download snap arm64 artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
+          digest-mismatch: warn
           name: snap-package-arm64
 
       - name: Check Snapcraft credentials
@@ -104,23 +112,34 @@ jobs:
           echo "amd64_snap=$AMD64_SNAP" >> $GITHUB_OUTPUT
           echo "arm64_snap=$ARM64_SNAP" >> $GITHUB_OUTPUT
 
+      - name: Install Snapcraft
+        if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.snap_found == 'true'
+        run: |
+          if ! command -v snap >/dev/null 2>&1; then
+            sudo apt-get update -q
+            sudo apt-get install -qy snapd
+          fi
+
+          ROOT_OWNER=$(stat -c '%u:%g' /)
+          if [ "$ROOT_OWNER" != "0:0" ]; then
+            sudo chown root:root /
+          fi
+
+          if [ ! -x /snap/bin/snapcraft ]; then
+            sudo snap install --classic snapcraft
+          fi
+
       - name: Publish AMD64 snap
         if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.amd64_snap != ''
-        uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
+        run: /snap/bin/snapcraft upload "${{ steps.locate_snaps.outputs.amd64_snap }}" --release "${{ inputs.channel }}"
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.locate_snaps.outputs.amd64_snap }}
-          release: ${{ inputs.channel }}
 
       - name: Publish ARM64 snap
         if: steps.check_creds.outputs.has_creds == 'true' && steps.locate_snaps.outputs.arm64_snap != ''
-        uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
+        run: /snap/bin/snapcraft upload "${{ steps.locate_snaps.outputs.arm64_snap }}" --release "${{ inputs.channel }}"
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.locate_snaps.outputs.arm64_snap }}
-          release: ${{ inputs.channel }}
 
       - name: Deployment summary
         if: always()

@@ -78,8 +78,8 @@ func TestManagedServiceEntryRetainsFlags(t *testing.T) {
 		t.Fatal("expected ElastiCache to be marked as AWS managed")
 	}
 
-	if entry.Extra["TLS"] != "true" {
-		t.Fatalf("expected ElastiCache TLS default, got %q", entry.Extra["TLS"])
+	if entry.Extra["TLS"].DefaultValue != "true" {
+		t.Fatalf("expected ElastiCache TLS default, got %q", entry.Extra["TLS"].DefaultValue)
 	}
 }
 
@@ -94,7 +94,14 @@ func TestRegisterClonesEntriesAndReturnedValuesAreDefensiveCopies(t *testing.T) 
 		ID:         engine.DatabaseType("CustomDB"),
 		Label:      "Custom DB",
 		PluginType: engine.DatabaseType_Postgres,
-		Extra:      map[string]string{"Port": "15432"},
+		Extra: map[string]source.ConnectionExtraField{
+			"Port": {
+				DefaultValue:   "15432",
+				Kind:           source.ConnectionFieldKindText,
+				LabelKey:       "advancedFields.customPort",
+				PlaceholderKey: "enterCustomPort",
+			},
+		},
 		SSLModes: []source.SSLModeInfo{
 			{Value: string(ssl.SSLModeRequired), Label: "Required", Description: "Require TLS"},
 		},
@@ -102,28 +109,34 @@ func TestRegisterClonesEntriesAndReturnedValuesAreDefensiveCopies(t *testing.T) 
 
 	Register(entry)
 
-	entry.Extra["Port"] = "9999"
+	entry.Extra["Port"] = source.ConnectionExtraField{DefaultValue: "9999"}
 	entry.SSLModes[0].Label = "Mutated"
 
 	found, ok := Find("CustomDB")
 	if !ok {
 		t.Fatal("expected custom database to be found after registration")
 	}
-	if found.Extra["Port"] != "15432" {
+	if found.Extra["Port"].DefaultValue != "15432" {
+		t.Fatalf("expected Register to clone entry.Extra, got %#v", found.Extra)
+	}
+	if found.Extra["Port"].Kind != source.ConnectionFieldKindText {
 		t.Fatalf("expected Register to clone entry.Extra, got %#v", found.Extra)
 	}
 	if found.SSLModes[0].Label != "Required" {
 		t.Fatalf("expected Register to clone entry.SSLModes, got %#v", found.SSLModes)
 	}
 
-	found.Extra["Port"] = "1111"
+	found.Extra["Port"] = source.ConnectionExtraField{DefaultValue: "1111", Kind: source.ConnectionFieldKindBoolean}
 	found.SSLModes[0].Label = "Changed"
 
 	refetched, ok := Find("CustomDB")
 	if !ok {
 		t.Fatal("expected custom database to be refetchable")
 	}
-	if refetched.Extra["Port"] != "15432" {
+	if refetched.Extra["Port"].DefaultValue != "15432" {
+		t.Fatalf("expected Find to return defensive copies of Extra, got %#v", refetched.Extra)
+	}
+	if refetched.Extra["Port"].Kind != source.ConnectionFieldKindText {
 		t.Fatalf("expected Find to return defensive copies of Extra, got %#v", refetched.Extra)
 	}
 	if refetched.SSLModes[0].Label != "Required" {
@@ -135,7 +148,7 @@ func TestRegisterClonesEntriesAndReturnedValuesAreDefensiveCopies(t *testing.T) 
 		if all[i].ID != engine.DatabaseType("CustomDB") {
 			continue
 		}
-		all[i].Extra["Port"] = "2222"
+		all[i].Extra["Port"] = source.ConnectionExtraField{DefaultValue: "2222", Kind: source.ConnectionFieldKindBoolean}
 		all[i].SSLModes[0].Label = "Changed Again"
 		break
 	}
@@ -144,7 +157,10 @@ func TestRegisterClonesEntriesAndReturnedValuesAreDefensiveCopies(t *testing.T) 
 	if !ok {
 		t.Fatal("expected custom database to still be available after All mutation")
 	}
-	if refetched.Extra["Port"] != "15432" {
+	if refetched.Extra["Port"].DefaultValue != "15432" {
+		t.Fatalf("expected All to return defensive copies of Extra, got %#v", refetched.Extra)
+	}
+	if refetched.Extra["Port"].Kind != source.ConnectionFieldKindText {
 		t.Fatalf("expected All to return defensive copies of Extra, got %#v", refetched.Extra)
 	}
 	if refetched.SSLModes[0].Label != "Required" {
@@ -164,7 +180,7 @@ func TestDefaultPortReturnsFalseWhenCatalogPortIsInvalid(t *testing.T) {
 		ID:         customID,
 		Label:      "Custom Port DB",
 		PluginType: customID,
-		Extra:      map[string]string{"Port": "invalid"},
+		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "invalid"}},
 	})
 
 	if port, ok := DefaultPort(string(customID)); ok {

@@ -20,17 +20,9 @@ import { SearchSelect } from './ux';
 import { DocumentTextIcon, ExclamationCircleIcon, FolderIcon } from './heroicons';
 import { useTranslation } from '@/hooks/use-translation';
 import { SSLModeOption } from '@/config/source-types';
+import { SSL_KEYS } from '@/utils/source-ssl';
 
-// SSL configuration keys that match the backend constants.
-// Note: Path-based keys are intentionally not supported to prevent path traversal attacks.
-// Frontend reads certificate files client-side and sends Content directly.
-export const SSL_KEYS = {
-  MODE: 'SSL Mode',
-  CA_CONTENT: 'SSL CA Content',
-  CLIENT_CERT_CONTENT: 'SSL Client Cert Content',
-  CLIENT_KEY_CONTENT: 'SSL Client Key Content',
-  SERVER_NAME: 'SSL Server Name',
-} as const;
+export { SSL_KEYS } from '@/utils/source-ssl';
 
 // Modes that require CA certificate
 const MODES_REQUIRING_CA = ['verify-ca', 'verify-identity', 'enabled'];

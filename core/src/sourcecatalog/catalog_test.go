@@ -346,6 +346,59 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 	}
 }
 
+func TestBuildTypeSpecUsesTypedExtraFields(t *testing.T) {
+	t.Parallel()
+
+	spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+		ID:        "CustomBridge",
+		Label:     "Custom Bridge",
+		Connector: "Postgres",
+		Extra: map[string]source.ConnectionExtraField{
+			"Token": {
+				DefaultValue: "secret",
+				Kind:         source.ConnectionFieldKindPassword,
+				Required:     true,
+				LabelKey:     "advancedFields.customToken",
+			},
+			"SSL": {
+				DefaultValue: "false",
+				Kind:         source.ConnectionFieldKindBoolean,
+				LabelKey:     "advancedFields.customSsl",
+			},
+		},
+		Fields:         coresourcecatalog.FieldVisibility{Hostname: true},
+		RequiredFields: coresourcecatalog.FieldRequirements{Hostname: true},
+	})
+	if !ok {
+		t.Fatal("expected custom bridge entry to map into the source catalog")
+	}
+
+	tokenField, ok := spec.ConnectionFieldByKey("Token")
+	if !ok {
+		t.Fatal("expected custom token field")
+	}
+	if tokenField.Kind != source.ConnectionFieldKindPassword {
+		t.Fatalf("expected token field kind %q, got %q", source.ConnectionFieldKindPassword, tokenField.Kind)
+	}
+	if !tokenField.Required {
+		t.Fatal("expected token field to remain required in the built source type")
+	}
+	if tokenField.LabelKey != "advancedFields.customToken" {
+		t.Fatalf("expected token field label key %q, got %q", "advancedFields.customToken", tokenField.LabelKey)
+	}
+
+	sslField, ok := spec.ConnectionFieldByKey("SSL")
+	if !ok {
+		t.Fatal("expected custom ssl field")
+	}
+	if sslField.Kind != source.ConnectionFieldKindBoolean {
+		t.Fatalf("expected ssl field kind %q, got %q", source.ConnectionFieldKindBoolean, sslField.Kind)
+	}
+	if sslField.LabelKey != "advancedFields.customSsl" {
+		t.Fatalf("expected ssl field label key %q, got %q", "advancedFields.customSsl", sslField.LabelKey)
+	}
+}
+
 func sourceSSLModes(modes []source.SSLModeInfo) []source.SSLModeInfo {
 	cloned := make([]source.SSLModeInfo, 0, len(modes))
 	for _, mode := range modes {

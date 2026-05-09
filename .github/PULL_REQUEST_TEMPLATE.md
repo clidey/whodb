@@ -34,7 +34,7 @@ Closes #
 
 ## Checklist
 
-- [ ] I have read the [Contributing Guidelines](../CONTRIBUTING.md)
+- [ ] I have read the [Contributing Guidelines](https://github.com/clidey/whodb/blob/main/CONTRIBUTING.md)
 - [ ] I discussed this change in an issue before starting work
 - [ ] My PR description is written in my own words and accurately describes my changes
 - [ ] I have tested my changes locally

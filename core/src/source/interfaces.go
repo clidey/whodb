@@ -18,6 +18,7 @@ package source
 
 import (
 	"context"
+	"io"
 
 	"github.com/clidey/whodb/core/src/query"
 )
@@ -57,6 +58,12 @@ type SourceBrowser interface {
 	GetObject(ctx context.Context, ref ObjectRef) (*Object, error)
 }
 
+// PaginatedSourceBrowser lists browseable objects with an offset and page size.
+type PaginatedSourceBrowser interface {
+	// ListObjectsPage lists one page of objects beneath the provided parent.
+	ListObjectsPage(ctx context.Context, parent *ObjectRef, kinds []ObjectKind, pageSize int, pageOffset int) ([]Object, error)
+}
+
 // TabularReader reads row/column data from a source object.
 type TabularReader interface {
 	// ReadRows returns tabular rows for the provided object reference.
@@ -79,6 +86,21 @@ type ColumnConstraintReader interface {
 type ContentReader interface {
 	// ReadContent returns a content payload for the provided object reference.
 	ReadContent(ctx context.Context, ref ObjectRef) (*ContentResult, error)
+}
+
+// ContentDownloader streams source object content for download.
+type ContentDownloader interface {
+	// DownloadContent returns a streaming payload for the provided object reference.
+	DownloadContent(ctx context.Context, ref ObjectRef) (*ContentDownload, error)
+}
+
+// ContentUploader streams source object content into a source.
+type ContentUploader interface {
+	// UploadContent uploads content beneath a parent source object.
+	UploadContent(ctx context.Context, parent *ObjectRef, name string, reader io.Reader, contentType string, sizeBytes int64) (bool, error)
+	// ReplaceContent replaces content for the provided object reference, using
+	// name as the desired leaf object name when supplied.
+	ReplaceContent(ctx context.Context, ref ObjectRef, name string, reader io.Reader, contentType string, sizeBytes int64) (bool, error)
 }
 
 // AvailabilityChecker verifies that a source session can reach the underlying

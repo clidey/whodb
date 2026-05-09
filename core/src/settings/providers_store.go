@@ -38,6 +38,7 @@ type persistedProviderConfig struct {
 	DiscoverRDS         bool   `json:"discoverRDS"`
 	DiscoverElastiCache bool   `json:"discoverElastiCache"`
 	DiscoverDocumentDB  bool   `json:"discoverDocumentDB"`
+	DiscoverS3          *bool  `json:"discoverS3,omitempty"`
 }
 
 // getConfigOptions returns the datadir options for this environment.
@@ -55,6 +56,7 @@ func saveProvidersToFile() error {
 	awsProvidersMu.RLock()
 	providers := make([]persistedProviderConfig, 0, len(awsProviders))
 	for _, state := range awsProviders {
+		discoverS3 := state.Config.DiscoverS3
 		providers = append(providers, persistedProviderConfig{
 			ID:                  state.Config.ID,
 			Name:                state.Config.Name,
@@ -64,6 +66,7 @@ func saveProvidersToFile() error {
 			DiscoverRDS:         state.Config.DiscoverRDS,
 			DiscoverElastiCache: state.Config.DiscoverElastiCache,
 			DiscoverDocumentDB:  state.Config.DiscoverDocumentDB,
+			DiscoverS3:          &discoverS3,
 		})
 	}
 	awsProvidersMu.RUnlock()
@@ -104,6 +107,11 @@ func LoadProvidersFromFile() error {
 
 	loadedCount := 0
 	for _, cfg := range section.Providers {
+		discoverS3 := true
+		if cfg.DiscoverS3 != nil {
+			discoverS3 = *cfg.DiscoverS3
+		}
+
 		// Convert to AWSProviderConfig
 		providerCfg := &AWSProviderConfig{
 			ID:                  cfg.ID,
@@ -114,6 +122,7 @@ func LoadProvidersFromFile() error {
 			DiscoverRDS:         cfg.DiscoverRDS,
 			DiscoverElastiCache: cfg.DiscoverElastiCache,
 			DiscoverDocumentDB:  cfg.DiscoverDocumentDB,
+			DiscoverS3:          discoverS3,
 		}
 
 		// Check if this provider already exists (e.g., from env var)

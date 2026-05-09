@@ -101,6 +101,9 @@ func TestDefaultConfig(t *testing.T) {
 	if !config.DiscoverDocumentDB {
 		t.Error("expected DiscoverDocumentDB to be true")
 	}
+	if !config.DiscoverS3 {
+		t.Error("expected DiscoverS3 to be true")
+	}
 }
 
 func TestProvider_ConnectionID(t *testing.T) {
@@ -173,6 +176,7 @@ func TestConfig_DiscoveryFlags(t *testing.T) {
 		DiscoverRDS:         true,
 		DiscoverElastiCache: false,
 		DiscoverDocumentDB:  true,
+		DiscoverS3:          true,
 	}
 
 	if !config.DiscoverRDS {
@@ -183,5 +187,8 @@ func TestConfig_DiscoveryFlags(t *testing.T) {
 	}
 	if !config.DiscoverDocumentDB {
 		t.Error("expected DiscoverDocumentDB to be true")
+	}
+	if !config.DiscoverS3 {
+		t.Error("expected DiscoverS3 to be true")
 	}
 }

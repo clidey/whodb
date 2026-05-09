@@ -138,13 +138,14 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, session, err := getSourceSessionForContext(r.Context())
+	spec, session, err := getSourceSessionForContext(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+	scope := sourceAuditScopeFromContext(r.Context(), spec)
 
-	exporter, ok := session.(source.TabularExporter)
+	exporter, ok := source.AsTabularExporter(scope, session)
 	if !ok {
 		http.Error(w, "Export not supported for this source", http.StatusBadRequest)
 		return
@@ -154,7 +155,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	case "excel":
 		handleExcelExport(r.Context(), w, exporter, *resolvedRef, fileBaseName, req.SelectedRows)
 	case "ndjson":
-		ndjsonExporter, ok := session.(source.NDJSONExporter)
+		ndjsonExporter, ok := source.AsNDJSONExporter(scope, session)
 		if !ok {
 			http.Error(w, "NDJSON export not supported for this source", http.StatusBadRequest)
 			return

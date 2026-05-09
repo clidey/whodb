@@ -151,6 +151,11 @@ export const useDesktopMenu = () => {
         // Emit custom event that the table component can listen to
         window.dispatchEvent(new CustomEvent('menu:trigger-export'));
       }),
+      'menu:import-data': safeHandler(() => {
+        // Emit custom event that the table component can listen to
+        window.dispatchEvent(new CustomEvent('menu:trigger-import'));
+      }),
+
       'menu:refresh': safeHandler(() => {
         // Emit refresh event instead of page reload for HashRouter compatibility
         window.dispatchEvent(new CustomEvent('app:refresh-data'));

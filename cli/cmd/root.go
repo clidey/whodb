@@ -92,7 +92,11 @@ Press ? in any view for keyboard shortcuts.`,
 			return
 		}
 		if result := updatecheck.Check(version.Version); result != nil {
-			fmt.Fprintf(os.Stderr, "\nA new version of %s is available: %s → %s\n", identity.Current().CommandName, result.LatestVersion, identity.Current().UpdateCheckPageURL)
+			fmt.Fprintf(os.Stderr, "\nA new version of %s is available: %s → %s\nUpgrade URL: %s\n",
+				identity.Current().CommandName,
+				version.Version,
+				result.LatestVersion,
+				identity.Current().UpdateCheckPageURL)
 		}
 	},
 }

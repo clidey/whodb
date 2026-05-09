@@ -35,6 +35,7 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/router"
 	"github.com/clidey/whodb/core/src/settings"
+	_ "github.com/clidey/whodb/core/src/source/adapters"
 )
 
 // RunConfig describes the edition-specific dependencies needed to run a

@@ -29,7 +29,13 @@ test.describe('Cloud Providers', () => {
          * Helper to mock SettingsConfig with cloud providers enabled/disabled.
          * Also mocks GetCloudProviders to return the given list.
          */
-        async function mockCloudProviders(page, { enabled, providers = [] }) {
+        async function mockCloudProviders(page, {
+            enabled,
+            providers = [],
+            awsEnabled = enabled,
+            azureEnabled = enabled,
+            gcpEnabled = enabled,
+        }) {
             await page.route('**/api/query', async (route) => {
                 let postData;
                 try {
@@ -48,7 +54,11 @@ test.describe('Cloud Providers', () => {
                                 SettingsConfig: {
                                     MetricsEnabled: true,
                                     CloudProvidersEnabled: enabled,
+                                    AWSProviderEnabled: awsEnabled,
+                                    AzureProviderEnabled: azureEnabled,
+                                    GCPProviderEnabled: gcpEnabled,
                                     DisableCredentialForm: false,
+                                    EnableNewUI: true,
                                     MaxPageSize: 10000,
                                     __typename: 'SettingsConfig',
                                 },
@@ -88,10 +98,18 @@ test.describe('Cloud Providers', () => {
 
         test.describe('Visibility', () => {
             test('shows AWS providers section when enabled', async ({ whodb, page }) => {
-                await mockCloudProviders(page, { enabled: true, providers: [] });
+                await mockCloudProviders(page, {
+                    enabled: true,
+                    awsEnabled: true,
+                    azureEnabled: false,
+                    gcpEnabled: false,
+                    providers: [],
+                });
                 await whodb.goto('settings');
 
                 await expect(page.locator('[data-testid="add-aws-provider"]')).toBeVisible({ timeout: TIMEOUT.ACTION });
+                await expect(page.locator('[data-testid="add-azure-provider"]')).not.toBeAttached();
+                await expect(page.locator('[data-testid="add-gcp-provider"]')).not.toBeAttached();
             });
 
             test('hides AWS providers section when disabled', async ({ whodb, page }) => {

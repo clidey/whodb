@@ -69,6 +69,7 @@ export function useSourceTypeItems(
         fetchPolicy: import.meta.env.DEV ? "network-only" : "cache-and-network",
     });
     const cloudProvidersEnabled = options.cloudProvidersEnabled;
+    const awsProviderEnabled = options.awsProviderEnabled;
 
     useEffect(() => {
         if (data?.SourceTypes) {
@@ -78,8 +79,8 @@ export function useSourceTypeItems(
 
     const items = useMemo(() => {
         const catalog = data?.SourceTypes ?? cachedCatalog;
-        return resolveSourceTypeItems(catalog, { cloudProvidersEnabled });
-    }, [cachedCatalog, cloudProvidersEnabled, data?.SourceTypes]);
+        return resolveSourceTypeItems(catalog, { cloudProvidersEnabled, awsProviderEnabled });
+    }, [awsProviderEnabled, cachedCatalog, cloudProvidersEnabled, data?.SourceTypes]);
 
     return {
         items,

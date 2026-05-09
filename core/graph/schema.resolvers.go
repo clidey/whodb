@@ -17,6 +17,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
+	"github.com/clidey/whodb/core/src/audit"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/aws"
 	"github.com/clidey/whodb/core/src/azure"
@@ -61,9 +62,11 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 	hasIdentity := identity != "" && identity != "disabled"
 	hasProfile := false
 	sourceType := ""
+	var profileID *string
 	if creds != nil {
 		hasProfile = creds.ID != nil && strings.TrimSpace(*creds.ID) != ""
 		sourceType = creds.SourceType
+		profileID = creds.ID
 	}
 
 	if hasIdentity {
@@ -81,6 +84,19 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 				"profile_id_present": hasProfile,
 			})
 		}
+		if creds != nil {
+			audit.RecordWithContext(ctx, audit.AuditEvent{
+				Timestamp: time.Now(),
+				Action:    "logout.source",
+				Severity:  audit.SeverityWarn,
+				Resource:  audit.SourceResource(sourceType, profileID),
+				Details: map[string]any{
+					"source_type":        sourceType,
+					"profile_id_present": hasProfile,
+					"error":              err.Error(),
+				},
+			})
+		}
 		return nil, err
 	}
 
@@ -88,6 +104,19 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 		analytics.CaptureWithDistinctID(ctx, identity, "logout.success", map[string]any{
 			"database_type":      sourceType,
 			"profile_id_present": hasProfile,
+		})
+	}
+
+	if creds != nil {
+		audit.RecordWithContext(ctx, audit.AuditEvent{
+			Timestamp: time.Now(),
+			Action:    "logout.source",
+			Severity:  audit.SeverityInfo,
+			Resource:  audit.SourceResource(sourceType, profileID),
+			Details: map[string]any{
+				"source_type":        sourceType,
+				"profile_id_present": hasProfile,
+			},
 		})
 	}
 
@@ -115,12 +144,11 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 
 // CreateSourceObject is the resolver for the CreateSourceObject field.
 func (r *mutationResolver) CreateSourceObject(ctx context.Context, parent *model.SourceObjectRefInput, name string, fields []*model.RecordInput) (*model.StatusResponse, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	manager, ok := session.(source.ObjectManager)
+	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source object creation is not supported")
 	}
@@ -135,12 +163,11 @@ func (r *mutationResolver) CreateSourceObject(ctx context.Context, parent *model
 
 // UpdateSourceObject is the resolver for the UpdateSourceObject field.
 func (r *mutationResolver) UpdateSourceObject(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	manager, ok := session.(source.ObjectManager)
+	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source object updates are not supported")
 	}
@@ -155,12 +182,11 @@ func (r *mutationResolver) UpdateSourceObject(ctx context.Context, ref model.Sou
 
 // AddSourceRow is the resolver for the AddSourceRow field.
 func (r *mutationResolver) AddSourceRow(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput) (*model.StatusResponse, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	manager, ok := session.(source.ObjectManager)
+	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source row inserts are not supported")
 	}
@@ -175,12 +201,11 @@ func (r *mutationResolver) AddSourceRow(ctx context.Context, ref model.SourceObj
 
 // DeleteSourceRow is the resolver for the DeleteSourceRow field.
 func (r *mutationResolver) DeleteSourceRow(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput) (*model.StatusResponse, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	manager, ok := session.(source.ObjectManager)
+	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source row deletes are not supported")
 	}
@@ -200,11 +225,11 @@ func (r *mutationResolver) GenerateMockData(ctx context.Context, input model.Moc
 
 // ImportSQL is the resolver for the ImportSQL field.
 func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLInput) (*model.ImportResult, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	runner, ok := session.(source.ScriptRunner)
+	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source scripts are not supported")
 	}
@@ -259,11 +284,11 @@ func (r *mutationResolver) ImportSourceObjectFile(ctx context.Context, input mod
 
 // ExecuteConfirmedSQL is the resolver for the ExecuteConfirmedSQL field.
 func (r *mutationResolver) ExecuteConfirmedSQL(ctx context.Context, query string, operationType string) (*model.AIChatMessage, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	runner, ok := session.(source.ScriptRunner)
+	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source scripts are not supported")
 	}
@@ -334,6 +359,11 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 		discoverDocumentDB = *input.DiscoverDocumentDb
 	}
 
+	discoverS3 := true
+	if input.DiscoverS3 != nil {
+		discoverS3 = *input.DiscoverS3
+	}
+
 	cfg := &settings.AWSProviderConfig{
 		ID:                  id,
 		Name:                input.Name,
@@ -343,6 +373,7 @@ func (r *mutationResolver) AddAWSProvider(ctx context.Context, input model.AWSPr
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
+		DiscoverS3:          discoverS3,
 	}
 
 	state, err := settings.AddAWSProvider(cfg)
@@ -389,6 +420,11 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		discoverDocumentDB = *input.DiscoverDocumentDb
 	}
 
+	discoverS3 := existing.Config.DiscoverS3
+	if input.DiscoverS3 != nil {
+		discoverS3 = *input.DiscoverS3
+	}
+
 	cfg := &settings.AWSProviderConfig{
 		ID:                  id,
 		Name:                input.Name,
@@ -398,6 +434,7 @@ func (r *mutationResolver) UpdateAWSProvider(ctx context.Context, id string, inp
 		DiscoverRDS:         discoverRDS,
 		DiscoverElastiCache: discoverElastiCache,
 		DiscoverDocumentDB:  discoverDocumentDB,
+		DiscoverS3:          discoverS3,
 	}
 
 	state, err := settings.UpdateAWSProvider(id, cfg)
@@ -941,9 +978,9 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 	// Check if user is authenticated and has credentials
 	credentials := auth.GetSourceCredentials(ctx)
 	if credentials != nil && credentials.SourceType != "" {
-		_, session, err := getSourceSessionForContext(ctx)
+		spec, session, err := getSourceSessionForContext(ctx)
 		if err == nil {
-			availability, ok := session.(source.AvailabilityChecker)
+			availability, ok := source.AsAvailabilityChecker(sourceAuditScopeFromContext(ctx, spec), session)
 			if ok {
 				healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 				defer cancel()
@@ -1013,7 +1050,7 @@ func (r *queryResolver) SourceFieldOptions(ctx context.Context, sourceType strin
 		return nil, err
 	}
 
-	reader, ok := session.(source.ConnectionFieldOptionsReader)
+	reader, ok := source.AsConnectionFieldOptionsReader(source.AuditScopeFromCredentials(spec, credentials), session)
 	if !ok {
 		return []string{}, nil
 	}
@@ -1042,7 +1079,7 @@ func (r *queryResolver) SourceObjects(ctx context.Context, parent *model.SourceO
 		return nil, err
 	}
 
-	browser, ok := session.(source.SourceBrowser)
+	browser, ok := source.AsSourceBrowser(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source browsing is not supported")
 	}
@@ -1061,12 +1098,12 @@ func (r *queryResolver) SourceObjects(ctx context.Context, parent *model.SourceO
 
 // SourceObject is the resolver for the SourceObject field.
 func (r *queryResolver) SourceObject(ctx context.Context, ref model.SourceObjectRefInput) (*model.SourceObject, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	browser, ok := session.(source.SourceBrowser)
+	browser, ok := source.AsSourceBrowser(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source browsing is not supported")
 	}
@@ -1090,12 +1127,12 @@ func (r *queryResolver) SourceRows(ctx context.Context, ref model.SourceObjectRe
 		return nil, fmt.Errorf("pageOffset must not be negative")
 	}
 
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, ok := session.(source.TabularReader)
+	reader, ok := source.AsTabularReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source rows are not supported")
 	}
@@ -1117,12 +1154,12 @@ func (r *queryResolver) SourceRows(ctx context.Context, ref model.SourceObjectRe
 
 // SourceContent is the resolver for the SourceContent field.
 func (r *queryResolver) SourceContent(ctx context.Context, ref model.SourceObjectRefInput) (*model.SourceContent, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, ok := session.(source.ContentReader)
+	reader, ok := source.AsContentReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source content is not supported")
 	}
@@ -1136,12 +1173,12 @@ func (r *queryResolver) SourceContent(ctx context.Context, ref model.SourceObjec
 
 // SourceColumns is the resolver for the SourceColumns field.
 func (r *queryResolver) SourceColumns(ctx context.Context, ref model.SourceObjectRefInput) ([]*model.Column, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, ok := session.(source.TabularReader)
+	reader, ok := source.AsTabularReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source columns are not supported")
 	}
@@ -1155,12 +1192,12 @@ func (r *queryResolver) SourceColumns(ctx context.Context, ref model.SourceObjec
 
 // SourceColumnsBatch is the resolver for the SourceColumnsBatch field.
 func (r *queryResolver) SourceColumnsBatch(ctx context.Context, refs []*model.SourceObjectRefInput) ([]*model.SourceObjectColumns, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, ok := session.(source.TabularReader)
+	reader, ok := source.AsTabularReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source columns are not supported")
 	}
@@ -1182,12 +1219,12 @@ func (r *queryResolver) SourceColumnsBatch(ctx context.Context, refs []*model.So
 
 // RunSourceQuery is the resolver for the RunSourceQuery field.
 func (r *queryResolver) RunSourceQuery(ctx context.Context, query string) (*model.RowsResult, error) {
-	_, session, err := getSourceSessionForContext(ctx)
+	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	runner, ok := session.(source.QueryRunner)
+	runner, ok := source.AsQueryRunner(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source queries are not supported")
 	}
@@ -1206,7 +1243,7 @@ func (r *queryResolver) SourceGraph(ctx context.Context, ref *model.SourceObject
 		return nil, err
 	}
 
-	reader, ok := session.(source.GraphReader)
+	reader, ok := source.AsGraphReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source graph is not supported")
 	}
@@ -1297,7 +1334,7 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 		requestToken = *token
 	}
 	creds := envconfig.ResolveProviderCredentials(providerId, requestToken, "", modelType)
-	assistant, ok := session.(source.ModelAwareSourceAssistant)
+	assistant, ok := source.AsModelAwareSourceAssistant(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source chat is not supported")
 	}
@@ -1358,6 +1395,9 @@ func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConf
 	return &model.SettingsConfig{
 		MetricsEnabled:        &currentSettings.MetricsEnabled,
 		CloudProvidersEnabled: env.IsAWSProviderEnabled || env.IsAzureProviderEnabled || env.IsGCPProviderEnabled,
+		AWSProviderEnabled:    env.IsAWSProviderEnabled,
+		AzureProviderEnabled:  env.IsAzureProviderEnabled,
+		GCPProviderEnabled:    env.IsGCPProviderEnabled,
 		DisableCredentialForm: env.DisableCredentialForm,
 		EnableNewUI:           env.IsNewUIEnabled,
 		MaxPageSize:           env.MaxPageSize,
@@ -1381,7 +1421,7 @@ func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 		log.Debug("[SSL] SSLStatus resolver: no plugin context")
 		return nil, nil
 	}
-	reader, ok := session.(source.SecurityReader)
+	reader, ok := source.AsSecurityReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, nil
 	}

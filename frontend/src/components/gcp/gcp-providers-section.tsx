@@ -15,7 +15,7 @@
  */
 
 import { useMutation } from "@apollo/client/react";
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useMemo } from "react";
 import { Badge, Button, cn, toast } from "@clidey/ux";
 import {
     CloudProviderStatus,
@@ -70,30 +70,18 @@ export const GcpProvidersSection: FC = () => {
         [allProviders]
     );
     const isModalOpen = useAppSelector(state => state.providers.isProviderModalOpen);
-    // Only show modal if editing a GCP provider or adding new
-    const editingProviderId = useAppSelector(state => state.providers.editingProviderId);
-    const isGcpModal = useMemo(() => {
-        if (!isModalOpen) return false;
-        if (!editingProviderId) return false; // Add mode handled by which section triggers it
-        const provider = allProviders.find(p => p.Id === editingProviderId);
-        return provider?.ProviderType === CloudProviderType.Gcp;
-    }, [isModalOpen, editingProviderId, allProviders]);
+    const providerModalType = useAppSelector(state => state.providers.providerModalType);
 
     // GraphQL mutations
     const [refreshProvider, { loading: refreshLoading }] = useMutation(RefreshCloudProviderDocument);
     const [removeProvider, { loading: removeLoading }] = useMutation(RemoveCloudProviderDocument);
 
-    // Track whether we initiated the add modal
-    const [gcpAddMode, setGcpAddMode] = useState(false);
-
     const handleAddProvider = useCallback(() => {
-        setGcpAddMode(true);
-        dispatch(ProvidersActions.openAddProviderModal());
+        dispatch(ProvidersActions.openAddProviderModal({ providerType: CloudProviderType.Gcp }));
     }, [dispatch]);
 
     const handleEditProvider = useCallback((id: string) => {
-        setGcpAddMode(false);
-        dispatch(ProvidersActions.openEditProviderModal({ id }));
+        dispatch(ProvidersActions.openEditProviderModal({ id, providerType: CloudProviderType.Gcp }));
     }, [dispatch]);
 
     const handleRemoveProvider = useCallback(async (id: string, name: string) => {
@@ -140,15 +128,13 @@ export const GcpProvidersSection: FC = () => {
 
     const handleModalOpenChange = useCallback((open: boolean) => {
         if (!open) {
-            setGcpAddMode(false);
             dispatch(ProvidersActions.closeProviderModal());
         }
     }, [dispatch]);
 
     const isLoading = refreshLoading || removeLoading;
 
-    // Show modal if it's a GCP edit or if we initiated add mode
-    const showModal = isGcpModal || (isModalOpen && gcpAddMode && !editingProviderId);
+    const showModal = isModalOpen && providerModalType === CloudProviderType.Gcp;
 
     return (
         <div className="flex flex-col gap-4">

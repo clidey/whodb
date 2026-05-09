@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
@@ -87,6 +88,7 @@ type DatabaseSession struct {
 	spec        source.TypeSpec
 	plugin      *engine.Plugin
 	credentials *source.Credentials
+	mu          sync.RWMutex
 	validated   map[databaseObjectCacheKey]struct{}
 	columns     map[databaseObjectCacheKey][]source.Column
 }
@@ -854,6 +856,8 @@ func (s *DatabaseSession) cacheKey(namespace string, name string) databaseObject
 }
 
 func (s *DatabaseSession) isValidatedObject(namespace string, name string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	if len(s.validated) == 0 {
 		return false
 	}
@@ -863,6 +867,8 @@ func (s *DatabaseSession) isValidatedObject(namespace string, name string) bool 
 }
 
 func (s *DatabaseSession) rememberValidatedObject(namespace string, name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.validated == nil {
 		s.validated = map[databaseObjectCacheKey]struct{}{}
 	}
@@ -871,6 +877,8 @@ func (s *DatabaseSession) rememberValidatedObject(namespace string, name string)
 }
 
 func (s *DatabaseSession) cachedColumns(namespace string, name string) ([]source.Column, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	if len(s.columns) == 0 {
 		return nil, false
 	}
@@ -884,12 +892,17 @@ func (s *DatabaseSession) cachedColumns(namespace string, name string) ([]source
 }
 
 func (s *DatabaseSession) cacheColumns(namespace string, name string, columns []source.Column) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.columns == nil {
 		s.columns = map[databaseObjectCacheKey][]source.Column{}
 	}
 
 	s.columns[s.cacheKey(namespace, name)] = cloneSourceColumns(columns)
-	s.rememberValidatedObject(namespace, name)
+	if s.validated == nil {
+		s.validated = map[databaseObjectCacheKey]struct{}{}
+	}
+	s.validated[s.cacheKey(namespace, name)] = struct{}{}
 }
 
 func (s *DatabaseSession) ensureSurface(surface source.Surface) error {

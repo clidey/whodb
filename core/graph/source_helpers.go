@@ -55,6 +55,10 @@ func getSourceSessionForContext(ctx context.Context) (source.TypeSpec, source.So
 	return spec, session, nil
 }
 
+func sourceAuditScopeFromContext(ctx context.Context, spec source.TypeSpec) source.AuditScope {
+	return source.AuditScopeFromCredentials(spec, auth.GetSourceCredentials(ctx))
+}
+
 func sourceCredentialsFromInput(input model.SourceLoginInput) *source.Credentials {
 	return &source.Credentials{
 		ID:          input.ID,

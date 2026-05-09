@@ -44,4 +44,7 @@ type AWSProviderEnvConfig struct {
 
 	// DiscoverDocumentDB enables DocumentDB discovery (defaults to true if omitted).
 	DiscoverDocumentDB *bool `json:"discoverDocumentDB,omitempty"`
+
+	// DiscoverS3 enables S3 bucket discovery (defaults to true if omitted).
+	DiscoverS3 *bool `json:"discoverS3,omitempty"`
 }

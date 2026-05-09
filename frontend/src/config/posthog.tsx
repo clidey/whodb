@@ -29,7 +29,7 @@ let handlersRegistered = false;
 let cachedDistinctId: string | null = null;
 
 const posthogKey = "phc_hbXcCoPTdxm5ADL8PmLSYTIUvS6oRWFM2JAK8SMbfnH";
-const apiHost = "https://us.i.posthog.com";
+const apiHost = "https://z.clidey.com";
 const getEnvEnvironment = () => import.meta.env.MODE ?? 'development';
 const getBuildEdition = () => 'ce';
 const isE2ETest = () => import.meta.env.VITE_E2E_TEST === 'true';
@@ -201,24 +201,27 @@ const ensureInitializedClient = async (): Promise<PostHog | null> => {
         // Debug logging for desktop environments
         const isDesktop = !!(window as any).go?.main?.App || !!(window as any).go?.common?.App;
 
+        const enabled = consent === 'granted';
+
         posthog.init(posthogKey, {
             api_host: apiHost,
-            capture_pageleave: consent === 'granted',
+            defaults: "2026-01-30",
+            capture_pageleave: enabled,
             persistence: 'localStorage+cookie',
-            enable_recording_console_log: consent === 'granted',
-            autocapture: consent === 'granted',
-            capture_pageview: consent === 'granted',
-            enable_heatmaps: consent === 'granted',
-            disable_web_experiments: consent !== 'granted',
-            disable_surveys: true,
+            enable_recording_console_log: enabled,
+            autocapture: enabled,
+            capture_pageview: enabled,
+            enable_heatmaps: enabled,
+            disable_web_experiments: enabled,
+            disable_surveys: enabled,
             //@ts-ignore
-            opt_out_capturing_by_default: consent === 'denied',
+            opt_out_capturing_by_default: enabled,
             loaded: (client) => {
                 activeClient = client as PostHog;
                 registerContext(client as PostHog);
                 registerGlobalHandlers(client as PostHog);
 
-                if (consent === 'granted') {
+                if (enabled) {
                     client.opt_in_capturing();
                     //@ts-ignore
                 } else if (consent === 'denied') {

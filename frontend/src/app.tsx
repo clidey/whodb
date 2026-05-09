@@ -41,7 +41,8 @@ export const App = () => {
     const dispatch = useAppDispatch();
   const metricsEnabled = useAppSelector(state => state.settings.metricsEnabled);
   const authStatus = useAppSelector(state => state.auth.status);
-  const newUIEnabled = settingsConfigData?.SettingsConfig?.EnableNewUI === true;
+  const settingsConfig = settingsConfigData?.SettingsConfig;
+  const newUIEnabled = settingsConfig?.EnableNewUI === true;
 
   // Apply UI customization settings
   useThemeCustomization();
@@ -66,6 +67,14 @@ export const App = () => {
           document.body.classList.remove('whodb-new-ui-enabled');
       };
   }, [dispatch, newUIEnabled]);
+
+  useEffect(() => {
+      if (!settingsConfig) return;
+      dispatch(SettingsActions.setCloudProvidersEnabled(settingsConfig.CloudProvidersEnabled));
+      dispatch(SettingsActions.setAWSProviderEnabled(settingsConfig.AWSProviderEnabled));
+      dispatch(SettingsActions.setAzureProviderEnabled(settingsConfig.AzureProviderEnabled));
+      dispatch(SettingsActions.setGCPProviderEnabled(settingsConfig.GCPProviderEnabled));
+  }, [dispatch, settingsConfig]);
 
   useEffect(() => {
       const consent = getStoredConsentState();

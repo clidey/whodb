@@ -140,8 +140,8 @@ For SQL seed files, use the database client for the target engine. For example, 
 
 Use the path that matches your fixture format:
 
-<Tabs>
-<Tab title="CSV Or Excel">
+### CSV Or Excel
+
 ```bash
 npx @clidey/whodb-cli import \
   --connection ci-postgres \
@@ -151,16 +151,15 @@ npx @clidey/whodb-cli import \
 ```
 
 Useful flags include `--schema`, `--delimiter`, `--sheet`, `--header=false`, `--mapping position`, `--mode overwrite`, `--mode upsert`, `--create-table`, and `--allow-auto-generated`.
-</Tab>
-<Tab title="SQL">
+
+### SQL
+
 ```bash
 PGPASSWORD=postgres \
 psql -h localhost -U postgres -d app_test -f test/fixtures/seed.sql
 ```
 
 The in-app import panel also supports pasted SQL and `.sql` uploads for manual workflows.
-</Tab>
-</Tabs>
 
 ## Local Reproduction With Docker Compose
 

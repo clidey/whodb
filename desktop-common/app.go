@@ -378,6 +378,9 @@ func (a *App) SetupApplicationMenu() {
 	fileMenu.AddText("Export Data", keys.Combo("e", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(a.ctx, "menu:export-data")
 	})
+	fileMenu.AddText("Import Data", keys.CmdOrCtrl("i"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(a.ctx, "menu:import-data")
+	})
 	fileMenu.AddSeparator()
 	fileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		runtime.Quit(a.ctx)
