@@ -89,6 +89,7 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                         <Input
                             value={value}
                             onChange={(e) => onAdvancedFormChange(field.Key, e.target.value)}
+                            data-testid={`${field.Key}-input`}
                             type={field.Kind === SourceConnectionFieldKind.Password ? 'password' : 'text'}
                             placeholder={field.PlaceholderKey ? translate(field.PlaceholderKey) : undefined}
                             showPasswordToggle={field.Kind === SourceConnectionFieldKind.Password && showPasswordToggle}
@@ -102,6 +103,7 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                     <Input
                         value={value}
                         onChange={(e) => onAdvancedFormChange(key, e.target.value)}
+                        data-testid={`${key}-input`}
                     />
                 </div>
             ))}
