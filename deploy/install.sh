@@ -27,7 +27,6 @@ error() {
 RELEASE_NAME="${RELEASE_NAME:-dataflow}"
 NAMESPACE="${NAMESPACE:-dataflow-system}"
 HELM_OPTS="${HELM_OPTS:-}"
-HELM_TIMEOUT="${HELM_TIMEOUT:-20m}"
 DEFAULT_VALUES_FILE="./charts/dataflow/dataflow-values.yaml"
 USER_VALUES_DIR="/root/.sealos/cloud/values/apps/dataflow"
 USER_VALUES_FILE="${USER_VALUES_DIR}/dataflow-values.yaml"
@@ -137,11 +136,16 @@ if [ -n "${HELM_OPTS}" ]; then
   helm_opts_arr=(${HELM_OPTS})
 fi
 
+GLOBAL_VALUES_FILE="/root/.sealos/cloud/values/global.yaml"
+if [ -f "$GLOBAL_VALUES_FILE" ]; then
+  helm_set_args+=(
+    -f "$GLOBAL_VALUES_FILE"
+  )
+fi
+
 info "Installing chart charts/dataflow into namespace ${NAMESPACE}"
 helm upgrade -i "${RELEASE_NAME}" -n "${NAMESPACE}" --create-namespace charts/dataflow \
   -f "${DEFAULT_VALUES_FILE}" \
   -f "${USER_VALUES_FILE}" \
   "${helm_set_args[@]}" \
-  "${helm_opts_arr[@]}" \
-  --wait \
-  --timeout "${HELM_TIMEOUT}"
+  "${helm_opts_arr[@]}"
