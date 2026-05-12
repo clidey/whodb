@@ -40,6 +40,9 @@ pnpm install
 
 # Terminal 1: backend
 cd ../core
+set -a
+source .env.local
+set +a
 go run .
 
 # Terminal 2: frontend

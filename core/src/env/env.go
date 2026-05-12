@@ -208,6 +208,11 @@ func GetSealosBootstrapEnabled() bool {
 	return strings.TrimSpace(os.Getenv("WHODB_SEALOS_BOOTSTRAP_ENABLED")) != "false"
 }
 
+// GetStandaloneLoginEnabled returns true when manual standalone login is enabled.
+func GetStandaloneLoginEnabled() bool {
+	return strings.TrimSpace(os.Getenv("WHODB_STANDALONE_LOGIN_ENABLED")) != "false"
+}
+
 func getMaxPageSize() int {
 	val := os.Getenv("WHODB_MAX_PAGE_SIZE")
 	if val == "" {

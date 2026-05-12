@@ -183,6 +183,8 @@ For active development with hot-reload:
 
 <CodeGroup>
 ```bash Backend
+export WHODB_SESSION_DSN="postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable"
+export WHODB_SESSION_ENCRYPTION_KEY="12345678901234567890123456789012"
 cd core
 go run .
 ```
@@ -193,6 +195,8 @@ pnpm dev
 </CodeGroup>
 
 Run both commands in separate terminals. The DataFlow dev server will be available at `http://localhost:5173` and will proxy API requests to the backend.
+
+Standalone login uses server-owned auth sessions. For local development, run a PostgreSQL database for the session store and set `WHODB_SESSION_DSN` plus an explicit 32-byte `WHODB_SESSION_ENCRYPTION_KEY` before starting the backend.
 
 ## Configuration Options
 
@@ -212,6 +216,10 @@ WhoDB can be configured using environment variables or command-line flags:
 | `WHODB_TOKENS` | Comma-separated static tokens to restrict API/UI access | unset |
 | `WHODB_ALLOWED_ORIGINS` | Comma-separated CORS origins (defaults to all origins) | unset |
 | `WHODB_DISABLE_CREDENTIAL_FORM` | Set `true` to hide the database credential form on the login page | `false` |
+| `WHODB_STANDALONE_LOGIN_ENABLED` | Set `false` to disable standalone manual database login | `true` |
+| `WHODB_SESSION_DSN` | PostgreSQL DSN for server-owned auth sessions | unset |
+| `WHODB_SESSION_ENCRYPTION_KEY` | 32-byte AES-GCM key for encrypted session credentials | unset |
+| `WHODB_SESSION_TTL` | Server-owned auth session lifetime | `24h` |
 | `WHODB_MAX_PAGE_SIZE` | Maximum number of rows returned per page | `10000` |
 | `WHODB_DISABLE_MOCK_DATA_GENERATION` | Disable mock data generation. `*` disables for all tables, or a comma-separated list of table names to disable selectively (e.g., `logs, metrics`) | unset |
 | `WHODB_DISABLE_UPDATE_CHECK` | Set `true` to disable the automatic update availability check | `false` |

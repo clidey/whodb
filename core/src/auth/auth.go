@@ -268,7 +268,7 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	switch query.OperationName {
-	case "Login", "LoginWithProfile", "BootstrapSealosSession", "GetProfiles", "UpdateSettings", "SettingsConfig", "GetVersion",
+	case "Login", "LoginWithProfile", "BootstrapSealosSession", "CreateStandaloneSession", "GetProfiles", "UpdateSettings", "SettingsConfig", "GetVersion",
 		"GetAWSProviders", "GetDiscoveredConnections", "GetProviderConnections",
 		"GetLocalAWSProfiles", "GetAWSRegions",
 		"AddAWSProvider", "TestAWSCredentials", "TestCloudProvider",

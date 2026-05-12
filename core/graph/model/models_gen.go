@@ -370,10 +370,11 @@ type SealosBootstrapInput struct {
 }
 
 type SettingsConfig struct {
-	MetricsEnabled        *bool `json:"MetricsEnabled,omitempty"`
-	CloudProvidersEnabled bool  `json:"CloudProvidersEnabled"`
-	DisableCredentialForm bool  `json:"DisableCredentialForm"`
-	MaxPageSize           int   `json:"MaxPageSize"`
+	MetricsEnabled         *bool `json:"MetricsEnabled,omitempty"`
+	CloudProvidersEnabled  bool  `json:"CloudProvidersEnabled"`
+	DisableCredentialForm  bool  `json:"DisableCredentialForm"`
+	StandaloneLoginEnabled bool  `json:"StandaloneLoginEnabled"`
+	MaxPageSize            int   `json:"MaxPageSize"`
 }
 
 type SettingsConfigInput struct {

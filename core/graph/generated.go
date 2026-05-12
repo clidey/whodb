@@ -240,36 +240,37 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddAWSProvider         func(childComplexity int, input model.AWSProviderInput) int
-		AddRow                 func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
-		AddStorageUnit         func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
-		AddWidget              func(childComplexity int, dashboardID string, input model.WidgetInput) int
-		BootstrapSealosSession func(childComplexity int, input model.SealosBootstrapInput) int
-		CreateDashboard        func(childComplexity int, name string, description *string, refreshRule string) int
-		DeleteDashboard        func(childComplexity int, id string) int
-		DeleteRow              func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
-		DeleteWidget           func(childComplexity int, id string) int
-		ExecuteConfirmedSQL    func(childComplexity int, query string, operationType string) int
-		GenerateChatTitle      func(childComplexity int, input model.GenerateChatTitleInput) int
-		GenerateMockData       func(childComplexity int, input model.MockDataGenerationInput) int
-		GenerateRDSAuthToken   func(childComplexity int, providerID string, endpoint string, port int, region string, username string) int
-		ImportPreview          func(childComplexity int, file graphql.Upload, options model.ImportFileOptions, schema *string, storageUnit *string, useHeaderMapping *bool) int
-		ImportSQL              func(childComplexity int, input model.ImportSQLInput) int
-		ImportTableFile        func(childComplexity int, input model.ImportFileInput) int
-		Login                  func(childComplexity int, credentials model.LoginCredentials) int
-		LoginWithProfile       func(childComplexity int, profile model.LoginProfileInput) int
-		Logout                 func(childComplexity int) int
-		RefreshCloudProvider   func(childComplexity int, id string) int
-		RemoveCloudProvider    func(childComplexity int, id string) int
-		TestAWSCredentials     func(childComplexity int, input model.AWSProviderInput) int
-		TestCloudProvider      func(childComplexity int, id string) int
-		UpdateAWSProvider      func(childComplexity int, id string, input model.AWSProviderInput) int
-		UpdateDashboard        func(childComplexity int, id string, name *string, description *string, refreshRule *string) int
-		UpdateSettings         func(childComplexity int, newSettings model.SettingsConfigInput) int
-		UpdateStorageUnit      func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) int
-		UpdateWidget           func(childComplexity int, id string, input model.UpdateWidgetInput) int
-		UpdateWidgetLayouts    func(childComplexity int, dashboardID string, layouts []*model.LayoutInput) int
-		UpdateWidgetSnapshot   func(childComplexity int, id string, snapshot model.SnapshotInput) int
+		AddAWSProvider          func(childComplexity int, input model.AWSProviderInput) int
+		AddRow                  func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
+		AddStorageUnit          func(childComplexity int, schema string, storageUnit string, fields []*model.RecordInput) int
+		AddWidget               func(childComplexity int, dashboardID string, input model.WidgetInput) int
+		BootstrapSealosSession  func(childComplexity int, input model.SealosBootstrapInput) int
+		CreateDashboard         func(childComplexity int, name string, description *string, refreshRule string) int
+		CreateStandaloneSession func(childComplexity int, credentials model.LoginCredentials) int
+		DeleteDashboard         func(childComplexity int, id string) int
+		DeleteRow               func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput) int
+		DeleteWidget            func(childComplexity int, id string) int
+		ExecuteConfirmedSQL     func(childComplexity int, query string, operationType string) int
+		GenerateChatTitle       func(childComplexity int, input model.GenerateChatTitleInput) int
+		GenerateMockData        func(childComplexity int, input model.MockDataGenerationInput) int
+		GenerateRDSAuthToken    func(childComplexity int, providerID string, endpoint string, port int, region string, username string) int
+		ImportPreview           func(childComplexity int, file graphql.Upload, options model.ImportFileOptions, schema *string, storageUnit *string, useHeaderMapping *bool) int
+		ImportSQL               func(childComplexity int, input model.ImportSQLInput) int
+		ImportTableFile         func(childComplexity int, input model.ImportFileInput) int
+		Login                   func(childComplexity int, credentials model.LoginCredentials) int
+		LoginWithProfile        func(childComplexity int, profile model.LoginProfileInput) int
+		Logout                  func(childComplexity int) int
+		RefreshCloudProvider    func(childComplexity int, id string) int
+		RemoveCloudProvider     func(childComplexity int, id string) int
+		TestAWSCredentials      func(childComplexity int, input model.AWSProviderInput) int
+		TestCloudProvider       func(childComplexity int, id string) int
+		UpdateAWSProvider       func(childComplexity int, id string, input model.AWSProviderInput) int
+		UpdateDashboard         func(childComplexity int, id string, name *string, description *string, refreshRule *string) int
+		UpdateSettings          func(childComplexity int, newSettings model.SettingsConfigInput) int
+		UpdateStorageUnit       func(childComplexity int, schema string, storageUnit string, values []*model.RecordInput, updatedColumns []string) int
+		UpdateWidget            func(childComplexity int, id string, input model.UpdateWidgetInput) int
+		UpdateWidgetLayouts     func(childComplexity int, dashboardID string, layouts []*model.LayoutInput) int
+		UpdateWidgetSnapshot    func(childComplexity int, id string, snapshot model.SnapshotInput) int
 	}
 
 	Query struct {
@@ -321,10 +322,11 @@ type ComplexityRoot struct {
 	}
 
 	SettingsConfig struct {
-		CloudProvidersEnabled func(childComplexity int) int
-		DisableCredentialForm func(childComplexity int) int
-		MaxPageSize           func(childComplexity int) int
-		MetricsEnabled        func(childComplexity int) int
+		CloudProvidersEnabled  func(childComplexity int) int
+		DisableCredentialForm  func(childComplexity int) int
+		MaxPageSize            func(childComplexity int) int
+		MetricsEnabled         func(childComplexity int) int
+		StandaloneLoginEnabled func(childComplexity int) int
 	}
 
 	StatusResponse struct {
@@ -362,6 +364,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	BootstrapSealosSession(ctx context.Context, input model.SealosBootstrapInput) (*model.AuthSessionPayload, error)
+	CreateStandaloneSession(ctx context.Context, credentials model.LoginCredentials) (*model.AuthSessionPayload, error)
 	Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error)
 	LoginWithProfile(ctx context.Context, profile model.LoginProfileInput) (*model.StatusResponse, error)
 	Logout(ctx context.Context) (*model.StatusResponse, error)
@@ -1296,6 +1299,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateDashboard(childComplexity, args["name"].(string), args["description"].(*string), args["refreshRule"].(string)), true
+	case "Mutation.CreateStandaloneSession":
+		if e.ComplexityRoot.Mutation.CreateStandaloneSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_CreateStandaloneSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateStandaloneSession(childComplexity, args["credentials"].(model.LoginCredentials)), true
 	case "Mutation.DeleteDashboard":
 		if e.ComplexityRoot.Mutation.DeleteDashboard == nil {
 			break
@@ -1866,6 +1880,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SettingsConfig.MetricsEnabled(childComplexity), true
+	case "SettingsConfig.StandaloneLoginEnabled":
+		if e.ComplexityRoot.SettingsConfig.StandaloneLoginEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SettingsConfig.StandaloneLoginEnabled(childComplexity), true
 
 	case "StatusResponse.Status":
 		if e.ComplexityRoot.StatusResponse.Status == nil {
@@ -2195,6 +2215,17 @@ func (ec *executionContext) field_Mutation_CreateDashboard_args(ctx context.Cont
 		return nil, err
 	}
 	args["refreshRule"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_CreateStandaloneSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "credentials", ec.unmarshalNLoginCredentials2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐLoginCredentials)
+	if err != nil {
+		return nil, err
+	}
+	args["credentials"] = arg0
 	return args, nil
 }
 
@@ -6727,6 +6758,63 @@ func (ec *executionContext) fieldContext_Mutation_BootstrapSealosSession(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_CreateStandaloneSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_CreateStandaloneSession,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateStandaloneSession(ctx, fc.Args["credentials"].(model.LoginCredentials))
+		},
+		nil,
+		ec.marshalNAuthSessionPayload2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐAuthSessionPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_CreateStandaloneSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "sessionToken":
+				return ec.fieldContext_AuthSessionPayload_sessionToken(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_AuthSessionPayload_expiresAt(ctx, field)
+			case "type":
+				return ec.fieldContext_AuthSessionPayload_type(ctx, field)
+			case "hostname":
+				return ec.fieldContext_AuthSessionPayload_hostname(ctx, field)
+			case "port":
+				return ec.fieldContext_AuthSessionPayload_port(ctx, field)
+			case "database":
+				return ec.fieldContext_AuthSessionPayload_database(ctx, field)
+			case "displayName":
+				return ec.fieldContext_AuthSessionPayload_displayName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuthSessionPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_CreateStandaloneSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_Login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8898,6 +8986,8 @@ func (ec *executionContext) fieldContext_Query_SettingsConfig(_ context.Context,
 				return ec.fieldContext_SettingsConfig_CloudProvidersEnabled(ctx, field)
 			case "DisableCredentialForm":
 				return ec.fieldContext_SettingsConfig_DisableCredentialForm(ctx, field)
+			case "StandaloneLoginEnabled":
+				return ec.fieldContext_SettingsConfig_StandaloneLoginEnabled(ctx, field)
 			case "MaxPageSize":
 				return ec.fieldContext_SettingsConfig_MaxPageSize(ctx, field)
 			}
@@ -9855,6 +9945,35 @@ func (ec *executionContext) _SettingsConfig_DisableCredentialForm(ctx context.Co
 }
 
 func (ec *executionContext) fieldContext_SettingsConfig_DisableCredentialForm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SettingsConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SettingsConfig_StandaloneLoginEnabled(ctx context.Context, field graphql.CollectedField, obj *model.SettingsConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SettingsConfig_StandaloneLoginEnabled,
+		func(ctx context.Context) (any, error) {
+			return obj.StandaloneLoginEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SettingsConfig_StandaloneLoginEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SettingsConfig",
 		Field:      field,
@@ -14448,6 +14567,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "CreateStandaloneSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_CreateStandaloneSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "Login":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_Login(ctx, field)
@@ -15493,6 +15619,11 @@ func (ec *executionContext) _SettingsConfig(ctx context.Context, sel ast.Selecti
 			}
 		case "DisableCredentialForm":
 			out.Values[i] = ec._SettingsConfig_DisableCredentialForm(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "StandaloneLoginEnabled":
+			out.Values[i] = ec._SettingsConfig_StandaloneLoginEnabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

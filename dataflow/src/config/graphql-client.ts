@@ -14,18 +14,26 @@ import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { addAuthHeader } from './auth-headers';
-import { triggerRebootstrap } from './auth-store';
-import { useSealosStore } from '@/stores/useSealosStore';
+import {
+  getBootstrapDescriptor,
+  triggerRebootstrap,
+  triggerStandaloneUnauthorized,
+} from './auth-store';
 
 const RETRY_HEADER = 'X-WhoDB-Retry-Attempt';
 
-async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+/** Fetch wrapper that handles expired server-side auth sessions. */
+export async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const response = await fetch(input, init);
   if (response.status !== 401) return response;
-  if (!useSealosStore.getState().isInSealosDesktop) return response;
 
   const retryAttempt = readHeader(init?.headers, RETRY_HEADER);
   if (retryAttempt === '1') return response;
+
+  if (!getBootstrapDescriptor()) {
+    await triggerStandaloneUnauthorized();
+    return response;
+  }
 
   const rebootstrapSucceeded = await triggerRebootstrap();
   if (!rebootstrapSucceeded) return response;

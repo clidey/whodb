@@ -5,10 +5,10 @@ import { graphqlClient } from '@/config/graphql-client';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useI18n } from '@/i18n/useI18n';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { StandaloneLogin } from '@/components/auth/StandaloneLogin';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { resolveLocaleFromSearch } from '@/i18n/locale';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { useSealosStore } from '@/stores/useSealosStore';
 import './globals.css';
 
 const locale = resolveLocaleFromSearch(window.location.search);
@@ -16,11 +16,11 @@ const locale = resolveLocaleFromSearch(window.location.search);
 function AppBootstrap() {
   const status = useAuthStore((state) => state.status);
   const error = useAuthStore((state) => state.error);
+  const standaloneLoginDisabled = useAuthStore((state) => state.standaloneLoginDisabled);
   const { t } = useI18n();
 
   React.useEffect(() => {
     void (async () => {
-      await useSealosStore.getState().initialize();
       await useAuthStore.getState().initialize();
     })();
   }, []);
@@ -39,6 +39,17 @@ function AppBootstrap() {
         {t('common.auth.bootstrapFailed', { message: error ?? t('common.unknownError') })}
       </div>
     );
+  }
+
+  if (status === 'unauthenticated') {
+    if (standaloneLoginDisabled) {
+      return (
+        <div className="flex h-screen items-center justify-center bg-background p-6 text-center text-sm text-muted-foreground">
+          {t('standaloneLogin.disabled')}
+        </div>
+      );
+    }
+    return <StandaloneLogin />;
   }
 
   return <MainLayout />;

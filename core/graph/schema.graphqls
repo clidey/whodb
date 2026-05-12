@@ -179,6 +179,7 @@ type SettingsConfig {
   MetricsEnabled: Boolean
   CloudProvidersEnabled: Boolean!
   DisableCredentialForm: Boolean!
+  StandaloneLoginEnabled: Boolean!
   MaxPageSize: Int!
 }
 
@@ -564,6 +565,7 @@ type GenerateChatTitleResponse {
 
 type Mutation {
   BootstrapSealosSession(input: SealosBootstrapInput!): AuthSessionPayload!
+  CreateStandaloneSession(credentials: LoginCredentials!): AuthSessionPayload!
   Login(credentials: LoginCredentials!): StatusResponse!
   LoginWithProfile(profile: LoginProfileInput!): StatusResponse!
   Logout: StatusResponse!

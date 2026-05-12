@@ -405,6 +405,7 @@ export type Mutation = {
   AddWidget: DashboardWidget;
   BootstrapSealosSession: AuthSessionPayload;
   CreateDashboard: Dashboard;
+  CreateStandaloneSession: AuthSessionPayload;
   DeleteDashboard: StatusResponse;
   DeleteRow: StatusResponse;
   DeleteWidget: StatusResponse;
@@ -466,6 +467,11 @@ export type MutationCreateDashboardArgs = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   refreshRule: Scalars['String']['input'];
+};
+
+
+export type MutationCreateStandaloneSessionArgs = {
+  credentials: LoginCredentials;
 };
 
 
@@ -763,6 +769,7 @@ export type SettingsConfig = {
   DisableCredentialForm: Scalars['Boolean']['output'];
   MaxPageSize: Scalars['Int']['output'];
   MetricsEnabled?: Maybe<Scalars['Boolean']['output']>;
+  StandaloneLoginEnabled: Scalars['Boolean']['output'];
 };
 
 export type SettingsConfigInput = {
@@ -910,6 +917,13 @@ export type CreateDashboardMutationVariables = Exact<{
 
 export type CreateDashboardMutation = { __typename?: 'Mutation', CreateDashboard: { __typename?: 'Dashboard', ID: string, Name: string, Description?: string | null, RefreshRule: string, CreatedAt: string, UpdatedAt: string, Widgets: Array<{ __typename?: 'DashboardWidget', ID: string, Type: string, Title: string, Description?: string | null, Layout: string, Query?: string | null, QueryContext?: string | null, Visualization?: string | null, Snapshot?: string | null, SortOrder: number }> } };
 
+export type CreateStandaloneSessionMutationVariables = Exact<{
+  credentials: LoginCredentials;
+}>;
+
+
+export type CreateStandaloneSessionMutation = { __typename?: 'Mutation', CreateStandaloneSession: { __typename?: 'AuthSessionPayload', sessionToken: string, expiresAt: string, type: string, hostname: string, port: string, database: string, displayName: string } };
+
 export type DeleteDashboardMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -1048,6 +1062,11 @@ export type GetSchemaQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetSchemaQuery = { __typename?: 'Query', Schema: Array<string> };
+
+export type SettingsConfigQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SettingsConfigQuery = { __typename?: 'Query', SettingsConfig: { __typename?: 'SettingsConfig', DisableCredentialForm: boolean, StandaloneLoginEnabled: boolean } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   schema: Scalars['String']['input'];
@@ -1265,6 +1284,45 @@ export function useCreateDashboardMutation(baseOptions?: Apollo.MutationHookOpti
 export type CreateDashboardMutationHookResult = ReturnType<typeof useCreateDashboardMutation>;
 export type CreateDashboardMutationResult = Apollo.MutationResult<CreateDashboardMutation>;
 export type CreateDashboardMutationOptions = Apollo.BaseMutationOptions<CreateDashboardMutation, CreateDashboardMutationVariables>;
+export const CreateStandaloneSessionDocument = gql`
+    mutation CreateStandaloneSession($credentials: LoginCredentials!) {
+  CreateStandaloneSession(credentials: $credentials) {
+    sessionToken
+    expiresAt
+    type
+    hostname
+    port
+    database
+    displayName
+  }
+}
+    `;
+export type CreateStandaloneSessionMutationFn = Apollo.MutationFunction<CreateStandaloneSessionMutation, CreateStandaloneSessionMutationVariables>;
+
+/**
+ * __useCreateStandaloneSessionMutation__
+ *
+ * To run a mutation, you first call `useCreateStandaloneSessionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStandaloneSessionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStandaloneSessionMutation, { data, loading, error }] = useCreateStandaloneSessionMutation({
+ *   variables: {
+ *      credentials: // value for 'credentials'
+ *   },
+ * });
+ */
+export function useCreateStandaloneSessionMutation(baseOptions?: Apollo.MutationHookOptions<CreateStandaloneSessionMutation, CreateStandaloneSessionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateStandaloneSessionMutation, CreateStandaloneSessionMutationVariables>(CreateStandaloneSessionDocument, options);
+      }
+export type CreateStandaloneSessionMutationHookResult = ReturnType<typeof useCreateStandaloneSessionMutation>;
+export type CreateStandaloneSessionMutationResult = Apollo.MutationResult<CreateStandaloneSessionMutation>;
+export type CreateStandaloneSessionMutationOptions = Apollo.BaseMutationOptions<CreateStandaloneSessionMutation, CreateStandaloneSessionMutationVariables>;
 export const DeleteDashboardDocument = gql`
     mutation DeleteDashboard($id: ID!) {
   DeleteDashboard(id: $id) {
@@ -2057,6 +2115,46 @@ export type GetSchemaQueryHookResult = ReturnType<typeof useGetSchemaQuery>;
 export type GetSchemaLazyQueryHookResult = ReturnType<typeof useGetSchemaLazyQuery>;
 export type GetSchemaSuspenseQueryHookResult = ReturnType<typeof useGetSchemaSuspenseQuery>;
 export type GetSchemaQueryResult = Apollo.QueryResult<GetSchemaQuery, GetSchemaQueryVariables>;
+export const SettingsConfigDocument = gql`
+    query SettingsConfig {
+  SettingsConfig {
+    DisableCredentialForm
+    StandaloneLoginEnabled
+  }
+}
+    `;
+
+/**
+ * __useSettingsConfigQuery__
+ *
+ * To run a query within a React component, call `useSettingsConfigQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSettingsConfigQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSettingsConfigQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useSettingsConfigQuery(baseOptions?: Apollo.QueryHookOptions<SettingsConfigQuery, SettingsConfigQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SettingsConfigQuery, SettingsConfigQueryVariables>(SettingsConfigDocument, options);
+      }
+export function useSettingsConfigLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SettingsConfigQuery, SettingsConfigQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SettingsConfigQuery, SettingsConfigQueryVariables>(SettingsConfigDocument, options);
+        }
+export function useSettingsConfigSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SettingsConfigQuery, SettingsConfigQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SettingsConfigQuery, SettingsConfigQueryVariables>(SettingsConfigDocument, options);
+        }
+export type SettingsConfigQueryHookResult = ReturnType<typeof useSettingsConfigQuery>;
+export type SettingsConfigLazyQueryHookResult = ReturnType<typeof useSettingsConfigLazyQuery>;
+export type SettingsConfigSuspenseQueryHookResult = ReturnType<typeof useSettingsConfigSuspenseQuery>;
+export type SettingsConfigQueryResult = Apollo.QueryResult<SettingsConfigQuery, SettingsConfigQueryVariables>;
 export const GetStorageUnitsDocument = gql`
     query GetStorageUnits($schema: String!) {
   StorageUnit(schema: $schema) {

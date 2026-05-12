@@ -265,6 +265,12 @@ func TestIsAllowedPermitsWhitelistedOperations(t *testing.T) {
 	if !isAllowed(req, []byte(bootstrap)) {
 		t.Fatalf("expected BootstrapSealosSession to be allowed without auth")
 	}
+
+	standalone := `{"operationName":"CreateStandaloneSession","variables":{}}`
+	req = httptest.NewRequest(http.MethodPost, "/api/query", strings.NewReader(standalone))
+	if !isAllowed(req, []byte(standalone)) {
+		t.Fatalf("expected CreateStandaloneSession to be allowed without auth")
+	}
 }
 
 func TestAuthMiddlewareExtractsCredentialsFromSessionToken(t *testing.T) {

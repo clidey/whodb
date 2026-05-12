@@ -53,3 +53,19 @@ func TestGetSealosBootstrapEnabledDefaultsToTrue(t *testing.T) {
 		}
 	})
 }
+
+func TestGetStandaloneLoginEnabledDefaultsToTrue(t *testing.T) {
+	t.Run("default enabled", func(t *testing.T) {
+		t.Setenv("WHODB_STANDALONE_LOGIN_ENABLED", "")
+		if !GetStandaloneLoginEnabled() {
+			t.Fatalf("expected standalone login to default to enabled")
+		}
+	})
+
+	t.Run("explicit false disables", func(t *testing.T) {
+		t.Setenv("WHODB_STANDALONE_LOGIN_ENABLED", "false")
+		if GetStandaloneLoginEnabled() {
+			t.Fatalf("expected explicit false to disable standalone login")
+		}
+	})
+}

@@ -103,15 +103,48 @@ func (r *mutationResolver) BootstrapSealosSession(ctx context.Context, input mod
 	}, nil
 }
 
+// CreateStandaloneSession is the resolver for the CreateStandaloneSession field.
+func (r *mutationResolver) CreateStandaloneSession(ctx context.Context, credentials model.LoginCredentials) (*model.AuthSessionPayload, error) {
+	if !env.GetStandaloneLoginEnabled() || env.DisableCredentialForm {
+		return nil, errors.New("standalone login is disabled")
+	}
+
+	engineCredentials := loginCredentialsToEngineCredentials(credentials)
+	plugin := src.MainEngine.Choose(engine.DatabaseType(credentials.Type))
+	if plugin == nil || !plugin.IsAvailable(ctx, engine.NewPluginConfig(engineCredentials)) {
+		log.WithFields(log.Fields{
+			"type":     credentials.Type,
+			"hostname": credentials.Hostname,
+			"username": credentials.Username,
+			"database": credentials.Database,
+		}).Error("Database connection failed during standalone login - credentials unauthorized")
+		return nil, errors.New("unauthorized")
+	}
+
+	svc, err := session.GetDefaultService()
+	if err != nil {
+		return nil, err
+	}
+
+	port := advancedValue(engineCredentials.Advanced, "Port")
+	record, token, err := svc.Create(ctx, session.CreateParams{
+		Source:       "standalone",
+		DBType:       credentials.Type,
+		Host:         credentials.Hostname,
+		Port:         port,
+		DatabaseName: credentials.Database,
+		Credentials:  engineCredentials,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return authSessionPayload(token, record.ExpiresAt, credentials.Type, credentials.Hostname, port, credentials.Database), nil
+}
+
 // Login is the resolver for the Login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.StatusResponse, error) {
-	advanced := make([]engine.Record, 0, len(credentials.Advanced))
-	for _, recordInput := range credentials.Advanced {
-		advanced = append(advanced, engine.Record{
-			Key:   recordInput.Key,
-			Value: recordInput.Value,
-		})
-	}
+	engineCredentials := loginCredentialsToEngineCredentials(credentials)
 
 	hasProfileID := credentials.ID != nil && strings.TrimSpace(*credentials.ID) != ""
 	identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
@@ -125,14 +158,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 	}
 
 	if !src.MainEngine.Choose(engine.DatabaseType(credentials.Type)).IsAvailable(ctx, &engine.PluginConfig{
-		Credentials: &engine.Credentials{
-			Type:     credentials.Type,
-			Hostname: credentials.Hostname,
-			Username: credentials.Username,
-			Password: credentials.Password,
-			Database: credentials.Database,
-			Advanced: advanced,
-		},
+		Credentials: engineCredentials,
 	}) {
 		log.WithFields(log.Fields{
 			"type":     credentials.Type,
@@ -1806,10 +1832,11 @@ func (r *queryResolver) AIChat(ctx context.Context, providerID *string, modelTyp
 func (r *queryResolver) SettingsConfig(ctx context.Context) (*model.SettingsConfig, error) {
 	currentSettings := settings.Get()
 	return &model.SettingsConfig{
-		MetricsEnabled:        &currentSettings.MetricsEnabled,
-		CloudProvidersEnabled: env.IsAWSProviderEnabled,
-		DisableCredentialForm: env.DisableCredentialForm,
-		MaxPageSize:           env.MaxPageSize,
+		MetricsEnabled:         &currentSettings.MetricsEnabled,
+		CloudProvidersEnabled:  env.IsAWSProviderEnabled,
+		DisableCredentialForm:  env.DisableCredentialForm,
+		StandaloneLoginEnabled: env.GetStandaloneLoginEnabled(),
+		MaxPageSize:            env.MaxPageSize,
 	}, nil
 }
 

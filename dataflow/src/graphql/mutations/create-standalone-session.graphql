@@ -1,0 +1,11 @@
+mutation CreateStandaloneSession($credentials: LoginCredentials!) {
+  CreateStandaloneSession(credentials: $credentials) {
+    sessionToken
+    expiresAt
+    type
+    hostname
+    port
+    database
+    displayName
+  }
+}

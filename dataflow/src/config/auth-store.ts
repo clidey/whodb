@@ -42,6 +42,7 @@ let currentAuthState: PersistedAuthState = {
   bootstrap: null,
 };
 let rebootstrapHandler: (() => Promise<boolean>) | null = null
+let standaloneUnauthorizedHandler: (() => Promise<boolean>) | null = null
 
 /** Set the opaque auth session after a successful bootstrap. */
 export function setAuthSession(session: AuthSessionSummary): void {
@@ -86,6 +87,17 @@ export function registerRebootstrapHandler(handler: (() => Promise<boolean>) | n
 export async function triggerRebootstrap(): Promise<boolean> {
   if (!rebootstrapHandler) return false
   return rebootstrapHandler()
+}
+
+/** Register the handler used when a standalone session token is rejected. */
+export function registerStandaloneUnauthorizedHandler(handler: (() => Promise<boolean>) | null): void {
+  standaloneUnauthorizedHandler = handler
+}
+
+/** Trigger the standalone stale-session handler. */
+export async function triggerStandaloneUnauthorized(): Promise<boolean> {
+  if (!standaloneUnauthorizedHandler) return false
+  return standaloneUnauthorizedHandler()
 }
 
 /** Restore persisted auth state from sessionStorage. */
