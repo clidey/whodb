@@ -19,12 +19,13 @@ package graph
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/clidey/whodb/core/graph/model"
-	"github.com/clidey/whodb/core/src/dashboard"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/dashboard"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
@@ -35,18 +36,22 @@ import (
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
+// Resolver owns GraphQL resolver dependencies.
 type Resolver struct {
-	DashboardService dashboard.ServiceAPI
+	DashboardService        dashboard.ServiceAPI
+	dashboardServiceFactory func() (dashboard.ServiceAPI, error)
+	dashboardServiceMu      sync.Mutex
 }
 
+// NewResolver creates the GraphQL dependency resolver.
 func NewResolver() *Resolver {
-	service, err := dashboard.NewServiceFromEnv()
-	if err != nil {
-		log.Warnf("dashboard metadata disabled: %v", err)
-		return &Resolver{}
-	}
+	return newResolverWithDashboardFactory(func() (dashboard.ServiceAPI, error) {
+		return dashboard.NewServiceFromEnv()
+	})
+}
 
-	return &Resolver{DashboardService: service}
+func newResolverWithDashboardFactory(factory func() (dashboard.ServiceAPI, error)) *Resolver {
+	return &Resolver{dashboardServiceFactory: factory}
 }
 
 // GetPluginForContext returns the appropriate database plugin and config for the current session.
@@ -242,10 +247,31 @@ func discoveredConnectionToModel(conn *providers.DiscoveredConnection) *model.Di
 }
 
 func requireDashboardService(resolver *Resolver) (dashboard.ServiceAPI, error) {
-	if resolver == nil || resolver.DashboardService == nil {
+	if resolver == nil {
 		return nil, dashboard.ErrMetadataStoreNotConfigured
 	}
-	return resolver.DashboardService, nil
+	if resolver.DashboardService != nil {
+		return resolver.DashboardService, nil
+	}
+	if resolver.dashboardServiceFactory == nil {
+		return nil, dashboard.ErrMetadataStoreNotConfigured
+	}
+
+	resolver.dashboardServiceMu.Lock()
+	defer resolver.dashboardServiceMu.Unlock()
+
+	if resolver.DashboardService != nil {
+		return resolver.DashboardService, nil
+	}
+
+	service, err := resolver.dashboardServiceFactory()
+	if err != nil {
+		log.Warnf("dashboard metadata unavailable: %v", err)
+		return nil, err
+	}
+
+	resolver.DashboardService = service
+	return service, nil
 }
 
 func mapDashboardModel(item dashboard.Dashboard) *model.Dashboard {

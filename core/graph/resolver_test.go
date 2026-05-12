@@ -22,6 +22,7 @@ import (
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/auth"
+	"github.com/clidey/whodb/core/src/dashboard"
 	"github.com/clidey/whodb/core/src/engine"
 )
 
@@ -130,6 +131,37 @@ func TestValidateStorageUnit(t *testing.T) {
 	if err := ValidateStorageUnit(mock, engine.NewPluginConfig(&engine.Credentials{Type: "Test"}), "public", "missing"); err == nil {
 		t.Fatalf("expected error to bubble up when validation fails")
 	}
+}
+
+func TestRequireDashboardServiceRetriesAfterInitialFactoryFailure(t *testing.T) {
+	expected := &stubDashboardService{}
+	attempts := 0
+	resolver := newResolverWithDashboardFactory(func() (dashboard.ServiceAPI, error) {
+		attempts++
+		if attempts == 1 {
+			return nil, errors.New("metadata database not ready")
+		}
+		return expected, nil
+	})
+
+	if _, err := requireDashboardService(resolver); err == nil || err.Error() != "metadata database not ready" {
+		t.Fatalf("expected initial factory error, got %v", err)
+	}
+
+	got, err := requireDashboardService(resolver)
+	if err != nil {
+		t.Fatalf("expected retry to initialize dashboard service, got %v", err)
+	}
+	if got != expected {
+		t.Fatalf("expected initialized dashboard service to be reused")
+	}
+	if attempts != 2 {
+		t.Fatalf("expected two factory attempts, got %d", attempts)
+	}
+}
+
+type stubDashboardService struct {
+	dashboard.ServiceAPI
 }
 
 func TestGetPluginForContextUsesEngine(t *testing.T) {
