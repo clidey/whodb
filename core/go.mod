@@ -24,7 +24,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/rds v1.118.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.42.1
 	github.com/aws/smithy-go v1.25.1
-	github.com/boundaryml/baml v0.220.0
+	github.com/boundaryml/baml v0.222.0
 	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/dromara/carbon/v2 v2.6.16
