@@ -30,19 +30,20 @@ export function DashboardEditor() {
     const setDeletingWidgetId = useAnalysisUIStore(state => state.setDeletingWidgetId);
 
     const dashboard = dashboards.find(d => d.id === activeDashboardId);
+    const dashboardId = dashboard?.id;
 
     const handleRefresh = useCallback(async () => {
-        if (!dashboard) return;
-        await refreshDashboard(dashboard.id);
-    }, [dashboard, refreshDashboard]);
+        if (!dashboardId) return;
+        await refreshDashboard(dashboardId);
+    }, [dashboardId, refreshDashboard]);
 
     const handleRefreshRef = useRef(handleRefresh);
     handleRefreshRef.current = handleRefresh;
 
     useEffect(() => {
-        if (!dashboard) return;
+        if (!dashboardId) return;
         void handleRefresh();
-    }, [dashboard?.id, handleRefresh]);
+    }, [dashboardId, handleRefresh]);
 
     useEffect(() => {
         if (dashboard?.refreshRule !== 'by-minute') return;

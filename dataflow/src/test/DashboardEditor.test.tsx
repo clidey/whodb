@@ -74,4 +74,40 @@ describe('DashboardEditor', () => {
       expect(screen.getByTestId('chart-option').textContent).toContain('"Jan"')
     })
   })
+
+  it('does not restart dashboard refresh when a widget snapshot changes', async () => {
+    const refreshDashboard = vi.fn(async () => {
+      useAnalysisDefinitionStore.setState(state => ({
+        dashboards: state.dashboards.map(dashboard => ({
+          ...dashboard,
+          widgets: dashboard.widgets.map(widget => widget.id === 'widget-1'
+            ? {
+                ...widget,
+                snapshot: {
+                  ...widget.snapshot!,
+                  executedAt: '2026-04-02T00:01:00Z',
+                },
+              }
+            : widget),
+        })),
+      }))
+    })
+
+    useAnalysisRuntimeStore.setState({
+      widgetStatesById: {},
+      refreshDashboard,
+      refreshWidget: vi.fn(),
+      clearDashboardRuntime: vi.fn(),
+    })
+
+    renderWithI18n(<DashboardEditor />)
+
+    await waitFor(() => {
+      expect(refreshDashboard).toHaveBeenCalledTimes(1)
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    expect(refreshDashboard).toHaveBeenCalledTimes(1)
+  })
 })
