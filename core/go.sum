@@ -1,7 +1,7 @@
 cloud.google.com/go v0.123.0 h1:2NAUJwPR47q+E35uaJeYoNhuNEM9kM8SjgRgdeOJUSE=
 cloud.google.com/go v0.123.0/go.mod h1:xBoMV08QcqUGuPW65Qfm1o9Y4zKZBpGS+7bImXLTAZU=
-cloud.google.com/go/alloydb v1.24.0 h1:szOpiAgflrFNw3ErOmoQPdiMkxem00YyVn7S0DavlPM=
-cloud.google.com/go/alloydb v1.24.0/go.mod h1:oqHGc/Xb5fWtH+wIDpu2wcPJX9oML/fGJuH/sp8ysyo=
+cloud.google.com/go/alloydb v1.26.0 h1:UTzyumJ8tEo0CqwzLkV4WMGnCxvvhw3BDy1nXfCt9KE=
+cloud.google.com/go/alloydb v1.26.0/go.mod h1:oqHGc/Xb5fWtH+wIDpu2wcPJX9oML/fGJuH/sp8ysyo=
 cloud.google.com/go/auth v0.20.0 h1:kXTssoVb4azsVDoUiF8KvxAqrsQcQtB53DcSgta74CA=
 cloud.google.com/go/auth v0.20.0/go.mod h1:942/yi/itH1SsmpyrbnTMDgGfdy2BUqIKyd0cyYLc5Q=
 cloud.google.com/go/auth/oauth2adapt v0.2.8 h1:keo8NaayQZ6wimpNSmW5OPc283g65QNIiLpZnkHRbnc=
