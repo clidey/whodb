@@ -82,9 +82,9 @@ app:
   namespace: app-system
   name: dataflow
   type: iframe
-  displayType: normal
+  displayType: hidden
   urlScheme: https
-  iconPath: /favicon.ico
+  iconPath: /favicon.svg
   hostOverride: ''
   data:
     desc: Sealos-native database workspace
@@ -92,9 +92,9 @@ app:
     en:
       name: DataFlow
     zh:
-      name: 数据库工作台
+      name: 数据库管理
     zh-Hans:
-      name: 数据库工作台
+      name: 数据库管理
 
 resources: {}
 
