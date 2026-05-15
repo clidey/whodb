@@ -19,7 +19,6 @@ ar_AE:
   switchSuccessful: "تم تبديل الملف الشخصي بنجاح"
   switchFailed: "فشل في تبديل الملف الشخصي"
   switchFailedWithError: "فشل في تبديل الملف الشخصي: {error}"
-  reconnecting: "جارٍ محاولة إعادة الاتصال..."
 
 de_DE:
   serverDownTitle: "Server nicht verfügbar"
@@ -31,7 +30,6 @@ de_DE:
   switchSuccessful: "Profil erfolgreich gewechselt"
   switchFailed: "Profilwechsel fehlgeschlagen"
   switchFailedWithError: "Profilwechsel fehlgeschlagen: {error}"
-  reconnecting: "Es wird versucht, die Verbindung wiederherzustellen..."
 
 el_GR:
   serverDownTitle: "Μη διαθέσιμος διακομιστής"
@@ -43,7 +41,6 @@ el_GR:
   switchSuccessful: "Επιτυχής αλλαγή προφίλ"
   switchFailed: "Αποτυχία αλλαγής προφίλ"
   switchFailedWithError: "Αποτυχία αλλαγής προφίλ: {error}"
-  reconnecting: "Προσπάθεια επανασύνδεσης..."
 
 en_GB:
   serverDownTitle: "Server Unavailable"
@@ -55,7 +52,6 @@ en_GB:
   switchSuccessful: "Successfully switched profile"
   switchFailed: "Failed to switch profile"
   switchFailedWithError: "Failed to switch profile: {error}"
-  reconnecting: "Attempting to reconnect..."
 
 es_ES:
   serverDownTitle: "Servidor no disponible"
@@ -67,7 +63,6 @@ es_ES:
   switchSuccessful: "Perfil cambiado exitosamente"
   switchFailed: "No se pudo cambiar de perfil"
   switchFailedWithError: "No se pudo cambiar el perfil: {error}"
-  reconnecting: "Intentando volver a conectar..."
 
 fi_FI:
   serverDownTitle: "Palvelin ei ole käytettävissä"
@@ -79,7 +74,6 @@ fi_FI:
   switchSuccessful: "Profiilin vaihto onnistui"
   switchFailed: "Profiilin vaihto epäonnistui"
   switchFailedWithError: "Profiilin vaihto epäonnistui: {error}"
-  reconnecting: "Yritetään muodostaa yhteys uudelleen..."
 
 fr_FR:
   serverDownTitle: "Serveur indisponible"
@@ -91,7 +85,6 @@ fr_FR:
   switchSuccessful: "Changement de profil réussi"
   switchFailed: "Échec du changement de profil"
   switchFailedWithError: "Échec du changement de profil : {error}"
-  reconnecting: "Tentative de reconnexion..."
 
 it_IT:
   serverDownTitle: "Server non disponibile"
@@ -103,7 +96,6 @@ it_IT:
   switchSuccessful: "Cambio profilo riuscito"
   switchFailed: "Impossibile cambiare profilo"
   switchFailedWithError: "Impossibile cambiare profilo: {error}"
-  reconnecting: "Tentativo di riconnessione..."
 
 iw_IL:
   serverDownTitle: "השרת לא זמין"
@@ -115,7 +107,6 @@ iw_IL:
   switchSuccessful: "הפרופיל עבר בהצלחה"
   switchFailed: "החלפת פרופיל נכשלה"
   switchFailedWithError: "החלפת פרופיל נכשלה: {error}"
-  reconnecting: "מנסה להתחבר מחדש..."
 
 ja_JP:
   serverDownTitle: "サーバーが利用できません"
@@ -127,7 +118,6 @@ ja_JP:
   switchSuccessful: "プロファイルが正常に切り替えられました"
   switchFailed: "プロファイルの切り替えに失敗しました"
   switchFailedWithError: "プロファイルの切り替えに失敗しました: {error}"
-  reconnecting: "再接続しようとしています..."
 
 ko_KR:
   serverDownTitle: "서버를 사용할 수 없음"
@@ -139,7 +129,6 @@ ko_KR:
   switchSuccessful: "프로필을 전환했습니다."
   switchFailed: "프로필을 전환하지 못했습니다."
   switchFailedWithError: "프로필을 전환하지 못했습니다: {error}"
-  reconnecting: "다시 연결을 시도하는 중..."
 
 nl_NL:
   serverDownTitle: "Server niet beschikbaar"
@@ -151,7 +140,6 @@ nl_NL:
   switchSuccessful: "Profiel gewijzigd"
   switchFailed: "Kan profiel niet wijzigen"
   switchFailedWithError: "Kan niet van profiel wisselen: {error}"
-  reconnecting: "Proberen opnieuw verbinding te maken..."
 
 pl_PL:
   serverDownTitle: "Serwer niedostępny"
@@ -163,7 +151,6 @@ pl_PL:
   switchSuccessful: "Pomyślnie zmieniono profil"
   switchFailed: "Nie udało się przełączyć profilu"
   switchFailedWithError: "Nie udało się przełączyć profilu: {error}"
-  reconnecting: "Próba ponownego połączenia..."
 
 pt_BR:
   serverDownTitle: "Servidor indisponível"
@@ -175,7 +162,6 @@ pt_BR:
   switchSuccessful: "Perfil trocado com sucesso"
   switchFailed: "Falha ao mudar de perfil"
   switchFailedWithError: "Falha ao mudar de perfil: {error}"
-  reconnecting: "Tentando reconectar..."
 
 ro_RO:
   serverDownTitle: "Server indisponibil"
@@ -187,7 +173,6 @@ ro_RO:
   switchSuccessful: "Profilul a fost schimbat cu succes"
   switchFailed: "Schimbarea profilului a eșuat"
   switchFailedWithError: "Schimbarea profilului a eșuat: {error}"
-  reconnecting: "Se încearcă reconectarea..."
 
 ru_RU:
   serverDownTitle: "Сервер недоступен"
@@ -199,7 +184,6 @@ ru_RU:
   switchSuccessful: "Профиль успешно переключен"
   switchFailed: "Не удалось переключить профиль"
   switchFailedWithError: "Не удалось переключить профиль: {error}"
-  reconnecting: "Попытка восстановить соединение..."
 
 sk_SK:
   serverDownTitle: "Server je nedostupný"
@@ -211,7 +195,6 @@ sk_SK:
   switchSuccessful: "Profil bol úspešne prepnutý"
   switchFailed: "Prepnutie profilu zlyhalo"
   switchFailedWithError: "Nepodarilo sa prepnúť profil: {error}"
-  reconnecting: "Prebieha pokus o opätovné pripojenie..."
 
 sv_SE:
   serverDownTitle: "Servern är inte tillgänglig"
@@ -223,7 +206,6 @@ sv_SE:
   switchSuccessful: "Profilen har bytts"
   switchFailed: "Det gick inte att byta profil"
   switchFailedWithError: "Det gick inte att byta profil: {error}"
-  reconnecting: "Försöker återansluta..."
 
 zh_CN:
   serverDownTitle: "服务器不可用"
@@ -235,7 +217,6 @@ zh_CN:
   switchSuccessful: "已成功切换个人资料"
   switchFailed: "切换配置文件失败"
   switchFailedWithError: "切换配置文件失败：{error}"
-  reconnecting: "正在尝试重新连接..."
 
 zh_TW:
   serverDownTitle: "伺服器不可用"
@@ -247,7 +228,6 @@ zh_TW:
   switchSuccessful: "已成功切換個人資料"
   switchFailed: "切換設定檔失敗"
   switchFailedWithError: "切換設定檔失敗：{error}"
-  reconnecting: "正在嘗試重新連線..."
 
 bg_BG:
   serverDownTitle: "Сървърът е недостъпен"
@@ -259,7 +239,6 @@ bg_BG:
   switchSuccessful: "Успешно превключен профил"
   switchFailed: "Неуспешно превключване на профила"
   switchFailedWithError: "Неуспешно превключване на профила: {error}"
-  reconnecting: "Опит за повторно свързване..."
 
 bn_BD:
   serverDownTitle: "সার্ভার অনুপলব্ধ"
@@ -271,7 +250,6 @@ bn_BD:
   switchSuccessful: "সফলভাবে প্রোফাইল স্যুইচ করা হয়েছে"
   switchFailed: "প্রোফাইল স্যুইচ করতে ব্যর্থ হয়েছে"
   switchFailedWithError: "প্রোফাইল স্যুইচ করতে ব্যর্থ হয়েছে: {error}"
-  reconnecting: "পুনরায় সংযোগ করার চেষ্টা করা হচ্ছে..."
 
 ca_ES:
   serverDownTitle: "Servidor no disponible"
@@ -283,7 +261,6 @@ ca_ES:
   switchSuccessful: "S'ha canviat de perfil correctament"
   switchFailed: "No s'ha pogut canviar de perfil"
   switchFailedWithError: "No s'ha pogut canviar de perfil: {error}"
-  reconnecting: "Attempting to reconnect..."
 
 cs_CZ:
   serverDownTitle: "Server nedostupný"
@@ -295,7 +272,6 @@ cs_CZ:
   switchSuccessful: "Profil byl úspěšně přepnut"
   switchFailed: "Přepnutí profilu se nezdařilo"
   switchFailedWithError: "Přepnutí profilu se nezdařilo: {error}"
-  reconnecting: "Pokus o opětovné připojení..."
 
 da_DK:
   serverDownTitle: "Server ikke tilgængelig"
@@ -307,7 +283,6 @@ da_DK:
   switchSuccessful: "Skiftet profil"
   switchFailed: "Det lykkedes ikke at skifte profil"
   switchFailedWithError: "Kunne ikke skifte profil: {error}"
-  reconnecting: "Forsøger at oprette forbindelse igen..."
 
 fa_IR:
   serverDownTitle: "سرور در دسترس نیست"
@@ -319,7 +294,6 @@ fa_IR:
   switchSuccessful: "تغییر نمایه با موفقیت انجام شد"
   switchFailed: "تغییر نمایه انجام نشد"
   switchFailedWithError: "تغییر نمایه انجام نشد: {error}"
-  reconnecting: "تلاش برای اتصال مجدد..."
 
 hi_IN:
   serverDownTitle: "सर्वर अनुपलब्ध"
@@ -331,7 +305,6 @@ hi_IN:
   switchSuccessful: "प्रोफ़ाइल सफलतापूर्वक स्विच की गई"
   switchFailed: "प्रोफ़ाइल स्विच करने में विफल"
   switchFailedWithError: "प्रोफ़ाइल स्विच करने में विफल: {error}"
-  reconnecting: "फिर से कनेक्ट करने का प्रयास..."
 
 hr_HR:
   serverDownTitle: "Poslužitelj nedostupan"
@@ -343,7 +316,6 @@ hr_HR:
   switchSuccessful: "Uspješno promijenjen profil"
   switchFailed: "Promjena profila nije uspjela"
   switchFailedWithError: "Promjena profila nije uspjela: {error}"
-  reconnecting: "Pokušaj ponovnog povezivanja..."
 
 hu_HU:
   serverDownTitle: "A szerver nem elérhető"
@@ -355,7 +327,6 @@ hu_HU:
   switchSuccessful: "Sikeres profilváltás"
   switchFailed: "Nem sikerült váltani a profilt"
   switchFailedWithError: "Nem sikerült a profilváltás: {error}"
-  reconnecting: "Újracsatlakozási kísérlet..."
 
 id_ID:
   serverDownTitle: "Server Tidak Tersedia"
@@ -367,7 +338,6 @@ id_ID:
   switchSuccessful: "Berhasil mengganti profil"
   switchFailed: "Gagal mengganti profil"
   switchFailedWithError: "Gagal mengganti profil: {error}"
-  reconnecting: "Mencoba menyambung kembali..."
 
 ms_MY:
   serverDownTitle: "Pelayan Tidak Tersedia"
@@ -379,7 +349,6 @@ ms_MY:
   switchSuccessful: "Berjaya menukar profil"
   switchFailed: "Gagal menukar profil"
   switchFailedWithError: "Gagal menukar profil: {error}"
-  reconnecting: "Cuba untuk menyambung semula..."
 
 nb_NO:
   serverDownTitle: "Server utilgjengelig"
@@ -391,7 +360,6 @@ nb_NO:
   switchSuccessful: "Byttet profil"
   switchFailed: "Kunne ikke bytte profil"
   switchFailedWithError: "Kunne ikke bytte profil: {error}"
-  reconnecting: "Forsøker å koble til igjen..."
 
 sw_KE:
   serverDownTitle: "Seva Haipatikani"
@@ -403,7 +371,6 @@ sw_KE:
   switchSuccessful: "Imefaulu kubadilisha wasifu"
   switchFailed: "Imeshindwa kubadilisha wasifu"
   switchFailedWithError: "Imeshindwa kubadilisha wasifu: {error}"
-  reconnecting: "Inajaribu kuunganisha tena..."
 
 ta_IN:
   serverDownTitle: "சேவையகம் கிடைக்கவில்லை"
@@ -415,7 +382,6 @@ ta_IN:
   switchSuccessful: "சுயவிவரம் வெற்றிகரமாக மாற்றப்பட்டது"
   switchFailed: "சுயவிவரத்தை மாற்ற முடியவில்லை"
   switchFailedWithError: "சுயவிவரத்தை மாற்றுவதில் தோல்வி: {error}"
-  reconnecting: "மீண்டும் இணைக்க முயற்சிக்கிறது..."
 
 th_TH:
   serverDownTitle: "เซิร์ฟเวอร์ไม่พร้อมใช้งาน"
@@ -427,7 +393,6 @@ th_TH:
   switchSuccessful: "เปลี่ยนโปรไฟล์เรียบร้อยแล้ว"
   switchFailed: "ไม่สามารถเปลี่ยนโปรไฟล์ได้"
   switchFailedWithError: "ไม่สามารถเปลี่ยนโปรไฟล์: {error}"
-  reconnecting: "กำลังพยายามเชื่อมต่อใหม่..."
 
 tr_TR:
   serverDownTitle: "Sunucu Kullanılamıyor"
@@ -439,7 +404,6 @@ tr_TR:
   switchSuccessful: "Profil başarıyla değiştirildi"
   switchFailed: "Profil değiştirilemedi"
   switchFailedWithError: "Profil değiştirilemedi: {error}"
-  reconnecting: "Yeniden bağlanmaya çalışılıyor..."
 
 uk_UA:
   serverDownTitle: "Сервер недоступний"
@@ -451,7 +415,6 @@ uk_UA:
   switchSuccessful: "Успішно змінено профіль"
   switchFailed: "Не вдалося змінити профіль"
   switchFailedWithError: "Не вдалося змінити профіль: {error}"
-  reconnecting: "Спроба повторного підключення..."
 
 ur_PK:
   serverDownTitle: "سرور دستیاب نہیں ہے۔"
@@ -463,7 +426,6 @@ ur_PK:
   switchSuccessful: "پروفائل کو کامیابی سے تبدیل کر دیا گیا۔"
   switchFailed: "پروفائل کو تبدیل کرنے میں ناکام"
   switchFailedWithError: "پروفائل کو تبدیل کرنے میں ناکام: {error}"
-  reconnecting: "دوبارہ منسلک کرنے کی کوشش کر رہا ہے..."
 
 vi_VN:
   serverDownTitle: "Máy chủ không khả dụng"
@@ -475,7 +437,6 @@ vi_VN:
   switchSuccessful: "Đã chuyển đổi hồ sơ thành công"
   switchFailed: "Không thể chuyển đổi hồ sơ"
   switchFailedWithError: "Không thể chuyển đổi hồ sơ: {error}"
-  reconnecting: "Đang cố gắng kết nối lại..."
 
 af_ZA:
   serverDownTitle: "Bediener nie beskikbaar nie"
@@ -487,7 +448,6 @@ af_ZA:
   switchSuccessful: "Profiel suksesvol verander"
   switchFailed: "Kon nie profiel verander nie"
   switchFailedWithError: "Kon nie profiel verander nie: {error}"
-  reconnecting: "Probeer tans om weer te koppel …"
 
 am_ET:
   serverDownTitle: "አገልጋይ የለም።"
@@ -499,7 +459,6 @@ am_ET:
   switchSuccessful: "መገለጫ በተሳካ ሁኔታ ተቀይሯል።"
   switchFailed: "መገለጫ መቀየር አልተሳካም።"
   switchFailedWithError: "መገለጫ መቀየር አልተሳካም፦ {error}"
-  reconnecting: "ዳግም ለመገናኘት በመሞከር ላይ..."
 
 az_AZ:
   serverDownTitle: "Server əlçatan deyil"
@@ -511,7 +470,6 @@ az_AZ:
   switchSuccessful: "Profil uğurla dəyişdirildi"
   switchFailed: "Profili dəyişmək alınmadı"
   switchFailedWithError: "Profili dəyişmək alınmadı: {error}"
-  reconnecting: "Yenidən qoşulmağa cəhd edilir..."
 
 et_EE:
   serverDownTitle: "Server pole saadaval"
@@ -523,7 +481,6 @@ et_EE:
   switchSuccessful: "Profiili vahetamine õnnestus"
   switchFailed: "Profiili vahetamine ebaõnnestus"
   switchFailedWithError: "Profiili vahetamine ebaõnnestus: {error}"
-  reconnecting: "Ühenduse taastamise katse..."
 
 gu_IN:
   serverDownTitle: "સર્વર અનુપલબ્ધ"
@@ -535,7 +492,6 @@ gu_IN:
   switchSuccessful: "પ્રોફાઇલ સફળતાપૂર્વક સ્વિચ કરી"
   switchFailed: "પ્રોફાઇલ સ્વિચ કરવામાં નિષ્ફળ"
   switchFailedWithError: "પ્રોફાઇલ સ્વિચ કરવામાં નિષ્ફળ: {error}"
-  reconnecting: "ફરીથી કનેક્ટ કરવાનો પ્રયાસ કરી રહ્યાં છીએ..."
 
 ha_NG:
   serverDownTitle: "Babu Sabar"
@@ -547,7 +503,6 @@ ha_NG:
   switchSuccessful: "An yi nasarar sauya bayanin martaba"
   switchFailed: "An kasa canza bayanin martaba"
   switchFailedWithError: "An kasa canza bayanin martaba: {error}"
-  reconnecting: "Ana ƙoƙarin sake haɗawa..."
 
 ka_GE:
   serverDownTitle: "სერვერი მიუწვდომელია"
@@ -559,7 +514,6 @@ ka_GE:
   switchSuccessful: "პროფილი წარმატებით შეიცვალა"
   switchFailed: "პროფილის გადართვა ვერ მოხერხდა"
   switchFailedWithError: "პროფილის გადართვა ვერ მოხერხდა: {error}"
-  reconnecting: "ხელახლა დაკავშირების მცდელობა..."
 
 km_KH:
   serverDownTitle: "ម៉ាស៊ីនមេមិនអាចប្រើបានទេ។"
@@ -571,7 +525,6 @@ km_KH:
   switchSuccessful: "បានប្តូរទម្រង់ដោយជោគជ័យ"
   switchFailed: "បានបរាជ័យក្នុងការប្តូរទម្រង់"
   switchFailedWithError: "បរាជ័យក្នុងការផ្លាស់ប្តូរទម្រង់៖ {error}"
-  reconnecting: "កំពុងព្យាយាមភ្ជាប់ឡើងវិញ..."
 
 kn_IN:
   serverDownTitle: "ಸರ್ವರ್ ಲಭ್ಯವಿಲ್ಲ"
@@ -583,7 +536,6 @@ kn_IN:
   switchSuccessful: "ಪ್ರೊಫೈಲ್ ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಯಿಸಲಾಗಿದೆ"
   switchFailed: "ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ"
   switchFailedWithError: "ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ: {error}"
-  reconnecting: "ಮರುಸಂಪರ್ಕಿಸಲು ಪ್ರಯತ್ನಿಸಲಾಗುತ್ತಿದೆ..."
 
 lt_LT:
   serverDownTitle: "Serveris nepasiekiamas"
@@ -595,7 +547,6 @@ lt_LT:
   switchSuccessful: "Sėkmingai perjungtas profilis"
   switchFailed: "Nepavyko perjungti profilio"
   switchFailedWithError: "Nepavyko perjungti profilio: {error}"
-  reconnecting: "Bandoma vėl prisijungti..."
 
 lv_LV:
   serverDownTitle: "Serveris nav pieejams"
@@ -607,7 +558,6 @@ lv_LV:
   switchSuccessful: "Profils ir veiksmīgi pārslēgts"
   switchFailed: "Neizdevās pārslēgt profilu"
   switchFailedWithError: "Neizdevās pārslēgt profilu: {error}"
-  reconnecting: "Mēģina atkārtoti izveidot savienojumu..."
 
 ml_IN:
   serverDownTitle: "സെർവർ ലഭ്യമല്ല"
@@ -619,7 +569,6 @@ ml_IN:
   switchSuccessful: "പ്രൊഫൈൽ മാറ്റി"
   switchFailed: "പ്രൊഫൈൽ മാറുന്നതിൽ പരാജയപ്പെട്ടു"
   switchFailedWithError: "പ്രൊഫൈൽ മാറുന്നതിൽ പരാജയപ്പെട്ടു: {error}"
-  reconnecting: "വീണ്ടും ബന്ധിപ്പിക്കാൻ ശ്രമിക്കുന്നു..."
 
 mr_IN:
   serverDownTitle: "सर्व्हर अनुपलब्ध"
@@ -631,7 +580,6 @@ mr_IN:
   switchSuccessful: "प्रोफाइल यशस्वीरित्या स्विच केले"
   switchFailed: "प्रोफाइल स्विच करण्यात अयशस्वी"
   switchFailedWithError: "प्रोफाइल स्विच करण्यात अयशस्वी: {error}"
-  reconnecting: "पुन्हा कनेक्ट करण्याचा प्रयत्न करत आहे..."
 
 ne_NP:
   serverDownTitle: "सर्भर उपलब्ध छैन"
@@ -643,7 +591,6 @@ ne_NP:
   switchSuccessful: "प्रोफाइल सफलतापूर्वक बदलियो"
   switchFailed: "प्रोफाइल स्विच गर्न असफल भयो"
   switchFailedWithError: "प्रोफाइल स्विच गर्न असफल: {error}"
-  reconnecting: "पुन: जडान गर्ने प्रयास गर्दै..."
 
 pa_IN:
   serverDownTitle: "ਸਰਵਰ ਉਪਲਬਧ ਨਹੀਂ ਹੈ"
@@ -655,7 +602,6 @@ pa_IN:
   switchSuccessful: "ਪ੍ਰੋਫਾਈਲ ਨੂੰ ਸਫਲਤਾਪੂਰਵਕ ਬਦਲਿਆ ਗਿਆ"
   switchFailed: "ਪ੍ਰੋਫਾਈਲ ਬਦਲਣਾ ਅਸਫਲ ਰਿਹਾ"
   switchFailedWithError: "ਪ੍ਰੋਫਾਈਲ ਨੂੰ ਬਦਲਣ ਵਿੱਚ ਅਸਫਲ: {error}"
-  reconnecting: "ਮੁੜ ਕਨੈਕਟ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ..."
 
 si_LK:
   serverDownTitle: "සේවාදායකය නොමැත"
@@ -667,7 +613,6 @@ si_LK:
   switchSuccessful: "පැතිකඩ සාර්ථකව මාරු විය"
   switchFailed: "පැතිකඩ මාරු කිරීමට අසමත් විය"
   switchFailedWithError: "පැතිකඩ මාරු කිරීමට අසමත් විය: {error}"
-  reconnecting: "නැවත සම්බන්ධ වීමට උත්සාහ කරමින්..."
 
 sl_SI:
   serverDownTitle: "Strežnik ni na voljo"
@@ -679,7 +624,6 @@ sl_SI:
   switchSuccessful: "Profil je bil uspešno zamenjan"
   switchFailed: "Preklop profila ni uspel"
   switchFailedWithError: "Preklop profila ni uspel: {error}"
-  reconnecting: "Poskus ponovne povezave ..."
 
 sr_RS:
   serverDownTitle: "Сервер недоступан"
@@ -691,7 +635,6 @@ sr_RS:
   switchSuccessful: "Профил је промењен"
   switchFailed: "Промена профила није успела"
   switchFailedWithError: "Промена профила није успела: {error}"
-  reconnecting: "Покушај поновног повезивања..."
 
 te_IN:
   serverDownTitle: "సర్వర్ అందుబాటులో లేదు"
@@ -703,7 +646,6 @@ te_IN:
   switchSuccessful: "ప్రొఫైల్ విజయవంతంగా మార్చబడింది"
   switchFailed: "ప్రొఫైల్ మారడం విఫలమైంది"
   switchFailedWithError: "ప్రొఫైల్‌ని మార్చడంలో విఫలమైంది: {error}"
-  reconnecting: "మళ్లీ కనెక్ట్ చేయడానికి ప్రయత్నిస్తోంది..."
 
 tl_PH:
   serverDownTitle: "Hindi Available ang Server"
@@ -715,7 +657,6 @@ tl_PH:
   switchSuccessful: "Matagumpay na napalitan ang profile"
   switchFailed: "Nabigong lumipat ng profile"
   switchFailedWithError: "Nabigong lumipat ng profile: {error}"
-  reconnecting: "Sinusubukang kumonekta muli..."
 
 uz_UZ:
   serverDownTitle: "Server mavjud emas"
@@ -727,7 +668,6 @@ uz_UZ:
   switchSuccessful: "Profil muvaffaqiyatli almashtirildi"
   switchFailed: "Profilni almashtirib bo‘lmadi"
   switchFailedWithError: "Profilni almashtirib bo‘lmadi: {error}"
-  reconnecting: "Qayta ulanishga urinish..."
 
 yo_NG:
   serverDownTitle: "Ko si olupin"
@@ -739,4 +679,3 @@ yo_NG:
   switchSuccessful: "Ni aṣeyọri yipada profaili"
   switchFailed: "O kuna lati yi profaili pada"
   switchFailedWithError: "Kuna lati yi profaili pada: {error}"
-  reconnecting: "Ngbiyanju lati tun sopọ..."

@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import {useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
+import {useLazyQuery, useQuery} from "@apollo/client/react";
 import {
     Badge,
     Button,
-    Checkbox,
     cn,
-    Input,
-    Label,
     SearchInput,
-    Separator,
     SheetTitle,
     StackList,
     StackListItem,
@@ -36,26 +32,20 @@ import {
     Tabs,
     TabsList,
     TabsTrigger,
-    toast,
     VirtualizedTableBody
 } from '@clidey/ux';
-import {TypeSelector} from "../../components/type-selector";
-import {findColumnTypeDefinition} from "../../utils/source-column-types";
 import {
-    AddStorageUnitDocument,
     DataShape,
     GetColumnsBatchDocument,
     GetGraphQuery,
     GetStorageUnitsQuery,
     GetStorageUnitsDocument,
-    RecordInput,
     SourceSchemaFidelity,
     SourceAction,
 } from '@graphql';
 import {
     ArrowPathRoundedSquareIcon,
     Bars3Icon,
-    CheckCircleIcon,
     CircleStackIcon,
     CommandLineIcon,
     InformationCircleIcon,
@@ -63,10 +53,8 @@ import {
     PlusCircleIcon,
     Squares2X2Icon,
     TableCellsIcon,
-    XCircleIcon,
     XMarkIcon
 } from '../../components/heroicons';
-import classNames from "classnames";
 import {FC, useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
@@ -84,6 +72,7 @@ import {useTranslation} from '../../hooks/use-translation';
 import {buildSourceParentObjectRef, buildSourceParentRef} from '../../utils/source-refs';
 import {formatAttributeValue} from '../../utils/functions';
 import { findSourceObjectType, type SourceTypeItem } from '../../config/source-types';
+import { CreateSourceObjectCard } from './create-source-object-card';
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
 
@@ -293,22 +282,17 @@ export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
     const [searchParams,] = useSearchParams();
     const [create, setCreate] = useState(searchParams.get("create") === "true");
-    const [storageUnitName, setStorageUnitName] = useState("");
-    const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "", Extra: [] }]);
     const [error, setError] = useState<string>();
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const {
         item,
-        isNoSQL,
         singularStorageUnitLabel,
         storageUnitLabel,
-        supportsModifiers,
         supportsScratchpad,
         usesDatabaseInsteadOfSchema,
     } = useSourceContract(current?.Type);
     const view = useAppSelector(state => state.settings.storageUnitView);
-    const [addStorageUnit,] = useMutation(AddStorageUnitDocument);
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
     const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: any[] } | null>(null);
     const [expandedUnitColumnsLoading, setExpandedUnitColumnsLoading] = useState(false);
@@ -408,76 +392,6 @@ export const StorageUnitPage: FC = () => {
         });
     }, [create, current?.Type, trackFrontendEvent]);
 
-    const handleSubmit = useCallback(() => {
-        if (storageUnitName.length === 0) {
-            return setError(t('nameRequired'));
-        }
-        if (!isNoSQL && fields.some(field => field.Key.length === 0 || field.Value.length === 0)) {
-            return setError(t('fieldsCannotBeEmpty'));
-        }
-        setError(undefined);
-        addStorageUnit({
-            variables: {
-                parent: parentRef,
-                storageUnit: storageUnitName,
-                fields,
-            },
-            onCompleted() {
-                const message = t('createSuccessMessage').replace('{storageUnit}', `${singularStorageUnitLabel} ${storageUnitName}`);
-                toast.success(message);
-                void trackFrontendEvent('ui.storage_unit_created', {
-                    database_type: current?.Type ?? 'unknown',
-                    field_count: fields.length,
-                });
-                setStorageUnitName("");
-                setFields([]);
-                refetch();
-                setCreate(false);
-            },
-            onError(e) {
-                toast.error(e.message);
-            },
-        });
-    }, [addStorageUnit, current?.Type, fields, isNoSQL, parentRef, refetch, singularStorageUnitLabel, storageUnitName, t, trackFrontendEvent]);
-
-    const handleAddField = useCallback(() => {
-        setFields(f => [...f, { Key: "", Value: "", Extra: [] }]);
-        void trackFrontendEvent('ui.storage_unit_field_added', {
-            database_type: current?.Type ?? 'unknown',
-        });
-    }, [current?.Type, trackFrontendEvent]);
-
-    const handleFieldValueChange = useCallback((type: string, index: number, value: string | boolean) => {
-        setFields(f => {
-            const newF = structuredClone(f);
-            if (type === "Key" || type === "Value") {
-                newF[index][type] = value as string;
-            } else {
-                if (newF[index].Extra == null) {
-                    newF[index].Extra = [];
-                }
-                const extraIndex = newF[index].Extra.findIndex(extra => extra.Key === type);
-                if (value && extraIndex === -1) {
-                    newF[index].Extra = [...newF[index].Extra, { Key: type, Value: "true" }];
-                } else {
-                    newF[index].Extra = newF[index].Extra.filter((_, i) => i !== extraIndex);
-                }
-            }
-            return newF;
-        });
-    }, []);
-
-    const handleRemove = useCallback((index: number) => {
-        if (fields.length <= 1) {
-            return;
-        }
-        setFields(f => {
-            const newF = [...f];
-            newF.splice(index, 1);
-            return newF;
-        })
-    }, [fields.length]);
-
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
         return storageUnits.filter(unit => (unit.Name ?? "").toLowerCase().includes(lowerCaseFilterValue))
@@ -488,10 +402,6 @@ export const StorageUnitPage: FC = () => {
                 return (a.Name ?? "").localeCompare(b.Name ?? "");
             });
     }, [filterValue, storageUnits]);
-
-    const showModifiers = useMemo(() => {
-        return supportsModifiers;
-    }, [supportsModifiers]);
 
     const handleOpenUnit = useCallback((unit: SourceBrowserObject) => {
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
@@ -590,80 +500,14 @@ export const StorageUnitPage: FC = () => {
                         <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
                     </Button>
                 </div>
-                <div className="flex grow flex-col my-2 gap-4">
-                    <div className="flex flex-col gap-4">
-                        <SheetTitle className="flex items-center gap-2">
-                            <PlusCircleIcon className="w-5 h-5" />
-                            {t('createTitle', { storageUnit: singularStorageUnitLabel })}
-                        </SheetTitle>
-                        <div className="flex flex-col gap-2">
-                            <Label>{t('nameLabel')}</Label>
-                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder={t('namePlaceholder')} />
-                        </div>
-                        <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
-                            "hidden": isNoSQL,
-                        })}>
-                            <div className="flex flex-col gap-4">
-                                {
-                                    fields.map((field, index) => (
-                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
-                                            <Label>{t('fieldNameLabel')}</Label>
-                                            <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder={t('fieldNamePlaceholder')}/>
-                                            <Label>{t('fieldTypeLabel')}</Label>
-                                            <TypeSelector
-                                                sourceType={current?.Type}
-                                                value={field.Value}
-                                                onChange={value => handleFieldValueChange("Value", index, value)}
-                                                placeholder={t('fieldTypePlaceholder')}
-                                                searchPlaceholder={t('searchTypePlaceholder')}
-                                                buttonProps={{
-                                                    "data-testid": `field-type-${index}`,
-                                                }}
-                                            />
-
-                                            {(() => {
-                                                const typeDef = current?.Type && field.Value
-                                                    ? findColumnTypeDefinition(field.Value, current.Type)
-                                                    : undefined;
-                                                return typeDef?.tableModel ? (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {t('aggregateKeyHint')}
-                                                    </p>
-                                                ) : null;
-                                            })()}
-
-                                            {showModifiers && (
-                                                <>
-                                                    <Label>{t('modifiersLabel')}</Label>
-                                                    <div className="flex items-center w-1/3 justify-start gap-2">
-                                                        <Checkbox checked={field.Extra?.find(extra => extra.Key === "Primary") != null} onCheckedChange={() => handleFieldValueChange("Primary", index, !field.Extra?.find(extra => extra.Key === "Primary") != null)}/>
-                                                        <Label>{t('primaryModifier')}</Label>
-                                                        <Checkbox checked={field.Extra?.find(extra => extra.Key === "Nullable") != null} onCheckedChange={() => handleFieldValueChange("Nullable", index, !field.Extra?.find(extra => extra.Key === "Nullable") != null)}/>
-                                                        <Label>{t('nullableModifier')}</Label>
-                                                    </div>
-                                                </>
-                                            )}
-                                            {
-                                                fields.length > 1 &&
-                                                <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XCircleIcon className="w-4 h-4"/> <span>{t('remove')}</span>
-                                                </Button>
-                                            }
-                                            {index !== fields.length - 1 && <Separator className="mt-2" />}
-                                        </div>
-                                    ))
-                                } 
-                            </div>
-                            <Button className="self-end" onClick={handleAddField} data-testid="add-field-button" variant="secondary">
-                                <PlusCircleIcon  className='w-4 h-4' /> {t('addField')}
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="flex grow" />
-                    <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        <CheckCircleIcon className="w-4 h-4" /> {t('create')}
-                    </Button>
-                </div>
+                <CreateSourceObjectCard
+                    databaseType={current?.Type}
+                    parentRef={parentRef}
+                    singularStorageUnitLabel={singularStorageUnitLabel}
+                    onCreated={refetch}
+                    onErrorChange={setError}
+                    onClose={() => setCreate(false)}
+                />
             </ExpandableCard>}
             {
                 storageUnits.length > 0 && filterStorageUnits.map(unit => (

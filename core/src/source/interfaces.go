@@ -82,6 +82,13 @@ type ColumnConstraintReader interface {
 	ColumnConstraints(ctx context.Context, ref ObjectRef) (map[string]map[string]any, error)
 }
 
+// FieldConstraintReader loads normalized source-level field constraints for one
+// object.
+type FieldConstraintReader interface {
+	// FieldConstraints returns normalized constraints for one source object.
+	FieldConstraints(ctx context.Context, ref ObjectRef) ([]FieldConstraints, error)
+}
+
 // ContentReader reads blob/text content from a source object.
 type ContentReader interface {
 	// ReadContent returns a content payload for the provided object reference.

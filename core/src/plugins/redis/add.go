@@ -31,6 +31,19 @@ import (
 // determines the Redis data structure: string, hash, list, set, or zset.
 // If no type is specified, defaults to "string".
 func (p *RedisPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
+	return p.createStorageUnitFromRecords(config, storageUnit, fields)
+}
+
+// CreateStorageUnit creates a Redis key from a normalized object definition.
+func (p *RedisPlugin) CreateStorageUnit(config *engine.PluginConfig, schema string, definition engine.ObjectDefinition) (bool, error) {
+	fields := engine.ObjectDefinitionToRecords(definition)
+	if len(fields) == 0 && definition.TableOptions["type"] != "" {
+		fields = []engine.Record{{Extra: map[string]string{"type": definition.TableOptions["type"]}}}
+	}
+	return p.createStorageUnitFromRecords(config, definition.Name, fields)
+}
+
+func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, storageUnit string, fields []engine.Record) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		return false, err

@@ -49,6 +49,93 @@ function schemaFieldTypes(db, key, defaults) {
     return db.schemaManagement?.fieldTypes?.[key] ?? defaults;
 }
 
+function waitForCreateSourceObjectFromDefinition(page) {
+    const responsePromise = page.waitForResponse(
+        resp =>
+            resp.url().includes('/api/query') &&
+            resp.request().postDataJSON?.()?.operationName === 'CreateSourceObjectFromDefinition',
+        { timeout: 30000 }
+    );
+
+    return async () => {
+        const response = await responsePromise;
+        const result = await response.json();
+        expect(result.errors, 'CreateSourceObjectFromDefinition mutation should succeed').toBeUndefined();
+        return {
+            result,
+            variables: response.request().postDataJSON?.()?.variables ?? {},
+            headers: response.request().headers(),
+        };
+    };
+}
+
+function createdObjectRef(parentRef, objectName) {
+    return {
+        Kind: 'Table',
+        Path: [...(parentRef?.Path ?? []), objectName],
+    };
+}
+
+async function querySourceFieldConstraints(page, ref, requestHeaders = {}) {
+    const authorization = requestHeaders.authorization ?? requestHeaders.Authorization;
+    const result = await page.evaluate(async ({ ref, authorization }) => {
+        const headers = { 'content-type': 'application/json' };
+        if (authorization) {
+            headers.authorization = authorization;
+        }
+        const response = await fetch(`${window.location.origin}/api/query`, {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: JSON.stringify({
+                operationName: 'SourceFieldConstraints',
+                variables: { ref },
+                query: `query SourceFieldConstraints($ref: SourceObjectRefInput!) {
+                    SourceFieldConstraints(ref: $ref) {
+                        Name
+                        Type
+                        Nullable
+                        Primary
+                        Unique
+                        Identity
+                        DefaultValue
+                        AllowedValues
+                        CheckMin
+                        CheckMax
+                        ForeignKey {
+                            Table
+                            Column
+                        }
+                        Length
+                        Precision
+                        Scale
+                    }
+                }`,
+            }),
+        });
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch {
+            throw new Error(`SourceFieldConstraints HTTP ${response.status}: ${text}`);
+        }
+    }, { ref, authorization });
+
+    expect(result.errors, 'SourceFieldConstraints query should succeed').toBeUndefined();
+    return result.data.SourceFieldConstraints;
+}
+
+async function setModifierIfPresent(field, labelPattern) {
+    const label = field.locator('label').filter({ hasText: labelPattern }).first();
+    if (await label.count() === 0) {
+        return false;
+    }
+    const button = label.locator('xpath=preceding-sibling::button[1]');
+    await button.click();
+    await expect(button).toHaveAttribute('data-state', 'checked');
+    return true;
+}
+
 /**
  * Schema/Table Management Tests
  *
@@ -154,7 +241,7 @@ test.describe('Schema Management', () => {
                     for (let i = 0; i < count; i++) {
                         const field = fieldCards.nth(i);
                         // Field name input exists
-                        await expect(field.locator('input')).toBeAttached();
+                        await expect(field.locator('input').first()).toBeAttached();
                         // Field type selector button exists
                         await expect(field.locator('button[data-testid^="field-type-"]')).toBeAttached();
                     }
@@ -229,19 +316,16 @@ test.describe('Schema Management', () => {
                     const hasPrimaryLabel = await firstField.locator('label').filter({ hasText: /primary/i }).count();
 
                     if (hasPrimaryLabel > 0) {
-                        // Database supports modifiers
-                        // Primary key checkbox should be visible
                         await expect(firstField.locator('label').filter({ hasText: /primary/i })).toBeVisible();
-
-                        // Nullable checkbox should be visible
                         await expect(firstField.locator('label').filter({ hasText: /nullable/i })).toBeVisible();
+                        await expect(firstField.locator('label').filter({ hasText: /unique/i })).toBeVisible();
+                        await expect(firstField.locator('label').filter({ hasText: /identity/i })).toBeVisible();
+                        await expect(firstField.locator('input[placeholder*="default" i]')).toBeVisible();
 
-                        // Check the Primary checkbox (click the button preceding the label)
                         const primaryLabel = firstField.locator('label').filter({ hasText: /primary/i });
                         const primaryButton = primaryLabel.locator('xpath=preceding-sibling::button[1]');
                         await primaryButton.click();
 
-                        // Verify checkbox is checked (has data-state="checked")
                         await expect(primaryButton).toHaveAttribute('data-state', 'checked');
                     }
                     // If no primary label, database doesn't support modifiers - skip silently
@@ -319,6 +403,7 @@ test.describe('Schema Management', () => {
                     await firstField.locator('button[data-testid^="field-type-"]').click();
 
                     await selectFieldType(page, schemaFieldTypes(db, 'integer', ['integer', 'int']));
+                    const primarySelected = await setModifierIfPresent(firstField, /primary/i);
 
                     // Add second field: name (text/varchar)
                     await page.locator('[data-testid="add-field-button"]').click();
@@ -332,11 +417,11 @@ test.describe('Schema Management', () => {
 
                     await selectFieldType(page, schemaFieldTypes(db, 'string', ['varchar', 'string', 'text']));
 
-                    const verifyCreate = waitForMutation(page, 'AddStorageUnit');
+                    const verifyCreate = waitForCreateSourceObjectFromDefinition(page);
 
                     // Submit the form
                     await page.locator('[data-testid="submit-button"]').click();
-                    await verifyCreate();
+                    const createRequest = await verifyCreate();
 
                     await page.goto(whodb.url('/storage-unit'));
                     await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
@@ -344,6 +429,22 @@ test.describe('Schema Management', () => {
                     await expect(
                         page.locator('[data-testid="storage-unit-card"]').filter({ hasText: uniqueTableName })
                     ).toBeAttached({ timeout: 10000 });
+
+                    const constraints = await querySourceFieldConstraints(
+                        page,
+                        createdObjectRef(createRequest.variables.parent, uniqueTableName),
+                        createRequest.headers
+                    );
+                    const idConstraints = constraints.find(field => field.Name.toLowerCase() === 'id');
+                    const nameConstraints = constraints.find(field => field.Name.toLowerCase() === 'name');
+
+                    expect(idConstraints, 'created id field constraints should be returned').toBeTruthy();
+                    expect(nameConstraints, 'created name field constraints should be returned').toBeTruthy();
+                    expect(idConstraints.Type, 'id field type should be returned').toBeTruthy();
+                    expect(nameConstraints.Type, 'name field type should be returned').toBeTruthy();
+                    if (primarySelected) {
+                        expect(idConstraints.Primary, 'id primary key constraint should round-trip').toBe(true);
+                    }
                 });
 
                 test('new table appears in storage unit list after creation', async ({ whodb, page }) => {
@@ -375,7 +476,7 @@ test.describe('Schema Management', () => {
 
                     await selectFieldType(page, schemaFieldTypes(db, 'integer', ['integer', 'int']));
 
-                    const verifyCreate = waitForMutation(page, 'AddStorageUnit');
+                    const verifyCreate = waitForMutation(page, 'CreateSourceObjectFromDefinition');
 
                     // Submit
                     await page.locator('[data-testid="submit-button"]').click();

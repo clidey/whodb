@@ -1,0 +1,5 @@
+mutation CreateSourceObjectFromDefinition($parent: SourceObjectRefInput, $definition: SourceObjectDefinitionInput!) {
+  CreateSourceObjectFromDefinition(parent: $parent, definition: $definition) {
+    Status
+  }
+}

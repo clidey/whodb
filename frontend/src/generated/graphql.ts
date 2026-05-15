@@ -167,6 +167,34 @@ export type Column = {
   Type: Scalars['String']['output'];
 };
 
+export type ColumnCreationCapabilities = {
+  __typename?: 'ColumnCreationCapabilities';
+  CheckMinMax: Scalars['Boolean']['output'];
+  CheckValues: Scalars['Boolean']['output'];
+  CompositePrimaryKey: Scalars['Boolean']['output'];
+  DefaultValue: Scalars['Boolean']['output'];
+  ForeignKey: Scalars['Boolean']['output'];
+  Identity: Scalars['Boolean']['output'];
+  Nullable: Scalars['Boolean']['output'];
+  PrimaryKey: Scalars['Boolean']['output'];
+  Types: Scalars['Boolean']['output'];
+  Unique: Scalars['Boolean']['output'];
+};
+
+export type ColumnDefinitionInput = {
+  CheckMax?: InputMaybe<Scalars['Float']['input']>;
+  CheckMin?: InputMaybe<Scalars['Float']['input']>;
+  CheckValues?: InputMaybe<Array<Scalars['String']['input']>>;
+  DefaultValue?: InputMaybe<Scalars['String']['input']>;
+  ForeignKey?: InputMaybe<ForeignKeyDefinitionInput>;
+  Identity: Scalars['Boolean']['input'];
+  Name: Scalars['String']['input'];
+  Nullable?: InputMaybe<Scalars['Boolean']['input']>;
+  Primary: Scalars['Boolean']['input'];
+  Type: Scalars['String']['input'];
+  Unique: Scalars['Boolean']['input'];
+};
+
 export enum ConnectionStatus {
   Available = 'Available',
   Deleting = 'Deleting',
@@ -175,6 +203,14 @@ export enum ConnectionStatus {
   Stopped = 'Stopped',
   Unknown = 'Unknown'
 }
+
+export type CreationOptionDefinition = {
+  __typename?: 'CreationOptionDefinition';
+  Key: Scalars['String']['output'];
+  Label: Scalars['String']['output'];
+  Required: Scalars['Boolean']['output'];
+  Values: Array<Scalars['String']['output']>;
+};
 
 export enum DataShape {
   Content = 'Content',
@@ -194,6 +230,17 @@ export type DiscoveredConnection = {
   Region?: Maybe<Scalars['String']['output']>;
   SourceType: Scalars['String']['output'];
   Status: ConnectionStatus;
+};
+
+export type ForeignKeyDefinition = {
+  __typename?: 'ForeignKeyDefinition';
+  Column: Scalars['String']['output'];
+  Table: Scalars['String']['output'];
+};
+
+export type ForeignKeyDefinitionInput = {
+  Column: Scalars['String']['input'];
+  Table: Scalars['String']['input'];
 };
 
 export type GcpProvider = CloudProvider & {
@@ -396,6 +443,7 @@ export type Mutation = {
   AddGCPProvider: GcpProvider;
   AddSourceRow: StatusResponse;
   CreateSourceObject: StatusResponse;
+  CreateSourceObjectFromDefinition: StatusResponse;
   DeleteSourceRow: StatusResponse;
   ExecuteConfirmedSQL: AiChatMessage;
   GenerateAzureADToken: Scalars['String']['output'];
@@ -450,6 +498,12 @@ export type MutationAddSourceRowArgs = {
 export type MutationCreateSourceObjectArgs = {
   fields: Array<RecordInput>;
   name: Scalars['String']['input'];
+  parent?: InputMaybe<SourceObjectRefInput>;
+};
+
+
+export type MutationCreateSourceObjectFromDefinitionArgs = {
+  definition: SourceObjectDefinitionInput;
   parent?: InputMaybe<SourceObjectRefInput>;
 };
 
@@ -599,6 +653,17 @@ export type MutationUpdateSourceObjectArgs = {
   values: Array<RecordInput>;
 };
 
+export type ObjectCreationMetadata = {
+  __typename?: 'ObjectCreationMetadata';
+  ColumnCapabilities: ColumnCreationCapabilities;
+  ObjectKind: SourceObjectKind;
+  RequiresColumns: Scalars['Boolean']['output'];
+  Supported: Scalars['Boolean']['output'];
+  TableCapabilities: TableCreationCapabilities;
+  TableOptions: Array<CreationOptionDefinition>;
+  TypeDefinitions: Array<TypeDefinition>;
+};
+
 export type OperationWhereCondition = {
   Children: Array<WhereCondition>;
 };
@@ -631,9 +696,11 @@ export type Query = {
   SourceColumns: Array<Column>;
   SourceColumnsBatch: Array<SourceObjectColumns>;
   SourceContent?: Maybe<SourceContent>;
+  SourceFieldConstraints: Array<SourceFieldConstraints>;
   SourceFieldOptions: Array<Scalars['String']['output']>;
   SourceGraph: Array<GraphUnit>;
   SourceObject?: Maybe<SourceObject>;
+  SourceObjectCreationMetadata: ObjectCreationMetadata;
   SourceObjects: Array<SourceObject>;
   SourceProfiles: Array<SourceProfile>;
   SourceQuerySuggestions: Array<SourceQuerySuggestion>;
@@ -708,6 +775,11 @@ export type QuerySourceContentArgs = {
 };
 
 
+export type QuerySourceFieldConstraintsArgs = {
+  ref: SourceObjectRefInput;
+};
+
+
 export type QuerySourceFieldOptionsArgs = {
   fieldKey: Scalars['String']['input'];
   sourceType: Scalars['String']['input'];
@@ -722,6 +794,11 @@ export type QuerySourceGraphArgs = {
 
 export type QuerySourceObjectArgs = {
   ref: SourceObjectRefInput;
+};
+
+
+export type QuerySourceObjectCreationMetadataArgs = {
+  parent?: InputMaybe<SourceObjectRefInput>;
 };
 
 
@@ -902,6 +979,24 @@ export type SourceDiscoveryPrefill = {
   AdvancedDefaults: Array<SourceDiscoveryAdvancedDefault>;
 };
 
+export type SourceFieldConstraints = {
+  __typename?: 'SourceFieldConstraints';
+  AllowedValues: Array<Scalars['String']['output']>;
+  CheckMax?: Maybe<Scalars['Float']['output']>;
+  CheckMin?: Maybe<Scalars['Float']['output']>;
+  DefaultValue?: Maybe<Scalars['String']['output']>;
+  ForeignKey?: Maybe<ForeignKeyDefinition>;
+  Identity: Scalars['Boolean']['output'];
+  Length?: Maybe<Scalars['Int']['output']>;
+  Name: Scalars['String']['output'];
+  Nullable?: Maybe<Scalars['Boolean']['output']>;
+  Precision?: Maybe<Scalars['Int']['output']>;
+  Primary: Scalars['Boolean']['output'];
+  Scale?: Maybe<Scalars['Int']['output']>;
+  Type: Scalars['String']['output'];
+  Unique: Scalars['Boolean']['output'];
+};
+
 export enum SourceHostInputMode {
   Hostname = 'Hostname',
   HostnameOrUrl = 'HostnameOrURL',
@@ -950,6 +1045,12 @@ export type SourceObjectColumns = {
   __typename?: 'SourceObjectColumns';
   Columns: Array<Column>;
   Ref: SourceObjectRef;
+};
+
+export type SourceObjectDefinitionInput = {
+  Columns: Array<ColumnDefinitionInput>;
+  Name: Scalars['String']['input'];
+  TableOptions?: InputMaybe<Array<RecordInput>>;
 };
 
 export enum SourceObjectKind {
@@ -1105,6 +1206,15 @@ export type StorageUnitColumns = {
   __typename?: 'StorageUnitColumns';
   Columns: Array<Column>;
   StorageUnit: Scalars['String']['output'];
+};
+
+export type TableCreationCapabilities = {
+  __typename?: 'TableCreationCapabilities';
+  ClusteringKey: Scalars['Boolean']['output'];
+  KeyValueType: Scalars['Boolean']['output'];
+  OrderKey: Scalars['Boolean']['output'];
+  PartitionKey: Scalars['Boolean']['output'];
+  RequiresPrimaryKey: Scalars['Boolean']['output'];
 };
 
 export enum TypeCategory {
@@ -1585,6 +1695,14 @@ export type AddStorageUnitMutationVariables = Exact<{
 
 export type AddStorageUnitMutation = { __typename?: 'Mutation', AddStorageUnit: { __typename?: 'StatusResponse', Status: boolean } };
 
+export type CreateSourceObjectFromDefinitionMutationVariables = Exact<{
+  parent?: InputMaybe<SourceObjectRefInput>;
+  definition: SourceObjectDefinitionInput;
+}>;
+
+
+export type CreateSourceObjectFromDefinitionMutation = { __typename?: 'Mutation', CreateSourceObjectFromDefinition: { __typename?: 'StatusResponse', Status: boolean } };
+
 export type DeleteRowMutationVariables = Exact<{
   ref: SourceObjectRefInput;
   values: Array<RecordInput> | RecordInput;
@@ -1617,6 +1735,20 @@ export type GetSourceContentQueryVariables = Exact<{
 
 
 export type GetSourceContentQuery = { __typename?: 'Query', Content?: { __typename?: 'SourceContent', Text?: string | null, MIMEType: string, IsBinary: boolean, SizeBytes: string, Truncated: boolean, FileName: string, ModifiedAt?: string | null } | null };
+
+export type SourceFieldConstraintsQueryVariables = Exact<{
+  ref: SourceObjectRefInput;
+}>;
+
+
+export type SourceFieldConstraintsQuery = { __typename?: 'Query', SourceFieldConstraints: Array<{ __typename?: 'SourceFieldConstraints', Name: string, Type: string, Nullable?: boolean | null, Primary: boolean, Unique: boolean, Identity: boolean, DefaultValue?: string | null, AllowedValues: Array<string>, CheckMin?: number | null, CheckMax?: number | null, Length?: number | null, Precision?: number | null, Scale?: number | null, ForeignKey?: { __typename?: 'ForeignKeyDefinition', Table: string, Column: string } | null }> };
+
+export type SourceObjectCreationMetadataQueryVariables = Exact<{
+  parent?: InputMaybe<SourceObjectRefInput>;
+}>;
+
+
+export type SourceObjectCreationMetadataQuery = { __typename?: 'Query', SourceObjectCreationMetadata: { __typename?: 'ObjectCreationMetadata', Supported: boolean, ObjectKind: SourceObjectKind, RequiresColumns: boolean, TypeDefinitions: Array<{ __typename?: 'TypeDefinition', id: string, label: string, hasLength: boolean, hasPrecision: boolean, defaultLength?: number | null, defaultPrecision?: number | null, category: TypeCategory }>, ColumnCapabilities: { __typename?: 'ColumnCreationCapabilities', Types: boolean, Nullable: boolean, PrimaryKey: boolean, CompositePrimaryKey: boolean, Unique: boolean, Identity: boolean, DefaultValue: boolean, CheckValues: boolean, CheckMinMax: boolean, ForeignKey: boolean }, TableCapabilities: { __typename?: 'TableCreationCapabilities', RequiresPrimaryKey: boolean, PartitionKey: boolean, ClusteringKey: boolean, OrderKey: boolean, KeyValueType: boolean }, TableOptions: Array<{ __typename?: 'CreationOptionDefinition', Key: string, Label: string, Required: boolean, Values: Array<string> }> } };
 
 export type GetStorageUnitsQueryVariables = Exact<{
   parent?: InputMaybe<SourceObjectRefInput>;
@@ -1699,9 +1831,12 @@ export const SettingsConfigDocument = {"kind":"Document","definitions":[{"kind":
 export const UpdateSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"newSettings"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SettingsConfigInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"UpdateSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"newSettings"},"value":{"kind":"Variable","name":{"kind":"Name","value":"newSettings"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}}]}}]}}]} as unknown as DocumentNode<UpdateSettingsMutation, UpdateSettingsMutationVariables>;
 export const AddRowDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddRow"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"values"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RecordInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"AddRow"},"name":{"kind":"Name","value":"AddSourceRow"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}},{"kind":"Argument","name":{"kind":"Name","value":"values"},"value":{"kind":"Variable","name":{"kind":"Name","value":"values"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}}]}}]}}]} as unknown as DocumentNode<AddRowMutation, AddRowMutationVariables>;
 export const AddStorageUnitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddStorageUnit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parent"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"storageUnit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fields"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RecordInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"AddStorageUnit"},"name":{"kind":"Name","value":"CreateSourceObject"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parent"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parent"}}},{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"storageUnit"}}},{"kind":"Argument","name":{"kind":"Name","value":"fields"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fields"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}}]}}]}}]} as unknown as DocumentNode<AddStorageUnitMutation, AddStorageUnitMutationVariables>;
+export const CreateSourceObjectFromDefinitionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateSourceObjectFromDefinition"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parent"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"definition"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectDefinitionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"CreateSourceObjectFromDefinition"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parent"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parent"}}},{"kind":"Argument","name":{"kind":"Name","value":"definition"},"value":{"kind":"Variable","name":{"kind":"Name","value":"definition"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}}]}}]}}]} as unknown as DocumentNode<CreateSourceObjectFromDefinitionMutation, CreateSourceObjectFromDefinitionMutationVariables>;
 export const DeleteRowDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteRow"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"values"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RecordInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"DeleteRow"},"name":{"kind":"Name","value":"DeleteSourceRow"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}},{"kind":"Argument","name":{"kind":"Name","value":"values"},"value":{"kind":"Variable","name":{"kind":"Name","value":"values"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}}]}}]}}]} as unknown as DocumentNode<DeleteRowMutation, DeleteRowMutationVariables>;
 export const GetColumnsBatchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetColumnsBatch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"refs"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"ColumnsBatch"},"name":{"kind":"Name","value":"SourceColumnsBatch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"refs"},"value":{"kind":"Variable","name":{"kind":"Name","value":"refs"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"StorageUnit"},"name":{"kind":"Name","value":"Ref"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"Locator"}},{"kind":"Field","name":{"kind":"Name","value":"Path"}}]}},{"kind":"Field","name":{"kind":"Name","value":"Columns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Name"}},{"kind":"Field","name":{"kind":"Name","value":"Type"}},{"kind":"Field","name":{"kind":"Name","value":"IsPrimary"}},{"kind":"Field","name":{"kind":"Name","value":"IsForeignKey"}},{"kind":"Field","name":{"kind":"Name","value":"ReferencedTable"}},{"kind":"Field","name":{"kind":"Name","value":"ReferencedColumn"}},{"kind":"Field","name":{"kind":"Name","value":"Length"}},{"kind":"Field","name":{"kind":"Name","value":"Precision"}},{"kind":"Field","name":{"kind":"Name","value":"Scale"}}]}}]}}]}}]} as unknown as DocumentNode<GetColumnsBatchQuery, GetColumnsBatchQueryVariables>;
 export const GetStorageUnitRowsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStorageUnitRows"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"WhereCondition"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sort"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SortCondition"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pageSize"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pageOffset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"Row"},"name":{"kind":"Name","value":"SourceRows"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}},{"kind":"Argument","name":{"kind":"Name","value":"sort"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sort"}}},{"kind":"Argument","name":{"kind":"Name","value":"pageSize"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pageSize"}}},{"kind":"Argument","name":{"kind":"Name","value":"pageOffset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pageOffset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Columns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Type"}},{"kind":"Field","name":{"kind":"Name","value":"Name"}},{"kind":"Field","name":{"kind":"Name","value":"IsPrimary"}},{"kind":"Field","name":{"kind":"Name","value":"IsForeignKey"}},{"kind":"Field","name":{"kind":"Name","value":"ReferencedTable"}},{"kind":"Field","name":{"kind":"Name","value":"ReferencedColumn"}},{"kind":"Field","name":{"kind":"Name","value":"Length"}},{"kind":"Field","name":{"kind":"Name","value":"Precision"}},{"kind":"Field","name":{"kind":"Name","value":"Scale"}}]}},{"kind":"Field","name":{"kind":"Name","value":"Rows"}},{"kind":"Field","name":{"kind":"Name","value":"DisableUpdate"}},{"kind":"Field","name":{"kind":"Name","value":"TotalCount"}}]}}]}}]} as unknown as DocumentNode<GetStorageUnitRowsQuery, GetStorageUnitRowsQueryVariables>;
 export const GetSourceContentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSourceContent"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"Content"},"name":{"kind":"Name","value":"SourceContent"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Text"}},{"kind":"Field","name":{"kind":"Name","value":"MIMEType"}},{"kind":"Field","name":{"kind":"Name","value":"IsBinary"}},{"kind":"Field","name":{"kind":"Name","value":"SizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"Truncated"}},{"kind":"Field","name":{"kind":"Name","value":"FileName"}},{"kind":"Field","name":{"kind":"Name","value":"ModifiedAt"}}]}}]}}]} as unknown as DocumentNode<GetSourceContentQuery, GetSourceContentQueryVariables>;
+export const SourceFieldConstraintsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceFieldConstraints"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SourceFieldConstraints"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Name"}},{"kind":"Field","name":{"kind":"Name","value":"Type"}},{"kind":"Field","name":{"kind":"Name","value":"Nullable"}},{"kind":"Field","name":{"kind":"Name","value":"Primary"}},{"kind":"Field","name":{"kind":"Name","value":"Unique"}},{"kind":"Field","name":{"kind":"Name","value":"Identity"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"AllowedValues"}},{"kind":"Field","name":{"kind":"Name","value":"CheckMin"}},{"kind":"Field","name":{"kind":"Name","value":"CheckMax"}},{"kind":"Field","name":{"kind":"Name","value":"ForeignKey"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Table"}},{"kind":"Field","name":{"kind":"Name","value":"Column"}}]}},{"kind":"Field","name":{"kind":"Name","value":"Length"}},{"kind":"Field","name":{"kind":"Name","value":"Precision"}},{"kind":"Field","name":{"kind":"Name","value":"Scale"}}]}}]}}]} as unknown as DocumentNode<SourceFieldConstraintsQuery, SourceFieldConstraintsQueryVariables>;
+export const SourceObjectCreationMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SourceObjectCreationMetadata"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parent"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"SourceObjectCreationMetadata"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parent"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parent"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Supported"}},{"kind":"Field","name":{"kind":"Name","value":"ObjectKind"}},{"kind":"Field","name":{"kind":"Name","value":"RequiresColumns"}},{"kind":"Field","name":{"kind":"Name","value":"TypeDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"hasLength"}},{"kind":"Field","name":{"kind":"Name","value":"hasPrecision"}},{"kind":"Field","name":{"kind":"Name","value":"defaultLength"}},{"kind":"Field","name":{"kind":"Name","value":"defaultPrecision"}},{"kind":"Field","name":{"kind":"Name","value":"category"}}]}},{"kind":"Field","name":{"kind":"Name","value":"ColumnCapabilities"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Types"}},{"kind":"Field","name":{"kind":"Name","value":"Nullable"}},{"kind":"Field","name":{"kind":"Name","value":"PrimaryKey"}},{"kind":"Field","name":{"kind":"Name","value":"CompositePrimaryKey"}},{"kind":"Field","name":{"kind":"Name","value":"Unique"}},{"kind":"Field","name":{"kind":"Name","value":"Identity"}},{"kind":"Field","name":{"kind":"Name","value":"DefaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"CheckValues"}},{"kind":"Field","name":{"kind":"Name","value":"CheckMinMax"}},{"kind":"Field","name":{"kind":"Name","value":"ForeignKey"}}]}},{"kind":"Field","name":{"kind":"Name","value":"TableCapabilities"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"RequiresPrimaryKey"}},{"kind":"Field","name":{"kind":"Name","value":"PartitionKey"}},{"kind":"Field","name":{"kind":"Name","value":"ClusteringKey"}},{"kind":"Field","name":{"kind":"Name","value":"OrderKey"}},{"kind":"Field","name":{"kind":"Name","value":"KeyValueType"}}]}},{"kind":"Field","name":{"kind":"Name","value":"TableOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Label"}},{"kind":"Field","name":{"kind":"Name","value":"Required"}},{"kind":"Field","name":{"kind":"Name","value":"Values"}}]}}]}}]}}]} as unknown as DocumentNode<SourceObjectCreationMetadataQuery, SourceObjectCreationMetadataQueryVariables>;
 export const GetStorageUnitsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStorageUnits"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parent"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"StorageUnit"},"name":{"kind":"Name","value":"SourceObjects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parent"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parent"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Ref"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"Locator"}},{"kind":"Field","name":{"kind":"Name","value":"Path"}}]}},{"kind":"Field","name":{"kind":"Name","value":"Kind"}},{"kind":"Field","name":{"kind":"Name","value":"Name"}},{"kind":"Field","alias":{"kind":"Name","value":"Attributes"},"name":{"kind":"Name","value":"Metadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Key"}},{"kind":"Field","name":{"kind":"Name","value":"Value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"Actions"}},{"kind":"Field","name":{"kind":"Name","value":"HasChildren"}}]}}]}}]} as unknown as DocumentNode<GetStorageUnitsQuery, GetStorageUnitsQueryVariables>;
 export const UpdateStorageUnitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateStorageUnit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ref"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SourceObjectRefInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"values"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RecordInput"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"updatedColumns"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"UpdateStorageUnit"},"name":{"kind":"Name","value":"UpdateSourceObject"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ref"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ref"}}},{"kind":"Argument","name":{"kind":"Name","value":"values"},"value":{"kind":"Variable","name":{"kind":"Name","value":"values"}}},{"kind":"Argument","name":{"kind":"Name","value":"updatedColumns"},"value":{"kind":"Variable","name":{"kind":"Name","value":"updatedColumns"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"Status"}}]}}]}}]} as unknown as DocumentNode<UpdateStorageUnitMutation, UpdateStorageUnitMutationVariables>;

@@ -145,6 +145,28 @@ type Column {
   Scale: Int
 }
 
+type SourceFieldConstraints {
+  Name: String!
+  Type: String!
+  Nullable: Boolean
+  Primary: Boolean!
+  Unique: Boolean!
+  Identity: Boolean!
+  DefaultValue: String
+  AllowedValues: [String!]!
+  CheckMin: Float
+  CheckMax: Float
+  ForeignKey: ForeignKeyDefinition
+  Length: Int
+  Precision: Int
+  Scale: Int
+}
+
+type ForeignKeyDefinition {
+  Table: String!
+  Column: String!
+}
+
 type StorageUnitColumns {
     StorageUnit: String!
     Columns: [Column!]!
@@ -210,6 +232,69 @@ input RecordInput {
   Key: String!
   Value: String!
   Extra: [RecordInput!]
+}
+
+type ObjectCreationMetadata {
+  Supported: Boolean!
+  ObjectKind: SourceObjectKind!
+  RequiresColumns: Boolean!
+  TypeDefinitions: [TypeDefinition!]!
+  ColumnCapabilities: ColumnCreationCapabilities!
+  TableCapabilities: TableCreationCapabilities!
+  TableOptions: [CreationOptionDefinition!]!
+}
+
+type ColumnCreationCapabilities {
+  Types: Boolean!
+  Nullable: Boolean!
+  PrimaryKey: Boolean!
+  CompositePrimaryKey: Boolean!
+  Unique: Boolean!
+  Identity: Boolean!
+  DefaultValue: Boolean!
+  CheckValues: Boolean!
+  CheckMinMax: Boolean!
+  ForeignKey: Boolean!
+}
+
+type TableCreationCapabilities {
+  RequiresPrimaryKey: Boolean!
+  PartitionKey: Boolean!
+  ClusteringKey: Boolean!
+  OrderKey: Boolean!
+  KeyValueType: Boolean!
+}
+
+type CreationOptionDefinition {
+  Key: String!
+  Label: String!
+  Required: Boolean!
+  Values: [String!]!
+}
+
+input SourceObjectDefinitionInput {
+  Name: String!
+  Columns: [ColumnDefinitionInput!]!
+  TableOptions: [RecordInput!]
+}
+
+input ColumnDefinitionInput {
+  Name: String!
+  Type: String!
+  Nullable: Boolean
+  Primary: Boolean!
+  Unique: Boolean!
+  Identity: Boolean!
+  DefaultValue: String
+  CheckValues: [String!]
+  CheckMin: Float
+  CheckMax: Float
+  ForeignKey: ForeignKeyDefinitionInput
+}
+
+input ForeignKeyDefinitionInput {
+  Table: String!
+  Column: String!
 }
 
 input ImportFileOptions {
@@ -770,12 +855,14 @@ type Query {
   SourceTypes: [SourceType!]!
   SourceFieldOptions(sourceType: String!, fieldKey: String!, values: [RecordInput!]): [String!]!
   SourceSessionMetadata: SourceSessionMetadata
+  SourceObjectCreationMetadata(parent: SourceObjectRefInput): ObjectCreationMetadata!
   SourceObjects(parent: SourceObjectRefInput, kinds: [SourceObjectKind!]): [SourceObject!]!
   SourceObject(ref: SourceObjectRefInput!): SourceObject
   SourceRows(ref: SourceObjectRefInput!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
   SourceContent(ref: SourceObjectRefInput!): SourceContent
   SourceColumns(ref: SourceObjectRefInput!): [Column!]!
   SourceColumnsBatch(refs: [SourceObjectRefInput!]!): [SourceObjectColumns!]!
+  SourceFieldConstraints(ref: SourceObjectRefInput!): [SourceFieldConstraints!]!
   RunSourceQuery(query: String!): RowsResult!
   SourceGraph(ref: SourceObjectRefInput): [GraphUnit!]!
   AIProviders: [AIProvider!]!
@@ -831,6 +918,7 @@ type Mutation {
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 
   CreateSourceObject(parent: SourceObjectRefInput, name: String!, fields: [RecordInput!]!): StatusResponse!
+  CreateSourceObjectFromDefinition(parent: SourceObjectRefInput, definition: SourceObjectDefinitionInput!): StatusResponse!
   UpdateSourceObject(ref: SourceObjectRefInput!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddSourceRow(ref: SourceObjectRefInput!, values: [RecordInput!]!): StatusResponse!
   DeleteSourceRow(ref: SourceObjectRefInput!, values: [RecordInput!]!): StatusResponse!

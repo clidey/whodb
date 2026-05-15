@@ -126,8 +126,6 @@ ar_AE:
   confirmExecutionDescription: "ستقوم هذه العملية بتعديل قاعدة البيانات الخاصة بك. قم بالمراجعة والتأكيد للمتابعة."
   showQuery: "إظهار الاستعلام"
   hideQuery: "إخفاء الاستعلام"
-  True: "نعم"
-  False: "لا"
   executing: "جاري التنفيذ..."
   queryCancelled: "تم إلغاء الاستعلام"
   sendMessage: "أرسل رسالة"
@@ -187,6 +185,8 @@ ar_AE:
   example25: "قم بإدراج جميع المعاملات التي تم وضع علامة عليها للتدقيق في العام الماضي"
   example26: "تلخيص مشكلات الامتثال التي تم الإبلاغ عنها حسب المنطقة"
   example27: "عرض تقرير بجميع انتهاكات السياسة في الربع الأخير"
+  "yes": "نعم"
+  "no": "لا"
 
 de_DE:
   placeholder: "Geben Sie hier Ihre Nachricht ein..."
@@ -221,8 +221,6 @@ de_DE:
   confirmExecutionDescription: "Durch diesen Vorgang wird Ihre Datenbank geändert. Überprüfen und bestätigen Sie, um fortzufahren."
   showQuery: "Abfrage anzeigen"
   hideQuery: "Abfrage ausblenden"
-  True: "Ja"
-  False: "NEIN"
   executing: "Ausführen..."
   queryCancelled: "Abfrage abgebrochen"
   sendMessage: "Nachricht senden"
@@ -282,6 +280,8 @@ de_DE:
   example25: "Listen Sie alle Transaktionen auf, die im letzten Jahr zur Prüfung markiert wurden"
   example26: "Fassen Sie die nach Region gemeldeten Compliance-Probleme zusammen"
   example27: "Zeigen Sie einen Bericht aller Richtlinienverstöße im letzten Quartal an"
+  "yes": "Ja"
+  "no": "NEIN"
 
 el_GR:
   placeholder: "Πληκτρολογήστε το μήνυμά σας εδώ..."
@@ -316,8 +316,6 @@ el_GR:
   confirmExecutionDescription: "Αυτή η λειτουργία θα τροποποιήσει τη βάση δεδομένων σας. Ελέγξτε και επιβεβαιώστε για να συνεχίσετε."
   showQuery: "Εμφάνιση ερωτήματος"
   hideQuery: "Απόκρυψη ερωτήματος"
-  True: "Ναί"
-  False: "Οχι"
   executing: "Εκτέλεση..."
   queryCancelled: "Το ερώτημα ακυρώθηκε"
   sendMessage: "Αποστολή μηνύματος"
@@ -377,6 +375,8 @@ el_GR:
   example25: "Καταχωρίστε όλες τις συναλλαγές που επισημάνθηκαν για έλεγχο το τελευταίο έτος"
   example26: "Συνοψίστε ζητήματα συμμόρφωσης που αναφέρθηκαν ανά περιοχή"
   example27: "Εμφάνιση αναφοράς όλων των παραβιάσεων πολιτικής το τελευταίο τρίμηνο"
+  "yes": "Ναί"
+  "no": "Οχι"
 
 en_GB:
   placeholder: "Type Your Message Here..."
@@ -411,8 +411,6 @@ en_GB:
   confirmExecutionDescription: "This operation will modify your database. Review and confirm to proceed."
   showQuery: "Show Query"
   hideQuery: "Hide Query"
-  True: "Yes"
-  False: "No"
   executing: "Executing..."
   queryCancelled: "Query Cancelled"
   sendMessage: "Send message"
@@ -472,6 +470,8 @@ en_GB:
   example25: "List all transactions flagged for audit in the last year"
   example26: "Summarise compliance issues reported by region"
   example27: "Show a report of all policy violations in the last quarter"
+  "yes": "Yes"
+  "no": "No"
 
 es_ES:
   placeholder: "Escriba su mensaje aquí..."
@@ -506,8 +506,6 @@ es_ES:
   confirmExecutionDescription: "Esta operación modificará su base de datos. Revise y confirme para continuar."
   showQuery: "Mostrar consulta"
   hideQuery: "Ocultar consulta"
-  True: "Sí"
-  False: "No"
   executing: "Ejecutando..."
   queryCancelled: "Consulta cancelada"
   sendMessage: "enviar mensaje"
@@ -567,6 +565,8 @@ es_ES:
   example25: "Enumere todas las transacciones marcadas para auditoría en el último año"
   example26: "Resumir los problemas de cumplimiento informados por región"
   example27: "Mostrar un informe de todas las infracciones de políticas en el último trimestre"
+  "yes": "Sí"
+  "no": "No"
 
 fi_FI:
   placeholder: "Kirjoita viestisi tähän..."
@@ -601,8 +601,6 @@ fi_FI:
   confirmExecutionDescription: "Tämä toiminto muuttaa tietokantaasi. Tarkista ja vahvista jatkaaksesi."
   showQuery: "Näytä kysely"
   hideQuery: "Piilota kysely"
-  True: "Kyllä"
-  False: "Ei"
   executing: "Suoritetaan..."
   queryCancelled: "Kysely peruutettu"
   sendMessage: "Lähetä viesti"
@@ -662,6 +660,8 @@ fi_FI:
   example25: "Luettele kaikki tapahtumat, jotka on merkitty tarkastettavaksi viimeisen vuoden aikana"
   example26: "Tee yhteenveto raportoiduista vaatimustenmukaisuusongelmista alueittain"
   example27: "Näytä raportti kaikista viimeisen vuosineljänneksen sääntörikkomuksista"
+  "yes": "Kyllä"
+  "no": "Ei"
 
 fr_FR:
   placeholder: "Tapez votre message ici..."
@@ -696,8 +696,6 @@ fr_FR:
   confirmExecutionDescription: "Cette opération modifiera votre base de données. Vérifiez et confirmez pour continuer."
   showQuery: "Afficher la requête"
   hideQuery: "Masquer la requête"
-  True: "Oui"
-  False: "Non"
   executing: "Exécution..."
   queryCancelled: "Requête annulée"
   sendMessage: "Envoyer un message"
@@ -757,6 +755,8 @@ fr_FR:
   example25: "Répertoriez toutes les transactions signalées pour audit au cours de la dernière année"
   example26: "Résumer les problèmes de conformité signalés par région"
   example27: "Afficher un rapport sur toutes les violations des règles au cours du dernier trimestre"
+  "yes": "Oui"
+  "no": "Non"
 
 it_IT:
   placeholder: "Scrivi qui il tuo messaggio..."
@@ -791,8 +791,6 @@ it_IT:
   confirmExecutionDescription: "Questa operazione modificherà il tuo database. Rivedi e conferma per procedere."
   showQuery: "Mostra interrogazione"
   hideQuery: "Nascondi domanda"
-  True: "SÌ"
-  False: "NO"
   executing: "In esecuzione..."
   queryCancelled: "Interrogazione annullata"
   sendMessage: "Invia messaggio"
@@ -852,6 +850,8 @@ it_IT:
   example25: "Elenca tutte le transazioni contrassegnate per la verifica nell'ultimo anno"
   example26: "Riepilogare i problemi di conformità segnalati per regione"
   example27: "Mostra un rapporto su tutte le violazioni delle norme nell'ultimo trimestre"
+  "yes": "SÌ"
+  "no": "NO"
 
 iw_IL:
   placeholder: "הקלד את הודעתך כאן..."
@@ -886,8 +886,6 @@ iw_IL:
   confirmExecutionDescription: "פעולה זו תשנה את מסד הנתונים שלך. בדוק ואשר כדי להמשיך."
   showQuery: "הצג שאילתה"
   hideQuery: "הסתר שאילתה"
-  True: "כֵּן"
-  False: "לֹא"
   executing: "מְבַצֵעַ..."
   queryCancelled: "השאילתה בוטלה"
   sendMessage: "שלח הודעה"
@@ -947,6 +945,8 @@ iw_IL:
   example25: "רשום את כל העסקאות שסומנו לביקורת בשנה האחרונה"
   example26: "סיכום בעיות תאימות שדווחו לפי אזור"
   example27: "הצג דוח של כל הפרות המדיניות ברבעון האחרון"
+  "yes": "כֵּן"
+  "no": "לֹא"
 
 ja_JP:
   placeholder: "ここにメッセージを入力してください..."
@@ -981,8 +981,6 @@ ja_JP:
   confirmExecutionDescription: "この操作によりデータベースが変更されます。 確認して続行します。"
   showQuery: "クエリを表示"
   hideQuery: "クエリを非表示にする"
-  True: "はい"
-  False: "いいえ"
   executing: "実行中..."
   queryCancelled: "クエリがキャンセルされました"
   sendMessage: "メッセージを送信する"
@@ -1042,6 +1040,8 @@ ja_JP:
   example25: "過去 1 年間に監査のフラグが立てられたすべてのトランザクションをリストします"
   example26: "報告されたコンプライアンス問題を地域ごとにまとめます"
   example27: "前四半期のすべてのポリシー違反のレポートを表示します"
+  "yes": "はい"
+  "no": "いいえ"
 
 ko_KR:
   placeholder: "여기에 메시지를 입력하세요..."
@@ -1076,8 +1076,6 @@ ko_KR:
   confirmExecutionDescription: "이 작업을 수행하면 데이터베이스가 수정됩니다. 계속 진행하려면 검토하고 확인하세요."
   showQuery: "쿼리 표시"
   hideQuery: "쿼리 숨기기"
-  True: "예"
-  False: "아니요"
   executing: "실행 중..."
   queryCancelled: "쿼리가 취소되었습니다."
   sendMessage: "메시지 보내기"
@@ -1137,6 +1135,8 @@ ko_KR:
   example25: "작년에 감사 대상으로 표시된 모든 거래를 나열합니다."
   example26: "지역별로 보고된 규정 준수 문제 요약"
   example27: "지난 분기의 모든 정책 위반에 대한 보고서 표시"
+  "yes": "예"
+  "no": "아니요"
 
 nl_NL:
   placeholder: "Typ hier uw bericht..."
@@ -1171,8 +1171,6 @@ nl_NL:
   confirmExecutionDescription: "Deze bewerking zal uw database wijzigen. Controleer en bevestig om door te gaan."
   showQuery: "Zoekopdracht weergeven"
   hideQuery: "Zoekopdracht verbergen"
-  True: "Ja"
-  False: "Nee"
   executing: "Uitvoeren..."
   queryCancelled: "Zoekopdracht geannuleerd"
   sendMessage: "Bericht verzenden"
@@ -1232,6 +1230,8 @@ nl_NL:
   example25: "Maak een lijst van alle transacties die het afgelopen jaar zijn gemarkeerd voor audit"
   example26: "Geef een samenvatting van complianceproblemen die per regio zijn gerapporteerd"
   example27: "Toon een rapport van alle beleidsschendingen in het afgelopen kwartaal"
+  "yes": "Ja"
+  "no": "Nee"
 
 pl_PL:
   placeholder: "Wpisz tutaj swoją wiadomość..."
@@ -1266,8 +1266,6 @@ pl_PL:
   confirmExecutionDescription: "Ta operacja spowoduje modyfikację bazy danych. Przejrzyj i potwierdź, aby kontynuować."
   showQuery: "Pokaż zapytanie"
   hideQuery: "Ukryj zapytanie"
-  True: "Tak"
-  False: "NIE"
   executing: "Wykonywanie..."
   queryCancelled: "Zapytanie anulowane"
   sendMessage: "Wyślij wiadomość"
@@ -1327,6 +1325,8 @@ pl_PL:
   example25: "Wymień wszystkie transakcje oznaczone do kontroli w zeszłym roku"
   example26: "Podsumuj problemy dotyczące zgodności zgłoszone według regionu"
   example27: "Pokaż raport wszystkich naruszeń zasad w ostatnim kwartale"
+  "yes": "Tak"
+  "no": "NIE"
 
 pt_BR:
   placeholder: "Digite sua mensagem aqui..."
@@ -1361,8 +1361,6 @@ pt_BR:
   confirmExecutionDescription: "Esta operação modificará seu banco de dados. Revise e confirme para prosseguir."
   showQuery: "Mostrar consulta"
   hideQuery: "Ocultar consulta"
-  True: "Sim"
-  False: "Não"
   executing: "Executando..."
   queryCancelled: "Consulta cancelada"
   sendMessage: "Enviar mensagem"
@@ -1422,6 +1420,8 @@ pt_BR:
   example25: "Liste todas as transações sinalizadas para auditoria no último ano"
   example26: "Resuma os problemas de conformidade relatados por região"
   example27: "Mostrar um relatório de todas as violações da política no último trimestre"
+  "yes": "Sim"
+  "no": "Não"
 
 ro_RO:
   placeholder: "Introduceți mesajul dvs. aici..."
@@ -1456,8 +1456,6 @@ ro_RO:
   confirmExecutionDescription: "Această operațiune va modifica baza de date. Examinați și confirmați pentru a continua."
   showQuery: "Afișați interogarea"
   hideQuery: "Ascunde interogarea"
-  True: "Da"
-  False: "Nu"
   executing: "Se execută..."
   queryCancelled: "Interogarea a fost anulată"
   sendMessage: "Trimite mesaj"
@@ -1517,6 +1515,8 @@ ro_RO:
   example25: "Listați toate tranzacțiile marcate pentru audit în ultimul an"
   example26: "Rezumați problemele de conformitate raportate pe regiune"
   example27: "Afișați un raport cu toate încălcările politicii din ultimul trimestru"
+  "yes": "Da"
+  "no": "Nu"
 
 ru_RU:
   placeholder: "Введите здесь свое сообщение..."
@@ -1551,8 +1551,6 @@ ru_RU:
   confirmExecutionDescription: "Эта операция изменит вашу базу данных. Просмотрите и подтвердите, чтобы продолжить."
   showQuery: "Показать запрос"
   hideQuery: "Скрыть запрос"
-  True: "Да"
-  False: "Нет"
   executing: "Выполнение..."
   queryCancelled: "Запрос отменен"
   sendMessage: "Отправить сообщение"
@@ -1612,6 +1610,8 @@ ru_RU:
   example25: "Перечислите все транзакции, помеченные для аудита за последний год."
   example26: "Обобщить проблемы соответствия, о которых сообщили по регионам."
   example27: "Показать отчет обо всех нарушениях правил за последний квартал."
+  "yes": "Да"
+  "no": "Нет"
 
 sk_SK:
   placeholder: "Sem napíšte svoju správu..."
@@ -1646,8 +1646,6 @@ sk_SK:
   confirmExecutionDescription: "Táto operácia zmení vašu databázu. Ak chcete pokračovať, skontrolujte a potvrďte."
   showQuery: "Zobraziť dopyt"
   hideQuery: "Skryť dopyt"
-  True: "áno"
-  False: "Nie"
   executing: "Vykonáva sa..."
   queryCancelled: "Dopyt zrušený"
   sendMessage: "Odoslať správu"
@@ -1707,6 +1705,8 @@ sk_SK:
   example25: "Uveďte všetky transakcie označené na audit za posledný rok"
   example26: "Zhrňte problémy s dodržiavaním predpisov hlásené podľa regiónu"
   example27: "Zobrazte správu o všetkých porušeniach pravidiel za posledný štvrťrok"
+  "yes": "áno"
+  "no": "Nie"
 
 sv_SE:
   placeholder: "Skriv ditt meddelande här..."
@@ -1741,8 +1741,6 @@ sv_SE:
   confirmExecutionDescription: "Denna operation kommer att ändra din databas. Granska och bekräfta för att fortsätta."
   showQuery: "Visa fråga"
   hideQuery: "Dölj fråga"
-  True: "Ja"
-  False: "Inga"
   executing: "Kör..."
   queryCancelled: "Fråga avbruten"
   sendMessage: "Skicka meddelande"
@@ -1802,6 +1800,8 @@ sv_SE:
   example25: "Lista alla transaktioner som flaggats för revision under det senaste året"
   example26: "Sammanfatta efterlevnadsproblem som rapporterats per region"
   example27: "Visa en rapport över alla policyöverträdelser under det senaste kvartalet"
+  "yes": "Ja"
+  "no": "Inga"
 
 zh_CN:
   placeholder: "在此输入您的消息..."
@@ -1836,8 +1836,6 @@ zh_CN:
   confirmExecutionDescription: "此操作将修改您的数据库。 检查并确认以继续。"
   showQuery: "显示查询"
   hideQuery: "隐藏查询"
-  True: "是的"
-  False: "不"
   executing: "正在执行..."
   queryCancelled: "查询已取消"
   sendMessage: "发送消息"
@@ -1897,6 +1895,8 @@ zh_CN:
   example25: "列出去年标记为审计的所有交易"
   example26: "总结各地区报告的合规问题"
   example27: "显示上季度所有政策违规行为的报告"
+  "yes": "是的"
+  "no": "不"
 
 zh_TW:
   placeholder: "在此輸入您的訊息..."
@@ -1931,8 +1931,6 @@ zh_TW:
   confirmExecutionDescription: "此操作將修改您的資料庫。 檢查並確認以繼續。"
   showQuery: "顯示查詢"
   hideQuery: "隱藏查詢"
-  True: "是的"
-  False: "不"
   executing: "正在執行..."
   queryCancelled: "查詢已取消"
   sendMessage: "發送訊息"
@@ -1992,6 +1990,8 @@ zh_TW:
   example25: "列出去年標記為審計的所有交易"
   example26: "總結各地區報告的合規問題"
   example27: "顯示上季所有政策違規行為的報告"
+  "yes": "是的"
+  "no": "不"
 
 bg_BG:
   placeholder: "Въведете вашето съобщение тук..."
@@ -2026,8 +2026,6 @@ bg_BG:
   confirmExecutionDescription: "Тази операция ще промени вашата база данни. Прегледайте и потвърдете, за да продължите."
   showQuery: "Показване на заявка"
   hideQuery: "Скриване на заявката"
-  True: "да"
-  False: "не"
   executing: "Изпълнява се..."
   queryCancelled: "Заявката е отменена"
   sendMessage: "Изпратете съобщение"
@@ -2087,6 +2085,8 @@ bg_BG:
   example25: "Избройте всички транзакции, маркирани за одит през последната година"
   example26: "Обобщете докладваните проблеми със съответствието по региони"
   example27: "Показване на отчет за всички нарушения на правилата през последното тримесечие"
+  "yes": "да"
+  "no": "не"
 
 bn_BD:
   placeholder: "এখানে আপনার বার্তা টাইপ করুন..."
@@ -2121,8 +2121,6 @@ bn_BD:
   confirmExecutionDescription: "এই অপারেশন আপনার ডাটাবেস পরিবর্তন করবে. পর্যালোচনা করুন এবং এগিয়ে যেতে নিশ্চিত করুন."
   showQuery: "ক্যোয়ারী দেখান"
   hideQuery: "ক্যোয়ারী লুকান"
-  True: "হ্যাঁ"
-  False: "না"
   executing: "কার্যকর করা হচ্ছে..."
   queryCancelled: "প্রশ্ন বাতিল করা হয়েছে"
   sendMessage: "বার্তা পাঠান"
@@ -2182,6 +2180,8 @@ bn_BD:
   example25: "গত বছরে নিরীক্ষার জন্য পতাকাঙ্কিত সমস্ত লেনদেনের তালিকা করুন"
   example26: "অঞ্চল দ্বারা রিপোর্ট করা সম্মতি সংক্রান্ত সমস্যাগুলির সংক্ষিপ্ত বিবরণ"
   example27: "গত ত্রৈমাসিকে সমস্ত নীতি লঙ্ঘনের রিপোর্ট দেখান৷"
+  "yes": "হ্যাঁ"
+  "no": "না"
 
 ca_ES:
   placeholder: "Escriu el teu missatge aquí..."
@@ -2216,8 +2216,6 @@ ca_ES:
   confirmExecutionDescription: "Aquesta operació modificarà la vostra base de dades. Revisa i confirma per continuar."
   showQuery: "Mostra la consulta"
   hideQuery: "Amaga la consulta"
-  True: "Sí"
-  False: "No"
   executing: "S'està executant..."
   queryCancelled: "Consulta cancel·lada"
   sendMessage: "Enviar missatge"
@@ -2277,6 +2275,8 @@ ca_ES:
   example25: "Enumereu totes les transaccions marcades per a auditoria durant l'últim any"
   example26: "Resumeix els problemes de compliment notificats per regió"
   example27: "Mostra un informe de totes les infraccions de les polítiques durant l'últim trimestre"
+  "yes": "Sí"
+  "no": "No"
 
 cs_CZ:
   placeholder: "Sem napište svou zprávu..."
@@ -2311,8 +2311,6 @@ cs_CZ:
   confirmExecutionDescription: "Tato operace změní vaši databázi. Zkontrolujte a potvrďte pro pokračování."
   showQuery: "Zobrazit dotaz"
   hideQuery: "Skrýt dotaz"
-  True: "Ano"
-  False: "Žádný"
   executing: "Probíhá..."
   queryCancelled: "Dotaz zrušen"
   sendMessage: "Odeslat zprávu"
@@ -2372,6 +2370,8 @@ cs_CZ:
   example25: "Seznam všech transakcí označených k auditu za poslední rok"
   example26: "Shrňte problémy s dodržováním předpisů hlášené podle regionu"
   example27: "Zobrazit zprávu o všech porušeních zásad za poslední čtvrtletí"
+  "yes": "Ano"
+  "no": "Žádný"
 
 da_DK:
   placeholder: "Skriv din besked her..."
@@ -2406,8 +2406,6 @@ da_DK:
   confirmExecutionDescription: "Denne handling vil ændre din database. Gennemgå og bekræft for at fortsætte."
   showQuery: "Vis forespørgsel"
   hideQuery: "Skjul forespørgsel"
-  True: "Ja"
-  False: "Ingen"
   executing: "Udfører..."
   queryCancelled: "Forespørgsel annulleret"
   sendMessage: "Send besked"
@@ -2467,6 +2465,8 @@ da_DK:
   example25: "Liste over alle transaktioner, der er markeret til revision i det sidste år"
   example26: "Opsummer overholdelsesproblemer rapporteret efter region"
   example27: "Vis en rapport over alle politikovertrædelser i det sidste kvartal"
+  "yes": "Ja"
+  "no": "Ingen"
 
 fa_IR:
   placeholder: "پیام خود را اینجا تایپ کنید..."
@@ -2501,8 +2501,6 @@ fa_IR:
   confirmExecutionDescription: "این عملیات پایگاه داده شما را تغییر می دهد. برای ادامه بررسی و تایید کنید."
   showQuery: "نمایش پرس و جو"
   hideQuery: "پنهان کردن پرس و جو"
-  True: "بله"
-  False: "خیر"
   executing: "در حال اجرا..."
   queryCancelled: "پرس و جو لغو شد"
   sendMessage: "ارسال پیام"
@@ -2562,6 +2560,8 @@ fa_IR:
   example25: "فهرست تمام معاملات علامت گذاری شده برای حسابرسی در سال گذشته"
   example26: "مسائل مربوط به انطباق گزارش شده بر اساس منطقه را خلاصه کنید"
   example27: "گزارشی از تمام تخلفات خط‌مشی در سه ماهه گذشته نشان دهید"
+  "yes": "بله"
+  "no": "خیر"
 
 hi_IN:
   placeholder: "यहाँ आपके संदेश लिखें..."
@@ -2596,8 +2596,6 @@ hi_IN:
   confirmExecutionDescription: "यह ऑपरेशन आपके डेटाबेस को संशोधित करेगा. समीक्षा करें और आगे बढ़ने की पुष्टि करें।"
   showQuery: "क्वेरी दिखाएँ"
   hideQuery: "क्वेरी छिपाएँ"
-  True: "हाँ"
-  False: "नहीं"
   executing: "क्रियान्वयन..."
   queryCancelled: "क्वेरी रद्द कर दी गई"
   sendMessage: "मेसेज भेजें"
@@ -2657,6 +2655,8 @@ hi_IN:
   example25: "पिछले वर्ष ऑडिट के लिए चिह्नित सभी लेनदेन की सूची बनाएं"
   example26: "क्षेत्र द्वारा रिपोर्ट किए गए अनुपालन मुद्दों का सारांश प्रस्तुत करें"
   example27: "पिछली तिमाही में सभी नीति उल्लंघनों की रिपोर्ट दिखाएँ"
+  "yes": "हाँ"
+  "no": "नहीं"
 
 hr_HR:
   placeholder: "Ovdje upišite svoju poruku..."
@@ -2691,8 +2691,6 @@ hr_HR:
   confirmExecutionDescription: "Ova operacija će izmijeniti vašu bazu podataka. Pregledajte i potvrdite za nastavak."
   showQuery: "Prikaži upit"
   hideQuery: "Sakrij upit"
-  True: "Da"
-  False: "Ne"
   executing: "Izvršavanje..."
   queryCancelled: "Upit poništen"
   sendMessage: "Pošalji poruku"
@@ -2752,6 +2750,8 @@ hr_HR:
   example25: "Navedite sve transakcije označene za reviziju u prošloj godini"
   example26: "Sažeti prijavljene probleme usklađenosti po regijama"
   example27: "Prikaži izvješće o svim kršenjima pravila u zadnjem kvartalu"
+  "yes": "Da"
+  "no": "Ne"
 
 hu_HU:
   placeholder: "Írja be üzenetét ide..."
@@ -2786,8 +2786,6 @@ hu_HU:
   confirmExecutionDescription: "Ez a művelet módosítja az adatbázist. Tekintse át és erősítse meg a folytatáshoz."
   showQuery: "Lekérdezés megjelenítése"
   hideQuery: "Lekérdezés elrejtése"
-  True: "Igen"
-  False: "Nem"
   executing: "Végrehajtó..."
   queryCancelled: "Lekérdezés megszakítva"
   sendMessage: "Üzenet küldése"
@@ -2847,6 +2845,8 @@ hu_HU:
   example25: "Sorolja fel az összes, az elmúlt évben ellenőrzésre megjelölt tranzakciót"
   example26: "Foglalja össze a jelentett megfelelőségi problémákat régiónként"
   example27: "Jelentés megjelenítése az összes irányelvsértésről az elmúlt negyedévben"
+  "yes": "Igen"
+  "no": "Nem"
 
 id_ID:
   placeholder: "Ketik Pesan Anda Disini..."
@@ -2881,8 +2881,6 @@ id_ID:
   confirmExecutionDescription: "Operasi ini akan mengubah database Anda. Tinjau dan konfirmasi untuk melanjutkan."
   showQuery: "Tampilkan Kueri"
   hideQuery: "Sembunyikan Kueri"
-  True: "Ya"
-  False: "TIDAK"
   executing: "Menjalankan..."
   queryCancelled: "Kueri Dibatalkan"
   sendMessage: "Kirim pesan"
@@ -2942,6 +2940,8 @@ id_ID:
   example25: "Cantumkan semua transaksi yang ditandai untuk diaudit pada tahun lalu"
   example26: "Meringkas masalah kepatuhan yang dilaporkan berdasarkan wilayah"
   example27: "Tampilkan laporan semua pelanggaran kebijakan pada kuartal terakhir"
+  "yes": "Ya"
+  "no": "TIDAK"
 
 ms_MY:
   placeholder: "Taip Mesej Anda Di Sini..."
@@ -2976,8 +2976,6 @@ ms_MY:
   confirmExecutionDescription: "Operasi ini akan mengubah suai pangkalan data anda. Semak dan sahkan untuk meneruskan."
   showQuery: "Tunjukkan Pertanyaan"
   hideQuery: "Sembunyikan Pertanyaan"
-  True: "ya"
-  False: "Tidak"
   executing: "Melaksanakan..."
   queryCancelled: "Pertanyaan Dibatalkan"
   sendMessage: "Hantar mesej"
@@ -3037,6 +3035,8 @@ ms_MY:
   example25: "Senaraikan semua transaksi yang dibenderakan untuk diaudit pada tahun lepas"
   example26: "Ringkaskan isu pematuhan yang dilaporkan mengikut wilayah"
   example27: "Tunjukkan laporan semua pelanggaran dasar pada suku terakhir"
+  "yes": "ya"
+  "no": "Tidak"
 
 nb_NO:
   placeholder: "Skriv inn meldingen din her..."
@@ -3071,8 +3071,6 @@ nb_NO:
   confirmExecutionDescription: "Denne operasjonen vil endre databasen din. Se gjennom og bekreft for å fortsette."
   showQuery: "Vis spørring"
   hideQuery: "Skjul spørring"
-  True: "Ja"
-  False: "Ingen"
   executing: "Utfører..."
   queryCancelled: "Spørsmålet kansellert"
   sendMessage: "Send melding"
@@ -3132,6 +3130,8 @@ nb_NO:
   example25: "List opp alle transaksjoner som er flagget for revisjon det siste året"
   example26: "Oppsummer samsvarsproblemer rapportert etter region"
   example27: "Vis en rapport over alle brudd på retningslinjene i det siste kvartalet"
+  "yes": "Ja"
+  "no": "Ingen"
 
 sw_KE:
   placeholder: "Andika Ujumbe wako Hapa..."
@@ -3166,8 +3166,6 @@ sw_KE:
   confirmExecutionDescription: "Operesheni hii itarekebisha hifadhidata yako. Kagua na uthibitishe ili kuendelea."
   showQuery: "Onyesha Hoja"
   hideQuery: "Ficha Hoja"
-  True: "Ndiyo"
-  False: "Hapana"
   executing: "Inatekeleza..."
   queryCancelled: "Hoja Imeghairiwa"
   sendMessage: "Tuma ujumbe"
@@ -3227,6 +3225,8 @@ sw_KE:
   example25: "Orodhesha miamala yote iliyoalamishwa kwa ukaguzi katika mwaka uliopita"
   example26: "Toa muhtasari wa masuala ya kufuata yaliyoripotiwa na eneo"
   example27: "Onyesha ripoti ya ukiukaji wote wa sera katika robo ya mwisho"
+  "yes": "Ndiyo"
+  "no": "Hapana"
 
 ta_IN:
   placeholder: "உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்..."
@@ -3261,8 +3261,6 @@ ta_IN:
   confirmExecutionDescription: "இந்த செயல்பாடு உங்கள் தரவுத்தளத்தை மாற்றியமைக்கும். தொடர மதிப்பாய்வு செய்து உறுதிப்படுத்தவும்."
   showQuery: "வினவலைக் காட்டு"
   hideQuery: "வினவலை மறை"
-  True: "ஆம்"
-  False: "இல்லை"
   executing: "செயல்படுத்துகிறது..."
   queryCancelled: "வினவல் ரத்துசெய்யப்பட்டது"
   sendMessage: "செய்தி அனுப்பு"
@@ -3322,6 +3320,8 @@ ta_IN:
   example25: "கடந்த ஆண்டில் தணிக்கைக்காகக் கொடியிடப்பட்ட அனைத்து பரிவர்த்தனைகளையும் பட்டியலிடுங்கள்"
   example26: "பிராந்தியத்தால் புகாரளிக்கப்பட்ட இணக்கச் சிக்கல்களைச் சுருக்கவும்"
   example27: "கடந்த காலாண்டில் நடந்த அனைத்து கொள்கை மீறல்களின் அறிக்கையையும் காட்டு"
+  "yes": "ஆம்"
+  "no": "இல்லை"
 
 th_TH:
   placeholder: "พิมพ์ข้อความของคุณที่นี่..."
@@ -3356,8 +3356,6 @@ th_TH:
   confirmExecutionDescription: "การดำเนินการนี้จะแก้ไขฐานข้อมูลของคุณ ตรวจสอบและยืนยันเพื่อดำเนินการต่อ"
   showQuery: "แสดงแบบสอบถาม"
   hideQuery: "ซ่อนแบบสอบถาม"
-  True: "ใช่"
-  False: "เลขที่"
   executing: "กำลังดำเนินการ..."
   queryCancelled: "ยกเลิกแบบสอบถามแล้ว"
   sendMessage: "ส่งข้อความ"
@@ -3417,6 +3415,8 @@ th_TH:
   example25: "แสดงรายการธุรกรรมทั้งหมดที่ถูกตั้งค่าสถานะสำหรับการตรวจสอบในปีที่แล้ว"
   example26: "สรุปประเด็นการปฏิบัติตามข้อกำหนดที่รายงานตามภูมิภาค"
   example27: "แสดงรายงานการละเมิดนโยบายทั้งหมดในไตรมาสสุดท้าย"
+  "yes": "ใช่"
+  "no": "เลขที่"
 
 tr_TR:
   placeholder: "Mesajınızı Buraya Yazın..."
@@ -3451,8 +3451,6 @@ tr_TR:
   confirmExecutionDescription: "Bu işlem veritabanınızı değiştirecektir. Devam etmek için inceleyin ve onaylayın."
   showQuery: "Sorguyu Göster"
   hideQuery: "Sorguyu Gizle"
-  True: "Evet"
-  False: "HAYIR"
   executing: "Yürütülüyor..."
   queryCancelled: "Sorgu İptal Edildi"
   sendMessage: "Mesaj gönder"
@@ -3512,6 +3510,8 @@ tr_TR:
   example25: "Geçen yıl denetim için işaretlenen tüm işlemleri listeleyin"
   example26: "Bölgeye göre bildirilen uyumluluk sorunlarını özetleyin"
   example27: "Son çeyrekteki tüm politika ihlallerinin raporunu göster"
+  "yes": "Evet"
+  "no": "HAYIR"
 
 uk_UA:
   placeholder: "Введіть своє повідомлення тут..."
@@ -3546,8 +3546,6 @@ uk_UA:
   confirmExecutionDescription: "Ця операція змінить вашу базу даних. Перегляньте та підтвердьте, щоб продовжити."
   showQuery: "Показати запит"
   hideQuery: "Приховати запит"
-  True: "так"
-  False: "немає"
   executing: "Виконання..."
   queryCancelled: "Запит скасовано"
   sendMessage: "Надіслати повідомлення"
@@ -3607,6 +3605,8 @@ uk_UA:
   example25: "Перелічіть усі транзакції, позначені для аудиту за останній рік"
   example26: "Узагальніть проблеми відповідності, про які повідомлено за регіонами"
   example27: "Показати звіт про всі порушення політики за останній квартал"
+  "yes": "так"
+  "no": "немає"
 
 ur_PK:
   placeholder: "اپنا پیغام یہاں ٹائپ کریں..."
@@ -3641,8 +3641,6 @@ ur_PK:
   confirmExecutionDescription: "یہ آپریشن آپ کے ڈیٹا بیس میں ترمیم کرے گا۔ جائزہ لیں اور آگے بڑھنے کے لیے تصدیق کریں۔"
   showQuery: "استفسار دکھائیں۔"
   hideQuery: "استفسار چھپائیں۔"
-  True: "جی ہاں"
-  False: "نہیں"
   executing: "عملدرآمد کر رہا ہے..."
   queryCancelled: "استفسار منسوخ کر دیا گیا۔"
   sendMessage: "پیغام بھیجیں۔"
@@ -3702,6 +3700,8 @@ ur_PK:
   example25: "پچھلے سال میں آڈٹ کے لیے جھنڈا لگائے گئے تمام لین دین کی فہرست بنائیں"
   example26: "علاقے کے لحاظ سے رپورٹ کردہ تعمیل کے مسائل کا خلاصہ کریں۔"
   example27: "پچھلی سہ ماہی میں پالیسی کی تمام خلاف ورزیوں کی رپورٹ دکھائیں۔"
+  "yes": "جی ہاں"
+  "no": "نہیں"
 
 vi_VN:
   placeholder: "Nhập tin nhắn của bạn ở đây..."
@@ -3736,8 +3736,6 @@ vi_VN:
   confirmExecutionDescription: "Thao tác này sẽ sửa đổi cơ sở dữ liệu của bạn. Xem lại và xác nhận để tiếp tục."
   showQuery: "Hiển thị truy vấn"
   hideQuery: "Ẩn truy vấn"
-  True: "Đúng"
-  False: "KHÔNG"
   executing: "Đang thực hiện..."
   queryCancelled: "Truy vấn đã bị hủy"
   sendMessage: "Gửi tin nhắn"
@@ -3797,6 +3795,8 @@ vi_VN:
   example25: "Liệt kê tất cả các giao dịch được gắn cờ để kiểm toán trong năm qua"
   example26: "Tổng hợp các vấn đề tuân thủ được báo cáo theo khu vực"
   example27: "Hiển thị báo cáo về tất cả các vi phạm chính sách trong quý vừa qua"
+  "yes": "Đúng"
+  "no": "KHÔNG"
 
 af_ZA:
   placeholder: "Tik jou boodskap hier..."
@@ -3831,8 +3831,6 @@ af_ZA:
   confirmExecutionDescription: "Hierdie bewerking sal jou databasis wysig. Hersien en bevestig om voort te gaan."
   showQuery: "Wys navraag"
   hideQuery: "Versteek navraag"
-  True: "Ja"
-  False: "Nee"
   executing: "Voer tans uit..."
   queryCancelled: "Navraag gekanselleer"
   sendMessage: "Stuur boodskap"
@@ -3892,6 +3890,8 @@ af_ZA:
   example25: "Lys alle transaksies wat die afgelope jaar vir oudit gevlag is"
   example26: "Som voldoeningskwessies op wat volgens streek gerapporteer is"
   example27: "Wys 'n verslag van alle beleidsoortredings in die afgelope kwartaal"
+  "yes": "Ja"
+  "no": "Nee"
 
 am_ET:
   placeholder: "መልእክትህን እዚህ ፃፍ..."
@@ -3926,8 +3926,6 @@ am_ET:
   confirmExecutionDescription: "ይህ ክዋኔ የእርስዎን የውሂብ ጎታ ይለውጠዋል። ለመቀጠል ይገምግሙ እና ያረጋግጡ።"
   showQuery: "ጥያቄ አሳይ"
   hideQuery: "መጠይቁን ደብቅ"
-  True: "አዎ"
-  False: "አይ"
   executing: "በማስፈጸም ላይ..."
   queryCancelled: "መጠይቁ ተሰርዟል።"
   sendMessage: "መልእክት ላክ"
@@ -3987,6 +3985,8 @@ am_ET:
   example25: "ባለፈው ዓመት ለኦዲት የተደረጉ ሁሉንም ግብይቶች ይዘርዝሩ"
   example26: "በክልል የተዘገበ የማክበር ጉዳዮችን ጠቅለል አድርግ"
   example27: "ባለፈው ሩብ ዓመት ውስጥ የሁሉም የመመሪያ ጥሰቶች ሪፖርት አሳይ"
+  "yes": "አዎ"
+  "no": "አይ"
 
 az_AZ:
   placeholder: "Mesajınızı Bura Yazın..."
@@ -4021,8 +4021,6 @@ az_AZ:
   confirmExecutionDescription: "Bu əməliyyat verilənlər bazanızı dəyişdirəcək. Davam etmək üçün nəzərdən keçirin və təsdiqləyin."
   showQuery: "Sorğunu göstərin"
   hideQuery: "Sorğunu gizlədin"
-  True: "Bəli"
-  False: "yox"
   executing: "İcra olunur..."
   queryCancelled: "Sorğu Ləğv Edildi"
   sendMessage: "Mesaj göndər"
@@ -4082,6 +4080,8 @@ az_AZ:
   example25: "Son bir ildə audit üçün işarələnmiş bütün əməliyyatları sadalayın"
   example26: "Bölgələr üzrə bildirilən uyğunluq məsələlərini ümumiləşdirin"
   example27: "Son rübdə bütün siyasət pozuntularının hesabatını göstərin"
+  "yes": "Bəli"
+  "no": "yox"
 
 et_EE:
   placeholder: "Sisestage oma sõnum siia..."
@@ -4116,8 +4116,6 @@ et_EE:
   confirmExecutionDescription: "See toiming muudab teie andmebaasi. Jätkamiseks vaadake üle ja kinnitage."
   showQuery: "Näita päringut"
   hideQuery: "Peida päring"
-  True: "Jah"
-  False: "Ei"
   executing: "Täitmine..."
   queryCancelled: "Päring tühistatud"
   sendMessage: "Saada sõnum"
@@ -4177,6 +4175,8 @@ et_EE:
   example25: "Loetlege kõik eelmisel aastal auditeerimiseks märgistatud tehingud"
   example26: "Tehke kokkuvõte vastavusprobleemidest piirkondade kaupa"
   example27: "Kuvage aruanne kõigi viimase kvartali eeskirjade rikkumiste kohta"
+  "yes": "Jah"
+  "no": "Ei"
 
 gu_IN:
   placeholder: "તમારો સંદેશ અહીં લખો..."
@@ -4211,8 +4211,6 @@ gu_IN:
   confirmExecutionDescription: "આ કામગીરી તમારા ડેટાબેઝમાં ફેરફાર કરશે. સમીક્ષા કરો અને આગળ વધવા માટે પુષ્ટિ કરો."
   showQuery: "ક્વેરી બતાવો"
   hideQuery: "ક્વેરી છુપાવો"
-  True: "હા"
-  False: "ના"
   executing: "ચલાવી રહ્યું છે..."
   queryCancelled: "ક્વેરી રદ કરી"
   sendMessage: "સંદેશ મોકલો"
@@ -4272,6 +4270,8 @@ gu_IN:
   example25: "ગયા વર્ષે ઓડિટ માટે ફ્લેગ કરાયેલા તમામ વ્યવહારોની યાદી બનાવો"
   example26: "પ્રદેશ દ્વારા નોંધાયેલા અનુપાલન મુદ્દાઓનો સારાંશ આપો"
   example27: "છેલ્લા ક્વાર્ટરમાં તમામ નીતિ ઉલ્લંઘનોનો અહેવાલ બતાવો"
+  "yes": "હા"
+  "no": "ના"
 
 ha_NG:
   placeholder: "Buga Saƙonku Anan..."
@@ -4306,8 +4306,6 @@ ha_NG:
   confirmExecutionDescription: "Wannan aiki zai canza bayananku. Bincika kuma tabbatar da ci gaba."
   showQuery: "Nuna Tambaya"
   hideQuery: "Ɓoye Tambaya"
-  True: "Ee"
-  False: "A'a"
   executing: "Ana aiwatar da..."
   queryCancelled: "An soke tambaya"
   sendMessage: "Aika sako"
@@ -4367,6 +4365,8 @@ ha_NG:
   example25: "Yi lissafin duk ma'amaloli da aka yi alama don tantancewa a cikin shekarar da ta gabata"
   example26: "Takaita batutuwan yarda da yanki suka ruwaito"
   example27: "Nuna rahoton duk take hakki a cikin kwata na ƙarshe"
+  "yes": "Ee"
+  "no": "A'a"
 
 ka_GE:
   placeholder: "ჩაწერეთ თქვენი შეტყობინება აქ..."
@@ -4401,8 +4401,6 @@ ka_GE:
   confirmExecutionDescription: "ეს ოპერაცია შეცვლის თქვენს მონაცემთა ბაზას. გადახედეთ და დაადასტურეთ გასაგრძელებლად."
   showQuery: "შეკითხვის ჩვენება"
   hideQuery: "შეკითხვის დამალვა"
-  True: "დიახ"
-  False: "არა"
   executing: "მიმდინარეობს შესრულება..."
   queryCancelled: "მოთხოვნა გაუქმდა"
   sendMessage: "შეტყობინების გაგზავნა"
@@ -4462,6 +4460,8 @@ ka_GE:
   example25: "ჩამოთვალეთ ყველა ტრანზაქცია, რომელიც მონიშნული იყო აუდიტისთვის გასულ წელს"
   example26: "შეაჯამეთ შესაბამისობის საკითხები, რომლებიც მოხსენებულია რეგიონის მიხედვით"
   example27: "აჩვენეთ ანგარიში ყველა პოლიტიკის დარღვევის შესახებ ბოლო კვარტალში"
+  "yes": "დიახ"
+  "no": "არა"
 
 km_KH:
   placeholder: "វាយបញ្ចូលសាររបស់អ្នកនៅទីនេះ..."
@@ -4496,8 +4496,6 @@ km_KH:
   confirmExecutionDescription: "ប្រតិបត្តិការនេះនឹងកែប្រែមូលដ្ឋានទិន្នន័យរបស់អ្នក។ ពិនិត្យ និងបញ្ជាក់ដើម្បីបន្ត។"
   showQuery: "បង្ហាញសំណួរ"
   hideQuery: "លាក់សំណួរ"
-  True: "បាទ"
-  False: "ទេ"
   executing: "កំពុង​ប្រតិបត្តិ..."
   queryCancelled: "សំណួរត្រូវបានលុបចោល"
   sendMessage: "ផ្ញើសារ"
@@ -4557,6 +4555,8 @@ km_KH:
   example25: "រាយបញ្ជីប្រតិបត្តិការទាំងអស់ដែលបានដាក់ទង់សម្រាប់សវនកម្មក្នុងឆ្នាំចុងក្រោយ"
   example26: "សង្ខេបបញ្ហាអនុលោមតាមច្បាប់ដែលបានរាយការណ៍តាមតំបន់"
   example27: "បង្ហាញរបាយការណ៍នៃការបំពានគោលការណ៍ទាំងអស់នៅក្នុងត្រីមាសចុងក្រោយ"
+  "yes": "បាទ"
+  "no": "ទេ"
 
 kn_IN:
   placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..."
@@ -4591,8 +4591,6 @@ kn_IN:
   confirmExecutionDescription: "ಈ ಕಾರ್ಯಾಚರಣೆಯು ನಿಮ್ಮ ಡೇಟಾಬೇಸ್ ಅನ್ನು ಮಾರ್ಪಡಿಸುತ್ತದೆ. ಮುಂದುವರೆಯಲು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ದೃಢೀಕರಿಸಿ."
   showQuery: "ಪ್ರಶ್ನೆಯನ್ನು ತೋರಿಸು"
   hideQuery: "ಪ್ರಶ್ನೆಯನ್ನು ಮರೆಮಾಡಿ"
-  True: "ಹೌದು"
-  False: "ಸಂ"
   executing: "ಕಾರ್ಯಗತಗೊಳಿಸಲಾಗುತ್ತಿದೆ..."
   queryCancelled: "ಪ್ರಶ್ನೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ"
   sendMessage: "ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಿ"
@@ -4652,6 +4650,8 @@ kn_IN:
   example25: "ಕಳೆದ ವರ್ಷದಲ್ಲಿ ಆಡಿಟ್‌ಗಾಗಿ ಫ್ಲ್ಯಾಗ್ ಮಾಡಲಾದ ಎಲ್ಲಾ ವಹಿವಾಟುಗಳನ್ನು ಪಟ್ಟಿ ಮಾಡಿ"
   example26: "ಪ್ರದೇಶದ ಮೂಲಕ ವರದಿ ಮಾಡಲಾದ ಅನುಸರಣೆ ಸಮಸ್ಯೆಗಳನ್ನು ಸಾರಾಂಶಗೊಳಿಸಿ"
   example27: "ಕಳೆದ ತ್ರೈಮಾಸಿಕದಲ್ಲಿ ಎಲ್ಲಾ ನೀತಿ ಉಲ್ಲಂಘನೆಗಳ ವರದಿಯನ್ನು ತೋರಿಸಿ"
+  "yes": "ಹೌದು"
+  "no": "ಸಂ"
 
 lt_LT:
   placeholder: "Įveskite savo žinutę čia..."
@@ -4686,8 +4686,6 @@ lt_LT:
   confirmExecutionDescription: "Ši operacija pakeis jūsų duomenų bazę. Peržiūrėkite ir patvirtinkite, kad tęstumėte."
   showQuery: "Rodyti užklausą"
   hideQuery: "Slėpti užklausą"
-  True: "Taip"
-  False: "Nr"
   executing: "Vykdoma..."
   queryCancelled: "Užklausa atšaukta"
   sendMessage: "Siųsti žinutę"
@@ -4747,6 +4745,8 @@ lt_LT:
   example25: "Išvardykite visas praėjusių metų auditui pažymėtas operacijas"
   example26: "Apibendrinkite atitikties problemas, apie kurias pranešta pagal regioną"
   example27: "Rodyti visų politikos pažeidimų ataskaitą per pastarąjį ketvirtį"
+  "yes": "Taip"
+  "no": "Nr"
 
 lv_LV:
   placeholder: "Ierakstiet savu ziņojumu šeit..."
@@ -4781,8 +4781,6 @@ lv_LV:
   confirmExecutionDescription: "Šī darbība mainīs jūsu datu bāzi. Pārskatiet un apstipriniet, lai turpinātu."
   showQuery: "Rādīt vaicājumu"
   hideQuery: "Slēpt vaicājumu"
-  True: "Jā"
-  False: "Nē"
   executing: "Notiek izpilde..."
   queryCancelled: "Vaicājums atcelts"
   sendMessage: "Nosūtīt ziņu"
@@ -4842,6 +4840,8 @@ lv_LV:
   example25: "Norādiet visus darījumus, kas pagājušajā gadā atzīmēti kā revīzijai"
   example26: "Apkopojiet ziņotās atbilstības problēmas pa reģioniem"
   example27: "Rādīt pārskatu par visiem politikas pārkāpumiem pēdējā ceturksnī"
+  "yes": "Jā"
+  "no": "Nē"
 
 ml_IN:
   placeholder: "നിങ്ങളുടെ സന്ദേശം ഇവിടെ ടൈപ്പ് ചെയ്യുക..."
@@ -4876,8 +4876,6 @@ ml_IN:
   confirmExecutionDescription: "ഈ പ്രവർത്തനം നിങ്ങളുടെ ഡാറ്റാബേസിൽ മാറ്റം വരുത്തും. തുടരാൻ അവലോകനം ചെയ്‌ത് സ്ഥിരീകരിക്കുക."
   showQuery: "ചോദ്യം കാണിക്കുക"
   hideQuery: "ചോദ്യം മറയ്ക്കുക"
-  True: "അതെ"
-  False: "ഇല്ല"
   executing: "നടപ്പിലാക്കുന്നു..."
   queryCancelled: "ചോദ്യം റദ്ദാക്കി"
   sendMessage: "സന്ദേശം അയക്കുക"
@@ -4937,6 +4935,8 @@ ml_IN:
   example25: "കഴിഞ്ഞ വർഷം ഓഡിറ്റിനായി ഫ്ലാഗ് ചെയ്ത എല്ലാ ഇടപാടുകളും ലിസ്റ്റ് ചെയ്യുക"
   example26: "പ്രദേശം റിപ്പോർട്ട് ചെയ്ത പാലിക്കൽ പ്രശ്നങ്ങൾ സംഗ്രഹിക്കുക"
   example27: "കഴിഞ്ഞ പാദത്തിലെ എല്ലാ നയ ലംഘനങ്ങളുടെയും റിപ്പോർട്ട് കാണിക്കുക"
+  "yes": "അതെ"
+  "no": "ഇല്ല"
 
 mr_IN:
   placeholder: "तुमचा संदेश येथे टाइप करा..."
@@ -4971,8 +4971,6 @@ mr_IN:
   confirmExecutionDescription: "हे ऑपरेशन तुमचा डेटाबेस सुधारेल. पुनरावलोकन करा आणि पुढे जाण्यासाठी पुष्टी करा."
   showQuery: "क्वेरी दर्शवा"
   hideQuery: "क्वेरी लपवा"
-  True: "होय"
-  False: "नाही"
   executing: "कार्यान्वित करत आहे..."
   queryCancelled: "क्वेरी रद्द केली"
   sendMessage: "संदेश पाठवा"
@@ -5032,6 +5030,8 @@ mr_IN:
   example25: "गेल्या वर्षी ऑडिटसाठी ध्वजांकित केलेल्या सर्व व्यवहारांची यादी करा"
   example26: "प्रदेशानुसार नोंदवलेल्या अनुपालन समस्यांचा सारांश द्या"
   example27: "मागील तिमाहीतील सर्व धोरण उल्लंघनांचा अहवाल दर्शवा"
+  "yes": "होय"
+  "no": "नाही"
 
 ne_NP:
   placeholder: "यहाँ आफ्नो सन्देश टाइप गर्नुहोस्..."
@@ -5066,8 +5066,6 @@ ne_NP:
   confirmExecutionDescription: "यो अपरेशनले तपाईको डाटाबेस परिमार्जन गर्नेछ। समीक्षा गर्नुहोस् र अगाडि बढ्न पुष्टि गर्नुहोस्।"
   showQuery: "क्वेरी देखाउनुहोस्"
   hideQuery: "क्वेरी लुकाउनुहोस्"
-  True: "हो"
-  False: "छैन"
   executing: "कार्यान्वयन गर्दै..."
   queryCancelled: "क्वेरी रद्द गरियो"
   sendMessage: "सन्देश पठाउनुहोस्"
@@ -5127,6 +5125,8 @@ ne_NP:
   example25: "गत वर्ष अडिटको लागि फ्ल्याग गरिएका सबै लेनदेनहरू सूचीबद्ध गर्नुहोस्"
   example26: "क्षेत्र द्वारा रिपोर्ट गरिएको अनुपालन समस्याहरू संक्षेप गर्नुहोस्"
   example27: "पछिल्लो क्वाटरमा सबै नीति उल्लङ्घनहरूको रिपोर्ट देखाउनुहोस्"
+  "yes": "हो"
+  "no": "छैन"
 
 pa_IN:
   placeholder: "ਆਪਣਾ ਸੁਨੇਹਾ ਇੱਥੇ ਟਾਈਪ ਕਰੋ..."
@@ -5161,8 +5161,6 @@ pa_IN:
   confirmExecutionDescription: "ਇਹ ਕਾਰਵਾਈ ਤੁਹਾਡੇ ਡੇਟਾਬੇਸ ਨੂੰ ਸੰਸ਼ੋਧਿਤ ਕਰੇਗੀ। ਸਮੀਖਿਆ ਕਰੋ ਅਤੇ ਅੱਗੇ ਵਧਣ ਲਈ ਪੁਸ਼ਟੀ ਕਰੋ।"
   showQuery: "ਪੁੱਛਗਿੱਛ ਦਿਖਾਓ"
   hideQuery: "ਪੁੱਛਗਿੱਛ ਲੁਕਾਓ"
-  True: "ਹਾਂ"
-  False: "ਨੰ"
   executing: "ਚਲਾਇਆ ਜਾ ਰਿਹਾ ਹੈ..."
   queryCancelled: "ਪੁੱਛਗਿੱਛ ਰੱਦ ਕੀਤੀ ਗਈ"
   sendMessage: "ਸੁਨੇਹਾ ਭੇਜੋ"
@@ -5222,6 +5220,8 @@ pa_IN:
   example25: "ਪਿਛਲੇ ਸਾਲ ਆਡਿਟ ਲਈ ਫਲੈਗ ਕੀਤੇ ਗਏ ਸਾਰੇ ਲੈਣ-ਦੇਣ ਦੀ ਸੂਚੀ ਬਣਾਓ"
   example26: "ਖੇਤਰ ਦੁਆਰਾ ਰਿਪੋਰਟ ਕੀਤੀ ਗਈ ਪਾਲਣਾ ਸੰਬੰਧੀ ਮੁੱਦਿਆਂ ਨੂੰ ਸੰਖੇਪ ਕਰੋ"
   example27: "ਪਿਛਲੀ ਤਿਮਾਹੀ ਵਿੱਚ ਨੀਤੀ ਦੀਆਂ ਸਾਰੀਆਂ ਉਲੰਘਣਾਵਾਂ ਦੀ ਰਿਪੋਰਟ ਦਿਖਾਓ"
+  "yes": "ਹਾਂ"
+  "no": "ਨੰ"
 
 si_LK:
   placeholder: "ඔබගේ පණිවිඩය මෙහි ටයිප් කරන්න..."
@@ -5256,8 +5256,6 @@ si_LK:
   confirmExecutionDescription: "මෙම මෙහෙයුම ඔබගේ දත්ත සමුදාය වෙනස් කරනු ඇත. ඉදිරියට යාමට සමාලෝචනය කර තහවුරු කරන්න."
   showQuery: "විමසුම පෙන්වන්න"
   hideQuery: "විමසුම සඟවන්න"
-  True: "ඔව්"
-  False: "නැත"
   executing: "ක්‍රියාත්මක කරමින්..."
   queryCancelled: "විමසුම අවලංගු කරන ලදී"
   sendMessage: "පණිවිඩයක් යවන්න"
@@ -5317,6 +5315,8 @@ si_LK:
   example25: "පසුගිය වසරේ විගණනය සඳහා සලකුණු කළ සියලුම ගනුදෙනු ලැයිස්තුගත කරන්න"
   example26: "කලාපය විසින් වාර්තා කරන ලද අනුකූලතා ගැටළු සාරාංශ කරන්න"
   example27: "පසුගිය කාර්තුවේ සියලුම ප්‍රතිපත්ති කඩකිරීම් පිළිබඳ වාර්තාවක් පෙන්වන්න"
+  "yes": "ඔව්"
+  "no": "නැත"
 
 sl_SI:
   placeholder: "Tukaj vnesite svoje sporočilo ..."
@@ -5351,8 +5351,6 @@ sl_SI:
   confirmExecutionDescription: "Ta operacija bo spremenila vašo bazo podatkov. Preglejte in potrdite za nadaljevanje."
   showQuery: "Prikaži poizvedbo"
   hideQuery: "Skrij poizvedbo"
-  True: "ja"
-  False: "št"
   executing: "Izvajanje ..."
   queryCancelled: "Poizvedba preklicana"
   sendMessage: "Pošlji sporočilo"
@@ -5412,6 +5410,8 @@ sl_SI:
   example25: "Navedite vse transakcije, označene za revizijo v zadnjem letu"
   example26: "Povzemite poročane težave glede skladnosti po regijah"
   example27: "Prikaži poročilo o vseh kršitvah pravilnika v zadnjem četrtletju"
+  "yes": "ja"
+  "no": "št"
 
 sr_RS:
   placeholder: "Унесите своју поруку овде..."
@@ -5446,8 +5446,6 @@ sr_RS:
   confirmExecutionDescription: "Ова операција ће изменити вашу базу података. Прегледајте и потврдите да бисте наставили."
   showQuery: "Прикажи упит"
   hideQuery: "Сакриј упит"
-  True: "Да"
-  False: "бр"
   executing: "Извршавање..."
   queryCancelled: "Упит је отказан"
   sendMessage: "Пошаљи поруку"
@@ -5507,6 +5505,8 @@ sr_RS:
   example25: "Наведите све трансакције означене за ревизију у прошлој години"
   example26: "Сумирајте проблеме усклађености пријављене по регионима"
   example27: "Прикажи извештај о свим кршењима смерница у последњем тромесечју"
+  "yes": "Да"
+  "no": "бр"
 
 te_IN:
   placeholder: "మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి..."
@@ -5541,8 +5541,6 @@ te_IN:
   confirmExecutionDescription: "ఈ ఆపరేషన్ మీ డేటాబేస్‌ని మారుస్తుంది. సమీక్షించండి మరియు కొనసాగడానికి నిర్ధారించండి."
   showQuery: "ప్రశ్నను చూపించు"
   hideQuery: "ప్రశ్నను దాచు"
-  True: "అవును"
-  False: "నం"
   executing: "అమలు చేస్తోంది..."
   queryCancelled: "ప్రశ్న రద్దు చేయబడింది"
   sendMessage: "సందేశం పంపండి"
@@ -5602,6 +5600,8 @@ te_IN:
   example25: "గత సంవత్సరంలో ఆడిట్ కోసం ఫ్లాగ్ చేసిన అన్ని లావాదేవీలను జాబితా చేయండి"
   example26: "ప్రాంతం వారీగా నివేదించబడిన సమ్మతి సమస్యలను సంగ్రహించండి"
   example27: "గత త్రైమాసికంలో అన్ని విధాన ఉల్లంఘనల నివేదికను చూపండి"
+  "yes": "అవును"
+  "no": "సంఖ్య"
 
 tl_PH:
   placeholder: "I-type ang Iyong Mensahe Dito..."
@@ -5636,8 +5636,6 @@ tl_PH:
   confirmExecutionDescription: "Babaguhin ng operasyong ito ang iyong database. Suriin at kumpirmahin upang magpatuloy."
   showQuery: "Ipakita ang Query"
   hideQuery: "Itago ang Query"
-  True: "Oo"
-  False: "Hindi"
   executing: "Isinasagawa..."
   queryCancelled: "Kinansela ang Query"
   sendMessage: "Magpadala ng mensahe"
@@ -5697,6 +5695,8 @@ tl_PH:
   example25: "Ilista ang lahat ng transaksyong na-flag para sa pag-audit noong nakaraang taon"
   example26: "Ibuod ang mga isyu sa pagsunod na iniulat ng rehiyon"
   example27: "Magpakita ng ulat ng lahat ng paglabag sa patakaran sa huling quarter"
+  "yes": "Oo"
+  "no": "Hindi"
 
 uz_UZ:
   placeholder: "Xabaringizni shu yerga yozing..."
@@ -5731,8 +5731,6 @@ uz_UZ:
   confirmExecutionDescription: "Ushbu operatsiya ma'lumotlar bazasini o'zgartiradi. Davom etish uchun tekshiring va tasdiqlang."
   showQuery: "So'rovni ko'rsatish"
   hideQuery: "So'rovni yashirish"
-  True: "Ha"
-  False: "Yo'q"
   executing: "Bajarilmoqda..."
   queryCancelled: "So‘rov bekor qilindi"
   sendMessage: "Xabar yuborish"
@@ -5792,6 +5790,8 @@ uz_UZ:
   example25: "O'tgan yili audit uchun belgilangan barcha operatsiyalarni sanab o'ting"
   example26: "Hududlar bo'yicha bildirilgan muvofiqlik masalalarini umumlashtiring"
   example27: "Oxirgi chorakdagi barcha siyosat buzilishlari haqidagi hisobotni ko'rsating"
+  "yes": "Ha"
+  "no": "Yo'q"
 
 yo_NG:
   placeholder: "Tẹ ifiranṣẹ rẹ Nibi ..."
@@ -5826,8 +5826,6 @@ yo_NG:
   confirmExecutionDescription: "Išišẹ yii yoo ṣe atunṣe aaye data rẹ. Ṣayẹwo ki o jẹrisi lati tẹsiwaju."
   showQuery: "Ṣe afihan ibeere"
   hideQuery: "Tọju Ìbéèrè"
-  True: "Bẹẹni"
-  False: "Rara"
   executing: "Nṣiṣẹ..."
   queryCancelled: "Ti fagile ibeere"
   sendMessage: "Firanṣẹ ifiranṣẹ"
@@ -5887,3 +5885,5 @@ yo_NG:
   example25: "Ṣe atokọ gbogbo awọn iṣowo ti a fihan fun iṣayẹwo ni ọdun to kọja"
   example26: "Ṣe akopọ awọn ọran ibamu ti agbegbe royin"
   example27: "Ṣe afihan ijabọ kan ti gbogbo awọn irufin eto imulo ni mẹẹdogun to kẹhin"
+  "yes": "Bẹẹni"
+  "no": "Rara"

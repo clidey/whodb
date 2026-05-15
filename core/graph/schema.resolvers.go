@@ -166,6 +166,26 @@ func (r *mutationResolver) CreateSourceObject(ctx context.Context, parent *model
 	return &model.StatusResponse{Status: status}, nil
 }
 
+// CreateSourceObjectFromDefinition is the resolver for the CreateSourceObjectFromDefinition field.
+func (r *mutationResolver) CreateSourceObjectFromDefinition(ctx context.Context, parent *model.SourceObjectRefInput, definition model.SourceObjectDefinitionInput) (*model.StatusResponse, error) {
+	spec, session, err := getSourceSessionForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
+	if !ok {
+		return nil, errors.New("source object creation is not supported")
+	}
+
+	objectDefinition := sourceObjectDefinitionInputToSource(definition)
+	status, err := manager.CreateObject(ctx, sourceRefFromInput(parent), objectDefinition.Name, source.ObjectDefinitionToRecords(objectDefinition))
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.StatusResponse{Status: status}, nil
+}
+
 // UpdateSourceObject is the resolver for the UpdateSourceObject field.
 func (r *mutationResolver) UpdateSourceObject(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error) {
 	spec, session, err := getSourceSessionForContext(ctx)
@@ -1077,6 +1097,23 @@ func (r *queryResolver) SourceSessionMetadata(ctx context.Context) (*model.Sourc
 	return sourceSessionMetadataToModel(metadata), nil
 }
 
+// SourceObjectCreationMetadata is the resolver for the SourceObjectCreationMetadata field.
+func (r *queryResolver) SourceObjectCreationMetadata(ctx context.Context, parent *model.SourceObjectRefInput) (*model.ObjectCreationMetadata, error) {
+	spec, _, err := getSourceSpecForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	metadata, ok := sourcecatalog.ResolveObjectCreationMetadata(spec.ID, spec.Connector)
+	if !ok {
+		return sourceObjectCreationMetadataToModel(source.ObjectCreationMetadata{
+			Supported:       false,
+			ObjectKind:      spec.Contract.DefaultObjectKind,
+			RequiresColumns: false,
+		}), nil
+	}
+	return sourceObjectCreationMetadataToModel(metadata), nil
+}
+
 // SourceObjects is the resolver for the SourceObjects field.
 func (r *queryResolver) SourceObjects(ctx context.Context, parent *model.SourceObjectRefInput, kinds []model.SourceObjectKind) ([]*model.SourceObject, error) {
 	spec, session, err := getSourceSessionForContext(ctx)
@@ -1220,6 +1257,25 @@ func (r *queryResolver) SourceColumnsBatch(ctx context.Context, refs []*model.So
 		return nil, err
 	}
 	return sourceObjectColumnsToModel(results), nil
+}
+
+// SourceFieldConstraints is the resolver for the SourceFieldConstraints field.
+func (r *queryResolver) SourceFieldConstraints(ctx context.Context, ref model.SourceObjectRefInput) ([]*model.SourceFieldConstraints, error) {
+	spec, session, err := getSourceSessionForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, ok := source.AsFieldConstraintReader(sourceAuditScopeFromContext(ctx, spec), session)
+	if !ok {
+		return nil, errors.New("source field constraints are not supported")
+	}
+
+	constraints, err := reader.FieldConstraints(ctx, *sourceRefFromInput(&ref))
+	if err != nil {
+		return nil, err
+	}
+	return MapFieldConstraintsToModel(constraints), nil
 }
 
 // RunSourceQuery is the resolver for the RunSourceQuery field.

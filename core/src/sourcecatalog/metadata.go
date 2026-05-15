@@ -31,6 +31,9 @@ var (
 	sessionMetadataMu    sync.RWMutex
 	sessionMetadataSpecs = map[string]source.TypeSessionMetadata{}
 
+	objectCreationMetadataMu    sync.RWMutex
+	objectCreationMetadataSpecs = map[string]source.ObjectCreationMetadata{}
+
 	discoveryPrefillMu    sync.RWMutex
 	discoveryPrefillSpecs = map[string]source.DiscoveryPrefill{}
 )
@@ -143,6 +146,94 @@ func registerSessionMetadata() {
 		string(engine.DatabaseType_Memcached),
 		SessionMetadataFromOperatorMap(nil, specs.MemcachedOperators, nil),
 	)
+
+	RegisterObjectCreationMetadataAliases(
+		relationalObjectCreationMetadata(specs.PostgresTypeDefinitions),
+		string(engine.DatabaseType_Postgres),
+		string(engine.DatabaseType_YugabyteDB),
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_CockroachDB),
+		relationalObjectCreationMetadata(specs.CockroachDBTypeDefinitions),
+	)
+	RegisterObjectCreationMetadataAliases(
+		relationalObjectCreationMetadata(specs.MySQLTypeDefinitions),
+		string(engine.DatabaseType_MySQL),
+		string(engine.DatabaseType_MariaDB),
+		string(engine.DatabaseType_TiDB),
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_ClickHouse),
+		source.ObjectCreationMetadata{
+			Supported:       true,
+			ObjectKind:      source.ObjectKindTable,
+			RequiresColumns: true,
+			TypeDefinitions: slices.Clone(specs.ClickHouseTypeDefinitions),
+			ColumnCapabilities: source.ColumnCreationCapabilities{
+				Types:        true,
+				Nullable:     true,
+				PrimaryKey:   true,
+				DefaultValue: true,
+				CheckValues:  true,
+				CheckMinMax:  true,
+			},
+			TableCapabilities: source.TableCreationCapabilities{OrderKey: true},
+		},
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_Sqlite3),
+		relationalObjectCreationMetadata(specs.SQLiteTypeDefinitions),
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_DuckDB),
+		relationalObjectCreationMetadata(specs.DuckDBTypeDefinitions),
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_QuestDB),
+		relationalObjectCreationMetadata(specs.QuestDBTypeDefinitions),
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_ElasticSearch),
+		source.ObjectCreationMetadata{
+			Supported:       true,
+			ObjectKind:      source.ObjectKindIndex,
+			RequiresColumns: false,
+			TypeDefinitions: slices.Clone(specs.ElasticSearchTypeDefinitions),
+			ColumnCapabilities: source.ColumnCreationCapabilities{
+				Types: true,
+			},
+		},
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_MongoDB),
+		source.ObjectCreationMetadata{
+			Supported:       true,
+			ObjectKind:      source.ObjectKindCollection,
+			RequiresColumns: false,
+			TypeDefinitions: slices.Clone(specs.MongoDBTypeDefinitions),
+			ColumnCapabilities: source.ColumnCreationCapabilities{
+				Types:    true,
+				Nullable: true,
+			},
+		},
+	)
+	RegisterObjectCreationMetadata(
+		string(engine.DatabaseType_Redis),
+		source.ObjectCreationMetadata{
+			Supported:       true,
+			ObjectKind:      source.ObjectKindKey,
+			RequiresColumns: false,
+			TableCapabilities: source.TableCreationCapabilities{
+				KeyValueType: true,
+			},
+			TableOptions: []source.CreationOptionDefinition{{
+				Key:      "type",
+				Label:    "Type",
+				Required: true,
+				Values:   []string{"string", "hash", "list", "set", "zset"},
+			}},
+		},
+	)
 }
 
 // RegisterSessionMetadata registers source-owned editor/query metadata for one
@@ -181,6 +272,43 @@ func ResolveSessionMetadata(ids ...string) (*source.TypeSessionMetadata, bool) {
 	}
 
 	return nil, false
+}
+
+// RegisterObjectCreationMetadata registers source-owned create-object metadata
+// for one source type or connector id.
+func RegisterObjectCreationMetadata(id string, metadata source.ObjectCreationMetadata) {
+	if strings.TrimSpace(id) == "" {
+		return
+	}
+
+	objectCreationMetadataMu.Lock()
+	defer objectCreationMetadataMu.Unlock()
+	objectCreationMetadataSpecs[strings.ToLower(id)] = cloneObjectCreationMetadata(metadata)
+}
+
+// RegisterObjectCreationMetadataAliases registers the same create-object
+// metadata for multiple source type or connector ids.
+func RegisterObjectCreationMetadataAliases(metadata source.ObjectCreationMetadata, ids ...string) {
+	for _, id := range ids {
+		RegisterObjectCreationMetadata(id, metadata)
+	}
+}
+
+// ResolveObjectCreationMetadata resolves create-object metadata for the first
+// matching source type or connector id.
+func ResolveObjectCreationMetadata(ids ...string) (source.ObjectCreationMetadata, bool) {
+	objectCreationMetadataMu.RLock()
+	defer objectCreationMetadataMu.RUnlock()
+
+	for _, id := range ids {
+		metadata, ok := objectCreationMetadataSpecs[strings.ToLower(strings.TrimSpace(id))]
+		if !ok {
+			continue
+		}
+		return cloneObjectCreationMetadata(metadata), true
+	}
+
+	return source.ObjectCreationMetadata{}, false
 }
 
 // RegisterDiscoveryPrefill registers source-owned discovered-resource prefill
@@ -282,6 +410,52 @@ func cloneDiscoveryPrefill(prefill source.DiscoveryPrefill) source.DiscoveryPref
 			DefaultValue:  item.DefaultValue,
 			ProviderTypes: slices.Clone(item.ProviderTypes),
 			Conditions:    slices.Clone(item.Conditions),
+		})
+	}
+	return cloned
+}
+
+func relationalObjectCreationMetadata(typeDefinitions []source.TypeDefinition) source.ObjectCreationMetadata {
+	return source.ObjectCreationMetadata{
+		Supported:       true,
+		ObjectKind:      source.ObjectKindTable,
+		RequiresColumns: true,
+		TypeDefinitions: slices.Clone(typeDefinitions),
+		ColumnCapabilities: source.ColumnCreationCapabilities{
+			Types:               true,
+			Nullable:            true,
+			PrimaryKey:          true,
+			CompositePrimaryKey: true,
+			Unique:              true,
+			Identity:            true,
+			DefaultValue:        true,
+			CheckValues:         true,
+			CheckMinMax:         true,
+			ForeignKey:          true,
+		},
+	}
+}
+
+func cloneObjectCreationMetadata(metadata source.ObjectCreationMetadata) source.ObjectCreationMetadata {
+	return source.ObjectCreationMetadata{
+		Supported:          metadata.Supported,
+		ObjectKind:         metadata.ObjectKind,
+		RequiresColumns:    metadata.RequiresColumns,
+		TypeDefinitions:    slices.Clone(metadata.TypeDefinitions),
+		ColumnCapabilities: metadata.ColumnCapabilities,
+		TableCapabilities:  metadata.TableCapabilities,
+		TableOptions:       cloneCreationOptionDefinitions(metadata.TableOptions),
+	}
+}
+
+func cloneCreationOptionDefinitions(options []source.CreationOptionDefinition) []source.CreationOptionDefinition {
+	cloned := make([]source.CreationOptionDefinition, 0, len(options))
+	for _, option := range options {
+		cloned = append(cloned, source.CreationOptionDefinition{
+			Key:      option.Key,
+			Label:    option.Label,
+			Required: option.Required,
+			Values:   slices.Clone(option.Values),
 		})
 	}
 	return cloned

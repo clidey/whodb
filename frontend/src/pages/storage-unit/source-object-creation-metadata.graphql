@@ -1,0 +1,41 @@
+query SourceObjectCreationMetadata($parent: SourceObjectRefInput) {
+  SourceObjectCreationMetadata(parent: $parent) {
+    Supported
+    ObjectKind
+    RequiresColumns
+    TypeDefinitions {
+      id
+      label
+      hasLength
+      hasPrecision
+      defaultLength
+      defaultPrecision
+      category
+    }
+    ColumnCapabilities {
+      Types
+      Nullable
+      PrimaryKey
+      CompositePrimaryKey
+      Unique
+      Identity
+      DefaultValue
+      CheckValues
+      CheckMinMax
+      ForeignKey
+    }
+    TableCapabilities {
+      RequiresPrimaryKey
+      PartitionKey
+      ClusteringKey
+      OrderKey
+      KeyValueType
+    }
+    TableOptions {
+      Key
+      Label
+      Required
+      Values
+    }
+  }
+}

@@ -63,6 +63,8 @@ ar_AE:
   providerAdded: "تمت إضافة حساب AWS بنجاح"
   providerUpdated: "تم تحديث حساب AWS بنجاح"
   profileRequired: "اسم الملف الشخصي مطلوب"
+  s3Label: "دلاء S3"
+  s3Desc: "دلاء تخزين الكائنات"
 
 de_DE:
   editProvider: "Bearbeiten Sie das AWS-Konto"
@@ -91,6 +93,8 @@ de_DE:
   providerAdded: "AWS-Konto erfolgreich hinzugefügt"
   providerUpdated: "AWS-Konto erfolgreich aktualisiert"
   profileRequired: "Profilname ist erforderlich"
+  s3Label: "S3-Eimer"
+  s3Desc: "Object storage buckets"
 
 el_GR:
   editProvider: "Επεξεργασία λογαριασμού AWS"
@@ -119,6 +123,8 @@ el_GR:
   providerAdded: "Ο λογαριασμός AWS προστέθηκε με επιτυχία"
   providerUpdated: "Ο λογαριασμός AWS ενημερώθηκε με επιτυχία"
   profileRequired: "Απαιτείται όνομα προφίλ"
+  s3Label: "Κάδοι S3"
+  s3Desc: "Κάδοι αποθήκευσης αντικειμένων"
 
 en_GB:
   editProvider: "Edit AWS Account"
@@ -177,6 +183,8 @@ es_ES:
   providerAdded: "Cuenta de AWS agregada exitosamente"
   providerUpdated: "Cuenta de AWS actualizada correctamente"
   profileRequired: "El nombre del perfil es obligatorio."
+  s3Label: "Cubos S3"
+  s3Desc: "Cubos de almacenamiento de objetos"
 
 fi_FI:
   editProvider: "Muokkaa AWS-tiliä"
@@ -205,6 +213,8 @@ fi_FI:
   providerAdded: "AWS-tili lisätty onnistuneesti"
   providerUpdated: "AWS-tilin päivitys onnistui"
   profileRequired: "Profiilin nimi vaaditaan"
+  s3Label: "S3 Kauhat"
+  s3Desc: "Esineiden säilytysastiat"
 
 fr_FR:
   editProvider: "Modifier le compte AWS"
@@ -233,6 +243,8 @@ fr_FR:
   providerAdded: "Compte AWS ajouté avec succès"
   providerUpdated: "Compte AWS mis à jour avec succès"
   profileRequired: "Le nom du profil est requis"
+  s3Label: "Seaux S3"
+  s3Desc: "Compartiments de stockage d'objets"
 
 it_IT:
   editProvider: "Modifica account AWS"
@@ -261,6 +273,8 @@ it_IT:
   providerAdded: "Account AWS aggiunto correttamente"
   providerUpdated: "Account AWS aggiornato correttamente"
   profileRequired: "Il nome del profilo è obbligatorio"
+  s3Label: "Benne S3"
+  s3Desc: "Bucket di archiviazione di oggetti"
 
 iw_IL:
   editProvider: "ערוך חשבון AWS"
@@ -289,6 +303,8 @@ iw_IL:
   providerAdded: "חשבון AWS נוסף בהצלחה"
   providerUpdated: "חשבון AWS עודכן בהצלחה"
   profileRequired: "נדרש שם פרופיל"
+  s3Label: "S3 דליים"
+  s3Desc: "דליים לאחסון חפצים"
 
 ja_JP:
   editProvider: "AWSアカウントの編集"
@@ -317,6 +333,8 @@ ja_JP:
   providerAdded: "AWS アカウントが正常に追加されました"
   providerUpdated: "AWS アカウントが正常に更新されました"
   profileRequired: "プロファイル名は必須です"
+  s3Label: "S3バケット"
+  s3Desc: "オブジェクトストレージバケット"
 
 ko_KR:
   editProvider: "AWS 계정 편집"
@@ -345,6 +363,8 @@ ko_KR:
   providerAdded: "AWS 계정이 성공적으로 추가되었습니다."
   providerUpdated: "AWS 계정이 성공적으로 업데이트되었습니다."
   profileRequired: "프로필 이름은 필수 항목입니다."
+  s3Label: "S3 버킷"
+  s3Desc: "객체 스토리지 버킷"
 
 nl_NL:
   editProvider: "Bewerk AWS-account"
@@ -373,6 +393,8 @@ nl_NL:
   providerAdded: "AWS-account succesvol toegevoegd"
   providerUpdated: "AWS-account is succesvol bijgewerkt"
   profileRequired: "Profielnaam is vereist"
+  s3Label: "S3-emmers"
+  s3Desc: "Objectopslagbuckets"
 
 pl_PL:
   editProvider: "Edytuj konto AWS"
@@ -401,6 +423,8 @@ pl_PL:
   providerAdded: "Konto AWS zostało pomyślnie dodane"
   providerUpdated: "Konto AWS zostało pomyślnie zaktualizowane"
   profileRequired: "Nazwa profilu jest wymagana"
+  s3Label: "Wiadra S3"
+  s3Desc: "Wiadra do przechowywania obiektów"
 
 pt_BR:
   editProvider: "Editar conta AWS"
@@ -429,6 +453,8 @@ pt_BR:
   providerAdded: "Conta AWS adicionada com sucesso"
   providerUpdated: "Conta AWS atualizada com sucesso"
   profileRequired: "O nome do perfil é obrigatório"
+  s3Label: "Baldes S3"
+  s3Desc: "Buckets de armazenamento de objetos"
 
 ro_RO:
   editProvider: "Editați contul AWS"
@@ -457,6 +483,8 @@ ro_RO:
   providerAdded: "Contul AWS a fost adăugat cu succes"
   providerUpdated: "Contul AWS a fost actualizat cu succes"
   profileRequired: "Numele profilului este obligatoriu"
+  s3Label: "Găleți S3"
+  s3Desc: "Găleți de depozitare a obiectelor"
 
 ru_RU:
   editProvider: "Изменить учетную запись AWS"
@@ -485,6 +513,8 @@ ru_RU:
   providerAdded: "Аккаунт AWS успешно добавлен"
   providerUpdated: "Аккаунт AWS успешно обновлен"
   profileRequired: "Укажите имя профиля."
+  s3Label: "Ковши S3"
+  s3Desc: "Сегменты хранения объектов"
 
 sk_SK:
   editProvider: "Upraviť účet AWS"
@@ -513,6 +543,8 @@ sk_SK:
   providerAdded: "Účet AWS bol úspešne pridaný"
   providerUpdated: "Účet AWS bol úspešne aktualizovaný"
   profileRequired: "Vyžaduje sa názov profilu"
+  s3Label: "S3 vedierka"
+  s3Desc: "Vedrá na ukladanie predmetov"
 
 sv_SE:
   editProvider: "Redigera AWS-konto"
@@ -541,6 +573,8 @@ sv_SE:
   providerAdded: "AWS-konto har lagts till"
   providerUpdated: "AWS-kontot har uppdaterats"
   profileRequired: "Profilnamn krävs"
+  s3Label: "S3 skopor"
+  s3Desc: "Förvaringshinkar för föremål"
 
 zh_CN:
   editProvider: "编辑 AWS 账户"
@@ -569,6 +603,8 @@ zh_CN:
   providerAdded: "AWS账户添加成功"
   providerUpdated: "AWS 账户更新成功"
   profileRequired: "个人资料名称为必填项"
+  s3Label: "S3 铲斗"
+  s3Desc: "对象存储桶"
 
 zh_TW:
   editProvider: "編輯 AWS 帳戶"
@@ -597,6 +633,8 @@ zh_TW:
   providerAdded: "AWS帳戶新增成功"
   providerUpdated: "AWS 帳號更新成功"
   profileRequired: "個人資料名稱為必填項"
+  s3Label: "S3 鏟鬥"
+  s3Desc: "物件儲存桶"
 
 bg_BG:
   editProvider: "Редактиране на AWS акаунт"
@@ -625,6 +663,8 @@ bg_BG:
   providerAdded: "AWS акаунтът е добавен успешно"
   providerUpdated: "AWS акаунтът е актуализиран успешно"
   profileRequired: "Името на профила е задължително"
+  s3Label: "S3 кофи"
+  s3Desc: "Кофи за съхранение на обекти"
 
 bn_BD:
   editProvider: "AWS অ্যাকাউন্ট সম্পাদনা করুন"
@@ -653,6 +693,8 @@ bn_BD:
   providerAdded: "AWS অ্যাকাউন্ট সফলভাবে যোগ করা হয়েছে"
   providerUpdated: "AWS অ্যাকাউন্ট সফলভাবে আপডেট করা হয়েছে"
   profileRequired: "প্রোফাইল নাম প্রয়োজন"
+  s3Label: "S3 বালতি"
+  s3Desc: "বস্তু স্টোরেজ buckets"
 
 ca_ES:
   editProvider: "Editeu el compte d'AWS"
@@ -681,6 +723,8 @@ ca_ES:
   providerAdded: "El compte d'AWS s'ha afegit correctament"
   providerUpdated: "El compte d'AWS s'ha actualitzat correctament"
   profileRequired: "El nom del perfil és obligatori"
+  s3Label: "S3 Cubells"
+  s3Desc: "Cubells d'emmagatzematge d'objectes"
 
 cs_CZ:
   editProvider: "Upravit účet AWS"
@@ -709,6 +753,8 @@ cs_CZ:
   providerAdded: "Účet AWS byl úspěšně přidán"
   providerUpdated: "Účet AWS byl úspěšně aktualizován"
   profileRequired: "Jméno profilu je povinné"
+  s3Label: "S3 vědra"
+  s3Desc: "Kbelíky pro ukládání objektů"
 
 da_DK:
   editProvider: "Rediger AWS-konto"
@@ -737,6 +783,8 @@ da_DK:
   providerAdded: "AWS-konto blev tilføjet"
   providerUpdated: "AWS-kontoen blev opdateret"
   profileRequired: "Profilnavn er påkrævet"
+  s3Label: "S3 spande"
+  s3Desc: "Opbevaringsspande til objekter"
 
 fa_IR:
   editProvider: "حساب AWS را ویرایش کنید"
@@ -765,6 +813,8 @@ fa_IR:
   providerAdded: "حساب AWS با موفقیت اضافه شد"
   providerUpdated: "حساب AWS با موفقیت به روز شد"
   profileRequired: "نام نمایه الزامی است"
+  s3Label: "سطل S3"
+  s3Desc: "سطل های ذخیره اشیاء"
 
 hi_IN:
   editProvider: "AWS खाता संपादित करें"
@@ -793,6 +843,8 @@ hi_IN:
   providerAdded: "AWS खाता सफलतापूर्वक जोड़ा गया"
   providerUpdated: "AWS खाता सफलतापूर्वक अपडेट किया गया"
   profileRequired: "प्रोफ़ाइल नाम आवश्यक है"
+  s3Label: "S3 बाल्टी"
+  s3Desc: "वस्तु भंडारण बकेट"
 
 hr_HR:
   editProvider: "Uredite AWS račun"
@@ -821,6 +873,8 @@ hr_HR:
   providerAdded: "AWS račun je uspješno dodan"
   providerUpdated: "AWS račun je uspješno ažuriran"
   profileRequired: "Potreban je naziv profila"
+  s3Label: "S3 kante"
+  s3Desc: "Spremnici za skladištenje objekata"
 
 hu_HU:
   editProvider: "Szerkessze az AWS-fiókot"
@@ -849,6 +903,8 @@ hu_HU:
   providerAdded: "Az AWS-fiók sikeresen hozzáadva"
   providerUpdated: "Az AWS-fiók sikeresen frissítve"
   profileRequired: "A profilnév megadása kötelező"
+  s3Label: "S3 vödrök"
+  s3Desc: "Tárgytároló vödrök"
 
 id_ID:
   editProvider: "Edit Akun AWS"
@@ -877,6 +933,8 @@ id_ID:
   providerAdded: "Akun AWS berhasil ditambahkan"
   providerUpdated: "Akun AWS berhasil diperbarui"
   profileRequired: "Nama profil wajib diisi"
+  s3Label: "Ember S3"
+  s3Desc: "Bucket penyimpanan objek"
 
 ms_MY:
   editProvider: "Edit Akaun AWS"
@@ -905,6 +963,8 @@ ms_MY:
   providerAdded: "Akaun AWS berjaya ditambahkan"
   providerUpdated: "Akaun AWS berjaya dikemas kini"
   profileRequired: "Nama profil diperlukan"
+  s3Label: "S3 Baldi"
+  s3Desc: "Baldi penyimpanan objek"
 
 nb_NO:
   editProvider: "Rediger AWS-konto"
@@ -933,6 +993,8 @@ nb_NO:
   providerAdded: "AWS-konto ble lagt til"
   providerUpdated: "AWS-kontoen ble oppdatert"
   profileRequired: "Profilnavn er obligatorisk"
+  s3Label: "S3 Bøtter"
+  s3Desc: "Oppbevaringsbøtter for gjenstander"
 
 sw_KE:
   editProvider: "Badilisha Akaunti ya AWS"
@@ -961,6 +1023,8 @@ sw_KE:
   providerAdded: "Akaunti ya AWS imeongezwa"
   providerUpdated: "Akaunti ya AWS imesasishwa"
   profileRequired: "Jina la wasifu linahitajika"
+  s3Label: "Ndoo za S3"
+  s3Desc: "Ndoo za kuhifadhi kitu"
 
 ta_IN:
   editProvider: "AWS கணக்கைத் திருத்தவும்"
@@ -989,6 +1053,8 @@ ta_IN:
   providerAdded: "AWS கணக்கு வெற்றிகரமாக சேர்க்கப்பட்டது"
   providerUpdated: "AWS கணக்கு வெற்றிகரமாக புதுப்பிக்கப்பட்டது"
   profileRequired: "சுயவிவரப் பெயர் தேவை"
+  s3Label: "S3 வாளிகள்"
+  s3Desc: "பொருள் சேமிப்பு வாளிகள்"
 
 th_TH:
   editProvider: "แก้ไขบัญชี AWS"
@@ -1017,6 +1083,8 @@ th_TH:
   providerAdded: "เพิ่มบัญชี AWS เรียบร้อยแล้ว"
   providerUpdated: "อัปเดตบัญชี AWS เรียบร้อยแล้ว"
   profileRequired: "ต้องระบุชื่อโปรไฟล์"
+  s3Label: "ถัง S3"
+  s3Desc: "ที่เก็บข้อมูลออบเจ็กต์"
 
 tr_TR:
   editProvider: "AWS Hesabını Düzenle"
@@ -1045,6 +1113,8 @@ tr_TR:
   providerAdded: "AWS hesabı başarıyla eklendi"
   providerUpdated: "AWS hesabı başarıyla güncellendi"
   profileRequired: "Profil adı gerekli"
+  s3Label: "S3 Kovaları"
+  s3Desc: "Nesne depolama paketleri"
 
 uk_UA:
   editProvider: "Редагувати обліковий запис AWS"
@@ -1073,6 +1143,8 @@ uk_UA:
   providerAdded: "Обліковий запис AWS успішно додано"
   providerUpdated: "Обліковий запис AWS успішно оновлено"
   profileRequired: "Потрібно вказати назву профілю"
+  s3Label: "S3 Відра"
+  s3Desc: "Відра для зберігання об’єктів"
 
 ur_PK:
   editProvider: "AWS اکاؤنٹ میں ترمیم کریں۔"
@@ -1101,6 +1173,8 @@ ur_PK:
   providerAdded: "AWS اکاؤنٹ کامیابی کے ساتھ شامل ہو گیا۔"
   providerUpdated: "AWS اکاؤنٹ کامیابی کے ساتھ اپ ڈیٹ ہو گیا۔"
   profileRequired: "پروفائل کا نام درکار ہے۔"
+  s3Label: "S3 بالٹیاں"
+  s3Desc: "آبجیکٹ اسٹوریج بالٹیاں"
 
 vi_VN:
   editProvider: "Chỉnh sửa tài khoản AWS"
@@ -1129,6 +1203,8 @@ vi_VN:
   providerAdded: "Đã thêm tài khoản AWS thành công"
   providerUpdated: "Tài khoản AWS được cập nhật thành công"
   profileRequired: "Tên hồ sơ là bắt buộc"
+  s3Label: "Nhóm S3"
+  s3Desc: "Thùng lưu trữ đối tượng"
 
 af_ZA:
   editProvider: "Wysig AWS-rekening"
@@ -1157,6 +1233,8 @@ af_ZA:
   providerAdded: "AWS-rekening is suksesvol bygevoeg"
   providerUpdated: "AWS-rekening is suksesvol opgedateer"
   profileRequired: "Profielnaam word vereis"
+  s3Label: "S3 Emmers"
+  s3Desc: "Voorwerpopbergemmers"
 
 am_ET:
   editProvider: "የAWS መለያ ያርትዑ"
@@ -1185,6 +1263,8 @@ am_ET:
   providerAdded: "የAWS መለያ በተሳካ ሁኔታ ታክሏል።"
   providerUpdated: "የAWS መለያ በተሳካ ሁኔታ ተዘምኗል"
   profileRequired: "የመገለጫ ስም ያስፈልጋል"
+  s3Label: "S3 ባልዲዎች"
+  s3Desc: "የነገር ማከማቻ ባልዲዎች"
 
 az_AZ:
   editProvider: "AWS Hesabını redaktə edin"
@@ -1213,6 +1293,8 @@ az_AZ:
   providerAdded: "AWS hesabı uğurla əlavə edildi"
   providerUpdated: "AWS hesabı uğurla yeniləndi"
   profileRequired: "Profil adı tələb olunur"
+  s3Label: "S3 Kovalar"
+  s3Desc: "Obyekt saxlama qabları"
 
 et_EE:
   editProvider: "Redigeerige AWS-i kontot"
@@ -1241,6 +1323,8 @@ et_EE:
   providerAdded: "AWS-i konto lisamine õnnestus"
   providerUpdated: "AWS-i konto värskendamine õnnestus"
   profileRequired: "Profiili nimi on nõutav"
+  s3Label: "S3 kopad"
+  s3Desc: "Objektide hoidmise ämbrid"
 
 gu_IN:
   editProvider: "AWS એકાઉન્ટ સંપાદિત કરો"
@@ -1269,6 +1353,8 @@ gu_IN:
   providerAdded: "AWS એકાઉન્ટ સફળતાપૂર્વક ઉમેર્યું"
   providerUpdated: "AWS એકાઉન્ટ સફળતાપૂર્વક અપડેટ થયું"
   profileRequired: "પ્રોફાઇલ નામ જરૂરી છે"
+  s3Label: "S3 ડોલ"
+  s3Desc: "ઑબ્જેક્ટ સ્ટોરેજ બકેટ"
 
 ha_NG:
   editProvider: "Shirya AWS Account"
@@ -1297,6 +1383,8 @@ ha_NG:
   providerAdded: "An ƙara asusun AWS cikin nasara"
   providerUpdated: "An sabunta asusun AWS cikin nasara"
   profileRequired: "Ana buƙatar sunan bayanin martaba"
+  s3Label: "S3 Bukata"
+  s3Desc: "Buckets ajiya abubuwa"
 
 ka_GE:
   editProvider: "AWS ანგარიშის რედაქტირება"
@@ -1325,6 +1413,8 @@ ka_GE:
   providerAdded: "AWS ანგარიში წარმატებით დაემატა"
   providerUpdated: "AWS ანგარიში წარმატებით განახლდა"
   profileRequired: "საჭიროა პროფილის სახელი"
+  s3Label: "S3 თაიგულები"
+  s3Desc: "ობიექტების შესანახი თაიგულები"
 
 km_KH:
   editProvider: "កែសម្រួលគណនី AWS"
@@ -1353,6 +1443,8 @@ km_KH:
   providerAdded: "គណនី AWS បានបន្ថែមដោយជោគជ័យ"
   providerUpdated: "ធ្វើបច្ចុប្បន្នភាពគណនី AWS ដោយជោគជ័យ"
   profileRequired: "ឈ្មោះកម្រងព័ត៌មានត្រូវបានទាមទារ"
+  s3Label: "ធុង S3"
+  s3Desc: "ធុងផ្ទុកវត្ថុ"
 
 kn_IN:
   editProvider: "AWS ಖಾತೆಯನ್ನು ಸಂಪಾದಿಸಿ"
@@ -1381,6 +1473,8 @@ kn_IN:
   providerAdded: "AWS ಖಾತೆಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ"
   providerUpdated: "AWS ಖಾತೆಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ"
   profileRequired: "ಪ್ರೊಫೈಲ್ ಹೆಸರು ಅಗತ್ಯವಿದೆ"
+  s3Label: "S3 ಬಕೆಟ್‌ಗಳು"
+  s3Desc: "ವಸ್ತು ಸಂಗ್ರಹಣೆ ಬಕೆಟ್ಗಳು"
 
 lt_LT:
   editProvider: "Redaguoti AWS paskyrą"
@@ -1409,6 +1503,8 @@ lt_LT:
   providerAdded: "AWS paskyra sėkmingai pridėta"
   providerUpdated: "AWS paskyra sėkmingai atnaujinta"
   profileRequired: "Būtinas profilio pavadinimas"
+  s3Label: "S3 kibirai"
+  s3Desc: "Objektų saugojimo kibirai"
 
 lv_LV:
   editProvider: "Rediģēt AWS kontu"
@@ -1437,6 +1533,8 @@ lv_LV:
   providerAdded: "AWS konts ir veiksmīgi pievienots"
   providerUpdated: "AWS konts ir veiksmīgi atjaunināts"
   profileRequired: "Profila nosaukums ir nepieciešams"
+  s3Label: "S3 Spaiņi"
+  s3Desc: "Objektu uzglabāšanas spaiņi"
 
 ml_IN:
   editProvider: "AWS അക്കൗണ്ട് എഡിറ്റ് ചെയ്യുക"
@@ -1465,6 +1563,8 @@ ml_IN:
   providerAdded: "AWS അക്കൗണ്ട് വിജയകരമായി ചേർത്തു"
   providerUpdated: "AWS അക്കൗണ്ട് വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു"
   profileRequired: "പ്രൊഫൈൽ പേര് ആവശ്യമാണ്"
+  s3Label: "എസ് 3 ബക്കറ്റുകൾ"
+  s3Desc: "ഒബ്ജക്റ്റ് സ്റ്റോറേജ് ബക്കറ്റുകൾ"
 
 mr_IN:
   editProvider: "AWS खाते संपादित करा"
@@ -1493,6 +1593,8 @@ mr_IN:
   providerAdded: "AWS खाते यशस्वीरित्या जोडले"
   providerUpdated: "AWS खाते यशस्वीरित्या अपडेट केले"
   profileRequired: "प्रोफाइल नाव आवश्यक आहे"
+  s3Label: "S3 बादल्या"
+  s3Desc: "ऑब्जेक्ट स्टोरेज बादल्या"
 
 ne_NP:
   editProvider: "AWS खाता सम्पादन गर्नुहोस्"
@@ -1521,6 +1623,8 @@ ne_NP:
   providerAdded: "AWS खाता सफलतापूर्वक थपियो"
   providerUpdated: "AWS खाता सफलतापूर्वक अद्यावधिक गरियो"
   profileRequired: "प्रोफाइल नाम आवश्यक छ"
+  s3Label: "S3 बाल्टिन"
+  s3Desc: "वस्तु भण्डारण बाल्टिन"
 
 pa_IN:
   editProvider: "AWS ਖਾਤੇ ਦਾ ਸੰਪਾਦਨ ਕਰੋ"
@@ -1549,6 +1653,8 @@ pa_IN:
   providerAdded: "AWS ਖਾਤਾ ਸਫਲਤਾਪੂਰਵਕ ਸ਼ਾਮਲ ਕੀਤਾ ਗਿਆ"
   providerUpdated: "AWS ਖਾਤਾ ਸਫਲਤਾਪੂਰਵਕ ਅੱਪਡੇਟ ਕੀਤਾ ਗਿਆ"
   profileRequired: "ਪ੍ਰੋਫਾਈਲ ਨਾਮ ਦੀ ਲੋੜ ਹੈ"
+  s3Label: "S3 ਬਾਲਟੀਆਂ"
+  s3Desc: "ਵਸਤੂ ਸਟੋਰੇਜ਼ ਬਾਲਟੀਆਂ"
 
 si_LK:
   editProvider: "AWS ගිණුම සංස්කරණය කරන්න"
@@ -1577,6 +1683,8 @@ si_LK:
   providerAdded: "AWS ගිණුම සාර්ථකව එකතු කරන ලදී"
   providerUpdated: "AWS ගිණුම සාර්ථකව යාවත්කාලීන කරන ලදී"
   profileRequired: "පැතිකඩ නම අවශ්ය වේ"
+  s3Label: "S3 බාල්දි"
+  s3Desc: "වස්තු ගබඩා බාල්දි"
 
 sl_SI:
   editProvider: "Uredi račun AWS"
@@ -1605,6 +1713,8 @@ sl_SI:
   providerAdded: "Račun AWS je bil uspešno dodan"
   providerUpdated: "AWS account updated successfully"
   profileRequired: "Zahtevano je ime profila"
+  s3Label: "S3 žlice"
+  s3Desc: "Vedra za shranjevanje predmetov"
 
 sr_RS:
   editProvider: "Уредите АВС налог"
@@ -1633,6 +1743,8 @@ sr_RS:
   providerAdded: "АВС налог је додат"
   providerUpdated: "АВС налог је успешно ажуриран"
   profileRequired: "Име профила је обавезно"
+  s3Label: "С3 Буцкетс"
+  s3Desc: "Корпе за складиштење објеката"
 
 te_IN:
   editProvider: "AWS ఖాతాను సవరించండి"
@@ -1661,6 +1773,8 @@ te_IN:
   providerAdded: "AWS ఖాతా విజయవంతంగా జోడించబడింది"
   providerUpdated: "AWS ఖాతా విజయవంతంగా నవీకరించబడింది"
   profileRequired: "ప్రొఫైల్ పేరు అవసరం"
+  s3Label: "S3 బకెట్లు"
+  s3Desc: "వస్తువు నిల్వ బకెట్లు"
 
 tl_PH:
   editProvider: "I-edit ang AWS Account"
@@ -1689,6 +1803,8 @@ tl_PH:
   providerAdded: "Matagumpay na naidagdag ang AWS account"
   providerUpdated: "Matagumpay na na-update ang AWS account"
   profileRequired: "Kinakailangan ang pangalan ng profile"
+  s3Label: "S3 Mga Balde"
+  s3Desc: "Mga bucket ng imbakan ng bagay"
 
 uz_UZ:
   editProvider: "AWS hisobini tahrirlash"
@@ -1717,6 +1833,8 @@ uz_UZ:
   providerAdded: "AWS hisobi muvaffaqiyatli qo'shildi"
   providerUpdated: "AWS hisobi muvaffaqiyatli yangilandi"
   profileRequired: "Profil nomi talab qilinadi"
+  s3Label: "S3 chelaklar"
+  s3Desc: "Ob'ektni saqlash chelaklari"
 
 yo_NG:
   editProvider: "Ṣatunkọ AWS Account"
@@ -1745,3 +1863,5 @@ yo_NG:
   providerAdded: "AWS iroyin kun ni aṣeyọri"
   providerUpdated: "AWS iroyin imudojuiwọn ni aṣeyọri"
   profileRequired: "O nilo orukọ profaili"
+  s3Label: "S3 Buckets"
+  s3Desc: "Awọn buckets ipamọ ohun"

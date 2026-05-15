@@ -6,31 +6,26 @@ en_US:
   noProviders: No AWS accounts configured
   addFirstProvider: Add your first AWS account to discover sources
 
-
-
-
-
-
 ar_AE:
   cloudConnection: "اتصال سحابي"
   title: "حسابات AWS"
-  description: "قم بتوصيل حسابات AWS لاكتشاف مثيلات RDS وElastiCache وDocumentDB تلقائيًا."
+  description: "قم بتوصيل حسابات AWS لاكتشاف موارد RDS وElastiCache وDocumentDB وS3 تلقائيًا."
   noProviders: "لم يتم تكوين أي حسابات AWS"
-  addFirstProvider: "أضف حساب AWS الأول الخاص بك لاكتشاف قواعد البيانات"
+  addFirstProvider: "أضف حساب AWS الأول الخاص بك لاكتشاف المصادر"
 
 de_DE:
   cloudConnection: "Cloud-Verbindung"
   title: "AWS-Konten"
-  description: "Verbinden Sie AWS-Konten, um RDS-, ElastiCache- und DocumentDB-Instanzen automatisch zu erkennen."
+  description: "Verbinden Sie AWS-Konten, um RDS-, ElastiCache-, DocumentDB- und S3-Ressourcen automatisch zu erkennen."
   noProviders: "Keine AWS-Konten konfiguriert"
-  addFirstProvider: "Fügen Sie Ihr erstes AWS-Konto hinzu, um Datenbanken zu entdecken"
+  addFirstProvider: "Fügen Sie Ihr erstes AWS-Konto hinzu, um Quellen zu entdecken"
 
 el_GR:
   cloudConnection: "Σύνδεση στο σύννεφο"
   title: "Λογαριασμοί AWS"
-  description: "Συνδέστε λογαριασμούς AWS για αυτόματη ανακάλυψη παρουσιών RDS, ElastiCache και DocumentDB."
+  description: "Συνδέστε λογαριασμούς AWS για αυτόματη ανακάλυψη πόρων RDS, ElastiCache, DocumentDB και S3."
   noProviders: "Δεν έχουν διαμορφωθεί λογαριασμοί AWS"
-  addFirstProvider: "Προσθέστε τον πρώτο σας λογαριασμό AWS για να ανακαλύψετε βάσεις δεδομένων"
+  addFirstProvider: "Προσθέστε τον πρώτο σας λογαριασμό AWS για να ανακαλύψετε πηγές"
 
 en_GB:
   cloudConnection: "Cloud connection"
@@ -42,398 +37,398 @@ en_GB:
 es_ES:
   cloudConnection: "Conexión a la nube"
   title: "Cuentas de AWS"
-  description: "Conecte cuentas de AWS para descubrir automáticamente instancias de RDS, ElastiCache y DocumentDB."
+  description: "Conecte cuentas de AWS para descubrir automáticamente recursos de RDS, ElastiCache, DocumentDB y S3."
   noProviders: "No hay cuentas de AWS configuradas"
-  addFirstProvider: "Agregue su primera cuenta de AWS para descubrir bases de datos"
+  addFirstProvider: "Agregue su primera cuenta de AWS para descubrir fuentes"
 
 fi_FI:
   cloudConnection: "Pilviyhteys"
   title: "AWS-tilit"
-  description: "Yhdistä AWS-tilit RDS-, ElastiCache- ja DocumentDB-esiintymien automaattiseen löytämiseen."
+  description: "Yhdistä AWS-tilit löytääksesi RDS-, ElastiCache-, DocumentDB- ja S3-resurssit automaattisesti."
   noProviders: "AWS-tilejä ei ole määritetty"
-  addFirstProvider: "Lisää ensimmäinen AWS-tilisi löytääksesi tietokannat"
+  addFirstProvider: "Lisää ensimmäinen AWS-tilisi löytääksesi lähteitä"
 
 fr_FR:
   cloudConnection: "Connexion au cloud"
   title: "Comptes AWS"
-  description: "Connectez les comptes AWS pour découvrir automatiquement les instances RDS, ElastiCache et DocumentDB."
+  description: "Connectez les comptes AWS pour découvrir automatiquement les ressources RDS, ElastiCache, DocumentDB et S3."
   noProviders: "Aucun compte AWS configuré"
-  addFirstProvider: "Ajoutez votre premier compte AWS pour découvrir les bases de données"
+  addFirstProvider: "Ajoutez votre premier compte AWS pour découvrir les sources"
 
 it_IT:
   cloudConnection: "Connessione al cloud"
   title: "Account AWS"
-  description: "Connetti gli account AWS per individuare automaticamente le istanze RDS, ElastiCache e DocumentDB."
+  description: "Connetti gli account AWS per individuare automaticamente le risorse RDS, ElastiCache, DocumentDB e S3."
   noProviders: "Nessun account AWS configurato"
-  addFirstProvider: "Aggiungi il tuo primo account AWS per scoprire i database"
+  addFirstProvider: "Aggiungi il tuo primo account AWS per scoprire le origini"
 
 iw_IL:
   cloudConnection: "חיבור לענן"
   title: "חשבונות AWS"
-  description: "חבר חשבונות AWS כדי לגלות אוטומטית מופעי RDS, ElastiCache ו-DocumentDB."
+  description: "חבר חשבונות AWS כדי לגלות אוטומטית משאבי RDS, ElastiCache, DocumentDB ו-S3."
   noProviders: "לא הוגדרו חשבונות AWS"
-  addFirstProvider: "הוסף את חשבון AWS הראשון שלך כדי לגלות מסדי נתונים"
+  addFirstProvider: "הוסף את חשבון AWS הראשון שלך כדי לגלות מקורות"
 
 ja_JP:
   cloudConnection: "クラウド接続"
   title: "AWS アカウント"
-  description: "AWS アカウントを接続して、RDS、ElastiCache、DocumentDB インスタンスを自動検出します。"
+  description: "AWS アカウントを接続して、RDS、ElastiCache、DocumentDB、および S3 リソースを自動検出します。"
   noProviders: "AWS アカウントが設定されていません"
-  addFirstProvider: "データベースを検出するために最初の AWS アカウントを追加します"
+  addFirstProvider: "最初の AWS アカウントを追加してソースを検出する"
 
 ko_KR:
   cloudConnection: "클라우드 연결"
   title: "AWS 계정"
-  description: "AWS 계정을 연결하여 RDS, ElastiCache 및 DocumentDB 인스턴스를 자동 검색하세요."
+  description: "AWS 계정을 연결하여 RDS, ElastiCache, DocumentDB 및 S3 리소스를 자동 검색하세요."
   noProviders: "구성된 AWS 계정이 없습니다."
-  addFirstProvider: "데이터베이스를 검색하려면 첫 번째 AWS 계정을 추가하세요."
+  addFirstProvider: "소스를 검색하려면 첫 번째 AWS 계정을 추가하세요."
 
 nl_NL:
   cloudConnection: "Cloud-verbinding"
   title: "AWS-accounts"
-  description: "Verbind AWS-accounts om RDS-, ElastiCache- en DocumentDB-instanties automatisch te ontdekken."
+  description: "Verbind AWS-accounts om RDS-, ElastiCache-, DocumentDB- en S3-bronnen automatisch te ontdekken."
   noProviders: "Geen AWS-accounts geconfigureerd"
-  addFirstProvider: "Voeg uw eerste AWS-account toe om databases te ontdekken"
+  addFirstProvider: "Voeg uw eerste AWS-account toe om bronnen te ontdekken"
 
 pl_PL:
   cloudConnection: "Połączenie z chmurą"
   title: "Konta AWS"
-  description: "Połącz konta AWS, aby automatycznie wykrywać instancje RDS, ElastiCache i DocumentDB."
+  description: "Połącz konta AWS, aby automatycznie wykrywać zasoby RDS, ElastiCache, DocumentDB i S3."
   noProviders: "Nie skonfigurowano żadnych kont AWS"
-  addFirstProvider: "Dodaj swoje pierwsze konto AWS, aby odkrywać bazy danych"
+  addFirstProvider: "Dodaj swoje pierwsze konto AWS, aby odkryć źródła"
 
 pt_BR:
   cloudConnection: "Conexão em nuvem"
   title: "Contas AWS"
-  description: "Conecte contas da AWS para descobrir automaticamente instâncias RDS, ElastiCache e DocumentDB."
+  description: "Conecte contas da AWS para descobrir automaticamente recursos RDS, ElastiCache, DocumentDB e S3."
   noProviders: "Nenhuma conta AWS configurada"
-  addFirstProvider: "Adicione sua primeira conta AWS para descobrir bancos de dados"
+  addFirstProvider: "Adicione sua primeira conta AWS para descobrir fontes"
 
 ro_RO:
   cloudConnection: "Conexiune la cloud"
   title: "Conturi AWS"
-  description: "Conectați conturile AWS pentru a descoperi automat instanțe RDS, ElastiCache și DocumentDB."
+  description: "Conectați conturile AWS pentru a descoperi automat resursele RDS, ElastiCache, DocumentDB și S3."
   noProviders: "Nu au fost configurate conturi AWS"
-  addFirstProvider: "Adăugați primul cont AWS pentru a descoperi baze de date"
+  addFirstProvider: "Adăugați primul cont AWS pentru a descoperi surse"
 
 ru_RU:
   cloudConnection: "Облачное соединение"
   title: "Аккаунты AWS"
-  description: "Подключите учетные записи AWS для автоматического обнаружения экземпляров RDS, ElastiCache и DocumentDB."
+  description: "Подключите учетные записи AWS для автоматического обнаружения ресурсов RDS, ElastiCache, DocumentDB и S3."
   noProviders: "Аккаунты AWS не настроены"
-  addFirstProvider: "Добавьте свою первую учетную запись AWS для поиска баз данных"
+  addFirstProvider: "Добавьте свою первую учетную запись AWS, чтобы находить источники"
 
 sk_SK:
   cloudConnection: "Cloudové pripojenie"
   title: "Účty AWS"
-  description: "Pripojte účty AWS na automatické objavovanie inštancií RDS, ElastiCache a DocumentDB."
+  description: "Pripojte účty AWS na automatické objavovanie zdrojov RDS, ElastiCache, DocumentDB a S3."
   noProviders: "Nie sú nakonfigurované žiadne účty AWS"
-  addFirstProvider: "Pridajte svoj prvý účet AWS a objavte databázy"
+  addFirstProvider: "Pridajte svoj prvý účet AWS a objavte zdroje"
 
 sv_SE:
   cloudConnection: "Molnanslutning"
   title: "AWS-konton"
-  description: "Anslut AWS-konton för att automatiskt upptäcka RDS-, ElastiCache- och DocumentDB-instanser."
+  description: "Anslut AWS-konton för att automatiskt upptäcka RDS-, ElastiCache-, DocumentDB- och S3-resurser."
   noProviders: "Inga AWS-konton har konfigurerats"
-  addFirstProvider: "Lägg till ditt första AWS-konto för att upptäcka databaser"
+  addFirstProvider: "Lägg till ditt första AWS-konto för att upptäcka källor"
 
 zh_CN:
   cloudConnection: "云连接"
   title: "AWS 账户"
-  description: "连接 AWS 账户以自动发现 RDS、ElastiCache 和 DocumentDB 实例。"
+  description: "连接 AWS 账户以自动发现 RDS、ElastiCache、DocumentDB 和 S3 资源。"
   noProviders: "未配置 AWS 账户"
-  addFirstProvider: "添加您的第一个 AWS 账户以发现数据库"
+  addFirstProvider: "添加您的第一个 AWS 账户以发现源"
 
 zh_TW:
   cloudConnection: "雲端連線"
   title: "AWS 帳號"
-  description: "連接 AWS 帳戶以自動發現 RDS、ElastiCache 和 DocumentDB 實例。"
+  description: "連接 AWS 帳戶以自動發現 RDS、ElastiCache、DocumentDB 和 S3 資源。"
   noProviders: "未配置 AWS 帳戶"
-  addFirstProvider: "新增您的第一個 AWS 帳戶以發現資料庫"
+  addFirstProvider: "新增您的第一個 AWS 帳戶以發現來源"
 
 bg_BG:
   cloudConnection: "Облачна връзка"
   title: "AWS акаунти"
-  description: "Свържете AWS акаунти с автоматично откриване на RDS, ElastiCache и DocumentDB инстанции."
+  description: "Свържете AWS акаунти с автоматично откриване на RDS, ElastiCache, DocumentDB и S3 ресурси."
   noProviders: "Няма конфигурирани AWS акаунти"
-  addFirstProvider: "Добавете първия си акаунт в AWS, за да откриете бази данни"
+  addFirstProvider: "Добавете първия си акаунт в AWS, за да откриете източници"
 
 bn_BD:
   cloudConnection: "মেঘ সংযোগ"
   title: "AWS অ্যাকাউন্টস"
-  description: "RDS, ElastiCache, এবং DocumentDB দৃষ্টান্তগুলি স্বয়ংক্রিয়ভাবে আবিষ্কার করতে AWS অ্যাকাউন্টগুলিকে সংযুক্ত করুন৷"
+  description: "RDS, ElastiCache, DocumentDB, এবং S3 সংস্থানগুলি স্বয়ংক্রিয়ভাবে আবিষ্কার করতে AWS অ্যাকাউন্টগুলিকে সংযুক্ত করুন৷"
   noProviders: "কোনো AWS অ্যাকাউন্ট কনফিগার করা নেই"
-  addFirstProvider: "ডেটাবেস আবিষ্কার করতে আপনার প্রথম AWS অ্যাকাউন্ট যোগ করুন"
+  addFirstProvider: "উৎস আবিষ্কার করতে আপনার প্রথম AWS অ্যাকাউন্ট যোগ করুন"
 
 ca_ES:
   cloudConnection: "Connexió al núvol"
   title: "Comptes d'AWS"
-  description: "Connecteu els comptes d'AWS per descobrir automàticament instàncies RDS, ElastiCache i DocumentDB."
+  description: "Connecteu els comptes d'AWS per descobrir automàticament els recursos RDS, ElastiCache, DocumentDB i S3."
   noProviders: "No s'ha configurat cap compte AWS"
-  addFirstProvider: "Afegiu el vostre primer compte d'AWS per descobrir bases de dades"
+  addFirstProvider: "Afegiu el vostre primer compte d'AWS per descobrir les fonts"
 
 cs_CZ:
   cloudConnection: "Cloudové připojení"
   title: "Účty AWS"
-  description: "Připojte účty AWS a automaticky zjistěte instance RDS, ElastiCache a DocumentDB."
+  description: "Připojte účty AWS k automatickému objevování zdrojů RDS, ElastiCache, DocumentDB a S3."
   noProviders: "Nejsou nakonfigurovány žádné účty AWS"
-  addFirstProvider: "Přidejte svůj první účet AWS a objevujte databáze"
+  addFirstProvider: "Přidejte svůj první účet AWS a objevujte zdroje"
 
 da_DK:
   cloudConnection: "Cloud forbindelse"
   title: "AWS konti"
-  description: "Tilslut AWS-konti for automatisk at opdage RDS-, ElastiCache- og DocumentDB-forekomster."
+  description: "Tilslut AWS-konti for automatisk at opdage RDS-, ElastiCache-, DocumentDB- og S3-ressourcer."
   noProviders: "Ingen AWS-konti konfigureret"
-  addFirstProvider: "Tilføj din første AWS-konto for at opdage databaser"
+  addFirstProvider: "Tilføj din første AWS-konto for at finde kilder"
 
 fa_IR:
   cloudConnection: "اتصال ابری"
   title: "حساب های AWS"
-  description: "حساب‌های AWS را برای کشف خودکار نمونه‌های RDS، ElastiCache و DocumentDB متصل کنید."
+  description: "حساب های AWS را برای کشف خودکار منابع RDS، ElastiCache، DocumentDB و S3 متصل کنید."
   noProviders: "هیچ حساب AWS پیکربندی نشده است"
-  addFirstProvider: "اولین حساب AWS خود را برای کشف پایگاه داده اضافه کنید"
+  addFirstProvider: "اولین حساب AWS خود را برای کشف منابع اضافه کنید"
 
 hi_IN:
   cloudConnection: "क्लाउड कनेक्शन"
   title: "एडब्ल्यूएस खाते"
-  description: "AWS खातों को RDS, ElastiCache और DocumentDB इंस्टेंसेस को ऑटो-डिस्कवर करने के लिए कनेक्ट करें।"
+  description: "AWS खातों को RDS, ElastiCache, DocumentDB और S3 संसाधनों की स्वतः खोज से कनेक्ट करें।"
   noProviders: "कोई AWS खाता कॉन्फ़िगर नहीं किया गया"
-  addFirstProvider: "डेटाबेस खोजने के लिए अपना पहला AWS खाता जोड़ें"
+  addFirstProvider: "स्रोत खोजने के लिए अपना पहला AWS खाता जोड़ें"
 
 hr_HR:
   cloudConnection: "Veza s oblakom"
   title: "AWS računi"
-  description: "Povežite AWS račune s automatskim otkrivanjem RDS, ElastiCache i DocumentDB instanci."
+  description: "Povežite AWS račune s automatskim otkrivanjem RDS, ElastiCache, DocumentDB i S3 resursa."
   noProviders: "Nema konfiguriranih AWS računa"
-  addFirstProvider: "Dodajte svoj prvi AWS račun za otkrivanje baza podataka"
+  addFirstProvider: "Dodajte svoj prvi AWS račun za otkrivanje izvora"
 
 hu_HU:
   cloudConnection: "Felhő kapcsolat"
   title: "AWS-fiókok"
-  description: "Csatlakoztassa az AWS-fiókokat az RDS, ElastiCache és DocumentDB példányok automatikus felfedezéséhez."
+  description: "Csatlakoztassa az AWS-fiókokat az RDS, ElastiCache, DocumentDB és S3 erőforrások automatikus felfedezéséhez."
   noProviders: "Nincsenek konfigurálva AWS-fiókok"
-  addFirstProvider: "Adja hozzá első AWS-fiókját az adatbázisok felfedezéséhez"
+  addFirstProvider: "Adja hozzá első AWS-fiókját a források felfedezéséhez"
 
 id_ID:
   cloudConnection: "Koneksi awan"
   title: "Akun AWS"
-  description: "Hubungkan akun AWS untuk menemukan instans RDS, ElastiCache, dan DocumentDB secara otomatis."
+  description: "Hubungkan akun AWS untuk menemukan sumber daya RDS, ElastiCache, DocumentDB, dan S3 secara otomatis."
   noProviders: "Tidak ada akun AWS yang dikonfigurasi"
-  addFirstProvider: "Tambahkan akun AWS pertama Anda untuk menemukan database"
+  addFirstProvider: "Tambahkan akun AWS pertama Anda untuk menemukan sumber"
 
 ms_MY:
   cloudConnection: "Sambungan awan"
   title: "Akaun AWS"
-  description: "Sambungkan akaun AWS untuk mencari auto RDS, ElastiCache dan kejadian DocumentDB."
+  description: "Sambungkan akaun AWS untuk mencari sumber RDS, ElastiCache, DocumentDB dan S3 secara automatik."
   noProviders: "Tiada akaun AWS dikonfigurasikan"
-  addFirstProvider: "Tambahkan akaun AWS pertama anda untuk menemui pangkalan data"
+  addFirstProvider: "Tambahkan akaun AWS pertama anda untuk menemui sumber"
 
 nb_NO:
   cloudConnection: "Skyforbindelse"
   title: "AWS-kontoer"
-  description: "Koble til AWS-kontoer for å automatisk oppdage RDS-, ElastiCache- og DocumentDB-forekomster."
+  description: "Koble til AWS-kontoer for å automatisk oppdage RDS-, ElastiCache-, DocumentDB- og S3-ressurser."
   noProviders: "Ingen AWS-kontoer er konfigurert"
-  addFirstProvider: "Legg til din første AWS-konto for å oppdage databaser"
+  addFirstProvider: "Legg til din første AWS-konto for å finne kilder"
 
 sw_KE:
   cloudConnection: "Uunganisho wa wingu"
   title: "Akaunti za AWS"
-  description: "Unganisha akaunti za AWS ili kugundua kiotomatiki matukio ya RDS, ElastiCache na DocumentDB."
+  description: "Unganisha akaunti za AWS ili kugundua kiotomatiki RDS, ElastiCache, DocumentDB, na rasilimali za S3."
   noProviders: "Hakuna akaunti za AWS zilizosanidiwa"
-  addFirstProvider: "Ongeza akaunti yako ya kwanza ya AWS ili kugundua hifadhidata"
+  addFirstProvider: "Ongeza akaunti yako ya kwanza ya AWS ili kugundua vyanzo"
 
 ta_IN:
   cloudConnection: "கிளவுட் இணைப்பு"
   title: "AWS கணக்குகள்"
-  description: "RDS, ElastiCache மற்றும் DocumentDB நிகழ்வுகளைத் தானாகக் கண்டறிய AWS கணக்குகளை இணைக்கவும்."
+  description: "RDS, ElastiCache, DocumentDB மற்றும் S3 ஆதாரங்களைத் தானாகக் கண்டறிய AWS கணக்குகளை இணைக்கவும்."
   noProviders: "AWS கணக்குகள் எதுவும் கட்டமைக்கப்படவில்லை"
-  addFirstProvider: "தரவுத்தளங்களைக் கண்டறிய உங்கள் முதல் AWS கணக்கைச் சேர்க்கவும்"
+  addFirstProvider: "ஆதாரங்களைக் கண்டறிய உங்கள் முதல் AWS கணக்கைச் சேர்க்கவும்"
 
 th_TH:
   cloudConnection: "การเชื่อมต่อคลาวด์"
   title: "บัญชี AWS"
-  description: "เชื่อมต่อบัญชี AWS เพื่อค้นหาอินสแตนซ์ RDS, ElastiCache และ DocumentDB โดยอัตโนมัติ"
+  description: "เชื่อมต่อบัญชี AWS เพื่อค้นหาทรัพยากร RDS, ElastiCache, DocumentDB และ S3 โดยอัตโนมัติ"
   noProviders: "ไม่มีการกำหนดค่าบัญชี AWS"
-  addFirstProvider: "เพิ่มบัญชี AWS แรกของคุณเพื่อค้นหาฐานข้อมูล"
+  addFirstProvider: "เพิ่มบัญชี AWS แรกของคุณเพื่อค้นหาแหล่งที่มา"
 
 tr_TR:
   cloudConnection: "Bulut bağlantısı"
   title: "AWS Hesapları"
-  description: "RDS, ElastiCache ve DocumentDB bulut sunucularını otomatik olarak keşfetmek için AWS hesaplarını bağlayın."
+  description: "RDS, ElastiCache, DocumentDB ve S3 kaynaklarını otomatik olarak keşfetmek için AWS hesaplarını bağlayın."
   noProviders: "Hiçbir AWS hesabı yapılandırılmadı"
-  addFirstProvider: "Veritabanlarını keşfetmek için ilk AWS hesabınızı ekleyin"
+  addFirstProvider: "Kaynakları keşfetmek için ilk AWS hesabınızı ekleyin"
 
 uk_UA:
   cloudConnection: "Хмарне підключення"
   title: "Облікові записи AWS"
-  description: "Підключіть облікові записи AWS до примірників RDS, ElastiCache і DocumentDB з автоматичним виявленням."
+  description: "Підключіть облікові записи AWS до ресурсів RDS, ElastiCache, DocumentDB і S3 з автоматичним виявленням."
   noProviders: "Облікові записи AWS не налаштовано"
-  addFirstProvider: "Додайте свій перший обліковий запис AWS, щоб відкривати бази даних"
+  addFirstProvider: "Додайте свій перший обліковий запис AWS, щоб знайти джерела"
 
 ur_PK:
   cloudConnection: "کلاؤڈ کنکشن"
   title: "AWS اکاؤنٹس"
-  description: "AWS اکاؤنٹس کو RDS، ElastiCache، اور DocumentDB مثالوں کو خودکار دریافت کرنے سے مربوط کریں۔"
+  description: "AWS اکاؤنٹس کو RDS، ElastiCache، DocumentDB، اور S3 وسائل کو خودکار دریافت کرنے سے مربوط کریں۔"
   noProviders: "کوئی AWS اکاؤنٹس کنفیگر نہیں ہیں۔"
-  addFirstProvider: "ڈیٹا بیس دریافت کرنے کے لیے اپنا پہلا AWS اکاؤنٹ شامل کریں۔"
+  addFirstProvider: "ذرائع دریافت کرنے کے لیے اپنا پہلا AWS اکاؤنٹ شامل کریں۔"
 
 vi_VN:
   cloudConnection: "Kết nối đám mây"
   title: "Tài khoản AWS"
-  description: "Kết nối tài khoản AWS để tự động khám phá các phiên bản RDS, ElastiCache và DocumentDB."
+  description: "Kết nối tài khoản AWS để tự động khám phá các tài nguyên RDS, ElastiCache, DocumentDB và S3."
   noProviders: "Không có tài khoản AWS nào được định cấu hình"
-  addFirstProvider: "Thêm tài khoản AWS đầu tiên của bạn để khám phá cơ sở dữ liệu"
+  addFirstProvider: "Thêm tài khoản AWS đầu tiên của bạn để khám phá các nguồn"
 
 af_ZA:
   cloudConnection: "Wolkverbinding"
   title: "AWS Rekeninge"
-  description: "Koppel AWS-rekeninge om RDS-, ElastiCache- en DocumentDB-gevalle outomaties te ontdek."
+  description: "Koppel AWS-rekeninge om RDS-, ElastiCache-, DocumentDB- en S3-hulpbronne outomaties te ontdek."
   noProviders: "Geen AWS-rekeninge is opgestel nie"
-  addFirstProvider: "Voeg jou eerste AWS-rekening by om databasisse te ontdek"
+  addFirstProvider: "Voeg jou eerste AWS-rekening by om bronne te ontdek"
 
 am_ET:
   cloudConnection: "የደመና ግንኙነት"
   title: "AWS መለያዎች"
-  description: "የAWS መለያዎችን RDS፣ ElastiCache እና DocumentDB ምሳሌዎችን በራስ-ማግኘት ያገናኙ።"
+  description: "የAWS መለያዎችን RDS፣ ElastiCache፣ DocumentDB እና S3 መርጃዎችን በራስ-ማግኘት ያገናኙ።"
   noProviders: "ምንም የAWS መለያዎች አልተዋቀሩም።"
-  addFirstProvider: "የውሂብ ጎታዎችን ለማግኘት የመጀመሪያውን የAWS መለያዎን ያክሉ"
+  addFirstProvider: "ምንጮችን ለማግኘት የመጀመሪያውን የAWS መለያዎን ያክሉ"
 
 az_AZ:
   cloudConnection: "Bulud bağlantısı"
   title: "AWS Hesabları"
-  description: "RDS, ElastiCache və DocumentDB instansiyalarını avtomatik kəşf etmək üçün AWS hesablarını birləşdirin."
+  description: "RDS, ElastiCache, DocumentDB və S3 resurslarını avtomatik kəşf etmək üçün AWS hesablarını birləşdirin."
   noProviders: "Heç bir AWS hesabı konfiqurasiya edilməmişdir"
-  addFirstProvider: "Verilənlər bazalarını kəşf etmək üçün ilk AWS hesabınızı əlavə edin"
+  addFirstProvider: "Mənbələri tapmaq üçün ilk AWS hesabınızı əlavə edin"
 
 et_EE:
   cloudConnection: "Pilveühendus"
   title: "AWS-i kontod"
-  description: "Ühendage AWS-i kontod RDS-i, ElastiCache'i ja DocumentDB eksemplaride automaatseks avastamiseks."
+  description: "Ühendage AWS-i kontod RDS-i, ElastiCache-i, DocumentDB- ja S3-ressursside automaatseks avastamiseks."
   noProviders: "AWS-i kontosid pole konfigureeritud"
-  addFirstProvider: "Andmebaaside avastamiseks lisage oma esimene AWS-i konto"
+  addFirstProvider: "Lisage allikate avastamiseks oma esimene AWS-i konto"
 
 gu_IN:
   cloudConnection: "ક્લાઉડ કનેક્શન"
   title: "AWS એકાઉન્ટ્સ"
-  description: "AWS એકાઉન્ટ્સને RDS, ElastiCache અને DocumentDB દાખલાઓ સ્વતઃ-શોધવા માટે કનેક્ટ કરો."
+  description: "AWS એકાઉન્ટ્સને RDS, ElastiCache, DocumentDB અને S3 સંસાધનોને સ્વતઃ-શોધવા માટે કનેક્ટ કરો."
   noProviders: "કોઈ AWS એકાઉન્ટ્સ ગોઠવેલ નથી"
-  addFirstProvider: "ડેટાબેસેસ શોધવા માટે તમારું પ્રથમ AWS એકાઉન્ટ ઉમેરો"
+  addFirstProvider: "સ્ત્રોતો શોધવા માટે તમારું પ્રથમ AWS એકાઉન્ટ ઉમેરો"
 
 ha_NG:
   cloudConnection: "Haɗin Cloud"
   title: "AWS Accounts"
-  description: "Haɗa asusun AWS zuwa ga ganowa ta atomatik RDS, ElastiCache, da misalin DocumentDB."
+  description: "Haɗa asusun AWS don ganowa ta atomatik RDS, ElastiCache, DocumentDB, da albarkatun S3."
   noProviders: "Babu asusun AWS da aka saita"
-  addFirstProvider: "Ƙara asusun AWS na farko don gano bayanan bayanai"
+  addFirstProvider: "Ƙara asusun AWS na farko don gano maɓuɓɓuka"
 
 ka_GE:
   cloudConnection: "ღრუბლოვანი კავშირი"
   title: "AWS ანგარიშები"
-  description: "დააკავშირეთ AWS ანგარიშები RDS, ElastiCache და DocumentDB ინსტანციების ავტომატური აღმოჩენისთვის."
+  description: "დააკავშირეთ AWS ანგარიშები RDS, ElastiCache, DocumentDB და S3 რესურსების ავტომატური აღმოჩენისთვის."
   noProviders: "AWS ანგარიშები არ არის კონფიგურირებული"
-  addFirstProvider: "დაამატეთ თქვენი პირველი AWS ანგარიში მონაცემთა ბაზების აღმოსაჩენად"
+  addFirstProvider: "დაამატეთ თქვენი პირველი AWS ანგარიში წყაროების აღმოსაჩენად"
 
 km_KH:
   cloudConnection: "ការតភ្ជាប់ពពក"
   title: "គណនី AWS"
-  description: "ភ្ជាប់គណនី AWS ទៅនឹងករណី RDS, ElastiCache និង DocumentDB ស្វែងរកដោយស្វ័យប្រវត្តិ។"
+  description: "ភ្ជាប់គណនី AWS ដើម្បីស្វែងរកដោយស្វ័យប្រវត្តិ RDS, ElastiCache, DocumentDB និងធនធាន S3 ។"
   noProviders: "មិនមានគណនី AWS ត្រូវបានកំណត់រចនាសម្ព័ន្ធទេ។"
-  addFirstProvider: "បន្ថែមគណនី AWS ដំបូងរបស់អ្នកដើម្បីស្វែងរកមូលដ្ឋានទិន្នន័យ"
+  addFirstProvider: "បន្ថែមគណនី AWS ដំបូងរបស់អ្នកដើម្បីស្វែងរកប្រភព"
 
 kn_IN:
   cloudConnection: "ಮೇಘ ಸಂಪರ್ಕ"
   title: "AWS ಖಾತೆಗಳು"
-  description: "RDS, ElastiCache ಮತ್ತು DocumentDB ನಿದರ್ಶನಗಳನ್ನು ಸ್ವಯಂ ಅನ್ವೇಷಿಸಲು AWS ಖಾತೆಗಳನ್ನು ಸಂಪರ್ಕಿಸಿ."
+  description: "RDS, ElastiCache, DocumentDB ಮತ್ತು S3 ಸಂಪನ್ಮೂಲಗಳನ್ನು ಸ್ವಯಂ ಅನ್ವೇಷಿಸಲು AWS ಖಾತೆಗಳನ್ನು ಸಂಪರ್ಕಿಸಿ."
   noProviders: "ಯಾವುದೇ AWS ಖಾತೆಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿಲ್ಲ"
-  addFirstProvider: "ಡೇಟಾಬೇಸ್‌ಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ನಿಮ್ಮ ಮೊದಲ AWS ಖಾತೆಯನ್ನು ಸೇರಿಸಿ"
+  addFirstProvider: "ಮೂಲಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ನಿಮ್ಮ ಮೊದಲ AWS ಖಾತೆಯನ್ನು ಸೇರಿಸಿ"
 
 lt_LT:
   cloudConnection: "Debesų ryšys"
   title: "AWS paskyros"
-  description: "Prijunkite AWS paskyras, kad automatiškai atrastumėte RDS, ElastiCache ir DocumentDB egzempliorius."
+  description: "Prijunkite AWS paskyras, kad automatiškai atrastumėte RDS, ElastiCache, DocumentDB ir S3 išteklius."
   noProviders: "AWS paskyrų nesukonfigūruota"
-  addFirstProvider: "Pridėkite savo pirmąją AWS paskyrą, kad rastumėte duomenų bazes"
+  addFirstProvider: "Pridėkite savo pirmąją AWS paskyrą, kad rastumėte šaltinius"
 
 lv_LV:
   cloudConnection: "Mākoņu savienojums"
   title: "AWS konti"
-  description: "Pievienojiet AWS kontus, lai automātiski atklātu RDS, ElastiCache un DocumentDB gadījumus."
+  description: "Savienojiet AWS kontus, lai automātiski atklātu RDS, ElastiCache, DocumentDB un S3 resursus."
   noProviders: "Nav konfigurēts neviens AWS konts"
-  addFirstProvider: "Pievienojiet savu pirmo AWS kontu, lai atklātu datu bāzes"
+  addFirstProvider: "Pievienojiet savu pirmo AWS kontu, lai atklātu avotus"
 
 ml_IN:
   cloudConnection: "ക്ലൗഡ് കണക്ഷൻ"
   title: "AWS അക്കൗണ്ടുകൾ"
-  description: "RDS, ElastiCache, DocumentDB എന്നിവ സ്വയമേവ കണ്ടെത്തുന്നതിന് AWS അക്കൗണ്ടുകൾ ബന്ധിപ്പിക്കുക."
+  description: "RDS, ElastiCache, DocumentDB, S3 ഉറവിടങ്ങൾ സ്വയമേവ കണ്ടെത്തുന്നതിന് AWS അക്കൗണ്ടുകൾ ബന്ധിപ്പിക്കുക."
   noProviders: "AWS അക്കൗണ്ടുകളൊന്നും കോൺഫിഗർ ചെയ്തിട്ടില്ല"
-  addFirstProvider: "ഡാറ്റാബേസുകൾ കണ്ടെത്തുന്നതിന് നിങ്ങളുടെ ആദ്യ AWS അക്കൗണ്ട് ചേർക്കുക"
+  addFirstProvider: "ഉറവിടങ്ങൾ കണ്ടെത്തുന്നതിന് നിങ്ങളുടെ ആദ്യ AWS അക്കൗണ്ട് ചേർക്കുക"
 
 mr_IN:
   cloudConnection: "मेघ कनेक्शन"
   title: "AWS खाती"
-  description: "RDS, ElastiCache आणि DocumentDB उदाहरणे स्वयं-शोधण्यासाठी AWS खाती कनेक्ट करा."
+  description: "RDS, ElastiCache, DocumentDB आणि S3 संसाधने स्वयं-शोधण्यासाठी AWS खाती कनेक्ट करा."
   noProviders: "कोणतीही AWS खाती कॉन्फिगर केलेली नाहीत"
-  addFirstProvider: "डेटाबेस शोधण्यासाठी तुमचे पहिले AWS खाते जोडा"
+  addFirstProvider: "स्रोत शोधण्यासाठी तुमचे पहिले AWS खाते जोडा"
 
 ne_NP:
   cloudConnection: "क्लाउड जडान"
   title: "AWS खाताहरू"
-  description: "AWS खाताहरूलाई RDS, ElastiCache, र DocumentDB दृष्टान्तहरू स्वत: पत्ता लगाउन जडान गर्नुहोस्।"
+  description: "AWS खाताहरूलाई RDS, ElastiCache, DocumentDB, र S3 स्रोतहरू स्वत: पत्ता लगाउन जडान गर्नुहोस्।"
   noProviders: "कुनै AWS खाताहरू कन्फिगर गरिएको छैन"
-  addFirstProvider: "डाटाबेसहरू पत्ता लगाउन आफ्नो पहिलो AWS खाता थप्नुहोस्"
+  addFirstProvider: "स्रोतहरू पत्ता लगाउन आफ्नो पहिलो AWS खाता थप्नुहोस्"
 
 pa_IN:
   cloudConnection: "ਕਲਾਉਡ ਕਨੈਕਸ਼ਨ"
   title: "AWS ਖਾਤੇ"
-  description: "AWS ਖਾਤਿਆਂ ਨੂੰ ਸਵੈ-ਖੋਜ RDS, ElastiCache, ਅਤੇ DocumentDB ਉਦਾਹਰਨਾਂ ਨਾਲ ਕਨੈਕਟ ਕਰੋ।"
+  description: "AWS ਖਾਤਿਆਂ ਨੂੰ ਸਵੈ-ਖੋਜ RDS, ElastiCache, DocumentDB, ਅਤੇ S3 ਸਰੋਤਾਂ ਨਾਲ ਕਨੈਕਟ ਕਰੋ।"
   noProviders: "ਕੋਈ AWS ਖਾਤੇ ਕੌਂਫਿਗਰ ਨਹੀਂ ਕੀਤੇ ਗਏ ਹਨ"
-  addFirstProvider: "ਡਾਟਾਬੇਸ ਖੋਜਣ ਲਈ ਆਪਣਾ ਪਹਿਲਾ AWS ਖਾਤਾ ਸ਼ਾਮਲ ਕਰੋ"
+  addFirstProvider: "ਸਰੋਤਾਂ ਦੀ ਖੋਜ ਕਰਨ ਲਈ ਆਪਣਾ ਪਹਿਲਾ AWS ਖਾਤਾ ਸ਼ਾਮਲ ਕਰੋ"
 
 si_LK:
   cloudConnection: "වලාකුළු සම්බන්ධතාවය"
   title: "AWS ගිණුම්"
-  description: "RDS, ElastiCache, සහ DocumentDB අවස්ථා ස්වයංක්‍රීයව සොයා ගැනීමට AWS ගිණුම් සම්බන්ධ කරන්න."
+  description: "RDS, ElastiCache, DocumentDB, සහ S3 සම්පත් ස්වයංක්‍රීයව සොයා ගැනීමට AWS ගිණුම් සම්බන්ධ කරන්න."
   noProviders: "AWS ගිණුම් වින්‍යාස කර නැත"
-  addFirstProvider: "දත්ත සමුදායන් සොයා ගැනීමට ඔබගේ පළමු AWS ගිණුම එක් කරන්න"
+  addFirstProvider: "මූලාශ්‍ර සොයා ගැනීමට ඔබේ පළමු AWS ගිණුම එක් කරන්න"
 
 sl_SI:
   cloudConnection: "Povezava v oblak"
   title: "Računi AWS"
-  description: "Povežite račune AWS s primerki RDS, ElastiCache in DocumentDB s samodejnim odkrivanjem."
+  description: "Povežite račune AWS s samodejnim odkrivanjem virov RDS, ElastiCache, DocumentDB in S3."
   noProviders: "Noben konfiguriran račun AWS"
-  addFirstProvider: "Dodajte svoj prvi račun AWS, da odkrijete zbirke podatkov"
+  addFirstProvider: "Dodajte svoj prvi račun AWS, da odkrijete vire"
 
 sr_RS:
   cloudConnection: "Цлоуд веза"
   title: "АВС налози"
-  description: "Повежите АВС налоге да бисте аутоматски открили РДС, ЕластиЦацхе и ДоцументДБ инстанце."
+  description: "Повежите АВС налоге да бисте аутоматски открили РДС, ЕластиЦацхе, ДоцументДБ и С3 ресурсе."
   noProviders: "Ниједан АВС налог није конфигурисан"
-  addFirstProvider: "Додајте свој први АВС налог да бисте открили базе података"
+  addFirstProvider: "Додајте свој први АВС налог да бисте открили изворе"
 
 te_IN:
   cloudConnection: "క్లౌడ్ కనెక్షన్"
   title: "AWS ఖాతాలు"
-  description: "RDS, ElastiCache మరియు DocumentDB దృష్టాంతాలను ఆటో-డిస్కవర్ చేయడానికి AWS ఖాతాలను కనెక్ట్ చేయండి."
+  description: "RDS, ElastiCache, DocumentDB మరియు S3 వనరులను ఆటో-డిస్కవర్ చేయడానికి AWS ఖాతాలను కనెక్ట్ చేయండి."
   noProviders: "AWS ఖాతాలు ఏవీ కాన్ఫిగర్ చేయబడలేదు"
-  addFirstProvider: "డేటాబేస్‌లను కనుగొనడానికి మీ మొదటి AWS ఖాతాను జోడించండి"
+  addFirstProvider: "మూలాలను కనుగొనడానికి మీ మొదటి AWS ఖాతాను జోడించండి"
 
 tl_PH:
   cloudConnection: "Koneksyon sa ulap"
   title: "Mga AWS Account"
-  description: "Ikonekta ang mga AWS account upang awtomatikong matuklasan ang mga pagkakataon ng RDS, ElastiCache, at DocumentDB."
+  description: "Ikonekta ang mga AWS account upang awtomatikong matuklasan ang mga mapagkukunan ng RDS, ElastiCache, DocumentDB, at S3."
   noProviders: "Walang mga AWS account na na-configure"
-  addFirstProvider: "Idagdag ang iyong unang AWS account para tumuklas ng mga database"
+  addFirstProvider: "Idagdag ang iyong unang AWS account para tumuklas ng mga source"
 
 uz_UZ:
   cloudConnection: "Bulutli ulanish"
   title: "AWS hisoblari"
-  description: "RDS, ElastiCache va DocumentDB nusxalarini avtomatik aniqlash uchun AWS hisoblarini ulang."
+  description: "RDS, ElastiCache, DocumentDB va S3 resurslarini avtomatik aniqlash uchun AWS hisoblarini ulang."
   noProviders: "Hech qanday AWS hisobi sozlanmagan"
-  addFirstProvider: "Ma'lumotlar bazalarini kashf qilish uchun birinchi AWS hisobingizni qo'shing"
+  addFirstProvider: "Manbalarni topish uchun birinchi AWS hisobingizni qo'shing"
 
 yo_NG:
   cloudConnection: "Awọsanma asopọ"
   title: "AWS iroyin"
-  description: "So awọn akọọlẹ AWS pọ si adaṣe-ṣawari RDS, ElastiCache, ati awọn iṣẹlẹ DocumentDB."
+  description: "So awọn akọọlẹ AWS pọ si adaṣe-ṣawari RDS, ElastiCache, DocumentDB, ati awọn orisun S3."
   noProviders: "Ko si awọn akọọlẹ AWS tunto"
-  addFirstProvider: "Ṣafikun akọọlẹ AWS akọkọ rẹ lati ṣawari awọn apoti isura infomesonu"
+  addFirstProvider: "Ṣafikun akọọlẹ AWS akọkọ rẹ lati ṣawari awọn orisun"

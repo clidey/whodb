@@ -56,6 +56,10 @@ func (b *BasePlugin) AddStorageUnit(_ *PluginConfig, _ string, _ string, _ []Rec
 	return false, errors.ErrUnsupported
 }
 
+func (b *BasePlugin) CreateStorageUnit(_ *PluginConfig, _ string, _ ObjectDefinition) (bool, error) {
+	return false, errors.ErrUnsupported
+}
+
 func (b *BasePlugin) UpdateStorageUnit(_ *PluginConfig, _ string, _ string, _ map[string]string, _ []string) (bool, error) {
 	return false, errors.ErrUnsupported
 }

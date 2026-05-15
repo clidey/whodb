@@ -120,6 +120,21 @@ func AsTabularReader(scope AuditScope, session SourceSession) (TabularReader, bo
 	return auditedTabularReader{scope: scope, next: reader}, true
 }
 
+// AsFieldConstraintReader returns an audited field constraint reader when
+// supported.
+func AsFieldConstraintReader(scope AuditScope, session SourceSession) (FieldConstraintReader, bool) {
+	if reader, ok := session.(FieldConstraintReader); ok {
+		return auditedFieldConstraintReader{scope: scope, next: reader}, true
+	}
+	if reader, ok := session.(ColumnConstraintReader); ok {
+		return auditedFieldConstraintReader{
+			scope: scope,
+			next:  legacyFieldConstraintReader{next: reader},
+		}, true
+	}
+	return nil, false
+}
+
 // AsContentReader returns an audited content reader when supported.
 func AsContentReader(scope AuditScope, session SourceSession) (ContentReader, bool) {
 	reader, ok := session.(ContentReader)
@@ -372,6 +387,32 @@ func (a auditedTabularReader) ColumnsBatch(ctx context.Context, refs []ObjectRef
 	}
 	a.scope.record(ctx, "source.columns_batch", start, err, details)
 	return columns, err
+}
+
+type legacyFieldConstraintReader struct {
+	next ColumnConstraintReader
+}
+
+func (r legacyFieldConstraintReader) FieldConstraints(ctx context.Context, ref ObjectRef) ([]FieldConstraints, error) {
+	constraints, err := r.next.ColumnConstraints(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	return NormalizeFieldConstraints(constraints), nil
+}
+
+type auditedFieldConstraintReader struct {
+	scope AuditScope
+	next  FieldConstraintReader
+}
+
+func (a auditedFieldConstraintReader) FieldConstraints(ctx context.Context, ref ObjectRef) ([]FieldConstraints, error) {
+	start := time.Now()
+	constraints, err := a.next.FieldConstraints(ctx, ref)
+	details := objectRefDetails(&ref)
+	details["field_count"] = len(constraints)
+	a.scope.record(ctx, "source.field_constraints", start, err, details)
+	return constraints, err
 }
 
 type auditedContentReader struct {

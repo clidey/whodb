@@ -122,3 +122,31 @@ func TestSQLBuilderCreateTableQuotesIdentifiers(t *testing.T) {
 		t.Fatalf("expected NOT NULL column clause %q, got %q", expectedNotNull, ddl)
 	}
 }
+
+func TestSQLBuilderCreateTableIncludesCommonConstraints(t *testing.T) {
+	db := newDryRunDB(t)
+	sb := NewSQLBuilder(db, nil)
+	defaultValue := "active"
+	checkMin := float64(0)
+	checkMax := float64(10)
+
+	ddl := sb.CreateTableQuery("public", "orders", []ColumnDef{
+		{Name: "status", Type: "TEXT", Unique: true, Default: &defaultValue, CheckValues: []string{"active", "archived"}},
+		{Name: "quantity", Type: "INTEGER", CheckMin: &checkMin, CheckMax: &checkMax},
+		{Name: "user_id", Type: "INTEGER", ReferencesTable: "public.users", ReferencesColumn: "id"},
+	})
+
+	expectedParts := []string{
+		"DEFAULT 'active'",
+		"UNIQUE (" + sb.QuoteIdentifier("status") + ")",
+		"CHECK (" + sb.QuoteIdentifier("status") + " IN ('active', 'archived'))",
+		"CHECK (" + sb.QuoteIdentifier("quantity") + " >= 0)",
+		"CHECK (" + sb.QuoteIdentifier("quantity") + " <= 10)",
+		"FOREIGN KEY (" + sb.QuoteIdentifier("user_id") + ") REFERENCES " + sb.QuoteIdentifier("public") + "." + sb.QuoteIdentifier("users") + " (" + sb.QuoteIdentifier("id") + ")",
+	}
+	for _, expected := range expectedParts {
+		if !strings.Contains(ddl, expected) {
+			t.Fatalf("expected DDL to include %q, got %q", expected, ddl)
+		}
+	}
+}

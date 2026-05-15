@@ -73,7 +73,7 @@ test.describe("Accessibility (axe-core)", () => {
     await page.locator('[data-value="Postgres"]').click();
 
     await page.locator('[data-testid="advanced-button"]').click();
-    await page.locator('[data-testid="Port-input"]').waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="ssl-mode-select"]').waitFor({ timeout: 15_000 });
     await runAxeScan(page, testInfo, "login-advanced");
   });
 

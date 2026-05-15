@@ -104,26 +104,29 @@ test.describe('Login & Authentication', () => {
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator('[data-value="Postgres"]').click();
 
-            // Advanced options should be hidden by default
-            await expect(page.locator('[data-testid="Port-input"]')).not.toBeAttached();
+            // Port is promoted to the primary form (always visible next to hostname)
+            await expect(page.locator('[data-testid="port"]')).toBeVisible();
+
+            // SSL Mode is in the advanced section — hidden by default
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).not.toBeAttached();
 
             // Click advanced button to show options
             await page.locator('[data-testid="advanced-button"]').click();
-            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toBeVisible();
 
             // Click again to hide
             await page.locator('[data-testid="advanced-button"]').click();
-            await expect(page.locator('[data-testid="Port-input"]')).not.toBeAttached();
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).not.toBeAttached();
         });
 
         test('accepts advanced configuration values', async ({ whodb, page }) => {
             await page.locator('[data-testid="database-type-select"]').click();
             await page.locator('[data-value="Postgres"]').click();
 
-            await page.locator('[data-testid="advanced-button"]').click();
-            await page.locator('[data-testid="Port-input"]').clear();
-            await page.locator('[data-testid="Port-input"]').fill('5433');
-            await expect(page.locator('[data-testid="Port-input"]')).toHaveValue('5433');
+            // Port is in the primary form
+            await page.locator('[data-testid="port"]').clear();
+            await page.locator('[data-testid="port"]').fill('5433');
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('5433');
         });
     });
 
@@ -303,7 +306,7 @@ test.describe('Login & Authentication', () => {
     });
 
     test.describe('URL Parameter Advanced Fields', () => {
-        test('port param maps to Port advanced field (backward compat)', async ({ whodb, page }) => {
+        test('port param maps to Port field (backward compat)', async ({ whodb, page }) => {
             await page.goto(whodb.url('/login?type=Postgres&host=localhost&username=user&database=db&port=5433'));
 
             await page.waitForTimeout(500);
@@ -312,9 +315,9 @@ test.describe('Login & Authentication', () => {
                 await disableBtn.click();
             }
 
-            // Advanced panel should be visible and Port should be pre-filled
-            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
-            await expect(page.locator('[data-testid="Port-input"]')).toHaveValue('5433');
+            // Port is promoted to the primary form and should be pre-filled
+            await expect(page.locator('[data-testid="port"]')).toBeVisible();
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('5433');
         });
 
         test('region param maps to Region advanced field (backward compat)', async ({ whodb, page }) => {
@@ -355,7 +358,7 @@ test.describe('Login & Authentication', () => {
             }
 
             // Advanced panel should be visible (SSL Mode opened it)
-            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toBeVisible();
         });
 
         test('UI params are not consumed as advanced fields', async ({ whodb, page }) => {
@@ -397,8 +400,9 @@ test.describe('Login & Authentication', () => {
                 await disableBtn.click();
             }
 
-            await expect(page.locator('[data-testid="Port-input"]')).toBeVisible();
-            await expect(page.locator('[data-testid="Port-input"]')).toHaveValue('5433');
+            // Port is promoted to the primary form
+            await expect(page.locator('[data-testid="port"]')).toBeVisible();
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('5433');
         });
 
         test('auto-login with ?login param navigates to storage unit', async ({ whodb, page }) => {

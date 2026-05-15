@@ -161,6 +161,40 @@ type Column struct {
 	Scale            *int    `json:"Scale,omitempty"`
 }
 
+type ColumnCreationCapabilities struct {
+	Types               bool `json:"Types"`
+	Nullable            bool `json:"Nullable"`
+	PrimaryKey          bool `json:"PrimaryKey"`
+	CompositePrimaryKey bool `json:"CompositePrimaryKey"`
+	Unique              bool `json:"Unique"`
+	Identity            bool `json:"Identity"`
+	DefaultValue        bool `json:"DefaultValue"`
+	CheckValues         bool `json:"CheckValues"`
+	CheckMinMax         bool `json:"CheckMinMax"`
+	ForeignKey          bool `json:"ForeignKey"`
+}
+
+type ColumnDefinitionInput struct {
+	Name         string                     `json:"Name"`
+	Type         string                     `json:"Type"`
+	Nullable     *bool                      `json:"Nullable,omitempty"`
+	Primary      bool                       `json:"Primary"`
+	Unique       bool                       `json:"Unique"`
+	Identity     bool                       `json:"Identity"`
+	DefaultValue *string                    `json:"DefaultValue,omitempty"`
+	CheckValues  []string                   `json:"CheckValues,omitempty"`
+	CheckMin     *float64                   `json:"CheckMin,omitempty"`
+	CheckMax     *float64                   `json:"CheckMax,omitempty"`
+	ForeignKey   *ForeignKeyDefinitionInput `json:"ForeignKey,omitempty"`
+}
+
+type CreationOptionDefinition struct {
+	Key      string   `json:"Key"`
+	Label    string   `json:"Label"`
+	Required bool     `json:"Required"`
+	Values   []string `json:"Values"`
+}
+
 type DiscoveredConnection struct {
 	ID           string            `json:"Id"`
 	ProviderType CloudProviderType `json:"ProviderType"`
@@ -170,6 +204,16 @@ type DiscoveredConnection struct {
 	Region       *string           `json:"Region,omitempty"`
 	Status       ConnectionStatus  `json:"Status"`
 	Metadata     []*Record         `json:"Metadata"`
+}
+
+type ForeignKeyDefinition struct {
+	Table  string `json:"Table"`
+	Column string `json:"Column"`
+}
+
+type ForeignKeyDefinitionInput struct {
+	Table  string `json:"Table"`
+	Column string `json:"Column"`
 }
 
 type GCPProvider struct {
@@ -344,6 +388,16 @@ type MockDataTableInfo struct {
 type Mutation struct {
 }
 
+type ObjectCreationMetadata struct {
+	Supported          bool                        `json:"Supported"`
+	ObjectKind         SourceObjectKind            `json:"ObjectKind"`
+	RequiresColumns    bool                        `json:"RequiresColumns"`
+	TypeDefinitions    []*TypeDefinition           `json:"TypeDefinitions"`
+	ColumnCapabilities *ColumnCreationCapabilities `json:"ColumnCapabilities"`
+	TableCapabilities  *TableCreationCapabilities  `json:"TableCapabilities"`
+	TableOptions       []*CreationOptionDefinition `json:"TableOptions"`
+}
+
 type OperationWhereCondition struct {
 	Children []*WhereCondition `json:"Children"`
 }
@@ -450,6 +504,23 @@ type SourceDiscoveryPrefill struct {
 	AdvancedDefaults []*SourceDiscoveryAdvancedDefault `json:"AdvancedDefaults"`
 }
 
+type SourceFieldConstraints struct {
+	Name          string                `json:"Name"`
+	Type          string                `json:"Type"`
+	Nullable      *bool                 `json:"Nullable,omitempty"`
+	Primary       bool                  `json:"Primary"`
+	Unique        bool                  `json:"Unique"`
+	Identity      bool                  `json:"Identity"`
+	DefaultValue  *string               `json:"DefaultValue,omitempty"`
+	AllowedValues []string              `json:"AllowedValues"`
+	CheckMin      *float64              `json:"CheckMin,omitempty"`
+	CheckMax      *float64              `json:"CheckMax,omitempty"`
+	ForeignKey    *ForeignKeyDefinition `json:"ForeignKey,omitempty"`
+	Length        *int                  `json:"Length,omitempty"`
+	Precision     *int                  `json:"Precision,omitempty"`
+	Scale         *int                  `json:"Scale,omitempty"`
+}
+
 type SourceLoginInput struct {
 	ID          *string        `json:"Id,omitempty"`
 	SourceType  string         `json:"SourceType"`
@@ -474,6 +545,12 @@ type SourceObject struct {
 type SourceObjectColumns struct {
 	Ref     *SourceObjectRef `json:"Ref"`
 	Columns []*Column        `json:"Columns"`
+}
+
+type SourceObjectDefinitionInput struct {
+	Name         string                   `json:"Name"`
+	Columns      []*ColumnDefinitionInput `json:"Columns"`
+	TableOptions []*RecordInput           `json:"TableOptions,omitempty"`
 }
 
 type SourceObjectRef struct {
@@ -567,6 +644,14 @@ type StatusResponse struct {
 type StorageUnitColumns struct {
 	StorageUnit string    `json:"StorageUnit"`
 	Columns     []*Column `json:"Columns"`
+}
+
+type TableCreationCapabilities struct {
+	RequiresPrimaryKey bool `json:"RequiresPrimaryKey"`
+	PartitionKey       bool `json:"PartitionKey"`
+	ClusteringKey      bool `json:"ClusteringKey"`
+	OrderKey           bool `json:"OrderKey"`
+	KeyValueType       bool `json:"KeyValueType"`
 }
 
 type TypeDefinition struct {

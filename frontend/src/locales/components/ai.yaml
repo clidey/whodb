@@ -45,6 +45,8 @@ ar_AE:
   ollamaDocsText: "راجع وثائقنا للحصول على مزيد من المعلومات حول كيفية إعداد Olma."
   unableToConnect: "غير قادر على الاتصال بالنموذج"
   tokenRequired: "الرمز المميز مطلوب للاتصال بالموفر"
+  providerUnavailable: "غير متاح"
+  environmentDefined: "تم تكوينه عبر البيئة"
 
 de_DE:
   title: "KI-Assistent"
@@ -68,6 +70,8 @@ de_DE:
   ollamaDocsText: "Weitere Informationen zur Einrichtung von Ollama finden Sie in unserer Dokumentation."
   unableToConnect: "Es kann keine Verbindung zum Modell hergestellt werden"
   tokenRequired: "Für die Verbindung zum Anbieter ist ein Token erforderlich"
+  providerUnavailable: "Nicht verfügbar"
+  environmentDefined: "Configured via environment"
 
 el_GR:
   title: "Βοηθός AI"
@@ -91,6 +95,8 @@ el_GR:
   ollamaDocsText: "Ελέγξτε την τεκμηρίωσή μας για περισσότερες πληροφορίες σχετικά με τον τρόπο ρύθμισης του Ollama."
   unableToConnect: "Δεν είναι δυνατή η σύνδεση με το μοντέλο"
   tokenRequired: "Απαιτείται διακριτικό για σύνδεση με τον πάροχο"
+  providerUnavailable: "Δυσεύρετος"
+  environmentDefined: "Διαμόρφωση μέσω περιβάλλοντος"
 
 en_GB:
   title: "AI Assistant"
@@ -114,6 +120,8 @@ en_GB:
   ollamaDocsText: "Check our documentation for more information on how to setup Ollama."
   unableToConnect: "Unable to Connect to the Model"
   tokenRequired: "Token is required to connect to the provider"
+  providerUnavailable: "Unavailable"
+  environmentDefined: "Configured via environment"
 
 es_ES:
   title: "Asistente de IA"
@@ -137,6 +145,8 @@ es_ES:
   ollamaDocsText: "Consulte nuestra documentación para obtener más información sobre cómo configurar Ollama."
   unableToConnect: "No se puede conectar con el modelo"
   tokenRequired: "Se requiere token para conectarse al proveedor"
+  providerUnavailable: "Indisponible"
+  environmentDefined: "Configurado a través del entorno"
 
 fi_FI:
   title: "AI Assistant"
@@ -160,6 +170,8 @@ fi_FI:
   ollamaDocsText: "Katso dokumentaatiomme saadaksesi lisätietoja Ollaman määrittämisestä."
   unableToConnect: "Ei voida muodostaa yhteyttä malliin"
   tokenRequired: "Token tarvitaan yhteyden muodostamiseen palveluntarjoajaan"
+  providerUnavailable: "Ei saatavilla"
+  environmentDefined: "Konfiguroitu ympäristön kautta"
 
 fr_FR:
   title: "Assistant IA"
@@ -183,6 +195,8 @@ fr_FR:
   ollamaDocsText: "Consultez notre documentation pour plus d'informations sur la configuration d'Ollama."
   unableToConnect: "Impossible de se connecter au modèle"
   tokenRequired: "Un jeton est requis pour se connecter au fournisseur"
+  providerUnavailable: "Indisponible"
+  environmentDefined: "Configuré via l'environnement"
 
 it_IT:
   title: "Assistente AI"
@@ -206,6 +220,8 @@ it_IT:
   ollamaDocsText: "Consulta la nostra documentazione per ulteriori informazioni su come configurare Ollama."
   unableToConnect: "Impossibile connettersi al modello"
   tokenRequired: "Il token è necessario per connettersi al provider"
+  providerUnavailable: "Non disponibile"
+  environmentDefined: "Configurato tramite ambiente"
 
 iw_IL:
   title: "עוזר AI"
@@ -229,6 +245,8 @@ iw_IL:
   ollamaDocsText: "עיין בתיעוד שלנו למידע נוסף על אופן הגדרת Ollama."
   unableToConnect: "לא ניתן להתחבר לדגם"
   tokenRequired: "נדרש אסימון כדי להתחבר לספק"
+  providerUnavailable: "לא זמין"
+  environmentDefined: "מוגדר באמצעות סביבה"
 
 ja_JP:
   title: "AIアシスタント"
@@ -252,6 +270,8 @@ ja_JP:
   ollamaDocsText: "Ollama のセットアップ方法の詳細については、ドキュメントを参照してください。"
   unableToConnect: "モデルに接続できません"
   tokenRequired: "プロバイダーに接続するにはトークンが必要です"
+  providerUnavailable: "利用不可"
+  environmentDefined: "環境経由で設定"
 
 ko_KR:
   title: "AI 어시스턴트"
@@ -275,6 +295,8 @@ ko_KR:
   ollamaDocsText: "Ollama 설정 방법에 대한 자세한 내용은 설명서를 확인하세요."
   unableToConnect: "모델에 연결할 수 없습니다"
   tokenRequired: "공급자에 연결하려면 토큰이 필요합니다."
+  providerUnavailable: "없는"
+  environmentDefined: "환경을 통해 구성됨"
 
 nl_NL:
   title: "AI-assistent"
@@ -298,6 +320,8 @@ nl_NL:
   ollamaDocsText: "Bekijk onze documentatie voor meer informatie over het instellen van Ollama."
   unableToConnect: "Kan geen verbinding maken met het model"
   tokenRequired: "Token is vereist om verbinding te maken met de provider"
+  providerUnavailable: "Niet beschikbaar"
+  environmentDefined: "Geconfigureerd via omgeving"
 
 pl_PL:
   title: "Asystent AI"
@@ -321,6 +345,8 @@ pl_PL:
   ollamaDocsText: "Sprawdź naszą dokumentację, aby uzyskać więcej informacji na temat konfiguracji Ollama."
   unableToConnect: "Nie można połączyć się z modelem"
   tokenRequired: "Aby połączyć się z dostawcą, wymagany jest token"
+  providerUnavailable: "Nie płynny"
+  environmentDefined: "Konfiguracja poprzez środowisko"
 
 pt_BR:
   title: "Assistente de IA"
@@ -344,6 +370,8 @@ pt_BR:
   ollamaDocsText: "Verifique nossa documentação para obter mais informações sobre como configurar o Ollama."
   unableToConnect: "Não é possível conectar-se ao modelo"
   tokenRequired: "O token é necessário para se conectar ao provedor"
+  providerUnavailable: "Indisponível"
+  environmentDefined: "Configurado via ambiente"
 
 ro_RO:
   title: "Asistent AI"
@@ -367,6 +395,8 @@ ro_RO:
   ollamaDocsText: "Consultați documentația noastră pentru mai multe informații despre cum să configurați Ollama."
   unableToConnect: "Nu se poate conecta la model"
   tokenRequired: "Tokenul este necesar pentru a vă conecta la furnizor"
+  providerUnavailable: "Indisponibil"
+  environmentDefined: "Configurat prin mediu"
 
 ru_RU:
   title: "ИИ-помощник"
@@ -390,6 +420,8 @@ ru_RU:
   ollamaDocsText: "Дополнительную информацию о настройке Ollama можно найти в нашей документации."
   unableToConnect: "Невозможно подключиться к модели"
   tokenRequired: "Токен необходим для подключения к провайдеру"
+  providerUnavailable: "Недоступно"
+  environmentDefined: "Настраивается через среду"
 
 sk_SK:
   title: "Asistent AI"
@@ -413,6 +445,8 @@ sk_SK:
   ollamaDocsText: "Viac informácií o nastavení Ollama nájdete v našej dokumentácii."
   unableToConnect: "Nedá sa pripojiť k modelu"
   tokenRequired: "Na pripojenie k poskytovateľovi je potrebný token"
+  providerUnavailable: "nedostupné"
+  environmentDefined: "Konfigurované cez prostredie"
 
 sv_SE:
   title: "AI-assistent"
@@ -436,6 +470,8 @@ sv_SE:
   ollamaDocsText: "Se vår dokumentation för mer information om hur du ställer in Ollama."
   unableToConnect: "Det går inte att ansluta till modellen"
   tokenRequired: "Token krävs för att ansluta till leverantören"
+  providerUnavailable: "Inte tillgänglig"
+  environmentDefined: "Konfigurerad via miljö"
 
 zh_CN:
   title: "人工智能助手"
@@ -459,6 +495,8 @@ zh_CN:
   ollamaDocsText: "请查看我们的文档，了解有关如何设置 Ollama 的更多信息。"
   unableToConnect: "无法连接到模型"
   tokenRequired: "连接到提供商需要令牌"
+  providerUnavailable: "不可用"
+  environmentDefined: "通过环境配置"
 
 zh_TW:
   title: "人工智慧助手"
@@ -482,6 +520,8 @@ zh_TW:
   ollamaDocsText: "請查看我們的文檔，以了解有關如何設定 Ollama 的更多資訊。"
   unableToConnect: "無法連接到模型"
   tokenRequired: "連接到提供商需要令牌"
+  providerUnavailable: "不可用"
+  environmentDefined: "透過環境配置"
 
 bg_BG:
   title: "AI асистент"
@@ -505,6 +545,8 @@ bg_BG:
   ollamaDocsText: "Вижте нашата документация за повече информация как да настроите Ollama."
   unableToConnect: "Не може да се свърже с модела"
   tokenRequired: "За свързване с доставчика е необходим токен"
+  providerUnavailable: "Недостъпен"
+  environmentDefined: "Конфигуриран чрез среда"
 
 bn_BD:
   title: "এআই সহকারী"
@@ -528,6 +570,8 @@ bn_BD:
   ollamaDocsText: "ওল্লামা কীভাবে সেটআপ করবেন সে সম্পর্কে আরও তথ্যের জন্য আমাদের ডকুমেন্টেশন দেখুন।"
   unableToConnect: "মডেলের সাথে সংযোগ করতে অক্ষম৷"
   tokenRequired: "প্রদানকারীর সাথে সংযোগ করতে টোকেন প্রয়োজন"
+  providerUnavailable: "অনুপলব্ধ"
+  environmentDefined: "পরিবেশের মাধ্যমে কনফিগার করা হয়েছে"
 
 ca_ES:
   title: "Assistent d'IA"
@@ -551,6 +595,8 @@ ca_ES:
   ollamaDocsText: "Consulteu la nostra documentació per obtenir més informació sobre com configurar Ollama."
   unableToConnect: "No es pot connectar al model"
   tokenRequired: "El testimoni és necessari per connectar-se al proveïdor"
+  providerUnavailable: "No disponible"
+  environmentDefined: "Configurat mitjançant l'entorn"
 
 cs_CZ:
   title: "Asistent AI"
@@ -574,6 +620,8 @@ cs_CZ:
   ollamaDocsText: "Další informace o tom, jak nastavit Ollama, najdete v naší dokumentaci."
   unableToConnect: "Nelze se připojit k modelu"
   tokenRequired: "Pro připojení k poskytovateli je vyžadován token"
+  providerUnavailable: "Není k dispozici"
+  environmentDefined: "Konfigurováno prostřednictvím prostředí"
 
 da_DK:
   title: "AI assistent"
@@ -597,6 +645,8 @@ da_DK:
   ollamaDocsText: "Se vores dokumentation for mere information om, hvordan du opsætter Ollama."
   unableToConnect: "Kan ikke oprette forbindelse til modellen"
   tokenRequired: "Token er påkrævet for at oprette forbindelse til udbyderen"
+  providerUnavailable: "Ikke tilgængelig"
+  environmentDefined: "Konfigureret via miljø"
 
 fa_IR:
   title: "دستیار هوش مصنوعی"
@@ -620,6 +670,8 @@ fa_IR:
   ollamaDocsText: "برای اطلاعات بیشتر در مورد نحوه راه اندازی Ollama، اسناد ما را بررسی کنید."
   unableToConnect: "امکان اتصال به مدل وجود ندارد"
   tokenRequired: "رمز برای اتصال به ارائه دهنده مورد نیاز است"
+  providerUnavailable: "در دسترس نیست"
+  environmentDefined: "از طریق محیط پیکربندی شده است"
 
 hi_IN:
   title: "एआई सहायक"
@@ -643,6 +695,8 @@ hi_IN:
   ollamaDocsText: "ओलामा को सेटअप करने के तरीके के बारे में अधिक जानकारी के लिए हमारे दस्तावेज़ देखें।"
   unableToConnect: "मॉडल से कनेक्ट करने में असमर्थ"
   tokenRequired: "प्रदाता से जुड़ने के लिए टोकन आवश्यक है"
+  providerUnavailable: "अनुपलब्ध"
+  environmentDefined: "पर्यावरण के माध्यम से कॉन्फ़िगर किया गया"
 
 hr_HR:
   title: "AI pomoćnik"
@@ -666,6 +720,8 @@ hr_HR:
   ollamaDocsText: "Provjerite našu dokumentaciju za više informacija o tome kako postaviti Ollamu."
   unableToConnect: "Nije moguće povezati se s modelom"
   tokenRequired: "Token je potreban za povezivanje s pružateljem usluga"
+  providerUnavailable: "Nedostupan"
+  environmentDefined: "Konfigurirano putem okruženja"
 
 hu_HU:
   title: "AI-asszisztens"
@@ -689,6 +745,8 @@ hu_HU:
   ollamaDocsText: "Az Ollama beállításával kapcsolatos további információkért tekintse meg dokumentációnkat."
   unableToConnect: "Nem lehet csatlakozni a modellhez"
   tokenRequired: "Token is required to connect to the provider"
+  providerUnavailable: "Nem elérhető"
+  environmentDefined: "Környezeten keresztül konfigurálva"
 
 id_ID:
   title: "Asisten AI"
@@ -712,6 +770,8 @@ id_ID:
   ollamaDocsText: "Periksa dokumentasi kami untuk informasi lebih lanjut tentang cara mengatur Ollama."
   unableToConnect: "Tidak Dapat Terhubung ke Model"
   tokenRequired: "Token diperlukan untuk terhubung ke penyedia"
+  providerUnavailable: "Tidak tersedia"
+  environmentDefined: "Dikonfigurasi melalui lingkungan"
 
 ms_MY:
   title: "Penolong AI"
@@ -735,6 +795,8 @@ ms_MY:
   ollamaDocsText: "Semak dokumentasi kami untuk mendapatkan maklumat lanjut tentang cara menyediakan Ollama."
   unableToConnect: "Tidak Dapat Menyambung ke Model"
   tokenRequired: "Token diperlukan untuk menyambung kepada pembekal"
+  providerUnavailable: "Tidak tersedia"
+  environmentDefined: "Dikonfigurasikan melalui persekitaran"
 
 nb_NO:
   title: "AI-assistent"
@@ -758,6 +820,8 @@ nb_NO:
   ollamaDocsText: "Se vår dokumentasjon for mer informasjon om hvordan du konfigurerer Ollama."
   unableToConnect: "Kan ikke koble til modellen"
   tokenRequired: "Token kreves for å koble til leverandøren"
+  providerUnavailable: "Utilgjengelig"
+  environmentDefined: "Konfigurert via miljø"
 
 sw_KE:
   title: "Msaidizi wa AI"
@@ -781,6 +845,8 @@ sw_KE:
   ollamaDocsText: "Angalia hati zetu kwa habari zaidi juu ya jinsi ya kusanidi Ollama."
   unableToConnect: "Haiwezi Kuunganishwa kwa Muundo"
   tokenRequired: "Tokeni inahitajika ili kuunganisha kwa mtoa huduma"
+  providerUnavailable: "Haipatikani"
+  environmentDefined: "Imesanidiwa kupitia mazingira"
 
 ta_IN:
   title: "AI உதவியாளர்"
@@ -804,6 +870,8 @@ ta_IN:
   ollamaDocsText: "ஒல்லாமாவை எவ்வாறு அமைப்பது என்பது பற்றிய கூடுதல் தகவலுக்கு எங்கள் ஆவணங்களைப் பார்க்கவும்."
   unableToConnect: "மாதிரியுடன் இணைக்க முடியவில்லை"
   tokenRequired: "வழங்குநருடன் இணைக்க டோக்கன் தேவை"
+  providerUnavailable: "கிடைக்கவில்லை"
+  environmentDefined: "சூழல் மூலம் கட்டமைக்கப்பட்டது"
 
 th_TH:
   title: "ผู้ช่วยเอไอ"
@@ -827,6 +895,8 @@ th_TH:
   ollamaDocsText: "ตรวจสอบเอกสารของเราสำหรับข้อมูลเพิ่มเติมเกี่ยวกับวิธีการตั้งค่า Ollama"
   unableToConnect: "ไม่สามารถเชื่อมต่อกับโมเดลได้"
   tokenRequired: "ต้องใช้โทเค็นเพื่อเชื่อมต่อกับผู้ให้บริการ"
+  providerUnavailable: "ไม่พร้อมใช้งาน"
+  environmentDefined: "กำหนดค่าผ่านสภาพแวดล้อม"
 
 tr_TR:
   title: "Yapay Zeka Asistanı"
@@ -850,6 +920,8 @@ tr_TR:
   ollamaDocsText: "Ollama'nın nasıl kurulacağı hakkında daha fazla bilgi için belgelerimize bakın."
   unableToConnect: "Modele Bağlanılamıyor"
   tokenRequired: "Sağlayıcıya bağlanmak için jeton gereklidir"
+  providerUnavailable: "Kullanılamıyor"
+  environmentDefined: "Ortam aracılığıyla yapılandırıldı"
 
 uk_UA:
   title: "ШІ помічник"
@@ -873,6 +945,8 @@ uk_UA:
   ollamaDocsText: "Перегляньте нашу документацію, щоб дізнатися більше про те, як налаштувати Ollama."
   unableToConnect: "Неможливо підключитися до моделі"
   tokenRequired: "Для підключення до провайдера потрібен токен"
+  providerUnavailable: "Недоступний"
+  environmentDefined: "Налаштовано через середовище"
 
 ur_PK:
   title: "اے آئی اسسٹنٹ"
@@ -896,6 +970,8 @@ ur_PK:
   ollamaDocsText: "اولاما کو سیٹ اپ کرنے کے طریقے کے بارے میں مزید معلومات کے لیے ہماری دستاویزات چیک کریں۔"
   unableToConnect: "ماڈل سے مربوط ہونے سے قاصر"
   tokenRequired: "فراہم کنندہ سے جڑنے کے لیے ٹوکن درکار ہے۔"
+  providerUnavailable: "دستیاب نہیں۔"
+  environmentDefined: "ماحول کے ذریعے ترتیب دیا گیا ہے۔"
 
 vi_VN:
   title: "Trợ lý AI"
@@ -919,6 +995,8 @@ vi_VN:
   ollamaDocsText: "Hãy xem tài liệu của chúng tôi để biết thêm thông tin về cách thiết lập Ollama."
   unableToConnect: "Không thể kết nối với mô hình"
   tokenRequired: "Cần có mã thông báo để kết nối với nhà cung cấp"
+  providerUnavailable: "Không có sẵn"
+  environmentDefined: "Cấu hình thông qua môi trường"
 
 af_ZA:
   title: "KI assistent"
@@ -942,6 +1020,8 @@ af_ZA:
   ollamaDocsText: "Gaan ons dokumentasie na vir meer inligting oor hoe om Ollama op te stel."
   unableToConnect: "Kan nie aan die model koppel nie"
   tokenRequired: "Token word vereis om aan die verskaffer te koppel"
+  providerUnavailable: "Onbeskikbaar"
+  environmentDefined: "Gekonfigureer via omgewing"
 
 am_ET:
   title: "AI ረዳት"
@@ -965,6 +1045,8 @@ am_ET:
   ollamaDocsText: "ኦላማን እንዴት ማዋቀር እንደሚቻል ለበለጠ መረጃ የእኛን ሰነድ ይመልከቱ።"
   unableToConnect: "ከአምሳያው ጋር መገናኘት አልተቻለም"
   tokenRequired: "ከአቅራቢው ጋር ለመገናኘት ማስመሰያ ያስፈልጋል"
+  providerUnavailable: "አይገኝም"
+  environmentDefined: "በአከባቢ በኩል የተዋቀረ"
 
 az_AZ:
   title: "AI köməkçisi"
@@ -988,6 +1070,8 @@ az_AZ:
   ollamaDocsText: "Ollama-nı necə quraşdırmaq haqqında ətraflı məlumat üçün sənədlərimizi yoxlayın."
   unableToConnect: "Modelə qoşulmaq mümkün deyil"
   tokenRequired: "Provayderə qoşulmaq üçün token tələb olunur"
+  providerUnavailable: "Əlçatan deyil"
+  environmentDefined: "Ətraf mühit vasitəsilə konfiqurasiya edilmişdir"
 
 et_EE:
   title: "AI assistent"
@@ -1011,6 +1095,8 @@ et_EE:
   ollamaDocsText: "Ollama seadistamise kohta lisateabe saamiseks vaadake meie dokumentatsiooni."
   unableToConnect: "Mudeliga ei saa ühendust luua"
   tokenRequired: "Pakkujaga ühenduse loomiseks on vaja Token"
+  providerUnavailable: "Pole saadaval"
+  environmentDefined: "Seadistatud keskkonna kaudu"
 
 gu_IN:
   title: "એઆઈ સહાયક"
@@ -1034,6 +1120,8 @@ gu_IN:
   ollamaDocsText: "ઓલામાને કેવી રીતે સેટઅપ કરવું તે વિશે વધુ માહિતી માટે અમારા દસ્તાવેજો તપાસો."
   unableToConnect: "મોડેલ સાથે કનેક્ટ કરવામાં અસમર્થ"
   tokenRequired: "પ્રદાતા સાથે જોડાવા માટે ટોકન જરૂરી છે"
+  providerUnavailable: "અનુપલબ્ધ"
+  environmentDefined: "પર્યાવરણ દ્વારા રૂપરેખાંકિત"
 
 ha_NG:
   title: "AI Mataimakin"
@@ -1057,6 +1145,8 @@ ha_NG:
   ollamaDocsText: "Duba takaddun mu don ƙarin bayani kan yadda ake saita Ollama."
   unableToConnect: "Rashin Haɗawa zuwa Samfurin"
   tokenRequired: "Ana buƙatar alamar don haɗi zuwa mai badawa"
+  providerUnavailable: "Babu"
+  environmentDefined: "An saita ta hanyar muhalli"
 
 ka_GE:
   title: "AI ასისტენტი"
@@ -1080,6 +1170,8 @@ ka_GE:
   ollamaDocsText: "შეამოწმეთ ჩვენი დოკუმენტაცია დამატებითი ინფორმაციისთვის, თუ როგორ უნდა დააყენოთ Ollama."
   unableToConnect: "მოდელთან დაკავშირება შეუძლებელია"
   tokenRequired: "პროვაიდერთან დასაკავშირებლად საჭიროა ჟეტონი"
+  providerUnavailable: "მიუწვდომელია"
+  environmentDefined: "კონფიგურირებულია გარემოს საშუალებით"
 
 km_KH:
   title: "ជំនួយការ AI"
@@ -1103,6 +1195,8 @@ km_KH:
   ollamaDocsText: "សូមពិនិត្យមើលឯកសាររបស់យើងសម្រាប់ព័ត៌មានបន្ថែមអំពីរបៀបដំឡើង Ollama ។"
   unableToConnect: "មិនអាចភ្ជាប់ទៅម៉ូដែលបានទេ។"
   tokenRequired: "Token ត្រូវបានទាមទារដើម្បីភ្ជាប់ទៅអ្នកផ្តល់សេវា"
+  providerUnavailable: "មិនអាចប្រើបាន"
+  environmentDefined: "កំណត់រចនាសម្ព័ន្ធតាមរយៈបរិស្ថាន"
 
 kn_IN:
   title: "AI ಸಹಾಯಕ"
@@ -1126,6 +1220,8 @@ kn_IN:
   ollamaDocsText: "Ollama ಅನ್ನು ಹೇಗೆ ಹೊಂದಿಸುವುದು ಎಂಬುದರ ಕುರಿತು ಹೆಚ್ಚಿನ ಮಾಹಿತಿಗಾಗಿ ನಮ್ಮ ದಸ್ತಾವೇಜನ್ನು ಪರಿಶೀಲಿಸಿ."
   unableToConnect: "ಮಾದರಿಗೆ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ"
   tokenRequired: "ಒದಗಿಸುವವರಿಗೆ ಸಂಪರ್ಕಿಸಲು ಟೋಕನ್ ಅಗತ್ಯವಿದೆ"
+  providerUnavailable: "ಲಭ್ಯವಿಲ್ಲ"
+  environmentDefined: "ಪರಿಸರದ ಮೂಲಕ ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿದೆ"
 
 lt_LT:
   title: "AI asistentas"
@@ -1149,6 +1245,8 @@ lt_LT:
   ollamaDocsText: "Norėdami gauti daugiau informacijos apie tai, kaip nustatyti „Ollama“, žr. mūsų dokumentus."
   unableToConnect: "Nepavyko prisijungti prie modelio"
   tokenRequired: "Norint prisijungti prie teikėjo, reikalingas prieigos raktas"
+  providerUnavailable: "Nepasiekiamas"
+  environmentDefined: "Konfigūruojama per aplinką"
 
 lv_LV:
   title: "AI palīgs"
@@ -1172,6 +1270,8 @@ lv_LV:
   ollamaDocsText: "Plašāku informāciju par Ollama iestatīšanu skatiet mūsu dokumentācijā."
   unableToConnect: "Nevar izveidot savienojumu ar modeli"
   tokenRequired: "Lai izveidotu savienojumu ar pakalpojumu sniedzēju, ir nepieciešams marķieris"
+  providerUnavailable: "Nav pieejams"
+  environmentDefined: "Konfigurēts, izmantojot vidi"
 
 ml_IN:
   title: "AI അസിസ്റ്റൻ്റ്"
@@ -1195,6 +1295,8 @@ ml_IN:
   ollamaDocsText: "ഒല്ലമ എങ്ങനെ സജ്ജീകരിക്കാം എന്നതിനെക്കുറിച്ചുള്ള കൂടുതൽ വിവരങ്ങൾക്ക് ഞങ്ങളുടെ ഡോക്യുമെൻ്റേഷൻ പരിശോധിക്കുക."
   unableToConnect: "മോഡലിലേക്ക് കണക്റ്റുചെയ്യാനായില്ല"
   tokenRequired: "ദാതാവുമായി ബന്ധിപ്പിക്കുന്നതിന് ടോക്കൺ ആവശ്യമാണ്"
+  providerUnavailable: "ലഭ്യമല്ല"
+  environmentDefined: "പരിസ്ഥിതി വഴി ക്രമീകരിച്ചത്"
 
 mr_IN:
   title: "एआय सहाय्यक"
@@ -1218,6 +1320,8 @@ mr_IN:
   ollamaDocsText: "ओलामा कसे सेट करावे याबद्दल अधिक माहितीसाठी आमचे दस्तऐवज तपासा."
   unableToConnect: "मॉडेलशी कनेक्ट करण्यात अक्षम"
   tokenRequired: "प्रदात्याशी कनेक्ट होण्यासाठी टोकन आवश्यक आहे"
+  providerUnavailable: "अनुपलब्ध"
+  environmentDefined: "पर्यावरणाद्वारे कॉन्फिगर केले"
 
 ne_NP:
   title: "एआई सहायक"
@@ -1241,6 +1345,8 @@ ne_NP:
   ollamaDocsText: "Ollama कसरी सेटअप गर्ने बारे थप जानकारीको लागि हाम्रो कागजात जाँच गर्नुहोस्।"
   unableToConnect: "मोडेलमा जडान गर्न असमर्थ"
   tokenRequired: "प्रदायकसँग जडान गर्न टोकन आवश्यक छ"
+  providerUnavailable: "अनुपलब्ध"
+  environmentDefined: "वातावरण मार्फत कन्फिगर गरियो"
 
 pa_IN:
   title: "AI ਸਹਾਇਕ"
@@ -1264,6 +1370,8 @@ pa_IN:
   ollamaDocsText: "ਓਲਾਮਾ ਨੂੰ ਕਿਵੇਂ ਸੈੱਟਅੱਪ ਕਰਨਾ ਹੈ ਇਸ ਬਾਰੇ ਹੋਰ ਜਾਣਕਾਰੀ ਲਈ ਸਾਡੇ ਦਸਤਾਵੇਜ਼ਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।"
   unableToConnect: "ਮਾਡਲ ਨਾਲ ਕਨੈਕਟ ਕਰਨ ਵਿੱਚ ਅਸਮਰੱਥ"
   tokenRequired: "ਪ੍ਰਦਾਤਾ ਨਾਲ ਜੁੜਨ ਲਈ ਟੋਕਨ ਦੀ ਲੋੜ ਹੈ"
+  providerUnavailable: "ਅਣਉਪਲਬਧ"
+  environmentDefined: "ਵਾਤਾਵਰਣ ਦੁਆਰਾ ਸੰਰਚਿਤ ਕੀਤਾ ਗਿਆ"
 
 si_LK:
   title: "AI සහකාර"
@@ -1287,6 +1395,8 @@ si_LK:
   ollamaDocsText: "Ollama සකසන්නේ කෙසේද යන්න පිළිබඳ වැඩිදුර තොරතුරු සඳහා අපගේ ලේඛන පරීක්ෂා කරන්න."
   unableToConnect: "ආකෘතියට සම්බන්ධ වීමට නොහැකි විය"
   tokenRequired: "සපයන්නා වෙත සම්බන්ධ වීමට ටෝකනය අවශ්‍ය වේ"
+  providerUnavailable: "ලබා ගත නොහැක"
+  environmentDefined: "පරිසරය හරහා වින්‍යාස කර ඇත"
 
 sl_SI:
   title: "Pomočnik AI"
@@ -1310,6 +1420,8 @@ sl_SI:
   ollamaDocsText: "Preverite našo dokumentacijo za več informacij o tem, kako nastaviti Ollamo."
   unableToConnect: "Ni mogoče vzpostaviti povezave z modelom"
   tokenRequired: "Za povezavo s ponudnikom je potreben žeton"
+  providerUnavailable: "Ni na voljo"
+  environmentDefined: "Konfigurirano prek okolja"
 
 sr_RS:
   title: "АИ Ассистант"
@@ -1333,6 +1445,8 @@ sr_RS:
   ollamaDocsText: "Погледајте нашу документацију за више информација о томе како да подесите Оллама."
   unableToConnect: "Није могуће повезати се са моделом"
   tokenRequired: "Токен је неопходан за повезивање са провајдером"
+  providerUnavailable: "Недоступно"
+  environmentDefined: "Конфигурисано преко окружења"
 
 te_IN:
   title: "AI అసిస్టెంట్"
@@ -1356,6 +1470,8 @@ te_IN:
   ollamaDocsText: "ఒల్లామాను ఎలా సెటప్ చేయాలో మరింత సమాచారం కోసం మా డాక్యుమెంటేషన్‌ని తనిఖీ చేయండి."
   unableToConnect: "మోడల్‌కి కనెక్ట్ చేయడం సాధ్యపడలేదు"
   tokenRequired: "ప్రొవైడర్‌కి కనెక్ట్ చేయడానికి టోకెన్ అవసరం"
+  providerUnavailable: "అందుబాటులో లేదు"
+  environmentDefined: "పర్యావరణం ద్వారా కాన్ఫిగర్ చేయబడింది"
 
 tl_PH:
   title: "AI Assistant"
@@ -1379,6 +1495,8 @@ tl_PH:
   ollamaDocsText: "Tingnan ang aming dokumentasyon para sa higit pang impormasyon sa kung paano i-setup ang Ollama."
   unableToConnect: "Hindi Makakonekta sa Modelo"
   tokenRequired: "Kinakailangan ang Token para kumonekta sa provider"
+  providerUnavailable: "Hindi magagamit"
+  environmentDefined: "Na-configure sa pamamagitan ng kapaligiran"
 
 uz_UZ:
   title: "AI yordamchisi"
@@ -1402,6 +1520,8 @@ uz_UZ:
   ollamaDocsText: "Ollama-ni qanday sozlash haqida ko'proq ma'lumot olish uchun hujjatlarimizni tekshiring."
   unableToConnect: "Modelga ulanish imkonsiz"
   tokenRequired: "Provayderga ulanish uchun token talab qilinadi"
+  providerUnavailable: "Mavjud emas"
+  environmentDefined: "Atrof-muhit orqali sozlangan"
 
 yo_NG:
   title: "AI Iranlọwọ"
@@ -1425,3 +1545,5 @@ yo_NG:
   ollamaDocsText: "Ṣayẹwo iwe wa fun alaye diẹ sii lori bi o ṣe le ṣeto Ollama."
   unableToConnect: "Ko le Sopọ si Awoṣe"
   tokenRequired: "Tokini nilo lati sopọ si olupese"
+  providerUnavailable: "Ko si"
+  environmentDefined: "Tunto nipasẹ ayika"

@@ -242,6 +242,55 @@ func TestQueryRawExecuteAndGraphMapPluginResults(t *testing.T) {
 	}
 }
 
+func TestQuerySourceFieldConstraintsMapsPluginMetadata(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) {
+		return true, nil
+	}
+	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
+		return map[string]map[string]any{
+			"id": {
+				"is_primary":     true,
+				"auto_increment": true,
+				"nullable":       false,
+			},
+			"status": {
+				"unique":       true,
+				"default":      "draft",
+				"check_values": []string{"draft", "published"},
+			},
+		}, nil
+	}
+	mock.GetColumnsForTableFunc = func(*engine.PluginConfig, string, string) ([]engine.Column, error) {
+		return []engine.Column{
+			{Name: "id", Type: "integer"},
+			{Name: "status", Type: "text"},
+		}, nil
+	}
+	setEngineMock(t, mock)
+
+	ctx := testSourceContext("Postgres", map[string]string{"Database": "app"})
+	fields, err := (&Resolver{}).Query().SourceFieldConstraints(ctx, testSourceRef(model.SourceObjectKindTable, "app", "public", "users"))
+	if err != nil {
+		t.Fatalf("expected field constraints query to succeed, got %v", err)
+	}
+	if len(fields) != 2 {
+		t.Fatalf("expected two field constraints, got %#v", fields)
+	}
+	if fields[0].Name != "id" || !fields[0].Primary || !fields[0].Identity || fields[0].Nullable == nil || *fields[0].Nullable {
+		t.Fatalf("expected id constraints to be normalized, got %#v", fields[0])
+	}
+	if fields[0].Type != "integer" || fields[1].Type != "text" {
+		t.Fatalf("expected field types to be merged from columns, got %#v", fields)
+	}
+	if fields[1].Name != "status" || !fields[1].Unique || fields[1].DefaultValue == nil || *fields[1].DefaultValue != "draft" {
+		t.Fatalf("expected status constraints to be normalized, got %#v", fields[1])
+	}
+	if len(fields[1].AllowedValues) != 2 || fields[1].AllowedValues[1] != "published" {
+		t.Fatalf("expected status allowed values, got %#v", fields[1].AllowedValues)
+	}
+}
+
 func TestQuerySSLStatusHandlesMappedNilAndErrorResults(t *testing.T) {
 	t.Run("nil status returns nil", func(t *testing.T) {
 		mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))

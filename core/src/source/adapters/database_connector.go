@@ -340,6 +340,64 @@ func (s *DatabaseSession) ColumnConstraints(ctx context.Context, ref source.Obje
 	return s.plugin.GetColumnConstraints(config, namespace, name)
 }
 
+// FieldConstraints returns normalized source-level field constraints for one
+// source object.
+func (s *DatabaseSession) FieldConstraints(ctx context.Context, ref source.ObjectRef) ([]source.FieldConstraints, error) {
+	if err := s.ensureObjectAction(ref.Kind, source.ActionInspect); err != nil {
+		return nil, err
+	}
+
+	config := s.pluginConfig(ctx, &ref)
+	namespace := s.namespaceForRef(&ref)
+	name := objectName(ref)
+	if err := s.validateObject(config, namespace, name); err != nil {
+		return nil, err
+	}
+
+	columns, err := s.Columns(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	constraints, err := s.plugin.GetColumnConstraints(config, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	fields := source.MergeFieldConstraintsWithColumns(source.NormalizeFieldConstraints(constraints), columns)
+
+	relationships, err := s.plugin.GetForeignKeyRelationships(config, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	for _, relationship := range relationships {
+		if relationship == nil {
+			continue
+		}
+		matched := false
+		for i := range fields {
+			if !strings.EqualFold(fields[i].Name, relationship.ColumnName) {
+				continue
+			}
+			fields[i].ForeignKey = &source.ForeignKeyDefinition{
+				Table:  relationship.ReferencedTable,
+				Column: relationship.ReferencedColumn,
+			}
+			matched = true
+			break
+		}
+		if !matched {
+			fields = append(fields, source.FieldConstraints{
+				Name: relationship.ColumnName,
+				ForeignKey: &source.ForeignKeyDefinition{
+					Table:  relationship.ReferencedTable,
+					Column: relationship.ReferencedColumn,
+				},
+			})
+		}
+	}
+
+	return fields, nil
+}
+
 // RunQuery executes a query against the source session.
 func (s *DatabaseSession) RunQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error) {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
@@ -431,7 +489,7 @@ func (s *DatabaseSession) CreateObject(ctx context.Context, parent *source.Objec
 
 	config := s.pluginConfig(ctx, parent)
 	namespace := s.namespaceForRef(parent)
-	return s.plugin.AddStorageUnit(config, namespace, name, fields)
+	return s.plugin.CreateStorageUnit(config, namespace, source.RecordsToObjectDefinition(name, fields))
 }
 
 // UpdateObject updates data within an existing source object.

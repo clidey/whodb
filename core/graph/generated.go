@@ -117,6 +117,26 @@ type ComplexityRoot struct {
 		Type             func(childComplexity int) int
 	}
 
+	ColumnCreationCapabilities struct {
+		CheckMinMax         func(childComplexity int) int
+		CheckValues         func(childComplexity int) int
+		CompositePrimaryKey func(childComplexity int) int
+		DefaultValue        func(childComplexity int) int
+		ForeignKey          func(childComplexity int) int
+		Identity            func(childComplexity int) int
+		Nullable            func(childComplexity int) int
+		PrimaryKey          func(childComplexity int) int
+		Types               func(childComplexity int) int
+		Unique              func(childComplexity int) int
+	}
+
+	CreationOptionDefinition struct {
+		Key      func(childComplexity int) int
+		Label    func(childComplexity int) int
+		Required func(childComplexity int) int
+		Values   func(childComplexity int) int
+	}
+
 	DiscoveredConnection struct {
 		ID           func(childComplexity int) int
 		Metadata     func(childComplexity int) int
@@ -126,6 +146,11 @@ type ComplexityRoot struct {
 		Region       func(childComplexity int) int
 		SourceType   func(childComplexity int) int
 		Status       func(childComplexity int) int
+	}
+
+	ForeignKeyDefinition struct {
+		Column func(childComplexity int) int
+		Table  func(childComplexity int) int
 	}
 
 	GCPProvider struct {
@@ -234,78 +259,91 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddAWSProvider               func(childComplexity int, input model.AWSProviderInput) int
-		AddAzureProvider             func(childComplexity int, input model.AzureProviderInput) int
-		AddGCPProvider               func(childComplexity int, input model.GCPProviderInput) int
-		AddSourceRow                 func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput) int
-		CreateSourceObject           func(childComplexity int, parent *model.SourceObjectRefInput, name string, fields []*model.RecordInput) int
-		DeleteSourceRow              func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput) int
-		ExecuteConfirmedSQL          func(childComplexity int, query string, operationType string) int
-		GenerateAzureADToken         func(childComplexity int, providerID string, sourceType string) int
-		GenerateChatTitle            func(childComplexity int, input model.GenerateChatTitleInput) int
-		GenerateCloudSQLIAMAuthToken func(childComplexity int, providerID string, username string) int
-		GenerateMockData             func(childComplexity int, input model.MockDataGenerationInput) int
-		GenerateRDSAuthToken         func(childComplexity int, providerID string, endpoint string, port int, region string, username string) int
-		ImportPreview                func(childComplexity int, file graphql.Upload, options model.ImportFileOptions, ref *model.SourceObjectRefInput, useHeaderMapping *bool) int
-		ImportSQL                    func(childComplexity int, input model.ImportSQLInput) int
-		ImportSourceObjectFile       func(childComplexity int, input model.ImportFileInput) int
-		LoginSource                  func(childComplexity int, credentials model.SourceLoginInput) int
-		LoginWithSourceProfile       func(childComplexity int, profile model.SourceProfileLoginInput) int
-		Logout                       func(childComplexity int) int
-		RefreshAzureProvider         func(childComplexity int, id string) int
-		RefreshCloudProvider         func(childComplexity int, id string) int
-		RefreshGCPProvider           func(childComplexity int, id string) int
-		RemoveCloudProvider          func(childComplexity int, id string) int
-		TestAWSCredentials           func(childComplexity int, input model.AWSProviderInput) int
-		TestAzureCredentials         func(childComplexity int, input model.AzureProviderInput) int
-		TestCloudProvider            func(childComplexity int, id string) int
-		TestGCPCredentials           func(childComplexity int, input model.GCPProviderInput) int
-		TestSourceConnection         func(childComplexity int, credentials model.SourceLoginInput) int
-		UpdateAWSProvider            func(childComplexity int, id string, input model.AWSProviderInput) int
-		UpdateAzureProvider          func(childComplexity int, id string, input model.AzureProviderInput) int
-		UpdateGCPProvider            func(childComplexity int, id string, input model.GCPProviderInput) int
-		UpdateSettings               func(childComplexity int, newSettings model.SettingsConfigInput) int
-		UpdateSourceObject           func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput, updatedColumns []string) int
+		AddAWSProvider                   func(childComplexity int, input model.AWSProviderInput) int
+		AddAzureProvider                 func(childComplexity int, input model.AzureProviderInput) int
+		AddGCPProvider                   func(childComplexity int, input model.GCPProviderInput) int
+		AddSourceRow                     func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput) int
+		CreateSourceObject               func(childComplexity int, parent *model.SourceObjectRefInput, name string, fields []*model.RecordInput) int
+		CreateSourceObjectFromDefinition func(childComplexity int, parent *model.SourceObjectRefInput, definition model.SourceObjectDefinitionInput) int
+		DeleteSourceRow                  func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput) int
+		ExecuteConfirmedSQL              func(childComplexity int, query string, operationType string) int
+		GenerateAzureADToken             func(childComplexity int, providerID string, sourceType string) int
+		GenerateChatTitle                func(childComplexity int, input model.GenerateChatTitleInput) int
+		GenerateCloudSQLIAMAuthToken     func(childComplexity int, providerID string, username string) int
+		GenerateMockData                 func(childComplexity int, input model.MockDataGenerationInput) int
+		GenerateRDSAuthToken             func(childComplexity int, providerID string, endpoint string, port int, region string, username string) int
+		ImportPreview                    func(childComplexity int, file graphql.Upload, options model.ImportFileOptions, ref *model.SourceObjectRefInput, useHeaderMapping *bool) int
+		ImportSQL                        func(childComplexity int, input model.ImportSQLInput) int
+		ImportSourceObjectFile           func(childComplexity int, input model.ImportFileInput) int
+		LoginSource                      func(childComplexity int, credentials model.SourceLoginInput) int
+		LoginWithSourceProfile           func(childComplexity int, profile model.SourceProfileLoginInput) int
+		Logout                           func(childComplexity int) int
+		RefreshAzureProvider             func(childComplexity int, id string) int
+		RefreshCloudProvider             func(childComplexity int, id string) int
+		RefreshGCPProvider               func(childComplexity int, id string) int
+		RemoveCloudProvider              func(childComplexity int, id string) int
+		TestAWSCredentials               func(childComplexity int, input model.AWSProviderInput) int
+		TestAzureCredentials             func(childComplexity int, input model.AzureProviderInput) int
+		TestCloudProvider                func(childComplexity int, id string) int
+		TestGCPCredentials               func(childComplexity int, input model.GCPProviderInput) int
+		TestSourceConnection             func(childComplexity int, credentials model.SourceLoginInput) int
+		UpdateAWSProvider                func(childComplexity int, id string, input model.AWSProviderInput) int
+		UpdateAzureProvider              func(childComplexity int, id string, input model.AzureProviderInput) int
+		UpdateGCPProvider                func(childComplexity int, id string, input model.GCPProviderInput) int
+		UpdateSettings                   func(childComplexity int, newSettings model.SettingsConfigInput) int
+		UpdateSourceObject               func(childComplexity int, ref model.SourceObjectRefInput, values []*model.RecordInput, updatedColumns []string) int
+	}
+
+	ObjectCreationMetadata struct {
+		ColumnCapabilities func(childComplexity int) int
+		ObjectKind         func(childComplexity int) int
+		RequiresColumns    func(childComplexity int) int
+		Supported          func(childComplexity int) int
+		TableCapabilities  func(childComplexity int) int
+		TableOptions       func(childComplexity int) int
+		TypeDefinitions    func(childComplexity int) int
 	}
 
 	Query struct {
-		AIChat                      func(childComplexity int, providerID *string, modelType string, token *string, ref *model.SourceObjectRefInput, input model.ChatInput) int
-		AIModel                     func(childComplexity int, providerID *string, modelType string, token *string) int
-		AIProviders                 func(childComplexity int) int
-		AWSRegions                  func(childComplexity int) int
-		AnalyzeMockDataDependencies func(childComplexity int, ref model.SourceObjectRefInput, rowCount int, fkDensityRatio *int) int
-		AzureProvider               func(childComplexity int, id string) int
-		AzureProviders              func(childComplexity int) int
-		AzureRegions                func(childComplexity int) int
-		AzureSubscriptions          func(childComplexity int) int
-		CloudProvider               func(childComplexity int, id string) int
-		CloudProviders              func(childComplexity int) int
-		DiscoveredConnections       func(childComplexity int) int
-		GCPProvider                 func(childComplexity int, id string) int
-		GCPProviders                func(childComplexity int) int
-		GCPRegions                  func(childComplexity int) int
-		Health                      func(childComplexity int) int
-		LocalAWSProfiles            func(childComplexity int) int
-		LocalGCPProjects            func(childComplexity int) int
-		MockDataMaxRowCount         func(childComplexity int) int
-		ProviderConnections         func(childComplexity int, providerID string) int
-		RunSourceQuery              func(childComplexity int, query string) int
-		SSLStatus                   func(childComplexity int) int
-		SettingsConfig              func(childComplexity int) int
-		SourceColumns               func(childComplexity int, ref model.SourceObjectRefInput) int
-		SourceColumnsBatch          func(childComplexity int, refs []*model.SourceObjectRefInput) int
-		SourceContent               func(childComplexity int, ref model.SourceObjectRefInput) int
-		SourceFieldOptions          func(childComplexity int, sourceType string, fieldKey string, values []*model.RecordInput) int
-		SourceGraph                 func(childComplexity int, ref *model.SourceObjectRefInput) int
-		SourceObject                func(childComplexity int, ref model.SourceObjectRefInput) int
-		SourceObjects               func(childComplexity int, parent *model.SourceObjectRefInput, kinds []model.SourceObjectKind) int
-		SourceProfiles              func(childComplexity int) int
-		SourceQuerySuggestions      func(childComplexity int, ref *model.SourceObjectRefInput) int
-		SourceRows                  func(childComplexity int, ref model.SourceObjectRefInput, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
-		SourceSessionMetadata       func(childComplexity int) int
-		SourceTypes                 func(childComplexity int) int
-		UpdateInfo                  func(childComplexity int) int
-		Version                     func(childComplexity int) int
+		AIChat                       func(childComplexity int, providerID *string, modelType string, token *string, ref *model.SourceObjectRefInput, input model.ChatInput) int
+		AIModel                      func(childComplexity int, providerID *string, modelType string, token *string) int
+		AIProviders                  func(childComplexity int) int
+		AWSRegions                   func(childComplexity int) int
+		AnalyzeMockDataDependencies  func(childComplexity int, ref model.SourceObjectRefInput, rowCount int, fkDensityRatio *int) int
+		AzureProvider                func(childComplexity int, id string) int
+		AzureProviders               func(childComplexity int) int
+		AzureRegions                 func(childComplexity int) int
+		AzureSubscriptions           func(childComplexity int) int
+		CloudProvider                func(childComplexity int, id string) int
+		CloudProviders               func(childComplexity int) int
+		DiscoveredConnections        func(childComplexity int) int
+		GCPProvider                  func(childComplexity int, id string) int
+		GCPProviders                 func(childComplexity int) int
+		GCPRegions                   func(childComplexity int) int
+		Health                       func(childComplexity int) int
+		LocalAWSProfiles             func(childComplexity int) int
+		LocalGCPProjects             func(childComplexity int) int
+		MockDataMaxRowCount          func(childComplexity int) int
+		ProviderConnections          func(childComplexity int, providerID string) int
+		RunSourceQuery               func(childComplexity int, query string) int
+		SSLStatus                    func(childComplexity int) int
+		SettingsConfig               func(childComplexity int) int
+		SourceColumns                func(childComplexity int, ref model.SourceObjectRefInput) int
+		SourceColumnsBatch           func(childComplexity int, refs []*model.SourceObjectRefInput) int
+		SourceContent                func(childComplexity int, ref model.SourceObjectRefInput) int
+		SourceFieldConstraints       func(childComplexity int, ref model.SourceObjectRefInput) int
+		SourceFieldOptions           func(childComplexity int, sourceType string, fieldKey string, values []*model.RecordInput) int
+		SourceGraph                  func(childComplexity int, ref *model.SourceObjectRefInput) int
+		SourceObject                 func(childComplexity int, ref model.SourceObjectRefInput) int
+		SourceObjectCreationMetadata func(childComplexity int, parent *model.SourceObjectRefInput) int
+		SourceObjects                func(childComplexity int, parent *model.SourceObjectRefInput, kinds []model.SourceObjectKind) int
+		SourceProfiles               func(childComplexity int) int
+		SourceQuerySuggestions       func(childComplexity int, ref *model.SourceObjectRefInput) int
+		SourceRows                   func(childComplexity int, ref model.SourceObjectRefInput, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) int
+		SourceSessionMetadata        func(childComplexity int) int
+		SourceTypes                  func(childComplexity int) int
+		UpdateInfo                   func(childComplexity int) int
+		Version                      func(childComplexity int) int
 	}
 
 	Record struct {
@@ -390,6 +428,23 @@ type ComplexityRoot struct {
 
 	SourceDiscoveryPrefill struct {
 		AdvancedDefaults func(childComplexity int) int
+	}
+
+	SourceFieldConstraints struct {
+		AllowedValues func(childComplexity int) int
+		CheckMax      func(childComplexity int) int
+		CheckMin      func(childComplexity int) int
+		DefaultValue  func(childComplexity int) int
+		ForeignKey    func(childComplexity int) int
+		Identity      func(childComplexity int) int
+		Length        func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Nullable      func(childComplexity int) int
+		Precision     func(childComplexity int) int
+		Primary       func(childComplexity int) int
+		Scale         func(childComplexity int) int
+		Type          func(childComplexity int) int
+		Unique        func(childComplexity int) int
 	}
 
 	SourceMockDataTraits struct {
@@ -493,6 +548,14 @@ type ComplexityRoot struct {
 		StorageUnit func(childComplexity int) int
 	}
 
+	TableCreationCapabilities struct {
+		ClusteringKey      func(childComplexity int) int
+		KeyValueType       func(childComplexity int) int
+		OrderKey           func(childComplexity int) int
+		PartitionKey       func(childComplexity int) int
+		RequiresPrimaryKey func(childComplexity int) int
+	}
+
 	TypeDefinition struct {
 		Category         func(childComplexity int) int
 		DefaultLength    func(childComplexity int) int
@@ -520,6 +583,7 @@ type MutationResolver interface {
 	TestSourceConnection(ctx context.Context, credentials model.SourceLoginInput) (*model.StatusResponse, error)
 	UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error)
 	CreateSourceObject(ctx context.Context, parent *model.SourceObjectRefInput, name string, fields []*model.RecordInput) (*model.StatusResponse, error)
+	CreateSourceObjectFromDefinition(ctx context.Context, parent *model.SourceObjectRefInput, definition model.SourceObjectDefinitionInput) (*model.StatusResponse, error)
 	UpdateSourceObject(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput, updatedColumns []string) (*model.StatusResponse, error)
 	AddSourceRow(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput) (*model.StatusResponse, error)
 	DeleteSourceRow(ctx context.Context, ref model.SourceObjectRefInput, values []*model.RecordInput) (*model.StatusResponse, error)
@@ -555,12 +619,14 @@ type QueryResolver interface {
 	SourceTypes(ctx context.Context) ([]*model.SourceType, error)
 	SourceFieldOptions(ctx context.Context, sourceType string, fieldKey string, values []*model.RecordInput) ([]string, error)
 	SourceSessionMetadata(ctx context.Context) (*model.SourceSessionMetadata, error)
+	SourceObjectCreationMetadata(ctx context.Context, parent *model.SourceObjectRefInput) (*model.ObjectCreationMetadata, error)
 	SourceObjects(ctx context.Context, parent *model.SourceObjectRefInput, kinds []model.SourceObjectKind) ([]*model.SourceObject, error)
 	SourceObject(ctx context.Context, ref model.SourceObjectRefInput) (*model.SourceObject, error)
 	SourceRows(ctx context.Context, ref model.SourceObjectRefInput, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error)
 	SourceContent(ctx context.Context, ref model.SourceObjectRefInput) (*model.SourceContent, error)
 	SourceColumns(ctx context.Context, ref model.SourceObjectRefInput) ([]*model.Column, error)
 	SourceColumnsBatch(ctx context.Context, refs []*model.SourceObjectRefInput) ([]*model.SourceObjectColumns, error)
+	SourceFieldConstraints(ctx context.Context, ref model.SourceObjectRefInput) ([]*model.SourceFieldConstraints, error)
 	RunSourceQuery(ctx context.Context, query string) (*model.RowsResult, error)
 	SourceGraph(ctx context.Context, ref *model.SourceObjectRefInput) ([]*model.GraphUnit, error)
 	AIProviders(ctx context.Context) ([]*model.AIProvider, error)
@@ -945,6 +1011,92 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Column.Type(childComplexity), true
 
+	case "ColumnCreationCapabilities.CheckMinMax":
+		if e.ComplexityRoot.ColumnCreationCapabilities.CheckMinMax == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.CheckMinMax(childComplexity), true
+	case "ColumnCreationCapabilities.CheckValues":
+		if e.ComplexityRoot.ColumnCreationCapabilities.CheckValues == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.CheckValues(childComplexity), true
+	case "ColumnCreationCapabilities.CompositePrimaryKey":
+		if e.ComplexityRoot.ColumnCreationCapabilities.CompositePrimaryKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.CompositePrimaryKey(childComplexity), true
+	case "ColumnCreationCapabilities.DefaultValue":
+		if e.ComplexityRoot.ColumnCreationCapabilities.DefaultValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.DefaultValue(childComplexity), true
+	case "ColumnCreationCapabilities.ForeignKey":
+		if e.ComplexityRoot.ColumnCreationCapabilities.ForeignKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.ForeignKey(childComplexity), true
+	case "ColumnCreationCapabilities.Identity":
+		if e.ComplexityRoot.ColumnCreationCapabilities.Identity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.Identity(childComplexity), true
+	case "ColumnCreationCapabilities.Nullable":
+		if e.ComplexityRoot.ColumnCreationCapabilities.Nullable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.Nullable(childComplexity), true
+	case "ColumnCreationCapabilities.PrimaryKey":
+		if e.ComplexityRoot.ColumnCreationCapabilities.PrimaryKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.PrimaryKey(childComplexity), true
+	case "ColumnCreationCapabilities.Types":
+		if e.ComplexityRoot.ColumnCreationCapabilities.Types == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.Types(childComplexity), true
+	case "ColumnCreationCapabilities.Unique":
+		if e.ComplexityRoot.ColumnCreationCapabilities.Unique == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationCapabilities.Unique(childComplexity), true
+
+	case "CreationOptionDefinition.Key":
+		if e.ComplexityRoot.CreationOptionDefinition.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreationOptionDefinition.Key(childComplexity), true
+	case "CreationOptionDefinition.Label":
+		if e.ComplexityRoot.CreationOptionDefinition.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreationOptionDefinition.Label(childComplexity), true
+	case "CreationOptionDefinition.Required":
+		if e.ComplexityRoot.CreationOptionDefinition.Required == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreationOptionDefinition.Required(childComplexity), true
+	case "CreationOptionDefinition.Values":
+		if e.ComplexityRoot.CreationOptionDefinition.Values == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreationOptionDefinition.Values(childComplexity), true
+
 	case "DiscoveredConnection.Id":
 		if e.ComplexityRoot.DiscoveredConnection.ID == nil {
 			break
@@ -993,6 +1145,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DiscoveredConnection.Status(childComplexity), true
+
+	case "ForeignKeyDefinition.Column":
+		if e.ComplexityRoot.ForeignKeyDefinition.Column == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ForeignKeyDefinition.Column(childComplexity), true
+	case "ForeignKeyDefinition.Table":
+		if e.ComplexityRoot.ForeignKeyDefinition.Table == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ForeignKeyDefinition.Table(childComplexity), true
 
 	case "GCPProvider.DiscoverAlloyDB":
 		if e.ComplexityRoot.GCPProvider.DiscoverAlloyDb == nil {
@@ -1424,6 +1589,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateSourceObject(childComplexity, args["parent"].(*model.SourceObjectRefInput), args["name"].(string), args["fields"].([]*model.RecordInput)), true
+	case "Mutation.CreateSourceObjectFromDefinition":
+		if e.ComplexityRoot.Mutation.CreateSourceObjectFromDefinition == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_CreateSourceObjectFromDefinition_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateSourceObjectFromDefinition(childComplexity, args["parent"].(*model.SourceObjectRefInput), args["definition"].(model.SourceObjectDefinitionInput)), true
 	case "Mutation.DeleteSourceRow":
 		if e.ComplexityRoot.Mutation.DeleteSourceRow == nil {
 			break
@@ -1717,6 +1893,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UpdateSourceObject(childComplexity, args["ref"].(model.SourceObjectRefInput), args["values"].([]*model.RecordInput), args["updatedColumns"].([]string)), true
 
+	case "ObjectCreationMetadata.ColumnCapabilities":
+		if e.ComplexityRoot.ObjectCreationMetadata.ColumnCapabilities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.ColumnCapabilities(childComplexity), true
+	case "ObjectCreationMetadata.ObjectKind":
+		if e.ComplexityRoot.ObjectCreationMetadata.ObjectKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.ObjectKind(childComplexity), true
+	case "ObjectCreationMetadata.RequiresColumns":
+		if e.ComplexityRoot.ObjectCreationMetadata.RequiresColumns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.RequiresColumns(childComplexity), true
+	case "ObjectCreationMetadata.Supported":
+		if e.ComplexityRoot.ObjectCreationMetadata.Supported == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.Supported(childComplexity), true
+	case "ObjectCreationMetadata.TableCapabilities":
+		if e.ComplexityRoot.ObjectCreationMetadata.TableCapabilities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.TableCapabilities(childComplexity), true
+	case "ObjectCreationMetadata.TableOptions":
+		if e.ComplexityRoot.ObjectCreationMetadata.TableOptions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.TableOptions(childComplexity), true
+	case "ObjectCreationMetadata.TypeDefinitions":
+		if e.ComplexityRoot.ObjectCreationMetadata.TypeDefinitions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.TypeDefinitions(childComplexity), true
+
 	case "Query.AIChat":
 		if e.ComplexityRoot.Query.AIChat == nil {
 			break
@@ -1929,6 +2148,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SourceContent(childComplexity, args["ref"].(model.SourceObjectRefInput)), true
+	case "Query.SourceFieldConstraints":
+		if e.ComplexityRoot.Query.SourceFieldConstraints == nil {
+			break
+		}
+
+		args, err := ec.field_Query_SourceFieldConstraints_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SourceFieldConstraints(childComplexity, args["ref"].(model.SourceObjectRefInput)), true
 	case "Query.SourceFieldOptions":
 		if e.ComplexityRoot.Query.SourceFieldOptions == nil {
 			break
@@ -1962,6 +2192,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SourceObject(childComplexity, args["ref"].(model.SourceObjectRefInput)), true
+	case "Query.SourceObjectCreationMetadata":
+		if e.ComplexityRoot.Query.SourceObjectCreationMetadata == nil {
+			break
+		}
+
+		args, err := ec.field_Query_SourceObjectCreationMetadata_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SourceObjectCreationMetadata(childComplexity, args["parent"].(*model.SourceObjectRefInput)), true
 	case "Query.SourceObjects":
 		if e.ComplexityRoot.Query.SourceObjects == nil {
 			break
@@ -2343,6 +2584,91 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SourceDiscoveryPrefill.AdvancedDefaults(childComplexity), true
 
+	case "SourceFieldConstraints.AllowedValues":
+		if e.ComplexityRoot.SourceFieldConstraints.AllowedValues == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.AllowedValues(childComplexity), true
+	case "SourceFieldConstraints.CheckMax":
+		if e.ComplexityRoot.SourceFieldConstraints.CheckMax == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.CheckMax(childComplexity), true
+	case "SourceFieldConstraints.CheckMin":
+		if e.ComplexityRoot.SourceFieldConstraints.CheckMin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.CheckMin(childComplexity), true
+	case "SourceFieldConstraints.DefaultValue":
+		if e.ComplexityRoot.SourceFieldConstraints.DefaultValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.DefaultValue(childComplexity), true
+	case "SourceFieldConstraints.ForeignKey":
+		if e.ComplexityRoot.SourceFieldConstraints.ForeignKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.ForeignKey(childComplexity), true
+	case "SourceFieldConstraints.Identity":
+		if e.ComplexityRoot.SourceFieldConstraints.Identity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Identity(childComplexity), true
+	case "SourceFieldConstraints.Length":
+		if e.ComplexityRoot.SourceFieldConstraints.Length == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Length(childComplexity), true
+	case "SourceFieldConstraints.Name":
+		if e.ComplexityRoot.SourceFieldConstraints.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Name(childComplexity), true
+	case "SourceFieldConstraints.Nullable":
+		if e.ComplexityRoot.SourceFieldConstraints.Nullable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Nullable(childComplexity), true
+	case "SourceFieldConstraints.Precision":
+		if e.ComplexityRoot.SourceFieldConstraints.Precision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Precision(childComplexity), true
+	case "SourceFieldConstraints.Primary":
+		if e.ComplexityRoot.SourceFieldConstraints.Primary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Primary(childComplexity), true
+	case "SourceFieldConstraints.Scale":
+		if e.ComplexityRoot.SourceFieldConstraints.Scale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Scale(childComplexity), true
+	case "SourceFieldConstraints.Type":
+		if e.ComplexityRoot.SourceFieldConstraints.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Type(childComplexity), true
+	case "SourceFieldConstraints.Unique":
+		if e.ComplexityRoot.SourceFieldConstraints.Unique == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.Unique(childComplexity), true
+
 	case "SourceMockDataTraits.SupportsRelationalDependencies":
 		if e.ComplexityRoot.SourceMockDataTraits.SupportsRelationalDependencies == nil {
 			break
@@ -2694,6 +3020,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.StorageUnitColumns.StorageUnit(childComplexity), true
 
+	case "TableCreationCapabilities.ClusteringKey":
+		if e.ComplexityRoot.TableCreationCapabilities.ClusteringKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TableCreationCapabilities.ClusteringKey(childComplexity), true
+	case "TableCreationCapabilities.KeyValueType":
+		if e.ComplexityRoot.TableCreationCapabilities.KeyValueType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TableCreationCapabilities.KeyValueType(childComplexity), true
+	case "TableCreationCapabilities.OrderKey":
+		if e.ComplexityRoot.TableCreationCapabilities.OrderKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TableCreationCapabilities.OrderKey(childComplexity), true
+	case "TableCreationCapabilities.PartitionKey":
+		if e.ComplexityRoot.TableCreationCapabilities.PartitionKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TableCreationCapabilities.PartitionKey(childComplexity), true
+	case "TableCreationCapabilities.RequiresPrimaryKey":
+		if e.ComplexityRoot.TableCreationCapabilities.RequiresPrimaryKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TableCreationCapabilities.RequiresPrimaryKey(childComplexity), true
+
 	case "TypeDefinition.category":
 		if e.ComplexityRoot.TypeDefinition.Category == nil {
 			break
@@ -2786,6 +3143,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAtomicWhereCondition,
 		ec.unmarshalInputAzureProviderInput,
 		ec.unmarshalInputChatInput,
+		ec.unmarshalInputColumnDefinitionInput,
+		ec.unmarshalInputForeignKeyDefinitionInput,
 		ec.unmarshalInputGCPProviderInput,
 		ec.unmarshalInputGenerateChatTitleInput,
 		ec.unmarshalInputImportColumnMapping,
@@ -2798,6 +3157,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSettingsConfigInput,
 		ec.unmarshalInputSortCondition,
 		ec.unmarshalInputSourceLoginInput,
+		ec.unmarshalInputSourceObjectDefinitionInput,
 		ec.unmarshalInputSourceObjectRefInput,
 		ec.unmarshalInputSourceProfileLoginInput,
 		ec.unmarshalInputWhereCondition,
@@ -3055,6 +3415,46 @@ func (ec *executionContext) childFields_Column(ctx context.Context, field graphq
 	return nil, fmt.Errorf("no field named %q was found under type Column", field.Name)
 }
 
+func (ec *executionContext) childFields_ColumnCreationCapabilities(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Types":
+		return ec.fieldContext_ColumnCreationCapabilities_Types(ctx, field)
+	case "Nullable":
+		return ec.fieldContext_ColumnCreationCapabilities_Nullable(ctx, field)
+	case "PrimaryKey":
+		return ec.fieldContext_ColumnCreationCapabilities_PrimaryKey(ctx, field)
+	case "CompositePrimaryKey":
+		return ec.fieldContext_ColumnCreationCapabilities_CompositePrimaryKey(ctx, field)
+	case "Unique":
+		return ec.fieldContext_ColumnCreationCapabilities_Unique(ctx, field)
+	case "Identity":
+		return ec.fieldContext_ColumnCreationCapabilities_Identity(ctx, field)
+	case "DefaultValue":
+		return ec.fieldContext_ColumnCreationCapabilities_DefaultValue(ctx, field)
+	case "CheckValues":
+		return ec.fieldContext_ColumnCreationCapabilities_CheckValues(ctx, field)
+	case "CheckMinMax":
+		return ec.fieldContext_ColumnCreationCapabilities_CheckMinMax(ctx, field)
+	case "ForeignKey":
+		return ec.fieldContext_ColumnCreationCapabilities_ForeignKey(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ColumnCreationCapabilities", field.Name)
+}
+
+func (ec *executionContext) childFields_CreationOptionDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Key":
+		return ec.fieldContext_CreationOptionDefinition_Key(ctx, field)
+	case "Label":
+		return ec.fieldContext_CreationOptionDefinition_Label(ctx, field)
+	case "Required":
+		return ec.fieldContext_CreationOptionDefinition_Required(ctx, field)
+	case "Values":
+		return ec.fieldContext_CreationOptionDefinition_Values(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CreationOptionDefinition", field.Name)
+}
+
 func (ec *executionContext) childFields_DiscoveredConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "Id":
@@ -3075,6 +3475,16 @@ func (ec *executionContext) childFields_DiscoveredConnection(ctx context.Context
 		return ec.fieldContext_DiscoveredConnection_Metadata(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DiscoveredConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_ForeignKeyDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Table":
+		return ec.fieldContext_ForeignKeyDefinition_Table(ctx, field)
+	case "Column":
+		return ec.fieldContext_ForeignKeyDefinition_Column(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ForeignKeyDefinition", field.Name)
 }
 
 func (ec *executionContext) childFields_GCPProvider(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3287,6 +3697,26 @@ func (ec *executionContext) childFields_MockDataTableInfo(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type MockDataTableInfo", field.Name)
 }
 
+func (ec *executionContext) childFields_ObjectCreationMetadata(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Supported":
+		return ec.fieldContext_ObjectCreationMetadata_Supported(ctx, field)
+	case "ObjectKind":
+		return ec.fieldContext_ObjectCreationMetadata_ObjectKind(ctx, field)
+	case "RequiresColumns":
+		return ec.fieldContext_ObjectCreationMetadata_RequiresColumns(ctx, field)
+	case "TypeDefinitions":
+		return ec.fieldContext_ObjectCreationMetadata_TypeDefinitions(ctx, field)
+	case "ColumnCapabilities":
+		return ec.fieldContext_ObjectCreationMetadata_ColumnCapabilities(ctx, field)
+	case "TableCapabilities":
+		return ec.fieldContext_ObjectCreationMetadata_TableCapabilities(ctx, field)
+	case "TableOptions":
+		return ec.fieldContext_ObjectCreationMetadata_TableOptions(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ObjectCreationMetadata", field.Name)
+}
+
 func (ec *executionContext) childFields_Record(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "Key":
@@ -3453,6 +3883,40 @@ func (ec *executionContext) childFields_SourceDiscoveryPrefill(ctx context.Conte
 		return ec.fieldContext_SourceDiscoveryPrefill_AdvancedDefaults(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SourceDiscoveryPrefill", field.Name)
+}
+
+func (ec *executionContext) childFields_SourceFieldConstraints(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Name":
+		return ec.fieldContext_SourceFieldConstraints_Name(ctx, field)
+	case "Type":
+		return ec.fieldContext_SourceFieldConstraints_Type(ctx, field)
+	case "Nullable":
+		return ec.fieldContext_SourceFieldConstraints_Nullable(ctx, field)
+	case "Primary":
+		return ec.fieldContext_SourceFieldConstraints_Primary(ctx, field)
+	case "Unique":
+		return ec.fieldContext_SourceFieldConstraints_Unique(ctx, field)
+	case "Identity":
+		return ec.fieldContext_SourceFieldConstraints_Identity(ctx, field)
+	case "DefaultValue":
+		return ec.fieldContext_SourceFieldConstraints_DefaultValue(ctx, field)
+	case "AllowedValues":
+		return ec.fieldContext_SourceFieldConstraints_AllowedValues(ctx, field)
+	case "CheckMin":
+		return ec.fieldContext_SourceFieldConstraints_CheckMin(ctx, field)
+	case "CheckMax":
+		return ec.fieldContext_SourceFieldConstraints_CheckMax(ctx, field)
+	case "ForeignKey":
+		return ec.fieldContext_SourceFieldConstraints_ForeignKey(ctx, field)
+	case "Length":
+		return ec.fieldContext_SourceFieldConstraints_Length(ctx, field)
+	case "Precision":
+		return ec.fieldContext_SourceFieldConstraints_Precision(ctx, field)
+	case "Scale":
+		return ec.fieldContext_SourceFieldConstraints_Scale(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SourceFieldConstraints", field.Name)
 }
 
 func (ec *executionContext) childFields_SourceMockDataTraits(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3645,6 +4109,22 @@ func (ec *executionContext) childFields_StatusResponse(ctx context.Context, fiel
 		return ec.fieldContext_StatusResponse_Status(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type StatusResponse", field.Name)
+}
+
+func (ec *executionContext) childFields_TableCreationCapabilities(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "RequiresPrimaryKey":
+		return ec.fieldContext_TableCreationCapabilities_RequiresPrimaryKey(ctx, field)
+	case "PartitionKey":
+		return ec.fieldContext_TableCreationCapabilities_PartitionKey(ctx, field)
+	case "ClusteringKey":
+		return ec.fieldContext_TableCreationCapabilities_ClusteringKey(ctx, field)
+	case "OrderKey":
+		return ec.fieldContext_TableCreationCapabilities_OrderKey(ctx, field)
+	case "KeyValueType":
+		return ec.fieldContext_TableCreationCapabilities_KeyValueType(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type TableCreationCapabilities", field.Name)
 }
 
 func (ec *executionContext) childFields_TypeDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3862,6 +4342,28 @@ func (ec *executionContext) field_Mutation_AddSourceRow_args(ctx context.Context
 		return nil, err
 	}
 	args["values"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_CreateSourceObjectFromDefinition_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "parent",
+		func(ctx context.Context, v any) (*model.SourceObjectRefInput, error) {
+			return ec.unmarshalOSourceObjectRefInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectRefInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["parent"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "definition",
+		func(ctx context.Context, v any) (model.SourceObjectDefinitionInput, error) {
+			return ec.unmarshalNSourceObjectDefinitionInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectDefinitionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["definition"] = arg1
 	return args, nil
 }
 
@@ -4605,6 +5107,20 @@ func (ec *executionContext) field_Query_SourceContent_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_SourceFieldConstraints_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ref",
+		func(ctx context.Context, v any) (model.SourceObjectRefInput, error) {
+			return ec.unmarshalNSourceObjectRefInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectRefInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ref"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_SourceFieldOptions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4646,6 +5162,20 @@ func (ec *executionContext) field_Query_SourceGraph_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["ref"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_SourceObjectCreationMetadata_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "parent",
+		func(ctx context.Context, v any) (*model.SourceObjectRefInput, error) {
+			return ec.unmarshalOSourceObjectRefInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectRefInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["parent"] = arg0
 	return args, nil
 }
 
@@ -6120,6 +6650,328 @@ func (ec *executionContext) fieldContext_Column_Scale(_ context.Context, field g
 	return graphql.NewScalarFieldContext("Column", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _ColumnCreationCapabilities_Types(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_Types(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Types, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_Types(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_Nullable(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_Nullable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Nullable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_Nullable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_PrimaryKey(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_PrimaryKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PrimaryKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_PrimaryKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_CompositePrimaryKey(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_CompositePrimaryKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompositePrimaryKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_CompositePrimaryKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_Unique(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_Unique(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Unique, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_Unique(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_Identity(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_Identity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Identity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_Identity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_DefaultValue(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_DefaultValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_DefaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_CheckValues(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_CheckValues(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckValues, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_CheckValues(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_CheckMinMax(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_CheckMinMax(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckMinMax, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_CheckMinMax(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationCapabilities_ForeignKey(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationCapabilities_ForeignKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ForeignKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationCapabilities_ForeignKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CreationOptionDefinition_Key(ctx context.Context, field graphql.CollectedField, obj *model.CreationOptionDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreationOptionDefinition_Key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreationOptionDefinition_Key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreationOptionDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CreationOptionDefinition_Label(ctx context.Context, field graphql.CollectedField, obj *model.CreationOptionDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreationOptionDefinition_Label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreationOptionDefinition_Label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreationOptionDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CreationOptionDefinition_Required(ctx context.Context, field graphql.CollectedField, obj *model.CreationOptionDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreationOptionDefinition_Required(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Required, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreationOptionDefinition_Required(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreationOptionDefinition", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CreationOptionDefinition_Values(ctx context.Context, field graphql.CollectedField, obj *model.CreationOptionDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreationOptionDefinition_Values(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Values, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreationOptionDefinition_Values(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreationOptionDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _DiscoveredConnection_Id(ctx context.Context, field graphql.CollectedField, obj *model.DiscoveredConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6311,6 +7163,52 @@ func (ec *executionContext) fieldContext_DiscoveredConnection_Metadata(_ context
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _ForeignKeyDefinition_Table(ctx context.Context, field graphql.CollectedField, obj *model.ForeignKeyDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ForeignKeyDefinition_Table(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Table, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ForeignKeyDefinition_Table(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ForeignKeyDefinition", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ForeignKeyDefinition_Column(ctx context.Context, field graphql.CollectedField, obj *model.ForeignKeyDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ForeignKeyDefinition_Column(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Column, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ForeignKeyDefinition_Column(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ForeignKeyDefinition", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _GCPProvider_Id(ctx context.Context, field graphql.CollectedField, obj *model.GCPProvider) (ret graphql.Marshaler) {
@@ -7990,6 +8888,50 @@ func (ec *executionContext) fieldContext_Mutation_CreateSourceObject(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_CreateSourceObjectFromDefinition(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_CreateSourceObjectFromDefinition(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateSourceObjectFromDefinition(ctx, fc.Args["parent"].(*model.SourceObjectRefInput), fc.Args["definition"].(model.SourceObjectDefinitionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.StatusResponse) graphql.Marshaler {
+			return ec.marshalNStatusResponse2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐStatusResponse(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_CreateSourceObjectFromDefinition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_StatusResponse(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_CreateSourceObjectFromDefinition_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_UpdateSourceObject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9134,6 +10076,203 @@ func (ec *executionContext) fieldContext_Mutation_GenerateCloudSQLIAMAuthToken(c
 	return fc, nil
 }
 
+func (ec *executionContext) _ObjectCreationMetadata_Supported(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_Supported(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Supported, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_Supported(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ObjectCreationMetadata", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_ObjectKind(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_ObjectKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObjectKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceObjectKind) graphql.Marshaler {
+			return ec.marshalNSourceObjectKind2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_ObjectKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ObjectCreationMetadata", field, false, false, errors.New("field of type SourceObjectKind does not have child fields"))
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_RequiresColumns(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_RequiresColumns(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresColumns, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_RequiresColumns(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ObjectCreationMetadata", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_TypeDefinitions(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_TypeDefinitions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TypeDefinitions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.TypeDefinition) graphql.Marshaler {
+			return ec.marshalNTypeDefinition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeDefinitionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_TypeDefinitions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectCreationMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TypeDefinition(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_ColumnCapabilities(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_ColumnCapabilities(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ColumnCapabilities, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ColumnCreationCapabilities) graphql.Marshaler {
+			return ec.marshalNColumnCreationCapabilities2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnCreationCapabilities(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_ColumnCapabilities(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectCreationMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ColumnCreationCapabilities(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_TableCapabilities(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_TableCapabilities(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TableCapabilities, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.TableCreationCapabilities) graphql.Marshaler {
+			return ec.marshalNTableCreationCapabilities2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTableCreationCapabilities(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_TableCapabilities(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectCreationMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TableCreationCapabilities(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_TableOptions(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_TableOptions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TableOptions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.CreationOptionDefinition) graphql.Marshaler {
+			return ec.marshalNCreationOptionDefinition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐCreationOptionDefinitionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_TableOptions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectCreationMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CreationOptionDefinition(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Version(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9357,6 +10496,50 @@ func (ec *executionContext) fieldContext_Query_SourceSessionMetadata(_ context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_SourceSessionMetadata(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_SourceObjectCreationMetadata(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_SourceObjectCreationMetadata(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SourceObjectCreationMetadata(ctx, fc.Args["parent"].(*model.SourceObjectRefInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ObjectCreationMetadata) graphql.Marshaler {
+			return ec.marshalNObjectCreationMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_SourceObjectCreationMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ObjectCreationMetadata(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_SourceObjectCreationMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9619,6 +10802,50 @@ func (ec *executionContext) fieldContext_Query_SourceColumnsBatch(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_SourceColumnsBatch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_SourceFieldConstraints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_SourceFieldConstraints(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SourceFieldConstraints(ctx, fc.Args["ref"].(model.SourceObjectRefInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.SourceFieldConstraints) graphql.Marshaler {
+			return ec.marshalNSourceFieldConstraints2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceFieldConstraintsᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_SourceFieldConstraints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SourceFieldConstraints(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_SourceFieldConstraints_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11789,6 +13016,337 @@ func (ec *executionContext) fieldContext_SourceDiscoveryPrefill_AdvancedDefaults
 	return fc, nil
 }
 
+func (ec *executionContext) _SourceFieldConstraints_Name(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Type(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Nullable(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Nullable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Nullable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *bool) graphql.Marshaler {
+			return ec.marshalOBoolean2ᚖbool(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Nullable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Primary(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Primary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Primary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Primary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Unique(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Unique(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Unique, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Unique(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Identity(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Identity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Identity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Identity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_DefaultValue(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_DefaultValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_DefaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_AllowedValues(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_AllowedValues(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AllowedValues, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_AllowedValues(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_CheckMin(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_CheckMin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckMin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_CheckMin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_CheckMax(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_CheckMax(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckMax, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_CheckMax(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_ForeignKey(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_ForeignKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ForeignKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ForeignKeyDefinition) graphql.Marshaler {
+			return ec.marshalOForeignKeyDefinition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐForeignKeyDefinition(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_ForeignKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SourceFieldConstraints",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ForeignKeyDefinition(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Length(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Length(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Length, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Length(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Precision(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Precision(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Precision, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Precision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SourceFieldConstraints_Scale(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_Scale(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Scale, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_Scale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _SourceMockDataTraits_SupportsRelationalDependencies(ctx context.Context, field graphql.CollectedField, obj *model.SourceMockDataTraits) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13228,6 +14786,121 @@ func (ec *executionContext) fieldContext_StorageUnitColumns_Columns(_ context.Co
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _TableCreationCapabilities_RequiresPrimaryKey(ctx context.Context, field graphql.CollectedField, obj *model.TableCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TableCreationCapabilities_RequiresPrimaryKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresPrimaryKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TableCreationCapabilities_RequiresPrimaryKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TableCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TableCreationCapabilities_PartitionKey(ctx context.Context, field graphql.CollectedField, obj *model.TableCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TableCreationCapabilities_PartitionKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartitionKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TableCreationCapabilities_PartitionKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TableCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TableCreationCapabilities_ClusteringKey(ctx context.Context, field graphql.CollectedField, obj *model.TableCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TableCreationCapabilities_ClusteringKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ClusteringKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TableCreationCapabilities_ClusteringKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TableCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TableCreationCapabilities_OrderKey(ctx context.Context, field graphql.CollectedField, obj *model.TableCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TableCreationCapabilities_OrderKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrderKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TableCreationCapabilities_OrderKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TableCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TableCreationCapabilities_KeyValueType(ctx context.Context, field graphql.CollectedField, obj *model.TableCreationCapabilities) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TableCreationCapabilities_KeyValueType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.KeyValueType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TableCreationCapabilities_KeyValueType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TableCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _TypeDefinition_id(ctx context.Context, field graphql.CollectedField, obj *model.TypeDefinition) (ret graphql.Marshaler) {
@@ -14862,6 +16535,143 @@ func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj any
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputColumnDefinitionInput(ctx context.Context, obj any) (model.ColumnDefinitionInput, error) {
+	var it model.ColumnDefinitionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Name", "Type", "Nullable", "Primary", "Unique", "Identity", "DefaultValue", "CheckValues", "CheckMin", "CheckMax", "ForeignKey"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "Type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Type"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "Nullable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Nullable"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Nullable = data
+		case "Primary":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Primary"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Primary = data
+		case "Unique":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Unique"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Unique = data
+		case "Identity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Identity"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Identity = data
+		case "DefaultValue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("DefaultValue"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultValue = data
+		case "CheckValues":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("CheckValues"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckValues = data
+		case "CheckMin":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("CheckMin"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckMin = data
+		case "CheckMax":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("CheckMax"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckMax = data
+		case "ForeignKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ForeignKey"))
+			data, err := ec.unmarshalOForeignKeyDefinitionInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐForeignKeyDefinitionInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ForeignKey = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputForeignKeyDefinitionInput(ctx context.Context, obj any) (model.ForeignKeyDefinitionInput, error) {
+	var it model.ForeignKeyDefinitionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Table", "Column"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Table":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Table"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Table = data
+		case "Column":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Column"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Column = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGCPProviderInput(ctx context.Context, obj any) (model.GCPProviderInput, error) {
 	var it model.GCPProviderInput
 	if obj == nil {
@@ -15441,6 +17251,50 @@ func (ec *executionContext) unmarshalInputSourceLoginInput(ctx context.Context, 
 				return it, err
 			}
 			it.AccessToken = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSourceObjectDefinitionInput(ctx context.Context, obj any) (model.SourceObjectDefinitionInput, error) {
+	var it model.SourceObjectDefinitionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Name", "Columns", "TableOptions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "Columns":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Columns"))
+			data, err := ec.unmarshalNColumnDefinitionInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnDefinitionInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Columns = data
+		case "TableOptions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("TableOptions"))
+			data, err := ec.unmarshalORecordInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TableOptions = data
 		}
 	}
 	return it, nil
@@ -16133,6 +17987,144 @@ func (ec *executionContext) _Column(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var columnCreationCapabilitiesImplementors = []string{"ColumnCreationCapabilities"}
+
+func (ec *executionContext) _ColumnCreationCapabilities(ctx context.Context, sel ast.SelectionSet, obj *model.ColumnCreationCapabilities) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, columnCreationCapabilitiesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ColumnCreationCapabilities")
+		case "Types":
+			out.Values[i] = ec._ColumnCreationCapabilities_Types(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Nullable":
+			out.Values[i] = ec._ColumnCreationCapabilities_Nullable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "PrimaryKey":
+			out.Values[i] = ec._ColumnCreationCapabilities_PrimaryKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CompositePrimaryKey":
+			out.Values[i] = ec._ColumnCreationCapabilities_CompositePrimaryKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Unique":
+			out.Values[i] = ec._ColumnCreationCapabilities_Unique(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Identity":
+			out.Values[i] = ec._ColumnCreationCapabilities_Identity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DefaultValue":
+			out.Values[i] = ec._ColumnCreationCapabilities_DefaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CheckValues":
+			out.Values[i] = ec._ColumnCreationCapabilities_CheckValues(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CheckMinMax":
+			out.Values[i] = ec._ColumnCreationCapabilities_CheckMinMax(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ForeignKey":
+			out.Values[i] = ec._ColumnCreationCapabilities_ForeignKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var creationOptionDefinitionImplementors = []string{"CreationOptionDefinition"}
+
+func (ec *executionContext) _CreationOptionDefinition(ctx context.Context, sel ast.SelectionSet, obj *model.CreationOptionDefinition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, creationOptionDefinitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreationOptionDefinition")
+		case "Key":
+			out.Values[i] = ec._CreationOptionDefinition_Key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Label":
+			out.Values[i] = ec._CreationOptionDefinition_Label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Required":
+			out.Values[i] = ec._CreationOptionDefinition_Required(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Values":
+			out.Values[i] = ec._CreationOptionDefinition_Values(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var discoveredConnectionImplementors = []string{"DiscoveredConnection"}
 
 func (ec *executionContext) _DiscoveredConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DiscoveredConnection) graphql.Marshaler {
@@ -16178,6 +18170,50 @@ func (ec *executionContext) _DiscoveredConnection(ctx context.Context, sel ast.S
 			}
 		case "Metadata":
 			out.Values[i] = ec._DiscoveredConnection_Metadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var foreignKeyDefinitionImplementors = []string{"ForeignKeyDefinition"}
+
+func (ec *executionContext) _ForeignKeyDefinition(ctx context.Context, sel ast.SelectionSet, obj *model.ForeignKeyDefinition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, foreignKeyDefinitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ForeignKeyDefinition")
+		case "Table":
+			out.Values[i] = ec._ForeignKeyDefinition_Table(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Column":
+			out.Values[i] = ec._ForeignKeyDefinition_Column(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -17039,6 +19075,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "CreateSourceObjectFromDefinition":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_CreateSourceObjectFromDefinition(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "UpdateSourceObject":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_UpdateSourceObject(ctx, field)
@@ -17244,6 +19287,75 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var objectCreationMetadataImplementors = []string{"ObjectCreationMetadata"}
+
+func (ec *executionContext) _ObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, obj *model.ObjectCreationMetadata) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, objectCreationMetadataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ObjectCreationMetadata")
+		case "Supported":
+			out.Values[i] = ec._ObjectCreationMetadata_Supported(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ObjectKind":
+			out.Values[i] = ec._ObjectCreationMetadata_ObjectKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "RequiresColumns":
+			out.Values[i] = ec._ObjectCreationMetadata_RequiresColumns(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "TypeDefinitions":
+			out.Values[i] = ec._ObjectCreationMetadata_TypeDefinitions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ColumnCapabilities":
+			out.Values[i] = ec._ObjectCreationMetadata_ColumnCapabilities(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "TableCapabilities":
+			out.Values[i] = ec._ObjectCreationMetadata_TableCapabilities(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "TableOptions":
+			out.Values[i] = ec._ObjectCreationMetadata_TableOptions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -17414,6 +19526,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "SourceObjectCreationMetadata":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_SourceObjectCreationMetadata(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "SourceObjects":
 			field := field
 
@@ -17528,6 +19662,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_SourceColumnsBatch(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "SourceFieldConstraints":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_SourceFieldConstraints(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -18698,6 +20854,86 @@ func (ec *executionContext) _SourceDiscoveryPrefill(ctx context.Context, sel ast
 	return out
 }
 
+var sourceFieldConstraintsImplementors = []string{"SourceFieldConstraints"}
+
+func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast.SelectionSet, obj *model.SourceFieldConstraints) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sourceFieldConstraintsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SourceFieldConstraints")
+		case "Name":
+			out.Values[i] = ec._SourceFieldConstraints_Name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Type":
+			out.Values[i] = ec._SourceFieldConstraints_Type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Nullable":
+			out.Values[i] = ec._SourceFieldConstraints_Nullable(ctx, field, obj)
+		case "Primary":
+			out.Values[i] = ec._SourceFieldConstraints_Primary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Unique":
+			out.Values[i] = ec._SourceFieldConstraints_Unique(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Identity":
+			out.Values[i] = ec._SourceFieldConstraints_Identity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DefaultValue":
+			out.Values[i] = ec._SourceFieldConstraints_DefaultValue(ctx, field, obj)
+		case "AllowedValues":
+			out.Values[i] = ec._SourceFieldConstraints_AllowedValues(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CheckMin":
+			out.Values[i] = ec._SourceFieldConstraints_CheckMin(ctx, field, obj)
+		case "CheckMax":
+			out.Values[i] = ec._SourceFieldConstraints_CheckMax(ctx, field, obj)
+		case "ForeignKey":
+			out.Values[i] = ec._SourceFieldConstraints_ForeignKey(ctx, field, obj)
+		case "Length":
+			out.Values[i] = ec._SourceFieldConstraints_Length(ctx, field, obj)
+		case "Precision":
+			out.Values[i] = ec._SourceFieldConstraints_Precision(ctx, field, obj)
+		case "Scale":
+			out.Values[i] = ec._SourceFieldConstraints_Scale(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var sourceMockDataTraitsImplementors = []string{"SourceMockDataTraits"}
 
 func (ec *executionContext) _SourceMockDataTraits(ctx context.Context, sel ast.SelectionSet, obj *model.SourceMockDataTraits) graphql.Marshaler {
@@ -19488,6 +21724,65 @@ func (ec *executionContext) _StorageUnitColumns(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var tableCreationCapabilitiesImplementors = []string{"TableCreationCapabilities"}
+
+func (ec *executionContext) _TableCreationCapabilities(ctx context.Context, sel ast.SelectionSet, obj *model.TableCreationCapabilities) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tableCreationCapabilitiesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TableCreationCapabilities")
+		case "RequiresPrimaryKey":
+			out.Values[i] = ec._TableCreationCapabilities_RequiresPrimaryKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "PartitionKey":
+			out.Values[i] = ec._TableCreationCapabilities_PartitionKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ClusteringKey":
+			out.Values[i] = ec._TableCreationCapabilities_ClusteringKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "OrderKey":
+			out.Values[i] = ec._TableCreationCapabilities_OrderKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "KeyValueType":
+			out.Values[i] = ec._TableCreationCapabilities_KeyValueType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var typeDefinitionImplementors = []string{"TypeDefinition"}
 
 func (ec *executionContext) _TypeDefinition(ctx context.Context, sel ast.SelectionSet, obj *model.TypeDefinition) graphql.Marshaler {
@@ -20225,6 +22520,36 @@ func (ec *executionContext) marshalNColumn2ᚖgithubᚗcomᚋclideyᚋwhodbᚋco
 	return ec._Column(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNColumnCreationCapabilities2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnCreationCapabilities(ctx context.Context, sel ast.SelectionSet, v *model.ColumnCreationCapabilities) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ColumnCreationCapabilities(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNColumnDefinitionInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnDefinitionInputᚄ(ctx context.Context, v any) ([]*model.ColumnDefinitionInput, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.ColumnDefinitionInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNColumnDefinitionInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnDefinitionInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNColumnDefinitionInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnDefinitionInput(ctx context.Context, v any) (*model.ColumnDefinitionInput, error) {
+	res, err := ec.unmarshalInputColumnDefinitionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNConnectionStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐConnectionStatus(ctx context.Context, v any) (model.ConnectionStatus, error) {
 	var res model.ConnectionStatus
 	err := res.UnmarshalGQL(v)
@@ -20233,6 +22558,32 @@ func (ec *executionContext) unmarshalNConnectionStatus2githubᚗcomᚋclideyᚋw
 
 func (ec *executionContext) marshalNConnectionStatus2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐConnectionStatus(ctx context.Context, sel ast.SelectionSet, v model.ConnectionStatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNCreationOptionDefinition2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐCreationOptionDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CreationOptionDefinition) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCreationOptionDefinition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐCreationOptionDefinition(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCreationOptionDefinition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐCreationOptionDefinition(ctx context.Context, sel ast.SelectionSet, v *model.CreationOptionDefinition) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreationOptionDefinition(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDataShape2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐDataShape(ctx context.Context, v any) (model.DataShape, error) {
@@ -20678,6 +23029,20 @@ func (ec *executionContext) marshalNMockDataTableInfo2ᚖgithubᚗcomᚋclidey�
 	return ec._MockDataTableInfo(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNObjectCreationMetadata2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, v model.ObjectCreationMetadata) graphql.Marshaler {
+	return ec._ObjectCreationMetadata(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNObjectCreationMetadata2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐObjectCreationMetadata(ctx context.Context, sel ast.SelectionSet, v *model.ObjectCreationMetadata) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ObjectCreationMetadata(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNRecord2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Record) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -20961,6 +23326,32 @@ func (ec *executionContext) marshalNSourceDiscoveryPrefill2ᚖgithubᚗcomᚋcli
 	return ec._SourceDiscoveryPrefill(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSourceFieldConstraints2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceFieldConstraintsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SourceFieldConstraints) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSourceFieldConstraints2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceFieldConstraints(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSourceFieldConstraints2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceFieldConstraints(ctx context.Context, sel ast.SelectionSet, v *model.SourceFieldConstraints) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SourceFieldConstraints(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNSourceHostInputMode2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceHostInputMode(ctx context.Context, v any) (model.SourceHostInputMode, error) {
 	var res model.SourceHostInputMode
 	err := res.UnmarshalGQL(v)
@@ -21056,6 +23447,11 @@ func (ec *executionContext) marshalNSourceObjectColumns2ᚖgithubᚗcomᚋclidey
 		return graphql.Null
 	}
 	return ec._SourceObjectColumns(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSourceObjectDefinitionInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectDefinitionInput(ctx context.Context, v any) (model.SourceObjectDefinitionInput, error) {
+	res, err := ec.unmarshalInputSourceObjectDefinitionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNSourceObjectKind2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceObjectKind(ctx context.Context, v any) (model.SourceObjectKind, error) {
@@ -21501,6 +23897,16 @@ func (ec *executionContext) marshalNString2ᚕᚕstringᚄ(ctx context.Context, 
 	return ret
 }
 
+func (ec *executionContext) marshalNTableCreationCapabilities2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTableCreationCapabilities(ctx context.Context, sel ast.SelectionSet, v *model.TableCreationCapabilities) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TableCreationCapabilities(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNTypeCategory2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐTypeCategory(ctx context.Context, v any) (model.TypeCategory, error) {
 	var res model.TypeCategory
 	err := res.UnmarshalGQL(v)
@@ -21790,6 +24196,38 @@ func (ec *executionContext) marshalOCloudProvider2githubᚗcomᚋclideyᚋwhodb�
 	return ec._CloudProvider(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) marshalOForeignKeyDefinition2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐForeignKeyDefinition(ctx context.Context, sel ast.SelectionSet, v *model.ForeignKeyDefinition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ForeignKeyDefinition(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOForeignKeyDefinitionInput2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐForeignKeyDefinitionInput(ctx context.Context, v any) (*model.ForeignKeyDefinitionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputForeignKeyDefinitionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOGCPProvider2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐGCPProvider(ctx context.Context, sel ast.SelectionSet, v *model.GCPProvider) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -21991,6 +24429,42 @@ func (ec *executionContext) marshalOSourceSessionMetadata2ᚖgithubᚗcomᚋclid
 		return graphql.Null
 	}
 	return ec._SourceSessionMetadata(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

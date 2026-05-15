@@ -31,6 +31,12 @@ type ExternalModel = source.ExternalModel
 // Column aliases the source-owned column type for compatibility.
 type Column = source.Column
 
+// FieldConstraints aliases the source-owned normalized field constraints type.
+type FieldConstraints = source.FieldConstraints
+
+// ObjectFieldConstraints aliases source-owned object field constraints.
+type ObjectFieldConstraints = source.ObjectFieldConstraints
+
 // GetRowsResult aliases the source-owned row result type for compatibility.
 type GetRowsResult = source.RowsResult
 
@@ -57,6 +63,59 @@ type TypeCategory = source.TypeCategory
 
 // TypeDefinition aliases the source-owned type definition.
 type TypeDefinition = source.TypeDefinition
+
+// ObjectCreationMetadata aliases the source-owned object creation metadata.
+type ObjectCreationMetadata = source.ObjectCreationMetadata
+
+// ColumnCreationCapabilities aliases source-owned column creation capabilities.
+type ColumnCreationCapabilities = source.ColumnCreationCapabilities
+
+// TableCreationCapabilities aliases source-owned table creation capabilities.
+type TableCreationCapabilities = source.TableCreationCapabilities
+
+// CreationOptionDefinition aliases a source-owned create option definition.
+type CreationOptionDefinition = source.CreationOptionDefinition
+
+// ObjectDefinition aliases the source-owned object definition.
+type ObjectDefinition = source.ObjectDefinition
+
+// ColumnDefinition aliases the source-owned column definition.
+type ColumnDefinition = source.ColumnDefinition
+
+// ForeignKeyDefinition aliases the source-owned foreign key definition.
+type ForeignKeyDefinition = source.ForeignKeyDefinition
+
+// RecordsToObjectDefinition normalizes legacy records into an object definition.
+func RecordsToObjectDefinition(name string, fields []Record) ObjectDefinition {
+	return source.RecordsToObjectDefinition(name, fields)
+}
+
+// ObjectDefinitionToRecords converts a typed object definition to records.
+func ObjectDefinitionToRecords(definition ObjectDefinition) []Record {
+	return source.ObjectDefinitionToRecords(definition)
+}
+
+// ColumnDefinitionToRecord converts one typed column definition to a record.
+func ColumnDefinitionToRecord(column ColumnDefinition) Record {
+	return source.ColumnDefinitionToRecord(column)
+}
+
+// NormalizeCreationExtra maps legacy and plugin-specific constraint names to
+// canonical create-object keys.
+func NormalizeCreationExtra(extra map[string]string) map[string]string {
+	return source.NormalizeCreationExtra(extra)
+}
+
+// NormalizeFieldConstraints converts legacy constraint maps into typed field
+// constraints.
+func NormalizeFieldConstraints(constraints map[string]map[string]any) []FieldConstraints {
+	return source.NormalizeFieldConstraints(constraints)
+}
+
+// CreationListSeparator returns the separator used for list-valued extras.
+func CreationListSeparator() string {
+	return source.CreationListSeparator()
+}
 
 const (
 	// TypeCategoryNumeric groups numeric types.

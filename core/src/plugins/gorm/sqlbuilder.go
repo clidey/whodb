@@ -18,6 +18,7 @@ package gorm_plugin
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -138,6 +139,9 @@ func (sb *SQLBuilder) BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gor
 func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef) string {
 	columnDefs := make([]string, len(columns))
 	var primaryKeys []string
+	var uniqueKeys []string
+	var checkDefs []string
+	var foreignKeys []string
 
 	for i, col := range columns {
 		def := sb.QuoteIdentifier(col.Name) + " " + col.Type
@@ -145,11 +149,33 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 		if col.Primary {
 			primaryKeys = append(primaryKeys, sb.QuoteIdentifier(col.Name))
 		}
+		if col.Unique {
+			uniqueKeys = append(uniqueKeys, sb.QuoteIdentifier(col.Name))
+		}
 
 		if col.Extra != "" {
 			def += " " + col.Extra
 		} else if col.NotNull || (!col.Nullable && !col.Primary) {
 			def += " NOT NULL"
+		}
+		if col.Default != nil {
+			def += " DEFAULT " + formatCreateLiteral(*col.Default)
+		}
+		if len(col.CheckValues) > 0 {
+			values := make([]string, 0, len(col.CheckValues))
+			for _, value := range col.CheckValues {
+				values = append(values, formatCreateLiteral(value))
+			}
+			checkDefs = append(checkDefs, fmt.Sprintf("CHECK (%s IN (%s))", sb.QuoteIdentifier(col.Name), strings.Join(values, ", ")))
+		}
+		if col.CheckMin != nil {
+			checkDefs = append(checkDefs, fmt.Sprintf("CHECK (%s >= %s)", sb.QuoteIdentifier(col.Name), formatCreateLiteral(strconv.FormatFloat(*col.CheckMin, 'f', -1, 64))))
+		}
+		if col.CheckMax != nil {
+			checkDefs = append(checkDefs, fmt.Sprintf("CHECK (%s <= %s)", sb.QuoteIdentifier(col.Name), formatCreateLiteral(strconv.FormatFloat(*col.CheckMax, 'f', -1, 64))))
+		}
+		if col.ReferencesTable != "" && col.ReferencesColumn != "" {
+			foreignKeys = append(foreignKeys, fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", sb.QuoteIdentifier(col.Name), sb.quoteTableRef(col.ReferencesTable), sb.QuoteIdentifier(col.ReferencesColumn)))
 		}
 
 		columnDefs[i] = def
@@ -159,6 +185,11 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 	if len(primaryKeys) > 0 {
 		columnDefs = append(columnDefs, fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(primaryKeys, ", ")))
 	}
+	for _, uniqueKey := range uniqueKeys {
+		columnDefs = append(columnDefs, fmt.Sprintf("UNIQUE (%s)", uniqueKey))
+	}
+	columnDefs = append(columnDefs, checkDefs...)
+	columnDefs = append(columnDefs, foreignKeys...)
 
 	// For DDL, we need proper identifier escaping
 	var fullTableName string
@@ -168,6 +199,32 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 		fullTableName = sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
 	}
 	return fmt.Sprintf("CREATE TABLE %s (%s)", fullTableName, strings.Join(columnDefs, ", "))
+}
+
+func (sb *SQLBuilder) quoteTableRef(table string) string {
+	parts := strings.Split(table, ".")
+	quoted := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			quoted = append(quoted, sb.QuoteIdentifier(part))
+		}
+	}
+	return strings.Join(quoted, ".")
+}
+
+func formatCreateLiteral(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return "''"
+	}
+	lower := strings.ToLower(trimmed)
+	if lower == "null" || lower == "true" || lower == "false" || lower == "current_timestamp" {
+		return trimmed
+	}
+	if _, err := strconv.ParseFloat(trimmed, 64); err == nil {
+		return trimmed
+	}
+	return "'" + strings.ReplaceAll(trimmed, "'", "''") + "'"
 }
 
 // CreateTableQueryWithSuffix builds a CREATE TABLE statement with a suffix (for ClickHouse ENGINE, etc)
@@ -262,12 +319,19 @@ func (sb *SQLBuilder) CountQuery(schema, table string) (int64, error) {
 
 // ColumnDef represents a column definition for CREATE TABLE
 type ColumnDef struct {
-	Name     string
-	Type     string
-	Primary  bool
-	Nullable bool
-	NotNull  bool   // Explicit NOT NULL flag (opposite of Nullable)
-	Extra    string // Additional column modifiers (e.g., AUTO_INCREMENT, DEFAULT)
+	Name             string
+	Type             string
+	Primary          bool
+	Nullable         bool
+	NotNull          bool    // Explicit NOT NULL flag (opposite of Nullable)
+	Unique           bool    // Adds a single-column UNIQUE constraint.
+	Default          *string // Adds a safe literal DEFAULT expression.
+	CheckValues      []string
+	CheckMin         *float64
+	CheckMax         *float64
+	ReferencesTable  string
+	ReferencesColumn string
+	Extra            string // Additional column modifiers (e.g., AUTO_INCREMENT, DEFAULT)
 }
 
 // PrimaryKeyDecorator customizes how a primary key column is decorated.
@@ -285,11 +349,39 @@ func RecordsToColumnDefs(columns []engine.Record, decorator PrimaryKeyDecorator)
 			Name: column.Key,
 			Type: column.Value,
 		}
+		extra := engine.NormalizeCreationExtra(column.Extra)
+		def.Unique = extra["unique"] == "true"
+		if defaultValue, ok := extra["default"]; ok {
+			def.Default = &defaultValue
+		}
+		if checkValues, ok := extra["check_values"]; ok && checkValues != "" {
+			separator := engine.CreationListSeparator()
+			if !strings.Contains(checkValues, separator) {
+				separator = ","
+			}
+			for _, value := range strings.Split(checkValues, separator) {
+				if trimmed := strings.TrimSpace(value); trimmed != "" {
+					def.CheckValues = append(def.CheckValues, trimmed)
+				}
+			}
+		}
+		if checkMin, ok := extra["check_min"]; ok {
+			if parsed, err := strconv.ParseFloat(checkMin, 64); err == nil {
+				def.CheckMin = &parsed
+			}
+		}
+		if checkMax, ok := extra["check_max"]; ok {
+			if parsed, err := strconv.ParseFloat(checkMax, 64); err == nil {
+				def.CheckMax = &parsed
+			}
+		}
+		def.ReferencesTable = extra["references_table"]
+		def.ReferencesColumn = extra["references_column"]
 
-		if primary, ok := column.Extra["primary"]; ok && primary == "true" {
+		if primary, ok := extra["primary"]; ok && primary == "true" {
 			def = decorator(def, column)
 		} else {
-			if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
+			if nullable, ok := extra["nullable"]; ok && nullable == "false" {
 				def.NotNull = true
 			}
 		}

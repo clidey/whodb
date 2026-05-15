@@ -54,9 +54,8 @@ async function attemptLoginWithUnreachablePort(page, whodb, db) {
         await page.locator('[data-testid="database"]').fill(conn.database);
     }
 
-    await page.locator('[data-testid="advanced-button"]').click();
-    await page.locator('[data-testid="Port-input"]').clear();
-    await page.locator('[data-testid="Port-input"]').fill('1');
+    await page.locator('[data-testid="port"]').clear();
+    await page.locator('[data-testid="port"]').fill('1');
 
     await page.locator('[data-testid="login-button"]').click();
     await expect(page.getByText(/Login Failed/i)).toBeVisible({ timeout: 45_000 });

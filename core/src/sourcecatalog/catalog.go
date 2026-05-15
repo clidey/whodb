@@ -591,7 +591,7 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 		placeholderKey = field.PlaceholderKey
 
 		section := source.ConnectionFieldSectionAdvanced
-		if key == "Port" {
+		if key == "Port" && field.DefaultValue != "" {
 			section = source.ConnectionFieldSectionPrimary
 		}
 
