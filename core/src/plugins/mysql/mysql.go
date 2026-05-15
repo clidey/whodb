@@ -105,8 +105,8 @@ func (p *MySQLPlugin) GetTableInfoQuery() string {
 		SELECT
 			TABLE_NAME,
 			TABLE_TYPE,
-			IFNULL(ROUND(((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024), 2), 0) AS total_size,
-			IFNULL(ROUND((DATA_LENGTH / 1024 / 1024), 2), 0) AS data_size
+			(DATA_LENGTH + INDEX_LENGTH) AS total_size,
+			DATA_LENGTH AS data_size
 		FROM
 			INFORMATION_SCHEMA.TABLES
 		WHERE
@@ -123,7 +123,7 @@ func (p *MySQLPlugin) GetPlaceholder(index int) string {
 
 func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
-	var totalSize, dataSize float64
+	var totalSize, dataSize sql.NullInt64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
 		log.WithError(err).Error("Failed to scan MySQL table information")
 		return "", []engine.Record{}
@@ -131,8 +131,12 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engin
 
 	attributes := []engine.Record{
 		{Key: "Type", Value: tableType},
-		{Key: "Total Size", Value: fmt.Sprintf("%.2f MB", totalSize)},
-		{Key: "Data Size", Value: fmt.Sprintf("%.2f MB", dataSize)},
+	}
+	if totalSize.Valid {
+		attributes = append(attributes, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", totalSize.Int64)})
+	}
+	if dataSize.Valid {
+		attributes = append(attributes, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", dataSize.Int64)})
 	}
 	return tableName, attributes
 }

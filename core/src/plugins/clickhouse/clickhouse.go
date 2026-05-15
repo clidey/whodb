@@ -142,7 +142,7 @@ func (p *ClickHousePlugin) GetTableInfoQuery() string {
 			name,
 			engine,
 			total_rows,
-			formatReadableSize(total_bytes) as total_size
+			total_bytes
 		FROM system.tables
 		WHERE database = ?
 		AND name NOT LIKE '.inner%'
@@ -155,29 +155,24 @@ func (p *ClickHousePlugin) GetStorageUnitExistsQuery() string {
 
 func (p *ClickHousePlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
 	var tableName, tableType string
-	var totalRows *uint64
-	var totalSize *string
+	var totalRows, totalBytes *uint64
 
-	if err := rows.Scan(&tableName, &tableType, &totalRows, &totalSize); err != nil {
+	if err := rows.Scan(&tableName, &tableType, &totalRows, &totalBytes); err != nil {
 		log.WithError(err).Error("Failed to scan table name and attributes from ClickHouse system.tables query")
 		return "", nil
 	}
 
+	attributes := []engine.Record{
+		{Key: "Type", Value: tableType},
+	}
+	if totalBytes != nil {
+		attributes = append(attributes, engine.Record{Key: "Total Size", Value: strconv.FormatUint(*totalBytes, 10)})
+	}
 	rowCount := "0"
 	if totalRows != nil {
 		rowCount = strconv.FormatUint(*totalRows, 10)
 	}
-
-	size := "unknown"
-	if totalSize != nil {
-		size = *totalSize
-	}
-
-	attributes := []engine.Record{
-		{Key: "Type", Value: tableType},
-		{Key: "Total Size", Value: size},
-		{Key: "Count", Value: rowCount},
-	}
+	attributes = append(attributes, engine.Record{Key: "Count", Value: rowCount})
 
 	return tableName, attributes
 }

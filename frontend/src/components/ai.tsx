@@ -57,6 +57,7 @@ import {
     ArrowTopRightOnSquareIcon,
     CheckCircleIcon,
     ChevronDownIcon,
+    ExclamationCircleIcon,
     LockClosedIcon,
     PlusCircleIcon,
     SparklesIcon,
@@ -79,6 +80,7 @@ export const useAI = () => {
     const modelsRaw = useAppSelector(state => state.aiModels.models);
     const models = ensureModelsArray(modelsRaw);
     const [modelAvailable, setModelAvailable] = useState(true);
+    const [unavailableProviders, setUnavailableProviders] = useState<Set<string>>(new Set());
 
     // Get persisted AI selection from platform store (EE only)
     const platformState = useAppSelector(state => (state as any).platform);
@@ -91,6 +93,24 @@ export const useAI = () => {
     const [getAIModels, { loading: getAIModelsLoading }] = useLazyQuery(GetAiModelsDocument, {
         fetchPolicy: "network-only",
     });
+
+    const markProviderUnavailable = useCallback((providerId: string) => {
+        setUnavailableProviders(prev => {
+            if (prev.has(providerId)) return prev;
+            const next = new Set(prev);
+            next.add(providerId);
+            return next;
+        });
+    }, []);
+
+    const markProviderAvailable = useCallback((providerId: string) => {
+        setUnavailableProviders(prev => {
+            if (!prev.has(providerId)) return prev;
+            const next = new Set(prev);
+            next.delete(providerId);
+            return next;
+        });
+    }, []);
 
     const handleAIModelsError = useCallback(() => {
         setModelAvailable(false);
@@ -127,9 +147,13 @@ export const useAI = () => {
                 dispatch(AIModelsActions.setModels(aiModels));
                 if (aiModels.length > 0) {
                     dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
+                    markProviderAvailable(modelType.id);
+                } else {
+                    markProviderUnavailable(modelType.id);
                 }
             })
             .catch(() => {
+                markProviderUnavailable(modelType.id);
                 handleAIModelsError();
             });
     }, [dispatch, fetchAIModels, handleAIModelsError, modelTypes]);
@@ -156,6 +180,10 @@ export const useAI = () => {
 
         persistAISelection({ providerId: item, model: null });
     }, [handleAIModelTypeChange, dispatch]);
+
+    const retryProvider = useCallback((providerId: string) => {
+        handleAIModelTypeChange(providerId);
+    }, [handleAIModelTypeChange]);
 
     const stateRef = useRef({ modelType, currentModel, modelTypes });
     stateRef.current = { modelType, currentModel, modelTypes };
@@ -247,9 +275,13 @@ export const useAI = () => {
                     dispatch(AIModelsActions.setModels(aiModels));
                     if (aiModels.length > 0) {
                         dispatch(AIModelsActions.setCurrentModel(aiModels[0]));
+                        markProviderAvailable(firstProvider.id);
+                    } else {
+                        markProviderUnavailable(firstProvider.id);
                     }
                 })
                 .catch(() => {
+                    markProviderUnavailable(firstProvider.id);
                     handleAIModelsError();
                 });
         } else if (selectedProvider) {
@@ -269,9 +301,13 @@ export const useAI = () => {
                                 ? savedModel
                                 : aiModels[0];
                         dispatch(AIModelsActions.setCurrentModel(modelToSelect));
+                        markProviderAvailable(selectedProvider.id);
+                    } else {
+                        markProviderUnavailable(selectedProvider.id);
                     }
                 })
                 .catch(() => {
+                    markProviderUnavailable(selectedProvider.id);
                     handleAIModelsError();
                 });
         }
@@ -319,11 +355,14 @@ export const useAI = () => {
         getAIModels,
         getAIModelsLoading,
         modelAvailable,
+        unavailableProviders,
         handleAIModelsError,
         handleAIModelTypeChange,
         handleAIModelChange,
         handleAIModelRemove,
         handleAIProviderChange,
+        markProviderAvailable,
+        retryProvider,
         modelTypesDropdownItems,
         modelDropdownItems,
     }
@@ -343,6 +382,8 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     getAIModels,
     getAIModelsLoading,
     modelAvailable,
+    unavailableProviders,
+    retryProvider,
     handleAIModelsError,
     handleAIModelTypeChange,
     handleAIModelChange,
@@ -558,7 +599,10 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         value: item.id,
                         label: item.label,
                         icon: item.icon,
-                        rightIcon: item.extra?.isEnvironmentDefined ? <LockClosedIcon className="w-3 h-3 text-muted-foreground" /> : undefined,
+                        rightIcon: <span className="flex items-center gap-1">
+                            {unavailableProviders.has(item.id) && <span title={t('providerUnavailable')}><ExclamationCircleIcon className="w-3 h-3 text-amber-500" /></span>}
+                            {item.extra?.isEnvironmentDefined && <span title={t('environmentDefined')}><LockClosedIcon className="w-3 h-3 text-muted-foreground" /></span>}
+                        </span>,
                     }))}
                     value={modelType?.id}
                     onChange={id => {
@@ -598,6 +642,17 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         "data-testid": "ai-provider-select",
                     }}
                 />
+                {modelType && unavailableProviders.has(modelType.id) && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => retryProvider(modelType.id)}
+                        title={t('providerUnavailable')}
+                        className="px-2"
+                    >
+                        <ArrowPathIcon className="w-4 h-4 text-amber-500" />
+                    </Button>
+                )}
                 <SearchSelect
                     disabled={modelType == null || getAIModelsLoading}
                     options={modelDropdownItems.map(item => ({

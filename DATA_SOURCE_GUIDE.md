@@ -397,6 +397,35 @@ func NewMyNewDBPlugin() *engine.Plugin {
 | `GetTableNameAndAttributes(rows) (string, []Record)` | Parse table info query results |
 | `ParseConnectionConfig(config) (*ConnectionInput, error)` | Parse credentials into connection params |
 
+**Size attribute conventions** — `GetTableNameAndAttributes` (and any custom `GetStorageUnits` implementation) must follow these rules for size-related attributes:
+
+| Rule | Detail |
+|------|--------|
+| **Emit raw bytes** | Size values MUST be numeric strings representing bytes (e.g., `"1048576"` not `"1 MB"`). The frontend owns formatting via `formatBytes()`. |
+| **Standard key names** | Use `"Total Size"` (data + indexes) and/or `"Data Size"` (data only). Do NOT invent custom names like `"Size (KB)"` or `"Storage Size"`. |
+| **Use `sql.NullInt64`** | Scan size columns as `sql.NullInt64`. Only append the attribute when `.Valid` is true — this gracefully handles tables without allocation data. |
+| **No backend formatting** | Never use `pg_size_pretty()`, `formatReadableSize()`, `ROUND(... / 1024)`, or `fmt.Sprintf("%.2f MB", ...)` in size queries. |
+| **Non-byte counts** | For counts that are NOT bytes (e.g., Redis element count), use a distinct key like `"Entries"` or `"Item Count"` — these must NOT be named `"Size"`. |
+
+Example (`GetTableNameAndAttributes`):
+```go
+func (p *MyPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
+    var tableName, tableType string
+    var totalSize, dataSize sql.NullInt64
+    if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
+        return "", nil
+    }
+    attributes := []engine.Record{{Key: "Type", Value: tableType}}
+    if totalSize.Valid {
+        attributes = append(attributes, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", totalSize.Int64)})
+    }
+    if dataSize.Valid {
+        attributes = append(attributes, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", dataSize.Int64)})
+    }
+    return tableName, attributes
+}
+```
+
 **You SHOULD override these for correctness** (GormPlugin provides defaults):
 
 | Method | Default | Override When |

@@ -106,10 +106,12 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	}
 	defer res.Body.Close()
 
+	// _stats requires the monitor cluster privilege. If it is denied (403) or
+	// otherwise errors, fall back to listing indices without size/count so the
+	// UI remains usable for read-only callers.
 	if res.IsError() {
-		err := fmt.Errorf("error getting stats for indices: %s", res.String())
-		log.WithError(err).Error("ElasticSearch indices stats API returned error")
-		return nil, err
+		log.Warnf("ElasticSearch indices stats API returned error (%d); falling back to index-only listing", res.StatusCode)
+		return p.listIndicesWithoutStats(config)
 	}
 
 	var stats map[string]any
@@ -132,42 +134,65 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 			continue
 		}
 
+		attrs := []engine.Record{{Key: "Type", Value: "Index"}}
+
 		indexStats, ok := indexStatsInterface.(map[string]any)
 		if !ok {
-			log.Warnf("Skipping index %s: unexpected stats format", indexName)
+			log.Warnf("Skipping stats for index %s: unexpected format", indexName)
+			storageUnits = append(storageUnits, engine.StorageUnit{Name: indexName, Attributes: attrs})
 			continue
 		}
 
-		primaries, ok := indexStats["primaries"].(map[string]any)
-		if !ok {
-			log.Warnf("Skipping index %s: missing primaries data", indexName)
-			continue
+		primaries, _ := indexStats["primaries"].(map[string]any)
+		if store, ok := primaries["store"].(map[string]any); ok {
+			if bytes, ok := toInt64(store["size_in_bytes"]); ok {
+				attrs = append(attrs, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", bytes)})
+			}
+		}
+		if docs, ok := primaries["docs"].(map[string]any); ok {
+			if count, ok := toInt64(docs["count"]); ok {
+				attrs = append(attrs, engine.Record{Key: "Count", Value: fmt.Sprintf("%d", count)})
+			}
 		}
 
-		docs, ok := primaries["docs"].(map[string]any)
-		if !ok {
-			log.Warnf("Skipping index %s: missing docs data", indexName)
-			continue
-		}
-
-		store, ok := primaries["store"].(map[string]any)
-		if !ok {
-			log.Warnf("Skipping index %s: missing store data", indexName)
-			continue
-		}
-
-		storageUnit := engine.StorageUnit{
-			Name: indexName,
-			Attributes: []engine.Record{
-				{Key: "Type", Value: "Index"},
-				{Key: "Storage Size", Value: fmt.Sprintf("%v", store["size_in_bytes"])},
-				{Key: "Count", Value: fmt.Sprintf("%v", docs["count"])},
-			},
-		}
-		storageUnits = append(storageUnits, storageUnit)
+		storageUnits = append(storageUnits, engine.StorageUnit{Name: indexName, Attributes: attrs})
 	}
 
 	return storageUnits, nil
+}
+
+// listIndicesWithoutStats returns indices visible to the caller but without
+// size/count attributes. Used when _stats is unavailable (e.g., 403 Forbidden).
+func (p *ElasticSearchPlugin) listIndicesWithoutStats(config *engine.PluginConfig) ([]engine.StorageUnit, error) {
+	names, err := p.GetDatabases(config)
+	if err != nil {
+		return nil, err
+	}
+	units := make([]engine.StorageUnit, 0, len(names))
+	for _, name := range names {
+		units = append(units, engine.StorageUnit{
+			Name:       name,
+			Attributes: []engine.Record{{Key: "Type", Value: "Index"}},
+		})
+	}
+	return units, nil
+}
+
+// toInt64 extracts an int64 from a JSON-decoded value, handling the common
+// numeric forms encoutered when encoding/json targets an any.
+func toInt64(v any) (int64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return int64(n), true
+	case int64:
+		return n, true
+	case int:
+		return int64(n), true
+	case json.Number:
+		i, err := n.Int64()
+		return i, err == nil
+	}
+	return 0, false
 }
 
 func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, database string, index string) (bool, error) {

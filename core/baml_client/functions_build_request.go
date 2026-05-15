@@ -21,7 +21,12 @@ import (
 	"github.com/clidey/whodb/core/baml_client/types"
 )
 
-func GenerateChatTitle(ctx context.Context, user_query string, opts ...CallOptionFunc) (string, error) {
+type build_request struct{}
+
+var Request = &build_request{}
+
+// Build HTTP request for GenerateChatTitle (returns baml.HTTPRequest)
+func (*build_request) GenerateChatTitle(user_query string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
 	var callOpts callOption
 	for _, opt := range opts {
@@ -37,7 +42,7 @@ func GenerateChatTitle(ctx context.Context, user_query string, opts ...CallOptio
 	}
 
 	args := baml.BamlFunctionArguments{
-		Kwargs: map[string]any{"user_query": user_query},
+		Kwargs: map[string]any{"user_query": user_query, "stream": false},
 		Env:    getEnvVars(callOpts.env),
 	}
 
@@ -59,43 +64,15 @@ func GenerateChatTitle(ctx context.Context, user_query string, opts ...CallOptio
 
 	encoded, err := args.Encode()
 	if err != nil {
-		panic(err)
+		wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateChatTitle: %w", err)
+		panic(wrapped_err)
 	}
 
-	if callOpts.onTick == nil {
-		result, err := bamlRuntime.CallFunction(ctx, "GenerateChatTitle", encoded, callOpts.onTick)
-		if err != nil {
-			return "", err
-		}
-
-		if result.Error != nil {
-			return "", result.Error
-		}
-
-		casted := (result.Data).(string)
-
-		return casted, nil
-	} else {
-		channel, err := bamlRuntime.CallFunctionStream(ctx, "GenerateChatTitle", encoded, callOpts.onTick)
-		if err != nil {
-			return "", err
-		}
-
-		for result := range channel {
-			if result.Error != nil {
-				return "", result.Error
-			}
-
-			if result.HasData {
-				return result.Data.(string), nil
-			}
-		}
-
-		return "", fmt.Errorf("No data returned from stream")
-	}
+	return bamlRuntime.BuildRequest(context.Background(), "GenerateChatTitle", encoded)
 }
 
-func GenerateSQLQuery(ctx context.Context, db_context types.DatabaseContext, user_query string, opts ...CallOptionFunc) ([]types.ChatResponse, error) {
+// Build HTTP request for GenerateSQLQuery (returns baml.HTTPRequest)
+func (*build_request) GenerateSQLQuery(db_context types.DatabaseContext, user_query string, opts ...CallOptionFunc) (baml.HTTPRequest, error) {
 
 	var callOpts callOption
 	for _, opt := range opts {
@@ -111,7 +88,7 @@ func GenerateSQLQuery(ctx context.Context, db_context types.DatabaseContext, use
 	}
 
 	args := baml.BamlFunctionArguments{
-		Kwargs: map[string]any{"db_context": db_context, "user_query": user_query},
+		Kwargs: map[string]any{"db_context": db_context, "user_query": user_query, "stream": false},
 		Env:    getEnvVars(callOpts.env),
 	}
 
@@ -133,38 +110,9 @@ func GenerateSQLQuery(ctx context.Context, db_context types.DatabaseContext, use
 
 	encoded, err := args.Encode()
 	if err != nil {
-		panic(err)
+		wrapped_err := fmt.Errorf("BAML INTERNAL ERROR: GenerateSQLQuery: %w", err)
+		panic(wrapped_err)
 	}
 
-	if callOpts.onTick == nil {
-		result, err := bamlRuntime.CallFunction(ctx, "GenerateSQLQuery", encoded, callOpts.onTick)
-		if err != nil {
-			return nil, err
-		}
-
-		if result.Error != nil {
-			return nil, result.Error
-		}
-
-		casted := (result.Data).([]types.ChatResponse)
-
-		return casted, nil
-	} else {
-		channel, err := bamlRuntime.CallFunctionStream(ctx, "GenerateSQLQuery", encoded, callOpts.onTick)
-		if err != nil {
-			return nil, err
-		}
-
-		for result := range channel {
-			if result.Error != nil {
-				return nil, result.Error
-			}
-
-			if result.HasData {
-				return result.Data.([]types.ChatResponse), nil
-			}
-		}
-
-		return nil, fmt.Errorf("No data returned from stream")
-	}
+	return bamlRuntime.BuildRequest(context.Background(), "GenerateSQLQuery", encoded)
 }

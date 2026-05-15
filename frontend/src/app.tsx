@@ -147,8 +147,8 @@ export const App = () => {
 
   return (
     <TourProvider>
+      <Toaster position="bottom-center" />
       <div className="h-[100vh] w-[100vw]" id="whodb-app-container">
-        <Toaster />
         {KeyboardShortcutsHelpModal}
         {CommandPaletteModal}
         <ServerDownOverlay />

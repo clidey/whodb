@@ -110,7 +110,7 @@ export function verifyMetadata(fields, metadata) {
         expect(typeField[1]).toEqual(metadata.type);
     }
     if (metadata.hasStorageSize) {
-        expect(fields.some(([k]) => k === 'Storage Size')).toBeTruthy();
+        expect(fields.some(([k]) => k === 'Data Size')).toBeTruthy();
     }
     if (metadata.hasCount) {
         expect(fields.some(([k]) => k === 'Count')).toBeTruthy();

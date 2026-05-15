@@ -102,7 +102,9 @@ export function verifyStringValue(rows, expectedValue) {
 export function verifyKeyMetadata(fields, expectedType) {
     const typeField = fields.find(([k, v]) => k === 'Type' && v === expectedType);
     expect(typeField, `Key should be of type: ${expectedType}`).toBeDefined();
-    expect(fields.some(([k]) => k === 'Size')).toBeTruthy();
+    // Strings expose bytes as Data Size; hash/list/set/zset expose element
+    // count as Entries. Either satisfies the "has size metadata" assertion.
+    expect(fields.some(([k]) => k === 'Data Size' || k === 'Entries')).toBeTruthy();
 }
 
 /**

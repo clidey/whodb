@@ -56,6 +56,12 @@ jobs:
         with:
           go-version-file: 'cli/go.mod'
 
+      - name: Stamp plugin.json version
+        run: |
+          PLUGIN_JSON="cli/external-plugin/whodb/.claude-plugin/plugin.json"
+          jq --arg v "${{ inputs.version }}" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
+          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
+
       - name: Build CLI
         working-directory: ./cli
         run: make ${{ matrix.make_target }} VERSION=${{ inputs.version }}
@@ -122,6 +128,12 @@ jobs:
             done
           done
 
+      - name: Stamp plugin.json version
+        run: |
+          PLUGIN_JSON="cli/external-plugin/whodb/.claude-plugin/plugin.json"
+          jq --arg v "${{ inputs.version }}" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
+          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
+
       - name: Build CLI
         working-directory: ./cli
         run: make ci-build-linux-armv7 VERSION=${{ inputs.version }}
@@ -164,6 +176,12 @@ jobs:
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: 'cli/go.mod'
+
+      - name: Stamp plugin.json version
+        run: |
+          PLUGIN_JSON="cli/external-plugin/whodb/.claude-plugin/plugin.json"
+          jq --arg v "${{ inputs.version }}" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
+          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
 
       - name: Build CLI (both architectures)
         working-directory: ./cli
@@ -230,6 +248,13 @@ jobs:
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: 'cli/go.mod'
+
+      - name: Stamp plugin.json version
+        shell: pwsh
+        run: |
+          $json = Get-Content "cli/external-plugin/whodb/.claude-plugin/plugin.json" | ConvertFrom-Json
+          $json.version = "${{ inputs.version }}"
+          $json | ConvertTo-Json -Depth 10 | Set-Content "cli/external-plugin/whodb/.claude-plugin/plugin.json"
 
       - name: Build CLI
         working-directory: ./cli

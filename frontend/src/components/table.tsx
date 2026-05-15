@@ -934,30 +934,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 return;
             }
 
-            // Skip if no rows
-            if (paginatedRows.length === 0) return;
-
-            // Extend-select variants (Shift+Arrow)
-            if (matchesShortcut(event, SHORTCUTS.extendSelectDown)) {
-                event.preventDefault();
-                if (focusedRowIndex === null) {
-                    moveFocus(0, true);
-                } else {
-                    moveFocus(Math.min(focusedRowIndex + 1, paginatedRows.length - 1), true);
-                }
-                return;
-            }
-            if (matchesShortcut(event, SHORTCUTS.extendSelectUp)) {
-                event.preventDefault();
-                if (focusedRowIndex === null) {
-                    moveFocus(paginatedRows.length - 1, true);
-                } else {
-                    moveFocus(Math.max(focusedRowIndex - 1, 0), true);
-                }
-                return;
-            }
-
-            // Mod+Shift combos
+            // Mod+Shift combos (table-level: available with zero rows)
             if (matchesShortcut(event, SHORTCUTS.exportData)) {
                 event.preventDefault();
                 openExport();
@@ -989,6 +966,29 @@ export const StorageUnitTable: FC<TableProps> = ({
                 setChecked(checked.length === paginatedRows.length ? [] : paginatedRows.map((_, index) => index));
                 return;
             }
+
+            if (paginatedRows.length === 0) return;
+
+            // Extend-select variants (Shift+Arrow)
+            if (matchesShortcut(event, SHORTCUTS.extendSelectDown)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(0, true);
+                } else {
+                    moveFocus(Math.min(focusedRowIndex + 1, paginatedRows.length - 1), true);
+                }
+                return;
+            }
+            if (matchesShortcut(event, SHORTCUTS.extendSelectUp)) {
+                event.preventDefault();
+                if (focusedRowIndex === null) {
+                    moveFocus(paginatedRows.length - 1, true);
+                } else {
+                    moveFocus(Math.max(focusedRowIndex - 1, 0), true);
+                }
+                return;
+            }
+
             if (matchesShortcut(event, SHORTCUTS.editRowAlt)) {
                 if (focusedRowIndex !== null && canEditRows) {
                     event.preventDefault();

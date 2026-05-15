@@ -319,6 +319,18 @@ bash dev/run-backend-tests.sh integration
 ```
 
 
+### Preserving `data-testid` Attributes During Refactoring
+
+E2E tests locate elements via `data-testid` selectors. When extracting inline JSX into shared components, **always carry over `data-testid` attributes** to the new component's rendered elements. Dropping them silently breaks every E2E test that depends on those selectors.
+
+Key patterns to preserve:
+- Login form advanced fields use `data-testid={`${field.Key}-input`}` (e.g., `Port-input`, `Search Path-input`)
+- Login form standard fields: `hostname`, `username`, `password`, `database`
+- Buttons: `login-button`, `advanced-button`, `database-type-select`
+- SSL config: `ssl-mode-select`, `ssl-ca-certificate-content`
+
+When refactoring UI code, search for `data-testid` in the original code and ensure every attribute is present in the replacement. Run `grep -r "data-testid" frontend/e2e/` to see what selectors the tests actually use.
+
 ### Debug Mode
 
 ```bash

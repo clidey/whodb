@@ -130,9 +130,11 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 				log.WithError(err).WithField("key", key).Error("Failed to get string key size")
 				return nil, err
 			}
+			// StrLen returns bytes — maps to Data Size, so the UI renders
+			// auto-scaled units (KB/MB/...) like other byte-valued attributes.
 			attributes = []engine.Record{
 				{Key: "Type", Value: "string"},
-				{Key: "Size", Value: fmt.Sprintf("%d", size)},
+				{Key: "Data Size", Value: fmt.Sprintf("%d", size)},
 			}
 		case "hash":
 			sizeCmd := pipe.HLen(ctx, key)
@@ -147,7 +149,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "hash"},
-				{Key: "Size", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
 			}
 		case "list":
 			sizeCmd := pipe.LLen(ctx, key)
@@ -162,7 +164,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "list"},
-				{Key: "Size", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
 			}
 		case "set":
 			sizeCmd := pipe.SCard(ctx, key)
@@ -177,7 +179,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "set"},
-				{Key: "Size", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
 			}
 		case "zset":
 			sizeCmd := pipe.ZCard(ctx, key)
@@ -192,7 +194,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "zset"},
-				{Key: "Size", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
 			}
 		default:
 			attributes = []engine.Record{

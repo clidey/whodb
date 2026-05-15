@@ -22,6 +22,7 @@ import {
     SourceFieldOptionsDocument,
     SourceProfilesDocument,
     LoginSourceDocument,
+    TestSourceConnectionDocument,
     LoginWithSourceProfileDocument,
     SourceHostInputMode,
     SourceHostInputUrlParser,
@@ -202,6 +203,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     });
 
     const [login, { loading: loginLoading }] = useMutation(LoginSourceDocument);
+    const [testConnection, { loading: testConnectionLoading }] = useMutation(TestSourceConnectionDocument);
     const [loginWithSourceProfile, { loading: loginWithSourceProfileLoading }] = useMutation(LoginWithSourceProfileDocument);
     const [getDatabases, { loading: databasesLoading, data: foundDatabases }] = useLazyQuery(SourceFieldOptionsDocument);
     const { loading: profilesLoading, data: profiles } = useQuery(SourceProfilesDocument);
@@ -371,6 +373,27 @@ export const LoginForm: FC<LoginFormProps> = ({
             }
         })();
     }, [advancedForm, database, databaseType, dispatch, handleLoginError, hostName, login, markFirstLoginComplete, navigate, onLoginSuccess, password, searchParams, setSearchParams, t, username]);
+
+    const handleTestConnection = useCallback(() => {
+        const values = buildRecordInputs(hostName, database, username, password, advancedForm);
+        void (async () => {
+            try {
+                const { data } = await testConnection({
+                    variables: {
+                        credentials: {
+                            SourceType: databaseType.id,
+                            Values: values,
+                        },
+                    },
+                });
+                if (data?.TestSourceConnection.Status) {
+                    toast.success(t('testConnectionSuccess'));
+                }
+            } catch (e: any) {
+                toast.error(t('testConnectionFailed', { error: e?.message ?? '' }));
+            }
+        })();
+    }, [advancedForm, database, databaseType.id, hostName, password, testConnection, t, username]);
 
     const handleLoginWithSourceProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
@@ -854,6 +877,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
 
         const hostnameField = findConnectionFieldByKey(databaseType, "Hostname");
+        const portField = findConnectionFieldByKey(databaseType, "Port");
         const usernameField = findConnectionFieldByKey(databaseType, "Username");
         const passwordField = findConnectionFieldByKey(databaseType, "Password");
         const databaseField = findConnectionFieldByKey(databaseType, "Database");
@@ -862,7 +886,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         if (usesFileTransport(databaseType)) {
             return <div className="flex flex-col gap-lg w-full">
                 <div className="flex flex-col gap-xs w-full">
-                    <Label htmlFor="sqlite-database">{t('database')}</Label>
+                    <Label htmlFor="sqlite-database">{t(databaseField?.LabelKey ?? 'database')}</Label>
                     {isDesktop ? (
                         <div className="flex flex-col gap-sm w-full">
                             <Input
@@ -913,9 +937,17 @@ export const LoginForm: FC<LoginFormProps> = ({
         }
         return <div className="flex flex-col gap-lg w-full">
             { databaseType.fields?.hostname && (
-                <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-hostname">{databaseType.traits?.connection.hostInputMode === SourceHostInputMode.HostnameOrUrl ? t('hostNameOrUrl') : t('hostName')}</Label>
-                    <Input id="login-hostname" value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder={hostnameField?.PlaceholderKey ? t(hostnameField.PlaceholderKey) : t('enterHostName')} aria-required={hostnameField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
+                <div className="flex gap-sm w-full items-end">
+                    <div className="flex flex-col gap-sm flex-1">
+                        <Label htmlFor="login-hostname">{databaseType.traits?.connection.hostInputMode === SourceHostInputMode.HostnameOrUrl ? t('hostNameOrUrl') : t('hostName')}</Label>
+                        <Input id="login-hostname" value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder={hostnameField?.PlaceholderKey ? t(hostnameField.PlaceholderKey) : t('enterHostName')} aria-required={hostnameField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
+                    </div>
+                    { portField && (
+                        <div className="flex flex-col gap-sm w-24">
+                            <Label htmlFor="login-port">{t(portField.LabelKey)}</Label>
+                            <Input id="login-port" value={advancedForm['Port'] ?? portField.DefaultValue ?? ''} onChange={(e) => handleAdvancedForm('Port', e.target.value)} data-testid="port" placeholder={portField.DefaultValue ?? ''} />
+                        </div>
+                    )}
                 </div>
             )}
             { databaseType.fields?.username && (
@@ -932,7 +964,7 @@ export const LoginForm: FC<LoginFormProps> = ({
             )}
             { databaseType.fields?.database && (
                 <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-database">{t('database')}</Label>
+                    <Label htmlFor="login-database">{t(databaseField?.LabelKey ?? 'database')}</Label>
                     <Input id="login-database" value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder={databaseField?.PlaceholderKey ? t(databaseField.PlaceholderKey) : t('enterDatabase')} aria-required={databaseField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
                 </div>
             )}
@@ -1087,21 +1119,29 @@ export const LoginForm: FC<LoginFormProps> = ({
                     })} onClick={handleAdvancedToggle} data-testid="advanced-button" variant="secondary">
                         <AdjustmentsHorizontalIcon className="w-4 h-4" /> {showAdvanced ? t('lessAdvancedButton') : t('advancedButton')}
                     </Button>
-                    {advancedDirection === "horizontal" && (
+                    {advancedDirection === "horizontal" && (<>
+                        <Button onClick={handleTestConnection} variant="secondary" disabled={!loginWithCredentialsEnabled || testConnectionLoading}>
+                            {t('testConnection')}
+                        </Button>
                         <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
                             <CheckCircleIcon className="w-4 h-4" /> {t('title')}
                         </Button>
-                    )}
+                    </>)}
                     </>}
                 </div>
                 {advancedDirection === "vertical" && (
-                    <div className={cn("flex flex-col justify-end", {
+                    <div className={cn("flex flex-col justify-end gap-2", {
                         "grow": availableProfiles.length === 0,
                     })}>
                         {!disableCredentialForm && <>
-                        <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled}>
-                            <CheckCircleIcon className="w-4 h-4" /> {t('title')}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button onClick={handleTestConnection} variant="secondary" disabled={!loginWithCredentialsEnabled || testConnectionLoading} className="flex-1">
+                                {t('testConnection')}
+                            </Button>
+                            <Button onClick={handleSubmit} data-testid="login-button" variant={loginWithCredentialsEnabled ? "default" : "secondary"} disabled={!loginWithCredentialsEnabled} className="flex-1">
+                                <CheckCircleIcon className="w-4 h-4" /> {t('title')}
+                            </Button>
+                        </div>
                         </>}
                     </div>
                 )}

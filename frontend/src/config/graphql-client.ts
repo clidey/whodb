@@ -30,7 +30,7 @@ import {
 import {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
-import {withBasePath} from '../utils/base-path';
+import {isOnRoute, navigateWithBasePath, withBasePath} from '../utils/base-path';
 import {isAwsHostname, isAzureHostname, isGcpHostname} from '../utils/cloud-connection-prefill';
 import {getTranslation, loadTranslationsSync} from '../utils/i18n';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
@@ -70,7 +70,7 @@ const redirectToLoginWithMessage = (
 ) => {
     const t = translator ?? getTranslator();
     toast.error(t(key));
-    window.location.href = withBasePath('/login');
+    navigateWithBasePath('/login');
 };
 
 const httpLink = new HttpLink({
@@ -115,7 +115,7 @@ const errorLink = onError(({error}) => {
 });
 
 function fallbackAutoLogin() {
-    if (window.location.pathname.startsWith(withBasePath('/login'))) {
+    if (isOnRoute('/login')) {
         return;
     }
 
@@ -236,6 +236,8 @@ export const graphqlClient = new ApolloClient({
  * Clears all cached GraphQL data without refetching active queries.
  */
 export async function clearGraphqlStore(): Promise<void> {
-    await graphqlClient.clearStore();
+    try {
+        await graphqlClient.clearStore();
+    } catch (e) {}
     clearSourceSessionMetadata();
 }

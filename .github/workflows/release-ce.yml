@@ -667,7 +667,47 @@ jobs:
     with:
       version: ${{ needs.calculate-version.outputs.version }}
 
-  # Step 10: Final summary
+  # Step 10: Stamp plugin.json version on main after successful release
+  stamp-plugin-version:
+    name: Stamp Plugin Version on Main
+    runs-on: ubuntu-latest
+    needs: [calculate-version, create-github-release]
+    if: |
+      needs.create-github-release.result == 'success' &&
+      needs.calculate-version.outputs.stage-only != 'true'
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          submodules: false
+
+      - name: Stamp and push plugin.json
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.version }}
+        run: |
+          PLUGIN_JSON="cli/external-plugin/whodb/.claude-plugin/plugin.json"
+          jq --arg v "$VERSION" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
+          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
+          if git diff --quiet "$PLUGIN_JSON"; then
+            echo "plugin.json already at version $VERSION"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$PLUGIN_JSON"
+            git commit -m "chore: stamp plugin.json version to $VERSION"
+            git push origin main
+            echo "Stamped plugin.json to $VERSION on main"
+          fi
+
+  # Step 11: Final summary
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
@@ -690,7 +730,8 @@ jobs:
       deploy-apple,
       deploy-npm,
       create-github-release,
-      generate-homebrew-cask
+      generate-homebrew-cask,
+      stamp-plugin-version
     ]
     steps:
       - name: Harden Runner

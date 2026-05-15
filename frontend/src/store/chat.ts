@@ -51,22 +51,22 @@ export const houdiniSlice = createSlice({
   initialState,
   reducers: {
     // Legacy actions (for backward compatibility)
-    addChatMessage: (state, action: PayloadAction<IChatMessage>) => {
-        // If using sessions, add to active session
-        if (state.sessions.length > 0 && state.activeSessionId) {
-            const session = state.sessions.find(s => s.id === state.activeSessionId);
+    addChatMessage: (state, action: PayloadAction<IChatMessage & { sessionId?: string }>) => {
+        const targetId = action.payload.sessionId ?? state.activeSessionId;
+        if (state.sessions.length > 0 && targetId) {
+            const session = state.sessions.find(s => s.id === targetId);
             if (session) {
-                session.messages.push(action.payload);
+                const { sessionId: _, ...msg } = action.payload;
+                session.messages.push(msg);
             }
         } else {
-            // Fallback to legacy behavior
             state.chats.push(action.payload);
         }
     },
-    updateChatMessage: (state, action: PayloadAction<{ id: number; Text: string }>) => {
-        // Update in active session if using sessions
-        if (state.sessions.length > 0 && state.activeSessionId) {
-            const session = state.sessions.find(s => s.id === state.activeSessionId);
+    updateChatMessage: (state, action: PayloadAction<{ id: number; Text: string; sessionId?: string }>) => {
+        const targetId = action.payload.sessionId ?? state.activeSessionId;
+        if (state.sessions.length > 0 && targetId) {
+            const session = state.sessions.find(s => s.id === targetId);
             if (session) {
                 const message = session.messages.find(chat => chat.id === action.payload.id);
                 if (message) {
@@ -74,17 +74,16 @@ export const houdiniSlice = createSlice({
                 }
             }
         } else {
-            // Fallback to legacy behavior
             const message = state.chats.find(chat => chat.id === action.payload.id);
             if (message) {
                 message.Text = action.payload.Text;
             }
         }
     },
-    completeStreamingMessage: (state, action: PayloadAction<{ id: number; message: Partial<IChatMessage> }>) => {
-        // Update in active session if using sessions
-        if (state.sessions.length > 0 && state.activeSessionId) {
-            const session = state.sessions.find(s => s.id === state.activeSessionId);
+    completeStreamingMessage: (state, action: PayloadAction<{ id: number; message: Partial<IChatMessage>; sessionId?: string }>) => {
+        const targetId = action.payload.sessionId ?? state.activeSessionId;
+        if (state.sessions.length > 0 && targetId) {
+            const session = state.sessions.find(s => s.id === targetId);
             if (session) {
                 const message = session.messages.find(chat => chat.id === action.payload.id);
                 if (message) {
@@ -93,7 +92,6 @@ export const houdiniSlice = createSlice({
                 }
             }
         } else {
-            // Fallback to legacy behavior
             const message = state.chats.find(chat => chat.id === action.payload.id);
             if (message) {
                 Object.assign(message, action.payload.message);
@@ -101,16 +99,18 @@ export const houdiniSlice = createSlice({
             }
         }
     },
-    removeChatMessage: (state, action: PayloadAction<number>) => {
-        // Remove from active session if using sessions
-        if (state.sessions.length > 0 && state.activeSessionId) {
-            const session = state.sessions.find(s => s.id === state.activeSessionId);
+    removeChatMessage: (state, action: PayloadAction<number | { id: number; sessionId?: string }>) => {
+        const { id: msgId, sessionId } = typeof action.payload === 'number'
+            ? { id: action.payload, sessionId: undefined }
+            : action.payload;
+        const targetId = sessionId ?? state.activeSessionId;
+        if (state.sessions.length > 0 && targetId) {
+            const session = state.sessions.find(s => s.id === targetId);
             if (session) {
-                session.messages = session.messages.filter(chat => chat.id !== action.payload);
+                session.messages = session.messages.filter(chat => chat.id !== msgId);
             }
         } else {
-            // Fallback to legacy behavior
-            state.chats = state.chats.filter(chat => chat.id !== action.payload);
+            state.chats = state.chats.filter(chat => chat.id !== msgId);
         }
     },
     clear: (state) => {

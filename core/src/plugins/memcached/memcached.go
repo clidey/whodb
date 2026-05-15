@@ -77,7 +77,7 @@ func (p *MemcachedPlugin) GetStorageUnits(config *engine.PluginConfig, schema st
 			Name: entry.Key,
 			Attributes: []engine.Record{
 				{Key: "Type", Value: "string"},
-				{Key: "Size", Value: strconv.Itoa(entry.Size)},
+				{Key: "Data Size", Value: strconv.Itoa(entry.Size)},
 				{Key: "Expires", Value: expValue},
 			},
 		})

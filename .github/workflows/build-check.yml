@@ -1,0 +1,72 @@
+name: Build Check
+
+on:
+  workflow_dispatch:
+#  pull_request:
+#    branches: [release]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build-frontend:
+    name: Build Frontend
+    uses: ./.github/workflows/_build-frontend.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit
+
+  build-docker:
+    name: Build Docker
+    needs: [build-frontend]
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit
+
+  build-docker-cli:
+    name: Build CLI Docker
+    uses: ./.github/workflows/_build-docker-cli.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit
+
+  build-windows:
+    name: Build Windows
+    needs: [build-frontend]
+    uses: ./.github/workflows/_build-windows.yml
+    with:
+      version: 0.0.0-pr-check
+      platforms: 'windows-amd64,windows-arm64'
+    secrets: inherit
+
+  build-apple:
+    name: Build Apple
+    needs: [build-frontend]
+    uses: ./.github/workflows/_build-apple.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit
+
+  build-snap:
+    name: Build Snap
+    uses: ./.github/workflows/_build-snap.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit
+
+  build-linux-terminal:
+    name: Build Linux Terminal
+    needs: [build-frontend]
+    uses: ./.github/workflows/_build-linux-terminal.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit
+
+  build-cli:
+    name: Build CLI
+    uses: ./.github/workflows/_build-cli.yml
+    with:
+      version: 0.0.0-pr-check
+    secrets: inherit

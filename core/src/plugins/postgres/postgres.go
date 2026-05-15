@@ -59,19 +59,26 @@ func (p *PostgresPlugin) GetAllSchemasQuery() string {
 }
 
 func (p *PostgresPlugin) GetTableInfoQuery() string {
+	// Guard pg_*_relation_size with has_table_privilege so a single restricted
+	// relation does not error the whole listing. NULL sizes propagate up and
+	// are emitted as absent attributes rather than "0".
 	return `
 		SELECT
 			t.table_name,
 			t.table_type,
-			pg_size_pretty(pg_total_relation_size(quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))) AS total_size,
-			pg_size_pretty(pg_relation_size(quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))) AS data_size
+			CASE WHEN c.oid IS NOT NULL AND has_table_privilege(c.oid, 'SELECT')
+				THEN pg_total_relation_size(c.oid)::bigint
+				ELSE NULL END AS total_size,
+			CASE WHEN c.oid IS NOT NULL AND has_table_privilege(c.oid, 'SELECT')
+				THEN pg_relation_size(c.oid)::bigint
+				ELSE NULL END AS data_size
 		FROM
 			information_schema.tables t
+		LEFT JOIN pg_namespace n ON n.nspname = t.table_schema
+		LEFT JOIN pg_class c ON c.relname = t.table_name AND c.relnamespace = n.oid
 		WHERE
 			t.table_schema = ?;
 	`
-
-	// AND t.table_type = 'BASE TABLE' this removes the view tables
 }
 
 func (p *PostgresPlugin) GetStorageUnitExistsQuery() string {
@@ -83,7 +90,8 @@ func (p *PostgresPlugin) GetPlaceholder(index int) string {
 }
 
 func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engine.Record) {
-	var tableName, tableType, totalSize, dataSize string
+	var tableName, tableType string
+	var totalSize, dataSize sql.NullInt64
 	if err := rows.Scan(&tableName, &tableType, &totalSize, &dataSize); err != nil {
 		log.WithError(err).Error("Failed to scan table info row data")
 		return "", nil
@@ -91,8 +99,12 @@ func (p *PostgresPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []en
 
 	attributes := []engine.Record{
 		{Key: "Type", Value: tableType},
-		{Key: "Total Size", Value: totalSize},
-		{Key: "Data Size", Value: dataSize},
+	}
+	if totalSize.Valid {
+		attributes = append(attributes, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", totalSize.Int64)})
+	}
+	if dataSize.Valid {
+		attributes = append(attributes, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", dataSize.Int64)})
 	}
 
 	return tableName, attributes

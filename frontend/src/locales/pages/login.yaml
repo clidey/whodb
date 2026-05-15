@@ -6,6 +6,8 @@ en_US:
   loggingIn: Logging In
   title: Login
   databaseType: Database Type
+  databaseName: "Database Name"
+  databaseFilePath: "Database File Path"
   hostName: Host Name
   hostNameOrUrl: Host Name (or Paste Connection URL)
   username: Username
@@ -54,6 +56,9 @@ en_US:
   advancedFields.debug: Debug
   advancedFields.urlParams: URL Params
   advancedFields.dnsEnabled: DNS Enabled
+  testConnection: Test
+  testConnectionSuccess: Connection successful
+  testConnectionFailed: "Connection failed: {error}"
 
 ar_AE:
   enterHostName: "أدخل اسم المضيف"

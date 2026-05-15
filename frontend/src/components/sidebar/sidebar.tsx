@@ -348,7 +348,7 @@ export const Sidebar: FC = () => {
     // Sidebar routes
     const sidebarRoutes = useMemo(() => {
         if (!current) return [];
-        const routes = [
+        const routes: { title: string; icon: React.ReactNode; path: string }[] = [
             {
                 title: storageUnitLabel,
                 icon: <TableCellsIcon className="w-4 h-4" />,

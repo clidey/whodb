@@ -160,6 +160,37 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 	return resp, nil
 }
 
+func testSourceConnection(ctx context.Context, credentials *source.Credentials) (*model.StatusResponse, error) {
+	spec, ok := sourcecatalog.Find(credentials.SourceType)
+	if !ok {
+		return nil, errors.New("unsupported source type")
+	}
+
+	testCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	// Invalidate any cached connection so we get a fresh one for the test.
+	if err := source.Invalidate(testCtx, spec, credentials); err != nil {
+		log.WithError(err).Debug("Failed to invalidate cached connection for test")
+	}
+
+	session, err := source.Open(testCtx, spec, credentials)
+	if err != nil {
+		return nil, err
+	}
+
+	availability, ok := source.AsAvailabilityChecker(source.AuditScopeFromCredentials(spec, credentials), session)
+	if !ok {
+		return nil, errors.New("connection test not supported for this source type")
+	}
+
+	if !availability.IsAvailable(testCtx) {
+		return nil, errors.New("unable to connect: check your credentials and that the database is running")
+	}
+
+	return &model.StatusResponse{Status: true}, nil
+}
+
 func sourceObjectModels(_ source.TypeSpec, objects []source.Object) []*model.SourceObject {
 	mapped := make([]*model.SourceObject, 0, len(objects))
 	for _, object := range objects {

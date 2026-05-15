@@ -539,10 +539,12 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 	if entry.Fields.Database {
 		fileBased := traits.Connection.Transport == source.ConnectionTransportFile
 		kind := source.ConnectionFieldKindText
+		labelKey := "databaseName"
 		placeholderKey := "enterDatabase"
 		supportsOptions := false
 		if fileBased {
 			kind = source.ConnectionFieldKindFilePath
+			labelKey = "databaseFilePath"
 			placeholderKey = "selectOrEnterDatabasePath"
 			supportsOptions = true
 		}
@@ -552,7 +554,7 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 			Kind:            kind,
 			Section:         source.ConnectionFieldSectionPrimary,
 			Required:        entry.RequiredFields.Database,
-			LabelKey:        "databaseType",
+			LabelKey:        labelKey,
 			PlaceholderKey:  placeholderKey,
 			SupportsOptions: supportsOptions,
 			CredentialField: source.CredentialFieldDatabase,
@@ -588,10 +590,15 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 		}
 		placeholderKey = field.PlaceholderKey
 
+		section := source.ConnectionFieldSectionAdvanced
+		if key == "Port" {
+			section = source.ConnectionFieldSectionPrimary
+		}
+
 		fields = append(fields, source.ConnectionField{
 			Key:             key,
 			Kind:            kind,
-			Section:         source.ConnectionFieldSectionAdvanced,
+			Section:         section,
 			Required:        field.Required,
 			LabelKey:        labelKey,
 			PlaceholderKey:  placeholderKey,

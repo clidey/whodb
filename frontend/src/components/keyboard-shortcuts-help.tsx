@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import {Dialog, DialogContent, DialogHeader, DialogTitle,} from "@clidey/ux";
-import {FC, useCallback, useEffect, useState} from "react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, SearchInput,} from "@clidey/ux";
+import {FC, useCallback, useEffect, useState, useMemo} from "react";
 import {useTranslation} from "@/hooks/use-translation";
-import {getKeyDisplay, getEffectiveIsMac} from "@/utils/platform";
+import {getKeyDisplay, getEffectiveIsMac, formatShortcut} from "@/utils/platform";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";
 
 interface ShortcutEntry {
@@ -77,6 +77,7 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
     onOpenChange,
 }) => {
     const { t } = useTranslation('components/keyboard-shortcuts-help');
+    const [searchFilter, setSearchFilter] = useState("");
 
     const shortcutCategories: ShortcutCategory[] = [
         {
@@ -140,6 +141,16 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
             ],
         },
     ];
+    const filteredShortcuts = useMemo(() => {
+        const lowerCaseFilterValue = searchFilter.toLowerCase();
+
+        return shortcutCategories.map(shortcutCategory => ({
+            ...shortcutCategory,
+            shortcuts: shortcutCategory.shortcuts.filter(shortcut => shortcut.description.toLowerCase().includes(lowerCaseFilterValue) ||
+                                                                     formatShortcut(shortcut.keys).toLowerCase().includes(lowerCaseFilterValue))
+            })).filter(category => category.shortcuts.length > 0)
+
+    }, [searchFilter, shortcutCategories]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,15 +159,24 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                     <DialogTitle className="flex items-center gap-2">
                         {t('title')}
                     </DialogTitle>
+                    <SearchInput className="mt-2" value={searchFilter} onChange={e => setSearchFilter(e.target.value)} placeholder={'Type a Shortcut or search...'} />
                 </DialogHeader>
                 <div className="mt-4">
-                    {shortcutCategories.map((category, idx) => (
+                    {filteredShortcuts.length > 0 ?
+                    ( filteredShortcuts.map((category, idx) => (
                         <ShortcutSection
                             key={idx}
                             category={category}
                             testId={`shortcuts-category-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
                         />
-                    ))}
+                    )))
+                    : 
+                    (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                            "No shortcuts found"
+                        </p>
+                    )}
+                    
                 </div>
                 <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
                     <p className="text-xs text-muted-foreground text-center">

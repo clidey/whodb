@@ -19,7 +19,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAppSelector } from '@/store/hooks';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { PublicRoutes } from '@/config/routes';
+import { InternalRoutes, PublicRoutes } from '@/config/routes';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { LocalLoginProfile } from '@/store/auth';
@@ -159,7 +159,7 @@ export const DatabaseDownOverlay = () => {
     };
 
     const handleLogout = () => {
-        navigate(PublicRoutes.Login.path);
+        navigate(InternalRoutes.Logout.path);
     };
 
     return (

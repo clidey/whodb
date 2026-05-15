@@ -96,6 +96,7 @@ import {useContainerWidth} from "../../hooks/use-container-width";
 import {getComponent} from "../../config/component-registry";
 import { findSourceObjectType } from "../../config/source-types";
 import {buildSourceObjectRef, buildSourceParentObjectRef} from "../../utils/source-refs";
+import {formatAttributeValue} from "../../utils/functions";
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
 
@@ -862,13 +863,16 @@ export const ExploreStorageUnit: FC = () => {
                         )}
                     </div>
                     <StackList>
-                        {unit.Attributes.map(attribute => (
-                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
-                                <StackListItem item={attribute.Key}>
-                                    {attribute.Value?.toLowerCase()}
-                                </StackListItem>
-                            </div>
-                        ))}
+                        {unit.Attributes.map(attribute => {
+                            const display = formatAttributeValue(attribute.Key, attribute.Value);
+                            return (
+                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={display}>
+                                    <StackListItem item={attribute.Key}>
+                                        {display}
+                                    </StackListItem>
+                                </div>
+                            );
+                        })}
                     </StackList>
                     {sourceContentLoading ? (
                         <div className="flex justify-center items-center grow">

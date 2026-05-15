@@ -292,7 +292,7 @@ services:
   e2e_tidb:
     image: pingcap/tidb:latest
     ports:
-      - "4000:4000"
+      - "4002:4000"
     networks:
       - db
     healthcheck:

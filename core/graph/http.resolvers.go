@@ -43,6 +43,7 @@ func SetupHTTPServer(router chi.Router) {
 	router.Post("/api/agent/stream", agentStreamHandler)
 	router.Post("/api/agent/permit", agentPermitHandler)
 	router.Post("/api/app/generate", appGenerateHandler)
+	router.Post("/api/function/stream", functionStreamHandler)
 
 	router.Post("/api/storage-units", addStorageUnitHandler)
 	router.Post("/api/rows", addRowHandler)

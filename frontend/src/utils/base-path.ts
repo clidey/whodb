@@ -57,3 +57,26 @@ export function withBasePath(path: string): string {
 
     return basePath === "" ? path : `${basePath}${path}`;
 }
+
+/**
+ * Navigates to an app route via window.location, bypassing React Router.
+ * Uses hash navigation on desktop (HashRouter) and full href on web (BrowserRouter).
+ */
+export function navigateWithBasePath(path: string): void {
+    if (isDesktopContext()) {
+        window.location.hash = path;
+    } else {
+        window.location.href = withBasePath(path);
+    }
+}
+
+/**
+ * Checks if the current window location matches a given app route.
+ * Handles both HashRouter (desktop) and BrowserRouter (web) contexts.
+ */
+export function isOnRoute(path: string): boolean {
+    if (isDesktopContext()) {
+        return window.location.hash.startsWith('#' + path);
+    }
+    return window.location.pathname.startsWith(withBasePath(path));
+}

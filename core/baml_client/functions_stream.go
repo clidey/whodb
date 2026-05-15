@@ -117,7 +117,7 @@ func (*stream) GenerateChatTitle(ctx context.Context, user_query string, opts ..
 }
 
 // / Streaming version of GenerateSQLQuery
-func (*stream) GenerateSQLQuery(ctx context.Context, context types.DatabaseContext, user_query string, opts ...CallOptionFunc) (<-chan StreamValue[[]stream_types.ChatResponse, []types.ChatResponse], error) {
+func (*stream) GenerateSQLQuery(ctx context.Context, db_context types.DatabaseContext, user_query string, opts ...CallOptionFunc) (<-chan StreamValue[[]stream_types.ChatResponse, []types.ChatResponse], error) {
 
 	var callOpts callOption
 	for _, opt := range opts {
@@ -125,7 +125,7 @@ func (*stream) GenerateSQLQuery(ctx context.Context, context types.DatabaseConte
 	}
 
 	args := baml.BamlFunctionArguments{
-		Kwargs: map[string]any{"context": context, "user_query": user_query},
+		Kwargs: map[string]any{"db_context": db_context, "user_query": user_query},
 		Env:    getEnvVars(callOpts.env),
 	}
 

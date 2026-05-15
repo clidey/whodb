@@ -827,6 +827,7 @@ type Mutation {
   LoginSource(credentials: SourceLoginInput!): StatusResponse!
   LoginWithSourceProfile(profile: SourceProfileLoginInput!): StatusResponse!
   Logout: StatusResponse!
+  TestSourceConnection(credentials: SourceLoginInput!): StatusResponse!
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 
   CreateSourceObject(parent: SourceObjectRefInput, name: String!, fields: [RecordInput!]!): StatusResponse!

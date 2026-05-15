@@ -34,6 +34,7 @@ jobs:
             github.com:443
             index.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             registry-1.docker.io:443
             rekor.sigstore.dev:443
             release-assets.githubusercontent.com:443

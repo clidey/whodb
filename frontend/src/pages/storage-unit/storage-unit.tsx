@@ -82,6 +82,7 @@ import {Tip} from '../../components/tip';
 import {SettingsActions} from '../../store/settings';
 import {useTranslation} from '../../hooks/use-translation';
 import {buildSourceParentObjectRef, buildSourceParentRef} from '../../utils/source-refs';
+import {formatAttributeValue} from '../../utils/functions';
 import { findSourceObjectType, type SourceTypeItem } from '../../config/source-types';
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
@@ -198,7 +199,7 @@ const StorageUnitCard: FC<{
                 </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
-                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {attribute.Value?.toLowerCase()}</p>
+                        <p key={attribute.Key} className="text-xs">{attribute.Key}: {formatAttributeValue(attribute.Key, attribute.Value)}</p>
                     ))
                 }
             </div>
@@ -229,22 +230,28 @@ const StorageUnitCard: FC<{
                     <StackList>
                         {/* Metadata attributes (Type, Total Size, etc.) */}
                         {
-                            introAttributes.map(attribute => (
-                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
-                                    <StackListItem item={attribute.Key}>
-                                        {attribute.Value?.toLowerCase()}
-                                    </StackListItem>
-                                </div>
-                            ))
+                            introAttributes.map(attribute => {
+                                const display = formatAttributeValue(attribute.Key, attribute.Value);
+                                return (
+                                    <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={display}>
+                                        <StackListItem item={attribute.Key}>
+                                            {display}
+                                        </StackListItem>
+                                    </div>
+                                );
+                            })
                         }
                         {
-                            expandedAttributes.map(attribute => (
-                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
-                                    <StackListItem item={attribute.Key}>
-                                        {attribute.Value?.toLowerCase()}
-                                    </StackListItem>
-                                </div>
-                            ))
+                            expandedAttributes.map(attribute => {
+                                const display = formatAttributeValue(attribute.Key, attribute.Value);
+                                return (
+                                    <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={display}>
+                                        <StackListItem item={attribute.Key}>
+                                            {display}
+                                        </StackListItem>
+                                    </div>
+                                );
+                            })
                         }
                     </StackList>
                     {columnsLoading && shouldFetchColumns && (
@@ -691,7 +698,7 @@ export const StorageUnitPage: FC = () => {
                             <TableRow key={unit.Name} className="group">
                                 <TableCell>{unit.Name}</TableCell>
                                 {sharedAttributeKeys.map(key => (
-                                    <TableCell key={key}>{attrMap[key] ?? ""}</TableCell>
+                                    <TableCell key={key}>{formatAttributeValue(key, attrMap[key])}</TableCell>
                                 ))}
                                 <TableCell className="relative">
                                     <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
@@ -726,20 +733,26 @@ export const StorageUnitPage: FC = () => {
                                     <h2 className="text-2xl font-bold">{unit.Name}</h2>
                                     <StackList>
                                         {/* Metadata attributes */}
-                                        {introAttributes.map(attribute => (
-                                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
-                                                <StackListItem item={attribute.Key}>
-                                                    {attribute.Value?.toLowerCase()}
-                                                </StackListItem>
-                                            </div>
-                                        ))}
-                                        {expandedAttributes.map(attribute => (
-                                            <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={attribute.Value?.toLowerCase()}>
-                                                <StackListItem item={attribute.Key}>
-                                                    {attribute.Value?.toLowerCase()}
-                                                </StackListItem>
-                                            </div>
-                                        ))}
+                                        {introAttributes.map(attribute => {
+                                            const display = formatAttributeValue(attribute.Key, attribute.Value);
+                                            return (
+                                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={display}>
+                                                    <StackListItem item={attribute.Key}>
+                                                        {display}
+                                                    </StackListItem>
+                                                </div>
+                                            );
+                                        })}
+                                        {expandedAttributes.map(attribute => {
+                                            const display = formatAttributeValue(attribute.Key, attribute.Value);
+                                            return (
+                                                <div key={attribute.Key} data-field-key={attribute.Key} data-field-value={display}>
+                                                    <StackListItem item={attribute.Key}>
+                                                        {display}
+                                                    </StackListItem>
+                                                </div>
+                                            );
+                                        })}
                                     </StackList>
                                     {expandedUnitColumnsLoading && <Loading hideText={true} />}
                                     {!expandedUnitColumnsLoading && columns && columns.length > 0 && (

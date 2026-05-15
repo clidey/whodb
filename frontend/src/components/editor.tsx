@@ -33,12 +33,17 @@ import { useTranslation } from "@/hooks/use-translation";
 
 // Extension autocomplete — set via registerEditorExtensions()
 let createSQLAutocomplete: ((options: { apolloClient: any; defaultSchema?: string }) => any[]) | undefined;
+const registeredLanguages: Record<string, () => any> = {};
 
 export const registerEditorExtensions = (fns: {
     createSQLAutocomplete?: (options: { apolloClient: any; defaultSchema?: string }) => any[];
+    languages?: Record<string, () => any>;
 }) => {
     if (fns.createSQLAutocomplete) {
         createSQLAutocomplete = fns.createSQLAutocomplete;
+    }
+    if (fns.languages) {
+        Object.assign(registeredLanguages, fns.languages);
     }
 };
 import { useAppSelector } from "@/store/hooks";
@@ -106,7 +111,7 @@ const findValidQueriesWithPositions = (doc: any): Array<{query: string, startLin
 type ICodeEditorProps = {
   value: string;
   setValue?: (value: string) => void;
-  language?: "sql" | "markdown" | "json";
+  language?: string;
   onRun?: (lineText?: string) => void;
   defaultShowPreview?: boolean;
   disabled?: boolean;
@@ -228,6 +233,11 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
         case "markdown":
           return markdown();
         case "sql":
+          return sql();
+        default:
+          if (language && registeredLanguages[language]) {
+            return registeredLanguages[language]();
+          }
           return sql();
       }
     })();
@@ -422,7 +432,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
       "pointer-events-none": disabled,
     })}>
       {children}
-      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 [&>.cm-editor]:!bg-neutral-100 [&_.cm-gutters]:!bg-neutral-100 dark:[&>.cm-editor]:!bg-[#252526] dark:[&_.cm-gutters]:!bg-[#252526] transition-all opacity-100", {
+      <div ref={editorRef} className={classNames("h-full w-full [&>.cm-editor]:h-full [&>.cm-editor]:p-2 transition-all opacity-100", {
         "opacity-0 pointer-events-none": hidePreview && disabled,
         }
       )} data-testid="code-editor"></div>

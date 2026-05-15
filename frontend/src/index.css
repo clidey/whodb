@@ -211,6 +211,16 @@ body.disable-animations *::after {
   flex-grow: 1;
 }
 
+[data-testid="code-editor"] .cm-editor,
+[data-testid="code-editor"] .cm-gutters {
+  background-color: #f5f5f5;
+}
+
+.dark [data-testid="code-editor"] .cm-editor,
+.dark [data-testid="code-editor"] .cm-gutters {
+  background-color: #252526;
+}
+
 *:focus {
   outline: none;
 }

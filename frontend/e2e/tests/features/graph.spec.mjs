@@ -67,7 +67,7 @@ test.describe('Graph Visualization', () => {
                 }
                 if (tableConfig.metadata.hasSize) {
                     // Different databases use different size field names
-                    const sizeFields = ['Total Size', 'Data Size', 'Size', 'Table Size', 'Segment Size'];
+                    const sizeFields = ['Total Size', 'Data Size', 'Size', 'Table Size', 'Segment Size', 'Entries'];
                     expect(fields.some(([k]) => sizeFields.some(sf => k.includes(sf) || k.toLowerCase().includes('size'))),
                         'Should have size info').toBe(true);
                 }

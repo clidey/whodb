@@ -291,10 +291,15 @@ func normalizeGraphQLArgumentName(name string) string {
 // statusResponseWriter wraps http.ResponseWriter to capture the status code.
 type statusResponseWriter struct {
 	http.ResponseWriter
-	statusCode int
+	statusCode  int
+	wroteHeader bool
 }
 
 func (w *statusResponseWriter) WriteHeader(code int) {
+	if w.wroteHeader {
+		return
+	}
+	w.wroteHeader = true
 	w.statusCode = code
 	w.ResponseWriter.WriteHeader(code)
 }
@@ -303,6 +308,22 @@ func (w *statusResponseWriter) WriteHeader(code int) {
 func (w *statusResponseWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
+	}
+}
+
+// sseAwareTimeout applies the given timeout to all requests except SSE streaming endpoints,
+// which are long-lived connections that manage their own timeouts via the LLM HTTP client.
+func sseAwareTimeout(dt time.Duration) func(http.Handler) http.Handler {
+	timeoutMiddleware := middleware.Timeout(dt)
+	return func(next http.Handler) http.Handler {
+		timedHandler := timeoutMiddleware(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasSuffix(r.URL.Path, "/stream") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			timedHandler.ServeHTTP(w, r)
+		})
 	}
 }
 
@@ -343,7 +364,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		middleware.RealIP,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
-		middleware.Timeout(90 * time.Second), // Increased for LLM inference time
+		sseAwareTimeout(90 * time.Second),
 		cors.Handler(cors.Options{
 			AllowedOrigins:   allowedOrigins,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

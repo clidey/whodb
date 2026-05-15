@@ -132,21 +132,35 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 				{Key: "View On", Value: viewOn},
 			}
 		} else {
+			attrs := []engine.Record{{Key: "Type", Value: "Collection"}}
+
+			// collStats requires read privilege on the collection. If denied
+			// (or the server rejects for any reason), keep the collection
+			// visible and omit size/count rather than aborting the listing.
 			stats := bson.M{}
-			err := db.RunCommand(ctx, bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats)
-			if err != nil {
+			if err := db.RunCommand(ctx, bson.D{{Key: "collStats", Value: collectionName}}).Decode(&stats); err != nil {
 				log.WithError(err).WithFields(map[string]any{
 					"hostname":   config.Credentials.Hostname,
 					"database":   database,
 					"collection": collectionName,
-				}).Error("Failed to get MongoDB collection statistics")
-				return nil, err
-			}
-
-			storageUnit.Attributes = []engine.Record{
-				{Key: "Type", Value: "Collection"},
-				{Key: "Storage Size", Value: fmt.Sprintf("%v", stats["storageSize"])},
-				{Key: "Count", Value: fmt.Sprintf("%v", stats["count"])},
+				}).Warn("collStats unavailable for MongoDB collection; omitting size/count")
+				storageUnit.Attributes = attrs
+			} else {
+				storageSize, hasStorage := toInt64(stats["storageSize"])
+				if hasStorage {
+					attrs = append(attrs, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", storageSize)})
+				}
+				if totalSize, ok := toInt64(stats["totalSize"]); ok {
+					attrs = append(attrs, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", totalSize)})
+				} else if hasStorage {
+					if indexSize, ok := toInt64(stats["totalIndexSize"]); ok {
+						attrs = append(attrs, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", storageSize+indexSize)})
+					}
+				}
+				if count, ok := toInt64(stats["count"]); ok {
+					attrs = append(attrs, engine.Record{Key: "Count", Value: fmt.Sprintf("%d", count)})
+				}
+				storageUnit.Attributes = attrs
 			}
 		}
 
@@ -332,6 +346,23 @@ func parseMongoDBJsonSchema(schema map[string]any) map[string]map[string]any {
 	}
 
 	return constraints
+}
+
+// toInt64 converts common BSON numeric types to int64.
+func toInt64(v any) (int64, bool) {
+	switch val := v.(type) {
+	case int64:
+		return val, true
+	case int32:
+		return int64(val), true
+	case int:
+		return int64(val), true
+	case float64:
+		return int64(val), true
+	case float32:
+		return int64(val), true
+	}
+	return 0, false
 }
 
 // toFloat64 converts common BSON numeric types to float64.

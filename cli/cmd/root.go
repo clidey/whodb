@@ -27,11 +27,13 @@ import (
 	"github.com/clidey/whodb/cli/internal/tui"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/identity"
+	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/clidey/whodb/cli/pkg/styles"
 	"github.com/clidey/whodb/cli/pkg/updatecheck"
 	"github.com/clidey/whodb/cli/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 )
 
 var cfgFile string
@@ -88,8 +90,13 @@ Press ? in any view for keyboard shortcuts.`,
 		return nil
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		if shouldSkipStartupSideEffects() || viper.GetBool("no-update-check") || version.Version == "dev" {
+		if shouldSkipStartupSideEffects() || viper.GetBool("no-update-check") || version.Version == "dev" || !term.IsTerminal(int(os.Stdout.Fd())) {
 			return
+		}
+		if f := cmd.Flags().Lookup("format"); f != nil {
+			if parsed, err := output.ParseFormat(f.Value.String()); err == nil && parsed != output.FormatTable && parsed != output.FormatAuto {
+				return
+			}
 		}
 		if result := updatecheck.Check(version.Version); result != nil {
 			fmt.Fprintf(os.Stderr, "\nA new version of %s is available: %s → %s\nUpgrade URL: %s\n",

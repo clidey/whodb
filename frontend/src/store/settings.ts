@@ -41,6 +41,7 @@ type ISettingsState = {
     appTheme: 'default';
     /** OS override for keyboard shortcuts. Undefined means use system detection. */
     os: 'linux' | 'macos' | 'windows' | undefined;
+    sidebarOpen: boolean;
 }
 
 const getInitialMetricsEnabled = (): boolean => {
@@ -77,6 +78,7 @@ const getInitialState = (): ISettingsState => {
         disableAnimations: settingsDefaults.disableAnimations ?? false,
         appTheme: 'default',
         os: undefined,
+        sidebarOpen: true,
     };
 };
 
@@ -140,6 +142,9 @@ export const settingsSlice = createSlice({
         },
         setOS: (state, action: PayloadAction<ISettingsState["os"]>) => {
             state.os = action.payload;
+        },
+        setSidebarOpen: (state, action: PayloadAction<boolean>) => {
+            state.sidebarOpen = action.payload;
         },
     },
 });

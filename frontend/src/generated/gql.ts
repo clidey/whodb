@@ -34,6 +34,7 @@ type Documents = {
     "mutation LoginWithSourceProfile($profile: SourceProfileLoginInput!) {\n  LoginWithSourceProfile(profile: $profile) {\n    Status\n  }\n}": typeof types.LoginWithSourceProfileDocument,
     "mutation LoginSource($credentials: SourceLoginInput!) {\n  LoginSource(credentials: $credentials) {\n    Status\n  }\n}": typeof types.LoginSourceDocument,
     "mutation Logout {\n  Logout {\n    Status\n  }\n}": typeof types.LogoutDocument,
+    "mutation TestSourceConnection($credentials: SourceLoginInput!) {\n  TestSourceConnection(credentials: $credentials) {\n    Status\n  }\n}": typeof types.TestSourceConnectionDocument,
     "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n  }\n}": typeof types.GetAiProvidersDocument,
     "query GetAIChat($providerId: String, $modelType: String!, $token: String, $ref: SourceObjectRefInput, $previousConversation: String!, $query: String!, $model: String!) {\n  AIChat(\n    providerId: $providerId\n    modelType: $modelType\n    token: $token\n    ref: $ref\n    input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}\n  ) {\n    Type\n    Result {\n      Columns {\n        Type\n        Name\n      }\n      Rows\n    }\n    Text\n  }\n}": typeof types.GetAiChatDocument,
     "query GetDatabaseQuerySuggestions($ref: SourceObjectRefInput) {\n  DatabaseQuerySuggestions: SourceQuerySuggestions(ref: $ref) {\n    description\n    category\n  }\n}": typeof types.GetDatabaseQuerySuggestionsDocument,
@@ -77,6 +78,7 @@ const documents: Documents = {
     "mutation LoginWithSourceProfile($profile: SourceProfileLoginInput!) {\n  LoginWithSourceProfile(profile: $profile) {\n    Status\n  }\n}": types.LoginWithSourceProfileDocument,
     "mutation LoginSource($credentials: SourceLoginInput!) {\n  LoginSource(credentials: $credentials) {\n    Status\n  }\n}": types.LoginSourceDocument,
     "mutation Logout {\n  Logout {\n    Status\n  }\n}": types.LogoutDocument,
+    "mutation TestSourceConnection($credentials: SourceLoginInput!) {\n  TestSourceConnection(credentials: $credentials) {\n    Status\n  }\n}": types.TestSourceConnectionDocument,
     "query GetAIProviders {\n  AIProviders {\n    Type\n    Name\n    ProviderId\n    IsEnvironmentDefined\n    IsGeneric\n  }\n}": types.GetAiProvidersDocument,
     "query GetAIChat($providerId: String, $modelType: String!, $token: String, $ref: SourceObjectRefInput, $previousConversation: String!, $query: String!, $model: String!) {\n  AIChat(\n    providerId: $providerId\n    modelType: $modelType\n    token: $token\n    ref: $ref\n    input: {PreviousConversation: $previousConversation, Query: $query, Model: $model}\n  ) {\n    Type\n    Result {\n      Columns {\n        Type\n        Name\n      }\n      Rows\n    }\n    Text\n  }\n}": types.GetAiChatDocument,
     "query GetDatabaseQuerySuggestions($ref: SourceObjectRefInput) {\n  DatabaseQuerySuggestions: SourceQuerySuggestions(ref: $ref) {\n    description\n    category\n  }\n}": types.GetDatabaseQuerySuggestionsDocument,
@@ -194,6 +196,10 @@ export function graphql(source: "mutation LoginSource($credentials: SourceLoginI
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "mutation Logout {\n  Logout {\n    Status\n  }\n}"): (typeof documents)["mutation Logout {\n  Logout {\n    Status\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation TestSourceConnection($credentials: SourceLoginInput!) {\n  TestSourceConnection(credentials: $credentials) {\n    Status\n  }\n}"): (typeof documents)["mutation TestSourceConnection($credentials: SourceLoginInput!) {\n  TestSourceConnection(credentials: $credentials) {\n    Status\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

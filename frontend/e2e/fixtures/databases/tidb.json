@@ -27,7 +27,7 @@
   },
   "connection": {
     "host": "localhost",
-    "port": 4000,
+    "port": 4002,
     "user": "user",
     "password": "password",
     "database": "test_db",

@@ -20,7 +20,8 @@ import {AnimatePresence, motion} from "framer-motion";
 import {FC, ReactNode} from "react";
 import {twMerge} from "tailwind-merge";
 import type {IInternalRoute} from "../config/routes";
-import {useAppSelector} from "../store/hooks";
+import {useAppDispatch, useAppSelector} from "../store/hooks";
+import {SettingsActions} from "../store/settings";
 import {Breadcrumb} from "./breadcrumbs";
 import {Loading} from "./loading";
 import {Sidebar} from "./sidebar/sidebar";
@@ -128,6 +129,8 @@ const KeyboardShortcutsHint: FC = () => {
 
 export const InternalPage: FC<IInternalPageProps> = (props) => {
     const current = useAppSelector(state => state.auth.current);
+    const sidebarOpen = useAppSelector(state => state.settings.sidebarOpen);
+    const dispatch = useAppDispatch();
 
     // Fetch source session metadata when logged in so Apollo state is ready
     // for source-operator and column-type helpers.
@@ -136,7 +139,7 @@ export const InternalPage: FC<IInternalPageProps> = (props) => {
     return (
         <Container>
             <div className="flex flex-row grow">
-                <SidebarProvider defaultOpen={props.sidebar == null}>
+                <SidebarProvider open={sidebarOpen} onOpenChange={(open) => dispatch(SettingsActions.setSidebarOpen(open))}>
                     <Sidebar />
                 </SidebarProvider>
                 {props.sidebar && <SidebarProvider>

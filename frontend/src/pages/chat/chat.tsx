@@ -56,7 +56,7 @@ import {
     TableCellsIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import {cloneElement, FC, KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {cloneElement, FC, KeyboardEventHandler, memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactMarkdown from 'react-markdown';
 import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
@@ -91,6 +91,24 @@ const PieChart = getComponent('pie-chart');
 
 const THINKING_PHRASES_COUNT = 25;
 
+const markdownComponents = {
+    p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
+    strong: ({node, ...props}: any) => <strong className="font-semibold" {...props} />,
+    ul: ({node, ...props}: any) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
+    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
+    li: ({node, ...props}: any) => <li className="ml-2" {...props} />,
+    h1: ({node, ...props}: any) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
+    h2: ({node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
+    h3: ({node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
+    code: ({node, children, ...props}: any) => {
+        const isInline = !String(props.className || '').includes('language-');
+        return isInline
+            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
+            : <CodeBlock>{String(children)}</CodeBlock>;
+    },
+    blockquote: ({node, ...props}: any) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
+};
+
 const CodeBlock: FC<{ children: string }> = ({ children }) => {
     const [copied, setCopied] = useState(false);
 
@@ -123,7 +141,7 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
 
 type TableData = GetAiChatQuery["AIChat"][0]["Result"];
 
-const TablePreview: FC<{ type: string, data: TableData, text: string, containerWidth?: number }> = ({ type, data, text, containerWidth }) => {
+const TablePreview: FC<{ type: string, data: TableData, text: string, containerWidth?: number }> = memo(({ type, data, text, containerWidth }) => {
     const { t } = useTranslation('pages/chat');
     const dispatch = useAppDispatch();
     const [showSQL, setShowSQL] = useState(false);
@@ -319,7 +337,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             </DialogContent>
         </Dialog>
     </div>
-}
+});
 
 export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
@@ -916,25 +934,7 @@ export const ChatPage: FC = () => {
                                                         <div className={classNames("py-2 rounded-xl markdown-content", {
                                                             "animate-fade-in": chat.isStreaming,
                                                         })} data-input-message="system">
-                                                            <ReactMarkdown
-                                                                components={{
-                                                                    p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                                                                    strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-                                                                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
-                                                                    ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
-                                                                    li: ({node, ...props}) => <li className="ml-2" {...props} />,
-                                                                    h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
-                                                                    h2: ({node, ...props}) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
-                                                                    h3: ({node, ...props}) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
-                                                                    code: ({node, children, ...props}) => {
-                                                                        const isInline = !String(props.className || '').includes('language-');
-                                                                        return isInline
-                                                                            ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
-                                                                            : <CodeBlock>{String(children)}</CodeBlock>;
-                                                                    },
-                                                                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
-                                                                }}
-                                                            >
+                                                            <ReactMarkdown components={markdownComponents}>
                                                                 {chat.Text}
                                                             </ReactMarkdown>
                                                             {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}

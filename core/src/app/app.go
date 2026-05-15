@@ -198,7 +198,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      1 * time.Minute,
+		WriteTimeout:      10 * time.Minute,
 		IdleTimeout:       30 * time.Second,
 	}
 

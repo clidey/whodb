@@ -1,0 +1,5 @@
+mutation TestSourceConnection($credentials: SourceLoginInput!) {
+  TestSourceConnection(credentials: $credentials) {
+    Status
+  }
+}

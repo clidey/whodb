@@ -47,3 +47,55 @@ export function chooseRandomItems<T>(array: T[], n: number = 3): T[] {
     }
     return sampleSize(array, n);
 }
+
+/**
+ * Storage unit attribute keys whose Value is a raw byte count and should be
+ * auto-scaled for display. Plugins emit bytes as a numeric string; the
+ * frontend owns presentation.
+ */
+const BYTE_SIZE_KEYS: ReadonlySet<string> = new Set(["Total Size", "Data Size"]);
+
+/**
+ * Formats a byte count as a human-readable string, auto-scaling to B/KB/MB/GB/TB/PB.
+ * Uses 1024-based (binary) steps with decimal-suffix labels, which matches the
+ * convention users see in most file managers.
+ * @param bytes - The byte count to format. Non-finite or negative values are returned as-is.
+ */
+export function formatBytes(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+        return String(bytes);
+    }
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+    const units = ["KB", "MB", "GB", "TB", "PB"] as const;
+    let value = bytes / 1024;
+    let unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+        value /= 1024;
+        unitIndex++;
+    }
+    const precision = value < 10 ? 2 : value < 100 ? 1 : 0;
+    return `${value.toFixed(precision)} ${units[unitIndex]}`;
+}
+
+/**
+ * Formats a storage-unit attribute value for display. Size-keyed attributes
+ * (emitted as raw bytes by the backend) are auto-scaled via formatBytes();
+ * all other attributes are lowercased to match existing display conventions.
+ * Falls through to the raw value if size parsing fails, keeping pre-migration
+ * backends forward-compatible.
+ */
+export function formatAttributeValue(key: string, value: string | null | undefined): string {
+    if (value == null) {
+        return "";
+    }
+    if (BYTE_SIZE_KEYS.has(key)) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed) && parsed >= 0) {
+            return formatBytes(parsed);
+        }
+        return value;
+    }
+    return value.toLowerCase();
+}

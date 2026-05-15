@@ -45,6 +45,7 @@ jobs:
             github.com:443
             objects.githubusercontent.com:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             proxy.golang.org:443
             registry-1.docker.io:443
             release-assets.githubusercontent.com:443
@@ -58,6 +59,12 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Stamp plugin.json version
+        run: |
+          PLUGIN_JSON="cli/external-plugin/whodb/.claude-plugin/plugin.json"
+          jq --arg v "${{ inputs.version }}" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
+          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
 
       - name: Build CLI Docker image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0

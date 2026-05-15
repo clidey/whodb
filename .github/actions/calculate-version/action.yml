@@ -205,26 +205,6 @@ runs:
           echo "📦 Version: $NEXT_VERSION (previous: $PREVIOUS_VERSION, bump: $BUMP_TYPE)"
         fi
 
-    - name: Stamp and commit plugin.json version
-      shell: bash
-      run: |
-        PLUGIN_JSON="cli/external-plugin/whodb/.claude-plugin/plugin.json"
-        VERSION="${{ steps.version.outputs.version }}"
-        if [ -f "$PLUGIN_JSON" ]; then
-          jq --arg v "$VERSION" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
-          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
-          if git diff --quiet "$PLUGIN_JSON"; then
-            echo "plugin.json already at version $VERSION"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add "$PLUGIN_JSON"
-            git commit -m "chore: stamp plugin.json version to $VERSION"
-            git push
-            echo "Committed plugin.json version $VERSION"
-          fi
-        fi
-
     - name: Set store selection
       id: stores
       shell: bash
