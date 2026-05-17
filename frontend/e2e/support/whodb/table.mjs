@@ -133,25 +133,45 @@ export const tableMethods = {
      * @param {{ waitForRows?: boolean }} [options]
      */
     async data(tableName, { waitForRows = true } = {}) {
-        await this.page.evaluate(() => {
-            const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
-            settings.storageUnitView = '"card"';
-            localStorage.setItem("persist:settings", JSON.stringify(settings));
-        });
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.page.evaluate(() => {
+                const settings = JSON.parse(localStorage.getItem("persist:settings") || "{}");
+                settings.storageUnitView = '"card"';
+                localStorage.setItem("persist:settings", JSON.stringify(settings));
+            });
 
-        await this.page.evaluate((url) => { window.location.href = url; }, this.url("/storage-unit"));
-        await this.page.waitForURL(/\/storage-unit/, { timeout: TIMEOUT.NAVIGATION });
-        await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: TIMEOUT.NAVIGATION });
+            await this.page.evaluate((url) => { window.location.href = url; }, this.url("/storage-unit"));
+            await this.page.waitForURL(/\/storage-unit/, { timeout: TIMEOUT.NAVIGATION });
+            await this.page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: TIMEOUT.NAVIGATION });
 
-        const card = this.page.locator(`[data-testid="storage-unit-card"][data-table-name="${tableName}"]`).first();
-        await card.waitFor({ state: "visible", timeout: TIMEOUT.NAVIGATION });
-        const dataBtn = card.locator('[data-testid="data-button"]').first();
-        await dataBtn.scrollIntoViewIfNeeded();
-        await dataBtn.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
-        await dataBtn.click({ force: true });
+            const card = this.page.locator(`[data-testid="storage-unit-card"][data-table-name="${tableName}"]`).first();
+            await card.waitFor({ state: "visible", timeout: TIMEOUT.NAVIGATION });
+            const dataBtn = card.locator('[data-testid="data-button"]').first();
+            await dataBtn.scrollIntoViewIfNeeded();
+            await dataBtn.waitFor({ state: "visible", timeout: TIMEOUT.ACTION });
+            await dataBtn.click({ force: true });
 
-        await this.page.waitForURL(/\/storage-unit\/explore/, { timeout: TIMEOUT.ACTION });
-        await this.waitForDataTable({ waitForRows });
+            await this.page.waitForURL(/\/storage-unit\/explore/, { timeout: TIMEOUT.ACTION });
+            const dataTableResult = this.waitForDataTable({ waitForRows })
+                .then(() => ({ status: "ready" }))
+                .catch((error) => ({ status: "error", error }));
+            const errorBoundaryResult = this.page.getByRole("heading", { name: /whoops, something went wrong/i })
+                .waitFor({ state: "visible", timeout: TIMEOUT.ELEMENT })
+                .then(() => ({ status: "error-boundary" }))
+                .catch(() => ({ status: "not-visible" }));
+            const result = await Promise.race([dataTableResult, errorBoundaryResult]);
+
+            if (result.status === "ready") {
+                return;
+            }
+            if (attempt === 0 && result.status === "error-boundary") {
+                continue;
+            }
+            if (result.status === "error") {
+                throw result.error;
+            }
+            await this.waitForDataTable({ waitForRows });
+        }
     },
 
     /**
