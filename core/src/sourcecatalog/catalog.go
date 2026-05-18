@@ -474,6 +474,8 @@ func buildTypeTraits(entry DatabaseEntry, family FamilySpec) source.TypeTraits {
 			traits.Query.ExplainMode = source.QueryExplainModeExplain
 		case connectorClickHouse:
 			traits.Query.ExplainMode = source.QueryExplainModeExplainPipeline
+		default:
+			traits.Query.ExplainMode = source.QueryExplainModeNone
 		}
 	}
 	if entry.ID == connectorPostgres {

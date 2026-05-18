@@ -110,6 +110,28 @@ func TestBuildTypeSpecConnectionContractsAreSelfConsistent(t *testing.T) {
 	}
 }
 
+func TestBuildTypeSpecMetadataContractsAreSelfConsistent(t *testing.T) {
+	t.Parallel()
+
+	for _, entry := range dbcatalog.All() {
+		entry := entry
+		t.Run(string(entry.ID), func(t *testing.T) {
+			t.Parallel()
+
+			spec := buildTestTypeSpec(t, entry)
+			sessionMetadata, sessionMetadataOK := coresourcecatalog.ResolveSessionMetadata(spec.ID, spec.Connector)
+			if err := source.ValidateSessionMetadataContract(spec, sessionMetadata, sessionMetadataOK); err != nil {
+				t.Fatalf("expected source session metadata contract to be self-consistent: %v; traits=%v metadata=%#v", err, spec.Traits.Query, sessionMetadata)
+			}
+
+			creationMetadata, creationMetadataOK := coresourcecatalog.ResolveObjectCreationMetadata(spec.ID, spec.Connector)
+			if err := source.ValidateObjectCreationMetadataContract(spec, creationMetadata, creationMetadataOK); err != nil {
+				t.Fatalf("expected source object creation metadata contract to be self-consistent: %v; contract=%v metadata=%#v", err, spec.Contract, creationMetadata)
+			}
+		})
+	}
+}
+
 func TestBuildTypeSpecExposesMutableDataActions(t *testing.T) {
 	t.Parallel()
 
@@ -537,4 +559,23 @@ func sourceSSLModes(modes []source.SSLModeInfo) []source.SSLModeInfo {
 		})
 	}
 	return cloned
+}
+
+func buildTestTypeSpec(t *testing.T, entry dbcatalog.ConnectableDatabase) source.TypeSpec {
+	t.Helper()
+
+	spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+		ID:             string(entry.ID),
+		Label:          entry.Label,
+		Connector:      string(entry.PluginType),
+		Extra:          maps.Clone(entry.Extra),
+		Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+		RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+		IsAWSManaged:   entry.IsAWSManaged,
+		SSLModes:       sourceSSLModes(entry.SSLModes),
+	})
+	if !ok {
+		t.Fatalf("expected %q to map into the source catalog", entry.ID)
+	}
+	return spec
 }

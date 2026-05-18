@@ -647,6 +647,9 @@ surfaces the source does not expose.
 ### Phase 6: Register Session Metadata
 
 This provides type definitions, operators, and aliases for the query builder UI.
+Plain English: query/editor behavior is declared once in the source catalog,
+and the frontend renders editor tools from that declaration instead of checking
+source names.
 
 - **CE**: Add to `registerSessionMetadata()` in `core/src/sourcecatalog/metadata.go`
 - **EE**: Add to `Register()` in `ee/core/src/sourcecatalog/register.go`
@@ -687,6 +690,13 @@ var MyNewDBTypeDefinitions = []engine.TypeDefinition{
     {ID: "JSON", Label: "json", Category: engine.TypeCategoryJSON},
 }
 ```
+
+Every query-capable source must resolve `SourceSessionMetadata`. Operators must
+be non-empty, type IDs must be unique, and every alias target must match a
+declared type definition. Sources that expose create-child actions must also
+resolve supported object creation metadata when the create-object UI needs it.
+The source catalog tests call `ValidateSessionMetadataContract` and
+`ValidateObjectCreationMetadataContract` to catch drift across these declarations.
 
 ### Phase 7: Frontend Integration
 
@@ -1025,6 +1035,7 @@ Understanding the full registration flow helps debug issues:
 2. dbcatalog entry → ConnectableDatabase{ID, PluginType, Fields}    [connection form defined]
 3. sourcecatalog FamilySpec → familySpecs["MyNewDB"]                [capabilities defined]
 4. sourcecatalog metadata → RegisterSessionMetadata(...)            [query builder metadata]
+   sourcecatalog metadata → RegisterObjectCreationMetadata(...)      [create-object metadata]
 5. core/src/sources/database/register.go init():
    - Iterates dbcatalog.All()
    - Calls sourcecatalog.BuildTypeSpec(entry) for each

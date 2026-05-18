@@ -176,6 +176,63 @@ func ValidateConnectionContract(spec TypeSpec) error {
 	return nil
 }
 
+// ValidateSessionMetadataContract reports source session metadata
+// inconsistencies that would make query-builder/editor behavior diverge from
+// the source contract.
+func ValidateSessionMetadataContract(spec TypeSpec, metadata *TypeSessionMetadata, ok bool) error {
+	if !spec.Contract.SupportsSurface(SurfaceQuery) && !ok {
+		return nil
+	}
+	if err := validateQueryTraits(spec); err != nil {
+		return err
+	}
+	if !ok || metadata == nil {
+		return fmt.Errorf("%s query surface requires session metadata", sourceLabel(spec))
+	}
+	if len(metadata.Operators) == 0 && spec.Contract.SupportsSurface(SurfaceQuery) {
+		return fmt.Errorf("%s query surface requires operator metadata", sourceLabel(spec))
+	}
+	if err := validateTypeDefinitions(spec, "session metadata", metadata.TypeDefinitions); err != nil {
+		return err
+	}
+	if err := validateOperators(spec, metadata.Operators); err != nil {
+		return err
+	}
+	return validateAliasMap(spec, metadata)
+}
+
+// ValidateObjectCreationMetadataContract reports create-object metadata
+// inconsistencies that would make the create-object UI diverge from the source
+// contract.
+func ValidateObjectCreationMetadataContract(spec TypeSpec, metadata ObjectCreationMetadata, ok bool) error {
+	requiresCreationMetadata := spec.Contract.SupportsRootAction(ActionCreateChild) || spec.Contract.SupportsAction(ActionCreateChild)
+	if !requiresCreationMetadata && !ok {
+		return nil
+	}
+	if !ok {
+		return fmt.Errorf("%s create-object contract requires object creation metadata", sourceLabel(spec))
+	}
+	if !requiresCreationMetadata && !metadata.Supported {
+		return nil
+	}
+	if !metadata.Supported {
+		return fmt.Errorf("%s create-object contract requires supported object creation metadata", sourceLabel(spec))
+	}
+	if _, exists := spec.Contract.ObjectTypeForKind(metadata.ObjectKind); !exists {
+		return fmt.Errorf("%s object creation kind %q is not declared in object types", sourceLabel(spec), metadata.ObjectKind)
+	}
+	if metadata.RequiresColumns && !metadata.ColumnCapabilities.Types {
+		return fmt.Errorf("%s column-based object creation requires type capability metadata", sourceLabel(spec))
+	}
+	if metadata.ColumnCapabilities.Types && len(metadata.TypeDefinitions) == 0 {
+		return fmt.Errorf("%s object creation type capability requires type definitions", sourceLabel(spec))
+	}
+	if err := validateTypeDefinitions(spec, "object creation metadata", metadata.TypeDefinitions); err != nil {
+		return err
+	}
+	return validateCreationOptions(spec, metadata.TableOptions)
+}
+
 // ValidateSurfaceSupported returns an error when the source contract does not
 // expose the requested surface.
 func ValidateSurfaceSupported(spec TypeSpec, surface Surface) error {
@@ -302,6 +359,128 @@ func isValidCredentialField(field CredentialField) bool {
 func isReservedSSLConnectionKey(key string) bool {
 	switch strings.ToLower(strings.TrimSpace(key)) {
 	case "ssl mode", "ssl ca content", "ssl client cert content", "ssl client key content", "ssl server name":
+		return true
+	default:
+		return false
+	}
+}
+
+func validateQueryTraits(spec TypeSpec) error {
+	switch spec.Traits.Query.ExplainMode {
+	case QueryExplainModeNone, QueryExplainModeExplain, QueryExplainModeExplainAnalyze, QueryExplainModeExplainPipeline:
+	default:
+		return fmt.Errorf("%s has unsupported query explain mode %q", sourceLabel(spec), spec.Traits.Query.ExplainMode)
+	}
+	if spec.Traits.Query.SupportsAnalyze && spec.Traits.Query.ExplainMode != QueryExplainModeExplainAnalyze {
+		return fmt.Errorf("%s analyze support requires explain-analyze mode", sourceLabel(spec))
+	}
+	if spec.Traits.Query.ExplainMode == QueryExplainModeExplainAnalyze && !spec.Traits.Query.SupportsAnalyze {
+		return fmt.Errorf("%s explain-analyze mode requires analyze support", sourceLabel(spec))
+	}
+	return nil
+}
+
+func validateTypeDefinitions(spec TypeSpec, owner string, definitions []TypeDefinition) error {
+	seen := map[string]struct{}{}
+	for _, definition := range definitions {
+		id := strings.TrimSpace(definition.ID)
+		if id == "" {
+			return fmt.Errorf("%s %s contains an empty type id", sourceLabel(spec), owner)
+		}
+		normalizedID := strings.ToUpper(id)
+		if _, exists := seen[normalizedID]; exists {
+			return fmt.Errorf("%s %s type %q is declared more than once", sourceLabel(spec), owner, definition.ID)
+		}
+		seen[normalizedID] = struct{}{}
+		if strings.TrimSpace(definition.Label) == "" {
+			return fmt.Errorf("%s %s type %q has an empty label", sourceLabel(spec), owner, definition.ID)
+		}
+		if !isValidTypeCategory(definition.Category) {
+			return fmt.Errorf("%s %s type %q has unsupported category %q", sourceLabel(spec), owner, definition.ID, definition.Category)
+		}
+	}
+	return nil
+}
+
+func validateOperators(spec TypeSpec, operators []string) error {
+	seen := map[string]struct{}{}
+	for _, operator := range operators {
+		trimmed := strings.TrimSpace(operator)
+		if trimmed == "" {
+			return fmt.Errorf("%s session metadata contains an empty operator", sourceLabel(spec))
+		}
+		normalized := strings.ToLower(trimmed)
+		if _, exists := seen[normalized]; exists {
+			return fmt.Errorf("%s session metadata operator %q is declared more than once", sourceLabel(spec), operator)
+		}
+		seen[normalized] = struct{}{}
+	}
+	return nil
+}
+
+func validateAliasMap(spec TypeSpec, metadata *TypeSessionMetadata) error {
+	if len(metadata.AliasMap) == 0 {
+		return nil
+	}
+	typeIDs := map[string]struct{}{}
+	for _, definition := range metadata.TypeDefinitions {
+		typeIDs[strings.ToUpper(strings.TrimSpace(definition.ID))] = struct{}{}
+	}
+	if len(typeIDs) == 0 {
+		return fmt.Errorf("%s session metadata aliases require type definitions", sourceLabel(spec))
+	}
+
+	for alias, target := range metadata.AliasMap {
+		alias = strings.TrimSpace(alias)
+		target = strings.TrimSpace(target)
+		if alias == "" {
+			return fmt.Errorf("%s session metadata contains an empty type alias", sourceLabel(spec))
+		}
+		if target == "" {
+			return fmt.Errorf("%s session metadata alias %q has an empty target type", sourceLabel(spec), alias)
+		}
+		if _, exists := typeIDs[strings.ToUpper(target)]; !exists {
+			return fmt.Errorf("%s session metadata alias %q references unknown type %q", sourceLabel(spec), alias, target)
+		}
+	}
+	return nil
+}
+
+func validateCreationOptions(spec TypeSpec, options []CreationOptionDefinition) error {
+	seenOptions := map[string]struct{}{}
+	for _, option := range options {
+		key := strings.TrimSpace(option.Key)
+		if key == "" {
+			return fmt.Errorf("%s object creation option has an empty key", sourceLabel(spec))
+		}
+		normalizedKey := strings.ToLower(key)
+		if _, exists := seenOptions[normalizedKey]; exists {
+			return fmt.Errorf("%s object creation option %q is declared more than once", sourceLabel(spec), option.Key)
+		}
+		seenOptions[normalizedKey] = struct{}{}
+		if strings.TrimSpace(option.Label) == "" {
+			return fmt.Errorf("%s object creation option %q has an empty label", sourceLabel(spec), option.Key)
+		}
+
+		seenValues := map[string]struct{}{}
+		for _, value := range option.Values {
+			value = strings.TrimSpace(value)
+			if value == "" {
+				return fmt.Errorf("%s object creation option %q contains an empty value", sourceLabel(spec), option.Key)
+			}
+			normalizedValue := strings.ToLower(value)
+			if _, exists := seenValues[normalizedValue]; exists {
+				return fmt.Errorf("%s object creation option %q value %q is declared more than once", sourceLabel(spec), option.Key, value)
+			}
+			seenValues[normalizedValue] = struct{}{}
+		}
+	}
+	return nil
+}
+
+func isValidTypeCategory(category TypeCategory) bool {
+	switch category {
+	case TypeCategoryNumeric, TypeCategoryText, TypeCategoryBinary, TypeCategoryDatetime, TypeCategoryBoolean, TypeCategoryJSON, TypeCategoryOther:
 		return true
 	default:
 		return false

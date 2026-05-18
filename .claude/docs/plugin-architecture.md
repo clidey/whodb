@@ -145,9 +145,17 @@ metadata is the source of truth for:
 - Type definitions (VARCHAR, INTEGER, etc.) with UI hints (hasLength, hasPrecision)
 - Alias maps (INT → INTEGER, BOOL → BOOLEAN)
 
+Plain English: query/editor behavior is declared once in the source catalog,
+and the frontend renders editor tools from that declaration instead of checking
+source names.
+
 This metadata is exposed through the source-first GraphQL
 `SourceSessionMetadata` query after login. **No fallbacks** - if the backend
 doesn't provide it, the UI type selectors and query helpers will be broken.
+Every alias target must match a declared type definition, and every query-capable
+source must resolve non-empty operator metadata. The source catalog tests call
+`ValidateSessionMetadataContract` and
+`ValidateObjectCreationMetadataContract` so metadata drift fails in tests.
 
 Do not call `sourcecatalog.RegisterSessionMetadata(...)` from plugin `init()`
 functions anymore. Keep plugin `init()` limited to runtime plugin registration

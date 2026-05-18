@@ -138,6 +138,7 @@ var CockroachDBTypeDefinitions = []engine.TypeDefinition{
 	{ID: "TIMESTAMP WITH TIME ZONE", Label: "timestamptz", Category: engine.TypeCategoryDatetime},
 	{ID: "DATE", Label: "date", Category: engine.TypeCategoryDatetime},
 	{ID: "TIME", Label: "time", Category: engine.TypeCategoryDatetime},
+	{ID: "TIME WITH TIME ZONE", Label: "timetz", Category: engine.TypeCategoryDatetime},
 	{ID: "BOOLEAN", Label: "boolean", Category: engine.TypeCategoryBoolean},
 	{ID: "JSON", Label: "json", Category: engine.TypeCategoryJSON},
 	{ID: "JSONB", Label: "jsonb", Category: engine.TypeCategoryJSON},
