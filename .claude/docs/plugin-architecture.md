@@ -182,7 +182,12 @@ Source metadata reliability also belongs in `SourceType.Traits`. Use
 filtering fidelity. Declare system schemas, internal collections, hidden
 indices, or synthetic keys with `HiddenObjectNames` or `HiddenObjectPrefixes`
 in the source catalog; the database adapter applies those rules consistently to
-browse and graph metadata.
+browse and graph metadata. Plain English: object metadata behavior is declared
+once in the source catalog, and the adapter normalizes columns, constraints,
+graph relationships, and hidden objects from that declaration. The source
+catalog tests call `ValidateObjectMetadataContract`, while the database adapter
+validates normalized `Column`, `FieldConstraints`, and `GraphUnit` results
+before returning them.
 
 ### types.go Structure
 

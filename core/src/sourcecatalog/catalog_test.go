@@ -119,6 +119,10 @@ func TestBuildTypeSpecMetadataContractsAreSelfConsistent(t *testing.T) {
 			t.Parallel()
 
 			spec := buildTestTypeSpec(t, entry)
+			if err := source.ValidateObjectMetadataContract(spec); err != nil {
+				t.Fatalf("expected source object metadata contract to be self-consistent: %v; traits=%v contract=%v", err, spec.Traits.Metadata, spec.Contract)
+			}
+
 			sessionMetadata, sessionMetadataOK := coresourcecatalog.ResolveSessionMetadata(spec.ID, spec.Connector)
 			if err := source.ValidateSessionMetadataContract(spec, sessionMetadata, sessionMetadataOK); err != nil {
 				t.Fatalf("expected source session metadata contract to be self-consistent: %v; traits=%v metadata=%#v", err, spec.Traits.Query, sessionMetadata)

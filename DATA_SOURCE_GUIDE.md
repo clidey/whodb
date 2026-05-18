@@ -642,7 +642,10 @@ surfaces are controlled by `Surfaces`.
 `TypeTraits.Metadata` values. Use exact metadata for system catalogs, driver
 metadata for bridge-backed families, sampled metadata for document/search
 sources, inferred metadata for heuristic graph edges, and unsupported for
-surfaces the source does not expose.
+surfaces the source does not expose. Plain English: object metadata behavior is
+declared once in the source catalog, and the adapter normalizes columns,
+constraints, graph relationships, and hidden objects from that declaration.
+Hidden object names and prefixes must reference declared object kinds.
 
 ### Phase 6: Register Session Metadata
 
@@ -697,6 +700,8 @@ declared type definition. Sources that expose create-child actions must also
 resolve supported object creation metadata when the create-object UI needs it.
 The source catalog tests call `ValidateSessionMetadataContract` and
 `ValidateObjectCreationMetadataContract` to catch drift across these declarations.
+They also call `ValidateObjectMetadataContract` so column, constraint, graph,
+and internal-object fidelity stays aligned with the source contract.
 
 ### Phase 7: Frontend Integration
 

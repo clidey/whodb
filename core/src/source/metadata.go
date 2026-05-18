@@ -17,6 +17,7 @@
 package source
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -104,15 +105,107 @@ func ApplyFieldConstraintMetadataFidelity(fields []FieldConstraints, fidelity Me
 
 // ApplyGraphMetadataFidelity annotates graph relationships missing relationship fidelity.
 func ApplyGraphMetadataFidelity(units []GraphUnit, fidelity MetadataFidelity) []GraphUnit {
+	return NormalizeGraphMetadata(units, fidelity)
+}
+
+// NormalizeGraphMetadata fills missing graph relationship metadata with the
+// source-declared fidelity and a stable relationship type.
+func NormalizeGraphMetadata(units []GraphUnit, fidelity MetadataFidelity) []GraphUnit {
 	fidelity = MetadataFidelityOrUnknown(fidelity)
 	for i := range units {
 		for j := range units[i].Relations {
 			if units[i].Relations[j].MetadataFidelity == "" {
 				units[i].Relations[j].MetadataFidelity = fidelity
 			}
+			if units[i].Relations[j].RelationshipType == "" {
+				units[i].Relations[j].RelationshipType = GraphRelationshipTypeUnknown
+			}
 		}
 	}
 	return units
+}
+
+// ValidateColumns reports malformed source column metadata after source-level
+// normalization has been applied.
+func ValidateColumns(columns []Column) error {
+	seen := map[string]struct{}{}
+	for _, column := range columns {
+		name := strings.TrimSpace(column.Name)
+		if name == "" {
+			return fmt.Errorf("source column has an empty name")
+		}
+		normalizedName := strings.ToLower(name)
+		if _, exists := seen[normalizedName]; exists {
+			return fmt.Errorf("source column %q is declared more than once", column.Name)
+		}
+		seen[normalizedName] = struct{}{}
+		if !isValidMetadataFidelity(MetadataFidelityOrUnknown(column.MetadataFidelity)) {
+			return fmt.Errorf("source column %q has unsupported metadata fidelity %q", column.Name, column.MetadataFidelity)
+		}
+		if err := validateColumnShape(column); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ValidateFieldConstraints reports malformed normalized source field
+// constraints.
+func ValidateFieldConstraints(fields []FieldConstraints) error {
+	seen := map[string]struct{}{}
+	for _, field := range fields {
+		name := strings.TrimSpace(field.Name)
+		if name == "" {
+			return fmt.Errorf("source field constraint has an empty name")
+		}
+		normalizedName := strings.ToLower(name)
+		if _, exists := seen[normalizedName]; exists {
+			return fmt.Errorf("source field constraint %q is declared more than once", field.Name)
+		}
+		seen[normalizedName] = struct{}{}
+		if !isValidMetadataFidelity(MetadataFidelityOrUnknown(field.MetadataFidelity)) {
+			return fmt.Errorf("source field constraint %q has unsupported metadata fidelity %q", field.Name, field.MetadataFidelity)
+		}
+		if err := validateFieldConstraintShape(field); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ValidateGraphUnits reports malformed source graph metadata after source-level
+// normalization has been applied.
+func ValidateGraphUnits(units []GraphUnit) error {
+	seen := map[string]struct{}{}
+	for _, unit := range units {
+		name := strings.TrimSpace(unit.Unit.Name)
+		if name == "" {
+			return fmt.Errorf("source graph unit has an empty name")
+		}
+		normalizedName := strings.ToLower(name)
+		if _, exists := seen[normalizedName]; exists {
+			return fmt.Errorf("source graph unit %q is declared more than once", unit.Unit.Name)
+		}
+		seen[normalizedName] = struct{}{}
+		for _, relationship := range unit.Relations {
+			if strings.TrimSpace(relationship.Name) == "" {
+				return fmt.Errorf("source graph unit %q has a relationship with an empty name", unit.Unit.Name)
+			}
+			if !isValidGraphRelationshipType(relationship.RelationshipType) {
+				return fmt.Errorf("source graph unit %q has unsupported relationship type %q", unit.Unit.Name, relationship.RelationshipType)
+			}
+			if !isValidMetadataFidelity(MetadataFidelityOrUnknown(relationship.MetadataFidelity)) {
+				return fmt.Errorf("source graph unit %q has unsupported relationship fidelity %q", unit.Unit.Name, relationship.MetadataFidelity)
+			}
+			if relationship.SourceColumn != nil && strings.TrimSpace(*relationship.SourceColumn) == "" {
+				return fmt.Errorf("source graph unit %q has an empty source column", unit.Unit.Name)
+			}
+			if relationship.TargetColumn != nil && strings.TrimSpace(*relationship.TargetColumn) == "" {
+				return fmt.Errorf("source graph unit %q has an empty target column", unit.Unit.Name)
+			}
+		}
+	}
+	return nil
 }
 
 // FilterInternalObjects removes catalog-declared internal objects from a list.
@@ -195,6 +288,67 @@ func cloneObjectRules(rules map[ObjectKind][]string) map[ObjectKind][]string {
 		cloned[kind] = slices.Clone(values)
 	}
 	return cloned
+}
+
+func validateColumnShape(column Column) error {
+	if (column.ReferencedTable == nil) != (column.ReferencedColumn == nil) {
+		return fmt.Errorf("source column %q has incomplete foreign-key metadata", column.Name)
+	}
+	if column.ReferencedTable != nil && strings.TrimSpace(*column.ReferencedTable) == "" {
+		return fmt.Errorf("source column %q has an empty referenced table", column.Name)
+	}
+	if column.ReferencedColumn != nil && strings.TrimSpace(*column.ReferencedColumn) == "" {
+		return fmt.Errorf("source column %q has an empty referenced column", column.Name)
+	}
+	if column.Length != nil && *column.Length < 0 {
+		return fmt.Errorf("source column %q has negative length %d", column.Name, *column.Length)
+	}
+	if column.Precision != nil && *column.Precision < 0 {
+		return fmt.Errorf("source column %q has negative precision %d", column.Name, *column.Precision)
+	}
+	if column.Scale != nil && *column.Scale < 0 {
+		return fmt.Errorf("source column %q has negative scale %d", column.Name, *column.Scale)
+	}
+	if column.Precision != nil && column.Scale != nil && *column.Scale > *column.Precision {
+		return fmt.Errorf("source column %q has scale greater than precision", column.Name)
+	}
+	return nil
+}
+
+func validateFieldConstraintShape(field FieldConstraints) error {
+	if field.ForeignKey != nil {
+		if strings.TrimSpace(field.ForeignKey.Table) == "" {
+			return fmt.Errorf("source field constraint %q has an empty foreign-key table", field.Name)
+		}
+		if strings.TrimSpace(field.ForeignKey.Column) == "" {
+			return fmt.Errorf("source field constraint %q has an empty foreign-key column", field.Name)
+		}
+	}
+	if field.Length != nil && *field.Length < 0 {
+		return fmt.Errorf("source field constraint %q has negative length %d", field.Name, *field.Length)
+	}
+	if field.Precision != nil && *field.Precision < 0 {
+		return fmt.Errorf("source field constraint %q has negative precision %d", field.Name, *field.Precision)
+	}
+	if field.Scale != nil && *field.Scale < 0 {
+		return fmt.Errorf("source field constraint %q has negative scale %d", field.Name, *field.Scale)
+	}
+	if field.Precision != nil && field.Scale != nil && *field.Scale > *field.Precision {
+		return fmt.Errorf("source field constraint %q has scale greater than precision", field.Name)
+	}
+	if field.CheckMin != nil && field.CheckMax != nil && *field.CheckMin > *field.CheckMax {
+		return fmt.Errorf("source field constraint %q has minimum greater than maximum", field.Name)
+	}
+	return nil
+}
+
+func isValidGraphRelationshipType(relationshipType GraphRelationshipType) bool {
+	switch relationshipType {
+	case GraphRelationshipTypeOneToOne, GraphRelationshipTypeOneToMany, GraphRelationshipTypeManyToOne, GraphRelationshipTypeManyToMany, GraphRelationshipTypeUnknown:
+		return true
+	default:
+		return false
+	}
 }
 
 func metadataWithDefaults(metadata MetadataTraits, columns MetadataFidelity, constraints MetadataFidelity, graph MetadataFidelity) MetadataTraits {

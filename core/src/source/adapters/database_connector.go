@@ -307,6 +307,9 @@ func (s *DatabaseSession) Columns(ctx context.Context, ref source.ObjectRef) ([]
 		log.WithError(err).Warn("Failed to mark generated columns for source object")
 	}
 	columns = source.ApplyColumnMetadataFidelity(columns, s.spec.Traits.Metadata.Columns)
+	if err := source.ValidateColumns(columns); err != nil {
+		return nil, err
+	}
 	s.cacheColumns(namespace, name, columns)
 	return cloneSourceColumns(columns), nil
 }
@@ -400,6 +403,9 @@ func (s *DatabaseSession) FieldConstraints(ctx context.Context, ref source.Objec
 	}
 
 	fields = source.ApplyFieldConstraintMetadataFidelity(fields, s.spec.Traits.Metadata.Constraints)
+	if err := source.ValidateFieldConstraints(fields); err != nil {
+		return nil, err
+	}
 	return fields, nil
 }
 
@@ -459,7 +465,11 @@ func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) 
 		return nil, err
 	}
 	units = source.FilterInternalGraphUnits(s.spec, units, s.spec.Contract.DefaultObjectKind)
-	return source.ApplyGraphMetadataFidelity(units, s.spec.Traits.Metadata.Graph), nil
+	units = source.NormalizeGraphMetadata(units, s.spec.Traits.Metadata.Graph)
+	if err := source.ValidateGraphUnits(units); err != nil {
+		return nil, err
+	}
+	return units, nil
 }
 
 // Reply runs AI chat against the source session.

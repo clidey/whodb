@@ -233,6 +233,40 @@ func ValidateObjectCreationMetadataContract(spec TypeSpec, metadata ObjectCreati
 	return validateCreationOptions(spec, metadata.TableOptions)
 }
 
+// ValidateObjectMetadataContract reports metadata trait inconsistencies that
+// would make object columns, constraints, graph data, or internal-object rules
+// diverge from the source contract.
+func ValidateObjectMetadataContract(spec TypeSpec) error {
+	contract := NormalizeContract(spec.Contract)
+	metadata := NormalizeMetadataTraits(spec.Traits.Metadata)
+	if err := validateMetadataFidelity(spec, "column metadata", metadata.Columns); err != nil {
+		return err
+	}
+	if err := validateMetadataFidelity(spec, "constraint metadata", metadata.Constraints); err != nil {
+		return err
+	}
+	if err := validateMetadataFidelity(spec, "graph metadata", metadata.Graph); err != nil {
+		return err
+	}
+	if err := validateMetadataFidelity(spec, "system object filtering metadata", metadata.SystemObjectFiltering); err != nil {
+		return err
+	}
+
+	if metadata.Columns != MetadataFidelityUnsupported && !contractSupportsObjectMetadata(contract) {
+		return fmt.Errorf("%s declares column metadata without inspectable or row-viewable objects", sourceLabel(spec))
+	}
+	if metadata.Constraints != MetadataFidelityUnsupported && !contract.SupportsAction(ActionInspect) {
+		return fmt.Errorf("%s declares constraint metadata without inspectable objects", sourceLabel(spec))
+	}
+	if metadata.Graph != MetadataFidelityUnsupported && !contract.SupportsSurface(SurfaceGraph) {
+		return fmt.Errorf("%s declares graph metadata without the graph surface", sourceLabel(spec))
+	}
+	if contract.SupportsSurface(SurfaceGraph) && metadata.Graph == MetadataFidelityUnsupported {
+		return fmt.Errorf("%s graph surface requires graph metadata fidelity", sourceLabel(spec))
+	}
+	return validateHiddenObjectRules(spec, contract, metadata)
+}
+
 // ValidateSurfaceSupported returns an error when the source contract does not
 // expose the requested surface.
 func ValidateSurfaceSupported(spec TypeSpec, surface Surface) error {
@@ -380,6 +414,67 @@ func validateQueryTraits(spec TypeSpec) error {
 	return nil
 }
 
+func validateMetadataFidelity(spec TypeSpec, name string, fidelity MetadataFidelity) error {
+	if isValidMetadataFidelity(fidelity) {
+		return nil
+	}
+	return fmt.Errorf("%s has unsupported %s fidelity %q", sourceLabel(spec), name, fidelity)
+}
+
+func validateHiddenObjectRules(spec TypeSpec, contract Contract, metadata MetadataTraits) error {
+	hasRules := len(metadata.HiddenObjectNames) > 0 || len(metadata.HiddenObjectPrefixes) > 0
+	if hasRules && metadata.SystemObjectFiltering == MetadataFidelityUnsupported {
+		return fmt.Errorf("%s declares hidden object rules while system object filtering is unsupported", sourceLabel(spec))
+	}
+
+	for kind, names := range metadata.HiddenObjectNames {
+		if _, ok := contract.ObjectTypeForKind(kind); !ok {
+			return fmt.Errorf("%s hidden object names reference undeclared kind %q", sourceLabel(spec), kind)
+		}
+		if err := validateHiddenObjectRuleValues(spec, kind, "name", names); err != nil {
+			return err
+		}
+	}
+	for kind, prefixes := range metadata.HiddenObjectPrefixes {
+		if _, ok := contract.ObjectTypeForKind(kind); !ok {
+			return fmt.Errorf("%s hidden object prefixes reference undeclared kind %q", sourceLabel(spec), kind)
+		}
+		if err := validateHiddenObjectRuleValues(spec, kind, "prefix", prefixes); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateHiddenObjectRuleValues(spec TypeSpec, kind ObjectKind, valueKind string, values []string) error {
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			return fmt.Errorf("%s hidden object %s rule for kind %q is empty", sourceLabel(spec), valueKind, kind)
+		}
+		normalized := strings.ToLower(trimmed)
+		if _, exists := seen[normalized]; exists {
+			return fmt.Errorf("%s hidden object %s rule %q for kind %q is declared more than once", sourceLabel(spec), valueKind, value, kind)
+		}
+		seen[normalized] = struct{}{}
+	}
+	return nil
+}
+
+func contractSupportsObjectMetadata(contract Contract) bool {
+	for _, objectType := range contract.ObjectTypes {
+		if objectType.SupportsAction(ActionInspect) || objectType.SupportsAction(ActionViewRows) {
+			return true
+		}
+		switch objectType.DataShape {
+		case DataShapeTabular, DataShapeDocument, DataShapeContent:
+			return true
+		}
+	}
+	return false
+}
+
 func validateTypeDefinitions(spec TypeSpec, owner string, definitions []TypeDefinition) error {
 	seen := map[string]struct{}{}
 	for _, definition := range definitions {
@@ -481,6 +576,15 @@ func validateCreationOptions(spec TypeSpec, options []CreationOptionDefinition) 
 func isValidTypeCategory(category TypeCategory) bool {
 	switch category {
 	case TypeCategoryNumeric, TypeCategoryText, TypeCategoryBinary, TypeCategoryDatetime, TypeCategoryBoolean, TypeCategoryJSON, TypeCategoryOther:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidMetadataFidelity(fidelity MetadataFidelity) bool {
+	switch fidelity {
+	case MetadataFidelityExact, MetadataFidelityDriver, MetadataFidelitySampled, MetadataFidelityInferred, MetadataFidelitySynthetic, MetadataFidelityUnsupported, MetadataFidelityUnknown:
 		return true
 	default:
 		return false
