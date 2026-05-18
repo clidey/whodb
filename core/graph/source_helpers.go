@@ -264,8 +264,11 @@ func sourceTraitsToModel(traits source.TypeTraits) *model.SourceTraits {
 			SchemaFidelity:       model.SourceSchemaFidelity(traits.Presentation.SchemaFidelity),
 		},
 		Query: &model.SourceQueryTraits{
-			SupportsAnalyze: traits.Query.SupportsAnalyze,
-			ExplainMode:     model.SourceQueryExplainMode(traits.Query.ExplainMode),
+			SupportsAnalyze:        traits.Query.SupportsAnalyze,
+			SupportsScripts:        traits.Query.SupportsScripts,
+			SupportsStreaming:      traits.Query.SupportsStreaming,
+			SupportsMultiStatement: traits.Query.SupportsMultiStatement,
+			ExplainMode:            model.SourceQueryExplainMode(traits.Query.ExplainMode),
 		},
 		MockData: &model.SourceMockDataTraits{
 			SupportsRelationalDependencies: traits.MockData.SupportsRelationalDependencies,

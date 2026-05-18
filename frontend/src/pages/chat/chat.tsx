@@ -356,7 +356,7 @@ export const ChatPage: FC = () => {
     const containerWidth = useContainerWidth(scrollContainerRef);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
-    const { item } = useSourceContract(authProfile?.Type);
+    const { item, supportsScripts } = useSourceContract(authProfile?.Type);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
     const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
     const [copiedSqlId, setCopiedSqlId] = useState<number | null>(null);
@@ -1024,7 +1024,7 @@ export const ChatPage: FC = () => {
                                                             </Button>
                                                             <Button
                                                                 onClick={() => chat.id && handleConfirmSQL(chat.id, chat.Text, chat.Type)}
-                                                                disabled={isExecuting}
+                                                                disabled={isExecuting || !supportsScripts}
                                                                 size="sm"
                                                             >
                                                                 {isExecuting ? (t('executing') || 'Executing...') : (t('yes') || 'Yes')}

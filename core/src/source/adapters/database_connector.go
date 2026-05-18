@@ -425,6 +425,9 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return err
 	}
+	if !s.spec.Traits.Query.SupportsStreaming {
+		return fmt.Errorf("streaming queries are not supported for %s", s.spec.Label)
+	}
 	if writer == nil {
 		return fmt.Errorf("stream writer is required")
 	}
@@ -442,6 +445,12 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 func (s *DatabaseSession) RunScript(ctx context.Context, script string, multiStatement bool, params ...any) (*source.RowsResult, error) {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return nil, err
+	}
+	if !s.spec.Traits.Query.SupportsScripts {
+		return nil, fmt.Errorf("script execution is not supported for %s", s.spec.Label)
+	}
+	if multiStatement && !s.spec.Traits.Query.SupportsMultiStatement {
+		return nil, engine.ErrMultiStatementUnsupported
 	}
 
 	config := s.pluginConfig(ctx, nil)

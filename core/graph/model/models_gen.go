@@ -623,8 +623,11 @@ type SourceQuerySuggestion struct {
 }
 
 type SourceQueryTraits struct {
-	SupportsAnalyze bool                   `json:"SupportsAnalyze"`
-	ExplainMode     SourceQueryExplainMode `json:"ExplainMode"`
+	SupportsAnalyze        bool                   `json:"SupportsAnalyze"`
+	SupportsScripts        bool                   `json:"SupportsScripts"`
+	SupportsStreaming      bool                   `json:"SupportsStreaming"`
+	SupportsMultiStatement bool                   `json:"SupportsMultiStatement"`
+	ExplainMode            SourceQueryExplainMode `json:"ExplainMode"`
 }
 
 type SourceSSLMode struct {

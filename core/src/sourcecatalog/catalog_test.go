@@ -375,6 +375,12 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				if spec.Traits.Query.ExplainMode != source.QueryExplainModeExplainAnalyze {
 					t.Fatalf("expected Postgres explain mode %q, got %q", source.QueryExplainModeExplainAnalyze, spec.Traits.Query.ExplainMode)
 				}
+				if !spec.Traits.Query.SupportsScripts || !spec.Traits.Query.SupportsStreaming || !spec.Traits.Query.SupportsMultiStatement {
+					t.Fatalf("expected Postgres execution traits to support scripts, streaming, and multi-statement, got %#v", spec.Traits.Query)
+				}
+				if !spec.Contract.SupportsRootAction(source.ActionExecute) {
+					t.Fatalf("expected Postgres root execute support")
+				}
 				if !spec.Traits.MockData.SupportsRelationalDependencies {
 					t.Fatalf("expected Postgres mock-data relational dependency support")
 				}
@@ -431,6 +437,12 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				t.Helper()
 				if spec.Traits.Query.ExplainMode != source.QueryExplainModeExplainPipeline {
 					t.Fatalf("expected ClickHouse explain mode %q, got %q", source.QueryExplainModeExplainPipeline, spec.Traits.Query.ExplainMode)
+				}
+				if !spec.Traits.Query.SupportsScripts || !spec.Traits.Query.SupportsStreaming {
+					t.Fatalf("expected ClickHouse execution traits to support scripts and streaming, got %#v", spec.Traits.Query)
+				}
+				if spec.Traits.Query.SupportsMultiStatement {
+					t.Fatalf("expected ClickHouse multi-statement support to remain disabled")
 				}
 				if spec.Traits.Metadata.Graph != source.MetadataFidelityInferred {
 					t.Fatalf("expected ClickHouse graph metadata fidelity %q, got %q", source.MetadataFidelityInferred, spec.Traits.Metadata.Graph)

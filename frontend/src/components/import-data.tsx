@@ -49,6 +49,7 @@ import {
   ImportTableFileMutation,
   type SourceObjectRefInput,
 } from "@graphql";
+import {useSourceContract} from "@/hooks/useSourceContract";
 
 const importLimits = {
   maxRows: 100000,
@@ -64,6 +65,7 @@ type ImportDataProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   objectRef?: SourceObjectRefInput;
+  databaseType?: string;
   onImportSuccess?: () => void;
 };
 
@@ -76,9 +78,11 @@ export const ImportData: FC<ImportDataProps> = ({
   open,
   onOpenChange,
   objectRef,
+  databaseType,
   onImportSuccess,
 }) => {
   const { t } = useTranslation("components/import-data");
+  const { supportsMultiStatement } = useSourceContract(databaseType);
   const importSizeMB = Math.round(importLimits.maxFileSizeBytes / (1024 * 1024));
   const [mode, setMode] = useState<ImportModeType>("data");
 
@@ -112,6 +116,13 @@ export const ImportData: FC<ImportDataProps> = ({
       ? validationMessage
       : null;
   const previewErrorMessage = translateKey(previewError);
+  const supportsSQLImport = supportsMultiStatement;
+
+  useEffect(() => {
+    if (!supportsSQLImport && mode === "sql") {
+      setMode("data");
+    }
+  }, [mode, supportsSQLImport]);
 
   const delimiterOptions = useMemo(
     () => [
@@ -477,7 +488,7 @@ export const ImportData: FC<ImportDataProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="data" data-value="data">{t("modeData")}</SelectItem>
-                    <SelectItem value="sql" data-value="sql">{t("modeSql")}</SelectItem>
+                    {supportsSQLImport && <SelectItem value="sql" data-value="sql">{t("modeSql")}</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>

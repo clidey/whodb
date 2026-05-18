@@ -49,6 +49,12 @@ export interface SourceContractState extends SourceContractFlags {
     schemaFidelity: SourceSchemaFidelity;
     /** Whether the source supports explain/analyze-style query tooling. */
     supportsAnalyze: boolean;
+    /** Whether the source supports source-native script execution. */
+    supportsScripts: boolean;
+    /** Whether the source supports streaming query execution. */
+    supportsStreaming: boolean;
+    /** Whether the source supports multi-statement script execution. */
+    supportsMultiStatement: boolean;
     /** Source-owned explain mode for CLI/UI query planning. */
     explainMode: SourceQueryExplainMode;
     /** Whether mock-data generation can reason about relational dependencies. */

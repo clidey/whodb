@@ -98,6 +98,9 @@ export interface SourcePresentationTraitsDescriptor {
  */
 export interface SourceQueryTraitsDescriptor {
     supportsAnalyze: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsAnalyze'];
+    supportsScripts: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsScripts'];
+    supportsStreaming: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsStreaming'];
+    supportsMultiStatement: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsMultiStatement'];
     explainMode: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['explainMode'];
 }
 

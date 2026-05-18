@@ -77,7 +77,7 @@ var (
 var familySpecs = map[string]FamilySpec{
 	connectorPostgres: {
 		Category:       source.CategoryDatabase,
-		Traits:         postgresTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres),
+		Traits:         withExecutionTraits(postgresTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres), true, true),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
@@ -92,7 +92,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorCockroachDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         postgresTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:         withExecutionTraits(postgresTraits(source.HostInputModeHostname, source.HostInputURLParserNone), true, true),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
@@ -107,7 +107,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMySQL: {
 		Category:       source.CategoryDatabase,
-		Traits:         mysqlTraits(),
+		Traits:         withExecutionTraits(mysqlTraits(), true, true),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -121,7 +121,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMariaDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         mysqlTraits(),
+		Traits:         withExecutionTraits(mysqlTraits(), true, true),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -135,7 +135,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorTiDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         mysqlTraits(),
+		Traits:         withExecutionTraits(mysqlTraits(), true, true),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -149,7 +149,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorClickHouse: {
 		Category:       source.CategoryDatabase,
-		Traits:         clickHouseTraits(),
+		Traits:         withExecutionTraits(clickHouseTraits(), true, false),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -162,7 +162,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorSqlite3: {
 		Category:      source.CategoryDatabase,
-		Traits:        sqliteTraits(),
+		Traits:        withExecutionTraits(sqliteTraits(), true, true),
 		Model:         source.ModelRelational,
 		Surfaces:      []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		RootActions:   []source.Action{source.ActionBrowse, source.ActionCreateChild},
@@ -174,7 +174,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorDuckDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         duckDBTraits(),
+		Traits:         withExecutionTraits(duckDBTraits(), true, false),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		RootActions:    []source.Action{source.ActionBrowse, source.ActionCreateChild},
@@ -189,7 +189,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorQuestDB: {
 		Category:      source.CategoryDatabase,
-		Traits:        networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:        withExecutionTraits(networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone), true, true),
 		Model:         source.ModelRelational,
 		Surfaces:      []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat},
 		RootActions:   []source.Action{source.ActionBrowse, source.ActionCreateChild},
@@ -201,7 +201,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorYugabyteDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         postgresTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres),
+		Traits:         withExecutionTraits(postgresTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres), true, true),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
@@ -393,10 +393,16 @@ func BuildTypeSpec(entry DatabaseEntry) (source.TypeSpec, bool) {
 }
 
 func buildRootActions(family FamilySpec) []source.Action {
+	var actions []source.Action
 	if len(family.RootActions) > 0 {
-		return slices.Clone(family.RootActions)
+		actions = slices.Clone(family.RootActions)
+	} else {
+		actions = []source.Action{source.ActionBrowse}
 	}
-	return []source.Action{source.ActionBrowse}
+	if slices.Contains(family.Surfaces, source.SurfaceQuery) && !slices.Contains(actions, source.ActionExecute) {
+		actions = append(actions, source.ActionExecute)
+	}
+	return actions
 }
 
 func usesDatabaseInsteadOfSchema(spec source.TypeSpec) bool {
@@ -466,6 +472,9 @@ func buildTypeTraits(entry DatabaseEntry, family FamilySpec) source.TypeTraits {
 		traits.Presentation.SchemaFidelity = source.SchemaFidelityExact
 	}
 	traits.Metadata = defaultMetadataTraits(family, traits)
+	if slices.Contains(family.Surfaces, source.SurfaceQuery) {
+		traits.Query.SupportsScripts = true
+	}
 	if traits.Query.ExplainMode == "" {
 		switch entry.Connector {
 		case connectorPostgres, connectorCockroachDB, connectorQuestDB, connectorYugabyteDB:
@@ -992,6 +1001,13 @@ func withHiddenObjectRules(
 ) source.TypeTraits {
 	traits.Metadata.HiddenObjectNames = names
 	traits.Metadata.HiddenObjectPrefixes = prefixes
+	return traits
+}
+
+func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatement bool) source.TypeTraits {
+	traits.Query.SupportsScripts = true
+	traits.Query.SupportsStreaming = streaming
+	traits.Query.SupportsMultiStatement = multiStatement
 	return traits
 }
 

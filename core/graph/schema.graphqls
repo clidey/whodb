@@ -555,6 +555,9 @@ type SourcePresentationTraits {
 
 type SourceQueryTraits {
   SupportsAnalyze: Boolean!
+  SupportsScripts: Boolean!
+  SupportsStreaming: Boolean!
+  SupportsMultiStatement: Boolean!
   ExplainMode: SourceQueryExplainMode!
 }
 

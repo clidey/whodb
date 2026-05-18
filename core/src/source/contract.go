@@ -57,6 +57,9 @@ func NormalizeContract(contract Contract) Contract {
 // frontend and backend disagree about source behavior.
 func ValidateContract(spec TypeSpec) error {
 	contract := NormalizeContract(spec.Contract)
+	if err := ValidateExecutionContract(spec); err != nil {
+		return err
+	}
 	if contract.SupportsSurface(SurfaceBrowser) && len(contract.BrowsePath) == 0 {
 		return fmt.Errorf("%s browser surface requires a browse path", sourceLabel(spec))
 	}
@@ -96,6 +99,29 @@ func ValidateContract(spec TypeSpec) error {
 	}
 	if !contract.ObjectKindSupportsAction(*contract.GraphScopeKind, ActionViewGraph) {
 		return fmt.Errorf("%s graph scope kind %q does not support graph views", sourceLabel(spec), *contract.GraphScopeKind)
+	}
+	return nil
+}
+
+// ValidateExecutionContract reports execution-trait inconsistencies that would
+// make query runners, script runners, and streaming runners disagree with the
+// source contract.
+func ValidateExecutionContract(spec TypeSpec) error {
+	contract := NormalizeContract(spec.Contract)
+	if err := validateQueryTraits(spec); err != nil {
+		return err
+	}
+	if spec.Traits.Query.SupportsScripts && !contract.SupportsSurface(SurfaceQuery) {
+		return fmt.Errorf("%s script execution requires the query surface", sourceLabel(spec))
+	}
+	if spec.Traits.Query.SupportsStreaming && !contract.SupportsSurface(SurfaceQuery) {
+		return fmt.Errorf("%s streaming execution requires the query surface", sourceLabel(spec))
+	}
+	if spec.Traits.Query.SupportsMultiStatement && !spec.Traits.Query.SupportsScripts {
+		return fmt.Errorf("%s multi-statement execution requires script execution", sourceLabel(spec))
+	}
+	if spec.Traits.Query.SupportsScripts && !contract.SupportsRootAction(ActionExecute) {
+		return fmt.Errorf("%s script execution requires root execute support", sourceLabel(spec))
 	}
 	return nil
 }

@@ -1916,6 +1916,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     open={showImport}
                     onOpenChange={setShowImport}
                     objectRef={objectRef}
+                    databaseType={databaseType}
                     onImportSuccess={onRefresh}
                 />
             )}

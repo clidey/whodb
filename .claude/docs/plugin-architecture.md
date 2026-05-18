@@ -175,7 +175,12 @@ that can be represented in the contract.
 Frontend and CLI connection/presentation behavior also comes from the source
 model now. Use `SourceType.Traits` for things like file-vs-network transport,
 host input parsing, profile labeling, schema fidelity, and query UI options.
-Do not reintroduce `DatabaseType` branches for those decisions.
+Execution behavior belongs there too: `TypeTraits.Query` declares whether a
+source supports scripts, streaming queries, and multi-statement scripts. Plain
+English: WhoDB asks each source what kinds of execution it supports, then both
+the backend and frontend use that same answer instead of guessing from the
+database type or failing at runtime. Do not reintroduce `DatabaseType` branches
+for those decisions.
 
 Source metadata reliability also belongs in `SourceType.Traits`. Use
 `TypeTraits.Metadata` to declare column, constraint, graph, and internal-object

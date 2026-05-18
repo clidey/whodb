@@ -342,8 +342,11 @@ type PresentationTraits struct {
 
 // QueryTraits describes query-surface behavior for a source type.
 type QueryTraits struct {
-	SupportsAnalyze bool
-	ExplainMode     QueryExplainMode
+	SupportsAnalyze        bool
+	SupportsScripts        bool
+	SupportsStreaming      bool
+	SupportsMultiStatement bool
+	ExplainMode            QueryExplainMode
 }
 
 // MockDataTraits describes mock-data behavior for a source type.

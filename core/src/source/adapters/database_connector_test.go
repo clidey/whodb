@@ -18,6 +18,7 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -38,6 +39,49 @@ func TestDatabaseSessionRunQueryRejectsUnsupportedSurface(t *testing.T) {
 	_, err := session.RunQuery(context.Background(), "SELECT 1")
 	if err == nil || !strings.Contains(err.Error(), "querying") {
 		t.Fatalf("expected querying error, got %v", err)
+	}
+}
+
+func TestDatabaseSessionRunScriptRejectsUnsupportedExecutionTraits(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.RawExecuteFunc = func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error) {
+		t.Fatalf("expected script execution to be blocked by the source contract")
+		return nil, nil
+	}
+
+	spec := testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery})
+	session := newTestDatabaseSession(spec, mock)
+
+	_, err := session.RunScript(context.Background(), "SELECT 1", false)
+	if err == nil || !strings.Contains(err.Error(), "script execution") {
+		t.Fatalf("expected script execution error, got %v", err)
+	}
+}
+
+func TestDatabaseSessionRunScriptRejectsUnsupportedMultiStatement(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.RawExecuteFunc = func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error) {
+		t.Fatalf("expected multi-statement execution to be blocked by the source contract")
+		return nil, nil
+	}
+
+	spec := testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery})
+	spec.Traits.Query.SupportsScripts = true
+	session := newTestDatabaseSession(spec, mock)
+
+	_, err := session.RunScript(context.Background(), "SELECT 1; SELECT 2;", true)
+	if !errors.Is(err, engine.ErrMultiStatementUnsupported) {
+		t.Fatalf("expected multi-statement unsupported error, got %v", err)
+	}
+}
+
+func TestDatabaseSessionRunQueryStreamRejectsUnsupportedExecutionTraits(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	session := newTestDatabaseSession(testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery}), mock)
+
+	err := session.RunQueryStream(context.Background(), "SELECT 1", nil)
+	if err == nil || !strings.Contains(err.Error(), "streaming queries") {
+		t.Fatalf("expected streaming query error, got %v", err)
 	}
 }
 

@@ -17,6 +17,9 @@ query SourceTypes {
       }
       query: Query {
         supportsAnalyze: SupportsAnalyze
+        supportsScripts: SupportsScripts
+        supportsStreaming: SupportsStreaming
+        supportsMultiStatement: SupportsMultiStatement
         explainMode: ExplainMode
       }
       mockData: MockData {

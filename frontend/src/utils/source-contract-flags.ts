@@ -29,6 +29,9 @@ export interface SourceContractFlags {
     supportsChat: boolean;
     supportsGraph: boolean;
     supportsScratchpad: boolean;
+    supportsScripts: boolean;
+    supportsStreaming: boolean;
+    supportsMultiStatement: boolean;
     supportsSchema: boolean;
     supportsDatabaseSwitching: boolean;
     usesSchemaForGraph: boolean;
@@ -51,6 +54,9 @@ export function resolveSourceContractFlags(
         supportsChat: sourceSupportsSurface(item, SourceSurface.Chat),
         supportsGraph: sourceSupportsSurface(item, SourceSurface.Graph),
         supportsScratchpad: sourceSupportsSurface(item, SourceSurface.Query),
+        supportsScripts: item?.traits?.query.supportsScripts ?? false,
+        supportsStreaming: item?.traits?.query.supportsStreaming ?? false,
+        supportsMultiStatement: item?.traits?.query.supportsMultiStatement ?? false,
         supportsSchema: sourceUsesObjectKind(item, SourceObjectKind.Schema),
         supportsDatabaseSwitching: sourceUsesObjectKind(item, SourceObjectKind.Database),
         usesSchemaForGraph: item?.usesSchemaForGraph ?? true,

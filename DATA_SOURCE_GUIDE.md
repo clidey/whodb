@@ -300,6 +300,12 @@ type DriverShutdowner interface {
 }
 ```
 
+Database-backed sources must declare execution behavior in `SourceType.Traits.Query`:
+`SupportsScripts`, `SupportsStreaming`, and `SupportsMultiStatement`.
+Plain English: WhoDB now asks each source what kinds of execution it supports,
+then both the backend and frontend use that same answer instead of guessing from
+the database type or failing at runtime.
+
 ---
 
 ## Reference: ObjectType Builder Helpers
@@ -774,10 +780,12 @@ and EE catalogs.
 
 The frontend source-contract helpers auto-derive capability flags
 (`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`,
-`supportsDatabaseSwitching`, `supportsMockData`, etc.) from the backend
-contract. Do not set these manually or add source-name checks for capabilities
-— they come from `source.Contract.Surfaces`, `BrowsePath`, `RootActions`, and
-`ObjectTypes.Actions`.
+`supportsDatabaseSwitching`, `supportsMockData`, `supportsScripts`,
+`supportsStreaming`, `supportsMultiStatement`, etc.) from the backend contract
+and traits. Do not set these manually or add source-name checks for capabilities
+— surface/object capabilities come from `source.Contract.Surfaces`,
+`BrowsePath`, `RootActions`, and `ObjectTypes.Actions`; execution capabilities
+come from `source.TypeTraits.Query`.
 
 ---
 
