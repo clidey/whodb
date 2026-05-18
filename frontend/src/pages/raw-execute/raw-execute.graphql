@@ -3,6 +3,7 @@ query RawExecute($query: String!) {
       Columns {
           Type
           Name
+          MetadataFidelity
       }
       Rows
       TotalCount

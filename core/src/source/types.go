@@ -292,6 +292,26 @@ const (
 	SchemaFidelitySampled SchemaFidelity = "Sampled"
 )
 
+// MetadataFidelity identifies how source metadata was obtained.
+type MetadataFidelity string
+
+const (
+	// MetadataFidelityExact indicates metadata was read from authoritative source metadata.
+	MetadataFidelityExact MetadataFidelity = "Exact"
+	// MetadataFidelityDriver indicates metadata was reported by the source driver.
+	MetadataFidelityDriver MetadataFidelity = "Driver"
+	// MetadataFidelitySampled indicates metadata was inferred from sampled data.
+	MetadataFidelitySampled MetadataFidelity = "Sampled"
+	// MetadataFidelityInferred indicates metadata was inferred from naming or type conventions.
+	MetadataFidelityInferred MetadataFidelity = "Inferred"
+	// MetadataFidelitySynthetic indicates metadata is a WhoDB synthetic shape.
+	MetadataFidelitySynthetic MetadataFidelity = "Synthetic"
+	// MetadataFidelityUnsupported indicates the metadata surface is not supported.
+	MetadataFidelityUnsupported MetadataFidelity = "Unsupported"
+	// MetadataFidelityUnknown indicates metadata fidelity was not declared.
+	MetadataFidelityUnknown MetadataFidelity = "Unknown"
+)
+
 // QueryExplainMode identifies how query-plan inspection should be invoked.
 type QueryExplainMode string
 
@@ -331,12 +351,23 @@ type MockDataTraits struct {
 	SupportsRelationalDependencies bool
 }
 
+// MetadataTraits describes how reliable each source metadata surface is.
+type MetadataTraits struct {
+	Columns               MetadataFidelity
+	Constraints           MetadataFidelity
+	Graph                 MetadataFidelity
+	SystemObjectFiltering MetadataFidelity
+	HiddenObjectNames     map[ObjectKind][]string
+	HiddenObjectPrefixes  map[ObjectKind][]string
+}
+
 // TypeTraits describes non-CRUD source behavior consumed by frontend and CLI.
 type TypeTraits struct {
 	Connection   ConnectionTraits
 	Presentation PresentationTraits
 	Query        QueryTraits
 	MockData     MockDataTraits
+	Metadata     MetadataTraits
 }
 
 // Contract describes the type-level support surface for a source type.

@@ -108,6 +108,16 @@ export interface SourceMockDataTraitsDescriptor {
 }
 
 /**
+ * Metadata fidelity traits exposed by the backend source catalog.
+ */
+export interface SourceMetadataTraitsDescriptor {
+    columns: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['metadata']['columns'];
+    constraints: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['metadata']['constraints'];
+    graph: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['metadata']['graph'];
+    systemObjectFiltering: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['metadata']['systemObjectFiltering'];
+}
+
+/**
  * Backend-owned source traits that do not belong in the CRUD contract.
  */
 export interface SourceTraitsDescriptor {
@@ -115,6 +125,7 @@ export interface SourceTraitsDescriptor {
     presentation: SourcePresentationTraitsDescriptor;
     query: SourceQueryTraitsDescriptor;
     mockData: SourceMockDataTraitsDescriptor;
+    metadata: SourceMetadataTraitsDescriptor;
 }
 
 /**
@@ -432,6 +443,7 @@ function mergeSourceTypeOverride(
                 presentation: { ...(item.traits?.presentation ?? {}), ...override.traits.presentation },
                 query: { ...(item.traits?.query ?? {}), ...override.traits.query },
                 mockData: { ...(item.traits?.mockData ?? {}), ...override.traits.mockData },
+                metadata: { ...(item.traits?.metadata ?? {}), ...override.traits.metadata },
             }
             : item.traits,
         fields: override.fields ? { ...item.fields, ...override.fields } : item.fields,

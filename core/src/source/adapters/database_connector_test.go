@@ -56,6 +56,81 @@ func TestDatabaseSessionReadGraphRejectsUnsupportedSurface(t *testing.T) {
 	}
 }
 
+func TestDatabaseSessionListObjectsFiltersInternalObjects(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.GetAllSchemasFunc = func(*engine.PluginConfig) ([]string, error) {
+		return []string{"public", "pg_catalog", "app"}, nil
+	}
+
+	spec := testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser})
+	spec.Traits.Metadata.HiddenObjectNames = map[source.ObjectKind][]string{
+		source.ObjectKindSchema: {"pg_catalog"},
+	}
+	session := newTestDatabaseSession(spec, mock)
+
+	objects, err := session.ListObjects(context.Background(), &source.ObjectRef{
+		Kind: source.ObjectKindDatabase,
+		Path: []string{"app"},
+	}, nil)
+	if err != nil {
+		t.Fatalf("expected schema listing to succeed, got %v", err)
+	}
+	if len(objects) != 2 {
+		t.Fatalf("expected two visible schemas, got %#v", objects)
+	}
+	if objects[0].Name != "public" || objects[1].Name != "app" {
+		t.Fatalf("expected internal schema to be filtered, got %#v", objects)
+	}
+}
+
+func TestDatabaseSessionReadGraphAppliesMetadataContract(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("ClickHouse"))
+	mock.GetGraphFunc = func(*engine.PluginConfig, string) ([]engine.GraphUnit, error) {
+		return []engine.GraphUnit{
+			{
+				Unit: engine.StorageUnit{Name: "events"},
+				Relations: []engine.GraphUnitRelationship{
+					{
+						Name:             ".inner_events",
+						RelationshipType: engine.GraphUnitRelationshipTypeOneToMany,
+					},
+					{
+						Name:             "sessions",
+						RelationshipType: engine.GraphUnitRelationshipTypeOneToMany,
+					},
+				},
+			},
+			{
+				Unit: engine.StorageUnit{Name: "sessions"},
+			},
+			{
+				Unit: engine.StorageUnit{Name: ".inner_events"},
+			},
+		}, nil
+	}
+
+	spec := testTypeSpec("ClickHouse", []source.Surface{source.SurfaceBrowser, source.SurfaceGraph})
+	spec.Traits.Metadata.Graph = source.MetadataFidelityInferred
+	spec.Traits.Metadata.HiddenObjectPrefixes = map[source.ObjectKind][]string{
+		source.ObjectKindTable: {".inner"},
+	}
+	session := newTestDatabaseSession(spec, mock)
+
+	graph, err := session.ReadGraph(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("expected graph read to succeed, got %v", err)
+	}
+	if len(graph) != 2 {
+		t.Fatalf("expected internal graph unit to be filtered, got %#v", graph)
+	}
+	if len(graph[0].Relations) != 1 {
+		t.Fatalf("expected relation to hidden graph unit to be filtered, got %#v", graph[0].Relations)
+	}
+	if graph[0].Relations[0].MetadataFidelity != source.MetadataFidelityInferred {
+		t.Fatalf("expected graph relationship metadata fidelity %q, got %q", source.MetadataFidelityInferred, graph[0].Relations[0].MetadataFidelity)
+	}
+}
+
 func TestDatabaseSessionReplyRejectsUnsupportedSurface(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Redis"))
 	mock.ChatFunc = func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error) {
@@ -358,14 +433,16 @@ func TestDatabaseSessionColumnsCachesMetadataWithinSession(t *testing.T) {
 		return nil
 	}
 
-	session := newTestDatabaseSession(testTypeWithObjectActions(
+	spec := testTypeWithObjectActions(
 		"Postgres",
 		[]source.Surface{source.SurfaceBrowser},
 		[]source.Action{source.ActionBrowse},
 		map[source.ObjectKind][]source.Action{
 			source.ObjectKindTable: {source.ActionInspect, source.ActionViewRows},
 		},
-	), mock)
+	)
+	spec.Traits.Metadata.Columns = source.MetadataFidelityExact
+	session := newTestDatabaseSession(spec, mock)
 
 	columns, err := session.Columns(context.Background(), testTableRef())
 	if err != nil {
@@ -373,6 +450,9 @@ func TestDatabaseSessionColumnsCachesMetadataWithinSession(t *testing.T) {
 	}
 	if len(columns) != 1 || columns[0].Length == nil {
 		t.Fatalf("expected one cached column with length, got %#v", columns)
+	}
+	if columns[0].MetadataFidelity != source.MetadataFidelityExact {
+		t.Fatalf("expected column metadata fidelity %q, got %q", source.MetadataFidelityExact, columns[0].MetadataFidelity)
 	}
 
 	columns[0].Name = "mutated"
@@ -403,6 +483,44 @@ func TestDatabaseSessionColumnsCachesMetadataWithinSession(t *testing.T) {
 	}
 	if markCalls != 1 {
 		t.Fatalf("expected one generated-column call, got %d", markCalls)
+	}
+}
+
+func TestDatabaseSessionFieldConstraintsAppliesMetadataContract(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) {
+		return true, nil
+	}
+	mock.GetColumnsForTableFunc = func(*engine.PluginConfig, string, string) ([]engine.Column, error) {
+		return []engine.Column{{Name: "id", Type: "INTEGER", IsPrimary: true}}, nil
+	}
+	mock.GetColumnConstraintsFunc = func(*engine.PluginConfig, string, string) (map[string]map[string]any, error) {
+		return map[string]map[string]any{
+			"id": {"nullable": false},
+		}, nil
+	}
+
+	spec := testTypeWithObjectActions(
+		"Postgres",
+		[]source.Surface{source.SurfaceBrowser},
+		[]source.Action{source.ActionBrowse},
+		map[source.ObjectKind][]source.Action{
+			source.ObjectKindTable: {source.ActionInspect, source.ActionViewRows},
+		},
+	)
+	spec.Traits.Metadata.Columns = source.MetadataFidelityExact
+	spec.Traits.Metadata.Constraints = source.MetadataFidelityExact
+	session := newTestDatabaseSession(spec, mock)
+
+	fields, err := session.FieldConstraints(context.Background(), testTableRef())
+	if err != nil {
+		t.Fatalf("expected field constraints to succeed, got %v", err)
+	}
+	if len(fields) != 1 {
+		t.Fatalf("expected one field constraint, got %#v", fields)
+	}
+	if fields[0].MetadataFidelity != source.MetadataFidelityExact {
+		t.Fatalf("expected constraint metadata fidelity %q, got %q", source.MetadataFidelityExact, fields[0].MetadataFidelity)
 	}
 }
 

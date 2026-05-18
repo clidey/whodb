@@ -2,6 +2,7 @@ query SourceFieldConstraints($ref: SourceObjectRefInput!) {
   SourceFieldConstraints(ref: $ref) {
     Name
     Type
+    MetadataFidelity
     Nullable
     Primary
     Unique

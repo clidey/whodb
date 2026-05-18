@@ -44,6 +44,7 @@ type StorageUnit struct {
 type Column struct {
 	Type             string
 	Name             string
+	MetadataFidelity MetadataFidelity
 	IsNullable       bool
 	IsPrimary        bool
 	IsAutoIncrement  bool
@@ -59,20 +60,21 @@ type Column struct {
 // FieldConstraints describes normalized source-level constraints for one
 // field, column, or property.
 type FieldConstraints struct {
-	Name          string
-	Type          string
-	Nullable      *bool
-	Primary       bool
-	Unique        bool
-	Identity      bool
-	DefaultValue  *string
-	AllowedValues []string
-	CheckMin      *float64
-	CheckMax      *float64
-	ForeignKey    *ForeignKeyDefinition
-	Length        *int
-	Precision     *int
-	Scale         *int
+	Name             string
+	Type             string
+	MetadataFidelity MetadataFidelity
+	Nullable         *bool
+	Primary          bool
+	Unique           bool
+	Identity         bool
+	DefaultValue     *string
+	AllowedValues    []string
+	CheckMin         *float64
+	CheckMax         *float64
+	ForeignKey       *ForeignKeyDefinition
+	Length           *int
+	Precision        *int
+	Scale            *int
 }
 
 // ObjectFieldConstraints contains normalized field constraints for one source
@@ -130,6 +132,7 @@ const (
 type GraphRelationship struct {
 	Name             string
 	RelationshipType GraphRelationshipType
+	MetadataFidelity MetadataFidelity
 	SourceColumn     *string
 	TargetColumn     *string
 }

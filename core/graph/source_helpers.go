@@ -270,6 +270,12 @@ func sourceTraitsToModel(traits source.TypeTraits) *model.SourceTraits {
 		MockData: &model.SourceMockDataTraits{
 			SupportsRelationalDependencies: traits.MockData.SupportsRelationalDependencies,
 		},
+		Metadata: &model.SourceMetadataTraits{
+			Columns:               metadataFidelityToModel(traits.Metadata.Columns),
+			Constraints:           metadataFidelityToModel(traits.Metadata.Constraints),
+			Graph:                 metadataFidelityToModel(traits.Metadata.Graph),
+			SystemObjectFiltering: metadataFidelityToModel(traits.Metadata.SystemObjectFiltering),
+		},
 	}
 }
 
@@ -445,20 +451,21 @@ func MapFieldConstraintsToModel(fields []source.FieldConstraints) []*model.Sourc
 			}
 		}
 		results = append(results, &model.SourceFieldConstraints{
-			Name:          field.Name,
-			Type:          field.Type,
-			Nullable:      field.Nullable,
-			Primary:       field.Primary,
-			Unique:        field.Unique,
-			Identity:      field.Identity,
-			DefaultValue:  field.DefaultValue,
-			AllowedValues: slices.Clone(field.AllowedValues),
-			CheckMin:      field.CheckMin,
-			CheckMax:      field.CheckMax,
-			ForeignKey:    foreignKey,
-			Length:        field.Length,
-			Precision:     field.Precision,
-			Scale:         field.Scale,
+			Name:             field.Name,
+			Type:             field.Type,
+			MetadataFidelity: metadataFidelityToModel(field.MetadataFidelity),
+			Nullable:         field.Nullable,
+			Primary:          field.Primary,
+			Unique:           field.Unique,
+			Identity:         field.Identity,
+			DefaultValue:     field.DefaultValue,
+			AllowedValues:    slices.Clone(field.AllowedValues),
+			CheckMin:         field.CheckMin,
+			CheckMax:         field.CheckMax,
+			ForeignKey:       foreignKey,
+			Length:           field.Length,
+			Precision:        field.Precision,
+			Scale:            field.Scale,
 		})
 	}
 	return results
@@ -523,10 +530,11 @@ func graphUnitsToModel(graphUnits []source.GraphUnit, parent *source.ObjectRef, 
 		relations := make([]*model.GraphUnitRelationship, 0, len(graphUnit.Relations))
 		for _, relation := range graphUnit.Relations {
 			relations = append(relations, &model.GraphUnitRelationship{
-				Name:         relation.Name,
-				Relationship: model.GraphUnitRelationshipType(relation.RelationshipType),
-				SourceColumn: relation.SourceColumn,
-				TargetColumn: relation.TargetColumn,
+				Name:             relation.Name,
+				Relationship:     model.GraphUnitRelationshipType(relation.RelationshipType),
+				MetadataFidelity: metadataFidelityToModel(relation.MetadataFidelity),
+				SourceColumn:     relation.SourceColumn,
+				TargetColumn:     relation.TargetColumn,
 			})
 		}
 

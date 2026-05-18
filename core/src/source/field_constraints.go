@@ -76,6 +76,9 @@ func enrichFieldConstraintWithColumn(field FieldConstraints, column Column) Fiel
 	if field.Type == "" {
 		field.Type = column.Type
 	}
+	if field.MetadataFidelity == "" {
+		field.MetadataFidelity = column.MetadataFidelity
+	}
 	if column.IsPrimary {
 		field.Primary = true
 	}

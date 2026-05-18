@@ -158,6 +158,13 @@ model now. Use `SourceType.Traits` for things like file-vs-network transport,
 host input parsing, profile labeling, schema fidelity, and query UI options.
 Do not reintroduce `DatabaseType` branches for those decisions.
 
+Source metadata reliability also belongs in `SourceType.Traits`. Use
+`TypeTraits.Metadata` to declare column, constraint, graph, and internal-object
+filtering fidelity. Declare system schemas, internal collections, hidden
+indices, or synthetic keys with `HiddenObjectNames` or `HiddenObjectPrefixes`
+in the source catalog; the database adapter applies those rules consistently to
+browse and graph metadata.
+
 ### types.go Structure
 
 ```go

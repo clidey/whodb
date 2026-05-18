@@ -320,6 +320,9 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				if spec.Traits.Presentation.SchemaFidelity != source.SchemaFidelitySampled {
 					t.Fatalf("expected MongoDB schema fidelity %q, got %q", source.SchemaFidelitySampled, spec.Traits.Presentation.SchemaFidelity)
 				}
+				if spec.Traits.Metadata.Columns != source.MetadataFidelitySampled {
+					t.Fatalf("expected MongoDB column metadata fidelity %q, got %q", source.MetadataFidelitySampled, spec.Traits.Metadata.Columns)
+				}
 			},
 		},
 		{
@@ -346,6 +349,9 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				t.Helper()
 				if spec.Traits.Query.ExplainMode != source.QueryExplainModeExplainPipeline {
 					t.Fatalf("expected ClickHouse explain mode %q, got %q", source.QueryExplainModeExplainPipeline, spec.Traits.Query.ExplainMode)
+				}
+				if spec.Traits.Metadata.Graph != source.MetadataFidelityInferred {
+					t.Fatalf("expected ClickHouse graph metadata fidelity %q, got %q", source.MetadataFidelityInferred, spec.Traits.Metadata.Graph)
 				}
 				if spec.Traits.MockData.SupportsRelationalDependencies {
 					t.Fatalf("expected ClickHouse mock-data relational dependency support to remain disabled")
@@ -433,6 +439,34 @@ func TestBuildTypeSpecUsesTypedExtraFields(t *testing.T) {
 	}
 	if sslField.LabelKey != "advancedFields.customSsl" {
 		t.Fatalf("expected ssl field label key %q, got %q", "advancedFields.customSsl", sslField.LabelKey)
+	}
+}
+
+func TestBuildTypeSpecDeclaresInternalObjectRules(t *testing.T) {
+	t.Parallel()
+
+	entry, ok := dbcatalog.Find("MySQL")
+	if !ok {
+		t.Fatal("expected MySQL database catalog entry")
+	}
+	spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+		ID:             string(entry.ID),
+		Label:          entry.Label,
+		Connector:      string(entry.PluginType),
+		Extra:          maps.Clone(entry.Extra),
+		Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+		RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+		IsAWSManaged:   entry.IsAWSManaged,
+		SSLModes:       sourceSSLModes(entry.SSLModes),
+	})
+	if !ok {
+		t.Fatal("expected MySQL to map into the source catalog")
+	}
+	if !source.ShouldHideObject(spec, source.ObjectKindDatabase, "information_schema") {
+		t.Fatal("expected MySQL information_schema to be declared internal")
+	}
+	if spec.Traits.Metadata.SystemObjectFiltering != source.MetadataFidelityExact {
+		t.Fatalf("expected internal object filtering fidelity %q, got %q", source.MetadataFidelityExact, spec.Traits.Metadata.SystemObjectFiltering)
 	}
 }
 

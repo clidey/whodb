@@ -113,6 +113,16 @@ enum SourceSchemaFidelity {
   Sampled
 }
 
+enum SourceMetadataFidelity {
+  Exact
+  Driver
+  Sampled
+  Inferred
+  Synthetic
+  Unsupported
+  Unknown
+}
+
 enum SourceQueryExplainMode {
   None
   Explain
@@ -136,6 +146,7 @@ enum ImportMode {
 type Column {
   Type: String!
   Name: String!
+  MetadataFidelity: SourceMetadataFidelity!
   IsPrimary: Boolean!
   IsForeignKey: Boolean!
   ReferencedTable: String
@@ -148,6 +159,7 @@ type Column {
 type SourceFieldConstraints {
   Name: String!
   Type: String!
+  MetadataFidelity: SourceMetadataFidelity!
   Nullable: Boolean
   Primary: Boolean!
   Unique: Boolean!
@@ -348,6 +360,7 @@ enum GraphUnitRelationshipType {
 type GraphUnitRelationship {
   Name: String!
   Relationship: GraphUnitRelationshipType!
+  MetadataFidelity: SourceMetadataFidelity!
   SourceColumn: String
   TargetColumn: String
 }
@@ -549,11 +562,19 @@ type SourceMockDataTraits {
   SupportsRelationalDependencies: Boolean!
 }
 
+type SourceMetadataTraits {
+  Columns: SourceMetadataFidelity!
+  Constraints: SourceMetadataFidelity!
+  Graph: SourceMetadataFidelity!
+  SystemObjectFiltering: SourceMetadataFidelity!
+}
+
 type SourceTraits {
   Connection: SourceConnectionTraits!
   Presentation: SourcePresentationTraits!
   Query: SourceQueryTraits!
   MockData: SourceMockDataTraits!
+  Metadata: SourceMetadataTraits!
 }
 
 type SourceType {

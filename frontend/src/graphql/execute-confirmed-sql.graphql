@@ -6,6 +6,7 @@ mutation ExecuteConfirmedSQL($query: String!, $operationType: String!) {
       Columns {
         Type
         Name
+        MetadataFidelity
         IsPrimary
         IsForeignKey
         ReferencedTable

@@ -16,6 +16,7 @@ query GetGraph($ref: SourceObjectRefInput) {
     Relations {
       Name
       Relationship
+      MetadataFidelity
       SourceColumn
       TargetColumn
     }

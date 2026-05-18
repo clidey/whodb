@@ -156,6 +156,22 @@ A `bool` on `ConnectionTraits`. When `true` (the default for most network source
 | `SchemaFidelityExact` | Schema from system tables (SQL databases) |
 | `SchemaFidelitySampled` | Schema inferred from data samples (MongoDB, Elasticsearch) |
 
+### `source.MetadataFidelity` — Column, constraint, graph, and filtering precision
+| Value | Use For |
+|-------|---------|
+| `MetadataFidelityExact` | Authoritative source metadata |
+| `MetadataFidelityDriver` | Metadata reported by a driver or bridge metadata API |
+| `MetadataFidelitySampled` | Metadata inferred from sampled documents or records |
+| `MetadataFidelityInferred` | Metadata inferred from conventions, such as ID-like names |
+| `MetadataFidelitySynthetic` | WhoDB-created metadata for synthetic shapes |
+| `MetadataFidelityUnsupported` | The metadata surface is not available |
+| `MetadataFidelityUnknown` | The source did not declare fidelity |
+
+`TypeTraits.Metadata` declares fidelity for `Columns`, `Constraints`, `Graph`,
+and `SystemObjectFiltering`. Database-backed sources should also declare
+internal object names or prefixes in the source catalog rather than filtering
+system schemas, collections, indices, or tables in shared code.
+
 ### `source.QueryExplainMode` — Query plan inspection
 `QueryExplainModeNone`, `QueryExplainModeExplain`, `QueryExplainModeExplainAnalyze`, `QueryExplainModeExplainPipeline`
 
@@ -330,6 +346,11 @@ fileTraits(profileLabelStrategy) source.TypeTraits
 // Bridge/sidecar source (EE only)
 bridgeTraits() source.TypeTraits  // EE only, in ee/core/src/sourcecatalog/register.go
 ```
+
+When a source has internal schemas, collections, indices, tables, or keys,
+declare them on `TypeTraits.Metadata.HiddenObjectNames` or
+`HiddenObjectPrefixes` in the catalog family. The database adapter applies those
+rules consistently to browse and graph metadata.
 
 ---
 
@@ -604,6 +625,12 @@ This defines browsing hierarchy, capabilities, and actions.
 | Index only | Elasticsearch | `[Index]` |
 
 **`GraphScopeKind`**: Set to the ObjectKind that scopes relationship visualization. Use `ptr(source.ObjectKindSchema)` for schema-scoped, `ptr(source.ObjectKindDatabase)` for database-scoped, or `nil` for no graph support.
+
+**Metadata fidelity**: Confirm the family declares appropriate
+`TypeTraits.Metadata` values. Use exact metadata for system catalogs, driver
+metadata for bridge-backed families, sampled metadata for document/search
+sources, inferred metadata for heuristic graph edges, and unsupported for
+surfaces the source does not expose.
 
 ### Phase 6: Register Session Metadata
 

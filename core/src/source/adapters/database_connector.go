@@ -159,7 +159,7 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 		for _, name := range names {
 			objects = append(objects, s.makeContainerObject(parent, nextKind, name, nil))
 		}
-		return objects, nil
+		return source.FilterInternalObjects(s.spec, objects), nil
 	case source.ObjectKindSchema:
 		names, err := s.plugin.GetAllSchemas(config)
 		if err != nil {
@@ -169,7 +169,7 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 		for _, name := range names {
 			objects = append(objects, s.makeContainerObject(parent, nextKind, name, nil))
 		}
-		return objects, nil
+		return source.FilterInternalObjects(s.spec, objects), nil
 	default:
 		namespace := s.namespaceForRef(parent)
 		units, err := s.plugin.GetStorageUnits(config, namespace)
@@ -191,7 +191,7 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 				Metadata:    slices.Clone(unit.Attributes),
 			})
 		}
-		return objects, nil
+		return source.FilterInternalObjects(s.spec, objects), nil
 	}
 }
 
@@ -303,6 +303,7 @@ func (s *DatabaseSession) Columns(ctx context.Context, ref source.ObjectRef) ([]
 	if err := s.plugin.MarkGeneratedColumns(config, namespace, name, columns); err != nil {
 		log.WithError(err).Warn("Failed to mark generated columns for source object")
 	}
+	columns = source.ApplyColumnMetadataFidelity(columns, s.spec.Traits.Metadata.Columns)
 	s.cacheColumns(namespace, name, columns)
 	return cloneSourceColumns(columns), nil
 }
@@ -395,6 +396,7 @@ func (s *DatabaseSession) FieldConstraints(ctx context.Context, ref source.Objec
 		}
 	}
 
+	fields = source.ApplyFieldConstraintMetadataFidelity(fields, s.spec.Traits.Metadata.Constraints)
 	return fields, nil
 }
 
@@ -449,7 +451,12 @@ func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) 
 	if ref != nil {
 		scope = s.graphScopeForRef(*ref)
 	}
-	return s.plugin.GetGraph(config, scope)
+	units, err := s.plugin.GetGraph(config, scope)
+	if err != nil {
+		return nil, err
+	}
+	units = source.FilterInternalGraphUnits(s.spec, units, s.spec.Contract.DefaultObjectKind)
+	return source.ApplyGraphMetadataFidelity(units, s.spec.Traits.Metadata.Graph), nil
 }
 
 // Reply runs AI chat against the source session.
@@ -1110,6 +1117,7 @@ func cloneSourceColumns(columns []source.Column) []source.Column {
 		cloned = append(cloned, source.Column{
 			Type:             column.Type,
 			Name:             column.Name,
+			MetadataFidelity: column.MetadataFidelity,
 			IsNullable:       column.IsNullable,
 			IsPrimary:        column.IsPrimary,
 			IsAutoIncrement:  column.IsAutoIncrement,

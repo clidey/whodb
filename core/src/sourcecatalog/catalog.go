@@ -77,7 +77,7 @@ var (
 var familySpecs = map[string]FamilySpec{
 	connectorPostgres: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres),
+		Traits:         postgresTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
@@ -92,7 +92,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorCockroachDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:         postgresTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
@@ -107,7 +107,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMySQL: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:         mysqlTraits(),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -121,7 +121,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMariaDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:         mysqlTraits(),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -135,7 +135,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorTiDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:         mysqlTraits(),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -149,7 +149,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorClickHouse: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:         clickHouseTraits(),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
@@ -162,7 +162,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorSqlite3: {
 		Category:      source.CategoryDatabase,
-		Traits:        fileTraits(source.ProfileLabelStrategyDatabase),
+		Traits:        sqliteTraits(),
 		Model:         source.ModelRelational,
 		Surfaces:      []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		RootActions:   []source.Action{source.ActionBrowse, source.ActionCreateChild},
@@ -174,7 +174,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorDuckDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         fileTraits(source.ProfileLabelStrategyDatabase),
+		Traits:         duckDBTraits(),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		RootActions:    []source.Action{source.ActionBrowse, source.ActionCreateChild},
@@ -201,7 +201,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorYugabyteDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         networkTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres),
+		Traits:         postgresTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserPostgres),
 		Model:          source.ModelRelational,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
@@ -216,7 +216,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMongoDB: {
 		Category:       source.CategoryDatabase,
-		Traits:         sampledNetworkTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserMongoSRV, source.ProfileLabelStrategyDefault),
+		Traits:         mongoTraits(),
 		Model:          source.ModelDocument,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindColl},
@@ -242,7 +242,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorMemcached: {
 		Category:      source.CategoryCache,
-		Traits:        networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		Traits:        memcachedTraits(),
 		Model:         source.ModelKeyValue,
 		Surfaces:      []source.Surface{source.SurfaceBrowser},
 		BrowsePath:    []source.ObjectKind{objectKindItem},
@@ -253,7 +253,7 @@ var familySpecs = map[string]FamilySpec{
 	},
 	connectorElasticSearch: {
 		Category:       source.CategorySearch,
-		Traits:         sampledNetworkTraits(source.HostInputModeHostname, source.HostInputURLParserNone, source.ProfileLabelStrategyDefault),
+		Traits:         elasticSearchTraits(),
 		Model:          source.ModelSearch,
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindIndex},
@@ -467,6 +467,7 @@ func buildTypeTraits(entry DatabaseEntry, family FamilySpec) source.TypeTraits {
 	if traits.Presentation.SchemaFidelity == "" {
 		traits.Presentation.SchemaFidelity = source.SchemaFidelityExact
 	}
+	traits.Metadata = defaultMetadataTraits(family, traits)
 	if traits.Query.ExplainMode == "" {
 		switch entry.Connector {
 		case connectorPostgres, connectorCockroachDB, connectorQuestDB, connectorYugabyteDB:
@@ -810,9 +811,11 @@ func cloneObjectTypes(objectTypes []source.ObjectType) []source.ObjectType {
 }
 
 func cloneFamilySpec(spec FamilySpec) FamilySpec {
+	traits := spec.Traits
+	traits.Metadata = source.CloneMetadataTraits(spec.Traits.Metadata)
 	return FamilySpec{
 		Category:       spec.Category,
-		Traits:         spec.Traits,
+		Traits:         traits,
 		Model:          spec.Model,
 		Surfaces:       slices.Clone(spec.Surfaces),
 		RootActions:    slices.Clone(spec.RootActions),
@@ -853,6 +856,142 @@ func sampledNetworkTraits(
 ) source.TypeTraits {
 	traits := networkTraitsWithProfileLabel(hostInputMode, urlParser, profileLabelStrategy)
 	traits.Presentation.SchemaFidelity = source.SchemaFidelitySampled
+	return traits
+}
+
+func postgresTraits(hostInputMode source.HostInputMode, urlParser source.HostInputURLParser) source.TypeTraits {
+	return withHiddenObjectRules(
+		networkTraits(hostInputMode, urlParser),
+		map[source.ObjectKind][]string{
+			source.ObjectKindSchema: {"crdb_internal", "information_schema", "pg_catalog", "sys"},
+		},
+		map[source.ObjectKind][]string{
+			source.ObjectKindSchema: {"pg_temp_", "pg_toast", "pg_toast_temp_"},
+		},
+	)
+}
+
+func mysqlTraits() source.TypeTraits {
+	return withHiddenObjectRules(
+		networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		map[source.ObjectKind][]string{
+			source.ObjectKindDatabase: {"information_schema", "mysql", "performance_schema", "sys"},
+		},
+		nil,
+	)
+}
+
+func clickHouseTraits() source.TypeTraits {
+	traits := withHiddenObjectRules(
+		networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		map[source.ObjectKind][]string{
+			source.ObjectKindDatabase: {"system"},
+		},
+		map[source.ObjectKind][]string{
+			source.ObjectKindTable: {".inner"},
+		},
+	)
+	traits.Metadata.Graph = source.MetadataFidelityInferred
+	return traits
+}
+
+func sqliteTraits() source.TypeTraits {
+	return withHiddenObjectRules(
+		fileTraits(source.ProfileLabelStrategyDatabase),
+		nil,
+		map[source.ObjectKind][]string{
+			source.ObjectKindTable: {"sqlite_"},
+		},
+	)
+}
+
+func duckDBTraits() source.TypeTraits {
+	return withHiddenObjectRules(
+		fileTraits(source.ProfileLabelStrategyDatabase),
+		map[source.ObjectKind][]string{
+			source.ObjectKindSchema: {"information_schema", "pg_catalog"},
+		},
+		nil,
+	)
+}
+
+func mongoTraits() source.TypeTraits {
+	return withHiddenObjectRules(
+		sampledNetworkTraits(source.HostInputModeHostnameOrURL, source.HostInputURLParserMongoSRV, source.ProfileLabelStrategyDefault),
+		nil,
+		map[source.ObjectKind][]string{
+			source.ObjectKindCollection: {"system."},
+		},
+	)
+}
+
+func memcachedTraits() source.TypeTraits {
+	return withHiddenObjectRules(
+		networkTraits(source.HostInputModeHostname, source.HostInputURLParserNone),
+		map[source.ObjectKind][]string{
+			source.ObjectKindItem: {"auth"},
+		},
+		nil,
+	)
+}
+
+func elasticSearchTraits() source.TypeTraits {
+	return withHiddenObjectRules(
+		sampledNetworkTraits(source.HostInputModeHostname, source.HostInputURLParserNone, source.ProfileLabelStrategyDefault),
+		nil,
+		map[source.ObjectKind][]string{
+			source.ObjectKindIndex: {"."},
+		},
+	)
+}
+
+func defaultMetadataTraits(family FamilySpec, traits source.TypeTraits) source.MetadataTraits {
+	metadata := source.CloneMetadataTraits(traits.Metadata)
+	switch family.Model {
+	case source.ModelRelational:
+		metadata = metadataWithDefaults(metadata, source.MetadataFidelityExact, source.MetadataFidelityExact, graphFidelity(family, source.MetadataFidelityExact))
+	case source.ModelDocument, source.ModelSearch:
+		metadata = metadataWithDefaults(metadata, source.MetadataFidelitySampled, source.MetadataFidelitySampled, graphFidelity(family, source.MetadataFidelityInferred))
+	case source.ModelKeyValue:
+		metadata = metadataWithDefaults(metadata, source.MetadataFidelitySynthetic, source.MetadataFidelityUnsupported, source.MetadataFidelityUnsupported)
+	case source.ModelGraph:
+		metadata = metadataWithDefaults(metadata, source.MetadataFidelityUnsupported, source.MetadataFidelityUnsupported, graphFidelity(family, source.MetadataFidelityExact))
+	default:
+		metadata = metadataWithDefaults(metadata, source.MetadataFidelityUnsupported, source.MetadataFidelityUnsupported, source.MetadataFidelityUnsupported)
+	}
+	if !slices.Contains(family.Surfaces, source.SurfaceGraph) {
+		metadata.Graph = source.MetadataFidelityUnsupported
+	}
+	return source.NormalizeMetadataTraits(metadata)
+}
+
+func metadataWithDefaults(metadata source.MetadataTraits, columns source.MetadataFidelity, constraints source.MetadataFidelity, graph source.MetadataFidelity) source.MetadataTraits {
+	if metadata.Columns == "" {
+		metadata.Columns = columns
+	}
+	if metadata.Constraints == "" {
+		metadata.Constraints = constraints
+	}
+	if metadata.Graph == "" {
+		metadata.Graph = graph
+	}
+	return metadata
+}
+
+func graphFidelity(family FamilySpec, fidelity source.MetadataFidelity) source.MetadataFidelity {
+	if slices.Contains(family.Surfaces, source.SurfaceGraph) {
+		return fidelity
+	}
+	return source.MetadataFidelityUnsupported
+}
+
+func withHiddenObjectRules(
+	traits source.TypeTraits,
+	names map[source.ObjectKind][]string,
+	prefixes map[source.ObjectKind][]string,
+) source.TypeTraits {
+	traits.Metadata.HiddenObjectNames = names
+	traits.Metadata.HiddenObjectPrefixes = prefixes
 	return traits
 }
 

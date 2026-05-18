@@ -22,6 +22,12 @@ query SourceTypes {
       mockData: MockData {
         supportsRelationalDependencies: SupportsRelationalDependencies
       }
+      metadata: Metadata {
+        columns: Columns
+        constraints: Constraints
+        graph: Graph
+        systemObjectFiltering: SystemObjectFiltering
+      }
     }
     connectionFields: ConnectionFields {
       Key

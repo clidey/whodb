@@ -2,6 +2,7 @@ query GetColumns($ref: SourceObjectRefInput!) {
   Columns: SourceColumns(ref: $ref) {
     Name
     Type
+    MetadataFidelity
     IsPrimary
     IsForeignKey
     ReferencedTable

@@ -109,6 +109,7 @@ type ComplexityRoot struct {
 		IsForeignKey     func(childComplexity int) int
 		IsPrimary        func(childComplexity int) int
 		Length           func(childComplexity int) int
+		MetadataFidelity func(childComplexity int) int
 		Name             func(childComplexity int) int
 		Precision        func(childComplexity int) int
 		ReferencedColumn func(childComplexity int) int
@@ -196,10 +197,11 @@ type ComplexityRoot struct {
 	}
 
 	GraphUnitRelationship struct {
-		Name         func(childComplexity int) int
-		Relationship func(childComplexity int) int
-		SourceColumn func(childComplexity int) int
-		TargetColumn func(childComplexity int) int
+		MetadataFidelity func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Relationship     func(childComplexity int) int
+		SourceColumn     func(childComplexity int) int
+		TargetColumn     func(childComplexity int) int
 	}
 
 	HealthStatus struct {
@@ -444,20 +446,28 @@ type ComplexityRoot struct {
 	}
 
 	SourceFieldConstraints struct {
-		AllowedValues func(childComplexity int) int
-		CheckMax      func(childComplexity int) int
-		CheckMin      func(childComplexity int) int
-		DefaultValue  func(childComplexity int) int
-		ForeignKey    func(childComplexity int) int
-		Identity      func(childComplexity int) int
-		Length        func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Nullable      func(childComplexity int) int
-		Precision     func(childComplexity int) int
-		Primary       func(childComplexity int) int
-		Scale         func(childComplexity int) int
-		Type          func(childComplexity int) int
-		Unique        func(childComplexity int) int
+		AllowedValues    func(childComplexity int) int
+		CheckMax         func(childComplexity int) int
+		CheckMin         func(childComplexity int) int
+		DefaultValue     func(childComplexity int) int
+		ForeignKey       func(childComplexity int) int
+		Identity         func(childComplexity int) int
+		Length           func(childComplexity int) int
+		MetadataFidelity func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Nullable         func(childComplexity int) int
+		Precision        func(childComplexity int) int
+		Primary          func(childComplexity int) int
+		Scale            func(childComplexity int) int
+		Type             func(childComplexity int) int
+		Unique           func(childComplexity int) int
+	}
+
+	SourceMetadataTraits struct {
+		Columns               func(childComplexity int) int
+		Constraints           func(childComplexity int) int
+		Graph                 func(childComplexity int) int
+		SystemObjectFiltering func(childComplexity int) int
 	}
 
 	SourceMockDataTraits struct {
@@ -534,6 +544,7 @@ type ComplexityRoot struct {
 
 	SourceTraits struct {
 		Connection   func(childComplexity int) int
+		Metadata     func(childComplexity int) int
 		MockData     func(childComplexity int) int
 		Presentation func(childComplexity int) int
 		Query        func(childComplexity int) int
@@ -987,6 +998,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Column.Length(childComplexity), true
+	case "Column.MetadataFidelity":
+		if e.ComplexityRoot.Column.MetadataFidelity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Column.MetadataFidelity(childComplexity), true
 	case "Column.Name":
 		if e.ComplexityRoot.Column.Name == nil {
 			break
@@ -1339,6 +1356,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GraphUnit.Unit(childComplexity), true
 
+	case "GraphUnitRelationship.MetadataFidelity":
+		if e.ComplexityRoot.GraphUnitRelationship.MetadataFidelity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GraphUnitRelationship.MetadataFidelity(childComplexity), true
 	case "GraphUnitRelationship.Name":
 		if e.ComplexityRoot.GraphUnitRelationship.Name == nil {
 			break
@@ -2700,6 +2723,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceFieldConstraints.Length(childComplexity), true
+	case "SourceFieldConstraints.MetadataFidelity":
+		if e.ComplexityRoot.SourceFieldConstraints.MetadataFidelity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceFieldConstraints.MetadataFidelity(childComplexity), true
 	case "SourceFieldConstraints.Name":
 		if e.ComplexityRoot.SourceFieldConstraints.Name == nil {
 			break
@@ -2742,6 +2771,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceFieldConstraints.Unique(childComplexity), true
+
+	case "SourceMetadataTraits.Columns":
+		if e.ComplexityRoot.SourceMetadataTraits.Columns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceMetadataTraits.Columns(childComplexity), true
+	case "SourceMetadataTraits.Constraints":
+		if e.ComplexityRoot.SourceMetadataTraits.Constraints == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceMetadataTraits.Constraints(childComplexity), true
+	case "SourceMetadataTraits.Graph":
+		if e.ComplexityRoot.SourceMetadataTraits.Graph == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceMetadataTraits.Graph(childComplexity), true
+	case "SourceMetadataTraits.SystemObjectFiltering":
+		if e.ComplexityRoot.SourceMetadataTraits.SystemObjectFiltering == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceMetadataTraits.SystemObjectFiltering(childComplexity), true
 
 	case "SourceMockDataTraits.SupportsRelationalDependencies":
 		if e.ComplexityRoot.SourceMockDataTraits.SupportsRelationalDependencies == nil {
@@ -2994,6 +3048,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceTraits.Connection(childComplexity), true
+	case "SourceTraits.Metadata":
+		if e.ComplexityRoot.SourceTraits.Metadata == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceTraits.Metadata(childComplexity), true
 	case "SourceTraits.MockData":
 		if e.ComplexityRoot.SourceTraits.MockData == nil {
 			break
@@ -3471,6 +3531,8 @@ func (ec *executionContext) childFields_Column(ctx context.Context, field graphq
 		return ec.fieldContext_Column_Type(ctx, field)
 	case "Name":
 		return ec.fieldContext_Column_Name(ctx, field)
+	case "MetadataFidelity":
+		return ec.fieldContext_Column_MetadataFidelity(ctx, field)
 	case "IsPrimary":
 		return ec.fieldContext_Column_IsPrimary(ctx, field)
 	case "IsForeignKey":
@@ -3651,6 +3713,8 @@ func (ec *executionContext) childFields_GraphUnitRelationship(ctx context.Contex
 		return ec.fieldContext_GraphUnitRelationship_Name(ctx, field)
 	case "Relationship":
 		return ec.fieldContext_GraphUnitRelationship_Relationship(ctx, field)
+	case "MetadataFidelity":
+		return ec.fieldContext_GraphUnitRelationship_MetadataFidelity(ctx, field)
 	case "SourceColumn":
 		return ec.fieldContext_GraphUnitRelationship_SourceColumn(ctx, field)
 	case "TargetColumn":
@@ -3991,6 +4055,8 @@ func (ec *executionContext) childFields_SourceFieldConstraints(ctx context.Conte
 		return ec.fieldContext_SourceFieldConstraints_Name(ctx, field)
 	case "Type":
 		return ec.fieldContext_SourceFieldConstraints_Type(ctx, field)
+	case "MetadataFidelity":
+		return ec.fieldContext_SourceFieldConstraints_MetadataFidelity(ctx, field)
 	case "Nullable":
 		return ec.fieldContext_SourceFieldConstraints_Nullable(ctx, field)
 	case "Primary":
@@ -4017,6 +4083,20 @@ func (ec *executionContext) childFields_SourceFieldConstraints(ctx context.Conte
 		return ec.fieldContext_SourceFieldConstraints_Scale(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SourceFieldConstraints", field.Name)
+}
+
+func (ec *executionContext) childFields_SourceMetadataTraits(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Columns":
+		return ec.fieldContext_SourceMetadataTraits_Columns(ctx, field)
+	case "Constraints":
+		return ec.fieldContext_SourceMetadataTraits_Constraints(ctx, field)
+	case "Graph":
+		return ec.fieldContext_SourceMetadataTraits_Graph(ctx, field)
+	case "SystemObjectFiltering":
+		return ec.fieldContext_SourceMetadataTraits_SystemObjectFiltering(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SourceMetadataTraits", field.Name)
 }
 
 func (ec *executionContext) childFields_SourceMockDataTraits(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -4173,6 +4253,8 @@ func (ec *executionContext) childFields_SourceTraits(ctx context.Context, field 
 		return ec.fieldContext_SourceTraits_Query(ctx, field)
 	case "MockData":
 		return ec.fieldContext_SourceTraits_MockData(ctx, field)
+	case "Metadata":
+		return ec.fieldContext_SourceTraits_Metadata(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SourceTraits", field.Name)
 }
@@ -6589,6 +6671,29 @@ func (ec *executionContext) fieldContext_Column_Name(_ context.Context, field gr
 	return graphql.NewScalarFieldContext("Column", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _Column_MetadataFidelity(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Column_MetadataFidelity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MetadataFidelity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Column_MetadataFidelity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Column", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
+}
+
 func (ec *executionContext) _Column_IsPrimary(ctx context.Context, field graphql.CollectedField, obj *model.Column) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7994,6 +8099,29 @@ func (ec *executionContext) _GraphUnitRelationship_Relationship(ctx context.Cont
 }
 func (ec *executionContext) fieldContext_GraphUnitRelationship_Relationship(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("GraphUnitRelationship", field, false, false, errors.New("field of type GraphUnitRelationshipType does not have child fields"))
+}
+
+func (ec *executionContext) _GraphUnitRelationship_MetadataFidelity(ctx context.Context, field graphql.CollectedField, obj *model.GraphUnitRelationship) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_GraphUnitRelationship_MetadataFidelity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MetadataFidelity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_GraphUnitRelationship_MetadataFidelity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("GraphUnitRelationship", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
 }
 
 func (ec *executionContext) _GraphUnitRelationship_SourceColumn(ctx context.Context, field graphql.CollectedField, obj *model.GraphUnitRelationship) (ret graphql.Marshaler) {
@@ -13401,6 +13529,29 @@ func (ec *executionContext) fieldContext_SourceFieldConstraints_Type(_ context.C
 	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _SourceFieldConstraints_MetadataFidelity(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceFieldConstraints_MetadataFidelity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MetadataFidelity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceFieldConstraints_MetadataFidelity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
+}
+
 func (ec *executionContext) _SourceFieldConstraints_Nullable(ctx context.Context, field graphql.CollectedField, obj *model.SourceFieldConstraints) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13684,6 +13835,98 @@ func (ec *executionContext) _SourceFieldConstraints_Scale(ctx context.Context, f
 }
 func (ec *executionContext) fieldContext_SourceFieldConstraints_Scale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SourceFieldConstraints", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SourceMetadataTraits_Columns(ctx context.Context, field graphql.CollectedField, obj *model.SourceMetadataTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceMetadataTraits_Columns(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Columns, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceMetadataTraits_Columns(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceMetadataTraits", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
+}
+
+func (ec *executionContext) _SourceMetadataTraits_Constraints(ctx context.Context, field graphql.CollectedField, obj *model.SourceMetadataTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceMetadataTraits_Constraints(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Constraints, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceMetadataTraits_Constraints(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceMetadataTraits", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
+}
+
+func (ec *executionContext) _SourceMetadataTraits_Graph(ctx context.Context, field graphql.CollectedField, obj *model.SourceMetadataTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceMetadataTraits_Graph(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Graph, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceMetadataTraits_Graph(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceMetadataTraits", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
+}
+
+func (ec *executionContext) _SourceMetadataTraits_SystemObjectFiltering(ctx context.Context, field graphql.CollectedField, obj *model.SourceMetadataTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceMetadataTraits_SystemObjectFiltering(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SystemObjectFiltering, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+			return ec.marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceMetadataTraits_SystemObjectFiltering(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceMetadataTraits", field, false, false, errors.New("field of type SourceMetadataFidelity does not have child fields"))
 }
 
 func (ec *executionContext) _SourceMockDataTraits_SupportsRelationalDependencies(ctx context.Context, field graphql.CollectedField, obj *model.SourceMockDataTraits) (ret graphql.Marshaler) {
@@ -14769,6 +15012,38 @@ func (ec *executionContext) fieldContext_SourceTraits_MockData(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_SourceMockDataTraits(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SourceTraits_Metadata(ctx context.Context, field graphql.CollectedField, obj *model.SourceTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceTraits_Metadata(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metadata, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SourceMetadataTraits) graphql.Marshaler {
+			return ec.marshalNSourceMetadataTraits2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataTraits(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceTraits_Metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SourceTraits",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SourceMetadataTraits(ctx, field)
 		},
 	}
 	return fc, nil
@@ -18283,6 +18558,11 @@ func (ec *executionContext) _Column(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "MetadataFidelity":
+			out.Values[i] = ec._Column_MetadataFidelity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "IsPrimary":
 			out.Values[i] = ec._Column_IsPrimary(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18893,6 +19173,11 @@ func (ec *executionContext) _GraphUnitRelationship(ctx context.Context, sel ast.
 			}
 		case "Relationship":
 			out.Values[i] = ec._GraphUnitRelationship_Relationship(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "MetadataFidelity":
+			out.Values[i] = ec._GraphUnitRelationship_MetadataFidelity(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -21298,6 +21583,11 @@ func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "MetadataFidelity":
+			out.Values[i] = ec._SourceFieldConstraints_MetadataFidelity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "Nullable":
 			out.Values[i] = ec._SourceFieldConstraints_Nullable(ctx, field, obj)
 		case "Primary":
@@ -21334,6 +21624,60 @@ func (ec *executionContext) _SourceFieldConstraints(ctx context.Context, sel ast
 			out.Values[i] = ec._SourceFieldConstraints_Precision(ctx, field, obj)
 		case "Scale":
 			out.Values[i] = ec._SourceFieldConstraints_Scale(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sourceMetadataTraitsImplementors = []string{"SourceMetadataTraits"}
+
+func (ec *executionContext) _SourceMetadataTraits(ctx context.Context, sel ast.SelectionSet, obj *model.SourceMetadataTraits) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sourceMetadataTraitsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SourceMetadataTraits")
+		case "Columns":
+			out.Values[i] = ec._SourceMetadataTraits_Columns(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Constraints":
+			out.Values[i] = ec._SourceMetadataTraits_Constraints(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Graph":
+			out.Values[i] = ec._SourceMetadataTraits_Graph(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "SystemObjectFiltering":
+			out.Values[i] = ec._SourceMetadataTraits_SystemObjectFiltering(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21954,6 +22298,11 @@ func (ec *executionContext) _SourceTraits(ctx context.Context, sel ast.Selection
 			}
 		case "MockData":
 			out.Values[i] = ec._SourceTraits_MockData(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Metadata":
+			out.Values[i] = ec._SourceTraits_Metadata(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -23808,6 +24157,26 @@ func (ec *executionContext) marshalNSourceHostInputURLParser2githubᚗcomᚋclid
 func (ec *executionContext) unmarshalNSourceLoginInput2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceLoginInput(ctx context.Context, v any) (model.SourceLoginInput, error) {
 	res, err := ec.unmarshalInputSourceLoginInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx context.Context, v any) (model.SourceMetadataFidelity, error) {
+	var res model.SourceMetadataFidelity
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSourceMetadataFidelity2githubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataFidelity(ctx context.Context, sel ast.SelectionSet, v model.SourceMetadataFidelity) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNSourceMetadataTraits2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMetadataTraits(ctx context.Context, sel ast.SelectionSet, v *model.SourceMetadataTraits) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SourceMetadataTraits(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSourceMockDataTraits2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐSourceMockDataTraits(ctx context.Context, sel ast.SelectionSet, v *model.SourceMockDataTraits) graphql.Marshaler {

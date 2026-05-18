@@ -19,6 +19,7 @@ import {
     SourceConnectionTransport,
     SourceHostInputMode,
     SourceHostInputUrlParser,
+    SourceMetadataFidelity,
     SourceModel,
     SourceQueryExplainMode,
     SourceProfileLabelStrategy,
@@ -52,6 +53,14 @@ export interface SourceContractState extends SourceContractFlags {
     explainMode: SourceQueryExplainMode;
     /** Whether mock-data generation can reason about relational dependencies. */
     supportsMockDataRelations: boolean;
+    /** Fidelity of source column metadata. */
+    columnMetadataFidelity: SourceMetadataFidelity;
+    /** Fidelity of source constraint metadata. */
+    constraintMetadataFidelity: SourceMetadataFidelity;
+    /** Fidelity of source graph metadata. */
+    graphMetadataFidelity: SourceMetadataFidelity;
+    /** Fidelity of source-owned internal object filtering. */
+    systemObjectFilteringFidelity: SourceMetadataFidelity;
     /** Whether the catalog is still loading without cached data. */
     loading: boolean;
     /** Whether the source behaves like a NoSQL database in the UI. */
@@ -91,6 +100,10 @@ export function useSourceContract(sourceType: string | undefined): SourceContrac
             supportsAnalyze: traits?.query.supportsAnalyze ?? false,
             explainMode: traits?.query.explainMode ?? SourceQueryExplainMode.None,
             supportsMockDataRelations: traits?.mockData.supportsRelationalDependencies ?? true,
+            columnMetadataFidelity: traits?.metadata.columns ?? SourceMetadataFidelity.Unknown,
+            constraintMetadataFidelity: traits?.metadata.constraints ?? SourceMetadataFidelity.Unknown,
+            graphMetadataFidelity: traits?.metadata.graph ?? SourceMetadataFidelity.Unsupported,
+            systemObjectFilteringFidelity: traits?.metadata.systemObjectFiltering ?? SourceMetadataFidelity.Unsupported,
             loading,
             isNoSQL: model != null && model !== SourceModel.Relational,
             storageUnitLabel: item?.storageUnitLabel ?? defaultObjectType?.PluralLabel ?? "Storage Units",
