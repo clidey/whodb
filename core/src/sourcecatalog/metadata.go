@@ -59,8 +59,8 @@ func init() {
 	RegisterDiscoveryPrefill("ElastiCache", source.DiscoveryPrefill{
 		AdvancedDefaults: []source.DiscoveryAdvancedDefault{
 			{
-				Key:        "TLS",
-				Value:      "true",
+				Key:        "SSL Mode",
+				Value:      "enabled",
 				Conditions: []source.DiscoveryMetadataCondition{{Key: "transitEncryption", Value: "true"}},
 			},
 		},
@@ -68,8 +68,8 @@ func init() {
 	RegisterDiscoveryPrefill("Valkey", source.DiscoveryPrefill{
 		AdvancedDefaults: []source.DiscoveryAdvancedDefault{
 			{
-				Key:        "TLS",
-				Value:      "true",
+				Key:        "SSL Mode",
+				Value:      "enabled",
 				Conditions: []source.DiscoveryMetadataCondition{{Key: "transitEncryption", Value: "true"}},
 			},
 		},
@@ -84,7 +84,7 @@ func init() {
 	})
 	RegisterDiscoveryPrefill(connectorRedis, source.DiscoveryPrefill{
 		AdvancedDefaults: []source.DiscoveryAdvancedDefault{
-			{Key: "TLS", Value: "true", ProviderTypes: []string{"Azure"}},
+			{Key: "SSL Mode", Value: "enabled", ProviderTypes: []string{"Azure"}},
 		},
 	})
 	RegisterDiscoveryPrefill(connectorMongoDB, source.DiscoveryPrefill{

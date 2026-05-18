@@ -82,6 +82,34 @@ func TestBuildTypeSpecContractsAreSelfConsistent(t *testing.T) {
 	}
 }
 
+func TestBuildTypeSpecConnectionContractsAreSelfConsistent(t *testing.T) {
+	t.Parallel()
+
+	for _, entry := range dbcatalog.All() {
+		entry := entry
+		t.Run(string(entry.ID), func(t *testing.T) {
+			t.Parallel()
+
+			spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+				ID:             string(entry.ID),
+				Label:          entry.Label,
+				Connector:      string(entry.PluginType),
+				Extra:          maps.Clone(entry.Extra),
+				Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+				RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+				IsAWSManaged:   entry.IsAWSManaged,
+				SSLModes:       sourceSSLModes(entry.SSLModes),
+			})
+			if !ok {
+				t.Fatalf("expected %q to map into the source catalog", entry.ID)
+			}
+			if err := source.ValidateConnectionContract(spec); err != nil {
+				t.Fatalf("expected source connection contract to be self-consistent: %v", err)
+			}
+		})
+	}
+}
+
 func TestBuildTypeSpecExposesMutableDataActions(t *testing.T) {
 	t.Parallel()
 

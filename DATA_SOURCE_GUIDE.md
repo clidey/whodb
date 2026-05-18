@@ -734,8 +734,11 @@ Only needed if your source requires a heavily customized connection form that do
 For normal database sources, do not build a bespoke form first. Prefer the
 backend-declared `connectionFields` and `sslModes` contract and let the shared
 frontend connection form render it. CE login and EE platform create/edit now
-share the same advanced-field and SSL rendering path, so generic field-based
-sources should work in both places without extra frontend code.
+share the same primary-field, advanced-field, and SSL rendering path, so
+generic field-based sources should work in both places without extra frontend
+code. In plain English: declare the connection inputs once in the backend
+source catalog, and both editions render and validate the same form from that
+declaration.
 
 - **CE**: Register via `registerSourceTypeOverrides()` in `frontend/src/config/source-registry.ts`
 - **EE**: Register in `ee/frontend/src/config.tsx` via `eeSourceTypeOverrides` array, which is passed to `registerSourceTypeOverrides()` in `ee/frontend/src/register.ts`
@@ -749,6 +752,10 @@ const override: SourceTypeOverride = {
 
 Use `customFormRenderer` only when the standard field-based flow is genuinely
 insufficient.
+
+Connection prefills must target declared `connectionFields` or reserved SSL
+fields such as `SSL Mode`; `ValidateConnectionContract` tests this for the CE
+and EE catalogs.
 
 The frontend source-contract helpers auto-derive capability flags
 (`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`,

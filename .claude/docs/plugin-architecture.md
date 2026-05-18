@@ -48,6 +48,12 @@ TLS defaults, managed-service flags, source traits, etc.).
 Connection defaults such as ports belong in the shared database/source catalog
 metadata (`dbcatalog` `Extra["Port"]`, which flows into
 `SourceType.ConnectionFields`), not in per-plugin registries.
+Connection forms should also flow from `SourceType.ConnectionFields` and
+`SSLModes`: the shared frontend renderer now handles the standard primary,
+advanced, and SSL fields for CE login and EE platform create/edit. Discovery
+prefills should reference declared fields or reserved SSL keys such as
+`SSL Mode`, and sourcecatalog tests enforce that with
+`ValidateConnectionContract`.
 
 If an alias needs even one runtime override, promote it to a thin first-class
 plugin wrapper instead of adding alias-specific branches in shared code. Common

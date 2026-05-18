@@ -15,7 +15,7 @@
  */
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
-import {Badge, Button, Card, cn, Input, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
+import {Badge, Button, Card, cn, Label, ModeToggle, Separator, toast, useTheme} from '@clidey/ux';
 import {SearchSelect} from '../../components/ux';
 import {
     SettingsConfigDocument,
@@ -24,7 +24,6 @@ import {
     LoginSourceDocument,
     TestSourceConnectionDocument,
     LoginWithSourceProfileDocument,
-    SourceHostInputMode,
     SourceHostInputUrlParser,
 } from '@graphql';
 import classNames from "classnames";
@@ -37,7 +36,6 @@ import {
     ChatBubbleLeftRightIcon,
     CheckCircleIcon,
     ChevronDownIcon,
-    CircleStackIcon,
     CodeBracketIcon,
     ShareIcon,
     SparklesIcon,
@@ -87,11 +85,11 @@ import {
     buildSourceAdvancedSectionState,
     canSubmitCustomConnectionForm,
     canSubmitStandardConnectionForm,
-    findConnectionFieldByKey,
     getPromotedConnectionFieldKeys,
     supportsDatabaseFieldOptions,
     usesFileTransport,
 } from '@/utils/source-connection-form';
+import { buildDatabaseFieldOptions, SourceConnectionFields } from '@/components/source-connection-fields';
 import { SSL_KEYS } from '@/utils/source-ssl';
 
 /**
@@ -876,105 +874,30 @@ export const LoginForm: FC<LoginFormProps> = ({
             />;
         }
 
-        const hostnameField = findConnectionFieldByKey(databaseType, "Hostname");
-        const portField = findConnectionFieldByKey(databaseType, "Port");
-        const usernameField = findConnectionFieldByKey(databaseType, "Username");
-        const passwordField = findConnectionFieldByKey(databaseType, "Password");
-        const databaseField = findConnectionFieldByKey(databaseType, "Database");
-        const searchPathField = findConnectionFieldByKey(databaseType, "Search Path");
-
-        if (usesFileTransport(databaseType)) {
-            return <div className="flex flex-col gap-lg w-full">
-                <div className="flex flex-col gap-xs w-full">
-                    <Label htmlFor="sqlite-database">{t(databaseField?.LabelKey ?? 'database')}</Label>
-                    {isDesktop ? (
-                        <div className="flex flex-col gap-sm w-full">
-                            <Input
-                                id="sqlite-database"
-                                value={database}
-                                onChange={(e) => setDatabase(e.target.value)}
-                                placeholder={databaseField?.PlaceholderKey ? t(databaseField.PlaceholderKey) : t('selectOrEnterDatabasePath')}
-                                data-testid="database"
-                                aria-required={databaseField?.Required ? "true" : undefined}
-                                aria-invalid={error ? "true" : undefined}
-                                aria-describedby={error ? "login-error" : undefined}
-                            />
-                            <Button
-                                onClick={handleBrowseDatabaseFile}
-                                variant="outline"
-                                className="w-full"
-                            >
-                                {t('browseForSqliteFile')}
-                            </Button>
-                        </div>
-                    ) : (
-                        <SearchSelect
-                            value={database}
-                            onChange={setDatabase}
-                            disabled={databasesLoading}
-                            options={
-                                databasesLoading
-                                    ? []
-                                    : foundDatabases?.SourceFieldOptions?.map(db => ({
-                                    value: db,
-                                    label: db,
-                                    icon: <CircleStackIcon className="w-4 h-4"/>,
-                                })) ?? []
-                            }
-                            placeholder={t('selectDatabase')}
-                            buttonProps={{
-                                "data-testid": "database",
-                                "aria-required": databaseField?.Required ? "true" : undefined,
-                                "aria-invalid": error ? "true" : undefined,
-                                "aria-describedby": error ? "login-error" : undefined,
-                            }}
-                            contentClassName="w-[var(--radix-popover-trigger-width)] login-select-popover"
-                            rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
-                        />
-                    )}
-                </div>
-            </div>
-        }
-        return <div className="flex flex-col gap-lg w-full">
-            { databaseType.fields?.hostname && (
-                <div className="flex gap-sm w-full items-end">
-                    <div className="flex flex-col gap-sm flex-1">
-                        <Label htmlFor="login-hostname">{databaseType.traits?.connection.hostInputMode === SourceHostInputMode.HostnameOrUrl ? t('hostNameOrUrl') : t('hostName')}</Label>
-                        <Input id="login-hostname" value={hostName} onChange={(e) => handleHostNameChange(e.target.value)} data-testid="hostname" placeholder={hostnameField?.PlaceholderKey ? t(hostnameField.PlaceholderKey) : t('enterHostName')} aria-required={hostnameField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
-                    </div>
-                    { portField && (
-                        <div className="flex flex-col gap-sm w-24">
-                            <Label htmlFor="login-port">{t(portField.LabelKey)}</Label>
-                            <Input id="login-port" value={advancedForm['Port'] ?? portField.DefaultValue ?? ''} onChange={(e) => handleAdvancedForm('Port', e.target.value)} data-testid="port" placeholder={portField.DefaultValue ?? ''} />
-                        </div>
-                    )}
-                </div>
-            )}
-            { databaseType.fields?.username && (
-                <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-username">{t('username')}</Label>
-                    <Input ref={usernameInputRef} id="login-username" value={username} onChange={(e) => setUsername(e.target.value)} data-testid="username" placeholder={usernameField?.PlaceholderKey ? t(usernameField.PlaceholderKey) : t('enterUsername')} aria-required={usernameField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
-                </div>
-            )}
-            { databaseType.fields?.password && (
-                <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-password">{t('password')}</Label>
-                    <Input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" data-testid="password" placeholder={passwordField?.PlaceholderKey ? t(passwordField.PlaceholderKey) : t('enterPassword')} aria-required={passwordField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} showPasswordToggle={!isEmbedded} />
-                </div>
-            )}
-            { databaseType.fields?.database && (
-                <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-database">{t(databaseField?.LabelKey ?? 'database')}</Label>
-                    <Input id="login-database" value={database} onChange={(e) => setDatabase(e.target.value)} data-testid="database" placeholder={databaseField?.PlaceholderKey ? t(databaseField.PlaceholderKey) : t('enterDatabase')} aria-required={databaseField?.Required ? "true" : undefined} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
-                </div>
-            )}
-            { databaseType.fields?.searchPath && (
-                <div className="flex flex-col gap-sm w-full">
-                    <Label htmlFor="login-search-path">{t(searchPathField?.LabelKey ?? 'advancedFields.searchPath')}</Label>
-                    <Input id="login-search-path" value={advancedForm['Search Path'] ?? ''} onChange={(e) => handleAdvancedForm('Search Path', e.target.value)} data-testid="search-path" placeholder={searchPathField?.PlaceholderKey ? t(searchPathField.PlaceholderKey) : t('enterSearchPath')} aria-required={searchPathField?.Required ? "true" : undefined} />
-                </div>
-            )}
-        </div>
+        return (
+            <SourceConnectionFields
+                databaseType={databaseType}
+                hostName={hostName}
+                onHostNameChange={handleHostNameChange}
+                username={username}
+                setUsername={setUsername}
+                usernameInputRef={usernameInputRef}
+                password={password}
+                setPassword={setPassword}
+                database={database}
+                setDatabase={setDatabase}
+                advancedForm={advancedForm}
+                onAdvancedFormChange={handleAdvancedForm}
+                translate={t}
+                showPasswordToggle={!isEmbedded}
+                isDesktop={isDesktop}
+                onBrowseDatabaseFile={handleBrowseDatabaseFile}
+                databaseOptions={buildDatabaseFieldOptions(foundDatabases?.SourceFieldOptions)}
+                databaseOptionsLoading={databasesLoading}
+                hasError={error != null}
+                errorId="login-error"
+            />
+        );
     }, [database, databaseType, databasesLoading, foundDatabases?.SourceFieldOptions, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseDatabaseFile, advancedForm, formResetKey, t, error, isEmbedded]);
 
     const loginWithCredentialsEnabled = useMemo(() => {

@@ -78,8 +78,8 @@ func TestManagedServiceEntryRetainsFlags(t *testing.T) {
 		t.Fatal("expected ElastiCache to be marked as AWS managed")
 	}
 
-	if entry.Extra["TLS"].DefaultValue != "true" {
-		t.Fatalf("expected ElastiCache TLS default, got %q", entry.Extra["TLS"].DefaultValue)
+	if entry.Extra["SSL Mode"].DefaultValue != "enabled" {
+		t.Fatalf("expected ElastiCache SSL mode default, got %q", entry.Extra["SSL Mode"].DefaultValue)
 	}
 }
 

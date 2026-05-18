@@ -100,6 +100,82 @@ func ValidateContract(spec TypeSpec) error {
 	return nil
 }
 
+// ValidateConnectionContract reports source connection-field inconsistencies
+// that would make generated forms, discovery prefills, and stored credentials
+// disagree about the source's connection shape.
+func ValidateConnectionContract(spec TypeSpec) error {
+	seenFields := map[string]struct{}{}
+	for _, field := range spec.ConnectionFields {
+		fieldKey := strings.TrimSpace(field.Key)
+		if fieldKey == "" {
+			return fmt.Errorf("%s connection field has an empty key", sourceLabel(spec))
+		}
+
+		normalizedKey := strings.ToLower(fieldKey)
+		if _, ok := seenFields[normalizedKey]; ok {
+			return fmt.Errorf("%s connection field %q is declared more than once", sourceLabel(spec), field.Key)
+		}
+		seenFields[normalizedKey] = struct{}{}
+
+		if !isValidConnectionFieldKind(field.Kind) {
+			return fmt.Errorf("%s connection field %q has unsupported kind %q", sourceLabel(spec), field.Key, field.Kind)
+		}
+		if !isValidConnectionFieldSection(field.Section) {
+			return fmt.Errorf("%s connection field %q has unsupported section %q", sourceLabel(spec), field.Key, field.Section)
+		}
+		if strings.TrimSpace(field.LabelKey) == "" {
+			return fmt.Errorf("%s connection field %q has an empty label key", sourceLabel(spec), field.Key)
+		}
+		if !isValidCredentialField(field.CredentialField) {
+			return fmt.Errorf("%s connection field %q has unsupported credential field %q", sourceLabel(spec), field.Key, field.CredentialField)
+		}
+		if field.CredentialField == CredentialFieldAdvanced && strings.TrimSpace(field.AdvancedKey) == "" {
+			return fmt.Errorf("%s advanced connection field %q has an empty advanced key", sourceLabel(spec), field.Key)
+		}
+	}
+
+	for _, item := range spec.DiscoveryPrefill.AdvancedDefaults {
+		key := strings.TrimSpace(item.Key)
+		if key == "" {
+			return fmt.Errorf("%s discovery prefill has an empty field key", sourceLabel(spec))
+		}
+		if isReservedSSLConnectionKey(key) && len(spec.SSLModes) == 0 {
+			return fmt.Errorf("%s discovery prefill references SSL field %q without declaring SSL modes", sourceLabel(spec), item.Key)
+		}
+		if _, ok := seenFields[strings.ToLower(key)]; !ok && !isReservedSSLConnectionKey(key) {
+			return fmt.Errorf("%s discovery prefill references undeclared connection field %q", sourceLabel(spec), item.Key)
+		}
+	}
+
+	seenModes := map[string]struct{}{}
+	for _, mode := range spec.SSLModes {
+		value := strings.TrimSpace(mode.Value)
+		if value == "" {
+			return fmt.Errorf("%s SSL mode has an empty value", sourceLabel(spec))
+		}
+		normalizedValue := strings.ToLower(value)
+		if _, ok := seenModes[normalizedValue]; ok {
+			return fmt.Errorf("%s SSL mode %q is declared more than once", sourceLabel(spec), mode.Value)
+		}
+		seenModes[normalizedValue] = struct{}{}
+
+		seenAliases := map[string]struct{}{}
+		for _, alias := range mode.Aliases {
+			alias = strings.TrimSpace(alias)
+			if alias == "" {
+				return fmt.Errorf("%s SSL mode %q has an empty alias", sourceLabel(spec), mode.Value)
+			}
+			normalizedAlias := strings.ToLower(alias)
+			if _, ok := seenAliases[normalizedAlias]; ok {
+				return fmt.Errorf("%s SSL mode %q alias %q is declared more than once", sourceLabel(spec), mode.Value, alias)
+			}
+			seenAliases[normalizedAlias] = struct{}{}
+		}
+	}
+
+	return nil
+}
+
 // ValidateSurfaceSupported returns an error when the source contract does not
 // expose the requested surface.
 func ValidateSurfaceSupported(spec TypeSpec, surface Surface) error {
@@ -194,6 +270,42 @@ func sourceLabel(spec TypeSpec) string {
 		return spec.ID
 	}
 	return "source"
+}
+
+func isValidConnectionFieldKind(kind ConnectionFieldKind) bool {
+	switch kind {
+	case ConnectionFieldKindText, ConnectionFieldKindPassword, ConnectionFieldKindBoolean, ConnectionFieldKindFilePath:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidConnectionFieldSection(section ConnectionFieldSection) bool {
+	switch section {
+	case ConnectionFieldSectionPrimary, ConnectionFieldSectionAdvanced:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidCredentialField(field CredentialField) bool {
+	switch field {
+	case "", CredentialFieldHostname, CredentialFieldUsername, CredentialFieldPassword, CredentialFieldDatabase, CredentialFieldAdvanced:
+		return true
+	default:
+		return false
+	}
+}
+
+func isReservedSSLConnectionKey(key string) bool {
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "ssl mode", "ssl ca content", "ssl client cert content", "ssl client key content", "ssl server name":
+		return true
+	default:
+		return false
+	}
 }
 
 func cloneContractObjectTypes(objectTypes []ObjectType) []ObjectType {
