@@ -130,6 +130,18 @@ type ComplexityRoot struct {
 		Unique              func(childComplexity int) int
 	}
 
+	ColumnCreationLabels struct {
+		CheckMax     func(childComplexity int) int
+		CheckMin     func(childComplexity int) int
+		CheckValues  func(childComplexity int) int
+		DefaultValue func(childComplexity int) int
+		ForeignKey   func(childComplexity int) int
+		Identity     func(childComplexity int) int
+		Nullable     func(childComplexity int) int
+		PrimaryKey   func(childComplexity int) int
+		Unique       func(childComplexity int) int
+	}
+
 	CreationOptionDefinition struct {
 		Key      func(childComplexity int) int
 		Label    func(childComplexity int) int
@@ -296,6 +308,7 @@ type ComplexityRoot struct {
 
 	ObjectCreationMetadata struct {
 		ColumnCapabilities func(childComplexity int) int
+		ColumnLabels       func(childComplexity int) int
 		ObjectKind         func(childComplexity int) int
 		RequiresColumns    func(childComplexity int) int
 		Supported          func(childComplexity int) int
@@ -1071,6 +1084,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ColumnCreationCapabilities.Unique(childComplexity), true
+
+	case "ColumnCreationLabels.CheckMax":
+		if e.ComplexityRoot.ColumnCreationLabels.CheckMax == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.CheckMax(childComplexity), true
+	case "ColumnCreationLabels.CheckMin":
+		if e.ComplexityRoot.ColumnCreationLabels.CheckMin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.CheckMin(childComplexity), true
+	case "ColumnCreationLabels.CheckValues":
+		if e.ComplexityRoot.ColumnCreationLabels.CheckValues == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.CheckValues(childComplexity), true
+	case "ColumnCreationLabels.DefaultValue":
+		if e.ComplexityRoot.ColumnCreationLabels.DefaultValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.DefaultValue(childComplexity), true
+	case "ColumnCreationLabels.ForeignKey":
+		if e.ComplexityRoot.ColumnCreationLabels.ForeignKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.ForeignKey(childComplexity), true
+	case "ColumnCreationLabels.Identity":
+		if e.ComplexityRoot.ColumnCreationLabels.Identity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.Identity(childComplexity), true
+	case "ColumnCreationLabels.Nullable":
+		if e.ComplexityRoot.ColumnCreationLabels.Nullable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.Nullable(childComplexity), true
+	case "ColumnCreationLabels.PrimaryKey":
+		if e.ComplexityRoot.ColumnCreationLabels.PrimaryKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.PrimaryKey(childComplexity), true
+	case "ColumnCreationLabels.Unique":
+		if e.ComplexityRoot.ColumnCreationLabels.Unique == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ColumnCreationLabels.Unique(childComplexity), true
 
 	case "CreationOptionDefinition.Key":
 		if e.ComplexityRoot.CreationOptionDefinition.Key == nil {
@@ -1899,6 +1967,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ObjectCreationMetadata.ColumnCapabilities(childComplexity), true
+	case "ObjectCreationMetadata.ColumnLabels":
+		if e.ComplexityRoot.ObjectCreationMetadata.ColumnLabels == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ObjectCreationMetadata.ColumnLabels(childComplexity), true
 	case "ObjectCreationMetadata.ObjectKind":
 		if e.ComplexityRoot.ObjectCreationMetadata.ObjectKind == nil {
 			break
@@ -3441,6 +3515,30 @@ func (ec *executionContext) childFields_ColumnCreationCapabilities(ctx context.C
 	return nil, fmt.Errorf("no field named %q was found under type ColumnCreationCapabilities", field.Name)
 }
 
+func (ec *executionContext) childFields_ColumnCreationLabels(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "Nullable":
+		return ec.fieldContext_ColumnCreationLabels_Nullable(ctx, field)
+	case "PrimaryKey":
+		return ec.fieldContext_ColumnCreationLabels_PrimaryKey(ctx, field)
+	case "Unique":
+		return ec.fieldContext_ColumnCreationLabels_Unique(ctx, field)
+	case "Identity":
+		return ec.fieldContext_ColumnCreationLabels_Identity(ctx, field)
+	case "DefaultValue":
+		return ec.fieldContext_ColumnCreationLabels_DefaultValue(ctx, field)
+	case "CheckValues":
+		return ec.fieldContext_ColumnCreationLabels_CheckValues(ctx, field)
+	case "CheckMin":
+		return ec.fieldContext_ColumnCreationLabels_CheckMin(ctx, field)
+	case "CheckMax":
+		return ec.fieldContext_ColumnCreationLabels_CheckMax(ctx, field)
+	case "ForeignKey":
+		return ec.fieldContext_ColumnCreationLabels_ForeignKey(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ColumnCreationLabels", field.Name)
+}
+
 func (ec *executionContext) childFields_CreationOptionDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "Key":
@@ -3709,6 +3807,8 @@ func (ec *executionContext) childFields_ObjectCreationMetadata(ctx context.Conte
 		return ec.fieldContext_ObjectCreationMetadata_TypeDefinitions(ctx, field)
 	case "ColumnCapabilities":
 		return ec.fieldContext_ObjectCreationMetadata_ColumnCapabilities(ctx, field)
+	case "ColumnLabels":
+		return ec.fieldContext_ObjectCreationMetadata_ColumnLabels(ctx, field)
 	case "TableCapabilities":
 		return ec.fieldContext_ObjectCreationMetadata_TableCapabilities(ctx, field)
 	case "TableOptions":
@@ -6878,6 +6978,213 @@ func (ec *executionContext) _ColumnCreationCapabilities_ForeignKey(ctx context.C
 }
 func (ec *executionContext) fieldContext_ColumnCreationCapabilities_ForeignKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ColumnCreationCapabilities", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_Nullable(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_Nullable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Nullable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_Nullable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_PrimaryKey(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_PrimaryKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PrimaryKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_PrimaryKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_Unique(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_Unique(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Unique, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_Unique(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_Identity(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_Identity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Identity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_Identity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_DefaultValue(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_DefaultValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_DefaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_CheckValues(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_CheckValues(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckValues, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_CheckValues(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_CheckMin(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_CheckMin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckMin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_CheckMin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_CheckMax(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_CheckMax(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckMax, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_CheckMax(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ColumnCreationLabels_ForeignKey(ctx context.Context, field graphql.CollectedField, obj *model.ColumnCreationLabels) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ColumnCreationLabels_ForeignKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ForeignKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ColumnCreationLabels_ForeignKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ColumnCreationLabels", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _CreationOptionDefinition_Key(ctx context.Context, field graphql.CollectedField, obj *model.CreationOptionDefinition) (ret graphql.Marshaler) {
@@ -10204,6 +10511,38 @@ func (ec *executionContext) fieldContext_ObjectCreationMetadata_ColumnCapabiliti
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_ColumnCreationCapabilities(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectCreationMetadata_ColumnLabels(ctx context.Context, field graphql.CollectedField, obj *model.ObjectCreationMetadata) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ObjectCreationMetadata_ColumnLabels(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ColumnLabels, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ColumnCreationLabels) graphql.Marshaler {
+			return ec.marshalNColumnCreationLabels2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnCreationLabels(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ObjectCreationMetadata_ColumnLabels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectCreationMetadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ColumnCreationLabels(ctx, field)
 		},
 	}
 	return fc, nil
@@ -18071,6 +18410,85 @@ func (ec *executionContext) _ColumnCreationCapabilities(ctx context.Context, sel
 	return out
 }
 
+var columnCreationLabelsImplementors = []string{"ColumnCreationLabels"}
+
+func (ec *executionContext) _ColumnCreationLabels(ctx context.Context, sel ast.SelectionSet, obj *model.ColumnCreationLabels) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, columnCreationLabelsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ColumnCreationLabels")
+		case "Nullable":
+			out.Values[i] = ec._ColumnCreationLabels_Nullable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "PrimaryKey":
+			out.Values[i] = ec._ColumnCreationLabels_PrimaryKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Unique":
+			out.Values[i] = ec._ColumnCreationLabels_Unique(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Identity":
+			out.Values[i] = ec._ColumnCreationLabels_Identity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "DefaultValue":
+			out.Values[i] = ec._ColumnCreationLabels_DefaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CheckValues":
+			out.Values[i] = ec._ColumnCreationLabels_CheckValues(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CheckMin":
+			out.Values[i] = ec._ColumnCreationLabels_CheckMin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "CheckMax":
+			out.Values[i] = ec._ColumnCreationLabels_CheckMax(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ForeignKey":
+			out.Values[i] = ec._ColumnCreationLabels_ForeignKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var creationOptionDefinitionImplementors = []string{"CreationOptionDefinition"}
 
 func (ec *executionContext) _CreationOptionDefinition(ctx context.Context, sel ast.SelectionSet, obj *model.CreationOptionDefinition) graphql.Marshaler {
@@ -19320,6 +19738,11 @@ func (ec *executionContext) _ObjectCreationMetadata(ctx context.Context, sel ast
 			}
 		case "ColumnCapabilities":
 			out.Values[i] = ec._ObjectCreationMetadata_ColumnCapabilities(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ColumnLabels":
+			out.Values[i] = ec._ObjectCreationMetadata_ColumnLabels(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22528,6 +22951,16 @@ func (ec *executionContext) marshalNColumnCreationCapabilities2ᚖgithubᚗcom�
 		return graphql.Null
 	}
 	return ec._ColumnCreationCapabilities(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNColumnCreationLabels2ᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnCreationLabels(ctx context.Context, sel ast.SelectionSet, v *model.ColumnCreationLabels) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ColumnCreationLabels(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNColumnDefinitionInput2ᚕᚖgithubᚗcomᚋclideyᚋwhodbᚋcoreᚋgraphᚋmodelᚐColumnDefinitionInputᚄ(ctx context.Context, v any) ([]*model.ColumnDefinitionInput, error) {

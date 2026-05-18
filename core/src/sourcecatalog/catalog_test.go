@@ -202,6 +202,43 @@ func TestQuestDBSessionMetadataUsesQuestDBTypes(t *testing.T) {
 	}
 }
 
+func TestObjectCreationMetadataUsesSourceNativeColumnLabels(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		id                     string
+		wantIdentity           string
+		wantPrimary            string
+		wantIdentityCapability bool
+	}{
+		{id: "MySQL", wantIdentity: "AUTO_INCREMENT", wantPrimary: "PRIMARY KEY", wantIdentityCapability: true},
+		{id: "Postgres", wantIdentity: "GENERATED ALWAYS AS IDENTITY", wantPrimary: "PRIMARY KEY", wantIdentityCapability: true},
+		{id: "DuckDB", wantIdentity: "DEFAULT nextval()", wantPrimary: "PRIMARY KEY", wantIdentityCapability: true},
+		{id: "Sqlite3", wantIdentity: "Identity", wantPrimary: "PRIMARY KEY", wantIdentityCapability: false},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.id, func(t *testing.T) {
+			t.Parallel()
+
+			metadata, ok := coresourcecatalog.ResolveObjectCreationMetadata(tt.id)
+			if !ok {
+				t.Fatalf("expected object creation metadata for %q", tt.id)
+			}
+			if metadata.ColumnLabels.Identity != tt.wantIdentity {
+				t.Fatalf("expected identity label %q, got %q", tt.wantIdentity, metadata.ColumnLabels.Identity)
+			}
+			if metadata.ColumnLabels.PrimaryKey != tt.wantPrimary {
+				t.Fatalf("expected primary label %q, got %q", tt.wantPrimary, metadata.ColumnLabels.PrimaryKey)
+			}
+			if metadata.ColumnCapabilities.Identity != tt.wantIdentityCapability {
+				t.Fatalf("expected identity capability %t, got %t", tt.wantIdentityCapability, metadata.ColumnCapabilities.Identity)
+			}
+		})
+	}
+}
+
 func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 	t.Parallel()
 

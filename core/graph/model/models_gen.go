@@ -174,6 +174,18 @@ type ColumnCreationCapabilities struct {
 	ForeignKey          bool `json:"ForeignKey"`
 }
 
+type ColumnCreationLabels struct {
+	Nullable     string `json:"Nullable"`
+	PrimaryKey   string `json:"PrimaryKey"`
+	Unique       string `json:"Unique"`
+	Identity     string `json:"Identity"`
+	DefaultValue string `json:"DefaultValue"`
+	CheckValues  string `json:"CheckValues"`
+	CheckMin     string `json:"CheckMin"`
+	CheckMax     string `json:"CheckMax"`
+	ForeignKey   string `json:"ForeignKey"`
+}
+
 type ColumnDefinitionInput struct {
 	Name         string                     `json:"Name"`
 	Type         string                     `json:"Type"`
@@ -394,6 +406,7 @@ type ObjectCreationMetadata struct {
 	RequiresColumns    bool                        `json:"RequiresColumns"`
 	TypeDefinitions    []*TypeDefinition           `json:"TypeDefinitions"`
 	ColumnCapabilities *ColumnCreationCapabilities `json:"ColumnCapabilities"`
+	ColumnLabels       *ColumnCreationLabels       `json:"ColumnLabels"`
 	TableCapabilities  *TableCreationCapabilities  `json:"TableCapabilities"`
 	TableOptions       []*CreationOptionDefinition `json:"TableOptions"`
 }

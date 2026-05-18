@@ -150,3 +150,17 @@ func TestSQLBuilderCreateTableIncludesCommonConstraints(t *testing.T) {
 		}
 	}
 }
+
+func TestSQLBuilderCreateTableQualifiesUnqualifiedForeignKeyReferences(t *testing.T) {
+	db := newDryRunDB(t)
+	sb := NewSQLBuilder(db, nil)
+
+	ddl := sb.CreateTableQuery("test_schema", "orders", []ColumnDef{
+		{Name: "user_id", Type: "INTEGER", ReferencesTable: "users", ReferencesColumn: "id"},
+	})
+
+	expected := "FOREIGN KEY (" + sb.QuoteIdentifier("user_id") + ") REFERENCES " + sb.QuoteIdentifier("test_schema") + "." + sb.QuoteIdentifier("users") + " (" + sb.QuoteIdentifier("id") + ")"
+	if !strings.Contains(ddl, expected) {
+		t.Fatalf("expected DDL to include %q, got %q", expected, ddl)
+	}
+}

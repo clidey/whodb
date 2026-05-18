@@ -24,6 +24,17 @@ query SourceObjectCreationMetadata($parent: SourceObjectRefInput) {
       CheckMinMax
       ForeignKey
     }
+    ColumnLabels {
+      Nullable
+      PrimaryKey
+      Unique
+      Identity
+      DefaultValue
+      CheckValues
+      CheckMin
+      CheckMax
+      ForeignKey
+    }
     TableCapabilities {
       RequiresPrimaryKey
       PartitionKey

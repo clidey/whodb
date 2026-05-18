@@ -37,6 +37,7 @@ import {
 import {
     DataShape,
     GetColumnsBatchDocument,
+    type GetColumnsBatchQuery,
     GetGraphQuery,
     GetStorageUnitsQuery,
     GetStorageUnitsDocument,
@@ -75,6 +76,12 @@ import { findSourceObjectType, type SourceTypeItem } from '../../config/source-t
 import { CreateSourceObjectCard } from './create-source-object-card';
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
+type SourceColumn = GetColumnsBatchQuery['ColumnsBatch'][number]['Columns'][number];
+type SourceObjectRefLike = {
+    Kind: unknown;
+    Locator?: string | null;
+    Path?: readonly string[] | null;
+};
 
 type StorageBrowserState = {
     parent?: SourceBrowserObject;
@@ -99,16 +106,21 @@ function nextBrowserState(
     };
 }
 
+function sourceObjectRefKey(ref: SourceObjectRefLike): string {
+    return `${ref.Kind}:${ref.Locator ?? ""}:${ref.Path?.join("/") ?? ""}`;
+}
+
 const StorageUnitCard: FC<{
     unit: SourceBrowserObject;
     trail: SourceBrowserObject[];
-}> = ({ unit, trail }) => {
+    onColumnsLoaded: (unitName: string, columns: SourceColumn[]) => void;
+}> = ({ unit, trail, onColumnsLoaded }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
     const current = useAppSelector(state => state.auth.current);
     const { item, schemaFidelity } = useSourceContract(current?.Type);
-    const [columns, setColumns] = useState<any[] | undefined>(undefined);
+    const [columns, setColumns] = useState<SourceColumn[] | undefined>(undefined);
     const [columnsLoading, setColumnsLoading] = useState(false);
     const [fetchColumnsBatch] = useLazyQuery(GetColumnsBatchDocument);
     const canBrowse = unit.Actions.includes(SourceAction.Browse) && unit.HasChildren;
@@ -138,17 +150,20 @@ const StorageUnitCard: FC<{
             variables: { refs: [unit.Ref] },
         }).then(result => {
             const batch = result.data?.ColumnsBatch;
+            const loadedColumns = batch?.[0]?.Columns ?? [];
             if (batch && batch.length > 0 && batch[0].Columns.length > 0) {
-                setColumns(batch[0].Columns);
+                setColumns(loadedColumns);
             } else {
                 setColumns([]);
             }
+            onColumnsLoaded(unit.Name, loadedColumns);
         }).catch(() => {
             setColumns([]);
+            onColumnsLoaded(unit.Name, []);
         }).finally(() => {
             setColumnsLoading(false);
         });
-    }, [columns, fetchColumnsBatch, shouldFetchColumns, unit.Ref]);
+    }, [columns, fetchColumnsBatch, onColumnsLoaded, shouldFetchColumns, unit.Name, unit.Ref]);
 
     const handleSetExpanded = useCallback((status: boolean) => {
         setExpanded(status);
@@ -294,9 +309,10 @@ export const StorageUnitPage: FC = () => {
     } = useSourceContract(current?.Type);
     const view = useAppSelector(state => state.settings.storageUnitView);
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
-    const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: any[] } | null>(null);
+    const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: SourceColumn[] } | null>(null);
     const [expandedUnitColumnsLoading, setExpandedUnitColumnsLoading] = useState(false);
     const [fetchColumnsBatchForList] = useLazyQuery(GetColumnsBatchDocument);
+    const [storageUnitColumnsByName, setStorageUnitColumnsByName] = useState<Record<string, SourceColumn[]>>({});
     const dispatch = useAppDispatch();
     const { t } = useTranslation('pages/storage-unit');
     const { t: tCommon } = useTranslation('common');
@@ -325,6 +341,7 @@ export const StorageUnitPage: FC = () => {
         return item?.contract?.RootActions?.includes(SourceAction.CreateChild) ?? false;
     }, [currentParent?.Kind, initialParentRef?.Kind, item]);
     const parentRef = currentParent?.Ref ?? initialParentRef;
+    const parentRefKey = parentRef ? sourceObjectRefKey(parentRef) : "";
 
     const { loading, data, refetch } = useQuery(GetStorageUnitsDocument, {
         variables: {
@@ -336,6 +353,23 @@ export const StorageUnitPage: FC = () => {
         return (data?.StorageUnit ?? []) as SourceBrowserObject[];
     }, [data?.StorageUnit]);
 
+    const referenceStorageUnits = useMemo(() => {
+        return storageUnits.filter(unit => isTabularSourceObject(item, unit));
+    }, [item, storageUnits]);
+
+    const referenceColumnsByName = useMemo(() => {
+        return Object.fromEntries(
+            Object.entries(storageUnitColumnsByName).map(([unitName, columns]) => [
+                unitName,
+                columns.map(column => column.Name),
+            ])
+        );
+    }, [storageUnitColumnsByName]);
+
+    const handleColumnsLoaded = useCallback((unitName: string, columns: SourceColumn[]) => {
+        setStorageUnitColumnsByName(current => ({ ...current, [unitName]: columns }));
+    }, []);
+
     // Refetch storage units when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
     const currentDatabase = current?.Database;
@@ -344,6 +378,46 @@ export const StorageUnitPage: FC = () => {
             refetch();
         }
     }, [currentProfileId, currentDatabase, refetch]);
+
+    useEffect(() => {
+        setStorageUnitColumnsByName({});
+    }, [currentProfileId, currentDatabase, parentRefKey]);
+
+    useEffect(() => {
+        if (!create || referenceStorageUnits.length === 0) {
+            return;
+        }
+        const missingUnits = referenceStorageUnits.filter(unit => storageUnitColumnsByName[unit.Name] == null);
+        if (missingUnits.length === 0) {
+            return;
+        }
+        const unitNameByRef = new Map(missingUnits.map(unit => [sourceObjectRefKey(unit.Ref), unit.Name]));
+        fetchColumnsBatchForList({
+            variables: { refs: missingUnits.map(unit => unit.Ref) },
+        }).then(result => {
+            setStorageUnitColumnsByName(current => {
+                const next = { ...current };
+                for (const unit of missingUnits) {
+                    next[unit.Name] = [];
+                }
+                for (const batch of result.data?.ColumnsBatch ?? []) {
+                    const unitName = unitNameByRef.get(sourceObjectRefKey(batch.StorageUnit));
+                    if (unitName) {
+                        next[unitName] = batch.Columns;
+                    }
+                }
+                return next;
+            });
+        }).catch(() => {
+            setStorageUnitColumnsByName(current => {
+                const next = { ...current };
+                for (const unit of missingUnits) {
+                    next[unit.Name] = [];
+                }
+                return next;
+            });
+        });
+    }, [create, fetchColumnsBatchForList, referenceStorageUnits, storageUnitColumnsByName]);
 
     // Lazy-load columns for list view expanded detail
     useEffect(() => {
@@ -360,17 +434,20 @@ export const StorageUnitPage: FC = () => {
             variables: { refs: [expandedSourceUnit.Ref] },
         }).then(result => {
             const batch = result.data?.ColumnsBatch;
+            const loadedColumns = batch?.[0]?.Columns ?? [];
             if (batch && batch.length > 0 && batch[0].Columns.length > 0) {
-                setExpandedUnitColumns({ name: expandedUnit, columns: batch[0].Columns });
+                setExpandedUnitColumns({ name: expandedUnit, columns: loadedColumns });
             } else {
                 setExpandedUnitColumns({ name: expandedUnit, columns: [] });
             }
+            handleColumnsLoaded(expandedUnit, loadedColumns);
         }).catch(() => {
             setExpandedUnitColumns({ name: expandedUnit, columns: [] });
+            handleColumnsLoaded(expandedUnit, []);
         }).finally(() => {
             setExpandedUnitColumnsLoading(false);
         });
-    }, [expandedUnit, expandedUnitColumns?.name, fetchColumnsBatchForList, item, storageUnits]);
+    }, [expandedUnit, expandedUnitColumns?.name, fetchColumnsBatchForList, handleColumnsLoaded, item, storageUnits]);
 
     const [filterValue, setFilterValue] = useState("");
 
@@ -503,6 +580,8 @@ export const StorageUnitPage: FC = () => {
                 <CreateSourceObjectCard
                     databaseType={current?.Type}
                     parentRef={parentRef}
+                    referenceColumnsByName={referenceColumnsByName}
+                    referenceObjects={referenceStorageUnits.map(unit => ({ name: unit.Name }))}
                     singularStorageUnitLabel={singularStorageUnitLabel}
                     onCreated={refetch}
                     onErrorChange={setError}
@@ -511,7 +590,7 @@ export const StorageUnitPage: FC = () => {
             </ExpandableCard>}
             {
                 storageUnits.length > 0 && filterStorageUnits.map(unit => (
-                    <StorageUnitCard key={`${unit.Name}-${unit.Kind}`} unit={unit} trail={trail} />
+                    <StorageUnitCard key={`${unit.Name}-${unit.Kind}`} unit={unit} trail={trail} onColumnsLoaded={handleColumnsLoaded} />
                 ))
             }
         </div>

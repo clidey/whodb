@@ -411,6 +411,17 @@ func sourceObjectCreationMetadataToModel(metadata source.ObjectCreationMetadata)
 			CheckMinMax:         metadata.ColumnCapabilities.CheckMinMax,
 			ForeignKey:          metadata.ColumnCapabilities.ForeignKey,
 		},
+		ColumnLabels: &model.ColumnCreationLabels{
+			Nullable:     metadata.ColumnLabels.Nullable,
+			PrimaryKey:   metadata.ColumnLabels.PrimaryKey,
+			Unique:       metadata.ColumnLabels.Unique,
+			Identity:     metadata.ColumnLabels.Identity,
+			DefaultValue: metadata.ColumnLabels.DefaultValue,
+			CheckValues:  metadata.ColumnLabels.CheckValues,
+			CheckMin:     metadata.ColumnLabels.CheckMin,
+			CheckMax:     metadata.ColumnLabels.CheckMax,
+			ForeignKey:   metadata.ColumnLabels.ForeignKey,
+		},
 		TableCapabilities: &model.TableCreationCapabilities{
 			RequiresPrimaryKey: metadata.TableCapabilities.RequiresPrimaryKey,
 			PartitionKey:       metadata.TableCapabilities.PartitionKey,

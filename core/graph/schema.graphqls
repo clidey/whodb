@@ -240,6 +240,7 @@ type ObjectCreationMetadata {
   RequiresColumns: Boolean!
   TypeDefinitions: [TypeDefinition!]!
   ColumnCapabilities: ColumnCreationCapabilities!
+  ColumnLabels: ColumnCreationLabels!
   TableCapabilities: TableCreationCapabilities!
   TableOptions: [CreationOptionDefinition!]!
 }
@@ -255,6 +256,18 @@ type ColumnCreationCapabilities {
   CheckValues: Boolean!
   CheckMinMax: Boolean!
   ForeignKey: Boolean!
+}
+
+type ColumnCreationLabels {
+  Nullable: String!
+  PrimaryKey: String!
+  Unique: String!
+  Identity: String!
+  DefaultValue: String!
+  CheckValues: String!
+  CheckMin: String!
+  CheckMax: String!
+  ForeignKey: String!
 }
 
 type TableCreationCapabilities {

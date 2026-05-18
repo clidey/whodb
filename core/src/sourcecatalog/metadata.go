@@ -148,16 +148,16 @@ func registerSessionMetadata() {
 	)
 
 	RegisterObjectCreationMetadataAliases(
-		relationalObjectCreationMetadata(specs.PostgresTypeDefinitions),
+		relationalObjectCreationMetadata(specs.PostgresTypeDefinitions, "GENERATED ALWAYS AS IDENTITY"),
 		string(engine.DatabaseType_Postgres),
 		string(engine.DatabaseType_YugabyteDB),
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_CockroachDB),
-		relationalObjectCreationMetadata(specs.CockroachDBTypeDefinitions),
+		relationalObjectCreationMetadata(specs.CockroachDBTypeDefinitions, "GENERATED ALWAYS AS IDENTITY"),
 	)
 	RegisterObjectCreationMetadataAliases(
-		relationalObjectCreationMetadata(specs.MySQLTypeDefinitions),
+		relationalObjectCreationMetadata(specs.MySQLTypeDefinitions, "AUTO_INCREMENT"),
 		string(engine.DatabaseType_MySQL),
 		string(engine.DatabaseType_MariaDB),
 		string(engine.DatabaseType_TiDB),
@@ -177,20 +177,21 @@ func registerSessionMetadata() {
 				CheckValues:  true,
 				CheckMinMax:  true,
 			},
+			ColumnLabels:      sqlColumnCreationLabels(""),
 			TableCapabilities: source.TableCreationCapabilities{OrderKey: true},
 		},
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_Sqlite3),
-		relationalObjectCreationMetadata(specs.SQLiteTypeDefinitions),
+		sqliteObjectCreationMetadata(specs.SQLiteTypeDefinitions),
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_DuckDB),
-		relationalObjectCreationMetadata(specs.DuckDBTypeDefinitions),
+		relationalObjectCreationMetadata(specs.DuckDBTypeDefinitions, "DEFAULT nextval()"),
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_QuestDB),
-		relationalObjectCreationMetadata(specs.QuestDBTypeDefinitions),
+		relationalObjectCreationMetadata(specs.QuestDBTypeDefinitions, ""),
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_ElasticSearch),
@@ -283,6 +284,7 @@ func RegisterObjectCreationMetadata(id string, metadata source.ObjectCreationMet
 
 	objectCreationMetadataMu.Lock()
 	defer objectCreationMetadataMu.Unlock()
+	metadata.ColumnLabels = source.ColumnCreationLabelsWithDefaults(metadata.ColumnLabels)
 	objectCreationMetadataSpecs[strings.ToLower(id)] = cloneObjectCreationMetadata(metadata)
 }
 
@@ -415,7 +417,7 @@ func cloneDiscoveryPrefill(prefill source.DiscoveryPrefill) source.DiscoveryPref
 	return cloned
 }
 
-func relationalObjectCreationMetadata(typeDefinitions []source.TypeDefinition) source.ObjectCreationMetadata {
+func relationalObjectCreationMetadata(typeDefinitions []source.TypeDefinition, identityLabel string) source.ObjectCreationMetadata {
 	return source.ObjectCreationMetadata{
 		Supported:       true,
 		ObjectKind:      source.ObjectKindTable,
@@ -433,7 +435,28 @@ func relationalObjectCreationMetadata(typeDefinitions []source.TypeDefinition) s
 			CheckMinMax:         true,
 			ForeignKey:          true,
 		},
+		ColumnLabels: sqlColumnCreationLabels(identityLabel),
 	}
+}
+
+func sqliteObjectCreationMetadata(typeDefinitions []source.TypeDefinition) source.ObjectCreationMetadata {
+	metadata := relationalObjectCreationMetadata(typeDefinitions, "")
+	metadata.ColumnCapabilities.Identity = false
+	return metadata
+}
+
+func sqlColumnCreationLabels(identityLabel string) source.ColumnCreationLabels {
+	return source.ColumnCreationLabelsWithDefaults(source.ColumnCreationLabels{
+		Nullable:     "NULL",
+		PrimaryKey:   "PRIMARY KEY",
+		Unique:       "UNIQUE",
+		Identity:     identityLabel,
+		DefaultValue: "DEFAULT",
+		CheckValues:  "CHECK IN",
+		CheckMin:     "CHECK >=",
+		CheckMax:     "CHECK <=",
+		ForeignKey:   "REFERENCES",
+	})
 }
 
 func cloneObjectCreationMetadata(metadata source.ObjectCreationMetadata) source.ObjectCreationMetadata {
@@ -443,6 +466,7 @@ func cloneObjectCreationMetadata(metadata source.ObjectCreationMetadata) source.
 		RequiresColumns:    metadata.RequiresColumns,
 		TypeDefinitions:    slices.Clone(metadata.TypeDefinitions),
 		ColumnCapabilities: metadata.ColumnCapabilities,
+		ColumnLabels:       source.ColumnCreationLabelsWithDefaults(metadata.ColumnLabels),
 		TableCapabilities:  metadata.TableCapabilities,
 		TableOptions:       cloneCreationOptionDefinitions(metadata.TableOptions),
 	}

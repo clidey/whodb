@@ -175,7 +175,7 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 			checkDefs = append(checkDefs, fmt.Sprintf("CHECK (%s <= %s)", sb.QuoteIdentifier(col.Name), formatCreateLiteral(strconv.FormatFloat(*col.CheckMax, 'f', -1, 64))))
 		}
 		if col.ReferencesTable != "" && col.ReferencesColumn != "" {
-			foreignKeys = append(foreignKeys, fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", sb.QuoteIdentifier(col.Name), sb.quoteTableRef(col.ReferencesTable), sb.QuoteIdentifier(col.ReferencesColumn)))
+			foreignKeys = append(foreignKeys, fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", sb.QuoteIdentifier(col.Name), sb.quoteReferenceTableRef(schema, col.ReferencesTable), sb.QuoteIdentifier(col.ReferencesColumn)))
 		}
 
 		columnDefs[i] = def
@@ -210,6 +210,13 @@ func (sb *SQLBuilder) quoteTableRef(table string) string {
 		}
 	}
 	return strings.Join(quoted, ".")
+}
+
+func (sb *SQLBuilder) quoteReferenceTableRef(schema, table string) string {
+	if schema != "" && !strings.Contains(table, ".") {
+		return sb.QuoteIdentifier(schema) + "." + sb.QuoteIdentifier(table)
+	}
+	return sb.quoteTableRef(table)
 }
 
 func formatCreateLiteral(value string) string {
@@ -378,7 +385,9 @@ func RecordsToColumnDefs(columns []engine.Record, decorator PrimaryKeyDecorator)
 		def.ReferencesTable = extra["references_table"]
 		def.ReferencesColumn = extra["references_column"]
 
-		if primary, ok := extra["primary"]; ok && primary == "true" {
+		primary := extra["primary"] == "true"
+		identity := extra["identity"] == "true"
+		if primary || identity {
 			def = decorator(def, column)
 		} else {
 			if nullable, ok := extra["nullable"]; ok && nullable == "false" {

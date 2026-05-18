@@ -126,6 +126,7 @@ async function querySourceFieldConstraints(page, ref, requestHeaders = {}) {
 }
 
 async function setModifierIfPresent(field, labelPattern) {
+    await expandFieldOptionsIfPresent(field);
     const label = field.locator('label').filter({ hasText: labelPattern }).first();
     if (await label.count() === 0) {
         return false;
@@ -134,6 +135,16 @@ async function setModifierIfPresent(field, labelPattern) {
     await button.click();
     await expect(button).toHaveAttribute('data-state', 'checked');
     return true;
+}
+
+async function expandFieldOptionsIfPresent(field) {
+    const trigger = field.locator('[data-testid^="field-options-trigger-"]').first();
+    if (await trigger.count() === 0) {
+        return;
+    }
+    if (await trigger.getAttribute('data-state') !== 'open') {
+        await trigger.click();
+    }
 }
 
 /**
@@ -313,13 +324,17 @@ test.describe('Schema Management', () => {
 
                     // Check if database supports modifiers (Primary, Nullable)
                     const firstField = page.locator('[data-testid="create-field-card"]').first();
+                    await expandFieldOptionsIfPresent(firstField);
                     const hasPrimaryLabel = await firstField.locator('label').filter({ hasText: /primary/i }).count();
 
                     if (hasPrimaryLabel > 0) {
                         await expect(firstField.locator('label').filter({ hasText: /primary/i })).toBeVisible();
-                        await expect(firstField.locator('label').filter({ hasText: /nullable/i })).toBeVisible();
+                        await expect(firstField.locator('label').filter({ hasText: /nullable|null/i })).toBeVisible();
                         await expect(firstField.locator('label').filter({ hasText: /unique/i })).toBeVisible();
-                        await expect(firstField.locator('label').filter({ hasText: /identity/i })).toBeVisible();
+                        const identityLabel = firstField.locator('label').filter({ hasText: /identity|auto_increment|autoincrement|nextval/i });
+                        if (await identityLabel.count() > 0) {
+                            await expect(identityLabel).toBeVisible();
+                        }
                         await expect(firstField.locator('input[placeholder*="default" i]')).toBeVisible();
 
                         const primaryLabel = firstField.locator('label').filter({ hasText: /primary/i });

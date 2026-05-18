@@ -242,6 +242,7 @@ type ObjectCreationMetadata struct {
 	RequiresColumns    bool
 	TypeDefinitions    []TypeDefinition
 	ColumnCapabilities ColumnCreationCapabilities
+	ColumnLabels       ColumnCreationLabels
 	TableCapabilities  TableCreationCapabilities
 	TableOptions       []CreationOptionDefinition
 }
@@ -259,6 +260,69 @@ type ColumnCreationCapabilities struct {
 	CheckValues         bool
 	CheckMinMax         bool
 	ForeignKey          bool
+}
+
+// ColumnCreationLabels describes source-native labels for column creation
+// capabilities.
+type ColumnCreationLabels struct {
+	Nullable     string
+	PrimaryKey   string
+	Unique       string
+	Identity     string
+	DefaultValue string
+	CheckValues  string
+	CheckMin     string
+	CheckMax     string
+	ForeignKey   string
+}
+
+// DefaultColumnCreationLabels returns generic labels for normalized column
+// creation capabilities.
+func DefaultColumnCreationLabels() ColumnCreationLabels {
+	return ColumnCreationLabels{
+		Nullable:     "Nullable",
+		PrimaryKey:   "Primary key",
+		Unique:       "Unique",
+		Identity:     "Identity",
+		DefaultValue: "Default value",
+		CheckValues:  "Allowed values",
+		CheckMin:     "Minimum",
+		CheckMax:     "Maximum",
+		ForeignKey:   "Foreign key",
+	}
+}
+
+// ColumnCreationLabelsWithDefaults fills unset labels with generic labels.
+func ColumnCreationLabelsWithDefaults(labels ColumnCreationLabels) ColumnCreationLabels {
+	defaults := DefaultColumnCreationLabels()
+	if labels.Nullable == "" {
+		labels.Nullable = defaults.Nullable
+	}
+	if labels.PrimaryKey == "" {
+		labels.PrimaryKey = defaults.PrimaryKey
+	}
+	if labels.Unique == "" {
+		labels.Unique = defaults.Unique
+	}
+	if labels.Identity == "" {
+		labels.Identity = defaults.Identity
+	}
+	if labels.DefaultValue == "" {
+		labels.DefaultValue = defaults.DefaultValue
+	}
+	if labels.CheckValues == "" {
+		labels.CheckValues = defaults.CheckValues
+	}
+	if labels.CheckMin == "" {
+		labels.CheckMin = defaults.CheckMin
+	}
+	if labels.CheckMax == "" {
+		labels.CheckMax = defaults.CheckMax
+	}
+	if labels.ForeignKey == "" {
+		labels.ForeignKey = defaults.ForeignKey
+	}
+	return labels
 }
 
 // TableCreationCapabilities describes supported table-level creation options.
