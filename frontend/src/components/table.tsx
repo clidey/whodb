@@ -74,6 +74,7 @@ import {
     DeleteRowDocument,
     GenerateMockDataDocument,
     MockDataMaxRowCountDocument,
+    SourceAction,
     type SourceObjectRefInput,
 } from '@graphql';
 import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
@@ -82,6 +83,7 @@ import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';
 import {copyToClipboard} from '@/services/clipboard';
 import {useSourceContract} from "@/hooks/useSourceContract";
+import {sourceObjectSupportsAction} from "@/config/source-types";
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -386,9 +388,10 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [mockDataOverwriteExisting, setMockDataOverwriteExisting] = useState("append");
     const [mockDataFkDensityRatio, setMockDataFkDensityRatio] = useState("20");
     const [showMockDataConfirmation, setShowMockDataConfirmation] = useState(false);
-    const { isNoSQL, supportsImportData, supportsMockData, supportsMockDataRelations } = useSourceContract(databaseType);
-    const isMockDataSupported = supportsMockData && isMockDataGenerationAllowed;
-    const isImportSupported = supportsImportData;
+    const { isNoSQL, item, supportsMockDataRelations } = useSourceContract(databaseType);
+    const isMockDataSupported =
+        sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.GenerateMockData) && isMockDataGenerationAllowed;
+    const isImportSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ImportData);
     const { data: maxRowData } = useQuery(MockDataMaxRowCountDocument);
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     

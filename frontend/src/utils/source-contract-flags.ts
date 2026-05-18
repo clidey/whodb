@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-import { SourceAction } from '@graphql';
-import type { SourceTypeItem } from '../config/source-types';
+import { SourceAction, SourceModel, SourceObjectKind, SourceSurface } from '@graphql';
+import {
+    sourceSupportsAction,
+    sourceSupportsSurface,
+    sourceUsesObjectKind,
+    type SourceTypeItem,
+} from '../config/source-types';
 
 /**
  * Catalog-backed source contract flags resolved for the current UI.
@@ -43,15 +48,15 @@ export function resolveSourceContractFlags(
     item: SourceTypeItem | undefined
 ): SourceContractFlags {
     return {
-        supportsChat: item?.supportsChat ?? false,
-        supportsGraph: item?.supportsGraph ?? false,
-        supportsScratchpad: item?.supportsScratchpad ?? false,
-        supportsSchema: item?.supportsSchema ?? false,
-        supportsDatabaseSwitching: item?.supportsDatabaseSwitching ?? false,
+        supportsChat: sourceSupportsSurface(item, SourceSurface.Chat),
+        supportsGraph: sourceSupportsSurface(item, SourceSurface.Graph),
+        supportsScratchpad: sourceSupportsSurface(item, SourceSurface.Query),
+        supportsSchema: sourceUsesObjectKind(item, SourceObjectKind.Schema),
+        supportsDatabaseSwitching: sourceUsesObjectKind(item, SourceObjectKind.Database),
         usesSchemaForGraph: item?.usesSchemaForGraph ?? true,
         usesDatabaseInsteadOfSchema: item?.usesDatabaseInsteadOfSchema ?? false,
-        supportsMockData: item?.supportsMockData ?? false,
-        supportsImportData: item?.contract?.ObjectTypes.some(objectType => objectType.Actions.includes(SourceAction.ImportData)) ?? false,
-        supportsModifiers: item?.supportsModifiers ?? false,
+        supportsMockData: sourceSupportsAction(item, SourceAction.GenerateMockData),
+        supportsImportData: sourceSupportsAction(item, SourceAction.ImportData),
+        supportsModifiers: item?.contract?.Model === SourceModel.Relational,
     };
 }

@@ -66,7 +66,17 @@ func TestDatabaseSessionListObjectsFiltersInternalObjects(t *testing.T) {
 	spec.Traits.Metadata.HiddenObjectNames = map[source.ObjectKind][]string{
 		source.ObjectKindSchema: {"pg_catalog"},
 	}
-	session := newTestDatabaseSession(spec, mock)
+	session := newTestDatabaseSession(testTypeWithObjectActions(
+		"Postgres",
+		[]source.Surface{source.SurfaceBrowser},
+		[]source.Action{source.ActionBrowse},
+		map[source.ObjectKind][]source.Action{
+			source.ObjectKindDatabase: {source.ActionBrowse},
+			source.ObjectKindSchema:   {source.ActionBrowse},
+			source.ObjectKindTable:    {source.ActionInspect, source.ActionViewRows},
+		},
+	), mock)
+	session.spec.Traits.Metadata = spec.Traits.Metadata
 
 	objects, err := session.ListObjects(context.Background(), &source.ObjectRef{
 		Kind: source.ObjectKindDatabase,
@@ -80,6 +90,29 @@ func TestDatabaseSessionListObjectsFiltersInternalObjects(t *testing.T) {
 	}
 	if objects[0].Name != "public" || objects[1].Name != "app" {
 		t.Fatalf("expected internal schema to be filtered, got %#v", objects)
+	}
+}
+
+func TestDatabaseSessionListObjectsRejectsUnsupportedBrowseAction(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.GetStorageUnitsFunc = func(*engine.PluginConfig, string) ([]engine.StorageUnit, error) {
+		t.Fatalf("expected browsing to be blocked before storage-unit lookup")
+		return nil, nil
+	}
+
+	session := newTestDatabaseSession(testTypeWithObjectActions(
+		"Postgres",
+		[]source.Surface{source.SurfaceBrowser},
+		[]source.Action{source.ActionBrowse},
+		map[source.ObjectKind][]source.Action{
+			source.ObjectKindSchema: {},
+			source.ObjectKindTable:  {source.ActionInspect, source.ActionViewRows},
+		},
+	), mock)
+
+	_, err := session.ListObjects(context.Background(), testSchemaRef(), nil)
+	if err == nil || !strings.Contains(err.Error(), "browsing") {
+		t.Fatalf("expected browsing error, got %v", err)
 	}
 }
 
@@ -583,6 +616,7 @@ func TestDatabaseSessionReadRowsThenColumnsReusesValidation(t *testing.T) {
 }
 
 func newTestDatabaseSession(spec source.TypeSpec, mock *testutil.PluginMock) *DatabaseSession {
+	spec.Contract = source.NormalizeContract(spec.Contract)
 	return &DatabaseSession{
 		spec:      spec,
 		plugin:    mock.AsPlugin(),

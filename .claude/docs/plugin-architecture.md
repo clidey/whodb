@@ -152,6 +152,11 @@ type definitions for runtime normalization, import them from
 Feature gating is not owned by session metadata. Public behavior
 such as chat/query/graph surfaces and source object actions/views comes from the
 source catalog contract in `core/src/sourcecatalog/catalog.go`.
+The source contract is authoritative: `SourceContract.Surfaces`, `RootActions`,
+`BrowsePath`, and `ObjectTypes.Actions` are used by the backend source adapter
+to block unsupported operations and by the frontend to show or hide source
+surfaces and object controls. Do not add source-name conditionals for behavior
+that can be represented in the contract.
 
 Frontend and CLI connection/presentation behavior also comes from the source
 model now. Use `SourceType.Traits` for things like file-vs-network transport,

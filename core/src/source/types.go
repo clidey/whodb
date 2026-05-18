@@ -401,6 +401,16 @@ func (c Contract) SupportsAction(action Action) bool {
 	return false
 }
 
+// SupportsRootAction reports whether the source root supports the action.
+func (c Contract) SupportsRootAction(action Action) bool {
+	for _, candidate := range c.RootActions {
+		if candidate == action {
+			return true
+		}
+	}
+	return false
+}
+
 // ObjectTypeForKind looks up the declared object-type contract by kind.
 func (c Contract) ObjectTypeForKind(kind ObjectKind) (ObjectType, bool) {
 	for _, objectType := range c.ObjectTypes {
@@ -409,6 +419,12 @@ func (c Contract) ObjectTypeForKind(kind ObjectKind) (ObjectType, bool) {
 		}
 	}
 	return ObjectType{}, false
+}
+
+// ObjectKindSupportsAction reports whether an object kind supports the action.
+func (c Contract) ObjectKindSupportsAction(kind ObjectKind, action Action) bool {
+	objectType, ok := c.ObjectTypeForKind(kind)
+	return ok && objectType.SupportsAction(action)
 }
 
 // ObjectType describes support for one source object kind.

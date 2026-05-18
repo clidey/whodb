@@ -146,6 +146,9 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 	if len(kinds) > 0 && !slices.Contains(kinds, nextKind) {
 		return []source.Object{}, nil
 	}
+	if err := s.ensureBrowseSupported(parent); err != nil {
+		return nil, err
+	}
 
 	config := s.pluginConfig(ctx, parent)
 
@@ -442,7 +445,7 @@ func (s *DatabaseSession) RunScript(ctx context.Context, script string, multiSta
 
 // ReadGraph returns graph data for a source scope.
 func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) ([]source.GraphUnit, error) {
-	if err := s.ensureSurface(source.SurfaceGraph); err != nil {
+	if err := s.ensureGraphSupported(ref); err != nil {
 		return nil, err
 	}
 
@@ -971,34 +974,41 @@ func (s *DatabaseSession) cacheColumns(namespace string, name string, columns []
 }
 
 func (s *DatabaseSession) ensureSurface(surface source.Surface) error {
-	if s.spec.Contract.SupportsSurface(surface) {
-		return nil
-	}
-
-	return fmt.Errorf("%s is not supported for %s", sourceSurfaceDescription(surface), s.spec.Label)
+	return source.ValidateSurfaceSupported(s.spec, surface)
 }
 
 func (s *DatabaseSession) ensureObjectAction(kind source.ObjectKind, action source.Action) error {
-	objectType, ok := s.spec.Contract.ObjectTypeForKind(kind)
-	if !ok {
-		return fmt.Errorf("%s objects are not supported for %s", kind, s.spec.Label)
-	}
-	if objectType.SupportsAction(action) {
-		return nil
-	}
-
-	return fmt.Errorf("%s is not supported for %s objects in %s", sourceActionDescription(action), kind, s.spec.Label)
+	return source.ValidateObjectActionSupported(s.spec, kind, action)
 }
 
 func (s *DatabaseSession) ensureCreateChildSupported(parent *source.ObjectRef) error {
 	if parent == nil {
-		if slices.Contains(s.spec.Contract.RootActions, source.ActionCreateChild) {
-			return nil
-		}
-		return fmt.Errorf("%s is not supported at the source root for %s", sourceActionDescription(source.ActionCreateChild), s.spec.Label)
+		return source.ValidateRootActionSupported(s.spec, source.ActionCreateChild)
 	}
 
 	return s.ensureObjectAction(parent.Kind, source.ActionCreateChild)
+}
+
+func (s *DatabaseSession) ensureBrowseSupported(parent *source.ObjectRef) error {
+	if parent == nil {
+		return source.ValidateRootActionSupported(s.spec, source.ActionBrowse)
+	}
+
+	return s.ensureObjectAction(parent.Kind, source.ActionBrowse)
+}
+
+func (s *DatabaseSession) ensureGraphSupported(ref *source.ObjectRef) error {
+	if err := s.ensureSurface(source.SurfaceGraph); err != nil {
+		return err
+	}
+	if ref == nil {
+		if s.spec.Contract.GraphScopeKind == nil {
+			return source.ValidateRootActionSupported(s.spec, source.ActionViewGraph)
+		}
+		return nil
+	}
+
+	return s.ensureObjectAction(ref.Kind, source.ActionViewGraph)
 }
 
 func queryLanguagesForSpec(spec source.TypeSpec) []string {
@@ -1018,56 +1028,6 @@ func cloneAliasMap(aliasMap map[string]string) map[string]string {
 		cloned[key] = value
 	}
 	return cloned
-}
-
-func sourceSurfaceDescription(surface source.Surface) string {
-	switch surface {
-	case source.SurfaceQuery:
-		return "querying"
-	case source.SurfaceGraph:
-		return "graph views"
-	case source.SurfaceChat:
-		return "chat"
-	case source.SurfaceBrowser:
-		return "browsing"
-	default:
-		return strings.ToLower(string(surface))
-	}
-}
-
-func sourceActionDescription(action source.Action) string {
-	switch action {
-	case source.ActionBrowse:
-		return "browsing"
-	case source.ActionInspect:
-		return "inspecting objects"
-	case source.ActionViewRows:
-		return "viewing rows"
-	case source.ActionViewContent:
-		return "viewing content"
-	case source.ActionViewDefinition:
-		return "viewing definitions"
-	case source.ActionCreateChild:
-		return "creating child objects"
-	case source.ActionDelete:
-		return "deleting objects"
-	case source.ActionInsertData:
-		return "inserting data"
-	case source.ActionUpdateData:
-		return "updating data"
-	case source.ActionDeleteData:
-		return "deleting data"
-	case source.ActionImportData:
-		return "importing data"
-	case source.ActionGenerateMockData:
-		return "generating mock data"
-	case source.ActionExecute:
-		return "executing actions"
-	case source.ActionViewGraph:
-		return "viewing graphs"
-	default:
-		return strings.ToLower(string(action))
-	}
 }
 
 func appendPath(parent *source.ObjectRef, name string) []string {

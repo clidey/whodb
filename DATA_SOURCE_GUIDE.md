@@ -46,11 +46,12 @@ Read the **Core Architecture** section first, then follow the path that matches 
 ### Key Principles
 
 1. **Source-First GraphQL API** — You do NOT add custom GraphQL queries or mutations for new data sources. The public API (`SourceTypes`, `SourceObjects`, `SourceRows`, `RunSourceQuery`, `SourceGraph`, etc.) is generic and works for all source types automatically.
-2. **Plugin Self-Registration** — Plugins register themselves via `init()` functions. The frontend and API automatically adapt based on the plugin's declared catalog entries.
-3. **CE vs. EE Strict Boundary** — CE (Community Edition) knows *nothing* about EE (Enterprise Edition). CE code must never contain `ee/` imports, references, or `if isEE` logic. EE extends CE purely through registries at boot time. Edition is controlled by which entry point is compiled (`core/cmd/whodb/main.go` for CE, `ee/cmd/whodb/main.go` for EE), not build tags.
-4. **No Defensive Code** — Do not write fallback logic unless explicitly requested.
-5. **No SQL Injection** — Use parameterized queries or `GetPlaceholder(index)`. Never use `fmt.Sprintf` for user-supplied SQL variables.
-6. **Localization** — All user-facing strings must use `t()` with YAML keys. No hardcoded UI text.
+2. **Source Contract Authority** — Declare capabilities once in the source catalog. `SourceContract.Surfaces`, `RootActions`, `BrowsePath`, `ObjectTypes.Actions`, and `ObjectTypes.Views` are the single source of truth for what the backend allows and what the frontend shows.
+3. **Plugin Self-Registration** — Plugins register themselves via `init()` functions. The frontend and API automatically adapt based on the plugin's declared catalog entries.
+4. **CE vs. EE Strict Boundary** — CE (Community Edition) knows *nothing* about EE (Enterprise Edition). CE code must never contain `ee/` imports, references, or `if isEE` logic. EE extends CE purely through registries at boot time. Edition is controlled by which entry point is compiled (`core/cmd/whodb/main.go` for CE, `ee/cmd/whodb/main.go` for EE), not build tags.
+5. **No Defensive Code** — Do not write fallback logic unless explicitly requested.
+6. **No SQL Injection** — Use parameterized queries or `GetPlaceholder(index)`. Never use `fmt.Sprintf` for user-supplied SQL variables.
+7. **Localization** — All user-facing strings must use `t()` with YAML keys. No hardcoded UI text.
 
 ---
 
@@ -80,7 +81,7 @@ Before implementing anything, understand these types. Every value listed below i
 ### `source.Surface` — UI experiences enabled
 | Value | Description |
 |-------|-------------|
-| `SurfaceBrowser` | Object tree navigation (always included) |
+| `SurfaceBrowser` | Object tree navigation |
 | `SurfaceQuery` | SQL/query editor |
 | `SurfaceChat` | AI chat interface |
 | `SurfaceGraph` | Relationship visualization |
@@ -588,7 +589,10 @@ This controls the connection UI form and which fields are shown.
 
 ### Phase 5: Register the Source Family Spec
 
-This defines browsing hierarchy, capabilities, and actions.
+This defines browsing hierarchy, capabilities, and actions. The source family
+spec is the authority for source behavior: the backend adapter enforces it, and
+the frontend uses it to decide which screens, buttons, and object actions are
+available.
 
 - **CE**: Add to the `familySpecs` map in `core/src/sourcecatalog/catalog.go`
 - **EE**: Call `coresourcecatalog.RegisterFamilySpec()` in `ee/core/src/sourcecatalog/register.go`
@@ -625,6 +629,14 @@ This defines browsing hierarchy, capabilities, and actions.
 | Index only | Elasticsearch | `[Index]` |
 
 **`GraphScopeKind`**: Set to the ObjectKind that scopes relationship visualization. Use `ptr(source.ObjectKindSchema)` for schema-scoped, `ptr(source.ObjectKindDatabase)` for database-scoped, or `nil` for no graph support.
+
+**Contract enforcement**: Declare every operation in `ObjectTypes.Actions` or
+`RootActions`. `ListObjects` requires `Browse`, row reads require `ViewRows`,
+column/constraint inspection requires `Inspect`, mutations require their matching
+data action, imports require `ImportData`, mock data requires
+`GenerateMockData`, and graph reads require `SurfaceGraph` plus `ViewGraph` on
+the graph scope object (or root graph support for flat sources). Query and chat
+surfaces are controlled by `Surfaces`.
 
 **Metadata fidelity**: Confirm the family declares appropriate
 `TypeTraits.Metadata` values. Use exact metadata for system catalogs, driver
@@ -738,7 +750,12 @@ const override: SourceTypeOverride = {
 Use `customFormRenderer` only when the standard field-based flow is genuinely
 insufficient.
 
-The frontend `decorateSourceType()` function auto-derives all capability flags (`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`, `supportsDatabaseSwitching`, `supportsMockData`, etc.) from the backend contract. Do not set these manually — they come from `source.Contract.Surfaces`, `BrowsePath`, and `ObjectTypes`.
+The frontend source-contract helpers auto-derive capability flags
+(`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`,
+`supportsDatabaseSwitching`, `supportsMockData`, etc.) from the backend
+contract. Do not set these manually or add source-name checks for capabilities
+— they come from `source.Contract.Surfaces`, `BrowsePath`, `RootActions`, and
+`ObjectTypes.Actions`.
 
 ---
 
@@ -1037,6 +1054,7 @@ Understanding the full registration flow helps debug issues:
 - [ ] Blank import added to entry point (`main.go`)
 - [ ] `ConnectableDatabase` entry in dbcatalog (with SSL modes if applicable)
 - [ ] `FamilySpec` in sourcecatalog
+- [ ] Source contract declares the correct surfaces, browse path, root actions, object actions, and views
 - [ ] Session metadata registered (operators, type definitions, alias map)
 - [ ] Frontend icon added (keyed by exact source ID string)
 - [ ] Localization strings added

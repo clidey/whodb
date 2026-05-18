@@ -16,6 +16,7 @@
 
 import { ComponentType, ReactElement, createElement } from "react";
 import {
+    DataShape,
     SourceTypesQuery,
     SourceAction,
     SourceConnectionFieldSection,
@@ -358,6 +359,88 @@ function mapAdvancedDefaults(
 function resolveIcon(sourceType: string, connector: string): ReactElement {
     const logos = Icons.Logos as Record<string, ReactElement>;
     return logos[sourceType] ?? logos[connector] ?? createElement("span", { className: "w-6 h-6" });
+}
+
+/**
+ * Reports whether a source type exposes a top-level application surface.
+ *
+ * @param item Decorated source type item.
+ * @param surface Source surface to check.
+ * @returns `true` when the surface is declared by the source contract.
+ */
+export function sourceSupportsSurface(
+    item: SourceTypeItem | undefined,
+    surface: SourceSurface
+): boolean {
+    return item?.contract?.Surfaces.includes(surface) ?? false;
+}
+
+/**
+ * Reports whether the source root exposes a declared action.
+ *
+ * @param item Decorated source type item.
+ * @param action Source root action to check.
+ * @returns `true` when the action is declared at the source root.
+ */
+export function sourceSupportsRootAction(
+    item: SourceTypeItem | undefined,
+    action: SourceAction
+): boolean {
+    return item?.contract?.RootActions.includes(action) ?? false;
+}
+
+/**
+ * Reports whether an object kind exposes a declared action.
+ *
+ * @param item Decorated source type item.
+ * @param kind Source object kind to check.
+ * @param action Source object action to check.
+ * @returns `true` when the object kind declares the action.
+ */
+export function sourceObjectSupportsAction(
+    item: SourceTypeItem | undefined,
+    kind: SourceObjectKind | undefined | null,
+    action: SourceAction
+): boolean {
+    return findSourceObjectType(item, kind)?.Actions.includes(action) ?? false;
+}
+
+/**
+ * Reports whether any declared object kind exposes an action.
+ *
+ * @param item Decorated source type item.
+ * @param action Source object action to check.
+ * @returns `true` when at least one object kind declares the action.
+ */
+export function sourceSupportsAction(
+    item: SourceTypeItem | undefined,
+    action: SourceAction
+): boolean {
+    return item?.contract?.ObjectTypes.some(objectType => objectType.Actions.includes(action)) ?? false;
+}
+
+/**
+ * Reports whether the browse path includes an object kind.
+ *
+ * @param item Decorated source type item.
+ * @param kind Source object kind to check.
+ * @returns `true` when the kind is part of the source browse path.
+ */
+export function sourceUsesObjectKind(
+    item: SourceTypeItem | undefined,
+    kind: SourceObjectKind
+): boolean {
+    return item?.contract?.BrowsePath.includes(kind) ?? false;
+}
+
+/**
+ * Reports whether the default browsed object exposes tabular data.
+ *
+ * @param item Decorated source type item.
+ * @returns `true` when the default object data shape is tabular.
+ */
+export function sourceDefaultObjectIsTabular(item: SourceTypeItem | undefined): boolean {
+    return getDefaultSourceObjectType(item)?.DataShape === DataShape.Tabular;
 }
 
 function decorateSourceType(item: BackendSourceType): SourceTypeItem {

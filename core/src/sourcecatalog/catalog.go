@@ -373,6 +373,7 @@ func BuildTypeSpec(entry DatabaseEntry) (source.TypeSpec, bool) {
 		GraphScopeKind:    family.GraphScopeKind,
 		ObjectTypes:       cloneObjectTypes(family.ObjectTypes),
 	}
+	contract = source.NormalizeContract(contract)
 
 	traits := buildTypeTraits(entry, family)
 
@@ -439,9 +440,6 @@ func buildSurfaces(family FamilySpec) []source.Surface {
 		if slices.Contains(family.Surfaces, surface) {
 			surfaces = append(surfaces, surface)
 		}
-	}
-	if !slices.Contains(surfaces, source.SurfaceBrowser) {
-		surfaces = append([]source.Surface{source.SurfaceBrowser}, surfaces...)
 	}
 	return surfaces
 }
