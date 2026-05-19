@@ -643,6 +643,9 @@ data action, imports require `ImportData`, mock data requires
 `GenerateMockData`, and graph reads require `SurfaceGraph` plus `ViewGraph` on
 the graph scope object (or root graph support for flat sources). Query and chat
 surfaces are controlled by `Surfaces`.
+Plain English: the source contract is the write policy; WhoDB asks the source
+which writes are allowed for this object, then both backend resolvers and
+frontend controls use that same answer.
 
 **Metadata fidelity**: Confirm the family declares appropriate
 `TypeTraits.Metadata` values. Use exact metadata for system catalogs, driver

@@ -192,12 +192,16 @@ func (r *mutationResolver) UpdateSourceObject(ctx context.Context, ref model.Sou
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionUpdateData); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source object updates are not supported")
 	}
 
-	status, err := manager.UpdateObject(ctx, *sourceRefFromInput(&ref), recordInputsToMap(values), updatedColumns)
+	status, err := manager.UpdateObject(ctx, *resolvedRef, recordInputsToMap(values), updatedColumns)
 	if err != nil {
 		return nil, err
 	}
@@ -211,12 +215,16 @@ func (r *mutationResolver) AddSourceRow(ctx context.Context, ref model.SourceObj
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionInsertData); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source row inserts are not supported")
 	}
 
-	status, err := manager.AddRow(ctx, *sourceRefFromInput(&ref), recordInputsToSourceRecords(values))
+	status, err := manager.AddRow(ctx, *resolvedRef, recordInputsToSourceRecords(values))
 	if err != nil {
 		return nil, err
 	}
@@ -230,12 +238,16 @@ func (r *mutationResolver) DeleteSourceRow(ctx context.Context, ref model.Source
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionDeleteData); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source row deletes are not supported")
 	}
 
-	status, err := manager.DeleteRow(ctx, *sourceRefFromInput(&ref), recordInputsToMap(values))
+	status, err := manager.DeleteRow(ctx, *resolvedRef, recordInputsToMap(values))
 	if err != nil {
 		return nil, err
 	}
@@ -254,10 +266,6 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	if err != nil {
 		return nil, err
 	}
-	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
-	if !ok {
-		return nil, errors.New("source scripts are not supported")
-	}
 
 	script := ""
 	if input.Script != nil {
@@ -271,6 +279,16 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	}
 	if !hasScript && !hasFile {
 		return importResult(false, importErrorSQLSourceMissing), nil
+	}
+	if err := source.ValidateScriptExecutionSupported(spec); err != nil {
+		return nil, err
+	}
+	if !spec.Traits.Query.SupportsMultiStatement {
+		return importResult(false, importErrorSQLMultiStatementUnsupported), nil
+	}
+	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
+	if !ok {
+		return nil, errors.New("source scripts are not supported")
 	}
 
 	if hasFile {
@@ -311,6 +329,9 @@ func (r *mutationResolver) ImportSourceObjectFile(ctx context.Context, input mod
 func (r *mutationResolver) ExecuteConfirmedSQL(ctx context.Context, query string, operationType string) (*model.AIChatMessage, error) {
 	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := source.ValidateScriptExecutionSupported(spec); err != nil {
 		return nil, err
 	}
 	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)

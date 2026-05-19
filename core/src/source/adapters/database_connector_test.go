@@ -49,7 +49,7 @@ func TestDatabaseSessionRunScriptRejectsUnsupportedExecutionTraits(t *testing.T)
 		return nil, nil
 	}
 
-	spec := testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery})
+	spec := testTypeWithObjectActions("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery}, []source.Action{source.ActionBrowse, source.ActionExecute}, nil)
 	session := newTestDatabaseSession(spec, mock)
 
 	_, err := session.RunScript(context.Background(), "SELECT 1", false)
@@ -65,7 +65,7 @@ func TestDatabaseSessionRunScriptRejectsUnsupportedMultiStatement(t *testing.T) 
 		return nil, nil
 	}
 
-	spec := testTypeSpec("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery})
+	spec := testTypeWithObjectActions("Postgres", []source.Surface{source.SurfaceBrowser, source.SurfaceQuery}, []source.Action{source.ActionBrowse, source.ActionExecute}, nil)
 	spec.Traits.Query.SupportsScripts = true
 	session := newTestDatabaseSession(spec, mock)
 

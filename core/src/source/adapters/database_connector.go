@@ -443,11 +443,8 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 
 // RunScript executes a source-native script against the session.
 func (s *DatabaseSession) RunScript(ctx context.Context, script string, multiStatement bool, params ...any) (*source.RowsResult, error) {
-	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
+	if err := source.ValidateScriptExecutionSupported(s.spec); err != nil {
 		return nil, err
-	}
-	if !s.spec.Traits.Query.SupportsScripts {
-		return nil, fmt.Errorf("script execution is not supported for %s", s.spec.Label)
 	}
 	if multiStatement && !s.spec.Traits.Query.SupportsMultiStatement {
 		return nil, engine.ErrMultiStatementUnsupported

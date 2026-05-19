@@ -392,6 +392,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     const isMockDataSupported =
         sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.GenerateMockData) && isMockDataGenerationAllowed;
     const isImportSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ImportData);
+    const isRowUpdateSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.UpdateData);
+    const isRowDeleteSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.DeleteData);
     const { data: maxRowData } = useQuery(MockDataMaxRowCountDocument);
     const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
     
@@ -405,8 +407,8 @@ export const StorageUnitTable: FC<TableProps> = ({
     const [deleteRow, ] = useMutation(DeleteRowDocument);
     const [containerWidth, setContainerWidth] = useState<number>(0);
     const lastSearchState = useRef<{ search: string; matchIdx: number }>({ search: '', matchIdx: 0 });
-    const canEditRows = !disableEdit && allowRowUpdate && onRowUpdate != null;
-    const canDeleteRows = !disableEdit && allowRowDelete && objectRef != null;
+    const canEditRows = !disableEdit && allowRowUpdate && isRowUpdateSupported && onRowUpdate != null;
+    const canDeleteRows = !disableEdit && allowRowDelete && isRowDeleteSupported && objectRef != null;
 
     const handleEdit = (index: number) => {
         if (!canEditRows) {
