@@ -177,6 +177,10 @@ func ValidateGraphSupported(spec TypeSpec, ref *ObjectRef) error {
 		return nil
 	}
 
+	if spec.Contract.GraphScopeKind != nil && ref.Kind == *spec.Contract.GraphScopeKind {
+		return nil
+	}
+
 	return ValidateObjectActionSupported(spec, ref.Kind, ActionViewGraph)
 }
 

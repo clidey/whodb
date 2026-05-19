@@ -1008,6 +1008,7 @@ func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatemen
 	traits.Query.SupportsScripts = true
 	traits.Query.SupportsStreaming = streaming
 	traits.Query.SupportsMultiStatement = multiStatement
+	traits.Query.SupportsSqlImport = true
 	return traits
 }
 

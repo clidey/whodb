@@ -223,6 +223,28 @@ func (p *QuestDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLSt
 	return status, nil
 }
 
+// GetCreateTableQuery generates QuestDB-compatible CREATE TABLE DDL.
+// QuestDB does not support GENERATED ALWAYS AS IDENTITY, UNIQUE, CHECK,
+// FOREIGN KEY, or DEFAULT clauses.
+func (p *QuestDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+
+	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
+		extra := engine.NormalizeCreationExtra(column.Extra)
+		def.Primary = extra["primary"] == "true"
+		def.Unique = false
+		def.Default = nil
+		def.CheckValues = nil
+		def.CheckMin = nil
+		def.CheckMax = nil
+		def.ReferencesTable = ""
+		def.ReferencesColumn = ""
+		return def
+	})
+
+	return builder.CreateTableQuery(schema, storageUnit, columnDefs)
+}
+
 // NewQuestDBPlugin creates a QuestDB plugin that reuses the PostgreSQL runtime
 // while overriding the incompatible catalog and metadata paths.
 func NewQuestDBPlugin() *engine.Plugin {

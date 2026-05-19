@@ -275,6 +275,7 @@ func sourceTraitsToModel(traits source.TypeTraits) *model.SourceTraits {
 			SupportsScripts:        traits.Query.SupportsScripts,
 			SupportsStreaming:      traits.Query.SupportsStreaming,
 			SupportsMultiStatement: traits.Query.SupportsMultiStatement,
+			SupportsSQLImport:      traits.Query.SupportsSqlImport,
 			ExplainMode:            model.SourceQueryExplainMode(traits.Query.ExplainMode),
 		},
 		MockData: &model.SourceMockDataTraits{

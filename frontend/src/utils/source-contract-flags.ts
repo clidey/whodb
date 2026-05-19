@@ -32,6 +32,7 @@ export interface SourceContractFlags {
     supportsScripts: boolean;
     supportsStreaming: boolean;
     supportsMultiStatement: boolean;
+    supportsSqlImport: boolean;
     supportsSchema: boolean;
     supportsDatabaseSwitching: boolean;
     usesSchemaForGraph: boolean;
@@ -57,6 +58,7 @@ export function resolveSourceContractFlags(
         supportsScripts: item?.traits?.query.supportsScripts ?? false,
         supportsStreaming: item?.traits?.query.supportsStreaming ?? false,
         supportsMultiStatement: item?.traits?.query.supportsMultiStatement ?? false,
+        supportsSqlImport: item?.traits?.query.supportsSqlImport ?? false,
         supportsSchema: sourceUsesObjectKind(item, SourceObjectKind.Schema),
         supportsDatabaseSwitching: sourceUsesObjectKind(item, SourceObjectKind.Database),
         usesSchemaForGraph: item?.usesSchemaForGraph ?? true,

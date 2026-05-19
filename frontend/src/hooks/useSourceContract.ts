@@ -55,6 +55,8 @@ export interface SourceContractState extends SourceContractFlags {
     supportsStreaming: boolean;
     /** Whether the source supports multi-statement script execution. */
     supportsMultiStatement: boolean;
+    /** Whether the source supports SQL import (single or multi-statement). */
+    supportsSqlImport: boolean;
     /** Source-owned explain mode for CLI/UI query planning. */
     explainMode: SourceQueryExplainMode;
     /** Whether mock-data generation can reason about relational dependencies. */

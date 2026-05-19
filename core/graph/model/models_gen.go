@@ -627,6 +627,7 @@ type SourceQueryTraits struct {
 	SupportsScripts        bool                   `json:"SupportsScripts"`
 	SupportsStreaming      bool                   `json:"SupportsStreaming"`
 	SupportsMultiStatement bool                   `json:"SupportsMultiStatement"`
+	SupportsSQLImport      bool                   `json:"SupportsSqlImport"`
 	ExplainMode            SourceQueryExplainMode `json:"ExplainMode"`
 }
 

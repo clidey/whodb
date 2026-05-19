@@ -346,6 +346,7 @@ type QueryTraits struct {
 	SupportsScripts        bool
 	SupportsStreaming      bool
 	SupportsMultiStatement bool
+	SupportsSqlImport      bool
 	ExplainMode            QueryExplainMode
 }
 

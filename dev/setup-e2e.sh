@@ -102,12 +102,12 @@ get_db_wait_time() {
     local db=$1
     case $db in
         postgres|mysql|mysql8|mariadb) echo "90" ;;  # Heavy init scripts
-        cockroachdb)                    echo "60" ;;  # Single-node startup
+        cockroachdb)                    echo "120" ;;  # Single-node startup
         elasticsearch)                  echo "60" ;;  # Can be slow
         mongodb|clickhouse)             echo "30" ;;  # Light init
         redis|memcached|valkey|dragonfly) echo "20" ;;  # Very fast
         opensearch)                     echo "60" ;;  # Similar to ES
-        tidb)                           echo "90" ;;  # MySQL-compatible distributed DB
+        tidb)                           echo "120" ;;  # MySQL-compatible distributed DB
         yugabytedb)                     echo "90" ;;  # Distributed DB startup
         questdb)                        echo "30" ;;  # Lightweight
         ferretdb)                       echo "30" ;;  # Lightweight (depends on PG)

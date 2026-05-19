@@ -101,6 +101,7 @@ export interface SourceQueryTraitsDescriptor {
     supportsScripts: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsScripts'];
     supportsStreaming: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsStreaming'];
     supportsMultiStatement: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsMultiStatement'];
+    supportsSqlImport: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['supportsSqlImport'];
     explainMode: NonNullable<SourceTypesQuery['SourceTypes'][number]['traits']>['query']['explainMode'];
 }
 
