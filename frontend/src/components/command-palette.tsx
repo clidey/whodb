@@ -45,7 +45,7 @@ import {
     ShareIcon,
 } from "./heroicons";
 
-interface CommandPaletteProps {
+export interface CommandPaletteProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
@@ -300,6 +300,14 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     );
 };
 
+type CommandPaletteOverride = FC<CommandPaletteProps>;
+let commandPaletteOverride: CommandPaletteOverride | null = null;
+
+/** Register an override component for the command palette (used by EE). */
+export const registerCommandPaletteOverride = (component: FC<CommandPaletteProps>) => {
+    commandPaletteOverride = component;
+};
+
 export const useCommandPalette = () => {
     const [open, setOpen] = useState(false);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
@@ -328,9 +336,17 @@ export const useCommandPalette = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleKeyDown]);
 
+    useEffect(() => {
+        const handleOpen = () => setOpen(true);
+        window.addEventListener('command-palette:open', handleOpen);
+        return () => window.removeEventListener('command-palette:open', handleOpen);
+    }, []);
+
+    const PaletteComponent = commandPaletteOverride ?? CommandPalette;
+
     return {
         open,
         setOpen,
-        CommandPaletteModal: <CommandPalette open={open} onOpenChange={setOpen} />,
+        CommandPaletteModal: <PaletteComponent open={open} onOpenChange={setOpen} />,
     };
 };
