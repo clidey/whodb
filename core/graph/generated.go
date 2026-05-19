@@ -528,6 +528,7 @@ type ComplexityRoot struct {
 		ExplainMode            func(childComplexity int) int
 		SupportsAnalyze        func(childComplexity int) int
 		SupportsMultiStatement func(childComplexity int) int
+		SupportsSQLImport      func(childComplexity int) int
 		SupportsScripts        func(childComplexity int) int
 		SupportsStreaming      func(childComplexity int) int
 	}
@@ -3006,6 +3007,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SourceQueryTraits.SupportsMultiStatement(childComplexity), true
+	case "SourceQueryTraits.SupportsSqlImport":
+		if e.ComplexityRoot.SourceQueryTraits.SupportsSQLImport == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourceQueryTraits.SupportsSQLImport(childComplexity), true
 	case "SourceQueryTraits.SupportsScripts":
 		if e.ComplexityRoot.SourceQueryTraits.SupportsScripts == nil {
 			break
@@ -4238,6 +4245,8 @@ func (ec *executionContext) childFields_SourceQueryTraits(ctx context.Context, f
 		return ec.fieldContext_SourceQueryTraits_SupportsStreaming(ctx, field)
 	case "SupportsMultiStatement":
 		return ec.fieldContext_SourceQueryTraits_SupportsMultiStatement(ctx, field)
+	case "SupportsSqlImport":
+		return ec.fieldContext_SourceQueryTraits_SupportsSqlImport(ctx, field)
 	case "ExplainMode":
 		return ec.fieldContext_SourceQueryTraits_ExplainMode(ctx, field)
 	}
@@ -14783,6 +14792,29 @@ func (ec *executionContext) fieldContext_SourceQueryTraits_SupportsMultiStatemen
 	return graphql.NewScalarFieldContext("SourceQueryTraits", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _SourceQueryTraits_SupportsSqlImport(ctx context.Context, field graphql.CollectedField, obj *model.SourceQueryTraits) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourceQueryTraits_SupportsSqlImport(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SupportsSQLImport, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourceQueryTraits_SupportsSqlImport(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourceQueryTraits", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _SourceQueryTraits_ExplainMode(ctx context.Context, field graphql.CollectedField, obj *model.SourceQueryTraits) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22247,6 +22279,11 @@ func (ec *executionContext) _SourceQueryTraits(ctx context.Context, sel ast.Sele
 			}
 		case "SupportsMultiStatement":
 			out.Values[i] = ec._SourceQueryTraits_SupportsMultiStatement(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "SupportsSqlImport":
+			out.Values[i] = ec._SourceQueryTraits_SupportsSqlImport(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

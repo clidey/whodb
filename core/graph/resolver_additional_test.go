@@ -164,6 +164,24 @@ func TestQueryRowValidatesPaginationAndEnrichesColumns(t *testing.T) {
 	})
 }
 
+func TestSourceQueriesRejectUnsupportedSourceObjectActions(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	setEngineMock(t, mock)
+	ctx := testSourceContext("Postgres", map[string]string{"Database": "app"})
+	schemaRef := testSourceRef(model.SourceObjectKindSchema, "app", "public")
+	tableRef := testSourceRef(model.SourceObjectKindTable, "app", "public", "orders")
+
+	if _, err := (&Resolver{}).Query().SourceRows(ctx, schemaRef, nil, nil, 5, 0); err == nil || !strings.Contains(err.Error(), "viewing rows is not supported") {
+		t.Fatalf("expected row-view action rejection, got %v", err)
+	}
+	if _, err := (&Resolver{}).Query().SourceContent(ctx, tableRef); err == nil || !strings.Contains(err.Error(), "viewing content is not supported") {
+		t.Fatalf("expected content-view action rejection, got %v", err)
+	}
+	if _, err := (&Resolver{}).Query().SourceColumns(ctx, schemaRef); err == nil || !strings.Contains(err.Error(), "inspecting objects is not supported") {
+		t.Fatalf("expected inspect action rejection, got %v", err)
+	}
+}
+
 func TestQueryColumnsBatchSkipsFailedTables(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
 	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }
@@ -332,6 +350,16 @@ func TestMutationExecuteConfirmedSQLMapsResultsAndErrors(t *testing.T) {
 	})
 }
 
+func TestMutationExecuteConfirmedSQLRejectsUnsupportedSourceScripts(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Redis"))
+	setEngineMock(t, mock)
+
+	ctx := testSourceContext("Redis", nil)
+	if _, err := (&Resolver{}).Mutation().ExecuteConfirmedSQL(ctx, "DEL key", "sql:delete"); err == nil || !strings.Contains(err.Error(), "querying is not supported") {
+		t.Fatalf("expected confirmed SQL to reject unsupported source scripts, got %v", err)
+	}
+}
+
 func TestMutationImportSQLValidatesSourcesAndExecutesScripts(t *testing.T) {
 	mutation := (&Resolver{}).Mutation()
 	ctx := testSourceContext("Postgres", nil)
@@ -398,6 +426,17 @@ func TestMutationImportSQLValidatesSourcesAndExecutesScripts(t *testing.T) {
 		}
 		if result.Status || result.Detail == nil || *result.Detail != importErrorSQLMultiStatementUnsupported {
 			t.Fatalf("expected unsupported multistatement result, got %#v", result)
+		}
+	})
+
+	t.Run("rejects sources without script execution", func(t *testing.T) {
+		mock := testutil.NewPluginMock(engine.DatabaseType("Redis"))
+		setEngineMock(t, mock)
+
+		script := "DEL key"
+		result, err := mutation.ImportSQL(testSourceContext("Redis", nil), model.ImportSQLInput{Script: &script})
+		if err == nil || result != nil || !strings.Contains(err.Error(), "querying is not supported") {
+			t.Fatalf("expected SQL import to reject unsupported source scripts, result=%#v err=%v", result, err)
 		}
 	})
 }

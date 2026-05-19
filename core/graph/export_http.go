@@ -143,6 +143,10 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+	if err := source.ValidateObjectActionSupported(spec, resolvedRef.Kind, source.ActionViewRows); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	scope := sourceAuditScopeFromContext(r.Context(), spec)
 
 	exporter, ok := source.AsTabularExporter(scope, session)

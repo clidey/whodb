@@ -60,6 +60,9 @@ func ValidateContract(spec TypeSpec) error {
 	if err := ValidateExecutionContract(spec); err != nil {
 		return err
 	}
+	if err := ValidateMutationContract(spec); err != nil {
+		return err
+	}
 	if contract.SupportsSurface(SurfaceBrowser) && len(contract.BrowsePath) == 0 {
 		return fmt.Errorf("%s browser surface requires a browse path", sourceLabel(spec))
 	}
@@ -122,6 +125,73 @@ func ValidateExecutionContract(spec TypeSpec) error {
 	}
 	if spec.Traits.Query.SupportsScripts && !contract.SupportsRootAction(ActionExecute) {
 		return fmt.Errorf("%s script execution requires root execute support", sourceLabel(spec))
+	}
+	return nil
+}
+
+// ValidateScriptExecutionSupported returns an error when the source contract
+// does not allow script execution through the query surface.
+func ValidateScriptExecutionSupported(spec TypeSpec) error {
+	if err := ValidateSurfaceSupported(spec, SurfaceQuery); err != nil {
+		return err
+	}
+	if err := ValidateRootActionSupported(spec, ActionExecute); err != nil {
+		return err
+	}
+	if !spec.Traits.Query.SupportsScripts {
+		return fmt.Errorf("script execution is not supported for %s", sourceLabel(spec))
+	}
+	return nil
+}
+
+// ValidateBrowseSupported returns an error when the source root or parent
+// object cannot be browsed according to the source contract.
+func ValidateBrowseSupported(spec TypeSpec, parent *ObjectRef) error {
+	if parent == nil {
+		return ValidateRootActionSupported(spec, ActionBrowse)
+	}
+
+	return ValidateObjectActionSupported(spec, parent.Kind, ActionBrowse)
+}
+
+// ValidateCreateChildSupported returns an error when the source root or parent
+// object cannot create child objects according to the source contract.
+func ValidateCreateChildSupported(spec TypeSpec, parent *ObjectRef) error {
+	if parent == nil {
+		return ValidateRootActionSupported(spec, ActionCreateChild)
+	}
+
+	return ValidateObjectActionSupported(spec, parent.Kind, ActionCreateChild)
+}
+
+// ValidateGraphSupported returns an error when graph data cannot be viewed for
+// the source root or object according to the source contract.
+func ValidateGraphSupported(spec TypeSpec, ref *ObjectRef) error {
+	if err := ValidateSurfaceSupported(spec, SurfaceGraph); err != nil {
+		return err
+	}
+	if ref == nil {
+		if spec.Contract.GraphScopeKind == nil {
+			return ValidateRootActionSupported(spec, ActionViewGraph)
+		}
+		return nil
+	}
+
+	if spec.Contract.GraphScopeKind != nil && ref.Kind == *spec.Contract.GraphScopeKind {
+		return nil
+	}
+
+	return ValidateObjectActionSupported(spec, ref.Kind, ActionViewGraph)
+}
+
+// ValidateMutationContract reports source mutation inconsistencies that would
+// make backend write enforcement and frontend controls disagree.
+func ValidateMutationContract(spec TypeSpec) error {
+	contract := NormalizeContract(spec.Contract)
+	for _, objectType := range contract.ObjectTypes {
+		if err := validateObjectMutationActions(spec, objectType); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -376,6 +446,31 @@ func ActionDescription(action Action) string {
 		return "viewing graphs"
 	default:
 		return strings.ToLower(string(action))
+	}
+}
+
+func validateObjectMutationActions(spec TypeSpec, objectType ObjectType) error {
+	for _, action := range []Action{ActionInsertData, ActionUpdateData, ActionDeleteData, ActionImportData, ActionGenerateMockData} {
+		if !objectType.SupportsAction(action) {
+			continue
+		}
+		if !objectTypeSupportsDataMutation(objectType, action) {
+			return fmt.Errorf("%s declares %s for %s objects without a compatible data view", sourceLabel(spec), ActionDescription(action), objectType.Kind)
+		}
+	}
+	return nil
+}
+
+func objectTypeSupportsDataMutation(objectType ObjectType, action Action) bool {
+	switch action {
+	case ActionImportData, ActionGenerateMockData:
+		return objectType.SupportsAction(ActionViewRows)
+	case ActionInsertData:
+		return objectType.SupportsAction(ActionViewRows) || objectType.DataShape == DataShapeDocument
+	case ActionUpdateData, ActionDeleteData:
+		return objectType.SupportsAction(ActionViewRows) || objectType.SupportsAction(ActionViewContent)
+	default:
+		return true
 	}
 }
 

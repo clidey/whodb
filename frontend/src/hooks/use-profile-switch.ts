@@ -92,10 +92,10 @@ export const useProfileSwitch = (options?: UseProfileSwitchOptions) => {
             }
 
             updateProfileLastAccessed(profile.Id);
+            await clearGraphqlStore();
             if (database) {
                 dispatch(AuthActions.setLoginProfileDatabase({ id: profile.Id, database }));
             }
-            await clearGraphqlStore();
             dispatch(DatabaseActions.setSchema(""));
             dispatch(AuthActions.switch({ id: profile.Id }));
             navigate(InternalRoutes.Dashboard.StorageUnit.path, {

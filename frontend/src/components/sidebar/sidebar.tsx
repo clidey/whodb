@@ -229,9 +229,11 @@ export const Sidebar: FC = () => {
     const sslStatusQueryOptions = current != null && sslStatus === undefined
         ? {}
         : skipToken;
-    const {data: availableDatabases, loading: availableDatabasesLoading, refetch: getDatabases} = useQuery(SourceFieldOptionsDocument, databaseQueryOptions);
-    const { data: availableSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useQuery(GetSchemaDocument, schemaQueryOptions);
-    const loading = availableDatabasesLoading || availableSchemasLoading;
+    const {data: availableDatabases, previousData: prevDatabases, loading: availableDatabasesLoading, refetch: getDatabases} = useQuery(SourceFieldOptionsDocument, databaseQueryOptions);
+    const { data: availableSchemas, previousData: prevSchemas, loading: availableSchemasLoading, refetch: getSchemas } = useQuery(GetSchemaDocument, schemaQueryOptions);
+    const hasDatabaseData = !!(availableDatabases ?? prevDatabases);
+    const hasSchemaData = !!(availableSchemas ?? prevSchemas);
+    const loading = (availableDatabasesLoading && !hasDatabaseData) || (availableSchemasLoading && !hasSchemaData);
     const availableSchemaNames = useMemo(() => {
         return availableSchemas?.Schema?.map(schemaObject => schemaObject.Name) ?? [];
     }, [availableSchemas?.Schema]);
@@ -304,12 +306,13 @@ export const Sidebar: FC = () => {
 
     // Database select logic
     const databaseOptions = useMemo(() => {
-        if (!availableDatabases?.SourceFieldOptions) return [];
-        return availableDatabases.SourceFieldOptions.map(db => ({
+        const databases = (availableDatabases ?? prevDatabases)?.SourceFieldOptions;
+        if (!databases) return [];
+        return databases.map(db => ({
             value: db,
             label: db,
         }));
-    }, [availableDatabases?.SourceFieldOptions]);
+    }, [availableDatabases, prevDatabases]);
     
     const handleDatabaseChange = useCallback((value: string) => {
         if (value === "") {
@@ -324,11 +327,14 @@ export const Sidebar: FC = () => {
 
     // Schema select logic
     const schemaOptions = useMemo(() => {
-        return availableSchemaNames.map(schemaName => ({
+        const schemas = availableSchemaNames.length > 0
+            ? availableSchemaNames
+            : (prevSchemas?.Schema?.map(s => s.Name) ?? []);
+        return schemas.map(schemaName => ({
             value: schemaName,
             label: schemaName,
-        })) ?? [];
-    }, [availableSchemaNames]);
+        }));
+    }, [availableSchemaNames, prevSchemas]);
 
     const handleSchemaChange = useCallback((value: string) => {
         if (value === "") {
@@ -547,6 +553,7 @@ export const Sidebar: FC = () => {
                                                     options={databaseOptions}
                                                     value={current?.Database}
                                                     onChange={handleDatabaseChange}
+                                                    disabled={availableDatabasesLoading}
                                                     placeholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('selectSchema') : t('selectDatabase')}
                                                     searchPlaceholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('searchSchema') : t('searchDatabase')}
                                                     side="left" align="start"
@@ -559,6 +566,7 @@ export const Sidebar: FC = () => {
                                                     options={schemaOptions}
                                                     value={schema}
                                                     onChange={handleSchemaChange}
+                                                    disabled={availableSchemasLoading}
                                                     placeholder={t('selectSchema')}
                                                     searchPlaceholder={t('searchSchema')}
                                                     side="left" align="start"
@@ -597,6 +605,7 @@ export const Sidebar: FC = () => {
                                                     options={databaseOptions}
                                                     value={current?.Database}
                                                     onChange={handleDatabaseChange}
+                                                    disabled={availableDatabasesLoading}
                                                     placeholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('selectSchema') : t('selectDatabase')}
                                                     searchPlaceholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('searchSchema') : t('searchDatabase')}
                                                     side="left" align="start"
@@ -609,6 +618,7 @@ export const Sidebar: FC = () => {
                                                     options={schemaOptions}
                                                     value={schema}
                                                     onChange={handleSchemaChange}
+                                                    disabled={availableSchemasLoading}
                                                     placeholder={t('selectSchema')}
                                                     searchPlaceholder={t('searchSchema')}
                                                     side="left" align="start"
@@ -719,6 +729,7 @@ export const Sidebar: FC = () => {
                                             options={databaseOptions}
                                             value={current?.Database}
                                             onChange={handleDatabaseChange}
+                                            disabled={availableDatabasesLoading}
                                             placeholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('selectSchema') : t('selectDatabase')}
                                             searchPlaceholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('searchSchema') : t('searchDatabase')}
                                             side="left" align="start"
@@ -739,6 +750,7 @@ export const Sidebar: FC = () => {
                                             options={schemaOptions}
                                             value={schema}
                                             onChange={handleSchemaChange}
+                                            disabled={availableSchemasLoading}
                                             placeholder={t('selectSchema')}
                                             searchPlaceholder={t('searchSchema')}
                                             side="left" align="start"

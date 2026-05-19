@@ -36,33 +36,7 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
         with:
-          egress-policy: block
-          allowed-endpoints: >
-            _http._tcp.azure.archive.ubuntu.com:443
-            _http._tcp.ports.ubuntu.com:443
-            _https._tcp.deb.nodesource.com:443
-            _https._tcp.esm.ubuntu.com:443
-            _https._tcp.motd.ubuntu.com:443
-            _https._tcp.packages.microsoft.com:443
-            _https._tcp.ppa.launchpadcontent.net:443
-            api.github.com:443
-            api.snapcraft.io:443
-            azure.archive.ubuntu.com:80
-            canonical-bos01.cdn.snapcraftcontent.com:443
-            canonical-lgw01.cdn.snapcraftcontent.com:443
-            deb.debian.org:443
-            deb.debian.org:80
-            deb.nodesource.com:443
-            esm.ubuntu.com:443
-            github.com:443
-            packages.microsoft.com:443
-            ports.ubuntu.com:80
-            ppa.launchpadcontent.net:443
-            proxy.golang.org:443
-            registry.npmjs.org:443
-            release-assets.githubusercontent.com:443
-            storage.googleapis.com:443
-            sum.golang.org:443
+          egress-policy: audit
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -79,27 +53,6 @@ jobs:
             core/go.mod
             desktop-ce/go.sum
             desktop-ce/go.mod
-
-      # CACHING DISABLED TO AVOID STALE CACHE ISSUES
-      # - name: Cache Go build artifacts
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.cache/go-build
-      #     key: ${{ runner.os }}-${{ runner.arch }}-go-build-snap-${{ hashFiles('core/go.sum', 'desktop-ce/go.sum', 'core/go.mod', 'desktop-ce/go.mod') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-${{ runner.arch }}-go-build-snap-
-      #       ${{ runner.os }}-go-build-
-
-      # - name: Cache Snapcraft downloads
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.cache/snapcraft/download
-      #       ~/.cache/snapcraft/stage-packages
-      #     key: ${{ runner.os }}-${{ runner.arch }}-snapcraft-${{ hashFiles('snapcraft.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-${{ runner.arch }}-snapcraft-
 
       - name: Setup pnpm
         uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v6.0.4
@@ -128,27 +81,6 @@ jobs:
           path: ~/go/bin/wails
           key: ${{ runner.os }}-${{ runner.arch }}-wails-${{ hashFiles('desktop-common/go.mod') }}
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
-        with:
-          key: ${{ runner.os }}-${{ runner.arch }}-ccache-snap
-          max-size: 500M
-
-      - name: Install build dependencies
-        run: |
-          # Update package lists
-          sudo apt-get update
-
-          # Install essential build tools
-          # Note: ccache is already installed by the ccache-action above
-          sudo apt-get install -y \
-            build-essential \
-            curl \
-            git \
-            pkg-config
-
-          echo "Build dependencies installed"
-
       - name: Setup Snapcraft
         run: |
           sudo snap install snapcraft --classic
@@ -160,26 +92,11 @@ jobs:
         run: |
           echo "Building snap with release-version: ${{ inputs.version }}"
 
-          # Show ccache stats before build (if available)
-          if command -v ccache &> /dev/null; then
-            echo "ccache stats before build:"
-            ccache -s || true
-          fi
-
-          # Write version to a file that snapcraft can read
           echo "${{ inputs.version }}" > .snap_version
 
-          # Run snapcraft with destructive mode
-          # The ccache-action will automatically set up the environment if available
           sudo -E snapcraft pack --destructive-mode --verbosity=debug
 
-          # Show ccache stats after build (if available)
-          if command -v ccache &> /dev/null; then
-            echo "ccache stats after build:"
-            ccache -s || true
-          fi
-
-          echo "✅ Snap built successfully"
+          echo "Snap built successfully"
           echo "build_method=destructive" >> $GITHUB_OUTPUT
 
       - name: Verify Snap

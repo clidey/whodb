@@ -143,6 +143,13 @@ func sourceRefFromInput(ref *model.SourceObjectRefInput) *source.ObjectRef {
 	return &normalized
 }
 
+func validateSourceObjectAction(spec source.TypeSpec, ref *source.ObjectRef, action source.Action) error {
+	if ref == nil {
+		return fmt.Errorf("source object reference is required")
+	}
+	return source.ValidateObjectActionSupported(spec, ref.Kind, action)
+}
+
 func sourceRefToModel(ref source.ObjectRef) *model.SourceObjectRef {
 	normalized := source.NormalizeObjectRef(ref)
 	return &model.SourceObjectRef{
@@ -268,6 +275,7 @@ func sourceTraitsToModel(traits source.TypeTraits) *model.SourceTraits {
 			SupportsScripts:        traits.Query.SupportsScripts,
 			SupportsStreaming:      traits.Query.SupportsStreaming,
 			SupportsMultiStatement: traits.Query.SupportsMultiStatement,
+			SupportsSQLImport:      traits.Query.SupportsSqlImport,
 			ExplainMode:            model.SourceQueryExplainMode(traits.Query.ExplainMode),
 		},
 		MockData: &model.SourceMockDataTraits{

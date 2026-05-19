@@ -19,6 +19,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -112,6 +113,37 @@ func TestUpdateStorageUnitCallsPlugin(t *testing.T) {
 	}
 	if updateCalled != 1 {
 		t.Fatalf("expected UpdateStorageUnit to be called once, got %d", updateCalled)
+	}
+}
+
+func TestMutationsRejectUnsupportedSourceObjectActions(t *testing.T) {
+	resolver := &Resolver{}
+	mut := resolver.Mutation()
+
+	mock := testutil.NewPluginMock(engine.DatabaseType("QuestDB"))
+	setEngineMock(t, mock)
+	ctx := testSourceContext("QuestDB", map[string]string{"Database": "app"})
+	ref := testSourceRef(model.SourceObjectKindTable, "app", "users")
+
+	if _, err := mut.UpdateSourceObject(ctx, ref, []*model.RecordInput{{Key: "name", Value: "alice"}}, []string{"name"}); err == nil || !strings.Contains(err.Error(), "updating data is not supported") {
+		t.Fatalf("expected update action rejection, got %v", err)
+	}
+	if _, err := mut.DeleteSourceRow(ctx, ref, []*model.RecordInput{{Key: "id", Value: "1"}}); err == nil || !strings.Contains(err.Error(), "deleting data is not supported") {
+		t.Fatalf("expected delete action rejection, got %v", err)
+	}
+	if _, err := mut.ImportSourceObjectFile(ctx, model.ImportFileInput{Ref: &ref}); err == nil || !strings.Contains(err.Error(), "importing data is not supported") {
+		t.Fatalf("expected import action rejection, got %v", err)
+	}
+	if _, err := mut.GenerateMockData(ctx, model.MockDataGenerationInput{
+		Ref:               &ref,
+		RowCount:          1,
+		Method:            "default",
+		OverwriteExisting: false,
+	}); err == nil || !strings.Contains(err.Error(), "generating mock data is not supported") {
+		t.Fatalf("expected mock-data action rejection, got %v", err)
+	}
+	if _, err := mut.CreateSourceObject(ctx, &ref, "child", nil); err == nil || !strings.Contains(err.Error(), "creating child objects is not supported") {
+		t.Fatalf("expected create-child action rejection, got %v", err)
 	}
 }
 

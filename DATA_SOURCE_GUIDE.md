@@ -637,12 +637,16 @@ available.
 **`GraphScopeKind`**: Set to the ObjectKind that scopes relationship visualization. Use `ptr(source.ObjectKindSchema)` for schema-scoped, `ptr(source.ObjectKindDatabase)` for database-scoped, or `nil` for no graph support.
 
 **Contract enforcement**: Declare every operation in `ObjectTypes.Actions` or
-`RootActions`. `ListObjects` requires `Browse`, row reads require `ViewRows`,
-column/constraint inspection requires `Inspect`, mutations require their matching
-data action, imports require `ImportData`, mock data requires
-`GenerateMockData`, and graph reads require `SurfaceGraph` plus `ViewGraph` on
-the graph scope object (or root graph support for flat sources). Query and chat
-surfaces are controlled by `Surfaces`.
+`RootActions`. `ListObjects` requires `Browse`, object creation requires
+`CreateChild` on the root or parent, row reads and exports require `ViewRows`,
+content reads and downloads require `ViewContent`, column/constraint inspection
+requires `Inspect`, mutations require their matching data action, imports
+require `ImportData`, mock data requires `GenerateMockData`, and graph reads
+require `SurfaceGraph` plus `ViewGraph` on the graph scope object (or root graph
+support for flat sources). Query and chat surfaces are controlled by `Surfaces`.
+Plain English: the source contract is the operation policy; WhoDB asks the
+source what this object can do, then both backend resolvers and frontend
+controls use that same answer.
 
 **Metadata fidelity**: Confirm the family declares appropriate
 `TypeTraits.Metadata` values. Use exact metadata for system catalogs, driver
