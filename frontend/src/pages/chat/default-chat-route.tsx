@@ -20,6 +20,7 @@ import { GetAiModelsDocument } from '@graphql';
 import { Loading } from "../../components/loading";
 import { Navigate } from "react-router-dom";
 import { InternalRoutes } from "../../config/routes";
+import { getSurfaceFallbackPath } from "../../config/route-registry";
 import { useSourceContract } from "../../hooks/useSourceContract";
 import { InternalPage } from "../../components/page";
 import { useAppSelector } from "../../store/hooks";
@@ -45,14 +46,14 @@ export const NavigateToDefault: FC = () => {
     const { data, error } = useQuery(GetAiModelsDocument, aiModelsQueryOptions);
 
     if (!supportsChat ||  error != null) {
-        return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
+        return <Navigate to={getSurfaceFallbackPath()} />
     }
 
     if (data?.AIModel != null) {
         if (data.AIModel.length > 0) {
             return <Navigate to={InternalRoutes.Chat.path} />
         }
-        return <Navigate to={InternalRoutes.Dashboard.StorageUnit.path} />
+        return <Navigate to={getSurfaceFallbackPath()} />
     }
 
     return <InternalPage>

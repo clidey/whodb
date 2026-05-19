@@ -52,3 +52,13 @@ export function getRegisteredRoutes(): RegisteredRoute[] {
 export function getRegisteredPublicRoutes(): RegisteredRoute[] {
     return publicRegistrations;
 }
+
+let surfaceFallbackPath = "/storage-unit";
+
+export function setSurfaceFallbackPath(path: string): void {
+    surfaceFallbackPath = path;
+}
+
+export function getSurfaceFallbackPath(): string {
+    return surfaceFallbackPath;
+}
