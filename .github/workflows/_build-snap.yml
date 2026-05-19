@@ -128,26 +128,14 @@ jobs:
           path: ~/go/bin/wails
           key: ${{ runner.os }}-${{ runner.arch }}-wails-${{ hashFiles('desktop-common/go.mod') }}
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
-        with:
-          key: ${{ runner.os }}-${{ runner.arch }}-ccache-snap
-          max-size: 500M
-
       - name: Install build dependencies
         run: |
-          # Update package lists
           sudo apt-get update
-
-          # Install essential build tools
-          # Note: ccache is already installed by the ccache-action above
           sudo apt-get install -y \
             build-essential \
             curl \
             git \
             pkg-config
-
-          echo "Build dependencies installed"
 
       - name: Setup Snapcraft
         run: |
@@ -160,26 +148,11 @@ jobs:
         run: |
           echo "Building snap with release-version: ${{ inputs.version }}"
 
-          # Show ccache stats before build (if available)
-          if command -v ccache &> /dev/null; then
-            echo "ccache stats before build:"
-            ccache -s || true
-          fi
-
-          # Write version to a file that snapcraft can read
           echo "${{ inputs.version }}" > .snap_version
 
-          # Run snapcraft with destructive mode
-          # The ccache-action will automatically set up the environment if available
           sudo -E snapcraft pack --destructive-mode --verbosity=debug
 
-          # Show ccache stats after build (if available)
-          if command -v ccache &> /dev/null; then
-            echo "ccache stats after build:"
-            ccache -s || true
-          fi
-
-          echo "✅ Snap built successfully"
+          echo "Snap built successfully"
           echo "build_method=destructive" >> $GITHUB_OUTPUT
 
       - name: Verify Snap
