@@ -46,11 +46,12 @@ Read the **Core Architecture** section first, then follow the path that matches 
 ### Key Principles
 
 1. **Source-First GraphQL API** — You do NOT add custom GraphQL queries or mutations for new data sources. The public API (`SourceTypes`, `SourceObjects`, `SourceRows`, `RunSourceQuery`, `SourceGraph`, etc.) is generic and works for all source types automatically.
-2. **Plugin Self-Registration** — Plugins register themselves via `init()` functions. The frontend and API automatically adapt based on the plugin's declared catalog entries.
-3. **CE vs. EE Strict Boundary** — CE (Community Edition) knows *nothing* about EE (Enterprise Edition). CE code must never contain `ee/` imports, references, or `if isEE` logic. EE extends CE purely through registries at boot time. Edition is controlled by which entry point is compiled (`core/cmd/whodb/main.go` for CE, `ee/cmd/whodb/main.go` for EE), not build tags.
-4. **No Defensive Code** — Do not write fallback logic unless explicitly requested.
-5. **No SQL Injection** — Use parameterized queries or `GetPlaceholder(index)`. Never use `fmt.Sprintf` for user-supplied SQL variables.
-6. **Localization** — All user-facing strings must use `t()` with YAML keys. No hardcoded UI text.
+2. **Source Contract Authority** — Declare capabilities once in the source catalog. `SourceContract.Surfaces`, `RootActions`, `BrowsePath`, `ObjectTypes.Actions`, and `ObjectTypes.Views` are the single source of truth for what the backend allows and what the frontend shows.
+3. **Plugin Self-Registration** — Plugins register themselves via `init()` functions. The frontend and API automatically adapt based on the plugin's declared catalog entries.
+4. **CE vs. EE Strict Boundary** — CE (Community Edition) knows *nothing* about EE (Enterprise Edition). CE code must never contain `ee/` imports, references, or `if isEE` logic. EE extends CE purely through registries at boot time. Edition is controlled by which entry point is compiled (`core/cmd/whodb/main.go` for CE, `ee/cmd/whodb/main.go` for EE), not build tags.
+5. **No Defensive Code** — Do not write fallback logic unless explicitly requested.
+6. **No SQL Injection** — Use parameterized queries or `GetPlaceholder(index)`. Never use `fmt.Sprintf` for user-supplied SQL variables.
+7. **Localization** — All user-facing strings must use `t()` with YAML keys. No hardcoded UI text.
 
 ---
 
@@ -80,7 +81,7 @@ Before implementing anything, understand these types. Every value listed below i
 ### `source.Surface` — UI experiences enabled
 | Value | Description |
 |-------|-------------|
-| `SurfaceBrowser` | Object tree navigation (always included) |
+| `SurfaceBrowser` | Object tree navigation |
 | `SurfaceQuery` | SQL/query editor |
 | `SurfaceChat` | AI chat interface |
 | `SurfaceGraph` | Relationship visualization |
@@ -155,6 +156,22 @@ A `bool` on `ConnectionTraits`. When `true` (the default for most network source
 |-------|---------|
 | `SchemaFidelityExact` | Schema from system tables (SQL databases) |
 | `SchemaFidelitySampled` | Schema inferred from data samples (MongoDB, Elasticsearch) |
+
+### `source.MetadataFidelity` — Column, constraint, graph, and filtering precision
+| Value | Use For |
+|-------|---------|
+| `MetadataFidelityExact` | Authoritative source metadata |
+| `MetadataFidelityDriver` | Metadata reported by a driver or bridge metadata API |
+| `MetadataFidelitySampled` | Metadata inferred from sampled documents or records |
+| `MetadataFidelityInferred` | Metadata inferred from conventions, such as ID-like names |
+| `MetadataFidelitySynthetic` | WhoDB-created metadata for synthetic shapes |
+| `MetadataFidelityUnsupported` | The metadata surface is not available |
+| `MetadataFidelityUnknown` | The source did not declare fidelity |
+
+`TypeTraits.Metadata` declares fidelity for `Columns`, `Constraints`, `Graph`,
+and `SystemObjectFiltering`. Database-backed sources should also declare
+internal object names or prefixes in the source catalog rather than filtering
+system schemas, collections, indices, or tables in shared code.
 
 ### `source.QueryExplainMode` — Query plan inspection
 `QueryExplainModeNone`, `QueryExplainModeExplain`, `QueryExplainModeExplainAnalyze`, `QueryExplainModeExplainPipeline`
@@ -283,6 +300,12 @@ type DriverShutdowner interface {
 }
 ```
 
+Database-backed sources must declare execution behavior in `SourceType.Traits.Query`:
+`SupportsScripts`, `SupportsStreaming`, and `SupportsMultiStatement`.
+Plain English: WhoDB now asks each source what kinds of execution it supports,
+then both the backend and frontend use that same answer instead of guessing from
+the database type or failing at runtime.
+
 ---
 
 ## Reference: ObjectType Builder Helpers
@@ -330,6 +353,11 @@ fileTraits(profileLabelStrategy) source.TypeTraits
 // Bridge/sidecar source (EE only)
 bridgeTraits() source.TypeTraits  // EE only, in ee/core/src/sourcecatalog/register.go
 ```
+
+When a source has internal schemas, collections, indices, tables, or keys,
+declare them on `TypeTraits.Metadata.HiddenObjectNames` or
+`HiddenObjectPrefixes` in the catalog family. The database adapter applies those
+rules consistently to browse and graph metadata.
 
 ---
 
@@ -567,7 +595,10 @@ This controls the connection UI form and which fields are shown.
 
 ### Phase 5: Register the Source Family Spec
 
-This defines browsing hierarchy, capabilities, and actions.
+This defines browsing hierarchy, capabilities, and actions. The source family
+spec is the authority for source behavior: the backend adapter enforces it, and
+the frontend uses it to decide which screens, buttons, and object actions are
+available.
 
 - **CE**: Add to the `familySpecs` map in `core/src/sourcecatalog/catalog.go`
 - **EE**: Call `coresourcecatalog.RegisterFamilySpec()` in `ee/core/src/sourcecatalog/register.go`
@@ -605,9 +636,33 @@ This defines browsing hierarchy, capabilities, and actions.
 
 **`GraphScopeKind`**: Set to the ObjectKind that scopes relationship visualization. Use `ptr(source.ObjectKindSchema)` for schema-scoped, `ptr(source.ObjectKindDatabase)` for database-scoped, or `nil` for no graph support.
 
+**Contract enforcement**: Declare every operation in `ObjectTypes.Actions` or
+`RootActions`. `ListObjects` requires `Browse`, object creation requires
+`CreateChild` on the root or parent, row reads and exports require `ViewRows`,
+content reads and downloads require `ViewContent`, column/constraint inspection
+requires `Inspect`, mutations require their matching data action, imports
+require `ImportData`, mock data requires `GenerateMockData`, and graph reads
+require `SurfaceGraph` plus `ViewGraph` on the graph scope object (or root graph
+support for flat sources). Query and chat surfaces are controlled by `Surfaces`.
+Plain English: the source contract is the operation policy; WhoDB asks the
+source what this object can do, then both backend resolvers and frontend
+controls use that same answer.
+
+**Metadata fidelity**: Confirm the family declares appropriate
+`TypeTraits.Metadata` values. Use exact metadata for system catalogs, driver
+metadata for bridge-backed families, sampled metadata for document/search
+sources, inferred metadata for heuristic graph edges, and unsupported for
+surfaces the source does not expose. Plain English: object metadata behavior is
+declared once in the source catalog, and the adapter normalizes columns,
+constraints, graph relationships, and hidden objects from that declaration.
+Hidden object names and prefixes must reference declared object kinds.
+
 ### Phase 6: Register Session Metadata
 
 This provides type definitions, operators, and aliases for the query builder UI.
+Plain English: query/editor behavior is declared once in the source catalog,
+and the frontend renders editor tools from that declaration instead of checking
+source names.
 
 - **CE**: Add to `registerSessionMetadata()` in `core/src/sourcecatalog/metadata.go`
 - **EE**: Add to `Register()` in `ee/core/src/sourcecatalog/register.go`
@@ -648,6 +703,15 @@ var MyNewDBTypeDefinitions = []engine.TypeDefinition{
     {ID: "JSON", Label: "json", Category: engine.TypeCategoryJSON},
 }
 ```
+
+Every query-capable source must resolve `SourceSessionMetadata`. Operators must
+be non-empty, type IDs must be unique, and every alias target must match a
+declared type definition. Sources that expose create-child actions must also
+resolve supported object creation metadata when the create-object UI needs it.
+The source catalog tests call `ValidateSessionMetadataContract` and
+`ValidateObjectCreationMetadataContract` to catch drift across these declarations.
+They also call `ValidateObjectMetadataContract` so column, constraint, graph,
+and internal-object fidelity stays aligned with the source contract.
 
 ### Phase 7: Frontend Integration
 
@@ -695,8 +759,11 @@ Only needed if your source requires a heavily customized connection form that do
 For normal database sources, do not build a bespoke form first. Prefer the
 backend-declared `connectionFields` and `sslModes` contract and let the shared
 frontend connection form render it. CE login and EE platform create/edit now
-share the same advanced-field and SSL rendering path, so generic field-based
-sources should work in both places without extra frontend code.
+share the same primary-field, advanced-field, and SSL rendering path, so
+generic field-based sources should work in both places without extra frontend
+code. In plain English: declare the connection inputs once in the backend
+source catalog, and both editions render and validate the same form from that
+declaration.
 
 - **CE**: Register via `registerSourceTypeOverrides()` in `frontend/src/config/source-registry.ts`
 - **EE**: Register in `ee/frontend/src/config.tsx` via `eeSourceTypeOverrides` array, which is passed to `registerSourceTypeOverrides()` in `ee/frontend/src/register.ts`
@@ -711,7 +778,18 @@ const override: SourceTypeOverride = {
 Use `customFormRenderer` only when the standard field-based flow is genuinely
 insufficient.
 
-The frontend `decorateSourceType()` function auto-derives all capability flags (`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`, `supportsDatabaseSwitching`, `supportsMockData`, etc.) from the backend contract. Do not set these manually — they come from `source.Contract.Surfaces`, `BrowsePath`, and `ObjectTypes`.
+Connection prefills must target declared `connectionFields` or reserved SSL
+fields such as `SSL Mode`; `ValidateConnectionContract` tests this for the CE
+and EE catalogs.
+
+The frontend source-contract helpers auto-derive capability flags
+(`supportsChat`, `supportsGraph`, `supportsScratchpad`, `supportsSchema`,
+`supportsDatabaseSwitching`, `supportsMockData`, `supportsScripts`,
+`supportsStreaming`, `supportsMultiStatement`, etc.) from the backend contract
+and traits. Do not set these manually or add source-name checks for capabilities
+— surface/object capabilities come from `source.Contract.Surfaces`,
+`BrowsePath`, `RootActions`, and `ObjectTypes.Actions`; execution capabilities
+come from `source.TypeTraits.Query`.
 
 ---
 
@@ -974,6 +1052,7 @@ Understanding the full registration flow helps debug issues:
 2. dbcatalog entry → ConnectableDatabase{ID, PluginType, Fields}    [connection form defined]
 3. sourcecatalog FamilySpec → familySpecs["MyNewDB"]                [capabilities defined]
 4. sourcecatalog metadata → RegisterSessionMetadata(...)            [query builder metadata]
+   sourcecatalog metadata → RegisterObjectCreationMetadata(...)      [create-object metadata]
 5. core/src/sources/database/register.go init():
    - Iterates dbcatalog.All()
    - Calls sourcecatalog.BuildTypeSpec(entry) for each
@@ -1010,6 +1089,7 @@ Understanding the full registration flow helps debug issues:
 - [ ] Blank import added to entry point (`main.go`)
 - [ ] `ConnectableDatabase` entry in dbcatalog (with SSL modes if applicable)
 - [ ] `FamilySpec` in sourcecatalog
+- [ ] Source contract declares the correct surfaces, browse path, root actions, object actions, and views
 - [ ] Session metadata registered (operators, type definitions, alias map)
 - [ ] Frontend icon added (keyed by exact source ID string)
 - [ ] Localization strings added

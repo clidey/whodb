@@ -29,11 +29,19 @@ import (
 )
 
 func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
+	return p.CreateStorageUnit(config, schema, engine.RecordsToObjectDefinition(storageUnit, fields))
+}
+
+// CreateStorageUnit creates an Elasticsearch index from a normalized object
+// definition.
+func (p *ElasticSearchPlugin) CreateStorageUnit(config *engine.PluginConfig, schema string, definition engine.ObjectDefinition) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
-		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to ElasticSearch while adding storage unit")
+		log.WithError(err).WithField("storageUnit", definition.Name).Error("Failed to connect to ElasticSearch while adding storage unit")
 		return false, err
 	}
+
+	fields := engine.ObjectDefinitionToRecords(definition)
 
 	// Build mapping from provided fields, best-effort. If none provided, keep default.
 	var body *bytes.Buffer
@@ -48,7 +56,7 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 			}
 			body = new(bytes.Buffer)
 			if err := json.NewEncoder(body).Encode(mapping); err != nil {
-				log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to encode ElasticSearch mapping for index creation")
+				log.WithError(err).WithField("storageUnit", definition.Name).Error("Failed to encode ElasticSearch mapping for index creation")
 				return false, err
 			}
 		}
@@ -57,12 +65,12 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 	req := client.Indices.Create
 	var res *esapi.Response
 	if body != nil {
-		res, err = req(storageUnit, client.Indices.Create.WithBody(body))
+		res, err = req(definition.Name, client.Indices.Create.WithBody(body))
 	} else {
-		res, err = req(storageUnit)
+		res, err = req(definition.Name)
 	}
 	if err != nil {
-		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to create ElasticSearch index")
+		log.WithError(err).WithField("storageUnit", definition.Name).Error("Failed to create ElasticSearch index")
 		return false, err
 	}
 
@@ -70,7 +78,7 @@ func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema
 
 	if res.IsError() {
 		err := fmt.Errorf("failed to create index: %s", formatElasticError(res))
-		log.WithError(err).WithField("storageUnit", storageUnit).Error("ElasticSearch index creation API returned error")
+		log.WithError(err).WithField("storageUnit", definition.Name).Error("ElasticSearch index creation API returned error")
 		return false, err
 	}
 

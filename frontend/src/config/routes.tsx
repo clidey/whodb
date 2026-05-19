@@ -27,8 +27,13 @@ export { registerRoute } from "./route-registry";
 
 // Allow EE to override the login page via the component registry (e.g. for SSO).
 // Falls back to the CE database-credential login page when no override is registered.
-const LoginPage = getComponent('login-page')
-    ?? lazy(() => import("../pages/auth/login").then(m => ({ default: m.LoginPage })));
+// Must be lazy — getComponent must run at render time (after EE register.ts populates the registry).
+const CELoginPage = lazy(() => import("../pages/auth/login").then(m => ({ default: m.LoginPage })));
+const LoginPage = () => {
+    const Registered = getComponent('login-page');
+    if (Registered) return <Registered />;
+    return <CELoginPage />;
+};
 
 const GraphPage = lazy(() => import("../pages/graph/graph").then(m => ({ default: m.GraphPage })));
 const ExploreStorageUnit = lazy(() => import("../pages/storage-unit/explore-storage-unit").then(m => ({ default: m.ExploreStorageUnit })));

@@ -30,12 +30,18 @@ import (
 )
 
 func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
+	return p.CreateStorageUnit(config, schema, engine.RecordsToObjectDefinition(storageUnit, fields))
+}
+
+// CreateStorageUnit creates a MongoDB collection with a JSON schema validator
+// when fields are provided.
+func (p *MongoDBPlugin) CreateStorageUnit(config *engine.PluginConfig, schema string, definition engine.ObjectDefinition) (bool, error) {
 	client, err := DB(config)
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
-			"storageUnit": storageUnit,
+			"storageUnit": definition.Name,
 		}).Error("Failed to connect to MongoDB for adding storage unit")
 		return false, err
 	}
@@ -43,12 +49,12 @@ func (p *MongoDBPlugin) AddStorageUnit(config *engine.PluginConfig, schema strin
 
 	database := client.Database(schema)
 
-	err = createCollectionIfNotExists(database, storageUnit, fields)
+	err = createCollectionIfNotExists(database, definition.Name, engine.ObjectDefinitionToRecords(definition))
 	if err != nil {
 		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
-			"storageUnit": storageUnit,
+			"storageUnit": definition.Name,
 		}).Error("Failed to create MongoDB collection")
 		return false, err
 	}
@@ -242,7 +248,8 @@ func buildValidator(fields []engine.Record) bson.M {
 		bsonType := mapMongoFieldType(f.Value)
 		properties[f.Key] = bson.M{"bsonType": bsonType}
 
-		nullable, err := strconv.ParseBool(f.Extra["Nullable"])
+		extra := engine.NormalizeCreationExtra(f.Extra)
+		nullable, err := strconv.ParseBool(extra["nullable"])
 		if err != nil {
 			nullable = false
 		}

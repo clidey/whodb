@@ -28,7 +28,8 @@ func (p *Sqlite3Plugin) GetCreateTableQuery(db *gorm.DB, schema string, storageU
 	builder := gorm_plugin.NewSQLBuilder(db, p)
 
 	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
-		def.Primary = true
+		extra := engine.NormalizeCreationExtra(column.Extra)
+		def.Primary = extra["primary"] == "true"
 		if strings.Contains(strings.ToLower(column.Value), "int") {
 			def.Type = "INTEGER"
 		}

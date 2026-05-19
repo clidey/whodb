@@ -33,13 +33,15 @@ func (p *DuckDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUn
 	// Determine if we need a sequence for an integer PK
 	var seqSQL string
 	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
+		extra := engine.NormalizeCreationExtra(column.Extra)
 		lowerType := strings.ToLower(column.Value)
-		if strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer") {
+		if extra["identity"] == "true" && (strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer")) {
 			seqName := fmt.Sprintf("%s_%s_seq", storageUnit, column.Key)
 			seqSQL = fmt.Sprintf("CREATE SEQUENCE IF NOT EXISTS %s; ", builder.QuoteIdentifier(seqName))
-			def.Extra = fmt.Sprintf("PRIMARY KEY DEFAULT nextval('%s')", strings.ReplaceAll(seqName, "'", "''"))
+			def.Extra = fmt.Sprintf("DEFAULT nextval('%s')", strings.ReplaceAll(seqName, "'", "''"))
+			def.Primary = extra["primary"] == "true"
 		} else {
-			def.Primary = true
+			def.Primary = extra["primary"] == "true"
 		}
 		return def
 	})

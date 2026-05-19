@@ -44,6 +44,7 @@ type StorageUnit struct {
 type Column struct {
 	Type             string
 	Name             string
+	MetadataFidelity MetadataFidelity
 	IsNullable       bool
 	IsPrimary        bool
 	IsAutoIncrement  bool
@@ -54,6 +55,33 @@ type Column struct {
 	Length           *int
 	Precision        *int
 	Scale            *int
+}
+
+// FieldConstraints describes normalized source-level constraints for one
+// field, column, or property.
+type FieldConstraints struct {
+	Name             string
+	Type             string
+	MetadataFidelity MetadataFidelity
+	Nullable         *bool
+	Primary          bool
+	Unique           bool
+	Identity         bool
+	DefaultValue     *string
+	AllowedValues    []string
+	CheckMin         *float64
+	CheckMax         *float64
+	ForeignKey       *ForeignKeyDefinition
+	Length           *int
+	Precision        *int
+	Scale            *int
+}
+
+// ObjectFieldConstraints contains normalized field constraints for one source
+// object.
+type ObjectFieldConstraints struct {
+	Ref    ObjectRef
+	Fields []FieldConstraints
 }
 
 // RowsResult contains the result of a row query including columns and rows.
@@ -104,6 +132,7 @@ const (
 type GraphRelationship struct {
 	Name             string
 	RelationshipType GraphRelationshipType
+	MetadataFidelity MetadataFidelity
 	SourceColumn     *string
 	TargetColumn     *string
 }
@@ -206,6 +235,142 @@ type TypeDefinition struct {
 	InsertFunc       string
 	TableModel       string
 	DDLSuffix        string
+}
+
+// ObjectCreationMetadata describes the create-object form and capabilities for
+// a source type.
+type ObjectCreationMetadata struct {
+	Supported          bool
+	ObjectKind         ObjectKind
+	RequiresColumns    bool
+	TypeDefinitions    []TypeDefinition
+	ColumnCapabilities ColumnCreationCapabilities
+	ColumnLabels       ColumnCreationLabels
+	TableCapabilities  TableCreationCapabilities
+	TableOptions       []CreationOptionDefinition
+}
+
+// ColumnCreationCapabilities describes supported column modifiers for object
+// creation.
+type ColumnCreationCapabilities struct {
+	Types               bool
+	Nullable            bool
+	PrimaryKey          bool
+	CompositePrimaryKey bool
+	Unique              bool
+	Identity            bool
+	DefaultValue        bool
+	CheckValues         bool
+	CheckMinMax         bool
+	ForeignKey          bool
+}
+
+// ColumnCreationLabels describes source-native labels for column creation
+// capabilities.
+type ColumnCreationLabels struct {
+	Nullable     string
+	PrimaryKey   string
+	Unique       string
+	Identity     string
+	DefaultValue string
+	CheckValues  string
+	CheckMin     string
+	CheckMax     string
+	ForeignKey   string
+}
+
+// DefaultColumnCreationLabels returns generic labels for normalized column
+// creation capabilities.
+func DefaultColumnCreationLabels() ColumnCreationLabels {
+	return ColumnCreationLabels{
+		Nullable:     "Nullable",
+		PrimaryKey:   "Primary key",
+		Unique:       "Unique",
+		Identity:     "Identity",
+		DefaultValue: "Default value",
+		CheckValues:  "Allowed values",
+		CheckMin:     "Minimum",
+		CheckMax:     "Maximum",
+		ForeignKey:   "Foreign key",
+	}
+}
+
+// ColumnCreationLabelsWithDefaults fills unset labels with generic labels.
+func ColumnCreationLabelsWithDefaults(labels ColumnCreationLabels) ColumnCreationLabels {
+	defaults := DefaultColumnCreationLabels()
+	if labels.Nullable == "" {
+		labels.Nullable = defaults.Nullable
+	}
+	if labels.PrimaryKey == "" {
+		labels.PrimaryKey = defaults.PrimaryKey
+	}
+	if labels.Unique == "" {
+		labels.Unique = defaults.Unique
+	}
+	if labels.Identity == "" {
+		labels.Identity = defaults.Identity
+	}
+	if labels.DefaultValue == "" {
+		labels.DefaultValue = defaults.DefaultValue
+	}
+	if labels.CheckValues == "" {
+		labels.CheckValues = defaults.CheckValues
+	}
+	if labels.CheckMin == "" {
+		labels.CheckMin = defaults.CheckMin
+	}
+	if labels.CheckMax == "" {
+		labels.CheckMax = defaults.CheckMax
+	}
+	if labels.ForeignKey == "" {
+		labels.ForeignKey = defaults.ForeignKey
+	}
+	return labels
+}
+
+// TableCreationCapabilities describes supported table-level creation options.
+type TableCreationCapabilities struct {
+	RequiresPrimaryKey bool
+	PartitionKey       bool
+	ClusteringKey      bool
+	OrderKey           bool
+	KeyValueType       bool
+}
+
+// CreationOptionDefinition describes one selectable table creation option.
+type CreationOptionDefinition struct {
+	Key      string
+	Label    string
+	Required bool
+	Values   []string
+}
+
+// ObjectDefinition describes a source object to create.
+type ObjectDefinition struct {
+	Name         string
+	Columns      []ColumnDefinition
+	TableOptions map[string]string
+}
+
+// ColumnDefinition describes one column or field in a create-object request.
+type ColumnDefinition struct {
+	Name         string
+	Type         string
+	Nullable     *bool
+	Primary      bool
+	Unique       bool
+	Identity     bool
+	DefaultValue *string
+	CheckValues  []string
+	CheckMin     *float64
+	CheckMax     *float64
+	ForeignKey   *ForeignKeyDefinition
+}
+
+// ForeignKeyDefinition describes one single-column foreign key.
+type ForeignKeyDefinition struct {
+	Table  string
+	Column string
 }
 
 // ImportMode controls how imported rows should be applied to the destination

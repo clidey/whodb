@@ -150,15 +150,62 @@ type ChatInput struct {
 }
 
 type Column struct {
-	Type             string  `json:"Type"`
-	Name             string  `json:"Name"`
-	IsPrimary        bool    `json:"IsPrimary"`
-	IsForeignKey     bool    `json:"IsForeignKey"`
-	ReferencedTable  *string `json:"ReferencedTable,omitempty"`
-	ReferencedColumn *string `json:"ReferencedColumn,omitempty"`
-	Length           *int    `json:"Length,omitempty"`
-	Precision        *int    `json:"Precision,omitempty"`
-	Scale            *int    `json:"Scale,omitempty"`
+	Type             string                 `json:"Type"`
+	Name             string                 `json:"Name"`
+	MetadataFidelity SourceMetadataFidelity `json:"MetadataFidelity"`
+	IsPrimary        bool                   `json:"IsPrimary"`
+	IsForeignKey     bool                   `json:"IsForeignKey"`
+	ReferencedTable  *string                `json:"ReferencedTable,omitempty"`
+	ReferencedColumn *string                `json:"ReferencedColumn,omitempty"`
+	Length           *int                   `json:"Length,omitempty"`
+	Precision        *int                   `json:"Precision,omitempty"`
+	Scale            *int                   `json:"Scale,omitempty"`
+}
+
+type ColumnCreationCapabilities struct {
+	Types               bool `json:"Types"`
+	Nullable            bool `json:"Nullable"`
+	PrimaryKey          bool `json:"PrimaryKey"`
+	CompositePrimaryKey bool `json:"CompositePrimaryKey"`
+	Unique              bool `json:"Unique"`
+	Identity            bool `json:"Identity"`
+	DefaultValue        bool `json:"DefaultValue"`
+	CheckValues         bool `json:"CheckValues"`
+	CheckMinMax         bool `json:"CheckMinMax"`
+	ForeignKey          bool `json:"ForeignKey"`
+}
+
+type ColumnCreationLabels struct {
+	Nullable     string `json:"Nullable"`
+	PrimaryKey   string `json:"PrimaryKey"`
+	Unique       string `json:"Unique"`
+	Identity     string `json:"Identity"`
+	DefaultValue string `json:"DefaultValue"`
+	CheckValues  string `json:"CheckValues"`
+	CheckMin     string `json:"CheckMin"`
+	CheckMax     string `json:"CheckMax"`
+	ForeignKey   string `json:"ForeignKey"`
+}
+
+type ColumnDefinitionInput struct {
+	Name         string                     `json:"Name"`
+	Type         string                     `json:"Type"`
+	Nullable     *bool                      `json:"Nullable,omitempty"`
+	Primary      bool                       `json:"Primary"`
+	Unique       bool                       `json:"Unique"`
+	Identity     bool                       `json:"Identity"`
+	DefaultValue *string                    `json:"DefaultValue,omitempty"`
+	CheckValues  []string                   `json:"CheckValues,omitempty"`
+	CheckMin     *float64                   `json:"CheckMin,omitempty"`
+	CheckMax     *float64                   `json:"CheckMax,omitempty"`
+	ForeignKey   *ForeignKeyDefinitionInput `json:"ForeignKey,omitempty"`
+}
+
+type CreationOptionDefinition struct {
+	Key      string   `json:"Key"`
+	Label    string   `json:"Label"`
+	Required bool     `json:"Required"`
+	Values   []string `json:"Values"`
 }
 
 type DiscoveredConnection struct {
@@ -170,6 +217,16 @@ type DiscoveredConnection struct {
 	Region       *string           `json:"Region,omitempty"`
 	Status       ConnectionStatus  `json:"Status"`
 	Metadata     []*Record         `json:"Metadata"`
+}
+
+type ForeignKeyDefinition struct {
+	Table  string `json:"Table"`
+	Column string `json:"Column"`
+}
+
+type ForeignKeyDefinitionInput struct {
+	Table  string `json:"Table"`
+	Column string `json:"Column"`
 }
 
 type GCPProvider struct {
@@ -232,10 +289,11 @@ type GraphUnit struct {
 }
 
 type GraphUnitRelationship struct {
-	Name         string                    `json:"Name"`
-	Relationship GraphUnitRelationshipType `json:"Relationship"`
-	SourceColumn *string                   `json:"SourceColumn,omitempty"`
-	TargetColumn *string                   `json:"TargetColumn,omitempty"`
+	Name             string                    `json:"Name"`
+	Relationship     GraphUnitRelationshipType `json:"Relationship"`
+	MetadataFidelity SourceMetadataFidelity    `json:"MetadataFidelity"`
+	SourceColumn     *string                   `json:"SourceColumn,omitempty"`
+	TargetColumn     *string                   `json:"TargetColumn,omitempty"`
 }
 
 type HealthStatus struct {
@@ -344,6 +402,17 @@ type MockDataTableInfo struct {
 type Mutation struct {
 }
 
+type ObjectCreationMetadata struct {
+	Supported          bool                        `json:"Supported"`
+	ObjectKind         SourceObjectKind            `json:"ObjectKind"`
+	RequiresColumns    bool                        `json:"RequiresColumns"`
+	TypeDefinitions    []*TypeDefinition           `json:"TypeDefinitions"`
+	ColumnCapabilities *ColumnCreationCapabilities `json:"ColumnCapabilities"`
+	ColumnLabels       *ColumnCreationLabels       `json:"ColumnLabels"`
+	TableCapabilities  *TableCreationCapabilities  `json:"TableCapabilities"`
+	TableOptions       []*CreationOptionDefinition `json:"TableOptions"`
+}
+
 type OperationWhereCondition struct {
 	Children []*WhereCondition `json:"Children"`
 }
@@ -450,11 +519,36 @@ type SourceDiscoveryPrefill struct {
 	AdvancedDefaults []*SourceDiscoveryAdvancedDefault `json:"AdvancedDefaults"`
 }
 
+type SourceFieldConstraints struct {
+	Name             string                 `json:"Name"`
+	Type             string                 `json:"Type"`
+	MetadataFidelity SourceMetadataFidelity `json:"MetadataFidelity"`
+	Nullable         *bool                  `json:"Nullable,omitempty"`
+	Primary          bool                   `json:"Primary"`
+	Unique           bool                   `json:"Unique"`
+	Identity         bool                   `json:"Identity"`
+	DefaultValue     *string                `json:"DefaultValue,omitempty"`
+	AllowedValues    []string               `json:"AllowedValues"`
+	CheckMin         *float64               `json:"CheckMin,omitempty"`
+	CheckMax         *float64               `json:"CheckMax,omitempty"`
+	ForeignKey       *ForeignKeyDefinition  `json:"ForeignKey,omitempty"`
+	Length           *int                   `json:"Length,omitempty"`
+	Precision        *int                   `json:"Precision,omitempty"`
+	Scale            *int                   `json:"Scale,omitempty"`
+}
+
 type SourceLoginInput struct {
 	ID          *string        `json:"Id,omitempty"`
 	SourceType  string         `json:"SourceType"`
 	Values      []*RecordInput `json:"Values"`
 	AccessToken *string        `json:"AccessToken,omitempty"`
+}
+
+type SourceMetadataTraits struct {
+	Columns               SourceMetadataFidelity `json:"Columns"`
+	Constraints           SourceMetadataFidelity `json:"Constraints"`
+	Graph                 SourceMetadataFidelity `json:"Graph"`
+	SystemObjectFiltering SourceMetadataFidelity `json:"SystemObjectFiltering"`
 }
 
 type SourceMockDataTraits struct {
@@ -474,6 +568,12 @@ type SourceObject struct {
 type SourceObjectColumns struct {
 	Ref     *SourceObjectRef `json:"Ref"`
 	Columns []*Column        `json:"Columns"`
+}
+
+type SourceObjectDefinitionInput struct {
+	Name         string                   `json:"Name"`
+	Columns      []*ColumnDefinitionInput `json:"Columns"`
+	TableOptions []*RecordInput           `json:"TableOptions,omitempty"`
 }
 
 type SourceObjectRef struct {
@@ -523,8 +623,11 @@ type SourceQuerySuggestion struct {
 }
 
 type SourceQueryTraits struct {
-	SupportsAnalyze bool                   `json:"SupportsAnalyze"`
-	ExplainMode     SourceQueryExplainMode `json:"ExplainMode"`
+	SupportsAnalyze        bool                   `json:"SupportsAnalyze"`
+	SupportsScripts        bool                   `json:"SupportsScripts"`
+	SupportsStreaming      bool                   `json:"SupportsStreaming"`
+	SupportsMultiStatement bool                   `json:"SupportsMultiStatement"`
+	ExplainMode            SourceQueryExplainMode `json:"ExplainMode"`
 }
 
 type SourceSSLMode struct {
@@ -545,6 +648,7 @@ type SourceTraits struct {
 	Presentation *SourcePresentationTraits `json:"Presentation"`
 	Query        *SourceQueryTraits        `json:"Query"`
 	MockData     *SourceMockDataTraits     `json:"MockData"`
+	Metadata     *SourceMetadataTraits     `json:"Metadata"`
 }
 
 type SourceType struct {
@@ -567,6 +671,14 @@ type StatusResponse struct {
 type StorageUnitColumns struct {
 	StorageUnit string    `json:"StorageUnit"`
 	Columns     []*Column `json:"Columns"`
+}
+
+type TableCreationCapabilities struct {
+	RequiresPrimaryKey bool `json:"RequiresPrimaryKey"`
+	PartitionKey       bool `json:"PartitionKey"`
+	ClusteringKey      bool `json:"ClusteringKey"`
+	OrderKey           bool `json:"OrderKey"`
+	KeyValueType       bool `json:"KeyValueType"`
 }
 
 type TypeDefinition struct {
@@ -1483,6 +1595,71 @@ func (e *SourceHostInputURLParser) UnmarshalJSON(b []byte) error {
 }
 
 func (e SourceHostInputURLParser) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SourceMetadataFidelity string
+
+const (
+	SourceMetadataFidelityExact       SourceMetadataFidelity = "Exact"
+	SourceMetadataFidelityDriver      SourceMetadataFidelity = "Driver"
+	SourceMetadataFidelitySampled     SourceMetadataFidelity = "Sampled"
+	SourceMetadataFidelityInferred    SourceMetadataFidelity = "Inferred"
+	SourceMetadataFidelitySynthetic   SourceMetadataFidelity = "Synthetic"
+	SourceMetadataFidelityUnsupported SourceMetadataFidelity = "Unsupported"
+	SourceMetadataFidelityUnknown     SourceMetadataFidelity = "Unknown"
+)
+
+var AllSourceMetadataFidelity = []SourceMetadataFidelity{
+	SourceMetadataFidelityExact,
+	SourceMetadataFidelityDriver,
+	SourceMetadataFidelitySampled,
+	SourceMetadataFidelityInferred,
+	SourceMetadataFidelitySynthetic,
+	SourceMetadataFidelityUnsupported,
+	SourceMetadataFidelityUnknown,
+}
+
+func (e SourceMetadataFidelity) IsValid() bool {
+	switch e {
+	case SourceMetadataFidelityExact, SourceMetadataFidelityDriver, SourceMetadataFidelitySampled, SourceMetadataFidelityInferred, SourceMetadataFidelitySynthetic, SourceMetadataFidelityUnsupported, SourceMetadataFidelityUnknown:
+		return true
+	}
+	return false
+}
+
+func (e SourceMetadataFidelity) String() string {
+	return string(e)
+}
+
+func (e *SourceMetadataFidelity) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SourceMetadataFidelity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SourceMetadataFidelity", str)
+	}
+	return nil
+}
+
+func (e SourceMetadataFidelity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SourceMetadataFidelity) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SourceMetadataFidelity) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

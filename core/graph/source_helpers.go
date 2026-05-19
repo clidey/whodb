@@ -143,6 +143,13 @@ func sourceRefFromInput(ref *model.SourceObjectRefInput) *source.ObjectRef {
 	return &normalized
 }
 
+func validateSourceObjectAction(spec source.TypeSpec, ref *source.ObjectRef, action source.Action) error {
+	if ref == nil {
+		return fmt.Errorf("source object reference is required")
+	}
+	return source.ValidateObjectActionSupported(spec, ref.Kind, action)
+}
+
 func sourceRefToModel(ref source.ObjectRef) *model.SourceObjectRef {
 	normalized := source.NormalizeObjectRef(ref)
 	return &model.SourceObjectRef{
@@ -264,11 +271,20 @@ func sourceTraitsToModel(traits source.TypeTraits) *model.SourceTraits {
 			SchemaFidelity:       model.SourceSchemaFidelity(traits.Presentation.SchemaFidelity),
 		},
 		Query: &model.SourceQueryTraits{
-			SupportsAnalyze: traits.Query.SupportsAnalyze,
-			ExplainMode:     model.SourceQueryExplainMode(traits.Query.ExplainMode),
+			SupportsAnalyze:        traits.Query.SupportsAnalyze,
+			SupportsScripts:        traits.Query.SupportsScripts,
+			SupportsStreaming:      traits.Query.SupportsStreaming,
+			SupportsMultiStatement: traits.Query.SupportsMultiStatement,
+			ExplainMode:            model.SourceQueryExplainMode(traits.Query.ExplainMode),
 		},
 		MockData: &model.SourceMockDataTraits{
 			SupportsRelationalDependencies: traits.MockData.SupportsRelationalDependencies,
+		},
+		Metadata: &model.SourceMetadataTraits{
+			Columns:               metadataFidelityToModel(traits.Metadata.Columns),
+			Constraints:           metadataFidelityToModel(traits.Metadata.Constraints),
+			Graph:                 metadataFidelityToModel(traits.Metadata.Graph),
+			SystemObjectFiltering: metadataFidelityToModel(traits.Metadata.SystemObjectFiltering),
 		},
 	}
 }
@@ -333,17 +349,7 @@ func sourceSessionMetadataToModel(metadata *source.SessionMetadata) *model.Sourc
 
 	typeDefinitions := make([]*model.TypeDefinition, 0, len(metadata.TypeDefinitions))
 	for _, definition := range metadata.TypeDefinitions {
-		typeDefinitions = append(typeDefinitions, &model.TypeDefinition{
-			ID:               definition.ID,
-			Label:            definition.Label,
-			HasLength:        definition.HasLength,
-			HasPrecision:     definition.HasPrecision,
-			DefaultLength:    definition.DefaultLength,
-			DefaultPrecision: definition.DefaultPrecision,
-			Category:         model.TypeCategory(definition.Category),
-			InsertFunc:       stringPtr(definition.InsertFunc),
-			TableModel:       stringPtr(definition.TableModel),
-		})
+		typeDefinitions = append(typeDefinitions, sourceTypeDefinitionToModel(definition))
 	}
 
 	return &model.SourceSessionMetadata{
@@ -352,6 +358,140 @@ func sourceSessionMetadataToModel(metadata *source.SessionMetadata) *model.Sourc
 		TypeDefinitions: typeDefinitions,
 		Operators:       slices.Clone(metadata.Operators),
 		AliasMap:        recordsToModel(metadata.AliasMap),
+	}
+}
+
+func sourceObjectDefinitionInputToSource(input model.SourceObjectDefinitionInput) source.ObjectDefinition {
+	columns := make([]source.ColumnDefinition, 0, len(input.Columns))
+	for _, column := range input.Columns {
+		if column == nil {
+			continue
+		}
+		var foreignKey *source.ForeignKeyDefinition
+		if column.ForeignKey != nil {
+			foreignKey = &source.ForeignKeyDefinition{
+				Table:  column.ForeignKey.Table,
+				Column: column.ForeignKey.Column,
+			}
+		}
+		columns = append(columns, source.ColumnDefinition{
+			Name:         column.Name,
+			Type:         column.Type,
+			Nullable:     column.Nullable,
+			Primary:      column.Primary,
+			Unique:       column.Unique,
+			Identity:     column.Identity,
+			DefaultValue: column.DefaultValue,
+			CheckValues:  slices.Clone(column.CheckValues),
+			CheckMin:     column.CheckMin,
+			CheckMax:     column.CheckMax,
+			ForeignKey:   foreignKey,
+		})
+	}
+	return source.ObjectDefinition{
+		Name:         input.Name,
+		Columns:      columns,
+		TableOptions: recordInputsToMap(input.TableOptions),
+	}
+}
+
+func sourceObjectCreationMetadataToModel(metadata source.ObjectCreationMetadata) *model.ObjectCreationMetadata {
+	typeDefinitions := make([]*model.TypeDefinition, 0, len(metadata.TypeDefinitions))
+	for _, definition := range metadata.TypeDefinitions {
+		typeDefinitions = append(typeDefinitions, sourceTypeDefinitionToModel(definition))
+	}
+	tableOptions := make([]*model.CreationOptionDefinition, 0, len(metadata.TableOptions))
+	for _, option := range metadata.TableOptions {
+		tableOptions = append(tableOptions, &model.CreationOptionDefinition{
+			Key:      option.Key,
+			Label:    option.Label,
+			Required: option.Required,
+			Values:   slices.Clone(option.Values),
+		})
+	}
+	return &model.ObjectCreationMetadata{
+		Supported:       metadata.Supported,
+		ObjectKind:      model.SourceObjectKind(metadata.ObjectKind),
+		RequiresColumns: metadata.RequiresColumns,
+		TypeDefinitions: typeDefinitions,
+		TableOptions:    tableOptions,
+		ColumnCapabilities: &model.ColumnCreationCapabilities{
+			Types:               metadata.ColumnCapabilities.Types,
+			Nullable:            metadata.ColumnCapabilities.Nullable,
+			PrimaryKey:          metadata.ColumnCapabilities.PrimaryKey,
+			CompositePrimaryKey: metadata.ColumnCapabilities.CompositePrimaryKey,
+			Unique:              metadata.ColumnCapabilities.Unique,
+			Identity:            metadata.ColumnCapabilities.Identity,
+			DefaultValue:        metadata.ColumnCapabilities.DefaultValue,
+			CheckValues:         metadata.ColumnCapabilities.CheckValues,
+			CheckMinMax:         metadata.ColumnCapabilities.CheckMinMax,
+			ForeignKey:          metadata.ColumnCapabilities.ForeignKey,
+		},
+		ColumnLabels: &model.ColumnCreationLabels{
+			Nullable:     metadata.ColumnLabels.Nullable,
+			PrimaryKey:   metadata.ColumnLabels.PrimaryKey,
+			Unique:       metadata.ColumnLabels.Unique,
+			Identity:     metadata.ColumnLabels.Identity,
+			DefaultValue: metadata.ColumnLabels.DefaultValue,
+			CheckValues:  metadata.ColumnLabels.CheckValues,
+			CheckMin:     metadata.ColumnLabels.CheckMin,
+			CheckMax:     metadata.ColumnLabels.CheckMax,
+			ForeignKey:   metadata.ColumnLabels.ForeignKey,
+		},
+		TableCapabilities: &model.TableCreationCapabilities{
+			RequiresPrimaryKey: metadata.TableCapabilities.RequiresPrimaryKey,
+			PartitionKey:       metadata.TableCapabilities.PartitionKey,
+			ClusteringKey:      metadata.TableCapabilities.ClusteringKey,
+			OrderKey:           metadata.TableCapabilities.OrderKey,
+			KeyValueType:       metadata.TableCapabilities.KeyValueType,
+		},
+	}
+}
+
+// MapFieldConstraintsToModel converts source field constraints to GraphQL model
+// field constraints.
+func MapFieldConstraintsToModel(fields []source.FieldConstraints) []*model.SourceFieldConstraints {
+	results := make([]*model.SourceFieldConstraints, 0, len(fields))
+	for _, field := range fields {
+		var foreignKey *model.ForeignKeyDefinition
+		if field.ForeignKey != nil {
+			foreignKey = &model.ForeignKeyDefinition{
+				Table:  field.ForeignKey.Table,
+				Column: field.ForeignKey.Column,
+			}
+		}
+		results = append(results, &model.SourceFieldConstraints{
+			Name:             field.Name,
+			Type:             field.Type,
+			MetadataFidelity: metadataFidelityToModel(field.MetadataFidelity),
+			Nullable:         field.Nullable,
+			Primary:          field.Primary,
+			Unique:           field.Unique,
+			Identity:         field.Identity,
+			DefaultValue:     field.DefaultValue,
+			AllowedValues:    slices.Clone(field.AllowedValues),
+			CheckMin:         field.CheckMin,
+			CheckMax:         field.CheckMax,
+			ForeignKey:       foreignKey,
+			Length:           field.Length,
+			Precision:        field.Precision,
+			Scale:            field.Scale,
+		})
+	}
+	return results
+}
+
+func sourceTypeDefinitionToModel(definition source.TypeDefinition) *model.TypeDefinition {
+	return &model.TypeDefinition{
+		ID:               definition.ID,
+		Label:            definition.Label,
+		HasLength:        definition.HasLength,
+		HasPrecision:     definition.HasPrecision,
+		DefaultLength:    definition.DefaultLength,
+		DefaultPrecision: definition.DefaultPrecision,
+		Category:         model.TypeCategory(definition.Category),
+		InsertFunc:       stringPtr(definition.InsertFunc),
+		TableModel:       stringPtr(definition.TableModel),
 	}
 }
 
@@ -400,10 +540,11 @@ func graphUnitsToModel(graphUnits []source.GraphUnit, parent *source.ObjectRef, 
 		relations := make([]*model.GraphUnitRelationship, 0, len(graphUnit.Relations))
 		for _, relation := range graphUnit.Relations {
 			relations = append(relations, &model.GraphUnitRelationship{
-				Name:         relation.Name,
-				Relationship: model.GraphUnitRelationshipType(relation.RelationshipType),
-				SourceColumn: relation.SourceColumn,
-				TargetColumn: relation.TargetColumn,
+				Name:             relation.Name,
+				Relationship:     model.GraphUnitRelationshipType(relation.RelationshipType),
+				MetadataFidelity: metadataFidelityToModel(relation.MetadataFidelity),
+				SourceColumn:     relation.SourceColumn,
+				TargetColumn:     relation.TargetColumn,
 			})
 		}
 

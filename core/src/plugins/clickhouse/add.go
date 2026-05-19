@@ -36,9 +36,12 @@ func (p *ClickHousePlugin) GetCreateTableQuery(db *gorm.DB, schema string, stora
 	// instead it uses them for the ORDER BY clause.
 	var primaryKeys []string
 	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
-		primaryKeys = append(primaryKeys, column.Key)
+		extra := engine.NormalizeCreationExtra(column.Extra)
+		if extra["primary"] == "true" {
+			primaryKeys = append(primaryKeys, column.Key)
+		}
 		// ClickHouse primary keys still respect nullable constraints
-		if nullable, ok := column.Extra["nullable"]; ok && nullable == "false" {
+		if nullable, ok := extra["nullable"]; ok && nullable == "false" {
 			def.NotNull = true
 		}
 		return def

@@ -292,6 +292,26 @@ const (
 	SchemaFidelitySampled SchemaFidelity = "Sampled"
 )
 
+// MetadataFidelity identifies how source metadata was obtained.
+type MetadataFidelity string
+
+const (
+	// MetadataFidelityExact indicates metadata was read from authoritative source metadata.
+	MetadataFidelityExact MetadataFidelity = "Exact"
+	// MetadataFidelityDriver indicates metadata was reported by the source driver.
+	MetadataFidelityDriver MetadataFidelity = "Driver"
+	// MetadataFidelitySampled indicates metadata was inferred from sampled data.
+	MetadataFidelitySampled MetadataFidelity = "Sampled"
+	// MetadataFidelityInferred indicates metadata was inferred from naming or type conventions.
+	MetadataFidelityInferred MetadataFidelity = "Inferred"
+	// MetadataFidelitySynthetic indicates metadata is a WhoDB synthetic shape.
+	MetadataFidelitySynthetic MetadataFidelity = "Synthetic"
+	// MetadataFidelityUnsupported indicates the metadata surface is not supported.
+	MetadataFidelityUnsupported MetadataFidelity = "Unsupported"
+	// MetadataFidelityUnknown indicates metadata fidelity was not declared.
+	MetadataFidelityUnknown MetadataFidelity = "Unknown"
+)
+
 // QueryExplainMode identifies how query-plan inspection should be invoked.
 type QueryExplainMode string
 
@@ -322,13 +342,26 @@ type PresentationTraits struct {
 
 // QueryTraits describes query-surface behavior for a source type.
 type QueryTraits struct {
-	SupportsAnalyze bool
-	ExplainMode     QueryExplainMode
+	SupportsAnalyze        bool
+	SupportsScripts        bool
+	SupportsStreaming      bool
+	SupportsMultiStatement bool
+	ExplainMode            QueryExplainMode
 }
 
 // MockDataTraits describes mock-data behavior for a source type.
 type MockDataTraits struct {
 	SupportsRelationalDependencies bool
+}
+
+// MetadataTraits describes how reliable each source metadata surface is.
+type MetadataTraits struct {
+	Columns               MetadataFidelity
+	Constraints           MetadataFidelity
+	Graph                 MetadataFidelity
+	SystemObjectFiltering MetadataFidelity
+	HiddenObjectNames     map[ObjectKind][]string
+	HiddenObjectPrefixes  map[ObjectKind][]string
 }
 
 // TypeTraits describes non-CRUD source behavior consumed by frontend and CLI.
@@ -337,6 +370,7 @@ type TypeTraits struct {
 	Presentation PresentationTraits
 	Query        QueryTraits
 	MockData     MockDataTraits
+	Metadata     MetadataTraits
 }
 
 // Contract describes the type-level support surface for a source type.
@@ -370,6 +404,16 @@ func (c Contract) SupportsAction(action Action) bool {
 	return false
 }
 
+// SupportsRootAction reports whether the source root supports the action.
+func (c Contract) SupportsRootAction(action Action) bool {
+	for _, candidate := range c.RootActions {
+		if candidate == action {
+			return true
+		}
+	}
+	return false
+}
+
 // ObjectTypeForKind looks up the declared object-type contract by kind.
 func (c Contract) ObjectTypeForKind(kind ObjectKind) (ObjectType, bool) {
 	for _, objectType := range c.ObjectTypes {
@@ -378,6 +422,12 @@ func (c Contract) ObjectTypeForKind(kind ObjectKind) (ObjectType, bool) {
 		}
 	}
 	return ObjectType{}, false
+}
+
+// ObjectKindSupportsAction reports whether an object kind supports the action.
+func (c Contract) ObjectKindSupportsAction(kind ObjectKind, action Action) bool {
+	objectType, ok := c.ObjectTypeForKind(kind)
+	return ok && objectType.SupportsAction(action)
 }
 
 // ObjectType describes support for one source object kind.

@@ -11,5 +11,9 @@
 	<!-- Allow unsigned executable memory for native FFI libraries -->
 	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
 	<true/>
+	<!-- Grant read-write access to files the user explicitly selects via the file picker
+	     (required for SQLite/DuckDB write operations in App Store sandbox) -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
 </dict>
 </plist>

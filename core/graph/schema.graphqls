@@ -113,6 +113,16 @@ enum SourceSchemaFidelity {
   Sampled
 }
 
+enum SourceMetadataFidelity {
+  Exact
+  Driver
+  Sampled
+  Inferred
+  Synthetic
+  Unsupported
+  Unknown
+}
+
 enum SourceQueryExplainMode {
   None
   Explain
@@ -136,6 +146,7 @@ enum ImportMode {
 type Column {
   Type: String!
   Name: String!
+  MetadataFidelity: SourceMetadataFidelity!
   IsPrimary: Boolean!
   IsForeignKey: Boolean!
   ReferencedTable: String
@@ -143,6 +154,29 @@ type Column {
   Length: Int
   Precision: Int
   Scale: Int
+}
+
+type SourceFieldConstraints {
+  Name: String!
+  Type: String!
+  MetadataFidelity: SourceMetadataFidelity!
+  Nullable: Boolean
+  Primary: Boolean!
+  Unique: Boolean!
+  Identity: Boolean!
+  DefaultValue: String
+  AllowedValues: [String!]!
+  CheckMin: Float
+  CheckMax: Float
+  ForeignKey: ForeignKeyDefinition
+  Length: Int
+  Precision: Int
+  Scale: Int
+}
+
+type ForeignKeyDefinition {
+  Table: String!
+  Column: String!
 }
 
 type StorageUnitColumns {
@@ -212,6 +246,82 @@ input RecordInput {
   Extra: [RecordInput!]
 }
 
+type ObjectCreationMetadata {
+  Supported: Boolean!
+  ObjectKind: SourceObjectKind!
+  RequiresColumns: Boolean!
+  TypeDefinitions: [TypeDefinition!]!
+  ColumnCapabilities: ColumnCreationCapabilities!
+  ColumnLabels: ColumnCreationLabels!
+  TableCapabilities: TableCreationCapabilities!
+  TableOptions: [CreationOptionDefinition!]!
+}
+
+type ColumnCreationCapabilities {
+  Types: Boolean!
+  Nullable: Boolean!
+  PrimaryKey: Boolean!
+  CompositePrimaryKey: Boolean!
+  Unique: Boolean!
+  Identity: Boolean!
+  DefaultValue: Boolean!
+  CheckValues: Boolean!
+  CheckMinMax: Boolean!
+  ForeignKey: Boolean!
+}
+
+type ColumnCreationLabels {
+  Nullable: String!
+  PrimaryKey: String!
+  Unique: String!
+  Identity: String!
+  DefaultValue: String!
+  CheckValues: String!
+  CheckMin: String!
+  CheckMax: String!
+  ForeignKey: String!
+}
+
+type TableCreationCapabilities {
+  RequiresPrimaryKey: Boolean!
+  PartitionKey: Boolean!
+  ClusteringKey: Boolean!
+  OrderKey: Boolean!
+  KeyValueType: Boolean!
+}
+
+type CreationOptionDefinition {
+  Key: String!
+  Label: String!
+  Required: Boolean!
+  Values: [String!]!
+}
+
+input SourceObjectDefinitionInput {
+  Name: String!
+  Columns: [ColumnDefinitionInput!]!
+  TableOptions: [RecordInput!]
+}
+
+input ColumnDefinitionInput {
+  Name: String!
+  Type: String!
+  Nullable: Boolean
+  Primary: Boolean!
+  Unique: Boolean!
+  Identity: Boolean!
+  DefaultValue: String
+  CheckValues: [String!]
+  CheckMin: Float
+  CheckMax: Float
+  ForeignKey: ForeignKeyDefinitionInput
+}
+
+input ForeignKeyDefinitionInput {
+  Table: String!
+  Column: String!
+}
+
 input ImportFileOptions {
   Format: ImportFileFormat!
   Delimiter: String
@@ -250,6 +360,7 @@ enum GraphUnitRelationshipType {
 type GraphUnitRelationship {
   Name: String!
   Relationship: GraphUnitRelationshipType!
+  MetadataFidelity: SourceMetadataFidelity!
   SourceColumn: String
   TargetColumn: String
 }
@@ -444,6 +555,9 @@ type SourcePresentationTraits {
 
 type SourceQueryTraits {
   SupportsAnalyze: Boolean!
+  SupportsScripts: Boolean!
+  SupportsStreaming: Boolean!
+  SupportsMultiStatement: Boolean!
   ExplainMode: SourceQueryExplainMode!
 }
 
@@ -451,11 +565,19 @@ type SourceMockDataTraits {
   SupportsRelationalDependencies: Boolean!
 }
 
+type SourceMetadataTraits {
+  Columns: SourceMetadataFidelity!
+  Constraints: SourceMetadataFidelity!
+  Graph: SourceMetadataFidelity!
+  SystemObjectFiltering: SourceMetadataFidelity!
+}
+
 type SourceTraits {
   Connection: SourceConnectionTraits!
   Presentation: SourcePresentationTraits!
   Query: SourceQueryTraits!
   MockData: SourceMockDataTraits!
+  Metadata: SourceMetadataTraits!
 }
 
 type SourceType {
@@ -770,12 +892,14 @@ type Query {
   SourceTypes: [SourceType!]!
   SourceFieldOptions(sourceType: String!, fieldKey: String!, values: [RecordInput!]): [String!]!
   SourceSessionMetadata: SourceSessionMetadata
+  SourceObjectCreationMetadata(parent: SourceObjectRefInput): ObjectCreationMetadata!
   SourceObjects(parent: SourceObjectRefInput, kinds: [SourceObjectKind!]): [SourceObject!]!
   SourceObject(ref: SourceObjectRefInput!): SourceObject
   SourceRows(ref: SourceObjectRefInput!, where: WhereCondition, sort: [SortCondition!], pageSize: Int!, pageOffset: Int!): RowsResult!
   SourceContent(ref: SourceObjectRefInput!): SourceContent
   SourceColumns(ref: SourceObjectRefInput!): [Column!]!
   SourceColumnsBatch(refs: [SourceObjectRefInput!]!): [SourceObjectColumns!]!
+  SourceFieldConstraints(ref: SourceObjectRefInput!): [SourceFieldConstraints!]!
   RunSourceQuery(query: String!): RowsResult!
   SourceGraph(ref: SourceObjectRefInput): [GraphUnit!]!
   AIProviders: [AIProvider!]!
@@ -831,6 +955,7 @@ type Mutation {
   UpdateSettings(newSettings: SettingsConfigInput!): StatusResponse!
 
   CreateSourceObject(parent: SourceObjectRefInput, name: String!, fields: [RecordInput!]!): StatusResponse!
+  CreateSourceObjectFromDefinition(parent: SourceObjectRefInput, definition: SourceObjectDefinitionInput!): StatusResponse!
   UpdateSourceObject(ref: SourceObjectRefInput!, values: [RecordInput!]!, updatedColumns: [String!]!): StatusResponse!
   AddSourceRow(ref: SourceObjectRefInput!, values: [RecordInput!]!): StatusResponse!
   DeleteSourceRow(ref: SourceObjectRefInput!, values: [RecordInput!]!): StatusResponse!

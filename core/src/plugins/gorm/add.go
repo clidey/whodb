@@ -19,7 +19,6 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -29,57 +28,41 @@ import (
 )
 
 func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
+	return p.CreateStorageUnit(config, schema, engine.RecordsToObjectDefinition(storageUnit, fields))
+}
+
+// CreateStorageUnit creates a table from a normalized object definition.
+func (p *GormPlugin) CreateStorageUnit(config *engine.PluginConfig, schema string, definition engine.ObjectDefinition) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
-		if len(fields) == 0 {
+		if len(definition.Columns) == 0 {
 			return false, errors.New("no fields provided for table creation")
 		}
 
 		migrator := NewMigratorHelper(db, p.GormPluginFunctions)
-		fullTableName := p.FormTableName(schema, storageUnit)
+		fullTableName := p.FormTableName(schema, definition.Name)
 		if migrator.TableExists(fullTableName) {
 			return false, fmt.Errorf("table %s already exists", fullTableName)
 		}
 
 		var columns []engine.Record
 		metadata, _ := sourcecatalog.ResolveSessionMetadata(string(p.Type))
-		for _, fieldType := range fields {
-			if err := engine.ValidateColumnType(fieldType.Value, string(p.Type), metadata); err != nil {
+		for _, column := range definition.Columns {
+			if err := engine.ValidateColumnType(column.Type, string(p.Type), metadata); err != nil {
 				return false, err
 			}
 
-			// Keep original field name without quoting for column definition
-			fieldName := fieldType.Key
-			primaryKey, err := strconv.ParseBool(fieldType.Extra["Primary"])
-			if err != nil {
-				log.WithError(err).Error(fmt.Sprintf("Failed to parse Primary key flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
-				primaryKey = false
-			}
-			nullable, err := strconv.ParseBool(fieldType.Extra["Nullable"])
-			if err != nil {
-				log.WithError(err).Error(fmt.Sprintf("Failed to parse Nullable flag for field %s in table %s.%s", fieldType.Key, schema, storageUnit))
-				nullable = false
+			if column.Nullable != nil && column.Primary && *column.Nullable {
+				return false, fmt.Errorf("column %s cannot be both primary key and nullable", column.Name)
 			}
 
-			// Validate: Primary keys cannot be nullable
-			if primaryKey && nullable {
-				return false, fmt.Errorf("column %s cannot be both primary key and nullable", fieldType.Key)
-			}
-
-			columns = append(columns, engine.Record{
-				Key:   fieldName,
-				Value: fieldType.Value,
-				Extra: map[string]string{
-					"primary":  strconv.FormatBool(primaryKey),
-					"nullable": strconv.FormatBool(nullable),
-				},
-			})
+			columns = append(columns, engine.ColumnDefinitionToRecord(column))
 		}
 
-		createTableQuery := p.GetCreateTableQuery(db, schema, storageUnit, columns)
+		createTableQuery := p.GetCreateTableQuery(db, schema, definition.Name, columns)
 
 		// codeql[go/sql-injection]: AddStorageUnit intentionally executes user-authored DDL for the requested table definition.
 		if err := db.Exec(createTableQuery).Error; err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, storageUnit, createTableQuery))
+			log.WithError(err).Error(fmt.Sprintf("Failed to create table %s.%s with query: %s", schema, definition.Name, createTableQuery))
 			return false, err
 		}
 		return true, nil

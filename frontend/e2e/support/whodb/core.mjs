@@ -161,9 +161,24 @@ export const coreMethods = {
                 }
             }
 
+            // Port is promoted to the main form (next to hostname) - fill it
+            // directly if the field is visible, rather than via Advanced.
+            const portValue = advanced.Port ?? advanced.port;
+            if (portValue != null) {
+                const portInput = this.page.locator('[data-testid="port"]');
+                if (await portInput.isVisible().catch(() => false)) {
+                    await portInput.clear();
+                    if (portValue !== "") {
+                        await portInput.fill(String(portValue));
+                    }
+                }
+            }
+
             const ssl = advanced.ssl || {};
             const advancedFields = { ...advanced };
             delete advancedFields.ssl;
+            delete advancedFields.Port;
+            delete advancedFields.port;
 
             const hasAdvancedOptions = Object.keys(advancedFields).length > 0 || Object.keys(ssl).length > 0;
 
@@ -191,17 +206,34 @@ export const coreMethods = {
             }
         }
 
-        const loginResponsePromise = this.page.waitForResponse(
-            (response) => response.url().includes("/api/query") && response.request().method() === "POST",
-            { timeout: TIMEOUT.LOGIN }
-        );
+        let body;
+        const loginDeadline = Date.now() + TIMEOUT.SLOW + TIMEOUT.NAVIGATION;
+        while (true) {
+            const loginButton = this.page.locator('[data-testid="login-button"]');
+            await expect(loginButton).toBeEnabled({ timeout: TIMEOUT.ACTION });
+            const loginResponsePromise = this.page.waitForResponse(
+                (response) =>
+                    response.url().includes("/api/query") &&
+                    response.request().method() === "POST" &&
+                    response.request().postDataJSON?.()?.operationName === "LoginSource",
+                { timeout: TIMEOUT.LOGIN }
+            );
 
-        await this.page.locator('[data-testid="login-button"]').click();
+            await loginButton.click();
 
-        const loginResponse = await loginResponsePromise;
-        const body = await loginResponse.json();
-        if (body?.errors) {
+            const loginResponse = await loginResponsePromise;
+            body = await loginResponse.json();
+            if (!body?.errors) {
+                break;
+            }
+
             console.log("Login API returned errors:", JSON.stringify(body.errors));
+            const retryableUnauthorized = body.errors.some((error) => String(error?.message ?? "").toLowerCase().includes("unauthorized"));
+            if (retryableUnauthorized && Date.now() < loginDeadline) {
+                await this.page.waitForTimeout(2000);
+                continue;
+            }
+            throw new Error(`Login API returned errors: ${JSON.stringify(body.errors)}`);
         }
 
         await this.page.locator('[data-testid="sidebar-profile"]').waitFor({ timeout: TIMEOUT.SLOW });

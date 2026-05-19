@@ -213,6 +213,15 @@ func TestRESTExportSuccessAndFailure(t *testing.T) {
 		t.Fatalf("expected export to succeed, got %d", rec.Code)
 	}
 
+	unsupportedPayload := `{"ref":{"Kind":"Schema","Path":["app","public"]},"selectedRows":[{"id":1}]}`
+	req = httptest.NewRequest(http.MethodPost, "/api/export", bytes.NewBufferString(unsupportedPayload))
+	req = req.WithContext(testSourceContext("Postgres", map[string]string{"Database": "app"}))
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "viewing rows is not supported") {
+		t.Fatalf("expected export action rejection, got %d (%s)", rec.Code, rec.Body.String())
+	}
+
 	// Failure case
 	failMock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
 	failMock.ExportDataFunc = func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error {

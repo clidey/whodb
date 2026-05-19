@@ -146,6 +146,9 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 	if len(kinds) > 0 && !slices.Contains(kinds, nextKind) {
 		return []source.Object{}, nil
 	}
+	if err := s.ensureBrowseSupported(parent); err != nil {
+		return nil, err
+	}
 
 	config := s.pluginConfig(ctx, parent)
 
@@ -159,7 +162,7 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 		for _, name := range names {
 			objects = append(objects, s.makeContainerObject(parent, nextKind, name, nil))
 		}
-		return objects, nil
+		return source.FilterInternalObjects(s.spec, objects), nil
 	case source.ObjectKindSchema:
 		names, err := s.plugin.GetAllSchemas(config)
 		if err != nil {
@@ -169,7 +172,7 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 		for _, name := range names {
 			objects = append(objects, s.makeContainerObject(parent, nextKind, name, nil))
 		}
-		return objects, nil
+		return source.FilterInternalObjects(s.spec, objects), nil
 	default:
 		namespace := s.namespaceForRef(parent)
 		units, err := s.plugin.GetStorageUnits(config, namespace)
@@ -191,7 +194,7 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 				Metadata:    slices.Clone(unit.Attributes),
 			})
 		}
-		return objects, nil
+		return source.FilterInternalObjects(s.spec, objects), nil
 	}
 }
 
@@ -303,6 +306,10 @@ func (s *DatabaseSession) Columns(ctx context.Context, ref source.ObjectRef) ([]
 	if err := s.plugin.MarkGeneratedColumns(config, namespace, name, columns); err != nil {
 		log.WithError(err).Warn("Failed to mark generated columns for source object")
 	}
+	columns = source.ApplyColumnMetadataFidelity(columns, s.spec.Traits.Metadata.Columns)
+	if err := source.ValidateColumns(columns); err != nil {
+		return nil, err
+	}
 	s.cacheColumns(namespace, name, columns)
 	return cloneSourceColumns(columns), nil
 }
@@ -340,6 +347,68 @@ func (s *DatabaseSession) ColumnConstraints(ctx context.Context, ref source.Obje
 	return s.plugin.GetColumnConstraints(config, namespace, name)
 }
 
+// FieldConstraints returns normalized source-level field constraints for one
+// source object.
+func (s *DatabaseSession) FieldConstraints(ctx context.Context, ref source.ObjectRef) ([]source.FieldConstraints, error) {
+	if err := s.ensureObjectAction(ref.Kind, source.ActionInspect); err != nil {
+		return nil, err
+	}
+
+	config := s.pluginConfig(ctx, &ref)
+	namespace := s.namespaceForRef(&ref)
+	name := objectName(ref)
+	if err := s.validateObject(config, namespace, name); err != nil {
+		return nil, err
+	}
+
+	columns, err := s.Columns(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	constraints, err := s.plugin.GetColumnConstraints(config, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	fields := source.MergeFieldConstraintsWithColumns(source.NormalizeFieldConstraints(constraints), columns)
+
+	relationships, err := s.plugin.GetForeignKeyRelationships(config, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	for _, relationship := range relationships {
+		if relationship == nil {
+			continue
+		}
+		matched := false
+		for i := range fields {
+			if !strings.EqualFold(fields[i].Name, relationship.ColumnName) {
+				continue
+			}
+			fields[i].ForeignKey = &source.ForeignKeyDefinition{
+				Table:  relationship.ReferencedTable,
+				Column: relationship.ReferencedColumn,
+			}
+			matched = true
+			break
+		}
+		if !matched {
+			fields = append(fields, source.FieldConstraints{
+				Name: relationship.ColumnName,
+				ForeignKey: &source.ForeignKeyDefinition{
+					Table:  relationship.ReferencedTable,
+					Column: relationship.ReferencedColumn,
+				},
+			})
+		}
+	}
+
+	fields = source.ApplyFieldConstraintMetadataFidelity(fields, s.spec.Traits.Metadata.Constraints)
+	if err := source.ValidateFieldConstraints(fields); err != nil {
+		return nil, err
+	}
+	return fields, nil
+}
+
 // RunQuery executes a query against the source session.
 func (s *DatabaseSession) RunQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error) {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
@@ -356,6 +425,9 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return err
 	}
+	if !s.spec.Traits.Query.SupportsStreaming {
+		return fmt.Errorf("streaming queries are not supported for %s", s.spec.Label)
+	}
 	if writer == nil {
 		return fmt.Errorf("stream writer is required")
 	}
@@ -371,8 +443,11 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 
 // RunScript executes a source-native script against the session.
 func (s *DatabaseSession) RunScript(ctx context.Context, script string, multiStatement bool, params ...any) (*source.RowsResult, error) {
-	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
+	if err := source.ValidateScriptExecutionSupported(s.spec); err != nil {
 		return nil, err
+	}
+	if multiStatement && !s.spec.Traits.Query.SupportsMultiStatement {
+		return nil, engine.ErrMultiStatementUnsupported
 	}
 
 	config := s.pluginConfig(ctx, nil)
@@ -382,7 +457,7 @@ func (s *DatabaseSession) RunScript(ctx context.Context, script string, multiSta
 
 // ReadGraph returns graph data for a source scope.
 func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) ([]source.GraphUnit, error) {
-	if err := s.ensureSurface(source.SurfaceGraph); err != nil {
+	if err := s.ensureGraphSupported(ref); err != nil {
 		return nil, err
 	}
 
@@ -391,7 +466,16 @@ func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) 
 	if ref != nil {
 		scope = s.graphScopeForRef(*ref)
 	}
-	return s.plugin.GetGraph(config, scope)
+	units, err := s.plugin.GetGraph(config, scope)
+	if err != nil {
+		return nil, err
+	}
+	units = source.FilterInternalGraphUnits(s.spec, units, s.spec.Contract.DefaultObjectKind)
+	units = source.NormalizeGraphMetadata(units, s.spec.Traits.Metadata.Graph)
+	if err := source.ValidateGraphUnits(units); err != nil {
+		return nil, err
+	}
+	return units, nil
 }
 
 // Reply runs AI chat against the source session.
@@ -431,7 +515,7 @@ func (s *DatabaseSession) CreateObject(ctx context.Context, parent *source.Objec
 
 	config := s.pluginConfig(ctx, parent)
 	namespace := s.namespaceForRef(parent)
-	return s.plugin.AddStorageUnit(config, namespace, name, fields)
+	return s.plugin.CreateStorageUnit(config, namespace, source.RecordsToObjectDefinition(name, fields))
 }
 
 // UpdateObject updates data within an existing source object.
@@ -906,34 +990,23 @@ func (s *DatabaseSession) cacheColumns(namespace string, name string, columns []
 }
 
 func (s *DatabaseSession) ensureSurface(surface source.Surface) error {
-	if s.spec.Contract.SupportsSurface(surface) {
-		return nil
-	}
-
-	return fmt.Errorf("%s is not supported for %s", sourceSurfaceDescription(surface), s.spec.Label)
+	return source.ValidateSurfaceSupported(s.spec, surface)
 }
 
 func (s *DatabaseSession) ensureObjectAction(kind source.ObjectKind, action source.Action) error {
-	objectType, ok := s.spec.Contract.ObjectTypeForKind(kind)
-	if !ok {
-		return fmt.Errorf("%s objects are not supported for %s", kind, s.spec.Label)
-	}
-	if objectType.SupportsAction(action) {
-		return nil
-	}
-
-	return fmt.Errorf("%s is not supported for %s objects in %s", sourceActionDescription(action), kind, s.spec.Label)
+	return source.ValidateObjectActionSupported(s.spec, kind, action)
 }
 
 func (s *DatabaseSession) ensureCreateChildSupported(parent *source.ObjectRef) error {
-	if parent == nil {
-		if slices.Contains(s.spec.Contract.RootActions, source.ActionCreateChild) {
-			return nil
-		}
-		return fmt.Errorf("%s is not supported at the source root for %s", sourceActionDescription(source.ActionCreateChild), s.spec.Label)
-	}
+	return source.ValidateCreateChildSupported(s.spec, parent)
+}
 
-	return s.ensureObjectAction(parent.Kind, source.ActionCreateChild)
+func (s *DatabaseSession) ensureBrowseSupported(parent *source.ObjectRef) error {
+	return source.ValidateBrowseSupported(s.spec, parent)
+}
+
+func (s *DatabaseSession) ensureGraphSupported(ref *source.ObjectRef) error {
+	return source.ValidateGraphSupported(s.spec, ref)
 }
 
 func queryLanguagesForSpec(spec source.TypeSpec) []string {
@@ -953,56 +1026,6 @@ func cloneAliasMap(aliasMap map[string]string) map[string]string {
 		cloned[key] = value
 	}
 	return cloned
-}
-
-func sourceSurfaceDescription(surface source.Surface) string {
-	switch surface {
-	case source.SurfaceQuery:
-		return "querying"
-	case source.SurfaceGraph:
-		return "graph views"
-	case source.SurfaceChat:
-		return "chat"
-	case source.SurfaceBrowser:
-		return "browsing"
-	default:
-		return strings.ToLower(string(surface))
-	}
-}
-
-func sourceActionDescription(action source.Action) string {
-	switch action {
-	case source.ActionBrowse:
-		return "browsing"
-	case source.ActionInspect:
-		return "inspecting objects"
-	case source.ActionViewRows:
-		return "viewing rows"
-	case source.ActionViewContent:
-		return "viewing content"
-	case source.ActionViewDefinition:
-		return "viewing definitions"
-	case source.ActionCreateChild:
-		return "creating child objects"
-	case source.ActionDelete:
-		return "deleting objects"
-	case source.ActionInsertData:
-		return "inserting data"
-	case source.ActionUpdateData:
-		return "updating data"
-	case source.ActionDeleteData:
-		return "deleting data"
-	case source.ActionImportData:
-		return "importing data"
-	case source.ActionGenerateMockData:
-		return "generating mock data"
-	case source.ActionExecute:
-		return "executing actions"
-	case source.ActionViewGraph:
-		return "viewing graphs"
-	default:
-		return strings.ToLower(string(action))
-	}
 }
 
 func appendPath(parent *source.ObjectRef, name string) []string {
@@ -1052,6 +1075,7 @@ func cloneSourceColumns(columns []source.Column) []source.Column {
 		cloned = append(cloned, source.Column{
 			Type:             column.Type,
 			Name:             column.Name,
+			MetadataFidelity: column.MetadataFidelity,
 			IsNullable:       column.IsNullable,
 			IsPrimary:        column.IsPrimary,
 			IsAutoIncrement:  column.IsAutoIncrement,

@@ -9,6 +9,7 @@ query GetAIChat($providerId: String, $modelType: String!, $token: String, $ref: 
       Columns {
         Type
         Name
+        MetadataFidelity
       }
       Rows
     }

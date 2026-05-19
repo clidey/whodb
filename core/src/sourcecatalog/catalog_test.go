@@ -54,6 +54,88 @@ func TestBuildTypeSpecCoversSharedDatabaseCatalog(t *testing.T) {
 	}
 }
 
+func TestBuildTypeSpecContractsAreSelfConsistent(t *testing.T) {
+	t.Parallel()
+
+	for _, entry := range dbcatalog.All() {
+		entry := entry
+		t.Run(string(entry.ID), func(t *testing.T) {
+			t.Parallel()
+
+			spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+				ID:             string(entry.ID),
+				Label:          entry.Label,
+				Connector:      string(entry.PluginType),
+				Extra:          maps.Clone(entry.Extra),
+				Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+				RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+				IsAWSManaged:   entry.IsAWSManaged,
+				SSLModes:       sourceSSLModes(entry.SSLModes),
+			})
+			if !ok {
+				t.Fatalf("expected %q to map into the source catalog", entry.ID)
+			}
+			if err := source.ValidateContract(spec); err != nil {
+				t.Fatalf("expected source contract to be self-consistent: %v", err)
+			}
+		})
+	}
+}
+
+func TestBuildTypeSpecConnectionContractsAreSelfConsistent(t *testing.T) {
+	t.Parallel()
+
+	for _, entry := range dbcatalog.All() {
+		entry := entry
+		t.Run(string(entry.ID), func(t *testing.T) {
+			t.Parallel()
+
+			spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+				ID:             string(entry.ID),
+				Label:          entry.Label,
+				Connector:      string(entry.PluginType),
+				Extra:          maps.Clone(entry.Extra),
+				Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+				RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+				IsAWSManaged:   entry.IsAWSManaged,
+				SSLModes:       sourceSSLModes(entry.SSLModes),
+			})
+			if !ok {
+				t.Fatalf("expected %q to map into the source catalog", entry.ID)
+			}
+			if err := source.ValidateConnectionContract(spec); err != nil {
+				t.Fatalf("expected source connection contract to be self-consistent: %v", err)
+			}
+		})
+	}
+}
+
+func TestBuildTypeSpecMetadataContractsAreSelfConsistent(t *testing.T) {
+	t.Parallel()
+
+	for _, entry := range dbcatalog.All() {
+		entry := entry
+		t.Run(string(entry.ID), func(t *testing.T) {
+			t.Parallel()
+
+			spec := buildTestTypeSpec(t, entry)
+			if err := source.ValidateObjectMetadataContract(spec); err != nil {
+				t.Fatalf("expected source object metadata contract to be self-consistent: %v; traits=%v contract=%v", err, spec.Traits.Metadata, spec.Contract)
+			}
+
+			sessionMetadata, sessionMetadataOK := coresourcecatalog.ResolveSessionMetadata(spec.ID, spec.Connector)
+			if err := source.ValidateSessionMetadataContract(spec, sessionMetadata, sessionMetadataOK); err != nil {
+				t.Fatalf("expected source session metadata contract to be self-consistent: %v; traits=%v metadata=%#v", err, spec.Traits.Query, sessionMetadata)
+			}
+
+			creationMetadata, creationMetadataOK := coresourcecatalog.ResolveObjectCreationMetadata(spec.ID, spec.Connector)
+			if err := source.ValidateObjectCreationMetadataContract(spec, creationMetadata, creationMetadataOK); err != nil {
+				t.Fatalf("expected source object creation metadata contract to be self-consistent: %v; contract=%v metadata=%#v", err, spec.Contract, creationMetadata)
+			}
+		})
+	}
+}
+
 func TestBuildTypeSpecExposesMutableDataActions(t *testing.T) {
 	t.Parallel()
 
@@ -202,6 +284,43 @@ func TestQuestDBSessionMetadataUsesQuestDBTypes(t *testing.T) {
 	}
 }
 
+func TestObjectCreationMetadataUsesSourceNativeColumnLabels(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		id                     string
+		wantIdentity           string
+		wantPrimary            string
+		wantIdentityCapability bool
+	}{
+		{id: "MySQL", wantIdentity: "AUTO_INCREMENT", wantPrimary: "PRIMARY KEY", wantIdentityCapability: true},
+		{id: "Postgres", wantIdentity: "GENERATED ALWAYS AS IDENTITY", wantPrimary: "PRIMARY KEY", wantIdentityCapability: true},
+		{id: "DuckDB", wantIdentity: "DEFAULT nextval()", wantPrimary: "PRIMARY KEY", wantIdentityCapability: true},
+		{id: "Sqlite3", wantIdentity: "Identity", wantPrimary: "PRIMARY KEY", wantIdentityCapability: false},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.id, func(t *testing.T) {
+			t.Parallel()
+
+			metadata, ok := coresourcecatalog.ResolveObjectCreationMetadata(tt.id)
+			if !ok {
+				t.Fatalf("expected object creation metadata for %q", tt.id)
+			}
+			if metadata.ColumnLabels.Identity != tt.wantIdentity {
+				t.Fatalf("expected identity label %q, got %q", tt.wantIdentity, metadata.ColumnLabels.Identity)
+			}
+			if metadata.ColumnLabels.PrimaryKey != tt.wantPrimary {
+				t.Fatalf("expected primary label %q, got %q", tt.wantPrimary, metadata.ColumnLabels.PrimaryKey)
+			}
+			if metadata.ColumnCapabilities.Identity != tt.wantIdentityCapability {
+				t.Fatalf("expected identity capability %t, got %t", tt.wantIdentityCapability, metadata.ColumnCapabilities.Identity)
+			}
+		})
+	}
+}
+
 func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 	t.Parallel()
 
@@ -256,6 +375,12 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				if spec.Traits.Query.ExplainMode != source.QueryExplainModeExplainAnalyze {
 					t.Fatalf("expected Postgres explain mode %q, got %q", source.QueryExplainModeExplainAnalyze, spec.Traits.Query.ExplainMode)
 				}
+				if !spec.Traits.Query.SupportsScripts || !spec.Traits.Query.SupportsStreaming || !spec.Traits.Query.SupportsMultiStatement {
+					t.Fatalf("expected Postgres execution traits to support scripts, streaming, and multi-statement, got %#v", spec.Traits.Query)
+				}
+				if !spec.Contract.SupportsRootAction(source.ActionExecute) {
+					t.Fatalf("expected Postgres root execute support")
+				}
 				if !spec.Traits.MockData.SupportsRelationalDependencies {
 					t.Fatalf("expected Postgres mock-data relational dependency support")
 				}
@@ -283,6 +408,9 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				if spec.Traits.Presentation.SchemaFidelity != source.SchemaFidelitySampled {
 					t.Fatalf("expected MongoDB schema fidelity %q, got %q", source.SchemaFidelitySampled, spec.Traits.Presentation.SchemaFidelity)
 				}
+				if spec.Traits.Metadata.Columns != source.MetadataFidelitySampled {
+					t.Fatalf("expected MongoDB column metadata fidelity %q, got %q", source.MetadataFidelitySampled, spec.Traits.Metadata.Columns)
+				}
 			},
 		},
 		{
@@ -309,6 +437,15 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 				t.Helper()
 				if spec.Traits.Query.ExplainMode != source.QueryExplainModeExplainPipeline {
 					t.Fatalf("expected ClickHouse explain mode %q, got %q", source.QueryExplainModeExplainPipeline, spec.Traits.Query.ExplainMode)
+				}
+				if !spec.Traits.Query.SupportsScripts || !spec.Traits.Query.SupportsStreaming {
+					t.Fatalf("expected ClickHouse execution traits to support scripts and streaming, got %#v", spec.Traits.Query)
+				}
+				if spec.Traits.Query.SupportsMultiStatement {
+					t.Fatalf("expected ClickHouse multi-statement support to remain disabled")
+				}
+				if spec.Traits.Metadata.Graph != source.MetadataFidelityInferred {
+					t.Fatalf("expected ClickHouse graph metadata fidelity %q, got %q", source.MetadataFidelityInferred, spec.Traits.Metadata.Graph)
 				}
 				if spec.Traits.MockData.SupportsRelationalDependencies {
 					t.Fatalf("expected ClickHouse mock-data relational dependency support to remain disabled")
@@ -399,6 +536,34 @@ func TestBuildTypeSpecUsesTypedExtraFields(t *testing.T) {
 	}
 }
 
+func TestBuildTypeSpecDeclaresInternalObjectRules(t *testing.T) {
+	t.Parallel()
+
+	entry, ok := dbcatalog.Find("MySQL")
+	if !ok {
+		t.Fatal("expected MySQL database catalog entry")
+	}
+	spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+		ID:             string(entry.ID),
+		Label:          entry.Label,
+		Connector:      string(entry.PluginType),
+		Extra:          maps.Clone(entry.Extra),
+		Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+		RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+		IsAWSManaged:   entry.IsAWSManaged,
+		SSLModes:       sourceSSLModes(entry.SSLModes),
+	})
+	if !ok {
+		t.Fatal("expected MySQL to map into the source catalog")
+	}
+	if !source.ShouldHideObject(spec, source.ObjectKindDatabase, "information_schema") {
+		t.Fatal("expected MySQL information_schema to be declared internal")
+	}
+	if spec.Traits.Metadata.SystemObjectFiltering != source.MetadataFidelityExact {
+		t.Fatalf("expected internal object filtering fidelity %q, got %q", source.MetadataFidelityExact, spec.Traits.Metadata.SystemObjectFiltering)
+	}
+}
+
 func sourceSSLModes(modes []source.SSLModeInfo) []source.SSLModeInfo {
 	cloned := make([]source.SSLModeInfo, 0, len(modes))
 	for _, mode := range modes {
@@ -410,4 +575,23 @@ func sourceSSLModes(modes []source.SSLModeInfo) []source.SSLModeInfo {
 		})
 	}
 	return cloned
+}
+
+func buildTestTypeSpec(t *testing.T, entry dbcatalog.ConnectableDatabase) source.TypeSpec {
+	t.Helper()
+
+	spec, ok := coresourcecatalog.BuildTypeSpec(coresourcecatalog.DatabaseEntry{
+		ID:             string(entry.ID),
+		Label:          entry.Label,
+		Connector:      string(entry.PluginType),
+		Extra:          maps.Clone(entry.Extra),
+		Fields:         coresourcecatalog.FieldVisibility(entry.Fields),
+		RequiredFields: coresourcecatalog.FieldRequirements(entry.RequiredFields),
+		IsAWSManaged:   entry.IsAWSManaged,
+		SSLModes:       sourceSSLModes(entry.SSLModes),
+	})
+	if !ok {
+		t.Fatalf("expected %q to map into the source catalog", entry.ID)
+	}
+	return spec
 }

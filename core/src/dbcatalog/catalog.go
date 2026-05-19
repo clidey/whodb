@@ -334,8 +334,8 @@ var catalog = []ConnectableDatabase{
 		Label:      "ElastiCache",
 		PluginType: engine.DatabaseType_Redis,
 		Extra: map[string]source.ConnectionExtraField{
-			"Port": {DefaultValue: "6379"},
-			"TLS":  {DefaultValue: "true"},
+			"Port":     {DefaultValue: "6379"},
+			"SSL Mode": {DefaultValue: "enabled"},
 		},
 		Fields: FieldVisibility{
 			Hostname: true,
@@ -350,7 +350,10 @@ var catalog = []ConnectableDatabase{
 		ID:         engine.DatabaseType_DocumentDB,
 		Label:      "DocumentDB",
 		PluginType: engine.DatabaseType_MongoDB,
-		Extra:      map[string]source.ConnectionExtraField{"Port": {DefaultValue: "27017"}},
+		Extra: map[string]source.ConnectionExtraField{
+			"Port":       {DefaultValue: "27017"},
+			"URL Params": {},
+		},
 		Fields: FieldVisibility{
 			Hostname: true,
 			Username: true,

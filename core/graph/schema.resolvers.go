@@ -153,12 +153,40 @@ func (r *mutationResolver) CreateSourceObject(ctx context.Context, parent *model
 	if err != nil {
 		return nil, err
 	}
+	resolvedParent := sourceRefFromInput(parent)
+	if err := source.ValidateCreateChildSupported(spec, resolvedParent); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source object creation is not supported")
 	}
 
-	status, err := manager.CreateObject(ctx, sourceRefFromInput(parent), name, recordInputsToSourceRecords(fields))
+	status, err := manager.CreateObject(ctx, resolvedParent, name, recordInputsToSourceRecords(fields))
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.StatusResponse{Status: status}, nil
+}
+
+// CreateSourceObjectFromDefinition is the resolver for the CreateSourceObjectFromDefinition field.
+func (r *mutationResolver) CreateSourceObjectFromDefinition(ctx context.Context, parent *model.SourceObjectRefInput, definition model.SourceObjectDefinitionInput) (*model.StatusResponse, error) {
+	spec, session, err := getSourceSessionForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolvedParent := sourceRefFromInput(parent)
+	if err := source.ValidateCreateChildSupported(spec, resolvedParent); err != nil {
+		return nil, err
+	}
+	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
+	if !ok {
+		return nil, errors.New("source object creation is not supported")
+	}
+
+	objectDefinition := sourceObjectDefinitionInputToSource(definition)
+	status, err := manager.CreateObject(ctx, resolvedParent, objectDefinition.Name, source.ObjectDefinitionToRecords(objectDefinition))
 	if err != nil {
 		return nil, err
 	}
@@ -172,12 +200,16 @@ func (r *mutationResolver) UpdateSourceObject(ctx context.Context, ref model.Sou
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionUpdateData); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source object updates are not supported")
 	}
 
-	status, err := manager.UpdateObject(ctx, *sourceRefFromInput(&ref), recordInputsToMap(values), updatedColumns)
+	status, err := manager.UpdateObject(ctx, *resolvedRef, recordInputsToMap(values), updatedColumns)
 	if err != nil {
 		return nil, err
 	}
@@ -191,12 +223,16 @@ func (r *mutationResolver) AddSourceRow(ctx context.Context, ref model.SourceObj
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionInsertData); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source row inserts are not supported")
 	}
 
-	status, err := manager.AddRow(ctx, *sourceRefFromInput(&ref), recordInputsToSourceRecords(values))
+	status, err := manager.AddRow(ctx, *resolvedRef, recordInputsToSourceRecords(values))
 	if err != nil {
 		return nil, err
 	}
@@ -210,12 +246,16 @@ func (r *mutationResolver) DeleteSourceRow(ctx context.Context, ref model.Source
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionDeleteData); err != nil {
+		return nil, err
+	}
 	manager, ok := source.AsObjectManager(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source row deletes are not supported")
 	}
 
-	status, err := manager.DeleteRow(ctx, *sourceRefFromInput(&ref), recordInputsToMap(values))
+	status, err := manager.DeleteRow(ctx, *resolvedRef, recordInputsToMap(values))
 	if err != nil {
 		return nil, err
 	}
@@ -234,10 +274,6 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	if err != nil {
 		return nil, err
 	}
-	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
-	if !ok {
-		return nil, errors.New("source scripts are not supported")
-	}
 
 	script := ""
 	if input.Script != nil {
@@ -251,6 +287,16 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	}
 	if !hasScript && !hasFile {
 		return importResult(false, importErrorSQLSourceMissing), nil
+	}
+	if err := source.ValidateScriptExecutionSupported(spec); err != nil {
+		return nil, err
+	}
+	if !spec.Traits.Query.SupportsMultiStatement {
+		return importResult(false, importErrorSQLMultiStatementUnsupported), nil
+	}
+	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
+	if !ok {
+		return nil, errors.New("source scripts are not supported")
 	}
 
 	if hasFile {
@@ -291,6 +337,9 @@ func (r *mutationResolver) ImportSourceObjectFile(ctx context.Context, input mod
 func (r *mutationResolver) ExecuteConfirmedSQL(ctx context.Context, query string, operationType string) (*model.AIChatMessage, error) {
 	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := source.ValidateScriptExecutionSupported(spec); err != nil {
 		return nil, err
 	}
 	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
@@ -1077,10 +1126,31 @@ func (r *queryResolver) SourceSessionMetadata(ctx context.Context) (*model.Sourc
 	return sourceSessionMetadataToModel(metadata), nil
 }
 
+// SourceObjectCreationMetadata is the resolver for the SourceObjectCreationMetadata field.
+func (r *queryResolver) SourceObjectCreationMetadata(ctx context.Context, parent *model.SourceObjectRefInput) (*model.ObjectCreationMetadata, error) {
+	spec, _, err := getSourceSpecForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	metadata, ok := sourcecatalog.ResolveObjectCreationMetadata(spec.ID, spec.Connector)
+	if !ok {
+		return sourceObjectCreationMetadataToModel(source.ObjectCreationMetadata{
+			Supported:       false,
+			ObjectKind:      spec.Contract.DefaultObjectKind,
+			RequiresColumns: false,
+		}), nil
+	}
+	return sourceObjectCreationMetadataToModel(metadata), nil
+}
+
 // SourceObjects is the resolver for the SourceObjects field.
 func (r *queryResolver) SourceObjects(ctx context.Context, parent *model.SourceObjectRefInput, kinds []model.SourceObjectKind) ([]*model.SourceObject, error) {
 	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
+		return nil, err
+	}
+	resolvedParent := sourceRefFromInput(parent)
+	if err := source.ValidateBrowseSupported(spec, resolvedParent); err != nil {
 		return nil, err
 	}
 
@@ -1094,7 +1164,7 @@ func (r *queryResolver) SourceObjects(ctx context.Context, parent *model.SourceO
 		kindFilter = append(kindFilter, source.ObjectKind(kind))
 	}
 
-	objects, err := browser.ListObjects(ctx, sourceRefFromInput(parent), kindFilter)
+	objects, err := browser.ListObjects(ctx, resolvedParent, kindFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -1107,13 +1177,17 @@ func (r *queryResolver) SourceObject(ctx context.Context, ref model.SourceObject
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionInspect); err != nil {
+		return nil, err
+	}
 
 	browser, ok := source.AsSourceBrowser(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source browsing is not supported")
 	}
 
-	object, err := browser.GetObject(ctx, *sourceRefFromInput(&ref))
+	object, err := browser.GetObject(ctx, *resolvedRef)
 	if err != nil {
 		return nil, err
 	}
@@ -1136,19 +1210,22 @@ func (r *queryResolver) SourceRows(ctx context.Context, ref model.SourceObjectRe
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionViewRows); err != nil {
+		return nil, err
+	}
 
 	reader, ok := source.AsTabularReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source rows are not supported")
 	}
 
-	resolvedRef := *sourceRefFromInput(&ref)
-	rowsResult, err := reader.ReadRows(ctx, resolvedRef, queryWhereConditionFromModel(where), querySortConditionsFromModel(sort), pageSize, pageOffset)
+	rowsResult, err := reader.ReadRows(ctx, *resolvedRef, queryWhereConditionFromModel(where), querySortConditionsFromModel(sort), pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	columns, err := reader.Columns(ctx, resolvedRef)
+	columns, err := reader.Columns(ctx, *resolvedRef)
 	if err != nil {
 		log.WithError(err).Warn("Failed to load source columns for row metadata")
 		return rowsResultToModel(rowsResult), nil
@@ -1163,13 +1240,17 @@ func (r *queryResolver) SourceContent(ctx context.Context, ref model.SourceObjec
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionViewContent); err != nil {
+		return nil, err
+	}
 
 	reader, ok := source.AsContentReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source content is not supported")
 	}
 
-	content, err := reader.ReadContent(ctx, *sourceRefFromInput(&ref))
+	content, err := reader.ReadContent(ctx, *resolvedRef)
 	if err != nil {
 		return nil, err
 	}
@@ -1182,13 +1263,17 @@ func (r *queryResolver) SourceColumns(ctx context.Context, ref model.SourceObjec
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionInspect); err != nil {
+		return nil, err
+	}
 
 	reader, ok := source.AsTabularReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source columns are not supported")
 	}
 
-	columns, err := reader.Columns(ctx, *sourceRefFromInput(&ref))
+	columns, err := reader.Columns(ctx, *resolvedRef)
 	if err != nil {
 		return nil, err
 	}
@@ -1212,7 +1297,11 @@ func (r *queryResolver) SourceColumnsBatch(ctx context.Context, refs []*model.So
 		if ref == nil {
 			continue
 		}
-		sourceRefs = append(sourceRefs, *sourceRefFromInput(ref))
+		resolvedRef := sourceRefFromInput(ref)
+		if err := validateSourceObjectAction(spec, resolvedRef, source.ActionInspect); err != nil {
+			return nil, err
+		}
+		sourceRefs = append(sourceRefs, *resolvedRef)
 	}
 
 	results, err := reader.ColumnsBatch(ctx, sourceRefs)
@@ -1222,10 +1311,39 @@ func (r *queryResolver) SourceColumnsBatch(ctx context.Context, refs []*model.So
 	return sourceObjectColumnsToModel(results), nil
 }
 
+// SourceFieldConstraints is the resolver for the SourceFieldConstraints field.
+func (r *queryResolver) SourceFieldConstraints(ctx context.Context, ref model.SourceObjectRefInput) ([]*model.SourceFieldConstraints, error) {
+	spec, session, err := getSourceSessionForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionInspect); err != nil {
+		return nil, err
+	}
+
+	reader, ok := source.AsFieldConstraintReader(sourceAuditScopeFromContext(ctx, spec), session)
+	if !ok {
+		return nil, errors.New("source field constraints are not supported")
+	}
+
+	constraints, err := reader.FieldConstraints(ctx, *resolvedRef)
+	if err != nil {
+		return nil, err
+	}
+	return MapFieldConstraintsToModel(constraints), nil
+}
+
 // RunSourceQuery is the resolver for the RunSourceQuery field.
 func (r *queryResolver) RunSourceQuery(ctx context.Context, query string) (*model.RowsResult, error) {
 	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := source.ValidateSurfaceSupported(spec, source.SurfaceQuery); err != nil {
+		return nil, err
+	}
+	if err := source.ValidateRootActionSupported(spec, source.ActionExecute); err != nil {
 		return nil, err
 	}
 
@@ -1247,13 +1365,16 @@ func (r *queryResolver) SourceGraph(ctx context.Context, ref *model.SourceObject
 	if err != nil {
 		return nil, err
 	}
+	resolvedRef := sourceRefFromInput(ref)
+	if err := source.ValidateGraphSupported(spec, resolvedRef); err != nil {
+		return nil, err
+	}
 
 	reader, ok := source.AsGraphReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source graph is not supported")
 	}
 
-	resolvedRef := sourceRefFromInput(ref)
 	graphUnits, err := reader.ReadGraph(ctx, resolvedRef)
 	if err != nil {
 		return nil, err

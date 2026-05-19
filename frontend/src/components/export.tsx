@@ -28,13 +28,14 @@ import {
     SheetTitle,
     toast
 } from "@clidey/ux";
-import { DataShape, type SourceObjectRefInput } from "@graphql";
+import { type SourceObjectRefInput } from "@graphql";
 import {FC, useCallback, useEffect, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
 import {ShareIcon} from "./heroicons";
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
 import {useTranslation} from "@/hooks/use-translation";
 import {useSourceContract} from "@/hooks/useSourceContract";
+import {sourceDefaultObjectIsTabular} from "@/config/source-types";
 
 interface IExportProps {
     open: boolean;
@@ -66,12 +67,7 @@ export const Export: FC<IExportProps> = ({
     const { t } = useTranslation('components/export');
     const [exportDelimiter, setExportDelimiter] = useState(',');
     const { isNoSQL, item } = useSourceContract(databaseType);
-    const isDefaultObjectTabular = useMemo(() => {
-        const defaultKind = item?.contract?.DefaultObjectKind;
-        return item?.contract?.ObjectTypes.some(objectType =>
-            objectType.Kind === defaultKind && objectType.DataShape === DataShape.Tabular
-        ) === true;
-    }, [item]);
+    const isDefaultObjectTabular = useMemo(() => sourceDefaultObjectIsTabular(item), [item]);
     const defaultFormat = useMemo(() => {
         if (rawQuery || isDefaultObjectTabular) {
             return 'csv';

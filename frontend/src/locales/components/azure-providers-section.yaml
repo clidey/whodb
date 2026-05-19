@@ -5,7 +5,368 @@ en_US:
   noProviders: No Azure accounts configured
   addFirstProvider: Add your first Azure account to discover databases
 
+af_ZA:
+  title: "Azure rekeninge"
+  description: "Koppel Azure-intekeninge om PostgreSQL-, MySQL-, Redis- en Cosmos DB-gevalle outomaties te ontdek."
+  noProviders: "Geen Azure-rekeninge is opgestel nie"
+  addFirstProvider: "Voeg jou eerste Azure-rekening by om databasisse te ontdek"
 
+am_ET:
+  title: "Azure መለያዎች"
+  description: "የAzuure ምዝገባዎችን ከ PostgreSQL፣ MySQL፣ Redis እና Cosmos DB ምሳሌዎችን በራስ-አግኝ ያገናኙ።"
+  noProviders: "ምንም የAzuure መለያዎች አልተዋቀሩም።"
+  addFirstProvider: "የውሂብ ጎታዎችን ለማግኘት የመጀመሪያውን የ Azure መለያዎን ያክሉ"
 
+ar_AE:
+  title: "حسابات أزور"
+  description: "قم بتوصيل اشتراكات Azure لاكتشاف مثيلات PostgreSQL وMySQL وRedis وCosmos DB تلقائيًا."
+  noProviders: "لم يتم تكوين أي حسابات Azure"
+  addFirstProvider: "أضف حساب Azure الأول الخاص بك لاكتشاف قواعد البيانات"
 
+az_AZ:
+  title: "Azure Hesabları"
+  description: "PostgreSQL, MySQL, Redis və Cosmos DB instansiyalarını avtomatik kəşf etmək üçün Azure abunəliklərini birləşdirin."
+  noProviders: "Heç bir Azure hesabı konfiqurasiya edilməyib"
+  addFirstProvider: "Verilənlər bazalarını kəşf etmək üçün ilk Azure hesabınızı əlavə edin"
 
+bg_BG:
+  title: "Акаунти в Azure"
+  description: "Свържете абонаментите на Azure за автоматично откриване на екземпляри на PostgreSQL, MySQL, Redis и Cosmos DB."
+  noProviders: "Няма конфигурирани акаунти в Azure"
+  addFirstProvider: "Добавете първия си акаунт в Azure, за да откриете бази данни"
+
+bn_BD:
+  title: "আজুর অ্যাকাউন্টস"
+  description: "Azure সাবস্ক্রিপশনগুলিকে PostgreSQL, MySQL, Redis, এবং Cosmos DB দৃষ্টান্তে স্বয়ংক্রিয়ভাবে আবিষ্কার করুন।"
+  noProviders: "কোনো Azure অ্যাকাউন্ট কনফিগার করা নেই"
+  addFirstProvider: "ডেটাবেস আবিষ্কার করতে আপনার প্রথম Azure অ্যাকাউন্ট যোগ করুন"
+
+ca_ES:
+  title: "Comptes d'Azure"
+  description: "Connecteu les subscripcions d'Azure per descobrir automàticament instàncies de PostgreSQL, MySQL, Redis i Cosmos DB."
+  noProviders: "No s'ha configurat cap compte d'Azure"
+  addFirstProvider: "Afegiu el vostre primer compte Azure per descobrir bases de dades"
+
+cs_CZ:
+  title: "Účty Azure"
+  description: "Připojte předplatná Azure k automatickému zjišťování instancí PostgreSQL, MySQL, Redis a Cosmos DB."
+  noProviders: "Nejsou nakonfigurovány žádné účty Azure"
+  addFirstProvider: "Přidejte svůj první účet Azure, abyste mohli objevovat databáze"
+
+da_DK:
+  title: "Azure-konti"
+  description: "Tilslut Azure-abonnementer for automatisk at opdage PostgreSQL-, MySQL-, Redis- og Cosmos DB-forekomster."
+  noProviders: "Ingen Azure-konti konfigureret"
+  addFirstProvider: "Tilføj din første Azure-konto for at finde databaser"
+
+de_DE:
+  title: "Azure-Konten"
+  description: "Verbinden Sie Azure-Abonnements, um PostgreSQL-, MySQL-, Redis- und Cosmos DB-Instanzen automatisch zu erkennen."
+  noProviders: "Keine Azure-Konten konfiguriert"
+  addFirstProvider: "Fügen Sie Ihr erstes Azure-Konto hinzu, um Datenbanken zu erkennen"
+
+el_GR:
+  title: "Λογαριασμοί Azure"
+  description: "Συνδέστε τις συνδρομές Azure για αυτόματη ανακάλυψη παρουσιών PostgreSQL, MySQL, Redis και Cosmos DB."
+  noProviders: "Δεν έχουν διαμορφωθεί λογαριασμοί Azure"
+  addFirstProvider: "Προσθέστε τον πρώτο σας λογαριασμό Azure για να ανακαλύψετε βάσεις δεδομένων"
+
+en_GB:
+  title: "Azure Accounts"
+  description: "Connect Azure subscriptions to auto-discover PostgreSQL, MySQL, Redis, and Cosmos DB instances."
+  noProviders: "No Azure accounts configured"
+  addFirstProvider: "Add your first Azure account to discover databases"
+
+es_ES:
+  title: "Cuentas de Azure"
+  description: "Conecte suscripciones de Azure para descubrir automáticamente instancias de PostgreSQL, MySQL, Redis y Cosmos DB."
+  noProviders: "No hay cuentas de Azure configuradas"
+  addFirstProvider: "Agregue su primera cuenta de Azure para descubrir bases de datos"
+
+et_EE:
+  title: "Azure'i kontod"
+  description: "Ühendage Azure'i tellimused PostgreSQL-i, MySQL-i, Redise ja Cosmose DB eksemplaride automaatseks avastamiseks."
+  noProviders: "Azure'i kontosid pole konfigureeritud"
+  addFirstProvider: "Lisage andmebaaside avastamiseks oma esimene Azure'i konto"
+
+fa_IR:
+  title: "حساب های لاجوردی"
+  description: "اشتراک های Azure را برای کشف خودکار نمونه های PostgreSQL، MySQL، Redis و Cosmos DB متصل کنید."
+  noProviders: "هیچ حساب Azure پیکربندی نشده است"
+  addFirstProvider: "اولین حساب Azure خود را برای کشف پایگاه های داده اضافه کنید"
+
+fi_FI:
+  title: "Azure-tilit"
+  description: "Yhdistä Azure-tilaukset löytääksesi automaattisesti PostgreSQL-, MySQL-, Redis- ja Cosmos DB -esiintymät."
+  noProviders: "Azure-tilejä ei ole määritetty"
+  addFirstProvider: "Lisää ensimmäinen Azure-tilisi löytääksesi tietokannat"
+
+fr_FR:
+  title: "Comptes Azure"
+  description: "Connectez les abonnements Azure pour découvrir automatiquement les instances PostgreSQL, MySQL, Redis et Cosmos DB."
+  noProviders: "Aucun compte Azure configuré"
+  addFirstProvider: "Ajoutez votre premier compte Azure pour découvrir les bases de données"
+
+gu_IN:
+  title: "એઝ્યુર એકાઉન્ટ્સ"
+  description: "Azure સબ્સ્ક્રિપ્શન્સને PostgreSQL, MySQL, Redis અને Cosmos DB ઇન્સ્ટન્સને ઑટો-ડિસ્કવર સાથે કનેક્ટ કરો."
+  noProviders: "કોઈ Azure એકાઉન્ટ્સ ગોઠવેલ નથી"
+  addFirstProvider: "ડેટાબેસેસ શોધવા માટે તમારું પ્રથમ Azure એકાઉન્ટ ઉમેરો"
+
+ha_NG:
+  title: "Azure Accounts"
+  description: "Haɗa biyan kuɗin Azure zuwa ga ganowa ta atomatik PostgreSQL, MySQL, Redis, da misalin Cosmos DB."
+  noProviders: "Ba a saita asusun Azure ba"
+  addFirstProvider: "Ƙara asusunku na farko na Azure don gano bayanan bayanai"
+
+hi_IN:
+  title: "Azure खाते"
+  description: "PostgreSQL, MySQL, Redis और Cosmos DB इंस्टेंसेस को ऑटो-डिस्कवर करने के लिए Azure सब्सक्रिप्शन कनेक्ट करें।"
+  noProviders: "कोई Azure खाता कॉन्फ़िगर नहीं किया गया"
+  addFirstProvider: "डेटाबेस खोजने के लिए अपना पहला Azure खाता जोड़ें"
+
+hr_HR:
+  title: "Azure računi"
+  description: "Povežite pretplate na Azure za automatsko otkrivanje instanci PostgreSQL, MySQL, Redis i Cosmos DB."
+  noProviders: "Nema konfiguriranih Azure računa"
+  addFirstProvider: "Dodajte svoj prvi Azure račun da biste otkrili baze podataka"
+
+hu_HU:
+  title: "Azure-fiókok"
+  description: "Csatlakoztassa az Azure-előfizetéseket a PostgreSQL, MySQL, Redis és Cosmos DB példányok automatikus felfedezéséhez."
+  noProviders: "Nincsenek konfigurálva Azure-fiókok"
+  addFirstProvider: "Adja hozzá első Azure-fiókját az adatbázisok felfedezéséhez"
+
+id_ID:
+  title: "Akun Azure"
+  description: "Hubungkan langganan Azure untuk menemukan instans PostgreSQL, MySQL, Redis, dan Cosmos DB secara otomatis."
+  noProviders: "Tidak ada akun Azure yang dikonfigurasi"
+  addFirstProvider: "Tambahkan akun Azure pertama Anda untuk menemukan database"
+
+it_IT:
+  title: "Account di Azure"
+  description: "Connetti le sottoscrizioni di Azure per individuare automaticamente le istanze PostgreSQL, MySQL, Redis e Cosmos DB."
+  noProviders: "Nessun account Azure configurato"
+  addFirstProvider: "Aggiungi il tuo primo account Azure per individuare i database"
+
+iw_IL:
+  title: "חשבונות תכלת"
+  description: "חבר מנויי Azure לגילוי אוטומטי של מופעי PostgreSQL, MySQL, Redis ו-Cosmos DB."
+  noProviders: "לא הוגדרו חשבונות Azure"
+  addFirstProvider: "הוסף את חשבון Azure הראשון שלך כדי לגלות מסדי נתונים"
+
+ja_JP:
+  title: "Azureアカウント"
+  description: "Azure サブスクリプションに接続して、PostgreSQL、MySQL、Redis、Cosmos DB インスタンスを自動検出します。"
+  noProviders: "Azure アカウントが構成されていません"
+  addFirstProvider: "最初の Azure アカウントを追加してデータベースを検出する"
+
+ka_GE:
+  title: "Azure ანგარიშები"
+  description: "დააკავშირეთ Azure ხელმოწერები PostgreSQL, MySQL, Redis და Cosmos DB ინსტანციების ავტომატური აღმოჩენისთვის."
+  noProviders: "Azure ანგარიშები არ არის კონფიგურირებული"
+  addFirstProvider: "დაამატეთ თქვენი პირველი Azure ანგარიში მონაცემთა ბაზების აღმოსაჩენად"
+
+km_KH:
+  title: "គណនី Azure"
+  description: "ភ្ជាប់ការជាវ Azure ទៅនឹងការស្វែងរកដោយស្វ័យប្រវត្តិ PostgreSQL, MySQL, Redis និង Cosmos DB instances ។"
+  noProviders: "មិនមានគណនី Azure ត្រូវបានកំណត់រចនាសម្ព័ន្ធទេ។"
+  addFirstProvider: "បន្ថែមគណនី Azure ដំបូងរបស់អ្នកដើម្បីស្វែងរកមូលដ្ឋានទិន្នន័យ"
+
+kn_IN:
+  title: "ಅಜುರೆ ಖಾತೆಗಳು"
+  description: "PostgreSQL, MySQL, Redis ಮತ್ತು Cosmos DB ನಿದರ್ಶನಗಳನ್ನು ಸ್ವಯಂ ಅನ್ವೇಷಿಸಲು Azure ಚಂದಾದಾರಿಕೆಗಳನ್ನು ಸಂಪರ್ಕಿಸಿ."
+  noProviders: "ಯಾವುದೇ ಅಜೂರ್ ಖಾತೆಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿಲ್ಲ"
+  addFirstProvider: "ಡೇಟಾಬೇಸ್‌ಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ನಿಮ್ಮ ಮೊದಲ Azure ಖಾತೆಯನ್ನು ಸೇರಿಸಿ"
+
+ko_KR:
+  title: "Azure 계정"
+  description: "Azure 구독을 연결하여 PostgreSQL, MySQL, Redis 및 Cosmos DB 인스턴스를 자동 검색하세요."
+  noProviders: "구성된 Azure 계정이 없습니다."
+  addFirstProvider: "데이터베이스를 검색하려면 첫 번째 Azure 계정을 추가하세요."
+
+lt_LT:
+  title: "Azure paskyros"
+  description: "Prijunkite Azure prenumeratas, kad automatiškai atrastumėte PostgreSQL, MySQL, Redis ir Cosmos DB egzempliorius."
+  noProviders: "„Azure“ paskyrų nesukonfigūruota"
+  addFirstProvider: "Pridėkite savo pirmąją Azure paskyrą, kad rastumėte duomenų bazes"
+
+lv_LV:
+  title: "Azure konti"
+  description: "Pievienojiet Azure abonementus, lai automātiski atklātu PostgreSQL, MySQL, Redis un Cosmos DB gadījumus."
+  noProviders: "Nav konfigurēts neviens Azure konts"
+  addFirstProvider: "Pievienojiet savu pirmo Azure kontu, lai atklātu datu bāzes"
+
+ml_IN:
+  title: "അസൂർ അക്കൗണ്ടുകൾ"
+  description: "PostgreSQL, MySQL, Redis, Cosmos DB സംഭവങ്ങൾ സ്വയമേവ കണ്ടെത്തുന്നതിന് Azure സബ്‌സ്‌ക്രിപ്‌ഷനുകൾ ബന്ധിപ്പിക്കുക."
+  noProviders: "Azure അക്കൗണ്ടുകളൊന്നും കോൺഫിഗർ ചെയ്തിട്ടില്ല"
+  addFirstProvider: "ഡാറ്റാബേസുകൾ കണ്ടെത്തുന്നതിന് നിങ്ങളുടെ ആദ്യ Azure അക്കൗണ്ട് ചേർക്കുക"
+
+mr_IN:
+  title: "Azure खाती"
+  description: "PostgreSQL, MySQL, Redis आणि Cosmos DB उदाहरणे ऑटो-डिस्कव्हर करण्यासाठी Azure सदस्यता कनेक्ट करा."
+  noProviders: "कोणतीही Azure खाती कॉन्फिगर केलेली नाहीत"
+  addFirstProvider: "डेटाबेस शोधण्यासाठी तुमचे पहिले Azure खाते जोडा"
+
+ms_MY:
+  title: "Akaun Azure"
+  description: "Sambungkan langganan Azure untuk mencari auto kejadian PostgreSQL, MySQL, Redis dan Cosmos DB."
+  noProviders: "Tiada akaun Azure dikonfigurasikan"
+  addFirstProvider: "Tambahkan akaun Azure pertama anda untuk menemui pangkalan data"
+
+nb_NO:
+  title: "Azure-kontoer"
+  description: "Koble til Azure-abonnementer for å automatisk oppdage PostgreSQL-, MySQL-, Redis- og Cosmos DB-forekomster."
+  noProviders: "Ingen Azure-kontoer er konfigurert"
+  addFirstProvider: "Legg til din første Azure-konto for å oppdage databaser"
+
+ne_NP:
+  title: "Azure खाताहरू"
+  description: "Azure सदस्यताहरू PostgreSQL, MySQL, Redis, र Cosmos DB उदाहरणहरू स्वत: खोजमा जडान गर्नुहोस्।"
+  noProviders: "Azure खाताहरू कन्फिगर गरिएको छैन"
+  addFirstProvider: "डाटाबेसहरू पत्ता लगाउन आफ्नो पहिलो Azure खाता थप्नुहोस्"
+
+nl_NL:
+  title: "Azure-accounts"
+  description: "Verbind Azure-abonnementen om automatisch PostgreSQL-, MySQL-, Redis- en Cosmos DB-instanties te ontdekken."
+  noProviders: "Er zijn geen Azure-accounts geconfigureerd"
+  addFirstProvider: "Voeg uw eerste Azure-account toe om databases te ontdekken"
+
+pa_IN:
+  title: "ਅਜ਼ੁਰ ਖਾਤੇ"
+  description: "Azure ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਨੂੰ ਆਟੋ-ਡਿਸਕਵਰ PostgreSQL, MySQL, Redis, ਅਤੇ Cosmos DB ਉਦਾਹਰਨਾਂ ਨਾਲ ਕਨੈਕਟ ਕਰੋ।"
+  noProviders: "ਕੋਈ Azure ਖਾਤੇ ਕੌਂਫਿਗਰ ਨਹੀਂ ਕੀਤੇ ਗਏ ਹਨ"
+  addFirstProvider: "ਡਾਟਾਬੇਸ ਖੋਜਣ ਲਈ ਆਪਣਾ ਪਹਿਲਾ Azure ਖਾਤਾ ਸ਼ਾਮਲ ਕਰੋ"
+
+pl_PL:
+  title: "Konta Azure"
+  description: "Połącz subskrypcje platformy Azure, aby automatycznie wykrywać wystąpienia PostgreSQL, MySQL, Redis i Cosmos DB."
+  noProviders: "Nie skonfigurowano żadnych kont platformy Azure"
+  addFirstProvider: "Dodaj swoje pierwsze konto platformy Azure, aby odnajdywać bazy danych"
+
+pt_BR:
+  title: "Contas do Azure"
+  description: "Conecte assinaturas do Azure para descobrir automaticamente instâncias do PostgreSQL, MySQL, Redis e Cosmos DB."
+  noProviders: "Nenhuma conta do Azure configurada"
+  addFirstProvider: "Adicione sua primeira conta do Azure para descobrir bancos de dados"
+
+ro_RO:
+  title: "Conturi Azure"
+  description: "Conectați abonamentele Azure pentru a descoperi automat instanțe PostgreSQL, MySQL, Redis și Cosmos DB."
+  noProviders: "Nu au fost configurate conturi Azure"
+  addFirstProvider: "Adăugați primul cont Azure pentru a descoperi baze de date"
+
+ru_RU:
+  title: "Учетные записи Azure"
+  description: "Подключите подписки Azure для автоматического обнаружения экземпляров PostgreSQL, MySQL, Redis и Cosmos DB."
+  noProviders: "Учетные записи Azure не настроены."
+  addFirstProvider: "Добавьте свою первую учетную запись Azure для обнаружения баз данных."
+
+si_LK:
+  title: "Azure ගිණුම්"
+  description: "PostgreSQL, MySQL, Redis, සහ Cosmos DB අවස්ථා ස්වයංක්‍රීයව සොයා ගැනීමට Azure දායකත්වයන් සම්බන්ධ කරන්න."
+  noProviders: "Azure ගිණුම් වින්‍යාස කර නැත"
+  addFirstProvider: "දත්ත සමුදායන් සොයා ගැනීමට ඔබගේ පළමු Azure ගිණුම එක් කරන්න"
+
+sk_SK:
+  title: "Účty Azure"
+  description: "Pripojte predplatné Azure na automatické objavovanie inštancií PostgreSQL, MySQL, Redis a Cosmos DB."
+  noProviders: "Nie sú nakonfigurované žiadne účty Azure"
+  addFirstProvider: "Pridajte svoj prvý účet Azure a objavte databázy"
+
+sl_SI:
+  title: "Računi Azure"
+  description: "Povežite naročnine na Azure s samodejnim odkrivanjem primerkov PostgreSQL, MySQL, Redis in Cosmos DB."
+  noProviders: "Računi Azure niso konfigurirani"
+  addFirstProvider: "Dodajte svoj prvi račun Azure za odkrivanje baz podatkov"
+
+sr_RS:
+  title: "Азуре налози"
+  description: "Повежите Азуре претплате да бисте аутоматски открили ПостгреСКЛ, МиСКЛ, Редис и Цосмос ДБ инстанце."
+  noProviders: "Ниједан Азуре налог није конфигурисан"
+  addFirstProvider: "Додајте свој први Азуре налог да бисте открили базе података"
+
+sv_SE:
+  title: "Azure-konton"
+  description: "Anslut Azure-prenumerationer för att automatiskt upptäcka PostgreSQL-, MySQL-, Redis- och Cosmos DB-instanser."
+  noProviders: "Inga Azure-konton har konfigurerats"
+  addFirstProvider: "Lägg till ditt första Azure-konto för att upptäcka databaser"
+
+sw_KE:
+  title: "Hesabu za Azure"
+  description: "Unganisha usajili wa Azure ili kugundua kiotomatiki matukio ya PostgreSQL, MySQL, Redis na Cosmos DB."
+  noProviders: "Hakuna akaunti za Azure zilizosanidiwa"
+  addFirstProvider: "Ongeza akaunti yako ya kwanza ya Azure ili kugundua hifadhidata"
+
+ta_IN:
+  title: "அசூர் கணக்குகள்"
+  description: "PostgreSQL, MySQL, Redis மற்றும் Cosmos DB நிகழ்வுகளைத் தானாகக் கண்டறிய Azure சந்தாக்களை இணைக்கவும்."
+  noProviders: "Azure கணக்குகள் எதுவும் கட்டமைக்கப்படவில்லை"
+  addFirstProvider: "தரவுத்தளங்களைக் கண்டறிய உங்கள் முதல் Azure கணக்கைச் சேர்க்கவும்"
+
+te_IN:
+  title: "అజూర్ ఖాతాలు"
+  description: "PostgreSQL, MySQL, Redis మరియు Cosmos DB దృష్టాంతాలను ఆటో-డిస్కవర్ చేయడానికి Azure సబ్‌స్క్రిప్షన్‌లను కనెక్ట్ చేయండి."
+  noProviders: "అజూర్ ఖాతాలు ఏవీ కాన్ఫిగర్ చేయబడలేదు"
+  addFirstProvider: "డేటాబేస్‌లను కనుగొనడానికి మీ మొదటి అజూర్ ఖాతాను జోడించండి"
+
+th_TH:
+  title: "บัญชี Azure"
+  description: "เชื่อมต่อการสมัครใช้งาน Azure เพื่อค้นหาอินสแตนซ์ PostgreSQL, MySQL, Redis และ Cosmos DB โดยอัตโนมัติ"
+  noProviders: "ไม่มีการกำหนดค่าบัญชี Azure"
+  addFirstProvider: "เพิ่มบัญชี Azure แรกของคุณเพื่อค้นหาฐานข้อมูล"
+
+tl_PH:
+  title: "Mga Azure Account"
+  description: "Ikonekta ang mga subscription sa Azure upang awtomatikong matuklasan ang mga instance ng PostgreSQL, MySQL, Redis, at Cosmos DB."
+  noProviders: "Walang mga Azure account na na-configure"
+  addFirstProvider: "Idagdag ang iyong unang Azure account para tumuklas ng mga database"
+
+tr_TR:
+  title: "Azure Hesapları"
+  description: "PostgreSQL, MySQL, Redis ve Cosmos DB örneklerini otomatik olarak keşfetmek için Azure aboneliklerini bağlayın."
+  noProviders: "Hiçbir Azure hesabı yapılandırılmadı"
+  addFirstProvider: "Veritabanlarını keşfetmek için ilk Azure hesabınızı ekleyin"
+
+uk_UA:
+  title: "Облікові записи Azure"
+  description: "Підключіть підписки Azure до екземплярів PostgreSQL, MySQL, Redis і Cosmos DB з автоматичним виявленням."
+  noProviders: "Облікові записи Azure не налаштовано"
+  addFirstProvider: "Додайте свій перший обліковий запис Azure, щоб відкривати бази даних"
+
+ur_PK:
+  title: "Azure اکاؤنٹس"
+  description: "Azure سبسکرپشنز کو PostgreSQL، MySQL، Redis، اور Cosmos DB مثالوں سے خود بخود دریافت کریں۔"
+  noProviders: "کوئی Azure اکاؤنٹس کنفیگر نہیں ہیں۔"
+  addFirstProvider: "ڈیٹا بیس دریافت کرنے کے لیے اپنا پہلا Azure اکاؤنٹ شامل کریں۔"
+
+uz_UZ:
+  title: "Azure hisoblari"
+  description: "PostgreSQL, MySQL, Redis va Cosmos DB nusxalarini avtomatik aniqlash uchun Azure obunalarini ulang."
+  noProviders: "Hech qanday Azure hisobi sozlanmagan"
+  addFirstProvider: "Ma'lumotlar bazalarini kashf qilish uchun birinchi Azure hisobingizni qo'shing"
+
+vi_VN:
+  title: "Tài khoản Azure"
+  description: "Kết nối đăng ký Azure để tự động khám phá các phiên bản PostgreSQL, MySQL, Redis và Cosmos DB."
+  noProviders: "Không có tài khoản Azure nào được định cấu hình"
+  addFirstProvider: "Thêm tài khoản Azure đầu tiên của bạn để khám phá cơ sở dữ liệu"
+
+yo_NG:
+  title: "Azure iroyin"
+  description: "So awọn ṣiṣe alabapin Azure pọ si adaṣe-ṣawari PostgreSQL, MySQL, Redis, ati awọn iṣẹlẹ Cosmos DB."
+  noProviders: "Ko si awọn akọọlẹ Azure ni tunto"
+  addFirstProvider: "Ṣafikun akọọlẹ Azure akọkọ rẹ lati ṣawari awọn apoti isura infomesonu"
+
+zh_CN:
+  title: "Azure 帐户"
+  description: "连接 Azure 订阅以自动发现 PostgreSQL、MySQL、Redis 和 Cosmos DB 实例。"
+  noProviders: "未配置 Azure 帐户"
+  addFirstProvider: "添加您的第一个 Azure 帐户以发现数据库"
+
+zh_TW:
+  title: "Azure 帳戶"
+  description: "連接 Azure 訂閱以自動發現 PostgreSQL、MySQL、Redis 和 Cosmos DB 執行個體。"
+  noProviders: "未配置 Azure 帳戶"
+  addFirstProvider: "新增您的第一個 Azure 帳戶以發現資料庫"

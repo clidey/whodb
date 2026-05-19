@@ -71,6 +71,7 @@ type PluginFunctions interface {
 	GetStorageUnits(config *PluginConfig, schema string) ([]StorageUnit, error)
 	StorageUnitExists(config *PluginConfig, schema string, storageUnit string) (bool, error)
 	AddStorageUnit(config *PluginConfig, schema string, storageUnit string, fields []Record) (bool, error)
+	CreateStorageUnit(config *PluginConfig, schema string, definition ObjectDefinition) (bool, error)
 	UpdateStorageUnit(config *PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error)
 	AddRow(config *PluginConfig, schema string, storageUnit string, values []Record) (bool, error)
 	AddRowReturningID(config *PluginConfig, schema string, storageUnit string, values []Record) (int64, error)

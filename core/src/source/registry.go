@@ -175,6 +175,8 @@ func RegisterType(spec TypeSpec) {
 	if _, exists := registered[key]; !exists {
 		registeredIDs = append(registeredIDs, key)
 	}
+	spec.Contract = NormalizeContract(spec.Contract)
+	spec.Traits.Metadata = DefaultMetadataTraitsForSpec(spec)
 	registered[key] = cloneTypeSpec(spec)
 }
 
@@ -208,6 +210,7 @@ func FindType(id string) (TypeSpec, bool) {
 
 func cloneTypeSpec(spec TypeSpec) TypeSpec {
 	cloned := spec
+	cloned.Traits.Metadata = CloneMetadataTraits(spec.Traits.Metadata)
 	cloned.ConnectionFields = slices.Clone(spec.ConnectionFields)
 	cloned.Contract = Contract{
 		Model:             spec.Contract.Model,

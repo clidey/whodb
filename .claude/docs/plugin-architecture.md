@@ -48,6 +48,12 @@ TLS defaults, managed-service flags, source traits, etc.).
 Connection defaults such as ports belong in the shared database/source catalog
 metadata (`dbcatalog` `Extra["Port"]`, which flows into
 `SourceType.ConnectionFields`), not in per-plugin registries.
+Connection forms should also flow from `SourceType.ConnectionFields` and
+`SSLModes`: the shared frontend renderer now handles the standard primary,
+advanced, and SSL fields for CE login and EE platform create/edit. Discovery
+prefills should reference declared fields or reserved SSL keys such as
+`SSL Mode`, and sourcecatalog tests enforce that with
+`ValidateConnectionContract`.
 
 If an alias needs even one runtime override, promote it to a thin first-class
 plugin wrapper instead of adding alias-specific branches in shared code. Common
@@ -139,9 +145,17 @@ metadata is the source of truth for:
 - Type definitions (VARCHAR, INTEGER, etc.) with UI hints (hasLength, hasPrecision)
 - Alias maps (INT → INTEGER, BOOL → BOOLEAN)
 
+Plain English: query/editor behavior is declared once in the source catalog,
+and the frontend renders editor tools from that declaration instead of checking
+source names.
+
 This metadata is exposed through the source-first GraphQL
 `SourceSessionMetadata` query after login. **No fallbacks** - if the backend
 doesn't provide it, the UI type selectors and query helpers will be broken.
+Every alias target must match a declared type definition, and every query-capable
+source must resolve non-empty operator metadata. The source catalog tests call
+`ValidateSessionMetadataContract` and
+`ValidateObjectCreationMetadataContract` so metadata drift fails in tests.
 
 Do not call `sourcecatalog.RegisterSessionMetadata(...)` from plugin `init()`
 functions anymore. Keep plugin `init()` limited to runtime plugin registration
@@ -152,11 +166,40 @@ type definitions for runtime normalization, import them from
 Feature gating is not owned by session metadata. Public behavior
 such as chat/query/graph surfaces and source object actions/views comes from the
 source catalog contract in `core/src/sourcecatalog/catalog.go`.
+The source contract is authoritative: `SourceContract.Surfaces`, `RootActions`,
+`BrowsePath`, and `ObjectTypes.Actions` are used by the backend source adapter
+to block unsupported operations and by the frontend to show or hide source
+surfaces and object controls. Do not add source-name conditionals for behavior
+that can be represented in the contract.
+Reading or changing source data must be declared with the matching object
+action: `ViewRows` for row reads and exports, `ViewContent` for content reads
+and downloads, `CreateChild` for child creation, and `InsertData`, `UpdateData`,
+`DeleteData`, `ImportData`, or `GenerateMockData` for writes. Plain English:
+the source contract is the operation policy; WhoDB asks the source what this
+object can do, then both backend resolvers and frontend controls use that same
+answer.
 
 Frontend and CLI connection/presentation behavior also comes from the source
 model now. Use `SourceType.Traits` for things like file-vs-network transport,
 host input parsing, profile labeling, schema fidelity, and query UI options.
-Do not reintroduce `DatabaseType` branches for those decisions.
+Execution behavior belongs there too: `TypeTraits.Query` declares whether a
+source supports scripts, streaming queries, and multi-statement scripts. Plain
+English: WhoDB asks each source what kinds of execution it supports, then both
+the backend and frontend use that same answer instead of guessing from the
+database type or failing at runtime. Do not reintroduce `DatabaseType` branches
+for those decisions.
+
+Source metadata reliability also belongs in `SourceType.Traits`. Use
+`TypeTraits.Metadata` to declare column, constraint, graph, and internal-object
+filtering fidelity. Declare system schemas, internal collections, hidden
+indices, or synthetic keys with `HiddenObjectNames` or `HiddenObjectPrefixes`
+in the source catalog; the database adapter applies those rules consistently to
+browse and graph metadata. Plain English: object metadata behavior is declared
+once in the source catalog, and the adapter normalizes columns, constraints,
+graph relationships, and hidden objects from that declaration. The source
+catalog tests call `ValidateObjectMetadataContract`, while the database adapter
+validates normalized `Column`, `FieldConstraints`, and `GraphUnit` results
+before returning them.
 
 ### types.go Structure
 

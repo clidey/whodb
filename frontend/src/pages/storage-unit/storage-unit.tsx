@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import {useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
+import {useLazyQuery, useQuery} from "@apollo/client/react";
 import {
     Badge,
     Button,
-    Checkbox,
     cn,
-    Input,
-    Label,
     SearchInput,
-    Separator,
     SheetTitle,
     StackList,
     StackListItem,
@@ -36,26 +32,21 @@ import {
     Tabs,
     TabsList,
     TabsTrigger,
-    toast,
     VirtualizedTableBody
 } from '@clidey/ux';
-import {TypeSelector} from "../../components/type-selector";
-import {findColumnTypeDefinition} from "../../utils/source-column-types";
 import {
-    AddStorageUnitDocument,
     DataShape,
     GetColumnsBatchDocument,
+    type GetColumnsBatchQuery,
     GetGraphQuery,
     GetStorageUnitsQuery,
     GetStorageUnitsDocument,
-    RecordInput,
     SourceSchemaFidelity,
     SourceAction,
 } from '@graphql';
 import {
     ArrowPathRoundedSquareIcon,
     Bars3Icon,
-    CheckCircleIcon,
     CircleStackIcon,
     CommandLineIcon,
     InformationCircleIcon,
@@ -63,10 +54,8 @@ import {
     PlusCircleIcon,
     Squares2X2Icon,
     TableCellsIcon,
-    XCircleIcon,
     XMarkIcon
 } from '../../components/heroicons';
-import classNames from "classnames";
 import {FC, useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
@@ -84,8 +73,15 @@ import {useTranslation} from '../../hooks/use-translation';
 import {buildSourceParentObjectRef, buildSourceParentRef} from '../../utils/source-refs';
 import {formatAttributeValue} from '../../utils/functions';
 import { findSourceObjectType, type SourceTypeItem } from '../../config/source-types';
+import { CreateSourceObjectCard } from './create-source-object-card';
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
+type SourceColumn = GetColumnsBatchQuery['ColumnsBatch'][number]['Columns'][number];
+type SourceObjectRefLike = {
+    Kind: unknown;
+    Locator?: string | null;
+    Path?: readonly string[] | null;
+};
 
 type StorageBrowserState = {
     parent?: SourceBrowserObject;
@@ -110,16 +106,21 @@ function nextBrowserState(
     };
 }
 
+function sourceObjectRefKey(ref: SourceObjectRefLike): string {
+    return `${ref.Kind}:${ref.Locator ?? ""}:${ref.Path?.join("/") ?? ""}`;
+}
+
 const StorageUnitCard: FC<{
     unit: SourceBrowserObject;
     trail: SourceBrowserObject[];
-}> = ({ unit, trail }) => {
+    onColumnsLoaded: (unitName: string, columns: SourceColumn[]) => void;
+}> = ({ unit, trail, onColumnsLoaded }) => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
     const current = useAppSelector(state => state.auth.current);
     const { item, schemaFidelity } = useSourceContract(current?.Type);
-    const [columns, setColumns] = useState<any[] | undefined>(undefined);
+    const [columns, setColumns] = useState<SourceColumn[] | undefined>(undefined);
     const [columnsLoading, setColumnsLoading] = useState(false);
     const [fetchColumnsBatch] = useLazyQuery(GetColumnsBatchDocument);
     const canBrowse = unit.Actions.includes(SourceAction.Browse) && unit.HasChildren;
@@ -149,17 +150,20 @@ const StorageUnitCard: FC<{
             variables: { refs: [unit.Ref] },
         }).then(result => {
             const batch = result.data?.ColumnsBatch;
+            const loadedColumns = batch?.[0]?.Columns ?? [];
             if (batch && batch.length > 0 && batch[0].Columns.length > 0) {
-                setColumns(batch[0].Columns);
+                setColumns(loadedColumns);
             } else {
                 setColumns([]);
             }
+            onColumnsLoaded(unit.Name, loadedColumns);
         }).catch(() => {
             setColumns([]);
+            onColumnsLoaded(unit.Name, []);
         }).finally(() => {
             setColumnsLoading(false);
         });
-    }, [columns, fetchColumnsBatch, shouldFetchColumns, unit.Ref]);
+    }, [columns, fetchColumnsBatch, onColumnsLoaded, shouldFetchColumns, unit.Name, unit.Ref]);
 
     const handleSetExpanded = useCallback((status: boolean) => {
         setExpanded(status);
@@ -293,26 +297,22 @@ export const StorageUnitPage: FC = () => {
     const navigate = useNavigate();
     const [searchParams,] = useSearchParams();
     const [create, setCreate] = useState(searchParams.get("create") === "true");
-    const [storageUnitName, setStorageUnitName] = useState("");
-    const [fields, setFields] = useState<RecordInput[]>([ {Key: "", Value: "", Extra: [] }]);
     const [error, setError] = useState<string>();
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const {
         item,
-        isNoSQL,
         singularStorageUnitLabel,
         storageUnitLabel,
-        supportsModifiers,
         supportsScratchpad,
         usesDatabaseInsteadOfSchema,
     } = useSourceContract(current?.Type);
     const view = useAppSelector(state => state.settings.storageUnitView);
-    const [addStorageUnit,] = useMutation(AddStorageUnitDocument);
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
-    const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: any[] } | null>(null);
+    const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: SourceColumn[] } | null>(null);
     const [expandedUnitColumnsLoading, setExpandedUnitColumnsLoading] = useState(false);
     const [fetchColumnsBatchForList] = useLazyQuery(GetColumnsBatchDocument);
+    const [storageUnitColumnsByName, setStorageUnitColumnsByName] = useState<Record<string, SourceColumn[]>>({});
     const dispatch = useAppDispatch();
     const { t } = useTranslation('pages/storage-unit');
     const { t: tCommon } = useTranslation('common');
@@ -341,6 +341,7 @@ export const StorageUnitPage: FC = () => {
         return item?.contract?.RootActions?.includes(SourceAction.CreateChild) ?? false;
     }, [currentParent?.Kind, initialParentRef?.Kind, item]);
     const parentRef = currentParent?.Ref ?? initialParentRef;
+    const parentRefKey = parentRef ? sourceObjectRefKey(parentRef) : "";
 
     const { loading, data, refetch } = useQuery(GetStorageUnitsDocument, {
         variables: {
@@ -352,14 +353,70 @@ export const StorageUnitPage: FC = () => {
         return (data?.StorageUnit ?? []) as SourceBrowserObject[];
     }, [data?.StorageUnit]);
 
-    // Refetch storage units when the connection context changes (profile switch or database switch)
+    const referenceStorageUnits = useMemo(() => {
+        return storageUnits.filter(unit => isTabularSourceObject(item, unit));
+    }, [item, storageUnits]);
+
+    const referenceColumnsByName = useMemo(() => {
+        return Object.fromEntries(
+            Object.entries(storageUnitColumnsByName).map(([unitName, columns]) => [
+                unitName,
+                columns.map(column => column.Name),
+            ])
+        );
+    }, [storageUnitColumnsByName]);
+
+    const handleColumnsLoaded = useCallback((unitName: string, columns: SourceColumn[]) => {
+        setStorageUnitColumnsByName(current => ({ ...current, [unitName]: columns }));
+    }, []);
+
     const currentProfileId = current?.Id;
     const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetch();
         }
-    }, [currentProfileId, currentDatabase, refetch]);
+    }, [currentProfileId, currentDatabase, parentRefKey, refetch]);
+
+    useEffect(() => {
+        setStorageUnitColumnsByName({});
+    }, [currentProfileId, currentDatabase, parentRefKey]);
+
+    useEffect(() => {
+        if (!create || referenceStorageUnits.length === 0) {
+            return;
+        }
+        const missingUnits = referenceStorageUnits.filter(unit => storageUnitColumnsByName[unit.Name] == null);
+        if (missingUnits.length === 0) {
+            return;
+        }
+        const unitNameByRef = new Map(missingUnits.map(unit => [sourceObjectRefKey(unit.Ref), unit.Name]));
+        fetchColumnsBatchForList({
+            variables: { refs: missingUnits.map(unit => unit.Ref) },
+        }).then(result => {
+            setStorageUnitColumnsByName(current => {
+                const next = { ...current };
+                for (const unit of missingUnits) {
+                    next[unit.Name] = [];
+                }
+                for (const batch of result.data?.ColumnsBatch ?? []) {
+                    const unitName = unitNameByRef.get(sourceObjectRefKey(batch.StorageUnit));
+                    if (unitName) {
+                        next[unitName] = batch.Columns;
+                    }
+                }
+                return next;
+            });
+        }).catch(() => {
+            setStorageUnitColumnsByName(current => {
+                const next = { ...current };
+                for (const unit of missingUnits) {
+                    next[unit.Name] = [];
+                }
+                return next;
+            });
+        });
+    }, [create, fetchColumnsBatchForList, referenceStorageUnits, storageUnitColumnsByName]);
 
     // Lazy-load columns for list view expanded detail
     useEffect(() => {
@@ -376,17 +433,20 @@ export const StorageUnitPage: FC = () => {
             variables: { refs: [expandedSourceUnit.Ref] },
         }).then(result => {
             const batch = result.data?.ColumnsBatch;
+            const loadedColumns = batch?.[0]?.Columns ?? [];
             if (batch && batch.length > 0 && batch[0].Columns.length > 0) {
-                setExpandedUnitColumns({ name: expandedUnit, columns: batch[0].Columns });
+                setExpandedUnitColumns({ name: expandedUnit, columns: loadedColumns });
             } else {
                 setExpandedUnitColumns({ name: expandedUnit, columns: [] });
             }
+            handleColumnsLoaded(expandedUnit, loadedColumns);
         }).catch(() => {
             setExpandedUnitColumns({ name: expandedUnit, columns: [] });
+            handleColumnsLoaded(expandedUnit, []);
         }).finally(() => {
             setExpandedUnitColumnsLoading(false);
         });
-    }, [expandedUnit, expandedUnitColumns?.name, fetchColumnsBatchForList, item, storageUnits]);
+    }, [expandedUnit, expandedUnitColumns?.name, fetchColumnsBatchForList, handleColumnsLoaded, item, storageUnits]);
 
     const [filterValue, setFilterValue] = useState("");
 
@@ -408,76 +468,6 @@ export const StorageUnitPage: FC = () => {
         });
     }, [create, current?.Type, trackFrontendEvent]);
 
-    const handleSubmit = useCallback(() => {
-        if (storageUnitName.length === 0) {
-            return setError(t('nameRequired'));
-        }
-        if (!isNoSQL && fields.some(field => field.Key.length === 0 || field.Value.length === 0)) {
-            return setError(t('fieldsCannotBeEmpty'));
-        }
-        setError(undefined);
-        addStorageUnit({
-            variables: {
-                parent: parentRef,
-                storageUnit: storageUnitName,
-                fields,
-            },
-            onCompleted() {
-                const message = t('createSuccessMessage').replace('{storageUnit}', `${singularStorageUnitLabel} ${storageUnitName}`);
-                toast.success(message);
-                void trackFrontendEvent('ui.storage_unit_created', {
-                    database_type: current?.Type ?? 'unknown',
-                    field_count: fields.length,
-                });
-                setStorageUnitName("");
-                setFields([]);
-                refetch();
-                setCreate(false);
-            },
-            onError(e) {
-                toast.error(e.message);
-            },
-        });
-    }, [addStorageUnit, current?.Type, fields, isNoSQL, parentRef, refetch, singularStorageUnitLabel, storageUnitName, t, trackFrontendEvent]);
-
-    const handleAddField = useCallback(() => {
-        setFields(f => [...f, { Key: "", Value: "", Extra: [] }]);
-        void trackFrontendEvent('ui.storage_unit_field_added', {
-            database_type: current?.Type ?? 'unknown',
-        });
-    }, [current?.Type, trackFrontendEvent]);
-
-    const handleFieldValueChange = useCallback((type: string, index: number, value: string | boolean) => {
-        setFields(f => {
-            const newF = structuredClone(f);
-            if (type === "Key" || type === "Value") {
-                newF[index][type] = value as string;
-            } else {
-                if (newF[index].Extra == null) {
-                    newF[index].Extra = [];
-                }
-                const extraIndex = newF[index].Extra.findIndex(extra => extra.Key === type);
-                if (value && extraIndex === -1) {
-                    newF[index].Extra = [...newF[index].Extra, { Key: type, Value: "true" }];
-                } else {
-                    newF[index].Extra = newF[index].Extra.filter((_, i) => i !== extraIndex);
-                }
-            }
-            return newF;
-        });
-    }, []);
-
-    const handleRemove = useCallback((index: number) => {
-        if (fields.length <= 1) {
-            return;
-        }
-        setFields(f => {
-            const newF = [...f];
-            newF.splice(index, 1);
-            return newF;
-        })
-    }, [fields.length]);
-
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
         return storageUnits.filter(unit => (unit.Name ?? "").toLowerCase().includes(lowerCaseFilterValue))
@@ -488,10 +478,6 @@ export const StorageUnitPage: FC = () => {
                 return (a.Name ?? "").localeCompare(b.Name ?? "");
             });
     }, [filterValue, storageUnits]);
-
-    const showModifiers = useMemo(() => {
-        return supportsModifiers;
-    }, [supportsModifiers]);
 
     const handleOpenUnit = useCallback((unit: SourceBrowserObject) => {
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
@@ -590,84 +576,20 @@ export const StorageUnitPage: FC = () => {
                         <PlusCircleIcon  className='w-4 h-4' /> {t('create')}
                     </Button>
                 </div>
-                <div className="flex grow flex-col my-2 gap-4">
-                    <div className="flex flex-col gap-4">
-                        <SheetTitle className="flex items-center gap-2">
-                            <PlusCircleIcon className="w-5 h-5" />
-                            {t('createTitle', { storageUnit: singularStorageUnitLabel })}
-                        </SheetTitle>
-                        <div className="flex flex-col gap-2">
-                            <Label>{t('nameLabel')}</Label>
-                            <Input value={storageUnitName} onChange={e => setStorageUnitName(e.target.value)} placeholder={t('namePlaceholder')} />
-                        </div>
-                        <div className={classNames("flex flex-col gap-sm overflow-y-auto max-h-[75vh]", {
-                            "hidden": isNoSQL,
-                        })}>
-                            <div className="flex flex-col gap-4">
-                                {
-                                    fields.map((field, index) => (
-                                        <div className="flex flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
-                                            <Label>{t('fieldNameLabel')}</Label>
-                                            <Input value={field.Key} onChange={e => handleFieldValueChange("Key", index, e.target.value)} placeholder={t('fieldNamePlaceholder')}/>
-                                            <Label>{t('fieldTypeLabel')}</Label>
-                                            <TypeSelector
-                                                sourceType={current?.Type}
-                                                value={field.Value}
-                                                onChange={value => handleFieldValueChange("Value", index, value)}
-                                                placeholder={t('fieldTypePlaceholder')}
-                                                searchPlaceholder={t('searchTypePlaceholder')}
-                                                buttonProps={{
-                                                    "data-testid": `field-type-${index}`,
-                                                }}
-                                            />
-
-                                            {(() => {
-                                                const typeDef = current?.Type && field.Value
-                                                    ? findColumnTypeDefinition(field.Value, current.Type)
-                                                    : undefined;
-                                                return typeDef?.tableModel ? (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {t('aggregateKeyHint')}
-                                                    </p>
-                                                ) : null;
-                                            })()}
-
-                                            {showModifiers && (
-                                                <>
-                                                    <Label>{t('modifiersLabel')}</Label>
-                                                    <div className="flex items-center w-1/3 justify-start gap-2">
-                                                        <Checkbox checked={field.Extra?.find(extra => extra.Key === "Primary") != null} onCheckedChange={() => handleFieldValueChange("Primary", index, !field.Extra?.find(extra => extra.Key === "Primary") != null)}/>
-                                                        <Label>{t('primaryModifier')}</Label>
-                                                        <Checkbox checked={field.Extra?.find(extra => extra.Key === "Nullable") != null} onCheckedChange={() => handleFieldValueChange("Nullable", index, !field.Extra?.find(extra => extra.Key === "Nullable") != null)}/>
-                                                        <Label>{t('nullableModifier')}</Label>
-                                                    </div>
-                                                </>
-                                            )}
-                                            {
-                                                fields.length > 1 &&
-                                                <Button variant="destructive" onClick={() => handleRemove(index)} data-testid="remove-field-button" className="w-full mt-1">
-                                                    <XCircleIcon className="w-4 h-4"/> <span>{t('remove')}</span>
-                                                </Button>
-                                            }
-                                            {index !== fields.length - 1 && <Separator className="mt-2" />}
-                                        </div>
-                                    ))
-                                } 
-                            </div>
-                            <Button className="self-end" onClick={handleAddField} data-testid="add-field-button" variant="secondary">
-                                <PlusCircleIcon  className='w-4 h-4' /> {t('addField')}
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="flex grow" />
-                    <Button onClick={handleSubmit} data-testid="submit-button" className="w-full">
-                        <CheckCircleIcon className="w-4 h-4" /> {t('create')}
-                    </Button>
-                </div>
+                <CreateSourceObjectCard
+                    databaseType={current?.Type}
+                    parentRef={parentRef}
+                    referenceColumnsByName={referenceColumnsByName}
+                    referenceObjects={referenceStorageUnits.map(unit => ({ name: unit.Name }))}
+                    singularStorageUnitLabel={singularStorageUnitLabel}
+                    onCreated={refetch}
+                    onErrorChange={setError}
+                    onClose={() => setCreate(false)}
+                />
             </ExpandableCard>}
             {
                 storageUnits.length > 0 && filterStorageUnits.map(unit => (
-                    <StorageUnitCard key={`${unit.Name}-${unit.Kind}`} unit={unit} trail={trail} />
+                    <StorageUnitCard key={`${unit.Name}-${unit.Kind}`} unit={unit} trail={trail} onColumnsLoaded={handleColumnsLoaded} />
                 ))
             }
         </div>

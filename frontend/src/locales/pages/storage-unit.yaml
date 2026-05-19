@@ -22,8 +22,23 @@ en_US:
   modifiersLabel: Modifiers
   primaryModifier: Primary
   nullableModifier: Nullable
+  uniqueModifier: Unique
+  identityModifier: Identity
+  defaultValueLabel: Default Value
+  defaultValuePlaceholder: Optional default value
+  checkValuesLabel: Allowed Values
+  checkValuesPlaceholder: Comma-separated values
+  checkMinLabel: Minimum
+  checkMinPlaceholder: Min
+  checkMaxLabel: Maximum
+  checkMaxPlaceholder: Max
+  foreignTableLabel: Foreign Table
+  foreignTablePlaceholder: Referenced table
+  foreignColumnLabel: Foreign Column
+  foreignColumnPlaceholder: Referenced column
   aggregateKeyHint: This type creates an Aggregate Key table. Non-aggregate columns become dimension keys.
   addField: Add Field
+  remove: Remove
   nameRequired: Name Is Required
   fieldsCannotBeEmpty: Fields Cannot Be Empty
   createSuccessMessage: "{storageUnit} Created Successfully!"

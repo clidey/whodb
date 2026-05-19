@@ -516,9 +516,8 @@ test.describe('SSL Integration Tests', () => {
             await page.locator('[data-testid="password"]').fill('wrong_password');
             await page.locator('[data-testid="database"]').fill('test_db');
 
-            await page.locator('[data-testid="advanced-button"]').click();
-            await page.locator('[data-testid="Port-input"]').fill('');
-            await page.locator('[data-testid="Port-input"]').fill(String(db.ssl.port));
+            await page.locator('[data-testid="port"]').clear();
+            await page.locator('[data-testid="port"]').fill(String(db.ssl.port));
 
             // Don't configure SSL - connection should fail
             const loginResponsePromise = page.waitForResponse(

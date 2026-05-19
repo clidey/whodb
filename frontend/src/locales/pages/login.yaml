@@ -116,6 +116,11 @@ ar_AE:
   advancedFields.debug: "تصحيح"
   advancedFields.urlParams: "معلمات URL"
   advancedFields.dnsEnabled: "تمكين DNS"
+  databaseName: "اسم قاعدة البيانات"
+  databaseFilePath: "مسار ملف قاعدة البيانات"
+  testConnection: "امتحان"
+  testConnectionSuccess: "تم الاتصال بنجاح"
+  testConnectionFailed: "فشل الاتصال: {error}"
 
 de_DE:
   enterHostName: "Geben Sie den Hostnamen ein"
@@ -173,6 +178,11 @@ de_DE:
   advancedFields.debug: "Debuggen"
   advancedFields.urlParams: "URL-Parameter"
   advancedFields.dnsEnabled: "DNS aktiviert"
+  databaseName: "Datenbankname"
+  databaseFilePath: "Datenbankdateipfad"
+  testConnection: "Prüfen"
+  testConnectionSuccess: "Verbindung erfolgreich"
+  testConnectionFailed: "Verbindung fehlgeschlagen: {error}"
 
 el_GR:
   enterHostName: "Εισαγάγετε Όνομα κεντρικού υπολογιστή"
@@ -230,6 +240,11 @@ el_GR:
   advancedFields.debug: "Εντοπισμός σφαλμάτων"
   advancedFields.urlParams: "Παράμετροι URL"
   advancedFields.dnsEnabled: "Ενεργοποιημένο DNS"
+  databaseName: "Όνομα βάσης δεδομένων"
+  databaseFilePath: "Διαδρομή αρχείου βάσης δεδομένων"
+  testConnection: "Δοκιμή"
+  testConnectionSuccess: "Επιτυχής σύνδεση"
+  testConnectionFailed: "Η σύνδεση απέτυχε: {error}"
 
 en_GB:
   enterHostName: "Enter Host Name"
@@ -287,6 +302,11 @@ en_GB:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "DNS Enabled"
+  databaseName: "Database Name"
+  databaseFilePath: "Database File Path"
+  testConnection: "Test"
+  testConnectionSuccess: "Connection successful"
+  testConnectionFailed: "Connection failed: {error}"
 
 es_ES:
   enterHostName: "Introduzca el nombre del host"
@@ -344,6 +364,11 @@ es_ES:
   advancedFields.debug: "Depurar"
   advancedFields.urlParams: "Parámetros de URL"
   advancedFields.dnsEnabled: "DNS habilitado"
+  databaseName: "Nombre de la base de datos"
+  databaseFilePath: "Ruta del archivo de base de datos"
+  testConnection: "Prueba"
+  testConnectionSuccess: "Conexión exitosa"
+  testConnectionFailed: "Error de conexión: {error}"
 
 fi_FI:
   enterHostName: "Anna isäntänimi"
@@ -401,6 +426,11 @@ fi_FI:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "URL-parametrit"
   advancedFields.dnsEnabled: "DNS käytössä"
+  databaseName: "Tietokannan nimi"
+  databaseFilePath: "Tietokannan tiedostopolku"
+  testConnection: "Testata"
+  testConnectionSuccess: "Yhteys onnistui"
+  testConnectionFailed: "Yhteys epäonnistui: {error}"
 
 fr_FR:
   enterHostName: "Entrez le nom d'hôte"
@@ -458,6 +488,11 @@ fr_FR:
   advancedFields.debug: "Déboguer"
   advancedFields.urlParams: "Paramètres d'URL"
   advancedFields.dnsEnabled: "DNS activé"
+  databaseName: "Nom de la base de données"
+  databaseFilePath: "Chemin du fichier de base de données"
+  testConnection: "Test"
+  testConnectionSuccess: "Connexion réussie"
+  testConnectionFailed: "Échec de la connexion : {error}"
 
 it_IT:
   enterHostName: "Inserisci il nome host"
@@ -515,6 +550,11 @@ it_IT:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "Parametri URL"
   advancedFields.dnsEnabled: "DNS abilitato"
+  databaseName: "Nome della banca dati"
+  databaseFilePath: "Percorso del file del database"
+  testConnection: "Test"
+  testConnectionSuccess: "Connessione riuscita"
+  testConnectionFailed: "Connessione non riuscita: {error}"
 
 iw_IL:
   enterHostName: "הזן את שם המארח"
@@ -572,6 +612,11 @@ iw_IL:
   advancedFields.debug: "לְנַפּוֹת"
   advancedFields.urlParams: "פרמטרים של כתובת URL"
   advancedFields.dnsEnabled: "DNS מופעל"
+  databaseName: "שם מסד הנתונים"
+  databaseFilePath: "נתיב קובץ מסד נתונים"
+  testConnection: "מִבְחָן"
+  testConnectionSuccess: "החיבור הצליח"
+  testConnectionFailed: "החיבור נכשל: {error}"
 
 ja_JP:
   enterHostName: "ホスト名を入力してください"
@@ -629,6 +674,11 @@ ja_JP:
   advancedFields.debug: "デバッグ"
   advancedFields.urlParams: "URLパラメータ"
   advancedFields.dnsEnabled: "DNSが有効になっています"
+  databaseName: "データベース名"
+  databaseFilePath: "データベースファイルのパス"
+  testConnection: "テスト"
+  testConnectionSuccess: "接続成功"
+  testConnectionFailed: "接続に失敗しました: {error}"
 
 ko_KR:
   enterHostName: "호스트 이름을 입력하세요"
@@ -686,6 +736,11 @@ ko_KR:
   advancedFields.debug: "디버그"
   advancedFields.urlParams: "URL 매개변수"
   advancedFields.dnsEnabled: "DNS 활성화됨"
+  databaseName: "데이터베이스 이름"
+  databaseFilePath: "데이터베이스 파일 경로"
+  testConnection: "시험"
+  testConnectionSuccess: "연결 성공"
+  testConnectionFailed: "연결 실패: {error}"
 
 nl_NL:
   enterHostName: "Voer de hostnaam in"
@@ -743,6 +798,11 @@ nl_NL:
   advancedFields.debug: "Foutopsporing"
   advancedFields.urlParams: "URL-parameters"
   advancedFields.dnsEnabled: "DNS ingeschakeld"
+  databaseName: "Databasenaam"
+  databaseFilePath: "Databasebestandspad"
+  testConnection: "Test"
+  testConnectionSuccess: "Verbinding succesvol"
+  testConnectionFailed: "Verbinding mislukt: {error}"
 
 pl_PL:
   enterHostName: "Wprowadź nazwę hosta"
@@ -800,6 +860,11 @@ pl_PL:
   advancedFields.debug: "Odpluskwić"
   advancedFields.urlParams: "Parametry adresu URL"
   advancedFields.dnsEnabled: "Włączono DNS"
+  databaseName: "Nazwa bazy danych"
+  databaseFilePath: "Ścieżka pliku bazy danych"
+  testConnection: "Test"
+  testConnectionSuccess: "Połączenie pomyślne"
+  testConnectionFailed: "Połączenie nie powiodło się: {error}"
 
 pt_BR:
   enterHostName: "Digite o nome do host"
@@ -857,6 +922,11 @@ pt_BR:
   advancedFields.debug: "Depurar"
   advancedFields.urlParams: "Parâmetros de URL"
   advancedFields.dnsEnabled: "DNS ativado"
+  databaseName: "Nome do banco de dados"
+  databaseFilePath: "Caminho do arquivo do banco de dados"
+  testConnection: "Teste"
+  testConnectionSuccess: "Conexão bem-sucedida"
+  testConnectionFailed: "Falha na conexão: {error}"
 
 ro_RO:
   enterHostName: "Introduceți numele gazdei"
@@ -914,6 +984,11 @@ ro_RO:
   advancedFields.debug: "Depanați"
   advancedFields.urlParams: "Parametri URL"
   advancedFields.dnsEnabled: "DNS activat"
+  databaseName: "Numele bazei de date"
+  databaseFilePath: "Calea fișierului bazei de date"
+  testConnection: "Test"
+  testConnectionSuccess: "Conexiune reușită"
+  testConnectionFailed: "Conexiunea a eșuat: {error}"
 
 ru_RU:
   enterHostName: "Введите имя хоста"
@@ -971,6 +1046,11 @@ ru_RU:
   advancedFields.debug: "Отлаживать"
   advancedFields.urlParams: "Параметры URL-адреса"
   advancedFields.dnsEnabled: "DNS включен"
+  databaseName: "Имя базы данных"
+  databaseFilePath: "Путь к файлу базы данных"
+  testConnection: "Тест"
+  testConnectionSuccess: "Соединение успешно"
+  testConnectionFailed: "Соединение не удалось: {error}"
 
 sk_SK:
   enterHostName: "Zadajte názov hostiteľa"
@@ -1028,6 +1108,11 @@ sk_SK:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "Parametre adresy URL"
   advancedFields.dnsEnabled: "DNS povolené"
+  databaseName: "Názov databázy"
+  databaseFilePath: "Cesta k súboru databázy"
+  testConnection: "Test"
+  testConnectionSuccess: "Pripojenie úspešné"
+  testConnectionFailed: "Pripojenie zlyhalo: {error}"
 
 sv_SE:
   enterHostName: "Ange värdnamn"
@@ -1085,6 +1170,11 @@ sv_SE:
   advancedFields.debug: "Felsök"
   advancedFields.urlParams: "URL-parametrar"
   advancedFields.dnsEnabled: "DNS aktiverad"
+  databaseName: "Databasnamn"
+  databaseFilePath: "Sökväg till databasfil"
+  testConnection: "Testa"
+  testConnectionSuccess: "Anslutningen lyckades"
+  testConnectionFailed: "Anslutning misslyckades: {error}"
 
 zh_CN:
   enterHostName: "输入主机名"
@@ -1142,6 +1232,11 @@ zh_CN:
   advancedFields.debug: "调试"
   advancedFields.urlParams: "网址参数"
   advancedFields.dnsEnabled: "启用 DNS"
+  databaseName: "数据库名称"
+  databaseFilePath: "数据库文件路径"
+  testConnection: "测试"
+  testConnectionSuccess: "连接成功"
+  testConnectionFailed: "连接失败：{error}"
 
 zh_TW:
   enterHostName: "輸入主機名稱"
@@ -1199,6 +1294,11 @@ zh_TW:
   advancedFields.debug: "偵錯"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "啟用 DNS"
+  databaseName: "資料庫名稱"
+  databaseFilePath: "資料庫檔案路徑"
+  testConnection: "測試"
+  testConnectionSuccess: "連線成功"
+  testConnectionFailed: "連線失敗：{error}"
 
 bg_BG:
   enterHostName: "Въведете име на хост"
@@ -1256,6 +1356,11 @@ bg_BG:
   advancedFields.debug: "Отстраняване на грешки"
   advancedFields.urlParams: "URL параметри"
   advancedFields.dnsEnabled: "DNS активиран"
+  databaseName: "Име на база данни"
+  databaseFilePath: "Път на файла на базата данни"
+  testConnection: "Тест"
+  testConnectionSuccess: "Връзката е успешна"
+  testConnectionFailed: "Неуспешна връзка: {error}"
 
 bn_BD:
   enterHostName: "হোস্টের নাম লিখুন"
@@ -1313,6 +1418,11 @@ bn_BD:
   advancedFields.debug: "ডিবাগ"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "DNS সক্ষম"
+  databaseName: "ডাটাবেসের নাম"
+  databaseFilePath: "ডাটাবেস ফাইল পাথ"
+  testConnection: "পরীক্ষা"
+  testConnectionSuccess: "সংযোগ সফল"
+  testConnectionFailed: "সংযোগ ব্যর্থ হয়েছে: {error}"
 
 ca_ES:
   enterHostName: "Introduïu el nom de l'amfitrió"
@@ -1370,6 +1480,11 @@ ca_ES:
   advancedFields.debug: "Depuració"
   advancedFields.urlParams: "Paràmetres d'URL"
   advancedFields.dnsEnabled: "DNS habilitat"
+  databaseName: "Nom de la base de dades"
+  databaseFilePath: "Ruta del fitxer de la base de dades"
+  testConnection: "Prova"
+  testConnectionSuccess: "Connexió correcta"
+  testConnectionFailed: "La connexió ha fallat: {error}"
 
 cs_CZ:
   enterHostName: "Zadejte název hostitele"
@@ -1427,6 +1542,11 @@ cs_CZ:
   advancedFields.debug: "Ladit"
   advancedFields.urlParams: "Parametry URL"
   advancedFields.dnsEnabled: "DNS povoleno"
+  databaseName: "Název databáze"
+  databaseFilePath: "Cesta k souboru databáze"
+  testConnection: "Test"
+  testConnectionSuccess: "Připojení úspěšné"
+  testConnectionFailed: "Připojení se nezdařilo: {error}"
 
 da_DK:
   enterHostName: "Indtast værtsnavn"
@@ -1484,6 +1604,11 @@ da_DK:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "URL-parametre"
   advancedFields.dnsEnabled: "DNS aktiveret"
+  databaseName: "Database navn"
+  databaseFilePath: "Databasefilsti"
+  testConnection: "Prøve"
+  testConnectionSuccess: "Forbindelsen lykkedes"
+  testConnectionFailed: "Forbindelsen mislykkedes: {error}"
 
 fa_IR:
   enterHostName: "نام میزبان را وارد کنید"
@@ -1541,6 +1666,11 @@ fa_IR:
   advancedFields.debug: "اشکال زدایی"
   advancedFields.urlParams: "پارامترهای URL"
   advancedFields.dnsEnabled: "DNS فعال شد"
+  databaseName: "نام پایگاه داده"
+  databaseFilePath: "مسیر فایل پایگاه داده"
+  testConnection: "تست کنید"
+  testConnectionSuccess: "اتصال با موفقیت انجام شد"
+  testConnectionFailed: "اتصال ناموفق بود: {error}"
 
 hi_IN:
   enterHostName: "होस्ट नाम दर्ज करें"
@@ -1598,6 +1728,11 @@ hi_IN:
   advancedFields.debug: "डिबग"
   advancedFields.urlParams: "यूआरएल पैरामीटर"
   advancedFields.dnsEnabled: "डीएनएस सक्षम"
+  databaseName: "डेटाबेस का नाम"
+  databaseFilePath: "डेटाबेस फ़ाइल पथ"
+  testConnection: "परीक्षा"
+  testConnectionSuccess: "कनेक्शन सफल"
+  testConnectionFailed: "कनेक्शन विफल: {error}"
 
 hr_HR:
   enterHostName: "Unesite naziv glavnog računala"
@@ -1655,6 +1790,11 @@ hr_HR:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "Parametri URL-a"
   advancedFields.dnsEnabled: "DNS omogućen"
+  databaseName: "Naziv baze podataka"
+  databaseFilePath: "Put do datoteke baze podataka"
+  testConnection: "Test"
+  testConnectionSuccess: "Povezivanje uspješno"
+  testConnectionFailed: "Povezivanje nije uspjelo: {error}"
 
 hu_HU:
   enterHostName: "Írja be a gazdagép nevét"
@@ -1712,6 +1852,11 @@ hu_HU:
   advancedFields.debug: "Hibakeresés"
   advancedFields.urlParams: "URL paraméterek"
   advancedFields.dnsEnabled: "DNS engedélyezve"
+  databaseName: "Adatbázis neve"
+  databaseFilePath: "Adatbázis fájl elérési útja"
+  testConnection: "Teszt"
+  testConnectionSuccess: "Sikeres csatlakozás"
+  testConnectionFailed: "A csatlakozás sikertelen: {error}"
 
 id_ID:
   enterHostName: "Masukkan Nama Host"
@@ -1769,6 +1914,11 @@ id_ID:
   advancedFields.debug: "Men-debug"
   advancedFields.urlParams: "Parameter URL"
   advancedFields.dnsEnabled: "DNS Diaktifkan"
+  databaseName: "Nama Basis Data"
+  databaseFilePath: "Jalur File Basis Data"
+  testConnection: "Tes"
+  testConnectionSuccess: "Koneksi berhasil"
+  testConnectionFailed: "Koneksi gagal: {error}"
 
 ms_MY:
   enterHostName: "Masukkan Nama Hos"
@@ -1826,6 +1976,11 @@ ms_MY:
   advancedFields.debug: "Nyahpepijat"
   advancedFields.urlParams: "Param URL"
   advancedFields.dnsEnabled: "DNS Didayakan"
+  databaseName: "Nama Pangkalan Data"
+  databaseFilePath: "Laluan Fail Pangkalan Data"
+  testConnection: "Ujian"
+  testConnectionSuccess: "Sambungan berjaya"
+  testConnectionFailed: "Sambungan gagal: {error}"
 
 nb_NO:
   enterHostName: "Skriv inn vertsnavn"
@@ -1883,6 +2038,11 @@ nb_NO:
   advancedFields.debug: "Feilsøk"
   advancedFields.urlParams: "URL-parametere"
   advancedFields.dnsEnabled: "DNS aktivert"
+  databaseName: "Databasenavn"
+  databaseFilePath: "Databasefilbane"
+  testConnection: "Test"
+  testConnectionSuccess: "Tilkoblingen var vellykket"
+  testConnectionFailed: "Tilkobling mislyktes: {error}"
 
 sw_KE:
   enterHostName: "Ingiza Jina la Mwenyeji"
@@ -1940,6 +2100,11 @@ sw_KE:
   advancedFields.debug: "Tatua"
   advancedFields.urlParams: "Vigezo vya URL"
   advancedFields.dnsEnabled: "DNS Imewashwa"
+  databaseName: "Jina la Hifadhidata"
+  databaseFilePath: "Njia ya Faili ya Hifadhidata"
+  testConnection: "Mtihani"
+  testConnectionSuccess: "Muunganisho umefaulu"
+  testConnectionFailed: "Muunganisho haukufaulu: {error}"
 
 ta_IN:
   enterHostName: "ஹோஸ்ட் பெயரை உள்ளிடவும்"
@@ -1997,6 +2162,11 @@ ta_IN:
   advancedFields.debug: "பிழைத்திருத்தம்"
   advancedFields.urlParams: "URL பரிமாணங்கள்"
   advancedFields.dnsEnabled: "DNS இயக்கப்பட்டது"
+  databaseName: "தரவுத்தளத்தின் பெயர்"
+  databaseFilePath: "தரவுத்தள கோப்பு பாதை"
+  testConnection: "சோதனை"
+  testConnectionSuccess: "இணைப்பு வெற்றிகரமாக உள்ளது"
+  testConnectionFailed: "இணைப்பு தோல்வியடைந்தது: {error}"
 
 th_TH:
   enterHostName: "ป้อนชื่อโฮสต์"
@@ -2054,6 +2224,11 @@ th_TH:
   advancedFields.debug: "ดีบัก"
   advancedFields.urlParams: "พารามิเตอร์ URL"
   advancedFields.dnsEnabled: "เปิดใช้งาน DNS แล้ว"
+  databaseName: "ชื่อฐานข้อมูล"
+  databaseFilePath: "เส้นทางไฟล์ฐานข้อมูล"
+  testConnection: "ทดสอบ"
+  testConnectionSuccess: "การเชื่อมต่อสำเร็จ"
+  testConnectionFailed: "การเชื่อมต่อล้มเหลว: {error}"
 
 tr_TR:
   enterHostName: "Ana Bilgisayar Adını Girin"
@@ -2111,6 +2286,11 @@ tr_TR:
   advancedFields.debug: "Hata ayıklama"
   advancedFields.urlParams: "URL Parametreleri"
   advancedFields.dnsEnabled: "DNS Etkin"
+  databaseName: "Veritabanı Adı"
+  databaseFilePath: "Veritabanı Dosya Yolu"
+  testConnection: "Test"
+  testConnectionSuccess: "Bağlantı başarılı"
+  testConnectionFailed: "Bağlantı başarısız oldu: {error}"
 
 uk_UA:
   enterHostName: "Введіть ім'я хоста"
@@ -2168,6 +2348,11 @@ uk_UA:
   advancedFields.debug: "Налагодження"
   advancedFields.urlParams: "Параметри URL-адреси"
   advancedFields.dnsEnabled: "DNS увімкнено"
+  databaseName: "Ім'я бази даних"
+  databaseFilePath: "Шлях до файлу бази даних"
+  testConnection: "Тест"
+  testConnectionSuccess: "Підключення успішне"
+  testConnectionFailed: "Помилка підключення: {error}"
 
 ur_PK:
   enterHostName: "میزبان کا نام درج کریں۔"
@@ -2225,6 +2410,11 @@ ur_PK:
   advancedFields.debug: "ڈیبگ"
   advancedFields.urlParams: "یو آر ایل پیرامز"
   advancedFields.dnsEnabled: "DNS فعال ہے۔"
+  databaseName: "ڈیٹا بیس کا نام"
+  databaseFilePath: "ڈیٹا بیس فائل پاتھ"
+  testConnection: "ٹیسٹ"
+  testConnectionSuccess: "کنکشن کامیاب"
+  testConnectionFailed: "کنکشن ناکام ہو گیا: {error}"
 
 vi_VN:
   enterHostName: "Nhập tên máy chủ"
@@ -2282,6 +2472,11 @@ vi_VN:
   advancedFields.debug: "Gỡ lỗi"
   advancedFields.urlParams: "Thông số URL"
   advancedFields.dnsEnabled: "Đã bật DNS"
+  databaseName: "Tên cơ sở dữ liệu"
+  databaseFilePath: "Đường dẫn tệp cơ sở dữ liệu"
+  testConnection: "Bài kiểm tra"
+  testConnectionSuccess: "Kết nối thành công"
+  testConnectionFailed: "Kết nối không thành công: {error}"
 
 af_ZA:
   enterHostName: "Voer gasheernaam in"
@@ -2339,6 +2534,11 @@ af_ZA:
   advancedFields.debug: "Ontfout"
   advancedFields.urlParams: "URL-parameters"
   advancedFields.dnsEnabled: "DNS geaktiveer"
+  databaseName: "Databasis Naam"
+  databaseFilePath: "Databasis lêer pad"
+  testConnection: "Toets"
+  testConnectionSuccess: "Verbinding suksesvol"
+  testConnectionFailed: "Konneksie het misluk: {error}"
 
 am_ET:
   enterHostName: "የአስተናጋጅ ስም ያስገቡ"
@@ -2396,6 +2596,11 @@ am_ET:
   advancedFields.debug: "ማረም"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "ዲ ኤን ኤስ ነቅቷል።"
+  databaseName: "የውሂብ ጎታ ስም"
+  databaseFilePath: "የውሂብ ጎታ ፋይል ዱካ"
+  testConnection: "ሙከራ"
+  testConnectionSuccess: "ግንኙነት ተሳክቷል።"
+  testConnectionFailed: "ግንኙነት አልተሳካም፦ {error}"
 
 az_AZ:
   enterHostName: "Host adını daxil edin"
@@ -2453,6 +2658,11 @@ az_AZ:
   advancedFields.debug: "Debug"
   advancedFields.urlParams: "URL Parametrləri"
   advancedFields.dnsEnabled: "DNS Aktivdir"
+  databaseName: "Verilənlər Bazasının Adı"
+  databaseFilePath: "Verilənlər bazası fayl yolu"
+  testConnection: "Test"
+  testConnectionSuccess: "Bağlantı uğurlu"
+  testConnectionFailed: "Bağlantı uğursuz oldu: {error}"
 
 et_EE:
   enterHostName: "Sisestage hosti nimi"
@@ -2510,6 +2720,11 @@ et_EE:
   advancedFields.debug: "Silumine"
   advancedFields.urlParams: "URL-i parameetrid"
   advancedFields.dnsEnabled: "DNS lubatud"
+  databaseName: "Andmebaasi nimi"
+  databaseFilePath: "Andmebaasi faili tee"
+  testConnection: "Test"
+  testConnectionSuccess: "Ühendus õnnestus"
+  testConnectionFailed: "Ühendus ebaõnnestus: {error}"
 
 gu_IN:
   enterHostName: "હોસ્ટનું નામ દાખલ કરો"
@@ -2567,6 +2782,11 @@ gu_IN:
   advancedFields.debug: "ડીબગ"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "DNS સક્ષમ"
+  databaseName: "ડેટાબેઝ નામ"
+  databaseFilePath: "ડેટાબેઝ ફાઇલ પાથ"
+  testConnection: "ટેસ્ટ"
+  testConnectionSuccess: "કનેક્શન સફળ"
+  testConnectionFailed: "કનેક્શન નિષ્ફળ થયું: {error}"
 
 ha_NG:
   enterHostName: "Shigar da Sunan Mai watsa shiri"
@@ -2624,6 +2844,11 @@ ha_NG:
   advancedFields.debug: "Gyara kuskure"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "An kunna DNS"
+  databaseName: "Sunan Database"
+  databaseFilePath: "Hanyar Fayil na Database"
+  testConnection: "Gwaji"
+  testConnectionSuccess: "Haɗin ya yi nasara"
+  testConnectionFailed: "Haɗin ya gaza: {error}"
 
 ka_GE:
   enterHostName: "შეიყვანეთ ჰოსტის სახელი"
@@ -2681,6 +2906,11 @@ ka_GE:
   advancedFields.debug: "გამართვა"
   advancedFields.urlParams: "URL პარამეტრები"
   advancedFields.dnsEnabled: "DNS ჩართულია"
+  databaseName: "მონაცემთა ბაზის სახელი"
+  databaseFilePath: "მონაცემთა ბაზის ფაილის გზა"
+  testConnection: "ტესტი"
+  testConnectionSuccess: "კავშირი წარმატებულია"
+  testConnectionFailed: "კავშირი ვერ მოხერხდა: {error}"
 
 km_KH:
   enterHostName: "បញ្ចូលឈ្មោះម៉ាស៊ីន"
@@ -2738,6 +2968,11 @@ km_KH:
   advancedFields.debug: "បំបាត់កំហុស"
   advancedFields.urlParams: "ប៉ារ៉ាម៉ែត្រ URL"
   advancedFields.dnsEnabled: "DNS ត្រូវបានបើក"
+  databaseName: "ឈ្មោះមូលដ្ឋានទិន្នន័យ"
+  databaseFilePath: "ផ្លូវឯកសារមូលដ្ឋានទិន្នន័យ"
+  testConnection: "សាកល្បង"
+  testConnectionSuccess: "ការតភ្ជាប់បានជោគជ័យ"
+  testConnectionFailed: "ការតភ្ជាប់បានបរាជ័យ៖ {error}"
 
 kn_IN:
   enterHostName: "ಹೋಸ್ಟ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ"
@@ -2795,6 +3030,11 @@ kn_IN:
   advancedFields.debug: "ಡೀಬಗ್ ಮಾಡಿ"
   advancedFields.urlParams: "URL ಪ್ಯಾರಾಮ್‌ಗಳು"
   advancedFields.dnsEnabled: "DNS ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ"
+  databaseName: "ಡೇಟಾಬೇಸ್ ಹೆಸರು"
+  databaseFilePath: "ಡೇಟಾಬೇಸ್ ಫೈಲ್ ಪಾತ್"
+  testConnection: "ಪರೀಕ್ಷೆ"
+  testConnectionSuccess: "ಸಂಪರ್ಕ ಯಶಸ್ವಿಯಾಗಿದೆ"
+  testConnectionFailed: "ಸಂಪರ್ಕ ವಿಫಲವಾಗಿದೆ: {error}"
 
 lt_LT:
   enterHostName: "Įveskite pagrindinio kompiuterio pavadinimą"
@@ -2852,6 +3092,11 @@ lt_LT:
   advancedFields.debug: "Derinimas"
   advancedFields.urlParams: "URL parametrai"
   advancedFields.dnsEnabled: "DNS įjungtas"
+  databaseName: "Duomenų bazės pavadinimas"
+  databaseFilePath: "Duomenų bazės failo kelias"
+  testConnection: "Testas"
+  testConnectionSuccess: "Prisijungimas sėkmingas"
+  testConnectionFailed: "Nepavyko prisijungti: {error}"
 
 lv_LV:
   enterHostName: "Ievadiet resursdatora nosaukumu"
@@ -2909,6 +3154,11 @@ lv_LV:
   advancedFields.debug: "Atkļūdošana"
   advancedFields.urlParams: "URL parametri"
   advancedFields.dnsEnabled: "DNS iespējots"
+  databaseName: "Datu bāzes nosaukums"
+  databaseFilePath: "Datu bāzes faila ceļš"
+  testConnection: "Test"
+  testConnectionSuccess: "Savienojums veiksmīgs"
+  testConnectionFailed: "Savienojums neizdevās: {error}"
 
 ml_IN:
   enterHostName: "ഹോസ്റ്റിൻ്റെ പേര് നൽകുക"
@@ -2966,6 +3216,11 @@ ml_IN:
   advancedFields.debug: "ഡീബഗ് ചെയ്യുക"
   advancedFields.urlParams: "URL പാരാമുകൾ"
   advancedFields.dnsEnabled: "DNS പ്രവർത്തനക്ഷമമാക്കി"
+  databaseName: "ഡാറ്റാബേസ് നാമം"
+  databaseFilePath: "ഡാറ്റാബേസ് ഫയൽ പാത്ത്"
+  testConnection: "ടെസ്റ്റ്"
+  testConnectionSuccess: "കണക്ഷൻ വിജയിച്ചു"
+  testConnectionFailed: "കണക്ഷൻ പരാജയപ്പെട്ടു: {error}"
 
 mr_IN:
   enterHostName: "होस्ट नाव प्रविष्ट करा"
@@ -3023,6 +3278,11 @@ mr_IN:
   advancedFields.debug: "डीबग करा"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "DNS सक्षम"
+  databaseName: "डेटाबेस नाव"
+  databaseFilePath: "डेटाबेस फाइल पथ"
+  testConnection: "चाचणी"
+  testConnectionSuccess: "कनेक्शन यशस्वी झाले"
+  testConnectionFailed: "कनेक्शन अयशस्वी: {error}"
 
 ne_NP:
   enterHostName: "होस्ट नाम प्रविष्ट गर्नुहोस्"
@@ -3080,6 +3340,11 @@ ne_NP:
   advancedFields.debug: "डिबग"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "DNS सक्षम गरियो"
+  databaseName: "डाटाबेस नाम"
+  databaseFilePath: "डाटाबेस फाइल पथ"
+  testConnection: "परीक्षण"
+  testConnectionSuccess: "जडान सफल भयो"
+  testConnectionFailed: "जडान असफल भयो: {error}"
 
 pa_IN:
   enterHostName: "ਮੇਜ਼ਬਾਨ ਦਾ ਨਾਮ ਦਰਜ ਕਰੋ"
@@ -3137,6 +3402,11 @@ pa_IN:
   advancedFields.debug: "ਡੀਬੱਗ ਕਰੋ"
   advancedFields.urlParams: "URL ਪਰਮ"
   advancedFields.dnsEnabled: "DNS ਸਮਰਥਿਤ"
+  databaseName: "ਡਾਟਾਬੇਸ ਦਾ ਨਾਮ"
+  databaseFilePath: "ਡਾਟਾਬੇਸ ਫਾਈਲ ਮਾਰਗ"
+  testConnection: "ਟੈਸਟ"
+  testConnectionSuccess: "ਕਨੈਕਸ਼ਨ ਸਫਲ ਰਿਹਾ"
+  testConnectionFailed: "ਕਨੈਕਸ਼ਨ ਅਸਫਲ: {error}"
 
 si_LK:
   enterHostName: "සත්කාරක නාමය ඇතුළත් කරන්න"
@@ -3194,6 +3464,11 @@ si_LK:
   advancedFields.debug: "දෝෂහරණය කරන්න"
   advancedFields.urlParams: "URL පරාමිති"
   advancedFields.dnsEnabled: "DNS සබල කර ඇත"
+  databaseName: "දත්ත සමුදායේ නම"
+  databaseFilePath: "දත්ත සමුදා ගොනු මාර්ගය"
+  testConnection: "පරීක්ෂණය"
+  testConnectionSuccess: "සම්බන්ධතාවය සාර්ථකයි"
+  testConnectionFailed: "සබැඳුම අසාර්ථක විය: {error}"
 
 sl_SI:
   enterHostName: "Vnesite ime gostitelja"
@@ -3251,6 +3526,11 @@ sl_SI:
   advancedFields.debug: "Odpravljanje napak"
   advancedFields.urlParams: "Parametri URL-ja"
   advancedFields.dnsEnabled: "DNS omogočen"
+  databaseName: "Ime baze podatkov"
+  databaseFilePath: "Pot datoteke baze podatkov"
+  testConnection: "Test"
+  testConnectionSuccess: "Povezava uspešna"
+  testConnectionFailed: "Povezava ni uspela: {error}"
 
 sr_RS:
   enterHostName: "Унесите име хоста"
@@ -3308,6 +3588,11 @@ sr_RS:
   advancedFields.debug: "Отклањање грешака"
   advancedFields.urlParams: "УРЛ Парамс"
   advancedFields.dnsEnabled: "ДНС је омогућен"
+  databaseName: "Име базе података"
+  databaseFilePath: "Путања датотеке базе података"
+  testConnection: "Тест"
+  testConnectionSuccess: "Веза је успела"
+  testConnectionFailed: "Повезивање није успело: {error}"
 
 te_IN:
   enterHostName: "హోస్ట్ పేరును నమోదు చేయండి"
@@ -3365,6 +3650,11 @@ te_IN:
   advancedFields.debug: "డీబగ్ చేయండి"
   advancedFields.urlParams: "URL పారామ్స్"
   advancedFields.dnsEnabled: "DNS ప్రారంభించబడింది"
+  databaseName: "డేటాబేస్ పేరు"
+  databaseFilePath: "డేటాబేస్ ఫైల్ మార్గం"
+  testConnection: "పరీక్ష"
+  testConnectionSuccess: "కనెక్షన్ విజయవంతమైంది"
+  testConnectionFailed: "కనెక్షన్ విఫలమైంది: {error}"
 
 tl_PH:
   enterHostName: "Ilagay ang Host Name"
@@ -3422,6 +3712,11 @@ tl_PH:
   advancedFields.debug: "I-debug"
   advancedFields.urlParams: "Mga Param ng URL"
   advancedFields.dnsEnabled: "Naka-enable ang DNS"
+  databaseName: "Pangalan ng Database"
+  databaseFilePath: "Landas ng File ng Database"
+  testConnection: "Pagsubok"
+  testConnectionSuccess: "Matagumpay ang koneksyon"
+  testConnectionFailed: "Nabigo ang koneksyon: {error}"
 
 uz_UZ:
   enterHostName: "Xost nomini kiriting"
@@ -3479,6 +3774,11 @@ uz_UZ:
   advancedFields.debug: "Nosozliklarni tuzatish"
   advancedFields.urlParams: "URL parametrlari"
   advancedFields.dnsEnabled: "DNS yoqilgan"
+  databaseName: "Ma'lumotlar bazasi nomi"
+  databaseFilePath: "Ma'lumotlar bazasi fayl yo'li"
+  testConnection: "Sinov"
+  testConnectionSuccess: "Ulanish muvaffaqiyatli"
+  testConnectionFailed: "Ulanish amalga oshmadi: {error}"
 
 yo_NG:
   enterHostName: "Tẹ Orukọ ogun sii"
@@ -3536,3 +3836,8 @@ yo_NG:
   advancedFields.debug: "Ṣatunkọ"
   advancedFields.urlParams: "URL Params"
   advancedFields.dnsEnabled: "Ti ṣiṣẹ DNS"
+  databaseName: "Orukọ aaye data"
+  databaseFilePath: "Ona Faili aaye data"
+  testConnection: "Idanwo"
+  testConnectionSuccess: "Asopọmọra ṣaṣeyọri"
+  testConnectionFailed: "Asopọ ti kuna: {error}"

@@ -17,10 +17,19 @@ query SourceTypes {
       }
       query: Query {
         supportsAnalyze: SupportsAnalyze
+        supportsScripts: SupportsScripts
+        supportsStreaming: SupportsStreaming
+        supportsMultiStatement: SupportsMultiStatement
         explainMode: ExplainMode
       }
       mockData: MockData {
         supportsRelationalDependencies: SupportsRelationalDependencies
+      }
+      metadata: Metadata {
+        columns: Columns
+        constraints: Constraints
+        graph: Graph
+        systemObjectFiltering: SystemObjectFiltering
       }
     }
     connectionFields: ConnectionFields {

@@ -1,0 +1,22 @@
+query SourceFieldConstraints($ref: SourceObjectRefInput!) {
+  SourceFieldConstraints(ref: $ref) {
+    Name
+    Type
+    MetadataFidelity
+    Nullable
+    Primary
+    Unique
+    Identity
+    DefaultValue
+    AllowedValues
+    CheckMin
+    CheckMax
+    ForeignKey {
+      Table
+      Column
+    }
+    Length
+    Precision
+    Scale
+  }
+}

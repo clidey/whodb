@@ -5,6 +5,368 @@ en_US:
   noProviders: No GCP accounts configured
   addFirstProvider: Add your first GCP account to discover databases
 
+af_ZA:
+  title: "GCP-rekeninge"
+  description: "Koppel GCP-rekeninge om Cloud SQL-, AlloyDB- en Memorystore-gevalle outomaties te ontdek."
+  noProviders: "Geen GCP-rekeninge is opgestel nie"
+  addFirstProvider: "Voeg jou eerste GCP-rekening by om databasisse te ontdek"
 
+am_ET:
+  title: "የጂሲፒ መለያዎች"
+  description: "የጂሲፒ መለያዎችን በራስ-አግኝ Cloud SQL፣ AlloyDB እና Memorystore ምሳሌዎችን ያገናኙ።"
+  noProviders: "ምንም የGCP መለያዎች አልተዋቀሩም።"
+  addFirstProvider: "የውሂብ ጎታዎችን ለማግኘት የመጀመሪያውን የጂሲፒ መለያ ያክሉ"
 
+ar_AE:
+  title: "حسابات Google Cloud Platform"
+  description: "قم بتوصيل حسابات GCP لاكتشاف مثيلات Cloud SQL وAlloyDB وMemorystore تلقائيًا."
+  noProviders: "لم يتم ضبط أي حسابات Google Cloud Platform"
+  addFirstProvider: "أضف حساب Google Cloud Platform الأول الخاص بك لاكتشاف قواعد البيانات"
 
+az_AZ:
+  title: "GCP Hesabları"
+  description: "Cloud SQL, AlloyDB və Memorystore instansiyalarını avtomatik kəşf etmək üçün GCP hesablarını birləşdirin."
+  noProviders: "Heç bir GCP hesabı konfiqurasiya edilməyib"
+  addFirstProvider: "Verilənlər bazalarını kəşf etmək üçün ilk GCP hesabınızı əlavə edin"
+
+bg_BG:
+  title: "GCP акаунти"
+  description: "Свържете GCP акаунти за автоматично откриване на екземпляри на Cloud SQL, AlloyDB и Memorystore."
+  noProviders: "Няма конфигурирани GCP акаунти"
+  addFirstProvider: "Добавете първия си GCP акаунт, за да откриете бази данни"
+
+bn_BD:
+  title: "GCP অ্যাকাউন্ট"
+  description: "ক্লাউড SQL, AlloyDB, এবং Memorystore দৃষ্টান্তগুলি স্বয়ংক্রিয়ভাবে আবিষ্কার করতে GCP অ্যাকাউন্টগুলিকে সংযুক্ত করুন৷"
+  noProviders: "কোনো GCP অ্যাকাউন্ট কনফিগার করা নেই"
+  addFirstProvider: "ডেটাবেস আবিষ্কার করতে আপনার প্রথম GCP অ্যাকাউন্ট যোগ করুন"
+
+ca_ES:
+  title: "Comptes de GCP"
+  description: "Connecteu els comptes de GCP per descobrir automàticament les instàncies de Cloud SQL, AlloyDB i Memorystore."
+  noProviders: "No s'ha configurat cap compte de GCP"
+  addFirstProvider: "Afegiu el vostre primer compte de GCP per descobrir bases de dades"
+
+cs_CZ:
+  title: "Účty GCP"
+  description: "Připojte účty GCP a automaticky zjistěte instance Cloud SQL, AlloyDB a Memorystore."
+  noProviders: "Nejsou nakonfigurovány žádné účty GCP"
+  addFirstProvider: "Přidejte svůj první účet GCP a objevujte databáze"
+
+da_DK:
+  title: "GCP-konti"
+  description: "Tilslut GCP-konti for automatisk at opdage Cloud SQL-, AlloyDB- og Memorystore-forekomster."
+  noProviders: "Ingen GCP-konti konfigureret"
+  addFirstProvider: "Tilføj din første GCP-konto for at finde databaser"
+
+de_DE:
+  title: "GCP-Konten"
+  description: "Verbinden Sie GCP-Konten, um Cloud SQL-, AlloyDB- und Memorystore-Instanzen automatisch zu erkennen."
+  noProviders: "Keine GCP-Konten konfiguriert"
+  addFirstProvider: "Fügen Sie Ihr erstes GCP-Konto hinzu, um Datenbanken zu entdecken"
+
+el_GR:
+  title: "Λογαριασμοί GCP"
+  description: "Συνδέστε λογαριασμούς GCP για αυτόματη ανακάλυψη παρουσιών Cloud SQL, AlloyDB και Memorystore."
+  noProviders: "Δεν έχουν διαμορφωθεί λογαριασμοί GCP"
+  addFirstProvider: "Προσθέστε τον πρώτο σας λογαριασμό GCP για να ανακαλύψετε βάσεις δεδομένων"
+
+en_GB:
+  title: "GCP Accounts"
+  description: "Connect GCP accounts to auto-discover Cloud SQL, AlloyDB, and Memorystore instances."
+  noProviders: "No GCP accounts configured"
+  addFirstProvider: "Add your first GCP account to discover databases"
+
+es_ES:
+  title: "Cuentas de GCP"
+  description: "Conecte cuentas de GCP para descubrir automáticamente instancias de Cloud SQL, AlloyDB y Memorystore."
+  noProviders: "No hay cuentas de GCP configuradas"
+  addFirstProvider: "Agregue su primera cuenta de GCP para descubrir bases de datos"
+
+et_EE:
+  title: "GCP kontod"
+  description: "Ühendage GCP-kontod Cloud SQL-i, AlloyDB ja Memorystore'i eksemplaride automaatseks avastamiseks."
+  noProviders: "GCP kontosid pole konfigureeritud"
+  addFirstProvider: "Andmebaaside avastamiseks lisage oma esimene GCP-konto"
+
+fa_IR:
+  title: "حساب های GCP"
+  description: "حساب‌های GCP را برای کشف خودکار نمونه‌های Cloud SQL، AlloyDB و Memorystore متصل کنید."
+  noProviders: "هیچ حساب GCP پیکربندی نشده است"
+  addFirstProvider: "اولین حساب GCP خود را برای کشف پایگاه داده اضافه کنید"
+
+fi_FI:
+  title: "GCP-tilit"
+  description: "Yhdistä GCP-tilit löytääksesi automaattisesti Cloud SQL-, AlloyDB- ja Memorystore-esiintymiä."
+  noProviders: "GCP-tilejä ei ole määritetty"
+  addFirstProvider: "Lisää ensimmäinen GCP-tilisi löytääksesi tietokannat"
+
+fr_FR:
+  title: "Comptes GCP"
+  description: "Connectez des comptes GCP pour découvrir automatiquement les instances Cloud SQL, AlloyDB et Memorystore."
+  noProviders: "Aucun compte GCP configuré"
+  addFirstProvider: "Ajoutez votre premier compte GCP pour découvrir des bases de données"
+
+gu_IN:
+  title: "GCP એકાઉન્ટ્સ"
+  description: "GCP એકાઉન્ટ્સને ઑટો-ડિસ્કવર ક્લાઉડ SQL, AlloyDB અને Memorystore ઉદાહરણો સાથે કનેક્ટ કરો."
+  noProviders: "કોઈ GCP એકાઉન્ટ્સ ગોઠવેલ નથી"
+  addFirstProvider: "ડેટાબેસેસ શોધવા માટે તમારું પ્રથમ GCP એકાઉન્ટ ઉમેરો"
+
+ha_NG:
+  title: "GCP Accounts"
+  description: "Haɗa asusun GCP zuwa ga ganowa ta atomatik Cloud SQL, AlloyDB, da misalan Memorystore."
+  noProviders: "Babu asusun GCP da aka saita"
+  addFirstProvider: "Ƙara asusun GCP na farko don gano bayanan bayanai"
+
+hi_IN:
+  title: "जीसीपी खाते"
+  description: "GCP खातों को क्लाउड SQL, AlloyDB और मेमोरीस्टोर इंस्टेंसेस को स्वचालित रूप से खोजने के लिए कनेक्ट करें।"
+  noProviders: "कोई GCP खाता कॉन्फ़िगर नहीं किया गया"
+  addFirstProvider: "डेटाबेस खोजने के लिए अपना पहला GCP खाता जोड़ें"
+
+hr_HR:
+  title: "GCP računi"
+  description: "Povežite GCP račune za automatsko otkrivanje Cloud SQL, AlloyDB i Memorystore instanci."
+  noProviders: "GCP računi nisu konfigurirani"
+  addFirstProvider: "Dodajte svoj prvi GCP račun za otkrivanje baza podataka"
+
+hu_HU:
+  title: "GCP-fiókok"
+  description: "Csatlakoztassa a GCP-fiókokat a Cloud SQL, AlloyDB és Memorystore példányok automatikus felfedezéséhez."
+  noProviders: "Nincsenek konfigurálva GCP-fiókok"
+  addFirstProvider: "Adja hozzá első GCP-fiókját az adatbázisok felfedezéséhez"
+
+id_ID:
+  title: "Akun GCP"
+  description: "Hubungkan akun GCP untuk menemukan instance Cloud SQL, AlloyDB, dan Memorystore secara otomatis."
+  noProviders: "Tidak ada akun GCP yang dikonfigurasi"
+  addFirstProvider: "Tambahkan akun GCP pertama Anda untuk menemukan database"
+
+it_IT:
+  title: "Account GCP"
+  description: "Connetti gli account GCP per individuare automaticamente le istanze Cloud SQL, AlloyDB e Memorystore."
+  noProviders: "Nessun account GCP configurato"
+  addFirstProvider: "Aggiungi il tuo primo account GCP per scoprire i database"
+
+iw_IL:
+  title: "חשבונות GCP"
+  description: "חבר חשבונות GCP כדי לגלות אוטומטית מופעים של Cloud SQL, AlloyDB ו-Memorystore."
+  noProviders: "לא הוגדרו חשבונות GCP"
+  addFirstProvider: "הוסף את חשבון GCP הראשון שלך כדי לגלות מסדי נתונים"
+
+ja_JP:
+  title: "GCP アカウント"
+  description: "GCP アカウントを接続して、Cloud SQL、AlloyDB、Memorystore インスタンスを自動検出します。"
+  noProviders: "GCP アカウントが設定されていません"
+  addFirstProvider: "データベースを検出するために最初の GCP アカウントを追加する"
+
+ka_GE:
+  title: "GCP ანგარიშები"
+  description: "დააკავშირეთ GCP ანგარიშები Cloud SQL, AlloyDB და Memorystore ეგზემპლარების ავტომატური აღმოჩენისთვის."
+  noProviders: "GCP ანგარიშები არ არის კონფიგურირებული"
+  addFirstProvider: "დაამატეთ თქვენი პირველი GCP ანგარიში მონაცემთა ბაზების აღმოსაჩენად"
+
+km_KH:
+  title: "គណនី GCP"
+  description: "ភ្ជាប់គណនី GCP ទៅ Cloud SQL, AlloyDB, និង Memorystore instances ស្វែងរកដោយស្វ័យប្រវត្តិ។"
+  noProviders: "មិនមានគណនី GCP ត្រូវបានកំណត់រចនាសម្ព័ន្ធទេ។"
+  addFirstProvider: "បន្ថែមគណនី GCP ដំបូងរបស់អ្នកដើម្បីស្វែងរកមូលដ្ឋានទិន្នន័យ"
+
+kn_IN:
+  title: "GCP ಖಾತೆಗಳು"
+  description: "ಕ್ಲೌಡ್ SQL, AlloyDB ಮತ್ತು Memorystore ನಿದರ್ಶನಗಳನ್ನು ಸ್ವಯಂ ಅನ್ವೇಷಿಸಲು GCP ಖಾತೆಗಳನ್ನು ಸಂಪರ್ಕಿಸಿ."
+  noProviders: "ಯಾವುದೇ GCP ಖಾತೆಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿಲ್ಲ"
+  addFirstProvider: "ಡೇಟಾಬೇಸ್‌ಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ನಿಮ್ಮ ಮೊದಲ GCP ಖಾತೆಯನ್ನು ಸೇರಿಸಿ"
+
+ko_KR:
+  title: "GCP 계정"
+  description: "GCP 계정을 연결하여 Cloud SQL, AlloyDB, Memorystore 인스턴스를 자동 검색하세요."
+  noProviders: "구성된 GCP 계정이 없습니다."
+  addFirstProvider: "데이터베이스를 검색하려면 첫 번째 GCP 계정을 추가하세요."
+
+lt_LT:
+  title: "GSP paskyros"
+  description: "Prijunkite GCP paskyras, kad automatiškai atrastumėte Cloud SQL, AlloyDB ir Memorystore egzempliorius."
+  noProviders: "GSP paskyrų nesukonfigūruota"
+  addFirstProvider: "Pridėkite savo pirmąją GSP paskyrą, kad rastumėte duomenų bazes"
+
+lv_LV:
+  title: "GSP konti"
+  description: "Pievienojiet GCP kontus, lai automātiski atklātu Cloud SQL, AlloyDB un Memorystore gadījumus."
+  noProviders: "Nav konfigurēts neviens GSP konts"
+  addFirstProvider: "Pievienojiet savu pirmo GCP kontu, lai atklātu datu bāzes"
+
+ml_IN:
+  title: "GCP അക്കൗണ്ടുകൾ"
+  description: "ക്ലൗഡ് SQL, AlloyDB, Memorystore സംഭവങ്ങൾ സ്വയമേവ കണ്ടെത്തുന്നതിന് GCP അക്കൗണ്ടുകൾ ബന്ധിപ്പിക്കുക."
+  noProviders: "GCP അക്കൗണ്ടുകളൊന്നും കോൺഫിഗർ ചെയ്തിട്ടില്ല"
+  addFirstProvider: "ഡാറ്റാബേസുകൾ കണ്ടെത്തുന്നതിന് നിങ്ങളുടെ ആദ്യ GCP അക്കൗണ്ട് ചേർക്കുക"
+
+mr_IN:
+  title: "GCP खाती"
+  description: "GCP खाती Cloud SQL, AlloyDB आणि Memorystore उदाहरणे ऑटो-डिस्कव्हर करण्यासाठी कनेक्ट करा."
+  noProviders: "कोणतीही GCP खाती कॉन्फिगर केलेली नाहीत"
+  addFirstProvider: "डेटाबेस शोधण्यासाठी तुमचे पहिले GCP खाते जोडा"
+
+ms_MY:
+  title: "Akaun GCP"
+  description: "Sambungkan akaun GCP untuk mencari secara automatik kejadian Cloud SQL, AlloyDB dan Memorystore."
+  noProviders: "Tiada akaun GCP dikonfigurasikan"
+  addFirstProvider: "Tambahkan akaun GCP pertama anda untuk menemui pangkalan data"
+
+nb_NO:
+  title: "GCP-kontoer"
+  description: "Koble til GCP-kontoer for å automatisk oppdage Cloud SQL-, AlloyDB- og Memorystore-forekomster."
+  noProviders: "Ingen GCP-kontoer er konfigurert"
+  addFirstProvider: "Legg til din første GCP-konto for å oppdage databaser"
+
+ne_NP:
+  title: "GCP खाताहरू"
+  description: "GCP खाताहरूलाई क्लाउड SQL, AlloyDB र Memorystore उदाहरणहरू स्वत: पत्ता लगाउन जडान गर्नुहोस्।"
+  noProviders: "कुनै GCP खाताहरू कन्फिगर गरिएको छैन"
+  addFirstProvider: "डाटाबेसहरू पत्ता लगाउन आफ्नो पहिलो GCP खाता थप्नुहोस्"
+
+nl_NL:
+  title: "GCP-accounts"
+  description: "Verbind GCP-accounts om automatisch Cloud SQL-, AlloyDB- en Memorystore-instanties te ontdekken."
+  noProviders: "Er zijn geen GCP-accounts geconfigureerd"
+  addFirstProvider: "Voeg uw eerste GCP-account toe om databases te ontdekken"
+
+pa_IN:
+  title: "GCP ਖਾਤੇ"
+  description: "GCP ਖਾਤਿਆਂ ਨੂੰ ਕਲਾਊਡ SQL, AlloyDB, ਅਤੇ Memorystore ਉਦਾਹਰਨਾਂ ਨਾਲ ਸਵੈ-ਖੋਜ ਨਾਲ ਕਨੈਕਟ ਕਰੋ।"
+  noProviders: "ਕੋਈ GCP ਖਾਤੇ ਕੌਂਫਿਗਰ ਨਹੀਂ ਕੀਤੇ ਗਏ ਹਨ"
+  addFirstProvider: "ਡਾਟਾਬੇਸ ਖੋਜਣ ਲਈ ਆਪਣਾ ਪਹਿਲਾ GCP ਖਾਤਾ ਸ਼ਾਮਲ ਕਰੋ"
+
+pl_PL:
+  title: "Konta GCP"
+  description: "Połącz konta GCP, aby automatycznie wykrywać instancje Cloud SQL, AlloyDB i Memorystore."
+  noProviders: "Nie skonfigurowano żadnych kont GCP"
+  addFirstProvider: "Dodaj swoje pierwsze konto GCP, aby odkrywać bazy danych"
+
+pt_BR:
+  title: "Contas do GCP"
+  description: "Conecte contas do GCP para descobrir automaticamente instâncias do Cloud SQL, AlloyDB e Memorystore."
+  noProviders: "Nenhuma conta do GCP configurada"
+  addFirstProvider: "Adicione sua primeira conta do GCP para descobrir bancos de dados"
+
+ro_RO:
+  title: "Conturi GCP"
+  description: "Conectați conturile GCP pentru a descoperi automat instanțe Cloud SQL, AlloyDB și Memorystore."
+  noProviders: "Nu au fost configurate conturi GCP"
+  addFirstProvider: "Adăugați primul cont GCP pentru a descoperi baze de date"
+
+ru_RU:
+  title: "Аккаунты GCP"
+  description: "Подключите учетные записи GCP для автоматического обнаружения экземпляров Cloud SQL, AlloyDB и Memorystore."
+  noProviders: "Аккаунты GCP не настроены"
+  addFirstProvider: "Добавьте свою первую учетную запись GCP для обнаружения баз данных."
+
+si_LK:
+  title: "GCP ගිණුම්"
+  description: "Cloud SQL, AlloyDB, සහ Memorystore අවස්ථා ස්වයංක්‍රීයව සොයා ගැනීමට GCP ගිණුම් සම්බන්ධ කරන්න."
+  noProviders: "GCP ගිණුම් වින්‍යාස කර නැත"
+  addFirstProvider: "දත්ත සමුදායන් සොයා ගැනීමට ඔබගේ පළමු GCP ගිණුම එක් කරන්න"
+
+sk_SK:
+  title: "Účty GCP"
+  description: "Pripojte účty GCP na automatické objavovanie inštancií Cloud SQL, AlloyDB a Memorystore."
+  noProviders: "Nie sú nakonfigurované žiadne účty GCP"
+  addFirstProvider: "Pridajte svoj prvý účet GCP a objavte databázy"
+
+sl_SI:
+  title: "Računi GCP"
+  description: "Povežite račune GCP s samodejnim odkrivanjem instanc Cloud SQL, AlloyDB in Memorystore."
+  noProviders: "Ni konfiguriranih računov GCP"
+  addFirstProvider: "Dodajte svoj prvi račun GCP za odkrivanje baz podatkov"
+
+sr_RS:
+  title: "ГЦП налози"
+  description: "Повежите ГЦП налоге да бисте аутоматски открили Цлоуд СКЛ, АллоиДБ и Мемористоре инстанце."
+  noProviders: "Ниједан ГЦП налог није конфигурисан"
+  addFirstProvider: "Додајте свој први ГЦП налог да бисте открили базе података"
+
+sv_SE:
+  title: "GCP-konton"
+  description: "Anslut GCP-konton för att automatiskt upptäcka Cloud SQL-, AlloyDB- och Memorystore-instanser."
+  noProviders: "Inga GCP-konton har konfigurerats"
+  addFirstProvider: "Lägg till ditt första GCP-konto för att upptäcka databaser"
+
+sw_KE:
+  title: "Hesabu za GCP"
+  description: "Unganisha akaunti za GCP ili kugundua kiotomatiki matukio ya Cloud SQL, AlloyDB na Memorystore."
+  noProviders: "Hakuna akaunti za GCP zilizosanidiwa"
+  addFirstProvider: "Ongeza akaunti yako ya kwanza ya GCP ili kugundua hifadhidata"
+
+ta_IN:
+  title: "GCP கணக்குகள்"
+  description: "கிளவுட் SQL, AlloyDB மற்றும் Memorystore நிகழ்வுகளைத் தானாகக் கண்டறிய GCP கணக்குகளை இணைக்கவும்."
+  noProviders: "GCP கணக்குகள் எதுவும் கட்டமைக்கப்படவில்லை"
+  addFirstProvider: "தரவுத்தளங்களைக் கண்டறிய உங்கள் முதல் GCP கணக்கைச் சேர்க்கவும்"
+
+te_IN:
+  title: "GCP ఖాతాలు"
+  description: "క్లౌడ్ SQL, AlloyDB మరియు Memorystore సందర్భాలను స్వయంచాలకంగా కనుగొనడానికి GCP ఖాతాలను కనెక్ట్ చేయండి."
+  noProviders: "GCP ఖాతాలు ఏవీ కాన్ఫిగర్ చేయబడలేదు"
+  addFirstProvider: "డేటాబేస్‌లను కనుగొనడానికి మీ మొదటి GCP ఖాతాను జోడించండి"
+
+th_TH:
+  title: "บัญชี GCP"
+  description: "เชื่อมต่อบัญชี GCP เพื่อค้นหาอินสแตนซ์ Cloud SQL, AlloyDB และ Memorystore โดยอัตโนมัติ"
+  noProviders: "ไม่มีการกำหนดค่าบัญชี GCP"
+  addFirstProvider: "เพิ่มบัญชี GCP แรกของคุณเพื่อค้นหาฐานข้อมูล"
+
+tl_PH:
+  title: "Mga GCP Account"
+  description: "Ikonekta ang mga GCP account para awtomatikong matuklasan ang mga instance ng Cloud SQL, AlloyDB, at Memorystore."
+  noProviders: "Walang mga GCP account na na-configure"
+  addFirstProvider: "Idagdag ang iyong unang GCP account para tumuklas ng mga database"
+
+tr_TR:
+  title: "GCP Hesapları"
+  description: "Cloud SQL, AlloyDB ve Memorystore örneklerini otomatik olarak keşfetmek için GCP hesaplarını bağlayın."
+  noProviders: "Hiçbir GCP hesabı yapılandırılmadı"
+  addFirstProvider: "Veritabanlarını keşfetmek için ilk GCP hesabınızı ekleyin"
+
+uk_UA:
+  title: "Облікові записи GCP"
+  description: "Підключіть облікові записи GCP до примірників Cloud SQL, AlloyDB і Memorystore з автоматичним виявленням."
+  noProviders: "Облікові записи GCP не налаштовано"
+  addFirstProvider: "Додайте свій перший обліковий запис GCP, щоб відкривати бази даних"
+
+ur_PK:
+  title: "جی سی پی اکاؤنٹس"
+  description: "GCP اکاؤنٹس کو Cloud SQL، AlloyDB، اور Memorystore کے مثالوں سے خودکار دریافت سے مربوط کریں۔"
+  noProviders: "کوئی GCP اکاؤنٹس کنفیگر نہیں ہیں۔"
+  addFirstProvider: "ڈیٹا بیس دریافت کرنے کے لیے اپنا پہلا GCP اکاؤنٹ شامل کریں۔"
+
+uz_UZ:
+  title: "GCP hisoblari"
+  description: "Cloud SQL, AlloyDB va Memorystore nusxalarini avtomatik aniqlash uchun GCP hisoblarini ulang."
+  noProviders: "Hech qanday GCP hisobi sozlanmagan"
+  addFirstProvider: "Ma'lumotlar bazalarini kashf qilish uchun birinchi GCP hisobingizni qo'shing"
+
+vi_VN:
+  title: "Tài khoản GCP"
+  description: "Kết nối tài khoản GCP để tự động khám phá các phiên bản Cloud SQL, AlloyDB và Memorystore."
+  noProviders: "Không có tài khoản GCP nào được định cấu hình"
+  addFirstProvider: "Thêm tài khoản GCP đầu tiên của bạn để khám phá cơ sở dữ liệu"
+
+yo_NG:
+  title: "Awọn akọọlẹ GCP"
+  description: "So awọn akọọlẹ GCP pọ si adaṣe-ṣawari Cloud SQL, AlloyDB, ati awọn iṣẹlẹ Memorystore."
+  noProviders: "Ko si awọn akọọlẹ GCP ti a tunto"
+  addFirstProvider: "Ṣafikun akọọlẹ GCP akọkọ rẹ lati ṣawari awọn apoti isura data"
+
+zh_CN:
+  title: "GCP 帐户"
+  description: "连接 GCP 帐户以自动发现 Cloud SQL、AlloyDB 和 Memorystore 实例。"
+  noProviders: "未配置 GCP 帐户"
+  addFirstProvider: "添加您的第一个 GCP 帐户以发现数据库"
+
+zh_TW:
+  title: "GCP 帳戶"
+  description: "連線 GCP 帳戶以自動發現 Cloud SQL、AlloyDB 和 Memorystore 執行個體。"
+  noProviders: "未配置 GCP 帳戶"
+  addFirstProvider: "新增您的第一個 GCP 帳戶以發現資料庫"

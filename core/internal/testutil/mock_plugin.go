@@ -36,6 +36,7 @@ type PluginMock struct {
 	GetStorageUnitsFunc      func(*engine.PluginConfig, string) ([]engine.StorageUnit, error)
 	StorageUnitExistsFunc    func(*engine.PluginConfig, string, string) (bool, error)
 	AddStorageUnitFunc       func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
+	CreateStorageUnitFunc    func(*engine.PluginConfig, string, engine.ObjectDefinition) (bool, error)
 	UpdateStorageUnitFunc    func(*engine.PluginConfig, string, string, map[string]string, []string) (bool, error)
 	AddRowFunc               func(*engine.PluginConfig, string, string, []engine.Record) (bool, error)
 	AddRowReturningIDFunc    func(*engine.PluginConfig, string, string, []engine.Record) (int64, error)
@@ -110,6 +111,13 @@ func (m *PluginMock) AddStorageUnit(config *engine.PluginConfig, schema string, 
 		return m.AddStorageUnitFunc(config, schema, storageUnit, fields)
 	}
 	return false, nil
+}
+
+func (m *PluginMock) CreateStorageUnit(config *engine.PluginConfig, schema string, definition engine.ObjectDefinition) (bool, error) {
+	if m.CreateStorageUnitFunc != nil {
+		return m.CreateStorageUnitFunc(config, schema, definition)
+	}
+	return m.AddStorageUnit(config, schema, definition.Name, engine.ObjectDefinitionToRecords(definition))
 }
 
 func (m *PluginMock) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {

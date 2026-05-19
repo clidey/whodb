@@ -309,6 +309,9 @@ func importPreviewForRef(ctx context.Context, file graphql.Upload, options model
 	if resolvedRef == nil {
 		return preview, nil
 	}
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionImportData); err != nil {
+		return nil, err
+	}
 
 	reader, ok := source.AsTabularReader(scope, session)
 	if !ok {
@@ -370,6 +373,9 @@ func importSourceObjectFile(ctx context.Context, input model.ImportFileInput) (*
 	if resolvedRef == nil {
 		return importResult(false, importValidationInvalidOptions), nil
 	}
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionImportData); err != nil {
+		return nil, err
+	}
 
 	dataImporter, ok := source.AsDataImporter(scope, session)
 	if !ok {
@@ -425,6 +431,9 @@ func generateMockDataForRef(ctx context.Context, input model.MockDataGenerationI
 	}
 	scope := sourceAuditScopeFromContext(ctx, spec)
 	resolvedRef := sourceRefFromInput(input.Ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionGenerateMockData); err != nil {
+		return nil, err
+	}
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
 		return nil, errors.New("mock data generation is not allowed for this table")
@@ -472,6 +481,10 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	}
 	scope := sourceAuditScopeFromContext(ctx, spec)
 	resolvedRef := sourceRefFromInput(&ref)
+	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionGenerateMockData); err != nil {
+		errMsg := err.Error()
+		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+	}
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
 		errMsg := "mock data generation is not allowed for this table"

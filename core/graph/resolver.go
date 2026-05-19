@@ -36,6 +36,7 @@ func MapColumnsToModel(columnsResult []source.Column) []*model.Column {
 		columns = append(columns, &model.Column{
 			Type:             column.Type,
 			Name:             column.Name,
+			MetadataFidelity: metadataFidelityToModel(column.MetadataFidelity),
 			IsPrimary:        column.IsPrimary,
 			IsForeignKey:     column.IsForeignKey,
 			ReferencedTable:  column.ReferencedTable,
@@ -46,6 +47,10 @@ func MapColumnsToModel(columnsResult []source.Column) []*model.Column {
 		})
 	}
 	return columns
+}
+
+func metadataFidelityToModel(fidelity source.MetadataFidelity) model.SourceMetadataFidelity {
+	return model.SourceMetadataFidelity(source.MetadataFidelityOrUnknown(fidelity))
 }
 
 // stateToAWSProvider converts settings.AWSProviderState to the GraphQL model.

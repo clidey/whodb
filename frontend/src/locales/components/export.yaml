@@ -43,7 +43,6 @@ ar_AE:
   delimiterPipe: "الأنبوب (|) - أقل شيوعًا في البيانات"
   jsonLineDelimited: "JSON مفصولة بأسطر (مستند واحد لكل صف)"
   jsonDetails: "يحافظ على الحقول المتداخلة دون التسوية"
-  utf8Encoding: "ترميز UTF-8"
 
 de_DE:
   selectedRows: "Sie sind dabei, {count} ausgewählte Zeilen zu exportieren."
@@ -67,7 +66,6 @@ de_DE:
   delimiterPipe: "Pipe (|) – In Daten seltener"
   jsonLineDelimited: "Zeilengetrenntes JSON (ein Dokument pro Zeile)"
   jsonDetails: "Behält verschachtelte Felder bei, ohne sie zu reduzieren"
-  utf8Encoding: "UTF-8-Kodierung"
 
 el_GR:
   selectedRows: "Πρόκειται να εξαγάγετε {count} επιλεγμένες σειρές."
@@ -91,7 +89,6 @@ el_GR:
   delimiterPipe: "Pipe (|) - Λιγότερο συνηθισμένο στα δεδομένα"
   jsonLineDelimited: "JSON οριοθετημένης γραμμής (ένα έγγραφο ανά σειρά)"
   jsonDetails: "Διατηρεί ένθετα χωράφια χωρίς ισοπέδωση"
-  utf8Encoding: "Κωδικοποίηση UTF-8"
 
 en_GB:
   selectedRows: "You are about to export {count} selected rows."
@@ -115,7 +112,6 @@ en_GB:
   delimiterPipe: "Pipe (|) - Less common in data"
   jsonLineDelimited: "Line-delimited JSON (one document per row)"
   jsonDetails: "Preserves nested fields without flattening"
-  utf8Encoding: "UTF-8 Encoding"
 
 es_ES:
   selectedRows: "Está a punto de exportar {count} filas seleccionadas."
@@ -139,7 +135,6 @@ es_ES:
   delimiterPipe: "Tubería (|): menos común en datos"
   jsonLineDelimited: "JSON delimitado por líneas (un documento por fila)"
   jsonDetails: "Conserva los campos anidados sin aplanarse"
-  utf8Encoding: "Codificación UTF-8"
 
 fi_FI:
   selectedRows: "Olet viemässä {count} valittua riviä."
@@ -163,7 +158,6 @@ fi_FI:
   delimiterPipe: "Putki (|) - Harvemmin tiedoissa"
   jsonLineDelimited: "Rivieroteltu JSON (yksi asiakirja riviä kohden)"
   jsonDetails: "Säilyttää sisäkkäiset kentät litistämättä"
-  utf8Encoding: "UTF-8-koodaus"
 
 fr_FR:
   selectedRows: "Vous êtes sur le point d'exporter {count} lignes sélectionnées."
@@ -187,7 +181,6 @@ fr_FR:
   delimiterPipe: "Pipe (|) - Moins courant dans les données"
   jsonLineDelimited: "JSON délimité par des lignes (un document par ligne)"
   jsonDetails: "Préserve les champs imbriqués sans les aplatir"
-  utf8Encoding: "Encodage UTF-8"
 
 it_IT:
   selectedRows: "Stai per esportare le {count} righe selezionate."
@@ -211,7 +204,6 @@ it_IT:
   delimiterPipe: "Pipe (|) - Meno comune nei dati"
   jsonLineDelimited: "JSON delimitato da righe (un documento per riga)"
   jsonDetails: "Conserva i campi nidificati senza appiattirli"
-  utf8Encoding: "Codifica UTF-8"
 
 iw_IL:
   selectedRows: "אתה עומד לייצא {count} שורות נבחרות."
@@ -235,7 +227,6 @@ iw_IL:
   delimiterPipe: "צינור (|) - פחות נפוץ בנתונים"
   jsonLineDelimited: "JSON מופרד בשורה (מסמך אחד בכל שורה)"
   jsonDetails: "שומר על שדות מקוננים ללא שיטוח"
-  utf8Encoding: "קידוד UTF-8"
 
 ja_JP:
   selectedRows: "選択した {count} 行をエクスポートしようとしています。"
@@ -259,7 +250,6 @@ ja_JP:
   delimiterPipe: "パイプ (|) - データではあまり一般的ではありません"
   jsonLineDelimited: "行区切りの JSON (1 行に 1 つのドキュメント)"
   jsonDetails: "ネストされたフィールドを平坦化せずに保持します"
-  utf8Encoding: "UTF-8エンコーディング"
 
 ko_KR:
   selectedRows: "선택한 행 {count}개를 내보내려고 합니다."
@@ -283,7 +273,6 @@ ko_KR:
   delimiterPipe: "파이프(|) - 데이터에서는 덜 일반적입니다."
   jsonLineDelimited: "줄로 구분된 JSON(행당 하나의 문서)"
   jsonDetails: "병합하지 않고 중첩된 필드를 유지합니다."
-  utf8Encoding: "UTF-8 인코딩"
 
 nl_NL:
   selectedRows: "U staat op het punt {count} geselecteerde rijen te exporteren."
@@ -307,7 +296,6 @@ nl_NL:
   delimiterPipe: "Pipe (|) - Minder gebruikelijk in gegevens"
   jsonLineDelimited: "Door regels gescheiden JSON (één document per rij)"
   jsonDetails: "Behoudt geneste velden zonder afvlakking"
-  utf8Encoding: "UTF-8-codering"
 
 pl_PL:
   selectedRows: "Zamierzasz wyeksportować {count} wybranych wierszy."
@@ -331,7 +319,6 @@ pl_PL:
   delimiterPipe: "Rura (|) — Rzadziej spotykana w danych"
   jsonLineDelimited: "JSON rozdzielany liniami (jeden dokument w wierszu)"
   jsonDetails: "Zachowuje zagnieżdżone pola bez spłaszczania"
-  utf8Encoding: "Kodowanie UTF-8"
 
 pt_BR:
   selectedRows: "Você está prestes a exportar {count} linhas selecionadas."
@@ -355,7 +342,6 @@ pt_BR:
   delimiterPipe: "Pipe (|) - Menos comum em dados"
   jsonLineDelimited: "JSON delimitado por linha (um documento por linha)"
   jsonDetails: "Preserva campos aninhados sem nivelar"
-  utf8Encoding: "Codificação UTF-8"
 
 ro_RO:
   selectedRows: "Sunteți pe cale să exportați {count} rânduri selectate."
@@ -379,7 +365,6 @@ ro_RO:
   delimiterPipe: "Pipe (|) - Mai puțin frecvente în date"
   jsonLineDelimited: "JSON delimitat de linii (un document pe rând)"
   jsonDetails: "Păstrează câmpurile imbricate fără aplatizare"
-  utf8Encoding: "Codificare UTF-8"
 
 ru_RU:
   selectedRows: "Вы собираетесь экспортировать {count} выбранных строк."
@@ -403,7 +388,6 @@ ru_RU:
   delimiterPipe: "Труба (|) — реже встречается в данных."
   jsonLineDelimited: "JSON с разделителями строк (один документ в строке)"
   jsonDetails: "Сохраняет вложенные поля без выравнивания."
-  utf8Encoding: "Кодировка UTF-8"
 
 sk_SK:
   selectedRows: "Chystáte sa exportovať {count} vybratých riadkov."
@@ -427,7 +411,6 @@ sk_SK:
   delimiterPipe: "Pipe (|) – Menej časté v údajoch"
   jsonLineDelimited: "JSON oddelený riadkami (jeden dokument na riadok)"
   jsonDetails: "Zachováva vnorené polia bez sploštenia"
-  utf8Encoding: "Kódovanie UTF-8"
 
 sv_SE:
   selectedRows: "Du håller på att exportera {count} markerade rader."
@@ -451,7 +434,6 @@ sv_SE:
   delimiterPipe: "Pipe (|) - Mindre vanligt i data"
   jsonLineDelimited: "Radavgränsad JSON (ett dokument per rad)"
   jsonDetails: "Bevarar kapslade fält utan att förenklas"
-  utf8Encoding: "UTF-8-kodning"
 
 zh_CN:
   selectedRows: "您即将导出 {count} 选定的行。"
@@ -475,7 +457,6 @@ zh_CN:
   delimiterPipe: "管道 (|) - 在数据中不太常见"
   jsonLineDelimited: "以行分隔的 JSON（每行一个文档）"
   jsonDetails: "保留嵌套字段而不展平"
-  utf8Encoding: "UTF-8 编码"
 
 zh_TW:
   selectedRows: "您即將匯出 {count} 選定的行。"
@@ -499,7 +480,6 @@ zh_TW:
   delimiterPipe: "管道 (|) - 在數據中較不常見"
   jsonLineDelimited: "以行分隔的 JSON（每行一個文件）"
   jsonDetails: "保留嵌套欄位而不展平"
-  utf8Encoding: "UTF-8 編碼"
 
 bg_BG:
   selectedRows: "На път сте да експортирате {count} избрани редове."
@@ -523,7 +503,6 @@ bg_BG:
   delimiterPipe: "Тръбна линия (|) – По-рядко срещана в данните"
   jsonLineDelimited: "Разделен с редове JSON (един документ на ред)"
   jsonDetails: "Запазва вложените полета без сплескване"
-  utf8Encoding: "UTF-8 кодиране"
 
 bn_BD:
   selectedRows: "আপনি {count} নির্বাচিত সারিগুলি রপ্তানি করতে চলেছেন৷"
@@ -547,7 +526,6 @@ bn_BD:
   delimiterPipe: "পাইপ (|) - ডেটাতে কম সাধারণ"
   jsonLineDelimited: "লাইন-ডিলিমিটেড JSON (প্রতি সারিতে একটি নথি)"
   jsonDetails: "সমতল না করে নেস্টেড ক্ষেত্র সংরক্ষণ করে"
-  utf8Encoding: "UTF-8 এনকোডিং"
 
 ca_ES:
   selectedRows: "Esteu a punt d'exportar {count} files seleccionades."
@@ -571,7 +549,6 @@ ca_ES:
   delimiterPipe: "Pipe (|) - Menys comú en dades"
   jsonLineDelimited: "JSON delimitat per línies (un document per fila)"
   jsonDetails: "Conserva els camps imbricats sense aplanar-los"
-  utf8Encoding: "Codificació UTF-8"
 
 cs_CZ:
   selectedRows: "Chystáte se exportovat {count} vybraných řádků."
@@ -595,7 +572,6 @@ cs_CZ:
   delimiterPipe: "Pipe (|) – Méně časté v datech"
   jsonLineDelimited: "JSON oddělený řádky (jeden dokument na řádek)"
   jsonDetails: "Zachovává vnořená pole bez zploštění"
-  utf8Encoding: "Kódování UTF-8"
 
 da_DK:
   selectedRows: "Du er ved at eksportere {count} valgte rækker."
@@ -619,7 +595,6 @@ da_DK:
   delimiterPipe: "Rør (|) - Mindre almindelig i data"
   jsonLineDelimited: "Linjesepareret JSON (et dokument pr. række)"
   jsonDetails: "Bevarer indlejrede felter uden at blive flad"
-  utf8Encoding: "UTF-8-kodning"
 
 fa_IR:
   selectedRows: "شما در شرف صدور {count} ردیف انتخاب شده هستید."
@@ -643,7 +618,6 @@ fa_IR:
   delimiterPipe: "لوله (|) - در داده ها کمتر رایج است"
   jsonLineDelimited: "JSON محدود به خط (یک سند در هر ردیف)"
   jsonDetails: "مزارع تو در تو را بدون مسطح شدن حفظ می کند"
-  utf8Encoding: "رمزگذاری UTF-8"
 
 hi_IN:
   selectedRows: "आप {count} चयनित पंक्तियाँ निर्यात करने वाले हैं।"
@@ -667,7 +641,6 @@ hi_IN:
   delimiterPipe: "पाइप (|) - डेटा में कम आम"
   jsonLineDelimited: "रेखा-सीमांकित JSON (प्रति पंक्ति एक दस्तावेज़)"
   jsonDetails: "घोंसले वाले खेतों को बिना समतल किए सुरक्षित रखता है"
-  utf8Encoding: "UTF-8 एन्कोडिंग"
 
 hr_HR:
   selectedRows: "Spremate se izvesti {count} odabranih redaka."
@@ -691,7 +664,6 @@ hr_HR:
   delimiterPipe: "Cjevčica (|) - Rjeđe u podacima"
   jsonLineDelimited: "JSON razgraničen linijama (jedan dokument po retku)"
   jsonDetails: "Čuva ugniježđena polja bez izravnavanja"
-  utf8Encoding: "UTF-8 kodiranje"
 
 hu_HU:
   selectedRows: "{count} kiválasztott sor exportálására készül."
@@ -715,7 +687,6 @@ hu_HU:
   delimiterPipe: "Cső (|) – Ritkább az adatokban"
   jsonLineDelimited: "Sorokkal elválasztott JSON (soronként egy dokumentum)"
   jsonDetails: "Megőrzi a beágyazott mezőket simítás nélkül"
-  utf8Encoding: "UTF-8 kódolás"
 
 id_ID:
   selectedRows: "Anda akan mengekspor {count} baris yang dipilih."
@@ -739,7 +710,6 @@ id_ID:
   delimiterPipe: "Pipa (|) - Kurang umum dalam data"
   jsonLineDelimited: "JSON yang dibatasi baris (satu dokumen per baris)"
   jsonDetails: "Mempertahankan bidang bersarang tanpa menjadi rata"
-  utf8Encoding: "Pengkodean UTF-8"
 
 ms_MY:
   selectedRows: "Anda akan mengeksport {count} baris yang dipilih."
@@ -763,7 +733,6 @@ ms_MY:
   delimiterPipe: "Paip (|) - Kurang biasa dalam data"
   jsonLineDelimited: "JSON dibatasi baris (satu dokumen setiap baris)"
   jsonDetails: "Memelihara padang bersarang tanpa diratakan"
-  utf8Encoding: "Pengekodan UTF-8"
 
 nb_NO:
   selectedRows: "Du er i ferd med å eksportere {count} valgte rader."
@@ -787,7 +756,6 @@ nb_NO:
   delimiterPipe: "Rør (|) - Mindre vanlig i data"
   jsonLineDelimited: "Linjedelt JSON (ett dokument per rad)"
   jsonDetails: "Bevarer nestede felt uten å flate ut"
-  utf8Encoding: "UTF-8-koding"
 
 sw_KE:
   selectedRows: "Unakaribia kuhamisha {count} safu mlalo zilizochaguliwa."
@@ -811,7 +779,6 @@ sw_KE:
   delimiterPipe: "Bomba (|) - Chini ya kawaida katika data"
   jsonLineDelimited: "JSON iliyotenganishwa na mstari (hati moja kwa kila safu)"
   jsonDetails: "Huhifadhi mashamba yaliyowekwa viota bila kujaa"
-  utf8Encoding: "UTF-8 Usimbaji"
 
 ta_IN:
   selectedRows: "நீங்கள் தேர்ந்தெடுத்த {count} வரிசைகளை ஏற்றுமதி செய்ய உள்ளீர்கள்."
@@ -835,7 +802,6 @@ ta_IN:
   delimiterPipe: "குழாய் (|) - தரவுகளில் குறைவாகவே உள்ளது"
   jsonLineDelimited: "வரியால் பிரிக்கப்பட்ட JSON (ஒரு வரிசைக்கு ஒரு ஆவணம்)"
   jsonDetails: "கூடு கட்டப்பட்ட வயல்களை சமதளமாக்காமல் பாதுகாக்கிறது"
-  utf8Encoding: "UTF-8 குறியாக்கம்"
 
 th_TH:
   selectedRows: "คุณกำลังจะส่งออกแถวที่เลือก {count}"
@@ -859,7 +825,6 @@ th_TH:
   delimiterPipe: "ไปป์ (|) - พบได้น้อยในข้อมูล"
   jsonLineDelimited: "JSON แบบคั่นด้วยบรรทัด (หนึ่งเอกสารต่อแถว)"
   jsonDetails: "รักษาเขตข้อมูลที่ซ้อนกันโดยไม่ทำให้แบน"
-  utf8Encoding: "การเข้ารหัส UTF-8"
 
 tr_TR:
   selectedRows: "Seçilen {count} satırı dışa aktarmak üzeresiniz."
@@ -883,7 +848,6 @@ tr_TR:
   delimiterPipe: "Boru (|) - Verilerde daha az yaygın"
   jsonLineDelimited: "Satırla ayrılmış JSON (satır başına bir belge)"
   jsonDetails: "Yuvalanmış alanları düzleştirmeden korur"
-  utf8Encoding: "UTF-8 Kodlaması"
 
 uk_UA:
   selectedRows: "Ви збираєтеся експортувати {count} вибраних рядків."
@@ -907,7 +871,6 @@ uk_UA:
   delimiterPipe: "Трубна лінія (|) – рідше в даних"
   jsonLineDelimited: "JSON із роздільниками (один документ на рядок)"
   jsonDetails: "Зберігає вкладені поля без зведення"
-  utf8Encoding: "Кодування UTF-8"
 
 ur_PK:
   selectedRows: "آپ {count} منتخب قطاریں برآمد کرنے والے ہیں۔"
@@ -931,7 +894,6 @@ ur_PK:
   delimiterPipe: "پائپ (|) - ڈیٹا میں کم عام"
   jsonLineDelimited: "لائن سے حد بندی JSON (ایک دستاویز فی قطار)"
   jsonDetails: "گھوںسلا کے کھیتوں کو چپٹا کیے بغیر محفوظ کرتا ہے۔"
-  utf8Encoding: "UTF-8 انکوڈنگ"
 
 vi_VN:
   selectedRows: "Bạn sắp xuất {count} hàng đã chọn."
@@ -955,7 +917,6 @@ vi_VN:
   delimiterPipe: "Ống (|) - Ít phổ biến hơn trong dữ liệu"
   jsonLineDelimited: "JSON được phân cách bằng dòng (một tài liệu trên mỗi hàng)"
   jsonDetails: "Bảo tồn các trường lồng nhau mà không làm phẳng"
-  utf8Encoding: "Mã hóa UTF-8"
 
 af_ZA:
   selectedRows: "Jy is op die punt om {count} geselekteerde rye uit te voer."
@@ -979,7 +940,6 @@ af_ZA:
   delimiterPipe: "Pyp (|) - Minder algemeen in data"
   jsonLineDelimited: "Lyn-geskeide JSON (een dokument per ry)"
   jsonDetails: "Behou geneste velde sonder om plat te maak"
-  utf8Encoding: "UTF-8-kodering"
 
 am_ET:
   selectedRows: "{count} የተመረጡ ረድፎችን ወደ ውጭ ሊልኩ ነው።"
@@ -1003,7 +963,6 @@ am_ET:
   delimiterPipe: "ቧንቧ (|) - በመረጃ ውስጥ ብዙም ያልተለመደ"
   jsonLineDelimited: "በመስመር የተገደበ JSON (በአንድ ረድፍ አንድ ሰነድ)"
   jsonDetails: "ያለ ጠፍጣፋ የጎጆ እርሻዎችን ይጠብቃል።"
-  utf8Encoding: "UTF-8 ኢንኮዲንግ"
 
 az_AZ:
   selectedRows: "Siz {count} seçilmiş sətirləri ixrac etmək üzrəsiniz."
@@ -1027,7 +986,6 @@ az_AZ:
   delimiterPipe: "Boru (|) - Məlumatlarda daha az yayılmışdır"
   jsonLineDelimited: "Sətirlə ayrılmış JSON (hər sətirə bir sənəd)"
   jsonDetails: "Yuvalanmış sahələri düzləşdirmədən qoruyur"
-  utf8Encoding: "UTF-8 Kodlaşdırma"
 
 et_EE:
   selectedRows: "Eksportite {count} valitud rida."
@@ -1051,7 +1009,6 @@ et_EE:
   delimiterPipe: "Toru (|) – andmetes vähem levinud"
   jsonLineDelimited: "Readega eraldatud JSON (üks dokument rea kohta)"
   jsonDetails: "Säilitab pesastatud väljad ilma tasandamata"
-  utf8Encoding: "UTF-8 kodeering"
 
 gu_IN:
   selectedRows: "તમે પસંદ કરેલી {count} પંક્તિઓની નિકાસ કરવા જઈ રહ્યાં છો."
@@ -1075,7 +1032,6 @@ gu_IN:
   delimiterPipe: "પાઇપ (|) - ડેટામાં ઓછું સામાન્ય"
   jsonLineDelimited: "રેખા-સીમાંકિત JSON (પંક્તિ દીઠ એક દસ્તાવેજ)"
   jsonDetails: "નેસ્ટેડ ફીલ્ડ્સને સપાટ કર્યા વિના સાચવે છે"
-  utf8Encoding: "UTF-8 એન્કોડિંગ"
 
 ha_NG:
   selectedRows: "Kuna shirin fitarwa {count} zaɓaɓɓun layuka."
@@ -1099,7 +1055,6 @@ ha_NG:
   delimiterPipe: "Bututu (|) - ƙarancin gama gari a cikin bayanai"
   jsonLineDelimited: "JSON-layi mai iyaka (takardu ɗaya a jere)"
   jsonDetails: "Yana adana filayen gida ba tare da lallashi ba"
-  utf8Encoding: "UTF-8 Encoding"
 
 ka_GE:
   selectedRows: "თქვენ აპირებთ {count} არჩეული მწკრივის ექსპორტს."
@@ -1123,7 +1078,6 @@ ka_GE:
   delimiterPipe: "მილები (|) - ნაკლებად გავრცელებულია მონაცემებში"
   jsonLineDelimited: "ხაზებით გამოყოფილი JSON (ერთი დოკუმენტი მწკრივზე)"
   jsonDetails: "ინარჩუნებს ბუდებულ ველებს გაბრტყელების გარეშე"
-  utf8Encoding: "UTF-8 კოდირება"
 
 km_KH:
   selectedRows: "អ្នកហៀបនឹងនាំចេញ {count} ជួរដែលបានជ្រើសរើស។"
@@ -1147,7 +1101,6 @@ km_KH:
   delimiterPipe: "បំពង់ (|) - មិនសូវមាននៅក្នុងទិន្នន័យ"
   jsonLineDelimited: "JSON កំណត់បន្ទាត់ (ឯកសារមួយក្នុងមួយជួរ)"
   jsonDetails: "រក្សា​វាល​ស្រែ​ដែល​មាន​សំបុក​ដោយ​មិន​មាន​សភាព​រាបស្មើ"
-  utf8Encoding: "ការអ៊ិនកូដ UTF-8"
 
 kn_IN:
   selectedRows: "ನೀವು {count} ಆಯ್ಕೆಮಾಡಿದ ಸಾಲುಗಳನ್ನು ರಫ್ತು ಮಾಡಲಿರುವಿರಿ."
@@ -1171,7 +1124,6 @@ kn_IN:
   delimiterPipe: "ಪೈಪ್ (|) - ಡೇಟಾದಲ್ಲಿ ಕಡಿಮೆ ಸಾಮಾನ್ಯವಾಗಿದೆ"
   jsonLineDelimited: "ಲೈನ್-ಡಿಲಿಮಿಟೆಡ್ JSON (ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು ಡಾಕ್ಯುಮೆಂಟ್)"
   jsonDetails: "ಗೂಡಿನ ಜಾಗ ಸಮತಟ್ಟಾಗದೆ ಸಂರಕ್ಷಿಸುತ್ತದೆ"
-  utf8Encoding: "UTF-8 ಎನ್ಕೋಡಿಂಗ್"
 
 lt_LT:
   selectedRows: "Ketinate eksportuoti {count} pasirinktas eilutes."
@@ -1195,7 +1147,6 @@ lt_LT:
   delimiterPipe: "Vamzdis (|) – duomenų rečiau pasitaiko"
   jsonLineDelimited: "Eilutėmis atskirtas JSON (po vieną dokumentą eilutėje)"
   jsonDetails: "Išsaugo įdėtus laukus be išlyginimo"
-  utf8Encoding: "UTF-8 kodavimas"
 
 lv_LV:
   selectedRows: "Jūs gatavojaties eksportēt {count} atlasītās rindas."
@@ -1219,7 +1170,6 @@ lv_LV:
   delimiterPipe: "Caurule (|) — datos retāk sastopama"
   jsonLineDelimited: "Ar rindiņām atdalīts JSON (viens dokuments katrā rindā)"
   jsonDetails: "Saglabā ligzdotos laukus bez saplacināšanas"
-  utf8Encoding: "UTF-8 kodējums"
 
 ml_IN:
   selectedRows: "നിങ്ങൾ തിരഞ്ഞെടുത്ത {count} വരികൾ കയറ്റുമതി ചെയ്യാൻ പോകുകയാണ്."
@@ -1243,7 +1193,6 @@ ml_IN:
   delimiterPipe: "പൈപ്പ് (|) - ഡാറ്റയിൽ കുറവാണ്"
   jsonLineDelimited: "ലൈൻ-ഡിലിമിറ്റഡ് JSON (ഒരു വരിയിൽ ഒരു പ്രമാണം)"
   jsonDetails: "കൂടുണ്ടാക്കിയ വയലുകൾ പരന്നുപോകാതെ സംരക്ഷിക്കുന്നു"
-  utf8Encoding: "UTF-8 എൻകോഡിംഗ്"
 
 mr_IN:
   selectedRows: "तुम्ही निवडलेल्या {count} पंक्ती निर्यात करणार आहात."
@@ -1267,7 +1216,6 @@ mr_IN:
   delimiterPipe: "पाईप (|) - डेटामध्ये कमी सामान्य"
   jsonLineDelimited: "लाइन-डिलिमिटेड JSON (प्रति पंक्ती एक दस्तऐवज)"
   jsonDetails: "नेस्टेड फील्ड सपाट न करता जतन करते"
-  utf8Encoding: "UTF-8 एन्कोडिंग"
 
 ne_NP:
   selectedRows: "तपाईं {count} चयन गरिएका पङ्क्तिहरू निर्यात गर्न लाग्दै हुनुहुन्छ।"
@@ -1291,7 +1239,6 @@ ne_NP:
   delimiterPipe: "पाइप (|) - डाटामा कम सामान्य"
   jsonLineDelimited: "रेखा-सीमित JSON (प्रति पङ्क्ति एक कागजात)"
   jsonDetails: "नेस्टेड फिल्डहरू सपाट नगरी जोगाउँछ"
-  utf8Encoding: "UTF-8 इन्कोडिङ"
 
 pa_IN:
   selectedRows: "ਤੁਸੀਂ {count} ਚੁਣੀਆਂ ਕਤਾਰਾਂ ਨੂੰ ਨਿਰਯਾਤ ਕਰਨ ਜਾ ਰਹੇ ਹੋ।"
@@ -1315,7 +1262,6 @@ pa_IN:
   delimiterPipe: "ਪਾਈਪ (|) - ਡੇਟਾ ਵਿੱਚ ਘੱਟ ਆਮ"
   jsonLineDelimited: "ਲਾਈਨ-ਸੀਮਤ JSON (ਪ੍ਰਤੀ ਕਤਾਰ ਇੱਕ ਦਸਤਾਵੇਜ਼)"
   jsonDetails: "ਨੇਸਟਡ ਫੀਲਡਾਂ ਨੂੰ ਫਲੈਟ ਕੀਤੇ ਬਿਨਾਂ ਸੁਰੱਖਿਅਤ ਰੱਖਿਆ"
-  utf8Encoding: "UTF-8 ਏਨਕੋਡਿੰਗ"
 
 si_LK:
   selectedRows: "ඔබ තෝරාගත් පේළි {count} නිර්යාත කිරීමට සූදානම් වේ."
@@ -1339,7 +1285,6 @@ si_LK:
   delimiterPipe: "පයිප්ප (|) - දත්තවල අඩු පොදු"
   jsonLineDelimited: "රේඛා-සීමිත JSON (පේළියකට එක් ලේඛනයක්)"
   jsonDetails: "කැදලි කෙත්වතු සමතලා නොකර සංරක්ෂණය කරයි"
-  utf8Encoding: "UTF-8 කේතනය කිරීම"
 
 sl_SI:
   selectedRows: "Izvozili boste {count} izbranih vrstic."
@@ -1363,7 +1308,6 @@ sl_SI:
   delimiterPipe: "Cev (|) – Manj pogosto v podatkih"
   jsonLineDelimited: "Z vrsticami ločen JSON (en dokument na vrstico)"
   jsonDetails: "Ohranja ugnezdena polja brez sploščitve"
-  utf8Encoding: "Kodiranje UTF-8"
 
 sr_RS:
   selectedRows: "Спремате се да извезете {count} изабране редове."
@@ -1387,7 +1331,6 @@ sr_RS:
   delimiterPipe: "Пипе (|) - Мање уобичајено у подацима"
   jsonLineDelimited: "ЈСОН раздвојен редовима (један документ по реду)"
   jsonDetails: "Чува угнежђена поља без спљоштења"
-  utf8Encoding: "УТФ-8 кодирање"
 
 te_IN:
   selectedRows: "మీరు ఎంచుకున్న {count} అడ్డు వరుసలను ఎగుమతి చేయబోతున్నారు."
@@ -1411,7 +1354,6 @@ te_IN:
   delimiterPipe: "పైప్ (|) - డేటాలో తక్కువ సాధారణం"
   jsonLineDelimited: "లైన్-డిలిమిటెడ్ JSON (ఒక అడ్డు వరుసకు ఒక పత్రం)"
   jsonDetails: "గూడు పొలాలను చదును చేయకుండా కాపాడుతుంది"
-  utf8Encoding: "UTF-8 ఎన్‌కోడింగ్"
 
 tl_PH:
   selectedRows: "Ie-export mo na ang {count} mga napiling row."
@@ -1435,7 +1377,6 @@ tl_PH:
   delimiterPipe: "Pipe (|) - Hindi gaanong karaniwan sa data"
   jsonLineDelimited: "Line-delimited JSON (isang dokumento bawat row)"
   jsonDetails: "Pinapanatili ang mga nested field nang walang pag-flatte"
-  utf8Encoding: "UTF-8 Encoding"
 
 uz_UZ:
   selectedRows: "Siz {count} tanlangan qatorlarni eksport qilmoqchisiz."
@@ -1459,7 +1400,6 @@ uz_UZ:
   delimiterPipe: "Quvur (|) - Ma'lumotlarda kamroq tarqalgan"
   jsonLineDelimited: "Satr bilan ajratilgan JSON (har bir satrda bitta hujjat)"
   jsonDetails: "Uyalangan maydonlarni tekislashsiz saqlaydi"
-  utf8Encoding: "UTF-8 kodlash"
 
 yo_NG:
   selectedRows: "O ti fẹrẹ ṣe okeere {count} awọn ori ila ti o yan."
@@ -1483,4 +1423,3 @@ yo_NG:
   delimiterPipe: "Paipu (|) - Kere wọpọ ni data"
   jsonLineDelimited: "JSON laini-ipin (ipamọ kan fun ila kan)"
   jsonDetails: "Ṣe itọju awọn aaye itẹle laisi fifẹ"
-  utf8Encoding: "UTF-8 kooduopo"
