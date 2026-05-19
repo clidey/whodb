@@ -370,14 +370,13 @@ export const StorageUnitPage: FC = () => {
         setStorageUnitColumnsByName(current => ({ ...current, [unitName]: columns }));
     }, []);
 
-    // Refetch storage units when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
     const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetch();
         }
-    }, [currentProfileId, currentDatabase, refetch]);
+    }, [currentProfileId, currentDatabase, parentRefKey, refetch]);
 
     useEffect(() => {
         setStorageUnitColumnsByName({});
