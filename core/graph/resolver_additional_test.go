@@ -164,6 +164,24 @@ func TestQueryRowValidatesPaginationAndEnrichesColumns(t *testing.T) {
 	})
 }
 
+func TestSourceQueriesRejectUnsupportedSourceObjectActions(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	setEngineMock(t, mock)
+	ctx := testSourceContext("Postgres", map[string]string{"Database": "app"})
+	schemaRef := testSourceRef(model.SourceObjectKindSchema, "app", "public")
+	tableRef := testSourceRef(model.SourceObjectKindTable, "app", "public", "orders")
+
+	if _, err := (&Resolver{}).Query().SourceRows(ctx, schemaRef, nil, nil, 5, 0); err == nil || !strings.Contains(err.Error(), "viewing rows is not supported") {
+		t.Fatalf("expected row-view action rejection, got %v", err)
+	}
+	if _, err := (&Resolver{}).Query().SourceContent(ctx, tableRef); err == nil || !strings.Contains(err.Error(), "viewing content is not supported") {
+		t.Fatalf("expected content-view action rejection, got %v", err)
+	}
+	if _, err := (&Resolver{}).Query().SourceColumns(ctx, schemaRef); err == nil || !strings.Contains(err.Error(), "inspecting objects is not supported") {
+		t.Fatalf("expected inspect action rejection, got %v", err)
+	}
+}
+
 func TestQueryColumnsBatchSkipsFailedTables(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
 	mock.StorageUnitExistsFunc = func(*engine.PluginConfig, string, string) (bool, error) { return true, nil }

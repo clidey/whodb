@@ -392,6 +392,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     const isMockDataSupported =
         sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.GenerateMockData) && isMockDataGenerationAllowed;
     const isImportSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ImportData);
+    const isExportSupported = rawQuery != null || sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.ViewRows);
     const isRowUpdateSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.UpdateData);
     const isRowDeleteSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.DeleteData);
     const { data: maxRowData } = useQuery(MockDataMaxRowCountDocument);
@@ -486,10 +487,13 @@ export const StorageUnitTable: FC<TableProps> = ({
     }, [hasSelectedRows, checked, rows, columns, rawQuery]);
 
     const openExport = useCallback((format?: 'csv' | 'excel' | 'ndjson', exportAll?: boolean) => {
+        if (!isExportSupported) {
+            return;
+        }
         setPreselectedFormat(format);
         setForceExportAll(exportAll ?? false);
         setShowExportConfirm(true);
-    }, []);
+    }, [isExportSupported]);
 
     // Delete logic, adapted from explore-storage-unit.tsx
     const doDeleteRows = useCallback(async (indexesToDelete: number[]) => {
@@ -941,8 +945,10 @@ export const StorageUnitTable: FC<TableProps> = ({
 
             // Mod+Shift combos (table-level: available with zero rows)
             if (matchesShortcut(event, SHORTCUTS.exportData)) {
-                event.preventDefault();
-                openExport();
+                if (isExportSupported) {
+                    event.preventDefault();
+                    openExport();
+                }
                 return;
             }
             if (matchesShortcut(event, SHORTCUTS.mockData)) {
@@ -1093,7 +1099,7 @@ export const StorageUnitTable: FC<TableProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [enableKeyboardShortcuts, onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, canEditRows, canDeleteRows, onPageChange, currentPage, totalPages, openExport]);
+    }, [enableKeyboardShortcuts, onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, canEditRows, canDeleteRows, onPageChange, currentPage, totalPages, openExport, isExportSupported]);
 
 
 
@@ -1336,48 +1342,50 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <ContextMenuShortcut>Enter</ContextMenuShortcut>
                     </ContextMenuItem>
                 )}
-                <ContextMenuSub>
-                    <ContextMenuSubTrigger>
-                        <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                        {t('export')}
-                    </ContextMenuSubTrigger>
-                    <ContextMenuSubContent
-                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                    >
-                        <ContextMenuItem
-                            onSelect={() => openExport('csv', true)}
+                {isExportSupported && (
+                    <ContextMenuSub>
+                        <ContextMenuSubTrigger>
+                            <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                            {t('export')}
+                        </ContextMenuSubTrigger>
+                        <ContextMenuSubContent
+                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                         >
-                            <DocumentIcon className="w-4 h-4" />
-                            {t('exportAllAsCsv')}
-                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
-                        </ContextMenuItem>
-                        <ContextMenuItem
-                            onSelect={() => openExport('excel', true)}
-                        >
-                            <DocumentIcon className="w-4 h-4" />
-                            {t('exportAllAsExcel')}
-                        </ContextMenuItem>
-                        {!disableEdit && (
-                            <>
-                                <ContextMenuSeparator />
-                                <ContextMenuItem
-                                    onSelect={() => openExport('csv')}
-                                    disabled={checked.length === 0}
-                                >
-                                    <DocumentIcon className="w-4 h-4" />
-                                    {t('exportSelectedAsCsv')}
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                    onSelect={() => openExport('excel')}
-                                    disabled={checked.length === 0}
-                                >
-                                    <DocumentIcon className="w-4 h-4" />
-                                    {t('exportSelectedAsExcel')}
-                                </ContextMenuItem>
-                            </>
-                        )}
-                    </ContextMenuSubContent>
-                </ContextMenuSub>
+                            <ContextMenuItem
+                                onSelect={() => openExport('csv', true)}
+                            >
+                                <DocumentIcon className="w-4 h-4" />
+                                {t('exportAllAsCsv')}
+                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                                onSelect={() => openExport('excel', true)}
+                            >
+                                <DocumentIcon className="w-4 h-4" />
+                                {t('exportAllAsExcel')}
+                            </ContextMenuItem>
+                            {!disableEdit && (
+                                <>
+                                    <ContextMenuSeparator />
+                                    <ContextMenuItem
+                                        onSelect={() => openExport('csv')}
+                                        disabled={checked.length === 0}
+                                    >
+                                        <DocumentIcon className="w-4 h-4" />
+                                        {t('exportSelectedAsCsv')}
+                                    </ContextMenuItem>
+                                    <ContextMenuItem
+                                        onSelect={() => openExport('excel')}
+                                        disabled={checked.length === 0}
+                                    >
+                                        <DocumentIcon className="w-4 h-4" />
+                                        {t('exportSelectedAsExcel')}
+                                    </ContextMenuItem>
+                                </>
+                            )}
+                        </ContextMenuSubContent>
+                    </ContextMenuSub>
+                )}
                 {!limitContextMenu && isMockDataSupported && (
                     <ContextMenuItem
                         onSelect={() => setShowMockDataSheet(true)}
@@ -1403,7 +1411,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
             </ContextMenuContent>
         </ContextMenu>
-    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported, openExport, canEditRows, canDeleteRows]);
+    }, [checked, handleCellClick, handleEdit, handleSelectRow, handleDeleteRow, paginatedRows, disableEdit, limitContextMenu, onRefresh, t, contextMenuCellIdx, columns, columnIsForeignKey, columnIsPrimary, onEntitySearch, deleting, focusedRowIndex, isMockDataSupported, openExport, canEditRows, canDeleteRows, isExportSupported]);
 
     return (
         <div ref={tableRef} className="flex min-w-0 w-full">
@@ -1494,50 +1502,52 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                     )}
-                                    {!limitContextMenu && isMockDataSupported && <ContextMenuSeparator />}
-                                    <ContextMenuSub>
-                                        <ContextMenuSubTrigger>
-                                            <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
-                                            {t('exportData')}
-                                        </ContextMenuSubTrigger>
-                                        <ContextMenuSubContent
-                                            collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                                        >
-                                            <ContextMenuItem
-                                                onSelect={() => openExport('csv', true)}
+                                    {!limitContextMenu && isMockDataSupported && isExportSupported && <ContextMenuSeparator />}
+                                    {isExportSupported && (
+                                        <ContextMenuSub>
+                                            <ContextMenuSubTrigger>
+                                                <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                                {t('exportData')}
+                                            </ContextMenuSubTrigger>
+                                            <ContextMenuSubContent
+                                                collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                             >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                {t('exportAllAsCsv')}
-                                                <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
-                                            </ContextMenuItem>
-                                            <ContextMenuItem
-                                                onSelect={() => openExport('excel', true)}
-                                            >
-                                                <DocumentIcon className="w-4 h-4" />
-                                                {t('exportAllAsExcel')}
-                                            </ContextMenuItem>
-                                            {!disableEdit && (
-                                                <>
-                                                    <ContextMenuSeparator />
-                                                    <ContextMenuItem
-                                                        onSelect={() => openExport('csv')}
-                                                        disabled={checked.length === 0}
-                                                    >
-                                                        <DocumentIcon className="w-4 h-4" />
-                                                        {t('exportSelectedAsCsv')}
-                                                    </ContextMenuItem>
-                                                    <ContextMenuItem
-                                                        onSelect={() => openExport('excel')}
-                                                        disabled={checked.length === 0}
-                                                    >
-                                                        <DocumentIcon className="w-4 h-4" />
-                                                        {t('exportSelectedAsExcel')}
-                                                    </ContextMenuItem>
-                                                </>
-                                            )}
-                                        </ContextMenuSubContent>
-                                    </ContextMenuSub>
-                                    <ContextMenuSeparator />
+                                                <ContextMenuItem
+                                                    onSelect={() => openExport('csv', true)}
+                                                >
+                                                    <DocumentIcon className="w-4 h-4" />
+                                                    {t('exportAllAsCsv')}
+                                                    <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
+                                                </ContextMenuItem>
+                                                <ContextMenuItem
+                                                    onSelect={() => openExport('excel', true)}
+                                                >
+                                                    <DocumentIcon className="w-4 h-4" />
+                                                    {t('exportAllAsExcel')}
+                                                </ContextMenuItem>
+                                                {!disableEdit && (
+                                                    <>
+                                                        <ContextMenuSeparator />
+                                                        <ContextMenuItem
+                                                            onSelect={() => openExport('csv')}
+                                                            disabled={checked.length === 0}
+                                                        >
+                                                            <DocumentIcon className="w-4 h-4" />
+                                                            {t('exportSelectedAsCsv')}
+                                                        </ContextMenuItem>
+                                                        <ContextMenuItem
+                                                            onSelect={() => openExport('excel')}
+                                                            disabled={checked.length === 0}
+                                                        >
+                                                            <DocumentIcon className="w-4 h-4" />
+                                                            {t('exportSelectedAsExcel')}
+                                                        </ContextMenuItem>
+                                                    </>
+                                                )}
+                                            </ContextMenuSubContent>
+                                        </ContextMenuSub>
+                                    )}
+                                    {(isExportSupported || (!limitContextMenu && isMockDataSupported)) && <ContextMenuSeparator />}
                                     {!limitContextMenu && (
                                         <ContextMenuItem onSelect={() => onRefresh?.()}>
                                             <CircleStackIcon className="w-4 h-4" />
@@ -1591,29 +1601,31 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 {t('mockData')}
                                 <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
                             </ContextMenuItem>
-                            <ContextMenuSub>
-                                <ContextMenuSubTrigger>
-                                    <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
-                                    {t('export')}
-                                </ContextMenuSubTrigger>
-                                <ContextMenuSubContent
-                                    collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                                >
-                                    <ContextMenuItem
-                                        onSelect={() => openExport('csv', true)}
+                            {isExportSupported && (
+                                <ContextMenuSub>
+                                    <ContextMenuSubTrigger>
+                                        <ArrowDownCircleIcon className="w-4 h-4 mr-2" />
+                                        {t('export')}
+                                    </ContextMenuSubTrigger>
+                                    <ContextMenuSubContent
+                                        collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                     >
-                                        <DocumentIcon className="w-4 h-4" />
-                                        {t('exportAllAsCsv')}
-                                        <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
-                                    </ContextMenuItem>
-                                    <ContextMenuItem
-                                        onSelect={() => openExport('excel', true)}
-                                    >
-                                        <DocumentIcon className="w-4 h-4" />
-                                        {t('exportAllAsExcel')}
-                                    </ContextMenuItem>
-                                </ContextMenuSubContent>
-                            </ContextMenuSub>
+                                        <ContextMenuItem
+                                            onSelect={() => openExport('csv', true)}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            {t('exportAllAsCsv')}
+                                            <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
+                                        </ContextMenuItem>
+                                        <ContextMenuItem
+                                            onSelect={() => openExport('excel', true)}
+                                        >
+                                            <DocumentIcon className="w-4 h-4" />
+                                            {t('exportAllAsExcel')}
+                                        </ContextMenuItem>
+                                    </ContextMenuSubContent>
+                                </ContextMenuSub>
+                            )}
                         </ContextMenuContent>
                     </ContextMenu>
                 )}
@@ -1681,15 +1693,17 @@ export const StorageUnitTable: FC<TableProps> = ({
                             {t('importAction')}
                         </Button>
                     )}
-                    <Button
-                        variant="secondary"
-                        onClick={() => openExport()}
-                        className="flex gap-sm"
-                        data-testid="export-all-button"
-                    >
-                        <ArrowDownCircleIcon className="w-4 h-4" />
-                        {hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}
-                    </Button>
+                    {isExportSupported && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => openExport()}
+                            className="flex gap-sm"
+                            data-testid="export-all-button"
+                        >
+                            <ArrowDownCircleIcon className="w-4 h-4" />
+                            {hasSelectedRows ? t('exportSelected', { count: checked.length }) : t('exportAll')}
+                        </Button>
+                    )}
                 </div>
                 <Sheet open={editIndex !== null} onOpenChange={open => {
                     if (!open) {
@@ -1898,21 +1912,23 @@ export const StorageUnitTable: FC<TableProps> = ({
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
-            <Suspense fallback={<Spinner />}>
-                <DynamicExport
-                    open={showExportConfirm}
-                    onOpenChange={setShowExportConfirm}
-                    storageUnit={rawQuery ? 'query_export' : (storageUnit || '')}
-                    objectRef={objectRef}
-                    hasSelectedRows={hasSelectedRows}
-                    selectedRowsData={selectedRowsData}
-                    checkedRowsCount={checked.length}
-                    databaseType={databaseType}
-                    rawQuery={rawQuery}
-                    preselectedFormat={preselectedFormat}
-                    forceExportAll={forceExportAll}
-                />
-            </Suspense>
+            {isExportSupported && (
+                <Suspense fallback={<Spinner />}>
+                    <DynamicExport
+                        open={showExportConfirm}
+                        onOpenChange={setShowExportConfirm}
+                        storageUnit={rawQuery ? 'query_export' : (storageUnit || '')}
+                        objectRef={objectRef}
+                        hasSelectedRows={hasSelectedRows}
+                        selectedRowsData={selectedRowsData}
+                        checkedRowsCount={checked.length}
+                        databaseType={databaseType}
+                        rawQuery={rawQuery}
+                        preselectedFormat={preselectedFormat}
+                        forceExportAll={forceExportAll}
+                    />
+                </Suspense>
+            )}
             {isImportSupported && allowImport && (
                 <ImportData
                     open={showImport}

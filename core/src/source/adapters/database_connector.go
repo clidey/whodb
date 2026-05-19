@@ -998,33 +998,15 @@ func (s *DatabaseSession) ensureObjectAction(kind source.ObjectKind, action sour
 }
 
 func (s *DatabaseSession) ensureCreateChildSupported(parent *source.ObjectRef) error {
-	if parent == nil {
-		return source.ValidateRootActionSupported(s.spec, source.ActionCreateChild)
-	}
-
-	return s.ensureObjectAction(parent.Kind, source.ActionCreateChild)
+	return source.ValidateCreateChildSupported(s.spec, parent)
 }
 
 func (s *DatabaseSession) ensureBrowseSupported(parent *source.ObjectRef) error {
-	if parent == nil {
-		return source.ValidateRootActionSupported(s.spec, source.ActionBrowse)
-	}
-
-	return s.ensureObjectAction(parent.Kind, source.ActionBrowse)
+	return source.ValidateBrowseSupported(s.spec, parent)
 }
 
 func (s *DatabaseSession) ensureGraphSupported(ref *source.ObjectRef) error {
-	if err := s.ensureSurface(source.SurfaceGraph); err != nil {
-		return err
-	}
-	if ref == nil {
-		if s.spec.Contract.GraphScopeKind == nil {
-			return source.ValidateRootActionSupported(s.spec, source.ActionViewGraph)
-		}
-		return nil
-	}
-
-	return s.ensureObjectAction(ref.Kind, source.ActionViewGraph)
+	return source.ValidateGraphSupported(s.spec, ref)
 }
 
 func queryLanguagesForSpec(spec source.TypeSpec) []string {

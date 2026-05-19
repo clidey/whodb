@@ -40,7 +40,7 @@ const (
 	AuthKey_Source AuthKey = "SourceCredentials"
 )
 
-const maxRequestBodySize = 1024 * 1024       // Limit request body size to 1MB
+const maxRequestBodySize = 1024 * 1024      // Limit request body size to 1MB
 const maxUploadBodySize = 250 * 1024 * 1024 // Limit multipart upload body size to 250MB
 
 // GetSourceCredentials returns the source-first credentials from the current request context.
@@ -273,7 +273,7 @@ func isAllowed(r *http.Request, body []byte) bool {
 	}
 
 	switch query.OperationName {
-	case "LoginSource",
+	case "LoginSource", "TestSourceConnection",
 		"LoginWithSourceProfile", "SourceProfiles",
 		"GetHealth", "SettingsConfig", "GetVersion",
 		"GetAWSProviders", "GetCloudProviders", "GetCloudProvider",

@@ -142,6 +142,9 @@ func TestMutationsRejectUnsupportedSourceObjectActions(t *testing.T) {
 	}); err == nil || !strings.Contains(err.Error(), "generating mock data is not supported") {
 		t.Fatalf("expected mock-data action rejection, got %v", err)
 	}
+	if _, err := mut.CreateSourceObject(ctx, &ref, "child", nil); err == nil || !strings.Contains(err.Error(), "creating child objects is not supported") {
+		t.Fatalf("expected create-child action rejection, got %v", err)
+	}
 }
 
 func TestQueryMockDataMaxRowCount(t *testing.T) {

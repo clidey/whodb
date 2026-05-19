@@ -144,6 +144,42 @@ func ValidateScriptExecutionSupported(spec TypeSpec) error {
 	return nil
 }
 
+// ValidateBrowseSupported returns an error when the source root or parent
+// object cannot be browsed according to the source contract.
+func ValidateBrowseSupported(spec TypeSpec, parent *ObjectRef) error {
+	if parent == nil {
+		return ValidateRootActionSupported(spec, ActionBrowse)
+	}
+
+	return ValidateObjectActionSupported(spec, parent.Kind, ActionBrowse)
+}
+
+// ValidateCreateChildSupported returns an error when the source root or parent
+// object cannot create child objects according to the source contract.
+func ValidateCreateChildSupported(spec TypeSpec, parent *ObjectRef) error {
+	if parent == nil {
+		return ValidateRootActionSupported(spec, ActionCreateChild)
+	}
+
+	return ValidateObjectActionSupported(spec, parent.Kind, ActionCreateChild)
+}
+
+// ValidateGraphSupported returns an error when graph data cannot be viewed for
+// the source root or object according to the source contract.
+func ValidateGraphSupported(spec TypeSpec, ref *ObjectRef) error {
+	if err := ValidateSurfaceSupported(spec, SurfaceGraph); err != nil {
+		return err
+	}
+	if ref == nil {
+		if spec.Contract.GraphScopeKind == nil {
+			return ValidateRootActionSupported(spec, ActionViewGraph)
+		}
+		return nil
+	}
+
+	return ValidateObjectActionSupported(spec, ref.Kind, ActionViewGraph)
+}
+
 // ValidateMutationContract reports source mutation inconsistencies that would
 // make backend write enforcement and frontend controls disagree.
 func ValidateMutationContract(spec TypeSpec) error {

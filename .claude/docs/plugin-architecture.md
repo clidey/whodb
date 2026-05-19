@@ -171,11 +171,13 @@ The source contract is authoritative: `SourceContract.Surfaces`, `RootActions`,
 to block unsupported operations and by the frontend to show or hide source
 surfaces and object controls. Do not add source-name conditionals for behavior
 that can be represented in the contract.
-Mutating source data must be declared with the matching object action:
-`InsertData`, `UpdateData`, `DeleteData`, `ImportData`, or
-`GenerateMockData`. Plain English: the source contract is the write policy;
-WhoDB asks the source which writes are allowed for this object, then both
-backend resolvers and frontend controls use that same answer.
+Reading or changing source data must be declared with the matching object
+action: `ViewRows` for row reads and exports, `ViewContent` for content reads
+and downloads, `CreateChild` for child creation, and `InsertData`, `UpdateData`,
+`DeleteData`, `ImportData`, or `GenerateMockData` for writes. Plain English:
+the source contract is the operation policy; WhoDB asks the source what this
+object can do, then both backend resolvers and frontend controls use that same
+answer.
 
 Frontend and CLI connection/presentation behavior also comes from the source
 model now. Use `SourceType.Traits` for things like file-vs-network transport,
