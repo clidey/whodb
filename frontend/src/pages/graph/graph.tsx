@@ -169,13 +169,14 @@ export const GraphPage: FC = () => {
 
     const [fetchColumnsBatch] = useLazyQuery(GetColumnsBatchDocument);
     const graphScopeRef = useMemo(() => buildSourceScopeRef(item, current, schema), [current, item, schema]);
-    const graphQueryOptions = current
-        ? {
+    const shouldSkipGraph = !current || !item?.contract || (item.contract.GraphScopeKind != null && graphScopeRef == null);
+    const graphQueryOptions = shouldSkipGraph
+        ? skipToken
+        : {
             variables: {
                 ref: graphScopeRef,
             },
-        }
-        : skipToken;
+        };
 
     const {
         data: graphQueryData,
@@ -198,12 +199,19 @@ export const GraphPage: FC = () => {
         setLoadingColumns({});
     }, [currentProfileId, currentDatabase, schema]);
 
-    // Refetch when the connection context changes (profile switch or database switch).
+    // Refetch when the user switches profile or database while already on the graph page.
+    // The initial fetch is handled by useQuery's variables changing.
+    const prevProfileRef = useRef(currentProfileId);
+    const prevDatabaseRef = useRef(currentDatabase);
     useEffect(() => {
-        if (currentProfileId) {
+        const profileChanged = prevProfileRef.current !== currentProfileId;
+        const databaseChanged = prevDatabaseRef.current !== currentDatabase;
+        prevProfileRef.current = currentProfileId;
+        prevDatabaseRef.current = currentDatabase;
+        if ((profileChanged || databaseChanged) && !shouldSkipGraph) {
             refetchGraph();
         }
-    }, [currentProfileId, currentDatabase, refetchGraph]);
+    }, [currentProfileId, currentDatabase, shouldSkipGraph, refetchGraph]);
 
     // Default selection logic: auto-select up to 10 units
     useEffect(() => {
@@ -216,10 +224,15 @@ export const GraphPage: FC = () => {
         });
     }, [storageUnits]);
 
+    const tableColumnsRef = useRef(tableColumns);
+    tableColumnsRef.current = tableColumns;
+    const loadingColumnsRef = useRef(loadingColumns);
+    loadingColumnsRef.current = loadingColumns;
+
     const loadColumnsForRefs = useCallback((refs: GraphStorageUnit["Ref"][]) => {
         const refsToFetch = refs.filter(ref => {
             const unitName = getObjectNameFromRef(ref);
-            return !(unitName in tableColumns) && !loadingColumns[unitName];
+            return !(unitName in tableColumnsRef.current) && !loadingColumnsRef.current[unitName];
         });
         if (refsToFetch.length === 0) {
             return;
@@ -258,7 +271,7 @@ export const GraphPage: FC = () => {
                 return next;
             });
         });
-    }, [fetchColumnsBatch, loadingColumns, tableColumns]);
+    }, [fetchColumnsBatch]);
 
     useEffect(() => {
         const refs = storageUnits
@@ -392,8 +405,8 @@ export const GraphPage: FC = () => {
                     const newEdge: Edge = {
                         ...createEdge(source, target),
                         id: edgeId,
-                        sourceHandle,
-                        targetHandle,
+                        ...(sourceHandle != null && { sourceHandle }),
+                        ...(targetHandle != null && { targetHandle }),
                     };
 
                     newEdgesSet.add(edgeId);
