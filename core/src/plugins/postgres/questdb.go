@@ -224,23 +224,28 @@ func (p *QuestDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLSt
 }
 
 // GetCreateTableQuery generates QuestDB-compatible CREATE TABLE DDL.
-// QuestDB does not support GENERATED ALWAYS AS IDENTITY, UNIQUE, CHECK,
-// FOREIGN KEY, or DEFAULT clauses.
+// QuestDB only supports bare column definitions (name + type). It does not
+// enforce PRIMARY KEY, NOT NULL, UNIQUE, CHECK, FK, DEFAULT, or IDENTITY.
 func (p *QuestDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
 	builder := gorm_plugin.NewSQLBuilder(db, p)
 
-	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
-		extra := engine.NormalizeCreationExtra(column.Extra)
-		def.Primary = extra["primary"] == "true"
-		def.Unique = false
-		def.Default = nil
-		def.CheckValues = nil
-		def.CheckMin = nil
-		def.CheckMax = nil
-		def.ReferencesTable = ""
-		def.ReferencesColumn = ""
+	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, _ engine.Record) gorm_plugin.ColumnDef {
 		return def
 	})
+
+	for i := range columnDefs {
+		columnDefs[i].Primary = false
+		columnDefs[i].NotNull = false
+		columnDefs[i].Nullable = true
+		columnDefs[i].Unique = false
+		columnDefs[i].Default = nil
+		columnDefs[i].CheckValues = nil
+		columnDefs[i].CheckMin = nil
+		columnDefs[i].CheckMax = nil
+		columnDefs[i].ReferencesTable = ""
+		columnDefs[i].ReferencesColumn = ""
+		columnDefs[i].Extra = ""
+	}
 
 	return builder.CreateTableQuery(schema, storageUnit, columnDefs)
 }
