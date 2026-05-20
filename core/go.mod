@@ -3,7 +3,7 @@ module github.com/clidey/whodb/core
 go 1.26.1
 
 require (
-	cloud.google.com/go/alloydb v1.24.0
+	cloud.google.com/go/alloydb v1.26.0
 	cloud.google.com/go/memcache v1.16.0
 	cloud.google.com/go/redis v1.22.0
 	github.com/99designs/gqlgen v0.17.90
