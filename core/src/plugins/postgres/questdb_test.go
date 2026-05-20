@@ -71,8 +71,8 @@ func TestQuestDBOverridesPostgresCatalogQueries(t *testing.T) {
 	}
 
 	pkQuery := plugin.GetPrimaryKeyColQuery()
-	if !strings.Contains(pkQuery, "($1 = '' OR n.nspname = $1)") {
-		t.Fatalf("expected QuestDB primary-key query to tolerate empty schema, got:\n%s", pkQuery)
+	if pkQuery != "" {
+		t.Fatalf("expected QuestDB primary-key query to be empty (QuestDB has no PKs), got:\n%s", pkQuery)
 	}
 }
 

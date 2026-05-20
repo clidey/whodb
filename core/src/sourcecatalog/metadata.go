@@ -191,7 +191,7 @@ func registerSessionMetadata() {
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_QuestDB),
-		relationalObjectCreationMetadata(specs.QuestDBTypeDefinitions, ""),
+		questDBObjectCreationMetadata(specs.QuestDBTypeDefinitions),
 	)
 	RegisterObjectCreationMetadata(
 		string(engine.DatabaseType_ElasticSearch),
@@ -443,6 +443,18 @@ func sqliteObjectCreationMetadata(typeDefinitions []source.TypeDefinition) sourc
 	metadata := relationalObjectCreationMetadata(typeDefinitions, "")
 	metadata.ColumnCapabilities.Identity = false
 	return metadata
+}
+
+func questDBObjectCreationMetadata(typeDefinitions []source.TypeDefinition) source.ObjectCreationMetadata {
+	return source.ObjectCreationMetadata{
+		Supported:       true,
+		ObjectKind:      source.ObjectKindTable,
+		RequiresColumns: true,
+		TypeDefinitions: slices.Clone(typeDefinitions),
+		ColumnCapabilities: source.ColumnCreationCapabilities{
+			Types: true,
+		},
+	}
 }
 
 func sqlColumnCreationLabels(identityLabel string) source.ColumnCreationLabels {

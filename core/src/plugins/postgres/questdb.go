@@ -169,17 +169,10 @@ func (p *QuestDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	})
 }
 
-// GetPrimaryKeyColQuery returns a primary key query that tolerates schema-less
-// QuestDB source references.
+// GetPrimaryKeyColQuery returns an empty string because QuestDB does not
+// support primary key constraints.
 func (p *QuestDBPlugin) GetPrimaryKeyColQuery() string {
-	return `
-		SELECT a.attname
-		FROM pg_index i
-		JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-		JOIN pg_class c ON c.oid = i.indrelid
-		JOIN pg_namespace n ON n.oid = c.relnamespace
-		WHERE ($1 = '' OR n.nspname = $1) AND c.relname = $2 AND i.indisprimary;
-	`
+	return ""
 }
 
 // GetForeignKeyRelationships returns an empty relationship set because the
