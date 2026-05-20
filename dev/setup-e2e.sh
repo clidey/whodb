@@ -81,7 +81,7 @@ get_db_port() {
         mysql)       echo "3306" ;;
         mysql8)      echo "3308" ;;
         mariadb)     echo "3307" ;;
-        tidb)        echo "4000" ;;
+        tidb)        echo "4002" ;;
         mongodb)     echo "27017" ;;
         redis)       echo "6379" ;;
         cockroachdb) echo "26257" ;;
@@ -410,7 +410,7 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         PID_MYSQL8=$!
         wait_for_port "MariaDB" 3307 90 &
         PID_MARIA=$!
-        wait_for_port "TiDB" 4000 90 &
+        wait_for_port "TiDB" 4002 90 &
         PID_TIDB=$!
         wait_for_port "MongoDB" 27017 30 &
         PID_MONGO=$!
