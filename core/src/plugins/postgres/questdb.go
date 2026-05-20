@@ -175,6 +175,40 @@ func (p *QuestDBPlugin) GetPrimaryKeyColQuery() string {
 	return ""
 }
 
+// GetColumnConstraints returns basic column metadata for QuestDB.
+// QuestDB does not support pg_index/pg_attribute system catalogs or the ANY()
+// function, so we query only information_schema.columns for nullability/type info.
+func (p *QuestDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
+	constraints := make(map[string]map[string]any)
+
+	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
+		rows, err := db.Table("information_schema.columns").
+			Select("column_name, is_nullable, data_type").
+			Where("table_name = ?", storageUnit).
+			Rows()
+		if err != nil {
+			return false, nil
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var columnName, isNullable, dataType string
+			if err := rows.Scan(&columnName, &isNullable, &dataType); err != nil {
+				continue
+			}
+			entry := make(map[string]any)
+			entry["nullable"] = strings.EqualFold(isNullable, "YES")
+			entry["type"] = dataType
+			constraints[columnName] = entry
+		}
+		return true, nil
+	})
+	if err != nil {
+		return constraints, nil
+	}
+	return constraints, nil
+}
+
 // GetForeignKeyRelationships returns an empty relationship set because the
 // QuestDB fixtures and source model treat QuestDB tables as lacking foreign-key
 // graph metadata.
