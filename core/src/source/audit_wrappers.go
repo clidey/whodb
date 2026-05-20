@@ -19,6 +19,7 @@ package source
 import (
 	"context"
 	"io"
+	"maps"
 	"strings"
 	"time"
 
@@ -761,9 +762,7 @@ func cloneAuditDetails(details map[string]any) map[string]any {
 	}
 
 	cloned := make(map[string]any, len(details))
-	for key, value := range details {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, details)
 	return cloned
 }
 

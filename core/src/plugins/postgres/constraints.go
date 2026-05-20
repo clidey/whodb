@@ -238,8 +238,8 @@ func extractArrayValues(clause string) []string {
 	content := clause[startIdx:endIdx]
 
 	var values []string
-	parts := strings.Split(content, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(content, ",")
+	for part := range parts {
 		cleaned := strings.TrimSpace(part)
 		// Remove PostgreSQL type casts like ::text, ::character varying
 		cleaned = pgTypeCastPattern.ReplaceAllString(cleaned, "")

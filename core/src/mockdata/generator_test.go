@@ -539,7 +539,7 @@ func TestGenDecimalRespectsPrecisionAndScale(t *testing.T) {
 				"scale":     tt.scale,
 			}
 
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				val := genDecimal(constraints, faker)
 				f, ok := val.(float64)
 				if !ok {
@@ -562,7 +562,7 @@ func TestGenDecimalAcceptsPrecisionAsInt64(t *testing.T) {
 		"scale":     2,
 	}
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		val := genDecimal(constraints, faker)
 		f, ok := val.(float64)
 		if !ok {
@@ -578,7 +578,7 @@ func TestGenDecimalDefaultsWithoutPrecision(t *testing.T) {
 	faker := gofakeit.New(1)
 
 	// No precision → default max 1000.0, scale 2
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		val := genDecimal(nil, faker)
 		f, ok := val.(float64)
 		if !ok {
@@ -606,7 +606,7 @@ func TestGenDecimalRespectsCheckMinMax(t *testing.T) {
 		"check_max": 20.0,
 	}
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		val := genDecimal(constraints, faker)
 		f, ok := val.(float64)
 		if !ok {
@@ -633,7 +633,7 @@ func TestColumnPrecisionScaleFlowsToGenDecimal(t *testing.T) {
 
 	maxAllowed := math.Pow(10, float64(precision-scale)) - math.Pow(10, -float64(scale))
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		records, err := g.GenerateRowDataWithConstraints(columns, constraints)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -690,7 +690,7 @@ func TestGenIntRespectsConstraints(t *testing.T) {
 				wantMax = int(tt.max)
 			}
 
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				val := genInt(tt.typ, constraints, faker)
 				n, ok := val.(int)
 				if !ok {
@@ -740,7 +740,7 @@ func TestGenTextRespectsLength(t *testing.T) {
 	lengths := []int{3, 10, 50, 255}
 	for _, maxLen := range lengths {
 		constraints := map[string]any{"length": maxLen}
-		for i := 0; i < 20; i++ {
+		for range 20 {
 			val := genText(constraints, faker)
 			str, ok := val.(string)
 			if !ok {
@@ -761,7 +761,7 @@ func TestGenUintRespectsConstraints(t *testing.T) {
 		"check_max": float64(200),
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		val := genUint("uint32", constraints, faker)
 		n, ok := val.(uint)
 		if !ok {
@@ -787,7 +787,7 @@ func TestGenUintUsesTypeLimits(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			val := genUint(tt.typeName, nil, faker)
 			n, ok := val.(uint)
 			if !ok {
@@ -803,7 +803,7 @@ func TestGenUintUsesTypeLimits(t *testing.T) {
 func TestGenDateFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genDate(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -822,7 +822,7 @@ func TestGenDateFormat(t *testing.T) {
 func TestGenDateTimeFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genDateTime(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -841,7 +841,7 @@ func TestGenDateTimeFormat(t *testing.T) {
 func TestGenTimeFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genTime(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -856,7 +856,7 @@ func TestGenTimeFormat(t *testing.T) {
 func TestGenYearRange(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genYear(faker)
 		n, ok := val.(int)
 		if !ok {
@@ -876,7 +876,7 @@ func TestGenIntervalFormat(t *testing.T) {
 	}
 
 	pattern := regexp.MustCompile(`^(\d+)\s+(\w+)$`)
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genInterval(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -900,7 +900,7 @@ func TestGenIPv4Format(t *testing.T) {
 	faker := gofakeit.New(1)
 	ipv4Pattern := regexp.MustCompile(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genIPv4(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -915,7 +915,7 @@ func TestGenIPv4Format(t *testing.T) {
 func TestGenIPv6Format(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genIPv6(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -931,7 +931,7 @@ func TestGenMACAddrFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 	macPattern := regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genMACAddr(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -946,7 +946,7 @@ func TestGenMACAddrFormat(t *testing.T) {
 func TestGenPointFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genPoint(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -1026,7 +1026,7 @@ func TestGenClickHouseDecimalFormats(t *testing.T) {
 	types := []string{"decimal32", "decimal64", "decimal128", "decimal256"}
 	for _, typeName := range types {
 		t.Run(typeName, func(t *testing.T) {
-			for i := 0; i < 20; i++ {
+			for i := range 20 {
 				val := genClickHouseDecimal(typeName, nil, faker)
 				str, ok := val.(string)
 				if !ok {
@@ -1050,7 +1050,7 @@ func TestGenClickHouseDecimalFormats(t *testing.T) {
 func TestGenXMLFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genXML(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -1068,7 +1068,7 @@ func TestGenXMLFormat(t *testing.T) {
 func TestGenJSONFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genJSON(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -1088,7 +1088,7 @@ func TestGenJSONFormat(t *testing.T) {
 func TestGenHstoreFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		val := genHstore(faker)
 		str, ok := val.(string)
 		if !ok {
@@ -1104,7 +1104,7 @@ func TestGenBinaryFormat(t *testing.T) {
 	faker := gofakeit.New(1)
 
 	t.Run("default length", func(t *testing.T) {
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			val := genBinary(nil, faker)
 			str, ok := val.(string)
 			if !ok {
@@ -1118,7 +1118,7 @@ func TestGenBinaryFormat(t *testing.T) {
 
 	t.Run("custom length", func(t *testing.T) {
 		constraints := map[string]any{"length": 4}
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			val := genBinary(constraints, faker)
 			str, ok := val.(string)
 			if !ok {
@@ -1142,7 +1142,7 @@ func TestGenArrayFormats(t *testing.T) {
 	types := []string{"text[]", "int[]", "integer[]", "varchar[]"}
 	for _, dbType := range types {
 		t.Run(dbType, func(t *testing.T) {
-			for i := 0; i < 20; i++ {
+			for i := range 20 {
 				val := genArray(dbType, faker)
 				str, ok := val.(string)
 				if !ok {
@@ -1355,7 +1355,7 @@ func TestGenerateByTypeClickHouseEnum(t *testing.T) {
 		"check_values": []string{"active", "inactive", "pending"},
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		val := GenerateByType("Enum8", "", constraints, faker)
 		str, ok := val.(string)
 		if !ok {
@@ -1451,7 +1451,7 @@ func TestGenClickHouseDecimalRespectsScale(t *testing.T) {
 				"scale":     tt.scale,
 				"precision": tt.precision,
 			}
-			for i := 0; i < 50; i++ {
+			for i := range 50 {
 				val := genClickHouseDecimal("decimal32", constraints, faker)
 				str, ok := val.(string)
 				if !ok {
@@ -1534,7 +1534,7 @@ func TestGenDecimalScaleRounding(t *testing.T) {
 	for _, scale := range scales {
 		t.Run(fmt.Sprintf("scale_%d", scale), func(t *testing.T) {
 			constraints := map[string]any{"scale": scale}
-			for i := 0; i < 50; i++ {
+			for i := range 50 {
 				val := genDecimal(constraints, faker)
 				f, ok := val.(float64)
 				if !ok {

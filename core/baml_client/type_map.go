@@ -21,11 +21,11 @@ import (
 )
 
 var typeMap = map[string]reflect.Type{
-	"TYPES.ChatResponse":           reflect.TypeOf(types.ChatResponse{}),
-	"STREAM_TYPES.ChatResponse":    reflect.TypeOf(stream_types.ChatResponse{}),
-	"TYPES.DatabaseContext":        reflect.TypeOf(types.DatabaseContext{}),
-	"STREAM_TYPES.DatabaseContext": reflect.TypeOf(stream_types.DatabaseContext{}),
+	"TYPES.ChatResponse":           reflect.TypeFor[types.ChatResponse](),
+	"STREAM_TYPES.ChatResponse":    reflect.TypeFor[stream_types.ChatResponse](),
+	"TYPES.DatabaseContext":        reflect.TypeFor[types.DatabaseContext](),
+	"STREAM_TYPES.DatabaseContext": reflect.TypeFor[stream_types.DatabaseContext](),
 
-	"TYPES.ChatMessageType": reflect.TypeOf(types.ChatMessageType("")),
-	"TYPES.OperationType":   reflect.TypeOf(types.OperationType("")),
+	"TYPES.ChatMessageType": reflect.TypeFor[types.ChatMessageType](),
+	"TYPES.OperationType":   reflect.TypeFor[types.OperationType](),
 }

@@ -18,6 +18,7 @@ package mockdata
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
@@ -153,12 +154,12 @@ func (g *Generator) generateRowsBulk(
 	rows := make([][]engine.Record, 0, rowCount)
 	failedCount := 0
 	pkCollisions := 0
-	for i := 0; i < rowCount; i++ {
+	for i := range rowCount {
 		var row []engine.Record
 		var err error
 
 		// Try to generate a row with unique PK (retry on collision)
-		for attempt := 0; attempt < MaxPKRetries; attempt++ {
+		for attempt := range MaxPKRetries {
 			row, err = g.generateRow(columns, constraints, fks, table)
 			if err != nil {
 				break // Generation error, not a collision
@@ -251,12 +252,12 @@ func (g *Generator) generateRowsSingle(
 	failedInsert := 0
 	pkCollisions := 0
 
-	for i := 0; i < rowCount; i++ {
+	for i := range rowCount {
 		var row []engine.Record
 		var err error
 
 		// Try to generate a row with unique PK (retry on collision)
-		for attempt := 0; attempt < MaxPKRetries; attempt++ {
+		for attempt := range MaxPKRetries {
 			row, err = g.generateRow(columns, constraints, fks, table)
 			if err != nil {
 				break // Generation error, not a collision
@@ -559,9 +560,8 @@ func (g *Generator) generateColumnValue(col engine.Column, constraints map[strin
 	}
 	if needsCopy {
 		effectiveConstraints = make(map[string]any)
-		for k, v := range constraints { // no-op if constraints is nil
-			effectiveConstraints[k] = v
-		}
+		// no-op if constraints is nil
+		maps.Copy(effectiveConstraints, constraints)
 		if col.Length != nil && *col.Length > 0 {
 			effectiveConstraints["length"] = *col.Length
 		}

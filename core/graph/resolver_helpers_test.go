@@ -18,6 +18,7 @@ package graph
 
 import (
 	"context"
+	"maps"
 	"testing"
 	"time"
 
@@ -54,9 +55,7 @@ func cloneStringMap(values map[string]string) map[string]string {
 	}
 
 	cloned := make(map[string]string, len(values))
-	for key, value := range values {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, values)
 	return cloned
 }
 
@@ -255,9 +254,10 @@ func TestResolverHelperFallbacks(t *testing.T) {
 	if got := derefBoolOr(nil, true); !got {
 		t.Fatalf("expected bool fallback true, got %t", got)
 	}
-	if got := derefBoolOr(boolPtr(false), true); got {
+	if got := derefBoolOr(new(false), true); got {
 		t.Fatalf("expected bool pointer value false, got %t", got)
 	}
 }
 
-func boolPtr(value bool) *bool { return &value }
+//go:fix inline
+func boolPtr(value bool) *bool { return new(value) }

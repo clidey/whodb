@@ -30,8 +30,7 @@ func handleMongoError(err error) error {
 		return nil
 	}
 
-	var we mongo.WriteException
-	if errors.As(err, &we) {
+	if we, ok := errors.AsType[mongo.WriteException](err); ok {
 		for _, werr := range we.WriteErrors {
 			switch werr.Code {
 			case 11000:
@@ -42,8 +41,7 @@ func handleMongoError(err error) error {
 		}
 	}
 
-	var ce mongo.CommandError
-	if errors.As(err, &ce) {
+	if ce, ok := errors.AsType[mongo.CommandError](err); ok {
 		switch ce.Code {
 		case 48: // NamespaceExists
 			return fmt.Errorf("collection already exists")

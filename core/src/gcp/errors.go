@@ -50,8 +50,7 @@ func HandleGCPError(err error) error {
 	}
 
 	// Handle REST API errors (googleapi.Error)
-	var apiErr *googleapi.Error
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*googleapi.Error](err); ok {
 		return handleRESTError(apiErr)
 	}
 

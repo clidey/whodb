@@ -59,7 +59,7 @@ func TestWithConnectionCachesConnections(t *testing.T) {
 		return "ok", nil
 	}
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if _, err := WithConnection(cfg, createDB, operation); err != nil {
 			t.Fatalf("WithConnection returned error: %v", err)
 		}

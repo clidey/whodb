@@ -515,11 +515,8 @@ func (p *ClickHousePlugin) GetColumnsForTable(config *engine.PluginConfig, schem
 			}
 
 			// Set primary key flag
-			for _, pk := range primaryKeys {
-				if columns[i].Name == pk {
-					columns[i].IsPrimary = true
-					break
-				}
+			if slices.Contains(primaryKeys, columns[i].Name) {
+				columns[i].IsPrimary = true
 			}
 		}
 

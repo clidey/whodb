@@ -37,7 +37,7 @@ func (p *Provider) discoverCloudSQL(ctx context.Context) ([]providers.Discovered
 
 	log.Debugf("Cloud SQL: starting discovery for provider %s (project=%s)", p.config.ID, p.config.ProjectID)
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
 			log.Warnf("Cloud SQL: context cancelled, returning %d results so far", len(connections))
 			return connections, ctx.Err()

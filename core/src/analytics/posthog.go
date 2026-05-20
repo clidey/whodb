@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -109,13 +110,13 @@ func Initialize(config Config) error {
 
 type silentPosthogLogger struct{}
 
-func (silentPosthogLogger) Debugf(string, ...interface{}) {}
+func (silentPosthogLogger) Debugf(string, ...any) {}
 
-func (silentPosthogLogger) Logf(string, ...interface{}) {}
+func (silentPosthogLogger) Logf(string, ...any) {}
 
-func (silentPosthogLogger) Warnf(string, ...interface{}) {}
+func (silentPosthogLogger) Warnf(string, ...any) {}
 
-func (silentPosthogLogger) Errorf(string, ...interface{}) {}
+func (silentPosthogLogger) Errorf(string, ...any) {}
 
 // Shutdown flushes events and disposes the PostHog client.
 func Shutdown() {
@@ -198,9 +199,7 @@ func CaptureError(ctx context.Context, operation string, err error, properties m
 	}
 
 	props := make(map[string]any, len(properties)+2)
-	for k, v := range properties {
-		props[k] = v
-	}
+	maps.Copy(props, properties)
 	props["operation"] = operation
 	props["error_message"] = err.Error()
 

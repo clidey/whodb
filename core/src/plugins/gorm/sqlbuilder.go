@@ -366,7 +366,7 @@ func RecordsToColumnDefs(columns []engine.Record, decorator PrimaryKeyDecorator)
 			if !strings.Contains(checkValues, separator) {
 				separator = ","
 			}
-			for _, value := range strings.Split(checkValues, separator) {
+			for value := range strings.SplitSeq(checkValues, separator) {
 				if trimmed := strings.TrimSpace(value); trimmed != "" {
 					def.CheckValues = append(def.CheckValues, trimmed)
 				}

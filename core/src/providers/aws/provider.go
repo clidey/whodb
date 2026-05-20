@@ -344,7 +344,6 @@ func (p *Provider) DiscoverConnections(ctx context.Context) ([]providers.Discove
 	}
 
 	for _, ext := range discoveryExtensions {
-		ext := ext
 		g.Go(func() error {
 			svcCtx, cancel := context.WithTimeout(gctx, timeout)
 			defer cancel()

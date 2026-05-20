@@ -242,29 +242,29 @@ func parseValue(s string, chType string) (any, error) {
 func chTypeToReflect(chType string) reflect.Type {
 	switch strings.ToUpper(strings.TrimSpace(chType)) {
 	case "INT8":
-		return reflect.TypeOf(int8(0))
+		return reflect.TypeFor[int8]()
 	case "INT16":
-		return reflect.TypeOf(int16(0))
+		return reflect.TypeFor[int16]()
 	case "INT32":
-		return reflect.TypeOf(int32(0))
+		return reflect.TypeFor[int32]()
 	case "INT64":
-		return reflect.TypeOf(int64(0))
+		return reflect.TypeFor[int64]()
 	case "UINT8":
-		return reflect.TypeOf(uint8(0))
+		return reflect.TypeFor[uint8]()
 	case "UINT16":
-		return reflect.TypeOf(uint16(0))
+		return reflect.TypeFor[uint16]()
 	case "UINT32":
-		return reflect.TypeOf(uint32(0))
+		return reflect.TypeFor[uint32]()
 	case "UINT64":
-		return reflect.TypeOf(uint64(0))
+		return reflect.TypeFor[uint64]()
 	case "FLOAT32":
-		return reflect.TypeOf(float32(0))
+		return reflect.TypeFor[float32]()
 	case "FLOAT64":
-		return reflect.TypeOf(float64(0))
+		return reflect.TypeFor[float64]()
 	case "BOOL", "BOOLEAN":
-		return reflect.TypeOf(false)
+		return reflect.TypeFor[bool]()
 	default:
-		return reflect.TypeOf("")
+		return reflect.TypeFor[string]()
 	}
 }
 

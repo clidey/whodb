@@ -16,6 +16,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
 	"github.com/boundaryml/baml/engine/language_client_go/pkg/cffi"
@@ -41,12 +42,7 @@ func (ChatMessageType) Values() []ChatMessageType {
 // IsValid checks whether the given ChatMessageType value is valid.
 func (e ChatMessageType) IsValid() bool {
 
-	for _, v := range e.Values() {
-		if e == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(e.Values(), e)
 
 }
 
@@ -118,12 +114,7 @@ func (OperationType) Values() []OperationType {
 // IsValid checks whether the given OperationType value is valid.
 func (e OperationType) IsValid() bool {
 
-	for _, v := range e.Values() {
-		if e == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(e.Values(), e)
 
 }
 

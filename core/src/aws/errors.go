@@ -49,8 +49,7 @@ func HandleAWSError(err error) error {
 		return handleAPIError(apiErr)
 	}
 
-	var opErr *smithy.OperationError
-	if errors.As(err, &opErr) {
+	if opErr, ok := errors.AsType[*smithy.OperationError](err); ok {
 		if errors.As(opErr.Err, &apiErr) {
 			return handleAPIError(apiErr)
 		}

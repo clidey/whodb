@@ -49,7 +49,7 @@ func (p *RedisPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 	maxDatabases := 16
 	var availableDatabases []string
 
-	for i := 0; i < maxDatabases; i++ {
+	for i := range maxDatabases {
 		dbConfig := *config
 		dbConfig.Credentials.Database = strconv.Itoa(i)
 

@@ -172,7 +172,7 @@ func TestQuerySourceSessionMetadataMapsFields(t *testing.T) {
 			Label:            "Text",
 			HasLength:        true,
 			HasPrecision:     false,
-			DefaultLength:    intPtr(255),
+			DefaultLength:    new(255),
 			DefaultPrecision: nil,
 			Category:         source.TypeCategoryText,
 		}},
@@ -272,4 +272,5 @@ func setSourceSessionMetadata(t *testing.T, id string, metadata source.TypeSessi
 	})
 }
 
-func intPtr(i int) *int { return &i }
+//go:fix inline
+func intPtr(i int) *int { return new(i) }

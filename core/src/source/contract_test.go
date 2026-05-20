@@ -4,7 +4,8 @@ import (
 	"testing"
 )
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }
 
 func specWithGraph(graphScopeKind *ObjectKind, objectTypes []ObjectType, rootActions []Action) TypeSpec {
 	return TypeSpec{
@@ -38,7 +39,7 @@ func TestValidateGraphSupported_NilRef_NoGraphScopeKind_PassesWithRootAction(t *
 }
 
 func TestValidateGraphSupported_NilRef_WithGraphScopeKind_AlwaysPasses(t *testing.T) {
-	spec := specWithGraph(ptr(ObjectKind("database")), nil, []Action{ActionBrowse})
+	spec := specWithGraph(new(ObjectKind("database")), nil, []Action{ActionBrowse})
 	err := ValidateGraphSupported(spec, nil)
 	if err != nil {
 		t.Fatalf("unexpected error when GraphScopeKind is set and ref is nil: %v", err)
@@ -47,7 +48,7 @@ func TestValidateGraphSupported_NilRef_WithGraphScopeKind_AlwaysPasses(t *testin
 
 func TestValidateGraphSupported_RefMatchesGraphScopeKind_PassesWithoutAction(t *testing.T) {
 	dbKind := ObjectKind("database")
-	spec := specWithGraph(ptr(dbKind), []ObjectType{
+	spec := specWithGraph(new(dbKind), []ObjectType{
 		{Kind: dbKind, Actions: []Action{ActionBrowse}},
 	}, []Action{ActionBrowse})
 
@@ -61,7 +62,7 @@ func TestValidateGraphSupported_RefMatchesGraphScopeKind_PassesWithoutAction(t *
 func TestValidateGraphSupported_RefDoesNotMatchGraphScopeKind_RequiresAction(t *testing.T) {
 	dbKind := ObjectKind("database")
 	tableKind := ObjectKind("table")
-	spec := specWithGraph(ptr(dbKind), []ObjectType{
+	spec := specWithGraph(new(dbKind), []ObjectType{
 		{Kind: dbKind, Actions: []Action{ActionBrowse}},
 		{Kind: tableKind, Actions: []Action{ActionInspect, ActionViewRows}},
 	}, []Action{ActionBrowse})
@@ -76,7 +77,7 @@ func TestValidateGraphSupported_RefDoesNotMatchGraphScopeKind_RequiresAction(t *
 func TestValidateGraphSupported_RefDoesNotMatchGraphScopeKind_PassesWithAction(t *testing.T) {
 	dbKind := ObjectKind("database")
 	tableKind := ObjectKind("table")
-	spec := specWithGraph(ptr(dbKind), []ObjectType{
+	spec := specWithGraph(new(dbKind), []ObjectType{
 		{Kind: dbKind, Actions: []Action{ActionBrowse}},
 		{Kind: tableKind, Actions: []Action{ActionInspect, ActionViewGraph}},
 	}, []Action{ActionBrowse})

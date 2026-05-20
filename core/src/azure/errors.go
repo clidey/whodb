@@ -25,19 +25,19 @@ import (
 )
 
 var (
-	ErrAccessDenied         = errors.New("access denied: check Azure RBAC permissions for this operation")
-	ErrInvalidCredentials   = errors.New("invalid Azure credentials: check tenant ID, client ID, and secret")
-	ErrExpiredCredentials   = errors.New("Azure credentials have expired: re-authenticate or refresh token")
-	ErrSubscriptionNotFound = errors.New("subscription not found: check the subscription ID and permissions")
-	ErrResourceNotFound     = errors.New("resource not found: check the resource name and subscription")
-	ErrServiceUnavailable   = errors.New("Azure service temporarily unavailable: try again later")
-	ErrThrottling           = errors.New("request throttled: too many requests, try again later")
-	ErrConnectionFailed     = errors.New("connection failed: check network connectivity and endpoint")
-	ErrSubscriptionRequired = errors.New("Azure subscription ID is required")
-	ErrTenantIDRequired     = errors.New("service principal auth requires a Tenant ID")
-	ErrClientIDRequired     = errors.New("service principal auth requires a Client ID")
-	ErrClientSecretRequired = errors.New("service principal auth requires a Client Secret")
-	ErrInvalidAuthMethod    = errors.New("invalid auth method: must be one of: default, service-principal")
+	ErrAccessDenied          = errors.New("access denied: check Azure RBAC permissions for this operation")
+	ErrInvalidCredentials    = errors.New("invalid Azure credentials: check tenant ID, client ID, and secret")
+	ErrExpiredCredentials    = errors.New("Azure credentials have expired: re-authenticate or refresh token")
+	ErrSubscriptionNotFound  = errors.New("subscription not found: check the subscription ID and permissions")
+	ErrResourceNotFound      = errors.New("resource not found: check the resource name and subscription")
+	ErrServiceUnavailable    = errors.New("Azure service temporarily unavailable: try again later")
+	ErrThrottling            = errors.New("request throttled: too many requests, try again later")
+	ErrConnectionFailed      = errors.New("connection failed: check network connectivity and endpoint")
+	ErrSubscriptionRequired  = errors.New("Azure subscription ID is required")
+	ErrTenantIDRequired      = errors.New("service principal auth requires a Tenant ID")
+	ErrClientIDRequired      = errors.New("service principal auth requires a Client ID")
+	ErrClientSecretRequired  = errors.New("service principal auth requires a Client Secret")
+	ErrInvalidAuthMethod     = errors.New("invalid auth method: must be one of: default, service-principal")
 	ErrAzureProviderDisabled = errors.New("Azure provider is disabled")
 )
 
@@ -47,8 +47,7 @@ func HandleAzureError(err error) error {
 		return nil
 	}
 
-	var respErr *azcore.ResponseError
-	if errors.As(err, &respErr) {
+	if respErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		return handleResponseError(respErr)
 	}
 

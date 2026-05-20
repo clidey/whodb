@@ -19,6 +19,8 @@
 package source
 
 import (
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -387,12 +389,7 @@ type Contract struct {
 
 // SupportsSurface reports whether the contract exposes a given surface.
 func (c Contract) SupportsSurface(surface Surface) bool {
-	for _, candidate := range c.Surfaces {
-		if candidate == surface {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.Surfaces, surface)
 }
 
 // SupportsAction reports whether any declared object kind supports the action.
@@ -407,12 +404,7 @@ func (c Contract) SupportsAction(action Action) bool {
 
 // SupportsRootAction reports whether the source root supports the action.
 func (c Contract) SupportsRootAction(action Action) bool {
-	for _, candidate := range c.RootActions {
-		if candidate == action {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.RootActions, action)
 }
 
 // ObjectTypeForKind looks up the declared object-type contract by kind.
@@ -443,12 +435,7 @@ type ObjectType struct {
 
 // SupportsAction reports whether the object type exposes the action.
 func (o ObjectType) SupportsAction(action Action) bool {
-	for _, candidate := range o.Actions {
-		if candidate == action {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(o.Actions, action)
 }
 
 // TypeSpec describes a connectable source type.
@@ -492,9 +479,7 @@ func (c *Credentials) CloneValues() map[string]string {
 	}
 
 	values := make(map[string]string, len(c.Values))
-	for key, value := range c.Values {
-		values[key] = value
-	}
+	maps.Copy(values, c.Values)
 	return values
 }
 

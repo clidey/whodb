@@ -17,6 +17,7 @@
 package sourcecatalog
 
 import (
+	"maps"
 	"slices"
 	"sort"
 	"strings"
@@ -394,9 +395,7 @@ func cloneAliasMap(aliasMap map[string]string) map[string]string {
 	}
 
 	cloned := make(map[string]string, len(aliasMap))
-	for key, value := range aliasMap {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, aliasMap)
 	return cloned
 }
 
