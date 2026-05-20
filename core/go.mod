@@ -25,7 +25,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.42.1
 	github.com/aws/smithy-go v1.25.1
 	github.com/boundaryml/baml v0.222.0
-	github.com/brianvoe/gofakeit/v7 v7.14.1
+	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/deckarep/golang-set/v2 v2.9.0
 	github.com/dromara/carbon/v2 v2.6.16
 	github.com/duckdb/duckdb-go/v2 v2.10502.0
