@@ -18,7 +18,6 @@ import { Button, Input, Label, Switch } from '@clidey/ux';
 import {
     SourceConnectionFieldKind,
     SourceConnectionFieldSection,
-    SourceHostInputMode,
 } from '@graphql';
 import type { ReactElement, Ref } from 'react';
 import { SearchSelect } from '@/components/ux';
@@ -56,6 +55,7 @@ export interface SourceConnectionFieldsProps {
     databaseType: SourceTypeItem;
     hostName: string;
     onHostNameChange: (value: string) => void;
+    onHostNamePaste?: (value: string) => boolean;
     username: string;
     setUsername: (value: string) => void;
     password: string;
@@ -91,6 +91,7 @@ export function SourceConnectionFields({
     databaseType,
     hostName,
     onHostNameChange,
+    onHostNamePaste,
     username,
     setUsername,
     password,
@@ -196,14 +197,18 @@ export function SourceConnectionFields({
                 <div className={layout === 'login' ? 'flex gap-sm w-full items-end' : 'grid gap-2'}>
                     <div className={layout === 'login' ? 'flex flex-col gap-sm flex-1' : 'grid gap-2'}>
                         <Label htmlFor="source-hostname">
-                            {databaseType.traits?.connection.hostInputMode === SourceHostInputMode.HostnameOrUrl
-                                ? translate('hostNameOrUrl')
-                                : translate(hostnameField.LabelKey)}
+                            {translate('hostNameOrUrl')}
                         </Label>
                         <Input
                             id="source-hostname"
                             value={hostName}
                             onChange={(e) => onHostNameChange(e.target.value)}
+                            onPaste={(event) => {
+                                const pastedValue = event.clipboardData.getData('text');
+                                if (pastedValue.length > 0 && onHostNamePaste?.(pastedValue)) {
+                                    event.preventDefault();
+                                }
+                            }}
                             data-testid="hostname"
                             placeholder={fieldPlaceholder(hostnameField, translate)}
                             aria-required={hostnameField.Required ? 'true' : undefined}

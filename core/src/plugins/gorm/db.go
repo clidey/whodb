@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -102,8 +103,16 @@ func (p *GormPlugin) ParseConnectionConfig(config *engine.PluginConfig) (*Connec
 
 	//clickhouse specific
 	httpProtocol := common.GetRecordValueOrDefault(config.Credentials.Advanced, httpProtocolKey, "disable")
-	readOnly := common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable")
-	debug := common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable")
+	readOnly, err := normalizeToggleValue(common.GetRecordValueOrDefault(config.Credentials.Advanced, readOnlyKey, "disable"))
+	if err != nil {
+		log.WithError(err).Error(fmt.Sprintf("Failed to parse %s setting for database type %s", readOnlyKey, p.Type))
+		return nil, err
+	}
+	debug, err := normalizeToggleValue(common.GetRecordValueOrDefault(config.Credentials.Advanced, debugKey, "disable"))
+	if err != nil {
+		log.WithError(err).Error(fmt.Sprintf("Failed to parse %s setting for database type %s", debugKey, p.Type))
+		return nil, err
+	}
 
 	//postgres specific
 	searchPath := common.GetRecordValueOrDefault(config.Credentials.Advanced, searchPathKey, "")
@@ -174,4 +183,15 @@ func (p *GormPlugin) IsAvailable(ctx context.Context, config *engine.PluginConfi
 	}
 
 	return available
+}
+
+func normalizeToggleValue(value string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "", "0", "false", "no", "off", "disable", "disabled":
+		return "disable", nil
+	case "1", "true", "yes", "on", "enable", "enabled":
+		return "enable", nil
+	default:
+		return "", fmt.Errorf("invalid toggle value %q", value)
+	}
 }

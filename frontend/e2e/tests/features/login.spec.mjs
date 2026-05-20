@@ -18,6 +18,27 @@ import { test, expect } from '../../support/test-fixture.mjs';
 import { getDatabaseConfig } from '../../support/database-config.mjs';
 import { clearBrowserState } from '../../support/helpers/animation.mjs';
 
+async function pasteIntoField(page, testId, value) {
+    await page.evaluate(({ selector, text }) => {
+        const input = document.querySelector(selector);
+        if (!(input instanceof HTMLInputElement)) {
+            throw new Error(`Expected input for ${selector}`);
+        }
+
+        input.focus();
+        const clipboardData = new DataTransfer();
+        clipboardData.setData('text', text);
+        input.dispatchEvent(new ClipboardEvent('paste', {
+            clipboardData,
+            bubbles: true,
+            cancelable: true,
+        }));
+    }, {
+        selector: `[data-testid="${testId}"]`,
+        text: value,
+    });
+}
+
 /**
  * Login & Authentication Tests
  *
@@ -96,6 +117,111 @@ test.describe('Login & Authentication', () => {
             await page.locator('[data-testid="database"]').fill('testdb');
 
             await expect(page.locator('[data-testid="login-button"]')).not.toBeDisabled();
+        });
+    });
+
+    test.describe('Connection String Paste', () => {
+        test('parses a pasted postgres connection string into the standard fields', async ({ page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="Postgres"]').click();
+
+            await pasteIntoField(
+                page,
+                'hostname',
+                'postgres://paste_user:paste_pass@pg.example.com:5432/paste_db?sslmode=require&search_path=test_schema'
+            );
+
+            await expect(page.locator('[data-testid="hostname"]')).toHaveValue('pg.example.com');
+            await expect(page.locator('[data-testid="username"]')).toHaveValue('paste_user');
+            await expect(page.locator('[data-testid="password"]')).toHaveValue('paste_pass');
+            await expect(page.locator('[data-testid="database"]')).toHaveValue('paste_db');
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('5432');
+            await expect(page.locator('[data-testid="search-path"]')).toHaveValue('test_schema');
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toBeVisible();
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toContainText('Required');
+            await expect(page.locator('[data-testid="login-button"]')).toBeEnabled();
+        });
+
+        test('parses a pasted mongodb connection string into the standard fields', async ({ page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="MongoDB"]').click();
+
+            await pasteIntoField(
+                page,
+                'hostname',
+                'mongodb://mongo_user:mongo_pass@mongo.example.com:27018/test_db?authSource=admin&retryWrites=true'
+            );
+
+            await expect(page.locator('[data-testid="hostname"]')).toHaveValue('mongo.example.com');
+            await expect(page.locator('[data-testid="username"]')).toHaveValue('mongo_user');
+            await expect(page.locator('[data-testid="password"]')).toHaveValue('mongo_pass');
+            await expect(page.locator('[data-testid="database"]')).toHaveValue('test_db');
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('27018');
+            await expect(page.locator('[data-testid="URL Params-input"]')).toHaveValue('?authSource=admin&retryWrites=true');
+            await expect(page.locator('[data-testid="login-button"]')).toBeEnabled();
+        });
+
+        test('maps pasted mongodb tls settings into the SSL controls and leaves leftover URL params intact', async ({ page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="MongoDB"]').click();
+
+            await pasteIntoField(
+                page,
+                'hostname',
+                'mongodb+srv://mongo_user:mongo_pass@mongo.example.com/test_db?authSource=admin&retryWrites=true&tls=true'
+            );
+
+            await expect(page.locator('[data-testid="hostname"]')).toHaveValue('mongo.example.com');
+            await expect(page.locator('[data-testid="username"]')).toHaveValue('mongo_user');
+            await expect(page.locator('[data-testid="password"]')).toHaveValue('mongo_pass');
+            await expect(page.locator('[data-testid="database"]')).toHaveValue('test_db');
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toContainText('Enabled');
+            await expect(page.locator('[data-testid="URL Params-input"]')).toHaveValue('?authSource=admin&retryWrites=true');
+            await expect(page.locator('[data-testid="login-button"]')).toBeEnabled();
+        });
+
+        test('maps pasted mysql advanced settings through semantic normalized fields', async ({ page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="MySQL"]').click();
+
+            await pasteIntoField(
+                page,
+                'hostname',
+                'mysql://mysql_user:mysql_pass@mysql.example.com:3307/app_db?sslMode=verify_identity&parseTime=1&loc=UTC&allowCleartextPasswords=0'
+            );
+
+            await expect(page.locator('[data-testid="hostname"]')).toHaveValue('mysql.example.com');
+            await expect(page.locator('[data-testid="username"]')).toHaveValue('mysql_user');
+            await expect(page.locator('[data-testid="password"]')).toHaveValue('mysql_pass');
+            await expect(page.locator('[data-testid="database"]')).toHaveValue('app_db');
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('3307');
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toContainText('Verify Identity');
+            await expect(page.locator('[data-testid="Parse Time-input"]')).toHaveValue('true');
+            await expect(page.locator('[data-testid="Loc-input"]')).toHaveValue('UTC');
+            await expect(page.locator('[data-testid="Allow clear text passwords-input"]')).toHaveValue('false');
+            await expect(page.locator('[data-testid="login-button"]')).toBeEnabled();
+        });
+
+        test('maps pasted clickhouse advanced settings through semantic normalized fields', async ({ page }) => {
+            await page.locator('[data-testid="database-type-select"]').click();
+            await page.locator('[data-value="ClickHouse"]').click();
+
+            await pasteIntoField(
+                page,
+                'hostname',
+                'clickhouse://click_user:click_pass@click.example.com:9440/default?ssl=true&httpProtocol=https&readonly=1&debug=1'
+            );
+
+            await expect(page.locator('[data-testid="hostname"]')).toHaveValue('click.example.com');
+            await expect(page.locator('[data-testid="username"]')).toHaveValue('click_user');
+            await expect(page.locator('[data-testid="password"]')).toHaveValue('click_pass');
+            await expect(page.locator('[data-testid="database"]')).toHaveValue('default');
+            await expect(page.locator('[data-testid="port"]')).toHaveValue('9440');
+            await expect(page.locator('[data-testid="ssl-mode-select"]')).toContainText('Enabled');
+            await expect(page.locator('[data-testid="HTTP Protocol-input"]')).toHaveValue('https');
+            await expect(page.locator('[data-testid="Readonly-input"]')).toHaveValue('1');
+            await expect(page.locator('[data-testid="Debug-input"]')).toHaveValue('true');
+            await expect(page.locator('[data-testid="login-button"]')).toBeEnabled();
         });
     });
 
