@@ -18,6 +18,7 @@ package aws
 
 import (
 	"bufio"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -64,9 +65,7 @@ func DiscoverLocalProfiles() ([]LocalProfile, error) {
 			log.Warnf("Failed to parse AWS credentials file %s: %v", credentialsPath, err)
 		}
 	} else {
-		for name, profile := range credProfiles {
-			profiles[name] = profile
-		}
+		maps.Copy(profiles, credProfiles)
 	}
 
 	configPath := filepath.Join(awsDir, "config")

@@ -39,7 +39,7 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 
 	log.Debugf("DocumentDB: starting discovery for provider %s", p.config.ID)
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
 			log.Warnf("DocumentDB: context cancelled, returning %d results so far", len(connections))
 			return connections, ctx.Err()

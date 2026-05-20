@@ -86,13 +86,10 @@ RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind
 	-o /core ./cmd/whodb
 
 RUN chmod +x /core && \
-    upx --best --lzma /core
+    upx --best /core
 
 RUN mkdir -p /runtime-libs && \
     chmod +x /usr/local/lib/libduckdb.so && \
-    if [ "$TARGETARCH" = "amd64" ]; then \
-        upx --best --lzma /usr/local/lib/libduckdb.so; \
-    fi && \
     cp /usr/local/lib/libduckdb.so /runtime-libs/
 
 # Pre-download BAML native library for the target architecture (musl for Alpine)
@@ -110,10 +107,7 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' go.mod | awk '{print $2}' 
     curl -L -o /baml-lib/libbaml_cffi.so \
         https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
     chmod +x /baml-lib/libbaml_cffi.so && \
-    strip --strip-unneeded /baml-lib/libbaml_cffi.so && \
-    if [ "$TARGETARCH" = "amd64" ]; then \
-        upx --best --lzma /baml-lib/libbaml_cffi.so; \
-    fi && \
+    strip --strip-debug /baml-lib/libbaml_cffi.so && \
     cp /baml-lib/libbaml_cffi.so /runtime-libs/ && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 

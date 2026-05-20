@@ -30,7 +30,6 @@ func TestBuildTypeSpecCoversSharedDatabaseCatalog(t *testing.T) {
 	t.Parallel()
 
 	for _, entry := range dbcatalog.All() {
-		entry := entry
 		t.Run(string(entry.ID), func(t *testing.T) {
 			t.Parallel()
 
@@ -58,7 +57,6 @@ func TestBuildTypeSpecContractsAreSelfConsistent(t *testing.T) {
 	t.Parallel()
 
 	for _, entry := range dbcatalog.All() {
-		entry := entry
 		t.Run(string(entry.ID), func(t *testing.T) {
 			t.Parallel()
 
@@ -86,7 +84,6 @@ func TestBuildTypeSpecConnectionContractsAreSelfConsistent(t *testing.T) {
 	t.Parallel()
 
 	for _, entry := range dbcatalog.All() {
-		entry := entry
 		t.Run(string(entry.ID), func(t *testing.T) {
 			t.Parallel()
 
@@ -114,7 +111,6 @@ func TestBuildTypeSpecMetadataContractsAreSelfConsistent(t *testing.T) {
 	t.Parallel()
 
 	for _, entry := range dbcatalog.All() {
-		entry := entry
 		t.Run(string(entry.ID), func(t *testing.T) {
 			t.Parallel()
 
@@ -179,7 +175,6 @@ func TestBuildTypeSpecExposesMutableDataActions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.id, func(t *testing.T) {
 			t.Parallel()
 
@@ -300,7 +295,6 @@ func TestObjectCreationMetadataUsesSourceNativeColumnLabels(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.id, func(t *testing.T) {
 			t.Parallel()
 
@@ -455,7 +449,6 @@ func TestBuildTypeSpecExposesSourceTraits(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.id, func(t *testing.T) {
 			t.Parallel()
 

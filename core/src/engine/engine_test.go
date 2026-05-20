@@ -15,6 +15,7 @@
 package engine
 
 import (
+	"maps"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/types"
@@ -77,9 +78,7 @@ func TestGetStorageUnitModel(t *testing.T) {
 
 func TestChooseResolvesDisplayTypesToUnderlyingPlugins(t *testing.T) {
 	original := make(map[DatabaseType]DatabaseType)
-	for k, v := range pluginTypeAliases {
-		original[k] = v
-	}
+	maps.Copy(original, pluginTypeAliases)
 	defer func() {
 		pluginTypeAliases = original
 	}()
@@ -133,9 +132,7 @@ func TestChooseResolvesDisplayTypesToUnderlyingPlugins(t *testing.T) {
 func TestRegisterPluginTypeAlias(t *testing.T) {
 	// Clean up after the test
 	original := make(map[DatabaseType]DatabaseType)
-	for k, v := range pluginTypeAliases {
-		original[k] = v
-	}
+	maps.Copy(original, pluginTypeAliases)
 	defer func() {
 		pluginTypeAliases = original
 	}()

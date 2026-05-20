@@ -19,6 +19,7 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -176,10 +177,7 @@ func bulkUpsertMongo(collection *mongo.Collection, pkColumns []string, rows [][]
 	const batchSize = 1000
 
 	for i := 0; i < len(rows); i += batchSize {
-		end := i + batchSize
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(i+batchSize, len(rows))
 
 		models := make([]mongo.WriteModel, 0, end-i)
 		for _, row := range rows[i:end] {
@@ -214,10 +212,8 @@ func createCollectionIfNotExists(database *mongo.Database, collectionName string
 		return err
 	}
 
-	for _, col := range collections {
-		if col == collectionName {
-			return errors.New("collection already exists")
-		}
+	if slices.Contains(collections, collectionName) {
+		return errors.New("collection already exists")
 	}
 
 	opts := options.CreateCollection()

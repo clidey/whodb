@@ -431,10 +431,7 @@ func genClickHouseDecimal(typeName string, c map[string]any, f *gofakeit.Faker) 
 		}
 	}
 
-	intDigits := maxPrecision - scale
-	if intDigits < 0 {
-		intDigits = 0
-	}
+	intDigits := max(maxPrecision-scale, 0)
 	// Cap integer digits to avoid float64 overflow
 	if intDigits > 15 {
 		intDigits = 15

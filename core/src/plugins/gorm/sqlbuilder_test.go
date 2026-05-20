@@ -1,6 +1,7 @@
 package gorm_plugin
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -22,12 +23,7 @@ func newDryRunDB(t *testing.T) *gorm.DB {
 }
 
 func varsContain(vars []any, value any) bool {
-	for _, v := range vars {
-		if v == value {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(vars, value)
 }
 
 func TestSQLBuilderUsesParameterizedQueries(t *testing.T) {

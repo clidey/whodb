@@ -23,8 +23,10 @@ import (
 )
 
 // Helper function to create a pointer to an int
+//
+//go:fix inline
 func IntPtr(i int) *int {
-	return &i
+	return new(i)
 }
 
 // ValidateColumnType checks if a column type string is valid against
@@ -79,9 +81,9 @@ func (e *UnsupportedTypeError) Error() string {
 // parseTypeForValidation extracts the base type and whether it has parameters
 func parseTypeForValidation(typeName string) (baseType string, hasParams bool) {
 	typeName = strings.TrimSpace(typeName)
-	parenIdx := strings.IndexByte(typeName, '(')
-	if parenIdx == -1 {
+	before, _, ok := strings.Cut(typeName, "(")
+	if !ok {
 		return typeName, false
 	}
-	return typeName[:parenIdx], true
+	return before, true
 }

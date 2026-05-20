@@ -17,6 +17,7 @@
 package ssl
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -457,13 +458,7 @@ func TestGetSSLModeAliases(t *testing.T) {
 				t.Errorf("GetSSLModeAliases(%s, %s) returned %d aliases, want %d", tt.dbType, tt.mode, len(aliases), tt.wantCount)
 			}
 			if tt.wantAlias != "" {
-				found := false
-				for _, a := range aliases {
-					if a == tt.wantAlias {
-						found = true
-						break
-					}
-				}
+				found := slices.Contains(aliases, tt.wantAlias)
 				if !found {
 					t.Errorf("GetSSLModeAliases(%s, %s) = %v, want to contain %q", tt.dbType, tt.mode, aliases, tt.wantAlias)
 				}

@@ -51,3 +51,40 @@ func TestParseConnectionConfigAllowsMissingPort(t *testing.T) {
 		t.Fatalf("expected missing port to remain unset, got %d", input.Port)
 	}
 }
+
+func TestParseConnectionConfigNormalizesClickHouseToggleFields(t *testing.T) {
+	plugin := newTestPlugin()
+	plugin.Type = engine.DatabaseType_ClickHouse
+
+	input, err := plugin.ParseConnectionConfig(&engine.PluginConfig{
+		Credentials: &engine.Credentials{
+			Advanced: []engine.Record{
+				{Key: "Readonly", Value: "1"},
+				{Key: "Debug", Value: "true"},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("expected ParseConnectionConfig to succeed, got %v", err)
+	}
+	if input.ReadOnly != "enable" {
+		t.Fatalf("expected Readonly to normalize to enable, got %q", input.ReadOnly)
+	}
+	if input.Debug != "enable" {
+		t.Fatalf("expected Debug to normalize to enable, got %q", input.Debug)
+	}
+}
+
+func TestParseConnectionConfigRejectsInvalidClickHouseToggleValue(t *testing.T) {
+	plugin := newTestPlugin()
+	plugin.Type = engine.DatabaseType_ClickHouse
+
+	_, err := plugin.ParseConnectionConfig(&engine.PluginConfig{
+		Credentials: &engine.Credentials{
+			Advanced: []engine.Record{{Key: "Readonly", Value: "maybe"}},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected ParseConnectionConfig to reject invalid toggle value")
+	}
+}

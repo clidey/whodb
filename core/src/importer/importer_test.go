@@ -78,8 +78,8 @@ func TestExecuteAppendSetsSkipConflictPrimaryKeys(t *testing.T) {
 			Rows:    [][]string{{"1", "alice"}, {"2", "bob"}},
 		},
 		Mapping: []ColumnMapping{
-			{SourceColumn: "id", TargetColumn: stringPtr("id")},
-			{SourceColumn: "name", TargetColumn: stringPtr("name")},
+			{SourceColumn: "id", TargetColumn: new("id")},
+			{SourceColumn: "name", TargetColumn: new("name")},
 		},
 		TargetColumns: []engine.Column{
 			{Name: "id", Type: "INTEGER", IsPrimary: true},
@@ -120,7 +120,7 @@ func TestExecuteOverwriteClearsTargetTable(t *testing.T) {
 			Rows:    [][]string{{"alice"}},
 		},
 		Mapping: []ColumnMapping{
-			{SourceColumn: "name", TargetColumn: stringPtr("name")},
+			{SourceColumn: "name", TargetColumn: new("name")},
 		},
 		TargetColumns: []engine.Column{
 			{Name: "name", Type: "TEXT"},
@@ -149,7 +149,7 @@ func TestExecuteUpsertRequiresPrimaryKey(t *testing.T) {
 			Rows:    [][]string{{"alice"}},
 		},
 		Mapping: []ColumnMapping{
-			{SourceColumn: "name", TargetColumn: stringPtr("name")},
+			{SourceColumn: "name", TargetColumn: new("name")},
 		},
 		TargetColumns: []engine.Column{
 			{Name: "name", Type: "TEXT"},
@@ -160,6 +160,7 @@ func TestExecuteUpsertRequiresPrimaryKey(t *testing.T) {
 	}
 }
 
+//go:fix inline
 func stringPtr(value string) *string {
-	return &value
+	return new(value)
 }

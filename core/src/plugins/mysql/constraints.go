@@ -218,8 +218,8 @@ func parseEnumValues(columnType string) []string {
 
 	// Split by comma, handling quoted strings
 	// Values are quoted with single quotes: 'value1','value2'
-	parts := strings.Split(content, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(content, ",")
+	for part := range parts {
 		cleaned := strings.TrimSpace(part)
 		cleaned = strings.Trim(cleaned, "'\"")
 		if cleaned != "" {

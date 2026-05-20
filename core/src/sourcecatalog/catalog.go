@@ -82,7 +82,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindSchema),
+		GraphScopeKind: new(objectKindSchema),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			metadataObjectType(objectKindSchema, "Schema", "Schemas", true),
@@ -97,7 +97,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindSchema),
+		GraphScopeKind: new(objectKindSchema),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			metadataObjectType(objectKindSchema, "Schema", "Schemas", true),
@@ -112,7 +112,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindDatabase),
+		GraphScopeKind: new(objectKindDatabase),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			tabularObjectType(objectKindTable, "Table", "Tables"),
@@ -126,7 +126,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindDatabase),
+		GraphScopeKind: new(objectKindDatabase),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			tabularObjectType(objectKindTable, "Table", "Tables"),
@@ -140,7 +140,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindDatabase),
+		GraphScopeKind: new(objectKindDatabase),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			tabularObjectType(objectKindTable, "Table", "Tables"),
@@ -154,7 +154,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindDatabase),
+		GraphScopeKind: new(objectKindDatabase),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			tabularObjectType(objectKindTable, "Table", "Tables"),
@@ -180,7 +180,7 @@ var familySpecs = map[string]FamilySpec{
 		RootActions:    []source.Action{source.ActionBrowse, source.ActionCreateChild},
 		BrowsePath:     []source.ObjectKind{objectKindSchema, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindSchema),
+		GraphScopeKind: new(objectKindSchema),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindSchema, "Schema", "Schemas", true),
 			tabularObjectType(objectKindTable, "Table", "Tables"),
@@ -206,7 +206,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceQuery, source.SurfaceChat, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindSchema, objectKindTable},
 		DefaultObject:  objectKindTable,
-		GraphScopeKind: ptr(objectKindSchema),
+		GraphScopeKind: new(objectKindSchema),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			metadataObjectType(objectKindSchema, "Schema", "Schemas", true),
@@ -221,7 +221,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindDatabase, objectKindColl},
 		DefaultObject:  objectKindColl,
-		GraphScopeKind: ptr(objectKindDatabase),
+		GraphScopeKind: new(objectKindDatabase),
 		ObjectTypes: []source.ObjectType{
 			metadataObjectType(objectKindDatabase, "Database", "Databases", true),
 			documentObjectType(objectKindColl, "Collection", "Collections", source.ActionGenerateMockData),
@@ -258,7 +258,7 @@ var familySpecs = map[string]FamilySpec{
 		Surfaces:       []source.Surface{source.SurfaceBrowser, source.SurfaceGraph},
 		BrowsePath:     []source.ObjectKind{objectKindIndex},
 		DefaultObject:  objectKindIndex,
-		GraphScopeKind: ptr(objectKindIndex),
+		GraphScopeKind: new(objectKindIndex),
 		ObjectTypes: []source.ObjectType{
 			documentObjectType(objectKindIndex, "Index", "Indices"),
 		},
@@ -1008,6 +1008,7 @@ func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatemen
 	traits.Query.SupportsScripts = true
 	traits.Query.SupportsStreaming = streaming
 	traits.Query.SupportsMultiStatement = multiStatement
+	traits.Query.SupportsSqlImport = true
 	return traits
 }
 
@@ -1026,6 +1027,7 @@ func fileTraits(profileLabelStrategy source.ProfileLabelStrategy) source.TypeTra
 	}
 }
 
+//go:fix inline
 func ptr(kind source.ObjectKind) *source.ObjectKind {
-	return &kind
+	return new(kind)
 }

@@ -82,7 +82,7 @@ export const ImportData: FC<ImportDataProps> = ({
   onImportSuccess,
 }) => {
   const { t } = useTranslation("components/import-data");
-  const { supportsMultiStatement } = useSourceContract(databaseType);
+  const { supportsSqlImport } = useSourceContract(databaseType);
   const importSizeMB = Math.round(importLimits.maxFileSizeBytes / (1024 * 1024));
   const [mode, setMode] = useState<ImportModeType>("data");
 
@@ -116,7 +116,7 @@ export const ImportData: FC<ImportDataProps> = ({
       ? validationMessage
       : null;
   const previewErrorMessage = translateKey(previewError);
-  const supportsSQLImport = supportsMultiStatement;
+  const supportsSQLImport = supportsSqlImport;
 
   useEffect(() => {
     if (!supportsSQLImport && mode === "sql") {

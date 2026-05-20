@@ -19,6 +19,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/clidey/whodb/core/graph/model"
@@ -275,6 +276,7 @@ func sourceTraitsToModel(traits source.TypeTraits) *model.SourceTraits {
 			SupportsScripts:        traits.Query.SupportsScripts,
 			SupportsStreaming:      traits.Query.SupportsStreaming,
 			SupportsMultiStatement: traits.Query.SupportsMultiStatement,
+			SupportsSQLImport:      traits.Query.SupportsSqlImport,
 			ExplainMode:            model.SourceQueryExplainMode(traits.Query.ExplainMode),
 		},
 		MockData: &model.SourceMockDataTraits{
@@ -620,12 +622,8 @@ func scopeValueForKind(spec source.TypeSpec, ref source.ObjectRef, kind source.O
 
 func mergeCredentialValues(base map[string]string, overrides map[string]string) map[string]string {
 	merged := map[string]string{}
-	for key, value := range base {
-		merged[key] = value
-	}
-	for key, value := range overrides {
-		merged[key] = value
-	}
+	maps.Copy(merged, base)
+	maps.Copy(merged, overrides)
 	return merged
 }
 

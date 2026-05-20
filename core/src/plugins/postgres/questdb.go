@@ -169,17 +169,10 @@ func (p *QuestDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	})
 }
 
-// GetPrimaryKeyColQuery returns a primary key query that tolerates schema-less
-// QuestDB source references.
+// GetPrimaryKeyColQuery returns an empty string because QuestDB does not
+// support primary key constraints.
 func (p *QuestDBPlugin) GetPrimaryKeyColQuery() string {
-	return `
-		SELECT a.attname
-		FROM pg_index i
-		JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-		JOIN pg_class c ON c.oid = i.indrelid
-		JOIN pg_namespace n ON n.oid = c.relnamespace
-		WHERE ($1 = '' OR n.nspname = $1) AND c.relname = $2 AND i.indisprimary;
-	`
+	return ""
 }
 
 // GetForeignKeyRelationships returns an empty relationship set because the
@@ -221,6 +214,33 @@ func (p *QuestDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.SSLSt
 
 	plugins.SetCachedSSLStatus(config, status)
 	return status, nil
+}
+
+// GetCreateTableQuery generates QuestDB-compatible CREATE TABLE DDL.
+// QuestDB only supports bare column definitions (name + type). It does not
+// enforce PRIMARY KEY, NOT NULL, UNIQUE, CHECK, FK, DEFAULT, or IDENTITY.
+func (p *QuestDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUnit string, columns []engine.Record) string {
+	builder := gorm_plugin.NewSQLBuilder(db, p)
+
+	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, _ engine.Record) gorm_plugin.ColumnDef {
+		return def
+	})
+
+	for i := range columnDefs {
+		columnDefs[i].Primary = false
+		columnDefs[i].NotNull = false
+		columnDefs[i].Nullable = true
+		columnDefs[i].Unique = false
+		columnDefs[i].Default = nil
+		columnDefs[i].CheckValues = nil
+		columnDefs[i].CheckMin = nil
+		columnDefs[i].CheckMax = nil
+		columnDefs[i].ReferencesTable = ""
+		columnDefs[i].ReferencesColumn = ""
+		columnDefs[i].Extra = ""
+	}
+
+	return builder.CreateTableQuery(schema, storageUnit, columnDefs)
 }
 
 // NewQuestDBPlugin creates a QuestDB plugin that reuses the PostgreSQL runtime

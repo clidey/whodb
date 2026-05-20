@@ -269,7 +269,7 @@ func TestConcurrentAddRemove(t *testing.T) {
 	const numGoroutines = 10
 	var wg sync.WaitGroup
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -294,4 +294,3 @@ func TestConcurrentAddRemove(t *testing.T) {
 		t.Errorf("expected 0 providers after concurrent add/remove, got %d", len(remaining))
 	}
 }
-

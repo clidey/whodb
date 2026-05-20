@@ -64,7 +64,7 @@ func GetWSL2WindowsHost() string {
 	if err != nil {
 		return ""
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) < 3 || fields[1] != "00000000" {
 			continue

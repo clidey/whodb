@@ -71,8 +71,8 @@ func TestQuestDBOverridesPostgresCatalogQueries(t *testing.T) {
 	}
 
 	pkQuery := plugin.GetPrimaryKeyColQuery()
-	if !strings.Contains(pkQuery, "($1 = '' OR n.nspname = $1)") {
-		t.Fatalf("expected QuestDB primary-key query to tolerate empty schema, got:\n%s", pkQuery)
+	if pkQuery != "" {
+		t.Fatalf("expected QuestDB primary-key query to be empty (QuestDB has no PKs), got:\n%s", pkQuery)
 	}
 }
 
@@ -155,5 +155,121 @@ func TestQuestDBGetSSLStatusUsesConfiguredMode(t *testing.T) {
 	}
 	if enabledStatus == nil || !enabledStatus.IsEnabled || enabledStatus.Mode != string(ssl.SSLModeRequired) {
 		t.Fatalf("expected enabled QuestDB SSL status, got %#v", enabledStatus)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_StripsIdentityAndPrimaryKey(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INTEGER", Extra: map[string]string{"primary": "true", "identity": "true"}},
+		{Key: "name", Value: "VARCHAR"},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "test_table", columns)
+
+	if strings.Contains(query, "GENERATED ALWAYS AS IDENTITY") {
+		t.Fatalf("QuestDB CREATE TABLE should not contain GENERATED ALWAYS AS IDENTITY, got:\n%s", query)
+	}
+	if strings.Contains(strings.ToUpper(query), "PRIMARY KEY") {
+		t.Fatalf("QuestDB CREATE TABLE should not contain PRIMARY KEY, got:\n%s", query)
+	}
+	if !strings.Contains(query, "test_table") {
+		t.Fatalf("QuestDB CREATE TABLE should contain table name, got:\n%s", query)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_StripsUniqueConstraints(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INTEGER", Extra: map[string]string{"primary": "true"}},
+		{Key: "email", Value: "VARCHAR", Extra: map[string]string{"unique": "true"}},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "users", columns)
+
+	if strings.Contains(strings.ToUpper(query), "UNIQUE") {
+		t.Fatalf("QuestDB CREATE TABLE should strip UNIQUE constraints, got:\n%s", query)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_StripsCheckConstraints(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INTEGER", Extra: map[string]string{"primary": "true"}},
+		{Key: "age", Value: "INTEGER", Extra: map[string]string{"check_min": "0", "check_max": "150"}},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "people", columns)
+
+	if strings.Contains(strings.ToUpper(query), "CHECK") {
+		t.Fatalf("QuestDB CREATE TABLE should strip CHECK constraints, got:\n%s", query)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_StripsForeignKeys(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INTEGER", Extra: map[string]string{"primary": "true"}},
+		{Key: "user_id", Value: "INTEGER", Extra: map[string]string{"references_table": "users", "references_column": "id"}},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "orders", columns)
+
+	if strings.Contains(strings.ToUpper(query), "FOREIGN KEY") {
+		t.Fatalf("QuestDB CREATE TABLE should strip FOREIGN KEY constraints, got:\n%s", query)
+	}
+	if strings.Contains(strings.ToUpper(query), "REFERENCES") {
+		t.Fatalf("QuestDB CREATE TABLE should strip REFERENCES, got:\n%s", query)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_StripsDefaults(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INTEGER", Extra: map[string]string{"primary": "true"}},
+		{Key: "status", Value: "VARCHAR", Extra: map[string]string{"default": "active"}},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "items", columns)
+
+	if strings.Contains(strings.ToUpper(query), "DEFAULT") {
+		t.Fatalf("QuestDB CREATE TABLE should strip DEFAULT values, got:\n%s", query)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_StripsNotNull(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INTEGER", Extra: map[string]string{"primary": "true"}},
+		{Key: "name", Value: "VARCHAR", Extra: map[string]string{"nullable": "false"}},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "test", columns)
+
+	if strings.Contains(strings.ToUpper(query), "NOT NULL") {
+		t.Fatalf("QuestDB CREATE TABLE should strip NOT NULL (not enforced by QuestDB), got:\n%s", query)
+	}
+}
+
+func TestQuestDBGetCreateTableQuery_ProducesBareColumnDefs(t *testing.T) {
+	plugin := NewQuestDBPlugin().PluginFunctions.(*QuestDBPlugin)
+
+	columns := []engine.Record{
+		{Key: "id", Value: "INT"},
+		{Key: "name", Value: "VARCHAR"},
+		{Key: "ts", Value: "TIMESTAMP"},
+	}
+
+	query := plugin.GetCreateTableQuery(nil, "", "events", columns)
+
+	expected := `CREATE TABLE events (id INT, name VARCHAR, ts TIMESTAMP)`
+	if query != expected {
+		t.Fatalf("QuestDB CREATE TABLE should produce bare column definitions.\nExpected: %s\nGot:      %s", expected, query)
 	}
 }

@@ -558,6 +558,7 @@ type SourceQueryTraits {
   SupportsScripts: Boolean!
   SupportsStreaming: Boolean!
   SupportsMultiStatement: Boolean!
+  SupportsSqlImport: Boolean!
   ExplainMode: SourceQueryExplainMode!
 }
 

@@ -332,8 +332,8 @@ func (c *Client) readLine() (string, error) {
 // Format: key=<key> exp=<exp> la=<la> cas=<cas> fetch=<yes|no> cls=<cls> size=<size>
 func parseMetadumpLine(line string) (MetadumpEntry, error) {
 	var entry MetadumpEntry
-	fields := strings.Fields(line)
-	for _, field := range fields {
+	fields := strings.FieldsSeq(line)
+	for field := range fields {
 		kv := strings.SplitN(field, "=", 2)
 		if len(kv) != 2 {
 			continue

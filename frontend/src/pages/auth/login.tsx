@@ -24,7 +24,6 @@ import {
     LoginSourceDocument,
     TestSourceConnectionDocument,
     LoginWithSourceProfileDocument,
-    SourceHostInputUrlParser,
 } from '@graphql';
 import classNames from "classnames";
 import {FC, ReactElement, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
@@ -87,6 +86,7 @@ import {
     canSubmitStandardConnectionForm,
     getPromotedConnectionFieldKeys,
     supportsDatabaseFieldOptions,
+    tryParseSourceConnectionString,
     usesFileTransport,
 } from '@/utils/source-connection-form';
 import { buildDatabaseFieldOptions, SourceConnectionFields } from '@/components/source-connection-fields';
@@ -803,60 +803,31 @@ export const LoginForm: FC<LoginFormProps> = ({
     }, [pendingAutoLogin]);
 
     const handleHostNameChange = useCallback((newHostName: string) => {
-        const urlParser = databaseType.traits?.connection.hostInputUrlParser ?? SourceHostInputUrlParser.None;
-
-        if (urlParser === SourceHostInputUrlParser.MongoSrv && newHostName.startsWith("mongodb+srv://")) {
-            const url = new URL(newHostName);
-            setHostName(url.hostname);
-            setUsername(url.username);
-            setPassword(url.password);
-            setDatabase(url.pathname.substring(1));
-            const advancedForm = {
-                "Port": "27017",
-                "URL Params": `?${url.searchParams.toString()}`,
-                "DNS Enabled": "false"
-            };
-            if (url.port.length === 0) {
-                advancedForm["Port"] = "";
-                advancedForm["DNS Enabled"] = "true";
-            }
-            setAdvancedForm(advancedForm);
-            setShowAdvanced(true);
-            return;
-        }
-
-        if (urlParser === SourceHostInputUrlParser.Postgres && (newHostName.startsWith("postgres://") || newHostName.startsWith("postgresql://"))) {
-            try {
-                const url = new URL(newHostName);
-                const hostname = url.hostname;
-                const username = url.username;
-                const password = url.password;
-                const database = url.pathname.substring(1);
-
-                if (!hostname || !username || !password || !database) {
-                    toast.warning(t('urlParseWarning'));
-                }
-                setHostName(hostname);
-                setUsername(username);
-                setPassword(password);
-                setDatabase(database);
-
-                if (url.port) {
-                    const advancedForm = {
-                        "Port": url.port,
-                        "SSL Mode": "disable"
-                    };
-                    setAdvancedForm(advancedForm);
-                    setShowAdvanced(true);
-                }
-            } catch (error) {
-                toast.warning(t('urlParseWarning'));
-            }
-            return;
-        }
-
         setHostName(newHostName);
-    }, [databaseType.traits?.connection.hostInputUrlParser, t]);
+    }, []);
+
+    const handleHostNamePaste = useCallback((pastedValue: string) => {
+        const parsed = tryParseSourceConnectionString(databaseType, pastedValue);
+        if (!parsed.handled || parsed.values == null) {
+            return false;
+        }
+
+        setHostName(parsed.values.hostName);
+        setUsername(parsed.values.username);
+        setPassword(parsed.values.password);
+        setDatabase(parsed.values.database);
+        setAdvancedForm({
+            ...(databaseType.extra ?? {}),
+            ...parsed.values.advancedForm,
+        });
+        setShowAdvanced(parsed.values.showAdvanced);
+
+        if (parsed.values.shouldWarn) {
+            toast.warning(t('urlParseWarning'));
+        }
+
+        return true;
+    }, [databaseType, t]);
 
     const fields = useMemo(() => {
         if (databaseType.customFormRenderer) {
@@ -879,6 +850,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 databaseType={databaseType}
                 hostName={hostName}
                 onHostNameChange={handleHostNameChange}
+                onHostNamePaste={handleHostNamePaste}
                 username={username}
                 setUsername={setUsername}
                 usernameInputRef={usernameInputRef}
@@ -898,7 +870,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 errorId="login-error"
             />
         );
-    }, [database, databaseType, databasesLoading, foundDatabases?.SourceFieldOptions, handleHostNameChange, hostName, password, username, isDesktop, handleBrowseDatabaseFile, advancedForm, formResetKey, t, error, isEmbedded]);
+    }, [database, databaseType, databasesLoading, foundDatabases?.SourceFieldOptions, handleHostNameChange, handleHostNamePaste, hostName, password, username, isDesktop, handleBrowseDatabaseFile, advancedForm, formResetKey, t, error, isEmbedded]);
 
     const loginWithCredentialsEnabled = useMemo(() => {
         if (databaseType.customFormRenderer) {

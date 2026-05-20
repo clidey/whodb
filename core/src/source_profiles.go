@@ -17,6 +17,8 @@
 package src
 
 import (
+	"maps"
+
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/types"
@@ -106,9 +108,7 @@ func GetSourceCredentials(profile types.DatabaseCredentials) *source.Credentials
 	if profile.Port != "" {
 		values["Port"] = profile.Port
 	}
-	for key, value := range profile.Advanced {
-		values[key] = value
-	}
+	maps.Copy(values, profile.Advanced)
 	return &source.Credentials{
 		SourceType: profile.Type,
 		Values:     values,

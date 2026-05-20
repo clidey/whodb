@@ -81,7 +81,7 @@ get_db_port() {
         mysql)       echo "3306" ;;
         mysql8)      echo "3308" ;;
         mariadb)     echo "3307" ;;
-        tidb)        echo "4000" ;;
+        tidb)        echo "4002" ;;
         mongodb)     echo "27017" ;;
         redis)       echo "6379" ;;
         cockroachdb) echo "26257" ;;
@@ -102,12 +102,12 @@ get_db_wait_time() {
     local db=$1
     case $db in
         postgres|mysql|mysql8|mariadb) echo "90" ;;  # Heavy init scripts
-        cockroachdb)                    echo "60" ;;  # Single-node startup
+        cockroachdb)                    echo "120" ;;  # Single-node startup
         elasticsearch)                  echo "60" ;;  # Can be slow
         mongodb|clickhouse)             echo "30" ;;  # Light init
         redis|memcached|valkey|dragonfly) echo "20" ;;  # Very fast
         opensearch)                     echo "60" ;;  # Similar to ES
-        tidb)                           echo "90" ;;  # MySQL-compatible distributed DB
+        tidb)                           echo "120" ;;  # MySQL-compatible distributed DB
         yugabytedb)                     echo "90" ;;  # Distributed DB startup
         questdb)                        echo "30" ;;  # Lightweight
         ferretdb)                       echo "30" ;;  # Lightweight (depends on PG)
@@ -410,7 +410,7 @@ if [ "$SKIP_CE_DATABASES" = "false" ]; then
         PID_MYSQL8=$!
         wait_for_port "MariaDB" 3307 90 &
         PID_MARIA=$!
-        wait_for_port "TiDB" 4000 90 &
+        wait_for_port "TiDB" 4002 90 &
         PID_TIDB=$!
         wait_for_port "MongoDB" 27017 30 &
         PID_MONGO=$!

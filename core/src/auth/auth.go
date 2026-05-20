@@ -22,7 +22,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -292,30 +294,16 @@ func isAllowed(r *http.Request, body []byte) bool {
 		"RefreshGCPProvider", "GenerateCloudSQLIAMAuthToken":
 		return true
 	}
-	for _, op := range additionalAllowedOps {
-		if query.OperationName == op {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(additionalAllowedOps, query.OperationName)
 }
 
 func mergeCredentialValues(base map[string]string, overrides map[string]string) map[string]string {
 	merged := map[string]string{}
-	for key, value := range base {
-		merged[key] = value
-	}
-	for key, value := range overrides {
-		merged[key] = value
-	}
+	maps.Copy(merged, base)
+	maps.Copy(merged, overrides)
 	return merged
 }
 
 func isTokenValid(token string) bool {
-	for _, t := range env.Tokens {
-		if t == token {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(env.Tokens, token)
 }

@@ -12,7 +12,7 @@ func TestSaveLoadDeleteCredentialsUsesKeyringWhenDesktopMode(t *testing.T) {
 	t.Setenv("WHODB_DESKTOP", "true")
 
 	creds := &source.Credentials{
-		ID:         strPtr("profile1"),
+		ID:         new("profile1"),
 		SourceType: "Postgres",
 		Values: map[string]string{
 			"Hostname": "db.local",
@@ -49,4 +49,5 @@ func TestSaveCredentialsNoopWhenNotDesktop(t *testing.T) {
 	}
 }
 
-func strPtr(s string) *string { return &s }
+//go:fix inline
+func strPtr(s string) *string { return new(s) }

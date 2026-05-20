@@ -142,9 +142,9 @@ func ParseORClauseValues(clause string) []string {
 //   - PostgreSQL/CockroachDB type casts: 'value'::text, 'value':::STRING
 func ParseValueList(content string) []string {
 	var values []string
-	parts := strings.Split(content, ",")
+	parts := strings.SplitSeq(content, ",")
 
-	for _, part := range parts {
+	for part := range parts {
 		part = strings.TrimSpace(part)
 
 		part = strings.TrimPrefix(part, "N")

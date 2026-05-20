@@ -20,6 +20,7 @@ query SourceTypes {
         supportsScripts: SupportsScripts
         supportsStreaming: SupportsStreaming
         supportsMultiStatement: SupportsMultiStatement
+        supportsSqlImport: SupportsSqlImport
         explainMode: ExplainMode
       }
       mockData: MockData {

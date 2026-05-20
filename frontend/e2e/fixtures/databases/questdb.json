@@ -21,8 +21,7 @@
       "thirdColumn": "email",
       "thirdValue": "jane@example.com",
       "expectedValue": "admin_user"
-    },
-    "typeCastingTable": "test_casting"
+    }
   },
   "connection": {
     "host": "localhost",
@@ -54,14 +53,18 @@
     "whereConditions": true,
     "queryHistory": true,
     "pagination": true,
-    "documentEdit": false
+    "documentEdit": false,
+    "schemaManagement": true
   },
   "featureNotes": {
     "graph": "QuestDB does not support foreign keys, so graph view has no relationships",
     "mockData": "Mock data generation not applicable for time-series databases",
-    "documentEdit": "QuestDB is append-only, direct row editing is not supported"
+    "documentEdit": "QuestDB is append-only, direct row editing is not supported",
+    "schemaManagement": "QuestDB only supports column name + type in CREATE TABLE, no constraints"
   },
   "expectedTables": [
+    "addresses",
+    "data_types",
     "order_items",
     "orders",
     "payments",
@@ -82,8 +85,186 @@
         "initial": [
           ["", "1", "john_doe", "john@example.com", "securepassword1"],
           ["", "2", "jane_smith", "jane@example.com", "securepassword2"],
-          ["", "3", "admin_user", "admin@example.com", "adminpass"]
+          ["", "3", "admin_user", "admin@example.com", "adminpass1"],
+          ["", "4", "bob_jones", "bob@example.com", "bobpass123"],
+          ["", "5", "alice_wong", "alice@example.com", "alicepass1"]
+        ],
+        "newRow": {
+          "id": "6",
+          "username": "new_user",
+          "email": "new@example.com",
+          "password": "newpass123",
+          "created_at": "2024-02-01T12:00:00.000000Z"
+        }
+      },
+      "metadata": {
+        "type": "base table"
+      }
+    },
+    "addresses": {
+      "columns": {
+        "id": "integer",
+        "user_id": "integer",
+        "street": "character varying",
+        "city": "character varying",
+        "state": "character varying",
+        "zip_code": "character varying",
+        "country": "character varying",
+        "created_at": "timestamp"
+      },
+      "expectedColumns": ["", "id", "user_id", "street", "city", "state", "zip_code", "country", "created_at"],
+      "testData": {
+        "initial": [
+          ["", "1", "1", "123 Main St", "New York", "NY", "10001", "USA"],
+          ["", "2", "2", "456 Oak Ave", "Los Angeles", "CA", "90001", "USA"],
+          ["", "3", "3", "789 Pine Rd", "Chicago", "IL", "60601", "USA"]
+        ],
+        "newRow": {
+          "id": "4",
+          "user_id": "4",
+          "street": "321 Elm St",
+          "city": "Houston",
+          "state": "TX",
+          "zip_code": "77001",
+          "country": "USA",
+          "created_at": "2024-02-01T12:00:00.000000Z"
+        }
+      },
+      "metadata": {
+        "type": "base table"
+      }
+    },
+    "data_types": {
+      "columns": {
+        "id": "integer",
+        "col_boolean": "boolean",
+        "col_short": "smallint",
+        "col_int": "integer",
+        "col_long": "bigint",
+        "col_float": "real",
+        "col_double": "double precision",
+        "col_string": "character varying",
+        "col_symbol": "character varying",
+        "col_uuid": "character varying",
+        "col_date": "date",
+        "col_timestamp": "timestamp"
+      },
+      "expectedColumns": ["", "id", "col_boolean", "col_short", "col_int", "col_long", "col_float", "col_double", "col_string", "col_symbol", "col_uuid", "col_date", "col_timestamp"],
+      "testData": {
+        "initial": [
+          ["", "1", "true", "100", "1000", "100000", "1.5", "2.5", "hello", "sym1"],
+          ["", "2", "false", "200", "2000", "200000", "3.14", "6.28", "world", "sym2"]
         ]
+      },
+      "metadata": {
+        "type": "base table"
+      }
+    },
+    "products": {
+      "columns": {
+        "id": "integer",
+        "name": "character varying",
+        "description": "character varying",
+        "price": "double precision",
+        "stock_quantity": "integer",
+        "created_at": "timestamp"
+      },
+      "expectedColumns": ["", "id", "name", "description", "price", "stock_quantity", "created_at"],
+      "testData": {
+        "initial": [
+          ["", "1", "Laptop", "High-performance laptop", "1200.0"],
+          ["", "2", "Smartphone", "Latest model smartphone", "800.0"],
+          ["", "3", "Headphones", "Noise-canceling headphones", "150.0"]
+        ],
+        "newRow": {
+          "id": "4",
+          "name": "Tablet",
+          "description": "Lightweight tablet",
+          "price": "500.00",
+          "stock_quantity": "15",
+          "created_at": "2024-02-01T12:00:00.000000Z"
+        }
+      },
+      "metadata": {
+        "type": "base table"
+      }
+    },
+    "orders": {
+      "columns": {
+        "id": "integer",
+        "user_id": "integer",
+        "total_amount": "double precision",
+        "status": "character varying",
+        "order_date": "timestamp"
+      },
+      "expectedColumns": ["", "id", "user_id", "total_amount", "status", "order_date"],
+      "testData": {
+        "initial": [
+          ["", "1", "1", "2000.0", "completed"],
+          ["", "2", "2", "150.0", "pending"]
+        ],
+        "newRow": {
+          "id": "3",
+          "user_id": "3",
+          "total_amount": "300.00",
+          "status": "processing",
+          "order_date": "2024-02-05T12:00:00.000000Z"
+        }
+      },
+      "metadata": {
+        "type": "base table"
+      }
+    },
+    "order_items": {
+      "columns": {
+        "id": "integer",
+        "order_id": "integer",
+        "product_id": "integer",
+        "quantity": "integer",
+        "price_at_purchase": "double precision",
+        "created_at": "timestamp"
+      },
+      "expectedColumns": ["", "id", "order_id", "product_id", "quantity", "price_at_purchase", "created_at"],
+      "testData": {
+        "initial": [
+          ["", "1", "1", "1", "1", "1200.0"],
+          ["", "2", "1", "2", "1", "800.0"],
+          ["", "3", "2", "3", "1", "150.0"]
+        ],
+        "newRow": {
+          "id": "4",
+          "order_id": "3",
+          "product_id": "1",
+          "quantity": "2",
+          "price_at_purchase": "1200.00",
+          "created_at": "2024-02-05T12:00:01.000000Z"
+        }
+      },
+      "metadata": {
+        "type": "base table"
+      }
+    },
+    "payments": {
+      "columns": {
+        "id": "integer",
+        "order_id": "integer",
+        "amount": "double precision",
+        "payment_method": "character varying",
+        "payment_date": "timestamp"
+      },
+      "expectedColumns": ["", "id", "order_id", "amount", "payment_method", "payment_date"],
+      "testData": {
+        "initial": [
+          ["", "1", "1", "2000.0", "credit_card"],
+          ["", "2", "2", "150.0", "paypal"]
+        ],
+        "newRow": {
+          "id": "3",
+          "order_id": "3",
+          "amount": "300.00",
+          "payment_method": "bank_transfer",
+          "payment_date": "2024-02-06T12:00:00.000000Z"
+        }
       },
       "metadata": {
         "type": "base table"
@@ -93,12 +274,13 @@
   "sql": {
     "schemaPrefix": "",
     "selectAllUsers": "SELECT * FROM users ORDER BY created_at;",
-    "selectUserById": "SELECT * FROM users WHERE id=1;",
+    "selectUserById": "SELECT * FROM users WHERE id = 1;",
     "countUsers": "SELECT COUNT(*) as user_count FROM users;",
     "countColumn": "user_count",
     "selectUsersFiltered": "SELECT username, email FROM users WHERE id > 1;",
-    "invalidQuery": "SELECT * FROM users1;",
-    "emptyResultQuery": "SELECT * FROM users WHERE id = -99999",
+    "limitQuery": "SELECT * FROM users LIMIT 5;",
+    "invalidQuery": "SELECT * FROM nonexistent_table;",
+    "emptyResultQuery": "SELECT * FROM users WHERE id = -99999;",
     "errorPatterns": {
       "tableNotFound": "table does not exist"
     }

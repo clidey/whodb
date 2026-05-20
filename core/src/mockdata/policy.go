@@ -36,8 +36,8 @@ func IsMockDataGenerationAllowed(tableName string) bool {
 		return false
 	}
 
-	disabledTables := strings.Split(env.DisableMockDataGeneration, ",")
-	for _, disabled := range disabledTables {
+	disabledTables := strings.SplitSeq(env.DisableMockDataGeneration, ",")
+	for disabled := range disabledTables {
 		if strings.TrimSpace(disabled) == tableName {
 			return false
 		}

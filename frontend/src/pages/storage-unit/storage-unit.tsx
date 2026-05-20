@@ -752,8 +752,13 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
         </Card>)
     }
 
+    const hasSourceHandle = columnItems.some((col: any) => col.IsForeignKey);
+    const hasTargetHandle = columnItems.some((col: any) => col.IsPrimary);
+
     return (
         <>
+            {!hasSourceHandle && <Handle type="source" position={Position.Right} className="invisible" />}
+            {!hasTargetHandle && <Handle type="target" position={Position.Left} className="invisible" />}
             <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-lg" data-testid="storage-unit-graph-card">
                     <div className="flex flex-col grow">

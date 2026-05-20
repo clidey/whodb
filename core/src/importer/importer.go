@@ -190,8 +190,7 @@ func ErrorKeyFromError(err error) string {
 		return ""
 	}
 
-	var typedErr *importError
-	if errors.As(err, &typedErr) {
+	if typedErr, ok := errors.AsType[*importError](err); ok {
 		return typedErr.key
 	}
 
@@ -549,10 +548,7 @@ func Execute(plugin engine.PluginFunctions, config *engine.PluginConfig, request
 		}
 
 		for start := 0; start < len(request.Parsed.Rows); start += batchSize {
-			end := start + batchSize
-			if end > len(request.Parsed.Rows) {
-				end = len(request.Parsed.Rows)
-			}
+			end := min(start+batchSize, len(request.Parsed.Rows))
 
 			batch := request.Parsed.Rows[start:end]
 			records := make([][]engine.Record, 0, len(batch))

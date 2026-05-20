@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/clidey/whodb/core/src/query"
 	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/query"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -248,17 +248,21 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 
 		var isForeignKey bool
 		var referencedTable *string
+		var referencedColumn *string
 		if ref, ok := fieldToRef[fieldName]; ok {
 			isForeignKey = true
 			referencedTable = &ref
+			idCol := "_id"
+			referencedColumn = &idCol
 		}
 
 		columns = append(columns, engine.Column{
-			Name:            fieldName,
-			Type:            fieldType,
-			IsPrimary:       fieldName == "_id",
-			IsForeignKey:    isForeignKey,
-			ReferencedTable: referencedTable,
+			Name:             fieldName,
+			Type:             fieldType,
+			IsPrimary:        fieldName == "_id",
+			IsForeignKey:     isForeignKey,
+			ReferencedTable:  referencedTable,
+			ReferencedColumn: referencedColumn,
 		})
 	}
 

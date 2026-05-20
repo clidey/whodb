@@ -14,11 +14,31 @@
  * limitations under the License.
  */
 
+import {
+    parseNormalize,
+    type ConnparseAddress,
+    type NormalizedConnparseAddress,
+    type QueryValue,
+} from '@clidey/connparse';
 import { SourceConnectionFieldSection, SourceConnectionTransport } from '@graphql';
 import type { SourceTypeItem } from '@/config/source-types';
-import { getSSLAdvancedKeys } from '@/utils/source-ssl';
+import { SSL_KEYS, getSSLAdvancedKeys } from '@/utils/source-ssl';
 
 type SourceConnectionFieldItem = NonNullable<SourceTypeItem['connectionFields']>[number];
+type ParsedSourceConnectionString = {
+    hostName: string;
+    username: string;
+    password: string;
+    database: string;
+    advancedForm: Record<string, string>;
+    showAdvanced: boolean;
+    shouldWarn: boolean;
+};
+
+type SourceConnectionStringParseResult = {
+    handled: boolean;
+    values?: ParsedSourceConnectionString;
+};
 
 /**
  * One derived advanced-section state snapshot for one source form.
@@ -67,6 +87,131 @@ export function supportsDatabaseFieldOptions(
     return databaseType?.connectionFields?.some(field =>
         field.Key.toLowerCase() === 'database' && field.SupportsOptions
     ) ?? false;
+}
+
+/**
+ * Attempts to translate one pasted connection string into backend-owned source form fields.
+ *
+ * @param databaseType Source type that owns the target form.
+ * @param input Raw pasted input from the hostname field.
+ * @returns Parsed field values when the input can be mapped into the form.
+ */
+export function tryParseSourceConnectionString(
+    databaseType: SourceTypeItem | null | undefined,
+    input: string
+): SourceConnectionStringParseResult {
+    if (
+        databaseType == null ||
+        !looksLikeConnectionString(input) ||
+        findConnectionFieldByKey(databaseType, 'Hostname') == null
+    ) {
+        return { handled: false };
+    }
+
+    const provider = resolveConnparseProvider(databaseType);
+    if (provider == null) {
+        return { handled: false };
+    }
+
+    const result = parseNormalize(input, {
+        provider,
+        includeCredentials: true,
+        includeDefaultPort: true,
+    });
+    if (!result.ok || result.value == null) {
+        return { handled: false };
+    }
+
+    const parsedAddress: NormalizedConnparseAddress = result.value;
+    const endpoint = singleEndpointFromAddress(parsedAddress);
+    if (endpoint == null || endpoint.hostName.length === 0) {
+        return { handled: false };
+    }
+
+    const urlParamsField = findConnectionFieldByKey(databaseType, 'URL Params');
+    const dnsEnabledField = findConnectionFieldByKey(databaseType, 'DNS Enabled');
+    const advancedForm: Record<string, string> = {};
+    const fieldKeyByNormalized = new Map<string, string>();
+
+    for (const field of databaseType.connectionFields ?? []) {
+        fieldKeyByNormalized.set(normalizeConnectionFieldKey(field.Key), field.Key);
+    }
+    fieldKeyByNormalized.set(normalizeConnectionFieldKey(SSL_KEYS.MODE), SSL_KEYS.MODE);
+    fieldKeyByNormalized.set(normalizeConnectionFieldKey(SSL_KEYS.SERVER_NAME), SSL_KEYS.SERVER_NAME);
+
+    if (endpoint.port != null && findConnectionFieldByKey(databaseType, 'Port') != null) {
+        advancedForm.Port = String(endpoint.port);
+    }
+
+    const handledQueryKeys = new Set(parsedAddress.semantic?.consumed?.query ?? []);
+
+    for (const [semanticKey, semanticValue] of Object.entries(parsedAddress.semantic?.fields ?? {})) {
+        const fieldKey = fieldKeyByNormalized.get(normalizeConnectionFieldKey(semanticKey));
+        if (fieldKey == null) {
+            continue;
+        }
+
+        advancedForm[fieldKey] = String(semanticValue);
+    }
+
+    for (const [queryKey, queryValue] of Object.entries(parsedAddress.query)) {
+        if (handledQueryKeys.has(queryKey)) {
+            continue;
+        }
+
+        const fieldKey = fieldKeyByNormalized.get(normalizeConnectionFieldKey(queryKey));
+        if (fieldKey != null) {
+            advancedForm[fieldKey] = queryValueToInputValue(queryValue);
+            handledQueryKeys.add(queryKey);
+        }
+    }
+
+    if (dnsEnabledField != null && advancedForm[dnsEnabledField.Key]?.toLowerCase() === 'true') {
+        if (findConnectionFieldByKey(databaseType, 'Port') != null) {
+            advancedForm.Port = '';
+        }
+    }
+
+    if (urlParamsField != null) {
+        const urlParams = buildQueryString(filterQueryByHandledKeys(parsedAddress.query, handledQueryKeys));
+        if (urlParams.length > 0) {
+            advancedForm[urlParamsField.Key] = urlParams;
+        }
+    }
+
+    const values: ParsedSourceConnectionString = {
+        hostName: endpoint.hostName,
+        username: findConnectionFieldByKey(databaseType, 'Username') != null
+            ? (parsedAddress.credentials.username ?? '')
+            : '',
+        password: findConnectionFieldByKey(databaseType, 'Password') != null
+            ? (parsedAddress.credentials.password ?? '')
+            : '',
+        database: findConnectionFieldByKey(databaseType, 'Database') != null
+            ? (parsedAddress.resource.name ?? '')
+            : '',
+        advancedForm,
+        showAdvanced: Object.keys(advancedForm).length > 0,
+        shouldWarn: !canSubmitStandardConnectionForm(
+            databaseType,
+            endpoint.hostName,
+            findConnectionFieldByKey(databaseType, 'Username') != null
+                ? (parsedAddress.credentials.username ?? '')
+                : '',
+            findConnectionFieldByKey(databaseType, 'Password') != null
+                ? (parsedAddress.credentials.password ?? '')
+                : '',
+            findConnectionFieldByKey(databaseType, 'Database') != null
+                ? (parsedAddress.resource.name ?? '')
+                : '',
+            advancedForm
+        ),
+    };
+
+    return {
+        handled: true,
+        values,
+    };
 }
 
 function connectionFieldValue(
@@ -249,5 +394,71 @@ export function buildSourceAdvancedSectionState(
         hasAdvancedSection: declaredAdvancedFields.length > 0 ||
             fallbackAdvancedEntries.length > 0 ||
             (databaseType.sslModes?.length ?? 0) > 0,
+    };
+}
+
+function looksLikeConnectionString(input: string): boolean {
+    const trimmed = input.trim();
+    return trimmed.includes('://') || trimmed.startsWith('jdbc:') || /^[a-z_][a-z0-9_]*=.+/i.test(trimmed);
+}
+
+function resolveConnparseProvider(databaseType: SourceTypeItem): string | undefined {
+    return databaseType.connector || databaseType.id || undefined;
+}
+
+function normalizeConnectionFieldKey(key: string): string {
+    return key.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function queryValueToInputValue(value: QueryValue): string {
+    return Array.isArray(value) ? value[value.length - 1] ?? '' : value;
+}
+
+function buildQueryString(query: Record<string, QueryValue>): string {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                params.append(key, item);
+            }
+            continue;
+        }
+        params.append(key, value);
+    }
+    const serialized = params.toString();
+    return serialized.length > 0 ? `?${serialized}` : '';
+}
+
+function filterQueryByHandledKeys(
+    query: Record<string, QueryValue>,
+    handledQueryKeys: ReadonlySet<string>
+): Record<string, QueryValue> {
+    return Object.fromEntries(
+        Object.entries(query).filter(([key]) => !handledQueryKeys.has(key))
+    );
+}
+function singleEndpointFromAddress(address: ConnparseAddress): { hostName: string; port: number | null } | null {
+    const hosts = Array.isArray(address.authority.hosts) ? address.authority.hosts : null;
+    if (hosts != null && hosts.length > 0) {
+        return null;
+    }
+
+    let hostName = typeof address.authority.host === 'string' ? address.authority.host.trim() : '';
+    let port = typeof address.authority.port === 'number' ? address.authority.port : null;
+
+    const tcpMatch = /^tcp\((.+)\)$/i.exec(hostName);
+    if (tcpMatch != null) {
+        try {
+            const tcpUrl = new URL(`tcp://${tcpMatch[1]}`);
+            hostName = tcpUrl.hostname;
+            port = tcpUrl.port.length > 0 ? Number(tcpUrl.port) : port;
+        } catch {
+            return null;
+        }
+    }
+
+    return {
+        hostName,
+        port,
     };
 }

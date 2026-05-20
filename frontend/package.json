@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@apollo/client": "4.1.7",
+    "@clidey/connparse": "0.7.0",
     "@clidey/ux": "0.42.0",
     "@codemirror/autocomplete": "6.18.6",
     "@codemirror/lang-json": "6.0.2",

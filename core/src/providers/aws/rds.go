@@ -39,7 +39,7 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 
 	log.Debugf("RDS discoverRDS: starting discovery for provider %s", p.config.ID)
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
 			log.Warnf("RDS discoverRDS: context cancelled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
@@ -138,7 +138,7 @@ func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.Discove
 
 	log.Debugf("RDS discoverRDSClusters: starting for provider %s", p.config.ID)
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
 			log.Warnf("RDS discoverRDSClusters: context cancelled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
@@ -251,7 +251,7 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 
 	log.Debugf("RDS discoverRDSProxies: starting for provider %s", p.config.ID)
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
 			log.Warnf("RDS discoverRDSProxies: context cancelled, returning %d results so far", len(connections))
 			return connections, ctx.Err()

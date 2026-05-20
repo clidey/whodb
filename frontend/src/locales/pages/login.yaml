@@ -9,7 +9,7 @@ en_US:
   databaseName: "Database Name"
   databaseFilePath: "Database File Path"
   hostName: Host Name
-  hostNameOrUrl: Host Name (or Paste Connection URL)
+  hostNameOrUrl: Host Name (or Enter Connection String)
   username: Username
   enterUsername: Enter Username
   password: Password
@@ -255,7 +255,7 @@ en_GB:
   title: "Login"
   databaseType: "Database Type"
   hostName: "Host Name"
-  hostNameOrUrl: "Host Name (or Paste Connection URL)"
+  hostNameOrUrl: "Host Name (or Enter Connection String)"
   username: "Username"
   enterUsername: "Enter Username"
   password: "Password"

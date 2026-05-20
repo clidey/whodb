@@ -21,7 +21,7 @@ import { LogoutPage } from "../pages/auth/logout";
 import { getComponent } from "./component-registry";
 import { featureFlags } from "./features";
 import { LoadingPage } from "../components/loading";
-import { getRegisteredRoutes } from "./route-registry";
+import { getRegisteredRoutes, getSurfaceFallbackPath } from "./route-registry";
 import { useSourceContract } from "../hooks/useSourceContract";
 export { registerRoute } from "./route-registry";
 
@@ -42,7 +42,13 @@ const RawExecutePage = lazy(() => import("../pages/raw-execute/raw-execute").the
 const ChatPage = lazy(() => import("../pages/chat/chat").then(m => ({ default: m.ChatPage })));
 const SettingsPage = lazy(() => import("../pages/settings/settings").then(m => ({ default: m.SettingsPage })));
 const ContactUsPage = lazy(() => import("../pages/contact-us/contact-us").then(m => ({ default: m.ContactUsPage })));
-const SQLAgentPage = getComponent('sql-agent') ?? null;
+const ChatRouteComponent: FC = () => {
+    const Agent = getComponent('sql-agent');
+    if (Agent) {
+        return <Suspense fallback={<LoadingPage />}><Agent /></Suspense>;
+    }
+    return <SourceSurfaceRoute surface="chat" component={<LazyRoute component={ChatPage} />} />;
+};
 
 // Wrapper component for lazy loaded routes
 const LazyRoute: FC<{ component: React.ComponentType<any> }> = ({ component: Component }) => (
@@ -69,7 +75,7 @@ const SourceSurfaceRoute: FC<{
             : supportsScratchpad;
 
     if (!isAllowed) {
-        return <Navigate to="/storage-unit" replace />;
+        return <Navigate to={getSurfaceFallbackPath()} replace />;
     }
 
     return <>{component}</>;
@@ -116,14 +122,7 @@ export const InternalRoutes = {
     Chat: {
         name: "Chat",
         path: "/chat",
-        component: SQLAgentPage
-            ? <Suspense fallback={<LoadingPage />}><SQLAgentPage /></Suspense>
-            : (
-                <SourceSurfaceRoute
-                    surface="chat"
-                    component={<LazyRoute component={ChatPage} />}
-                />
-            ),
+        component: <ChatRouteComponent />,
     },
     Logout: {
         name: "Logout",

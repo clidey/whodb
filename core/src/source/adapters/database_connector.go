@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -742,9 +743,7 @@ func (s *DatabaseSession) engineCredentials(values map[string]string) *engine.Cr
 			mergedValues[field.Key] = field.DefaultValue
 		}
 	}
-	for key, value := range values {
-		mergedValues[key] = value
-	}
+	maps.Copy(mergedValues, values)
 
 	engineCredentials := &engine.Credentials{
 		Id:          s.credentials.ID,
@@ -1022,9 +1021,7 @@ func cloneAliasMap(aliasMap map[string]string) map[string]string {
 	}
 
 	cloned := make(map[string]string, len(aliasMap))
-	for key, value := range aliasMap {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, aliasMap)
 	return cloned
 }
 

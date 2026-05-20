@@ -79,11 +79,7 @@ func (b *BatchProcessor) calculateBatchSize(columnCount int) int {
 	maxParams := b.getMaxParametersForDB()
 	// Leave some margin (10%) for safety
 	safeMaxParams := int(float64(maxParams) * 0.9)
-	maxRowsForDB := safeMaxParams / columnCount
-
-	if maxRowsForDB < 1 {
-		maxRowsForDB = 1
-	}
+	maxRowsForDB := max(safeMaxParams/columnCount, 1)
 
 	// Use the smaller of configured batch size and calculated max
 	if maxRowsForDB < b.config.BatchSize {
@@ -192,10 +188,7 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 	// Fall back to individual inserts if bulk insert is disabled
 	totalRecords := len(records)
 	for i := 0; i < totalRecords; i += effectiveBatchSize {
-		end := i + effectiveBatchSize
-		if end > totalRecords {
-			end = totalRecords
-		}
+		end := min(i+effectiveBatchSize, totalRecords)
 
 		batch := records[i:end]
 
