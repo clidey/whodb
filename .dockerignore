@@ -10,6 +10,7 @@
 !ee-stub/
 
 # Exclude test/dev artifacts within allowed directories
+**/vendor
 **/node_modules
 frontend/coverage
 frontend/.nyc_output
