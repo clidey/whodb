@@ -26,7 +26,9 @@ jobs:
     permissions:
       contents: read
     outputs:
+      cluster_tag: ${{ steps.meta.outputs.cluster_tag }}
       is_release: ${{ steps.meta.outputs.is_release }}
+      oss_prefix: ${{ steps.meta.outputs.oss_prefix }}
       short_sha: ${{ steps.meta.outputs.short_sha }}
       tag_name: ${{ steps.meta.outputs.tag_name }}
       tag_with_sha: ${{ steps.meta.outputs.tag_with_sha }}
@@ -43,15 +45,21 @@ jobs:
             TAG_NAME="${GITHUB_REF_NAME}"
             VERSION="${TAG_NAME}"
             TAG_WITH_SHA="${TAG_NAME}-${SHORT_SHA}"
+            CLUSTER_TAG="${TAG_NAME}"
+            OSS_PREFIX="release/${CLUSTER_TAG}"
             IS_RELEASE="true"
           else
             TAG_NAME="main"
             VERSION="main-${SHORT_SHA}"
             TAG_WITH_SHA="${VERSION}"
+            CLUSTER_TAG="${VERSION}"
+            OSS_PREFIX="ci/main/${SHORT_SHA}"
             IS_RELEASE="false"
           fi
 
+          echo "cluster_tag=${CLUSTER_TAG}" >> "${GITHUB_OUTPUT}"
           echo "is_release=${IS_RELEASE}" >> "${GITHUB_OUTPUT}"
+          echo "oss_prefix=${OSS_PREFIX}" >> "${GITHUB_OUTPUT}"
           echo "short_sha=${SHORT_SHA}" >> "${GITHUB_OUTPUT}"
           echo "tag_name=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
           echo "tag_with_sha=${TAG_WITH_SHA}" >> "${GITHUB_OUTPUT}"
@@ -235,21 +243,19 @@ jobs:
           cache-to: type=gha,mode=max,scope=dataflow-sealos-${{ matrix.arch }}
 
       - name: Save sealos image package
-        if: ${{ needs.meta.outputs.is_release == 'true' }}
         run: |
           set -euo pipefail
-          TAG_NAME="${{ needs.meta.outputs.tag_name }}"
+          CLUSTER_TAG="${{ needs.meta.outputs.cluster_tag }}"
           TAG_WITH_SHA="${{ needs.meta.outputs.tag_with_sha }}"
           docker pull "${GHCR_SEALOS_IMAGE}:${TAG_WITH_SHA}-${{ matrix.arch }}"
           mkdir -p release-assets
-          docker save "${GHCR_SEALOS_IMAGE}:${TAG_WITH_SHA}-${{ matrix.arch }}" | gzip > "release-assets/dataflow-cluster-${TAG_NAME}-${{ matrix.arch }}.tar.gz"
+          docker save "${GHCR_SEALOS_IMAGE}:${TAG_WITH_SHA}-${{ matrix.arch }}" | gzip > "release-assets/dataflow-cluster-${CLUSTER_TAG}-${{ matrix.arch }}.tar.gz"
 
       - name: Upload sealos image package
-        if: ${{ needs.meta.outputs.is_release == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: sealos-image-${{ needs.meta.outputs.tag_name }}-${{ matrix.arch }}
-          path: release-assets/dataflow-cluster-${{ needs.meta.outputs.tag_name }}-${{ matrix.arch }}.tar.gz
+          name: sealos-image-${{ needs.meta.outputs.cluster_tag }}-${{ matrix.arch }}
+          path: release-assets/dataflow-cluster-${{ needs.meta.outputs.cluster_tag }}-${{ matrix.arch }}.tar.gz
           if-no-files-found: error
           retention-days: 14
 
@@ -312,6 +318,54 @@ jobs:
           if [ "${{ needs.meta.outputs.is_release }}" = "true" ]; then
             docker buildx imagetools inspect "${GHCR_SEALOS_IMAGE}:latest"
           fi
+
+  sync-image-aliyun:
+    name: Sync Sealos Image to OSS (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - sealos-manifest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+
+    steps:
+      - name: Download sealos packages
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: sealos-image-${{ needs.meta.outputs.cluster_tag }}-${{ matrix.arch }}
+          merge-multiple: true
+
+      - name: Install oss tools
+        run: |
+          set -euo pipefail
+          sudo -v
+          curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
+
+      - name: Sync to OSS
+        run: |
+          set -euo pipefail
+          TAR_NAME="release-assets/dataflow-cluster-${{ needs.meta.outputs.cluster_tag }}-${{ matrix.arch }}.tar.gz"
+          md5sum "${TAR_NAME}" > "${TAR_NAME}.md5"
+          OSS_TAR_NAME="dataflow-cluster-${{ needs.meta.outputs.cluster_tag }}-${{ matrix.arch }}.tar.gz"
+
+          ossutil64 cp -f -e "${{ secrets.OSS_ENDPOINT }}" \
+            -i "${{ secrets.OSS_ACCESS_KEY_ID }}" \
+            -k "${{ secrets.OSS_ACCESS_KEY_SECRET }}" \
+            "${TAR_NAME}" \
+            "oss://${{ vars.OSS_BUCKET }}/${{ needs.meta.outputs.oss_prefix }}/${OSS_TAR_NAME}"
+
+          ossutil64 cp -f -e "${{ secrets.OSS_ENDPOINT }}" \
+            -i "${{ secrets.OSS_ACCESS_KEY_ID }}" \
+            -k "${{ secrets.OSS_ACCESS_KEY_SECRET }}" \
+            "${TAR_NAME}.md5" \
+            "oss://${{ vars.OSS_BUCKET }}/${{ needs.meta.outputs.oss_prefix }}/${OSS_TAR_NAME}.md5"
 
   release:
     name: Publish GitHub Release
