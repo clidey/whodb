@@ -123,6 +123,8 @@ For multi-step tasks, follow the step-by-step workflows in `.agents/workflows/`.
 | Add or update translation keys | `.agents/workflows/add-translation.md` |
 | Add a CLI command or TUI view | `.agents/workflows/cli-feature.md` |
 | Add a platform-constrained HTTP handler | `.agents/workflows/platform-constrained-handler.md` |
+| Prepare or consume a handoff | `.agents/workflows/task-handoff.md` |
+| Prove claims about external behavior | `.agents/workflows/research-proof.md` |
 | Pre-commit verification | `.agents/workflows/review-checklist.md` |
 
 ## When Updating Dependencies
