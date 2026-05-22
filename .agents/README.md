@@ -33,3 +33,4 @@ If `ee/` is present, also read `ee/AGENTS.md` for Enterprise Edition boundaries 
 - Keep tool-specific instructions in adapter files such as `CLAUDE.md`; keep shared behavior here.
 - Do not move user-facing product documentation into this directory. Public docs belong under `docs/`.
 - When adding new agent guidance, prefer a focused workflow or rule over expanding always-loaded instructions.
+- After changing agent instructions, run `dev/check-agent-instructions.sh`.

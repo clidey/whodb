@@ -41,6 +41,7 @@ If the task is unclear or has multiple valid interpretations, stop and ask inste
 ## Agent Operating Model
 
 - Treat `AGENTS.md` as the shared source of truth for Codex, Claude Code via import, opencode, Pi, and other compatible coding agents.
+- Use `.agents/README.md` as the index for deeper agent guidance, and read only the relevant linked file before editing.
 - Keep always-loaded instructions concise. Move detailed workflows, checklists, and runbooks into linked docs rather than duplicating them in tool-specific files.
 - Use planning mode for multi-file, risky, architectural, or ambiguous changes. Skip formal plans for obvious single-purpose edits.
 - Use separate agents only for bounded sidecar work such as codebase exploration, review, test triage, or documentation lookup. Do not delegate blocking implementation work when the main session is waiting on it.
@@ -67,7 +68,7 @@ core/                   # Backend (Go)
   graph/schema.graphqls # GraphQL schema
   graph/*.resolvers.go  # GraphQL resolvers
 
-frontend/               # React/TypeScript
+frontend/               # React/TypeScript (uses @clidey/ux component library)
   src/index.tsx        # Entry point
   src/store/           # Redux Toolkit state
   src/generated/       # GraphQL codegen output (@graphql alias)
