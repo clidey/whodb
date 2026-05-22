@@ -1,0 +1,14 @@
+# Ignore compiled binaries
+core/cmd/whodb/whodb
+ee/cmd/whodb/whodb
+
+# Ignore generated codegen types
+frontend/src/generated/
+ee/frontend/src/generated/
+
+# Ignore logs
+audit.log
+
+# Ignore large frontend build artifacts
+frontend/dist/
+ee/frontend/dist/
