@@ -110,6 +110,8 @@ For language-specific or domain-specific guidelines, refer to the shared rules i
 - GraphQL (`**/graph/`, `**/*.graphqls`): `.agents/rules/graphql.md`
 - Localization (`**/locales/`): `.agents/rules/localization.md`
 - E2E Tests (`frontend/e2e/`): `.agents/rules/e2e-tests.md`
+- Desktop (`desktop-ce/`, `desktop-common/`): `.agents/rules/desktop.md`
+- CI/CD (`.github/`): `.agents/rules/ci-cd.md`
 
 ## Procedures
 
@@ -122,6 +124,7 @@ For multi-step tasks, follow the step-by-step workflows in `.agents/workflows/`.
 | Add a new frontend page | `.agents/workflows/new-frontend-page.md` |
 | Add or update translation keys | `.agents/workflows/add-translation.md` |
 | Add a CLI command or TUI view | `.agents/workflows/cli-feature.md` |
+| Add or modify desktop app functionality | `.agents/workflows/desktop-feature.md` |
 | Add a platform-constrained HTTP handler | `.agents/workflows/platform-constrained-handler.md` |
 | Prepare or consume a handoff | `.agents/workflows/task-handoff.md` |
 | Prove claims about external behavior | `.agents/workflows/research-proof.md` |
