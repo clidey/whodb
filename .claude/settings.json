@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".agents/hooks/session-context.sh"
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/session-context.sh"
           }
         ]
       }
@@ -16,19 +16,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".agents/hooks/auto-format-go.sh"
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-format-go.sh"
           },
           {
             "type": "command",
-            "command": ".agents/hooks/auto-lint-ts.sh"
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-lint-ts.sh"
           },
           {
             "type": "command",
-            "command": ".agents/hooks/auto-graphql-codegen.sh"
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-graphql-codegen.sh"
           },
           {
             "type": "command",
-            "command": ".agents/hooks/auto-translate.sh"
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-translate.sh"
           }
         ]
       }
