@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Button, Input, Label, Switch } from '@clidey/ux';
+import { Button, cn, Input, Label, Switch } from '@clidey/ux';
+import { ph } from '@/utils/privacy';
 import {
     SourceConnectionFieldKind,
     SourceConnectionFieldSection,
@@ -124,7 +125,7 @@ export function SourceConnectionFields({
     const searchPathField = promotedConnectionField(databaseType, 'Search Path', promotedKeys);
     const port = portValue ?? advancedForm.Port ?? portField?.DefaultValue ?? '';
     const setPort = onPortChange ?? ((value: string) => onAdvancedFormChange('Port', value));
-    const containerClassName = layout === 'login' ? 'flex flex-col gap-lg w-full' : 'space-y-4';
+    const containerClassName = cn(layout === 'login' ? 'flex flex-col gap-lg w-full' : 'space-y-4', ph.noCapture);
     const fieldClassName = layout === 'login' ? 'flex flex-col gap-sm w-full' : 'grid gap-2';
 
     if (usesFileTransport(databaseType) && databaseField != null) {

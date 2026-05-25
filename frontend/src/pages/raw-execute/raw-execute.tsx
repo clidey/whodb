@@ -92,6 +92,7 @@ import { featureFlags } from "../../config/features";
 import { isDesktopApp } from "../../utils/external-links";
 import { useSourceContract } from "../../hooks/useSourceContract";
 import { IPluginProps, QueryView } from "./query-view";
+import { ph } from "../../utils/privacy";
 
 /** Raw-execute extensions — set via registerRawExecuteExtensions(). */
 let eeRawExecuteExtensions: {
@@ -594,8 +595,8 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     return (
         <div className="flex flex-col grow group/cell relative">
             <div className="relative">
-                <div 
-                    className="flex grow border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5"
+                <div
+                    className={`flex grow border border-gray-200 rounded-md overflow-hidden dark:bg-white/10 dark:border-white/5 ${ph.noCapture}`}
                     style={{ height: `${editorHeight}px` }}
                 >
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={(c) => handleRawExecute(c)} />

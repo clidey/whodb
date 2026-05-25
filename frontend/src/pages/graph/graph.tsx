@@ -36,6 +36,7 @@ import {useTranslation} from '@/hooks/use-translation';
 import {
     Button,
     Checkbox,
+    cn,
     EmptyState,
     SearchInput,
     Sidebar as SidebarComponent,
@@ -47,6 +48,7 @@ import {
 import {useNavigate} from "react-router-dom";
 import {FolderIcon, RectangleGroupIcon, TableCellsIcon} from "../../components/heroicons";
 import {buildSourceScopeRef, getObjectNameFromRef} from "../../utils/source-refs";
+import {ph} from "../../utils/privacy";
 
 type GraphStorageUnit = NonNullable<GetGraphQuery["Graph"]>[number]["Unit"];
 
@@ -110,7 +112,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                                 });
                             }} />
                             <TableCellsIcon className="w-4 h-4 min-w-4 min-h-4" />
-                            <p className="text-sm truncate max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                            <p className={cn("text-sm truncate max-w-full overflow-hidden text-ellipsis whitespace-nowrap", ph.mask)}>
                                 {u.Name}
                             </p>
                         </label>
