@@ -84,6 +84,7 @@ import {withBasePath} from "../../utils/base-path";
 import {matchesShortcut, SHORTCUTS} from "../../utils/shortcuts";
 import {useContainerWidth} from "../../hooks/use-container-width";
 import {buildSourceScopeRef} from "../../utils/source-refs";
+import {ph} from "../../utils/privacy";
 
 // Chart components from the component registry
 const LineChart = getComponent('line-chart');
@@ -256,7 +257,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
         <div className="flex flex-col gap-lg overflow-hidden break-all leading-6 shrink-0 w-full max-w-full min-w-0">
             {
                 showSQL
-                ? <div className="h-[300px] w-full">
+                ? <div className={cn("h-[300px] w-full", ph.mask)}>
                     <CodeEditor value={text} language="sql" />
                 </div>
                 :  (data != null && data.Rows.length > 0) || type === "sql:get"
@@ -951,7 +952,7 @@ export const ChatPage: FC = () => {
                                                     </div>
                                                 );
                                             } else if (featureFlags.dataVisualization && (chat.Type === "sql:pie-chart" || chat.Type === "sql:line-chart")) {
-                                                return <div key={`chat-${i}`} className="flex gap-lg w-full max-w-full min-w-0 pt-4 relative" data-testid="visual-message">
+                                                return <div key={`chat-${i}`} className={cn("flex gap-lg w-full max-w-full min-w-0 pt-4 relative", ph.mask)} data-testid="visual-message">
                                                     {!chat.isUserInput && chats[i-1]?.isUserInput && (extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />)}
                                                     {/* @ts-ignore */}
                                                     {chat.Type === "sql:pie-chart" && PieChart && <PieChart columns={chat.Result?.Columns?.map(col => col.Name) ?? []} data={chat.Result?.Rows ?? []} text={chat.Text} />}

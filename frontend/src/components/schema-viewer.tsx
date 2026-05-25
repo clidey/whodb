@@ -35,6 +35,7 @@ import {useAppSelector} from "../store/hooks";
 import {Loading} from "./loading";
 import {useTranslation} from "@/hooks/use-translation";
 import {buildSourceParentRef} from "@/utils/source-refs";
+import {ph} from "@/utils/privacy";
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
 
@@ -192,7 +193,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
                                 </div>
                             ) : (
                                 <Tree
-                                    className="flex-1 overflow-y-auto"
+                                    className={`flex-1 overflow-y-auto ${ph.mask}`}
                                     data={treeData}
                                     initialSelectedItemId={selectedName ?? state?.unit?.Name}
                                     onSelectChange={handleSelect}

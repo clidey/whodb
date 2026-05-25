@@ -70,6 +70,7 @@ import {featureFlags} from "../../config/features";
 import {getComponent} from "../../config/component-registry";
 import { findSourceTypeItem, type SourceTypeItem } from "../../config/source-types";
 import {isAwsHostname, isAzureHostname, isGcpHostname} from "../../utils/cloud-connection-prefill";
+import {ph} from "../../utils/privacy";
 import {useSourceContract} from "../../hooks/useSourceContract";
 import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
 import {
@@ -545,6 +546,7 @@ export const Sidebar: FC = () => {
                                                     </CommandItem>
                                                 ) : undefined}
                                                 side="left" align="start"
+                                                buttonClassName={ph.mask}
                                                 buttonProps={{ "data-testid": "sidebar-profile", "data-collapsed": !open }}
                                             />
                                             {supportsDatabaseSwitching && (
@@ -557,6 +559,7 @@ export const Sidebar: FC = () => {
                                                     placeholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('selectSchema') : t('selectDatabase')}
                                                     searchPlaceholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('searchSchema') : t('searchDatabase')}
                                                     side="left" align="start"
+                                                    buttonClassName={ph.mask}
                                                     buttonProps={{ "data-testid": "sidebar-database", "aria-label": databaseDropdownLabel }}
                                                 />
                                             )}
@@ -570,6 +573,7 @@ export const Sidebar: FC = () => {
                                                     placeholder={t('selectSchema')}
                                                     searchPlaceholder={t('searchSchema')}
                                                     side="left" align="start"
+                                                    buttonClassName={ph.mask}
                                                     buttonProps={{ "data-testid": "sidebar-schema" }}
                                                 />
                                             )}
@@ -597,6 +601,7 @@ export const Sidebar: FC = () => {
                                                     </CommandItem>
                                                 ) : undefined}
                                                 side="left" align="start"
+                                                buttonClassName={ph.mask}
                                                 buttonProps={{ "data-testid": "sidebar-profile", "data-collapsed": !open }}
                                             />
                                             {supportsDatabaseSwitching && (
@@ -609,6 +614,7 @@ export const Sidebar: FC = () => {
                                                     placeholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('selectSchema') : t('selectDatabase')}
                                                     searchPlaceholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('searchSchema') : t('searchDatabase')}
                                                     side="left" align="start"
+                                                    buttonClassName={ph.mask}
                                                     buttonProps={{ "data-testid": "sidebar-database", "aria-label": databaseDropdownLabel }}
                                                 />
                                             )}
@@ -622,6 +628,7 @@ export const Sidebar: FC = () => {
                                                     placeholder={t('selectSchema')}
                                                     searchPlaceholder={t('searchSchema')}
                                                     side="left" align="start"
+                                                    buttonClassName={ph.mask}
                                                     buttonProps={{ "data-testid": "sidebar-schema" }}
                                                 />
                                             )}
@@ -713,6 +720,7 @@ export const Sidebar: FC = () => {
                                             </CommandItem>
                                         ) : undefined}
                                         side="left" align="start"
+                                        buttonClassName={ph.mask}
                                         buttonProps={{
                                             "data-testid": "sidebar-profile",
                                             "data-collapsed": !open,
@@ -733,6 +741,7 @@ export const Sidebar: FC = () => {
                                             placeholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('selectSchema') : t('selectDatabase')}
                                             searchPlaceholder={databaseSchemaTerminology === 'schema' && usesDatabaseInsteadOfSchema ? t('searchSchema') : t('searchDatabase')}
                                             side="left" align="start"
+                                            buttonClassName={ph.mask}
                                             buttonProps={{
                                                 "data-testid": "sidebar-database",
                                                 "aria-label": databaseDropdownLabel,
@@ -754,6 +763,7 @@ export const Sidebar: FC = () => {
                                             placeholder={t('selectSchema')}
                                             searchPlaceholder={t('searchSchema')}
                                             side="left" align="start"
+                                            buttonClassName={ph.mask}
                                             buttonProps={{
                                                 "data-testid": "sidebar-schema",
                                             }}
@@ -924,7 +934,7 @@ export const Sidebar: FC = () => {
                                         showCloudBadge={isAwsConnection(profile.Id)}
                                         size="sm"
                                     />
-                                    <span className="text-sm font-medium truncate">{getProfileLabel(profile, sourceTypeItem)}</span>
+                                    <span className={cn("text-sm font-medium truncate", ph.mask)}>{getProfileLabel(profile, sourceTypeItem)}</span>
                                 </button>
                             );
                         })}

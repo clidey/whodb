@@ -74,6 +74,7 @@ import {buildSourceParentObjectRef, buildSourceParentRef} from '../../utils/sour
 import {formatAttributeValue} from '../../utils/functions';
 import { findSourceObjectType, type SourceTypeItem } from '../../config/source-types';
 import { CreateSourceObjectCard } from './create-source-object-card';
+import {ph} from '../../utils/privacy';
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
 type SourceColumn = GetColumnsBatchQuery['ColumnsBatch'][number]['Columns'][number];
@@ -193,13 +194,13 @@ const StorageUnitCard: FC<{
             <div className="flex flex-col grow mb-2 w-full overflow-x-hidden">
                 <Tip className="w-fit">
                     <h1
-                        className="text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px]"
+                        className={cn("text-sm font-semibold mb-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[190px]", ph.mask)}
                         data-testid="storage-unit-name"
                         title={unit.Name}
                     >
                         {unit.Name}
                     </h1>
-                    <p className="text-xs">{unit.Name}</p>
+                    <p className={cn("text-xs", ph.mask)}>{unit.Name}</p>
                 </Tip>
                 {
                     introAttributes.slice(0,2).map(attribute => (
@@ -217,7 +218,7 @@ const StorageUnitCard: FC<{
             </div>
         </div>
         <div className="flex flex-col grow gap-lg justify-between h-full overflow-y-auto">
-            <SheetTitle className="flex items-center gap-2 mb-4">
+            <SheetTitle className={cn("flex items-center gap-2 mb-4", ph.mask)}>
                 <TableCellsIcon className="w-5 h-5" />
                 {unit.Name}
             </SheetTitle>
@@ -270,7 +271,7 @@ const StorageUnitCard: FC<{
                                 {columns.map(col => {
                                     const isForeignKey = col.IsForeignKey;
                                     return (
-                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                        <div key={col.Name} className={ph.mask} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
                                             <StackListItem item={isForeignKey ?
                                                 <Badge className="text-lg" data-testid="foreign-key-attribute" variant="secondary">{col.Name}</Badge> : col.Name}>
                                                 {col.Type?.toLowerCase()}
@@ -762,7 +763,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
             <Card icon={<CircleStackIcon className="w-4 h-4" />} className="h-fit backdrop-blur-[2px] w-[400px] px-2 py-6">
                 <div className="flex flex-col grow mt-2 gap-lg" data-testid="storage-unit-graph-card">
                     <div className="flex flex-col grow">
-                        <h2 className="text-3xl font-semibold mb-2 break-words">{data.Name}</h2>
+                        <h2 className={cn("text-3xl font-semibold mb-2 break-words", ph.mask)}>{data.Name}</h2>
                         <StackList>
                             {/* Show metadata first (Type, Total Size, etc.) */}
                             {
@@ -794,7 +795,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                                     const isPKColumn = col.IsPrimary || false;
 
                                     return (
-                                        <div key={`col-${name}-${index}`} className="relative" data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
+                                        <div key={`col-${name}-${index}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"

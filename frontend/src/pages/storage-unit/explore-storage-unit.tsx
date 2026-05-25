@@ -97,6 +97,7 @@ import {getComponent} from "../../config/component-registry";
 import { findSourceObjectType } from "../../config/source-types";
 import {buildSourceObjectRef, buildSourceParentObjectRef} from "../../utils/source-refs";
 import {formatAttributeValue} from "../../utils/functions";
+import {ph} from "../../utils/privacy";
 
 type SourceBrowserObject = GetStorageUnitsQuery['StorageUnit'][number];
 
@@ -880,7 +881,7 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     ) : sourceContent?.Text ? (
                         sourceContentLanguage ? (
-                            <div className="grow min-h-[400px] border rounded-md overflow-hidden">
+                            <div className={`grow min-h-[400px] border rounded-md overflow-hidden ${ph.noCapture}`}>
                                 <CodeEditor
                                     language={sourceContentLanguage}
                                     value={sourceContent.Text}
@@ -888,7 +889,7 @@ export const ExploreStorageUnit: FC = () => {
                                 />
                             </div>
                         ) : (
-                            <div className="grow min-h-[400px] overflow-auto rounded-md border bg-background/40 p-4">
+                            <div className={`grow min-h-[400px] overflow-auto rounded-md border bg-background/40 p-4 ${ph.mask}`}>
                                 <pre className="whitespace-pre-wrap break-words text-sm">{sourceContent.Text}</pre>
                             </div>
                         )
@@ -1037,7 +1038,7 @@ export const ExploreStorageUnit: FC = () => {
                                 <div className="flex flex-col gap-4" data-testid="add-row-field-document">
                                     <Label>{t('documentJson')}</Label>
                                     <p className="text-xs text-muted-foreground">{t('documentJsonHelp')}</p>
-                                    <div className="h-[300px] border rounded-md overflow-hidden">
+                                    <div className={`h-[300px] border rounded-md overflow-hidden ${ph.noCapture}`}>
                                         <CodeEditor
                                             language="json"
                                             value={addRowData.document ?? "{\n  \n}"}
@@ -1158,7 +1159,7 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="flex flex-col gap-sm h-[150px] mb-4" data-vaul-no-drag>
+                <div className={`flex flex-col gap-sm h-[150px] mb-4 ${ph.noCapture}`} data-vaul-no-drag>
                     <CodeEditor language="sql" value={code} setValue={setCode} onRun={handleScratchpad} />
                 </div>
                 <div className="overflow-y-auto" data-vaul-no-drag ref={scratchpadResultsRef}>
