@@ -9,6 +9,8 @@
             <string>SQLite Database</string>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
             <key>LSItemContentTypes</key>
             <array>
                 <string>com.clidey.whodb.sqlite-database</string>
@@ -19,6 +21,8 @@
             <string>DuckDB Database</string>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
             <key>LSItemContentTypes</key>
             <array>
                 <string>com.clidey.whodb.duckdb-database</string>
@@ -28,6 +32,8 @@
             <key>CFBundleTypeName</key>
             <string>SQLite Journal</string>
             <key>CFBundleTypeRole</key>
+            <string>None</string>
+            <key>LSHandlerRank</key>
             <string>None</string>
             <key>NSIsRelatedItemType</key>
             <true/>
@@ -41,6 +47,8 @@
             <string>SQLite WAL</string>
             <key>CFBundleTypeRole</key>
             <string>None</string>
+            <key>LSHandlerRank</key>
+            <string>None</string>
             <key>NSIsRelatedItemType</key>
             <true/>
             <key>LSItemContentTypes</key>
@@ -52,6 +60,8 @@
             <key>CFBundleTypeName</key>
             <string>SQLite SHM</string>
             <key>CFBundleTypeRole</key>
+            <string>None</string>
+            <key>LSHandlerRank</key>
             <string>None</string>
             <key>NSIsRelatedItemType</key>
             <true/>
