@@ -280,6 +280,12 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST_PATH" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST_PATH"
 
+          # Add document type declarations for sandbox Related Items support.
+          # This tells the sandbox to grant access to SQLite auxiliary files
+          # (-journal, -wal, -shm) when the user opens a .db file via file picker.
+          echo "Adding document type declarations for sandbox Related Items..."
+          /usr/libexec/PlistBuddy -c "Merge ../.github/templates/Info.document-types.plist" "$PLIST_PATH"
+
           # Verify the changes
           echo "New Bundle ID:"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH"
@@ -417,6 +423,12 @@ jobs:
           echo "Adding LSApplicationCategoryType..."
           /usr/libexec/PlistBuddy -c "Add :LSApplicationCategoryType string public.app-category.developer-tools" "$PLIST_PATH" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :LSApplicationCategoryType public.app-category.developer-tools" "$PLIST_PATH"
+
+          # Add document type declarations for sandbox Related Items support.
+          # This tells the sandbox to grant access to SQLite auxiliary files
+          # (-journal, -wal, -shm) when the user opens a .db file via file picker.
+          echo "Adding document type declarations for sandbox Related Items..."
+          /usr/libexec/PlistBuddy -c "Merge ../.github/templates/Info.document-types.plist" "$PLIST_PATH"
 
           # Verify the changes
           echo "New Bundle ID:"

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>SQLite Database</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.clidey.whodb.sqlite-database</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>DuckDB Database</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.clidey.whodb.duckdb-database</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>SQLite Journal</string>
+            <key>CFBundleTypeRole</key>
+            <string>None</string>
+            <key>NSIsRelatedItemType</key>
+            <true/>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.clidey.whodb.sqlite-journal</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>SQLite WAL</string>
+            <key>CFBundleTypeRole</key>
+            <string>None</string>
+            <key>NSIsRelatedItemType</key>
+            <true/>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.clidey.whodb.sqlite-wal</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>SQLite SHM</string>
+            <key>CFBundleTypeRole</key>
+            <string>None</string>
+            <key>NSIsRelatedItemType</key>
+            <true/>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.clidey.whodb.sqlite-shm</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.clidey.whodb.sqlite-database</string>
+            <key>UTTypeDescription</key>
+            <string>SQLite Database</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.database</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>db</string>
+                    <string>sqlite</string>
+                    <string>sqlite3</string>
+                    <string>db3</string>
+                </array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.clidey.whodb.duckdb-database</string>
+            <key>UTTypeDescription</key>
+            <string>DuckDB Database</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.database</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>duckdb</string>
+                </array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.clidey.whodb.sqlite-journal</string>
+            <key>UTTypeDescription</key>
+            <string>SQLite Journal File</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>db-journal</string>
+                    <string>sqlite-journal</string>
+                    <string>sqlite3-journal</string>
+                    <string>db3-journal</string>
+                </array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.clidey.whodb.sqlite-wal</string>
+            <key>UTTypeDescription</key>
+            <string>SQLite WAL File</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>db-wal</string>
+                    <string>sqlite-wal</string>
+                    <string>sqlite3-wal</string>
+                    <string>db3-wal</string>
+                </array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.clidey.whodb.sqlite-shm</string>
+            <key>UTTypeDescription</key>
+            <string>SQLite SHM File</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>db-shm</string>
+                    <string>sqlite-shm</string>
+                    <string>sqlite3-shm</string>
+                    <string>db3-shm</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
