@@ -1,0 +1,63 @@
+{
+  "skill_name": "semantic-test-tags",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "读取这个前端服务里的 DevBox 创建页代码，再结合需求“自动化测试需要稳定识别名称输入、运行时选择、CPU/内存输入、创建按钮、配额不足禁用原因和创建中状态”，直接补充语义标签。不要只给方案，改代码并说明如何验证。",
+      "expected_output": "Agent locates the relevant page/components, adds stable data-testid and data-qa attributes for fields/actions/states/disabled reason, preserves accessibility and existing behavior, updates or explains semantic contract handling, and reports verification.",
+      "assertions": [
+        "Locates or describes the relevant route/page/component files before changing tags.",
+        "Inventories existing project conventions such as data-testid, data-qa, testId props, or getByTestId usage.",
+        "Provides or follows an element-to-tag plan mapping requirement elements to code locations and semantic attributes.",
+        "Adds stable data-testid surfaces for name input, runtime select, CPU/memory inputs, and create button.",
+        "Adds data-qa-state or data-qa-loading for creating/loading state.",
+        "Adds a stable machine-readable disabled reason such as quota_exceeded rather than visible text.",
+        "Creates or updates a semantic tag contract document for the touched module or workflow.",
+        "Reports verification through a concrete command, static check, or browser DOM inspection."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "给资源列表页补语义标签：每一行要能绑定资源类型、资源 ID、workspace ID 和运行状态；行内重启、删除、打开终端按钮要能被 Playwright 稳定定位。先读代码，看共享表格组件怎么传 props，避免在通用组件里硬编码业务语义。",
+      "expected_output": "Agent derives semantics from routes/components/data models, passes semantic props from the feature layer into shared list/table components, tags row roots and row actions with stable IDs and resource bindings, avoids hard-coding feature semantics in generic components, and verifies the rendered DOM or relevant tests.",
+      "assertions": [
+        "Inventories existing list/table and locator conventions before choosing new tag patterns.",
+        "Provides or follows an element-to-tag plan for row roots and row actions.",
+        "Inspects how the shared list/table component receives and forwards props.",
+        "Passes feature-specific semantic data from the feature layer instead of hard-coding it inside a generic component.",
+        "Uses stable repeated-row test IDs combined with data-qa-resource-id or equivalent resource binding for uniqueness.",
+        "Adds resource type, resource ID, workspace ID, and state semantics to row/card roots.",
+        "Adds stable locators for restart, delete, and open-terminal row actions.",
+        "Creates or updates a semantic tag contract document that records row/action tags and resource bindings."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "review 这个 PR 的前端语义标签覆盖是否足够支持 GUI Agent 黑盒测试。重点看创建/删除/错误提示/权限禁用/资源列表状态，不要改代码，按严重度列出问题和建议。",
+      "expected_output": "Agent takes a review stance, inspects changed frontend surfaces, evaluates semantic coverage for actions, states, errors, permissions, and resource bindings, avoids implementation changes, and returns prioritized findings with concrete file/element references when available.",
+      "assertions": [
+        "Does not modify files because the prompt asks for review only.",
+        "Prioritizes findings by severity.",
+        "Checks create/delete actions, error prompts, permission-disabled states, and resource list status coverage.",
+        "Calls out missing data-testid, data-qa-state, data-qa-disabled-reason, data-qa-error-code, or resource bindings where relevant.",
+        "Provides concrete file, component, or element references when available.",
+        "Recommends semantic contract document updates when coverage gaps affect automation-readable UI semantics."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "这个 Vue 页面要给自动化补标签：提交按钮、环境 select、错误 alert、loading 状态和详情页资源 ID 都要有稳定语义。按现有代码风格实现，不要把用户可见文案当 disabled reason。",
+      "expected_output": "Agent adapts the semantic tag model to Vue syntax and local component conventions, uses stable machine-readable enums for state/error/disabled reason, adds resource binding on the detail surface, and runs or reports relevant verification.",
+      "assertions": [
+        "Inventories existing Vue locator and prop-forwarding conventions before editing.",
+        "Provides or follows an element-to-tag plan mapping submit, select, alert, loading, and detail resource elements.",
+        "Uses Vue-compatible binding syntax or local Vue component prop conventions.",
+        "Adds stable semantic tags for submit button, environment select, error alert, loading state, and detail resource ID.",
+        "Uses machine-readable disabled reason or state enums rather than visible user-facing text.",
+        "Preserves existing accessibility and component behavior.",
+        "Creates or updates a semantic tag contract document for the Vue page or workflow.",
+        "Runs or reports relevant verification."
+      ]
+    }
+  ]
+}

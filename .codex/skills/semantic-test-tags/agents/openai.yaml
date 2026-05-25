@@ -1,0 +1,7 @@
+interface:
+  display_name: "Semantic Test Tags"
+  short_description: "Read frontend code and add semantic tags"
+  default_prompt: "Use $semantic-test-tags to read this frontend requirement and code, then implement stable data-testid and data-qa attributes."
+
+policy:
+  allow_implicit_invocation: true

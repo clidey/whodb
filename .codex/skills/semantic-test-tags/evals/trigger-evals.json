@@ -1,0 +1,74 @@
+[
+  {
+    "query": "读一下 apps/web 里的 DevBox 创建页，根据需求把名称输入、镜像选择、规格选择、创建按钮和 quota 禁用状态补上语义标签，最好能让 Playwright 稳定定位。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个前端服务要给 GUI Agent 做黑盒测试，先看代码和 API hook，然后给资源列表行加 data-qa-resource-id、workspace 和运行状态。",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我 review 这个 PR 的语义标签覆盖，重点看删除确认弹窗、权限不足、错误 alert、loading 和空列表状态是否能被自动化断言。",
+    "should_trigger": true
+  },
+  {
+    "query": "按这份 PRD 给控制台页面补 data-testid 和 data-qa，不要只写规范，要直接改前端代码并跑一下现有检查。",
+    "should_trigger": true
+  },
+  {
+    "query": "Vue 项目里环境 select 和提交按钮现在测试不好定位，帮我按现有组件写法加稳定语义标签，disabled reason 不能用中文文案。",
+    "should_trigger": true
+  },
+  {
+    "query": "资源表格用了共享 Table，别在通用组件里写死 devbox 语义。请读代码后从 feature 层传入每行的 data-testid、resource id 和状态。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个页面自动化老是靠按钮文字点，帮我把核心操作和状态区改成稳定 test contract，顺便更新 semantic-test-contract.md。",
+    "should_trigger": true
+  },
+  {
+    "query": "给 AI Agent Console 的任务列表补语义标签：任务行、工具调用状态、安全拦截提示和重试按钮都要能被 GUI agent 识别。",
+    "should_trigger": true
+  },
+  {
+    "query": "写一个 Playwright 测试，覆盖登录后创建 DevBox 的 happy path，优先用现有 data-testid，不要改业务代码。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我修一下这个按钮的 aria-label，屏幕阅读器现在读不出来，但不需要动测试定位。",
+    "should_trigger": false
+  },
+  {
+    "query": "这个页面样式乱了，卡片间距和按钮颜色不符合设计稿，帮我调整 CSS。",
+    "should_trigger": false
+  },
+  {
+    "query": "为后端 API 生成 OpenAPI contract，包含错误码和请求响应 schema，和前端页面无关。",
+    "should_trigger": false
+  },
+  {
+    "query": "重构这个 React 表单，把 useState 改成 react-hook-form，保持 UI 行为不变，暂时不处理自动化测试。",
+    "should_trigger": false
+  },
+  {
+    "query": "review 这个 e2e 测试为什么 flaky，怀疑是等待时机不对，请只改测试代码。",
+    "should_trigger": false
+  },
+  {
+    "query": "给这个组件加一个 tooltip，鼠标 hover 时展示说明文字。",
+    "should_trigger": false
+  },
+  {
+    "query": "整理一下测试用例文档，把创建、删除、权限不足这些场景写成手工测试步骤，不需要改前端代码。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我检查 data-testid 命名有没有重复和不稳定的地方，但这次只要报告，不要改代码。",
+    "should_trigger": true
+  },
+  {
+    "query": "前端页面已经有一堆 data-testid 了，帮我结合需求补齐 data-qa-state、data-qa-error-code 和资源绑定。",
+    "should_trigger": true
+  }
+]
