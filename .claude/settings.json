@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".agents/hooks/session-context.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".agents/hooks/auto-format-go.sh"
+          },
+          {
+            "type": "command",
+            "command": ".agents/hooks/auto-lint-ts.sh"
+          },
+          {
+            "type": "command",
+            "command": ".agents/hooks/auto-graphql-codegen.sh"
+          },
+          {
+            "type": "command",
+            "command": ".agents/hooks/auto-translate.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

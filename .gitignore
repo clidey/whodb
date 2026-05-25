@@ -62,5 +62,6 @@ tools/
 .playwright-mcp
 .claude/worktrees
 .pnpm-store
-.codex
+.codex/*
+!.codex/hooks.json
 frontend/build-ee

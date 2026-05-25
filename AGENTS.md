@@ -5,17 +5,21 @@ contract are built around `SourceType`, `SourceContract`, `SourceObject`,
 `SourceObjectRef`, and `SourceSessionMetadata`. The current execution layer is
 still powered mainly by database plugins under `core/src/plugins/`.
 
+`AGENTS.md` is the canonical agent instruction file for this repository. Tool-
+specific files such as `CLAUDE.md` should import or point to this file instead
+of duplicating these instructions.
+
 If the `ee/` directory is present, read `ee/AGENTS.md` for additional context. Do not add any code, comments, or references to `ee/` in the CE codebase.
 
 ## Non-Negotiable Rules
 
 1. **Analyze before coding** - Read relevant files and understand patterns before writing code. State assumptions explicitly, ask when requirements are ambiguous, and always check whether an existing pattern can be reused or adapted.
 2. **GraphQL-first** - All new API functionality via GraphQL. Never add HTTP resolvers unless explicitly needed (e.g., file downloads)
-3. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.claude/docs/sql-security.md`
-4. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.claude/docs/plugin-architecture.md`
-5. **Documentation requirements** - All exported Go functions/types need doc comments. All exported TypeScript functions/components need JSDoc. See `.claude/docs/documentation.md`
-6. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.claude/docs/localization.md`
-7. **Verify before completing** - For non-trivial tasks, define success criteria before editing. After finishing, verify: (1) type checks pass (`pnpm run build:ce` for frontend, `go build ./cmd/whodb` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.claude/docs/verification.md`
+3. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.agents/docs/sql-security.md`
+4. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.agents/docs/plugin-architecture.md`
+5. **Documentation requirements** - All exported Go functions/types need doc comments. All exported TypeScript functions/components need JSDoc. See `.agents/docs/documentation.md`
+6. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.agents/docs/localization.md`
+7. **Verify before completing** - For non-trivial tasks, define success criteria before editing. After finishing, verify: (1) type checks pass (`pnpm run build:ce` for frontend, `go build ./cmd/whodb` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.agents/docs/verification.md`
 8. **Fallback clarification** - Do not include fallback logic UNLESS you were asked to. If you think the project could benefit from fallback logic, first ask and clarify
 9. **Show proof** - When making a claim about how something outside of our codebase works, for example a 3rd party library or function, always provide official documentation or the actual code to back that up. Check online if you have to.
 10. **No defensive code** - Do not program defensively. If there is an edge or use case that you think needs to be handled, first ask.
@@ -33,6 +37,16 @@ For non-trivial tasks, use a short goal-driven loop:
 4. Run the relevant verification commands and inspect the diff before finishing.
 
 If the task is unclear or has multiple valid interpretations, stop and ask instead of silently choosing. If the implementation grows beyond the request, pause and simplify before continuing.
+
+## Agent Operating Model
+
+- Treat `AGENTS.md` as the shared source of truth for Codex, Claude Code via import, opencode, Pi, and other compatible coding agents.
+- Use `.agents/README.md` as the index for deeper agent guidance, and read only the relevant linked file before editing.
+- Keep always-loaded instructions concise. Move detailed workflows, checklists, and runbooks into linked docs rather than duplicating them in tool-specific files.
+- Use planning mode for multi-file, risky, architectural, or ambiguous changes. Skip formal plans for obvious single-purpose edits.
+- Use separate agents only for bounded sidecar work such as codebase exploration, review, test triage, or documentation lookup. Do not delegate blocking implementation work when the main session is waiting on it.
+- Do not run parallel implementation sessions against the same files. Use separate worktrees or explicitly disjoint file ownership for parallel work.
+- Ask review-oriented agents to find correctness, regression, security, and missing-test issues first; summaries are secondary.
 
 ## Project Structure
 
@@ -54,7 +68,7 @@ core/                   # Backend (Go)
   graph/schema.graphqls # GraphQL schema
   graph/*.resolvers.go  # GraphQL resolvers
 
-frontend/               # React/TypeScript
+frontend/               # React/TypeScript (uses @clidey/ux component library)
   src/index.tsx        # Entry point
   src/store/           # Redux Toolkit state
   src/generated/       # GraphQL codegen output (@graphql alias)
@@ -66,11 +80,11 @@ desktop-common/         # Shared desktop code
 .github/workflows/      # CI/CD pipelines (release, build, deploy)
 ```
 
-Additional docs: `.claude/docs/cli.md` (CLI), `.claude/docs/desktop.md` (desktop), `.claude/docs/ci-cd.md` (GitHub Actions), `.claude/docs/testing.md` (testing). For adding new data sources, follow `DATA_SOURCE_GUIDE.md` (EE-specific additions in `ee/DATA_SOURCE_GUIDE_EE.md`).
+Additional agent docs: `.agents/docs/cli.md` (CLI), `.agents/docs/desktop.md` (desktop), `.agents/docs/ci-cd.md` (GitHub Actions), `.agents/docs/testing.md` (testing). For adding new data sources, follow `DATA_SOURCE_GUIDE.md` (EE-specific additions in `ee/DATA_SOURCE_GUIDE_EE.md`).
 
 ## Testing
 
-See `.claude/docs/testing.md` for comprehensive testing documentation including:
+See `.agents/docs/testing.md` for comprehensive testing documentation including:
 - Frontend Playwright E2E tests
 - Docker container setup for test databases
 - Go backend unit and integration tests
@@ -89,23 +103,33 @@ bash dev/run-backend-tests.sh all           # Unit + integration
 bash dev/run-cli-tests.sh                   # All CLI tests
 ```
 
-## When Working on Backend (Go)
+## Domain-Specific Guidelines
 
-- Use `any` instead of `interface{}` (Go 1.18+)
-- Use `plugins.WithConnection()` for all database operations - handles connection lifecycle
-- SQL plugins should extend `GormPlugin` base class (`core/src/plugins/gorm/plugin.go`)
-- When adding plugin functionality: add to `PluginFunctions` interface, implement in each plugin
-- Use `ErrorHandler` (`core/src/plugins/gorm/errors.go`) for user-friendly error messages
-- Never log sensitive data (passwords, API keys, tokens, connection strings)
-- `env` package is for pure env var declarations only (no `log` import). Functions that parse env vars and need `log` for error reporting go in `envconfig`
-- Delete build binaries after testing (`go build` artifacts)
+For language-specific or domain-specific guidelines, refer to the shared rules in `.agents/rules/`:
+- Go Backend (`core/`, `cli/`): `.agents/rules/go-backend.md`
+- React Frontend (`frontend/`): `.agents/rules/react-frontend.md`
+- GraphQL (`**/graph/`, `**/*.graphqls`): `.agents/rules/graphql.md`
+- Localization (`**/locales/`): `.agents/rules/localization.md`
+- E2E Tests (`frontend/e2e/`): `.agents/rules/e2e-tests.md`
+- Desktop (`desktop-ce/`, `desktop-common/`): `.agents/rules/desktop.md`
+- CI/CD (`.github/`): `.agents/rules/ci-cd.md`
 
-## When Working on Frontend (TypeScript)
+## Procedures
 
-- Use PNPM, not NPM. Use pnpx, not npx
-- Define GraphQL operations in `.graphql` files, then run `pnpm run generate`
-- Import generated hooks from `@graphql` alias - never use inline `gql` strings
-- **Keyboard shortcuts** are centralized in `frontend/src/utils/shortcuts.ts`. Never hardcode shortcut keys inline — use `SHORTCUTS.*` for definitions, `matchesShortcut()` for event handling, and `SHORTCUTS.*.displayKeys` for UI display. Platform-variant shortcuts (nav numbers) use `resolveShortcut()`. Some shortcuts also have Wails accelerators in `desktop-common/app.go` that must be updated separately
+For multi-step tasks, follow the step-by-step workflows in `.agents/workflows/`. Read the relevant file before starting:
+
+| Task | Guide |
+|------|-------|
+| Add a new database plugin | `.agents/workflows/new-plugin.md` |
+| Add a GraphQL query/mutation end-to-end | `.agents/workflows/new-graphql-field.md` |
+| Add a new frontend page | `.agents/workflows/new-frontend-page.md` |
+| Add or update translation keys | `.agents/workflows/add-translation.md` |
+| Add a CLI command or TUI view | `.agents/workflows/cli-feature.md` |
+| Add or modify desktop app functionality | `.agents/workflows/desktop-feature.md` |
+| Add a platform-constrained HTTP handler | `.agents/workflows/platform-constrained-handler.md` |
+| Prepare or consume a handoff | `.agents/workflows/task-handoff.md` |
+| Prove claims about external behavior | `.agents/workflows/research-proof.md` |
+| Pre-commit verification | `.agents/workflows/review-checklist.md` |
 
 ## When Updating Dependencies
 
@@ -113,7 +137,7 @@ Use `core/go.mod` as the reference point for dependency versions.
 
 ## Commands Quick Reference
 
-See `.claude/docs/commands.md` for full reference.
+See `.agents/docs/commands.md` for full reference.
 
 ```bash
 # Backend: cd core && go run ./cmd/whodb
@@ -141,6 +165,6 @@ See `.claude/docs/commands.md` for full reference.
 - Do not delete unrelated dead code unless asked
 - Only comment edge cases and complex logic, not obvious code
 - Ask questions to understand requirements fully
-- Use subagents to accomplish tasks faster
+- Use separate agents only for bounded sidecar work that will not conflict with the main implementation path
 - Maintain professional, neutral tone without excessive enthusiasm
 - When you finish a task, go back and check your work. Check that it is correct and that it is not over-engineered
