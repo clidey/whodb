@@ -52,8 +52,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     render() {
         if (this.state.hasError) {
             return (
-                <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-8 bg-background text-foreground">
-                    <h1 className="text-3xl font-bold text-foreground">
+                <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-8 bg-popover text-popover-foreground">
+                    <h1 className="text-3xl font-bold text-popover-foreground">
                         Whoops, something went wrong.
                     </h1>
                     <p className="text-muted-foreground">
