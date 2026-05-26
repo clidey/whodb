@@ -34,8 +34,8 @@ require (
 	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.7 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.32.17 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.16 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.32.18 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.17 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.23 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.23 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.23 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/rds v1.118.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.21 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.36.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.42.1 // indirect
 	github.com/aws/smithy-go v1.25.1 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
@@ -60,17 +60,17 @@ require (
 	github.com/deckarep/golang-set/v2 v2.9.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dromara/carbon/v2 v2.6.16 // indirect
-	github.com/duckdb/duckdb-go-bindings v0.10502.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10502.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10502.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.10502.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.10502.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.10502.0 // indirect
-	github.com/duckdb/duckdb-go/v2 v2.10502.0 // indirect
+	github.com/duckdb/duckdb-go-bindings v0.10503.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10503.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10503.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.10503.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.10503.0 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.10503.0 // indirect
+	github.com/duckdb/duckdb-go/v2 v2.10503.0 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.11.0 // indirect
 	github.com/elastic/go-elasticsearch/v8 v8.19.6 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-chi/chi/v5 v5.2.5 // indirect
+	github.com/go-chi/chi/v5 v5.3.0 // indirect
 	github.com/go-chi/cors v1.2.2 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
@@ -114,7 +114,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/posthog/posthog-go v1.12.5 // indirect
+	github.com/posthog/posthog-go v1.12.6 // indirect
 	github.com/richardlehane/mscfb v1.0.6 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
