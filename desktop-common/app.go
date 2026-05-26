@@ -215,7 +215,13 @@ var databaseFileConfigs = map[string]databaseFileConfig{
 
 // SelectDatabaseFile shows a native file dialog for selecting database files.
 // The dbType parameter determines which file extensions are allowed (e.g. "Sqlite3", "DuckDB").
+// On macOS, this uses a custom NSOpenPanel implementation that activates security-scoped
+// resources, allowing the sandbox to grant access to SQLite auxiliary files (journal, WAL, SHM).
 func (a *App) SelectDatabaseFile(dbType string) (string, error) {
+	if goruntime.GOOS == "darwin" {
+		return a.selectDatabaseFileDarwin(dbType)
+	}
+
 	cfg, ok := databaseFileConfigs[dbType]
 	if !ok {
 		return "", fmt.Errorf("unsupported file-based database type: %s", dbType)
