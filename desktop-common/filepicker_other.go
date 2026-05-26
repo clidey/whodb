@@ -4,6 +4,9 @@ package common
 
 import "fmt"
 
+// RestoreSecurityScopedBookmarks is a no-op on non-darwin platforms.
+func (a *App) RestoreSecurityScopedBookmarks() {}
+
 // selectDatabaseFileDarwin is a no-op on non-darwin platforms.
 func (a *App) selectDatabaseFileDarwin(dbType string) (string, error) {
 	return "", fmt.Errorf("darwin-specific file picker called on non-darwin platform")

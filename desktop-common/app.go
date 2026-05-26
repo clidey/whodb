@@ -64,6 +64,7 @@ func NewApp(edition string) *App {
 // Startup is called when the app starts
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	a.RestoreSecurityScopedBookmarks()
 	a.RestoreWindowState()
 	a.SetupApplicationMenu()
 	a.SetupSystemTray()

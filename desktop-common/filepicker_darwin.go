@@ -55,11 +55,24 @@ static FilePickerResult openDatabaseFilePanel(const char *title, const char *fil
 			return;
 		}
 
-		// Activate security-scoped resource — this is what grants access to
-		// Related Items (sibling -journal/-wal/-shm files) in the sandbox.
+		// Bookmark the parent directory — SQLite needs to create sibling files
+		// (-journal, -wal, -shm) and the sandbox only allows that if we have
+		// access to the containing directory, not just the file itself.
+		NSURL *dirURL = [url URLByDeletingLastPathComponent];
+		[dirURL startAccessingSecurityScopedResource];
+
+		NSData *dirBookmark = [dirURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
+								includingResourceValuesForKeys:nil
+												 relativeToURL:nil
+														 error:nil];
+		if (dirBookmark != nil) {
+			NSString *dirKey = [NSString stringWithFormat:@"bookmark_dir_%@", [dirURL path]];
+			[[NSUserDefaults standardUserDefaults] setObject:dirBookmark forKey:dirKey];
+		}
+
+		// Also bookmark the file itself for read access on relaunch.
 		[url startAccessingSecurityScopedResource];
 
-		// Store a security-scoped bookmark so we can re-access on next launch.
 		NSError *bookmarkError = nil;
 		NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
 						includingResourceValuesForKeys:nil
@@ -117,6 +130,49 @@ static const char* resolveBookmark(const char *originalPath) {
 	return resolved;
 }
 
+// resolveAllBookmarks iterates all stored security-scoped bookmarks and
+// re-activates them. Call this on app startup so previously opened database
+// files remain accessible to the sandbox across launches.
+static void resolveAllBookmarks(void) {
+	dispatch_sync(dispatch_get_main_queue(), ^{
+		NSDictionary *defaults = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+		for (NSString *key in defaults) {
+			if (![key hasPrefix:@"bookmark_"]) {
+				continue;
+			}
+
+			NSData *bookmark = [defaults objectForKey:key];
+			if (![bookmark isKindOfClass:[NSData class]]) {
+				continue;
+			}
+
+			BOOL isStale = NO;
+			NSError *error = nil;
+			NSURL *url = [NSURL URLByResolvingBookmarkData:bookmark
+												   options:NSURLBookmarkResolutionWithSecurityScope
+											 relativeToURL:nil
+								   bookmarkDataIsStale:&isStale
+												 error:&error];
+			if (url == nil || error != nil) {
+				[[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+				continue;
+			}
+
+			[url startAccessingSecurityScopedResource];
+
+			if (isStale) {
+				NSData *newBookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
+									includingResourceValuesForKeys:nil
+												 relativeToURL:nil
+														 error:nil];
+				if (newBookmark != nil) {
+					[[NSUserDefaults standardUserDefaults] setObject:newBookmark forKey:key];
+				}
+			}
+		}
+	});
+}
+
 // stopAccessingPath stops accessing a security-scoped resource for a path.
 static void stopAccessingPath(const char *path) {
 	NSURL *url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
@@ -130,6 +186,12 @@ import (
 	"strings"
 	"unsafe"
 )
+
+// RestoreSecurityScopedBookmarks re-activates all stored security-scoped
+// bookmarks so previously opened database files remain accessible.
+func (a *App) RestoreSecurityScopedBookmarks() {
+	C.resolveAllBookmarks()
+}
 
 // selectDatabaseFileDarwin uses NSOpenPanel with security-scoped resource
 // activation so the sandbox grants access to SQLite auxiliary files.
