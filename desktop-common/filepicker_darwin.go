@@ -55,22 +55,7 @@ static FilePickerResult openDatabaseFilePanel(const char *title, const char *fil
 			return;
 		}
 
-		// Bookmark the parent directory — SQLite needs to create sibling files
-		// (-journal, -wal, -shm) and the sandbox only allows that if we have
-		// access to the containing directory, not just the file itself.
-		NSURL *dirURL = [url URLByDeletingLastPathComponent];
-		[dirURL startAccessingSecurityScopedResource];
-
-		NSData *dirBookmark = [dirURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
-								includingResourceValuesForKeys:nil
-												 relativeToURL:nil
-														 error:nil];
-		if (dirBookmark != nil) {
-			NSString *dirKey = [NSString stringWithFormat:@"bookmark_dir_%@", [dirURL path]];
-			[[NSUserDefaults standardUserDefaults] setObject:dirBookmark forKey:dirKey];
-		}
-
-		// Also bookmark the file itself for read access on relaunch.
+		// Bookmark the file for read access on relaunch.
 		[url startAccessingSecurityScopedResource];
 
 		NSError *bookmarkError = nil;
@@ -81,6 +66,40 @@ static FilePickerResult openDatabaseFilePanel(const char *title, const char *fil
 		if (bookmark != nil) {
 			NSString *key = [NSString stringWithFormat:@"bookmark_%@", [url path]];
 			[[NSUserDefaults standardUserDefaults] setObject:bookmark forKey:key];
+		}
+
+		// Check if we already have a directory bookmark for this path's parent.
+		NSURL *dirURL = [url URLByDeletingLastPathComponent];
+		NSString *dirKey = [NSString stringWithFormat:@"bookmark_dir_%@", [dirURL path]];
+		NSData *existingDirBookmark = [[NSUserDefaults standardUserDefaults] objectForKey:dirKey];
+
+		if (existingDirBookmark == nil) {
+			// Ask the user to grant access to the directory so SQLite can
+			// create journal/WAL/SHM sibling files.
+			NSOpenPanel *dirPanel = [NSOpenPanel openPanel];
+			[dirPanel setTitle:@"Grant access to the database folder"];
+			[dirPanel setMessage:@"WhoDB needs access to this folder to write database journal files. Please click Open."];
+			[dirPanel setCanChooseFiles:NO];
+			[dirPanel setCanChooseDirectories:YES];
+			[dirPanel setAllowsMultipleSelection:NO];
+			[dirPanel setDirectoryURL:dirURL];
+
+			NSModalResponse dirResponse = [dirPanel runModal];
+			if (dirResponse == NSModalResponseOK) {
+				NSURL *grantedDirURL = [[dirPanel URLs] firstObject];
+				if (grantedDirURL != nil) {
+					[grantedDirURL startAccessingSecurityScopedResource];
+
+					NSData *dirBookmark = [grantedDirURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
+												includingResourceValuesForKeys:nil
+																 relativeToURL:nil
+																		 error:nil];
+					if (dirBookmark != nil) {
+						NSString *grantedKey = [NSString stringWithFormat:@"bookmark_dir_%@", [grantedDirURL path]];
+						[[NSUserDefaults standardUserDefaults] setObject:dirBookmark forKey:grantedKey];
+					}
+				}
+			}
 		}
 
 		result.path = strdup([[url path] UTF8String]);
