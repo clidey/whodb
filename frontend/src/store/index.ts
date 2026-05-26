@@ -182,14 +182,14 @@ const settingsPersistTransform = createTransform(
 const PERSIST_THROTTLE = 2000;
 
 const ceReducerMap = {
-  auth: persistReducer({ key: "auth", storage, throttle: PERSIST_THROTTLE }, authReducers),
-  database: persistReducer({ key: "database", storage, throttle: PERSIST_THROTTLE }, databaseReducers),
-  settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform], throttle: PERSIST_THROTTLE }, settingsReducers),
+  auth: persistReducer({ key: "auth", storage }, authReducers),
+  database: persistReducer({ key: "database", storage }, databaseReducers),
+  settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform] }, settingsReducers),
   houdini: persistReducer({ key: "houdini", storage, transforms: [chatTransform], throttle: PERSIST_THROTTLE }, houdiniReducers),
-  aiModels: persistReducer({ key: "aiModels", storage, transforms: [aiModelsPersistTransform], throttle: PERSIST_THROTTLE }, aiModelsReducers),
+  aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
   scratchpad: persistReducer({ key: "scratchpad", storage, transforms: [scratchpadTransform], throttle: PERSIST_THROTTLE }, scratchpadReducers),
-  tour: persistReducer({ key: "tour", storage, throttle: PERSIST_THROTTLE }, tourReducers),
-  providers: persistReducer({ key: "providers", storage, throttle: PERSIST_THROTTLE }, providersReducers),
+  tour: persistReducer({ key: "tour", storage }, tourReducers),
+  providers: persistReducer({ key: "providers", storage }, providersReducers),
   health: healthReducers,
   exploreConditions: persistReducer({ key: 'exploreConditions', storage, throttle: PERSIST_THROTTLE }, exploreConditionsReducers),
 };
@@ -213,7 +213,7 @@ export const reduxStore = configureStore({
 export function registerReducer(key: string, reducer: Reducer): void {
   if (key in eeReducerMap) return;
   // Persist EE reducers (like platform)
-  const persistedReducer = persistReducer({ key, storage, throttle: PERSIST_THROTTLE }, reducer);
+  const persistedReducer = persistReducer({ key, storage }, reducer);
   eeReducerMap[key] = persistedReducer;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reduxStore.replaceReducer(buildRootReducer() as any);
