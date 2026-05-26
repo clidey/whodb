@@ -653,26 +653,28 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <ArrowPathIcon className="w-4 h-4 text-amber-500" />
                     </Button>
                 )}
-                <SearchSelect
-                    disabled={modelType == null || getAIModelsLoading}
-                    options={modelDropdownItems.map(item => ({
-                        value: item.id,
-                        label: item.label,
-                        icon: item.icon,
-                    }))}
-                    value={currentModel ? currentModel : undefined}
-                    onChange={id => {
-                        const item = modelDropdownItems.find(i => i.id === id);
-                        if (item) handleAIModelChange(item.id);
-                    }}
-                    placeholder={t('selectModel')}
-                    side="right"
-                    align="start"
-                    rightIcon={<ChevronDownIcon className="w-4 h-4" />}
-                    buttonProps={{
-                        "data-testid": "ai-model-select",
-                    }}
-                />
+                {!(modelType && unavailableProviders.has(modelType.id)) && (
+                    <SearchSelect
+                        disabled={modelType == null || getAIModelsLoading}
+                        options={modelDropdownItems.map(item => ({
+                            value: item.id,
+                            label: item.label,
+                            icon: item.icon,
+                        }))}
+                        value={currentModel ? currentModel : undefined}
+                        onChange={id => {
+                            const item = modelDropdownItems.find(i => i.id === id);
+                            if (item) handleAIModelChange(item.id);
+                        }}
+                        placeholder={t('selectModel')}
+                        side="right"
+                        align="start"
+                        rightIcon={<ChevronDownIcon className="w-4 h-4" />}
+                        buttonProps={{
+                            "data-testid": "ai-model-select",
+                        }}
+                    />
+                )}
             </div>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
