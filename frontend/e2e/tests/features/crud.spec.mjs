@@ -144,6 +144,10 @@ test.describe('CRUD Operations', () => {
         });
 
         test.describe('Add Row', () => {
+            if (!crudSupported) {
+                test.skip('adds a new row', async ({ whodb, page }) => {});
+                return;
+            }
             test('adds a new row', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 
@@ -174,6 +178,10 @@ test.describe('CRUD Operations', () => {
         });
 
         test.describe('Delete Row', () => {
+            if (!crudSupported) {
+                test.skip('deletes a row and verifies removal', async ({ whodb, page }) => {});
+                return;
+            }
             test('deletes a row and verifies removal', async ({ whodb, page }) => {
                 await whodb.data(tableName);
 

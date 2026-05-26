@@ -62,7 +62,7 @@
   },
   "import": {
     "sampleDataDir": "duckdb",
-    "supportsMultiStatement": true,
+    "supportsMultiStatement": false,
     "csvTable": "users",
     "excelTable": "products",
     "csvExpectedColumns": ["id", "username", "email", "password", "created_at"]

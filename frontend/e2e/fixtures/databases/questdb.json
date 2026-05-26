@@ -54,12 +54,14 @@
     "queryHistory": true,
     "pagination": true,
     "documentEdit": false,
+    "crud": false,
     "schemaManagement": true
   },
   "featureNotes": {
     "graph": "QuestDB does not support foreign keys, so graph view has no relationships",
     "mockData": "Mock data generation not applicable for time-series databases",
     "documentEdit": "QuestDB is append-only, direct row editing is not supported",
+    "crud": "QuestDB is append-only, DELETE operations are not supported",
     "schemaManagement": "QuestDB only supports column name + type in CREATE TABLE, no constraints"
   },
   "expectedTables": [

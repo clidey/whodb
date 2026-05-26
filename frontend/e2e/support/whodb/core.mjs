@@ -311,6 +311,7 @@ export const coreMethods = {
                 .click({ force: true });
         }
 
-        await this.page.waitForURL(/\/login/, { timeout: TIMEOUT.ACTION }).catch(() => {});
+        await this.page.waitForURL(/\/login/, { timeout: TIMEOUT.ACTION });
+        await this.page.waitForLoadState("domcontentloaded");
     },
 };

@@ -291,9 +291,6 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	if err := source.ValidateScriptExecutionSupported(spec); err != nil {
 		return nil, err
 	}
-	if !spec.Traits.Query.SupportsMultiStatement {
-		return importResult(false, importErrorSQLMultiStatementUnsupported), nil
-	}
 	runner, ok := source.AsScriptRunner(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {
 		return nil, errors.New("source scripts are not supported")
@@ -311,7 +308,7 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 		return importResult(false, importErrorSQLTooLarge), nil
 	}
 
-	_, err = runner.RunScript(ctx, script, true)
+	_, err = runner.RunScript(ctx, script, spec.Traits.Query.SupportsMultiStatement)
 	if err != nil {
 		if errors.Is(err, engine.ErrMultiStatementUnsupported) {
 			return importResult(false, importErrorSQLMultiStatementUnsupported), nil
