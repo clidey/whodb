@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/session-context.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-format-go.sh"
+          },
+          {
+            "type": "command",
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-lint-ts.sh"
+          },
+          {
+            "type": "command",
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-graphql-codegen.sh"
+          },
+          {
+            "type": "command",
+            "command": "$(git rev-parse --show-toplevel)/.agents/hooks/auto-translate.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

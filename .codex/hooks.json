@@ -1,0 +1,48 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/session-context.sh\"",
+            "statusMessage": "Loading session context",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-format-go.sh\"",
+            "statusMessage": "Formatting Go files",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-lint-ts.sh\"",
+            "statusMessage": "Linting TypeScript files",
+            "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-graphql-codegen.sh\"",
+            "statusMessage": "Regenerating GraphQL types",
+            "timeout": 300
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/auto-translate.sh\"",
+            "statusMessage": "Updating translations",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}

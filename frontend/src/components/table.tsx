@@ -84,6 +84,7 @@ import {useTranslation} from '@/hooks/use-translation';
 import {copyToClipboard} from '@/services/clipboard';
 import {useSourceContract} from "@/hooks/useSourceContract";
 import {sourceObjectSupportsAction} from "@/config/source-types";
+import {ph} from '@/utils/privacy';
 import {
     ArrowDownCircleIcon,
     ArrowDownTrayIcon,
@@ -1256,7 +1257,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <TableCell
                         key={cellIdx}
                         role="gridcell"
-                        className="cursor-pointer"
+                        className={cn(ph.mask, "cursor-pointer")}
                         title={t('cellInteractionHint')}
                         onClick={(e) => {
                             e.stopPropagation();
@@ -1457,7 +1458,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             <TableHead
                                                 key={col + idx}
                                                 icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
-                                                className={cn({
+                                                className={cn(ph.mask, {
                                                     "cursor-pointer select-none": onColumnSort,
                                                 })}
                                                 tabIndex={onColumnSort ? 0 : undefined}
@@ -1718,7 +1719,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                             <div className="flex flex-col gap-lg pr-2">
                                 {editRow &&
                                     columns.map((col, idx) => (
-                                        <div key={col} className="flex flex-col gap-2">
+                                        <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
                                             <div className="flex flex-col gap-0.5">
                                                 <Label>{col}</Label>
                                                 {columnTypes?.[idx] && (

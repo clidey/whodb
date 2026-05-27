@@ -1,6 +1,7 @@
 {
   "type": "CockroachDB",
   "category": "sql",
+  "navigationTimeout": 30000,
   "dataTypesTable": "data_types",
   "testTable": {
     "name": "users",

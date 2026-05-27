@@ -179,25 +179,19 @@ const settingsPersistTransform = createTransform(
   { whitelist: ['settings'] }
 );
 
+const PERSIST_THROTTLE = 2000;
+
 const ceReducerMap = {
-  auth: persistReducer({ key: "auth", storage, }, authReducers),
-  database: persistReducer({ key: "database", storage, }, databaseReducers),
+  auth: persistReducer({ key: "auth", storage }, authReducers),
+  database: persistReducer({ key: "database", storage }, databaseReducers),
   settings: persistReducer({ key: "settings", storage, transforms: [settingsPersistTransform] }, settingsReducers),
-  houdini: persistReducer({
-    key: "houdini",
-    storage,
-    transforms: [chatTransform]
-  }, houdiniReducers),
-  aiModels: persistReducer({ key: "aiModels", storage, transforms: [aiModelsPersistTransform] }, aiModelsReducers),
-  scratchpad: persistReducer({
-    key: "scratchpad",
-    storage,
-    transforms: [scratchpadTransform]
-  }, scratchpadReducers),
+  houdini: persistReducer({ key: "houdini", storage, transforms: [chatTransform], throttle: PERSIST_THROTTLE }, houdiniReducers),
+  aiModels: persistReducer({ key: "aiModels", storage }, aiModelsReducers),
+  scratchpad: persistReducer({ key: "scratchpad", storage, transforms: [scratchpadTransform], throttle: PERSIST_THROTTLE }, scratchpadReducers),
   tour: persistReducer({ key: "tour", storage }, tourReducers),
   providers: persistReducer({ key: "providers", storage }, providersReducers),
-  health: healthReducers, // Health status is not persisted (transient state)
-  exploreConditions: persistReducer({ key: 'exploreConditions', storage }, exploreConditionsReducers),
+  health: healthReducers,
+  exploreConditions: persistReducer({ key: 'exploreConditions', storage, throttle: PERSIST_THROTTLE }, exploreConditionsReducers),
 };
 
 const eeReducerMap: Record<string, Reducer> = {};
