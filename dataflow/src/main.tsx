@@ -27,7 +27,13 @@ function AppBootstrap() {
 
   if (status === 'loading') {
     return (
-      <div className="flex h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+      <div
+        className="flex h-screen items-center justify-center bg-background text-sm text-muted-foreground"
+        data-testid="auth.bootstrap.loading"
+        data-qa-module="auth"
+        data-qa-object="session"
+        data-qa-state="loading"
+      >
         {t('common.auth.loading')}
       </div>
     );
@@ -35,7 +41,14 @@ function AppBootstrap() {
 
   if (status === 'error') {
     return (
-      <div className="flex h-screen items-center justify-center bg-background p-6 text-center text-sm text-destructive">
+      <div
+        className="flex h-screen items-center justify-center bg-background p-6 text-center text-sm text-destructive"
+        data-testid="auth.bootstrap.error"
+        data-qa-module="auth"
+        data-qa-object="session"
+        data-qa-state="error"
+        data-qa-error-code="bootstrap_failed"
+      >
         {t('common.auth.bootstrapFailed', { message: error ?? t('common.unknownError') })}
       </div>
     );
@@ -44,7 +57,14 @@ function AppBootstrap() {
   if (status === 'unauthenticated') {
     if (standaloneLoginDisabled) {
       return (
-        <div className="flex h-screen items-center justify-center bg-background p-6 text-center text-sm text-muted-foreground">
+        <div
+          className="flex h-screen items-center justify-center bg-background p-6 text-center text-sm text-muted-foreground"
+          data-testid="auth.standalone.disabled"
+          data-qa-module="auth"
+          data-qa-object="standalone-login"
+          data-qa-state="disabled"
+          data-qa-disabled-reason="standalone_login_disabled"
+        >
           {t('standaloneLogin.disabled')}
         </div>
       );

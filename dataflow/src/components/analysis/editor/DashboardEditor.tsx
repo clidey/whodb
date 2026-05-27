@@ -58,8 +58,23 @@ export function DashboardEditor() {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-background overflow-hidden">
-            <div className="h-14 border-b flex items-center justify-between px-6 shrink-0 bg-background z-20">
+        <div
+            className="flex flex-col h-full w-full bg-background overflow-hidden"
+            data-testid="analysis.dashboard.editor"
+            data-qa-module="analysis"
+            data-qa-object="dashboard-editor"
+            data-qa-state={dashboard.widgets.length > 0 ? 'ready' : 'empty'}
+            data-qa-resource-type="dashboard"
+            data-qa-resource-id={dashboard.id}
+        >
+            <div
+                className="h-14 border-b flex items-center justify-between px-6 shrink-0 bg-background z-20"
+                data-testid="analysis.dashboard.toolbar"
+                data-qa-module="analysis"
+                data-qa-object="dashboard-toolbar"
+                data-qa-resource-type="dashboard"
+                data-qa-resource-id={dashboard.id}
+            >
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col justify-center">
                         <div className="font-bold text-lg leading-tight">
@@ -81,6 +96,12 @@ export function DashboardEditor() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => { void handleRefresh() }}
+                                    data-testid="analysis.dashboard.refresh-button"
+                                    data-qa-module="analysis"
+                                    data-qa-object="dashboard"
+                                    data-qa-action="refresh"
+                                    data-qa-resource-type="dashboard"
+                                    data-qa-resource-id={dashboard.id}
                                 >
                                     <RefreshCw className="w-4 h-4" />
                                 </Button>
@@ -93,6 +114,12 @@ export function DashboardEditor() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={openCreateChartModal}
+                                    data-testid="analysis.dashboard.add-widget-button"
+                                    data-qa-module="analysis"
+                                    data-qa-object="widget"
+                                    data-qa-action="create"
+                                    data-qa-resource-type="dashboard"
+                                    data-qa-resource-id={dashboard.id}
                                 >
                                     <Plus className="w-4 h-4" />
                                 </Button>
@@ -103,7 +130,13 @@ export function DashboardEditor() {
                 </TooltipProvider>
             </div>
 
-            <div className="flex-1 overflow-auto">
+            <div
+                className="flex-1 overflow-auto"
+                data-testid="analysis.dashboard.canvas-region"
+                data-qa-module="analysis"
+                data-qa-object="dashboard-canvas"
+                data-qa-state={dashboard.widgets.length > 0 ? 'ready' : 'empty'}
+            >
                 {dashboard.widgets.length > 0 ? (
                     <EditorCanvas
                         dashboard={dashboard}
@@ -113,7 +146,13 @@ export function DashboardEditor() {
                         onDeleteComponent={setDeletingWidgetId}
                     />
                 ) : (
-                    <div className="h-full min-h-[600px] flex flex-col items-center justify-center text-center p-8">
+                    <div
+                        className="h-full min-h-[600px] flex flex-col items-center justify-center text-center p-8"
+                        data-testid="analysis.dashboard.editor-empty"
+                        data-qa-module="analysis"
+                        data-qa-object="dashboard-canvas"
+                        data-qa-state="empty"
+                    >
                         <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
                             <Layout className="w-8 h-8 text-muted-foreground/50" />
                         </div>
@@ -123,7 +162,15 @@ export function DashboardEditor() {
                         <p className="text-sm text-muted-foreground max-w-sm mb-6">
                             {t('analysis.editor.emptyDescription')}
                         </p>
-                        <Button onClick={openCreateChartModal}>
+                        <Button
+                            onClick={openCreateChartModal}
+                            data-testid="analysis.dashboard.empty-add-widget-button"
+                            data-qa-module="analysis"
+                            data-qa-object="widget"
+                            data-qa-action="create"
+                            data-qa-resource-type="dashboard"
+                            data-qa-resource-id={dashboard.id}
+                        >
                             <Plus className="w-4 h-4" />
                             {t('analysis.chart.add')}
                         </Button>

@@ -81,10 +81,21 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+    <div
+      className="flex min-h-screen items-center justify-center bg-background p-6"
+      data-testid="auth.standalone.page"
+      data-qa-module="auth"
+      data-qa-object="standalone-login"
+      data-qa-state={submitting ? 'submitting' : error ? 'error' : 'ready'}
+    >
       <form
         className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm"
         onSubmit={handleSubmit}
+        data-testid="auth.standalone.form"
+        data-qa-module="auth"
+        data-qa-object="standalone-session"
+        data-qa-action="create"
+        data-qa-state={submitting ? 'submitting' : 'ready'}
       >
         <div className="mb-6">
           <h1 className="text-lg font-semibold text-foreground">{t('standaloneLogin.title')}</h1>
@@ -102,6 +113,12 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
               value={type}
               onChange={(event) => handleTypeChange(event.target.value as StandaloneDatabaseType)}
               disabled={submitting}
+              data-testid="auth.standalone.database-type-select"
+              data-qa-module="auth"
+              data-qa-object="standalone-session"
+              data-qa-field="database_type"
+              data-qa-state={submitting ? 'disabled' : 'ready'}
+              data-qa-disabled-reason={submitting ? 'submitting' : undefined}
             >
               {databaseTypes.map((databaseType) => (
                 <option key={databaseType} value={databaseType}>
@@ -119,6 +136,11 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
                 value={host}
                 onChange={(event) => setHost(event.target.value)}
                 disabled={submitting}
+                data-testid="auth.standalone.host-input"
+                data-qa-module="auth"
+                data-qa-object="standalone-session"
+                data-qa-field="host"
+                data-qa-disabled-reason={submitting ? 'submitting' : undefined}
               />
             </div>
             <div className="space-y-2">
@@ -132,6 +154,11 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
                   setPort(event.target.value)
                 }}
                 disabled={submitting}
+                data-testid="auth.standalone.port-input"
+                data-qa-module="auth"
+                data-qa-object="standalone-session"
+                data-qa-field="port"
+                data-qa-disabled-reason={submitting ? 'submitting' : undefined}
               />
             </div>
           </div>
@@ -143,6 +170,11 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               disabled={submitting}
+              data-testid="auth.standalone.username-input"
+              data-qa-module="auth"
+              data-qa-object="standalone-session"
+              data-qa-field="username"
+              data-qa-disabled-reason={submitting ? 'submitting' : undefined}
             />
           </div>
 
@@ -154,6 +186,11 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={submitting}
+              data-testid="auth.standalone.password-input"
+              data-qa-module="auth"
+              data-qa-object="standalone-session"
+              data-qa-field="password"
+              data-qa-disabled-reason={submitting ? 'submitting' : undefined}
             />
           </div>
 
@@ -167,17 +204,39 @@ export function StandaloneLoginForm({ onSubmit }: StandaloneLoginFormProps) {
                 setDatabase(event.target.value)
               }}
               disabled={submitting}
+              data-testid="auth.standalone.database-input"
+              data-qa-module="auth"
+              data-qa-object="standalone-session"
+              data-qa-field="database"
+              data-qa-disabled-reason={submitting ? 'submitting' : undefined}
             />
           </div>
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div
+            className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            data-testid="auth.standalone.error"
+            data-qa-module="auth"
+            data-qa-object="standalone-session"
+            data-qa-state="error"
+            data-qa-error-code="standalone_session_create_failed"
+          >
             {t('standaloneLogin.error', { message: error })}
           </div>
         ) : null}
 
-        <Button className="mt-6 w-full" type="submit" disabled={submitting}>
+        <Button
+          className="mt-6 w-full"
+          type="submit"
+          disabled={submitting}
+          data-testid="auth.standalone.submit-button"
+          data-qa-module="auth"
+          data-qa-object="standalone-session"
+          data-qa-action="create"
+          data-qa-state={submitting ? 'submitting' : 'ready'}
+          data-qa-disabled-reason={submitting ? 'submitting' : undefined}
+        >
           {submitting ? t('standaloneLogin.connecting') : t('standaloneLogin.connect')}
         </Button>
       </form>

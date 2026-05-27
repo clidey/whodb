@@ -99,6 +99,14 @@ export function DashboardWidget({
 
     return (
         <div
+            data-testid="analysis.dashboard.widget"
+            data-qa-module="analysis"
+            data-qa-object="widget"
+            data-qa-state={runtimeState?.status ?? 'idle'}
+            data-qa-loading={runtimeState?.status === 'loading' ? 'true' : 'false'}
+            data-qa-error-code={runtimeState?.status === 'error' ? 'widget_query_failed' : undefined}
+            data-qa-resource-type="widget"
+            data-qa-resource-id={widget.id}
             className={cn(
                 "bg-accent rounded-lg overflow-clip flex flex-col p-1 relative h-full transition-all group",
                 isSelected ? "ring-2 ring-primary" : "",
@@ -113,6 +121,13 @@ export function DashboardWidget({
             {/* Widget Header */}
             <div className="h-9 flex items-center justify-between shrink-0 relative z-10">
                 <div
+                    data-testid="analysis.dashboard.widget-title"
+                    data-qa-module="analysis"
+                    data-qa-object="widget"
+                    data-qa-field="title"
+                    data-qa-state={isRenaming ? 'editing' : 'ready'}
+                    data-qa-resource-type="widget"
+                    data-qa-resource-id={widget.id}
                     className={cn(
                         "flex items-center h-8 px-2.5 rounded-md w-[45%] min-w-0 transition-colors",
                         isRenaming ? "bg-input" : !isReadOnly && "hover:bg-input cursor-text"
@@ -127,6 +142,13 @@ export function DashboardWidget({
                         <input
                             ref={renameInputRef}
                             value={renameValue}
+                            data-testid="analysis.dashboard.widget-title-input"
+                            data-qa-module="analysis"
+                            data-qa-object="widget"
+                            data-qa-field="title"
+                            data-qa-state="editing"
+                            data-qa-resource-type="widget"
+                            data-qa-resource-id={widget.id}
                             onChange={(e) => setRenameValue(e.target.value)}
                             onBlur={commitRename}
                             onKeyDown={(e) => {
@@ -157,6 +179,12 @@ export function DashboardWidget({
                             const rect = e.currentTarget.getBoundingClientRect();
                             setContextMenu({ x: rect.right, y: rect.top, side: "right", align: "start" });
                         }}
+                        data-testid="analysis.dashboard.widget-menu-button"
+                        data-qa-module="analysis"
+                        data-qa-object="widget"
+                        data-qa-action="open-menu"
+                        data-qa-resource-type="widget"
+                        data-qa-resource-id={widget.id}
                         className={cn(
                             "flex items-center justify-center size-8 rounded-lg text-foreground/60 hover:bg-input transition-colors",
                             contextMenu && "bg-input"
@@ -175,7 +203,16 @@ export function DashboardWidget({
             </div>
 
             {runtimeState?.status === 'error' && (
-                <div className="px-3 pb-2 text-[10px] text-destructive truncate">
+                <div
+                    className="px-3 pb-2 text-[10px] text-destructive truncate"
+                    data-testid="analysis.dashboard.widget-error"
+                    data-qa-module="analysis"
+                    data-qa-object="widget"
+                    data-qa-state="error"
+                    data-qa-error-code="widget_query_failed"
+                    data-qa-resource-type="widget"
+                    data-qa-resource-id={widget.id}
+                >
                     {runtimeState.error}
                 </div>
             )}

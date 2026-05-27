@@ -18,7 +18,13 @@ export function TabContent() {
     // When no tabs are open, show empty state
     if (!activeTab) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/10">
+            <div
+                className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/10"
+                data-testid="layout.tab-content.empty"
+                data-qa-module="layout"
+                data-qa-object="tab-content"
+                data-qa-state="empty"
+            >
                 <Database className="h-16 w-16 mb-4 opacity-20" />
                 <p className="text-lg font-medium">{t('layout.empty.noTabsTitle')}</p>
                 <p className="text-sm">{t('layout.empty.noTabsDescription')}</p>
@@ -94,6 +100,16 @@ export function TabContent() {
             {tabs.map(tab => (
                 <div
                     key={tab.id}
+                    data-testid="layout.tab-content.panel"
+                    data-qa-module="layout"
+                    data-qa-object="tab-content"
+                    data-qa-state={tab.id === activeTabId ? 'active' : 'inactive'}
+                    data-qa-resource-type="tab"
+                    data-qa-resource-id={tab.id}
+                    data-qa-tab-type={tab.type}
+                    data-qa-connection-id={tab.connectionId}
+                    data-qa-database={tab.databaseName}
+                    data-qa-schema={tab.schemaName}
                     className={tab.id === activeTabId ? 'flex-1 flex flex-col overflow-hidden rounded-lg border border-border bg-background' : 'hidden'}
                 >
                     {renderTabContent(tab)}

@@ -36,9 +36,20 @@ export function DashboardSidebar() {
     };
 
     return (
-        <div className="flex flex-col h-full w-full border-r border-sidebar-border bg-sidebar">
+        <div
+            className="flex flex-col h-full w-full border-r border-sidebar-border bg-sidebar"
+            data-testid="analysis.dashboard.sidebar"
+            data-qa-module="analysis"
+            data-qa-object="dashboard-sidebar"
+            data-qa-state={sortedDashboards.length > 0 ? 'ready' : 'empty'}
+        >
             {/* Header */}
-            <div className="flex items-center px-4 pt-5 pb-2 shrink-0">
+            <div
+                className="flex items-center px-4 pt-5 pb-2 shrink-0"
+                data-testid="analysis.dashboard.sidebar-header"
+                data-qa-module="analysis"
+                data-qa-object="dashboard-sidebar-header"
+            >
                 <span className="text-xl font-medium text-sidebar-foreground">{t('analysis.dashboard.listTitle')}</span>
             </div>
 
@@ -49,6 +60,10 @@ export function DashboardSidebar() {
                     <Button
                         onClick={() => setCreateOpen(true)}
                         className="w-full rounded-lg"
+                        data-testid="analysis.dashboard.create-button"
+                        data-qa-module="analysis"
+                        data-qa-object="dashboard"
+                        data-qa-action="create"
                     >
                         <Plus className="w-4 h-4" />
                         {t('analysis.dashboard.create')}
@@ -63,6 +78,13 @@ export function DashboardSidebar() {
                             key={dashboard.id}
                             onClick={() => openDashboard(dashboard.id)}
                             onContextMenu={(e) => handleContextMenu(e, dashboard.id)}
+                            data-testid="analysis.dashboard.list-item"
+                            data-qa-module="analysis"
+                            data-qa-object="dashboard"
+                            data-qa-action="open"
+                            data-qa-state={activeDashboardId === dashboard.id ? 'active' : 'inactive'}
+                            data-qa-resource-type="dashboard"
+                            data-qa-resource-id={dashboard.id}
                             className={cn(
                                 "group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors text-sm select-none",
                                 activeDashboardId === dashboard.id
@@ -79,6 +101,12 @@ export function DashboardSidebar() {
                                     e.stopPropagation();
                                     handleContextMenu(e, dashboard.id);
                                 }}
+                                data-testid="analysis.dashboard.item-menu-button"
+                                data-qa-module="analysis"
+                                data-qa-object="dashboard"
+                                data-qa-action="open-menu"
+                                data-qa-resource-type="dashboard"
+                                data-qa-resource-id={dashboard.id}
                                 className="shrink-0 hover:bg-muted-foreground/20 text-muted-foreground cursor-pointer"
                             >
                                 <MoreVertical className="w-4 h-4" />

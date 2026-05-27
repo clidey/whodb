@@ -43,7 +43,13 @@ export function CollectionViewDocumentList() {
 
   if (state.documents.length === 0 && state.newRowOrder.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div
+        className="text-center py-12"
+        data-testid="mongodb.collection.document-list-empty"
+        data-qa-module="mongodb"
+        data-qa-object="document-list"
+        data-qa-state="empty"
+      >
         <FileJson className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-sm text-muted-foreground">{t('mongodb.collection.noDocuments')}</p>
       </div>
@@ -68,6 +74,12 @@ export function CollectionViewDocumentList() {
         return (
           <div
             key={item.rowKey}
+            data-testid="mongodb.collection.document-card"
+            data-qa-module="mongodb"
+            data-qa-object="document"
+            data-qa-state={item.changeType ?? (isSelected ? 'selected' : 'ready')}
+            data-qa-resource-type="document"
+            data-qa-resource-id={item.rowKey}
             data-find-current={hasCurrentMatch ? 'true' : undefined}
             className={cn(
               'rounded-xl p-4 group relative transition-colors duration-200 cursor-pointer',
@@ -95,6 +107,12 @@ export function CollectionViewDocumentList() {
                         onClick={(e) => { e.stopPropagation(); actions.handleEditClick(item.rowKey) }}
                         variant="ghost"
                         size="icon"
+                        data-testid="mongodb.collection.edit-document-button"
+                        data-qa-module="mongodb"
+                        data-qa-object="document"
+                        data-qa-action="edit"
+                        data-qa-resource-type="document"
+                        data-qa-resource-id={item.rowKey}
                         className="h-8 w-8 text-muted-foreground hover:text-primary"
                       >
                         <Edit2 className="h-4 w-4" />

@@ -344,9 +344,26 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
     const canCreateChart = showChartCreate && !!lastReadResult && !!context?.connectionId;
 
     return (
-        <div className="flex h-full flex-col bg-background overflow-hidden" ref={containerRef}>
+        <div
+            className="flex h-full flex-col bg-background overflow-hidden"
+            ref={containerRef}
+            data-testid="sql.editor.view"
+            data-qa-module="sql"
+            data-qa-object="editor"
+            data-qa-state={isExecuting ? 'executing' : queryResults?.some((r) => r.isError) ? 'error' : queryResults ? 'completed' : 'ready'}
+            data-qa-loading={isExecuting ? 'true' : 'false'}
+            data-qa-connection-id={context?.connectionId}
+            data-qa-database={selectedDatabase || context?.databaseName}
+            data-qa-schema={selectedSchema || context?.schemaName}
+        >
             {/* Toolbar */}
-            <div className="flex h-12 items-center justify-between border-b px-2 shrink-0">
+            <div
+                className="flex h-12 items-center justify-between border-b px-2 shrink-0"
+                data-testid="sql.editor.toolbar"
+                data-qa-module="sql"
+                data-qa-object="editor-toolbar"
+                data-qa-state={isExecuting ? 'executing' : 'ready'}
+            >
                 {/* Left: Action Buttons */}
                 <div className="flex items-center">
                     <Tooltip>
@@ -356,6 +373,13 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                 size="icon"
                                 onClick={handleRun}
                                 disabled={isExecuting}
+                                data-testid="sql.editor.run-button"
+                                data-qa-module="sql"
+                                data-qa-object="query"
+                                data-qa-action="execute"
+                                data-qa-state={isExecuting ? 'executing' : 'ready'}
+                                data-qa-disabled-reason={isExecuting ? 'executing' : undefined}
+                                data-qa-risk="query_execution"
                             >
                                 {isExecuting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                             </Button>
@@ -370,6 +394,11 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                     size="icon"
                                     onClick={handleFormat}
                                     disabled={!query.trim()}
+                                    data-testid="sql.editor.format-button"
+                                    data-qa-module="sql"
+                                    data-qa-object="query"
+                                    data-qa-action="format"
+                                    data-qa-disabled-reason={!query.trim() ? 'empty_query' : undefined}
                                 >
                                     <AlignLeft className="h-4 w-4" />
                                 </Button>
@@ -388,6 +417,11 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                             size="icon"
                                             onClick={() => setIsChartModalOpen(true)}
                                             disabled={!canCreateChart}
+                                            data-testid="sql.editor.create-chart-button"
+                                            data-qa-module="sql"
+                                            data-qa-object="query-result"
+                                            data-qa-action="create-chart"
+                                            data-qa-disabled-reason={!canCreateChart ? 'not_ready' : undefined}
                                         >
                                             <BarChart3 className="h-4 w-4" />
                                         </Button>
@@ -407,13 +441,36 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                         onValueChange={handleDatabaseChange}
                         disabled={databases.length === 0}
                     >
-                        <SelectTrigger className="gap-1.5 border-0 bg-transparent shadow-none">
+                        <SelectTrigger
+                            className="gap-1.5 border-0 bg-transparent shadow-none"
+                            data-testid="sql.editor.database-select"
+                            data-qa-module="sql"
+                            data-qa-object="execution-context"
+                            data-qa-field="database"
+                            data-qa-state={databases.length === 0 ? 'empty' : 'ready'}
+                            data-qa-disabled-reason={databases.length === 0 ? 'no_databases' : undefined}
+                        >
                             <Database className="h-4 w-4 text-muted-foreground" />
                             <SelectValue placeholder={t('sql.editor.selectDatabase')} />
                         </SelectTrigger>
-                        <SelectContent align="end">
+                        <SelectContent
+                            align="end"
+                            data-testid="sql.editor.database-select-content"
+                            data-qa-module="sql"
+                            data-qa-object="execution-context-options"
+                            data-qa-field="database"
+                        >
                             {databases.map((db) => (
-                                <SelectItem key={db} value={db}>
+                                <SelectItem
+                                    key={db}
+                                    value={db}
+                                    data-testid="sql.editor.database-option"
+                                    data-qa-module="sql"
+                                    data-qa-object="database"
+                                    data-qa-action="select"
+                                    data-qa-resource-type="database"
+                                    data-qa-resource-id={db}
+                                >
                                     {db}
                                 </SelectItem>
                             ))}
@@ -430,13 +487,36 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                             onValueChange={handleSchemaChange}
                             disabled={!selectedDatabase || schemas.length === 0}
                         >
-                            <SelectTrigger className="gap-1.5 border-0 bg-transparent shadow-none">
+                            <SelectTrigger
+                                className="gap-1.5 border-0 bg-transparent shadow-none"
+                                data-testid="sql.editor.schema-select"
+                                data-qa-module="sql"
+                                data-qa-object="execution-context"
+                                data-qa-field="schema"
+                                data-qa-state={schemas.length === 0 ? 'empty' : 'ready'}
+                                data-qa-disabled-reason={!selectedDatabase ? 'database_required' : schemas.length === 0 ? 'no_schemas' : undefined}
+                            >
                                 <Network className="h-4 w-4 text-muted-foreground" />
                                 <SelectValue placeholder={t('sql.editor.selectSchema')} />
                             </SelectTrigger>
-                            <SelectContent align="end">
+                            <SelectContent
+                                align="end"
+                                data-testid="sql.editor.schema-select-content"
+                                data-qa-module="sql"
+                                data-qa-object="execution-context-options"
+                                data-qa-field="schema"
+                            >
                                 {schemas.map((schema) => (
-                                    <SelectItem key={schema} value={schema}>
+                                    <SelectItem
+                                        key={schema}
+                                        value={schema}
+                                        data-testid="sql.editor.schema-option"
+                                        data-qa-module="sql"
+                                        data-qa-object="schema"
+                                        data-qa-action="select"
+                                        data-qa-resource-type="schema"
+                                        data-qa-resource-id={schema}
+                                    >
                                         {schema}
                                     </SelectItem>
                                 ))}
@@ -452,7 +532,14 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
             {/* Main Content Area (Split View) */}
             <div className="flex-1 flex flex-col overflow-hidden relative">
                 {/* Editor Area */}
-                <div className="flex-1 overflow-hidden" style={{ marginBottom: isResizing ? 0 : 0 }}>
+                <div
+                    className="flex-1 overflow-hidden"
+                    style={{ marginBottom: isResizing ? 0 : 0 }}
+                    data-testid="sql.editor.input-region"
+                    data-qa-module="sql"
+                    data-qa-object="query-input"
+                    data-qa-field="query"
+                >
                     <MonacoEditor
                         height="100%"
                         language={getEditorLanguage(connectionType)}
@@ -500,12 +587,21 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                 <div
                     className="w-full h-1 cursor-row-resize hover:bg-primary/30 active:bg-primary/50 z-10"
                     onMouseDown={handleResizeMouseDown}
+                    data-testid="sql.editor.result-resize-handle"
+                    data-qa-module="sql"
+                    data-qa-object="result-pane"
+                    data-qa-action="resize"
                 />
 
                 {/* Results Pane */}
                 <div
                     className="border-t flex flex-col bg-background transition-[height] ease-out duration-75"
                     style={{ height: resultsHeight, maxHeight: '80%' }}
+                    data-testid="sql.editor.result-pane"
+                    data-qa-module="sql"
+                    data-qa-object="query-result"
+                    data-qa-state={isExecuting ? 'loading' : queryResults?.some((r) => r.isError) ? 'error' : queryResults ? 'success' : 'empty'}
+                    data-qa-loading={isExecuting ? 'true' : 'false'}
                 >
                     {/* Result Tabs */}
                     <div className="flex items-center border-b bg-muted/10 h-10">
@@ -513,6 +609,11 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                             onClick={() => setActiveResultTab('result')}
                             variant="ghost"
                             size="sm"
+                            data-testid="sql.editor.result-tab"
+                            data-qa-module="sql"
+                            data-qa-object="result-pane-tab"
+                            data-qa-action="show-result"
+                            data-qa-state={activeResultTab === 'result' ? 'active' : 'inactive'}
                             className={cn(
                                 "h-full w-25 rounded-none border-b-2 px-4 py-2 text-sm font-normal",
                                 activeResultTab === 'result' ? "border-primary text-primary bg-background" : "border-transparent text-muted-foreground hover:text-foreground"
@@ -525,6 +626,11 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                             onClick={() => setActiveResultTab('message')}
                             variant="ghost"
                             size="sm"
+                            data-testid="sql.editor.message-tab"
+                            data-qa-module="sql"
+                            data-qa-object="result-pane-tab"
+                            data-qa-action="show-message"
+                            data-qa-state={activeResultTab === 'message' ? 'active' : 'inactive'}
                             className={cn(
                                 "h-full w-25 rounded-none border-b-2 px-4 py-2 text-sm font-normal",
                                 activeResultTab === 'message' ? "border-primary text-primary bg-background" : "border-transparent text-muted-foreground hover:text-foreground"
@@ -546,13 +652,28 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                 {queryResults && queryResults.length > 0 ? (
                                     <div className="divide-y divide-border">
                                         {queryResults.map((result, resultIndex) => (
-                                            <div key={resultIndex} className="flex flex-col">
+                                            <div
+                                                key={resultIndex}
+                                                className="flex flex-col"
+                                                data-testid="sql.editor.result-set"
+                                                data-qa-module="sql"
+                                                data-qa-object="statement-result"
+                                                data-qa-state={result.isError ? 'error' : 'success'}
+                                                data-qa-error-code={result.isError ? 'query_execution_failed' : undefined}
+                                                data-qa-result-index={resultIndex}
+                                                data-qa-row-count={result.rows.length}
+                                            >
                                                 {/* Result Header */}
                                                 <div className="flex flex-col border-b border-border/50">
                                                     <div className={cn(
                                                         "px-4 py-2.5 flex items-center justify-between",
                                                         result.isError ? 'bg-destructive/5' : 'bg-muted/30'
-                                                    )}>
+                                                    )}
+                                                        data-testid="sql.editor.result-set-header"
+                                                        data-qa-module="sql"
+                                                        data-qa-object="statement-result"
+                                                        data-qa-state={result.isError ? 'error' : 'success'}
+                                                    >
                                                         <div className="flex items-center gap-3">
                                                             <div className={cn(
                                                                 "flex items-center justify-center w-5 h-5 rounded-full",
@@ -611,7 +732,14 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                                     </div>
                                                 ) : (
                                                     <div className="overflow-x-auto">
-                                                        <table className="w-full border-collapse text-left">
+                                                        <table
+                                                            className="w-full border-collapse text-left"
+                                                            data-testid="sql.editor.result-table"
+                                                            data-qa-module="sql"
+                                                            data-qa-object="result-table"
+                                                            data-qa-state={result.rows.length > 0 ? 'ready' : 'empty'}
+                                                            data-qa-row-count={result.rows.length}
+                                                        >
                                                             <thead className="bg-muted sticky top-0 z-10">
                                                                 <tr>
                                                                     <th className="border-b border-r px-4 py-2 font-medium text-muted-foreground w-16 text-center bg-muted">#</th>
@@ -625,12 +753,28 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                                             <tbody>
                                                                 {result.rows.length > 0 ? (
                                                                     result.rows.map((row, i) => (
-                                                                        <tr key={i} className="hover:bg-muted/10">
+                                                                        <tr
+                                                                            key={i}
+                                                                            className="hover:bg-muted/10"
+                                                                            data-testid="sql.editor.result-row"
+                                                                            data-qa-module="sql"
+                                                                            data-qa-object="result-row"
+                                                                            data-qa-state="ready"
+                                                                            data-qa-row-index={i}
+                                                                        >
                                                                             <td className="border-b border-r px-4 py-1.5 text-muted-foreground text-center bg-muted/5 font-mono text-xs">
                                                                                 {i + 1}
                                                                             </td>
                                                                             {result.columns.map((col, j) => (
-                                                                                <td key={j} className="border-b border-r px-4 py-1.5 whitespace-nowrap max-w-[300px] truncate">
+                                                                                <td
+                                                                                    key={j}
+                                                                                    className="border-b border-r px-4 py-1.5 whitespace-nowrap max-w-[300px] truncate"
+                                                                                    data-testid="sql.editor.result-cell"
+                                                                                    data-qa-module="sql"
+                                                                                    data-qa-object="result-cell"
+                                                                                    data-qa-field={col}
+                                                                                    data-qa-row-index={i}
+                                                                                >
                                                                                     {typeof row[col] === 'object' ? JSON.stringify(row[col]) : String(row[col] ?? '')}
                                                                                 </td>
                                                                             ))}
@@ -638,7 +782,14 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                                                     ))
                                                                 ) : (
                                                                     <tr>
-                                                                        <td colSpan={result.columns.length + 1} className="px-4 py-8 text-center text-muted-foreground">
+                                                                        <td
+                                                                            colSpan={result.columns.length + 1}
+                                                                            className="px-4 py-8 text-center text-muted-foreground"
+                                                                            data-testid="sql.editor.result-empty"
+                                                                            data-qa-module="sql"
+                                                                            data-qa-object="result-table"
+                                                                            data-qa-state="empty"
+                                                                        >
                                                                             {t('sql.editor.noRowsReturned')}
                                                                         </td>
                                                                     </tr>
@@ -670,7 +821,14 @@ export function SQLEditorView({ tabId, context, initialSql, onSqlChange, onQuery
                                             <div key={idx} className={cn(
                                                 "flex flex-col gap-1 rounded px-3 py-2",
                                                 result.isError ? 'bg-destructive/5' : 'bg-muted/30'
-                                            )}>
+                                            )}
+                                                data-testid="sql.editor.message-item"
+                                                data-qa-module="sql"
+                                                data-qa-object="statement-message"
+                                                data-qa-state={result.isError ? 'error' : 'success'}
+                                                data-qa-error-code={result.isError ? 'query_execution_failed' : undefined}
+                                                data-qa-result-index={idx}
+                                            >
                                                 <div className="flex items-center gap-2">
                                                     {result.isError ? (
                                                         <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />

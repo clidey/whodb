@@ -40,11 +40,33 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
   }
 
   return (
-    <div className="flex items-center justify-between h-12 px-2">
+    <div
+      className="flex items-center justify-between h-12 px-2"
+      data-testid="sql.table.toolbar"
+      data-qa-module="sql"
+      data-qa-object="table-toolbar"
+      data-qa-state={state.loading ? 'loading' : state.hasPendingChanges ? 'dirty' : 'ready'}
+      data-qa-connection-id={connectionId}
+      data-qa-database={databaseName}
+      data-qa-schema={schema}
+      data-qa-resource-type="table"
+      data-qa-resource-id={tableName}
+    >
       <div className="flex items-center">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={actions.refresh} disabled={state.loading}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={actions.refresh}
+              disabled={state.loading}
+              data-testid="sql.table.refresh-button"
+              data-qa-module="sql"
+              data-qa-object="table-data"
+              data-qa-action="refresh"
+              data-qa-state={state.loading ? 'loading' : 'ready'}
+              data-qa-disabled-reason={state.loading ? 'loading' : undefined}
+            >
               <RefreshCw className={cn('h-4 w-4', state.loading && 'animate-spin')} />
             </Button>
           </TooltipTrigger>
@@ -57,7 +79,16 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={actions.addPendingRow}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={actions.addPendingRow}
+                  data-testid="sql.table.add-row-button"
+                  data-qa-module="sql"
+                  data-qa-object="table-row"
+                  data-qa-action="create"
+                  data-qa-risk="resource_mutation"
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -71,6 +102,12 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
                     size="icon"
                     onClick={actions.markSelectedRowsForDelete}
                     disabled={state.selectedRowKeys.size === 0}
+                    data-testid="sql.table.delete-selected-button"
+                    data-qa-module="sql"
+                    data-qa-object="table-row"
+                    data-qa-action="mark-delete"
+                    data-qa-risk="resource_mutation"
+                    data-qa-disabled-reason={state.selectedRowKeys.size === 0 ? 'no_selection' : undefined}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -86,6 +123,11 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
                     size="icon"
                     onClick={actions.undoLastChange}
                     disabled={state.undoStack.length === 0}
+                    data-testid="sql.table.undo-change-button"
+                    data-qa-module="sql"
+                    data-qa-object="changeset"
+                    data-qa-action="undo"
+                    data-qa-disabled-reason={state.undoStack.length === 0 ? 'no_pending_undo' : undefined}
                   >
                     <Undo2 className="h-4 w-4" />
                   </Button>
@@ -104,6 +146,12 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
                     size="icon"
                     onClick={() => actions.setShowPreviewModal(true)}
                     disabled={!state.hasPendingChanges}
+                    data-testid="sql.table.preview-changes-button"
+                    data-qa-module="sql"
+                    data-qa-object="changeset"
+                    data-qa-action="preview"
+                    data-qa-risk="resource_mutation"
+                    data-qa-disabled-reason={!state.hasPendingChanges ? 'no_pending_changes' : undefined}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -119,6 +167,12 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
                     size="icon"
                     onClick={() => actions.setShowSubmitModal(true)}
                     disabled={!state.hasPendingChanges}
+                    data-testid="sql.table.submit-changes-button"
+                    data-qa-module="sql"
+                    data-qa-object="changeset"
+                    data-qa-action="submit"
+                    data-qa-risk="resource_mutation"
+                    data-qa-disabled-reason={!state.hasPendingChanges ? 'no_pending_changes' : undefined}
                   >
                     <SendHorizontal className="h-4 w-4" />
                   </Button>
@@ -133,7 +187,15 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={() => setIsChartModalOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsChartModalOpen(true)}
+              data-testid="sql.table.create-chart-button"
+              data-qa-module="sql"
+              data-qa-object="table-data"
+              data-qa-action="create-chart"
+            >
               <BarChart3 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -145,11 +207,25 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
           onClick={() => actions.setIsFilterModalOpen(true)}
           count={state.filterConditions.length}
         />
-        <Button className="rounded-lg gap-2.5 min-w-[86px]" onClick={() => actions.setShowExportModal(true)}>
+        <Button
+          className="rounded-lg gap-2.5 min-w-[86px]"
+          onClick={() => actions.setShowExportModal(true)}
+          data-testid="sql.table.export-button"
+          data-qa-module="sql"
+          data-qa-object="table-data"
+          data-qa-action="export"
+        >
           <Download className="h-4 w-4" />
           {t('common.actions.export')}
         </Button>
-        <Button className="rounded-lg gap-2.5 min-w-[86px]" onClick={handleOpenQuery}>
+        <Button
+          className="rounded-lg gap-2.5 min-w-[86px]"
+          onClick={handleOpenQuery}
+          data-testid="sql.table.open-query-button"
+          data-qa-module="sql"
+          data-qa-object="table-data"
+          data-qa-action="open-query"
+        >
           <TerminalSquare className="h-4 w-4" />
           {t('common.actions.query')}
         </Button>

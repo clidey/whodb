@@ -34,11 +34,32 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
   }
 
   return (
-    <div className="flex items-center justify-between h-12 px-2">
+    <div
+      className="flex items-center justify-between h-12 px-2"
+      data-testid="mongodb.collection.toolbar"
+      data-qa-module="mongodb"
+      data-qa-object="collection-toolbar"
+      data-qa-state={state.loading ? 'loading' : state.hasPendingChanges ? 'dirty' : 'ready'}
+      data-qa-connection-id={connectionId}
+      data-qa-database={databaseName}
+      data-qa-resource-type="collection"
+      data-qa-resource-id={collectionName}
+    >
       <div className="flex items-center">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={actions.refresh} disabled={state.loading}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={actions.refresh}
+              disabled={state.loading}
+              data-testid="mongodb.collection.refresh-button"
+              data-qa-module="mongodb"
+              data-qa-object="collection-data"
+              data-qa-action="refresh"
+              data-qa-state={state.loading ? 'loading' : 'ready'}
+              data-qa-disabled-reason={state.loading ? 'loading' : undefined}
+            >
               <RefreshCw className={cn('h-4 w-4', state.loading && 'animate-spin')} />
             </Button>
           </TooltipTrigger>
@@ -49,7 +70,16 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={actions.handleAddClick}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={actions.handleAddClick}
+              data-testid="mongodb.collection.add-document-button"
+              data-qa-module="mongodb"
+              data-qa-object="document"
+              data-qa-action="create"
+              data-qa-risk="resource_mutation"
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -63,6 +93,12 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
                 size="icon"
                 onClick={actions.markSelectedForDelete}
                 disabled={state.selectedRowKeys.size === 0}
+                data-testid="mongodb.collection.delete-selected-button"
+                data-qa-module="mongodb"
+                data-qa-object="document"
+                data-qa-action="mark-delete"
+                data-qa-risk="resource_mutation"
+                data-qa-disabled-reason={state.selectedRowKeys.size === 0 ? 'no_selection' : undefined}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -78,6 +114,11 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
                 size="icon"
                 onClick={actions.undoLastChange}
                 disabled={state.undoStack.length === 0}
+                data-testid="mongodb.collection.undo-change-button"
+                data-qa-module="mongodb"
+                data-qa-object="changeset"
+                data-qa-action="undo"
+                data-qa-disabled-reason={state.undoStack.length === 0 ? 'no_pending_undo' : undefined}
               >
                 <Undo2 className="h-4 w-4" />
               </Button>
@@ -96,6 +137,12 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
                 size="icon"
                 onClick={() => actions.setShowPreviewModal(true)}
                 disabled={!state.hasPendingChanges}
+                data-testid="mongodb.collection.preview-changes-button"
+                data-qa-module="mongodb"
+                data-qa-object="changeset"
+                data-qa-action="preview"
+                data-qa-risk="resource_mutation"
+                data-qa-disabled-reason={!state.hasPendingChanges ? 'no_pending_changes' : undefined}
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -111,6 +158,12 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
                 size="icon"
                 onClick={() => actions.setShowSubmitModal(true)}
                 disabled={!state.hasPendingChanges}
+                data-testid="mongodb.collection.submit-changes-button"
+                data-qa-module="mongodb"
+                data-qa-object="changeset"
+                data-qa-action="submit"
+                data-qa-risk="resource_mutation"
+                data-qa-disabled-reason={!state.hasPendingChanges ? 'no_pending_changes' : undefined}
               >
                 <SendHorizontal className="h-4 w-4" />
               </Button>
@@ -123,7 +176,15 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={() => setIsChartModalOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsChartModalOpen(true)}
+              data-testid="mongodb.collection.create-chart-button"
+              data-qa-module="mongodb"
+              data-qa-object="collection-data"
+              data-qa-action="create-chart"
+            >
               <BarChart3 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -135,11 +196,25 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
           onClick={() => actions.setIsFilterModalOpen(true)}
           count={Object.keys(state.activeFilter).length}
         />
-        <Button className="rounded-lg gap-2.5 min-w-[86px]" onClick={() => actions.setShowExportModal(true)}>
+        <Button
+          className="rounded-lg gap-2.5 min-w-[86px]"
+          onClick={() => actions.setShowExportModal(true)}
+          data-testid="mongodb.collection.export-button"
+          data-qa-module="mongodb"
+          data-qa-object="collection-data"
+          data-qa-action="export"
+        >
           <Download className="h-4 w-4" />
           {t('common.actions.export')}
         </Button>
-        <Button className="rounded-lg gap-2.5 min-w-[86px]" onClick={handleOpenQuery}>
+        <Button
+          className="rounded-lg gap-2.5 min-w-[86px]"
+          onClick={handleOpenQuery}
+          data-testid="mongodb.collection.open-query-button"
+          data-qa-module="mongodb"
+          data-qa-object="collection-data"
+          data-qa-action="open-query"
+        >
           <TerminalSquare className="h-4 w-4" />
           {t('common.actions.query')}
         </Button>

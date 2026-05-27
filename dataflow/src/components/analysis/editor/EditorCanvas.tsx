@@ -52,7 +52,16 @@ export function EditorCanvas({ dashboard, isReadOnly, onEditComponent, onMaximiz
     };
 
     return (
-        <div className="p-4 min-h-[800px]" onClick={() => setSelectedWidgetId(null)}>
+        <div
+            className="p-4 min-h-[800px]"
+            onClick={() => setSelectedWidgetId(null)}
+            data-testid="analysis.dashboard.canvas"
+            data-qa-module="analysis"
+            data-qa-object="dashboard-canvas"
+            data-qa-resource-type="dashboard"
+            data-qa-resource-id={dashboard.id}
+            data-qa-state={isReadOnly ? 'read_only' : 'editable'}
+        >
             <ResponsiveGridLayout
                 className="layout"
                 layouts={layouts}
@@ -67,7 +76,15 @@ export function EditorCanvas({ dashboard, isReadOnly, onEditComponent, onMaximiz
                 draggableHandle=".drag-handle"
             >
                 {dashboard.widgets.map(widget => (
-                    <div key={widget.layout.i} className="h-full">
+                    <div
+                        key={widget.layout.i}
+                        className="h-full"
+                        data-testid="analysis.dashboard.widget-layout"
+                        data-qa-module="analysis"
+                        data-qa-object="widget-layout"
+                        data-qa-resource-type="widget"
+                        data-qa-resource-id={widget.id}
+                    >
                         <DashboardWidget
                             widget={widget}
                             isReadOnly={isReadOnly}

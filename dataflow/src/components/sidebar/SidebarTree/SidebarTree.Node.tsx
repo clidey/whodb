@@ -79,6 +79,19 @@ export function TreeNode({ node, depth }: TreeNodeProps) {
   return (
     <div>
       <div
+        data-testid="database.sidebar.tree-node"
+        data-qa-module="database"
+        data-qa-object="sidebar-node"
+        data-qa-state={[
+          isSelected ? "selected" : "idle",
+          isExpandable ? (isExpanded ? "expanded" : "collapsed") : "leaf",
+          nodeIsLoading ? "loading" : null,
+        ].filter(Boolean).join(" ")}
+        data-qa-resource-type={node.type}
+        data-qa-resource-id={node.id}
+        data-qa-connection-id={node.connectionId || node.id}
+        data-qa-database={node.metadata.database}
+        data-qa-schema={node.metadata.schema}
         className={cn(
           "group flex items-center gap-2 rounded-md text-sm transition-colors cursor-pointer select-none px-2 py-2",
           isSelected
@@ -94,6 +107,13 @@ export function TreeNode({ node, depth }: TreeNodeProps) {
               e.stopPropagation();
               onToggle(node);
             }}
+            data-testid="database.sidebar.tree-node-toggle"
+            data-qa-module="database"
+            data-qa-object="sidebar-node"
+            data-qa-action={isExpanded ? "collapse" : "expand"}
+            data-qa-state={nodeIsLoading ? "loading" : isExpanded ? "expanded" : "collapsed"}
+            data-qa-resource-type={node.type}
+            data-qa-resource-id={node.id}
             className={cn(
               "rounded p-0.5 transition-colors",
               isSelected ? "hover:bg-primary/20" : "hover:bg-muted"
@@ -118,12 +138,28 @@ export function TreeNode({ node, depth }: TreeNodeProps) {
         <span className="truncate flex-1">{node.name}</span>
 
         {nodeIsLoading && (
-          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          <Loader2
+            className="h-3 w-3 animate-spin text-muted-foreground"
+            data-testid="database.sidebar.tree-node-loading"
+            data-qa-module="database"
+            data-qa-object="sidebar-node"
+            data-qa-state="loading"
+            data-qa-resource-type={node.type}
+            data-qa-resource-id={node.id}
+          />
         )}
       </div>
 
       {isExpanded && children && children.length > 0 && (
-        <div className="ml-3 pl-3 border-l border-border/50 mt-1 space-y-0.5">
+        <div
+          className="ml-3 pl-3 border-l border-border/50 mt-1 space-y-0.5"
+          data-testid="database.sidebar.tree-node-children"
+          data-qa-module="database"
+          data-qa-object="sidebar-node-children"
+          data-qa-state="expanded"
+          data-qa-resource-type={node.type}
+          data-qa-resource-id={node.id}
+        >
           {children.map((child) => (
             <TreeNode key={child.id} node={child} depth={depth + 1} />
           ))}

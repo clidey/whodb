@@ -457,7 +457,18 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
 
   if (loading && !data) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div
+        className="flex-1 flex items-center justify-center"
+        data-testid="redis.key.detail-loading"
+        data-qa-module="redis"
+        data-qa-object="key-detail"
+        data-qa-state="loading"
+        data-qa-loading="true"
+        data-qa-connection-id={connectionId}
+        data-qa-database={databaseName}
+        data-qa-resource-type="redis_key"
+        data-qa-resource-id={keyName}
+      >
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
@@ -468,13 +479,42 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
 
   return (
     <FindBar.Provider rows={rows} columns={columns}>
-    <div className="flex flex-col h-full bg-background">
+    <div
+      className="flex flex-col h-full bg-background"
+      data-testid="redis.key.detail"
+      data-qa-module="redis"
+      data-qa-object="key-detail"
+      data-qa-state={error ? 'error' : loading ? 'loading' : mutating ? 'mutating' : 'ready'}
+      data-qa-loading={loading ? 'true' : 'false'}
+      data-qa-connection-id={connectionId}
+      data-qa-database={databaseName}
+      data-qa-resource-type="redis_key"
+      data-qa-resource-id={keyName}
+      data-qa-key-type={keyType}
+    >
       {/* ---- Toolbar ---- */}
-      <div className="flex items-center justify-between h-12 px-2">
+      <div
+        className="flex items-center justify-between h-12 px-2"
+        data-testid="redis.key.toolbar"
+        data-qa-module="redis"
+        data-qa-object="key-toolbar"
+        data-qa-state={loading ? 'loading' : mutating ? 'mutating' : 'ready'}
+      >
         <div className="flex items-center">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={refresh} disabled={loading}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={refresh}
+                disabled={loading}
+                data-testid="redis.key.refresh-button"
+                data-qa-module="redis"
+                data-qa-object="key-data"
+                data-qa-action="refresh"
+                data-qa-state={loading ? 'loading' : 'ready'}
+                data-qa-disabled-reason={loading ? 'loading' : undefined}
+              >
                 <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
               </Button>
             </TooltipTrigger>
@@ -486,7 +526,18 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
           {canAdd && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={startNewRow} disabled={newRow !== null || mutating}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={startNewRow}
+                  disabled={newRow !== null || mutating}
+                  data-testid="redis.key.add-row-button"
+                  data-qa-module="redis"
+                  data-qa-object="key-row"
+                  data-qa-action="create"
+                  data-qa-risk="resource_mutation"
+                  data-qa-disabled-reason={newRow !== null ? 'pending_row_active' : mutating ? 'mutating' : undefined}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -497,7 +548,18 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
-                <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(true)} disabled={selectedRows.size === 0 || mutating}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={selectedRows.size === 0 || mutating}
+                  data-testid="redis.key.delete-selected-button"
+                  data-qa-module="redis"
+                  data-qa-object="key-row"
+                  data-qa-action="delete"
+                  data-qa-risk="resource_mutation"
+                  data-qa-disabled-reason={selectedRows.size === 0 ? 'no_selection' : mutating ? 'mutating' : undefined}
+                >
                   <Minus className="h-4 w-4" />
                 </Button>
               </span>
@@ -509,7 +571,15 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setIsChartModalOpen(true)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsChartModalOpen(true)}
+                data-testid="redis.key.create-chart-button"
+                data-qa-module="redis"
+                data-qa-object="key-data"
+                data-qa-action="create-chart"
+              >
                 <BarChart3 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -518,7 +588,14 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
         </div>
 
         <div className="flex items-center gap-2">
-          <Button className="rounded-lg gap-2.5 min-w-[86px]" onClick={() => setShowExport(true)}>
+          <Button
+            className="rounded-lg gap-2.5 min-w-[86px]"
+            onClick={() => setShowExport(true)}
+            data-testid="redis.key.export-button"
+            data-qa-module="redis"
+            data-qa-object="key-data"
+            data-qa-action="export"
+          >
             <Download className="h-4 w-4" />
             {t('common.actions.export')}
           </Button>
@@ -527,7 +604,12 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
             title: t('sidebar.tab.queryWithDatabase', { database: databaseName }),
             connectionId,
             databaseName,
-          })}>
+          })}
+            data-testid="redis.key.open-query-button"
+            data-qa-module="redis"
+            data-qa-object="key-data"
+            data-qa-action="open-query"
+          >
             <TerminalSquare className="h-4 w-4" />
             {t('common.actions.query')}
           </Button>
@@ -538,7 +620,14 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
 
       {/* ---- Error banner ---- */}
       {error && (
-        <div className="px-4 py-2 text-sm text-destructive bg-destructive/10 border-b border-destructive/20 flex items-center justify-between">
+        <div
+          className="px-4 py-2 text-sm text-destructive bg-destructive/10 border-b border-destructive/20 flex items-center justify-between"
+          data-testid="redis.key.error"
+          data-qa-module="redis"
+          data-qa-object="key-data"
+          data-qa-state="error"
+          data-qa-error-code="redis_key_operation_failed"
+        >
           <span>{error}</span>
           <Button variant="ghost" size="icon-xs" onClick={() => setError(null)}><X className="h-3 w-3" /></Button>
         </div>
@@ -551,8 +640,19 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
         data-scrolled-x={isScrolledX || undefined}
         data-scrolled-y={isScrolledY || undefined}
         className="flex-1 overflow-auto"
+        data-testid="redis.key.grid-scroll"
+        data-qa-module="redis"
+        data-qa-object="key-grid"
+        data-qa-state={rows.length > 0 ? 'ready' : 'empty'}
+        data-qa-row-count={rows.length}
       >
-        <table className="min-w-full border-collapse text-sm">
+        <table
+          className="min-w-full border-collapse text-sm"
+          data-testid="redis.key.grid"
+          data-qa-module="redis"
+          data-qa-object="key-grid"
+          data-qa-state={rows.length > 0 ? 'ready' : 'empty'}
+        >
           <thead className="border-b border-border bg-background">
             <tr>
               {/* Row number column */}
@@ -653,7 +753,16 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
             {rows.map((row, rowIdx) => {
               const isSelected = selectedRows.has(rowIdx)
               return (
-                <tr key={rowIdx} className="group transition-colors hover:bg-muted/50">
+                <tr
+                  key={rowIdx}
+                  className="group transition-colors hover:bg-muted/50"
+                  data-testid="redis.key.row"
+                  data-qa-module="redis"
+                  data-qa-object="key-row"
+                  data-qa-state={isSelected ? 'selected' : 'ready'}
+                  data-qa-resource-type="redis_key_row"
+                  data-qa-resource-id={`${keyName}:${rowIdx}`}
+                >
                   {/* Row number — click to toggle selection */}
                   <td
                     className={cn(
@@ -662,6 +771,13 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
                     )}
                     style={{ width: 64, minWidth: 64, maxWidth: 64 }}
                     onClick={() => toggleRowSelection(rowIdx)}
+                    data-testid="redis.key.row-selector"
+                    data-qa-module="redis"
+                    data-qa-object="key-row"
+                    data-qa-action="select"
+                    data-qa-state={isSelected ? 'selected' : 'ready'}
+                    data-qa-resource-type="redis_key_row"
+                    data-qa-resource-id={`${keyName}:${rowIdx}`}
                   >
                     {(currentPage - 1) * pageSize + rowIdx + 1}
                   </td>
@@ -683,6 +799,14 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
                       <td
                         key={col}
                         data-col={col}
+                        data-testid="redis.key.cell"
+                        data-qa-module="redis"
+                        data-qa-object="key-cell"
+                        data-qa-field={col}
+                        data-qa-state={isActive ? 'editing' : editable ? 'editable' : 'read_only'}
+                        data-qa-disabled-reason={!editable ? 'read_only' : undefined}
+                        data-qa-resource-type="redis_key_row"
+                        data-qa-resource-id={`${keyName}:${rowIdx}`}
                         data-find-current={highlight === 'current' ? 'true' : undefined}
                         className={cn(
                           'relative overflow-hidden border-b border-r border-border/50 text-sm text-foreground/80 scroll-mt-14',
@@ -700,6 +824,14 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
                             autoFocus
                             type="text"
                             data-redis-editor="true"
+                            data-testid="redis.key.cell-editor"
+                            data-qa-module="redis"
+                            data-qa-object="key-cell"
+                            data-qa-action="edit"
+                            data-qa-field={col}
+                            data-qa-state="editing"
+                            data-qa-resource-type="redis_key_row"
+                            data-qa-resource-id={`${keyName}:${rowIdx}`}
                             value={activeDraftValue}
                             onChange={(e) => setActiveDraftValue(e.target.value)}
                             onBlur={() => {
@@ -740,7 +872,14 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
 
             {/* ---- New row (inline add) ---- */}
             {newRow && (
-              <tr className="bg-blue-50/30 dark:bg-blue-950/20">
+              <tr
+                className="bg-blue-50/30 dark:bg-blue-950/20"
+                data-testid="redis.key.new-row"
+                data-qa-module="redis"
+                data-qa-object="key-row"
+                data-qa-state="creating"
+                data-qa-risk="resource_mutation"
+              >
                 <td
                   className="sticky left-0 z-30 border-b border-r border-border/50 bg-blue-50/60 dark:bg-blue-950/40 px-2 py-2 text-center text-xs font-medium text-primary"
                   style={{ width: 64, minWidth: 64, maxWidth: 64 }}
@@ -763,6 +902,12 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
                           autoFocus={col === columns.find(isNewRowInputColumn)}
                           type={col === 'score' ? 'number' : 'text'}
                           placeholder={t('redis.detail.newRowPlaceholder')}
+                          data-testid="redis.key.new-row-input"
+                          data-qa-module="redis"
+                          data-qa-object="key-row"
+                          data-qa-field={col}
+                          data-qa-state={mutating ? 'disabled' : 'ready'}
+                          data-qa-disabled-reason={mutating ? 'mutating' : undefined}
                           value={newRow[col] ?? ''}
                           onChange={(e) => setNewRow((prev) => prev ? { ...prev, [col]: e.target.value } : null)}
                           onKeyDown={handleNewRowKeyDown}
@@ -785,7 +930,13 @@ export function RedisKeyDetailView({ connectionId, databaseName, keyName }: Redi
         </table>
 
         {rows.length === 0 && !newRow && (
-          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+          <div
+            className="flex items-center justify-center py-12 text-muted-foreground text-sm"
+            data-testid="redis.key.empty"
+            data-qa-module="redis"
+            data-qa-object="key-grid"
+            data-qa-state="empty"
+          >
             {t('redis.detail.empty')}
           </div>
         )}

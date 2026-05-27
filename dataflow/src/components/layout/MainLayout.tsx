@@ -49,18 +49,41 @@ export function MainLayout() {
     }, []);
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-background">
+        <div
+            className="flex h-screen w-full overflow-hidden bg-background"
+            data-testid="layout.shell"
+            data-qa-module="layout"
+            data-qa-object="app-shell"
+            data-qa-state={activeTab}
+        >
             <ActivityBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <div className="relative shrink-0" style={{ width: sidebarWidth }}>
+            <div
+                className="relative shrink-0"
+                style={{ width: sidebarWidth }}
+                data-testid="layout.sidebar-region"
+                data-qa-module="layout"
+                data-qa-object="sidebar"
+                data-qa-state={activeTab}
+            >
                 {activeTab === 'connections' ? <Sidebar /> : <DashboardSidebar />}
                 <div
                     className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 z-10"
                     onMouseDown={handleMouseDown}
+                    data-testid="layout.sidebar-resize-handle"
+                    data-qa-module="layout"
+                    data-qa-object="sidebar"
+                    data-qa-action="resize"
                 />
             </div>
 
-            <main className="flex flex-1 flex-col overflow-hidden relative bg-sidebar">
+            <main
+                className="flex flex-1 flex-col overflow-hidden relative bg-sidebar"
+                data-testid="layout.main-region"
+                data-qa-module="layout"
+                data-qa-object="main"
+                data-qa-state={activeTab}
+            >
                 {activeTab === 'connections' ? (
                     <>
                         <TabBar />

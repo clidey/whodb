@@ -417,14 +417,31 @@ function SidebarInner() {
   })();
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-sidebar-border bg-sidebar">
+    <div
+      className="flex h-full w-full flex-col border-r border-sidebar-border bg-sidebar"
+      data-testid="database.sidebar"
+      data-qa-module="database"
+      data-qa-object="sidebar"
+      data-qa-state={isLoading && Object.keys(isLoading).length > 0 ? "loading" : "ready"}
+    >
       {/* Header */}
-      <div className="flex items-center px-4 pt-5 pb-2 shrink-0">
+      <div
+        className="flex items-center px-4 pt-5 pb-2 shrink-0"
+        data-testid="database.sidebar.header"
+        data-qa-module="database"
+        data-qa-object="sidebar-header"
+      >
         <span className="text-xl font-medium text-sidebar-foreground">{t("sidebar.title")}</span>
       </div>
 
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div
+        className="flex-1 overflow-y-auto p-2"
+        data-testid="database.sidebar.tree"
+        data-qa-module="database"
+        data-qa-object="connection-tree"
+        data-qa-state={connections.length > 0 ? "ready" : "empty"}
+      >
         {connections.map((conn) => (
           <TreeNodeProvider
             key={conn.id}

@@ -39,7 +39,22 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
   const summary = summarizeChanges(state.changes)
 
   if (state.loading && !state.documents.length && !state.showAddModal) {
-    return <DataView.Loading />
+    return (
+      <div
+        className="flex h-full"
+        data-testid="mongodb.collection.detail-loading"
+        data-qa-module="mongodb"
+        data-qa-object="collection-detail"
+        data-qa-state="loading"
+        data-qa-loading="true"
+        data-qa-connection-id={connectionId}
+        data-qa-database={databaseName}
+        data-qa-resource-type="collection"
+        data-qa-resource-id={collectionName}
+      >
+        <DataView.Loading />
+      </div>
+    )
   }
 
   /** Extract all top-level field names from visible documents for FindBar. */
@@ -54,7 +69,18 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
   }, [state.documents])
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div
+      className="flex flex-col h-full bg-background"
+      data-testid="mongodb.collection.detail"
+      data-qa-module="mongodb"
+      data-qa-object="collection-detail"
+      data-qa-state={state.error ? 'error' : state.loading ? 'loading' : 'ready'}
+      data-qa-loading={state.loading ? 'true' : 'false'}
+      data-qa-connection-id={connectionId}
+      data-qa-database={databaseName}
+      data-qa-resource-type="collection"
+      data-qa-resource-id={collectionName}
+    >
       <CollectionViewToolbar connectionId={connectionId} databaseName={databaseName} collectionName={collectionName} />
 
       {state.error ? (
@@ -67,7 +93,13 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
           onSearchTermChange={actions.setSearchTerm}
         >
           <FindBar.Bar />
-          <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div
+            className="flex-1 overflow-auto p-4 space-y-4"
+            data-testid="mongodb.collection.document-list-region"
+            data-qa-module="mongodb"
+            data-qa-object="document-list"
+            data-qa-state={state.documents.length > 0 ? 'ready' : 'empty'}
+          >
             <CollectionViewDocumentList />
           </div>
         </FindBar.Provider>
@@ -123,7 +155,16 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
       />
 
       <Dialog open={state.showPreviewModal} onOpenChange={actions.setShowPreviewModal}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent
+          className="sm:max-w-3xl"
+          data-testid="mongodb.collection.changes-preview-dialog"
+          data-qa-module="mongodb"
+          data-qa-object="changes-preview"
+          data-qa-state="open"
+          data-qa-risk="resource_mutation"
+          data-qa-resource-type="collection"
+          data-qa-resource-id={collectionName}
+        >
           <DialogHeader>
             <DialogTitle>{t('mongodb.changes.previewTitle')}</DialogTitle>
             <DialogDescription>
@@ -131,7 +172,13 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] rounded-md border bg-muted/20">
-            <pre className="whitespace-pre-wrap p-4 font-mono text-xs">
+            <pre
+              className="whitespace-pre-wrap p-4 font-mono text-xs"
+              data-testid="mongodb.collection.changes-preview-command"
+              data-qa-module="mongodb"
+              data-qa-object="changes-preview"
+              data-qa-state={state.pendingChangeCount > 0 ? 'ready' : 'empty'}
+            >
               {previewCommands.join('\n\n')}
             </pre>
           </ScrollArea>

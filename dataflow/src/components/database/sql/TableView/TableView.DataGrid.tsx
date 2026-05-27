@@ -48,7 +48,14 @@ export function TableViewDataGrid() {
 
   if (state.loading && !state.data) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div
+        className="flex flex-1 items-center justify-center"
+        data-testid="sql.table.grid-loading"
+        data-qa-module="sql"
+        data-qa-object="table-grid"
+        data-qa-state="loading"
+        data-qa-loading="true"
+      >
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
@@ -107,8 +114,25 @@ export function TableViewDataGrid() {
   }
 
   return (
-    <div ref={scrollRef} onScroll={handleScroll} data-scrolled-x={isScrolledX || undefined} data-scrolled-y={isScrolledY || undefined} className="flex-1 overflow-auto">
-      <table className="min-w-full border-collapse text-sm">
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      data-scrolled-x={isScrolledX || undefined}
+      data-scrolled-y={isScrolledY || undefined}
+      className="flex-1 overflow-auto"
+      data-testid="sql.table.grid-scroll"
+      data-qa-module="sql"
+      data-qa-object="table-grid"
+      data-qa-state={state.renderedRows.length > 0 ? 'ready' : 'empty'}
+      data-qa-row-count={state.renderedRows.length}
+    >
+      <table
+        className="min-w-full border-collapse text-sm"
+        data-testid="sql.table.grid"
+        data-qa-module="sql"
+        data-qa-object="table-grid"
+        data-qa-state={state.renderedRows.length > 0 ? 'ready' : 'empty'}
+      >
         <thead className="border-b border-border bg-background">
           <tr>
             <th
@@ -139,6 +163,12 @@ export function TableViewDataGrid() {
             return (
               <tr
                 key={row.rowKey}
+                data-testid="sql.table.row"
+                data-qa-module="sql"
+                data-qa-object="table-row"
+                data-qa-state={row.isInserted ? 'inserted' : row.isDeleted ? 'deleted' : isSelected ? 'selected' : 'ready'}
+                data-qa-resource-type="table-row"
+                data-qa-resource-id={row.rowKey}
                 className={cn(
                   'group transition-colors',
                   row.isInserted && 'bg-blue-100/20',
@@ -157,6 +187,14 @@ export function TableViewDataGrid() {
                   onClick={() => {
                     if (state.canEdit) actions.toggleRowSelection(row.rowKey)
                   }}
+                  data-testid="sql.table.row-selector"
+                  data-qa-module="sql"
+                  data-qa-object="table-row"
+                  data-qa-action="select"
+                  data-qa-state={isSelected ? 'selected' : 'ready'}
+                  data-qa-disabled-reason={!state.canEdit ? 'read_only' : undefined}
+                  data-qa-resource-type="table-row"
+                  data-qa-resource-id={row.rowKey}
                 >
                   {row.rowNumber ?? ''}
                 </td>
@@ -182,6 +220,14 @@ export function TableViewDataGrid() {
                   return (
                     <td
                       key={col}
+                      data-testid="sql.table.cell"
+                      data-qa-module="sql"
+                      data-qa-object="table-cell"
+                      data-qa-field={col}
+                      data-qa-state={isActiveCell ? 'editing' : changed ? 'changed' : row.isInserted ? 'inserted' : row.isDeleted ? 'deleted' : editable ? 'editable' : 'read_only'}
+                      data-qa-disabled-reason={!editable ? row.isDeleted ? 'row_deleted' : state.primaryKey && col === state.primaryKey ? 'primary_key' : !state.canEdit ? 'read_only' : undefined : undefined}
+                      data-qa-resource-type="table-row"
+                      data-qa-resource-id={row.rowKey}
                       data-find-current={highlight === 'current' ? 'true' : undefined}
                       className={cn(
                         'relative overflow-hidden border-b border-r border-border/50 text-sm text-foreground/80 scroll-mt-14',
@@ -204,6 +250,14 @@ export function TableViewDataGrid() {
                           autoFocus
                           type="text"
                           data-changeset-editor="true"
+                          data-testid="sql.table.cell-editor"
+                          data-qa-module="sql"
+                          data-qa-object="table-cell"
+                          data-qa-action="edit"
+                          data-qa-field={col}
+                          data-qa-state="editing"
+                          data-qa-resource-type="table-row"
+                          data-qa-resource-id={row.rowKey}
                           value={state.activeDraftValue}
                           onChange={(event) => actions.updateActiveCellValue(event.target.value)}
                           onBlur={() => {

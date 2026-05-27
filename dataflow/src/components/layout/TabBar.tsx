@@ -35,6 +35,17 @@ function TabItem({ tab, isActive, onActivate, onClose, onContextMenu, closeTitle
         <div
             onClick={onActivate}
             onContextMenu={onContextMenu}
+            data-testid="layout.tab.item"
+            data-qa-module="layout"
+            data-qa-object="tab"
+            data-qa-action="activate"
+            data-qa-state={[isActive ? 'active' : 'inactive', tab.isDirty ? 'dirty' : null].filter(Boolean).join(' ')}
+            data-qa-resource-type="tab"
+            data-qa-resource-id={tab.id}
+            data-qa-tab-type={tab.type}
+            data-qa-connection-id={tab.connectionId}
+            data-qa-database={tab.databaseName}
+            data-qa-schema={tab.schemaName}
             className={cn(
                 "group flex items-center gap-1 p-2 pl-3 h-9 cursor-pointer border-r border-sidebar-border transition-colors duration-150 select-none",
                 isActive
@@ -55,6 +66,12 @@ function TabItem({ tab, isActive, onActivate, onClose, onContextMenu, closeTitle
                         variant="ghost"
                         size="icon-xs"
                         onClick={onClose}
+                        data-testid="layout.tab.close-button"
+                        data-qa-module="layout"
+                        data-qa-object="tab"
+                        data-qa-action="close"
+                        data-qa-resource-type="tab"
+                        data-qa-resource-id={tab.id}
                         className={cn(
                             "flex-shrink-0 transition-colors text-muted-foreground cursor-pointer",
                             isActive
@@ -122,7 +139,13 @@ export function TabBar() {
     };
 
     return (
-        <ScrollArea className="border-b border-sidebar-border mb-2">
+        <ScrollArea
+            className="border-b border-sidebar-border mb-2"
+            data-testid="layout.tab-bar"
+            data-qa-module="layout"
+            data-qa-object="tab-bar"
+            data-qa-state={tabs.length > 0 ? 'ready' : 'empty'}
+        >
             <div className="flex items-center pr-2">
                 {tabs.map(tab => (
                     <TabItem
@@ -141,6 +164,11 @@ export function TabBar() {
                             variant="ghost"
                             size="icon-xs"
                             onClick={handleAddTab}
+                            data-testid="layout.tab.new-query-button"
+                            data-qa-module="layout"
+                            data-qa-object="tab"
+                            data-qa-action="create-query"
+                            data-qa-disabled-reason={!activeTabId ? 'not_ready' : undefined}
                             className="h-9 w-9 shrink-0 rounded-none border-r border-sidebar-border hover:bg-muted"
                         >
                             <Plus className="h-4 w-4" />

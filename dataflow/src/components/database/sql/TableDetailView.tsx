@@ -35,7 +35,19 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
   const summary = summarizeChanges(state.changes)
 
   return (
-    <div className="flex h-full flex-col">
+    <div
+      className="flex h-full flex-col"
+      data-testid="sql.table.detail"
+      data-qa-module="sql"
+      data-qa-object="table-detail"
+      data-qa-state={state.error ? "error" : state.loading ? "loading" : "ready"}
+      data-qa-loading={state.loading ? "true" : "false"}
+      data-qa-connection-id={connectionId}
+      data-qa-database={databaseName}
+      data-qa-schema={schema}
+      data-qa-resource-type="table"
+      data-qa-resource-id={tableName}
+    >
       <TableViewToolbar connectionId={connectionId} databaseName={databaseName} tableName={tableName} schema={schema} />
 
       {state.error ? (
@@ -83,7 +95,16 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
       )}
 
       <Dialog open={state.showPreviewModal} onOpenChange={actions.setShowPreviewModal}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent
+          className="sm:max-w-3xl"
+          data-testid="sql.table.changes-preview-dialog"
+          data-qa-module="sql"
+          data-qa-object="changes-preview"
+          data-qa-state="open"
+          data-qa-risk="resource_mutation"
+          data-qa-resource-type="table"
+          data-qa-resource-id={tableName}
+        >
           <DialogHeader>
             <DialogTitle>{t('sql.changes.previewTitle')}</DialogTitle>
             <DialogDescription>
@@ -92,7 +113,13 @@ function TableDetailViewContent({ connectionId, databaseName, tableName, schema 
           </DialogHeader>
 
           <ScrollArea className="max-h-[60vh] rounded-md border bg-muted/20">
-            <pre className="whitespace-pre-wrap p-4 font-mono text-xs">
+            <pre
+              className="whitespace-pre-wrap p-4 font-mono text-xs"
+              data-testid="sql.table.changes-preview-sql"
+              data-qa-module="sql"
+              data-qa-object="changes-preview"
+              data-qa-state={state.pendingChangeCount > 0 ? "ready" : "empty"}
+            >
               {previewStatements.join('\n\n')}
             </pre>
           </ScrollArea>
