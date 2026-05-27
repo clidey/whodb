@@ -15,8 +15,9 @@
  */
 
 import { test, expect } from '../../support/test-fixture.mjs';
-import { getDatabaseConfig } from '../../support/database-config.mjs';
+import { getDatabaseConfig, getDatabaseId } from '../../support/database-config.mjs';
 import { clearBrowserState } from '../../support/helpers/animation.mjs';
+import path from 'path';
 
 const targetDb = process.env.DATABASE;
 const shouldRun = !targetDb || targetDb.toLowerCase() === 'postgres';
@@ -38,21 +39,13 @@ const describeOrSkip = shouldRun ? test.describe : test.describe.skip;
 
 describeOrSkip('Browser Storage', () => {
     const db = getDatabaseConfig('postgres');
+    const authFile = path.resolve(process.cwd(), 'e2e', '.auth', `${getDatabaseId(db)}.json`);
+
+    test.use({ storageState: authFile });
 
     test.beforeEach(async ({ whodb, page }) => {
-        const conn = db.connection;
-        await whodb.login(
-            db.uiType || db.type,
-            conn.host ?? undefined,
-            conn.user ?? undefined,
-            conn.password ?? undefined,
-            conn.database ?? undefined,
-            conn.advanced || {}
-        );
-    });
-
-    test.afterEach(async ({ whodb, page }) => {
-        await whodb.logout();
+        await page.goto('/storage-unit');
+        await page.locator('[data-testid="storage-unit-card"]').first().waitFor({ timeout: 15000 });
     });
 
     test.describe('Redux State Persistence', () => {
