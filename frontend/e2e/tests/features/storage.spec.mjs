@@ -109,42 +109,48 @@ describeOrSkip('Browser Storage', () => {
         });
 
         test('persists all Redux slices with correct keys', async ({ whodb, page }) => {
-            const result = await page.evaluate(() => {
-                // Check that all expected persist keys exist
-                const expectedKeys = [
-                    'persist:auth',
-                    'persist:database',
-                    'persist:settings',
-                    'persist:houdini',
-                    'persist:aiModels',
-                    'persist:scratchpad',
-                    'persist:tour',
-                    'persist:providers',
-                    'persist:exploreConditions'
-                ];
+            const expectedKeys = [
+                'persist:auth',
+                'persist:database',
+                'persist:settings',
+                'persist:houdini',
+                'persist:aiModels',
+                'persist:scratchpad',
+                'persist:tour',
+                'persist:providers',
+                'persist:exploreConditions'
+            ];
 
+            // Wait for all slices to persist (throttled slices may take up to 2s)
+            await expect(async () => {
+                const result = await page.evaluate((keys) => {
+                    return keys.map(key => ({
+                        key,
+                        exists: localStorage.getItem(key) !== null
+                    }));
+                }, expectedKeys);
+                for (const { key, exists } of result) {
+                    expect(exists, `${key} should exist in localStorage`).toBeTruthy();
+                }
+            }).toPass({ timeout: 5000 });
+
+            // Verify _persist metadata
+            const result = await page.evaluate((keys) => {
                 const results = {};
-                expectedKeys.forEach(key => {
+                keys.forEach(key => {
                     const data = localStorage.getItem(key);
-                    results[key] = {
-                        exists: data !== null,
-                        hasPersist: false
-                    };
-                    if (data !== null) {
-                        try {
-                            const parsed = JSON.parse(data);
-                            results[key].hasPersist = parsed._persist !== undefined;
-                        } catch {
-                            // ignore
-                        }
+                    try {
+                        const parsed = JSON.parse(data);
+                        results[key] = parsed._persist !== undefined;
+                    } catch {
+                        results[key] = false;
                     }
                 });
                 return results;
-            });
+            }, expectedKeys);
 
-            for (const [key, value] of Object.entries(result)) {
-                expect(value.exists, `${key} should exist in localStorage`).toBeTruthy();
-                expect(value.hasPersist, `${key} should have _persist`).toBeTruthy();
+            for (const [key, hasPersist] of Object.entries(result)) {
+                expect(hasPersist, `${key} should have _persist`).toBeTruthy();
             }
         });
 
