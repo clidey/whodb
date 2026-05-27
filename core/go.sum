@@ -262,8 +262,8 @@ github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10/go.mod h1
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/posthog/posthog-go v1.12.6 h1:N+FrKWY6DOuDhV2OMgvtKAKDYGTdtS9/nuvr0BTyBp0=
-github.com/posthog/posthog-go v1.12.6/go.mod h1:xsVOW9YImilUcazwPNEq4PJDqEZf2KeCS758zXjwkPg=
+github.com/posthog/posthog-go v1.13.0 h1:+i+t6txCczJcGZj7ME2ry4sLhPYvq3q7RYuUZ0z6NpQ=
+github.com/posthog/posthog-go v1.13.0/go.mod h1:xsVOW9YImilUcazwPNEq4PJDqEZf2KeCS758zXjwkPg=
 github.com/richardlehane/mscfb v1.0.6 h1:eN3bvvZCp00bs7Zf52bxNwAx5lJDBK1tCuH19qq5aC8=
 github.com/richardlehane/mscfb v1.0.6/go.mod h1:pe0+IUIc0AHh0+teNzBlJCtSyZdFOGgV4ZK9bsoV+Jo=
 github.com/richardlehane/msoleps v1.0.6 h1:9BvkpjvD+iUBalUY4esMwv6uBkfOip/Lzvd93jvR9gg=
