@@ -18,7 +18,7 @@ FROM golang:1.26-alpine3.23 AS builder
 
 ARG VERSION=dev
 
-RUN apk add --no-cache gcc g++ musl-dev git bash curl
+RUN apk add --no-cache gcc g++ musl-dev git bash curl binutils upx
 
 # DuckDB's pre-built static library references glibc-specific symbols unavailable in musl.
 # Build a static compat library so the linker deduplicates across CGO packages.
@@ -31,13 +31,17 @@ WORKDIR /app
 # Copy core module
 COPY core/go.mod core/go.sum ./core/
 WORKDIR /app/core
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 # Copy cli module
 WORKDIR /app
 COPY cli/go.mod cli/go.sum ./cli/
 WORKDIR /app/cli
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 # Copy all source code
 WORKDIR /app
@@ -47,11 +51,16 @@ COPY cli/ ./cli/
 # Build CLI binary with version injection
 WORKDIR /app/cli
 ARG TARGETARCH
-RUN CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_CFLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -flto -fvisibility=hidden" \
     CGO_LDFLAGS="-Wl,--gc-sections -Wl,--as-needed -flto -lduckdb_musl_compat" \
     CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} go build -trimpath \
     -ldflags "-s -w -X github.com/clidey/whodb/cli/pkg/version.Version=${VERSION}" \
     -o /whodb-cli .
+
+RUN chmod +x /whodb-cli && \
+    upx --best /whodb-cli
 
 # Pre-download BAML native library for the target architecture (musl for Alpine)
 # Extract BAML version from go.mod to stay in sync
@@ -66,6 +75,8 @@ RUN BAML_VERSION=$(grep 'github.com/boundaryml/baml ' /app/core/go.mod | awk '{p
     mkdir -p /baml-lib && \
     curl -L -o /baml-lib/libbaml_cffi.so \
         https://github.com/boundaryml/baml/releases/download/${BAML_VERSION}/libbaml_cffi-${BAML_ARCH}-unknown-linux-musl.so && \
+    chmod +x /baml-lib/libbaml_cffi.so && \
+    strip --strip-debug /baml-lib/libbaml_cffi.so && \
     echo "Downloaded BAML musl library for ${BAML_ARCH}"
 
 # Final stage
