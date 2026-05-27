@@ -51,16 +51,29 @@ export const houdiniSlice = createSlice({
   initialState,
   reducers: {
     // Legacy actions (for backward compatibility)
-    addChatMessage: (state, action: PayloadAction<IChatMessage & { sessionId?: string }>) => {
+    addChatMessage: (state, action: PayloadAction<IChatMessage & { sessionId?: string; insertAfterId?: number }>) => {
         const targetId = action.payload.sessionId ?? state.activeSessionId;
+        const insertMessage = (messages: IChatMessage[]) => {
+            const { sessionId: _, insertAfterId, ...msg } = action.payload;
+            if (insertAfterId == null) {
+                messages.push(msg);
+                return;
+            }
+            const index = messages.findIndex(chat => chat.id === insertAfterId);
+            if (index === -1) {
+                messages.push(msg);
+                return;
+            }
+            messages.splice(index + 1, 0, msg);
+        };
+
         if (state.sessions.length > 0 && targetId) {
             const session = state.sessions.find(s => s.id === targetId);
             if (session) {
-                const { sessionId: _, ...msg } = action.payload;
-                session.messages.push(msg);
+                insertMessage(session.messages);
             }
         } else {
-            state.chats.push(action.payload);
+            insertMessage(state.chats);
         }
     },
     updateChatMessage: (state, action: PayloadAction<{ id: number; Text: string; sessionId?: string }>) => {
