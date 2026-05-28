@@ -34,6 +34,9 @@ export type ChatSession = {
     projectId?: string;
     sourceId?: string;
     status?: string;
+    modelType?: string;
+    providerId?: string;
+    model?: string;
 };
 
 export type IChatState = {
@@ -170,7 +173,7 @@ export const houdiniSlice = createSlice({
         }
         state.activeSessionId = state.sessions[0]?.id ?? null;
     },
-    addChatSession: (state, action: PayloadAction<{ name?: string; projectId?: string; sourceId?: string }>) => {
+    addChatSession: (state, action: PayloadAction<{ name?: string; projectId?: string; sourceId?: string; modelType?: string; providerId?: string; model?: string }>) => {
         const newId = uuidv4();
         const newSession: ChatSession = {
             id: newId,
@@ -181,14 +184,15 @@ export const houdiniSlice = createSlice({
             projectId: action.payload.projectId,
             sourceId: action.payload.sourceId,
             status: 'idle',
+            modelType: action.payload.modelType,
+            providerId: action.payload.providerId,
+            model: action.payload.model,
         };
         // Add new session at the top (beginning) of the list
         state.sessions.unshift(newSession);
         state.activeSessionId = newId;
     },
     deleteChatSession: (state, action: PayloadAction<{ sessionId: string }>) => {
-        if (state.sessions.length <= 1) return;
-
         const sessionIndex = state.sessions.findIndex(session => session.id === action.payload.sessionId);
         if (sessionIndex === -1) return;
 
@@ -210,6 +214,14 @@ export const houdiniSlice = createSlice({
         const session = state.sessions.find(s => s.id === action.payload.sessionId);
         if (session) {
             session.name = action.payload.name;
+        }
+    },
+    updateSessionModel: (state, action: PayloadAction<{ sessionId: string; modelType: string; providerId: string; model: string }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.modelType = action.payload.modelType;
+            session.providerId = action.payload.providerId;
+            session.model = action.payload.model;
         }
     },
     clearAllChatSessions: (state) => {
