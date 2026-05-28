@@ -30,6 +30,10 @@ export type ChatSession = {
     name: string;
     messages: IChatMessage[];
     createdAt: Date;
+    updatedAt?: Date;
+    projectId?: string;
+    sourceId?: string;
+    status?: string;
 };
 
 export type IChatState = {
@@ -158,13 +162,25 @@ export const houdiniSlice = createSlice({
             state.activeSessionId = state.sessions[0].id;
         }
     },
-    addChatSession: (state, action: PayloadAction<{ name?: string }>) => {
+    hydrateChatSessions: (state, action: PayloadAction<{ sessions: ChatSession[]; activeSessionId?: string | null }>) => {
+        state.sessions = action.payload.sessions;
+        if (action.payload.activeSessionId && state.sessions.some(session => session.id === action.payload.activeSessionId)) {
+            state.activeSessionId = action.payload.activeSessionId;
+            return;
+        }
+        state.activeSessionId = state.sessions[0]?.id ?? null;
+    },
+    addChatSession: (state, action: PayloadAction<{ name?: string; projectId?: string; sourceId?: string }>) => {
         const newId = uuidv4();
         const newSession: ChatSession = {
             id: newId,
             name: action.payload.name || `Chat ${state.sessions.length + 1}`,
             messages: [],
-            createdAt: new Date()
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: action.payload.projectId,
+            sourceId: action.payload.sourceId,
+            status: 'idle',
         };
         // Add new session at the top (beginning) of the list
         state.sessions.unshift(newSession);
