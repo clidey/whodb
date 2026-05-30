@@ -9,6 +9,9 @@ cd core && go run ./cmd/whodb
 # Build CE binary
 cd core && go build -o whodb ./cmd/whodb
 
+# Lint
+./lint.sh
+
 # Run tests (see testing.md for full guide)
 cd core && go test ./...
 bash dev/run-backend-tests.sh all    # Unit + integration
@@ -20,14 +23,16 @@ bash dev/run-backend-tests.sh all    # Unit + integration
 # Run frontend (separate terminal)
 cd frontend && pnpm start
 
+# Lint + type check
+cd frontend && pnpm lint       # oxlint
+cd frontend && pnpm lint:fix   # oxlint --fix
+cd frontend && pnpm typecheck  # tsc --noEmit
+
 # E2E tests (Playwright) - see testing.md for full guide
 cd frontend && pnpm e2e:ce               # Interactive, all databases
 cd frontend && pnpm e2e:ce:headless      # Headless, all databases
 cd frontend && pnpm e2e:db postgres      # Single database
 # Available: postgres, mysql, mysql8, mariadb, sqlite, mongodb, redis, elasticsearch, clickhouse
-
-# Type check
-cd frontend && pnpm run build
 ```
 
 ## CLI

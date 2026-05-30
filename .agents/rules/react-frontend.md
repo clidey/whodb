@@ -9,8 +9,13 @@ paths:
 
 ## Verification (run after changes)
 ```bash
-cd frontend && pnpm run build:ce
+cd frontend && pnpm lint && pnpm typecheck && pnpm run build:ce
 ```
+
+## Lint Tooling
+- **Lint**: `oxlint` (Rust-based, 50-100x faster than ESLint) — `pnpm lint` / `pnpm lint:fix`
+- **Type check**: `tsc --noEmit` — `pnpm typecheck`
+- **Formatting**: `gofmt` (Go), `pnpm lint:fix` (TS/TSX via oxlint)
 
 ## UI Component Library: @clidey/ux
 
