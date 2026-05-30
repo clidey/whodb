@@ -6,6 +6,7 @@ en_US:
   loadingSuggestions: Loading suggestions...
   genericExamplesLabel: Example queries (not specific to your database)
   databaseSpecificSuggestionsLabel: Suggested queries based on your database schema
+  autoScroll: "Auto-scroll"
   scratchpadNotSupported: Scratchpad Is Not Supported for This Database Type
   queryMoved: Query Moved to Scratchpad
   moveToScratchpad: Move to Scratchpad

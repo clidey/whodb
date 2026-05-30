@@ -21,6 +21,7 @@ import {
     AlertTitle,
     Button,
     Card,
+    Checkbox,
     cn,
     Dialog,
     DialogContent,
@@ -69,6 +70,7 @@ import {StorageUnitTable} from "../../components/table";
 import {copyToClipboard} from "../../services/clipboard";
 import {extensions} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
+import {reduxStorePersistor} from "../../store";
 import {HoudiniActions} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
@@ -344,13 +346,15 @@ export const ChatPage: FC = () => {
     const { t } = useTranslation('pages/chat');
     const [query, setQuery] = useState("");
     const { sessions, activeSessionId } = useAppSelector(state => state.houdini);
-    const chats = useMemo(() => {
-        if (sessions.length > 0 && activeSessionId) {
-            const activeSession = sessions.find(s => s.id === activeSessionId);
-            return activeSession?.messages || [];
-        }
-        return [];
+    const activeSession = useMemo(() => {
+        return sessions.length > 0 && activeSessionId
+            ? sessions.find(s => s.id === activeSessionId)
+            : undefined;
     }, [sessions, activeSessionId]);
+    const chats = useMemo(() => {
+        return activeSession?.messages || [];
+    }, [activeSession]);
+    const autoScrollEnabled = activeSession?.autoScrollEnabled ?? true;
     const [executeConfirmedSql] = useMutation(ExecuteConfirmedSqlDocument);
     const [generateChatTitleMutation] = useMutation(GenerateChatTitleDocument);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -449,7 +453,6 @@ export const ChatPage: FC = () => {
         // Check if we should try to generate a title:
         // - Session still has default name (matches "Chat X" pattern)
         // This will keep trying on each message until we get a meaningful title
-        const activeSession = sessions.find(s => s.id === activeSessionId);
         const hasDefaultName = activeSession?.name?.match(/^Chat \d+$/);
         const shouldTryTitle = hasDefaultName;
 
@@ -468,14 +471,16 @@ export const ChatPage: FC = () => {
             RequiresConfirmation: false
         }));
 
-        setTimeout(() => {
-            if (scrollContainerRef.current != null) {
-                scrollContainerRef.current.scroll({
-                    top: scrollContainerRef.current.scrollHeight,
-                    behavior: "smooth",
-                });
-            }
-        }, 250);
+        if (autoScrollEnabled) {
+            setTimeout(() => {
+                if (scrollContainerRef.current != null) {
+                    scrollContainerRef.current.scroll({
+                        top: scrollContainerRef.current.scrollHeight,
+                        behavior: "smooth",
+                    });
+                }
+            }, 250);
+        }
 
         try {
             const response = await fetch(withBasePath('/api/ai-chat/stream'), {
@@ -553,7 +558,7 @@ export const ChatPage: FC = () => {
                                 }
 
                                 // Auto-scroll
-                                if (scrollContainerRef.current != null) {
+                                if (autoScrollEnabled && scrollContainerRef.current != null) {
                                     scrollContainerRef.current.scroll({
                                         top: scrollContainerRef.current.scrollHeight,
                                         behavior: "smooth",
@@ -578,14 +583,16 @@ export const ChatPage: FC = () => {
                                             id: messageId,
                                         }));
 
-                                        setTimeout(() => {
-                                            if (scrollContainerRef.current != null) {
-                                                scrollContainerRef.current.scroll({
-                                                    top: scrollContainerRef.current.scrollHeight,
-                                                    behavior: "smooth",
-                                                });
-                                            }
-                                        }, 100);
+                                        if (autoScrollEnabled) {
+                                            setTimeout(() => {
+                                                if (scrollContainerRef.current != null) {
+                                                    scrollContainerRef.current.scroll({
+                                                        top: scrollContainerRef.current.scrollHeight,
+                                                        behavior: "smooth",
+                                                    });
+                                                }
+                                            }, 100);
+                                        }
                                     }
                                 }
                             } else if (currentEventType === 'done') {
@@ -639,7 +646,7 @@ export const ChatPage: FC = () => {
             setLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSessionId, sessions]);
+    }, [chats, currentModel, modelType, query, sourceScopeRef, dispatch, t, scrollContainerRef, getUniqueMessageId, activeSession, activeSessionId, autoScrollEnabled]);
 
     // Helper function to generate and update chat title
     const generateChatTitle = useCallback(async (userQuery: string) => {
@@ -788,15 +795,16 @@ export const ChatPage: FC = () => {
                 },
             }));
 
-            // Scroll to bottom
-            setTimeout(() => {
-                if (scrollContainerRef.current != null) {
-                    scrollContainerRef.current.scroll({
-                        top: scrollContainerRef.current.scrollHeight,
-                        behavior: "smooth",
-                    });
-                }
-            }, 100);
+            if (autoScrollEnabled) {
+                setTimeout(() => {
+                    if (scrollContainerRef.current != null) {
+                        scrollContainerRef.current.scroll({
+                            top: scrollContainerRef.current.scrollHeight,
+                            behavior: "smooth",
+                        });
+                    }
+                }, 100);
+            }
 
         } catch (error) {
             const errorMessage = error instanceof Error
@@ -808,7 +816,7 @@ export const ChatPage: FC = () => {
         } finally {
             setExecutingConfirmedId(null);
         }
-    }, [executeConfirmedSql, dispatch, t, scrollContainerRef]);
+    }, [autoScrollEnabled, executeConfirmedSql, dispatch, t, scrollContainerRef]);
 
     const handleCancelSQL = useCallback((messageId: number) => {
         dispatch(HoudiniActions.removeChatMessage(messageId));
@@ -830,10 +838,28 @@ export const ChatPage: FC = () => {
 
     // Auto-scroll to bottom when chats change or component mounts
     useEffect(() => {
-        if (scrollContainerRef.current != null && chats.length > 0) {
+        if (autoScrollEnabled && scrollContainerRef.current != null && chats.length > 0) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
-    }, [chats.length]);
+    }, [activeSessionId, autoScrollEnabled, chats.length]);
+
+    const handleAutoScrollChange = useCallback((enabled: boolean) => {
+        if (activeSessionId) {
+            dispatch(HoudiniActions.updateSessionAutoScroll({ sessionId: activeSessionId, autoScrollEnabled: enabled }));
+            void reduxStorePersistor.flush();
+        }
+        if (!enabled) {
+            return;
+        }
+        setTimeout(() => {
+            if (scrollContainerRef.current != null) {
+                scrollContainerRef.current.scroll({
+                    top: scrollContainerRef.current.scrollHeight,
+                    behavior: "smooth",
+                });
+            }
+        }, 0);
+    }, [activeSessionId, dispatch]);
 
     // Fetch database-specific suggestions when AI is available and chat is empty
     useEffect(() => {
@@ -875,10 +901,20 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2 min-w-[30%]">
-                <AIProvider
-                    {...aiState}
-                    onClear={handleClear}
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                    <AIProvider
+                        {...aiState}
+                        onClear={handleClear}
+                    />
+                    <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs dark:bg-input/30">
+                        <Checkbox
+                            checked={autoScrollEnabled}
+                            onCheckedChange={checked => handleAutoScrollChange(checked === true)}
+                            data-testid="chat-auto-scroll-toggle"
+                        />
+                        <span>{t('autoScroll')}</span>
+                    </label>
+                </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "hidden": disableAll,
                 })}>
