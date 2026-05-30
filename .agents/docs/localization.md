@@ -58,12 +58,6 @@ Languages are defined in `frontend/src/utils/languages.ts`. Each YAML file conta
 
 **Component-specific keys override common keys.** If `common.yaml` has `title: "Default"` and `components/export.yaml` has `title: "Export Data"`, the export component gets "Export Data".
 
-### Adding a new common key
-
-1. Add the `en_US` entry to `common.yaml`
-2. Run the translation script: `cd dev/translate && python3 detect.py && node translate.mjs`
-3. Remove the key from any component YAML files that previously had it
-
 ## YAML File Format
 
 Each file has one top-level key per language, with `en_US` as the source of truth:
