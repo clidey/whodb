@@ -1,0 +1,92 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "browser": true
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/build/**",
+    "**/build-ee/**",
+    "**/node_modules/**",
+    "**/src/generated/**",
+    "**/coverage/**",
+    "**/.nyc_output/**",
+    "**/*.config.mjs",
+    "**/*.config.ts"
+  ],
+  "globals": {
+    "__dirname": "readonly",
+    "module": "readonly",
+    "process": "readonly",
+    "require": "readonly"
+  },
+  "overrides": [
+    {
+      "files": ["e2e/**/*.{ts,mjs}"],
+      "rules": {
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-misused-promises": "off",
+        "typescript/no-floating-promises": "off"
+      }
+    },
+    {
+      "files": ["src/**/*.{ts,tsx}"],
+      "plugins": ["typescript", "react", "import"],
+      "rules": {
+        // TypeScript
+        "typescript/no-explicit-any": "error",
+        "typescript/no-non-null-assertion": "error",
+        "typescript/no-empty-object-type": "error",
+        "typescript/consistent-type-imports": ["error", { "prefer": "type-imports" }],
+        "typescript/consistent-generic-constructors": ["error", "constructor"],
+        "typescript/no-unnecessary-condition": "error",
+        "typescript/prefer-optional-chain": "error",
+        "typescript/prefer-nullish-coalescing": "error",
+        "typescript/no-unsafe-assignment": "error",
+        "typescript/no-unsafe-member-access": "error",
+        "typescript/no-unsafe-return": "error",
+        "typescript/no-unsafe-call": "error",
+        "typescript/no-unsafe-argument": "error",
+        "typescript/restrict-template-expressions": ["error", { "allowNumber": true }],
+        "typescript/no-confusing-void-expression": "error",
+        "typescript/no-floating-promises": "error",
+        "typescript/no-misused-promises": "error",
+        "typescript/no-unused-vars": ["error", {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }],
+
+        // React
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "error",
+        "react/jsx-key": "error",
+        "react/no-direct-mutation-state": "error",
+        "react/no-array-index-key": "error",
+        "react/no-danger": "error",
+        "react/jsx-no-useless-fragment": "error",
+
+        // Import
+        "import/no-duplicates": "error",
+        "import/no-cycle": "error",
+
+        // General
+        "no-console": ["warn", { "allow": ["warn", "error"] }],
+        "no-debugger": "error",
+        "no-alert": "error",
+        "eqeqeq": ["error", "always"],
+        "prefer-const": "error",
+        "no-var": "error",
+        "no-template-curly-in-string": "error",
+
+        // Style
+        "no-extra-boolean-cast": "error"
+      }
+    }
+  ]
+}

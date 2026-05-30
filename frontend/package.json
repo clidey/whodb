@@ -73,7 +73,12 @@
     "coverage:clean": "rm -rf .nyc_output coverage",
     "coverage:clean:all": "bash ../dev/clean-coverage.sh",
     "view:coverage:backend": "cd ../core && go tool cover -html=coverage.out",
-    "generate": "graphql-codegen --config codegen.yml"
+    "generate": "graphql-codegen --config codegen.yml",
+    "lint": "oxlint src/",
+    "lint:fix": "oxlint --fix src/",
+    "oxlint": "oxlint src/",
+    "oxlint:fix": "oxlint --fix src/",
+    "typecheck": "tsc -p tsconfig.ce.json --noEmit"
   },
   "browserslist": {
     "production": [
@@ -97,6 +102,7 @@
     "@graphql-codegen/typescript-react-apollo": "4.3.2",
     "@graphql-typed-document-node/core": "3.2.0",
     "@lhci/cli": "0.15.1",
+    "@oxlint/migrate": "1.66.0",
     "@playwright/test": "1.58.1",
     "@types/js-yaml": "4.0.9",
     "@types/lodash": "4.17.20",
@@ -104,6 +110,8 @@
     "baseline-browser-mapping": "2.10.0",
     "js-yaml": "4.1.1",
     "nyc": "17.1.0",
+    "oxlint": "1.66.0",
+    "oxlint-tsgolint": "0.23.0",
     "typescript": "5.8.3",
     "vite": "7.1.11",
     "vite-plugin-istanbul": "7.2.1"
