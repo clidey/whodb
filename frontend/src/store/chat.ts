@@ -34,6 +34,8 @@ export type ChatSession = {
     projectId?: string;
     sourceId?: string;
     status?: string;
+    activeRunId?: string;
+    lastEventSequence?: number;
     modelType?: string;
     providerId?: string;
     model?: string;
@@ -184,6 +186,7 @@ export const houdiniSlice = createSlice({
             projectId: action.payload.projectId,
             sourceId: action.payload.sourceId,
             status: 'idle',
+            lastEventSequence: 0,
             modelType: action.payload.modelType,
             providerId: action.payload.providerId,
             model: action.payload.model,
@@ -222,6 +225,21 @@ export const houdiniSlice = createSlice({
             session.modelType = action.payload.modelType;
             session.providerId = action.payload.providerId;
             session.model = action.payload.model;
+        }
+    },
+    updateSessionStatus: (state, action: PayloadAction<{ sessionId: string; status: string; activeRunId?: string }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.status = action.payload.status;
+            if (action.payload.activeRunId !== undefined) {
+                session.activeRunId = action.payload.activeRunId;
+            }
+        }
+    },
+    updateSessionEventSequence: (state, action: PayloadAction<{ sessionId: string; sequence: number }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.lastEventSequence = Math.max(session.lastEventSequence ?? 0, action.payload.sequence);
         }
     },
     clearAllChatSessions: (state) => {
