@@ -13,19 +13,75 @@ If the `ee/` directory is present, read `ee/AGENTS.md` for additional context. D
 
 ## Non-Negotiable Rules
 
-1. **Analyze before coding** - Read relevant files and understand patterns before writing code. State assumptions explicitly, ask when requirements are ambiguous, and always check whether an existing pattern can be reused or adapted.
-2. **GraphQL-first** - All new API functionality via GraphQL. Never add HTTP resolvers unless explicitly needed (e.g., file downloads)
-3. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.agents/docs/sql-security.md`
-4. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.agents/docs/plugin-architecture.md`
-5. **Documentation requirements** - All exported Go functions/types need doc comments. All exported TypeScript functions/components need JSDoc. See `.agents/docs/documentation.md`
-6. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.agents/docs/localization.md`
-7. **Verify before completing** - For non-trivial tasks, define success criteria before editing. After finishing, verify: (1) type checks pass (`pnpm run build:ce` for frontend, `go build ./cmd/whodb` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.agents/docs/verification.md`
-8. **Fallback clarification** - Do not include fallback logic UNLESS you were asked to. If you think the project could benefit from fallback logic, first ask and clarify
-9. **Show proof** - When making a claim about how something outside of our codebase works, for example a 3rd party library or function, always provide official documentation or the actual code to back that up. Check online if you have to.
-10. **No defensive code** - Do not program defensively. If there is an edge or use case that you think needs to be handled, first ask.
-11. **Surgical changes** - Touch only the files and lines required by the request. Do not refactor, reformat, rename, or "improve" adjacent code unless the task requires it.
-12. **Simplicity first** - Solve the requested problem with the smallest clear implementation. Do not add speculative abstractions, configurability, or features.
-13. **Own your cleanup** - Remove imports, variables, functions, files, and generated artifacts made unused by your own changes. Mention unrelated dead code or suspicious behavior instead of deleting it.
+1. **GraphQL-first** - All new API functionality via GraphQL. Never add HTTP resolvers unless explicitly needed (e.g., file downloads)
+2. **No SQL injection** - Never use `fmt.Sprintf` with user input for SQL. Use parameterized queries or GORM builders. See `.agents/docs/sql-security.md`
+3. **Plugin architecture** - Never use `switch dbType` or `if dbType ==` in shared code. All database-specific logic goes in plugins. See `.agents/docs/plugin-architecture.md`
+4. **Documentation requirements** - All exported Go functions/types need doc comments. All exported TypeScript functions/components need JSDoc. See `.agents/docs/documentation.md`
+5. **Localization requirements** - All user-facing strings must use `t()` with YAML keys. No fallback strings. No hardcoded UI text. See `.agents/docs/localization.md`
+6. **Verify before completing** - For non-trivial tasks, define success criteria before editing. After finishing, verify: (1) type checks pass (`pnpm run build:ce` for frontend, `go build ./cmd/whodb` for backend), (2) no linting errors, (3) all added code is actually used (no dead code). See `.agents/docs/verification.md`
+7. **Show proof** - When making a claim about how something outside of our codebase works, for example a 3rd party library or function, always provide official documentation or the actual code to back that up. Check online if you have to.
+
+## Behavioral Guidelines
+
+These guidelines reduce common LLM coding mistakes. They bias toward caution over speed — for trivial tasks, use judgment.
+
+### 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- No fallback logic unless explicitly asked — if you think it's needed, ask first.
+- No defensive programming — if an edge case needs handling, ask first.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ## Execution Workflow
 
@@ -35,8 +91,6 @@ For non-trivial tasks, use a short goal-driven loop:
 2. Choose the smallest change that satisfies the request.
 3. Add or update focused tests when the behavior is testable and the risk justifies it.
 4. Run the relevant verification commands and inspect the diff before finishing.
-
-If the task is unclear or has multiple valid interpretations, stop and ask instead of silently choosing. If the implementation grows beyond the request, pause and simplify before continuing.
 
 ## Agent Operating Model
 
@@ -156,15 +210,6 @@ See `.agents/docs/commands.md` for full reference.
 ## Development Principles
 
 - Clean, readable code over clever code
-- Keep every changed line tied directly to the user's request
-- Only add what is required - no overengineering
 - Prefer existing style and local helper APIs over new abstractions
-- Do not modify existing functionality without justification
-- Do not rename variables/files unless necessary
-- Remove unused code introduced by your changes - no leftovers
-- Do not delete unrelated dead code unless asked
 - Only comment edge cases and complex logic, not obvious code
-- Ask questions to understand requirements fully
-- Use separate agents only for bounded sidecar work that will not conflict with the main implementation path
 - Maintain professional, neutral tone without excessive enthusiasm
-- When you finish a task, go back and check your work. Check that it is correct and that it is not over-engineered
