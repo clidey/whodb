@@ -44,9 +44,6 @@ linters:
   exclusions:
     presets:
       - comments
-    paths:
-      - src/analytics/.*
-      - third_party\.go$
     rules:
       # Allow unused parameters in interface implementations
       - linters:
