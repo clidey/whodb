@@ -39,6 +39,7 @@ export type ChatSession = {
     modelType?: string;
     providerId?: string;
     model?: string;
+    autoScrollEnabled?: boolean;
 };
 
 export type IChatState = {
@@ -156,7 +157,8 @@ export const houdiniSlice = createSlice({
                 id: newId,
                 name: "Chat 1",
                 messages: [],
-                createdAt: new Date()
+                createdAt: new Date(),
+                autoScrollEnabled: true,
             };
             state.sessions = [newSession];
             state.activeSessionId = newId;
@@ -190,6 +192,7 @@ export const houdiniSlice = createSlice({
             modelType: action.payload.modelType,
             providerId: action.payload.providerId,
             model: action.payload.model,
+            autoScrollEnabled: true,
         };
         // Add new session at the top (beginning) of the list
         state.sessions.unshift(newSession);
@@ -240,6 +243,12 @@ export const houdiniSlice = createSlice({
         const session = state.sessions.find(s => s.id === action.payload.sessionId);
         if (session) {
             session.lastEventSequence = Math.max(session.lastEventSequence ?? 0, action.payload.sequence);
+        }
+    },
+    updateSessionAutoScroll: (state, action: PayloadAction<{ sessionId: string; autoScrollEnabled: boolean }>) => {
+        const session = state.sessions.find(s => s.id === action.payload.sessionId);
+        if (session) {
+            session.autoScrollEnabled = action.payload.autoScrollEnabled;
         }
     },
     clearAllChatSessions: (state) => {
