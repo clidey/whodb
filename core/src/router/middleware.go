@@ -18,7 +18,9 @@ package router
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/clidey/whodb/core/src/analytics"
@@ -47,7 +49,7 @@ func contextMiddleware(next http.Handler) http.Handler {
 			Host:      r.Host,
 			Method:    r.Method,
 			Path:      r.URL.Path,
-			RemoteIP:  r.RemoteAddr,
+			RemoteIP:  clientIPFromRequest(r),
 			UserAgent: metadata.UserAgent,
 			Protocol:  r.Proto,
 		}
@@ -61,6 +63,44 @@ func contextMiddleware(next http.Handler) http.Handler {
 		ctx = coreaudit.WithRequest(ctx, request)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func clientIPFromRequest(r *http.Request) string {
+	if forwardedFor := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); forwardedFor != "" {
+		first, _, _ := strings.Cut(forwardedFor, ",")
+		if ip := normalizeIP(first); ip != "" {
+			return ip
+		}
+	}
+
+	if forwarded := strings.TrimSpace(r.Header.Get("Forwarded")); forwarded != "" {
+		for _, part := range strings.Split(forwarded, ";") {
+			key, value, found := strings.Cut(strings.TrimSpace(part), "=")
+			if !found || !strings.EqualFold(strings.TrimSpace(key), "for") {
+				continue
+			}
+			if ip := normalizeIP(value); ip != "" {
+				return ip
+			}
+		}
+	}
+
+	return normalizeIP(r.RemoteAddr)
+}
+
+func normalizeIP(raw string) string {
+	candidate := strings.TrimSpace(strings.Trim(raw, `"`))
+	if candidate == "" {
+		return ""
+	}
+	if host, _, err := net.SplitHostPort(candidate); err == nil {
+		candidate = host
+	}
+	candidate = strings.Trim(candidate, "[]")
+	if ip := net.ParseIP(candidate); ip != nil {
+		return ip.String()
+	}
+	return ""
 }
 
 func auditHTTPMiddleware(next http.Handler) http.Handler {

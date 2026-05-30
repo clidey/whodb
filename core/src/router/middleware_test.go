@@ -49,3 +49,23 @@ func TestContextMiddlewareAddsMetadata(t *testing.T) {
 		t.Fatalf("expected span id to be captured from traceparent, got %s", request.SpanID)
 	}
 }
+
+func TestContextMiddlewareUsesForwardedClientIP(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://api.local/data", nil)
+	req.RemoteAddr = "10.0.0.2:54321"
+	req.Header.Set("X-Forwarded-For", "203.0.113.10, 10.0.0.2")
+
+	rr := httptest.NewRecorder()
+	var request coreaudit.Request
+
+	handler := contextMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		request = coreaudit.RequestFromContext(r.Context())
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	handler.ServeHTTP(rr, req)
+
+	if request.RemoteIP != "203.0.113.10" {
+		t.Fatalf("expected forwarded client ip, got %q", request.RemoteIP)
+	}
+}

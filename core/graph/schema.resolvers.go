@@ -57,6 +57,7 @@ func (r *mutationResolver) LoginWithSourceProfile(ctx context.Context, profile m
 
 // Logout is the resolver for the Logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, error) {
+	start := time.Now()
 	creds := auth.GetSourceCredentials(ctx)
 	identity := strings.TrimSpace(analytics.MetadataFromContext(ctx).DistinctID)
 	hasIdentity := identity != "" && identity != "disabled"
@@ -86,8 +87,9 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 		}
 		if creds != nil {
 			audit.RecordWithContext(ctx, audit.AuditEvent{
-				Timestamp: time.Now(),
+				Timestamp: start,
 				Action:    "logout.source",
+				Outcome:   audit.OutcomeFailure,
 				Severity:  audit.SeverityWarn,
 				Resource:  audit.SourceResource(sourceType, profileID),
 				Details: map[string]any{
@@ -95,6 +97,7 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 					"profile_id_present": hasProfile,
 					"error":              err.Error(),
 				},
+				Duration: time.Since(start),
 			})
 		}
 		return nil, err
@@ -109,14 +112,16 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.StatusResponse, e
 
 	if creds != nil {
 		audit.RecordWithContext(ctx, audit.AuditEvent{
-			Timestamp: time.Now(),
+			Timestamp: start,
 			Action:    "logout.source",
+			Outcome:   audit.OutcomeSuccess,
 			Severity:  audit.SeverityInfo,
 			Resource:  audit.SourceResource(sourceType, profileID),
 			Details: map[string]any{
 				"source_type":        sourceType,
 				"profile_id_present": hasProfile,
 			},
+			Duration: time.Since(start),
 		})
 	}
 
@@ -130,11 +135,18 @@ func (r *mutationResolver) TestSourceConnection(ctx context.Context, credentials
 
 // UpdateSettings is the resolver for the UpdateSettings field.
 func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model.SettingsConfigInput) (*model.StatusResponse, error) {
+	start := time.Now()
+	before := settings.Get()
 	var fields []settings.ISettingsField
+	changedFields := make([]string, 0, 1)
+	details := map[string]any{}
 
 	if newSettings.MetricsEnabled != nil {
 		metricsEnabled := common.StrPtrToBool(newSettings.MetricsEnabled)
 		fields = append(fields, settings.MetricsEnabledField(metricsEnabled))
+		changedFields = append(changedFields, "metrics_enabled")
+		details["metrics_enabled_before"] = before.MetricsEnabled
+		details["metrics_enabled_after"] = metricsEnabled
 
 		analytics.TrackMutation(ctx, "UpdateSettings.metrics", map[string]any{
 			"metrics_enabled": metricsEnabled,
@@ -142,6 +154,23 @@ func (r *mutationResolver) UpdateSettings(ctx context.Context, newSettings model
 	}
 
 	updated := settings.UpdateSettings(fields...)
+	if len(changedFields) > 0 {
+		details["changed_fields"] = changedFields
+		details["updated"] = updated
+		audit.RecordWithContext(ctx, audit.AuditEvent{
+			Timestamp: start,
+			Action:    "settings.update",
+			Outcome:   audit.OutcomeSuccess,
+			Severity:  audit.SeverityInfo,
+			Resource: audit.Resource{
+				ID:   "global-settings",
+				Type: "settings_config",
+				Name: "settings",
+			},
+			Details:  details,
+			Duration: time.Since(start),
+		})
+	}
 	return &model.StatusResponse{
 		Status: updated,
 	}, nil

@@ -56,6 +56,7 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 		audit.RecordWithContext(ctx, audit.AuditEvent{
 			Timestamp: start,
 			Action:    "login.source",
+			Outcome:   loginAuditOutcome(err),
 			Severity:  severity,
 			Resource:  resource,
 			Details:   details,
@@ -158,6 +159,20 @@ func performSourceLogin(ctx context.Context, credentials *source.Credentials, pr
 
 	recordAudit(nil)
 	return resp, nil
+}
+
+func loginAuditOutcome(err error) audit.Outcome {
+	if err == nil {
+		return audit.OutcomeSuccess
+	}
+
+	errMessage := strings.TrimSpace(err.Error())
+	switch errMessage {
+	case "unauthorized", "login with credentials is disabled; use preconfigured connections":
+		return audit.OutcomeDenied
+	default:
+		return audit.OutcomeFailure
+	}
 }
 
 func testSourceConnection(ctx context.Context, credentials *source.Credentials) (*model.StatusResponse, error) {
