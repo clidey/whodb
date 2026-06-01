@@ -467,10 +467,10 @@ export const StorageUnitPage: FC = () => {
         const next = !create;
         setCreate(next);
         void trackFrontendEvent('ui.storage_unit_create_toggle', {
-            database_type: current?.Type ?? 'unknown',
+            database_type: currentType ?? 'unknown',
             open: next,
         });
-    }, [create, current?.Type]);
+    }, [create, currentType]);
 
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();
@@ -581,7 +581,7 @@ export const StorageUnitPage: FC = () => {
                     </Button>
                 </div>
                 <CreateSourceObjectCard
-                    databaseType={current?.Type}
+                    databaseType={currentType}
                     parentRef={parentRef}
                     referenceColumnsByName={referenceColumnsByName}
                     referenceObjects={referenceStorageUnits.map(unit => ({ name: unit.Name }))}
