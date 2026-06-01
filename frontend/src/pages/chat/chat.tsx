@@ -901,19 +901,21 @@ export const ChatPage: FC = () => {
     return (
         <InternalPage routes={[InternalRoutes.Chat]} className="h-full min-w-0" sidebar={<ChatHistorySidebar />}>
             <div className="flex flex-col w-full h-full gap-2 min-w-[30%]">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center">
                     <AIProvider
                         {...aiState}
                         onClear={handleClear}
+                        footerAction={(
+                            <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs dark:bg-input/30">
+                                <Checkbox
+                                    checked={autoScrollEnabled}
+                                    onCheckedChange={checked => handleAutoScrollChange(checked === true)}
+                                    data-testid="chat-auto-scroll-toggle"
+                                />
+                                <span>{t('autoScroll')}</span>
+                            </label>
+                        )}
                     />
-                    <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs dark:bg-input/30">
-                        <Checkbox
-                            checked={autoScrollEnabled}
-                            onCheckedChange={checked => handleAutoScrollChange(checked === true)}
-                            data-testid="chat-auto-scroll-toggle"
-                        />
-                        <span>{t('autoScroll')}</span>
-                    </label>
                 </div>
                 <div className={classNames("flex grow w-full rounded-xl overflow-hidden", {
                     "hidden": disableAll,

@@ -42,7 +42,7 @@ import {
     toast
 } from "@clidey/ux";
 import { SearchSelect } from "./ux";
-import { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, ReactElement, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GetAiModelsDocument, GetAiProvidersDocument } from "@graphql";
 import { AIModelsActions, availableExternalModelTypes, type IAIModelType } from "../store/ai-models";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -373,6 +373,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableClear?: boolean;
     onClear?: () => void;
     onAddExternalModel?: () => void;
+    footerAction?: ReactNode;
 }> = ({
     modelType,
     modelTypes,
@@ -395,6 +396,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
     disableClear,
     onClear,
     onAddExternalModel,
+    footerAction,
 }) => {
     const { t } = useTranslation('components/ai');
     const newUIEnabled = useAppSelector(state => state.settings.newUIEnabled);
@@ -710,12 +712,15 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
-        <div className={cn("flex items-center", {
-            "hidden": disableNewChat,
+        <div className={cn("flex flex-wrap items-center gap-3", {
+            "hidden": disableNewChat && footerAction == null,
         })}>
-            <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
-                <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
-            </Button>
+            {!disableNewChat && (
+                <Button onClick={handleClear} disabled={loading || disableClear} data-testid="chat-new-chat" variant="secondary">
+                    <ArrowPathIcon className="w-4 h-4" /> {t('newChat')}
+                </Button>
+            )}
+            {footerAction}
         </div>
     </div>
 }
