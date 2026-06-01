@@ -15,8 +15,8 @@ importers:
         specifier: 0.7.0
         version: 0.7.0
       '@clidey/ux':
-        specifier: 0.42.0
-        version: 0.42.0(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-is@16.13.1)(react@18.3.1)(redux@5.0.1)
+        specifier: 0.45.0
+        version: 0.45.0(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-is@16.13.1)(react@18.3.1)(redux@5.0.1)
       '@codemirror/autocomplete':
         specifier: 6.18.6
         version: 6.18.6
@@ -567,8 +567,8 @@ packages:
     resolution: {integrity: sha512-nRHXOwgX592GQqjfDX0D1VJQ9yJlseRu+oWoFmC3U1aOGiiIWmXJphQoj1pHcbZ+NASV4hP3ojpZTFUjgdUUKw==}
     hasBin: true
 
-  '@clidey/ux@0.42.0':
-    resolution: {integrity: sha512-9lqXmSP9cNWrNfisWH1BwtfRMjAXDDRcZchr2SglWuscushbggQNBi5WXBnWhV5De+NDuU7rgTt1tZLH1GYk1w==}
+  '@clidey/ux@0.45.0':
+    resolution: {integrity: sha512-RxJ2crWvPej8wm+lIIyCChoiWwV9OsTonOijS4vQEqan2nqZIcTxJD5WHAHsPveA48KU4FFGmXApiBNjt2CjQw==}
     peerDependencies:
       react: '>=18.3.0'
       react-dom: '>=18.3.0'
@@ -6571,7 +6571,7 @@ snapshots:
     dependencies:
       yaml: 2.9.0
 
-  '@clidey/ux@0.42.0(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-is@16.13.1)(react@18.3.1)(redux@5.0.1)':
+  '@clidey/ux@0.45.0(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react-is@16.13.1)(react@18.3.1)(redux@5.0.1)':
     dependencies:
       '@radix-ui/react-accordion': 1.2.11(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-alert-dialog': 1.1.14(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

@@ -2,6 +2,8 @@ name: Lint, Test & Typecheck
 
 on:
   pull_request:
+  push:
+    branches: [main, release]
   workflow_dispatch:
 
 permissions:
