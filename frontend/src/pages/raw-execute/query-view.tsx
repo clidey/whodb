@@ -15,7 +15,8 @@
  */
 
 import {useLazyQuery} from "@apollo/client/react";
-import React, {FC, useEffect} from "react";
+import type {FC} from "react";
+import React, { useEffect} from "react";
 import {StorageUnitTable} from "../../components/table";
 import {RawExecuteDocument} from "../../generated/graphql";
 import {CheckCircleIcon} from "../../components/heroicons";
@@ -55,7 +56,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
     const [rawExecute, { data }] = useLazyQuery(RawExecuteDocument, {
         fetchPolicy: 'network-only',
     });
-    const current = useAppSelector(state => state.auth.current);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
 
     // Set the ref to a function that executes the query and returns a promise
     useEffect(() => {
@@ -91,7 +92,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
                             disableEdit={true}
                             limitContextMenu={true}
                             height={250}
-                            databaseType={current?.Type}
+                            databaseType={currentType}
                             rawQuery={code}
                             totalCount={data.RawExecute.TotalCount}
                         />

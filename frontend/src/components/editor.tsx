@@ -24,7 +24,8 @@ import {EditorView, gutter, GutterMarker, lineNumbers} from "@codemirror/view";
 import {EyeIcon, EyeSlashIcon} from "./heroicons";
 import classNames from "classnames";
 import {basicSetup} from "codemirror";
-import React, {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactJson from "react-json-view";
 import MarkdownPreview from 'react-markdown';
 import remarkGfm from "remark-gfm";
@@ -188,11 +189,11 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
   const darkModeEnabled = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const apolloClient = useApolloClient();
   const currentSchema = useAppSelector(state => state.database.schema);
-  const currentProfile = useAppSelector(state => state.auth.current);
+  const currentDatabase = useAppSelector(state => state.auth.current?.Database);
 
   // For databases like MySQL where database and schema are the same,
   // use the connection database as fallback if no schema is selected
-  const defaultSchema = currentSchema || currentProfile?.Database || '';
+  const defaultSchema = currentSchema || currentDatabase || '';
 
   useEffect(() => {
     onRunReference.current = onRun;

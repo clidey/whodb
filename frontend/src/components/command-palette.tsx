@@ -24,7 +24,8 @@ import {
     Dialog,
     DialogContent,
 } from "@clidey/ux";
-import {FC, useCallback, useEffect, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "@/hooks/use-translation";
 import {useAppSelector} from "@/store/hooks";
@@ -61,12 +62,12 @@ interface CommandAction {
 const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const {t} = useTranslation('components/command-palette');
     const navigate = useNavigate();
-    const current = useAppSelector(state => state.auth.current);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
     const isEmbedded = useAppSelector(state => state.auth.isEmbedded);
     const isMac = useEffectiveIsMac();
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
-    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(current?.Type);
+    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(currentType);
 
     // Listen for columns broadcast from storage unit page
     useEffect(() => {
@@ -84,7 +85,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const tableActions: CommandAction[] = [];
     const sortActions: CommandAction[] = [];
 
-    if (isLoggedIn && current) {
+    if (isLoggedIn && currentType) {
         // Navigation actions - only show relevant ones based on database type
         const navDefs = [SHORTCUTS.navFirst, SHORTCUTS.navSecond, SHORTCUTS.navThird, SHORTCUTS.navFourth];
 

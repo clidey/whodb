@@ -26,7 +26,8 @@ import {
     LoginWithSourceProfileDocument,
 } from '@graphql';
 import classNames from "classnames";
-import {FC, ReactElement, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC, ReactElement} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {getComponent} from "../../config/component-registry";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
@@ -44,7 +45,7 @@ import {Icons} from "../../components/icons";
 import {Loading} from "../../components/loading";
 import {Container} from "../../components/page";
 import {updateProfileLastAccessed} from "../../components/profile-info-tooltip";
-import {SourceTypeItem} from "../../config/source-types";
+import type {SourceTypeItem} from "../../config/source-types";
 import {extensions, featureFlags, getAppName, sources} from '../../config/features';
 import {InternalRoutes} from "../../config/routes";
 import {useSourceTypeItems} from "../../hooks/useSourceCatalog";
@@ -70,7 +71,8 @@ import {
     GcpConnectionPicker,
     isGcpConnection,
 } from '../../components/gcp';
-import {ConnectionPrefillData, isAwsHostname, isAzureHostname, isGcpHostname} from '../../utils/cloud-connection-prefill';
+import type {ConnectionPrefillData} from '../../utils/cloud-connection-prefill';
+import { isAwsHostname, isAzureHostname, isGcpHostname} from '../../utils/cloud-connection-prefill';
 import { SourceAdvancedFields } from '@/components/source-advanced-fields';
 import { clearGraphqlStore } from '@/config/graphql-client';
 import {
@@ -187,7 +189,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const appName = getAppName();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const currentProfile = useAppSelector(state => state.auth.current);
+    const currentProfileId = useAppSelector(state => state.auth.current?.Id);
     const shouldUpdateLastAccessed = useRef(false);
     const usernameInputRef = useRef<HTMLInputElement>(null);
     const handleSubmitRef = useRef<() => void>(() => {});
@@ -635,11 +637,11 @@ export const LoginForm: FC<LoginFormProps> = ({
 
     // Update last accessed time when a new profile is created during login
     useEffect(() => {
-        if (shouldUpdateLastAccessed.current && currentProfile?.Id) {
-            updateProfileLastAccessed(currentProfile.Id);
+        if (shouldUpdateLastAccessed.current && currentProfileId) {
+            updateProfileLastAccessed(currentProfileId);
             shouldUpdateLastAccessed.current = false;
         }
-    }, [currentProfile]);
+    }, []);
 
     const availableProfiles = useMemo(() => {
         return profiles?.SourceProfiles

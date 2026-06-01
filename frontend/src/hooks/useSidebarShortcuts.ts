@@ -23,13 +23,13 @@ import {matchesShortcut, resolveShortcut, SHORTCUTS} from "../utils/shortcuts";
 
 export const useSidebarShortcuts = () => {
     const navigate = useNavigate();
-    const current = useAppSelector(state => state.auth.current);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
     const isLoggedIn = useAppSelector(state => state.auth.status === "logged-in");
-    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(current?.Type);
+    const { supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(currentType);
 
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
         // Only handle when logged in
-        if (!isLoggedIn || !current) return;
+        if (!isLoggedIn || !currentType) return;
 
         // Ignore if typing in an input or textarea
         if (
@@ -78,7 +78,13 @@ export const useSidebarShortcuts = () => {
             event.preventDefault();
             window.dispatchEvent(new CustomEvent('menu:toggle-sidebar'));
         }
-    }, [current, isLoggedIn, navigate, supportsChat, supportsGraph, supportsScratchpad]);
+    }, [
+	isLoggedIn,
+	navigate,
+	supportsChat,
+	supportsGraph,
+	supportsScratchpad
+]);
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);

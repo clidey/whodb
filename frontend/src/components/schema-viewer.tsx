@@ -59,8 +59,10 @@ function groupByType(units: SourceBrowserObject[]) {
 export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentRef, selectedName, trail = [] }) => {
     const { t } = useTranslation('components/schema-viewer');
     const current = useAppSelector(state => state.auth.current);
+    const currentType = current?.Type;
+    const currentDatabase = current?.Database;
     const selectedSchema = useAppSelector(state => state.database.schema);
-    const { item, storageUnitLabel, supportsSchema } = useSourceContract(current?.Type);
+    const { item, storageUnitLabel, supportsSchema } = useSourceContract(currentType);
     const navigate = useNavigate();
     const state = useLocation().state as { unit?: SourceBrowserObject } | undefined;
 
@@ -81,7 +83,6 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
 
     // Refetch when the connection context changes (profile switch or database switch)
     const currentProfileId = current?.Id;
-    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetch();

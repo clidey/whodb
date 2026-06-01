@@ -95,11 +95,11 @@ export const useDesktopMenu = () => {
   const location = useLocation();
   const isDesktop = isDesktopApp();
   const { showConfirm } = useDesktopDialog();
-  const currentAuth = useAppSelector(state => state.auth.current);
+  const isLoggedIn = useAppSelector(state => state.auth.current != null);
 
-  const currentAuthRef = useRef(currentAuth);
+  const currentAuthRef = useRef(isLoggedIn);
   const locationRef = useRef(location);
-  currentAuthRef.current = currentAuth;
+  currentAuthRef.current = isLoggedIn;
   locationRef.current = location;
 
   useEffect(() => {
