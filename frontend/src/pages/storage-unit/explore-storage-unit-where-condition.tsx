@@ -398,7 +398,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
                 {visibleFilters.map((filter, i) => (
                     <div
-                        key={`explore-storage-unit-filter-${i}`}
+                        key={`${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`}
                         className="group/filter-item flex gap-xs items-center text-xs rounded-2xl cursor-pointer h-[36px]"
                         data-testid="where-condition"
                         data-condition-key={filter.Atomic?.Key}
@@ -492,7 +492,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                     <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> {t('manageWhereConditions')}</SheetTitle>
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
                         {sheetFilters.map((filter, index) => (
-                            <div key={index} className="flex flex-col gap-lg p-4 border rounded-lg">
+                            <div key={`${filter.Key}-${filter.Operator}-${filter.Value}-${index}`} className="flex flex-col gap-lg p-4 border rounded-lg">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-medium">{t('conditionNumber', { index: index + 1 })}</Label>
                                     <Button

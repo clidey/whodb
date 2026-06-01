@@ -230,7 +230,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                             {existingFilters.map((filter, i) => {
                                 const isEditing = editingExistingIndex === i;
                                 return (
-                                    <div key={`existing-condition-card-${i}`} className="flex flex-col gap-2">
+                                    <div key={`${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`} className="flex flex-col gap-2">
                                         <div
                                             className="flex gap-2 p-4 border rounded-lg"
                                             data-testid={`existing-condition-card-${i}`}
@@ -382,8 +382,8 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     {/* Add new conditions section */}
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto h-full">
                         {sheetFilters.map((filter, index) => (
-                            <div 
-                                key={index} 
+                            <div
+                                key={`${filter.Key}-${filter.Operator}-${filter.Value}-${index}`}
                                 className="flex flex-col gap-lg p-4 border rounded-lg"
                             >
                                 <div className="flex items-center justify-between">

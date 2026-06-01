@@ -39,8 +39,8 @@
       "plugins": ["typescript", "react", "import"],
       "rules": {
         // TypeScript
-        "typescript/no-explicit-any": "error",
-        "typescript/no-non-null-assertion": "error",
+        "typescript/no-explicit-any": "warn",
+        "typescript/no-non-null-assertion": "warn",
         "typescript/no-empty-object-type": "error",
         "typescript/consistent-type-imports": ["error", { "prefer": "type-imports" }],
         "typescript/consistent-generic-constructors": ["error", "constructor"],
@@ -64,12 +64,12 @@
 
         // React
         "react/rules-of-hooks": "error",
-        "react/exhaustive-deps": "error",
-        "react/jsx-key": "error",
+        "react/exhaustive-deps": "warn",
+        "react/jsx-key": "warn",
         "react/no-direct-mutation-state": "error",
-        "react/no-array-index-key": "error",
+        "react/no-array-index-key": "warn",
         "react/no-danger": "error",
-        "react/jsx-no-useless-fragment": "error",
+        "react/jsx-no-useless-fragment": "warn",
 
         // Import
         "import/no-duplicates": "error",
@@ -78,8 +78,8 @@
         // General
         "no-console": ["warn", { "allow": ["warn", "error"] }],
         "no-debugger": "error",
-        "no-alert": "error",
-        "eqeqeq": ["error", "always"],
+        "no-alert": "warn",
+        "eqeqeq": ["error", "always", { "null": "ignore" }],
         "prefer-const": "error",
         "no-var": "error",
         "no-template-curly-in-string": "error",

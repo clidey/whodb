@@ -216,23 +216,23 @@ function stripTypeSuffix(type: string): string {
 export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
     return columns.map((col, idx) => {
         const rawType = columnTypes?.[idx] || "";
-        // Strip length/precision suffix and uppercase for matching
         const type = stripTypeSuffix(rawType).toUpperCase();
+        const key = `${col}-${idx}`;
 
-        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
-        if (floatTypes.has(type)) return <CalculatorIcon className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
-        if (boolTypes.has(type)) return <CheckCircleIcon className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
-        if (dateTypes.has(type)) return <CalendarIcon className="w-4 h-4" aria-label={t?.('dateType') ?? 'Date type'} />;
-        if (dateTimeTypes.has(type)) return <ClockIcon className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
-        if (uuidTypes.has(type)) return <KeyIcon className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
-        if (binaryTypes.has(type)) return <DocumentDuplicateIcon className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
-        if (jsonTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
-        if (networkTypes.has(type)) return <GlobeAltIcon className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
-        if (geometryTypes.has(type)) return <Squares2X2Icon className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
-        if (xmlTypes.has(type)) return <CodeBracketIcon className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
-        if (type.startsWith("ARRAY")) return <ListBulletIcon className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
-        if (stringTypes.has(type)) return <DocumentTextIcon className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
-        return <CircleStackIcon className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
+        if (intTypes.has(type) || uintTypes.has(type)) return <HashtagIcon key={key} className="w-4 h-4" aria-label={t?.('integerType') ?? 'Integer type'} />;
+        if (floatTypes.has(type)) return <CalculatorIcon key={key} className="w-4 h-4" aria-label={t?.('decimalType') ?? 'Decimal type'} />;
+        if (boolTypes.has(type)) return <CheckCircleIcon key={key} className="w-4 h-4" aria-label={t?.('booleanType') ?? 'Boolean type'} />;
+        if (dateTypes.has(type)) return <CalendarIcon key={key} className="w-4 h-4" aria-label={t?.('dateType') ?? 'Date type'} />;
+        if (dateTimeTypes.has(type)) return <ClockIcon key={key} className="w-4 h-4" aria-label={t?.('dateTimeType') ?? 'DateTime type'} />;
+        if (uuidTypes.has(type)) return <KeyIcon key={key} className="w-4 h-4" aria-label={t?.('uuidType') ?? 'UUID type'} />;
+        if (binaryTypes.has(type)) return <DocumentDuplicateIcon key={key} className="w-4 h-4" aria-label={t?.('binaryType') ?? 'Binary type'} />;
+        if (jsonTypes.has(type)) return <CodeBracketIcon key={key} className="w-4 h-4" aria-label={t?.('jsonType') ?? 'JSON type'} />;
+        if (networkTypes.has(type)) return <GlobeAltIcon key={key} className="w-4 h-4" aria-label={t?.('networkType') ?? 'Network type'} />;
+        if (geometryTypes.has(type)) return <Squares2X2Icon key={key} className="w-4 h-4" aria-label={t?.('geometryType') ?? 'Geometry type'} />;
+        if (xmlTypes.has(type)) return <CodeBracketIcon key={key} className="w-4 h-4" aria-label={t?.('xmlType') ?? 'XML type'} />;
+        if (type.startsWith("ARRAY")) return <ListBulletIcon key={key} className="w-4 h-4" aria-label={t?.('arrayType') ?? 'Array type'} />;
+        if (stringTypes.has(type)) return <DocumentTextIcon key={key} className="w-4 h-4" aria-label={t?.('textType') ?? 'Text type'} />;
+        return <CircleStackIcon key={key} className="w-4 h-4" aria-label={t?.('dataType') ?? 'Data type'} />;
     });
 }
 
