@@ -42,8 +42,10 @@ jobs:
             deb.debian.org:443
             deb.debian.org:80
             dl-cdn.alpinelinux.org:443
+            ghcr.io:443
             github.com:443
             objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
             proxy.golang.org:443
@@ -70,17 +72,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
-      - name: Build Docker image (cache only)
+      - name: Build Docker image (cache + load for scan)
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
           file: ./core/Dockerfile
           platforms: ${{ matrix.platform }}
           push: false
-          load: false
+          load: true
+          tags: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ inputs.version }}
             PLATFORM=docker
             USE_PREBUILT_FRONTEND=true
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: whodb-scan:${{ inputs.version }}-${{ matrix.arch }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+
+      - name: Remove scanned image
+        if: always()
+        run: docker rmi whodb-scan:${{ inputs.version }}-${{ matrix.arch }} 2>/dev/null || true

@@ -245,3 +245,39 @@ jobs:
                 body: fullBody,
               });
             }
+
+  trivy-image:
+    name: Trivy Image Scan (published)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - name: Trivy scan clidey/whodb:latest
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: docker.io/clidey/whodb:latest
+          format: table
+          exit-code: '0'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Trivy scan (JSON for artifact)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: docker.io/clidey/whodb:latest
+          format: json
+          output: trivy-image.json
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-image-report
+          path: trivy-image.json
+          retention-days: 30
