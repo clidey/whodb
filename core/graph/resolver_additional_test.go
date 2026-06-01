@@ -451,3 +451,157 @@ func TestCatalogHasStableDefaultPortForPostgres(t *testing.T) {
 		t.Fatalf("expected postgres default port 5432, got %#v (ok=%t)", portField, ok)
 	}
 }
+
+// TestSourceTypesContract validates that every source type returned by the
+// GraphQL resolver is self-consistent and free of model-level defects that
+// would cause frontend/backend disagreement.
+func TestSourceTypesContractIsSelfConsistent(t *testing.T) {
+	t.Parallel()
+
+	types, err := (&Resolver{}).Query().SourceTypes(context.Background())
+	if err != nil {
+		t.Fatalf("expected source types query to succeed, got %v", err)
+	}
+	if len(types) == 0 {
+		t.Fatal("expected at least one source type")
+	}
+
+	seenIDs := map[string]struct{}{}
+	for _, st := range types {
+		t.Run(st.ID, func(t *testing.T) {
+			t.Parallel()
+			validateSourceTypeContract(t, st)
+		})
+
+		// Check for duplicate IDs across the catalog
+		if _, dup := seenIDs[st.ID]; dup {
+			t.Errorf("duplicate source type ID %q", st.ID)
+		}
+		seenIDs[st.ID] = struct{}{}
+	}
+}
+
+func validateSourceTypeContract(t *testing.T, st *model.SourceType) {
+	t.Helper()
+
+	// Required identity fields
+	if st.ID == "" {
+		t.Error("Id must not be empty")
+	}
+	if st.Label == "" {
+		t.Error("Label must not be empty")
+	}
+	if st.Connector == "" {
+		t.Error("Connector must not be empty")
+	}
+
+	// Traits must exist with all sub-groups
+	if st.Traits == nil {
+		t.Fatal("Traits must not be nil")
+	}
+	if st.Traits.Connection == nil {
+		t.Error("Traits.Connection must not be nil")
+	}
+	if st.Traits.Presentation == nil {
+		t.Error("Traits.Presentation must not be nil")
+	}
+	if st.Traits.Query == nil {
+		t.Error("Traits.Query must not be nil")
+	}
+	if st.Traits.MockData == nil {
+		t.Error("Traits.MockData must not be nil")
+	}
+	if st.Traits.Metadata == nil {
+		t.Error("Traits.Metadata must not be nil")
+	}
+
+	// Contract must exist
+	if st.Contract == nil {
+		t.Fatal("Contract must not be nil")
+	}
+	contract := st.Contract
+
+	// Model must be a valid enum (non-empty string)
+	if contract.Model == "" {
+		t.Error("Contract.Model must not be empty")
+	}
+
+	// DefaultObjectKind must be declared in ObjectTypes
+	defaultKindOK := false
+	for _, ot := range contract.ObjectTypes {
+		if ot != nil && ot.Kind == contract.DefaultObjectKind {
+			defaultKindOK = true
+			break
+		}
+	}
+	if !defaultKindOK {
+		t.Errorf("Contract.DefaultObjectKind %q is not declared in ObjectTypes", contract.DefaultObjectKind)
+	}
+
+	// BrowsePath kinds must all be declared in ObjectTypes
+	for _, browseKind := range contract.BrowsePath {
+		found := false
+		for _, ot := range contract.ObjectTypes {
+			if ot != nil && ot.Kind == browseKind {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Contract.BrowsePath kind %q is not declared in ObjectTypes", browseKind)
+		}
+	}
+
+	// GraphScopeKind must be in ObjectTypes (when set)
+	if contract.GraphScopeKind != nil {
+		found := false
+		for _, ot := range contract.ObjectTypes {
+			if ot != nil && ot.Kind == *contract.GraphScopeKind {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Contract.GraphScopeKind %q is not declared in ObjectTypes", *contract.GraphScopeKind)
+		}
+	}
+
+	// Every object type must have a non-empty Kind, SingularLabel, PluralLabel
+	for i, ot := range contract.ObjectTypes {
+		if ot == nil {
+			t.Errorf("Contract.ObjectTypes[%d] is nil", i)
+			continue
+		}
+		if ot.Kind == "" {
+			t.Errorf("Contract.ObjectTypes[%d].Kind must not be empty", i)
+		}
+		if ot.SingularLabel == "" {
+			t.Errorf("Contract.ObjectTypes[%d].SingularLabel must not be empty", i)
+		}
+		if ot.PluralLabel == "" {
+			t.Errorf("Contract.ObjectTypes[%d].PluralLabel must not be empty", i)
+		}
+	}
+
+	// ConnectionFields: every field must have a non-empty Key
+	for i, field := range st.ConnectionFields {
+		if field == nil {
+			t.Errorf("ConnectionFields[%d] is nil", i)
+			continue
+		}
+		if field.Key == "" {
+			t.Errorf("ConnectionFields[%d].Key must not be empty", i)
+		}
+	}
+
+	// SSLModes: each entry must have a non-empty value
+	for i, mode := range st.SSLModes {
+		if mode == nil {
+			t.Errorf("SSLModes[%d] is nil", i)
+			continue
+		}
+		if mode.Value == "" {
+			t.Errorf("SSLModes[%d].Value must not be empty", i)
+		}
+	}
+}
