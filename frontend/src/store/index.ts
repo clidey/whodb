@@ -16,7 +16,7 @@
 
 import { combineReducers, configureStore, Reducer } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, createTransform } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import storage from 'redux-persist/es/storage';
 import { authReducers } from './auth';
 import { databaseReducers } from './database';
 import { settingsReducers } from "./settings";
