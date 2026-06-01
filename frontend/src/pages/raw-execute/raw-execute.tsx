@@ -30,6 +30,7 @@ import {
     Button,
     Card,
     cn,
+    CopyButton,
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -279,36 +280,6 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
     return <>{parseSQL(code)}</>;
 };
 
-const CopyButton: FC<{ text: string }> = ({text}) => {
-    const { t } = useTranslation('pages/raw-execute');
-    const [copied, setCopied] = useState(false);
-
-    const handleCopyToClipboard = useCallback(() => {
-        copyToClipboard(text).then(success => {
-            if (success) {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }
-        });
-    }, [text]);
-
-    return (
-        <Tip className="w-fit">
-            <Button
-                size="icon"
-                variant="secondary"
-                className="border border-input"
-                onClick={handleCopyToClipboard}
-                aria-label={copied ? t('copied') : t('copyToClipboard')}
-                type="button"
-                data-testid="copy-to-clipboard-button"
-            >
-                {copied ? <CheckCircleIcon className="w-4 h-4"/> : <ClipboardDocumentIcon className="w-4 h-4"/>}
-            </Button>
-            <p>{copied ? t('copied') : t('copyToClipboard')}</p>
-        </Tip>
-    );
-}
 
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData }) => {
     const { t } = useTranslation('pages/raw-execute');

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Dialog, DialogContent, DialogHeader, DialogTitle, SearchInput,} from "@clidey/ux";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, Kbd, SearchInput,} from "@clidey/ux";
 import {FC, useCallback, useEffect, useState, useMemo} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 import {getKeyDisplay, getEffectiveIsMac, formatShortcut} from "@/utils/platform";
@@ -30,11 +30,6 @@ interface ShortcutCategory {
     shortcuts: ShortcutEntry[];
 }
 
-const Kbd: FC<{ children: string }> = ({ children }) => (
-    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-muted border text-muted-foreground rounded shadow-sm">
-        {children}
-    </kbd>
-);
 
 const ShortcutRow: FC<{ shortcut: ShortcutEntry }> = ({ shortcut }) => (
     <div className="flex items-center justify-between py-1.5">
