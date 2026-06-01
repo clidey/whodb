@@ -64,7 +64,7 @@ func CheckConnectivity(connections []providers.DiscoveredConnection) {
 				unreachable.Add(1)
 				return
 			}
-			c.Close()
+			_ = c.Close()
 			log.Debugf("Connectivity: %s reachable", addr)
 			conn.Metadata["connectivity"] = connectivityReachable
 			reachable.Add(1)

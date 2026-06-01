@@ -30,7 +30,6 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
 )
 
 // CockroachDBPlugin extends PostgresPlugin with CockroachDB-specific overrides.
@@ -346,10 +345,6 @@ func (p *CockroachDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.S
 	}
 	return status, err
 }
-
-// CockroachDB-supported type definitions (excludes MONEY, XML, HSTORE, geometric types,
-// CIDR, MACADDR, TIMETZ which CockroachDB does not support).
-var cockroachDBTypeDefinitions = sourcecatalogspecs.CockroachDBTypeDefinitions
 
 // NewCockroachDBPlugin creates a CockroachDB plugin with PostgreSQL compatibility
 // and CockroachDB-specific overrides for unsupported catalog functions.

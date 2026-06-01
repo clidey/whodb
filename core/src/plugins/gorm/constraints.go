@@ -32,7 +32,7 @@ func (p *GormPlugin) GetColumnConstraints(config *engine.PluginConfig, schema st
 		if err != nil {
 			// Fall back to empty constraints if Migrator fails
 			// This maintains backward compatibility
-			return make(map[string]map[string]any), nil
+			return make(map[string]map[string]any), nil //nolint:nilerr
 		}
 
 		constraints := make(map[string]map[string]any)

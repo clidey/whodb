@@ -222,7 +222,7 @@ func ReadFile(path string, maxBytes int64) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	info, err := file.Stat()
 	if err == nil && info.Size() > maxBytes {
@@ -693,7 +693,7 @@ func parseExcel(data []byte, options *FileOptions, maxRows int, enforceRowCap bo
 	if err != nil {
 		return nil, newImportError(importValidationParseFailed, err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	sheetName := ""
 	if options.Sheet != nil {
@@ -711,7 +711,7 @@ func parseExcel(data []byte, options *FileOptions, maxRows int, enforceRowCap bo
 	if err != nil {
 		return nil, newImportError(importValidationParseFailed, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result := &ParsedFile{Sheet: sheetName}
 	firstRow := true

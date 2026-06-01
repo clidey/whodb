@@ -205,7 +205,7 @@ func (p *QuestDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		return true, nil
 	})
 	if err != nil {
-		return constraints, nil
+		return constraints, nil //nolint:nilerr
 	}
 	return constraints, nil
 }

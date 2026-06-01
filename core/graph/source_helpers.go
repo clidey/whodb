@@ -71,13 +71,6 @@ func sourceCredentialsFromInput(input model.SourceLoginInput) *source.Credential
 	}
 }
 
-func sourceCredentialsFromProfileInput(profile model.SourceProfileLoginInput) *source.Credentials {
-	return &source.Credentials{
-		ID:     &profile.ID,
-		Values: recordInputsToMap(profile.Values),
-	}
-}
-
 func recordInputsToMap(values []*model.RecordInput) map[string]string {
 	mapped := make(map[string]string, len(values))
 	for _, value := range values {

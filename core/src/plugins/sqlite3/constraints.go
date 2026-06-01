@@ -50,7 +50,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var cid int
@@ -75,6 +75,9 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 				constraints[name]["unique"] = true
 			}
 		}
+		if err := rows.Err(); err != nil {
+			return false, err
+		}
 
 		// Get unique indexes
 		indexListQuery, err := builder.PragmaQuery("index_list", storageUnit)
@@ -88,7 +91,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 			// Some tables might not have indexes, that's ok
 			return true, nil
 		}
-		defer indexRows.Close()
+		defer func() { _ = indexRows.Close() }()
 
 		for indexRows.Next() {
 			var seq int
@@ -125,7 +128,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 					columnCount++
 					columnName = colName
 				}
-				infoRows.Close()
+				_ = infoRows.Close() //nolint:rowserrcheck
 
 				// Only mark as unique if it's a single-column index
 				if columnCount == 1 && columnName != "" {
@@ -135,6 +138,9 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 					constraints[columnName]["unique"] = true
 				}
 			}
+		}
+		if err := indexRows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get CHECK constraints from sqlite_master

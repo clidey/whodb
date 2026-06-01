@@ -46,7 +46,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			WHERE i.indrelid = $1::regclass AND i.indisprimary
 		`, fullTableName).Rows()
 		if err == nil {
-			defer primaryRows.Close()
+			defer func() { _ = primaryRows.Close() }()
 			for primaryRows.Next() {
 				var columnName string
 				if err := primaryRows.Scan(&columnName); err != nil {
@@ -86,7 +86,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		if err != nil {
 			return false, err
 		}
-		defer uniqueRows.Close()
+		defer func() { _ = uniqueRows.Close() }()
 
 		for uniqueRows.Next() {
 			var columnName string
@@ -103,7 +103,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			Where("contype = 'c' AND conrelid = ?::regclass", fullTableName).
 			Rows()
 		if err == nil {
-			defer checkRows.Close()
+			defer func() { _ = checkRows.Close() }()
 
 			for checkRows.Next() {
 				var constraintName, checkClause string
@@ -127,7 +127,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			ORDER BY c.column_name, e.enumsortorder
 		`, schema, storageUnit).Rows()
 		if err == nil {
-			defer enumRows.Close()
+			defer func() { _ = enumRows.Close() }()
 
 			// Group enum values by column name
 			enumValues := make(map[string][]string)

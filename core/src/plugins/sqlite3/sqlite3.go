@@ -171,7 +171,7 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var columns []engine.Column
 
@@ -202,7 +202,7 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 	fkQuery := fmt.Sprintf("PRAGMA foreign_key_list('%s')", escapedTable)
 	fkRows, fkErr := db.Raw(fkQuery).Rows()
 	if fkErr == nil {
-		defer fkRows.Close()
+		defer func() { _ = fkRows.Close() }()
 		for fkRows.Next() {
 			var id, seq int
 			var table, from, to, onUpdate, onDelete, match string
@@ -288,7 +288,7 @@ func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema
 		if xerr != nil {
 			return true, nil
 		}
-		defer xrows.Close()
+		defer func() { _ = xrows.Close() }()
 		for xrows.Next() {
 			var cid int
 			var name, dataType string
@@ -601,7 +601,7 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 		if err != nil {
 			return nil, err
 		}
-		defer castRows.Close()
+		defer func() { _ = castRows.Close() }()
 
 		result, err := p.GormPlugin.ConvertRawToRows(castRows)
 		if err != nil {
@@ -690,7 +690,7 @@ func (p *Sqlite3Plugin) StreamRawExecute(config *engine.PluginConfig, query stri
 		if err != nil {
 			return false, err
 		}
-		defer castRows.Close()
+		defer func() { _ = castRows.Close() }()
 
 		if err := p.streamSQLiteRowsWithTypes(castRows, writer, origTypes); err != nil {
 			return false, err

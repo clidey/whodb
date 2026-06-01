@@ -79,7 +79,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 	if err != nil {
 		return fmt.Errorf("failed to query data: %w", err)
 	}
-	defer dataRows.Close()
+	defer func() { _ = dataRows.Close() }()
 
 	rowCount := 0
 	values := make([]any, len(columns))

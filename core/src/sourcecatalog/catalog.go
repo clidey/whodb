@@ -590,7 +590,6 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 
 		kind := source.ConnectionFieldKindText
 		labelKey := "advancedFields." + camelCaseKey(key)
-		placeholderKey := ""
 		field := entry.Extra[key]
 		if field.Kind != "" {
 			kind = field.Kind
@@ -598,7 +597,7 @@ func buildConnectionFields(entry DatabaseEntry, traits source.TypeTraits) []sour
 		if field.LabelKey != "" {
 			labelKey = field.LabelKey
 		}
-		placeholderKey = field.PlaceholderKey
+		placeholderKey := field.PlaceholderKey
 
 		section := source.ConnectionFieldSectionAdvanced
 		if key == "Port" && field.DefaultValue != "" {
@@ -1028,6 +1027,6 @@ func fileTraits(profileLabelStrategy source.ProfileLabelStrategy) source.TypeTra
 }
 
 //go:fix inline
-func ptr(kind source.ObjectKind) *source.ObjectKind {
+func ptr(kind source.ObjectKind) *source.ObjectKind { //nolint:unused
 	return new(kind)
 }

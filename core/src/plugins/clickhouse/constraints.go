@@ -65,7 +65,7 @@ func (p *ClickHousePlugin) GetColumnConstraints(config *engine.PluginConfig, sch
 
 	if err != nil {
 		// Return base constraints if system.columns query fails
-		return constraints, nil
+		return constraints, nil //nolint:nilerr
 	}
 
 	return constraints, nil

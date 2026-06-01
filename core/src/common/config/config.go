@@ -152,18 +152,18 @@ func WriteSection(section string, value any, opts datadir.Options) error {
 
 	// Write data and close
 	if _, err := tempFile.Write(newData); err != nil {
-		tempFile.Close()
-		os.Remove(tempPath)
+		_ = tempFile.Close()
+		_ = os.Remove(tempPath)
 		return err
 	}
 	if err := tempFile.Close(); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return err
 	}
 
 	// Atomic rename
 	if err := os.Rename(tempPath, path); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return err
 	}
 

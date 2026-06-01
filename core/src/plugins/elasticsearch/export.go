@@ -163,15 +163,15 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			db.Scroll.WithScroll(5*60*1000),
 		)
 		if err != nil {
-			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error during ElasticSearch scroll operation, breaking export loop")
-			break
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error during ElasticSearch scroll operation")
+			return fmt.Errorf("scroll failed: %w", err)
 		}
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 			res.Body.Close()
-			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response, breaking export loop")
-			break
+			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response")
+			return fmt.Errorf("failed to decode scroll response: %w", err)
 		}
 		res.Body.Close()
 
@@ -248,13 +248,13 @@ func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, sche
 			db.Scroll.WithScroll(5*60*1000),
 		)
 		if err != nil {
-			break
+			return fmt.Errorf("scroll failed: %w", err)
 		}
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 			res.Body.Close()
-			break
+			return fmt.Errorf("failed to decode scroll response: %w", err)
 		}
 		res.Body.Close()
 

@@ -392,13 +392,13 @@ func (p *Provider) Close(ctx context.Context) error {
 	defer p.initMu.Unlock()
 
 	if p.alloydbClient != nil {
-		p.alloydbClient.Close()
+		_ = p.alloydbClient.Close()
 	}
 	if p.memorystoreClient != nil {
-		p.memorystoreClient.Close()
+		_ = p.memorystoreClient.Close()
 	}
 	if p.memcachedClient != nil {
-		p.memcachedClient.Close()
+		_ = p.memcachedClient.Close()
 	}
 	return nil
 }

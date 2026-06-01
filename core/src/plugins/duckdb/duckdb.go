@@ -174,7 +174,7 @@ func (p *DuckDBPlugin) GetColumnCodec(columnType string) gorm_plugin.ColumnCodec
 			case map[string]any, []any:
 				b, err := json.Marshal(v)
 				if err != nil {
-					return fmt.Sprintf("%v", v), nil
+					return fmt.Sprintf("%v", v), nil //nolint:nilerr
 				}
 				return string(b), nil
 			default:

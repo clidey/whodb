@@ -58,7 +58,7 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 				AND dc.schema_name = ? AND dc.table_name = ?
 		`, schema, storageUnit).Rows()
 		if err == nil {
-			defer constraintRows.Close()
+			defer func() { _ = constraintRows.Close() }()
 			for constraintRows.Next() {
 				var columnName, constraintType string
 				if err := constraintRows.Scan(&columnName, &constraintType); err != nil {
@@ -81,7 +81,7 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 				AND dc.schema_name = ? AND dc.table_name = ?
 		`, schema, storageUnit).Rows()
 		if err == nil {
-			defer checkRows.Close()
+			defer func() { _ = checkRows.Close() }()
 			for checkRows.Next() {
 				var columnName, checkClause string
 				if err := checkRows.Scan(&columnName, &checkClause); err != nil {

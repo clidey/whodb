@@ -329,7 +329,7 @@ func (r *mutationResolver) ImportSQL(ctx context.Context, input model.ImportSQLI
 	if hasFile {
 		data, err := readUploadBytes(*input.File, maxImportFileSizeBytes)
 		if err != nil {
-			return importResult(false, importErrorSQLFileFailed), nil
+			return importResult(false, importErrorSQLFileFailed), nil //nolint:nilerr
 		}
 		script = string(data)
 	}
@@ -1572,7 +1572,7 @@ func (r *queryResolver) SSLStatus(ctx context.Context) (*model.SSLStatus, error)
 	spec, session, err := getSourceSessionForContext(ctx)
 	if err != nil {
 		log.Debug("[SSL] SSLStatus resolver: no plugin context")
-		return nil, nil
+		return nil, nil //nolint:nilerr
 	}
 	reader, ok := source.AsSecurityReader(sourceAuditScopeFromContext(ctx, spec), session)
 	if !ok {

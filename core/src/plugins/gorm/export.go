@@ -66,7 +66,7 @@ func (p *GormPlugin) ExportData(config *engine.PluginConfig, schema string, stor
 
 	// Export all rows from the database
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (struct{}, error) {
-		columnConfig := config
+		var columnConfig *engine.PluginConfig
 		if config != nil {
 			clonedConfig := *config
 			clonedConfig.Transaction = db

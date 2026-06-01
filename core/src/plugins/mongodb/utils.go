@@ -32,7 +32,7 @@ func normalizeMongoID(value any) (any, error) {
 		oid, err := bson.ObjectIDFromHex(v)
 		if err != nil {
 			// Not an ObjectID, use the raw string as-is
-			return v, nil
+			return v, nil //nolint:nilerr
 		}
 		return oid, nil
 	default:

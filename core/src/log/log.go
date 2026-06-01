@@ -263,11 +263,11 @@ func DisableOutput() {
 // CloseLogFile closes the log file and access log file if they were opened.
 func CloseLogFile() {
 	if logFile != nil {
-		logFile.Close()
+		_ = logFile.Close()
 		logFile = nil
 	}
 	if accessLogFile != nil {
-		accessLogFile.Close()
+		_ = accessLogFile.Close()
 		accessLogFile = nil
 		accessLogger = nil
 	}

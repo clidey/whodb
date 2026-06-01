@@ -217,7 +217,7 @@ func handleCSVExport(ctx context.Context, w http.ResponseWriter, exporter source
 
 func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter source.TabularExporter, ref source.ObjectRef, fileBaseName string, selectedRows []map[string]any) {
 	f := excelize.NewFile()
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	sheetName := "Data"
 	index, err := f.NewSheet(sheetName)
@@ -226,7 +226,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 		return
 	}
 	f.SetActiveSheet(index)
-	f.DeleteSheet("Sheet1")
+	_ = f.DeleteSheet("Sheet1")
 
 	streamWriter, err := f.NewStreamWriter(sheetName)
 	if err != nil {
@@ -291,7 +291,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 
 	if len(headers) > 0 {
 		for i := range headers {
-			streamWriter.SetColWidth(i+1, i+1, 15)
+			_ = streamWriter.SetColWidth(i+1, i+1, 15)
 		}
 	}
 
@@ -383,7 +383,7 @@ func handleSelectedRowsExcelExport(w http.ResponseWriter, fileBaseName string, s
 	}
 
 	f := excelize.NewFile()
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	sheetName := "Data"
 	index, err := f.NewSheet(sheetName)
@@ -392,7 +392,7 @@ func handleSelectedRowsExcelExport(w http.ResponseWriter, fileBaseName string, s
 		return
 	}
 	f.SetActiveSheet(index)
-	f.DeleteSheet("Sheet1")
+	_ = f.DeleteSheet("Sheet1")
 
 	streamWriter, err := f.NewStreamWriter(sheetName)
 	if err != nil {

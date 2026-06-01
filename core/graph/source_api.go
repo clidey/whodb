@@ -499,7 +499,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	resolvedRef := sourceRefFromInput(&ref)
 	if err := validateSourceObjectAction(spec, resolvedRef, source.ActionGenerateMockData); err != nil {
 		errMsg := err.Error()
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil //nolint:nilerr
 	}
 	_, objectName := namespaceAndObjectNameForRef(spec, *resolvedRef)
 	if !mockdata.IsMockDataGenerationAllowed(objectName) {
@@ -520,7 +520,7 @@ func analyzeMockDataDependenciesForRef(ctx context.Context, ref model.SourceObje
 	analysis, err := manager.AnalyzeMockDataDependencies(ctx, *resolvedRef, rowCount, fkRatio)
 	if err != nil {
 		errMsg := err.Error()
-		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil
+		return &model.MockDataDependencyAnalysis{Error: &errMsg}, nil //nolint:nilerr
 	}
 
 	tables := make([]*model.MockDataTableInfo, 0, len(analysis.Tables))
