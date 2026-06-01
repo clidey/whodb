@@ -17,7 +17,7 @@
 import type { FC} from 'react';
 import { useCallback } from 'react';
 import type { ConnectionLineComponentProps, EdgeProps, Node} from 'reactflow';
-import { Position, getBezierPath, getSimpleBezierPath, useStore } from 'reactflow';
+import { Position, getBezierPath, useStore } from 'reactflow';
 import { getEdgeParams } from './utils';
 
 export const GraphEdgeConnectionLine: FC<ConnectionLineComponentProps> = ({ toX, toY, fromPosition, toPosition, fromNode }) => {

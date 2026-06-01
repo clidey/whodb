@@ -50,6 +50,7 @@ import type {
     RecordInput,
     RowsResult,
     SortCondition,
+    SourceObjectRefInput,
     WhereCondition} from '@graphql';
 import {
     AddRowDocument,
@@ -60,7 +61,6 @@ import {
     RawExecuteDocument,
     SortDirection,
     SourceAction,
-    type SourceObjectRefInput,
     UpdateStorageUnitDocument,
     WhereConditionType
 } from '@graphql';
@@ -137,8 +137,6 @@ export const ExploreStorageUnit: FC = () => {
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
     const currentType = current?.Type;
-    const currentDatabase = current?.Database;
-    const currentId = current?.Id;
     const {
         item,
         isNoSQL,
@@ -671,7 +669,7 @@ export const ExploreStorageUnit: FC = () => {
                         Value: stringValue,
                     });
                 }
-            } catch (e) {
+            } catch {
                 setAddRowError(t('invalidJson'));
                 return;
             }

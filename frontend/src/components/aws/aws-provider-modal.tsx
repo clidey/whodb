@@ -82,7 +82,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const localProfilesQueryOptions = isEditMode ? skipToken : {};
 
     // Query local AWS profiles
-    const { data: localProfilesData, loading: profilesLoading } = useQuery(GetLocalAwsProfilesDocument, localProfilesQueryOptions);
+    const { data: localProfilesData } = useQuery(GetLocalAwsProfilesDocument, localProfilesQueryOptions);
     const localProfiles = localProfilesData?.LocalAWSProfiles ?? [];
 
     // Query AWS regions from backend

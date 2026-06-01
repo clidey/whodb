@@ -81,7 +81,7 @@ class HealthCheckService {
                 server: (health.Server?.toLowerCase() || 'unavailable') as 'healthy' | 'error' | 'unavailable',
                 database: (health.Database?.toLowerCase() || 'unavailable') as 'healthy' | 'error' | 'unavailable',
             };
-        } catch (error) {
+        } catch {
             // Network error or server unreachable
             return null;
         }

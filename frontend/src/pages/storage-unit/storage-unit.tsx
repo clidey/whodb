@@ -35,12 +35,12 @@ import {
     VirtualizedTableBody
 } from '@clidey/ux';
 import type {
+    GetColumnsBatchQuery,
     GetGraphQuery,
     GetStorageUnitsQuery} from '@graphql';
 import {
     DataShape,
     GetColumnsBatchDocument,
-    type GetColumnsBatchQuery,
     GetStorageUnitsDocument,
     SourceSchemaFidelity,
     SourceAction,
@@ -770,7 +770,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                         <StackList>
                             {/* Show metadata first (Type, Total Size, etc.) */}
                             {
-                                metadataItems.map((item: any, index: number) => {
+                                metadataItems.map((item: any, _index: number) => {
                                     const name = item.Key;
                                     const value = item.Value?.toLowerCase();
                                     return (
@@ -791,7 +791,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                             }
                             {/* Show columns with FK/PK handles */}
                             {
-                                !columnsLoading && columnItems.map((col: any, index: number) => {
+                                !columnsLoading && columnItems.map((col: any, _index: number) => {
                                     const name = col.Name;
                                     const value = col.Type?.toLowerCase();
                                     const isFKColumn = col.IsForeignKey || false;

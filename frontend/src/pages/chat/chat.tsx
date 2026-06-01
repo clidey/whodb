@@ -59,7 +59,7 @@ import {
 } from "../../components/heroicons";
 import classNames from "classnames";
 import type { FC, KeyboardEventHandler} from "react";
-import {cloneElement, memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactMarkdown from 'react-markdown';
 import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
@@ -70,13 +70,12 @@ import {Loading} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {copyToClipboard} from "../../services/clipboard";
-import {extensions} from "../../config/features";
+import {extensions, featureFlags} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {reduxStorePersistor} from "../../store";
 import {HoudiniActions} from "../../store/chat";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {ScratchpadActions} from "../../store/scratchpad";
-import {featureFlags} from "../../config/features";
 import {chooseRandomItems} from "../../utils/functions";
 import {getComponent} from "../../config/component-registry";
 import {useSourceContract} from "../../hooks/useSourceContract";
@@ -97,21 +96,21 @@ const PieChart = getComponent('pie-chart');
 const THINKING_PHRASES_COUNT = 25;
 
 const markdownComponents = {
-    p: ({node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
-    strong: ({node, ...props}: any) => <strong className="font-semibold" {...props} />,
-    ul: ({node, ...props}: any) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
-    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
-    li: ({node, ...props}: any) => <li className="ml-2" {...props} />,
-    h1: ({node, ...props}: any) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
-    h2: ({node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
-    h3: ({node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
-    code: ({node, children, ...props}: any) => {
+    p: ({_node, ...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
+    strong: ({_node, ...props}: any) => <strong className="font-semibold" {...props} />,
+    ul: ({_node, ...props}: any) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
+    ol: ({_node, ...props}: any) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
+    li: ({_node, ...props}: any) => <li className="ml-2" {...props} />,
+    h1: ({_node, ...props}: any) => <h1 className="text-xl font-bold mb-2 mt-4 first:mt-0" {...props} />,
+    h2: ({_node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
+    h3: ({_node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
+    code: ({_node, children, ...props}: any) => {
         const isInline = !String(props.className || '').includes('language-');
         return isInline
             ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
             : <CodeBlock>{String(children)}</CodeBlock>;
     },
-    blockquote: ({node, ...props}: any) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
+    blockquote: ({_node, ...props}: any) => <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-700 pl-4 my-2 italic" {...props} />,
 };
 
 const CodeBlock: FC<{ children: string }> = ({ children }) => {

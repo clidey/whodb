@@ -56,7 +56,7 @@ const ShortcutSection: FC<{ category: ShortcutCategory; testId?: string }> = ({ 
             {category.title}
         </h3>
         <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
-            {category.shortcuts.map((shortcut, idx) => (
+            {category.shortcuts.map((shortcut, _idx) => (
                 <ShortcutRow key={shortcut.description} shortcut={shortcut} />
             ))}
         </div>

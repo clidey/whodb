@@ -153,28 +153,10 @@ const chatTransform = createTransform(
   { whitelist: ['houdini'] }
 );
 
-const aiModelsPersistTransform = createTransform(
-  (inboundState: any) => {
-    if (!inboundState?.modelTypes) return inboundState;
-    // Only persist non-platform providers (user-added API keys)
-    const nonPlatformProviders = inboundState.modelTypes.filter((m: any) => !m.isPlatformProvider);
-    return {
-      ...inboundState,
-      modelTypes: nonPlatformProviders,
-      // Don't persist current selection for platform providers (goes in platform store instead)
-      current: inboundState.current?.isPlatformProvider ? undefined : inboundState.current,
-      currentModel: inboundState.current?.isPlatformProvider ? undefined : inboundState.currentModel,
-      models: inboundState.current?.isPlatformProvider ? [] : inboundState.models,
-    };
-  },
-  (outboundState: any) => outboundState,
-  { whitelist: ['aiModels'] }
-);
-
 const settingsPersistTransform = createTransform(
   (inboundState: any) => {
     if (!inboundState) return inboundState;
-    const { newUIEnabled, ...settingsToPersist } = inboundState;
+    const { newUIEnabled: _newUIEnabled, ...settingsToPersist } = inboundState;
     return settingsToPersist;
   },
   (outboundState: any) => outboundState,

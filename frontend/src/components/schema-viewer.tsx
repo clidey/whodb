@@ -26,8 +26,8 @@ import {
     toTitleCase,
     Tree
 } from "@clidey/ux";
-import type { GetStorageUnitsQuery} from "@graphql";
-import {GetStorageUnitsDocument, SourceAction, type SourceObjectRefInput} from "@graphql";
+import type { GetStorageUnitsQuery, SourceObjectRefInput} from "@graphql";
+import {GetStorageUnitsDocument, SourceAction} from "@graphql";
 import {FolderIcon, TableCellsIcon} from "./heroicons";
 import type {FC} from "react";
 import { useCallback, useEffect, useMemo, useState} from "react";

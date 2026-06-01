@@ -87,11 +87,9 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   }, [databaseTypeItem?.extra?.Port, profile]);
   const lastAccessed = getLastAccessedTime(profile.Id);
 
-  if (!port && !lastAccessed) return null;
-
   const showTooltip = useCallback(() => {
     if (!btnRef.current) return;
-    
+
     const rect = btnRef.current.getBoundingClientRect();
     setTooltipPos({
       top: rect.top + rect.height / 2,
@@ -113,10 +111,10 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
 
   useEffect(() => {
     if (!isVisible) return;
-    
+
     document.addEventListener("mousedown", handleClickAway);
     document.addEventListener("keydown", handleKeyDown);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickAway);
       document.removeEventListener("keydown", handleKeyDown);
@@ -124,6 +122,8 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
   }, [isVisible, handleClickAway, handleKeyDown]);
 
   const portalContainer = useMemo(getTooltipPortalContainer, []);
+
+  if (!port && !lastAccessed) return null;
 
   const tooltip = isVisible && tooltipPos && createPortal(
     <div

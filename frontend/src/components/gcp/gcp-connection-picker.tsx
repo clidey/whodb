@@ -15,8 +15,7 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import type { FC} from "react";
-import { useCallback, useEffect, useMemo } from "react";
+import { type FC, type ReactElement, useCallback, useEffect, useMemo } from "react";
 import {
     Badge,
     Button,
@@ -46,7 +45,6 @@ import {
     PlusIcon,
     QuestionMarkCircleIcon,
 } from "../heroicons";
-import type { ReactElement } from "react";
 import type { SourceTypeItem } from "@/config/source-types";
 import type { ConnectionPrefillData } from "@/utils/cloud-connection-prefill";
 import { buildConnectionPrefill } from "@/utils/cloud-connection-prefill";

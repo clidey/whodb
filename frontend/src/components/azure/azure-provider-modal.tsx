@@ -80,7 +80,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
     const subscriptionsQueryOptions = isEditMode ? skipToken : {};
 
     // Query Azure subscriptions for picker
-    const { data: subscriptionsData, loading: subscriptionsLoading } = useQuery(GetAzureSubscriptionsDocument, subscriptionsQueryOptions);
+    const { data: subscriptionsData } = useQuery(GetAzureSubscriptionsDocument, subscriptionsQueryOptions);
     const subscriptions = subscriptionsData?.AzureSubscriptions ?? [];
 
     // Query Azure regions from backend

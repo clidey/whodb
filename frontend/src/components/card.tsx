@@ -23,12 +23,11 @@ import {
   Sheet,
   SheetContent,
   SheetTitle,
-  SheetTrigger,
   Spinner,
 } from "@clidey/ux";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { FC, ReactElement, ReactNode} from "react";
-import {cloneElement, useEffect, useRef, useState,} from "react";
+import {cloneElement, useEffect, useState,} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 
 
@@ -57,7 +56,7 @@ export const Card: FC<ICardProps> = ({
       const timeout = setTimeout(() => {
         setHighlightStatus(false);
       }, 3000);
-      return () => clearTimeout(timeout);
+      return () =>{  clearTimeout(timeout); };
     }
   }, [highlight]);
 
@@ -101,7 +100,6 @@ type IExpandableCardProps = {
 export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
   const { t } = useTranslation('components/card');
   const [expand, setExpand] = useState(props.isExpanded ?? false);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setExpand(props.isExpanded ?? false);
@@ -117,7 +115,7 @@ export const ExpandableCard: FC<IExpandableCardProps> = (props) => {
   return (
     <>
       <Sheet open={expand} onOpenChange={handleOpenChange}>
-        <div onClick={() => handleOpenChange(true)}>
+        <div onClick={() =>{  handleOpenChange(true); }}>
           <Card
             {...props}
             tag={props.collapsedTag}

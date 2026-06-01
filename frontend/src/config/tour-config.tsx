@@ -24,7 +24,6 @@ import {
     SparklesIcon,
     TableCellsIcon,
     AdjustmentsHorizontalIcon,
-    ArrowDownTrayIcon,
 } from '../components/heroicons';
 import { InternalRoutes } from './routes';
 import { withBasePath } from '../utils/base-path';

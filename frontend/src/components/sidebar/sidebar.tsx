@@ -61,14 +61,13 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "reac
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
-import {extensions, getAppName} from "../../config/features";
+import {extensions, featureFlags, getAppName} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {LoginForm} from "../../pages/auth/login";
 import type { LocalLoginProfile} from "../../store/auth";
 import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {useAppSelector} from "../../store/hooks";
-import {featureFlags} from "../../config/features";
 import {getComponent} from "../../config/component-registry";
 import { findSourceTypeItem, type SourceTypeItem } from "../../config/source-types";
 import {isAwsHostname, isAzureHostname, isGcpHostname} from "../../utils/cloud-connection-prefill";

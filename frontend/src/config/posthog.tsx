@@ -15,6 +15,7 @@
  */
 
 import type {PostHog} from 'posthog-js';
+import type * as PostHogModule from 'posthog-js';
 import {featureFlags} from './features';
 
 type ConsentState = 'granted' | 'denied' | 'unknown';
@@ -22,7 +23,7 @@ type ConsentState = 'granted' | 'denied' | 'unknown';
 const CONSENT_STORAGE_KEY = 'whodb.analytics.consent';
 const DISTINCT_ID_STORAGE_KEY = 'whodb.analytics.distinct_id';
 
-let posthogModulePromise: Promise<typeof import('posthog-js')> | null = null;
+let posthogModulePromise: Promise<typeof PostHogModule> | null = null;
 let initPromise: Promise<PostHog | null> | null = null;
 let activeClient: PostHog | null = null;
 let handlersRegistered = false;
@@ -279,7 +280,7 @@ export const trackFrontendEvent = async (event: string, properties?: Record<stri
     try {
         const client = await ensureInitializedClient();
         client?.capture(event, properties ?? {});
-    } catch (error) {
+    } catch {
         // do nothing
     }
 };

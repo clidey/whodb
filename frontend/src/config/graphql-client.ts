@@ -240,6 +240,6 @@ export const graphqlClient = new ApolloClient({
 export async function clearGraphqlStore(): Promise<void> {
     try {
         await graphqlClient.clearStore();
-    } catch (e) {}
+    } catch {}
     clearSourceSessionMetadata();
 }

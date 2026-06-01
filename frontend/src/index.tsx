@@ -40,7 +40,7 @@ try {
             document.documentElement.classList.add('linux');
         }
     }
-} catch (e) {
+} catch {
     // best-effort; do not block startup on UA detection issues
 }
 
@@ -59,8 +59,8 @@ const AppWithProviders = () => {
         }
         setInitialized(true);
         initPosthog()
-            .then(client => setPosthogClient(client))
-            .catch(() => setPosthogClient(null));
+            .then(client => { setPosthogClient(client); })
+            .catch(() => { setPosthogClient(null); });
     }, [initialized]);
 
     const app = (

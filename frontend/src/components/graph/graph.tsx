@@ -23,7 +23,6 @@ import type { Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, React
 import ReactFlow, { Background, Controls, PanOnScrollMode, useReactFlow } from 'reactflow';
 import { Tip } from '../tip';
 import { useTranslation } from '@/hooks/use-translation';
-import { GraphElements } from './constants';
 import { FloatingGraphEdge, GraphEdgeConnectionLine } from './edge';
 import { getDagreLayoutedElements } from './layouts';
 

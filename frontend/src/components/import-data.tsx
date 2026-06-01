@@ -42,14 +42,14 @@ import type {
   ImportFileOptions,
   ImportPreviewMutation,
   ImportSqlMutation,
-  ImportTableFileMutation} from "@graphql";
+  ImportTableFileMutation,
+  SourceObjectRefInput} from "@graphql";
 import {
   ImportFileFormat,
   ImportMode,
   ImportPreviewDocument,
   ImportSqlDocument,
   ImportTableFileDocument,
-  type SourceObjectRefInput,
 } from "@graphql";
 import {useSourceContract} from "@/hooks/useSourceContract";
 
@@ -675,7 +675,7 @@ export const ImportData: FC<ImportDataProps> = ({
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {previewRows.map((row, rowIdx) => (
+                                    {previewRows.map((row, _rowIdx) => (
                                       <tr key={row.join("|")} className="border-b last:border-b-0">
                                         {row.map((cell, cellIdx) => (
                                           <td key={preview!.Columns[cellIdx]} className="px-3 py-2 whitespace-nowrap">

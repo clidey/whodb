@@ -31,10 +31,6 @@ export const NavigateToDefault: FC = () => {
     const currentType = useAppSelector(state => state.auth.current?.Type);
     const { supportsChat } = useSourceContract(currentType);
 
-    if (hasComponent('sql-agent')) {
-        return <Navigate to={InternalRoutes.Chat.path} />
-    }
-
     const defaultModelType = availableInternalModelTypes[0];
     const aiModelsQueryOptions = currentType && supportsChat && defaultModelType
         ? {
@@ -44,6 +40,10 @@ export const NavigateToDefault: FC = () => {
         }
         : skipToken;
     const { data, error } = useQuery(GetAiModelsDocument, aiModelsQueryOptions);
+
+    if (hasComponent('sql-agent')) {
+        return <Navigate to={InternalRoutes.Chat.path} />
+    }
 
     if (!supportsChat ||  error != null) {
         return <Navigate to={getSurfaceFallbackPath()} />
