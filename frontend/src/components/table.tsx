@@ -42,13 +42,7 @@ import {
     EmptyState,
     Input,
     Label,
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
+    DataPagination,
     Select,
     SelectContent,
     SelectItem,
@@ -593,57 +587,6 @@ export const StorageUnitTable: FC<TableProps> = ({
     const handlePageChange = useCallback((newPage: number) => {
         onPageChange?.(newPage);
     }, [onPageChange]);
-
-    const renderPaginationLinks = () => {
-        const links = [];
-        // Show up to 3 pages before and after current
-        const start = Math.max(1, currentPage - 2);
-        const end = Math.min(totalPages, currentPage + 2);
-
-        if (start > 1) {
-            links.push(
-                <PaginationItem key={1}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(1); }} size="sm" data-testid="table-page-number" data-page="1" data-active={currentPage === 1} aria-label={t('goToPage', { page: 1 })}>{formatNumber(1, language)}</PaginationLink>
-                </PaginationItem>
-            );
-            if (start > 2) {
-                links.push(<PaginationEllipsis key="start-ellipsis" aria-hidden="true" />);
-            }
-        }
-
-        for (let i = start; i <= end; i++) {
-            links.push(
-                <PaginationItem key={i}>
-                    <PaginationLink
-                        href="#"
-                        isActive={i === currentPage}
-                        onClick={e => { e.preventDefault(); handlePageChange(i); }}
-                        size="sm"
-                        data-testid="table-page-number"
-                        data-page={i}
-                        data-active={i === currentPage}
-                        aria-label={i === currentPage ? t('currentPage', { page: i }) : t('goToPage', { page: i })}
-                        aria-current={i === currentPage ? 'page' : undefined}
-                    >
-                        {formatNumber(i, language)}
-                    </PaginationLink>
-                </PaginationItem>
-            );
-        }
-
-        if (end < totalPages) {
-            if (end < totalPages - 1) {
-                links.push(<PaginationEllipsis key="end-ellipsis" aria-hidden="true" />);
-            }
-            links.push(
-                <PaginationItem key={totalPages}>
-                    <PaginationLink href="#" onClick={e => { e.preventDefault(); handlePageChange(totalPages); }} size="sm" data-testid="table-page-number" data-page={totalPages} data-active={currentPage === totalPages} aria-label={t('goToPage', { page: totalPages })}>{formatNumber(totalPages, language)}</PaginationLink>
-                </PaginationItem>
-            );
-        }
-
-        return links;
-    };
 
     const handleSelectRow = useCallback((rowIndex: number) => {
         const isCurrentlySelected = checked.includes(rowIndex);
@@ -1636,46 +1579,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     "mt-4": children != null,
                 })}>
                     {children}
-                    <Pagination
+                    <DataPagination
+                        totalPages={totalPages}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
                         className={cn("flex justify-end", {
                             "hidden": !showPagination,
                         })}
-                        aria-label={t('tablePagination')}
-                    >
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        if (currentPage > 1) handlePageChange(currentPage - 1);
-                                    }}
-                                    aria-disabled={currentPage === 1}
-                                    aria-label={t('previousPage')}
-                                    size="sm"
-                                    className={cn({
-                                        "opacity-50 pointer-events-none": currentPage === 1,
-                                    })}
-                                />
-                            </PaginationItem>
-                            {renderPaginationLinks()}
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                                    }}
-                                    aria-disabled={currentPage === totalPages}
-                                    aria-label={t('nextPage')}
-                                    size="sm"
-                                    className={cn({
-                                        "opacity-50 pointer-events-none": currentPage === totalPages,
-                                    })}
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
+                    />
                 </div>
                 <div className="flex justify-end items-center mb-2 gap-4">
                     {totalCount != null && totalCount > 0 && (
