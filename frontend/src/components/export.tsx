@@ -127,12 +127,52 @@ export const Export: FC<IExportProps> = ({
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog">
+                <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog" footer={
+                    <SheetFooter className="flex gap-sm px-0">
+                        <div className="text-xs text-muted-foreground mb-8">
+                            <p className="font-medium mb-1">{t('exportDetailsTitle')}</p>
+                            <ul className="list-disc list-inside space-y-1">
+                                {exportFormat === 'csv' ? (
+                                    <>
+                                        <li><p className="inline-block">{t('csvHeaders')}</p></li>
+                                        <li><p className="inline-block">{t('utf8Encoding')}</p></li>
+                                        <li><p className="inline-block">{t('csvDelimiter')}</p></li>
+                                    </>
+                                ) : exportFormat === 'excel' ? (
+                                    <>
+                                        <li><p className="inline-block">{t('excelFormat')}</p></li>
+                                        <li><p className="inline-block">{t('excelHeaders')}</p></li>
+                                        <li><p className="inline-block">{t('excelColumns')}</p></li>
+                                    </>
+                                ) : (
+                                    <>
+                                        <li><p className="inline-block">{t('jsonLineDelimited')}</p></li>
+                                        <li><p className="inline-block">{t('utf8Encoding')}</p></li>
+                                        <li><p className="inline-block">{t('jsonDetails')}</p></li>
+                                    </>
+                                )}
+                            </ul>
+                        </div>
+                        <div className="flex flex-row gap-sm">
+                            <Button
+                                className="flex-1"
+                                variant="secondary"
+                                onClick={() => onOpenChange(false)}
+                                data-testid="cancel-export"
+                            >
+                                {t('cancel')}
+                            </Button>
+                            <Button className="flex-1" onClick={handleExportConfirm} data-testid="export-confirm-button">
+                                {t('export')}
+                            </Button>
+                        </div>
+                    </SheetFooter>
+                }>
                     <SheetTitle className="flex items-center gap-2"><ShareIcon className="w-4 h-4" /> {t('exportData')}</SheetTitle>
                     <VisuallyHidden>
                         <SheetTitle>{t('exportData')}</SheetTitle>
                     </VisuallyHidden>
-                    <div className="flex flex-col gap-lg grow">
+                    <div className="flex flex-col gap-lg">
                         <div className="space-y-4 grow">
                             <p>
                                 {effectiveHasSelectedRows
@@ -191,45 +231,6 @@ export const Export: FC<IExportProps> = ({
                                 )}
                             </div>
                         </div>
-                        <SheetFooter className="flex gap-sm px-0">
-                            <div className="text-xs text-muted-foreground mb-8">
-                                <p className="font-medium mb-1">{t('exportDetailsTitle')}</p>
-                                <ul className="list-disc list-inside space-y-1">
-                                    {exportFormat === 'csv' ? (
-                                        <>
-                                            <li><p className="inline-block">{t('csvHeaders')}</p></li>
-                                            <li><p className="inline-block">{t('utf8Encoding')}</p></li>
-                                            <li><p className="inline-block">{t('csvDelimiter')}</p></li>
-                                        </>
-                                    ) : exportFormat === 'excel' ? (
-                                        <>
-                                            <li><p className="inline-block">{t('excelFormat')}</p></li>
-                                            <li><p className="inline-block">{t('excelHeaders')}</p></li>
-                                            <li><p className="inline-block">{t('excelColumns')}</p></li>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <li><p className="inline-block">{t('jsonLineDelimited')}</p></li>
-                                            <li><p className="inline-block">{t('utf8Encoding')}</p></li>
-                                            <li><p className="inline-block">{t('jsonDetails')}</p></li>
-                                        </>
-                                    )}
-                                </ul>
-                            </div>
-                            <div className="flex flex-row gap-sm">
-                                <Button
-                                    className="flex-1"
-                                    variant="secondary"
-                                    onClick={() => onOpenChange(false)}
-                                    data-testid="cancel-export"
-                                >
-                                    {t('cancel')}
-                                </Button>
-                                <Button className="flex-1" onClick={handleExportConfirm} data-testid="export-confirm-button">
-                                    {t('export')}
-                                </Button>
-                            </div>
-                        </SheetFooter>
                     </div>
                 </SheetContent>
             </Sheet>

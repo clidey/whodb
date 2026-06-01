@@ -1713,10 +1713,27 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setEditRowInitialLengths([]);
                     }
                 }}>
-                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog">
+                    <SheetContent side="right" className="w-[400px] max-w-full p-8 flex flex-col" data-testid="edit-row-dialog" footer={
+                        <SheetFooter className="flex gap-sm px-0">
+                            <Button
+                                className="flex-1"
+                                variant="secondary"
+                                onClick={() => {
+                                    setEditIndex(null);
+                                    setEditRow(null);
+                                    setEditRowInitialLengths([]);
+                                }}
+                                data-testid="cancel-edit-row"
+                            >
+                                {t('cancel')}
+                            </Button>
+                            <Button className="flex-1" onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
+                                {t('update')}
+                            </Button>
+                        </SheetFooter>
+                    }>
                         <SheetTitle>{t('editRow')}</SheetTitle>
-                        <div className="flex-1 overflow-y-auto mt-4">
-                            <div className="flex flex-col gap-lg pr-2">
+                        <div className="flex flex-col gap-lg mt-4">
                                 {editRow &&
                                     columns.map((col, idx) => (
                                         <div key={col} className={cn("flex flex-col gap-2", ph.noCapture)}>
@@ -1748,25 +1765,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             }
                                         </div>
                                     ))}
-                            </div>
                         </div>
-                        <SheetFooter className="flex gap-sm px-0 mt-4">
-                            <Button
-                                className="flex-1"
-                                variant="secondary"
-                                onClick={() => {
-                                    setEditIndex(null);
-                                    setEditRow(null);
-                                    setEditRowInitialLengths([]);
-                                }}
-                                data-testid="cancel-edit-row"
-                            >
-                                {t('cancel')}
-                            </Button>
-                            <Button className="flex-1" onClick={handleUpdate} disabled={!editRow} data-testid="update-button">
-                                {t('update')}
-                            </Button>
-                        </SheetFooter>
                     </SheetContent>
                 </Sheet>
             </div>
@@ -1776,8 +1775,34 @@ export const StorageUnitTable: FC<TableProps> = ({
                         setShowMockDataConfirmation(false);
                     }
                 }}>
-                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet">
-                    <div className="flex flex-col gap-lg h-full">
+                <SheetContent side="right" className="p-8" data-testid="mock-data-sheet" footer={
+                    <SheetFooter className="flex gap-sm px-0">
+                        <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
+                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
+                            <AlertDescription>
+                                {supportsMockDataRelations ? t('mockDataWarning') : t('mockDataWarningClickHouse')}
+                            </AlertDescription>
+                        </Alert>
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={() => setShowMockDataSheet(false)}
+                            data-testid="cancel-mock-data"
+                        >
+                            {t('cancel')}
+                        </Button>
+                        {!showMockDataConfirmation ? (
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
+                                {t('generate')}
+                            </Button>
+                        ) : (
+                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
+                                {t('yesOverwrite')}
+                            </Button>
+                        )}
+                    </SheetFooter>
+                }>
+                    <div className="flex flex-col gap-lg">
                         <SheetTitle className="flex items-center gap-2"><CalculatorIcon className="w-4 h-4" /> {t('mockData')}</SheetTitle>
                         {!showMockDataConfirmation ? (
                             <div className="space-y-4">
@@ -1886,31 +1911,6 @@ export const StorageUnitTable: FC<TableProps> = ({
                             </div>
                         )}
                     </div>
-                    <SheetFooter className="flex gap-sm px-0">
-                        <Alert variant={supportsMockDataRelations ? "info" : "default"} className="mb-4">
-                            <AlertTitle>{t('mockDataNote')}</AlertTitle>
-                            <AlertDescription>
-                                {supportsMockDataRelations ? t('mockDataWarning') : t('mockDataWarningClickHouse')}
-                            </AlertDescription>
-                        </Alert>
-                        <Button
-                            className="flex-1"
-                            variant="secondary"
-                            onClick={() => setShowMockDataSheet(false)}
-                            data-testid="cancel-mock-data"
-                        >
-                            {t('cancel')}
-                        </Button>
-                        {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
-                                {t('generate')}
-                            </Button>
-                        ) : (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
-                                {t('yesOverwrite')}
-                            </Button>
-                        )}
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
             {isExportSupported && (

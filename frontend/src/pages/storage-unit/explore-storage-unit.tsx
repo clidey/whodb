@@ -1030,6 +1030,21 @@ export const ExploreStorageUnit: FC = () => {
                                 setShowAdd(false);
                             }
                         }}
+                        footer={
+                            <SheetFooter className="flex flex-row gap-sm px-0">
+                                <Button
+                                    className="flex-1"
+                                    variant="secondary"
+                                    onClick={() => setShowAdd(false)}
+                                    data-testid="cancel-add-row"
+                                >
+                                    {t('cancel')}
+                                </Button>
+                                <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
+                                    <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
+                                </Button>
+                            </SheetFooter>
+                        }
                     >
                         <SheetTitle className="flex items-center gap-2"><TableCellsIcon className="w-5 h-5" /> {t('addRowTitle')}</SheetTitle>
                         <div className="flex-1 overflow-y-auto pr-2">
@@ -1075,19 +1090,6 @@ export const ExploreStorageUnit: FC = () => {
                                 <ErrorState error={addRowError} />
                             )}
                         </div>
-                        <SheetFooter className="flex flex-row gap-sm px-0 pt-4 border-t">
-                            <Button
-                                className="flex-1"
-                                variant="secondary"
-                                onClick={() => setShowAdd(false)}
-                                data-testid="cancel-add-row"
-                            >
-                                {t('cancel')}
-                            </Button>
-                            <Button className="flex-1" onClick={handleAddRowSubmit} data-testid="submit-add-row-button" disabled={adding}>
-                                <CheckCircleIcon className="w-4 h-4" /> {t('submit')}
-                            </Button>
-                        </SheetFooter>
                     </SheetContent>
                 </Sheet>
 
@@ -1216,7 +1218,13 @@ export const ExploreStorageUnit: FC = () => {
             </DrawerContent>
         </Drawer>
         <Sheet open={showEntitySearchSheet} onOpenChange={setShowEntitySearchSheet}>
-            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]">
+            <SheetContent side="right" className="flex flex-col p-8 min-w-[600px]" footer={
+                <SheetFooter>
+                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
+                        {t('close')}
+                    </Button>
+                </SheetFooter>
+            }>
                 <div className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <MagnifyingGlassIcon className="w-5 h-5" />
                     {t('searchAround')}
@@ -1257,11 +1265,6 @@ export const ExploreStorageUnit: FC = () => {
                         </div>
                     )}
                 </div>
-                <SheetFooter>
-                    <Button onClick={handleCloseEntitySearchSheet} variant="outline">
-                        {t('close')}
-                    </Button>
-                </SheetFooter>
             </SheetContent>
         </Sheet>
     </InternalPage>

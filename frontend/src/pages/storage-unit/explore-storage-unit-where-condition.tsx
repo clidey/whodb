@@ -472,7 +472,21 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
 
             {/* Sheet for managing all conditions */}
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetContent side="right" className="w-[500px] max-w-full p-8">
+                <SheetContent side="right" className="w-[500px] max-w-full p-8" footer={
+                    <SheetFooter className="flex gap-sm px-0">
+                        <Button
+                            className="flex-1"
+                            variant="secondary"
+                            onClick={() => setSheetOpen(false)}
+                            data-testid="cancel-manage-conditions"
+                        >
+                            {t('cancel')}
+                        </Button>
+                        <Button className="flex-1" onClick={handleSheetSave}>
+                            {t('saveChanges')}
+                        </Button>
+                    </SheetFooter>
+                }>
                     <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> {t('manageWhereConditions')}</SheetTitle>
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
                         {sheetFilters.map((filter, index) => (
@@ -527,19 +541,6 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             <PlusCircleIcon className="w-4 h-4"/> {t('addCondition')}
                         </Button>
                     </div>
-                    <SheetFooter className="flex gap-sm px-0 mt-6">
-                        <Button
-                            className="flex-1"
-                            variant="secondary"
-                            onClick={() => setSheetOpen(false)}
-                            data-testid="cancel-manage-conditions"
-                        >
-                            {t('cancel')}
-                        </Button>
-                        <Button className="flex-1" onClick={handleSheetSave}>
-                            {t('saveChanges')}
-                        </Button>
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>
