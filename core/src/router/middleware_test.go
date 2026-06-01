@@ -15,7 +15,7 @@ func TestContextMiddlewareAddsMetadata(t *testing.T) {
 	req.Header.Set("User-Agent", "tester")
 	req.Header.Set("X-Whodb-Analytics-Id", "user-123")
 	req.Header.Set("X-Request-Id", "req-1")
-	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+	req.Header.Set("Traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 
 	rr := httptest.NewRecorder()
 	var captured analytics.Metadata

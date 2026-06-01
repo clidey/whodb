@@ -70,7 +70,7 @@ func (p *ElasticSearchPlugin) UpdateStorageUnit(config *engine.PluginConfig, dat
 
 	idStr, ok := id.(string)
 	if !ok || strings.TrimSpace(idStr) == "" {
-		return false, fmt.Errorf("invalid '_id' field; expected non-empty string")
+		return false, errors.New("invalid '_id' field; expected non-empty string")
 	}
 
 	var buf bytes.Buffer

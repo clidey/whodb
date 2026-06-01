@@ -17,6 +17,7 @@
 package gcp
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -84,7 +85,7 @@ func TestParseFromWhoDB_MissingRegion(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrRegionRequired {
+	if !errors.Is(err, ErrRegionRequired) {
 		t.Errorf("expected ErrRegionRequired, got %v", err)
 	}
 }
@@ -95,7 +96,7 @@ func TestParseFromWhoDB_MissingProjectID(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrProjectIDRequired {
+	if !errors.Is(err, ErrProjectIDRequired) {
 		t.Errorf("expected ErrProjectIDRequired, got %v", err)
 	}
 }
@@ -110,7 +111,7 @@ func TestParseFromWhoDB_ServiceAccountKeyMissingPath(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrServiceAccountKeyPathRequired {
+	if !errors.Is(err, ErrServiceAccountKeyPathRequired) {
 		t.Errorf("expected ErrServiceAccountKeyPathRequired, got %v", err)
 	}
 }
@@ -125,7 +126,7 @@ func TestParseFromWhoDB_InvalidAuthMethod(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrInvalidAuthMethod {
+	if !errors.Is(err, ErrInvalidAuthMethod) {
 		t.Errorf("expected ErrInvalidAuthMethod, got %v", err)
 	}
 }
@@ -235,7 +236,7 @@ func TestValidate_EmptyRegion(t *testing.T) {
 		AuthMethod: AuthMethodDefault,
 	}
 
-	if err := config.Validate(); err != ErrRegionRequired {
+	if err := config.Validate(); !errors.Is(err, ErrRegionRequired) {
 		t.Errorf("expected ErrRegionRequired, got %v", err)
 	}
 }
@@ -246,7 +247,7 @@ func TestValidate_EmptyProjectID(t *testing.T) {
 		AuthMethod: AuthMethodDefault,
 	}
 
-	if err := config.Validate(); err != ErrProjectIDRequired {
+	if err := config.Validate(); !errors.Is(err, ErrProjectIDRequired) {
 		t.Errorf("expected ErrProjectIDRequired, got %v", err)
 	}
 }
@@ -271,7 +272,7 @@ func TestValidate_ServiceAccountKeyMissingPath(t *testing.T) {
 		AuthMethod: AuthMethodServiceAccountKey,
 	}
 
-	if err := config.Validate(); err != ErrServiceAccountKeyPathRequired {
+	if err := config.Validate(); !errors.Is(err, ErrServiceAccountKeyPathRequired) {
 		t.Errorf("expected ErrServiceAccountKeyPathRequired, got %v", err)
 	}
 }
@@ -283,7 +284,7 @@ func TestValidate_InvalidAuthMethod(t *testing.T) {
 		AuthMethod: AuthMethod("invalid"),
 	}
 
-	if err := config.Validate(); err != ErrInvalidAuthMethod {
+	if err := config.Validate(); !errors.Is(err, ErrInvalidAuthMethod) {
 		t.Errorf("expected ErrInvalidAuthMethod, got %v", err)
 	}
 }

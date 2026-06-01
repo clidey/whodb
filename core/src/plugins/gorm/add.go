@@ -20,11 +20,12 @@ import (
 	"errors"
 	"fmt"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/sourcecatalog"
-	"gorm.io/gorm"
 )
 
 func (p *GormPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
@@ -76,7 +77,7 @@ func (p *GormPlugin) addRowWithDB(db *gorm.DB, schema string, storageUnit string
 	}
 
 	if storageUnit == "" {
-		return fmt.Errorf("storage unit name cannot be empty")
+		return errors.New("storage unit name cannot be empty")
 	}
 
 	// Fetch column types to ensure proper type conversion
@@ -118,7 +119,7 @@ func (p *GormPlugin) AddRow(config *engine.PluginConfig, schema string, storageU
 
 	if storageUnit == "" {
 		log.Error("AddRow called with empty storageUnit name")
-		return false, fmt.Errorf("storage unit name cannot be empty")
+		return false, errors.New("storage unit name cannot be empty")
 	}
 
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
@@ -143,7 +144,7 @@ func (p *GormPlugin) AddRowReturningID(config *engine.PluginConfig, schema strin
 
 	if storageUnit == "" {
 		log.Error("AddRowReturningID called with empty storageUnit name")
-		return 0, fmt.Errorf("storage unit name cannot be empty")
+		return 0, errors.New("storage unit name cannot be empty")
 	}
 
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {

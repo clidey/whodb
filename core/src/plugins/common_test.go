@@ -19,9 +19,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 func TestWithConnectionCachesConnections(t *testing.T) {

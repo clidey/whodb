@@ -21,9 +21,10 @@ import (
 	"errors"
 	"fmt"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {

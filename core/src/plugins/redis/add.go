@@ -18,12 +18,14 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
+	"github.com/go-redis/redis/v8"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-redis/redis/v8"
 )
 
 // AddStorageUnit creates a new Redis key with initial data.
@@ -162,7 +164,7 @@ func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storage
 		field := valuesMap["field"]
 		value := valuesMap["value"]
 		if field == "" {
-			return false, fmt.Errorf("field name is required for hash")
+			return false, errors.New("field name is required for hash")
 		}
 		if err := client.HSet(ctx, storageUnit, field, value).Err(); err != nil {
 			return false, err

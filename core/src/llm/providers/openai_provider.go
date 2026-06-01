@@ -75,9 +75,9 @@ func (p *OpenAIProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/models", config.Endpoint)
+	url := config.Endpoint + "/models"
 	headers := map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", config.APIKey),
+		"Authorization": "Bearer " + config.APIKey,
 		"Content-Type":  "application/json",
 	}
 

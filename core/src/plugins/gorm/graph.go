@@ -17,12 +17,11 @@
 package gorm_plugin
 
 import (
-	"fmt"
+	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 type tableRelations struct {
@@ -39,7 +38,7 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 
 		schema = p.GormPluginFunctions.ResolveGraphSchema(config, schema)
 		if err := p.GetGraphQueryDB(db, schema).Scan(&tableRelations).Error; err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to execute graph query for schema: %s", schema))
+			log.WithError(err).Error("Failed to execute graph query for schema: " + schema)
 			return nil, err
 		}
 
@@ -55,7 +54,7 @@ func (p *GormPlugin) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 
 		storageUnits, err := p.GetStorageUnits(config, schema)
 		if err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to get storage units for graph generation in schema: %s", schema))
+			log.WithError(err).Error("Failed to get storage units for graph generation in schema: " + schema)
 			return nil, err
 		}
 

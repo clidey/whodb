@@ -22,11 +22,12 @@ import (
 	"strings"
 	"time"
 
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+
 	"github.com/clidey/whodb/core/src/engine"
 	gcpinfra "github.com/clidey/whodb/core/src/gcp"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
 // discoverCloudSQL discovers Cloud SQL instances in the configured project.
@@ -39,7 +40,7 @@ func (p *Provider) discoverCloudSQL(ctx context.Context) ([]providers.Discovered
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("Cloud SQL: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Cloud SQL: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 

@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
@@ -29,7 +31,6 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	"gorm.io/gorm"
 )
 
 // CockroachDBPlugin extends PostgresPlugin with CockroachDB-specific overrides.
@@ -288,7 +289,7 @@ func (p *CockroachDBPlugin) HandleCustomDataType(value string, columnType string
 
 	blobData, hasHexPrefix, err := gorm_plugin.DecodeHexLiteral(value)
 	if err != nil {
-		return nil, true, fmt.Errorf("invalid hex binary format: %v", err)
+		return nil, true, fmt.Errorf("invalid hex binary format: %w", err)
 	}
 	if !hasHexPrefix {
 		blobData = []byte(value)

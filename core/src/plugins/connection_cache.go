@@ -26,9 +26,10 @@ import (
 	"sync"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"gorm.io/gorm"
 )
 
 // cachedConnection holds a cached GORM database instance.

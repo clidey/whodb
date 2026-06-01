@@ -160,11 +160,11 @@ func TestProvider_BuildInternalCredentials_ServicePrincipal(t *testing.T) {
 	creds := p.buildInternalCredentials()
 
 	expected := map[string]string{
-		azureinfra.AdvancedKeyAuthMethod:     "service-principal",
-		azureinfra.AdvancedKeyTenantID:       "tenant-123",
-		azureinfra.AdvancedKeyClientID:       "client-456",
-		azureinfra.AdvancedKeyClientSecret:   "secret-789",
-		azureinfra.AdvancedKeyResourceGroup:  "my-rg",
+		azureinfra.AdvancedKeyAuthMethod:    "service-principal",
+		azureinfra.AdvancedKeyTenantID:      "tenant-123",
+		azureinfra.AdvancedKeyClientID:      "client-456",
+		azureinfra.AdvancedKeyClientSecret:  "secret-789",
+		azureinfra.AdvancedKeyResourceGroup: "my-rg",
 	}
 
 	found := make(map[string]string)

@@ -17,6 +17,7 @@
 package aws
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -74,7 +75,7 @@ func TestParseFromWhoDB_MissingRegion(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrRegionRequired {
+	if !errors.Is(err, ErrRegionRequired) {
 		t.Errorf("expected ErrRegionRequired, got %v", err)
 	}
 }
@@ -88,7 +89,7 @@ func TestParseFromWhoDB_ProfileAuthMissingName(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrProfileNameRequired {
+	if !errors.Is(err, ErrProfileNameRequired) {
 		t.Errorf("expected ErrProfileNameRequired, got %v", err)
 	}
 }
@@ -102,7 +103,7 @@ func TestParseFromWhoDB_InvalidAuthMethod(t *testing.T) {
 	}
 
 	_, err := ParseFromWhoDB(creds)
-	if err != ErrInvalidAuthMethod {
+	if !errors.Is(err, ErrInvalidAuthMethod) {
 		t.Errorf("expected ErrInvalidAuthMethod, got %v", err)
 	}
 }

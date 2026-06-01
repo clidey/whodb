@@ -24,10 +24,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-redis/redis/v8"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/query"
-	"github.com/go-redis/redis/v8"
 )
 
 type RedisPlugin struct {
@@ -134,7 +135,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			// auto-scaled units (KB/MB/...) like other byte-valued attributes.
 			attributes = []engine.Record{
 				{Key: "Type", Value: "string"},
-				{Key: "Data Size", Value: fmt.Sprintf("%d", size)},
+				{Key: "Data Size", Value: strconv.FormatInt(size, 10)},
 			}
 		case "hash":
 			sizeCmd := pipe.HLen(ctx, key)
@@ -149,7 +150,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "hash"},
-				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: strconv.FormatInt(size, 10)},
 			}
 		case "list":
 			sizeCmd := pipe.LLen(ctx, key)
@@ -164,7 +165,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "list"},
-				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: strconv.FormatInt(size, 10)},
 			}
 		case "set":
 			sizeCmd := pipe.SCard(ctx, key)
@@ -179,7 +180,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "set"},
-				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: strconv.FormatInt(size, 10)},
 			}
 		case "zset":
 			sizeCmd := pipe.ZCard(ctx, key)
@@ -194,7 +195,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			}
 			attributes = []engine.Record{
 				{Key: "Type", Value: "zset"},
-				{Key: "Entries", Value: fmt.Sprintf("%d", size)},
+				{Key: "Entries", Value: strconv.FormatInt(size, 10)},
 			}
 		default:
 			attributes = []engine.Record{
@@ -427,11 +428,12 @@ func filterRedisHash(field, value string, where *query.WhereCondition) bool {
 	}
 
 	for key, op := range condition {
-		if key == "field" {
+		switch key {
+		case "field":
 			if !evaluateRedisCondition(field, op.Operator, op.Value) {
 				return false
 			}
-		} else if key == "value" {
+		case "value":
 			if !evaluateRedisCondition(value, op.Operator, op.Value) {
 				return false
 			}
@@ -506,7 +508,7 @@ func convertWhereConditionToRedisFilter(where *query.WhereCondition) (map[string
 	switch where.Type {
 	case query.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
-			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+			return nil, errors.New("atomic condition must have an atomicwherecondition")
 		}
 
 		return map[string]redisFilter{

@@ -19,11 +19,12 @@ package gorm_plugin
 import (
 	"fmt"
 
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // BatchConfig holds configuration for batch operations

@@ -19,9 +19,10 @@ package gcp
 import (
 	"context"
 
+	"google.golang.org/api/option"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"google.golang.org/api/option"
 )
 
 // GCPConfig holds the resolved GCP configuration for creating service clients.

@@ -21,6 +21,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 )
@@ -39,8 +40,8 @@ func LoadAzureCredential(creds *engine.Credentials) (azcore.TokenCredential, str
 	}
 
 	log.WithFields(map[string]any{
-		"subscriptionID": azureCreds.SubscriptionID,
-		"authMethod":     azureCreds.AuthMethod,
+		"subscriptionID":   azureCreds.SubscriptionID,
+		"authMethod":       azureCreds.AuthMethod,
 		"hasResourceGroup": azureCreds.ResourceGroup != "",
 	}).Debug("Azure credential loaded successfully")
 

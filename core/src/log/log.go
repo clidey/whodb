@@ -25,8 +25,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/sirupsen/logrus"
+
+	"github.com/clidey/whodb/core/src/env"
 )
 
 const (
@@ -97,8 +98,8 @@ func WithFields(fields Fields) *ConditionalEntry {
 
 // Error downgrades to Debug when the attached error is errors.ErrUnsupported.
 func (e *ConditionalEntry) Error(args ...any) {
-	if isUnsupportedOperation(e.Entry.Data["error"]) {
-		e.Entry.Debug(args...)
+	if isUnsupportedOperation(e.Data["error"]) {
+		e.Debug(args...)
 		return
 	}
 	e.Entry.Error(args...)
@@ -106,8 +107,8 @@ func (e *ConditionalEntry) Error(args ...any) {
 
 // Errorf downgrades to Debug when the attached error is errors.ErrUnsupported.
 func (e *ConditionalEntry) Errorf(format string, args ...any) {
-	if isUnsupportedOperation(e.Entry.Data["error"]) {
-		e.Entry.Debug(args...)
+	if isUnsupportedOperation(e.Data["error"]) {
+		e.Debug(args...)
 		return
 	}
 	e.Entry.Errorf(format, args...)

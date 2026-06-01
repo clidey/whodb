@@ -8,12 +8,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/zalando/go-keyring"
+
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
 	"github.com/clidey/whodb/core/src/types"
-	"github.com/zalando/go-keyring"
 )
 
 func testSourceCredentials(sourceType, hostname, username, password, database string) source.Credentials {

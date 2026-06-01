@@ -19,10 +19,14 @@ package duckdb
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
+
+	duckdbDriver "github.com/duckdb/duckdb-go/v2"
+	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -31,8 +35,6 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	duckdbDriver "github.com/duckdb/duckdb-go/v2"
-	"gorm.io/gorm"
 )
 
 var supportedOperators = sourcecatalogspecs.DuckDBSupportedOperators
@@ -262,7 +264,7 @@ func (p *DuckDBPlugin) GetLastInsertID(db *gorm.DB) (int64, error) {
 // since DuckDB has no lastval() or last_insert_rowid() function.
 func (p *DuckDBPlugin) AddRowReturningID(config *engine.PluginConfig, schema string, storageUnit string, values []engine.Record) (int64, error) {
 	if storageUnit == "" {
-		return 0, fmt.Errorf("storage unit name cannot be empty")
+		return 0, errors.New("storage unit name cannot be empty")
 	}
 
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (int64, error) {

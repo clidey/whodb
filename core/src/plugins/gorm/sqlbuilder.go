@@ -17,14 +17,16 @@
 package gorm_plugin
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/plugins"
 )
 
 // SQLBuilderInterface defines the methods that can be overridden by database-specific implementations
@@ -77,7 +79,7 @@ func (sb *SQLBuilder) QuoteIdentifier(identifier string) string {
 	// Prefer GORM dialect quoting when available
 	if sb.db != nil && sb.db.Dialector != nil {
 		var b strings.Builder
-		sb.db.Dialector.QuoteTo(&b, identifier)
+		sb.db.QuoteTo(&b, identifier)
 		return b.String()
 	}
 	// If no dialect is available (should be rare), return as-is
@@ -247,7 +249,7 @@ func (sb *SQLBuilder) CreateTableQueryWithSuffix(schema, table string, columns [
 // GORM handles all escaping automatically
 func (sb *SQLBuilder) InsertRow(schema, table string, data map[string]any) error {
 	if table == "" {
-		return fmt.Errorf("table name cannot be empty when inserting row")
+		return errors.New("table name cannot be empty when inserting row")
 	}
 
 	// Let GORM handle the table name formatting

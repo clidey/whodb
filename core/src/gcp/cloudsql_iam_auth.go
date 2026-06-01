@@ -21,8 +21,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/clidey/whodb/core/src/log"
 	"golang.org/x/oauth2/google"
+
+	"github.com/clidey/whodb/core/src/log"
 )
 
 // GenerateCloudSQLIAMAuthToken generates an OAuth2 access token for Cloud SQL IAM

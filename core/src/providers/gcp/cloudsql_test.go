@@ -19,9 +19,10 @@ package gcp
 import (
 	"testing"
 
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/providers"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
 func TestMapCloudSQLStatus(t *testing.T) {

@@ -19,7 +19,6 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,6 +27,7 @@ import (
 	"time"
 
 	"errors"
+
 	"github.com/clidey/whodb/core/graph"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/log"
@@ -54,7 +54,7 @@ func TestMain(m *testing.M) {
 	}
 
 	srv = &http.Server{
-		Addr:              fmt.Sprintf(":%s", port),
+		Addr:              ":" + port,
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,

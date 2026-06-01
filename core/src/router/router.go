@@ -31,14 +31,15 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+
 	"github.com/clidey/whodb/core/graph"
 	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"github.com/clidey/whodb/core/src/auth"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 )
 
 type OAuthLoginUrl struct {

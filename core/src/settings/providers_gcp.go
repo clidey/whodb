@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	gcpinfra "github.com/clidey/whodb/core/src/gcp"
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/envconfig"
+	gcpinfra "github.com/clidey/whodb/core/src/gcp"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
 	gcpprovider "github.com/clidey/whodb/core/src/providers/gcp"

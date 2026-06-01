@@ -68,13 +68,13 @@ func (p *LMStudioProvider) GetSupportedModels(config *ProviderConfig) ([]string,
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/models", config.Endpoint)
+	url := config.Endpoint + "/models"
 
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
 	if config.APIKey != "" {
-		headers["Authorization"] = fmt.Sprintf("Bearer %s", config.APIKey)
+		headers["Authorization"] = "Bearer " + config.APIKey
 	}
 
 	resp, err := sendHTTPRequest("GET", url, nil, headers)

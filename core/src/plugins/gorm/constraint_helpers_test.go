@@ -227,7 +227,7 @@ func TestParseORClauseValues(t *testing.T) {
 		{
 			name:     "MSSQL OR chain with brackets",
 			clause:   "([status]='Cancelled' OR [status]='Delivered' OR [status]='Shipped' OR [status]='Pending')",
-			expected: []string{"Cancelled", "Delivered", "Shipped", "Pending"},
+			expected: []string{"Canceled", "Delivered", "Shipped", "Pending"},
 		},
 		{
 			name:     "MSSQL OR chain with Unicode prefix",

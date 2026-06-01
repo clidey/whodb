@@ -27,10 +27,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/clidey/whodb/core/internal/testutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
-	"github.com/go-chi/chi/v5"
 )
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)

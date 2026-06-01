@@ -20,12 +20,13 @@ import (
 	"regexp"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // Pre-compiled regex for PostgreSQL/CockroachDB type casts like ::text, ::character varying, :::STRING

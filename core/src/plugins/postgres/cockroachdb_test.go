@@ -21,8 +21,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm/clause"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 func TestCockroachDBSchemaQueryExcludesSystemSchemas(t *testing.T) {

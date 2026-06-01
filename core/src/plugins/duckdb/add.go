@@ -20,9 +20,10 @@ import (
 	"fmt"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // GetCreateTableQuery builds a CREATE TABLE statement for DuckDB.

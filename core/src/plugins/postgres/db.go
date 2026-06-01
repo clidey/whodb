@@ -20,15 +20,16 @@ import (
 	"maps"
 	"time"
 
-	"github.com/clidey/whodb/core/src/common/ssl"
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
-	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/clidey/whodb/core/src/common/ssl"
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/plugins"
 )
 
 func (p *PostgresPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {

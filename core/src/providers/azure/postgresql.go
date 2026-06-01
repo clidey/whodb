@@ -48,7 +48,7 @@ func (p *Provider) discoverPostgreSQL(ctx context.Context) ([]providers.Discover
 
 	for pager.More() {
 		if ctx.Err() != nil {
-			log.Warnf("Azure PostgreSQL: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Azure PostgreSQL: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -150,9 +150,7 @@ func (w *postgresRGPagerWrapper) NextPage(ctx context.Context) (armpostgresqlfle
 	if err != nil {
 		return armpostgresqlflexibleservers.ServersClientListResponse{}, err
 	}
-	return armpostgresqlflexibleservers.ServersClientListResponse{
-		ServerListResult: resp.ServerListResult,
-	}, nil
+	return armpostgresqlflexibleservers.ServersClientListResponse(resp), nil
 }
 
 func toPostgresListPager(pager interface {

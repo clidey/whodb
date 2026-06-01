@@ -34,7 +34,7 @@ func handleMongoError(err error) error {
 		for _, werr := range we.WriteErrors {
 			switch werr.Code {
 			case 11000:
-				return fmt.Errorf("duplicate key: a document with the same identifier already exists")
+				return errors.New("duplicate key: a document with the same identifier already exists")
 			default:
 				return fmt.Errorf("write error (%d): %s", werr.Code, werr.Message)
 			}
@@ -44,7 +44,7 @@ func handleMongoError(err error) error {
 	if ce, ok := errors.AsType[mongo.CommandError](err); ok {
 		switch ce.Code {
 		case 48: // NamespaceExists
-			return fmt.Errorf("collection already exists")
+			return errors.New("collection already exists")
 		case 121: // Document validation failure
 			return fmt.Errorf("document validation failed: %s", ce.Message)
 		}

@@ -29,9 +29,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xuri/excelize/v2"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"github.com/xuri/excelize/v2"
 )
 
 const (

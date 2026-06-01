@@ -21,12 +21,13 @@ import (
 	"fmt"
 	"sort"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+
 	"github.com/clidey/whodb/core/src/common/graphutil"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/query"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
@@ -55,7 +56,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 			"database":   database,
 			"collection": collection,
 		}).Error("Failed to convert where condition to MongoDB filter")
-		return nil, fmt.Errorf("error converting where condition: %v", err)
+		return nil, fmt.Errorf("error converting where condition: %w", err)
 	}
 
 	// Start count query in parallel
@@ -152,7 +153,7 @@ func (p *MongoDBPlugin) GetRowCount(config *engine.PluginConfig, database, colle
 
 	bsonFilter, err := convertWhereConditionToMongoDB(where)
 	if err != nil {
-		return 0, fmt.Errorf("error converting where condition: %v", err)
+		return 0, fmt.Errorf("error converting where condition: %w", err)
 	}
 
 	// codeql[go/nosql-injection]: collection name validated by StorageUnitExists before reaching this code

@@ -22,12 +22,13 @@ import (
 	"slices"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // QuestDBPlugin extends PostgresPlugin with QuestDB-specific catalog behavior.

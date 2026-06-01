@@ -275,7 +275,7 @@ func splitTopLevel(s string, sep byte) []string {
 	inQ := false // single-quote state
 	start := 0
 
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		switch ch := s[i]; {
 		case ch == '\'':
 			inQ = !inQ

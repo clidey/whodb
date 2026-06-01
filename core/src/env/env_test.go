@@ -53,7 +53,7 @@ func TestGetBasePathRejectsInvalidInput(t *testing.T) {
 	}{
 		{name: "double slash", input: "/whodb//admin"},
 		{name: "dot segment", input: "/whodb/./admin"},
-		{name: "dot dot segment", input: "/whodb/../admin"},
+		{name: "dot segment", input: "/whodb/../admin"},
 		{name: "space in segment", input: "/who db"},
 		{name: "query delimiter", input: "/whodb?next=/"},
 		{name: "fragment delimiter", input: "/whodb#frag"},

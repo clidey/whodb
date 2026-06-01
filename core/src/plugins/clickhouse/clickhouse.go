@@ -29,15 +29,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 var (
@@ -124,7 +125,7 @@ func (p *ClickHousePlugin) ConvertStringValue(value, columnType string, isNullab
 
 	if strings.Contains(normalized, "JSON") {
 		if !json.Valid([]byte(value)) {
-			return nil, fmt.Errorf("invalid JSON format")
+			return nil, errors.New("invalid JSON format")
 		}
 		return value, nil
 	}

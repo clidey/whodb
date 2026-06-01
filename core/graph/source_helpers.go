@@ -18,9 +18,11 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/auth"
@@ -31,7 +33,7 @@ import (
 func getSourceSpecForContext(ctx context.Context) (source.TypeSpec, *source.Credentials, error) {
 	credentials := auth.GetSourceCredentials(ctx)
 	if credentials == nil {
-		return source.TypeSpec{}, nil, fmt.Errorf("unauthorized")
+		return source.TypeSpec{}, nil, errors.New("unauthorized")
 	}
 
 	spec, ok := sourcecatalog.Find(credentials.SourceType)
@@ -146,7 +148,7 @@ func sourceRefFromInput(ref *model.SourceObjectRefInput) *source.ObjectRef {
 
 func validateSourceObjectAction(spec source.TypeSpec, ref *source.ObjectRef, action source.Action) error {
 	if ref == nil {
-		return fmt.Errorf("source object reference is required")
+		return errors.New("source object reference is required")
 	}
 	return source.ValidateObjectActionSupported(spec, ref.Kind, action)
 }
@@ -506,7 +508,7 @@ func sourceContentToModel(content *source.ContentResult) *model.SourceContent {
 		Text:       content.Text,
 		MIMEType:   content.MIMEType,
 		IsBinary:   content.IsBinary,
-		SizeBytes:  fmt.Sprintf("%d", content.SizeBytes),
+		SizeBytes:  strconv.FormatInt(content.SizeBytes, 10),
 		Truncated:  content.Truncated,
 		FileName:   content.FileName,
 		ModifiedAt: content.ModifiedAt,

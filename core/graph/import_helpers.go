@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/importer"
 	"github.com/clidey/whodb/core/src/source"

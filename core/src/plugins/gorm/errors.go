@@ -22,8 +22,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/log"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/log"
 )
 
 // ErrorHandler provides centralized error handling for GORM operations
@@ -52,63 +53,63 @@ func (h *ErrorHandler) HandleError(err error, operation string, details map[stri
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		logger.Debug("Record not found")
-		return fmt.Errorf("record not found")
+		return errors.New("record not found")
 
 	case errors.Is(err, gorm.ErrInvalidTransaction):
 		logger.Error("Invalid transaction")
-		return fmt.Errorf("transaction error: please retry the operation")
+		return errors.New("transaction error: please retry the operation")
 
 	case errors.Is(err, gorm.ErrNotImplemented):
 		logger.Error("Feature not implemented")
-		return fmt.Errorf("this feature is not supported for the current database")
+		return errors.New("this feature is not supported for the current database")
 
 	case errors.Is(err, gorm.ErrMissingWhereClause):
 		logger.Warn("Missing WHERE clause in destructive operation")
-		return fmt.Errorf("WHERE clause required for this operation")
+		return errors.New("WHERE clause required for this operation")
 
 	case errors.Is(err, gorm.ErrUnsupportedRelation):
 		logger.Error("Unsupported relation")
-		return fmt.Errorf("relationship operation not supported")
+		return errors.New("relationship operation not supported")
 
 	case errors.Is(err, gorm.ErrPrimaryKeyRequired):
 		logger.Error("Primary key required")
-		return fmt.Errorf("primary key is required for this operation")
+		return errors.New("primary key is required for this operation")
 
 	case errors.Is(err, gorm.ErrModelValueRequired):
 		logger.Error("Model value required")
-		return fmt.Errorf("value is required for this operation")
+		return errors.New("value is required for this operation")
 
 	case errors.Is(err, gorm.ErrUnsupportedDriver):
 		logger.Error("Unsupported database driver")
-		return fmt.Errorf("database driver not supported")
+		return errors.New("database driver not supported")
 
 	case h.isDuplicateKeyError(err):
 		logger.Warn("Duplicate key violation")
-		return fmt.Errorf("duplicate key: a record with these values already exists")
+		return errors.New("duplicate key: a record with these values already exists")
 
 	case h.isForeignKeyError(err):
 		logger.Warn("Foreign key constraint violation")
-		return fmt.Errorf("foreign key constraint: referenced record does not exist or is in use")
+		return errors.New("foreign key constraint: referenced record does not exist or is in use")
 
 	case h.isCheckConstraintError(err):
 		logger.Warn("Check constraint violation")
-		return fmt.Errorf("check constraint violation: value does not meet requirements")
+		return errors.New("check constraint violation: value does not meet requirements")
 
 	case h.isNotNullError(err):
 		logger.Warn("NOT NULL constraint violation")
-		return fmt.Errorf("required field cannot be empty")
+		return errors.New("required field cannot be empty")
 
 	case h.isConnectionError(err):
 		logger.Error("Database connection error")
-		return fmt.Errorf("database connection error: please check your connection settings")
+		return errors.New("database connection error: please check your connection settings")
 
 	case h.isTimeoutError(err):
 		logger.Error("Operation timeout")
-		return fmt.Errorf("operation timed out: the database took too long to respond")
+		return errors.New("operation timed out: the database took too long to respond")
 
 	case h.isPermissionError(err):
 		logger.Error("Permission denied")
-		return fmt.Errorf("permission denied: insufficient privileges for this operation")
+		return errors.New("permission denied: insufficient privileges for this operation")
 
 	default:
 		// Log full error for debugging but return sanitized message

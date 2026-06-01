@@ -19,9 +19,10 @@ package auth
 import (
 	"encoding/json"
 
+	"github.com/zalando/go-keyring"
+
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/source"
-	"github.com/zalando/go-keyring"
 )
 
 var keyringService = getKeyringService()

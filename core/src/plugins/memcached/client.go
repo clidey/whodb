@@ -19,6 +19,7 @@ package memcached
 import (
 	"bufio"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -167,7 +168,7 @@ func (c *Client) Delete(key string) error {
 		return fmt.Errorf("memcached delete read: %w", err)
 	}
 	if line == "NOT_FOUND" {
-		return fmt.Errorf("memcached delete: key not found")
+		return errors.New("memcached delete: key not found")
 	}
 	if line != "DELETED" {
 		return fmt.Errorf("memcached delete: %s", line)

@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 func (p *ElasticSearchPlugin) AddStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, fields []engine.Record) (bool, error) {
@@ -106,7 +107,7 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 	documentBytes, err := json.Marshal(jsonValue)
 	if err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to marshal ElasticSearch document to JSON")
-		return false, fmt.Errorf("error marshaling document to JSON: %v", err)
+		return false, fmt.Errorf("error marshaling document to JSON: %w", err)
 	}
 
 	documentReader := bytes.NewReader(documentBytes)
@@ -125,7 +126,7 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 	)
 	if err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to index document in ElasticSearch")
-		return false, fmt.Errorf("error indexing document: %v", err)
+		return false, fmt.Errorf("error indexing document: %w", err)
 	}
 	defer res.Body.Close()
 

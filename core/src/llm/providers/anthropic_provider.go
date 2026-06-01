@@ -69,7 +69,7 @@ func (p *AnthropicProvider) GetSupportedModels(config *ProviderConfig) ([]string
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/models", config.Endpoint)
+	url := config.Endpoint + "/models"
 	headers := map[string]string{
 		"x-api-key":         config.APIKey,
 		"anthropic-version": "2023-06-01",

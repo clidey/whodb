@@ -41,7 +41,7 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("DocumentDB: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("DocumentDB: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 

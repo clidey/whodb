@@ -17,13 +17,14 @@
 package plugins
 
 import (
-	"fmt"
+	"errors"
 	"time"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // SortDirection indicates ascending or descending sort order.
@@ -133,7 +134,7 @@ func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, opera
 
 	if db == nil {
 		var zero T
-		return zero, fmt.Errorf("internal error: nil database connection")
+		return zero, errors.New("internal error: nil database connection")
 	}
 
 	return operation(db.WithContext(config.OperationContext()))

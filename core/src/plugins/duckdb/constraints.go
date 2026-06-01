@@ -17,11 +17,12 @@
 package duckdb
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // GetColumnConstraints retrieves column constraints for DuckDB tables.

@@ -61,7 +61,7 @@ func FromStorageUnits(units []source.StorageUnit) []Suggestion {
 			}
 		default:
 			suggestion = Suggestion{
-				Description: fmt.Sprintf("Show me all the data in %s", tableName),
+				Description: "Show me all the data in " + tableName,
 				Category:    "SELECT",
 			}
 		}

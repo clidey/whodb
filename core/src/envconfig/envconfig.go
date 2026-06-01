@@ -37,7 +37,7 @@ import (
 // to numbered WHODB_<TYPE>_1, WHODB_<TYPE>_2, etc.
 func GetDefaultDatabaseCredentials(databaseType string) []types.DatabaseCredentials {
 	uppercaseDatabaseType := strings.ToUpper(databaseType)
-	credEnvVar := fmt.Sprintf("WHODB_%s", uppercaseDatabaseType)
+	credEnvVar := "WHODB_" + uppercaseDatabaseType
 	credEnvValue := os.Getenv(credEnvVar)
 
 	if credEnvValue == "" {

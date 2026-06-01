@@ -19,6 +19,7 @@ package elasticsearch
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -41,7 +42,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 	elasticSearchConditions, err := convertWhereConditionToES(where)
 	if err != nil {
 		log.WithError(err).WithField("collection", collection).Error("Failed to convert where condition to ElasticSearch query")
-		return nil, fmt.Errorf("error converting where condition: %v", err)
+		return nil, fmt.Errorf("error converting where condition: %w", err)
 	}
 
 	query := map[string]any{
@@ -107,7 +108,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 
 	hits, ok := searchResult["hits"].(map[string]any)["hits"].([]any)
 	if !ok {
-		err := fmt.Errorf("invalid response structure")
+		err := errors.New("invalid response structure")
 		log.WithError(err).WithField("collection", collection).Error("ElasticSearch search response has invalid structure")
 		return nil, err
 	}
@@ -152,7 +153,7 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 
 	elasticSearchConditions, err := convertWhereConditionToES(where)
 	if err != nil {
-		return 0, fmt.Errorf("error converting where condition: %v", err)
+		return 0, fmt.Errorf("error converting where condition: %w", err)
 	}
 
 	query := map[string]any{
@@ -187,7 +188,7 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 
 	count, ok := countResult["count"].(float64)
 	if !ok {
-		return 0, fmt.Errorf("unexpected count response format")
+		return 0, errors.New("unexpected count response format")
 	}
 
 	return int64(count), nil

@@ -20,11 +20,12 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/go-redis/redis/v8"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/common/ssl"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-redis/redis/v8"
 )
 
 func DB(config *engine.PluginConfig) (*redis.Client, error) {

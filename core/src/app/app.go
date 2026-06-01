@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
 	"github.com/clidey/whodb/core/src/engine"
@@ -87,7 +88,7 @@ func welcomeBannerLines(port string) []string {
 	return []string{
 		title,
 		"Get started by visiting:",
-		fmt.Sprintf("http://0.0.0.0:%s", port),
+		"http://0.0.0.0:" + port,
 		"Explore and enjoy working with your databases!",
 	}
 }
@@ -194,7 +195,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 	port := resolvePort()
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%s", port),
+		Addr:              ":" + port,
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,

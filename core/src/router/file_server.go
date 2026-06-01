@@ -24,9 +24,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/clidey/whodb/core/src/env"
 	"github.com/clidey/whodb/core/src/log"
-	"github.com/go-chi/chi/v5"
 )
 
 const baseHrefPlaceholder = "__WHODB_BASE_HREF__"

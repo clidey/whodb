@@ -20,15 +20,17 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
 	"strings"
 
+	"github.com/xuri/excelize/v2"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/source"
-	"github.com/xuri/excelize/v2"
 )
 
 const (
@@ -54,7 +56,7 @@ var InvalidDelimiters = map[byte]string{
 // validateDelimiter checks if a delimiter is valid for CSV export
 func validateDelimiter(delimiter string) error {
 	if len(delimiter) != 1 {
-		return fmt.Errorf("delimiter must be a single character")
+		return errors.New("delimiter must be a single character")
 	}
 
 	delimChar := delimiter[0]
@@ -173,7 +175,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 func handleCSVExport(ctx context.Context, w http.ResponseWriter, exporter source.TabularExporter, ref source.ObjectRef, fileBaseName string, delimiter string, selectedRows []map[string]any) {
 	delimRune := rune(delimiter[0])
 
-	filename := fmt.Sprintf("%s.csv", fileBaseName)
+	filename := fileBaseName + ".csv"
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -288,7 +290,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 	}
 
 	if len(headers) > 0 {
-		for i := 0; i < len(headers); i++ {
+		for i := range headers {
 			streamWriter.SetColWidth(i+1, i+1, 15)
 		}
 	}
@@ -299,7 +301,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 		return
 	}
 
-	filename := fmt.Sprintf("%s.xlsx", fileBaseName)
+	filename := fileBaseName + ".xlsx"
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -314,7 +316,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 }
 
 func handleNDJSONExport(ctx context.Context, w http.ResponseWriter, exporter source.NDJSONExporter, ref source.ObjectRef, fileBaseName string, selectedRows []map[string]any) {
-	filename := fmt.Sprintf("%s.ndjson", fileBaseName)
+	filename := fileBaseName + ".ndjson"
 
 	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
@@ -350,7 +352,7 @@ func handleSelectedRowsCSVExport(w http.ResponseWriter, fileBaseName string, del
 	}
 
 	delimRune := rune(delimiter[0])
-	filename := fmt.Sprintf("%s.csv", fileBaseName)
+	filename := fileBaseName + ".csv"
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -431,7 +433,7 @@ func handleSelectedRowsExcelExport(w http.ResponseWriter, fileBaseName string, s
 		return
 	}
 
-	filename := fmt.Sprintf("%s.xlsx", fileBaseName)
+	filename := fileBaseName + ".xlsx"
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -444,7 +446,7 @@ func handleSelectedRowsExcelExport(w http.ResponseWriter, fileBaseName string, s
 }
 
 func handleSelectedRowsNDJSONExport(w http.ResponseWriter, fileBaseName string, selectedRows []map[string]any) {
-	filename := fmt.Sprintf("%s.ndjson", fileBaseName)
+	filename := fileBaseName + ".ndjson"
 
 	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))

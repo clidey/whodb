@@ -289,7 +289,7 @@ func TrimEnclosingParens(value string) string {
 	for len(value) >= 2 && value[0] == '(' && value[len(value)-1] == ')' {
 		depth := 0
 		enclosesEntireValue := true
-		for i := 0; i < len(value); i++ {
+		for i := range len(value) {
 			switch value[i] {
 			case '(':
 				depth++

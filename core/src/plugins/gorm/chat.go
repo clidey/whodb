@@ -21,19 +21,20 @@ import (
 	"fmt"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/bamlconfig"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	"github.com/clidey/whodb/core/src/source"
-	"gorm.io/gorm"
 )
 
 func (p *GormPlugin) buildChatTableContext(config *engine.PluginConfig, db *gorm.DB, schema string) (string, error) {
 	// Get table names from table info query
 	rows, err := db.Raw(p.GetTableInfoQuery(), schema).Rows()
 	if err != nil {
-		log.WithError(err).Error(fmt.Sprintf("Failed to get tables for chat operation in schema: %s", schema))
+		log.WithError(err).Error("Failed to get tables for chat operation in schema: " + schema)
 		return "", err
 	}
 	defer rows.Close()
@@ -46,7 +47,7 @@ func (p *GormPlugin) buildChatTableContext(config *engine.PluginConfig, db *gorm
 			continue
 		}
 
-		tableDetails.WriteString(fmt.Sprintf("table: %v\n", tableName))
+		fmt.Fprintf(&tableDetails, "table: %v\n", tableName)
 
 		// Use the plugin column lookup so database-specific overrides
 		// (QuestDB, ClickHouse, SQLite, etc.) are reused for chat context too.
@@ -57,7 +58,7 @@ func (p *GormPlugin) buildChatTableContext(config *engine.PluginConfig, db *gorm
 		}
 
 		for _, col := range orderedColumns {
-			tableDetails.WriteString(fmt.Sprintf("- %v (%v)\n", col.Name, col.Type))
+			fmt.Fprintf(&tableDetails, "- %v (%v)\n", col.Name, col.Type)
 		}
 	}
 

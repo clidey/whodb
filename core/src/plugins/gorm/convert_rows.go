@@ -22,10 +22,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/log"
 	"github.com/dromara/carbon/v2"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/log"
 )
 
 // ColumnCodec provides custom scanner allocation and value formatting for a raw SQL column type.
@@ -252,7 +253,7 @@ func (p *GormPlugin) FindMissingDataType(db *gorm.DB, columnType string) string 
 			Select("typname").
 			Where("oid = ?", columnType).
 			Scan(&typname).Error; err != nil {
-			log.WithError(err).Error(fmt.Sprintf("Failed to find PostgreSQL type name for OID: %s", columnType))
+			log.WithError(err).Error("Failed to find PostgreSQL type name for OID: " + columnType)
 			typname = columnType
 		}
 		return strings.ToUpper(typname)

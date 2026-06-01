@@ -23,9 +23,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/query"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 func TestConvertAtomicConditionToES(t *testing.T) {

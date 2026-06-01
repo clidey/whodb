@@ -23,13 +23,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clidey/whodb/core/src/analytics"
-	coreaudit "github.com/clidey/whodb/core/src/audit"
-	"github.com/clidey/whodb/core/src/common"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/clidey/whodb/core/src/analytics"
+	coreaudit "github.com/clidey/whodb/core/src/audit"
+	"github.com/clidey/whodb/core/src/common"
 )
 
 func contextMiddleware(next http.Handler) http.Handler {

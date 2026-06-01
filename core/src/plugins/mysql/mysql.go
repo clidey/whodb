@@ -18,8 +18,11 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
+	"strconv"
 	"strings"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -27,8 +30,6 @@ import (
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 var (
@@ -133,10 +134,10 @@ func (p *MySQLPlugin) GetTableNameAndAttributes(rows *sql.Rows) (string, []engin
 		{Key: "Type", Value: tableType},
 	}
 	if totalSize.Valid {
-		attributes = append(attributes, engine.Record{Key: "Total Size", Value: fmt.Sprintf("%d", totalSize.Int64)})
+		attributes = append(attributes, engine.Record{Key: "Total Size", Value: strconv.FormatInt(totalSize.Int64, 10)})
 	}
 	if dataSize.Valid {
-		attributes = append(attributes, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", dataSize.Int64)})
+		attributes = append(attributes, engine.Record{Key: "Data Size", Value: strconv.FormatInt(dataSize.Int64, 10)})
 	}
 	return tableName, attributes
 }

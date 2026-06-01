@@ -50,7 +50,7 @@ func (p *Provider) discoverCosmosDB(ctx context.Context) ([]providers.Discovered
 
 	for pager.More() {
 		if ctx.Err() != nil {
-			log.Warnf("Azure CosmosDB: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("Azure CosmosDB: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -177,9 +177,7 @@ func (w *cosmosRGPagerWrapper) NextPage(ctx context.Context) (armcosmos.Database
 	if err != nil {
 		return armcosmos.DatabaseAccountsClientListResponse{}, err
 	}
-	return armcosmos.DatabaseAccountsClientListResponse{
-		DatabaseAccountsListResult: resp.DatabaseAccountsListResult,
-	}, nil
+	return armcosmos.DatabaseAccountsClientListResponse(resp), nil
 }
 
 func toCosmosListPager(pager interface {

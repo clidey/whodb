@@ -18,8 +18,10 @@ package redis
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
@@ -98,7 +100,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return err
 		}
 		for i, v := range values {
-			if err := writer([]string{fmt.Sprintf("%d", i), v}); err != nil {
+			if err := writer([]string{strconv.Itoa(i), v}); err != nil {
 				return err
 			}
 		}
@@ -123,7 +125,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		sort.Strings(values)
 		for i, v := range values {
-			if err := writer([]string{fmt.Sprintf("%d", i), v}); err != nil {
+			if err := writer([]string{strconv.Itoa(i), v}); err != nil {
 				return err
 			}
 		}
@@ -156,7 +158,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		for i, m := range values {
 			if err := writer([]string{
-				fmt.Sprintf("%d", i),
+				strconv.Itoa(i),
 				fmt.Sprintf("%v", m.Member),
 				fmt.Sprintf("%.2f", m.Score),
 			}); err != nil {
@@ -166,7 +168,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		return nil
 	}
 
-	return fmt.Errorf("unsupported Redis data type")
+	return errors.New("unsupported Redis data type")
 }
 
 // ExportDataNDJSON streams Redis data as NDJSON.
@@ -259,5 +261,5 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		return emit(rows)
 	}
 
-	return fmt.Errorf("unsupported Redis data type")
+	return errors.New("unsupported Redis data type")
 }

@@ -220,7 +220,7 @@ func TestHandleAzureError_ConnectionPatterns(t *testing.T) {
 func TestHandleAzureError_NonAzureError(t *testing.T) {
 	err := errors.New("something unrelated happened")
 	result := HandleAzureError(err)
-	if result != err {
+	if !errors.Is(result, err) {
 		t.Errorf("expected original error to be returned, got %v", result)
 	}
 }

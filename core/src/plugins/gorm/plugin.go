@@ -18,19 +18,21 @@ package gorm_plugin
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	queryast "github.com/clidey/whodb/core/src/query"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type GormPlugin struct {
@@ -511,7 +513,7 @@ func (p *GormPlugin) applyBetweenCondition(query *gorm.DB, col, operator, rawVal
 	raw := strings.TrimSpace(rawValue)
 	parts := strings.Split(raw, ",")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid BETWEEN value; expected 'min,max'")
+		return nil, errors.New("invalid BETWEEN value; expected 'min,max'")
 	}
 	v1, err := p.GormPluginFunctions.ConvertStringValue(strings.TrimSpace(parts[0]), columnType, isNullable)
 	if err != nil {

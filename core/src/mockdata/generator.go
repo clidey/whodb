@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"

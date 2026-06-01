@@ -18,8 +18,10 @@ package sqlite3
 
 import (
 	"fmt"
-	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
+
 	"gorm.io/gorm"
+
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 // SQLiteSQLBuilder embeds the generic SQLBuilder and overrides methods for SQLite-specific syntax.

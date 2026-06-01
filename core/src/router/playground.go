@@ -19,8 +19,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/clidey/whodb/core/src/env"
 )
 
 func setupPlaygroundHandler(router chi.Router, server *handler.Server) {
@@ -33,7 +34,7 @@ func setupPlaygroundHandler(router chi.Router, server *handler.Server) {
 		pathHandler = playground.Handler("API Gateway", apiQueryPath)
 	}
 	router.HandleFunc("/api/query", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "POST" || r.Header.Get("Connection") == "upgrade" {
+		if r.Method == http.MethodPost || r.Header.Get("Connection") == "upgrade" {
 			server.ServeHTTP(w, r)
 		} else if env.IsDevelopment {
 			pathHandler.ServeHTTP(w, r)

@@ -17,6 +17,7 @@
 package source
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -132,7 +133,7 @@ func ValidateColumns(columns []Column) error {
 	for _, column := range columns {
 		name := strings.TrimSpace(column.Name)
 		if name == "" {
-			return fmt.Errorf("source column has an empty name")
+			return errors.New("source column has an empty name")
 		}
 		normalizedName := strings.ToLower(name)
 		if _, exists := seen[normalizedName]; exists {
@@ -156,7 +157,7 @@ func ValidateFieldConstraints(fields []FieldConstraints) error {
 	for _, field := range fields {
 		name := strings.TrimSpace(field.Name)
 		if name == "" {
-			return fmt.Errorf("source field constraint has an empty name")
+			return errors.New("source field constraint has an empty name")
 		}
 		normalizedName := strings.ToLower(name)
 		if _, exists := seen[normalizedName]; exists {
@@ -180,7 +181,7 @@ func ValidateGraphUnits(units []GraphUnit) error {
 	for _, unit := range units {
 		name := strings.TrimSpace(unit.Unit.Name)
 		if name == "" {
-			return fmt.Errorf("source graph unit has an empty name")
+			return errors.New("source graph unit has an empty name")
 		}
 		normalizedName := strings.ToLower(name)
 		if _, exists := seen[normalizedName]; exists {

@@ -66,7 +66,7 @@ const (
 	SurfaceBrowser Surface = "Browser"
 	// SurfaceQuery enables query/scratchpad execution.
 	SurfaceQuery Surface = "Query"
-	// SurfaceGraph enables graph visualisation.
+	// SurfaceGraph enables graph visualization.
 	SurfaceGraph Surface = "Graph"
 	// SurfaceChat enables AI chat.
 	SurfaceChat Surface = "Chat"
@@ -132,7 +132,7 @@ const (
 	ActionGenerateMockData Action = "GenerateMockData"
 	// ActionExecute indicates an executable object or query surface is available.
 	ActionExecute Action = "Execute"
-	// ActionViewGraph indicates the object can be visualised in graph form.
+	// ActionViewGraph indicates the object can be visualized in graph form.
 	ActionViewGraph Action = "ViewGraph"
 )
 

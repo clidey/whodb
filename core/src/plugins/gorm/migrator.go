@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/engine"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/engine"
 )
 
 // MigratorHelper provides schema operations using GORM's Migrator interface

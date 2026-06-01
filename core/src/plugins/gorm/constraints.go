@@ -17,9 +17,10 @@
 package gorm_plugin
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
 )
 
 // GetColumnConstraints gets column constraints using GORM's Migrator

@@ -25,10 +25,11 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/source"
-	"golang.org/x/sync/errgroup"
 )
 
 // StreamRequest represents the incoming SSE request

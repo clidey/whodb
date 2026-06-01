@@ -15,9 +15,10 @@ package baml_client
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	baml "github.com/boundaryml/baml/engine/language_client_go/pkg"
+
 	"github.com/clidey/whodb/core/baml_client/types"
 )
 
@@ -91,7 +92,7 @@ func GenerateChatTitle(ctx context.Context, user_query string, opts ...CallOptio
 			}
 		}
 
-		return "", fmt.Errorf("No data returned from stream")
+		return "", errors.New("No data returned from stream")
 	}
 }
 
@@ -165,6 +166,6 @@ func GenerateSQLQuery(ctx context.Context, db_context types.DatabaseContext, use
 			}
 		}
 
-		return nil, fmt.Errorf("No data returned from stream")
+		return nil, errors.New("No data returned from stream")
 	}
 }

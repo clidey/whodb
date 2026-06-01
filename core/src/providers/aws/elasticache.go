@@ -73,7 +73,7 @@ func (p *Provider) discoverElastiCacheServerless(ctx context.Context) ([]provide
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("ElastiCache Serverless: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("ElastiCache Serverless: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -136,7 +136,7 @@ func (p *Provider) discoverElastiCacheReplicationGroups(ctx context.Context) ([]
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("ElastiCache ReplicationGroups: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("ElastiCache ReplicationGroups: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 
@@ -193,7 +193,7 @@ func (p *Provider) discoverElastiCacheClusters(ctx context.Context) ([]providers
 
 	for page := range maxPaginationPages {
 		if ctx.Err() != nil {
-			log.Warnf("ElastiCache Clusters: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("ElastiCache Clusters: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 

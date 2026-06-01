@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/env"
 	duckdbDriver "github.com/duckdb/duckdb-go/v2"
 	"gorm.io/gorm/clause"
+
+	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/env"
 )
 
 func TestDuckDBColumnCodec(t *testing.T) {

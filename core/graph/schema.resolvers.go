@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
 	"github.com/clidey/whodb/core/src/analytics"
@@ -1223,13 +1224,13 @@ func (r *queryResolver) SourceObject(ctx context.Context, ref model.SourceObject
 // SourceRows is the resolver for the SourceRows field.
 func (r *queryResolver) SourceRows(ctx context.Context, ref model.SourceObjectRefInput, where *model.WhereCondition, sort []*model.SortCondition, pageSize int, pageOffset int) (*model.RowsResult, error) {
 	if pageSize <= 0 {
-		return nil, fmt.Errorf("pageSize must be greater than 0")
+		return nil, errors.New("pageSize must be greater than 0")
 	}
 	if pageSize > env.MaxPageSize {
 		return nil, fmt.Errorf("pageSize must not exceed %d", env.MaxPageSize)
 	}
 	if pageOffset < 0 {
-		return nil, fmt.Errorf("pageOffset must not be negative")
+		return nil, errors.New("pageOffset must not be negative")
 	}
 
 	spec, session, err := getSourceSessionForContext(ctx)

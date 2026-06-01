@@ -19,7 +19,6 @@ package version
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -94,7 +93,7 @@ func CheckForUpdate(currentVersion string, disabled bool) UpdateInfo {
 				CurrentVersion:  currentVersion,
 				LatestVersion:   release.TagName,
 				UpdateAvailable: true,
-				ReleaseURL:      fmt.Sprintf("https://github.com/clidey/whodb/releases/tag/%s", release.TagName),
+				ReleaseURL:      "https://github.com/clidey/whodb/releases/tag/" + release.TagName,
 			}
 		}
 	}

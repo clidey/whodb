@@ -22,9 +22,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/query"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+
+	"github.com/clidey/whodb/core/src/query"
 )
 
 func mongoAtomicWhere(key, operator, value string) *query.WhereCondition {

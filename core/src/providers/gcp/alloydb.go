@@ -18,16 +18,18 @@ package gcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	alloydbpb "cloud.google.com/go/alloydb/apiv1/alloydbpb"
+	"google.golang.org/api/iterator"
+
 	"github.com/clidey/whodb/core/src/engine"
 	gcpinfra "github.com/clidey/whodb/core/src/gcp"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/providers"
-	"google.golang.org/api/iterator"
 )
 
 // discoverAlloyDB discovers AlloyDB clusters and their instances in the configured project/region.
@@ -46,7 +48,7 @@ func (p *Provider) discoverAlloyDB(ctx context.Context) ([]providers.DiscoveredC
 	clusterCount := 0
 	for {
 		if ctx.Err() != nil {
-			log.Warnf("AlloyDB: context cancelled, returning %d results so far", len(connections))
+			log.Warnf("AlloyDB: context canceled, returning %d results so far", len(connections))
 			return connections, ctx.Err()
 		}
 		if clusterCount >= maxPaginationPages {
@@ -54,7 +56,7 @@ func (p *Provider) discoverAlloyDB(ctx context.Context) ([]providers.DiscoveredC
 			break
 		}
 		cluster, err := clusterIter.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
@@ -73,7 +75,7 @@ func (p *Provider) discoverAlloyDB(ctx context.Context) ([]providers.DiscoveredC
 
 		for instanceCount := 0; ; instanceCount++ {
 			if ctx.Err() != nil {
-				log.Warnf("AlloyDB: context cancelled during instance iteration, returning %d results so far", len(connections))
+				log.Warnf("AlloyDB: context canceled during instance iteration, returning %d results so far", len(connections))
 				return connections, ctx.Err()
 			}
 			if instanceCount >= maxPaginationPages {
@@ -81,7 +83,7 @@ func (p *Provider) discoverAlloyDB(ctx context.Context) ([]providers.DiscoveredC
 				break
 			}
 			instance, err := instanceIter.Next()
-			if err == iterator.Done {
+			if errors.Is(err, iterator.Done) {
 				break
 			}
 			if err != nil {
@@ -117,10 +119,11 @@ func (p *Provider) alloyDBInstanceToConnection(instance *alloydbpb.Instance, clu
 	// Map instance type to endpointType metadata (mirrors AWS Aurora writer/reader pattern)
 	endpointType := "writer"
 	suffix := " (writer)"
-	if instance.InstanceType == alloydbpb.Instance_READ_POOL {
+	switch instance.InstanceType {
+	case alloydbpb.Instance_READ_POOL:
 		endpointType = "reader"
 		suffix = " (reader)"
-	} else if instance.InstanceType == alloydbpb.Instance_SECONDARY {
+	case alloydbpb.Instance_SECONDARY:
 		endpointType = "reader"
 		suffix = " (cross-region reader)"
 	}

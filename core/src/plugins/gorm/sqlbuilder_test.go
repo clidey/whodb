@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/clidey/whodb/core/src/plugins"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/clidey/whodb/core/src/plugins"
 )
 
 func newDryRunDB(t *testing.T) *gorm.DB {

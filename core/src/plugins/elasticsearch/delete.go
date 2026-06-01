@@ -58,7 +58,7 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 
 	idStr, ok := id.(string)
 	if !ok || strings.TrimSpace(idStr) == "" {
-		return false, fmt.Errorf("invalid '_id' field; expected non-empty string")
+		return false, errors.New("invalid '_id' field; expected non-empty string")
 	}
 
 	// Delete the document by ID

@@ -19,11 +19,13 @@ package gorm_plugin
 import (
 	"errors"
 	"fmt"
+	"slices"
+
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
-	"gorm.io/gorm"
-	"slices"
 )
 
 func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema string, storageUnit string, values map[string]string, updatedColumns []string) (bool, error) {

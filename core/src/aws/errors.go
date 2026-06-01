@@ -65,7 +65,7 @@ func HandleAWSError(err error) error {
 	}
 	if (strings.Contains(errMsg, "SSO") || strings.Contains(errMsg, "sso")) &&
 		(strings.Contains(errMsg, "expired") || strings.Contains(errMsg, "token")) {
-		return fmt.Errorf("AWS SSO session expired: run 'aws sso login' to refresh your session")
+		return errors.New("AWS SSO session expired: run 'aws sso login' to refresh your session")
 	}
 	if strings.Contains(errMsg, "connection refused") ||
 		strings.Contains(errMsg, "no such host") ||

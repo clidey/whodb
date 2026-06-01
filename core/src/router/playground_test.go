@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/clidey/whodb/core/src/env"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/clidey/whodb/core/src/env"
 )
 
 func TestSetupPlaygroundHandlerServesPlaygroundInDev(t *testing.T) {

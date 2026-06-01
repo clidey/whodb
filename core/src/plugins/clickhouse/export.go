@@ -21,7 +21,7 @@ import (
 
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
-	"github.com/clidey/whodb/core/src/plugins/gorm"
+	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
 // ExportData exports ClickHouse table data to tabular format
@@ -42,7 +42,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		Order("position").
 		Rows()
 	if err != nil {
-		return fmt.Errorf("failed to get columns: %v", err)
+		return fmt.Errorf("failed to get columns: %w", err)
 	}
 	defer rows.Close()
 
@@ -63,7 +63,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		headers[i] = common.FormatCSVHeader(col, types[i])
 	}
 	if err := writer(headers); err != nil {
-		return fmt.Errorf("failed to write headers: %v", err)
+		return fmt.Errorf("failed to write headers: %w", err)
 	}
 
 	// Use GORM query builder for export
@@ -77,7 +77,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 
 	dataRows, err := exportQuery.Rows()
 	if err != nil {
-		return fmt.Errorf("failed to query data: %v", err)
+		return fmt.Errorf("failed to query data: %w", err)
 	}
 	defer dataRows.Close()
 
@@ -90,7 +90,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 
 	for dataRows.Next() {
 		if err := dataRows.Scan(valuePtrs...); err != nil {
-			return fmt.Errorf("failed to scan row: %v", err)
+			return fmt.Errorf("failed to scan row: %w", err)
 		}
 
 		row := make([]string, len(columns))
@@ -99,7 +99,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		}
 
 		if err := writer(row); err != nil {
-			return fmt.Errorf("failed to write row: %v", err)
+			return fmt.Errorf("failed to write row: %w", err)
 		}
 
 		rowCount++

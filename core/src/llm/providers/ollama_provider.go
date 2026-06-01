@@ -67,7 +67,7 @@ func (p *OllamaProvider) GetSupportedModels(config *ProviderConfig) ([]string, e
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/tags", config.Endpoint)
+	url := config.Endpoint + "/tags"
 
 	resp, err := sendHTTPRequest("GET", url, nil, nil)
 	if err != nil {

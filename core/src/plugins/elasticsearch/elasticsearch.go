@@ -19,7 +19,10 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/engine"
@@ -123,7 +126,7 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 	indicesStats, ok := stats["indices"].(map[string]any)
 	if !ok {
 		log.WithField("stats", stats).Error("Unexpected indices stats format from ElasticSearch")
-		return nil, fmt.Errorf("unexpected indices stats format")
+		return nil, errors.New("unexpected indices stats format")
 	}
 
 	storageUnits := make([]engine.StorageUnit, 0, len(indicesStats))
@@ -146,12 +149,12 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 		primaries, _ := indexStats["primaries"].(map[string]any)
 		if store, ok := primaries["store"].(map[string]any); ok {
 			if bytes, ok := toInt64(store["size_in_bytes"]); ok {
-				attrs = append(attrs, engine.Record{Key: "Data Size", Value: fmt.Sprintf("%d", bytes)})
+				attrs = append(attrs, engine.Record{Key: "Data Size", Value: strconv.FormatInt(bytes, 10)})
 			}
 		}
 		if docs, ok := primaries["docs"].(map[string]any); ok {
 			if count, ok := toInt64(docs["count"]); ok {
-				attrs = append(attrs, engine.Record{Key: "Count", Value: fmt.Sprintf("%d", count)})
+				attrs = append(attrs, engine.Record{Key: "Count", Value: strconv.FormatInt(count, 10)})
 			}
 		}
 
@@ -207,7 +210,7 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 	}
 	defer res.Body.Close()
 
-	return res.StatusCode == 200, nil
+	return res.StatusCode == http.StatusOK, nil
 }
 
 func (p *ElasticSearchPlugin) FormatValue(val any) string {

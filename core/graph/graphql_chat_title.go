@@ -20,6 +20,7 @@ package graph
 
 import (
 	ctx "context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -52,7 +53,7 @@ func generateChatTitleImpl(c ctx.Context, input model.GenerateChatTitleInput) (*
 	if registeredGenerateChatTitle != nil {
 		return registeredGenerateChatTitle(c, input)
 	}
-	return nil, fmt.Errorf("chat title generation not available")
+	return nil, errors.New("chat title generation not available")
 }
 
 // ceGenerateChatTitle generates a chat title using BAML

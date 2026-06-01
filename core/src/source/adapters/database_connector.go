@@ -20,6 +20,7 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -214,7 +215,7 @@ func (s *DatabaseSession) GetObject(ctx context.Context, ref source.ObjectRef) (
 		}
 	}
 
-	return nil, fmt.Errorf("source object not found")
+	return nil, errors.New("source object not found")
 }
 
 // ReadRows returns rows for a tabular source object.
@@ -430,7 +431,7 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 		return fmt.Errorf("streaming queries are not supported for %s", s.spec.Label)
 	}
 	if writer == nil {
-		return fmt.Errorf("stream writer is required")
+		return errors.New("stream writer is required")
 	}
 
 	streamer, ok := s.plugin.PluginFunctions.(engine.QueryStreamer)
@@ -597,7 +598,7 @@ func (s *DatabaseSession) ExportRowsNDJSON(ctx context.Context, ref source.Objec
 		ExportDataNDJSON(config *engine.PluginConfig, namespace string, objectName string, writer func(string) error, selectedRows []map[string]any) error
 	})
 	if !ok {
-		return fmt.Errorf("NDJSON export is not supported")
+		return errors.New("NDJSON export is not supported")
 	}
 
 	return exporter.ExportDataNDJSON(config, namespace, name, writer, selectedRows)

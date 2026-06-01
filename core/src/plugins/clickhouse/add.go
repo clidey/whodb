@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/engine"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // ErrUpsertNotSupported is returned when upsert mode is attempted on ClickHouse.

@@ -3,8 +3,9 @@ package auth
 import (
 	"testing"
 
-	"github.com/clidey/whodb/core/src/source"
 	"github.com/zalando/go-keyring"
+
+	"github.com/clidey/whodb/core/src/source"
 )
 
 func TestSaveLoadDeleteCredentialsUsesKeyringWhenDesktopMode(t *testing.T) {

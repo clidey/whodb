@@ -23,8 +23,9 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/clidey/whodb/core/graph/model"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/clidey/whodb/core/graph/model"
 )
 
 // SetupHTTPServer registers REST API endpoints that wrap GraphQL resolvers for clients

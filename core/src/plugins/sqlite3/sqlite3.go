@@ -25,6 +25,8 @@ import (
 	"strings"
 	"sync"
 
+	"gorm.io/gorm"
+
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/env"
@@ -33,7 +35,6 @@ import (
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 	queryast "github.com/clidey/whodb/core/src/query"
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
-	"gorm.io/gorm"
 )
 
 // CreateSQLBuilder creates a SQLite-specific SQL builder.
@@ -158,7 +159,7 @@ func (p *Sqlite3Plugin) GetPlaceholder(index int) string {
 func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]engine.Column, error) {
 	builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
 	if !ok {
-		return nil, fmt.Errorf("failed to create SQLite SQL builder")
+		return nil, errors.New("failed to create SQLite SQL builder")
 	}
 
 	tableInfoQuery, err := builder.PragmaQuery("table_info", storageUnit)
@@ -236,7 +237,7 @@ func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema
 	_, err := plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {
 		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
 		if !ok {
-			return false, fmt.Errorf("failed to create SQLite SQL builder")
+			return false, errors.New("failed to create SQLite SQL builder")
 		}
 
 		// Detect auto-increment: SQLite INTEGER PRIMARY KEY with a single PK column
@@ -399,7 +400,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 
 			query, err := p.ApplyWhereConditions(query, where, columnTypes)
 			if err != nil {
-				log.WithError(err).Error(fmt.Sprintf("Failed to apply where conditions for STRICT table %s", storageUnit))
+				log.WithError(err).Error("Failed to apply where conditions for STRICT table " + storageUnit)
 				return nil, err
 			}
 
@@ -423,7 +424,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 
 			rows, err := query.Rows()
 			if err != nil {
-				log.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for STRICT table %s", storageUnit))
+				log.WithError(err).Error("Failed to execute SQLite rows query for STRICT table " + storageUnit)
 				return nil, err
 			}
 			defer rows.Close()
@@ -506,7 +507,7 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 
 		// Wait for count query to complete and set TotalCount
 		if countErr := <-countDone; countErr != nil {
-			log.WithError(countErr).Warn(fmt.Sprintf("Failed to get row count for table %s", storageUnit))
+			log.WithError(countErr).Warn("Failed to get row count for table " + storageUnit)
 		} else {
 			result.TotalCount = totalCount
 		}

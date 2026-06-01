@@ -224,7 +224,7 @@ func IdentifyWithDistinctID(ctx context.Context, distinctID string, traits map[s
 
 // TrackMutation is a helper for recording GraphQL mutations executed by the user.
 func TrackMutation(ctx context.Context, name string, props map[string]any) {
-	Capture(ctx, fmt.Sprintf("graphql.mutation.%s", name), props)
+	Capture(ctx, "graphql.mutation."+name, props)
 }
 
 // HashIdentifier hashes a potentially sensitive identifier before emission.

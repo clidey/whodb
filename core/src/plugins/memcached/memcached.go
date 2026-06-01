@@ -18,6 +18,7 @@ package memcached
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -244,7 +245,7 @@ func convertWhereCondition(where *query.WhereCondition) (map[string]memcachedFil
 	switch where.Type {
 	case query.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
-			return nil, fmt.Errorf("atomic condition must have an atomicwherecondition")
+			return nil, errors.New("atomic condition must have an atomicwherecondition")
 		}
 		return map[string]memcachedFilter{
 			where.Atomic.Key: {

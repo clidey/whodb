@@ -17,14 +17,15 @@
 package sqlite3
 
 import (
-	"fmt"
+	"errors"
 	"strings"
+
+	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/log"
 	"github.com/clidey/whodb/core/src/plugins"
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
-	"gorm.io/gorm"
 )
 
 // GetColumnConstraints retrieves column constraints for SQLite tables
@@ -35,7 +36,7 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		// Use SQLite-specific SQL builder.
 		builder, ok := p.CreateSQLBuilder(db).(*SQLiteSQLBuilder)
 		if !ok {
-			return false, fmt.Errorf("failed to create SQLite SQL builder")
+			return false, errors.New("failed to create SQLite SQL builder")
 		}
 
 		// Get table schema including nullability

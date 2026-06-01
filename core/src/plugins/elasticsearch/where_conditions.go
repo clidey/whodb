@@ -17,17 +17,18 @@
 package elasticsearch
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/clidey/whodb/core/src/query"
 	"github.com/clidey/whodb/core/src/log"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 // convertAtomicConditionToES converts an atomic where condition to an Elasticsearch query clause
 func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]any, error) {
 	if atomic == nil {
-		return nil, fmt.Errorf("atomic condition is nil")
+		return nil, errors.New("atomic condition is nil")
 	}
 
 	// Handle different operators
@@ -177,7 +178,7 @@ func convertAtomicConditionToES(atomic *query.AtomicWhereCondition) (map[string]
 
 	case "range", "RANGE":
 		// Expect "min,max" (empty allowed)
-		minBound, maxBound := parseRangeBounds(fmt.Sprintf("%v", atomic.Value))
+		minBound, maxBound := parseRangeBounds(atomic.Value)
 		rangeClause := map[string]any{}
 		if minBound != "" {
 			rangeClause["gte"] = minBound
@@ -244,7 +245,7 @@ func convertWhereConditionToES(where *query.WhereCondition) (map[string]any, err
 	switch where.Type {
 	case query.WhereConditionTypeAtomic:
 		if where.Atomic == nil {
-			err := fmt.Errorf("atomic condition must have an atomicwherecondition")
+			err := errors.New("atomic condition must have an atomicwherecondition")
 			log.WithError(err).Error("Invalid atomic where condition: missing atomic condition")
 			return nil, err
 		}
