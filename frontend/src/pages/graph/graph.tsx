@@ -15,18 +15,22 @@
  */
 
 import {skipToken, useLazyQuery, useQuery} from "@apollo/client/react";
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Edge, Node, NodeMouseHandler, ReactFlowProvider, useEdgesState, useNodesState} from "reactflow";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {Edge, Node, NodeMouseHandler} from "reactflow";
+import { ReactFlowProvider, useEdgesState, useNodesState} from "reactflow";
 import {GraphElements} from "../../components/graph/constants";
-import {Graph, IGraphInstance} from "../../components/graph/graph";
+import type { IGraphInstance} from "../../components/graph/graph";
+import {Graph} from "../../components/graph/graph";
 import {createEdge, createNode} from "../../components/graph/utils";
 import {LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
+import type {
+    GetGraphQuery,
+    GetGraphQueryVariables} from '@graphql';
 import {
     GetGraphDocument,
-    GetGraphQuery,
-    GetGraphQueryVariables,
     GetColumnsBatchDocument,
 } from '@graphql';
 import {useSourceContract} from "../../hooks/useSourceContract";
@@ -161,7 +165,9 @@ export const GraphPage: FC = () => {
     const reactFlowRef = useRef<IGraphInstance>();
     const schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
-    const { item, singularStorageUnitLabel, storageUnitLabel } = useSourceContract(current?.Type);
+    const currentType = current?.Type;
+    const currentDatabase = current?.Database;
+    const { item, singularStorageUnitLabel, storageUnitLabel } = useSourceContract(currentType);
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
@@ -170,7 +176,7 @@ export const GraphPage: FC = () => {
     const [loadingColumns, setLoadingColumns] = useState<Record<string, boolean>>({});
 
     const [fetchColumnsBatch] = useLazyQuery(GetColumnsBatchDocument);
-    const graphScopeRef = useMemo(() => buildSourceScopeRef(item, current, schema), [current, item, schema]);
+    const graphScopeRef = useMemo(() => buildSourceScopeRef(item, current, schema), [currentDatabase, item, schema]);
     const shouldSkipGraph = !current || !item?.contract || (item.contract.GraphScopeKind != null && graphScopeRef == null);
     const graphQueryOptions = shouldSkipGraph
         ? skipToken
@@ -194,7 +200,6 @@ export const GraphPage: FC = () => {
 
     // Clear graph-specific UI state when the connection context changes.
     const currentProfileId = current?.Id;
-    const currentDatabase = current?.Database;
     useEffect(() => {
         setSelectedUnits(new Set());
         setTableColumns({});

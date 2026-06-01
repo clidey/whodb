@@ -43,7 +43,8 @@ import {
     toast
 } from "@clidey/ux";
 import {ChatHistorySidebar} from "./chat-history-sidebar";
-import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetAiChatQuery, GetDatabaseQuerySuggestionsDocument} from '@graphql';
+import type { GetAiChatQuery} from '@graphql';
+import {ExecuteConfirmedSqlDocument, GenerateChatTitleDocument, GetDatabaseQuerySuggestionsDocument} from '@graphql';
 import {
     ArrowUpCircleIcon,
     CheckCircleIcon,
@@ -57,7 +58,8 @@ import {
     TableCellsIcon
 } from "../../components/heroicons";
 import classNames from "classnames";
-import {cloneElement, FC, KeyboardEventHandler, memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type { FC, KeyboardEventHandler} from "react";
+import {cloneElement, memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import ReactMarkdown from 'react-markdown';
 import logoImage from "../../../public/images/logo.svg";
 import {AIProvider, useAI} from "../../components/ai";
@@ -153,9 +155,9 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
     const [newPageName, setNewPageName] = useState<string>("");
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const navigate = useNavigate();
-    const current = useAppSelector(state => state.auth.current);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
     const { pages, activePageId } = useAppSelector(state => state.scratchpad);
-    const { supportsScratchpad } = useSourceContract(current?.Type);
+    const { supportsScratchpad } = useSourceContract(currentType);
 
     const handleCodeToggle = useCallback(() => {
         setShowSQL(status => !status);
@@ -271,7 +273,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             rows={data?.Rows ?? []}
                             disableEdit={true}
                             limitContextMenu={true}
-                            databaseType={current?.Type}
+                            databaseType={currentType}
                             rawQuery={text}
                             height={200}
                             enforceMinHeight={true}
@@ -361,12 +363,14 @@ export const ChatPage: FC = () => {
     const containerWidth = useContainerWidth(scrollContainerRef);
     const schemaFromState = useAppSelector(state => state.database.schema);
     const authProfile = useAppSelector(state => state.auth.current);
-    const { item, supportsScripts } = useSourceContract(authProfile?.Type);
+    const authProfileType = authProfile?.Type;
+    const authProfileDatabase = authProfile?.Database;
+    const { item, supportsScripts } = useSourceContract(authProfileType);
     const [executingConfirmedId, setExecutingConfirmedId] = useState<number | null>(null);
     const [showQueryForId, setShowQueryForId] = useState<number | null>(null);
     const [copiedSqlId, setCopiedSqlId] = useState<number | null>(null);
     const messageIdCounter = useRef(0);
-    const sourceScopeRef = useMemo(() => buildSourceScopeRef(item, authProfile, schemaFromState), [authProfile, item, schemaFromState]);
+    const sourceScopeRef = useMemo(() => buildSourceScopeRef(item, authProfile, schemaFromState), [authProfileDatabase, item, schemaFromState]);
     const [currentSearchIndex, setCurrentSearchIndex] = useState<number>();
 
     const dispatch = useAppDispatch();
@@ -519,7 +523,7 @@ export const ChatPage: FC = () => {
             let buffer = '';
             let streamingText = '';
             let currentEventType = '';
-            let addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
+            const addedSqlMessages = new Set<string>(); // Track added SQL to avoid duplicates
             let streamDone = false;
 
             while (true) {

@@ -45,25 +45,27 @@ import {
     toast,
 } from "@clidey/ux";
 import {skipToken, useLazyQuery, useMutation, useQuery} from "@apollo/client/react";
+import type {
+    GetStorageUnitsQuery,
+    RecordInput,
+    RowsResult,
+    SortCondition,
+    WhereCondition} from '@graphql';
 import {
     AddRowDocument,
     ColumnsDocument,
     DataShape,
     GetSourceContentDocument,
     GetStorageUnitRowsDocument,
-    GetStorageUnitsQuery,
-    RecordInput,
     RawExecuteDocument,
-    RowsResult,
-    SortCondition,
     SortDirection,
     SourceAction,
     type SourceObjectRefInput,
     UpdateStorageUnitDocument,
-    WhereCondition,
     WhereConditionType
 } from '@graphql';
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Navigate, useLocation, useNavigate} from "react-router-dom";
 import {CodeEditor} from "../../components/editor";
 import {ErrorState} from "../../components/error-state";
@@ -134,13 +136,16 @@ export const ExploreStorageUnit: FC = () => {
 
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const currentType = current?.Type;
+    const currentDatabase = current?.Database;
+    const currentId = current?.Id;
     const {
         item,
         isNoSQL,
         storageUnitLabel,
         supportsScratchpad,
         usesDatabaseInsteadOfSchema,
-    } = useSourceContract(current?.Type);
+    } = useSourceContract(currentType);
     const whereConditionMode = useAppSelector(state => state.settings.whereConditionMode);
     const locationState = location.state as ExploreSourceState | undefined;
     const unit = locationState?.unit;
@@ -630,7 +635,7 @@ export const ExploreStorageUnit: FC = () => {
     // Sheet logic for Add Row (like table.tsx)
     const handleOpenAddSheet = useCallback(() => {
         // Prepare empty values for empty addRowData values
-        let initialData: Record<string, any> = {};
+        const initialData: Record<string, any> = {};
         if (rows?.Columns) {
             // todo: add support for different functions for defaults like now(), gen_random_uuid(), etc
             for (const col of rows.Columns) {
@@ -651,7 +656,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const handleAddRowSubmit = useCallback(() => {
         if (rows?.Columns == null) return;
-        let values: RecordInput[] = [];
+        const values: RecordInput[] = [];
         if (isNoSQL && rows.Columns.length === 1 && rows.Columns[0].Type === "Document") {
             try {
                 const json = JSON.parse(addRowData.document);

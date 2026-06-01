@@ -56,14 +56,16 @@ import {
 } from '@graphql';
 import {useTranslation} from '@/hooks/use-translation';
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
-import {FC, LazyExoticComponent, ReactElement, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC, LazyExoticComponent, ReactElement, ReactNode} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useDispatch} from "react-redux";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logoImage from "../../../public/images/logo.svg";
 import {extensions, getAppName} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {LoginForm} from "../../pages/auth/login";
-import {AuthActions, LocalLoginProfile} from "../../store/auth";
+import type { LocalLoginProfile} from "../../store/auth";
+import {AuthActions} from "../../store/auth";
 import {DatabaseActions} from "../../store/database";
 import {useAppSelector} from "../../store/hooks";
 import {featureFlags} from "../../config/features";
@@ -463,14 +465,17 @@ export const Sidebar: FC = () => {
 
     // Refetch databases, schemas, and SSL status when the connection context changes
     // (profile switch or database switch within the same profile)
+    const currentId = current?.Id;
+    const currentDatabase = current?.Database;
+    const currentType = current?.Type;
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
             return;
         }
-        if (!current) return;
-        if (supportsDatabaseSwitching && current.Type) {
-            getDatabases({ sourceType: current.Type });
+        if (!currentId) return;
+        if (supportsDatabaseSwitching && currentType) {
+            getDatabases({ sourceType: currentType });
         }
         if (supportsSchema) {
             getSchemas();
@@ -480,7 +485,7 @@ export const Sidebar: FC = () => {
                 dispatch(AuthActions.setSSLStatus(data.SSLStatus));
             }
         });
-    }, [current, dispatch, getDatabases, getSchemas, refetchSslStatus, supportsDatabaseSwitching, supportsSchema]);
+    }, [currentId, currentDatabase, currentType, dispatch, getDatabases, getSchemas, refetchSslStatus, supportsDatabaseSwitching, supportsSchema]);
 
     // Listen for menu event to open add profile form
     useEffect(() => {

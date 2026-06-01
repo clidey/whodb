@@ -34,12 +34,13 @@ import {
     TabsTrigger,
     VirtualizedTableBody
 } from '@clidey/ux';
+import type {
+    GetGraphQuery,
+    GetStorageUnitsQuery} from '@graphql';
 import {
     DataShape,
     GetColumnsBatchDocument,
     type GetColumnsBatchQuery,
-    GetGraphQuery,
-    GetStorageUnitsQuery,
     GetStorageUnitsDocument,
     SourceSchemaFidelity,
     SourceAction,
@@ -56,11 +57,12 @@ import {
     TableCellsIcon,
     XMarkIcon
 } from '../../components/heroicons';
-import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 import {Handle, Position} from "reactflow";
 import {Card, ExpandableCard} from "../../components/card";
-import {IGraphCardProps} from "../../components/graph/graph";
+import type {IGraphCardProps} from "../../components/graph/graph";
 import {Loading, LoadingPage} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
@@ -119,8 +121,8 @@ const StorageUnitCard: FC<{
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
     const { t } = useTranslation('pages/storage-unit');
-    const current = useAppSelector(state => state.auth.current);
-    const { item, schemaFidelity } = useSourceContract(current?.Type);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
+    const { item, schemaFidelity } = useSourceContract(currentType);
     const [columns, setColumns] = useState<SourceColumn[] | undefined>(undefined);
     const [columnsLoading, setColumnsLoading] = useState(false);
     const [fetchColumnsBatch] = useLazyQuery(GetColumnsBatchDocument);
@@ -301,13 +303,16 @@ export const StorageUnitPage: FC = () => {
     const [error, setError] = useState<string>();
     let schema = useAppSelector(state => state.database.schema);
     const current = useAppSelector(state => state.auth.current);
+    const currentType = current?.Type;
+    const currentDatabase = current?.Database;
+    const currentProfileId = current?.Id;
     const {
         item,
         singularStorageUnitLabel,
         storageUnitLabel,
         supportsScratchpad,
         usesDatabaseInsteadOfSchema,
-    } = useSourceContract(current?.Type);
+    } = useSourceContract(currentType);
     const view = useAppSelector(state => state.settings.storageUnitView);
     const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
     const [expandedUnitColumns, setExpandedUnitColumns] = useState<{ name: string; columns: SourceColumn[] } | null>(null);
@@ -323,17 +328,17 @@ export const StorageUnitPage: FC = () => {
 
     useEffect(() => {
         void trackFrontendEvent('ui.storage_unit_viewed', {
-            database_type: current?.Type ?? 'unknown',
+            database_type: currentType ?? 'unknown',
             view_mode: view,
         });
-    }, [current?.Type, trackFrontendEvent, view]);
+    }, [currentType, view]);
 
     // Databases like MySQL, MariaDB, ClickHouse, MongoDB use database name as schema parameter since they treat database=schema
     if (usesDatabaseInsteadOfSchema) {
-        schema = current?.Database ?? '';
+        schema = currentDatabase ?? '';
     }
 
-    const initialParentRef = useMemo(() => buildSourceParentRef(item, current, schema), [current, item, schema]);
+    const initialParentRef = useMemo(() => buildSourceParentRef(item, current, schema), [currentDatabase, item, schema]);
     const canCreateObjects = useMemo(() => {
         const parentKind = currentParent?.Kind ?? initialParentRef?.Kind;
         if (parentKind) {
@@ -371,8 +376,6 @@ export const StorageUnitPage: FC = () => {
         setStorageUnitColumnsByName(current => ({ ...current, [unitName]: columns }));
     }, []);
 
-    const currentProfileId = current?.Id;
-    const currentDatabase = current?.Database;
     useEffect(() => {
         if (currentProfileId) {
             refetch();
@@ -467,7 +470,7 @@ export const StorageUnitPage: FC = () => {
             database_type: current?.Type ?? 'unknown',
             open: next,
         });
-    }, [create, current?.Type, trackFrontendEvent]);
+    }, [create, current?.Type]);
 
     const filterStorageUnits = useMemo(() => {
         const lowerCaseFilterValue = filterValue.toLowerCase();

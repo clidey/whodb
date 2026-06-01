@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { FC, lazy, ReactNode, Suspense } from "react";
+import type { FC, ReactNode} from "react";
+import { lazy, Suspense } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
 import { LogoutPage } from "../pages/auth/logout";
@@ -61,8 +62,8 @@ const SourceSurfaceRoute: FC<{
     surface: "chat" | "graph" | "scratchpad";
     component: ReactNode;
 }> = ({ surface, component }) => {
-    const current = useAppSelector(state => state.auth.current);
-    const { loading, supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(current?.Type);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
+    const { loading, supportsChat, supportsGraph, supportsScratchpad } = useSourceContract(currentType);
 
     if (loading) {
         return <LoadingPage />;

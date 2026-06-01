@@ -47,13 +47,14 @@ import {
     TabsTrigger,
     toast
 } from "@clidey/ux";
-import { RowsResult } from '@graphql';
+import type { RowsResult } from '@graphql';
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import {
+import type {
     ChangeEvent,
     FC,
-    ReactElement,
+    ReactElement} from "react";
+import {
     Suspense,
     useCallback,
     useEffect,
@@ -91,7 +92,8 @@ import { ScratchpadActions } from "../../store/scratchpad";
 import { featureFlags } from "../../config/features";
 import { isDesktopApp } from "../../utils/external-links";
 import { useSourceContract } from "../../hooks/useSourceContract";
-import { IPluginProps, QueryView } from "./query-view";
+import type { IPluginProps} from "./query-view";
+import { QueryView } from "./query-view";
 import { ph } from "../../utils/privacy";
 
 /** Raw-execute extensions — set via registerRawExecuteExtensions(). */
@@ -137,7 +139,7 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
     const parseSQL = (sql: string): React.ReactNode[] => {
         const tokens: Array<{ type: string; value: string; className?: string }> = [];
         let remaining = sql;
-        let position = 0;
+        const position = 0;
 
         while (remaining.length > 0) {
             let matched = false;
@@ -322,8 +324,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
             date: item.date instanceof Date ? item.date : new Date(item.date)
         }));
     });
-    const current = useAppSelector(state => state.auth.current);
-    const { supportsAnalyze } = useSourceContract(current?.Type);
+    const currentType = useAppSelector(state => state.auth.current?.Type);
+    const currentDatabase = useAppSelector(state => state.auth.current?.Database);
+    const currentId = useAppSelector(state => state.auth.current?.Id);
+    const { supportsAnalyze } = useSourceContract(currentType);
     const handleExecute = useRef<(code: string) => Promise<any>>(() => Promise.resolve());
     const [historyOpen, setHistoryOpen] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -435,7 +439,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     }, [handleExecute, cellId, dispatch]);
 
     const handleRawExecute = useCallback((historyCode?: string) => {
-        if (current == null) {
+        if (currentId == null) {
             setLoading(false);
             return;
         }
@@ -446,7 +450,11 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
         } else {
             doExecute(currentCode);
         }
-    }, [code, current, mode, doExecute]);
+    }, [
+	code,
+	mode,
+	doExecute
+]);
 
     const handleConfirmExecute = useCallback(() => {
         if (pendingExecuteCode != null) {
@@ -531,7 +539,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     // Use all plugins
     const output = useMemo(() => {
         const selectedPlugin = allPlugins.find((p: any) => p.type === mode);
-        if (selectedPlugin?.component == null || current == null) {
+        if (selectedPlugin?.component == null || currentId == null) {
             return null;
         }
         const Component = selectedPlugin.component as FC<IPluginProps>;
@@ -560,13 +568,24 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                 >
                     <Suspense fallback={<Loading />}>
                         <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
-                                   schema={current.Database} token={modelType?.token} providerId={current.Id}
+                                   schema={currentDatabase ?? ''} token={modelType?.token} providerId={currentId}
                                    containerWidth={containerWidth} />
                     </Suspense>
                 </div>
             </div>
         );
-    }, [mode, allActionOptions, allPlugins, code, modelType, current, userResizedHeight, isResizingResults, handleResultsResize, rows, containerWidth]);
+    }, [
+	mode,
+	allActionOptions,
+	allPlugins,
+	code,
+	modelType,
+	userResizedHeight,
+	isResizingResults,
+	handleResultsResize,
+	rows,
+	containerWidth
+]);
 
     // Reset user-resized height when new results come in so the container auto-fits
     useEffect(() => {
