@@ -18,6 +18,7 @@ package env
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -171,7 +172,7 @@ func GetOllamaEndpoint() string {
 	if OllamaPort != "" {
 		port = OllamaPort
 	}
-	return common.ResolveLocalURL(fmt.Sprintf("http://%s:%s/api", host, port))
+	return common.ResolveLocalURL(fmt.Sprintf("http://%s/api", net.JoinHostPort(host, port)))
 }
 
 func GetAnthropicEndpoint() string {
