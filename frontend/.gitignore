@@ -26,7 +26,3 @@ yarn-error.log*
 
 .parcel-cache
 dist/
-
-# Generated GraphQL types
-# CE version is now tracked in git
-# EE version is in ../ee/frontend/src/generated/graphql.tsx
