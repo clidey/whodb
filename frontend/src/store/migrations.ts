@@ -18,14 +18,6 @@ import type { IAIModelType } from './ai-models';
 import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-helper';
 import { featureFlags } from '../config/features';
 
-// Define the old database state structure for migration purposes
-interface OldDatabaseState {
-  schema: string;
-  current?: IAIModelType;
-  modelTypes?: IAIModelType[];
-  currentModel?: string;
-  models?: string[];
-}
 
 /**
  * Migrates AI-related data from the old database store to the new aiModels store
@@ -57,7 +49,7 @@ export function migrateAIModelsFromDatabase(): void {
       modelTypes = databaseState.modelTypes ? JSON.parse(databaseState.modelTypes) : undefined;
       currentModel = databaseState.currentModel ? JSON.parse(databaseState.currentModel) : undefined;
       models = databaseState.models ? JSON.parse(databaseState.models) : undefined;
-    } catch (e) {
+    } catch {
       // If parsing fails, the data might be in a different format
       current = databaseState.current;
       modelTypes = databaseState.modelTypes;
@@ -153,7 +145,7 @@ function ensureValidAIModelsState(): void {
             needsUpdate = true;
           }
         }
-      } catch (e) {
+      } catch {
         aiModelsState.modelTypes = JSON.stringify(ensureModelTypesArray(null));
         needsUpdate = true;
       }
@@ -171,7 +163,7 @@ function ensureValidAIModelsState(): void {
           aiModelsState.models = JSON.stringify(ensureModelsArray(models));
           needsUpdate = true;
         }
-      } catch (e) {
+      } catch {
         aiModelsState.models = JSON.stringify(ensureModelsArray(null));
         needsUpdate = true;
       }
@@ -248,7 +240,7 @@ function applyEESettingsDefaultsV4(): void {
           settingsState.whereConditionMode = JSON.stringify('sheet');
           needsUpdate = true;
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, set to extension default
         settingsState.whereConditionMode = JSON.stringify('sheet');
         needsUpdate = true;
@@ -267,7 +259,7 @@ function applyEESettingsDefaultsV4(): void {
           settingsState.disableAnimations = JSON.stringify(true);
           needsUpdate = true;
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, set to extension default
         settingsState.disableAnimations = JSON.stringify(true);
         needsUpdate = true;

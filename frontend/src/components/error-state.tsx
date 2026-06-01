@@ -27,7 +27,7 @@ export const ErrorState = ({ error }: ErrorStateProps) => {
     const message = typeof error === "string" ? error : error?.message ?? t('unknownError');
 
     return (
-        <Alert variant="destructive" title={t('title')} description={message} className="group relative" role="alert" data-testid="error-state">
+        <Alert variant="destructive" className="group relative" role="alert" data-testid="error-state">
             <BellAlertIcon className="w-4 h-4" aria-hidden="true" />
             <AlertTitle>{t('title')}</AlertTitle>
             <AlertDescription>{message}</AlertDescription>
