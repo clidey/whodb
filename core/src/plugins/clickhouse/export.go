@@ -44,7 +44,7 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 	if err != nil {
 		return fmt.Errorf("failed to get columns: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var columns []string
 	var types []string
@@ -55,6 +55,9 @@ func (p *ClickHousePlugin) ExportData(config *engine.PluginConfig, schema string
 		}
 		columns = append(columns, col)
 		types = append(types, typ)
+	}
+	if err := rows.Err(); err != nil {
+		return err
 	}
 
 	// Write headers

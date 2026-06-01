@@ -30,7 +30,7 @@ func (p *RedisPlugin) DeleteRow(config *engine.PluginConfig, schema string, stor
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for row deletion")
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 

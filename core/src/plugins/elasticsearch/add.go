@@ -75,7 +75,7 @@ func (p *ElasticSearchPlugin) CreateStorageUnit(config *engine.PluginConfig, sch
 		return false, err
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("failed to create index: %s", formatElasticError(res))
@@ -128,7 +128,7 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to index document in ElasticSearch")
 		return false, fmt.Errorf("error indexing document: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("failed to index document: %s", formatElasticError(res))

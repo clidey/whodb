@@ -73,7 +73,7 @@ func readUploadBytes(upload graphql.Upload, maxBytes int64) ([]byte, error) {
 	}
 
 	if closer, ok := upload.File.(io.Closer); ok {
-		defer closer.Close()
+		defer func() { _ = closer.Close() }()
 	}
 
 	if upload.Size > maxBytes {

@@ -17,6 +17,7 @@
 package gcp
 
 import (
+	"context"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -57,7 +58,9 @@ func CheckConnectivity(connections []providers.DiscoveredConnection) {
 			defer func() { <-sem }()
 
 			addr := net.JoinHostPort(endpoint, port)
-			c, err := net.DialTimeout("tcp", addr, connectivityTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), connectivityTimeout)
+			defer cancel()
+			c, err := (&net.Dialer{}).DialContext(ctx, "tcp", addr)
 			if err != nil {
 				log.Debugf("Connectivity: %s unreachable: %v", addr, err)
 				conn.Metadata["connectivity"] = connectivityUnreachable

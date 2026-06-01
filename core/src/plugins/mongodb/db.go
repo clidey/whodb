@@ -44,7 +44,7 @@ func opCtx(config *engine.PluginConfig) (context.Context, context.CancelFunc) {
 func disconnectClient(client *mongo.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client.Disconnect(ctx)
+	_ = client.Disconnect(ctx)
 }
 
 func DB(config *engine.PluginConfig) (*mongo.Client, error) {

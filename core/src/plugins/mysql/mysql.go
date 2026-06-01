@@ -62,10 +62,10 @@ func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 		if err != nil {
 			return nil, err
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		var currentDB sql.NullString
-		conn.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&currentDB)
+		_ = conn.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&currentDB)
 
 		accessible := make([]string, 0, len(allDBs))
 		for _, d := range allDBs {
@@ -77,7 +77,7 @@ func (p *MySQLPlugin) GetDatabases(config *engine.PluginConfig) ([]string, error
 
 		if currentDB.Valid && currentDB.String != "" {
 			escaped := strings.ReplaceAll(currentDB.String, "`", "``")
-			conn.ExecContext(ctx, "USE `"+escaped+"`")
+			_, _ = conn.ExecContext(ctx, "USE `"+escaped+"`")
 		}
 
 		return accessible, nil

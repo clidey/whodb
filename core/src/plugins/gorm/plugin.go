@@ -176,7 +176,7 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 			log.WithError(err).Error("Failed to execute table info query for schema: " + schema)
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			tableName, attributes := p.GetTableNameAndAttributes(rows)
@@ -187,6 +187,9 @@ func (p *GormPlugin) GetStorageUnits(config *engine.PluginConfig, schema string)
 				Name:       tableName,
 				Attributes: attributes,
 			})
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 
 		return storageUnits, nil
@@ -395,7 +398,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		log.WithError(err).Error(fmt.Sprintf("Failed to execute generic rows query for table %s.%s", schema, storageUnit))
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result, err := p.GormPluginFunctions.ConvertRawToRows(rows)
 	if err != nil {

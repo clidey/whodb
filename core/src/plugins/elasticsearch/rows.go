@@ -263,7 +263,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		log.WithError(err).Error("Failed to get ElasticSearch indices for FK detection")
 		return nil, err
 	}
-	defer indicesRes.Body.Close()
+	defer func() { _ = indicesRes.Body.Close() }()
 
 	if indicesRes.IsError() {
 		log.Error("ElasticSearch indices stats API returned error for FK detection")

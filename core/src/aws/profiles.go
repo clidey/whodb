@@ -120,7 +120,7 @@ func parseINIFile(path, source string, isConfigFile bool) (map[string]*LocalProf
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	profiles := make(map[string]*LocalProfile)
 	var currentProfile *LocalProfile

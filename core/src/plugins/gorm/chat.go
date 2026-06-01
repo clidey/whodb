@@ -37,7 +37,7 @@ func (p *GormPlugin) buildChatTableContext(config *engine.PluginConfig, db *gorm
 		log.WithError(err).Error("Failed to get tables for chat operation in schema: " + schema)
 		return "", err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	tableDetails := strings.Builder{}
 
@@ -47,7 +47,7 @@ func (p *GormPlugin) buildChatTableContext(config *engine.PluginConfig, db *gorm
 			continue
 		}
 
-		fmt.Fprintf(&tableDetails, "table: %v\n", tableName)
+		fmt.Fprintf(&tableDetails, "table: %v\n", tableName) //nolint:errcheck
 
 		// Use the plugin column lookup so database-specific overrides
 		// (QuestDB, ClickHouse, SQLite, etc.) are reused for chat context too.
@@ -58,8 +58,11 @@ func (p *GormPlugin) buildChatTableContext(config *engine.PluginConfig, db *gorm
 		}
 
 		for _, col := range orderedColumns {
-			fmt.Fprintf(&tableDetails, "- %v (%v)\n", col.Name, col.Type)
+			fmt.Fprintf(&tableDetails, "- %v (%v)\n", col.Name, col.Type) //nolint:errcheck
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return "", err
 	}
 
 	return tableDetails.String(), nil

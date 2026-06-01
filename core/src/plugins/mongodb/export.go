@@ -126,7 +126,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 		}).Error("Failed to query MongoDB collection for export")
 		return fmt.Errorf("failed to query collection: %w", err)
 	}
-	defer cursor.Close(context.Background())
+	defer func() { _ = cursor.Close(context.Background()) }()
 
 	rowCount := 0
 	for cursor.Next(context.Background()) {
@@ -192,7 +192,7 @@ func (p *MongoDBPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema str
 	if err != nil {
 		return err
 	}
-	defer cursor.Close(context.Background())
+	defer func() { _ = cursor.Close(context.Background()) }()
 
 	for cursor.Next(context.Background()) {
 		var doc bson.M
@@ -221,7 +221,7 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 		log.WithError(err).WithField("collectionName", collection.Name()).Error("Failed to sample MongoDB collection documents for field extraction")
 		return nil, err
 	}
-	defer cursor.Close(context.Background())
+	defer func() { _ = cursor.Close(context.Background()) }()
 
 	fieldSet := make(map[string]bool)
 	for cursor.Next(context.Background()) {

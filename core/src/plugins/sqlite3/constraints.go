@@ -106,36 +106,38 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 
 			// Only process unique indexes
 			if unique == 1 {
-				// Get columns in this index
-				indexInfoQuery, err := builder.PragmaQuery("index_info", name)
-				if err != nil {
-					return false, err
-				}
-				infoRows, err := db.Raw(indexInfoQuery).Rows()
-				if err != nil {
-					continue
-				}
-
-				var columnCount int
-				var columnName string
-				for infoRows.Next() {
-					var seqno int
-					var cid int
-					var colName string
-					if err := infoRows.Scan(&seqno, &cid, &colName); err != nil {
-						continue
+				// Get columns in this index — wrapped in closure so defer is scoped per iteration
+				colName, colCount := func() (string, int) {
+					indexInfoQuery, err := builder.PragmaQuery("index_info", name)
+					if err != nil {
+						return "", 0
 					}
-					columnCount++
-					columnName = colName
-				}
-				_ = infoRows.Close() //nolint:rowserrcheck
+					infoRows, err := db.Raw(indexInfoQuery).Rows()
+					if err != nil {
+						return "", 0
+					}
+					defer func() { _ = infoRows.Close() }()
+
+					var count int
+					var col string
+					for infoRows.Next() {
+						var seqno, cid int
+						var cn string
+						if err := infoRows.Scan(&seqno, &cid, &cn); err != nil {
+							continue
+						}
+						count++
+						col = cn
+					}
+					return col, count
+				}()
 
 				// Only mark as unique if it's a single-column index
-				if columnCount == 1 && columnName != "" {
-					if constraints[columnName] == nil {
-						constraints[columnName] = map[string]any{}
+				if colCount == 1 && colName != "" {
+					if constraints[colName] == nil {
+						constraints[colName] = map[string]any{}
 					}
-					constraints[columnName]["unique"] = true
+					constraints[colName]["unique"] = true
 				}
 			}
 		}

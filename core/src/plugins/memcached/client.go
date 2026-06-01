@@ -18,6 +18,7 @@ package memcached
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -72,7 +73,9 @@ func Dial(address string) (*Client, error) {
 // DialTLS connects to a memcached server with TLS.
 func DialTLS(address string, tlsConfig *tls.Config) (*Client, error) {
 	dialer := &net.Dialer{Timeout: dialTimeout}
-	conn, err := tls.DialWithDialer(dialer, "tcp", address, tlsConfig)
+	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
+	defer cancel()
+	conn, err := (&tls.Dialer{NetDialer: dialer, Config: tlsConfig}).DialContext(ctx, "tcp", address)
 	if err != nil {
 		return nil, fmt.Errorf("memcached TLS dial: %w", err)
 	}

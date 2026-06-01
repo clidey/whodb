@@ -17,6 +17,7 @@
 package version
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -107,11 +108,15 @@ func CheckForUpdate(currentVersion string, disabled bool) UpdateInfo {
 
 func fetchLatestRelease() (*githubRelease, error) {
 	client := &http.Client{Timeout: httpTimeout}
-	resp, err := client.Get(githubReleasesURL)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, githubReleasesURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("unexpected status")

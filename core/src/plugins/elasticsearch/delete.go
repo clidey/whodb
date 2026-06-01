@@ -72,7 +72,7 @@ func (p *ElasticSearchPlugin) DeleteRow(config *engine.PluginConfig, database st
 		log.WithError(err).WithField("storageUnit", storageUnit).WithField("documentId", idStr).Error("Failed to execute ElasticSearch delete operation")
 		return false, fmt.Errorf("failed to execute delete: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	// Check if the response indicates an error
 	if res.IsError() {

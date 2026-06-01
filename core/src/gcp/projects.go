@@ -159,7 +159,7 @@ func parseGcloudProperties(path string) string {
 	if err != nil {
 		return ""
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	inCoreSection := false
 	projectRegex := regexp.MustCompile(`^\s*project\s*=\s*(.+?)\s*$`)

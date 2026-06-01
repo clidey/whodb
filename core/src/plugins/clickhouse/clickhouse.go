@@ -319,7 +319,7 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 			}
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		return p.ConvertRawToRows(rows)
 	})

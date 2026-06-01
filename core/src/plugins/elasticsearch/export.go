@@ -84,7 +84,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get ElasticSearch index mapping for export")
 		return fmt.Errorf("failed to get index mapping: %w", err)
 	}
-	defer mapping.Body.Close()
+	defer func() { _ = mapping.Body.Close() }()
 
 	var mappingResponse map[string]any
 	if err := json.NewDecoder(mapping.Body).Decode(&mappingResponse); err != nil {

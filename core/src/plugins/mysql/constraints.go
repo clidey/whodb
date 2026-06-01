@@ -40,7 +40,7 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 			Order("k.ORDINAL_POSITION").
 			Rows()
 		if err == nil {
-			defer primaryRows.Close()
+			defer func() { _ = primaryRows.Close() }()
 			for primaryRows.Next() {
 				var columnName string
 				if err := primaryRows.Scan(&columnName); err != nil {
@@ -89,7 +89,7 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 		if err != nil {
 			return false, err
 		}
-		defer uniqueRows.Close()
+		defer func() { _ = uniqueRows.Close() }()
 
 		for uniqueRows.Next() {
 			var columnName string
@@ -109,7 +109,7 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 			Where("cc.CONSTRAINT_SCHEMA = DATABASE() AND tc.TABLE_NAME = ?", storageUnit).
 			Rows()
 		if err == nil {
-			defer checkRows.Close()
+			defer func() { _ = checkRows.Close() }()
 
 			for checkRows.Next() {
 				var constraintName, checkClause string

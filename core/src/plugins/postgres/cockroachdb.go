@@ -174,7 +174,7 @@ func (p *CockroachDBPlugin) getCockroachDBColumns(db *gorm.DB, schema string, st
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	columns := []engine.Column{}
 	for rows.Next() {

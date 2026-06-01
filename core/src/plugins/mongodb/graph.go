@@ -109,7 +109,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 				}
 			}
 		}
-		cursorSample.Close(ctx)
+		_ = cursorSample.Close(ctx)
 
 		if len(fieldFrequency) == 0 {
 			log.WithField("collection", collectionName).Warn("MongoDB Graph: No documents found or empty collection")

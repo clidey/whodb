@@ -50,7 +50,7 @@ func (p *RedisPlugin) createStorageUnitFromRecords(config *engine.PluginConfig, 
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 
@@ -139,7 +139,7 @@ func (p *RedisPlugin) AddRow(config *engine.PluginConfig, schema string, storage
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 

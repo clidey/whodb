@@ -61,7 +61,9 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		// If selected rows provided, use them
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row["value"])})
+				if err := writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row["value"])}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -90,7 +92,9 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])})
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -114,7 +118,9 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])})
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -143,11 +149,13 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				writer([]string{
+				if err := writer([]string{
 					fmt.Sprintf("%v", row["index"]),
 					fmt.Sprintf("%v", row["member"]),
 					fmt.Sprintf("%v", row["score"]),
-				})
+				}); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
