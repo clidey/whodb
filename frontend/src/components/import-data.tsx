@@ -30,23 +30,25 @@ import {
   SheetTitle,
   toast,
 } from "@clidey/ux";
-import {FC, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 import {CodeEditor} from "@/components/editor";
 import {executeMultipartGraphQL} from "@/utils/graphql-upload";
 import {withBasePath} from "@/utils/base-path";
 import {addAuthHeader} from "@/utils/auth-headers";
 import {print} from "graphql";
+import type {
+  ImportFileOptions,
+  ImportPreviewMutation,
+  ImportSqlMutation,
+  ImportTableFileMutation} from "@graphql";
 import {
   ImportFileFormat,
-  ImportFileOptions,
   ImportMode,
   ImportPreviewDocument,
-  ImportPreviewMutation,
   ImportSqlDocument,
-  ImportSqlMutation,
   ImportTableFileDocument,
-  ImportTableFileMutation,
   type SourceObjectRefInput,
 } from "@graphql";
 import {useSourceContract} from "@/hooks/useSourceContract";

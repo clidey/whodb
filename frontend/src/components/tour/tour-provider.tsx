@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { FC, ReactNode, useCallback, useEffect } from 'react';
+import type { FC, ReactNode} from 'react';
+import { useCallback, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { TourActions } from '../../store/tour';
 import { sampleDatabaseTour } from '../../config/tour-config';

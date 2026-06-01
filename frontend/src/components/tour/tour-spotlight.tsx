@@ -15,7 +15,8 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { FC, useEffect, useState } from 'react';
+import type { FC} from 'react';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../store/hooks';
 
 interface TourSpotlightProps {

@@ -15,9 +15,10 @@
  */
 
 import { AnimatePresence } from 'framer-motion';
-import { FC, useCallback, useEffect, useState } from 'react';
+import type { FC} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TourConfig, TourStep } from './tour-step';
+import type { TourConfig, TourStep } from './tour-step';
 import { TourSpotlight } from './tour-spotlight';
 import { TourTooltip } from './tour-tooltip';
 

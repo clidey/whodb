@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { IAIModelType } from './ai-models';
+import type { IAIModelType } from './ai-models';
 import { ensureModelTypesArray, ensureModelsArray } from '../utils/ai-models-helper';
 import { featureFlags } from '../config/features';
 

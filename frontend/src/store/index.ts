@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { combineReducers, configureStore, Reducer } from '@reduxjs/toolkit';
+import type { Reducer } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, createTransform } from 'redux-persist';
 import storage from 'redux-persist/es/storage';
 import { authReducers } from './auth';
@@ -22,8 +23,9 @@ import { databaseReducers } from './database';
 import { settingsReducers } from "./settings";
 import { houdiniReducers } from './chat';
 import { aiModelsReducers } from './ai-models';
-import { scratchpadReducers, IScratchpadState } from './scratchpad';
-import { IChatState } from './chat';
+import type { IScratchpadState } from './scratchpad';
+import { scratchpadReducers } from './scratchpad';
+import type { IChatState } from './chat';
 import { tourReducers } from './tour';
 import { providersReducers } from './providers';
 import { healthReducers } from './health';

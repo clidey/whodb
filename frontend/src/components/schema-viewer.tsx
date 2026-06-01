@@ -15,6 +15,8 @@
  */
 
 import { skipToken, useQuery } from "@apollo/client/react";
+import type {
+    TreeDataItem} from "@clidey/ux";
 import {
     SearchInput,
     Sidebar as SidebarComponent,
@@ -22,12 +24,13 @@ import {
     SidebarGroup,
     SidebarHeader,
     toTitleCase,
-    Tree,
-    TreeDataItem,
+    Tree
 } from "@clidey/ux";
-import {GetStorageUnitsDocument, GetStorageUnitsQuery, SourceAction, type SourceObjectRefInput} from "@graphql";
+import type { GetStorageUnitsQuery} from "@graphql";
+import {GetStorageUnitsDocument, SourceAction, type SourceObjectRefInput} from "@graphql";
 import {FolderIcon, TableCellsIcon} from "./heroicons";
-import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {InternalRoutes} from "../config/routes";
 import {useSourceContract} from "../hooks/useSourceContract";

@@ -25,7 +25,7 @@ import {
     SourceProfileLabelStrategy,
     SourceSchemaFidelity,
 } from "@graphql";
-import { SourceTypeItem } from "../config/source-types";
+import type { SourceTypeItem } from "../config/source-types";
 import { resolveSourceContractFlags, type SourceContractFlags } from "../utils/source-contract-flags";
 import { useSourceTypeItem } from "./useSourceCatalog";
 

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { WhereCondition } from '@graphql';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type { WhereCondition } from '@graphql';
 import { v4 as uuidv4 } from 'uuid';
 
 export type ScratchpadPage = {

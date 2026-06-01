@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {FC} from "react";
+import type {FC} from "react";
 import {useNavigate} from "react-router-dom";
-import {IInternalRoute, InternalRoutes} from "../config/routes";
+import type {IInternalRoute} from "../config/routes";
+import { InternalRoutes} from "../config/routes";
 import {
   Breadcrumb as UxBreadcrumb,
   BreadcrumbItem,

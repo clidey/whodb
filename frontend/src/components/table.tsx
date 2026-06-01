@@ -71,7 +71,8 @@ import {
     SourceAction,
     type SourceObjectRefInput,
 } from '@graphql';
-import {FC, Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import type {FC} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Export} from "./export";
 import {ImportData} from "./import-data";
 import {useTranslation} from '@/hooks/use-translation';

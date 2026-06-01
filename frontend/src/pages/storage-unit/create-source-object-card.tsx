@@ -41,7 +41,8 @@ import {
     type RecordInput,
     type SourceObjectRefInput,
 } from "@graphql";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TypeSelector } from "../../components/type-selector";
 import { CheckCircleIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { findColumnTypeDefinition } from "../../utils/source-column-types";
@@ -171,7 +172,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
         void trackFrontendEvent("ui.storage_unit_field_added", {
             database_type: databaseType ?? "unknown",
         });
-    }, [databaseType, firstType, trackFrontendEvent]);
+    }, [databaseType, firstType]);
 
     const handleRemoveColumn = useCallback((index: number) => {
         setColumns(current => current.length <= 1 ? current : current.filter((_, columnIndex) => columnIndex !== index));
@@ -246,7 +247,21 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                 toast.error(error.message);
             },
         });
-    }, [createSourceObject, databaseType, definitionColumns, definitionTableOptions, firstType, metadata?.RequiresColumns, name, onClose, onCreated, onErrorChange, parentRef, singularStorageUnitLabel, t, trackFrontendEvent]);
+    }, [
+	createSourceObject,
+	databaseType,
+	definitionColumns,
+	definitionTableOptions,
+	firstType,
+	metadata?.RequiresColumns,
+	name,
+	onClose,
+	onCreated,
+	onErrorChange,
+	parentRef,
+	singularStorageUnitLabel,
+	t
+]);
 
     if (metadata?.Supported === false) {
         return null;

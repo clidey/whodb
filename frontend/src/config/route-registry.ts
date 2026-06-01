@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { ComponentType, lazy, LazyExoticComponent } from "react";
+import type { ComponentType, LazyExoticComponent } from "react";
+import { lazy } from "react";
 
 type RouteFactory = () => Promise<{ default: ComponentType<any> }>;
 

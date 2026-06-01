@@ -29,7 +29,8 @@ import {
     toast
 } from "@clidey/ux";
 import { type SourceObjectRefInput } from "@graphql";
-import {FC, useCallback, useEffect, useMemo, useState} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useMemo, useState} from "react";
 import {useExportToCSV} from "./hooks";
 import {ShareIcon} from "./heroicons";
 import {VisuallyHidden} from "@radix-ui/react-visually-hidden";

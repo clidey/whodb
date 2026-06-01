@@ -27,7 +27,8 @@ import {
   Spinner,
 } from "@clidey/ux";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import {cloneElement, FC, ReactElement, ReactNode, useEffect, useRef, useState,} from "react";
+import type { FC, ReactElement, ReactNode} from "react";
+import {cloneElement, useEffect, useRef, useState,} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 
 

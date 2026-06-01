@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { IAIModelType } from "../store/ai-models";
+import type { IAIModelType } from "../store/ai-models";
 
 /** EE registers this to redirect AI provider CRUD to the platform database. */
 export interface AIProviderOverrides {

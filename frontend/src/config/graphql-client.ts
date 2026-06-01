@@ -21,13 +21,15 @@ import {onError} from '@apollo/client/link/error';
 import {HttpLink} from '@apollo/client/link/http';
 import {toast} from '@clidey/ux';
 import {print} from 'graphql';
-import {
-    LoginSourceDocument,
+import type {
     LoginSourceMutationVariables,
-    LoginWithSourceProfileDocument,
     LoginWithSourceProfileMutationVariables
 } from '@graphql';
-import {LocalLoginProfile} from '../store/auth';
+import {
+    LoginSourceDocument,
+    LoginWithSourceProfileDocument
+} from '@graphql';
+import type {LocalLoginProfile} from '../store/auth';
 import {reduxStore} from '../store';
 import {addAuthHeader} from '../utils/auth-headers';
 import {isOnRoute, navigateWithBasePath, withBasePath} from '../utils/base-path';

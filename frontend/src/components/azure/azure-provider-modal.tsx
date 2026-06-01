@@ -15,7 +15,8 @@
  */
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Badge,
     Button,
@@ -32,9 +33,10 @@ import {
     toast,
 } from "@clidey/ux";
 import { SearchSelect } from "../ux";
+import type {
+    AzureProviderInput} from "@graphql";
 import {
     AddAzureProviderDocument,
-    AzureProviderInput,
     CloudProviderStatus,
     GetAzureProvidersDocument,
     GetAzureRegionsDocument,

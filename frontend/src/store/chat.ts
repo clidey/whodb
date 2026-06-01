@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { AiChatMessage } from '@graphql';
+import type { PayloadAction} from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type { AiChatMessage } from '@graphql';
 import { v4 as uuidv4 } from 'uuid';
 
 

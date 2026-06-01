@@ -15,7 +15,8 @@
  */
 
 import {Dialog, DialogContent, DialogHeader, DialogTitle, Kbd, SearchInput,} from "@clidey/ux";
-import {FC, useCallback, useEffect, useState, useMemo} from "react";
+import type {FC} from "react";
+import { useCallback, useEffect, useState, useMemo} from "react";
 import {useTranslation} from "@/hooks/use-translation";
 import {getKeyDisplay, getEffectiveIsMac, formatShortcut} from "@/utils/platform";
 import {matchesShortcut, resolveShortcut, SHORTCUTS} from "@/utils/shortcuts";

@@ -15,7 +15,8 @@
  */
 
 import { skipToken, useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Badge,
     Button,
@@ -32,21 +33,23 @@ import {
     toast,
 } from "@clidey/ux";
 import { SearchSelect } from "../ux";
-import {
-    AddGcpProviderDocument,
+import type {
     GcpProviderInput,
     GcpProvider,
+    LocalGcpProject} from "@graphql";
+import {
+    AddGcpProviderDocument,
     CloudProviderStatus,
     GetDiscoveredConnectionsDocument,
     GetGcpRegionsDocument,
     GetLocalGcpProjectsDocument,
-    LocalGcpProject,
     TestCloudProviderDocument,
     TestGcpCredentialsDocument,
     UpdateGcpProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
+import type { LocalCloudProvider } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { ChevronDownIcon, CloudIcon } from "../heroicons";
 import { upsertCloudProviderCache } from "../../utils/apollo-provider-cache";

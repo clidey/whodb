@@ -25,8 +25,10 @@ import {
     SheetTitle
 } from "@clidey/ux";
 import { SearchSelect } from "../../components/ux";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
-import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type { AtomicWhereCondition, WhereCondition} from '@graphql';
+import { WhereConditionType } from '@graphql';
+import type { FC} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AdjustmentsHorizontalIcon, ChevronDownIcon, PencilIcon, PlusCircleIcon, XCircleIcon } from "../../components/heroicons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { ScratchpadActions } from "../../store/scratchpad";

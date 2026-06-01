@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {FC, ReactElement, ReactNode} from "react";
+import type {FC, ReactElement, ReactNode} from "react";
 import {createPortal} from "react-dom";
 
 type IEmptyMessageProps = {

@@ -42,7 +42,8 @@ import {
     toast
 } from "@clidey/ux";
 import { SearchSelect } from "./ux";
-import { FC, ReactElement, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FC, ReactElement, ReactNode} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GetAiModelsDocument, GetAiProvidersDocument } from "@graphql";
 import { AIModelsActions, availableExternalModelTypes, type IAIModelType } from "../store/ai-models";
 import { useAppDispatch, useAppSelector } from "../store/hooks";

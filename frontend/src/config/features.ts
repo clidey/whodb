@@ -50,9 +50,9 @@ const defaultFeatures: FeatureFlags = {
 };
 
 export let featureFlags: FeatureFlags = {} as FeatureFlags;
-export let extensions: Record<string, any> = {};
-export let sources: Record<string, any> = {};
-export let settingsDefaults: Record<string, any> = {};
+export const extensions: Record<string, any> = {};
+export const sources: Record<string, any> = {};
+export const settingsDefaults: Record<string, any> = {};
 
 export const getAppName = (): string => extensions.AppName || "WhoDB";
 

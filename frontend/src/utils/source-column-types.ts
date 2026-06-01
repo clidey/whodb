@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TypeDefinition } from '../config/source-types';
+import type { TypeDefinition } from '../config/source-types';
 import { getSourceSessionMetadataState } from './source-session-metadata-cache';
 
 /**

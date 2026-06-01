@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { EdgeMarker, MarkerType, Node, Position, Viewport, XYPosition } from "reactflow";
+import type { EdgeMarker, Node, Viewport, XYPosition } from "reactflow";
+import { MarkerType, Position } from "reactflow";
 
 function getNodeIntersection(node: Node, otherNode: Node, padding = 1) {
   // Add fallbacks for missing dimensions and positions

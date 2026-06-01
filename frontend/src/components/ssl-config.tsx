@@ -15,11 +15,12 @@
  */
 
 import { Alert, AlertDescription, Button, Input, Label, TextArea, cn } from '@clidey/ux';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FC} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchSelect } from './ux';
 import { DocumentTextIcon, ExclamationCircleIcon, FolderIcon } from './heroicons';
 import { useTranslation } from '@/hooks/use-translation';
-import { SSLModeOption } from '@/config/source-types';
+import type { SSLModeOption } from '@/config/source-types';
 import { SSL_KEYS } from '@/utils/source-ssl';
 
 export { SSL_KEYS } from '@/utils/source-ssl';

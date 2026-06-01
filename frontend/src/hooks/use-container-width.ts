@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { RefObject, useEffect, useState } from "react";
+import type { RefObject} from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Tracks the offsetWidth of a container element, updating on window resize.

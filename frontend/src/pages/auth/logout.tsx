@@ -15,10 +15,12 @@
  */
 
 import { useMutation } from "@apollo/client/react";
-import { FC, useEffect } from "react";
+import type { FC} from "react";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Container } from "../../components/page";
-import { LogoutDocument, LogoutMutation, LogoutMutationVariables } from '@graphql';
+import type { LogoutMutation, LogoutMutationVariables } from '@graphql';
+import { LogoutDocument } from '@graphql';
 import { AuthActions } from "../../store/auth";
 import { Loading } from "../../components/loading";
 import { toast } from "@clidey/ux";

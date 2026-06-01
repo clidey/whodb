@@ -29,9 +29,11 @@ import {
     SheetTitle
 } from "@clidey/ux";
 import { SearchSelect } from "../../components/ux";
-import { AtomicWhereCondition, WhereCondition, WhereConditionType } from '@graphql';
+import type { AtomicWhereCondition, WhereCondition} from '@graphql';
+import { WhereConditionType } from '@graphql';
 import classNames from "classnames";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { AdjustmentsVerticalIcon, CheckCircleIcon, PlusCircleIcon, XCircleIcon, XMarkIcon } from "../../components/heroicons";
 import { useTranslation } from "@/hooks/use-translation";

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ReactElement } from 'react';
-import { TooltipPosition } from './tour-tooltip';
+import type { ReactElement } from 'react';
+import type { TooltipPosition } from './tour-tooltip';
 
 export interface TourStep {
     target: string;

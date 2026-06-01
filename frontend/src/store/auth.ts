@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import type { PayloadAction} from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface SourceCredentialValue {

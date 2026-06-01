@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { TourConfig } from '../components/tour/tour-step';
+import type { TourConfig } from '../components/tour/tour-step';
 import {
     ChatBubbleLeftRightIcon,
     CodeBracketIcon,

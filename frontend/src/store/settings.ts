@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import type { PayloadAction} from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
 import {settingsDefaults} from '../config/features';
 import {type SupportedLanguage, DEFAULT_LANGUAGE} from '../utils/languages';
 

@@ -17,8 +17,10 @@
 import { Button, Tabs, TabsList, TabsTrigger } from '@clidey/ux';
 import { ArrowDownTrayIcon, RectangleGroupIcon } from '../heroicons';
 import classNames from 'classnames';
-import { Dispatch, FC, ReactNode, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReactFlow, { Background, Controls, Edge, Node, NodeProps, NodeTypes, OnInit, PanOnScrollMode, ReactFlowInstance, ReactFlowProps, useReactFlow } from 'reactflow';
+import type { Dispatch, FC, ReactNode, SetStateAction} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Edge, Node, NodeProps, NodeTypes, OnInit, ReactFlowInstance, ReactFlowProps} from 'reactflow';
+import ReactFlow, { Background, Controls, PanOnScrollMode, useReactFlow } from 'reactflow';
 import { Tip } from '../tip';
 import { useTranslation } from '@/hooks/use-translation';
 import { GraphElements } from './constants';

@@ -15,7 +15,8 @@
  */
 
 import {useQuery} from "@apollo/client/react";
-import {FC, Suspense, useCallback, useEffect, useMemo} from "react";
+import type {FC} from "react";
+import { Suspense, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
 import {InternalRoutes} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
@@ -93,7 +94,7 @@ export const SettingsPage: FC = () => {
             optOutUser();
         }
         dispatch(SettingsActions.setMetricsEnabled(enabled));
-    }, [dispatch, trackFrontendEvent]);
+    }, [dispatch]);
 
     const handleStorageUnitViewToggle = useCallback((view: 'list' | 'card') => {
         dispatch(SettingsActions.setStorageUnitView(view));

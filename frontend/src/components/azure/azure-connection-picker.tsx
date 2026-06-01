@@ -15,7 +15,8 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
     Badge,
     Button,
@@ -33,7 +34,8 @@ import {
     RefreshAzureProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalDiscoveredConnection } from "../../store/providers";
+import type { LocalDiscoveredConnection } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { Icons } from "../icons";
 import { AzureProviderModal } from "./azure-provider-modal";
@@ -44,9 +46,10 @@ import {
     PlusIcon,
     QuestionMarkCircleIcon,
 } from "../heroicons";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 import type { SourceTypeItem } from "@/config/source-types";
-import { buildConnectionPrefill, ConnectionPrefillData } from "@/utils/cloud-connection-prefill";
+import type { ConnectionPrefillData } from "@/utils/cloud-connection-prefill";
+import { buildConnectionPrefill } from "@/utils/cloud-connection-prefill";
 import { getAppName } from "@/config/features";
 
 export type AzureConnectionPrefillData = ConnectionPrefillData;

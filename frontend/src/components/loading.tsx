@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {FC} from "react";
+import type {FC} from "react";
 
 import {Spinner} from "@clidey/ux";
 import {useTranslation} from "@/hooks/use-translation";

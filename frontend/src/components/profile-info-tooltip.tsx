@@ -1,7 +1,8 @@
 import classNames from "classnames";
-import { FC, useState, useRef, useEffect, useCallback, useMemo } from "react";
+import type { FC} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { LocalLoginProfile } from "../store/auth";
+import type { LocalLoginProfile } from "../store/auth";
 import { useSourceTypeItem } from "../hooks/useSourceCatalog";
 import { InformationCircleIcon } from "./heroicons";
 import { useTranslation } from "@/hooks/use-translation";

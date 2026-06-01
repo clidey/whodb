@@ -15,7 +15,7 @@
  */
 
 import Dagre from '@dagrejs/dagre';
-import { Edge, Node } from 'reactflow';
+import type { Edge, Node } from 'reactflow';
 
 type ILayoutOption = {
     direction: "TB" | "LR";

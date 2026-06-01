@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction} from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
 export const availableInternalModelTypes = ["Ollama"];
 export const availableExternalModelTypes = ["OpenAI", "Anthropic"];
@@ -36,7 +37,7 @@ type IAIModelsState = {
   models: string[];
 }
 
-let defaultModelTypes = availableInternalModelTypes.map(modelType => ({
+const defaultModelTypes = availableInternalModelTypes.map(modelType => ({
   id: modelType,
   modelType,
 }));

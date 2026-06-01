@@ -16,7 +16,8 @@
 
 import { Badge, Button, Card } from '@clidey/ux';
 import { motion } from 'framer-motion';
-import { FC, ReactElement, useEffect, useState } from 'react';
+import type { FC, ReactElement} from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircleIcon, ChevronRightIcon, XMarkIcon } from '../heroicons';
 import { useTranslation } from '../../hooks/use-translation';
 import { useAppSelector } from '../../store/hooks';

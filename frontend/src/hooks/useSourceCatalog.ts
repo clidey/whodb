@@ -18,14 +18,15 @@ import type { ErrorLike } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { useEffect, useMemo, useState } from "react";
 import { SourceTypesDocument } from "@graphql";
-import {
+import type {
     BackendSourceType,
+    SourceTypeFilterOptions,
+    SourceTypeItem} from "../config/source-types";
+import {
     findSourceTypeItem,
     readCachedSourceCatalog,
     resolveSourceConnector,
     resolveSourceTypeItems,
-    SourceTypeFilterOptions,
-    SourceTypeItem,
     writeCachedSourceCatalog,
 } from "../config/source-types";
 

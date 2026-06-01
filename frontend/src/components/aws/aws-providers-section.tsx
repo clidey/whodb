@@ -15,10 +15,12 @@
  */
 
 import { useMutation, useQuery } from "@apollo/client/react";
-import { FC, useCallback, useEffect, useMemo } from "react";
+import type { FC} from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Badge, Button, cn, toast } from "@clidey/ux";
+import type {
+    AwsProvider} from "@graphql";
 import {
-    AwsProvider,
     CloudProviderStatus,
     CloudProviderType,
     GetCloudProvidersDocument,
@@ -27,7 +29,8 @@ import {
     RemoveCloudProviderDocument,
 } from "@graphql";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { ProvidersActions, LocalCloudProvider } from "../../store/providers";
+import type { LocalCloudProvider } from "../../store/providers";
+import { ProvidersActions } from "../../store/providers";
 import { useTranslation } from "@/hooks/use-translation";
 import { AwsProviderModal } from "./aws-provider-modal";
 import { Tip } from "../tip";
