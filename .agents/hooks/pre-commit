@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# WhoDB pre-commit hook — runs lint on staged files before committing.
+# Install:
+#   bash dev/setup-hooks.sh
+#
+# To skip (not recommended):
+#   SKIP_LINT=1 git commit ...
+
+set -euo pipefail
+
+if [[ "${SKIP_LINT:-}" == "1" ]]; then
+  echo "pre-commit: lint skipped (SKIP_LINT=1)"
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+STAGED_FILES="$(git diff --cached --name-only --diff-filter=ACM)"
+
+# --- Go lint ---
+STAGED_GO="$(echo "$STAGED_FILES" | grep '\.go$' | grep '^core/' || true)"
+if [[ -n "$STAGED_GO" ]]; then
+  echo "pre-commit: running Go lint on staged files..."
+  # golangci-lint needs to run from the module root (core/)
+  # but paths are relative to repo root, so strip the core/ prefix
+  GO_FILES="$(echo "$STAGED_GO" | sed 's|^core/||' | tr '\n' ' ')"
+  (cd "$REPO_ROOT/core" && ./lint.sh run $GO_FILES) || {
+    echo "pre-commit: Go lint failed."
+    exit 1
+  }
+fi
+
+# --- Frontend lint ---
+STAGED_TS="$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx)$' | grep '^frontend/' || true)"
+if [[ -n "$STAGED_TS" ]]; then
+  echo "pre-commit: running frontend lint on staged files..."
+  # oxlint with explicit files triggers stricter resolution — use --fix and
+  # fail if anything can't be auto-fixed
+  (cd "$REPO_ROOT/frontend" && pnpm lint:staged $(echo "$STAGED_TS" | sed 's|^frontend/||' | tr '\n' ' ')) || {
+    echo "pre-commit: oxlint failed. Run 'pnpm lint:fix' to auto-fix."
+    exit 1
+  }
+fi
+
+echo "pre-commit: ok"
