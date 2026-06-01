@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build-on-demand wrapper for golangci-lint with gounslop module plugin.
-# The custom binary (golangci-lint + gounslop) is built once into core/tmp/
+# Wrapper for golangci-lint with gounslop module plugin (pinned to latest commit).
+# The custom binary (golangci-lint + gounslop) is built once into $TMPDIR
 # and reused. Pass all arguments through, e.g.:
 #   ./lint.sh run ./...
 #   ./lint.sh fmt ./...
@@ -12,9 +12,10 @@ BINARY="${TMPDIR:-/tmp}/whodb-custom-gcl"
 # Build if missing
 if [ ! -x "${BINARY}" ]; then
 	echo "lint.sh: custom binary not found, building..." >&2
+	cd "${SCRIPT_DIR}"
 	golangci-lint custom --destination "${TMPDIR:-/tmp}" --name whodb-custom-gcl
 	if [ ! -x "${BINARY}" ]; then
-		echo "lint.sh: ERROR: golangci-lint custom did not produce the expected binary at ${BINARY}" >&2
+		echo "lint.sh: ERROR: build did not produce ${BINARY}" >&2
 		exit 1
 	fi
 	echo "lint.sh: custom binary built at ${BINARY}" >&2
