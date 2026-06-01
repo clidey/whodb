@@ -676,9 +676,9 @@ export const ImportData: FC<ImportDataProps> = ({
                                   </thead>
                                   <tbody>
                                     {previewRows.map((row, rowIdx) => (
-                                      <tr key={`${rowIdx}`} className="border-b last:border-b-0">
+                                      <tr key={row.join("|")} className="border-b last:border-b-0">
                                         {row.map((cell, cellIdx) => (
-                                          <td key={`${rowIdx}-${cellIdx}`} className="px-3 py-2 whitespace-nowrap">
+                                          <td key={preview!.Columns[cellIdx]} className="px-3 py-2 whitespace-nowrap">
                                             {cell}
                                           </td>
                                         ))}

@@ -228,9 +228,10 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     {existingFilters.length > 0 && (
                         <div className="flex flex-col gap-sm mt-4">
                             {existingFilters.map((filter, i) => {
+                                const existingFilterKey = `${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`;
                                 const isEditing = editingExistingIndex === i;
                                 return (
-                                    <div key={`${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`} className="flex flex-col gap-2">
+                                    <div key={existingFilterKey} className="flex flex-col gap-2">
                                         <div
                                             className="flex gap-2 p-4 border rounded-lg"
                                             data-testid={`existing-condition-card-${i}`}
@@ -381,9 +382,10 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                     
                     {/* Add new conditions section */}
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto h-full">
-                        {sheetFilters.map((filter, index) => (
-                            <div
-                                key={`${filter.Key}-${filter.Operator}-${filter.Value}-${index}`}
+                        {sheetFilters.map((filter, index) => {
+                            const newFilterKey = `${filter.Key}-${filter.Operator}-${filter.Value}-${index}`;
+                            return (<div
+                                key={newFilterKey}
                                 className="flex flex-col gap-lg p-4 border rounded-lg"
                             >
                                 <div className="flex items-center justify-between">
@@ -437,8 +439,8 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                         data-testid={`sheet-field-value-${index}`}
                                     />
                                 </div>
-                            </div>
-                        ))}
+                            </div>);
+                        })}
                         <div className="flex items-center justify-end">
                             <Button
                                 variant="ghost"

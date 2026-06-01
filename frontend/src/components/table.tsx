@@ -1199,7 +1199,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 </TableCell>
                 {paginatedRows[index]?.map((cell, cellIdx) => (
                     <TableCell
-                        key={cellIdx}
+                        key={columns[cellIdx]}
                         role="gridcell"
                         className={cn(ph.mask, "cursor-pointer")}
                         title={t('cellInteractionHint')}
@@ -1400,7 +1400,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         </TableHead>
                                         {columns.map((col, idx) => (
                                             <TableHead
-                                                key={col + idx}
+                                                key={col}
                                                 icon={columnIsPrimary?.[idx] ? <KeyIcon className="w-4 h-4" aria-label="Primary key" /> : columnIsForeignKey?.[idx] ? <ShareIcon className="w-4 h-4" aria-label="Foreign key" /> : columnIcons?.[idx]}
                                                 className={cn(ph.mask, {
                                                     "cursor-pointer select-none": onColumnSort,
@@ -1660,14 +1660,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                             {
                                                 editRowInitialLengths[idx] < 50 ?
                                                     <Input
-                                                        key={`input-${idx}`}
+                                                        key={`input-${col}`}
                                                         value={editRow[idx] ?? ""}
                                                         onChange={e => handleInputChange(e.target.value, idx)}
                                                         data-testid={`editable-field-${idx}`}
                                                         {...getInputPropsForColumnType(columnTypes?.[idx] || '')}
                                                     />
                                                     : <TextArea
-                                                        key={`textarea-${idx}`}
+                                                        key={`textarea-${col}`}
                                                         value={editRow[idx] ?? ""}
                                                         onChange={e => handleInputChange(e.target.value, idx)}
                                                         rows={5}

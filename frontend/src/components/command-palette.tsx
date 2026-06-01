@@ -220,7 +220,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
     const renderShortcut = (keys: string[]) => (
         <div className="ml-auto flex items-center gap-0.5">
             {keys.map((key, idx) => (
-                <span key={idx} className="flex items-center gap-0.5">
+                <span key={key} className="flex items-center gap-0.5">
                     <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded shadow-sm">
                         {getKeyDisplay(key)}
                     </kbd>

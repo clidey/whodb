@@ -197,11 +197,11 @@ export const TourTooltip: FC<TourTooltipProps> = ({
                             {currentStep} / {totalSteps}
                         </Badge>
                         <div className="flex gap-1">
-                            {Array.from({ length: totalSteps }).map((_, i) => (
+                            {Array.from({ length: totalSteps }, (_, i) => i).map((step) => (
                                 <div
-                                    key={i}
+                                    key={`dot-${step}`}
                                     className={`h-1.5 rounded-full transition-all ${
-                                        i === currentStep - 1
+                                        step === currentStep - 1
                                             ? 'w-6 bg-brand'
                                             : 'w-1.5 bg-muted'
                                     }`}

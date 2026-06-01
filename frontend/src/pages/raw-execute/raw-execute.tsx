@@ -265,10 +265,11 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
             }
         }
 
-        return tokens.map((token, index) => {
+        const keyedTokens = tokens.map((token, i) => ({ ...token, _key: `${token.type}-${token.value}-${i}` }));
+        return keyedTokens.map((token) => {
             if (token.className) {
                 return (
-                    <span key={index} className={token.className}>
+                    <span key={token._key} className={token.className}>
                         {token.value}
                     </span>
                 );

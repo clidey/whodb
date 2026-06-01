@@ -774,7 +774,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                                     const name = item.Key;
                                     const value = item.Value?.toLowerCase();
                                     return (
-                                        <div key={`meta-${name}-${index}`} data-field-key={name} data-field-value={value}>
+                                        <div key={`meta-${name}`} data-field-key={name} data-field-value={value}>
                                             <StackListItem rowClassName="items-start" item={name}>
                                                 {value}
                                             </StackListItem>
@@ -798,7 +798,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                                     const isPKColumn = col.IsPrimary || false;
 
                                     return (
-                                        <div key={`col-${name}-${index}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
+                                        <div key={`col-${name}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"

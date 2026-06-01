@@ -295,6 +295,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
             {showColumns && <div className="flex flex-col gap-sm">
                 <div className="flex flex-col gap-4">
                     {columns.map((column, index) => {
+                        const fieldKey = `field-${column.Name}-${column.Type}-${index}`;
                         const typeDef = databaseType && column.Type ? findColumnTypeDefinition(column.Type, databaseType) : undefined;
                         const creationTypeDef = typeDefinitions.find(definition => definition.id === column.Type);
                         const showDefaultValue = capabilities?.DefaultValue && supportsDefaultForType(creationTypeDef);
@@ -303,7 +304,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                         const showModifiers = capabilities?.PrimaryKey || capabilities?.Nullable || capabilities?.Unique || capabilities?.Identity;
                         const showAdvancedOptions = showModifiers || showDefaultValue || showCheckValues || showCheckRange || capabilities?.ForeignKey;
                         const foreignKeyColumnOptions = referenceColumnsByName?.[column.ForeignKeyTable] ?? [];
-                        return <div className="flex min-w-0 flex-col gap-lg relative" key={`field-${index}`} data-testid="create-field-card">
+                        return <div className="flex min-w-0 flex-col gap-lg relative" key={fieldKey} data-testid="create-field-card">
                             <Label>{t("fieldNameLabel")}</Label>
                             <Input value={column.Name} onChange={event => handleColumnChange(index, "Name", event.target.value)} placeholder={t("fieldNamePlaceholder")} />
                             {capabilities?.Types && <>

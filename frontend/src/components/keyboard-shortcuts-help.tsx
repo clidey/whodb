@@ -39,7 +39,7 @@ const ShortcutRow: FC<{ shortcut: ShortcutEntry }> = ({ shortcut }) => (
         </span>
         <div className="flex items-center gap-1">
             {shortcut.keys.map((key, idx) => (
-                <span key={idx} className="flex items-center gap-0.5">
+                <span key={key} className="flex items-center gap-0.5">
                     <Kbd>{getKeyDisplay(key)}</Kbd>
                     {idx < shortcut.keys.length - 1 && !getEffectiveIsMac() && (
                         <span className="text-muted-foreground text-xs">+</span>
@@ -57,7 +57,7 @@ const ShortcutSection: FC<{ category: ShortcutCategory; testId?: string }> = ({ 
         </h3>
         <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
             {category.shortcuts.map((shortcut, idx) => (
-                <ShortcutRow key={idx} shortcut={shortcut} />
+                <ShortcutRow key={shortcut.description} shortcut={shortcut} />
             ))}
         </div>
     </div>
@@ -159,9 +159,9 @@ export const KeyboardShortcutsHelp: FC<KeyboardShortcutsHelpProps> = ({
                 </DialogHeader>
                 <div className="mt-4">
                     {filteredShortcuts.length > 0 ?
-                    ( filteredShortcuts.map((category, idx) => (
+                    ( filteredShortcuts.map((category) => (
                         <ShortcutSection
-                            key={idx}
+                            key={category.title}
                             category={category}
                             testId={`shortcuts-category-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
                         />

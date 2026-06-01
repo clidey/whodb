@@ -396,9 +396,10 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
         <div className="flex flex-col" data-condition-count={totalConditionCount} data-condition-mode="and">
             <Label className="mb-2">{t('whereCondition')}</Label>
             <div className="flex flex-row gap-xs max-w-[min(500px,calc(100vw-20px))] flex-wrap">
-                {visibleFilters.map((filter, i) => (
-                    <div
-                        key={`${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`}
+                {visibleFilters.map((filter, i) => {
+                    const filterKey = `${filter.Atomic?.Key}-${filter.Atomic?.Operator}-${filter.Atomic?.Value}-${i}`;
+                    return (<div
+                        key={filterKey}
                         className="group/filter-item flex gap-xs items-center text-xs rounded-2xl cursor-pointer h-[36px]"
                         data-testid="where-condition"
                         data-condition-key={filter.Atomic?.Key}
@@ -444,8 +445,8 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                             editingIndex={i}
                             t={t}
                         />
-                    </div>
-                ))}
+                    </div>);
+                })}
                 {hiddenCount > 0 && (
                     <Button onClick={handleOpenSheet} data-testid="more-conditions-button" variant="secondary">
                         {t('moreConditions', { count: hiddenCount })}
@@ -491,8 +492,9 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                 }>
                     <SheetTitle><AdjustmentsVerticalIcon className="w-5 h-5" /> {t('manageWhereConditions')}</SheetTitle>
                     <div className="flex flex-col gap-lg mt-6 overflow-y-auto max-h-[calc(100vh-200px)]">
-                        {sheetFilters.map((filter, index) => (
-                            <div key={`${filter.Key}-${filter.Operator}-${filter.Value}-${index}`} className="flex flex-col gap-lg p-4 border rounded-lg">
+                        {sheetFilters.map((filter, index) => {
+                            const sheetFilterKey = `${filter.Key}-${filter.Operator}-${filter.Value}-${index}`;
+                            return (<div key={sheetFilterKey} className="flex flex-col gap-lg p-4 border rounded-lg">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-sm font-medium">{t('conditionNumber', { index: index + 1 })}</Label>
                                     <Button
@@ -536,8 +538,8 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                         data-testid={`sheet-field-value-${index}`}
                                     />
                                 </div>
-                            </div>
-                        ))}
+                            </div>);
+                        })}
                         <Button onClick={handleSheetAddFilter} data-testid="add-sheet-filter-button" variant="secondary"
                                 className="self-start">
                             <PlusCircleIcon className="w-4 h-4"/> {t('addCondition')}

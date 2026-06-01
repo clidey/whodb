@@ -65,9 +65,9 @@
         // React
         "react/rules-of-hooks": "error",
         "react/exhaustive-deps": "warn",
-        "react/jsx-key": "warn",
+        "react/jsx-key": "error",
         "react/no-direct-mutation-state": "error",
-        "react/no-array-index-key": "warn",
+        "react/no-array-index-key": "error",
         "react/no-danger": "error",
         "react/jsx-no-useless-fragment": "warn",
 
