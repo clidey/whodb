@@ -34,10 +34,10 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.22.11
+        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.27.1
 
       - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
 
       - name: Run gosec
         working-directory: core
