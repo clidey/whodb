@@ -42,8 +42,10 @@ jobs:
             api.github.com:443
             auth.docker.io:443
             dl-cdn.alpinelinux.org:443
+            ghcr.io:443
             github.com:443
             objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
             proxy.golang.org:443
@@ -79,6 +81,19 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ inputs.version }}
+
+      - name: Load image for scan
+        run: docker load -i /tmp/whodb-cli-docker-${{ matrix.arch }}.tar
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: clidey/whodb-cli:${{ inputs.version }}-${{ matrix.arch }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
 
       - name: Upload Docker artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
