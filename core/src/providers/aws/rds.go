@@ -32,6 +32,16 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	rdsStatusAvailable = "available"
+	rdsStatusCreating  = "creating"
+	rdsStatusDeleting  = "deleting"
+	rdsStatusStarting  = "starting"
+	rdsStatusStopped   = "stopped"
+	rdsStatusFailed    = "failed"
+	rdsStatusModifying = "modifying"
+)
+
 func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConnection, error) {
 	start := time.Now()
 	var connections []providers.DiscoveredConnection
@@ -399,11 +409,11 @@ func mapProxyEngineFamily(family string) engine.DatabaseType {
 
 func mapProxyStatus(status string) providers.ConnectionStatus {
 	switch strings.ToLower(status) {
-	case "available":
+	case rdsStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying":
+	case rdsStatusCreating, rdsStatusModifying:
 		return providers.ConnectionStatusStarting
-	case "deleting":
+	case rdsStatusDeleting:
 		return providers.ConnectionStatusDeleting
 	case "incompatible-network", "insufficient-resource-limits":
 		return providers.ConnectionStatusFailed
@@ -418,15 +428,15 @@ func mapRDSStatus(status *string) providers.ConnectionStatus {
 	}
 
 	switch strings.ToLower(*status) {
-	case "available":
+	case rdsStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "starting", "creating", "configuring-enhanced-monitoring", "modifying", "upgrading":
+	case rdsStatusStarting, rdsStatusCreating, "configuring-enhanced-monitoring", rdsStatusModifying, "upgrading":
 		return providers.ConnectionStatusStarting
-	case "stopped", "stopping", "storage-optimization":
+	case rdsStatusStopped, "stopping", "storage-optimization":
 		return providers.ConnectionStatusStopped
-	case "deleting":
+	case rdsStatusDeleting:
 		return providers.ConnectionStatusDeleting
-	case "failed", "restore-error", "incompatible-credentials", "incompatible-parameters", "incompatible-options":
+	case rdsStatusFailed, "restore-error", "incompatible-credentials", "incompatible-parameters", "incompatible-options":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

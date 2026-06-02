@@ -25,6 +25,10 @@ import (
 	gorm_plugin "github.com/clidey/whodb/core/src/plugins/gorm"
 )
 
+const (
+	duckDBYes = "YES"
+)
+
 // GetColumnConstraints retrieves column constraints for DuckDB tables.
 func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema string, storageUnit string) (map[string]map[string]any, error) {
 	constraints := make(map[string]map[string]any)
@@ -46,7 +50,7 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 			if err := rows.Scan(&columnName, &isNullable); err != nil {
 				continue
 			}
-			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = isNullable == "YES"
+			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = isNullable == duckDBYes
 		}
 		if err := rows.Err(); err != nil {
 			return false, err

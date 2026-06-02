@@ -32,6 +32,15 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	docdbStatusAvailable = "available"
+	docdbStatusCreating  = "creating"
+	docdbStatusStarting  = "starting"
+	docdbStatusDeleting  = "deleting"
+	docdbStatusFailed    = "failed"
+	docdbStatusStopped   = "stopped"
+)
+
 func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.DiscoveredConnection, error) {
 	start := time.Now()
 	var connections []providers.DiscoveredConnection
@@ -129,15 +138,15 @@ func mapDocDBStatus(status *string) providers.ConnectionStatus {
 	}
 
 	switch strings.ToLower(*status) {
-	case "available":
+	case docdbStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying", "upgrading", "migrating", "preparing-data-migration":
+	case docdbStatusCreating, rdsStatusModifying, "upgrading", "migrating", "preparing-data-migration":
 		return providers.ConnectionStatusStarting
-	case "stopped", "stopping", "starting":
+	case docdbStatusStopped, "stopping", docdbStatusStarting:
 		return providers.ConnectionStatusStopped
-	case "deleting":
+	case docdbStatusDeleting:
 		return providers.ConnectionStatusDeleting
-	case "failed", "inaccessible-encryption-credentials":
+	case docdbStatusFailed, "inaccessible-encryption-credentials":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

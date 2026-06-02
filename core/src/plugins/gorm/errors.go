@@ -27,6 +27,8 @@ import (
 	"github.com/clidey/whodb/core/src/log"
 )
 
+const redacted = "[REDACTED]"
+
 // ErrorHandler provides centralized error handling for GORM operations
 type ErrorHandler struct {
 	plugin GormPluginFunctions
@@ -194,18 +196,18 @@ type sanitizePattern struct {
 // from error messages. These patterns are intentionally broad to avoid leaking
 // credentials from driver/SDK error strings (DSNs, query params, etc.).
 var sanitizePatterns = []sanitizePattern{
-	{regexp.MustCompile(`(?i)\bpassword=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bpasswd=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bpwd=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\btoken=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bapi_key=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\baccess_key_id=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bsecret_access_key=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bsession_token=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bkey=\S+`), "[REDACTED]"},
-	{regexp.MustCompile(`(?i)\bsecret=\S+`), "[REDACTED]"},
+	{regexp.MustCompile(`(?i)\bpassword=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bpasswd=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bpwd=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\btoken=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bapi_key=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\baccess_key_id=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bsecret_access_key=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bsession_token=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bkey=\S+`), redacted},
+	{regexp.MustCompile(`(?i)\bsecret=\S+`), redacted},
 	{regexp.MustCompile(`(?i)://[^/\s]+@`), "://[REDACTED]@"},
-	{regexp.MustCompile(`@[\w.\-]+:\d+`), "[REDACTED]"},
+	{regexp.MustCompile(`@[\w.\-]+:\d+`), redacted},
 }
 
 // sanitizeErrorMessage removes sensitive information from error messages

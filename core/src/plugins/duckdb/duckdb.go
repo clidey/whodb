@@ -37,6 +37,12 @@ import (
 	sourcecatalogspecs "github.com/clidey/whodb/core/src/sourcecatalog/specs"
 )
 
+const (
+	duckDBTypeBlob = "BLOB"
+	duckDBTypeUUID = "UUID"
+	duckDBBoolTrue = "true"
+)
+
 var supportedOperators = sourcecatalogspecs.DuckDBSupportedOperators
 
 // DuckDBPlugin implements the WhoDB plugin for DuckDB.
@@ -153,7 +159,7 @@ func (p *DuckDBPlugin) GetColumnCodec(columnType string) gorm_plugin.ColumnCodec
 
 			switch v := val.(type) {
 			case []byte:
-				if len(v) == 16 && strings.ToUpper(columnType) == "UUID" {
+				if len(v) == 16 && strings.ToUpper(columnType) == duckDBTypeUUID {
 					return fmt.Sprintf("%x-%x-%x-%x-%x", v[0:4], v[4:6], v[6:8], v[8:10], v[10:16]), nil
 				}
 				return "0x" + fmt.Sprintf("%X", v), nil
@@ -210,9 +216,9 @@ func (p *DuckDBPlugin) HandleCustomDataType(value string, columnType string, isN
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS INTERVAL)", escaped)), true, nil
 	case upper == "JSON":
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS JSON)", escaped)), true, nil
-	case upper == "UUID":
+	case upper == duckDBTypeUUID:
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS UUID)", escaped)), true, nil
-	case upper == "BLOB":
+	case upper == duckDBTypeBlob:
 		return gorm.Expr(fmt.Sprintf("'%s'::BLOB", escaped)), true, nil
 	case upper == "HUGEINT":
 		return gorm.Expr(fmt.Sprintf("CAST('%s' AS HUGEINT)", escaped)), true, nil

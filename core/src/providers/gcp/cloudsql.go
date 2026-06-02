@@ -30,6 +30,8 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const gcpStatusRunnable = "RUNNABLE"
+
 // discoverCloudSQL discovers Cloud SQL instances in the configured project.
 func (p *Provider) discoverCloudSQL(ctx context.Context) ([]providers.DiscoveredConnection, error) {
 	start := time.Now()
@@ -199,7 +201,7 @@ func mapCloudSQLEngine(databaseVersion string) (engine.DatabaseType, bool) {
 
 func mapCloudSQLStatus(state string) providers.ConnectionStatus {
 	switch strings.ToUpper(state) {
-	case "RUNNABLE":
+	case gcpStatusRunnable:
 		return providers.ConnectionStatusAvailable
 	case "PENDING_CREATE", "MAINTENANCE":
 		return providers.ConnectionStatusStarting

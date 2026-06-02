@@ -28,6 +28,10 @@ import (
 )
 
 const (
+	ollamaProviderType = "openai"
+)
+
+const (
 	Ollama_LLMType LLMType = "Ollama"
 )
 
@@ -45,7 +49,7 @@ func (p *OllamaProvider) GetType() LLMType {
 }
 
 // GetProtocol returns "openai" — Ollama uses the OpenAI-compatible streaming protocol.
-func (p *OllamaProvider) GetProtocol() string { return "openai" }
+func (p *OllamaProvider) GetProtocol() string { return ollamaProviderType }
 
 // GetDefaultEndpoint returns the default Ollama API endpoint, resolved for the current environment
 // (Docker, WSL2, or custom WHODB_OLLAMA_HOST/PORT).

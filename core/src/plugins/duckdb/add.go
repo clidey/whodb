@@ -36,13 +36,13 @@ func (p *DuckDBPlugin) GetCreateTableQuery(db *gorm.DB, schema string, storageUn
 	columnDefs := gorm_plugin.RecordsToColumnDefs(columns, func(def gorm_plugin.ColumnDef, column engine.Record) gorm_plugin.ColumnDef {
 		extra := engine.NormalizeCreationExtra(column.Extra)
 		lowerType := strings.ToLower(column.Value)
-		if extra["identity"] == "true" && (strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer")) {
+		if extra["identity"] == duckDBBoolTrue && (strings.Contains(lowerType, "int") || strings.Contains(lowerType, "integer")) {
 			seqName := fmt.Sprintf("%s_%s_seq", storageUnit, column.Key)
 			seqSQL = fmt.Sprintf("CREATE SEQUENCE IF NOT EXISTS %s; ", builder.QuoteIdentifier(seqName))
 			def.Extra = fmt.Sprintf("DEFAULT nextval('%s')", strings.ReplaceAll(seqName, "'", "''"))
-			def.Primary = extra["primary"] == "true"
+			def.Primary = extra["primary"] == duckDBBoolTrue
 		} else {
-			def.Primary = extra["primary"] == "true"
+			def.Primary = extra["primary"] == duckDBBoolTrue
 		}
 		return def
 	})

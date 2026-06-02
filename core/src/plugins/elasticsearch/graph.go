@@ -67,7 +67,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 		var buf bytes.Buffer
 		query := map[string]any{
 			"size": 100,
-			"query": map[string]any{
+			esQueryKey: map[string]any{
 				"match_all": map[string]any{},
 			},
 		}
@@ -131,7 +131,7 @@ func (p *ElasticSearchPlugin) GetGraph(config *engine.PluginConfig, database str
 						Table2:       fk,
 						Relation:     "ManyToOne",
 						SourceColumn: fieldName,
-						TargetColumn: "_id",
+						TargetColumn: esFieldID,
 					})
 				}
 			}

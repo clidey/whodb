@@ -120,7 +120,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 
 		var attributes []engine.Record
 		switch keyType {
-		case "string":
+		case redisTypeString:
 			sizeCmd := pipe.StrLen(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
 				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for string key size")
@@ -134,10 +134,10 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 			// StrLen returns bytes — maps to Data Size, so the UI renders
 			// auto-scaled units (KB/MB/...) like other byte-valued attributes.
 			attributes = []engine.Record{
-				{Key: "Type", Value: "string"},
+				{Key: "Type", Value: redisTypeString},
 				{Key: "Data Size", Value: strconv.FormatInt(size, 10)},
 			}
-		case "hash":
+		case redisTypeHash:
 			sizeCmd := pipe.HLen(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
 				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for hash key size")
@@ -152,7 +152,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 				{Key: "Type", Value: "hash"},
 				{Key: "Entries", Value: strconv.FormatInt(size, 10)},
 			}
-		case "list":
+		case redisTypeList:
 			sizeCmd := pipe.LLen(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
 				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for list key size")
@@ -182,7 +182,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 				{Key: "Type", Value: "set"},
 				{Key: "Entries", Value: strconv.FormatInt(size, 10)},
 			}
-		case "zset":
+		case redisTypeZSet:
 			sizeCmd := pipe.ZCard(ctx, key)
 			if _, err := pipe.Exec(ctx); err != nil {
 				log.WithError(err).WithField("key", key).Error("Failed to execute pipeline for zset key size")
@@ -251,17 +251,17 @@ func (p *RedisPlugin) GetRows(
 	}
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		val, err := client.Get(ctx, storageUnit).Result()
 		if err != nil {
 			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis string value")
 			return nil, err
 		}
 		result = &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "value", Type: "string"}},
+			Columns: []engine.Column{{Name: redisKeyValue, Type: redisTypeString}},
 			Rows:    [][]string{{val}},
 		}
-	case "hash":
+	case redisTypeHash:
 		hashValues, err := client.HGetAll(ctx, storageUnit).Result()
 		if err != nil {
 			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis hash values")
@@ -278,10 +278,10 @@ func (p *RedisPlugin) GetRows(
 			return rows[i][0] < rows[j][0]
 		})
 		result = &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
+			Columns: []engine.Column{{Name: "field", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
 			Rows:    rows,
 		}
-	case "list":
+	case redisTypeList:
 		listValues, err := client.LRange(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis list values")
@@ -294,7 +294,7 @@ func (p *RedisPlugin) GetRows(
 			}
 		}
 		result = &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}},
+			Columns: []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
 			Rows:    rows,
 		}
 	case "set":
@@ -310,11 +310,11 @@ func (p *RedisPlugin) GetRows(
 			}
 		}
 		result = &engine.GetRowsResult{
-			Columns:       []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}},
+			Columns:       []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}},
 			Rows:          rows,
 			DisableUpdate: true,
 		}
-	case "zset":
+	case redisTypeZSet:
 		zsetValues, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to get Redis zset values")
@@ -329,7 +329,7 @@ func (p *RedisPlugin) GetRows(
 			}
 		}
 		result = &engine.GetRowsResult{
-			Columns: []engine.Column{{Name: "index", Type: "string"}, {Name: "member", Type: "string"}, {Name: "score", Type: "string"}},
+			Columns: []engine.Column{{Name: "index", Type: redisTypeString}, {Name: "member", Type: redisTypeString}, {Name: "score", Type: redisTypeString}},
 			Rows:    rows,
 		}
 	default:
@@ -358,15 +358,15 @@ func (p *RedisPlugin) GetRowCount(config *engine.PluginConfig, schema, storageUn
 	}
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		return 1, nil
-	case "hash":
+	case redisTypeHash:
 		count, err := client.HLen(ctx, storageUnit).Result()
 		if err != nil {
 			return 0, err
 		}
 		return count, nil
-	case "list":
+	case redisTypeList:
 		count, err := client.LLen(ctx, storageUnit).Result()
 		if err != nil {
 			return 0, err
@@ -378,7 +378,7 @@ func (p *RedisPlugin) GetRowCount(config *engine.PluginConfig, schema, storageUn
 			return 0, err
 		}
 		return count, nil
-	case "zset":
+	case redisTypeZSet:
 		count, err := client.ZCard(ctx, storageUnit).Result()
 		if err != nil {
 			return 0, err
@@ -406,16 +406,16 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 	}
 
 	switch keyType {
-	case "string":
-		return []engine.Column{{Name: "value", Type: "string"}}, nil
-	case "hash":
-		return []engine.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}}, nil
-	case "list":
-		return []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}}, nil
+	case redisTypeString:
+		return []engine.Column{{Name: redisKeyValue, Type: redisTypeString}}, nil
+	case redisTypeHash:
+		return []engine.Column{{Name: "field", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
+	case redisTypeList:
+		return []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
 	case "set":
-		return []engine.Column{{Name: "index", Type: "string"}, {Name: "value", Type: "string"}}, nil
-	case "zset":
-		return []engine.Column{{Name: "index", Type: "string"}, {Name: "member", Type: "string"}, {Name: "score", Type: "string"}}, nil
+		return []engine.Column{{Name: "index", Type: redisTypeString}, {Name: redisKeyValue, Type: redisTypeString}}, nil
+	case redisTypeZSet:
+		return []engine.Column{{Name: "index", Type: redisTypeString}, {Name: "member", Type: redisTypeString}, {Name: "score", Type: redisTypeString}}, nil
 	default:
 		return nil, errors.New("unsupported Redis data type")
 	}
@@ -433,7 +433,7 @@ func filterRedisHash(field, value string, where *query.WhereCondition) bool {
 			if !evaluateRedisCondition(field, op.Operator, op.Value) {
 				return false
 			}
-		case "value":
+		case redisKeyValue:
 			if !evaluateRedisCondition(value, op.Operator, op.Value) {
 				return false
 			}
@@ -449,7 +449,7 @@ func filterRedisList(value string, where *query.WhereCondition) bool {
 	}
 
 	for key, op := range condition {
-		if key == "value" {
+		if key == redisKeyValue {
 			if !evaluateRedisCondition(value, op.Operator, op.Value) {
 				return false
 			}
@@ -465,7 +465,7 @@ func filterRedisSet(value string, where *query.WhereCondition) bool {
 	}
 
 	for key, op := range condition {
-		if key == "value" || key == "member" {
+		if key == redisKeyValue || key == "member" {
 			if !evaluateRedisCondition(value, op.Operator, op.Value) {
 				return false
 			}

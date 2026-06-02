@@ -224,7 +224,7 @@ func (d Dialector) DataTypeOf(field *schema.Field) string {
 	case schema.Time:
 		return "TIMESTAMP"
 	case schema.Bytes:
-		return "BLOB"
+		return duckDBTypeBlob
 	}
 
 	return string(field.DataType)

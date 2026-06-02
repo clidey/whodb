@@ -29,6 +29,17 @@ import (
 	queryast "github.com/clidey/whodb/core/src/query"
 )
 
+const (
+	esFieldID    = "_id"
+	esQueryKey   = "query"
+	esTypeBool   = "bool"
+	esTypeText   = "text"
+	esOpRange    = "range"
+	esOpWildcard = "wildcard"
+	esOpMatch    = "match"
+	esOpIDs      = "ids"
+)
+
 func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRowsRequest) (*engine.GetRowsResult, error) {
 	collection := req.StorageUnit
 	where, sortConds, pageSize, pageOffset := req.Where, req.Sort, req.PageSize, req.PageOffset
@@ -48,8 +59,8 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 	query := map[string]any{
 		"from": pageOffset,
 		"size": pageSize,
-		"query": map[string]any{
-			"bool": elasticSearchConditions,
+		esQueryKey: map[string]any{
+			esTypeBool: elasticSearchConditions,
 		},
 	}
 
@@ -132,8 +143,8 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 	for _, hit := range hits {
 		hitMap := hit.(map[string]any)
 		source := hitMap["_source"].(map[string]any)
-		id := hitMap["_id"]
-		source["_id"] = id
+		id := hitMap[esFieldID]
+		source[esFieldID] = id
 		jsonBytes, err := json.Marshal(source)
 		if err != nil {
 			log.WithError(err).WithField("collection", collection).Error("Failed to marshal ElasticSearch document source to JSON")
@@ -157,8 +168,8 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 	}
 
 	query := map[string]any{
-		"query": map[string]any{
-			"bool": elasticSearchConditions,
+		esQueryKey: map[string]any{
+			esTypeBool: elasticSearchConditions,
 		},
 	}
 
@@ -206,7 +217,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 	var buf bytes.Buffer
 	query := map[string]any{
 		"size": 100,
-		"query": map[string]any{
+		esQueryKey: map[string]any{
 			"match_all": map[string]any{},
 		},
 	}
@@ -301,7 +312,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 
 	columns := []engine.Column{
 		{
-			Name:         "_id",
+			Name:         esFieldID,
 			Type:         "keyword",
 			IsPrimary:    true,
 			IsForeignKey: false,
@@ -337,7 +348,7 @@ func inferElasticSearchType(value any) string {
 
 	switch value.(type) {
 	case string:
-		return "text"
+		return esTypeText
 	case float64, float32:
 		return "float"
 	case int, int32, int64:

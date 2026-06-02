@@ -28,6 +28,10 @@ import (
 )
 
 const (
+	anthrpProviderType = "anthropic"
+)
+
+const (
 	Anthropic_LLMType LLMType = "Anthropic"
 )
 
@@ -44,8 +48,8 @@ func (p *AnthropicProvider) GetType() LLMType {
 	return Anthropic_LLMType
 }
 
-// GetProtocol returns "anthropic" — the streaming protocol family.
-func (p *AnthropicProvider) GetProtocol() string { return "anthropic" }
+// GetProtocol returns anthrpProviderType — the streaming protocol family.
+func (p *AnthropicProvider) GetProtocol() string { return anthrpProviderType }
 
 // GetDefaultEndpoint returns the default Anthropic API endpoint.
 func (p *AnthropicProvider) GetDefaultEndpoint() string {
@@ -118,5 +122,5 @@ func (p *AnthropicProvider) CreateBAMLClient(config *ProviderConfig, model strin
 	if config.Endpoint != "" && config.Endpoint != p.GetDefaultEndpoint() {
 		opts["base_url"] = config.Endpoint
 	}
-	return "anthropic", opts, nil
+	return anthrpProviderType, opts, nil
 }

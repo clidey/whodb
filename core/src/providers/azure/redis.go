@@ -79,8 +79,8 @@ func (p *Provider) redisCacheToConnection(cache *armredis.ResourceInfo) provider
 	resourceGroup := extractResourceGroup(derefStr(cache.ID))
 
 	metadata := map[string]string{
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	var status providers.ConnectionStatus

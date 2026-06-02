@@ -38,11 +38,11 @@ func redisAtomicWhere(key, operator, value string) *query.WhereCondition {
 }
 
 func TestConvertWhereConditionToRedisFilter(t *testing.T) {
-	filter, err := convertWhereConditionToRedisFilter(redisAtomicWhere("value", "contains", "alice"))
+	filter, err := convertWhereConditionToRedisFilter(redisAtomicWhere(redisKeyValue, "contains", "alice"))
 	if err != nil {
 		t.Fatalf("expected atomic filter conversion to succeed, got %v", err)
 	}
-	if filter["value"].Operator != "CONTAINS" || filter["value"].Value != "alice" {
+	if filter[redisKeyValue].Operator != "CONTAINS" || filter[redisKeyValue].Value != "alice" {
 		t.Fatalf("unexpected redis filter: %#v", filter)
 	}
 
@@ -82,7 +82,7 @@ func TestRedisFilterHelpers(t *testing.T) {
 	if !filterRedisHash("email", "alice@example.com", hashWhere) {
 		t.Fatal("expected hash filter to match field equality")
 	}
-	valueWhere := redisAtomicWhere("value", "CONTAINS", "alice")
+	valueWhere := redisAtomicWhere(redisKeyValue, "CONTAINS", "alice")
 	if !filterRedisList("alice@example.com", valueWhere) {
 		t.Fatal("expected list filter to match value")
 	}
@@ -97,7 +97,7 @@ func TestRedisFilterHelpers(t *testing.T) {
 
 	// Unsupported compound filters are intentionally ignored instead of hiding data.
 	ignoredWhere := &query.WhereCondition{Type: query.WhereConditionTypeAnd}
-	if !filterRedisHash("field", "value", ignoredWhere) {
+	if !filterRedisHash("field", redisKeyValue, ignoredWhere) {
 		t.Fatal("expected invalid filter expressions to be ignored")
 	}
 }

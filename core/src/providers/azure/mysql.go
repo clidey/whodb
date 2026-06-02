@@ -78,9 +78,9 @@ func (p *Provider) mysqlServerToConnection(server *armmysqlflexibleservers.Serve
 	resourceGroup := extractResourceGroup(derefStr(server.ID))
 
 	metadata := map[string]string{
-		"port":          "3306",
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		"port":                 "3306",
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	var status providers.ConnectionStatus

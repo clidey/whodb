@@ -99,9 +99,9 @@ func (p *ElasticSearchPlugin) AddRow(config *engine.PluginConfig, schema string,
 	}
 
 	docID := ""
-	if id, ok := jsonValue["_id"]; ok {
+	if id, ok := jsonValue[esFieldID]; ok {
 		docID = id
-		delete(jsonValue, "_id")
+		delete(jsonValue, esFieldID)
 	}
 
 	documentBytes, err := json.Marshal(jsonValue)
@@ -171,9 +171,9 @@ func mapElasticFieldType(typeStr string) string {
 	switch {
 	case strings.Contains(lower, "keyword"):
 		return "keyword"
-	case strings.Contains(lower, "text"):
-		return "text"
-	case strings.Contains(lower, "bool"):
+	case strings.Contains(lower, esTypeText):
+		return esTypeText
+	case strings.Contains(lower, esTypeBool):
 		return "boolean"
 	case strings.Contains(lower, "date"), strings.Contains(lower, "time"):
 		return "date"
@@ -186,6 +186,6 @@ func mapElasticFieldType(typeStr string) string {
 	case strings.Contains(lower, "object"), strings.Contains(lower, "json"):
 		return "object"
 	default:
-		return "text"
+		return esTypeText
 	}
 }

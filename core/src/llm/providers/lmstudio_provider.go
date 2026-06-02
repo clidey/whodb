@@ -26,6 +26,10 @@ import (
 )
 
 const (
+	lmsProviderType = "openai"
+)
+
+const (
 	LMStudio_LLMType LLMType = "LMStudio"
 )
 
@@ -44,7 +48,7 @@ func (p *LMStudioProvider) GetType() LLMType {
 
 // GetProtocol returns "openai" — LM Studio uses the OpenAI-compatible streaming protocol.
 func (p *LMStudioProvider) GetProtocol() string {
-	return "openai"
+	return lmsProviderType
 }
 
 // GetDefaultEndpoint returns the default LM Studio API endpoint.

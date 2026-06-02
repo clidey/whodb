@@ -32,6 +32,13 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	ecStatusAvailable    = "available"
+	ecStatusCreating     = "creating"
+	ecStatusDeleting     = "deleting"
+	ecStatusCreateFailed = "create-failed"
+)
+
 func (p *Provider) discoverElastiCache(ctx context.Context) ([]providers.DiscoveredConnection, error) {
 	var connections []providers.DiscoveredConnection
 
@@ -362,13 +369,13 @@ func (p *Provider) serverlessCacheToConnection(cache *ectypes.ServerlessCache) *
 
 func mapServerlessCacheStatus(status string) providers.ConnectionStatus {
 	switch strings.ToLower(status) {
-	case "available":
+	case ecStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying":
+	case ecStatusCreating, rdsStatusModifying:
 		return providers.ConnectionStatusStarting
-	case "deleting":
+	case ecStatusDeleting:
 		return providers.ConnectionStatusDeleting
-	case "create-failed", "update-failed", "delete-failed":
+	case ecStatusCreateFailed, "update-failed", "delete-failed":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown
@@ -389,13 +396,13 @@ func isSupportedCacheEngine(eng string) bool {
 
 func mapElastiCacheStatus(status string) providers.ConnectionStatus {
 	switch strings.ToLower(status) {
-	case "available":
+	case ecStatusAvailable:
 		return providers.ConnectionStatusAvailable
-	case "creating", "modifying", "snapshotting", "rebooting cluster nodes":
+	case "creating", rdsStatusModifying, "snapshotting", "rebooting cluster nodes":
 		return providers.ConnectionStatusStarting
 	case "deleted", "deleting":
 		return providers.ConnectionStatusDeleting
-	case "create-failed", "restore-failed":
+	case ecStatusCreateFailed, "restore-failed":
 		return providers.ConnectionStatusFailed
 	default:
 		return providers.ConnectionStatusUnknown

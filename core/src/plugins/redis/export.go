@@ -41,8 +41,8 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	}
 
 	switch keyType {
-	case "string":
-		headers := []string{common.FormatCSVHeader("value", "string")}
+	case redisTypeString:
+		headers := []string{common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
@@ -52,8 +52,8 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		return writer([]string{val})
 
-	case "hash":
-		headers := []string{common.FormatCSVHeader("field", "string"), common.FormatCSVHeader("value", "string")}
+	case redisTypeHash:
+		headers := []string{common.FormatCSVHeader("field", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		// If selected rows provided, use them
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				if err := writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row["value"])}); err != nil {
+				if err := writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
 					return err
 				}
 			}
@@ -84,15 +84,15 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		return nil
 
-	case "list":
-		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader("value", "string")}
+	case redisTypeList:
+		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])}); err != nil {
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
 					return err
 				}
 			}
@@ -111,14 +111,14 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		return nil
 
 	case "set":
-		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader("value", "string")}
+		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
 		if err := writer(headers); err != nil {
 			return err
 		}
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row["value"])}); err != nil {
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
 					return err
 				}
 			}
@@ -137,7 +137,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		return nil
 
-	case "zset":
+	case redisTypeZSet:
 		headers := []string{
 			common.FormatCSVHeader("index", "string"),
 			common.FormatCSVHeader("member", "string"),
@@ -212,32 +212,32 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 	ctx := client.Context()
 
 	switch keyType {
-	case "string":
+	case redisTypeString:
 		val, err := client.Get(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
-		return emit([]map[string]any{{"value": val}})
+		return emit([]map[string]any{{redisKeyValue: val}})
 
-	case "hash":
+	case redisTypeHash:
 		values, err := client.HGetAll(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
 		rows := make([]map[string]any, 0, len(values))
 		for field, value := range values {
-			rows = append(rows, map[string]any{"field": field, "value": value})
+			rows = append(rows, map[string]any{"field": field, redisKeyValue: value})
 		}
 		return emit(rows)
 
-	case "list":
+	case redisTypeList:
 		values, err := client.LRange(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			return err
 		}
 		rows := make([]map[string]any, 0, len(values))
 		for i, v := range values {
-			rows = append(rows, map[string]any{"index": i, "value": v})
+			rows = append(rows, map[string]any{"index": i, redisKeyValue: v})
 		}
 		return emit(rows)
 
@@ -249,11 +249,11 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 		sort.Strings(values)
 		rows := make([]map[string]any, 0, len(values))
 		for i, v := range values {
-			rows = append(rows, map[string]any{"index": i, "value": v})
+			rows = append(rows, map[string]any{"index": i, redisKeyValue: v})
 		}
 		return emit(rows)
 
-	case "zset":
+	case redisTypeZSet:
 		values, err := client.ZRangeWithScores(ctx, storageUnit, 0, -1).Result()
 		if err != nil {
 			return err

@@ -21,6 +21,12 @@ import (
 	"strings"
 )
 
+const (
+	constraintKeyCheckValues = "check_values"
+	constraintKeyCheckMin    = "check_min"
+	constraintKeyCheckMax    = "check_max"
+)
+
 const creationListSeparator = "\x1f"
 
 // RecordsToObjectDefinition normalizes legacy record inputs into a typed object
@@ -35,7 +41,7 @@ func RecordsToObjectDefinition(name string, fields []Record) ObjectDefinition {
 			Primary:     parseCreationBool(extra["primary"]),
 			Unique:      parseCreationBool(extra["unique"]),
 			Identity:    parseCreationBool(extra["identity"]) || parseCreationBool(extra["auto_increment"]),
-			CheckValues: splitCreationList(extra["check_values"]),
+			CheckValues: splitCreationList(extra[constraintKeyCheckValues]),
 		}
 		if raw, ok := extra["nullable"]; ok {
 			nullable := parseCreationBool(raw)
@@ -44,12 +50,12 @@ func RecordsToObjectDefinition(name string, fields []Record) ObjectDefinition {
 		if raw, ok := extra["default"]; ok {
 			column.DefaultValue = &raw
 		}
-		if raw, ok := extra["check_min"]; ok {
+		if raw, ok := extra[constraintKeyCheckMin]; ok {
 			if parsed, err := strconv.ParseFloat(raw, 64); err == nil {
 				column.CheckMin = &parsed
 			}
 		}
-		if raw, ok := extra["check_max"]; ok {
+		if raw, ok := extra[constraintKeyCheckMax]; ok {
 			if parsed, err := strconv.ParseFloat(raw, 64); err == nil {
 				column.CheckMax = &parsed
 			}
@@ -92,13 +98,13 @@ func ColumnDefinitionToRecord(column ColumnDefinition) Record {
 		extra["default"] = *column.DefaultValue
 	}
 	if len(column.CheckValues) > 0 {
-		extra["check_values"] = strings.Join(column.CheckValues, creationListSeparator)
+		extra[constraintKeyCheckValues] = strings.Join(column.CheckValues, creationListSeparator)
 	}
 	if column.CheckMin != nil {
-		extra["check_min"] = strconv.FormatFloat(*column.CheckMin, 'f', -1, 64)
+		extra[constraintKeyCheckMin] = strconv.FormatFloat(*column.CheckMin, 'f', -1, 64)
 	}
 	if column.CheckMax != nil {
-		extra["check_max"] = strconv.FormatFloat(*column.CheckMax, 'f', -1, 64)
+		extra[constraintKeyCheckMax] = strconv.FormatFloat(*column.CheckMax, 'f', -1, 64)
 	}
 	if column.ForeignKey != nil {
 		extra["references_table"] = column.ForeignKey.Table
@@ -123,12 +129,12 @@ func NormalizeCreationExtra(extra map[string]string) map[string]string {
 			canonical = "identity"
 		case "default_value":
 			canonical = "default"
-		case "check_values", "enum", "values":
-			canonical = "check_values"
-		case "check_min", "min":
-			canonical = "check_min"
-		case "check_max", "max":
-			canonical = "check_max"
+		case constraintKeyCheckValues, "enum", "values":
+			canonical = constraintKeyCheckValues
+		case constraintKeyCheckMin, "min":
+			canonical = constraintKeyCheckMin
+		case constraintKeyCheckMax, "max":
+			canonical = constraintKeyCheckMax
 		case "referenced_table", "foreign_table", "references_table":
 			canonical = "references_table"
 		case "referenced_column", "foreign_column", "references_column":

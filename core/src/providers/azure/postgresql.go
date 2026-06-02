@@ -78,9 +78,9 @@ func (p *Provider) postgresServerToConnection(server *armpostgresqlflexibleserve
 	resourceGroup := extractResourceGroup(derefStr(server.ID))
 
 	metadata := map[string]string{
-		"port":          "5432",
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		"port":                 "5432",
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	var status providers.ConnectionStatus

@@ -177,8 +177,16 @@ linters:
         - sprintfQuotedString
         - yodaStyleExpr
     goconst:
-      min-len: 3
-      min-occurrences: 4
+      min-len: 4
+      min-occurrences: 10
+      ignore-string-values:
+        - "^(true|false|enable|enabled|disable|default|error|type|value|query|profile|text)$"
+        - "^(Port|hostname|database|schema|storageUnit|table|column|path|kind|namespace|objectName)$"
+        - "^(driver_id|source_type|database_type|profile_id_present|profile_source|connector)$"
+        - "^(Content-Type|application/json|String|formula indicator|Database|openai-generic)$"
+        - "^(bsonType|modifying|upgrading|migrating|stopping|snapshotting|rebooting cluster nodes)$"
+        - "^(iamAuthEnabled|requireTLS|iamAuthSupported|serverless|transitEncryption)$"
+        - "^(Connected|Error|us-central1|healthy|DATETIME|String)$"
     misspell:
       locale: US
     nakedret:

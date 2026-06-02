@@ -29,6 +29,11 @@ import (
 	"github.com/clidey/whodb/core/src/providers"
 )
 
+const (
+	azureMetaLocation      = "location"
+	azureMetaResourceGroup = "resourceGroup"
+)
+
 // discoverCosmosDB discovers Azure Cosmos DB accounts with MongoDB API.
 // Only accounts with Kind == "MongoDB" or the EnableMongo capability are included.
 func (p *Provider) discoverCosmosDB(ctx context.Context) ([]providers.DiscoveredConnection, error) {
@@ -103,9 +108,9 @@ func (p *Provider) cosmosAccountToConnection(account *armcosmos.DatabaseAccountG
 	resourceGroup := extractResourceGroup(derefStr(account.ID))
 
 	metadata := map[string]string{
-		"port":          "10255",
-		"location":      location,
-		"resourceGroup": resourceGroup,
+		"port":                 "10255",
+		azureMetaLocation:      location,
+		azureMetaResourceGroup: resourceGroup,
 	}
 
 	if account.Kind != nil {
