@@ -31,7 +31,7 @@ type Resolver struct{}
 
 // MapColumnsToModel converts source columns to GraphQL model columns.
 func MapColumnsToModel(columnsResult []source.Column) []*model.Column {
-	var columns []*model.Column
+	columns := make([]*model.Column, 0, len(columnsResult))
 	for _, column := range columnsResult {
 		columns = append(columns, &model.Column{
 			Type:             column.Type,

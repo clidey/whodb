@@ -77,7 +77,7 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                             <Label>{translate(field.LabelKey)}</Label>
                             <Switch
                                 checked={value.toLowerCase() === 'true'}
-                                onCheckedChange={checked => onAdvancedFormChange(field.Key, checked ? 'true' : 'false')}
+                                onCheckedChange={(checked) => { onAdvancedFormChange(field.Key, checked ? 'true' : 'false'); }}
                             />
                         </div>
                     );
@@ -88,7 +88,7 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                         <Label>{translate(field.LabelKey)}</Label>
                         <Input
                             value={value}
-                            onChange={(e) => onAdvancedFormChange(field.Key, e.target.value)}
+                            onChange={(e) => { onAdvancedFormChange(field.Key, e.target.value); }}
                             data-testid={`${field.Key}-input`}
                             type={field.Kind === SourceConnectionFieldKind.Password ? 'password' : 'text'}
                             placeholder={field.PlaceholderKey ? translate(field.PlaceholderKey) : undefined}
@@ -102,7 +102,7 @@ export const SourceAdvancedFields: FC<SourceAdvancedFieldsProps> = ({
                     <Label>{translate(`advancedFields.${toCamelCase(key)}`)}</Label>
                     <Input
                         value={value}
-                        onChange={(e) => onAdvancedFormChange(key, e.target.value)}
+                        onChange={(e) => { onAdvancedFormChange(key, e.target.value); }}
                         data-testid={`${key}-input`}
                     />
                 </div>

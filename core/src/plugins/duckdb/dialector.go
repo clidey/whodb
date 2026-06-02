@@ -186,8 +186,8 @@ func (d Dialector) QuoteTo(writer clause.Writer, str string) {
 	_ = writer.WriteByte('"')
 }
 
-func (d Dialector) Explain(sql string, vars ...any) string {
-	return logger.ExplainSQL(sql, nil, `"`, vars...)
+func (d Dialector) Explain(query string, vars ...any) string {
+	return logger.ExplainSQL(query, nil, `"`, vars...)
 }
 
 func (d Dialector) DataTypeOf(field *schema.Field) string {

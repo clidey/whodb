@@ -170,7 +170,7 @@ export function TypeSelector({
         return (
             <Input
                 value={value}
-                onChange={e => onChange(e.target.value)}
+                onChange={(e) => { onChange(e.target.value); }}
                 placeholder={placeholder}
             />
         );

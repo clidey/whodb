@@ -89,7 +89,7 @@ const loadStoredDistinctId = (): string | null => {
         return null;
     }
     try {
-        cachedDistinctId = window.localStorage?.getItem(DISTINCT_ID_STORAGE_KEY) || null;
+        cachedDistinctId = window.localStorage?.getItem(DISTINCT_ID_STORAGE_KEY) ?? null;
     } catch (e) {
         console.warn('Failed to load distinct ID from localStorage:', e);
     }
@@ -97,12 +97,10 @@ const loadStoredDistinctId = (): string | null => {
 };
 
 const ensurePosthogModule = async () => {
-    if (!posthogModulePromise) {
-        posthogModulePromise = import('posthog-js').catch(err => {
-            console.warn('Failed to load PostHog module:', err);
-            throw err;
-        });
-    }
+    posthogModulePromise ??= import('posthog-js').catch(err => {
+        console.warn('Failed to load PostHog module:', err);
+        throw err;
+    });
     return posthogModulePromise;
 };
 

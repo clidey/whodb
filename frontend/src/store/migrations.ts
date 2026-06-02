@@ -102,7 +102,7 @@ export function migrateAIModelsFromDatabase(): void {
 
     // Clean up the old database state - keep only the schema
     const cleanedDatabaseState = {
-      schema: databaseState.schema || '""',
+      schema: databaseState.schema ?? '""',
       _persist: JSON.stringify({ version: -1, rehydrated: true })
     };
     localStorage.setItem('persist:database', JSON.stringify(cleanedDatabaseState));
@@ -138,7 +138,7 @@ function ensureValidAIModelsState(): void {
           needsUpdate = true;
         } else {
           // Ensure each modelType has required properties
-          const validModelTypes = modelTypes.filter((mt: IAIModelType | null) => mt && mt.id && mt.modelType);
+          const validModelTypes = modelTypes.filter((mt: IAIModelType | null) => mt?.id && mt.modelType);
           if (validModelTypes.length !== modelTypes.length) {
             modelTypes = validModelTypes.length > 0 ? validModelTypes : ensureModelTypesArray(null);
             aiModelsState.modelTypes = JSON.stringify(modelTypes);

@@ -43,10 +43,10 @@ export const Loading: FC<ILoadingProps> = ({className, size = "md", hideText = t
             data-testid="loading-spinner"
             role="status"
             aria-busy="true"
-            aria-label={loadingText || t('loading')}
+            aria-label={loadingText ?? t('loading')}
         >
             <Spinner className={className} size={size} aria-hidden="true" />
-            {!hideText && <p className={textSize}>{loadingText || t('loading')}</p>}
+            {!hideText && <p className={textSize}>{loadingText ?? t('loading')}</p>}
         </div>
     );
 };

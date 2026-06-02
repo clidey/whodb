@@ -262,7 +262,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
                         {azureConnections.map((conn) => (
                             <button
                                 key={conn.Id}
-                                onClick={() => handleSelectConnection(conn)}
+                                onClick={() => { handleSelectConnection(conn); }}
                                 className="flex items-center gap-3 p-3 rounded-lg border text-left transition-colors border-border hover:border-brand/50 hover:bg-brand/5"
                                 data-testid={`azure-connection-${conn.Id}`}
                             >

@@ -19,12 +19,12 @@ import { MarkerType, Position } from "reactflow";
 
 function getNodeIntersection(node: Node, otherNode: Node, padding = 1) {
   // Add fallbacks for missing dimensions and positions
-  const nodePos = node.positionAbsolute || { x: 0, y: 0 };
-  const otherPos = otherNode.positionAbsolute || { x: 0, y: 0 };
-  const nodeWidth = node.width || 100;
-  const nodeHeight = node.height || 50;
-  const otherWidth = otherNode.width || 100;
-  const otherHeight = otherNode.height || 50;
+  const nodePos = node.positionAbsolute ?? { x: 0, y: 0 };
+  const otherPos = otherNode.positionAbsolute ?? { x: 0, y: 0 };
+  const nodeWidth = node.width ?? 100;
+  const nodeHeight = node.height ?? 50;
+  const otherWidth = otherNode.width ?? 100;
+  const otherHeight = otherNode.height ?? 50;
 
   const nodeCenterX = nodePos.x + nodeWidth / 2;
   const nodeCenterY = nodePos.y + nodeHeight / 2;
@@ -49,9 +49,9 @@ function getNodeIntersection(node: Node, otherNode: Node, padding = 1) {
 
 function getEdgePosition(node: Node, intersectionPoint: { x: number; y: number }) {
     // Add fallbacks for missing dimensions and positions
-    const nodePos = node.positionAbsolute || { x: 0, y: 0 };
-    const nodeWidth = node.width || 100;
-    const nodeHeight = node.height || 50;
+    const nodePos = node.positionAbsolute ?? { x: 0, y: 0 };
+    const nodeWidth = node.width ?? 100;
+    const nodeHeight = node.height ?? 50;
 
     const px = intersectionPoint.x;
     const py = intersectionPoint.y;
@@ -99,7 +99,7 @@ export function createNode(node: Pick<Node, "id" | "type" | "data"> & Partial<No
       ...node,
       position: {
           x: position?.x != null ? position.x - 100 : (viewPort?.x ?? 100) / 2,
-          y: position?.y != null ? position.y : (viewPort?.y ?? 100) / 2,
+          y: position?.y ?? (viewPort?.y ?? 100) / 2,
       },
       className: "group-[.laying-out]:transition-all group-[.laying-out]:duration-300 -z-5",
   }

@@ -193,7 +193,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
 
   // For databases like MySQL where database and schema are the same,
   // use the connection database as fallback if no schema is selected
-  const defaultSchema = currentSchema || currentDatabase || '';
+  const defaultSchema = currentSchema ?? currentDatabase ?? '';
 
   useEffect(() => {
     onRunReference.current = onRun;
@@ -315,7 +315,7 @@ export const CodeEditor: FC<ICodeEditorProps> = ({
               },
           }),
             basicSetup,
-            languageExtension != null ? languageExtension : [],
+            languageExtension ?? [],
             // Add autocomplete for SQL in EE mode, but allow disabling it during E2E tests to prevent flakiness.
             (language === "sql" && createSQLAutocomplete && !(window as any).__E2E_DISABLE_AUTOCOMPLETE) ? createSQLAutocomplete({apolloClient, defaultSchema}) : [],
             darkModeEnabled ? [oneDark, EditorView.theme({

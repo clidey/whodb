@@ -23,8 +23,8 @@ const DEFAULT_ICON_PATH = "/images/logo.svg";
  * Applies the current branding metadata to the document shell.
  */
 export const updateDocumentMeta = (extensions: Record<string, any>) => {
-    const title = extensions.MetaTitle || DEFAULT_TITLE;
-    const icon = extensions.MetaIcon || withBasePath(DEFAULT_ICON_PATH);
+    const title = extensions.MetaTitle ?? DEFAULT_TITLE;
+    const icon = extensions.MetaIcon ?? withBasePath(DEFAULT_ICON_PATH);
 
     document.title = title;
 

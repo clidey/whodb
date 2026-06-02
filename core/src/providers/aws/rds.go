@@ -58,18 +58,20 @@ func (p *Provider) discoverRDS(ctx context.Context) ([]providers.DiscoveredConne
 		}
 		log.Debugf("RDS discoverRDS: DescribeDBInstances returned %d instances", len(output.DBInstances))
 
-		for _, instance := range output.DBInstances {
+		for i := range output.DBInstances {
+			instance := output.DBInstances[i]
 			instanceID := aws.ToString(instance.DBInstanceIdentifier)
 			engineName := aws.ToString(instance.Engine)
 			log.Debugf("RDS discoverRDS: processing instance %s (engine=%s)", instanceID, engineName)
 
 			conn := p.rdsInstanceToConnection(&instance)
-			if conn != nil {
+			switch {
+			case conn != nil:
 				log.Debugf("RDS discoverRDS: instance %s converted to connection (type=%s)", instanceID, conn.DatabaseType)
 				connections = append(connections, *conn)
-			} else if isEngineHandledByDedicatedDiscovery(engineName) {
+			case isEngineHandledByDedicatedDiscovery(engineName):
 				log.Debugf("RDS discoverRDS: skipping instance %s (engine=%s handled by dedicated discovery)", instanceID, engineName)
-			} else {
+			default:
 				log.Warnf("RDS discoverRDS: instance %s could not be converted (engine=%s not supported)", instanceID, engineName)
 			}
 		}
@@ -157,7 +159,8 @@ func (p *Provider) discoverRDSClusters(ctx context.Context) ([]providers.Discove
 
 		log.Debugf("RDS discoverRDSClusters: DescribeDBClusters returned %d clusters", len(output.DBClusters))
 
-		for _, cluster := range output.DBClusters {
+		for i := range output.DBClusters {
+			cluster := output.DBClusters[i]
 			if cluster.Engine == nil || cluster.DBClusterIdentifier == nil {
 				continue
 			}
@@ -270,7 +273,8 @@ func (p *Provider) discoverRDSProxies(ctx context.Context) ([]providers.Discover
 
 		log.Debugf("RDS discoverRDSProxies: DescribeDBProxies returned %d proxies", len(output.DBProxies))
 
-		for _, proxy := range output.DBProxies {
+		for i := range output.DBProxies {
+			proxy := output.DBProxies[i]
 			if proxy.DBProxyName == nil || proxy.Endpoint == nil {
 				continue
 			}

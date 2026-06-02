@@ -34,7 +34,6 @@ export const useExportToCSV = (
     format: 'csv' | 'excel' | 'ndjson' = 'csv'
 ) => {
     return useCallback(async () => {
-      try {
         // Prepare request body
         const requestBody: any = {
           ref: objectRef,
@@ -112,8 +111,5 @@ export const useExportToCSV = (
             window.URL.revokeObjectURL(downloadUrl);
           }, 100);
         }
-      } catch (error) {
-        throw error;
-      }
     }, [objectRef, fileBaseName, selectedOnly, delimiter, selectedRows, format]);
 };

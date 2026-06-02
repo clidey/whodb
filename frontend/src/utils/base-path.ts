@@ -20,7 +20,7 @@ function isDesktopContext(): boolean {
     }
 
     const wailsGo = (window as any).go;
-    return !!(wailsGo?.main?.App || wailsGo?.common?.App);
+    return !!(wailsGo?.main?.App ?? wailsGo?.common?.App);
 }
 
 function normalizeBasePath(pathname: string): string {

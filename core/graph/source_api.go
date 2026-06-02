@@ -209,8 +209,8 @@ func testSourceConnection(ctx context.Context, credentials *source.Credentials) 
 
 func sourceObjectModels(_ source.TypeSpec, objects []source.Object) []*model.SourceObject {
 	mapped := make([]*model.SourceObject, 0, len(objects))
-	for _, object := range objects {
-		mapped = append(mapped, sourceObjectToModel(object))
+	for i := range objects {
+		mapped = append(mapped, sourceObjectToModel(objects[i]))
 	}
 	return mapped
 }

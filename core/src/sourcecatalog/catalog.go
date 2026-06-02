@@ -290,8 +290,8 @@ func All() []source.TypeSpec {
 func IDs() []string {
 	specs := All()
 	ids := make([]string, 0, len(specs))
-	for _, spec := range specs {
-		ids = append(ids, spec.ID)
+	for i := range specs {
+		ids = append(ids, specs[i].ID)
 	}
 	return ids
 }

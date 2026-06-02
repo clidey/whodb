@@ -184,7 +184,8 @@ func sourceFileBaseName(ref *source.ObjectRef, fallback string) string {
 
 func sourceTypeToModel(spec source.TypeSpec) *model.SourceType {
 	fields := make([]*model.SourceConnectionField, 0, len(spec.ConnectionFields))
-	for _, field := range spec.ConnectionFields {
+	for i := range spec.ConnectionFields {
+		field := &spec.ConnectionFields[i]
 		var placeholder *string
 		if field.PlaceholderKey != "" {
 			placeholder = &field.PlaceholderKey
@@ -449,7 +450,8 @@ func sourceObjectCreationMetadataToModel(metadata source.ObjectCreationMetadata)
 // field constraints.
 func MapFieldConstraintsToModel(fields []source.FieldConstraints) []*model.SourceFieldConstraints {
 	results := make([]*model.SourceFieldConstraints, 0, len(fields))
-	for _, field := range fields {
+	for i := range fields {
+		field := &fields[i]
 		var foreignKey *model.ForeignKeyDefinition
 		if field.ForeignKey != nil {
 			foreignKey = &model.ForeignKeyDefinition{

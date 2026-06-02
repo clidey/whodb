@@ -208,9 +208,9 @@ func (s *DatabaseSession) GetObject(ctx context.Context, ref source.ObjectRef) (
 		return nil, err
 	}
 
-	for _, object := range objects {
-		if object.Kind == ref.Kind && slices.Equal(object.Path, ref.Path) {
-			objectCopy := object
+	for i := range objects {
+		if objects[i].Kind == ref.Kind && slices.Equal(objects[i].Path, ref.Path) {
+			objectCopy := objects[i]
 			return &objectCopy, nil
 		}
 	}
@@ -412,18 +412,18 @@ func (s *DatabaseSession) FieldConstraints(ctx context.Context, ref source.Objec
 }
 
 // RunQuery executes a query against the source session.
-func (s *DatabaseSession) RunQuery(ctx context.Context, query string, params ...any) (*source.RowsResult, error) {
+func (s *DatabaseSession) RunQuery(ctx context.Context, sql string, params ...any) (*source.RowsResult, error) {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return nil, err
 	}
 
 	config := s.pluginConfig(ctx, nil)
-	return s.plugin.RawExecute(config, query, params...)
+	return s.plugin.RawExecute(config, sql, params...)
 }
 
 // RunQueryStream executes a query through the active source session's
 // streaming path when supported.
-func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writer source.QueryStreamWriter, params ...any) error {
+func (s *DatabaseSession) RunQueryStream(ctx context.Context, sql string, writer source.QueryStreamWriter, params ...any) error {
 	if err := s.ensureSurface(source.SurfaceQuery); err != nil {
 		return err
 	}
@@ -440,7 +440,7 @@ func (s *DatabaseSession) RunQueryStream(ctx context.Context, query string, writ
 	}
 
 	config := s.pluginConfig(ctx, nil)
-	return streamer.StreamRawExecute(config, query, &sourceQueryStreamWriterAdapter{writer: writer}, params...)
+	return streamer.StreamRawExecute(config, sql, &sourceQueryStreamWriterAdapter{writer: writer}, params...)
 }
 
 // RunScript executes a source-native script against the session.
@@ -481,7 +481,7 @@ func (s *DatabaseSession) ReadGraph(ctx context.Context, ref *source.ObjectRef) 
 }
 
 // Reply runs AI chat against the source session.
-func (s *DatabaseSession) Reply(ctx context.Context, ref *source.ObjectRef, previousConversation string, query string) ([]*source.ChatMessage, error) {
+func (s *DatabaseSession) Reply(ctx context.Context, ref *source.ObjectRef, previousConversation string, prompt string) ([]*source.ChatMessage, error) {
 	if err := s.ensureSurface(source.SurfaceChat); err != nil {
 		return nil, err
 	}
@@ -491,11 +491,11 @@ func (s *DatabaseSession) Reply(ctx context.Context, ref *source.ObjectRef, prev
 	if ref != nil {
 		scope = s.graphScopeForRef(*ref)
 	}
-	return s.plugin.Chat(config, scope, previousConversation, query)
+	return s.plugin.Chat(config, scope, previousConversation, prompt)
 }
 
 // ReplyWithModel runs AI chat against the source session with an explicit model.
-func (s *DatabaseSession) ReplyWithModel(ctx context.Context, ref *source.ObjectRef, previousConversation string, query string, model *source.ExternalModel) ([]*source.ChatMessage, error) {
+func (s *DatabaseSession) ReplyWithModel(ctx context.Context, ref *source.ObjectRef, previousConversation string, prompt string, model *source.ExternalModel) ([]*source.ChatMessage, error) {
 	if err := s.ensureSurface(source.SurfaceChat); err != nil {
 		return nil, err
 	}
@@ -506,7 +506,7 @@ func (s *DatabaseSession) ReplyWithModel(ctx context.Context, ref *source.Object
 	if ref != nil {
 		scope = s.graphScopeForRef(*ref)
 	}
-	return s.plugin.Chat(config, scope, previousConversation, query)
+	return s.plugin.Chat(config, scope, previousConversation, prompt)
 }
 
 // CreateObject creates a new source object.
@@ -736,7 +736,8 @@ func (s *DatabaseSession) QuerySuggestions(ctx context.Context, ref *source.Obje
 
 func (s *DatabaseSession) engineCredentials(values map[string]string) *engine.Credentials {
 	mergedValues := s.credentials.CloneValues()
-	for _, field := range s.spec.ConnectionFields {
+	for i := range s.spec.ConnectionFields {
+		field := &s.spec.ConnectionFields[i]
 		if field.DefaultValue == "" {
 			continue
 		}
@@ -754,7 +755,8 @@ func (s *DatabaseSession) engineCredentials(values map[string]string) *engine.Cr
 	}
 
 	knownFields := map[string]bool{}
-	for _, field := range s.spec.ConnectionFields {
+	for i := range s.spec.ConnectionFields {
+		field := &s.spec.ConnectionFields[i]
 		value := mergedValues[field.Key]
 		if value == "" {
 			continue

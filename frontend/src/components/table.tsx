@@ -136,7 +136,7 @@ const DynamicExport: FC<{
     forceExportAll?: boolean;
 }> = (props) => {
     // Use registered Export if available, otherwise fall back to default
-    const ExportComponent = EEExport || Export;
+    const ExportComponent = EEExport ?? Export;
     return <ExportComponent {...props} />;
 };
 
@@ -215,7 +215,7 @@ function stripTypeSuffix(type: string): string {
 
 export function getColumnIcons(columns: string[], columnTypes?: string[], t?: (key: string) => string) {
     return columns.map((col, idx) => {
-        const rawType = columnTypes?.[idx] || "";
+        const rawType = columnTypes?.[idx] ?? "";
         const type = stripTypeSuffix(rawType).toUpperCase();
         const key = `${col}-${idx}`;
 
@@ -391,11 +391,11 @@ export const StorageUnitTable: FC<TableProps> = ({
     const isRowUpdateSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.UpdateData);
     const isRowDeleteSupported = sourceObjectSupportsAction(item, objectRef?.Kind, SourceAction.DeleteData);
     const { data: maxRowData } = useQuery(MockDataMaxRowCountDocument);
-    const maxRowCount = maxRowData?.MockDataMaxRowCount || 200;
-    
+    const maxRowCount = maxRowData?.MockDataMaxRowCount ?? 200;
+
     // Use server-side pagination
-    const currentPage = serverCurrentPage || 1;
-    const totalRows = totalCount || 0;
+    const currentPage = serverCurrentPage ?? 1;
+    const totalRows = totalCount ?? 0;
     const totalPages = Math.ceil(totalRows / pageSize);
 
     const [generateMockData, { loading: generatingMockData }] = useMutation(GenerateMockDataDocument);
@@ -516,7 +516,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     },
                 });
             } catch (e: any) {
-                toast.error(t('unableToDeleteRow', { message: e?.message || e }));
+                toast.error(t('unableToDeleteRow', { message: e?.message ?? e }));
                 unableToDeleteAll = true;
                 break;
             }
@@ -580,7 +580,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     header.focus();
                 }
             }, 50);
-            return () =>{  clearTimeout(timeoutId); };
+            return () => { clearTimeout(timeoutId); };
         }
     }, [rows]);
 
@@ -723,7 +723,7 @@ export const StorageUnitTable: FC<TableProps> = ({
     useEffect(() => {
         return () => {
             // Clear all pending timeouts
-            clickTimeouts.current.forEach(timeout =>{  clearTimeout(timeout); });
+            clickTimeouts.current.forEach(timeout => { clearTimeout(timeout); });
             clickTimeouts.current.clear();
         };
     }, []);
@@ -1042,7 +1042,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         };
 
         window.addEventListener('keydown', handleKeyDown);
-        return () =>{  window.removeEventListener('keydown', handleKeyDown); };
+        return () => { window.removeEventListener('keydown', handleKeyDown); };
     }, [enableKeyboardShortcuts, onRefresh, checked, paginatedRows, handleDeleteRow, handleEdit, focusedRowIndex, moveFocus, visibleRowCount, handleSelectRow, canEditRows, canDeleteRows, onPageChange, currentPage, totalPages, openExport, isExportSupported]);
 
 
@@ -1168,8 +1168,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                     isSelected && "bg-muted"
                 )}
                 style={style}
-                onClick={() =>{  setFocusedRowIndex(index); }}
-                onFocus={() =>{  setFocusedRowIndex(index); }}
+                onClick={() => { setFocusedRowIndex(index); }}
+                onFocus={() => { setFocusedRowIndex(index); }}
             >
                 <TableCell
                     role="gridcell"
@@ -1179,7 +1179,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 >
                     <Checkbox
                         checked={isSelected}
-                        onCheckedChange={() =>{  setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index]); }}
+                        onCheckedChange={() => { setChecked(isSelected ? checked.filter(i => i !== index) : [...checked, index]); }}
                         aria-label={isSelected ? t('deselectRow') : t('selectRow')}
                     />
                     <Button variant="secondary" className="opacity-0 group-hover:opacity-100 absolute right-2 w-0 top-1.5" onClick={(e) => {
@@ -1207,8 +1207,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                             setFocusedRowIndex(index);
                             handleCellClick(index, cellIdx);
                         }}
-                        onDoubleClick={() =>{  handleCellDoubleClick(index); }}
-                        onContextMenu={() => !limitContextMenu && setContextMenuCellIdx(cellIdx)}
+                        onDoubleClick={() => { handleCellDoubleClick(index); }}
+                        onContextMenu={() => { if (!limitContextMenu) { setContextMenuCellIdx(cellIdx); } }}
                         data-col-idx={cellIdx}
                     >
                         {cell}
@@ -1273,14 +1273,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenuShortcut><CursorArrowRaysIcon className="w-4 h-4" /><CursorArrowRaysIcon className="w-4 h-4" /></ContextMenuShortcut>
                 </ContextMenuItem>
                 {!limitContextMenu && (
-                    <ContextMenuItem onSelect={() =>{  handleSelectRow(index); }}>
+                    <ContextMenuItem onSelect={() => { handleSelectRow(index); }}>
                         <CheckCircleIcon className="w-4 h-4 text-primary" />
                         {checked.includes(index) ? t('deselectRow') : t('selectRow')}
                         <ContextMenuShortcut>Space</ContextMenuShortcut>
                     </ContextMenuItem>
                 )}
                 {!limitContextMenu && canEditRows && (
-                    <ContextMenuItem onSelect={() =>{  handleEdit(index); }} disabled={checked.length > 1} data-testid="context-menu-edit-row">
+                    <ContextMenuItem onSelect={() => { handleEdit(index); }} disabled={checked.length > 1} data-testid="context-menu-edit-row">
                         <PencilSquareIcon className="w-4 h-4" />
                         {t('editRow')}
                         <ContextMenuShortcut>Enter</ContextMenuShortcut>
@@ -1296,14 +1296,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                             collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                         >
                             <ContextMenuItem
-                                onSelect={() =>{  openExport('csv', true); }}
+                                onSelect={() => { openExport('csv', true); }}
                             >
                                 <DocumentIcon className="w-4 h-4" />
                                 {t('exportAllAsCsv')}
                                 <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                             </ContextMenuItem>
                             <ContextMenuItem
-                                onSelect={() =>{  openExport('excel', true); }}
+                                onSelect={() => { openExport('excel', true); }}
                             >
                                 <DocumentIcon className="w-4 h-4" />
                                 {t('exportAllAsExcel')}
@@ -1312,14 +1312,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <>
                                     <ContextMenuSeparator />
                                     <ContextMenuItem
-                                        onSelect={() =>{  openExport('csv'); }}
+                                        onSelect={() => { openExport('csv'); }}
                                         disabled={checked.length === 0}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
                                         {t('exportSelectedAsCsv')}
                                     </ContextMenuItem>
                                     <ContextMenuItem
-                                        onSelect={() =>{  openExport('excel'); }}
+                                        onSelect={() => { openExport('excel'); }}
                                         disabled={checked.length === 0}
                                     >
                                         <DocumentIcon className="w-4 h-4" />
@@ -1332,7 +1332,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 )}
                 {!limitContextMenu && isMockDataSupported && (
                     <ContextMenuItem
-                        onSelect={() =>{  setShowMockDataSheet(true); }}
+                        onSelect={() => { setShowMockDataSheet(true); }}
                     >
                         <DocumentDuplicateIcon className="w-4 h-4" />
                         {t('mockData')}
@@ -1343,8 +1343,8 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <ContextMenuItem
                         variant="destructive"
                         disabled={false}
-                        onSelect={async () => {
-                            await handleDeleteRow(index);
+                        onSelect={() => {
+                            handleDeleteRow(index);
                         }}
                         data-testid="context-menu-delete-row"
                     >
@@ -1437,7 +1437,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 onFocus={() => { focusedColumnRef.current = col; }}
                                                 data-testid={`column-header-${col}`}
                                                 data-column-name={col}
-                                                data-sort-direction={sortedColumns?.get(col) || undefined}
+                                                data-sort-direction={sortedColumns?.get(col) ?? undefined}
                                             >
                                                 <Tip>
                                                     <p className={cn("flex items-center gap-xs", {
@@ -1462,7 +1462,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     collisionPadding={{ top: 16, right: 16, bottom: 16, left: 16 }}
                 >
                                     {!limitContextMenu && isMockDataSupported && (
-                                        <ContextMenuItem onSelect={() =>{  setShowMockDataSheet(true); }} data-testid="context-menu-mock-data">
+                                        <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} data-testid="context-menu-mock-data">
                                             <CalculatorIcon className="w-4 h-4" />
                                             {t('mockData')}
                                             <ContextMenuShortcut>{formatShortcut(SHORTCUTS.mockData.displayKeys)}</ContextMenuShortcut>
@@ -1479,14 +1479,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                 collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                             >
                                                 <ContextMenuItem
-                                                    onSelect={() =>{  openExport('csv', true); }}
+                                                    onSelect={() => { openExport('csv', true); }}
                                                 >
                                                     <DocumentIcon className="w-4 h-4" />
                                                     {t('exportAllAsCsv')}
                                                     <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                                                 </ContextMenuItem>
                                                 <ContextMenuItem
-                                                    onSelect={() =>{  openExport('excel', true); }}
+                                                    onSelect={() => { openExport('excel', true); }}
                                                 >
                                                     <DocumentIcon className="w-4 h-4" />
                                                     {t('exportAllAsExcel')}
@@ -1495,14 +1495,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     <>
                                                         <ContextMenuSeparator />
                                                         <ContextMenuItem
-                                                            onSelect={() =>{  openExport('csv'); }}
+                                                            onSelect={() => { openExport('csv'); }}
                                                             disabled={checked.length === 0}
                                                         >
                                                             <DocumentIcon className="w-4 h-4" />
                                                             {t('exportSelectedAsCsv')}
                                                         </ContextMenuItem>
                                                         <ContextMenuItem
-                                                            onSelect={() =>{  openExport('excel'); }}
+                                                            onSelect={() => { openExport('excel'); }}
                                                             disabled={checked.length === 0}
                                                         >
                                                             <DocumentIcon className="w-4 h-4" />
@@ -1560,7 +1560,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                 className="w-52 max-h-[calc(100vh-2rem)] overflow-y-auto"
                 collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
             >
-                            <ContextMenuItem onSelect={() =>{  setShowMockDataSheet(true); }} className={cn({
+                            <ContextMenuItem onSelect={() => { setShowMockDataSheet(true); }} className={cn({
                                 "hidden": disableEdit || !isMockDataSupported,
                             })}>
                                 <CalculatorIcon className="w-4 h-4" />
@@ -1577,14 +1577,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                         collisionPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
                                     >
                                         <ContextMenuItem
-                                            onSelect={() =>{  openExport('csv', true); }}
+                                            onSelect={() => { openExport('csv', true); }}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
                                             {t('exportAllAsCsv')}
                                             <ContextMenuShortcut>{formatShortcut(SHORTCUTS.exportData.displayKeys)}</ContextMenuShortcut>
                                         </ContextMenuItem>
                                         <ContextMenuItem
-                                            onSelect={() =>{  openExport('excel', true); }}
+                                            onSelect={() => { openExport('excel', true); }}
                                         >
                                             <DocumentIcon className="w-4 h-4" />
                                             {t('exportAllAsExcel')}
@@ -1619,7 +1619,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     {isImportSupported && allowImport && (
                         <Button
                             variant="secondary"
-                            onClick={() =>{  setShowImport(true); }}
+                            onClick={() => { setShowImport(true); }}
                             className="flex gap-sm"
                             data-testid="import-button"
                         >
@@ -1630,7 +1630,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     {isExportSupported && (
                         <Button
                             variant="secondary"
-                            onClick={() =>{  openExport(); }}
+                            onClick={() => { openExport(); }}
                             className="flex gap-sm"
                             data-testid="export-all-button"
                         >
@@ -1683,14 +1683,14 @@ export const StorageUnitTable: FC<TableProps> = ({
                                                     <Input
                                                         key={`input-${col}`}
                                                         value={editRow[idx] ?? ""}
-                                                        onChange={e =>{  handleInputChange(e.target.value, idx); }}
+                                                        onChange={e => { handleInputChange(e.target.value, idx); }}
                                                         data-testid={`editable-field-${idx}`}
-                                                        {...getInputPropsForColumnType(columnTypes?.[idx] || '')}
+                                                        {...getInputPropsForColumnType(columnTypes?.[idx] ?? '')}
                                                     />
                                                     : <TextArea
                                                         key={`textarea-${col}`}
                                                         value={editRow[idx] ?? ""}
-                                                        onChange={e =>{  handleInputChange(e.target.value, idx); }}
+                                                        onChange={e => { handleInputChange(e.target.value, idx); }}
                                                         rows={5}
                                                         className="min-h-[100px]"
                                                         data-testid={`editable-field-${idx}`}
@@ -1719,7 +1719,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         <Button
                             className="flex-1"
                             variant="secondary"
-                            onClick={() =>{  setShowMockDataSheet(false); }}
+                            onClick={() => { setShowMockDataSheet(false); }}
                             data-testid="cancel-mock-data"
                         >
                             {t('cancel')}
@@ -1742,7 +1742,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                                 <Label>{t('numberOfRows', { max: maxRowCount })}</Label>
                                 <Input
                                     value={mockDataRowCount}
-                                    onChange={e =>{  handleMockDataRowCountChange(e.target.value); }}
+                                    onChange={e => {handleMockDataRowCountChange(e.target.value); }}
                                     type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
@@ -1851,7 +1851,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <DynamicExport
                         open={showExportConfirm}
                         onOpenChange={setShowExportConfirm}
-                        storageUnit={rawQuery ? 'query_export' : (storageUnit || '')}
+                        storageUnit={rawQuery ? 'query_export' : (storageUnit ?? '')}
                         objectRef={objectRef}
                         hasSelectedRows={hasSelectedRows}
                         selectedRowsData={selectedRowsData}

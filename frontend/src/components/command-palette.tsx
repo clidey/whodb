@@ -334,13 +334,13 @@ export const useCommandPalette = () => {
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        return () => { window.removeEventListener('keydown', handleKeyDown); };
     }, [handleKeyDown]);
 
     useEffect(() => {
-        const handleOpen = () => setOpen(true);
+        const handleOpen = () => { setOpen(true); };
         window.addEventListener('command-palette:open', handleOpen);
-        return () => window.removeEventListener('command-palette:open', handleOpen);
+        return () => { window.removeEventListener('command-palette:open', handleOpen); };
     }, []);
 
     const PaletteComponent = commandPaletteOverride ?? CommandPalette;

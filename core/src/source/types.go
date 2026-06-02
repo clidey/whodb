@@ -455,9 +455,9 @@ type TypeSpec struct {
 
 // ConnectionFieldByKey looks up a connection field by key.
 func (s TypeSpec) ConnectionFieldByKey(key string) (ConnectionField, bool) {
-	for _, field := range s.ConnectionFields {
-		if strings.EqualFold(field.Key, key) {
-			return field, true
+	for i := range s.ConnectionFields {
+		if strings.EqualFold(s.ConnectionFields[i].Key, key) {
+			return s.ConnectionFields[i], true
 		}
 	}
 	return ConnectionField{}, false

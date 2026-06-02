@@ -58,7 +58,8 @@ func (p *Provider) discoverDocumentDB(ctx context.Context) ([]providers.Discover
 
 		log.Debugf("DocumentDB: DescribeDBClusters returned %d clusters", len(output.DBClusters))
 
-		for _, cluster := range output.DBClusters {
+		for i := range output.DBClusters {
+			cluster := output.DBClusters[i]
 			clusterID := aws.ToString(cluster.DBClusterIdentifier)
 			clusterEngine := aws.ToString(cluster.Engine)
 

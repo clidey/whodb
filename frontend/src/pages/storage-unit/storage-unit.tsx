@@ -210,7 +210,7 @@ const StorageUnitCard: FC<{
                     ))
                 }
             </div>
-            <div className="flex flex-row justify-end gap-xs" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-row justify-end gap-xs" onClick={(e) => { e.stopPropagation(); }}>
                 <Button onClick={handleExpand} data-testid="explore-button" variant="secondary">
                     <MagnifyingGlassIcon className="w-4 h-4" /> {t('describe')}
                 </Button>
@@ -547,7 +547,7 @@ export const StorageUnitPage: FC = () => {
                         {tCommon('back')}
                     </Button>
                 )}
-                <SearchInput value={filterValue} onChange={e => setFilterValue(e.target.value)} placeholder={t('searchPlaceholder')} />
+                <SearchInput value={filterValue} onChange={(e) => { setFilterValue(e.target.value); }} placeholder={t('searchPlaceholder')} />
             </div>
             <div className="flex items-center gap-2">
                 {
@@ -588,7 +588,7 @@ export const StorageUnitPage: FC = () => {
                     singularStorageUnitLabel={singularStorageUnitLabel}
                     onCreated={refetch}
                     onErrorChange={setError}
-                    onClose={() => setCreate(false)}
+                    onClose={() => { setCreate(false); }}
                 />
             </ExpandableCard>}
             {
@@ -629,7 +629,7 @@ export const StorageUnitPage: FC = () => {
                                 <TableCell className="relative">
                                     <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button
-                                            onClick={() => handleOpenUnit(unit)}
+                                            onClick={() => { handleOpenUnit(unit); }}
                                             data-testid="data-button"
                                             variant="secondary"
                                             size="sm"
@@ -688,7 +688,7 @@ export const StorageUnitPage: FC = () => {
                                                 {columns.map((col: any) => {
                                                     const isForeignKey = col.IsForeignKey;
                                                     return (
-                                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey || undefined}>
+                                                        <div key={col.Name} data-field-key={col.Name} data-field-value={col.Type?.toLowerCase()} data-is-foreign-key={isForeignKey ?? undefined}>
                                                             <StackListItem item={isForeignKey ?
                                                                 <Badge className="text-lg" data-testid="foreign-key-attribute">{col.Name}</Badge> : col.Name}>
                                                                 {col.Type?.toLowerCase()}
@@ -701,14 +701,14 @@ export const StorageUnitPage: FC = () => {
                                     )}
                                     <div className="flex gap-sm mt-4">
                                         <Button
-                                            onClick={() => handleOpenUnit(unit)}
+                                            onClick={() => { handleOpenUnit(unit); }}
                                             data-testid="data-button"
                                             variant="secondary"
                                         >
                                             <CircleStackIcon className="w-4 h-4" /> {t('data')}
                                         </Button>
                                         <Button
-                                            onClick={() => setExpandedUnit(null)}
+                                            onClick={() => { setExpandedUnit(null); }}
                                             variant="outline"
                                         >
                                             <XMarkIcon className="w-4 h-4" /> {t('close')}
@@ -746,9 +746,9 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
 
     // Attributes contains metadata (Type, Total Size, etc.)
     // Columns contains field definitions with FK/PK info for handles
-    const metadataItems = data?.Attributes || [];
-    const columnItems = data?.columns || [];
-    const columnsLoading = data?.columnsLoading || false;
+    const metadataItems = data?.Attributes ?? [];
+    const columnItems = data?.columns ?? [];
+    const columnsLoading = data?.columnsLoading ?? false;
 
     if (data == null) {
         return (<Card icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}>
@@ -794,11 +794,11 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
                                 !columnsLoading && columnItems.map((col: any, _index: number) => {
                                     const name = col.Name;
                                     const value = col.Type?.toLowerCase();
-                                    const isFKColumn = col.IsForeignKey || false;
-                                    const isPKColumn = col.IsPrimary || false;
+                                    const isFKColumn = col.IsForeignKey ?? false;
+                                    const isPKColumn = col.IsPrimary ?? false;
 
                                     return (
-                                        <div key={`col-${name}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn || undefined} data-is-primary-key={isPKColumn || undefined}>
+                                        <div key={`col-${name}`} className={cn("relative", ph.mask)} data-field-key={name} data-field-value={value} data-is-foreign-key={isFKColumn ?? undefined} data-is-primary-key={isPKColumn ?? undefined}>
                                             {isFKColumn && (
                                                 <Handle
                                                     type="source"

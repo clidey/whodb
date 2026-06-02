@@ -102,7 +102,7 @@ func GetGormLogConfig() logger.LogLevel {
 // The underlying sql.DB handles connection pooling internally.
 // If config.Transaction is set (as a *gorm.DB), it will be used instead of creating a new connection.
 // Multi-statement connections bypass the cache and are closed immediately after use.
-func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, operation DBOperation[T]) (T, error) {
+func WithConnection[T any](config *engine.PluginConfig, dbFn DBCreationFunc, operation DBOperation[T]) (T, error) {
 	// Check if we're operating within a transaction
 	if config != nil && config.Transaction != nil {
 		if tx, ok := config.Transaction.(*gorm.DB); ok {
@@ -113,7 +113,7 @@ func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, opera
 	// Multi-statement connections are one-off (e.g., SQL imports). Create a fresh
 	// connection, run the operation, and close it — no caching.
 	if config != nil && config.MultiStatement {
-		db, err := DB(config)
+		db, err := dbFn(config)
 		if err != nil {
 			var zero T
 			return zero, err
@@ -122,7 +122,7 @@ func WithConnection[T any](config *engine.PluginConfig, DB DBCreationFunc, opera
 		return operation(db.WithContext(config.OperationContext()))
 	}
 
-	db, err := getOrCreateConnection(config, DB)
+	db, err := getOrCreateConnection(config, dbFn)
 	if err != nil {
 		log.WithFields(map[string]any{
 			"conn_id": connIdentifier(config),

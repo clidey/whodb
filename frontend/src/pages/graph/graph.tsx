@@ -138,7 +138,7 @@ const GraphSidebar: FC<GraphSidebarProps> = ({
                     <div className="px-4">
                         <SearchInput
                             value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            onChange={(e) => { setSearch(e.target.value); }}
                             placeholder={t('searchTables')}
                             aria-label={t('searchTables')}
                         />
@@ -438,7 +438,7 @@ export const GraphPage: FC = () => {
             const timer = setTimeout(() => {
                 reactFlowRef.current?.layout("dagre");
             }, 50);
-            return () => clearTimeout(timer);
+            return () => { clearTimeout(timer); };
         }
     }, [isInitialized, computedNodes, computedEdges]);
 

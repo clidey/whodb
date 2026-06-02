@@ -41,10 +41,10 @@ if (typeof window !== 'undefined') {
     const scratchpadData = localStorage.getItem('persist:scratchpad');
     if (scratchpadData) {
       const parsed = JSON.parse(scratchpadData);
-      if (parsed && parsed.cells) {
+      if (parsed?.cells) {
         // Check if any cells have invalid date strings in history
         const hasInvalidDates = Object.values(parsed.cells).some((cell: any) => {
-          if (cell && cell.history && Array.isArray(cell.history)) {
+          if (cell?.history && Array.isArray(cell.history)) {
             return cell.history.some((item: any) => 
               item.date && typeof item.date === 'string' && isNaN(new Date(item.date).getTime())
             );
@@ -72,7 +72,7 @@ const scratchpadTransform = createTransform(
   },
   // Transform state being rehydrated
   (outboundState: any) => {
-    if (!outboundState || !outboundState.cells) {
+    if (!outboundState?.cells) {
       return outboundState;
     }
 
@@ -80,7 +80,7 @@ const scratchpadTransform = createTransform(
     const transformedCells: Record<string, any> = {};
     Object.keys(outboundState.cells).forEach(cellId => {
       const cell = outboundState.cells[cellId];
-      if (cell && cell.history && Array.isArray(cell.history)) {
+      if (cell?.history && Array.isArray(cell.history)) {
         transformedCells[cellId] = {
           ...cell,
           history: cell.history.map((historyItem: any) => {
@@ -122,7 +122,7 @@ const chatTransform = createTransform(
   },
   // Transform state being rehydrated
   (outboundState: any) => {
-    if (!outboundState || !outboundState.sessions) {
+    if (!outboundState?.sessions) {
       return outboundState;
     }
 

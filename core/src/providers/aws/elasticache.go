@@ -90,7 +90,8 @@ func (p *Provider) discoverElastiCacheServerless(ctx context.Context) ([]provide
 
 		log.Debugf("ElastiCache: DescribeServerlessCaches returned %d caches", len(output.ServerlessCaches))
 
-		for _, cache := range output.ServerlessCaches {
+		for i := range output.ServerlessCaches {
+			cache := output.ServerlessCaches[i]
 			cacheName := aws.ToString(cache.ServerlessCacheName)
 			cacheEngine := aws.ToString(cache.Engine)
 			status := aws.ToString(cache.Status)
@@ -153,7 +154,8 @@ func (p *Provider) discoverElastiCacheReplicationGroups(ctx context.Context) ([]
 
 		log.Debugf("ElastiCache: DescribeReplicationGroups returned %d groups", len(output.ReplicationGroups))
 
-		for _, rg := range output.ReplicationGroups {
+		for i := range output.ReplicationGroups {
+			rg := output.ReplicationGroups[i]
 			rgID := aws.ToString(rg.ReplicationGroupId)
 			status := aws.ToString(rg.Status)
 			log.Debugf("ElastiCache: processing replication group %s (status=%s)", rgID, status)
@@ -211,7 +213,8 @@ func (p *Provider) discoverElastiCacheClusters(ctx context.Context) ([]providers
 
 		log.Debugf("ElastiCache: DescribeCacheClusters returned %d clusters", len(output.CacheClusters))
 
-		for _, cluster := range output.CacheClusters {
+		for i := range output.CacheClusters {
+			cluster := output.CacheClusters[i]
 			clusterID := aws.ToString(cluster.CacheClusterId)
 			engineName := aws.ToString(cluster.Engine)
 			replicationGroupID := aws.ToString(cluster.ReplicationGroupId)
@@ -373,9 +376,9 @@ func mapServerlessCacheStatus(status string) providers.ConnectionStatus {
 }
 
 // isRedisCompatibleEngine returns true for Redis-compatible engines (redis, valkey).
-func isRedisCompatibleEngine(engine string) bool {
-	engine = strings.ToLower(engine)
-	return engine == "redis" || engine == "valkey"
+func isRedisCompatibleEngine(engineName string) bool {
+	engineName = strings.ToLower(engineName)
+	return engineName == "redis" || engineName == "valkey"
 }
 
 // isSupportedCacheEngine returns true for all supported ElastiCache engines.

@@ -325,7 +325,7 @@ export const useAI = () => {
     }, [loadProviders]);
 
     const modelTypesDropdownItems = useMemo(() => {
-        return modelTypes.filter(modelType => modelType != null && modelType.modelType != null).map(modelType => ({
+        return modelTypes.filter(modelType => modelType?.modelType != null).map(modelType => ({
             id: modelType.id,
             label: modelType.name || modelType.modelType,
             icon: modelType.isGeneric
@@ -563,7 +563,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <Label>{t('name')}</Label>
                         <Input
                             value={externalModelName ?? ""}
-                            onChange={e => setExternalModelName(e.target.value)}
+                            onChange={e =>{  setExternalModelName(e.target.value); }}
                             placeholder={externalModelType}
                         />
                     </div>
@@ -571,7 +571,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <Label>{t('token')}</Label>
                         <Input
                             value={externalModelToken ?? ""}
-                            onChange={e => setExternalModelToken(e.target.value)}
+                            onChange={e =>{  setExternalModelToken(e.target.value); }}
                             type="password"
                         />
                     </div>
@@ -628,7 +628,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                 <PlusCircleIcon className="w-4 h-4" />
                                 {t('addProvider')}
                             </CommandItem>
-                        </> : (<>
+                        </> : (
                             <CommandItem
                                 key="__add__"
                                 value="__add__"
@@ -638,7 +638,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                                     <PlusCircleIcon className="w-4 h-4 stroke-green-500" />
                                     {t('addProvider')}
                                 </span>
-                            </CommandItem></>
+                            </CommandItem>
                         )
                     }
                     rightIcon={<ChevronDownIcon className="w-4 h-4" />}
@@ -650,7 +650,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => retryProvider(modelType.id)}
+                        onClick={() =>{  retryProvider(modelType.id); }}
                         title={t('providerUnavailable')}
                         className="px-2"
                     >

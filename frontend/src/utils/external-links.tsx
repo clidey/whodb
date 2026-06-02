@@ -30,7 +30,7 @@ export const isDesktopApp = (): boolean => {
   // even if other indicators suggest we might be
     // Check for bindings in both possible locations (main.App or common.App)
     const wailsGo = (window as any).go;
-    return !!(wailsGo?.main?.App || wailsGo?.common?.App);
+    return !!(wailsGo?.main?.App ?? wailsGo?.common?.App);
 };
 
 /**
@@ -48,8 +48,8 @@ export const openExternalLink = async (url: string, event?: React.MouseEvent): P
     // Use Wails runtime to open the URL in the system browser
     const wailsGo = (window as any).go;
       // Check both main.App and common.App namespaces
-      const app = wailsGo?.main?.App || wailsGo?.common?.App;
-      if (app && app.OpenURL) {
+      const app = wailsGo?.main?.App ?? wailsGo?.common?.App;
+      if (app?.OpenURL) {
       try {
           await app.OpenURL(url);
       } catch (error) {

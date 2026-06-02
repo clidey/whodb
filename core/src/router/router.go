@@ -428,7 +428,7 @@ func graphQLOperationName(opCtx *graphql.OperationContext) string {
 	return ""
 }
 
-func wrapWithBasePath(handler http.Handler, basePath string) *chi.Mux {
+func wrapWithBasePath(h http.Handler, basePath string) *chi.Mux {
 	router := chi.NewRouter()
 	redirectToBasePath := func(w http.ResponseWriter, r *http.Request) {
 		target := basePath + "/"
@@ -440,8 +440,8 @@ func wrapWithBasePath(handler http.Handler, basePath string) *chi.Mux {
 
 	router.Get(basePath, redirectToBasePath)
 	router.Head(basePath, redirectToBasePath)
-	router.Handle("/health", handler)
-	router.Handle(basePath+"/*", http.StripPrefix(basePath, handler))
+	router.Handle("/health", h)
+	router.Handle(basePath+"/*", http.StripPrefix(basePath, h))
 
 	return router
 }

@@ -121,12 +121,11 @@ export const Export: FC<IExportProps> = ({
             await backendExport();
             onOpenChange(false);
         } catch (error: any) {
-            toast.error(error.message || t('exportFailed'));
+            toast.error(error.message ?? t('exportFailed'));
         }
     }, [backendExport, onOpenChange, t]);
 
     return (
-        <>
             <Sheet open={open} onOpenChange={onOpenChange}>
                 <SheetContent side="right" className="max-w-md w-full p-8" data-testid="export-dialog" footer={
                     <SheetFooter className="flex gap-sm px-0">
@@ -158,7 +157,7 @@ export const Export: FC<IExportProps> = ({
                             <Button
                                 className="flex-1"
                                 variant="secondary"
-                                onClick={() => onOpenChange(false)}
+                                onClick={() =>{  onOpenChange(false); }}
                                 data-testid="cancel-export"
                             >
                                 {t('cancel')}
@@ -186,7 +185,7 @@ export const Export: FC<IExportProps> = ({
                                 </Label>
                                 <Select
                                     value={exportFormat}
-                                    onValueChange={(value) => setExportFormat(value as 'csv' | 'excel' | 'ndjson')}
+                                    onValueChange={(value) =>{  setExportFormat(value as 'csv' | 'excel' | 'ndjson'); }}
                                 >
                                     <SelectTrigger className="w-full" data-testid="export-format-select">
                                         <SelectValue>
@@ -210,7 +209,7 @@ export const Export: FC<IExportProps> = ({
                                         </Label>
                                         <Select
                                             value={exportDelimiter}
-                                            onValueChange={(value) => setExportDelimiter(value)}
+                                            onValueChange={(value) =>{  setExportDelimiter(value); }}
                                         >
                                             <SelectTrigger className="w-full" data-testid="export-delimiter-select">
                                                 <SelectValue>
@@ -235,6 +234,5 @@ export const Export: FC<IExportProps> = ({
                     </div>
                 </SheetContent>
             </Sheet>
-        </>
     );
 };

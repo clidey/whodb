@@ -74,7 +74,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
     const editingProvider = useMemo(() => {
         if (!editingProviderId) return null;
         const found = cloudProviders.find(p => p.Id === editingProviderId);
-        if (!found || found.__typename !== 'AWSProvider') return null;
+        if (found?.__typename !== 'AWSProvider') return null;
         return found as AwsProvider;
     }, [editingProviderId, cloudProviders]);
 
@@ -352,7 +352,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                                         <button
                                             key={`${profile.Source}-${profile.Name}`}
                                             type="button"
-                                            onClick={() => handleSelectLocalProfile(profile)}
+                                            onClick={() =>{  handleSelectLocalProfile(profile); }}
                                             className={cn(
                                                 "flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
                                                 "hover:border-brand hover:bg-brand/5",
@@ -393,7 +393,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         <Input
                             id="provider-name"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) =>{  setName(e.target.value); }}
                             placeholder={t('namePlaceholder')}
                             data-testid="provider-name"
                         />
@@ -413,7 +413,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         {region === "custom" && (
                             <Input
                                 value={customRegion}
-                                onChange={(e) => setCustomRegion(e.target.value)}
+                                onChange={(e) =>{  setCustomRegion(e.target.value); }}
                                 placeholder={t('customRegionPlaceholder')}
                                 data-testid="custom-region"
                                 className="mt-2"
@@ -427,7 +427,7 @@ export const AwsProviderModal: FC<AwsProviderModalProps> = ({
                         <Input
                             id="profile-name"
                             value={profileName}
-                            onChange={(e) => setProfileName(e.target.value)}
+                            onChange={(e) =>{  setProfileName(e.target.value); }}
                             placeholder={t('profilePlaceholder')}
                             data-testid="profile-name"
                         />

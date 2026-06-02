@@ -561,10 +561,7 @@ func evaluateRedisCondition(value, operator, target string) bool {
 		return true
 	}
 
-	switch operator {
-	default:
-		return false
-	}
+	return false
 }
 
 func (p *RedisPlugin) FormatValue(val any) string {

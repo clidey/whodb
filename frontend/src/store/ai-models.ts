@@ -55,7 +55,7 @@ export const aiModelsSlice = createSlice({
       state.modelTypes = Array.isArray(action.payload) ? action.payload : defaultModelTypes;
     },
     setCurrentModelType: (state, action: PayloadAction<{ id: string }>) => {
-      state.current = state.modelTypes.find(model => model.id === action.payload.id)!;
+      state.current = state.modelTypes.find(model => model.id === action.payload.id);
     },
     addAIModelType(state, action: PayloadAction<IAIModelType>) {
       state.modelTypes.push(action.payload);

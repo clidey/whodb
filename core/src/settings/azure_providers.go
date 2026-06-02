@@ -329,7 +329,8 @@ func InitAzureProvidersFromEnv() error {
 		return nil
 	}
 
-	for i, envCfg := range envConfigs {
+	for i := range envConfigs {
+		envCfg := &envConfigs[i]
 		name := envCfg.Name
 		if name == "" {
 			name = fmt.Sprintf("Azure-%d", i+1)

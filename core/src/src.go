@@ -76,10 +76,10 @@ func GetLoginProfiles() []types.DatabaseCredentials {
 
 	for _, databaseType := range sourcecatalog.IDs() {
 		databaseProfiles := envconfig.GetDefaultDatabaseCredentials(databaseType)
-		for _, databaseProfile := range databaseProfiles {
-			databaseProfile.Type = databaseType
-			databaseProfile.IsProfile = true
-			profiles = append(profiles, databaseProfile)
+		for i := range databaseProfiles {
+			databaseProfiles[i].Type = databaseType
+			databaseProfiles[i].IsProfile = true
+			profiles = append(profiles, databaseProfiles[i])
 		}
 	}
 	return profiles

@@ -473,7 +473,7 @@ func genHstore(f *gofakeit.Faker) any {
 	for i := range pairs {
 		key := f.Word()
 		value := f.Word()
-		pairs[i] = fmt.Sprintf("\"%s\"=>\"%s\"", key, value)
+		pairs[i] = fmt.Sprintf("%q=>%q", key, value)
 	}
 	return strings.Join(pairs, ",")
 }
@@ -643,11 +643,12 @@ func genText(c map[string]any, f *gofakeit.Faker) any {
 	}
 
 	var text string
-	if maxLen <= 10 {
+	switch {
+	case maxLen <= 10:
 		text = f.LetterN(uint(maxLen))
-	} else if maxLen <= 50 {
+	case maxLen <= 50:
 		text = f.LoremIpsumSentence(3)
-	} else {
+	default:
 		text = f.LoremIpsumSentence(f.Number(3, 10))
 	}
 

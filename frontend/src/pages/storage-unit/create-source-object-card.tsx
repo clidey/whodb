@@ -275,12 +275,12 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
             </SheetTitle>
             <div className="flex flex-col gap-2">
                 <Label>{t("nameLabel")}</Label>
-                <Input value={name} onChange={event => setName(event.target.value)} placeholder={t("namePlaceholder")} />
+                <Input value={name} onChange={event =>{  setName(event.target.value); }} placeholder={t("namePlaceholder")} />
             </div>
             {metadata?.TableOptions.map(option => (
                 <div className="flex flex-col gap-2" key={option.Key}>
                     <Label>{option.Label}</Label>
-                    <Select value={tableOptions[option.Key] ?? ""} onValueChange={value => setTableOptions(current => ({ ...current, [option.Key]: value }))}>
+                    <Select value={tableOptions[option.Key] ?? ""} onValueChange={value =>{  setTableOptions(current => ({ ...current, [option.Key]: value })); }}>
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder={option.Label} />
                         </SelectTrigger>
@@ -301,18 +301,18 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                         const showDefaultValue = capabilities?.DefaultValue && supportsDefaultForType(creationTypeDef);
                         const showCheckValues = capabilities?.CheckValues && supportsCheckValuesForType(creationTypeDef);
                         const showCheckRange = capabilities?.CheckMinMax && supportsCheckRangeForType(creationTypeDef);
-                        const showModifiers = capabilities?.PrimaryKey || capabilities?.Nullable || capabilities?.Unique || capabilities?.Identity;
-                        const showAdvancedOptions = showModifiers || showDefaultValue || showCheckValues || showCheckRange || capabilities?.ForeignKey;
+                        const showModifiers = capabilities?.PrimaryKey ?? capabilities?.Nullable ?? capabilities?.Unique ?? capabilities?.Identity;
+                        const showAdvancedOptions = showModifiers ?? showDefaultValue ?? showCheckValues ?? showCheckRange ?? capabilities?.ForeignKey;
                         const foreignKeyColumnOptions = referenceColumnsByName?.[column.ForeignKeyTable] ?? [];
                         return <div className="flex min-w-0 flex-col gap-lg relative" key={fieldKey} data-testid="create-field-card">
                             <Label>{t("fieldNameLabel")}</Label>
-                            <Input value={column.Name} onChange={event => handleColumnChange(index, "Name", event.target.value)} placeholder={t("fieldNamePlaceholder")} />
+                            <Input value={column.Name} onChange={event =>{  handleColumnChange(index, "Name", event.target.value); }} placeholder={t("fieldNamePlaceholder")} />
                             {capabilities?.Types && <>
                                 <Label>{t("fieldTypeLabel")}</Label>
                                 <TypeSelector
                                     sourceType={databaseType}
                                     value={column.Type}
-                                    onChange={value => handleColumnChange(index, "Type", value)}
+                                    onChange={value =>{  handleColumnChange(index, "Type", value); }}
                                     placeholder={t("fieldTypePlaceholder")}
                                     searchPlaceholder={t("searchTypePlaceholder")}
                                     buttonProps={{ "data-testid": `field-type-${index}` }}
@@ -327,27 +327,27 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                                     <AccordionContent>
                                         <div className="flex min-w-0 flex-col gap-lg pt-2">
                                             {showModifiers && <div className="grid min-w-0 grid-cols-1 gap-3">
-                                                {capabilities?.PrimaryKey && <ModifierCheckbox label={labels?.PrimaryKey ?? t("primaryModifier")} checked={column.Primary} onChange={value => handleColumnChange(index, "Primary", value)} />}
-                                                {capabilities?.Nullable && <ModifierCheckbox label={labels?.Nullable ?? t("nullableModifier")} checked={column.Nullable} onChange={value => handleColumnChange(index, "Nullable", value)} />}
-                                                {capabilities?.Unique && <ModifierCheckbox label={labels?.Unique ?? t("uniqueModifier")} checked={column.Unique} onChange={value => handleColumnChange(index, "Unique", value)} />}
-                                                {capabilities?.Identity && <ModifierCheckbox label={labels?.Identity ?? t("identityModifier")} checked={column.Identity} onChange={value => handleColumnChange(index, "Identity", value)} />}
+                                                {capabilities?.PrimaryKey && <ModifierCheckbox label={labels?.PrimaryKey ?? t("primaryModifier")} checked={column.Primary} onChange={value =>{  handleColumnChange(index, "Primary", value); }} />}
+                                                {capabilities?.Nullable && <ModifierCheckbox label={labels?.Nullable ?? t("nullableModifier")} checked={column.Nullable} onChange={value =>{  handleColumnChange(index, "Nullable", value); }} />}
+                                                {capabilities?.Unique && <ModifierCheckbox label={labels?.Unique ?? t("uniqueModifier")} checked={column.Unique} onChange={value =>{  handleColumnChange(index, "Unique", value); }} />}
+                                                {capabilities?.Identity && <ModifierCheckbox label={labels?.Identity ?? t("identityModifier")} checked={column.Identity} onChange={value =>{  handleColumnChange(index, "Identity", value); }} />}
                                             </div>}
                                             {showDefaultValue && <div className="flex flex-col gap-2">
                                                 <Label>{labels?.DefaultValue ?? t("defaultValueLabel")}</Label>
-                                                <Input value={column.DefaultValue} onChange={event => handleColumnChange(index, "DefaultValue", event.target.value)} placeholder={t("defaultValuePlaceholder")} />
+                                                <Input value={column.DefaultValue} onChange={event =>{  handleColumnChange(index, "DefaultValue", event.target.value); }} placeholder={t("defaultValuePlaceholder")} />
                                             </div>}
                                             {showCheckValues && <div className="flex flex-col gap-2">
                                                 <Label>{labels?.CheckValues ?? t("checkValuesLabel")}</Label>
-                                                <Input value={column.CheckValues} onChange={event => handleColumnChange(index, "CheckValues", event.target.value)} placeholder={t("checkValuesPlaceholder")} />
+                                                <Input value={column.CheckValues} onChange={event =>{  handleColumnChange(index, "CheckValues", event.target.value); }} placeholder={t("checkValuesPlaceholder")} />
                                             </div>}
                                             {showCheckRange && <div className="grid min-w-0 grid-cols-2 gap-2">
                                                 <div className="flex min-w-0 flex-col gap-2">
                                                     <Label>{labels?.CheckMin ?? t("checkMinLabel")}</Label>
-                                                    <Input value={column.CheckMin} onChange={event => handleColumnChange(index, "CheckMin", event.target.value)} placeholder={t("checkMinPlaceholder")} />
+                                                    <Input value={column.CheckMin} onChange={event =>{  handleColumnChange(index, "CheckMin", event.target.value); }} placeholder={t("checkMinPlaceholder")} />
                                                 </div>
                                                 <div className="flex min-w-0 flex-col gap-2">
                                                     <Label>{labels?.CheckMax ?? t("checkMaxLabel")}</Label>
-                                                    <Input value={column.CheckMax} onChange={event => handleColumnChange(index, "CheckMax", event.target.value)} placeholder={t("checkMaxPlaceholder")} />
+                                                    <Input value={column.CheckMax} onChange={event =>{  handleColumnChange(index, "CheckMax", event.target.value); }} placeholder={t("checkMaxPlaceholder")} />
                                                 </div>
                                             </div>}
                                             {capabilities?.ForeignKey && <div className="grid min-w-0 grid-cols-2 gap-2">
@@ -375,7 +375,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                                                     <Label>{t("foreignColumnLabel")}</Label>
                                                     <Select
                                                         value={column.ForeignKeyColumn}
-                                                        onValueChange={value => handleColumnChange(index, "ForeignKeyColumn", value)}
+                                                        onValueChange={value =>{  handleColumnChange(index, "ForeignKeyColumn", value); }}
                                                         disabled={column.ForeignKeyTable === "" || foreignKeyColumnOptions.length === 0}
                                                     >
                                                         <SelectTrigger className="w-full" data-testid={`foreign-column-${index}`}>
@@ -393,7 +393,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>}
-                            {columns.length > 1 && <Button variant="destructive" onClick={() => handleRemoveColumn(index)} data-testid="remove-field-button" className="w-full mt-1">
+                            {columns.length > 1 && <Button variant="destructive" onClick={() =>{  handleRemoveColumn(index); }} data-testid="remove-field-button" className="w-full mt-1">
                                 <XCircleIcon className="w-4 h-4" /> <span>{t("remove")}</span>
                             </Button>}
                             {index !== columns.length - 1 && <Separator className="mt-2" />}
@@ -417,7 +417,7 @@ const ModifierCheckbox: FC<{
     onChange: (value: boolean) => void;
 }> = ({ label, checked, onChange }) => (
     <div className="flex min-w-0 items-center gap-2">
-        <Checkbox className="shrink-0" checked={checked} onCheckedChange={value => onChange(value === true)} />
+        <Checkbox className="shrink-0" checked={checked} onCheckedChange={value =>{  onChange(value === true); }} />
         <Label className="block min-w-0 whitespace-normal break-all leading-snug [overflow-wrap:anywhere]">{label}</Label>
     </div>
 );

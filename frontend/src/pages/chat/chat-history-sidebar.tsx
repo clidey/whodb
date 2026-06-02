@@ -231,7 +231,7 @@ export const ChatHistorySidebar: FC = () => {
                                                     "bg-muted": isActive,
                                                 }
                                             )}
-                                            onClick={() => handleSelectSession(session.id)}
+                                            onClick={() => { handleSelectSession(session.id); }}
                                             data-testid={`chat-session-item-${session.id}`}
                                         >
                                             <ChatBubbleLeftRightIcon className={cn("w-4 h-4 shrink-0", {

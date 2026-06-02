@@ -92,7 +92,8 @@ func BuildObjectDetails(ctx context.Context, scope source.AuditScope, session so
 	g := new(errgroup.Group)
 	g.SetLimit(10)
 
-	for i, object := range objects {
+	for i := range objects {
+		object := &objects[i]
 		g.Go(func() error {
 			columns, err := reader.Columns(ctx, object.Ref)
 			if err != nil {

@@ -40,5 +40,5 @@ interface PortalProps {
 }
 
 export const Portal: FC<PortalProps> = ({ children }) => {
-  return createPortal(children, document.querySelector("#whodb-app-container")!);
+  return createPortal(children, document.querySelector("#whodb-app-container") ?? document.body);
 };

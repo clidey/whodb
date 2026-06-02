@@ -75,12 +75,12 @@ export const scratchpadSlice = createSlice({
       const cellId = uuidv4();
       const newPage: ScratchpadPage = {
         id: newId,
-        name: action.payload.name || `Page ${state.pages.length + 1}`,
+        name: action.payload.name ?? `Page ${state.pages.length + 1}`,
         cellIds: [cellId]
       };
       const newCell: ScratchpadCell = {
         id: cellId,
-        code: action.payload.initialQuery || "",
+        code: action.payload.initialQuery ?? "",
         mode: "Query",
         history: []
       };
@@ -124,7 +124,7 @@ export const scratchpadSlice = createSlice({
       const newCellId = uuidv4();
       const newCell: ScratchpadCell = {
         id: newCellId,
-        code: action.payload.initialQuery || "",
+        code: action.payload.initialQuery ?? "",
         mode: "Query",
         history: []
       };
@@ -241,7 +241,7 @@ export const scratchpadSlice = createSlice({
       const newCellId = uuidv4();
       const newCell: ScratchpadCell = {
         id: newCellId,
-        code: action.payload.initialQuery || "",
+        code: action.payload.initialQuery ?? "",
         mode: "Query",
         history: []
       };

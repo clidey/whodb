@@ -385,7 +385,7 @@ func formatInterval(v duckdbDriver.Interval) string {
 		hours := v.Micros / 3_600_000_000
 		remaining := v.Micros % 3_600_000_000
 		minutes := remaining / 60_000_000
-		remaining = remaining % 60_000_000
+		remaining %= 60_000_000
 		seconds := remaining / 1_000_000
 		if hours != 0 {
 			parts = append(parts, fmt.Sprintf("%d hour%s", hours, plural(hours)))

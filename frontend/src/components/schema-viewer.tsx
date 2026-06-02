@@ -180,7 +180,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
                     <div className="px-4">
                         <SearchInput
                             value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            onChange={(e) => { setSearch(e.target.value); }}
                             placeholder={t('searchTables')}
                             aria-label={t('searchTables')}
                         />

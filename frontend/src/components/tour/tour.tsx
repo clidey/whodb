@@ -52,7 +52,7 @@ export const Tour: FC<TourProps> = ({ config, isActive, onComplete, onSkip }) =>
             }
             attempts++;
             if (attempts < maxAttempts) {
-                setTimeout(() => tryFind(), 150);
+                setTimeout(() => { tryFind(); }, 150);
             } else {
                 callback(null);
             }

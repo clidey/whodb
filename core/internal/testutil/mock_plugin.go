@@ -182,16 +182,16 @@ func (m *PluginMock) GetGraph(config *engine.PluginConfig, schema string) ([]eng
 	return nil, nil
 }
 
-func (m *PluginMock) RawExecute(config *engine.PluginConfig, query string, params ...any) (*engine.GetRowsResult, error) {
+func (m *PluginMock) RawExecute(config *engine.PluginConfig, sql string, params ...any) (*engine.GetRowsResult, error) {
 	if m.RawExecuteFunc != nil {
-		return m.RawExecuteFunc(config, query, params...)
+		return m.RawExecuteFunc(config, sql, params...)
 	}
 	return nil, nil
 }
 
-func (m *PluginMock) Chat(config *engine.PluginConfig, schema string, previousConversation string, query string) ([]*engine.ChatMessage, error) {
+func (m *PluginMock) Chat(config *engine.PluginConfig, schema string, previousConversation string, prompt string) ([]*engine.ChatMessage, error) {
 	if m.ChatFunc != nil {
-		return m.ChatFunc(config, schema, previousConversation, query)
+		return m.ChatFunc(config, schema, previousConversation, prompt)
 	}
 	return nil, nil
 }

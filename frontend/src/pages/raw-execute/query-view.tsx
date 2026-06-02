@@ -68,7 +68,7 @@ export const QueryView: FC<IPluginProps> = ({ code, handleExecuteRef, containerW
                 throw result.error;
             }
             const data = result.data;
-            if (isSQLQueryAction(code) || (data?.RawExecute?.Rows?.length || 0) > 0) {
+            if (isSQLQueryAction(code) || (data?.RawExecute?.Rows?.length ?? 0) > 0) {
                 return data?.RawExecute ?? null;
             }
             return null;

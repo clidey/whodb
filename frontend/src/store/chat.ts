@@ -182,7 +182,7 @@ export const houdiniSlice = createSlice({
         const newId = uuidv4();
         const newSession: ChatSession = {
             id: newId,
-            name: action.payload.name || `Chat ${state.sessions.length + 1}`,
+            name: action.payload.name ?? `Chat ${state.sessions.length + 1}`,
             messages: [],
             createdAt: new Date(),
             updatedAt: new Date(),

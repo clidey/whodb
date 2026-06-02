@@ -113,7 +113,7 @@ function getLoginUiSearchParams(searchParams: URLSearchParams): URLSearchParams 
     const uiParams = new URLSearchParams();
     LOGIN_UI_PARAMS.forEach(key => {
         if (searchParams.has(key)) {
-            uiParams.set(key, searchParams.get(key)!);
+            uiParams.set(key, searchParams.get(key) ?? "");
         }
     });
     return uiParams;
@@ -316,7 +316,7 @@ export const LoginForm: FC<LoginFormProps> = ({
 
         if (databaseType.id === "" || !credentialsAreComplete) {
             setIsAutoLoggingIn(false);
-            return setError(t('allFieldsRequired'));
+             setError(t('allFieldsRequired'));; return;
         }
         setError(undefined);
 
@@ -398,7 +398,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     const handleLoginWithSourceProfileSubmit = useCallback((overrideProfileId?: string) => {
         const profileId = overrideProfileId ?? selectedAvailableProfile;
         if (profileId == null) {
-            return setError(t('selectProfile'));
+             setError(t('selectProfile'));; return;
         }
         setError(undefined);
 
@@ -693,7 +693,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         // Handle credentials parameter (base64 encoded JSON)
         if (searchParams.has("credentials")) {
             try {
-                const credentialsBase64 = searchParams.get("credentials")!;
+                const credentialsBase64 = searchParams.get("credentials") ?? "";
                 const credentialsJson = atob(credentialsBase64);
                 const credentials = JSON.parse(credentialsJson);
 
@@ -738,7 +738,7 @@ export const LoginForm: FC<LoginFormProps> = ({
         } else {
             // Handle individual URL parameters
             if (searchParams.has("type")) {
-                const typeParam = searchParams.get("type")!;
+                const typeParam = searchParams.get("type") ?? "";
                 const dbType = databaseTypeItems.find(item =>
                     item.id.toLowerCase() === typeParam.toLowerCase()
                 );
@@ -747,10 +747,10 @@ export const LoginForm: FC<LoginFormProps> = ({
                 }
             }
 
-            if (searchParams.has("host")) setHostName(searchParams.get("host")!);
-            if (searchParams.has("username")) setUsername(searchParams.get("username")!);
-            if (searchParams.has("password")) setPassword(searchParams.get("password")!);
-            if (searchParams.has("database")) setDatabase(searchParams.get("database")!);
+            if (searchParams.has("host")) setHostName(searchParams.get("host") ?? "");
+            if (searchParams.has("username")) setUsername(searchParams.get("username") ?? "");
+            if (searchParams.has("password")) setPassword(searchParams.get("password") ?? "");
+            if (searchParams.has("database")) setDatabase(searchParams.get("database") ?? "");
 
             // Merge known URL params into advancedForm with their canonical key names
             const hasPort = searchParams.has("port");
@@ -759,9 +759,9 @@ export const LoginForm: FC<LoginFormProps> = ({
             if (hasPort || hasRegion || hasSearchPath) {
                 setAdvancedForm(prev => ({
                     ...prev,
-                    ...(hasPort ? {'Port': searchParams.get("port")!} : {}),
-                    ...(hasRegion ? {'Region': searchParams.get("region")!} : {}),
-                    ...(hasSearchPath ? {'Search Path': searchParams.get("search_path")!} : {}),
+                    ...(hasPort ? {'Port': searchParams.get("port") ?? ""} : {}),
+                    ...(hasRegion ? {'Region': searchParams.get("region") ?? ""} : {}),
+                    ...(hasSearchPath ? {'Search Path': searchParams.get("search_path") ?? ""} : {}),
                 }));
                 setShowAdvanced(true);
             }
@@ -1030,7 +1030,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                     <div className={cn("flex flex-col justify-end gap-2", {
                         "grow": availableProfiles.length === 0,
                     })}>
-                        {!disableCredentialForm && <>
+                        {!disableCredentialForm &&
                         <div className="flex gap-2">
                             <Button onClick={handleTestConnection} variant="secondary" disabled={!loginWithCredentialsEnabled || testConnectionLoading} className="flex-1">
                                 {t('testConnection')}
@@ -1039,7 +1039,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 <CheckCircleIcon className="w-4 h-4" /> {t('title')}
                             </Button>
                         </div>
-                        </>}
+                        }
                     </div>
                 )}
                 {
@@ -1059,7 +1059,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                                 }}
                                 rightIcon={<ChevronDownIcon className="w-4 h-4"/>}
                             />
-                            <Button onClick={() => handleLoginWithSourceProfileSubmit()} data-testid="login-with-profile-button" variant={loginWithSourceProfileEnabled ? "default" : "secondary"} disabled={!loginWithSourceProfileEnabled}>
+                            <Button onClick={() =>{  handleLoginWithSourceProfileSubmit(); }} data-testid="login-with-profile-button" variant={loginWithSourceProfileEnabled ? "default" : "secondary"} disabled={!loginWithSourceProfileEnabled}>
                                 <CheckCircleIcon className="w-4 h-4" /> {t('title')}
                             </Button>
                         </div>
@@ -1193,7 +1193,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                             setMissingDriver(null);
                             handleSubmit();
                         }}
-                        onCancel={() => setMissingDriver(null)}
+                        onCancel={() =>{  setMissingDriver(null); }}
                     />
                 </Suspense>
             );

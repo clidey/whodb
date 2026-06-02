@@ -35,7 +35,7 @@ func convertWhereConditionToMongoDB(where *query.WhereCondition) (bson.M, error)
 	}
 
 	// Normalize operator to lower for comparisons
-	getOp := func(op string) string { return strings.ToLower(op) }
+	getOp := strings.ToLower
 
 	switch where.Type {
 	case query.WhereConditionTypeAtomic:

@@ -37,7 +37,7 @@ export function useContainerWidth(ref: RefObject<HTMLElement | null>): number {
 
         update();
         window.addEventListener('resize', update);
-        return () => window.removeEventListener('resize', update);
+        return () => { window.removeEventListener('resize', update); };
     }, [ref]);
 
     return width;

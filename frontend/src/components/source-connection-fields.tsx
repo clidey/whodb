@@ -124,7 +124,7 @@ export function SourceConnectionFields({
     const databaseField = findConnectionFieldByKey(databaseType, 'Database');
     const searchPathField = promotedConnectionField(databaseType, 'Search Path', promotedKeys);
     const port = portValue ?? advancedForm.Port ?? portField?.DefaultValue ?? '';
-    const setPort = onPortChange ?? ((value: string) => onAdvancedFormChange('Port', value));
+    const setPort = onPortChange ?? ((value: string) => { onAdvancedFormChange('Port', value); });
     const containerClassName = cn(layout === 'login' ? 'flex flex-col gap-lg w-full' : 'space-y-4', ph.noCapture);
     const fieldClassName = layout === 'login' ? 'flex flex-col gap-sm w-full' : 'grid gap-2';
 
@@ -138,7 +138,7 @@ export function SourceConnectionFields({
                             <Input
                                 id="source-database"
                                 value={database}
-                                onChange={(e) => setDatabase(e.target.value)}
+                                onChange={(e) => { setDatabase(e.target.value); }}
                                 placeholder={fieldPlaceholder(databaseField, translate)}
                                 data-testid="database"
                                 aria-required={databaseField.Required ? 'true' : undefined}
@@ -173,7 +173,7 @@ export function SourceConnectionFields({
                         <Input
                             id="source-database"
                             value={database}
-                            onChange={(e) => setDatabase(e.target.value)}
+                            onChange={(e) => { setDatabase(e.target.value); }}
                             placeholder={fieldPlaceholder(databaseField, translate)}
                             data-testid="database"
                             aria-required={databaseField.Required ? 'true' : undefined}
@@ -203,7 +203,7 @@ export function SourceConnectionFields({
                         <Input
                             id="source-hostname"
                             value={hostName}
-                            onChange={(e) => onHostNameChange(e.target.value)}
+                            onChange={(e) => { onHostNameChange(e.target.value); }}
                             onPaste={(event) => {
                                 const pastedValue = event.clipboardData.getData('text');
                                 if (pastedValue.length > 0 && onHostNamePaste?.(pastedValue)) {
@@ -223,7 +223,7 @@ export function SourceConnectionFields({
                             <Input
                                 id="source-port"
                                 value={port}
-                                onChange={(e) => setPort(e.target.value)}
+                                onChange={(e) => { setPort(e.target.value); }}
                                 data-testid="port"
                                 placeholder={portField.DefaultValue ?? ''}
                             />
@@ -239,7 +239,7 @@ export function SourceConnectionFields({
                             ref={usernameInputRef}
                             id="source-username"
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            onChange={(e) => { setUsername(e.target.value); }}
                             data-testid="username"
                             placeholder={fieldPlaceholder(usernameField, translate)}
                             aria-required={usernameField.Required ? 'true' : undefined}
@@ -254,7 +254,7 @@ export function SourceConnectionFields({
                         <Input
                             id="source-password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => { setPassword(e.target.value); }}
                             onFocus={onPasswordFocus}
                             type="password"
                             data-testid="password"
@@ -273,7 +273,7 @@ export function SourceConnectionFields({
                     <Input
                         id="source-database"
                         value={database}
-                        onChange={(e) => setDatabase(e.target.value)}
+                        onChange={(e) => { setDatabase(e.target.value); }}
                         data-testid="database"
                         placeholder={fieldPlaceholder(databaseField, translate)}
                         aria-required={databaseField.Required ? 'true' : undefined}
@@ -288,7 +288,7 @@ export function SourceConnectionFields({
                     <Input
                         id="source-port"
                         value={port}
-                        onChange={(e) => setPort(e.target.value)}
+                        onChange={(e) => { setPort(e.target.value); }}
                         data-testid="port"
                         placeholder={portField.DefaultValue ?? ''}
                     />
@@ -300,7 +300,7 @@ export function SourceConnectionFields({
                     <Input
                         id="source-search-path"
                         value={advancedForm['Search Path'] ?? ''}
-                        onChange={(e) => onAdvancedFormChange('Search Path', e.target.value)}
+                        onChange={(e) => { onAdvancedFormChange('Search Path', e.target.value); }}
                         data-testid="search-path"
                         placeholder={fieldPlaceholder(searchPathField, translate)}
                         aria-required={searchPathField.Required ? 'true' : undefined}
@@ -312,7 +312,7 @@ export function SourceConnectionFields({
                     key={field.Key}
                     field={field}
                     value={advancedForm[field.Key] ?? field.DefaultValue ?? ''}
-                    onChange={(value) => onAdvancedFormChange(field.Key, value)}
+                    onChange={(value) => { onAdvancedFormChange(field.Key, value); }}
                     translate={translate}
                     className={fieldClassName}
                     showPasswordToggle={showPasswordToggle}
@@ -372,7 +372,7 @@ function PrimaryAdvancedValueField({
                 <Label>{translate(field.LabelKey)}</Label>
                 <Switch
                     checked={value.toLowerCase() === 'true'}
-                    onCheckedChange={checked => onChange(checked ? 'true' : 'false')}
+                    onCheckedChange={(checked) => { onChange(checked ? 'true' : 'false'); }}
                 />
             </div>
         );
@@ -384,7 +384,7 @@ function PrimaryAdvancedValueField({
             <Input
                 id={`source-${field.Key}`}
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => { onChange(e.target.value); }}
                 data-testid={`${field.Key}-input`}
                 type={field.Kind === SourceConnectionFieldKind.Password ? 'password' : 'text'}
                 placeholder={fieldPlaceholder(field, translate)}

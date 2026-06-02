@@ -71,11 +71,12 @@ func (p *GormPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema strin
 			}
 
 			// GORM handles identifier escaping automatically
-			if isPK {
+			switch {
+			case isPK:
 				conditions[column] = convertedValue
-			} else if isUpdated {
+			case isUpdated:
 				convertedValues[column] = convertedValue
-			} else {
+			default:
 				// Store unchanged values for WHERE clause if no PKs
 				unchangedValues[column] = convertedValue
 			}

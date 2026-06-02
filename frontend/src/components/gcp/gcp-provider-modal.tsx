@@ -72,7 +72,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
     const editingProvider = useMemo(() => {
         if (!editingProviderId) return null;
         const found = cloudProviders.find(p => p.Id === editingProviderId);
-        if (!found || found.__typename !== 'GCPProvider') return null;
+        if (found?.__typename !== 'GCPProvider') return null;
         return found as GcpProvider;
     }, [editingProviderId, cloudProviders]);
 
@@ -294,7 +294,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                                         <button
                                             key={`${project.Source}-${project.ProjectID}`}
                                             type="button"
-                                            onClick={() => handleSelectLocalProject(project)}
+                                            onClick={() =>{  handleSelectLocalProject(project); }}
                                             className={cn(
                                                 "flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
                                                 "hover:border-brand hover:bg-brand/5",
@@ -325,7 +325,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         <Input
                             id="provider-name"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) =>{  setName(e.target.value); }}
                             placeholder={t('namePlaceholder')}
                             data-testid="provider-name"
                         />
@@ -337,7 +337,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         <Input
                             id="project-id"
                             value={projectId}
-                            onChange={(e) => setProjectId(e.target.value)}
+                            onChange={(e) =>{  setProjectId(e.target.value); }}
                             placeholder={t('projectIdPlaceholder')}
                             data-testid="project-id"
                         />
@@ -365,7 +365,7 @@ export const GcpProviderModal: FC<GcpProviderModalProps> = ({
                         <Input
                             id="service-account-key"
                             value={serviceAccountKeyPath}
-                            onChange={(e) => setServiceAccountKeyPath(e.target.value)}
+                            onChange={(e) =>{  setServiceAccountKeyPath(e.target.value); }}
                             placeholder={t('serviceAccountKeyPlaceholder')}
                             data-testid="service-account-key"
                         />

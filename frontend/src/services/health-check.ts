@@ -71,7 +71,7 @@ class HealthCheckService {
             }
 
             // Check if data exists
-            if (!result.data || !result.data.Health) {
+            if (!result.data?.Health) {
                 return null;
             }
 

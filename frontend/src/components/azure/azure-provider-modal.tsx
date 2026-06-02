@@ -303,7 +303,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                                     <button
                                         key={sub.Id}
                                         type="button"
-                                        onClick={() => handleSelectSubscription(sub.Id)}
+                                        onClick={() => { handleSelectSubscription(sub.Id); }}
                                         className={cn(
                                             "flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
                                             "hover:border-brand hover:bg-brand/5",
@@ -330,7 +330,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                         <Input
                             id="provider-name"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) => { setName(e.target.value); }}
                             placeholder={t('namePlaceholder')}
                             data-testid="provider-name"
                         />
@@ -342,7 +342,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                         <Input
                             id="subscription-id"
                             value={subscriptionId}
-                            onChange={(e) => setSubscriptionId(e.target.value)}
+                            onChange={(e) => { setSubscriptionId(e.target.value); }}
                             placeholder={t('uuidPlaceholder')}
                             data-testid="subscription-id"
                         />
@@ -372,7 +372,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                                 <Input
                                     id="tenant-id"
                                     value={tenantId}
-                                    onChange={(e) => setTenantId(e.target.value)}
+                                    onChange={(e) => { setTenantId(e.target.value); }}
                                     placeholder={t('uuidPlaceholder')}
                                     data-testid="tenant-id"
                                 />
@@ -382,7 +382,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                                 <Input
                                     id="client-id"
                                     value={clientId}
-                                    onChange={(e) => setClientId(e.target.value)}
+                                    onChange={(e) => { setClientId(e.target.value); }}
                                     placeholder={t('uuidPlaceholder')}
                                     data-testid="client-id"
                                 />
@@ -393,7 +393,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                                     id="client-secret"
                                     type="password"
                                     value={clientSecret}
-                                    onChange={(e) => setClientSecret(e.target.value)}
+                                    onChange={(e) => { setClientSecret(e.target.value); }}
                                     placeholder={t('clientSecretPlaceholder')}
                                     data-testid="client-secret"
                                 />
@@ -407,7 +407,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                         <Input
                             id="resource-group"
                             value={resourceGroup}
-                            onChange={(e) => setResourceGroup(e.target.value)}
+                            onChange={(e) => { setResourceGroup(e.target.value); }}
                             placeholder={t('resourceGroupPlaceholder')}
                             data-testid="resource-group"
                         />

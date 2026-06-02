@@ -79,7 +79,7 @@ const SourceSurfaceRoute: FC<{
         return <Navigate to={getSurfaceFallbackPath()} replace />;
     }
 
-    return <>{component}</>;
+    return component;
 };
 
 export type IInternalRoute = {

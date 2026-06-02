@@ -151,9 +151,7 @@ func Run(config AppConfig, staticFiles embed.FS) {
 		Host:        env.PosthogHost,
 		Environment: env.ApplicationEnvironment,
 		AppVersion:  env.ApplicationVersion,
-	}); err != nil {
-		// analytics init failure is non-fatal
-	} else {
+	}); err == nil {
 		defer analytics.Shutdown()
 	}
 	analytics.SetEnabled(settingsCfg.MetricsEnabled)

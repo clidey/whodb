@@ -27,7 +27,7 @@ const getPortFromAdvanced = (profile: LocalLoginProfile, defaultPort: string | u
   
   if (profile.Advanced) {
     const portObj = profile.Advanced.find(item => item.Key === 'Port');
-    return portObj?.Value || defaultPort;
+    return portObj?.Value ?? defaultPort;
   }
 
   return defaultPort;
@@ -98,7 +98,7 @@ export const ProfileInfoTooltip: FC<ProfileInfoTooltipProps> = ({ profile, class
     setIsVisible(true);
   }, []);
 
-  const hideTooltip = useCallback(() => setIsVisible(false), []);
+  const hideTooltip = useCallback(() =>{  setIsVisible(false); }, []);
 
   const handleClickAway = useCallback((event: MouseEvent) => {
     if (btnRef.current?.contains(event.target as Node)) return;

@@ -1105,8 +1105,8 @@ func (r *queryResolver) SourceProfiles(ctx context.Context) ([]*model.SourceProf
 func (r *queryResolver) SourceTypes(ctx context.Context) ([]*model.SourceType, error) {
 	specs := sourcecatalog.All()
 	types := make([]*model.SourceType, 0, len(specs))
-	for _, spec := range specs {
-		types = append(types, sourceTypeToModel(spec))
+	for i := range specs {
+		types = append(types, sourceTypeToModel(specs[i]))
 	}
 	return types, nil
 }

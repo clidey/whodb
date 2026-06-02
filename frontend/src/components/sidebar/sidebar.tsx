@@ -919,7 +919,7 @@ export const Sidebar: FC = () => {
                 </SheetContent>
             </Sheet>
             <Dialog open={showProfileSwitchDialog} onOpenChange={handleProfileSwitchDialogChange}>
-                <DialogContent className="max-w-sm" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+                <DialogContent className="max-w-sm" onInteractOutside={(e) => { e.preventDefault(); }} onEscapeKeyDown={(e) => { e.preventDefault(); }}>
                     <DialogHeader>
                         <DialogTitle>{t('switchProfile')}</DialogTitle>
                         <DialogDescription>{t('switchProfileDescription')}</DialogDescription>

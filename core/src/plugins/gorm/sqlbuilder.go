@@ -145,7 +145,8 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 	var checkDefs []string
 	var foreignKeys []string
 
-	for _, col := range columns {
+	for i := range columns {
+		col := columns[i]
 		def := sb.QuoteIdentifier(col.Name) + " " + col.Type
 
 		if col.Primary {

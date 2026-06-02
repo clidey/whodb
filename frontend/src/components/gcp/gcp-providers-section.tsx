@@ -229,7 +229,7 @@ export const GcpProvidersSection: FC = () => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleEditProvider(provider.Id)}
+                                            onClick={() => { handleEditProvider(provider.Id); }}
                                             disabled={isLoading}
                                             aria-label={t('edit')}
                                             data-testid={`edit-${provider.Id}`}

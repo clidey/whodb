@@ -19,7 +19,7 @@
 package graph
 
 import (
-	ctx "context"
+	stdctx "context"
 	"net/http"
 
 	"github.com/clidey/whodb/core/baml_client"
@@ -103,7 +103,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("AI Chat Stream: Setting up AI client...")
 	callOpts := bamlconfig.SetupAIClient(modelConfig)
 	log.Debugf("AI Chat Stream: Starting BAML GenerateSQLQuery stream...")
-	stream, err := baml_client.Stream.GenerateSQLQuery(ctx.Background(), dbContext, req.Input.Query, callOpts...)
+	stream, err := baml_client.Stream.GenerateSQLQuery(stdctx.Background(), dbContext, req.Input.Query, callOpts...)
 	if err != nil {
 		log.Debugf("AI Chat Stream: GenerateSQLQuery failed: %v", err)
 		SendSSEError(w, flusher, "Failed to start stream: "+err.Error())
@@ -118,7 +118,7 @@ func ceAIChatStreamHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func processStream(
-	ctx ctx.Context,
+	ctx stdctx.Context,
 	w http.ResponseWriter,
 	flusher http.Flusher,
 	stream <-chan baml_client.StreamValue[[]stream_types.ChatResponse, []types.ChatResponse],
@@ -144,7 +144,7 @@ func processStream(
 	}
 }
 
-func processFinalChunk(ctx ctx.Context, w http.ResponseWriter, flusher http.Flusher, responses *[]types.ChatResponse, queryRunner source.QueryRunner) {
+func processFinalChunk(ctx stdctx.Context, w http.ResponseWriter, flusher http.Flusher, responses *[]types.ChatResponse, queryRunner source.QueryRunner) {
 	if responses == nil {
 		return
 	}
@@ -154,7 +154,7 @@ func processFinalChunk(ctx ctx.Context, w http.ResponseWriter, flusher http.Flus
 	}
 }
 
-func processFinalResponse(ctx ctx.Context, bamlResp *types.ChatResponse, queryRunner source.QueryRunner) *model.AIChatMessage {
+func processFinalResponse(ctx stdctx.Context, bamlResp *types.ChatResponse, queryRunner source.QueryRunner) *model.AIChatMessage {
 	message := &model.AIChatMessage{
 		Type: bamlconfig.ConvertBAMLTypeToWhoDB(bamlResp.Type),
 		Text: bamlResp.Text,

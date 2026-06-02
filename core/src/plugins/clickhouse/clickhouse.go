@@ -262,11 +262,12 @@ func (p *ClickHousePlugin) UpdateStorageUnit(config *engine.PluginConfig, schema
 				converted = arrayToExpr(converted)
 			}
 
-			if isPK {
+			switch {
+			case isPK:
 				conditions[column] = converted
-			} else if isUpdated {
+			case isUpdated:
 				convertedValues[column] = converted
-			} else if len(pkColumns) == 0 {
+			case len(pkColumns) == 0:
 				conditions[column] = converted
 			}
 		}

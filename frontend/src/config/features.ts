@@ -54,7 +54,7 @@ export const extensions: Record<string, any> = {};
 export const sources: Record<string, any> = {};
 export const settingsDefaults: Record<string, any> = {};
 
-export const getAppName = (): string => extensions.AppName || "WhoDB";
+export const getAppName = (): string => extensions.AppName ?? "WhoDB";
 
 /** Initialize feature flags with defaults. */
 export const initialize = () => {
