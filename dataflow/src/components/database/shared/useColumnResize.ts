@@ -1,56 +1,68 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+
+interface ColumnResizeOptions {
+  initialWidth?: number
+  minimumWidth?: number
+}
 
 /**
  * Manages column resize state and document-level mouse event listeners for drag resizing.
  * Returns current column widths and a handler to initiate resizing on mousedown.
  */
-export function useColumnResize(columns: string[] | undefined): {
+export function useColumnResize(
+  columns: string[] | undefined,
+  { initialWidth = 120, minimumWidth = 60 }: ColumnResizeOptions = {},
+): {
   columnWidths: Record<string, number>
   resizingColumn: string | null
   resizedColumns: Set<string>
-  handleResizeStart: (e: React.MouseEvent, column: string) => void
+  handleResizeStart: (event: ReactMouseEvent, column: string) => void
 } {
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({})
   const [resizingColumn, setResizingColumn] = useState<string | null>(null)
   const [resizedColumns, setResizedColumns] = useState<Set<string>>(new Set())
   const resizingRef = useRef<{ column: string; startX: number; startWidth: number } | null>(null)
 
-  // Initialize widths when columns first arrive
+  const getInitialWidth = useCallback((column: string) => {
+    return Math.max(initialWidth, column.length * 10 + 60)
+  }, [initialWidth])
+
+  // Initialize widths when columns first arrive.
   useEffect(() => {
-    if (columns && Object.keys(columnWidths).length === 0) {
+    if (columns && columns.length > 0 && Object.keys(columnWidths).length === 0) {
       const initialWidths: Record<string, number> = {}
-      columns.forEach((col) => {
-        initialWidths[col] = Math.max(120, col.length * 10 + 60)
+      columns.forEach((column) => {
+        initialWidths[column] = getInitialWidth(column)
       })
       setColumnWidths(initialWidths)
     }
-  }, [columns])
+  }, [columnWidths, columns, getInitialWidth])
 
-  // Document-level mousemove/mouseup for drag resizing
+  // Document-level mousemove/mouseup for drag resizing.
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (event: MouseEvent) => {
       if (resizingRef.current) {
         const { column, startX, startWidth } = resizingRef.current
-        const diff = e.clientX - startX
-        const newWidth = Math.max(60, startWidth + diff)
+        const diff = event.clientX - startX
+        const newWidth = Math.max(minimumWidth, startWidth + diff)
         setColumnWidths(prev => ({ ...prev, [column]: newWidth }))
       }
     }
 
     const handleMouseUp = () => {
       if (resizingRef.current) {
-        const col = resizingRef.current.column
+        const column = resizingRef.current.column
         setResizedColumns(prev => {
-          if (prev.has(col)) return prev
+          if (prev.has(column)) return prev
           const next = new Set(prev)
-          next.add(col)
+          next.add(column)
           return next
         })
         resizingRef.current = null
         setResizingColumn(null)
         document.body.style.cursor = 'default'
-        document.querySelectorAll<HTMLElement>('[data-resize-active]').forEach(el => {
-          delete el.dataset.resizeActive
+        document.querySelectorAll<HTMLElement>('[data-resize-active]').forEach(element => {
+          delete element.dataset.resizeActive
         })
       }
     }
@@ -61,19 +73,19 @@ export function useColumnResize(columns: string[] | undefined): {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [])
+  }, [minimumWidth])
 
-  const handleResizeStart = useCallback((e: React.MouseEvent, column: string) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handleResizeStart = useCallback((event: ReactMouseEvent, column: string) => {
+    event.preventDefault()
+    event.stopPropagation()
     resizingRef.current = {
       column,
-      startX: e.clientX,
-      startWidth: columnWidths[column] || 120,
+      startX: event.clientX,
+      startWidth: columnWidths[column] || getInitialWidth(column),
     }
     setResizingColumn(column)
     document.body.style.cursor = 'col-resize'
-  }, [columnWidths])
+  }, [columnWidths, getInitialWidth])
 
   return { columnWidths, resizingColumn, resizedColumns, handleResizeStart }
 }

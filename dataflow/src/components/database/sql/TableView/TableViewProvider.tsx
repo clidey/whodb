@@ -1,7 +1,7 @@
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useChangesetManager } from './useChangesetManager'
 import { useDataQuery } from './useDataQuery'
-import { useColumnResize } from './useColumnResize'
+import { useColumnResize } from '@/components/database/shared/useColumnResize'
 import type { TableViewContextValue, TableViewState, TableViewActions, FilterCondition } from './types'
 import type { Alert } from '@/components/database/shared/types'
 

@@ -30,9 +30,13 @@ export function CollectionViewColumnHeader({ column, index }: CollectionViewColu
   const { state, actions } = useCollectionView()
   const isSorted = state.sortColumn === column
   const hasFilter = Object.prototype.hasOwnProperty.call(state.activeFilter, column)
+  const width = state.columnWidths[column] || 160
 
   return (
-    <th className="sticky top-0 z-40 min-w-[160px] border-b border-r border-border/50 bg-background px-4 py-2 text-left text-sm font-medium text-muted-foreground">
+    <th
+      style={{ minWidth: `${width}px`, ...(state.resizedColumns.has(column) && { maxWidth: `${width}px` }) }}
+      className="sticky top-0 z-40 overflow-hidden border-b border-r border-border/50 bg-background px-4 py-2 text-left text-sm font-medium text-muted-foreground select-none"
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col">
           <div className="flex min-w-0 items-center gap-1">
@@ -102,6 +106,22 @@ export function CollectionViewColumnHeader({ column, index }: CollectionViewColu
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <div
+        data-resize-col={column}
+        className={cn(
+          'absolute right-0 top-0 -bottom-px z-20 w-1 cursor-col-resize data-[resize-active]:bg-primary/50',
+          state.resizingColumn === column && 'bg-primary/50',
+        )}
+        onMouseEnter={() => {
+          if (state.resizingColumn) return
+          document.querySelectorAll<HTMLElement>(`[data-resize-col="${column}"]`).forEach(element => { element.dataset.resizeActive = '' })
+        }}
+        onMouseLeave={() => {
+          if (state.resizingColumn) return
+          document.querySelectorAll<HTMLElement>(`[data-resize-col="${column}"]`).forEach(element => { delete element.dataset.resizeActive })
+        }}
+        onMouseDown={(event) => actions.handleResizeStart(event, column)}
+      />
     </th>
   )
 }

@@ -202,6 +202,7 @@ export function CollectionViewTableGrid() {
                   </td>
 
                   {state.tableColumns.map((column) => {
+                    const width = state.columnWidths[column] || 160
                     const fieldExists = hasDocumentField(row.doc, column)
                     const value = row.doc[column]
                     const isComplex = fieldExists && !isMongoScalarValue(value)
@@ -227,7 +228,7 @@ export function CollectionViewTableGrid() {
                       <td
                         key={column}
                         className={cn(
-                          'relative min-w-[160px] max-w-[320px] overflow-hidden border-b border-r border-border/50 text-sm text-foreground/80',
+                          'relative overflow-hidden border-b border-r border-border/50 text-sm text-foreground/80',
                           isActive ? 'p-0' : 'px-4 py-2',
                           row.isInserted && 'bg-blue-100/60',
                           row.isDeleted && 'bg-red-100/60 text-muted-foreground line-through',
@@ -247,6 +248,10 @@ export function CollectionViewTableGrid() {
                         data-qa-resource-type="document"
                         data-qa-resource-id={row.rowKey}
                         data-find-current={highlight === 'current' ? 'true' : undefined}
+                        style={{
+                          minWidth: `${width}px`,
+                          maxWidth: state.resizedColumns.has(column) ? `${width}px` : '320px',
+                        }}
                         onDoubleClick={() => {
                           if (row.isDeleted) return
                           openCellEditor(row.rowKey, column, value, fieldExists)
@@ -282,6 +287,22 @@ export function CollectionViewTableGrid() {
                             {displayValue}
                           </span>
                         )}
+                        <div
+                          data-resize-col={column}
+                          className={cn(
+                            'absolute right-0 top-0 -bottom-px z-20 w-1 cursor-col-resize data-[resize-active]:bg-primary/50',
+                            state.resizingColumn === column && 'bg-primary/50',
+                          )}
+                          onMouseEnter={() => {
+                            if (state.resizingColumn) return
+                            document.querySelectorAll<HTMLElement>(`[data-resize-col="${column}"]`).forEach(element => { element.dataset.resizeActive = '' })
+                          }}
+                          onMouseLeave={() => {
+                            if (state.resizingColumn) return
+                            document.querySelectorAll<HTMLElement>(`[data-resize-col="${column}"]`).forEach(element => { delete element.dataset.resizeActive })
+                          }}
+                          onMouseDown={(event) => actions.handleResizeStart(event, column)}
+                        />
                       </td>
                     )
                   })}

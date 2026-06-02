@@ -15,6 +15,7 @@ import type { FlatMongoFilter } from '@/components/database/mongodb/filter-colle
 import { useDocumentChangesetManager } from './useDocumentChangesetManager'
 import { buildMongoTableColumns } from './mongo-table-utils'
 import { useI18n } from '@/i18n/useI18n'
+import { useColumnResize } from '@/components/database/shared/useColumnResize'
 
 const CollectionViewCtx = createContext<CollectionViewContextValue | null>(null)
 
@@ -176,6 +177,10 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     documents: documents as Record<string, unknown>[],
     changes: changesetState.changes,
   }), [changesetState.changes, documents, sampledFields])
+  const { columnWidths, resizingColumn, resizedColumns, handleResizeStart } = useColumnResize(tableColumns, {
+    initialWidth: 160,
+    minimumWidth: 80,
+  })
 
   const availableFields = tableColumns
 
@@ -344,6 +349,9 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     showExportModal,
     isFilterModalOpen,
     alert,
+    columnWidths,
+    resizingColumn,
+    resizedColumns,
     ...changesetState,
   }
 
@@ -359,6 +367,7 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     openFilterForField,
     handleFilterApply,
     setShowExportModal,
+    handleResizeStart,
     showAlert,
     closeAlert,
     confirmDiscardAndContinue,

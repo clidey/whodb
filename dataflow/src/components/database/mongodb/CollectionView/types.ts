@@ -1,3 +1,4 @@
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { Alert } from '@/components/database/shared/types'
 import type { FlatMongoFilter } from '@/components/database/mongodb/filter-collection.types'
 
@@ -69,6 +70,9 @@ export interface CollectionViewState {
   showExportModal: boolean
   isFilterModalOpen: boolean
   alert: Alert | null
+  columnWidths: Record<string, number>
+  resizingColumn: string | null
+  resizedColumns: Set<string>
 
   // Changeset state
   changes: Map<DocumentChangesetRowKey, DocumentChange>
@@ -101,6 +105,7 @@ export interface CollectionViewActions {
   openFilterForField: (field: string) => void
   handleFilterApply: (filter: FlatMongoFilter) => void
   setShowExportModal: (open: boolean) => void
+  handleResizeStart: (event: ReactMouseEvent, column: string) => void
   showAlert: (title: string, message: string, type: Alert['type']) => void
   closeAlert: () => void
 
