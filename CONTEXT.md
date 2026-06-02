@@ -53,7 +53,7 @@ _Avoid_: document table mode, field-level editor
 - An **Unset Field** is distinct from a field whose stored value is `null`.
 - Editing an **Unset Field** creates that field on the affected **MongoDB Document**.
 - An **Editable Scalar Field** can be edited inline in the **Collection Table View**.
-- Editing an **Editable Scalar Field** preserves the existing field type when the field already exists.
+- Editing an **Editable Scalar Field** preserves the existing field type when the field already exists, except when the input is a complete, valid, unquoted JSON object or array.
 - A **Complex Document Field** in the **Collection Table View** can open a **Field JSON Editor**.
 - A **Field JSON Editor** accepts any valid JSON value, even when that changes an object or array field into a scalar or `null`.
 - A **MongoDB Document** is edited through a **Document JSON Editor**.
@@ -82,4 +82,7 @@ _Avoid_: document table mode, field-level editor
 - Switching between **Collection Table View** and **JSON View** preserves pending document changes.
 - Pending changes from **Collection Table View** and **JSON View** share the same document-level preview and submission flow.
 - Clearing an existing field in the **Collection Table View** should not delete the field; field deletion should be a distinct action.
-- Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the user chooses a distinct typed action.
+- Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the input is a complete, valid, unquoted JSON object or array.
+- Typing a complete, valid, unquoted JSON object or array into any **Editable Scalar Field** changes that field into a **Complex Document Field**, including existing string, number, boolean, `null`, and **Unset Field** values; when normal scalar rules allow a string value, typing a quoted JSON string that contains an object or array literal, such as `"{}"` or `"[]"`, saves the literal text instead.
+- Input that is not a complete, valid, unquoted JSON object or array continues through the normal **Editable Scalar Field** type rules.
+- Leading and trailing whitespace is ignored when detecting a complete, valid, unquoted JSON object or array, but scalar string input keeps its whitespace when no object or array is detected.

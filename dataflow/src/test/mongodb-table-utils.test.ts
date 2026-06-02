@@ -84,9 +84,51 @@ describe('MongoDB table cell helpers', () => {
     expect(coerceMongoCellDraft('Ada', 'Grace', true)).toEqual({ ok: true, value: 'Grace' })
   })
 
+  it('coerces complete JSON object or array drafts into complex values', () => {
+    expect(coerceMongoCellDraft('paid', '{"method":"card"}', true)).toEqual({
+      ok: true,
+      value: { method: 'card' },
+    })
+    expect(coerceMongoCellDraft(1, '[1,"a",{"x":true}]', true)).toEqual({
+      ok: true,
+      value: [1, 'a', { x: true }],
+    })
+    expect(coerceMongoCellDraft(false, '  {}  ', true)).toEqual({ ok: true, value: {} })
+  })
+
   it('creates string values for null or unset fields', () => {
     expect(coerceMongoCellDraft(null, 'active', true)).toEqual({ ok: true, value: 'active' })
     expect(coerceMongoCellDraft(undefined, 'active', false)).toEqual({ ok: true, value: 'active' })
+  })
+
+  it('coerces complete JSON object or array drafts for null or unset fields', () => {
+    expect(coerceMongoCellDraft(null, '{}', true)).toEqual({ ok: true, value: {} })
+    expect(coerceMongoCellDraft(undefined, '[]', false)).toEqual({ ok: true, value: [] })
+  })
+
+  it('saves quoted object or array literals as strings when string values are allowed', () => {
+    expect(coerceMongoCellDraft('paid', '"{}"', true)).toEqual({ ok: true, value: '{}' })
+    expect(coerceMongoCellDraft(null, '"[]"', true)).toEqual({ ok: true, value: '[]' })
+    expect(coerceMongoCellDraft(undefined, '"{\\"method\\":\\"card\\"}"', false)).toEqual({
+      ok: true,
+      value: '{"method":"card"}',
+    })
+  })
+
+  it('keeps quoted object or array literals on the normal scalar path when string values are not allowed', () => {
+    expect(coerceMongoCellDraft(1, '"{}"', true)).toEqual({ ok: false, error: 'invalid-number' })
+    expect(coerceMongoCellDraft(false, '"[]"', true)).toEqual({ ok: false, error: 'invalid-boolean' })
+  })
+
+  it('keeps invalid object-like drafts on the normal scalar coercion path', () => {
+    expect(coerceMongoCellDraft('paid', '{method:"card"}', true)).toEqual({ ok: true, value: '{method:"card"}' })
+    expect(coerceMongoCellDraft(null, '[1,', true)).toEqual({ ok: true, value: '[1,' })
+    expect(coerceMongoCellDraft(1, '{method:"card"}', true)).toEqual({ ok: false, error: 'invalid-number' })
+    expect(coerceMongoCellDraft(false, '[1,', true)).toEqual({ ok: false, error: 'invalid-boolean' })
+  })
+
+  it('keeps scalar string whitespace when no object or array is detected', () => {
+    expect(coerceMongoCellDraft('paid', '  active  ', true)).toEqual({ ok: true, value: '  active  ' })
   })
 
   it('accepts any valid JSON value for field JSON edits', () => {

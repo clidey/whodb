@@ -6,10 +6,12 @@ import type {
 import { buildExistingRowKey } from './useDocumentChangesetManager'
 
 export type MongoScalarValue = string | number | boolean | null
+export type MongoComplexValue = Record<string, unknown> | unknown[]
+export type MongoCellValue = MongoScalarValue | MongoComplexValue
 export type MongoCellCoercionError = 'invalid-number' | 'invalid-boolean' | 'complex-value'
 
 export type MongoCellCoercionResult =
-  | { ok: true; value: MongoScalarValue }
+  | { ok: true; value: MongoCellValue }
   | { ok: false; error: MongoCellCoercionError }
 
 export type MongoFieldJsonParseResult =
@@ -19,6 +21,34 @@ export type MongoFieldJsonParseResult =
 /** Returns whether a value can be edited directly in a MongoDB table cell. */
 export function isMongoScalarValue(value: unknown): value is MongoScalarValue {
   return value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+}
+
+function parseMongoJsonObjectOrArrayDraft(draftValue: string): MongoComplexValue | null {
+  const trimmedDraft = draftValue.trim()
+  if (!trimmedDraft) return null
+
+  try {
+    const value = JSON.parse(trimmedDraft) as unknown
+    if (Array.isArray(value)) return value
+    if (value !== null && typeof value === 'object') return value as Record<string, unknown>
+  } catch {
+    return null
+  }
+
+  return null
+}
+
+function parseMongoQuotedComplexLiteralDraft(draftValue: string): string | null {
+  const trimmedDraft = draftValue.trim()
+  if (!trimmedDraft) return null
+
+  try {
+    const value = JSON.parse(trimmedDraft) as unknown
+    if (typeof value !== 'string') return null
+    return parseMongoJsonObjectOrArrayDraft(value) ? value : null
+  } catch {
+    return null
+  }
 }
 
 /** Returns whether a document owns the requested top-level field. */
@@ -114,11 +144,18 @@ export function coerceMongoCellDraft(
   draftValue: string,
   fieldExists: boolean,
 ): MongoCellCoercionResult {
+  const complexValue = parseMongoJsonObjectOrArrayDraft(draftValue)
+  if (complexValue !== null) return { ok: true, value: complexValue }
+
   if (!fieldExists || existingValue === null) {
+    const complexLiteral = parseMongoQuotedComplexLiteralDraft(draftValue)
+    if (complexLiteral !== null) return { ok: true, value: complexLiteral }
     return { ok: true, value: draftValue }
   }
 
   if (typeof existingValue === 'string') {
+    const complexLiteral = parseMongoQuotedComplexLiteralDraft(draftValue)
+    if (complexLiteral !== null) return { ok: true, value: complexLiteral }
     return { ok: true, value: draftValue }
   }
 
