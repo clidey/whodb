@@ -382,8 +382,7 @@ func confirmMockDataRun(payload *mockDataCommandOutput, skipPrompt bool) (bool, 
 		return false, fmt.Errorf("reading confirmation: %w", err)
 	}
 
-	answer := strings.ToLower(strings.TrimSpace(response))
-	return answer == "y" || answer == "yes", nil
+	return isAffirmativeConfirmation(response), nil
 }
 
 func isInteractiveInput() bool {
