@@ -12,7 +12,7 @@ export function AddDocumentModal(
       title={t('mongodb.document.addTitle')}
       submitLabel={t('mongodb.document.add')}
       description={t('mongodb.document.addDescription')}
-      placeholder="{ ... }"
+      placeholder={t('mongodb.document.placeholder')}
       {...props}
     />
   )

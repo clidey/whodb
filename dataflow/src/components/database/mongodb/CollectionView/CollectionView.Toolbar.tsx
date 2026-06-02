@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Plus, Minus, Undo2, Eye, SendHorizontal, RefreshCw, TerminalSquare, BarChart3 } from 'lucide-react'
+import { Download, Plus, Minus, Undo2, Eye, SendHorizontal, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useCollectionView } from './CollectionViewProvider'
 import { DataView } from '@/components/database/shared/DataView'
@@ -64,6 +64,46 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('common.actions.refresh')}</TooltipContent>
+        </Tooltip>
+
+        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => actions.setViewMode('table')}
+              data-testid="mongodb.collection.table-view-button"
+              data-qa-module="mongodb"
+              data-qa-object="collection-view-mode"
+              data-qa-action="show-table"
+              data-qa-state={state.viewMode === 'table' ? 'active' : 'inactive'}
+              className={cn(state.viewMode === 'table' && 'bg-muted text-foreground')}
+            >
+              <Table2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('mongodb.view.table')}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => actions.setViewMode('json')}
+              data-testid="mongodb.collection.json-view-button"
+              data-qa-module="mongodb"
+              data-qa-object="collection-view-mode"
+              data-qa-action="show-json"
+              data-qa-state={state.viewMode === 'json' ? 'active' : 'inactive'}
+              className={cn(state.viewMode === 'json' && 'bg-muted text-foreground')}
+            >
+              <FileJson className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('mongodb.view.json')}</TooltipContent>
         </Tooltip>
 
         <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />

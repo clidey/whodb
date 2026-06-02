@@ -262,6 +262,7 @@ function buildFlatFilter(conditions: FilterConditionDraft[]): FlatMongoFilter {
 interface FilterCollectionProviderProps {
   open: boolean
   fields: string[]
+  preferredField?: string | null
   initialFilter?: FlatMongoFilter
   onApply: (filter: FlatMongoFilter) => void
   onOpenChange: (open: boolean) => void
@@ -310,6 +311,7 @@ function AlertBridge({
 export function FilterCollectionProvider({
   open,
   fields,
+  preferredField,
   initialFilter,
   onApply,
   onOpenChange,
@@ -331,8 +333,17 @@ export function FilterCollectionProvider({
 
     if (open && !wasOpen) {
       const parsed = parseInitialFilter(initialFilter)
-      if (parsed.conditions.length > 0) {
-        setConditions(parsed.conditions)
+      const nextConditions = [...parsed.conditions]
+      if (
+        preferredField &&
+        fields.includes(preferredField) &&
+        !nextConditions.some((condition) => getNormalizedField(condition.field) === preferredField)
+      ) {
+        nextConditions.push(createConditionForField(preferredField))
+      }
+
+      if (nextConditions.length > 0) {
+        setConditions(nextConditions)
       } else {
         setConditions([createEmptyCondition(fields)])
       }
@@ -347,7 +358,7 @@ export function FilterCollectionProvider({
     }
 
     wasOpenRef.current = open
-  }, [open, initialFilter, fields, pushAlert, t])
+  }, [open, initialFilter, fields, preferredField, pushAlert, t])
 
   const addCondition = useCallback(() => {
     const nextField = findFirstUnusedField(fields, conditions) ?? fields[0] ?? null
