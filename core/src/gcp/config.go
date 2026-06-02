@@ -49,7 +49,7 @@ func loadConfigFromGCPCredentials(_ context.Context, gcpCreds *GCPCredentialConf
 	var opts []option.ClientOption
 
 	if gcpCreds.IsServiceAccountKeyAuth() && gcpCreds.ServiceAccountKeyPath != "" {
-		opts = append(opts, option.WithCredentialsFile(gcpCreds.ServiceAccountKeyPath))
+		opts = append(opts, option.WithAuthCredentialsFile(option.ServiceAccount, gcpCreds.ServiceAccountKeyPath))
 	}
 	// For AuthMethodDefault, no explicit option needed — the SDK uses ADC automatically.
 

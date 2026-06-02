@@ -46,7 +46,7 @@ func GenerateCloudSQLIAMAuthToken(ctx context.Context, serviceAccountKeyPath, us
 		if readErr != nil {
 			return "", fmt.Errorf("failed to read service account key file: %w", readErr)
 		}
-		creds, err = google.CredentialsFromJSONWithParams(ctx, data, google.CredentialsParams{Scopes: scopes})
+		creds, err = google.CredentialsFromJSONWithTypeAndParams(ctx, data, google.ServiceAccount, google.CredentialsParams{Scopes: scopes})
 	} else {
 		creds, err = google.FindDefaultCredentials(ctx, scopes...)
 	}
