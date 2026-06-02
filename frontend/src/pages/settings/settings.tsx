@@ -129,7 +129,7 @@ export const SettingsPage: FC = () => {
     }, [dispatch]);
 
     return (
-        <InternalPage routes={[InternalRoutes.Settings]}>
+        <InternalPage routes={[InternalRoutes.Settings!]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-2">

@@ -25,7 +25,7 @@ import {useTranslation} from '@/hooks/use-translation';
 export const ContactUsPage: FC = () => {
     const { t } = useTranslation('pages/contact-us');
     return (
-        <InternalPage routes={[InternalRoutes.ContactUs]}>
+        <InternalPage routes={[InternalRoutes.ContactUs!]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-sm mb-4">
