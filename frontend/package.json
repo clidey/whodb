@@ -47,6 +47,7 @@
   "scripts": {
     "start": "vite --port 3000 --open",
     "build": "tsc -p tsconfig.ce.json && vite build",
+    "build:ce": "tsc -p tsconfig.ce.json && vite build",
     "# E2E test commands": "",
     "e2e:ce": "VITE_E2E_TEST=true bash ../dev/run-e2e.sh false all",
     "e2e:ce:headless": "VITE_E2E_TEST=true bash ../dev/run-e2e.sh true all",
