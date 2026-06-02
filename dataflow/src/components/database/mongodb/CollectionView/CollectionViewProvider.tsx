@@ -43,7 +43,6 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
   const [currentPage, setCurrentPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [pageSize, setPageSize] = useState(50)
-  const [searchTerm, setSearchTerm] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
 
   // ---- Export state ----
@@ -127,14 +126,6 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     }
   }, [documents])
 
-  // ---- Guarded search term setter (resets to page 1) ----
-  const setSearchTermGuarded = useCallback((term: string) => {
-    runWithDiscardGuard(() => {
-      setSearchTerm(term)
-      setCurrentPage(1)
-    })
-  }, [runWithDiscardGuard])
-
   // ---- Main data fetch ----
   useEffect(() => {
     const fetchData = async () => {
@@ -176,19 +167,6 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
             })
           }
         }
-      }
-
-      // Add search term as regex on 'document' column if present
-      if (searchTerm.trim()) {
-        filterConditions.push({
-          Type: WhereConditionType.Atomic,
-          Atomic: {
-            Key: 'document',
-            Operator: 'regex',
-            Value: searchTerm.trim(),
-            ColumnType: 'string',
-          },
-        })
       }
 
       let where: WhereCondition | undefined
@@ -234,7 +212,7 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     }
 
     fetchData()
-  }, [connectionId, databaseName, collectionName, connections, collectionRefreshKey, currentPage, pageSize, searchTerm, activeFilter, refreshKey, getRows, t])
+  }, [connectionId, databaseName, collectionName, connections, collectionRefreshKey, currentPage, pageSize, activeFilter, refreshKey, getRows, t])
 
   // ---- Page change ----
   const handlePageChange = useCallback((page: number) => {
@@ -262,7 +240,6 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     pageSize,
     total,
     totalPages,
-    searchTerm,
     activeFilter,
     availableFields,
     showExportModal,
@@ -275,7 +252,6 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     refresh: () => runWithDiscardGuard(refresh),
     handlePageChange,
     handlePageSizeChange,
-    setSearchTerm: setSearchTermGuarded,
     setIsFilterModalOpen,
     handleFilterApply,
     setShowExportModal,

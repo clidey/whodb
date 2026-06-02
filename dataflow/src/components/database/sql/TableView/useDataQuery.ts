@@ -9,7 +9,6 @@ import {
 } from '@graphql'
 import { transformRowsResult, type TableData } from '@/utils/graphql-transforms'
 import { resolveSchemaParam } from '@/utils/database-features'
-import { parseSearchToWhereCondition, mergeSearchWithWhere } from '@/utils/search-parser'
 import { useI18n } from '@/i18n/useI18n'
 import type { FilterCondition } from './types'
 
@@ -20,7 +19,6 @@ interface UseDataQueryParams {
   tableName: string
   currentPage: number
   pageSize: number
-  searchTerm: string
   sortColumn: string | null
   sortDirection: 'asc' | 'desc' | null
   filterConditions: FilterCondition[]
@@ -57,7 +55,6 @@ export function useDataQuery(params: UseDataQueryParams): { state: DataQueryStat
     tableName,
     currentPage,
     pageSize,
-    searchTerm,
     sortColumn,
     sortDirection,
     filterConditions,
@@ -78,19 +75,9 @@ export function useDataQuery(params: UseDataQueryParams): { state: DataQueryStat
 
   const latestRequestIdRef = useRef(0)
   const filterConditionsRef = useRef(filterConditions)
-  const columnsRef = useRef<{ names: string[]; types: string[] }>({ names: [], types: [] })
 
   // Keep refs in sync
   useEffect(() => { filterConditionsRef.current = filterConditions }, [filterConditions])
-
-  useEffect(() => {
-    if (data?.columns && data.columns.length > 0) {
-      columnsRef.current = {
-        names: data.columns,
-        types: data.columns.map(c => data.columnTypes[c] ?? 'string'),
-      }
-    }
-  }, [data?.columns, data?.columnTypes])
 
   const handleSubmitRequest = useCallback(async (overridePageOffset?: number) => {
     const conn = connections.find((c) => c.id === connectionId)
@@ -134,16 +121,7 @@ export function useDataQuery(params: UseDataQueryParams): { state: DataQueryStat
       }
     }
 
-    // Build search where condition
-    const searchWhere = searchTerm.trim()
-      ? parseSearchToWhereCondition(
-          searchTerm,
-          columnsRef.current.names,
-          columnsRef.current.types,
-        )
-      : undefined
-
-    const where = mergeSearchWithWhere(searchWhere, filterWhere)
+    const where = filterWhere
 
     try {
       const { data: result, error: queryError } = await getRows({
@@ -182,7 +160,7 @@ export function useDataQuery(params: UseDataQueryParams): { state: DataQueryStat
         setLoading(false)
       }
     }
-  }, [connections, connectionId, databaseName, schema, tableName, sortColumn, sortDirection, searchTerm, pageSize, currentPage, getRows, visibleColumnsCount, onInitVisibleColumns, t])
+  }, [connections, connectionId, databaseName, schema, tableName, sortColumn, sortDirection, pageSize, currentPage, getRows, visibleColumnsCount, onInitVisibleColumns, t])
 
   // Fetch on mount and when data-changing params change
   useEffect(() => {

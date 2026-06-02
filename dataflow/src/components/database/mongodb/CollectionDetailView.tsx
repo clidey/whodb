@@ -89,8 +89,6 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
         <FindBar.Provider
           rows={state.documents}
           columns={docColumns}
-          searchTerm={state.searchTerm}
-          onSearchTermChange={actions.setSearchTerm}
         >
           <FindBar.Bar />
           <div

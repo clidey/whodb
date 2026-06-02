@@ -45,7 +45,6 @@ export interface CollectionViewState {
   pageSize: number
   total: number
   totalPages: number
-  searchTerm: string
   activeFilter: FlatMongoFilter
   availableFields: string[]
   showExportModal: boolean
@@ -75,7 +74,6 @@ export interface CollectionViewActions {
   refresh: () => void
   handlePageChange: (page: number) => void
   handlePageSizeChange: (size: number) => void
-  setSearchTerm: (term: string) => void
   setIsFilterModalOpen: (open: boolean) => void
   handleFilterApply: (filter: FlatMongoFilter) => void
   setShowExportModal: (open: boolean) => void
