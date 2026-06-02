@@ -19,7 +19,7 @@ python3 "$hook_dir/changed-files.py" | while IFS= read -r file_path; do
 	if [[ "$file_path" == *.go ]]; then
 		resolved_path="$(resolve_file "$file_path")"
 		if [[ -n "$resolved_path" ]]; then
-			gofmt -w -- "$resolved_path" 2>/dev/null
+			gofmt -w -- "$resolved_path" >/dev/null 2>&1 || true
 		fi
 	fi
 done
@@ -28,7 +28,9 @@ done
 python3 "$hook_dir/changed-files.py" | while IFS= read -r file_path; do
 	if [[ "$file_path" == *.go ]]; then
 		if [[ -n "$repo_root" ]] && [[ -f "$repo_root/core/go.mod" ]]; then
-			(cd "$repo_root/core" && golangci-lint run --fix -- "$file_path" 2>/dev/null) || true
+			(cd "$repo_root/core" && golangci-lint run --fix -- "$file_path" >/dev/null 2>&1) || true
 		fi
 	fi
 done
+
+exit 0

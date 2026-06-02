@@ -23,11 +23,13 @@ while IFS= read -r file_path; do
 done < <(python3 "$hook_dir/changed-files.py")
 
 if [[ "$needs_ce" -eq 1 ]]; then
-    cd "$repo_root/core" && go generate . 2>/dev/null
-    cd "$repo_root/frontend" && pnpm run generate 2>/dev/null
+    (cd "$repo_root/core" && go generate . >/dev/null 2>&1) || true
+    (cd "$repo_root/frontend" && pnpm run generate >/dev/null 2>&1) || true
 fi
 
 if [[ "$needs_ee" -eq 1 ]]; then
-    cd "$repo_root/ee" && go generate . 2>/dev/null
-    cd "$repo_root/ee/frontend" && pnpm run generate 2>/dev/null
+    (cd "$repo_root/ee" && go generate . >/dev/null 2>&1) || true
+    (cd "$repo_root/ee/frontend" && pnpm run generate >/dev/null 2>&1) || true
 fi
+
+exit 0

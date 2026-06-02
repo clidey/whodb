@@ -22,9 +22,11 @@ python3 "$hook_dir/changed-files.py" | while IFS= read -r file_path; do
 		fi
 
 		if [[ "$resolved_path" == "$repo_root/ee/frontend/"* ]]; then
-			(cd "$repo_root/ee/frontend" && pnpm exec oxlint --fix -- "$resolved_path" 2>/dev/null)
+			(cd "$repo_root/ee/frontend" && pnpm exec oxlint --fix -- "$resolved_path" >/dev/null 2>&1) || true
 		elif [[ "$resolved_path" == "$repo_root/frontend/"* ]]; then
-			(cd "$repo_root/frontend" && pnpm exec oxlint --fix -- "$resolved_path" 2>/dev/null)
+			(cd "$repo_root/frontend" && pnpm exec oxlint --fix -- "$resolved_path" >/dev/null 2>&1) || true
 		fi
 	fi
 done
+
+exit 0
