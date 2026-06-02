@@ -201,7 +201,7 @@ func (p *Provider) initialize(ctx context.Context) error {
 
 	var opts []option.ClientOption
 	if p.config.AuthMethod == gcpinfra.AuthMethodServiceAccountKey && p.config.ServiceAccountKeyPath != "" {
-		opts = append(opts, option.WithCredentialsFile(p.config.ServiceAccountKeyPath))
+		opts = append(opts, option.WithAuthCredentialsFile(option.ServiceAccount, p.config.ServiceAccountKeyPath))
 	}
 
 	p.clientOpts = opts

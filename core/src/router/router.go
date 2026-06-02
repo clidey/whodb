@@ -362,7 +362,7 @@ func setupMiddlewares(router *chi.Mux, additionalMiddlewares []func(http.Handler
 		healthCheckMiddleware,
 		middleware.ThrottleBacklog(100, 50, time.Second*5),
 		middleware.RequestID,
-		middleware.RealIP,
+		middleware.ClientIPFromRemoteAddr,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
 		sseAwareTimeout(90 * time.Second),
