@@ -361,6 +361,12 @@ func (c *Config) UpsertPlatformHost(host PlatformHost) {
 	c.Platform.Hosts = append(c.Platform.Hosts, host)
 }
 
+// SetOnlyPlatformHost replaces all hosted WhoDB account entries with one host.
+func (c *Config) SetOnlyPlatformHost(host PlatformHost) {
+	c.Platform.Hosts = []PlatformHost{host}
+	c.Platform.DefaultHost = host.URL
+}
+
 // GetPlatformHost returns the hosted WhoDB account entry for the URL.
 func (c *Config) GetPlatformHost(url string) (*PlatformHost, bool) {
 	for i := range c.Platform.Hosts {
@@ -419,6 +425,11 @@ func (c *Config) DeletePlatformRefreshToken(hostURL, accountID string) error {
 		return nil
 	}
 	return err
+}
+
+// IsKeyringNotFound reports whether err means the requested keyring item is missing.
+func IsKeyringNotFound(err error) bool {
+	return errors.Is(err, keyring.ErrNotFound)
 }
 
 func platformRefreshTokenKey(hostURL, accountID string) string {

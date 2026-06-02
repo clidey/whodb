@@ -100,7 +100,7 @@ var loginCmd = &cobra.Command{
 				return fmt.Errorf("login cancelled")
 			}
 			for _, existing := range existingHosts {
-				if _, err := revokePlatformLogin(ctx, cfg, existing.URL, existing.AccountID); err != nil {
+				if _, err := replacePlatformLogin(ctx, cfg, existing.URL, existing.AccountID); err != nil {
 					return fmt.Errorf("cannot replace existing hosted WhoDB login for %s: %w", existing.URL, err)
 				}
 			}
@@ -142,8 +142,7 @@ var loginCmd = &cobra.Command{
 			AccountID: user.ID,
 			Email:     user.Email,
 		}
-		cfg.UpsertPlatformHost(hostEntry)
-		cfg.SetDefaultPlatformHost(client.Host())
+		cfg.SetOnlyPlatformHost(hostEntry)
 		if err := cfg.SavePlatformRefreshToken(client.Host(), user.ID, tokens.RefreshToken); err != nil {
 			return err
 		}
@@ -575,6 +574,20 @@ func revokePlatformLogin(ctx context.Context, cfg *config.Config, host, accountI
 		return "", err
 	}
 	return "revoked", nil
+}
+
+func replacePlatformLogin(ctx context.Context, cfg *config.Config, host, accountID string) (string, error) {
+	status, err := revokePlatformLogin(ctx, cfg, host, accountID)
+	if err == nil {
+		return status, nil
+	}
+	if !config.IsKeyringNotFound(err) {
+		return "", err
+	}
+	if err := clearPlatformLogin(cfg, host, accountID); err != nil {
+		return "", err
+	}
+	return "local_only", nil
 }
 
 func clearPlatformLogin(cfg *config.Config, host, accountID string) error {
