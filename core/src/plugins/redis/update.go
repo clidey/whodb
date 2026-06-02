@@ -32,7 +32,7 @@ func (p *RedisPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema stri
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for storage unit update")
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 

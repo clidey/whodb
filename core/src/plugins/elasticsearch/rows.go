@@ -92,7 +92,7 @@ func (p *ElasticSearchPlugin) GetRows(config *engine.PluginConfig, req *engine.G
 		log.WithError(err).WithField("collection", collection).Error("Failed to execute ElasticSearch search query")
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("error searching documents: %s", res.String())
@@ -175,7 +175,7 @@ func (p *ElasticSearchPlugin) GetRowCount(config *engine.PluginConfig, database,
 	if err != nil {
 		return 0, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		return 0, fmt.Errorf("error counting documents: %s", res.String())
@@ -224,7 +224,7 @@ func (p *ElasticSearchPlugin) GetColumnsForTable(config *engine.PluginConfig, sc
 		log.WithError(err).WithField("index", storageUnit).Error("Failed to search for sample document")
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		log.WithField("index", storageUnit).Warn("No documents found, returning empty schema")

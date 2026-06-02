@@ -129,6 +129,9 @@ func (p *Sqlite3Plugin) GetColumnConstraints(config *engine.PluginConfig, schema
 						count++
 						col = cn
 					}
+					if infoRows.Err() != nil {
+						return "", 0
+					}
 					return col, count
 				}()
 

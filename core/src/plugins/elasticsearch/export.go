@@ -119,11 +119,11 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		res.Body.Close()
+		_ = res.Body.Close()
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to decode ElasticSearch search result during export")
 		return fmt.Errorf("failed to decode search result: %w", err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	scrollID, _ := searchResult["_scroll_id"].(string)
 	rowCount := 0
@@ -169,11 +169,11 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-			res.Body.Close()
+			_ = res.Body.Close()
 			log.WithError(err).WithField("storageUnit", storageUnit).Error("Error decoding ElasticSearch scroll response")
 			return fmt.Errorf("failed to decode scroll response: %w", err)
 		}
-		res.Body.Close()
+		_ = res.Body.Close()
 
 		if nextScrollID, ok := searchResult["_scroll_id"].(string); ok && nextScrollID != "" {
 			scrollID = nextScrollID
@@ -215,10 +215,10 @@ func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, sche
 
 	var searchResult map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		res.Body.Close()
+		_ = res.Body.Close()
 		return fmt.Errorf("failed to decode search result: %w", err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	scrollID, _ := searchResult["_scroll_id"].(string)
 
@@ -253,10 +253,10 @@ func (p *ElasticSearchPlugin) ExportDataNDJSON(config *engine.PluginConfig, sche
 
 		searchResult = make(map[string]any)
 		if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-			res.Body.Close()
+			_ = res.Body.Close()
 			return fmt.Errorf("failed to decode scroll response: %w", err)
 		}
-		res.Body.Close()
+		_ = res.Body.Close()
 
 		if nextScrollID, ok := searchResult["_scroll_id"].(string); ok && nextScrollID != "" {
 			scrollID = nextScrollID

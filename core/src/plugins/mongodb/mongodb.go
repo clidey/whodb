@@ -103,7 +103,7 @@ func (p *MongoDBPlugin) GetStorageUnits(config *engine.PluginConfig, database st
 		}).Error("Failed to list MongoDB collections")
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	storageUnits := []engine.StorageUnit{}
 	for cursor.Next(ctx) {
@@ -237,7 +237,7 @@ func (p *MongoDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema
 		}).Debug("Failed to list collections for schema validation")
 		return make(map[string]map[string]any), nil
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	var collInfo bson.M
 	if !cursor.Next(ctx) {

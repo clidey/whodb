@@ -60,7 +60,9 @@ const dialTimeout = 5 * time.Second
 
 // Dial connects to a memcached server at the given address.
 func Dial(address string) (*Client, error) {
-	conn, err := net.DialTimeout("tcp", address, dialTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
+	defer cancel()
+	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", address)
 	if err != nil {
 		return nil, fmt.Errorf("memcached dial: %w", err)
 	}

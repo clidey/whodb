@@ -30,7 +30,7 @@ func (p *MemcachedPlugin) UpdateStorageUnit(config *engine.PluginConfig, schema 
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Memcached for update")
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Get the current item to preserve unmodified fields
 	current, err := client.Get(storageUnit)

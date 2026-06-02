@@ -76,7 +76,7 @@ func (m DuckDBMigrator) ColumnTypes(value any) ([]gorm.ColumnType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var columnTypes []gorm.ColumnType
 	for rows.Next() {

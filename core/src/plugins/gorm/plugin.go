@@ -393,7 +393,7 @@ func (p *GormPlugin) getGenericRows(db *gorm.DB, schema, storageUnit string, whe
 		query = query.Limit(pageSize).Offset(pageOffset)
 	}
 
-	rows, err := query.Rows()
+	rows, err := query.Rows() //nolint:rowserrcheck
 	if err != nil {
 		log.WithError(err).Error(fmt.Sprintf("Failed to execute generic rows query for table %s.%s", schema, storageUnit))
 		return nil, err
@@ -641,7 +641,7 @@ func (p *GormPlugin) ExecuteRawSQL(config *engine.PluginConfig, openMultiStateme
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		return p.ConvertRawToRows(rows)
 	})
@@ -663,7 +663,7 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 			log.Debugf("[FK DEBUG] ERROR: Raw query error: %v", err)
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		relationships := make(map[string]*engine.ForeignKeyRelationship)
 		for rows.Next() {
@@ -677,6 +677,9 @@ func (p *GormPlugin) QueryForeignKeyRelationships(config *engine.PluginConfig, q
 				ReferencedTable:  referencedTable,
 				ReferencedColumn: referencedColumn,
 			}
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 		log.Debugf("[FK DEBUG] Found %d FK relationships for params %v", len(relationships), params)
 		return relationships, nil
@@ -692,7 +695,7 @@ func (p *GormPlugin) QueryComputedColumns(config *engine.PluginConfig, query str
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		computed := make(map[string]bool)
 		for rows.Next() {
@@ -701,6 +704,9 @@ func (p *GormPlugin) QueryComputedColumns(config *engine.PluginConfig, query str
 				continue
 			}
 			computed[columnName] = true
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 		return computed, nil
 	})

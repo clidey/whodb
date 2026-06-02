@@ -63,7 +63,7 @@ func (p *ElasticSearchPlugin) GetDatabases(config *engine.PluginConfig) ([]strin
 		log.WithError(err).Error("Failed to get ElasticSearch indices")
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.IsError() {
 		err := fmt.Errorf("error getting indices: %s", res.String())
@@ -107,7 +107,7 @@ func (p *ElasticSearchPlugin) GetStorageUnits(config *engine.PluginConfig, datab
 		log.WithError(err).Error("Failed to get ElasticSearch indices stats")
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	// _stats requires the monitor cluster privilege. If it is denied (403) or
 	// otherwise errors, fall back to listing indices without size/count so the
@@ -208,7 +208,7 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 	if err != nil {
 		return false, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	return res.StatusCode == http.StatusOK, nil
 }

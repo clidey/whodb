@@ -97,7 +97,7 @@ func (p *MongoDBPlugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 		}).Error("Failed to execute MongoDB find query")
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	var rowsResult []bson.M
 	if err = cursor.All(ctx, &rowsResult); err != nil {
@@ -187,7 +187,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	fieldTypes := make(map[string]string)
 	for cursor.Next(ctx) {
@@ -218,7 +218,7 @@ func (p *MongoDBPlugin) GetColumnsForTable(config *engine.PluginConfig, schema s
 		}).Error("Failed to list MongoDB collections for FK detection")
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	var collections []string
 	for cursor.Next(ctx) {

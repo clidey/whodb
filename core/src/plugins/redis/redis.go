@@ -41,7 +41,7 @@ func (p *RedisPlugin) IsAvailable(ctx context.Context, config *engine.PluginConf
 		log.WithError(err).Error("Failed to connect to Redis for availability check")
 		return false
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	status := client.Ping(ctx)
 	return status.Err() == nil
 }
@@ -76,7 +76,7 @@ func (p *RedisPlugin) GetStorageUnits(config *engine.PluginConfig, schema string
 		log.WithError(err).Error("Failed to connect to Redis for storage units retrieval")
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	var keys []string
 	var cursor uint64
@@ -218,7 +218,7 @@ func (p *RedisPlugin) StorageUnitExists(config *engine.PluginConfig, schema stri
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	exists, err := client.Exists(ctx, storageUnit).Result()
 	if err != nil {
@@ -240,7 +240,7 @@ func (p *RedisPlugin) GetRows(
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for rows retrieval")
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	var result *engine.GetRowsResult
 
@@ -350,7 +350,7 @@ func (p *RedisPlugin) GetRowCount(config *engine.PluginConfig, schema, storageUn
 	if err != nil {
 		return 0, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	keyType, err := client.Type(ctx, storageUnit).Result()
 	if err != nil {
@@ -397,7 +397,7 @@ func (p *RedisPlugin) GetColumnsForTable(config *engine.PluginConfig, schema str
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Redis for columns retrieval")
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	keyType, err := client.Type(ctx, storageUnit).Result()
 	if err != nil {

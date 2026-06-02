@@ -54,6 +54,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 				}
 				gorm_plugin.EnsureConstraintEntry(constraints, columnName)["primary"] = true
 			}
+			if err := primaryRows.Err(); err != nil {
+				return false, err
+			}
 		}
 
 		// Get nullability using GORM's query builder
@@ -64,7 +67,7 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var columnName, isNullable string
@@ -73,6 +76,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 			}
 
 			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = strings.EqualFold(isNullable, "YES")
+		}
+		if err := rows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get unique single-column indexes using GORM's query builder
@@ -96,6 +102,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 
 			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 		}
+		if err := uniqueRows.Err(); err != nil {
+			return false, err
+		}
 
 		// Get CHECK constraints using GORM's query builder
 		checkRows, err := db.Table("pg_constraint").
@@ -113,6 +122,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 
 				// Parse the CHECK clause to extract column and condition
 				p.parseCheckConstraint(checkClause, constraints)
+			}
+			if err := checkRows.Err(); err != nil {
+				return false, err
 			}
 		}
 		// Ignore error if query fails
@@ -137,6 +149,9 @@ func (p *PostgresPlugin) GetColumnConstraints(config *engine.PluginConfig, schem
 					continue
 				}
 				enumValues[columnName] = append(enumValues[columnName], enumLabel)
+			}
+			if err := enumRows.Err(); err != nil {
+				return false, err
 			}
 
 			// Add enum values to constraints

@@ -95,7 +95,7 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableNa
 	if err != nil {
 		return nil, nil
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var primaryKeys []string
 	for rows.Next() {
@@ -104,6 +104,9 @@ func (p *Sqlite3Plugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableNa
 			continue
 		}
 		primaryKeys = append(primaryKeys, columnName)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return primaryKeys, nil
 }

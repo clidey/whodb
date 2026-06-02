@@ -33,7 +33,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	keyType, err := client.Type(client.Context(), storageUnit).Result()
 	if err != nil {
@@ -185,7 +185,7 @@ func (p *RedisPlugin) ExportDataNDJSON(config *engine.PluginConfig, schema strin
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	keyType, err := client.Type(client.Context(), storageUnit).Result()
 	if err != nil {

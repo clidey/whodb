@@ -303,7 +303,7 @@ func (p *ClickHousePlugin) executeRawSQL(config *engine.PluginConfig, query stri
 		}
 
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
-		rows, err := db.Raw(query, params...).Rows()
+		rows, err := db.Raw(query, params...).Rows() //nolint:rowserrcheck
 		if err != nil {
 			// ClickHouse mutations (ALTER TABLE UPDATE/DELETE, INSERT, etc.) execute successfully
 			// but the driver returns "driver: bad connection" when trying to read the non-existent result set.

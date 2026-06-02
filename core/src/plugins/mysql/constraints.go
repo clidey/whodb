@@ -48,6 +48,9 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 				}
 				gorm_plugin.EnsureConstraintEntry(constraints, columnName)["primary"] = true
 			}
+			if err := primaryRows.Err(); err != nil {
+				return false, err
+			}
 		}
 
 		// Get nullability and column type (for ENUM detection) using GORM's query builder
@@ -58,7 +61,7 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var columnName, isNullable, columnType string
@@ -77,6 +80,9 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 					colConstraints["check_values"] = values
 				}
 			}
+		}
+		if err := rows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get unique single-column indexes using GORM's query builder
@@ -99,6 +105,9 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 
 			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 		}
+		if err := uniqueRows.Err(); err != nil {
+			return false, err
+		}
 
 		// Get CHECK constraints (MySQL 8.0.16+)
 		// We'll parse simple patterns like >= 0, <= 100, etc.
@@ -119,6 +128,9 @@ func (p *MySQLPlugin) GetColumnConstraints(config *engine.PluginConfig, schema s
 
 				// Parse the CHECK clause to extract column and condition
 				p.parseCheckConstraint(checkClause, constraints)
+			}
+			if err := checkRows.Err(); err != nil {
+				return false, err
 			}
 		}
 		// Ignore error if CHECK_CONSTRAINTS table doesn't exist (MySQL < 8.0.16)

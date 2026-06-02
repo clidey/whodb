@@ -39,7 +39,7 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		for rows.Next() {
 			var columnName, isNullable string
@@ -47,6 +47,9 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 				continue
 			}
 			gorm_plugin.EnsureConstraintEntry(constraints, columnName)["nullable"] = isNullable == "YES"
+		}
+		if err := rows.Err(); err != nil {
+			return false, err
 		}
 
 		// Get primary keys and unique constraints via duckdb_constraints()
@@ -71,6 +74,9 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 					gorm_plugin.EnsureConstraintEntry(constraints, columnName)["unique"] = true
 				}
 			}
+			if err := constraintRows.Err(); err != nil {
+				return false, err
+			}
 		}
 
 		// Get single-column CHECK constraints used by mock data generation.
@@ -88,6 +94,9 @@ func (p *DuckDBPlugin) GetColumnConstraints(config *engine.PluginConfig, schema 
 					continue
 				}
 				p.parseCheckConstraint(columnName, checkClause, constraints)
+			}
+			if err := checkRows.Err(); err != nil {
+				return false, err
 			}
 		}
 

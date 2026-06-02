@@ -47,7 +47,7 @@ func (p *MongoDBPlugin) GetGraph(config *engine.PluginConfig, database string) (
 		}).Error("Failed to list MongoDB collections for graph generation")
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	collections := []string{}
 	collectionTypes := make(map[string]string)

@@ -41,7 +41,7 @@ func (p *MemcachedPlugin) IsAvailable(ctx context.Context, config *engine.Plugin
 		log.WithError(err).Error("Failed to connect to Memcached for availability check")
 		return false
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	return client.Ping() == nil
 }
 
@@ -57,7 +57,7 @@ func (p *MemcachedPlugin) GetStorageUnits(config *engine.PluginConfig, schema st
 		log.WithError(err).Error("Failed to connect to Memcached for storage units retrieval")
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	entries, err := client.Metadump()
 	if err != nil {
@@ -93,7 +93,7 @@ func (p *MemcachedPlugin) StorageUnitExists(config *engine.PluginConfig, schema 
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	item, err := client.Get(storageUnit)
 	if err != nil {
@@ -115,7 +115,7 @@ func (p *MemcachedPlugin) GetRows(
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to connect to Memcached for rows retrieval")
 		return nil, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	item, err := client.Get(storageUnit)
 	if err != nil {
@@ -155,7 +155,7 @@ func (p *MemcachedPlugin) GetRowCount(config *engine.PluginConfig, schema, stora
 	if err != nil {
 		return 0, err
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	item, err := client.Get(storageUnit)
 	if err != nil {

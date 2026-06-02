@@ -91,7 +91,7 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 		log.Debug(fmt.Sprintf("No primary keys found for table %s.%s: %v", schema, tableName, err))
 		return primaryKeys, nil
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var columnName string
@@ -100,6 +100,9 @@ func (p *GormPlugin) GetPrimaryKeyColumns(db *gorm.DB, schema string, tableName 
 			continue
 		}
 		primaryKeys = append(primaryKeys, columnName)
+	}
+	if err := rows.Err(); err != nil {
+		log.WithError(err).Error(fmt.Sprintf("Error iterating primary key rows for table %s.%s", schema, tableName))
 	}
 
 	// It's ok if there are no primary keys - return empty array
