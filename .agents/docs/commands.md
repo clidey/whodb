@@ -9,8 +9,8 @@ cd core && go run ./cmd/whodb
 # Build CE binary
 cd core && go build -o whodb ./cmd/whodb
 
-# Lint
-./lint.sh
+# Lint core backend
+cd core && ./lint.sh
 
 # Run tests (see testing.md for full guide)
 cd core && go test ./...
@@ -40,6 +40,9 @@ cd frontend && pnpm e2e:db postgres      # Single database
 ```bash
 # Build CLI
 cd cli && go build -o whodb-cli .
+
+# Lint CLI only
+cd cli && make lint
 
 # Run interactive mode
 cd cli && go run .

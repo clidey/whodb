@@ -12,6 +12,9 @@ Run this checklist before marking work complete or creating a PR.
 # Backend (if Go files changed)
 cd core && ./lint.sh
 
+# CLI (if cli/ Go files changed)
+cd cli && make lint
+
 # Frontend (if TS/TSX files changed)
 cd frontend && pnpm lint
 ```

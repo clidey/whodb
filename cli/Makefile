@@ -85,7 +85,7 @@ dev:
 
 lint:
 	@echo "Running linters..."
-	@golangci-lint run ./...
+	@golangci-lint run --config .golangci.yml ./...
 
 docker-build:
 	@echo "Building Docker image..."

@@ -1,0 +1,12 @@
+version: "2"
+
+run:
+  go: "1.26.1"
+
+linters:
+  enable:
+    - govet
+
+formatters:
+  enable:
+    - gofmt
