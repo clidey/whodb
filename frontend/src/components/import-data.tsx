@@ -755,7 +755,7 @@ export const ImportData: FC<ImportDataProps> = ({
           </Button>
           {mode === "data" ? (
             <Button
-              onClick={handleImportData}
+              onClick={() => { void handleImportData(); }}
               disabled={
                 loadingImport ||
                 loadingPreview ||
@@ -769,7 +769,7 @@ export const ImportData: FC<ImportDataProps> = ({
               {loadingImport ? t("importing") : t("importAction")}
             </Button>
           ) : (
-            <Button onClick={handleImportSQL} disabled={loadingSQL || !sqlConfirmed} data-testid="import-submit-button">
+            <Button onClick={() => { void handleImportSQL(); }} disabled={loadingSQL || !sqlConfirmed} data-testid="import-submit-button">
               {loadingSQL ? t("importing") : t("importAction")}
             </Button>
           )}

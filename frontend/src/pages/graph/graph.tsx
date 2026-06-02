@@ -216,7 +216,7 @@ export const GraphPage: FC = () => {
         prevProfileRef.current = currentProfileId;
         prevDatabaseRef.current = currentDatabase;
         if ((profileChanged || databaseChanged) && !shouldSkipGraph) {
-            refetchGraph();
+            void refetchGraph();
         }
     }, [currentProfileId, currentDatabase, shouldSkipGraph, refetchGraph]);
 
@@ -477,7 +477,7 @@ export const GraphPage: FC = () => {
                             icon={<RectangleGroupIcon className="w-4 h-4" />}
                             title={t('noNodesTitle')}
                             description={t('noNodesDescription', { storageUnit: storageUnitLabel.toLowerCase() })}>
-                            <Button onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true")}>
+                            <Button onClick={() => { void navigate(InternalRoutes.Dashboard.StorageUnit.path + "?create=true"); }}>
                                 {t('createButton', { storageUnit: singularStorageUnitLabel })}
                             </Button>
                         </EmptyState>

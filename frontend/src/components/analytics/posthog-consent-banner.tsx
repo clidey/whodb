@@ -75,10 +75,10 @@ export const PosthogConsentBanner = () => {
                         </p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={handleDecline}>
+                        <Button variant="ghost" size="sm" onClick={() => { void handleDecline(); }}>
                             {t('decline')}
                         </Button>
-                        <Button size="sm" onClick={handleAllow}>
+                        <Button size="sm" onClick={() => { void handleAllow(); }}>
                             {t('accept')}
                         </Button>
                     </div>

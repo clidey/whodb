@@ -131,13 +131,13 @@ const StorageUnitCard: FC<{
 
     const handleNavigateToObject = useCallback(() => {
         if (canBrowse) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: nextBrowserState(trail, unit),
             });
             return;
         }
 
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
                 parentRef: buildSourceParentObjectRef(item, unit.Ref),
@@ -378,7 +378,7 @@ export const StorageUnitPage: FC = () => {
 
     useEffect(() => {
         if (currentProfileId) {
-            refetch();
+            void refetch();
         }
     }, [currentProfileId, currentDatabase, parentRefKey, refetch]);
 
@@ -485,13 +485,13 @@ export const StorageUnitPage: FC = () => {
 
     const handleOpenUnit = useCallback((unit: SourceBrowserObject) => {
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: nextBrowserState(trail, unit),
             });
             return;
         }
 
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
                 parentRef: buildSourceParentObjectRef(item, unit.Ref),
@@ -542,7 +542,7 @@ export const StorageUnitPage: FC = () => {
                     <Button
                         variant="secondary"
                         className="mr-2"
-                        onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path, { state: previousBrowserState })}
+                        onClick={() => { void navigate(InternalRoutes.Dashboard.StorageUnit.path, { state: previousBrowserState }); }}
                     >
                         {tCommon('back')}
                     </Button>
@@ -552,7 +552,7 @@ export const StorageUnitPage: FC = () => {
             <div className="flex items-center gap-2">
                 {
                     supportsScratchpad &&
-                    <Button onClick={() => navigate(InternalRoutes.RawExecute.path)} data-testid="scratchpad-button" variant="secondary">
+                    <Button onClick={() => { void navigate(InternalRoutes.RawExecute.path); }} data-testid="scratchpad-button" variant="secondary">
                         <CommandLineIcon className="w-4 h-4" /> {t('scratchpad')}
                     </Button>
                 }
@@ -586,7 +586,7 @@ export const StorageUnitPage: FC = () => {
                     referenceColumnsByName={referenceColumnsByName}
                     referenceObjects={referenceStorageUnits.map(unit => ({ name: unit.Name }))}
                     singularStorageUnitLabel={singularStorageUnitLabel}
-                    onCreated={refetch}
+                    onCreated={() => { void refetch(); }}
                     onErrorChange={setError}
                     onClose={() => { setCreate(false); }}
                 />
@@ -737,7 +737,7 @@ export const StorageUnitGraphCard: FC<IGraphCardProps<StorageUnitGraphCardData>>
         if (data == null) {
             return;
         }
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit: data,
             }

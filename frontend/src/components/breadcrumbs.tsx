@@ -57,9 +57,9 @@ export const Breadcrumb: FC<IBreadcrumbProps> = ({ routes, active }) => {
                 <BreadcrumbLink
                   asChild
                   className="cursor-pointer"
-                  onClick={() => navigate(route.path)}
+                  onClick={() => { void navigate(route.path); }}
                 >
-                  <div className="flex items-center gap-xs" onClick={() => navigate(InternalRoutes.Dashboard.StorageUnit.path)}>
+                  <div className="flex items-center gap-xs" onClick={() => { void navigate(InternalRoutes.Dashboard.StorageUnit.path); }}>
                     {i === 0 && (
                         <HomeIcon className="w-4 h-4"/>
                     )}

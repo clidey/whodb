@@ -98,7 +98,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 icon: <ChatBubbleLeftRightIcon className="w-4 h-4" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
-                    navigate(InternalRoutes.Chat.path);
+                    void navigate(InternalRoutes.Chat.path);
                     onOpenChange(false);
                 },
             });
@@ -111,7 +111,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
             icon: <RectangleGroupIcon className="w-4 h-4" />,
             shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
             onSelect: () => {
-                navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                void navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 onOpenChange(false);
             },
         });
@@ -124,7 +124,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 icon: <ShareIcon className="w-4 h-4" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
-                    navigate(InternalRoutes.Graph.path);
+                    void navigate(InternalRoutes.Graph.path);
                     onOpenChange(false);
                 },
             });
@@ -138,7 +138,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 icon: <CommandLineIcon className="w-4 h-4" />,
                 shortcut: resolveShortcut(navDefs[shortcutIndex]).displayKeys,
                 onSelect: () => {
-                    navigate(InternalRoutes.RawExecute.path);
+                    void navigate(InternalRoutes.RawExecute.path);
                     onOpenChange(false);
                 },
             });
@@ -195,7 +195,7 @@ const CommandPalette: FC<CommandPaletteProps> = ({open, onOpenChange}) => {
                 label: t('disconnect'),
                 icon: <ArrowLeftStartOnRectangleIcon className="w-4 h-4" />,
                 onSelect: () => {
-                    navigate(InternalRoutes.Logout.path);
+                    void navigate(InternalRoutes.Logout.path);
                     onOpenChange(false);
                 },
             });

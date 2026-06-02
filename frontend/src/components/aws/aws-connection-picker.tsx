@@ -236,7 +236,7 @@ export const AwsConnectionPicker: FC<AwsConnectionPickerProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleRefresh}
+                            onClick={() => { void handleRefresh(); }}
                             disabled={loading}
                             aria-label={t('refresh')}
                         >

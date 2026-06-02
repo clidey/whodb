@@ -322,9 +322,9 @@ export const Sidebar: FC = () => {
         }
         if (!current?.Id) return;
         if (pathname !== InternalRoutes.Graph.path && pathname !== InternalRoutes.Dashboard.StorageUnit.path) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
-        handleProfileChange(current.Id, value);
+        void handleProfileChange(current.Id, value);
     }, [current, handleProfileChange, navigate, pathname]);
 
     // Schema select logic
@@ -343,12 +343,12 @@ export const Sidebar: FC = () => {
             return;
         }
         if (pathname === InternalRoutes.Dashboard.StorageUnit.path) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 replace: true,
                 state: {},
             });
         } else if (pathname !== InternalRoutes.Graph.path) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
         dispatch(DatabaseActions.setSchema(value));
     }, [dispatch, navigate, pathname]);
@@ -392,7 +392,7 @@ export const Sidebar: FC = () => {
         if (!current) return;
         const remainingProfiles = profiles.filter(p => p.Id !== current.Id);
         if (remainingProfiles.length === 0) {
-            navigate(InternalRoutes.Logout.path);
+            void navigate(InternalRoutes.Logout.path);
             return;
         }
         setLogoutProfileId(current.Id);
@@ -401,7 +401,7 @@ export const Sidebar: FC = () => {
 
     // Logout all profiles
     const handleLogoutAll = useCallback(() => {
-        navigate(InternalRoutes.Logout.path);
+        void navigate(InternalRoutes.Logout.path);
     }, [navigate]);
 
     // Profile switch dialog handlers
@@ -474,12 +474,12 @@ export const Sidebar: FC = () => {
         }
         if (!currentId) return;
         if (supportsDatabaseSwitching && currentType) {
-            getDatabases({ sourceType: currentType });
+            void getDatabases({ sourceType: currentType });
         }
         if (supportsSchema) {
-            getSchemas();
+            void getSchemas();
         }
-        refetchSslStatus().then(({ data }) => {
+        void refetchSslStatus().then(({ data }) => {
             if (data?.SSLStatus) {
                 dispatch(AuthActions.setSSLStatus(data.SSLStatus));
             }
@@ -537,7 +537,7 @@ export const Sidebar: FC = () => {
                                                 label={t('profile')}
                                                 options={profileOptions}
                                                 value={currentProfileOption?.value}
-                                                onChange={handleProfileChange}
+                                                onChange={(v) => { void handleProfileChange(v); }}
                                                 placeholder={t('selectProfile')}
                                                 searchPlaceholder={t('searchProfile')}
                                                 onlyIcon={false}
@@ -592,7 +592,7 @@ export const Sidebar: FC = () => {
                                                 label={t('profile')}
                                                 options={profileOptions}
                                                 value={currentProfileOption?.value}
-                                                onChange={handleProfileChange}
+                                                onChange={(v) => { void handleProfileChange(v); }}
                                                 placeholder={t('selectProfile')}
                                                 searchPlaceholder={t('searchProfile')}
                                                 onlyIcon={!open}
@@ -707,7 +707,7 @@ export const Sidebar: FC = () => {
                                         label={t('profile')}
                                         options={profileOptions}
                                         value={currentProfileOption?.value}
-                                        onChange={handleProfileChange}
+                                        onChange={(v) => { void handleProfileChange(v); }}
                                         placeholder={t('selectProfile')}
                                         searchPlaceholder={t('searchProfile')}
                                         onlyIcon={!open}
@@ -931,7 +931,7 @@ export const Sidebar: FC = () => {
                                 <button
                                     key={profile.Id}
                                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-left w-full"
-                                    onClick={() => handleDialogProfileSwitch(profile)}
+                                    onClick={() => { void handleDialogProfileSwitch(profile); }}
                                 >
                                     <DatabaseIconWithBadge
                                         icon={getProfileIcon(profile)}

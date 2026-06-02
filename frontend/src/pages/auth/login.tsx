@@ -365,7 +365,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate(storageUnitPath);
+                    void navigate(storageUnitPath);
                 }
                 toast.success(t('loginSuccessful'));
             } catch (error) {
@@ -437,7 +437,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate(storageUnitPath);
+                    void navigate(storageUnitPath);
                 }
                 toast.success(t('loginSuccessful'));
             } catch (error) {
@@ -484,7 +484,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate(InternalRoutes.Dashboard.StorageUnit.path);
+                    void navigate(InternalRoutes.Dashboard.StorageUnit.path);
                 }
                 toast.success(t('welcomeToWhodb', { appName }));
             } catch (error) {
@@ -512,7 +512,7 @@ export const LoginForm: FC<LoginFormProps> = ({
     // setFormResetKey causes a re-mount that resets the useLazyQuery hook state.
     useEffect(() => {
         if (supportsDatabaseFieldOptions(databaseType)) {
-            getDatabases({ variables: { sourceType: databaseType.id } });
+            void getDatabases({ variables: { sourceType: databaseType.id } });
         }
     }, [databaseType, getDatabases, formResetKey]);
 
@@ -865,7 +865,7 @@ export const LoginForm: FC<LoginFormProps> = ({
                 translate={t}
                 showPasswordToggle={!isEmbedded}
                 isDesktop={isDesktop}
-                onBrowseDatabaseFile={handleBrowseDatabaseFile}
+                onBrowseDatabaseFile={() => { void handleBrowseDatabaseFile(); }}
                 databaseOptions={buildDatabaseFieldOptions(foundDatabases?.SourceFieldOptions)}
                 databaseOptionsLoading={databasesLoading}
                 hasError={error != null}

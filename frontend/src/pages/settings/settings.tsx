@@ -87,11 +87,11 @@ export const SettingsPage: FC = () => {
 
     const handleMetricsToggle = useCallback((enabled: boolean) => {
         if (enabled) {
-            optInUser();
+            void optInUser();
             void trackFrontendEvent('ui.telemetry_toggled', {enabled: true});
         } else {
             void trackFrontendEvent('ui.telemetry_toggled', {enabled: false});
-            optOutUser();
+            void optOutUser();
         }
         dispatch(SettingsActions.setMetricsEnabled(enabled));
     }, [dispatch]);

@@ -69,7 +69,7 @@ export const Tour: FC<TourProps> = ({ config, isActive, onComplete, onSkip }) =>
             const needsNavigation = step.path && location.pathname !== step.path;
 
             if (needsNavigation && step.path) {
-                navigate(step.path);
+                void navigate(step.path);
             }
 
             const delay = needsNavigation ? 1000 : 300;

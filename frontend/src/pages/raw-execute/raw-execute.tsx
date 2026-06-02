@@ -598,7 +598,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                                 {t('clear')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
-                                copyToClipboard(code).then(success => {
+                                void copyToClipboard(code).then(success => {
                                     if (success) toast.success(t('copyCode'));
                                 });
                             }}>

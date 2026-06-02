@@ -227,7 +227,7 @@ export const AzureConnectionPicker: FC<AzureConnectionPickerProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleRefresh}
+                            onClick={() => { void handleRefresh(); }}
                             disabled={loading}
                             aria-label={t('refresh')}
                         >

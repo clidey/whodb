@@ -162,7 +162,7 @@ export const Export: FC<IExportProps> = ({
                             >
                                 {t('cancel')}
                             </Button>
-                            <Button className="flex-1" onClick={handleExportConfirm} data-testid="export-confirm-button">
+                            <Button className="flex-1" onClick={() => { void handleExportConfirm(); }} data-testid="export-confirm-button">
                                 {t('export')}
                             </Button>
                         </div>

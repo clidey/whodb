@@ -235,7 +235,7 @@ export const GcpConnectionPicker: FC<GcpConnectionPickerProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleRefresh}
+                            onClick={() => { void handleRefresh(); }}
                             disabled={loading}
                             aria-label={t('refresh')}
                         >

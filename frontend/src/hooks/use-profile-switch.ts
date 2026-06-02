@@ -99,7 +99,7 @@ export const useProfileSwitch = (options?: UseProfileSwitchOptions) => {
             }
             dispatch(DatabaseActions.setSchema(""));
             dispatch(AuthActions.switch({ id: profile.Id }));
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: {},
             });
             options?.onSuccess?.();

@@ -214,7 +214,7 @@ export const GcpProvidersSection: FC = () => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleRefreshProvider(provider.Id)}
+                                            onClick={() => { void handleRefreshProvider(provider.Id); }}
                                             disabled={isLoading || provider.Status === CloudProviderStatus.Discovering}
                                             aria-label={t('refreshResources')}
                                             data-testid={`refresh-${provider.Id}`}
@@ -242,7 +242,7 @@ export const GcpProvidersSection: FC = () => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleRemoveProvider(provider.Id, provider.Name)}
+                                            onClick={() => { void handleRemoveProvider(provider.Id, provider.Name); }}
                                             disabled={isLoading}
                                             aria-label={t('remove')}
                                             data-testid={`remove-${provider.Id}`}

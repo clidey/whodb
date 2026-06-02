@@ -223,7 +223,7 @@ export const CreateSourceObjectCard: FC<CreateSourceObjectCardProps> = ({
             return;
         }
         onErrorChange(undefined);
-        createSourceObject({
+        void createSourceObject({
             variables: {
                 parent: parentRef,
                 definition: {

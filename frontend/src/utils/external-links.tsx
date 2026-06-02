@@ -91,7 +91,7 @@ export const ExternalLink: React.FC<ExternalLinkProps> = ({
   ...props
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    openExternalLink(href, e);
+    void openExternalLink(href, e);
     if (onClick) {
       onClick(e);
     }

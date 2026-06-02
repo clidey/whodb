@@ -54,8 +54,8 @@
         "typescript/no-unsafe-argument": "warn",
         "typescript/restrict-template-expressions": "error",
         "typescript/no-confusing-void-expression": "error",
-        "typescript/no-floating-promises": "warn",
-        "typescript/no-misused-promises": "warn",
+        "typescript/no-floating-promises": "error",
+        "typescript/no-misused-promises": "error",
         "typescript/no-unused-vars": ["error", {
           "argsIgnorePattern": "^_",
           "varsIgnorePattern": "^_",

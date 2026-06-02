@@ -88,7 +88,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
     const currentProfileId = current?.Id;
     useEffect(() => {
         if (currentProfileId) {
-            refetch();
+            void refetch();
         }
     }, [currentProfileId, currentDatabase, refetch]);
 
@@ -145,7 +145,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
             return;
         }
         if (unit.Actions.includes(SourceAction.Browse) && unit.HasChildren) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path, {
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path, {
                 state: {
                     parent: unit,
                     trail: [...trail, unit],
@@ -153,7 +153,7 @@ export const SchemaViewer: FC<SchemaViewerProps> = ({ parentRef: explicitParentR
             });
             return;
         }
-        navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
+        void navigate(InternalRoutes.Dashboard.ExploreStorageUnit.path, {
             state: {
                 unit,
                 parentRef,

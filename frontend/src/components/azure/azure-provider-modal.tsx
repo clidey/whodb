@@ -484,7 +484,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                 <DialogFooter className="flex gap-2">
                     <Button
                         variant="outline"
-                        onClick={handleTest}
+                        onClick={() => { void handleTest(); }}
                         disabled={loading}
                         data-testid="test-connection"
                     >
@@ -498,7 +498,7 @@ export const AzureProviderModal: FC<AzureProviderModalProps> = ({
                         {t('cancel')}
                     </Button>
                     <Button
-                        onClick={handleSubmit}
+                        onClick={() => { void handleSubmit(); }}
                         disabled={loading}
                         data-testid="submit-provider"
                     >

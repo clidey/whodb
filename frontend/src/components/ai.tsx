@@ -704,7 +704,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         <AlertDialogAction asChild>
                             <Button
                                 data-testid="chat-delete-provider-confirm"
-                                onClick={() => handleDeleteProvider(modelType?.id)}
+                                onClick={() => { void handleDeleteProvider(modelType?.id); }}
                                 variant="destructive"
                             >
                                 {t('delete')}

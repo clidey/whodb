@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     componentDidCatch(error: Error, info: ErrorInfo) {
         console.error("Uncaught error in component tree:", error, info.componentStack);
-        captureException(error, {componentStack: info.componentStack ?? ""});
+        void captureException(error, {componentStack: info.componentStack ?? ""});
     }
 
     private handleGoHome = () => {
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                         If the issue continues, please{" "}
                         <a
                             href="https://github.com/clidey/whodb/issues"
-                            onClick={(e) => openExternalLink("https://github.com/clidey/whodb/issues", e)}
+                            onClick={(e) => { void openExternalLink("https://github.com/clidey/whodb/issues", e); }}
                             className="text-primary underline underline-offset-2"
                         >
                             get in touch.

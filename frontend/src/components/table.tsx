@@ -610,7 +610,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         const timeout = window.setTimeout(() => {
             const cell = paginatedRows[rowIndex][cellIndex];
             if (cell !== undefined && cell !== null) {
-                copyToClipboard(String(cell)).then(success => {
+                void copyToClipboard(String(cell)).then(success => {
                     if (success) toast.success(t('copiedToClipboard'));
                 });
             }
@@ -634,7 +634,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         const row = paginatedRows[rowIndex];
         if (row && Array.isArray(row)) {
             const rowString = row.map(cell => cell ?? "").join("\t");
-            copyToClipboard(rowString).then(success => {
+            void copyToClipboard(rowString).then(success => {
                 if (success) toast.success(t('rowCopiedToClipboard'));
             });
         }
@@ -733,7 +733,7 @@ export const StorageUnitTable: FC<TableProps> = ({
         if (showMockDataSheet && objectRef) {
             const rowCount = parseInt(mockDataRowCount) || 100;
             if (rowCount > 0 && rowCount <= maxRowCount) {
-                analyzeDependencies({
+                void analyzeDependencies({
                     variables: {
                         ref: objectRef,
                         rowCount,
@@ -1230,7 +1230,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         if (contextMenuCellIdx == null) return;
                         const cell = paginatedRows[index]?.[contextMenuCellIdx];
                         if (cell !== undefined && cell !== null) {
-                            copyToClipboard(String(cell)).then(success => {
+                            void copyToClipboard(String(cell)).then(success => {
                                 if (success) toast.success(t('copiedCellToClipboard'));
                             });
                         }
@@ -1261,7 +1261,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         const row = paginatedRows[index];
                         if (row && Array.isArray(row)) {
                             const rowString = row.map(cell => cell ?? "").join("\t");
-                            copyToClipboard(rowString).then(success => {
+                            void copyToClipboard(rowString).then(success => {
                                 if (success) toast.success(t('rowCopiedToClipboard'));
                             });
                         }
@@ -1725,11 +1725,11 @@ export const StorageUnitTable: FC<TableProps> = ({
                             {t('cancel')}
                         </Button>
                         {!showMockDataConfirmation ? (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
+                            <Button className="flex-1" onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} data-testid="mock-data-generate-button">
                                 {t('generate')}
                             </Button>
                         ) : (
-                            <Button className="flex-1" onClick={handleMockDataGenerate} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
+                            <Button className="flex-1" onClick={() => { void handleMockDataGenerate(); }} disabled={generatingMockData || !mockDataRowCount || parseInt(mockDataRowCount) < 1} variant="destructive" data-testid="mock-data-overwrite-button">
                                 {t('yesOverwrite')}
                             </Button>
                         )}
@@ -1883,7 +1883,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={handleCancelDelete}>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction asChild>
-                            <Button variant="destructive" onClick={handleConfirmDelete} data-testid="confirm-delete-row-button">
+                            <Button variant="destructive" onClick={() => { void handleConfirmDelete(); }} data-testid="confirm-delete-row-button">
                                 {t('deleteRow', { count: pendingDeleteIndexes?.length ?? 1 })}
                             </Button>
                         </AlertDialogAction>

@@ -57,7 +57,7 @@ export const ContactUsPage: FC = () => {
                                 variant="secondary"
                                 className="w-fit gap-2"
                                 data-testid="github-issue-button"
-                                onClick={(e) => openExternalLink("https://github.com/clidey/whodb/issues", e)}
+                                onClick={(e) => { void openExternalLink("https://github.com/clidey/whodb/issues", e); }}
                             >
                                 <GlobeAltIcon className="w-5 h-5"/>
                                 {t('submitIssue')}

@@ -371,7 +371,7 @@ export const ExploreStorageUnit: FC = () => {
             ? { Type: WhereConditionType.And, And: { Children: [currentWhereCondition, searchCondition] } }
             : searchCondition ?? currentWhereCondition;
 
-        getStorageUnitRows({
+        void getStorageUnitRows({
             variables: {
                 ref,
                 where: mergedCondition,
@@ -434,7 +434,8 @@ export const ExploreStorageUnit: FC = () => {
 
                 if (changedColumns.length === 0) {
                     // Nothing changed, skip
-                    return Promise.resolve();
+                    resolve();
+                    return;
                 }
 
                 // Build values for all columns
@@ -448,7 +449,7 @@ export const ExploreStorageUnit: FC = () => {
                     return;
                 }
 
-                updateStorageUnit({
+                void updateStorageUnit({
                     variables: {
                         ref: currentUnitRef,
                         values,
@@ -565,7 +566,7 @@ export const ExploreStorageUnit: FC = () => {
 
     useEffect(() => {
         if (unit == null && !currentTableName) {
-            navigate(InternalRoutes.Dashboard.StorageUnit.path);
+            void navigate(InternalRoutes.Dashboard.StorageUnit.path);
         }
     }, [navigate, unit, currentTableName]);
 
@@ -690,7 +691,7 @@ export const ExploreStorageUnit: FC = () => {
             setAddRowError(t('fillAtLeastOneValue'));
             return;
         }
-        addRow({
+        void addRow({
             variables: {
                 ref: currentUnitRef ?? buildSourceObjectRef(item, current, schema, unit?.Name ?? unitName ?? currentTableName ?? ""),
                 values,
@@ -713,7 +714,7 @@ export const ExploreStorageUnit: FC = () => {
     const [pendingScratchpadQuery, setPendingScratchpadQuery] = useState<string | null>(null);
 
     const doScratchpadExecute = useCallback((query: string) => {
-        rawExecute({ variables: { query } });
+        void rawExecute({ variables: { query } });
     }, [rawExecute]);
 
     const handleScratchpad = useCallback((specificCode?: string) => {

@@ -155,11 +155,11 @@ export const DatabaseDownOverlay = () => {
 
         // Hide the dialog immediately when switching starts
         setIsSwitching(true);
-        switchProfile(profile);
+        void switchProfile(profile);
     };
 
     const handleLogout = () => {
-        navigate(InternalRoutes.Logout.path);
+        void navigate(InternalRoutes.Logout.path);
     };
 
     return (

@@ -117,7 +117,7 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = useCallback(() => {
-        copyToClipboard(children).then(success => {
+        void copyToClipboard(children).then(success => {
             if (success) {
                 setCopied(true);
                 setTimeout(() =>{  setCopied(false); }, 2000);
@@ -188,19 +188,19 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
             const pageName = newPageName.trim() || `Page ${pages.length + 1}`;
             dispatch(ScratchpadActions.addPage({ name: pageName, initialQuery: text }));
             // Navigate to scratchpad - the new page will be created with the query
-            navigate(InternalRoutes.RawExecute.path, {
+            void navigate(InternalRoutes.RawExecute.path, {
                 state: {
                     targetPage: "new"
                 }
             });
         } else {
             // Add to existing page and set it as active
-            dispatch(ScratchpadActions.addCellToPageAndActivate({ 
-                pageId: selectedPage, 
-                initialQuery: text 
+            dispatch(ScratchpadActions.addCellToPageAndActivate({
+                pageId: selectedPage,
+                initialQuery: text
             }));
             // Navigate to scratchpad and highlight the target page
-            navigate(InternalRoutes.RawExecute.path, {
+            void navigate(InternalRoutes.RawExecute.path, {
                 state: {
                     targetPage: selectedPage
                 }
@@ -614,7 +614,7 @@ export const ChatPage: FC = () => {
 
                                 // Try to generate title if session still has default name
                                 if (shouldTryTitle) {
-                                    generateChatTitle(sanitizedQuery);
+                                    void generateChatTitle(sanitizedQuery);
                                 }
                                 streamDone = true;
                             } else if (currentEventType === 'error') {
@@ -634,7 +634,7 @@ export const ChatPage: FC = () => {
 
                 // Stop reading after done/error — avoids WebKit throwing on post-EOF read in Wails
                 if (streamDone) {
-                    reader.cancel();
+                    void reader.cancel();
                     break;
                 }
             }
@@ -700,7 +700,7 @@ export const ChatPage: FC = () => {
     const handleKeyUp: KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
         if (e.key === "Enter") {
             if (query.trim().length > 0 && !disableChat) {
-                handleSubmitQuery();
+                void handleSubmitQuery();
             }
             return;
         }
@@ -1037,7 +1037,7 @@ export const ChatPage: FC = () => {
                                                                 </div>
                                                                 <button
                                                                     onClick={() => {
-                                                                        copyToClipboard(chat.Text).then(success => {
+                                                                        void copyToClipboard(chat.Text).then(success => {
                                                                             if (success) {
                                                                                 setCopiedSqlId(chat.id ?? null);
                                                                                 setTimeout(() =>{  setCopiedSqlId(null); }, 2000);
@@ -1065,7 +1065,7 @@ export const ChatPage: FC = () => {
                                                                 {t('no') || 'No'}
                                                             </Button>
                                                             <Button
-                                                                onClick={() => { if (chat.id) handleConfirmSQL(chat.id, chat.Text, chat.Type); }}
+                                                                onClick={() => { if (chat.id) void handleConfirmSQL(chat.id, chat.Text, chat.Type); }}
                                                                 disabled={isExecuting || !supportsScripts}
                                                                 size="sm"
                                                             >
@@ -1101,7 +1101,7 @@ export const ChatPage: FC = () => {
                         value={query}
                         onChange={e =>{  setQuery(e.target.value); }}
                         placeholder={t('placeholder')}
-                        onSubmit={handleSubmitQuery}
+                        onSubmit={() => { void handleSubmitQuery(); }}
                         disabled={disableAll}
                         onKeyDown={handleKeyDown}
                         onKeyUp={handleKeyUp}
@@ -1109,7 +1109,7 @@ export const ChatPage: FC = () => {
                         data-testid="chat-input"
                     />
                     <Tip className="w-fit">
-                        <Button tabIndex={0} onClick={loading ? undefined : handleSubmitQuery} className={cn("rounded-full", {
+                        <Button tabIndex={0} onClick={loading ? undefined : () => { void handleSubmitQuery(); }} className={cn("rounded-full", {
                             "opacity-50": loading,
                         })} disabled={disableChat} variant={disableChat ? "secondary" : undefined} data-testid="icon-button" aria-label={t('sendMessage')}>
                             <ArrowUpCircleIcon className="w-8 h-8" aria-hidden="true" />

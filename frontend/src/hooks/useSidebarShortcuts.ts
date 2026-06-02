@@ -67,7 +67,7 @@ export const useSidebarShortcuts = () => {
             if (matchesShortcut(event, resolveShortcut(navDefs[i]))) {
                 if (routes[i]) {
                     event.preventDefault();
-                    navigate(routes[i]);
+                    void navigate(routes[i]);
                 }
                 return;
             }
