@@ -212,7 +212,7 @@ export const useAI = () => {
             isPlatformMode && overrides ? overrides.loadProviders() : Promise.resolve([]),
         ]);
 
-        const aiProviders = envResult.data?.AIProviders || [];
+        const aiProviders = envResult.data?.AIProviders ?? [];
 
         const initialModelTypes = userAddedProviders.filter(model =>
             model.token != null && model.token !== ""
@@ -257,7 +257,7 @@ export const useAI = () => {
             : null;
 
         if (!selectedProvider && shouldRestoreSelection) {
-            selectedProvider = finalModelTypes.find(m => m.id === persistedProviderId) || null;
+            selectedProvider = finalModelTypes.find(m => m.id === persistedProviderId) ?? null;
             if (selectedProvider) {
                 dispatch(AIModelsActions.setCurrentModelType({ id: selectedProvider.id }));
             }
@@ -327,7 +327,7 @@ export const useAI = () => {
     const modelTypesDropdownItems = useMemo(() => {
         return modelTypes.filter(modelType => modelType?.modelType != null).map(modelType => ({
             id: modelType.id,
-            label: modelType.name || modelType.modelType,
+            label: modelType.name ?? modelType.modelType,
             icon: modelType.isGeneric
                 ? <SparklesIcon className="w-4 h-4" data-testid="generic-sparkles-icon" />
                 : (Icons.Logos as Record<string, ReactElement>)[modelType.modelType.replace("-", "")],
@@ -665,7 +665,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                             label: item.label,
                             icon: item.icon,
                         }))}
-                        value={currentModel ? currentModel : undefined}
+                        value={currentModel ?? undefined}
                         onChange={id => {
                             const item = modelDropdownItems.find(i => i.id === id);
                             if (item) handleAIModelChange(item.id);
@@ -686,7 +686,7 @@ export const AIProvider: FC<ReturnType<typeof useAI> & {
                         data-testid="chat-delete-provider"
                         variant="secondary"
                         className={cn({
-                            "hidden": disableNewChat || modelType?.isEnvironmentDefined || modelType?.isPlatformProvider,
+                            "hidden": disableNewChat ?? modelType?.isEnvironmentDefined ?? modelType?.isPlatformProvider,
                         })}
                     >
                         <TrashIcon className="w-4 h-4" /> {t('deleteProvider')}

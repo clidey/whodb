@@ -275,9 +275,9 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('field')}</Label>
                                                     <SearchSelect
-                                                        value={editingExistingFilter?.Key || ""}
+                                                        value={editingExistingFilter?.Key ?? ""}
                                                         options={fieldsDropdownItems}
-                                                        onChange={(value) => handleEditExistingFilterChange('Key', value)}
+                                                        onChange={(value) => { handleEditExistingFilterChange('Key', value); }}
                                                         buttonProps={{
                                                             "data-testid": `edit-existing-field-key-${i}`,
                                                         }}
@@ -287,9 +287,9 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('operator')}</Label>
                                                     <SearchSelect
-                                                        value={editingExistingFilter?.Operator || ""}
+                                                        value={editingExistingFilter?.Operator ?? ""}
                                                         options={validOperators}
-                                                        onChange={(value) => handleEditExistingFilterChange('Operator', value)}
+                                                        onChange={(value) => { handleEditExistingFilterChange('Operator', value); }}
                                                         buttonProps={{
                                                             "data-testid": `edit-existing-field-operator-${i}`,
                                                         }}
@@ -298,8 +298,8 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                                 <div className="flex flex-col gap-2">
                                                     <Label className="text-xs">{t('value')}</Label>
                                                     <Input
-                                                        value={editingExistingFilter?.Value || ""}
-                                                        onChange={(e) => handleEditExistingFilterChange('Value', e.target.value)}
+                                                        value={editingExistingFilter?.Value ?? ""}
+                                                        onChange={(e) => { handleEditExistingFilterChange('Value', e.target.value); }}
                                                         placeholder={t('enterFilterValue')}
                                                         data-testid={`edit-existing-field-value-${i}`}
                                                     />
@@ -412,7 +412,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     <SearchSelect
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
-                                        onChange={(value) => handleSheetFieldChange(index, 'Key', value)}
+                                        onChange={(value) =>{  handleSheetFieldChange(index, 'Key', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-key-${index}`,
                                         }}
@@ -423,7 +423,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     <SearchSelect
                                         value={filter.Operator}
                                         options={validOperators}
-                                        onChange={(value) => handleSheetFieldChange(index, 'Operator', value)}
+                                        onChange={(value) =>{  handleSheetFieldChange(index, 'Operator', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-operator-${index}`,
                                         }}
@@ -433,7 +433,7 @@ export const ExploreStorageUnitWhereConditionSheet: FC<IExploreStorageUnitWhereC
                                     <Label className="text-xs">{t('value')}</Label>
                                     <Input
                                         value={filter.Value}
-                                        onChange={(e) => handleSheetFieldChange(index, 'Value', e.target.value)}
+                                        onChange={(e) =>{  handleSheetFieldChange(index, 'Value', e.target.value); }}
                                         placeholder={t('enterFilterValue')}
                                         data-testid={`sheet-field-value-${index}`}
                                     />

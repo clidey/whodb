@@ -105,7 +105,7 @@ const markdownComponents = {
     h2: ({_node, ...props}: any) => <h2 className="text-lg font-semibold mb-2 mt-3 first:mt-0" {...props} />,
     h3: ({_node, ...props}: any) => <h3 className="text-md font-semibold mb-1 mt-2 first:mt-0" {...props} />,
     code: ({_node, children, ...props}: any) => {
-        const isInline = !String(props.className || '').includes('language-');
+        const isInline = !String(props.className ?? '').includes('language-');
         return isInline
             ? <code className="bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
             : <CodeBlock>{String(children)}</CodeBlock>;
@@ -120,7 +120,7 @@ const CodeBlock: FC<{ children: string }> = ({ children }) => {
         copyToClipboard(children).then(success => {
             if (success) {
                 setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+                setTimeout(() =>{  setCopied(false); }, 2000);
             }
         });
     }, [children]);
@@ -320,7 +320,7 @@ const TablePreview: FC<{ type: string, data: TableData, text: string, containerW
                             <label className="text-sm font-medium mb-2 block">{t('newPageLabel')}</label>
                             <Input
                                 value={newPageName}
-                                onChange={(e) => setNewPageName(e.target.value)}
+                                onChange={(e) =>{  setNewPageName(e.target.value); }}
                                 placeholder={t('newPagePlaceholder')}
                             />
                         </div>
@@ -353,7 +353,7 @@ export const ChatPage: FC = () => {
             : undefined;
     }, [sessions, activeSessionId]);
     const chats = useMemo(() => {
-        return activeSession?.messages || [];
+        return activeSession?.messages ?? [];
     }, [activeSession]);
     const autoScrollEnabled = activeSession?.autoScrollEnabled ?? true;
     const [executeConfirmedSql] = useMutation(ExecuteConfirmedSqlDocument);
@@ -495,8 +495,8 @@ export const ChatPage: FC = () => {
                 body: JSON.stringify({
                     ref: sourceScopeRef,
                     modelType: modelType.modelType,
-                    providerId: modelType.id || '',
-                    token: modelType.token || '',
+                    providerId: modelType.id ?? '',
+                    token: modelType.token ?? '',
                     model: currentModel ?? '',
                     input: {
                         Query: sanitizedQuery,
@@ -548,8 +548,8 @@ export const ChatPage: FC = () => {
                             const parsed = JSON.parse(data);
 
                             if (currentEventType === 'chunk') {
-                                const text = parsed.text || '';
-                                const chunkType = parsed.type || '';
+                                const text = parsed.text ?? '';
+                                const chunkType = parsed.type ?? '';
 
                                 // Only update message text if it's longer (ignore SQL/error chunks)
                                 if (chunkType !== 'sql' && chunkType !== 'error' && text && text.length > streamingText.length) {
@@ -582,7 +582,7 @@ export const ChatPage: FC = () => {
                                             Type: parsed.Type,
                                             Text: parsed.Text,
                                             Result: parsed.Result,
-                                            RequiresConfirmation: parsed.RequiresConfirmation || false,
+                                            RequiresConfirmation: parsed.RequiresConfirmation ?? false,
                                             id: messageId,
                                         }));
 
@@ -621,7 +621,7 @@ export const ChatPage: FC = () => {
                                 dispatch(HoudiniActions.removeChatMessage(streamingMessageId));
                                 const errorMessage = typeof parsed.error === 'string'
                                     ? parsed.error
-                                    : parsed.error?.message || parsed.message || 'Unknown error';
+                                    : parsed.error?.message ?? parsed.message ?? 'Unknown error';
                                 toast.error(t('unableToQuery') + " " + errorMessage);
                                 setLoading(false);
                                 streamDone = true;
@@ -663,8 +663,8 @@ export const ChatPage: FC = () => {
                     input: {
                         Query: userQuery,
                         ModelType: modelType.modelType,
-                        ProviderId: modelType.id || undefined,
-                        Token: modelType.token || undefined,
+                        ProviderId: modelType.id ?? undefined,
+                        Token: modelType.token ?? undefined,
                         Model: currentModel,
                         Endpoint: undefined,
                     }
@@ -780,7 +780,7 @@ export const ChatPage: FC = () => {
             });
 
             if (error || !data) {
-                toast.error(t('unableToQuery') + " " + (error?.message || t('failedToExecuteSQL')));
+                toast.error(t('unableToQuery') + " " + (error?.message ?? t('failedToExecuteSQL')));
                 setLoading(false);
                 return;
             }
@@ -912,7 +912,7 @@ export const ChatPage: FC = () => {
                             <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs dark:bg-input/30">
                                 <Checkbox
                                     checked={autoScrollEnabled}
-                                    onCheckedChange={checked => handleAutoScrollChange(checked === true)}
+                                    onCheckedChange={checked =>{  handleAutoScrollChange(checked === true); }}
                                     data-testid="chat-auto-scroll-toggle"
                                 />
                                 <span>{t('autoScroll')}</span>
@@ -942,7 +942,7 @@ export const ChatPage: FC = () => {
                                         {
                                             examples.map((example) => (
                                                 <Card key={example.description} className="flex flex-col gap-sm w-[250px] h-[120px] p-4 text-sm cursor-pointer hover:opacity-80 transition-all"
-                                                    onClick={() => handleSelectExample(example.description)}>
+                                                    onClick={() =>{  handleSelectExample(example.description); }}>
                                                     {example.icon}
                                                     {example.description}
                                                 </Card>
@@ -1022,7 +1022,7 @@ export const ChatPage: FC = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => setShowQueryForId(showQuery ? null : (chat.id ?? null))}
+                                                            onClick={() =>{  setShowQueryForId(showQuery ? null : (chat.id ?? null)); }}
                                                             className="w-fit"
                                                         >
                                                             <CodeBracketIcon className="w-4 h-4 mr-2" />
@@ -1040,7 +1040,7 @@ export const ChatPage: FC = () => {
                                                                         copyToClipboard(chat.Text).then(success => {
                                                                             if (success) {
                                                                                 setCopiedSqlId(chat.id ?? null);
-                                                                                setTimeout(() => setCopiedSqlId(null), 2000);
+                                                                                setTimeout(() =>{  setCopiedSqlId(null); }, 2000);
                                                                             }
                                                                         });
                                                                     }}
@@ -1058,14 +1058,14 @@ export const ChatPage: FC = () => {
                                                         <div className="flex gap-2">
                                                             <Button
                                                                 variant="outline"
-                                                                onClick={() => chat.id && handleCancelSQL(chat.id)}
+                                                                onClick={() => { if (chat.id) handleCancelSQL(chat.id); }}
                                                                 disabled={isExecuting}
                                                                 size="sm"
                                                             >
                                                                 {t('no') || 'No'}
                                                             </Button>
                                                             <Button
-                                                                onClick={() => chat.id && handleConfirmSQL(chat.id, chat.Text, chat.Type)}
+                                                                onClick={() => { if (chat.id) handleConfirmSQL(chat.id, chat.Text, chat.Type); }}
                                                                 disabled={isExecuting || !supportsScripts}
                                                                 size="sm"
                                                             >
@@ -1099,7 +1099,7 @@ export const ChatPage: FC = () => {
                 })}>
                     <Input
                         value={query}
-                        onChange={e => setQuery(e.target.value)}
+                        onChange={e =>{  setQuery(e.target.value); }}
                         placeholder={t('placeholder')}
                         onSubmit={handleSubmitQuery}
                         disabled={disableAll}

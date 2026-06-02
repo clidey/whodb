@@ -127,7 +127,7 @@ const PopoverCard: FC<IPopoverCardProps> = ({
                     className="min-w-[150px] w-full"
                     placeholder={t('enterFilterValue')}
                     value={currentFilter.Value}
-                    onChange={e => handleInputChange(e.target.value)}
+                    onChange={e => { handleInputChange(e.target.value); }}
                     data-testid="field-value"
                 />
             </div>
@@ -259,7 +259,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     }, [editingFilter, filters]);
 
     const handleSaveFilter = useCallback((index: number) => {
-        const updatedChildren = [...filters.And!.Children];
+        const updatedChildren = [...(filters.And?.Children ?? [])];
         updatedChildren[index] = { Type: WhereConditionType.Atomic, Atomic: { ...currentFilter } };
         const updatedFilters = {
             Type: WhereConditionType.And,
@@ -278,13 +278,11 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
     // Sheet management functions
     const handleOpenSheet = useCallback(() => {
         // Convert filters to sheet format
+        const defaultFilter = { ColumnType: "string", Key: "", Operator: "", Value: "" };
         const atomicFilters = filters.And?.Children?.map(child =>
-            child.Type === WhereConditionType.Atomic ? child.Atomic! : {
-                ColumnType: "string",
-                Key: "",
-                Operator: "",
-                Value: ""
-            }
+            child.Type === WhereConditionType.Atomic
+                ? (child.Atomic ?? defaultFilter)
+                : defaultFilter
         ) ?? [];
         setSheetFilters(atomicFilters);
         setSheetOpen(true);
@@ -413,13 +411,13 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     { "ring-2 ring-primary-500 dark:ring-primary-400": editingFilter === i }
                                 )
                             )}
-                            onClick={() => handleEdit(i)}
+                            onClick={() =>{  handleEdit(i); }}
                             data-testid="where-condition-badge"
                             variant="secondary"
                         >
                             <div className="flex items-center gap-xs h-full">
                                 {filter.Atomic?.Key} {filter.Atomic?.Operator} {filter.Atomic?.Value}
-                                <Button className="size-8 h-full" onClick={() => handleRemove(i)} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
+                                <Button className="size-8 h-full" onClick={() =>{  handleRemove(i); }} data-testid="remove-where-condition-button" variant="ghost" size="icon" aria-label={t('removeCondition')}>
                                     <XCircleIcon aria-hidden="true" />
                                 </Button>
                             </div>
@@ -480,7 +478,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                         <Button
                             className="flex-1"
                             variant="secondary"
-                            onClick={() => setSheetOpen(false)}
+                            onClick={() =>{  setSheetOpen(false); }}
                             data-testid="cancel-manage-conditions"
                         >
                             {t('cancel')}
@@ -500,7 +498,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleSheetRemoveFilter(index)}
+                                        onClick={() =>{  handleSheetRemoveFilter(index); }}
                                         data-testid={`remove-sheet-filter-${index}`}
                                         aria-label={t('removeCondition')}
                                     >
@@ -512,7 +510,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     <SearchSelect
                                         value={filter.Key}
                                         options={fieldsDropdownItems}
-                                        onChange={(value) => handleSheetFieldChange(index, 'Key', value)}
+                                        onChange={(value) =>{  handleSheetFieldChange(index, 'Key', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-key-${index}`,
                                         }}
@@ -523,7 +521,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     <SearchSelect
                                         value={filter.Operator}
                                         options={validOperators}
-                                        onChange={(value) => handleSheetFieldChange(index, 'Operator', value)}
+                                        onChange={(value) =>{  handleSheetFieldChange(index, 'Operator', value); }}
                                         buttonProps={{
                                             "data-testid": `sheet-field-operator-${index}`,
                                         }}
@@ -533,7 +531,7 @@ export const ExploreStorageUnitWhereCondition: FC<IExploreStorageUnitWhereCondit
                                     <Label className="text-xs">{t('value')}</Label>
                                     <Input
                                         value={filter.Value}
-                                        onChange={(e) => handleSheetFieldChange(index, 'Value', e.target.value)}
+                                        onChange={(e) =>{  handleSheetFieldChange(index, 'Value', e.target.value); }}
                                         placeholder={t('enterFilterValue')}
                                         data-testid={`sheet-field-value-${index}`}
                                     />

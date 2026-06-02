@@ -110,7 +110,7 @@ function nextBrowserState(
 }
 
 function sourceObjectRefKey(ref: SourceObjectRefLike): string {
-    return `${ref.Kind}:${ref.Locator ?? ""}:${ref.Path?.join("/") ?? ""}`;
+    return `${String(ref.Kind)}:${ref.Locator ?? ""}:${ref.Path?.join("/") ?? ""}`;
 }
 
 const StorageUnitCard: FC<{

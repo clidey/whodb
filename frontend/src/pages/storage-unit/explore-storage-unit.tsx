@@ -305,7 +305,7 @@ export const ExploreStorageUnit: FC = () => {
         const limitMatch = initialScratchpadQuery.match(/\s+LIMIT\s+\d+/i);
         if (limitMatch) {
             const beforeLimit = initialScratchpadQuery.substring(0, limitMatch.index);
-            const limitPart = initialScratchpadQuery.substring(limitMatch.index!);
+            const limitPart = initialScratchpadQuery.substring(limitMatch.index ?? 0);
             return `${beforeLimit} WHERE ${whereClause}${limitPart}`;
         }
 
@@ -350,7 +350,7 @@ export const ExploreStorageUnit: FC = () => {
         if (!isTabularObject) {
             return;
         }
-        const tableNameToUse = unitName || currentTableName;
+        const tableNameToUse = unitName ?? currentTableName;
         if (tableNameToUse) {
             setCurrentTableName(tableNameToUse);
         }
@@ -369,7 +369,7 @@ export const ExploreStorageUnit: FC = () => {
         // Merge EE search condition with user-defined where condition
         const mergedCondition = searchCondition && currentWhereCondition
             ? { Type: WhereConditionType.And, And: { Children: [currentWhereCondition, searchCondition] } }
-            : searchCondition || currentWhereCondition;
+            : searchCondition ?? currentWhereCondition;
 
         getStorageUnitRows({
             variables: {
@@ -444,7 +444,8 @@ export const ExploreStorageUnit: FC = () => {
                     Value: row[col].toString(),
                 }));
                 if (!currentUnitRef) {
-                    return reject(new Error("Missing source object ref"));
+                    reject(new Error("Missing source object ref"));
+                    return;
                 }
 
                 updateStorageUnit({
@@ -455,12 +456,13 @@ export const ExploreStorageUnit: FC = () => {
                     },
                     onCompleted: (data) => {
                         if (!data?.UpdateStorageUnit.Status) {
-                            return reject(new Error("Update failed"));
+                            reject(new Error("Update failed"));
+                            return;
                         }
-                        return resolve();
+                        resolve();
                     },
                     onError: (error) => {
-                        return reject(error);
+                        reject(error);
                     },
                 });
             });
@@ -690,7 +692,7 @@ export const ExploreStorageUnit: FC = () => {
         }
         addRow({
             variables: {
-                ref: currentUnitRef ?? buildSourceObjectRef(item, current, schema, unit?.Name || unitName || currentTableName || ""),
+                ref: currentUnitRef ?? buildSourceObjectRef(item, current, schema, unit?.Name ?? unitName ?? currentTableName ?? ""),
                 values,
             },
             onCompleted() {
@@ -750,7 +752,7 @@ export const ExploreStorageUnit: FC = () => {
 
     const getTargetTableName = useCallback((columnName: string) => {
         const column = getColumnByName(columnName);
-        return column?.ReferencedTable || null;
+        return column?.ReferencedTable ?? null;
     }, [getColumnByName]);
 
     // Entity search functionality
@@ -980,7 +982,7 @@ export const ExploreStorageUnit: FC = () => {
                                         min={1}
                                         className="w-24"
                                         value={customPageSizeInput}
-                                        onChange={(e) => setCustomPageSizeInput(e.target.value)}
+                                        onChange={(e) =>{  setCustomPageSizeInput(e.target.value); }}
                                         onBlur={handleCustomPageSizeApply}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {
@@ -1038,7 +1040,7 @@ export const ExploreStorageUnit: FC = () => {
                                 <Button
                                     className="flex-1"
                                     variant="secondary"
-                                    onClick={() => setShowAdd(false)}
+                                    onClick={() =>{  setShowAdd(false); }}
                                     data-testid="cancel-add-row"
                                 >
                                     {t('cancel')}
@@ -1060,7 +1062,7 @@ export const ExploreStorageUnit: FC = () => {
                                         <CodeEditor
                                             language="json"
                                             value={addRowData.document ?? "{\n  \n}"}
-                                            setValue={(value) => handleAddRowFieldChange("document", value)}
+                                            setValue={(value) =>{  handleAddRowFieldChange("document", value); }}
                                         />
                                     </div>
                                 </div>
@@ -1081,7 +1083,7 @@ export const ExploreStorageUnit: FC = () => {
                                             </Tip>
                                             <Input
                                                 value={addRowData[col.Name] ?? ""}
-                                                onChange={e => handleAddRowFieldChange(col.Name, e.target.value)}
+                                                onChange={e =>{  handleAddRowFieldChange(col.Name, e.target.value); }}
                                                 placeholder={`Enter value for ${col.Name}`}
                                                 {...getInputPropsForColumnType(col.Type || '')}
                                             />
@@ -1157,7 +1159,7 @@ export const ExploreStorageUnit: FC = () => {
                     <DrawerTitle className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">{t('scratchpad')}</h2>
                         <div className="flex gap-sm items-center">
-                            <Button onClick={() => handleScratchpad()} data-testid="run-submit-button">
+                            <Button onClick={() =>{  handleScratchpad(); }} data-testid="run-submit-button">
                                 <PlayIcon className="w-4 h-4" />
                                 {t('run')}
                             </Button>
@@ -1204,7 +1206,7 @@ export const ExploreStorageUnit: FC = () => {
                             <AlertDialogDescription>{t('confirmOperationDescription')}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel data-testid="execute-query-cancel" onClick={() => setPendingScratchpadQuery(null)}>{t('cancel')}</AlertDialogCancel>
+                            <AlertDialogCancel data-testid="execute-query-cancel" onClick={() =>{  setPendingScratchpadQuery(null); }}>{t('cancel')}</AlertDialogCancel>
                             <AlertDialogAction asChild>
                                 <Button variant="destructive" data-testid="execute-query-confirm" onClick={() => {
                                     if (pendingScratchpadQuery != null) {

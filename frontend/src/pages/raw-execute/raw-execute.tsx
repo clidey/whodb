@@ -282,8 +282,8 @@ const SQLHighlighter: FC<{ code: string }> = ({ code }) => {
 const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, showTools, cellData }) => {
     const { t } = useTranslation('pages/raw-execute');
     const dispatch = useAppDispatch();
-    const [mode, setMode] = useState<string>(cellData?.mode || ActionOptions.Query);
-    const [code, setCode] = useState(cellData?.code || "");
+    const [mode, setMode] = useState<string>(cellData?.mode ?? ActionOptions.Query);
+    const [code, setCode] = useState(cellData?.code ?? "");
     const [, setSubmittedCode] = useState("");
     const [history, setHistory] = useState<{id: string, item: string, status: boolean, date: Date}[]>(() => {
         if (!cellData?.history) return [];
@@ -324,10 +324,10 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
     // Sync local state with Redux state
     useEffect(() => {
         if (cellData) {
-            setCode(cellData.code || "");
-            setMode(cellData.mode || ActionOptions.Query);
+            setCode(cellData.code ?? "");
+            setMode(cellData.mode ?? ActionOptions.Query);
             // Ensure all dates are proper Date objects
-            const processedHistory = (cellData.history || []).map((item: any) => ({
+            const processedHistory = (cellData.history ?? []).map((item: any) => ({
                 ...item,
                 date: item.date instanceof Date ? item.date : new Date(item.date)
             }));
@@ -534,7 +534,7 @@ const RawExecuteCell: FC<IRawExecuteCellProps> = ({ cellId, onAdd, onDelete, sho
                     }}
                 >
                     <Suspense fallback={<Loading />}>
-                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType || ''}
+                        <Component code={code} handleExecuteRef={handleExecute} modelType={modelType?.modelType ?? ''}
                                    schema={currentDatabase ?? ''} token={modelType?.token} providerId={currentId}
                                    containerWidth={containerWidth} />
                     </Suspense>
@@ -1029,7 +1029,7 @@ export const RawExecutePage: FC = () => {
                 <div className="flex justify-center items-center w-full mt-4">
                     <div className="w-full flex flex-col gap-4">
                         <div className="flex justify-between items-center">
-                            <Tabs className="w-full h-full" value={activePageId || ""}>
+                            <Tabs className="w-full h-full" value={activePageId ?? ""}>
                                 <div className="flex gap-sm w-full justify-between">
                                     <TabsList className="flex flex-wrap gap-sm" data-testid="page-tabs">
                                         {
@@ -1071,7 +1071,7 @@ export const RawExecutePage: FC = () => {
                                         </Tip>
                                     </TabsList>
                                 </div>
-                                <TabsContent value={activePageId || ""} className="h-full w-full mt-4">
+                                <TabsContent value={activePageId ?? ""} className="h-full w-full mt-4">
                                     <AnimatePresence mode="wait">
                                         {pages.map((page) => (
                                             <motion.div
