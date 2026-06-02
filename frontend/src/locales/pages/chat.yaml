@@ -188,6 +188,7 @@ ar_AE:
   example27: "عرض تقرير بجميع انتهاكات السياسة في الربع الأخير"
   "yes": "نعم"
   "no": "لا"
+  autoScroll: "التمرير التلقائي"
 
 de_DE:
   placeholder: "Geben Sie hier Ihre Nachricht ein..."
@@ -283,6 +284,7 @@ de_DE:
   example27: "Zeigen Sie einen Bericht aller Richtlinienverstöße im letzten Quartal an"
   "yes": "Ja"
   "no": "NEIN"
+  autoScroll: "Automatisches Scrollen"
 
 el_GR:
   placeholder: "Πληκτρολογήστε το μήνυμά σας εδώ..."
@@ -378,6 +380,7 @@ el_GR:
   example27: "Εμφάνιση αναφοράς όλων των παραβιάσεων πολιτικής το τελευταίο τρίμηνο"
   "yes": "Ναί"
   "no": "Οχι"
+  autoScroll: "Auto-scroll"
 
 en_GB:
   placeholder: "Type Your Message Here..."
@@ -473,6 +476,7 @@ en_GB:
   example27: "Show a report of all policy violations in the last quarter"
   "yes": "Yes"
   "no": "No"
+  autoScroll: "Auto-scroll"
 
 es_ES:
   placeholder: "Escriba su mensaje aquí..."
@@ -568,6 +572,7 @@ es_ES:
   example27: "Mostrar un informe de todas las infracciones de políticas en el último trimestre"
   "yes": "Sí"
   "no": "No"
+  autoScroll: "Desplazamiento automático"
 
 fi_FI:
   placeholder: "Kirjoita viestisi tähän..."
@@ -663,6 +668,7 @@ fi_FI:
   example27: "Näytä raportti kaikista viimeisen vuosineljänneksen sääntörikkomuksista"
   "yes": "Kyllä"
   "no": "Ei"
+  autoScroll: "Automaattinen vieritys"
 
 fr_FR:
   placeholder: "Tapez votre message ici..."
@@ -758,6 +764,7 @@ fr_FR:
   example27: "Afficher un rapport sur toutes les violations des règles au cours du dernier trimestre"
   "yes": "Oui"
   "no": "Non"
+  autoScroll: "Défilement automatique"
 
 it_IT:
   placeholder: "Scrivi qui il tuo messaggio..."
@@ -853,6 +860,7 @@ it_IT:
   example27: "Mostra un rapporto su tutte le violazioni delle norme nell'ultimo trimestre"
   "yes": "SÌ"
   "no": "NO"
+  autoScroll: "Scorrimento automatico"
 
 iw_IL:
   placeholder: "הקלד את הודעתך כאן..."
@@ -948,6 +956,7 @@ iw_IL:
   example27: "הצג דוח של כל הפרות המדיניות ברבעון האחרון"
   "yes": "כֵּן"
   "no": "לֹא"
+  autoScroll: "גלילה אוטומטית"
 
 ja_JP:
   placeholder: "ここにメッセージを入力してください..."
@@ -1043,6 +1052,7 @@ ja_JP:
   example27: "前四半期のすべてのポリシー違反のレポートを表示します"
   "yes": "はい"
   "no": "いいえ"
+  autoScroll: "自動スクロール"
 
 ko_KR:
   placeholder: "여기에 메시지를 입력하세요..."
@@ -1138,6 +1148,7 @@ ko_KR:
   example27: "지난 분기의 모든 정책 위반에 대한 보고서 표시"
   "yes": "예"
   "no": "아니요"
+  autoScroll: "자동 스크롤"
 
 nl_NL:
   placeholder: "Typ hier uw bericht..."
@@ -1233,6 +1244,7 @@ nl_NL:
   example27: "Toon een rapport van alle beleidsschendingen in het afgelopen kwartaal"
   "yes": "Ja"
   "no": "Nee"
+  autoScroll: "Automatisch scrollen"
 
 pl_PL:
   placeholder: "Wpisz tutaj swoją wiadomość..."
@@ -1328,6 +1340,7 @@ pl_PL:
   example27: "Pokaż raport wszystkich naruszeń zasad w ostatnim kwartale"
   "yes": "Tak"
   "no": "NIE"
+  autoScroll: "Automatyczne przewijanie"
 
 pt_BR:
   placeholder: "Digite sua mensagem aqui..."
@@ -1423,6 +1436,7 @@ pt_BR:
   example27: "Mostrar um relatório de todas as violações da política no último trimestre"
   "yes": "Sim"
   "no": "Não"
+  autoScroll: "Rolagem automática"
 
 ro_RO:
   placeholder: "Introduceți mesajul dvs. aici..."
@@ -1518,6 +1532,7 @@ ro_RO:
   example27: "Afișați un raport cu toate încălcările politicii din ultimul trimestru"
   "yes": "Da"
   "no": "Nu"
+  autoScroll: "Defilare automată"
 
 ru_RU:
   placeholder: "Введите здесь свое сообщение..."
@@ -1613,6 +1628,7 @@ ru_RU:
   example27: "Показать отчет обо всех нарушениях правил за последний квартал."
   "yes": "Да"
   "no": "Нет"
+  autoScroll: "Автопрокрутка"
 
 sk_SK:
   placeholder: "Sem napíšte svoju správu..."
@@ -1708,6 +1724,7 @@ sk_SK:
   example27: "Zobrazte správu o všetkých porušeniach pravidiel za posledný štvrťrok"
   "yes": "áno"
   "no": "Nie"
+  autoScroll: "Automatické posúvanie"
 
 sv_SE:
   placeholder: "Skriv ditt meddelande här..."
@@ -1803,6 +1820,7 @@ sv_SE:
   example27: "Visa en rapport över alla policyöverträdelser under det senaste kvartalet"
   "yes": "Ja"
   "no": "Inga"
+  autoScroll: "Automatisk rullning"
 
 zh_CN:
   placeholder: "在此输入您的消息..."
@@ -1898,6 +1916,7 @@ zh_CN:
   example27: "显示上季度所有政策违规行为的报告"
   "yes": "是的"
   "no": "不"
+  autoScroll: "自动滚动"
 
 zh_TW:
   placeholder: "在此輸入您的訊息..."
@@ -1993,6 +2012,7 @@ zh_TW:
   example27: "顯示上季所有政策違規行為的報告"
   "yes": "是的"
   "no": "不"
+  autoScroll: "自動捲動"
 
 bg_BG:
   placeholder: "Въведете вашето съобщение тук..."
@@ -2088,6 +2108,7 @@ bg_BG:
   example27: "Показване на отчет за всички нарушения на правилата през последното тримесечие"
   "yes": "да"
   "no": "не"
+  autoScroll: "Автоматично превъртане"
 
 bn_BD:
   placeholder: "এখানে আপনার বার্তা টাইপ করুন..."
@@ -2183,6 +2204,7 @@ bn_BD:
   example27: "গত ত্রৈমাসিকে সমস্ত নীতি লঙ্ঘনের রিপোর্ট দেখান৷"
   "yes": "হ্যাঁ"
   "no": "না"
+  autoScroll: "অটো-স্ক্রোল"
 
 ca_ES:
   placeholder: "Escriu el teu missatge aquí..."
@@ -2278,6 +2300,7 @@ ca_ES:
   example27: "Mostra un informe de totes les infraccions de les polítiques durant l'últim trimestre"
   "yes": "Sí"
   "no": "No"
+  autoScroll: "Desplaçament automàtic"
 
 cs_CZ:
   placeholder: "Sem napište svou zprávu..."
@@ -2373,6 +2396,7 @@ cs_CZ:
   example27: "Zobrazit zprávu o všech porušeních zásad za poslední čtvrtletí"
   "yes": "Ano"
   "no": "Žádný"
+  autoScroll: "Automatické posouvání"
 
 da_DK:
   placeholder: "Skriv din besked her..."
@@ -2468,6 +2492,7 @@ da_DK:
   example27: "Vis en rapport over alle politikovertrædelser i det sidste kvartal"
   "yes": "Ja"
   "no": "Ingen"
+  autoScroll: "Auto-scroll"
 
 fa_IR:
   placeholder: "پیام خود را اینجا تایپ کنید..."
@@ -2563,6 +2588,7 @@ fa_IR:
   example27: "گزارشی از تمام تخلفات خط‌مشی در سه ماهه گذشته نشان دهید"
   "yes": "بله"
   "no": "خیر"
+  autoScroll: "اسکرول خودکار"
 
 hi_IN:
   placeholder: "यहाँ आपके संदेश लिखें..."
@@ -2658,6 +2684,7 @@ hi_IN:
   example27: "पिछली तिमाही में सभी नीति उल्लंघनों की रिपोर्ट दिखाएँ"
   "yes": "हाँ"
   "no": "नहीं"
+  autoScroll: "स्वतः स्क्रॉल"
 
 hr_HR:
   placeholder: "Ovdje upišite svoju poruku..."
@@ -2753,6 +2780,7 @@ hr_HR:
   example27: "Prikaži izvješće o svim kršenjima pravila u zadnjem kvartalu"
   "yes": "Da"
   "no": "Ne"
+  autoScroll: "Automatsko pomicanje"
 
 hu_HU:
   placeholder: "Írja be üzenetét ide..."
@@ -2848,6 +2876,7 @@ hu_HU:
   example27: "Jelentés megjelenítése az összes irányelvsértésről az elmúlt negyedévben"
   "yes": "Igen"
   "no": "Nem"
+  autoScroll: "Automatikus görgetés"
 
 id_ID:
   placeholder: "Ketik Pesan Anda Disini..."
@@ -2943,6 +2972,7 @@ id_ID:
   example27: "Tampilkan laporan semua pelanggaran kebijakan pada kuartal terakhir"
   "yes": "Ya"
   "no": "TIDAK"
+  autoScroll: "Gulir otomatis"
 
 ms_MY:
   placeholder: "Taip Mesej Anda Di Sini..."
@@ -3038,6 +3068,7 @@ ms_MY:
   example27: "Tunjukkan laporan semua pelanggaran dasar pada suku terakhir"
   "yes": "ya"
   "no": "Tidak"
+  autoScroll: "Tatal automatik"
 
 nb_NO:
   placeholder: "Skriv inn meldingen din her..."
@@ -3133,6 +3164,7 @@ nb_NO:
   example27: "Vis en rapport over alle brudd på retningslinjene i det siste kvartalet"
   "yes": "Ja"
   "no": "Ingen"
+  autoScroll: "Automatisk rulling"
 
 sw_KE:
   placeholder: "Andika Ujumbe wako Hapa..."
@@ -3228,6 +3260,7 @@ sw_KE:
   example27: "Onyesha ripoti ya ukiukaji wote wa sera katika robo ya mwisho"
   "yes": "Ndiyo"
   "no": "Hapana"
+  autoScroll: "Sogeza kiotomatiki"
 
 ta_IN:
   placeholder: "உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்..."
@@ -3323,6 +3356,7 @@ ta_IN:
   example27: "கடந்த காலாண்டில் நடந்த அனைத்து கொள்கை மீறல்களின் அறிக்கையையும் காட்டு"
   "yes": "ஆம்"
   "no": "இல்லை"
+  autoScroll: "தானாக உருட்டும்"
 
 th_TH:
   placeholder: "พิมพ์ข้อความของคุณที่นี่..."
@@ -3418,6 +3452,7 @@ th_TH:
   example27: "แสดงรายงานการละเมิดนโยบายทั้งหมดในไตรมาสสุดท้าย"
   "yes": "ใช่"
   "no": "เลขที่"
+  autoScroll: "เลื่อนอัตโนมัติ"
 
 tr_TR:
   placeholder: "Mesajınızı Buraya Yazın..."
@@ -3513,6 +3548,7 @@ tr_TR:
   example27: "Son çeyrekteki tüm politika ihlallerinin raporunu göster"
   "yes": "Evet"
   "no": "HAYIR"
+  autoScroll: "Otomatik kaydırma"
 
 uk_UA:
   placeholder: "Введіть своє повідомлення тут..."
@@ -3608,6 +3644,7 @@ uk_UA:
   example27: "Показати звіт про всі порушення політики за останній квартал"
   "yes": "так"
   "no": "немає"
+  autoScroll: "Автопрокручування"
 
 ur_PK:
   placeholder: "اپنا پیغام یہاں ٹائپ کریں..."
@@ -3703,6 +3740,7 @@ ur_PK:
   example27: "پچھلی سہ ماہی میں پالیسی کی تمام خلاف ورزیوں کی رپورٹ دکھائیں۔"
   "yes": "جی ہاں"
   "no": "نہیں"
+  autoScroll: "آٹو سکرول"
 
 vi_VN:
   placeholder: "Nhập tin nhắn của bạn ở đây..."
@@ -3798,6 +3836,7 @@ vi_VN:
   example27: "Hiển thị báo cáo về tất cả các vi phạm chính sách trong quý vừa qua"
   "yes": "Đúng"
   "no": "KHÔNG"
+  autoScroll: "Tự động cuộn"
 
 af_ZA:
   placeholder: "Tik jou boodskap hier..."
@@ -3893,6 +3932,7 @@ af_ZA:
   example27: "Wys 'n verslag van alle beleidsoortredings in die afgelope kwartaal"
   "yes": "Ja"
   "no": "Nee"
+  autoScroll: "Outo-blaai"
 
 am_ET:
   placeholder: "መልእክትህን እዚህ ፃፍ..."
@@ -3988,6 +4028,7 @@ am_ET:
   example27: "ባለፈው ሩብ ዓመት ውስጥ የሁሉም የመመሪያ ጥሰቶች ሪፖርት አሳይ"
   "yes": "አዎ"
   "no": "አይ"
+  autoScroll: "በራስ-ማሸብለል"
 
 az_AZ:
   placeholder: "Mesajınızı Bura Yazın..."
@@ -4083,6 +4124,7 @@ az_AZ:
   example27: "Son rübdə bütün siyasət pozuntularının hesabatını göstərin"
   "yes": "Bəli"
   "no": "yox"
+  autoScroll: "Avtomatik sürüşdürün"
 
 et_EE:
   placeholder: "Sisestage oma sõnum siia..."
@@ -4178,6 +4220,7 @@ et_EE:
   example27: "Kuvage aruanne kõigi viimase kvartali eeskirjade rikkumiste kohta"
   "yes": "Jah"
   "no": "Ei"
+  autoScroll: "Automaatne kerimine"
 
 gu_IN:
   placeholder: "તમારો સંદેશ અહીં લખો..."
@@ -4273,6 +4316,7 @@ gu_IN:
   example27: "છેલ્લા ક્વાર્ટરમાં તમામ નીતિ ઉલ્લંઘનોનો અહેવાલ બતાવો"
   "yes": "હા"
   "no": "ના"
+  autoScroll: "સ્વતઃ સ્ક્રોલ કરો"
 
 ha_NG:
   placeholder: "Buga Saƙonku Anan..."
@@ -4368,6 +4412,7 @@ ha_NG:
   example27: "Nuna rahoton duk take hakki a cikin kwata na ƙarshe"
   "yes": "Ee"
   "no": "A'a"
+  autoScroll: "Gungura ta atomatik"
 
 ka_GE:
   placeholder: "ჩაწერეთ თქვენი შეტყობინება აქ..."
@@ -4463,6 +4508,7 @@ ka_GE:
   example27: "აჩვენეთ ანგარიში ყველა პოლიტიკის დარღვევის შესახებ ბოლო კვარტალში"
   "yes": "დიახ"
   "no": "არა"
+  autoScroll: "ავტომატური გადახვევა"
 
 km_KH:
   placeholder: "វាយបញ្ចូលសាររបស់អ្នកនៅទីនេះ..."
@@ -4558,6 +4604,7 @@ km_KH:
   example27: "បង្ហាញរបាយការណ៍នៃការបំពានគោលការណ៍ទាំងអស់នៅក្នុងត្រីមាសចុងក្រោយ"
   "yes": "បាទ"
   "no": "ទេ"
+  autoScroll: "រមូរដោយស្វ័យប្រវត្តិ"
 
 kn_IN:
   placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..."
@@ -4653,6 +4700,7 @@ kn_IN:
   example27: "ಕಳೆದ ತ್ರೈಮಾಸಿಕದಲ್ಲಿ ಎಲ್ಲಾ ನೀತಿ ಉಲ್ಲಂಘನೆಗಳ ವರದಿಯನ್ನು ತೋರಿಸಿ"
   "yes": "ಹೌದು"
   "no": "ಸಂ"
+  autoScroll: "ಸ್ವಯಂ-ಸ್ಕ್ರಾಲ್"
 
 lt_LT:
   placeholder: "Įveskite savo žinutę čia..."
@@ -4748,6 +4796,7 @@ lt_LT:
   example27: "Rodyti visų politikos pažeidimų ataskaitą per pastarąjį ketvirtį"
   "yes": "Taip"
   "no": "Nr"
+  autoScroll: "Automatinis slinkimas"
 
 lv_LV:
   placeholder: "Ierakstiet savu ziņojumu šeit..."
@@ -4843,6 +4892,7 @@ lv_LV:
   example27: "Rādīt pārskatu par visiem politikas pārkāpumiem pēdējā ceturksnī"
   "yes": "Jā"
   "no": "Nē"
+  autoScroll: "Automātiska ritināšana"
 
 ml_IN:
   placeholder: "നിങ്ങളുടെ സന്ദേശം ഇവിടെ ടൈപ്പ് ചെയ്യുക..."
@@ -4938,6 +4988,7 @@ ml_IN:
   example27: "കഴിഞ്ഞ പാദത്തിലെ എല്ലാ നയ ലംഘനങ്ങളുടെയും റിപ്പോർട്ട് കാണിക്കുക"
   "yes": "അതെ"
   "no": "ഇല്ല"
+  autoScroll: "സ്വയമേവ സ്ക്രോൾ ചെയ്യുക"
 
 mr_IN:
   placeholder: "तुमचा संदेश येथे टाइप करा..."
@@ -5033,6 +5084,7 @@ mr_IN:
   example27: "मागील तिमाहीतील सर्व धोरण उल्लंघनांचा अहवाल दर्शवा"
   "yes": "होय"
   "no": "नाही"
+  autoScroll: "स्वयं-स्क्रोल करा"
 
 ne_NP:
   placeholder: "यहाँ आफ्नो सन्देश टाइप गर्नुहोस्..."
@@ -5128,6 +5180,7 @@ ne_NP:
   example27: "पछिल्लो क्वाटरमा सबै नीति उल्लङ्घनहरूको रिपोर्ट देखाउनुहोस्"
   "yes": "हो"
   "no": "छैन"
+  autoScroll: "स्वतः स्क्रोल गर्नुहोस्"
 
 pa_IN:
   placeholder: "ਆਪਣਾ ਸੁਨੇਹਾ ਇੱਥੇ ਟਾਈਪ ਕਰੋ..."
@@ -5223,6 +5276,7 @@ pa_IN:
   example27: "ਪਿਛਲੀ ਤਿਮਾਹੀ ਵਿੱਚ ਨੀਤੀ ਦੀਆਂ ਸਾਰੀਆਂ ਉਲੰਘਣਾਵਾਂ ਦੀ ਰਿਪੋਰਟ ਦਿਖਾਓ"
   "yes": "ਹਾਂ"
   "no": "ਨੰ"
+  autoScroll: "ਆਟੋ-ਸਕ੍ਰੌਲ ਕਰੋ"
 
 si_LK:
   placeholder: "ඔබගේ පණිවිඩය මෙහි ටයිප් කරන්න..."
@@ -5318,6 +5372,7 @@ si_LK:
   example27: "පසුගිය කාර්තුවේ සියලුම ප්‍රතිපත්ති කඩකිරීම් පිළිබඳ වාර්තාවක් පෙන්වන්න"
   "yes": "ඔව්"
   "no": "නැත"
+  autoScroll: "ස්වයංක්‍රීය අනුචලනය"
 
 sl_SI:
   placeholder: "Tukaj vnesite svoje sporočilo ..."
@@ -5413,6 +5468,7 @@ sl_SI:
   example27: "Prikaži poročilo o vseh kršitvah pravilnika v zadnjem četrtletju"
   "yes": "ja"
   "no": "št"
+  autoScroll: "Samodejno pomikanje"
 
 sr_RS:
   placeholder: "Унесите своју поруку овде..."
@@ -5508,6 +5564,7 @@ sr_RS:
   example27: "Прикажи извештај о свим кршењима смерница у последњем тромесечју"
   "yes": "Да"
   "no": "бр"
+  autoScroll: "Ауто-сцролл"
 
 te_IN:
   placeholder: "మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి..."
@@ -5603,6 +5660,7 @@ te_IN:
   example27: "గత త్రైమాసికంలో అన్ని విధాన ఉల్లంఘనల నివేదికను చూపండి"
   "yes": "అవును"
   "no": "సంఖ్య"
+  autoScroll: "స్వయంచాలకంగా స్క్రోల్ చేయండి"
 
 tl_PH:
   placeholder: "I-type ang Iyong Mensahe Dito..."
@@ -5698,6 +5756,7 @@ tl_PH:
   example27: "Magpakita ng ulat ng lahat ng paglabag sa patakaran sa huling quarter"
   "yes": "Oo"
   "no": "Hindi"
+  autoScroll: "Auto-scroll"
 
 uz_UZ:
   placeholder: "Xabaringizni shu yerga yozing..."
@@ -5793,6 +5852,7 @@ uz_UZ:
   example27: "Oxirgi chorakdagi barcha siyosat buzilishlari haqidagi hisobotni ko'rsating"
   "yes": "Ha"
   "no": "Yo'q"
+  autoScroll: "Avtomatik aylantirish"
 
 yo_NG:
   placeholder: "Tẹ ifiranṣẹ rẹ Nibi ..."
@@ -5888,3 +5948,4 @@ yo_NG:
   example27: "Ṣe afihan ijabọ kan ti gbogbo awọn irufin eto imulo ni mẹẹdogun to kẹhin"
   "yes": "Bẹẹni"
   "no": "Rara"
+  autoScroll: "Yi lọ laifọwọyi"
