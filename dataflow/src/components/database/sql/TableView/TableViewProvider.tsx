@@ -1,7 +1,7 @@
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useChangesetManager } from './useChangesetManager'
 import { useDataQuery } from './useDataQuery'
-import { useColumnResize } from './useColumnResize'
+import { useColumnResize } from '@/components/database/shared/useColumnResize'
 import type { TableViewContextValue, TableViewState, TableViewActions, FilterCondition } from './types'
 import type { Alert } from '@/components/database/shared/types'
 
@@ -37,7 +37,6 @@ interface TableViewProviderProps {
 /** Provider that owns all TableDetailView state, GraphQL operations, and handlers. */
 export function TableViewProvider({ connectionId, databaseName, tableName, schema, children }: TableViewProviderProps) {
   // ---- UI state ----
-  const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
 
@@ -73,7 +72,6 @@ export function TableViewProvider({ connectionId, databaseName, tableName, schem
     tableName,
     currentPage,
     pageSize,
-    searchTerm,
     sortColumn,
     sortDirection,
     filterConditions,
@@ -135,7 +133,6 @@ export function TableViewProvider({ connectionId, databaseName, tableName, schem
       setFilterConditions([])
       setSortColumn(null)
       setSortDirection(null)
-      setSearchTerm('')
       setCurrentPage(1)
       changesetActions.discardChanges()
     }
@@ -152,14 +149,6 @@ export function TableViewProvider({ connectionId, databaseName, tableName, schem
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [changesetState.hasPendingChanges])
-
-  // ---- Search submit (reset to page 1) ----
-  const handleSearchSubmit = useCallback(() => {
-    runWithDiscardGuard(() => {
-      setCurrentPage(1)
-      queryActions.handleSubmitRequest(0)
-    })
-  }, [queryActions.handleSubmitRequest, runWithDiscardGuard])
 
   // ---- Sorting ----
   const handleSort = useCallback((column: string, direction: 'asc' | 'desc') => {
@@ -207,7 +196,6 @@ export function TableViewProvider({ connectionId, databaseName, tableName, schem
     ...queryState,
     currentPage,
     pageSize,
-    searchTerm,
     visibleColumns,
     filterConditions,
     sortColumn,
@@ -227,8 +215,6 @@ export function TableViewProvider({ connectionId, databaseName, tableName, schem
     handleSubmitRequest: queryActions.handleSubmitRequest,
     handlePageChange,
     handlePageSizeChange,
-    setSearchTerm,
-    handleSearchSubmit,
     handleSort,
     clearSort,
     setActiveColumnMenu,

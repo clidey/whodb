@@ -297,7 +297,11 @@ function changesetReducer(state: ChangesetState, action: ChangesetAction): Chang
       return { ...state, showAddModal: false }
 
     case 'open-edit-modal':
-      return { ...state, editingRowKey: action.rowKey, editContent: action.content }
+      return {
+        ...state,
+        editingRowKey: action.rowKey,
+        editContent: action.content,
+      }
 
     case 'set-edit-content':
       return { ...state, editContent: action.content }
@@ -391,28 +395,50 @@ export function useDocumentChangesetManager({
 
   // ---- Edit document ----
 
-  const handleEditClick = useCallback((rowKey: DocumentChangesetRowKey) => {
+  const resolveDocumentForEdit = useCallback((rowKey: DocumentChangesetRowKey) => {
     const change = state.changes.get(rowKey)
-    let doc: Record<string, unknown> | undefined
 
-    if (change) {
-      doc = change.type === 'delete' ? change.originalDocument : change.document
-    } else {
-      const match = rowKey.match(/^existing-(\d+)$/)
-      if (match) {
-        const globalIndex = parseInt(match[1], 10)
-        const localIndex = globalIndex - pageOffset
-        if (localIndex >= 0 && localIndex < documents.length) {
-          doc = documents[localIndex]
-        }
+    if (change?.type === 'insert') {
+      return {
+        originalDocument: {},
+        currentDocument: change.document,
+        isInsert: true,
       }
     }
 
-    if (!doc) return
+    if (change) {
+      return {
+        originalDocument: change.originalDocument,
+        currentDocument: change.type === 'delete' ? change.originalDocument : change.document,
+        isInsert: false,
+      }
+    }
 
-    const { _id: _, ...rest } = doc
-    dispatch({ type: 'open-edit-modal', rowKey, content: JSON.stringify(rest, null, 2) })
+    const match = rowKey.match(/^existing-(\d+)$/)
+    if (!match) return null
+
+    const localIndex = parseInt(match[1], 10) - pageOffset
+    const document = documents[localIndex]
+    if (!document) return null
+
+    return {
+      originalDocument: document,
+      currentDocument: document,
+      isInsert: false,
+    }
   }, [documents, pageOffset, state.changes])
+
+  const handleEditClick = useCallback((rowKey: DocumentChangesetRowKey) => {
+    const resolved = resolveDocumentForEdit(rowKey)
+    if (!resolved) return
+
+    const { _id: _, ...rest } = resolved.currentDocument
+    dispatch({
+      type: 'open-edit-modal',
+      rowKey,
+      content: JSON.stringify(rest, null, 2),
+    })
+  }, [resolveDocumentForEdit])
 
   const setEditContent = useCallback((content: string) => {
     dispatch({ type: 'set-edit-content', content })
@@ -423,36 +449,37 @@ export function useDocumentChangesetManager({
 
     try {
       const parsed = parseMongoDocumentInput(state.editContent)
-      const change = state.changes.get(state.editingRowKey)
-      const isInsert = change?.type === 'insert'
-
-      let originalDocument: Record<string, unknown>
-      if (isInsert) {
-        originalDocument = {}
-      } else if (change) {
-        originalDocument = change.originalDocument
-      } else {
-        const match = state.editingRowKey.match(/^existing-(\d+)$/)
-        if (!match) return
-        const localIndex = parseInt(match[1], 10) - pageOffset
-        originalDocument = documents[localIndex]
-      }
+      const resolved = resolveDocumentForEdit(state.editingRowKey)
+      if (!resolved) return
 
       // Preserve _id from original document
-      const { _id } = isInsert ? change!.document : originalDocument
+      const { _id } = resolved.currentDocument
       const document = _id !== undefined ? { ...parsed, _id } : parsed
 
       dispatch({
         type: 'stage-edit',
         rowKey: state.editingRowKey,
-        originalDocument,
+        originalDocument: resolved.originalDocument,
         document,
-        isInsert,
+        isInsert: resolved.isInsert,
       })
     } catch (e: any) {
       showAlert(t('common.alert.error'), t('mongodb.alert.invalidJsonUpdate', { error: e.message }), 'error')
     }
-  }, [documents, pageOffset, showAlert, state.changes, state.editContent, state.editingRowKey, t])
+  }, [resolveDocumentForEdit, showAlert, state.editContent, state.editingRowKey, t])
+
+  const stageDocumentEdit = useCallback((rowKey: DocumentChangesetRowKey, document: Record<string, unknown>) => {
+    const resolved = resolveDocumentForEdit(rowKey)
+    if (!resolved) return
+
+    dispatch({
+      type: 'stage-edit',
+      rowKey,
+      originalDocument: resolved.originalDocument,
+      document,
+      isInsert: resolved.isInsert,
+    })
+  }, [resolveDocumentForEdit])
 
   const cancelEdit = useCallback(() => {
     dispatch({ type: 'close-edit-modal' })
@@ -622,6 +649,7 @@ export function useDocumentChangesetManager({
       markSelectedForDelete,
       undoLastChange,
       discardChanges,
+      stageDocumentEdit,
       submitChanges,
       setShowPreviewModal,
       setShowSubmitModal,

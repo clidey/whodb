@@ -1,16 +1,21 @@
-import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import {
+  SortDirection,
   useGetStorageUnitRowsLazyQuery,
+  useGetColumnsLazyQuery,
   WhereConditionType,
+  type SortCondition,
   type WhereCondition,
 } from '@graphql'
 import { resolveSchemaParam } from '@/utils/database-features'
-import type { CollectionViewContextValue } from './types'
+import type { CollectionViewContextValue, MongoCollectionViewMode, MongoSortDirection } from './types'
 import type { Alert } from '@/components/database/shared/types'
 import type { FlatMongoFilter } from '@/components/database/mongodb/filter-collection.types'
 import { useDocumentChangesetManager } from './useDocumentChangesetManager'
+import { buildMongoTableColumns } from './mongo-table-utils'
 import { useI18n } from '@/i18n/useI18n'
+import { useColumnResize } from '@/components/database/shared/useColumnResize'
 
 const CollectionViewCtx = createContext<CollectionViewContextValue | null>(null)
 
@@ -35,16 +40,24 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
 
   // ---- GraphQL hooks ----
   const [getRows] = useGetStorageUnitRowsLazyQuery({ fetchPolicy: 'no-cache' })
+  const [getColumns] = useGetColumnsLazyQuery({ fetchPolicy: 'no-cache' })
 
   // ---- Core state ----
   const [loading, setLoading] = useState(true)
   const [documents, setDocuments] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewModeState] = useState<MongoCollectionViewMode>('table')
   const [currentPage, setCurrentPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [pageSize, setPageSize] = useState(50)
-  const [searchTerm, setSearchTerm] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [sampledFields, setSampledFields] = useState<string[]>([])
+  const [hasSampledFields, setHasSampledFields] = useState(false)
+
+  // ---- Sorting state ----
+  const [sortColumn, setSortColumn] = useState<string | null>(null)
+  const [sortDirection, setSortDirection] = useState<MongoSortDirection | null>(null)
+  const [activeColumnMenu, setActiveColumnMenu] = useState<string | null>(null)
 
   // ---- Export state ----
   const [showExportModal, setShowExportModal] = useState(false)
@@ -52,7 +65,7 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
   // ---- Filter state ----
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<FlatMongoFilter>({})
-  const [availableFields, setAvailableFields] = useState<string[]>([])
+  const [preferredFilterField, setPreferredFilterField] = useState<string | null>(null)
 
   // ---- Alert state ----
   const [alert, setAlert] = useState<Alert | null>(null)
@@ -101,6 +114,51 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     pendingReloadActionRef.current = null
   }, [changesetActions])
 
+  const setViewMode = useCallback((mode: MongoCollectionViewMode) => {
+    setViewModeState(mode)
+  }, [])
+
+  const sampleCollectionFields = useCallback(async () => {
+    const conn = connections.find(c => c.id === connectionId)
+    if (!conn) return
+
+    const graphqlSchema = resolveSchemaParam(conn.type, databaseName)
+    const { data: result, error: queryError } = await getColumns({
+      variables: {
+        schema: graphqlSchema,
+        storageUnit: collectionName,
+      },
+      context: { database: databaseName },
+    })
+
+    if (queryError) {
+      setError(queryError.message)
+      setHasSampledFields(true)
+      return
+    }
+
+    setSampledFields(result?.Columns.map((column) => column.Name) ?? [])
+    setHasSampledFields(true)
+  }, [collectionName, connectionId, connections, databaseName, getColumns])
+
+  useEffect(() => {
+    setViewModeState('table')
+    setCurrentPage(1)
+    setSortColumn(null)
+    setSortDirection(null)
+    setActiveColumnMenu(null)
+    setActiveFilter({})
+    setPreferredFilterField(null)
+    setSampledFields([])
+    setHasSampledFields(false)
+    changesetActions.discardChanges()
+  }, [changesetActions.discardChanges, collectionName, connectionId, databaseName])
+
+  useEffect(() => {
+    if (viewMode !== 'table' || hasSampledFields) return
+    void sampleCollectionFields()
+  }, [hasSampledFields, sampleCollectionFields, viewMode])
+
   // ---- beforeunload guard ----
   useEffect(() => {
     if (!changesetState.hasPendingChanges) return
@@ -114,26 +172,17 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [changesetState.hasPendingChanges])
 
-  // ---- Extract available fields from documents ----
-  useEffect(() => {
-    if (documents.length > 0) {
-      const keys = new Set<string>()
-      documents.slice(0, 50).forEach(doc => {
-        if (typeof doc === 'object' && doc !== null) {
-          Object.keys(doc).forEach(k => keys.add(k))
-        }
-      })
-      setAvailableFields(Array.from(keys).sort())
-    }
-  }, [documents])
+  const tableColumns = useMemo(() => buildMongoTableColumns({
+    sampledFields,
+    documents: documents as Record<string, unknown>[],
+    changes: changesetState.changes,
+  }), [changesetState.changes, documents, sampledFields])
+  const { columnWidths, resizingColumn, resizedColumns, handleResizeStart } = useColumnResize(tableColumns, {
+    initialWidth: 160,
+    minimumWidth: 80,
+  })
 
-  // ---- Guarded search term setter (resets to page 1) ----
-  const setSearchTermGuarded = useCallback((term: string) => {
-    runWithDiscardGuard(() => {
-      setSearchTerm(term)
-      setCurrentPage(1)
-    })
-  }, [runWithDiscardGuard])
+  const availableFields = tableColumns
 
   // ---- Main data fetch ----
   useEffect(() => {
@@ -178,19 +227,6 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
         }
       }
 
-      // Add search term as regex on 'document' column if present
-      if (searchTerm.trim()) {
-        filterConditions.push({
-          Type: WhereConditionType.Atomic,
-          Atomic: {
-            Key: 'document',
-            Operator: 'regex',
-            Value: searchTerm.trim(),
-            ColumnType: 'string',
-          },
-        })
-      }
-
       let where: WhereCondition | undefined
       if (filterConditions.length === 1) {
         where = filterConditions[0]
@@ -198,12 +234,18 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
         where = { Type: WhereConditionType.And, And: { Children: filterConditions } }
       }
 
+      const sort: SortCondition[] | undefined =
+        sortColumn && sortDirection
+          ? [{ Column: sortColumn, Direction: sortDirection === 'asc' ? SortDirection.Asc : SortDirection.Desc }]
+          : undefined
+
       try {
         const { data: result, error: queryError } = await getRows({
           variables: {
             schema: graphqlSchema,
             storageUnit: collectionName,
             where,
+            sort,
             pageSize,
             pageOffset: (currentPage - 1) * pageSize,
           },
@@ -234,7 +276,7 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     }
 
     fetchData()
-  }, [connectionId, databaseName, collectionName, connections, collectionRefreshKey, currentPage, pageSize, searchTerm, activeFilter, refreshKey, getRows, t])
+  }, [connectionId, databaseName, collectionName, connections, collectionRefreshKey, currentPage, pageSize, activeFilter, refreshKey, sortColumn, sortDirection, getRows, t])
 
   // ---- Page change ----
   const handlePageChange = useCallback((page: number) => {
@@ -246,9 +288,43 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     runWithDiscardGuard(() => { setPageSize(size); setCurrentPage(1) })
   }, [runWithDiscardGuard])
 
+  // ---- Sorting ----
+  const handleSort = useCallback((column: string, direction: MongoSortDirection) => {
+    runWithDiscardGuard(() => {
+      setSortColumn(column)
+      setSortDirection(direction)
+      setActiveColumnMenu(null)
+      setCurrentPage(1)
+    })
+  }, [runWithDiscardGuard])
+
+  const clearSort = useCallback(() => {
+    runWithDiscardGuard(() => {
+      setSortColumn(null)
+      setSortDirection(null)
+      setActiveColumnMenu(null)
+      setCurrentPage(1)
+    })
+  }, [runWithDiscardGuard])
+
+  const setFilterModalOpen = useCallback((open: boolean) => {
+    setIsFilterModalOpen(open)
+    if (!open) setPreferredFilterField(null)
+  }, [])
+
+  const openFilterForField = useCallback((field: string) => {
+    setPreferredFilterField(field)
+    setActiveColumnMenu(null)
+    setIsFilterModalOpen(true)
+  }, [])
+
   // ---- Filter apply ----
   const handleFilterApply = useCallback((filter: FlatMongoFilter) => {
-    runWithDiscardGuard(() => { setActiveFilter(filter); setCurrentPage(1) })
+    runWithDiscardGuard(() => {
+      setActiveFilter(filter)
+      setPreferredFilterField(null)
+      setCurrentPage(1)
+    })
   }, [runWithDiscardGuard])
 
   // ---- Derived values ----
@@ -258,16 +334,24 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     loading,
     documents,
     error,
+    viewMode,
+    tableColumns,
     currentPage,
     pageSize,
     total,
     totalPages,
-    searchTerm,
+    sortColumn,
+    sortDirection,
+    activeColumnMenu,
     activeFilter,
     availableFields,
+    preferredFilterField,
     showExportModal,
     isFilterModalOpen,
     alert,
+    columnWidths,
+    resizingColumn,
+    resizedColumns,
     ...changesetState,
   }
 
@@ -275,10 +359,15 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
     refresh: () => runWithDiscardGuard(refresh),
     handlePageChange,
     handlePageSizeChange,
-    setSearchTerm: setSearchTermGuarded,
-    setIsFilterModalOpen,
+    setViewMode,
+    handleSort,
+    clearSort,
+    setActiveColumnMenu,
+    setIsFilterModalOpen: setFilterModalOpen,
+    openFilterForField,
     handleFilterApply,
     setShowExportModal,
+    handleResizeStart,
     showAlert,
     closeAlert,
     confirmDiscardAndContinue,

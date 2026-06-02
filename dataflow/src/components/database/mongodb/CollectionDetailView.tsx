@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { CollectionViewProvider, useCollectionView } from './CollectionView/CollectionViewProvider'
 import { CollectionViewDocumentList } from './CollectionView/CollectionView.DocumentList'
+import { CollectionViewTableGrid } from './CollectionView/CollectionView.TableGrid'
 import { CollectionViewToolbar } from './CollectionView/CollectionView.Toolbar'
 import { AddDocumentModal } from './CollectionView/CollectionView.AddDocumentModal'
 import { EditDocumentModal } from './CollectionView/CollectionView.EditDocumentModal'
 import { buildPreviewCommands, summarizeChanges } from './CollectionView/changeset-mongo-preview'
+import { buildRenderedMongoDocuments } from './CollectionView/mongo-table-utils'
 import { DataView } from '@/components/database/shared/DataView'
 import { FindBar } from '@/components/database/shared/FindBar'
 import { ExportCollectionModal } from './ExportCollectionModal'
@@ -59,6 +61,8 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
 
   /** Extract all top-level field names from visible documents for FindBar. */
   const docColumns = useMemo(() => {
+    if (state.viewMode === 'table') return state.tableColumns
+
     const keys = new Set<string>()
     state.documents.forEach((doc) => {
       if (typeof doc === 'object' && doc !== null) {
@@ -66,7 +70,21 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
       }
     })
     return Array.from(keys)
-  }, [state.documents])
+  }, [state.documents, state.tableColumns, state.viewMode])
+
+  const findRows = useMemo(() => {
+    if (state.viewMode === 'table') {
+      const pageOffset = (state.currentPage - 1) * state.pageSize
+      return buildRenderedMongoDocuments({
+        documents: state.documents as Record<string, unknown>[],
+        changes: state.changes,
+        newRowOrder: state.newRowOrder,
+        pageOffset,
+      }).map((row) => row.doc)
+    }
+
+    return state.documents
+  }, [state.changes, state.currentPage, state.documents, state.newRowOrder, state.pageSize, state.viewMode])
 
   return (
     <div
@@ -87,21 +105,23 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
         <DataView.Error message={state.error} />
       ) : (
         <FindBar.Provider
-          rows={state.documents}
+          rows={findRows}
           columns={docColumns}
-          searchTerm={state.searchTerm}
-          onSearchTermChange={actions.setSearchTerm}
         >
           <FindBar.Bar />
-          <div
-            className="flex-1 overflow-auto p-4 space-y-4"
-            data-testid="mongodb.collection.document-list-region"
-            data-qa-module="mongodb"
-            data-qa-object="document-list"
-            data-qa-state={state.documents.length > 0 ? 'ready' : 'empty'}
-          >
-            <CollectionViewDocumentList />
-          </div>
+          {state.viewMode === 'table' ? (
+            <CollectionViewTableGrid />
+          ) : (
+            <div
+              className="flex-1 overflow-auto p-4 space-y-4"
+              data-testid="mongodb.collection.document-list-region"
+              data-qa-module="mongodb"
+              data-qa-object="document-list"
+              data-qa-state={state.documents.length > 0 ? 'ready' : 'empty'}
+            >
+              <CollectionViewDocumentList />
+            </div>
+          )}
         </FindBar.Provider>
       )}
 
@@ -151,6 +171,7 @@ function CollectionDetailViewContent({ databaseName, collectionName, connectionI
         onOpenChange={actions.setIsFilterModalOpen}
         onApply={actions.handleFilterApply}
         fields={state.availableFields}
+        preferredField={state.preferredFilterField}
         initialFilter={state.activeFilter}
       />
 

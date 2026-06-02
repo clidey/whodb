@@ -1,5 +1,9 @@
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { Alert } from '@/components/database/shared/types'
 import type { FlatMongoFilter } from '@/components/database/mongodb/filter-collection.types'
+
+export type MongoCollectionViewMode = 'table' | 'json'
+export type MongoSortDirection = 'asc' | 'desc'
 
 // ---- Document changeset types ----
 
@@ -30,6 +34,16 @@ export interface DocumentUndoEntryDelete {
 
 export type DocumentUndoEntry = DocumentUndoEntryEdit | DocumentUndoEntryAdd | DocumentUndoEntryDelete
 
+export interface RenderedMongoDocument {
+  rowKey: DocumentChangesetRowKey
+  doc: Record<string, unknown>
+  originalDocument: Record<string, unknown>
+  changeType: DocumentChange['type'] | null
+  isDeleted: boolean
+  isInserted: boolean
+  rowNumber: number | null
+}
+
 /** Context value exposed by CollectionViewProvider. */
 export interface CollectionViewContextValue {
   state: CollectionViewState
@@ -41,16 +55,24 @@ export interface CollectionViewState {
   loading: boolean
   documents: any[]
   error: string | null
+  viewMode: MongoCollectionViewMode
+  tableColumns: string[]
   currentPage: number
   pageSize: number
   total: number
   totalPages: number
-  searchTerm: string
+  sortColumn: string | null
+  sortDirection: MongoSortDirection | null
+  activeColumnMenu: string | null
   activeFilter: FlatMongoFilter
   availableFields: string[]
+  preferredFilterField: string | null
   showExportModal: boolean
   isFilterModalOpen: boolean
   alert: Alert | null
+  columnWidths: Record<string, number>
+  resizingColumn: string | null
+  resizedColumns: Set<string>
 
   // Changeset state
   changes: Map<DocumentChangesetRowKey, DocumentChange>
@@ -75,10 +97,15 @@ export interface CollectionViewActions {
   refresh: () => void
   handlePageChange: (page: number) => void
   handlePageSizeChange: (size: number) => void
-  setSearchTerm: (term: string) => void
+  setViewMode: (mode: MongoCollectionViewMode) => void
+  handleSort: (column: string, direction: MongoSortDirection) => void
+  clearSort: () => void
+  setActiveColumnMenu: (column: string | null) => void
   setIsFilterModalOpen: (open: boolean) => void
+  openFilterForField: (field: string) => void
   handleFilterApply: (filter: FlatMongoFilter) => void
   setShowExportModal: (open: boolean) => void
+  handleResizeStart: (event: ReactMouseEvent, column: string) => void
   showAlert: (title: string, message: string, type: Alert['type']) => void
   closeAlert: () => void
 
@@ -87,6 +114,7 @@ export interface CollectionViewActions {
   markSelectedForDelete: () => void
   undoLastChange: () => void
   discardChanges: () => void
+  stageDocumentEdit: (rowKey: DocumentChangesetRowKey, document: Record<string, unknown>) => void
   submitChanges: () => Promise<void>
   setShowPreviewModal: (open: boolean) => void
   setShowSubmitModal: (open: boolean) => void

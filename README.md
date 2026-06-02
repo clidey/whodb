@@ -39,7 +39,7 @@ cd dataflow
 pnpm install
 
 # Terminal 1: backend
-cd ../core
+cd core
 set -a
 source .env.local
 set +a

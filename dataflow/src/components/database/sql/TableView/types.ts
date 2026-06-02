@@ -93,7 +93,6 @@ export interface TableViewState {
   pageSize: number
   total: number
   totalPages: number
-  searchTerm: string
   visibleColumns: string[]
   filterConditions: FilterCondition[]
   sortColumn: string | null
@@ -125,8 +124,6 @@ export interface TableViewActions {
   handleSubmitRequest: (overridePageOffset?: number) => Promise<void>
   handlePageChange: (page: number) => void
   handlePageSizeChange: (size: number) => void
-  setSearchTerm: (term: string) => void
-  handleSearchSubmit: () => void
   handleSort: (column: string, direction: 'asc' | 'desc') => void
   clearSort: () => void
   setActiveColumnMenu: (col: string | null) => void

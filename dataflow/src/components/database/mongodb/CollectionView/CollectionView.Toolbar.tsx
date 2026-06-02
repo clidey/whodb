@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Plus, Minus, Undo2, Eye, SendHorizontal, RefreshCw, TerminalSquare, BarChart3 } from 'lucide-react'
+import { Download, Plus, Minus, Undo2, Eye, SendHorizontal, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useCollectionView } from './CollectionViewProvider'
 import { DataView } from '@/components/database/shared/DataView'
@@ -17,11 +17,14 @@ interface CollectionViewToolbarProps {
   collectionName: string
 }
 
+/** Toolbar actions for refreshing and mutating MongoDB collection documents. */
 export function CollectionViewToolbar({ connectionId, databaseName, collectionName }: CollectionViewToolbarProps) {
   const { t } = useI18n()
   const { state, actions } = useCollectionView()
   const openTab = useTabStore((s) => s.openTab)
   const [isChartModalOpen, setIsChartModalOpen] = useState(false)
+  const nextViewMode = state.viewMode === 'table' ? 'json' : 'table'
+  const ViewSwitchIcon = nextViewMode === 'table' ? Table2 : FileJson
 
   const handleOpenQuery = () => {
     openTab({
@@ -64,6 +67,28 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('common.actions.refresh')}</TooltipContent>
+        </Tooltip>
+
+        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => actions.setViewMode(nextViewMode)}
+              data-testid="mongodb.collection.view-toggle-button"
+              data-qa-module="mongodb"
+              data-qa-object="collection-view-mode"
+              data-qa-action={nextViewMode === 'table' ? 'switch-to-table' : 'switch-to-json'}
+              data-qa-state={state.viewMode}
+            >
+              <ViewSwitchIcon className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {nextViewMode === 'table' ? t('mongodb.view.switchToTable') : t('mongodb.view.switchToJson')}
+          </TooltipContent>
         </Tooltip>
 
         <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />

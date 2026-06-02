@@ -25,6 +25,7 @@ interface FilterCollectionModalProps {
   onOpenChange: (open: boolean) => void
   onApply: (filter: FlatMongoFilter) => void
   fields: string[]
+  preferredField?: string | null
   initialFilter?: FlatMongoFilter
 }
 
@@ -49,6 +50,7 @@ export function FilterCollectionModal({
   onOpenChange,
   onApply,
   fields,
+  preferredField,
   initialFilter,
 }: FilterCollectionModalProps) {
   return (
@@ -57,6 +59,7 @@ export function FilterCollectionModal({
         <FilterCollectionProvider
           open={open}
           fields={fields}
+          preferredField={preferredField}
           initialFilter={initialFilter}
           onApply={onApply}
           onOpenChange={onOpenChange}

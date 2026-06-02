@@ -1,7 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { ModalForm } from '@/components/ui/ModalForm'
 import { Textarea } from '@/components/ui/Textarea'
-import { useI18n } from '@/i18n/useI18n'
 
 export interface DocumentEditorDialogProps {
   open: boolean
