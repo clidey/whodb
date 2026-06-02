@@ -139,13 +139,13 @@ func (sb *SQLBuilder) BuildOrderBy(query *gorm.DB, sortList []plugins.Sort) *gor
 // CreateTableQuery builds a CREATE TABLE statement for DDL operations
 // DDL requires manual SQL building as GORM doesn't support dynamic table creation
 func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef) string {
-	columnDefs := make([]string, len(columns))
+	columnDefs := make([]string, 0, len(columns)+8)
 	var primaryKeys []string
 	var uniqueKeys []string
 	var checkDefs []string
 	var foreignKeys []string
 
-	for i, col := range columns {
+	for _, col := range columns {
 		def := sb.QuoteIdentifier(col.Name) + " " + col.Type
 
 		if col.Primary {
@@ -180,7 +180,7 @@ func (sb *SQLBuilder) CreateTableQuery(schema, table string, columns []ColumnDef
 			foreignKeys = append(foreignKeys, fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", sb.QuoteIdentifier(col.Name), sb.quoteReferenceTableRef(schema, col.ReferencesTable), sb.QuoteIdentifier(col.ReferencesColumn)))
 		}
 
-		columnDefs[i] = def
+		columnDefs = append(columnDefs, def)
 	}
 
 	// Add primary key constraint if there are primary keys

@@ -461,9 +461,7 @@ func (p *GormPlugin) ConvertArrayValue(value string, columnType string) (any, er
 	if strings.HasPrefix(upperType, "ARRAY(") {
 		columnType = columnType[6:] // strip "ARRAY(" (6 chars)
 	}
-	if strings.HasSuffix(columnType, ")") {
-		columnType = columnType[:len(columnType)-1]
-	}
+	columnType = strings.TrimSuffix(columnType, ")")
 	elementType := columnType
 
 	// Remove brackets and split by comma

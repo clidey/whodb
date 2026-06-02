@@ -970,7 +970,7 @@ func (r *mutationResolver) GenerateAzureADToken(ctx context.Context, providerID 
 
 	scope, ok := sourcecatalog.ResolveAzureADScope(spec.ID, spec.Connector)
 	if !ok {
-		return "", fmt.Errorf("Azure AD authentication is not supported for source type: %s", sourceType)
+		return "", fmt.Errorf("azure AD authentication is not supported for source type: %s", sourceType)
 	}
 
 	registry := providers.GetDefaultRegistry()
@@ -1412,7 +1412,7 @@ func (r *queryResolver) SourceGraph(ctx context.Context, ref *model.SourceObject
 // AIProviders is the resolver for the AIProviders field.
 func (r *queryResolver) AIProviders(ctx context.Context) ([]*model.AIProvider, error) {
 	chatProviders := envconfig.GetConfiguredChatProviders()
-	var aiProviders []*model.AIProvider
+	aiProviders := make([]*model.AIProvider, 0, len(chatProviders))
 	for _, provider := range chatProviders {
 		aiProviders = append(aiProviders, &model.AIProvider{
 			Type:                 provider.Type,

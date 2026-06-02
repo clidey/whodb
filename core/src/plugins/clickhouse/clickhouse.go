@@ -100,17 +100,13 @@ func (p *ClickHousePlugin) ConvertStringValue(value, columnType string, isNullab
 	if strings.HasPrefix(upperCheck, "NULLABLE(") {
 		isNullable = true
 		columnType = columnType[9:] // strip "Nullable(" (9 chars)
-		if strings.HasSuffix(columnType, ")") {
-			columnType = columnType[:len(columnType)-1]
-		}
+		columnType = strings.TrimSuffix(columnType, ")")
 	}
 
 	// Unwrap LowCardinality() wrapper
 	if strings.HasPrefix(strings.ToUpper(columnType), "LOWCARDINALITY(") {
 		columnType = columnType[15:] // strip "LowCardinality(" (15 chars)
-		if strings.HasSuffix(columnType, ")") {
-			columnType = columnType[:len(columnType)-1]
-		}
+		columnType = strings.TrimSuffix(columnType, ")")
 	}
 
 	normalized := strings.ToUpper(p.NormalizeType(columnType))

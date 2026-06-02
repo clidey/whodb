@@ -196,6 +196,9 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 		}
 		columns = append(columns, col)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	// Enrich with foreign key relationships using the provided db connection directly
 	escapedTable := strings.ReplaceAll(storageUnit, "'", "''")
@@ -217,6 +220,9 @@ func (p *Sqlite3Plugin) getColumnsViaPragma(db *gorm.DB, storageUnit string) ([]
 					break
 				}
 			}
+		}
+		if fkRows.Err() != nil {
+			return nil, fkRows.Err()
 		}
 	}
 
@@ -250,7 +256,7 @@ func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		pkColTypes := make(map[string]string)
 		for rows.Next() {
@@ -265,6 +271,10 @@ func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema
 			if pk > 0 {
 				pkColTypes[name] = strings.ToUpper(dataType)
 			}
+		}
+
+		if err := rows.Err(); err != nil {
+			return false, err
 		}
 
 		if len(pkColTypes) == 1 {
@@ -308,6 +318,9 @@ func (p *Sqlite3Plugin) MarkGeneratedColumns(config *engine.PluginConfig, schema
 					}
 				}
 			}
+		}
+		if xrows.Err() != nil {
+			return false, xrows.Err()
 		}
 
 		return true, nil
@@ -422,12 +435,12 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 
 			query = query.Limit(pageSize).Offset(pageOffset)
 
-			rows, err := query.Rows()
+			rows, err := query.Rows() //nolint:rowserrcheck
 			if err != nil {
 				log.WithError(err).Error("Failed to execute SQLite rows query for STRICT table " + storageUnit)
 				return nil, err
 			}
-			defer rows.Close()
+			defer func() { _ = rows.Close() }()
 
 			// Use parent's ConvertRawToRows for STRICT tables
 			result, err = p.GormPlugin.ConvertRawToRows(rows)
@@ -485,9 +498,9 @@ func (p *Sqlite3Plugin) GetRows(config *engine.PluginConfig, req *engine.GetRows
 				log.WithError(err).Error(fmt.Sprintf("Failed to execute SQLite rows query for table %s.%s", schema, storageUnit))
 				return nil, err
 			}
-			defer rows.Close()
+			defer func() { _ = rows.Close() }()
 
-			result, err = p.ConvertRawToRows(rows)
+			result, err = p.ConvertRawToRows(rows) //nolint:rowserrcheck
 			if err != nil {
 				return nil, err
 			}
@@ -537,7 +550,7 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 		}
 
 		// codeql[go/sql-injection]: RawExecute intentionally runs user-authored SQL from the query editor/import flow.
-		rows, err := db.Raw(query, params...).Rows()
+		rows, err := db.Raw(query, params...).Rows() //nolint:rowserrcheck
 		if err != nil {
 			return nil, err
 		}
@@ -547,7 +560,7 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 		// (returns zero time.Time instead of the original string on parse failure).
 		columnTypes, err := rows.ColumnTypes()
 		if err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
 
@@ -561,21 +574,21 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 
 		// No datetime columns — use the base ConvertRawToRows directly
 		if len(datetimeIndexes) == 0 {
-			defer rows.Close()
-			return p.GormPlugin.ConvertRawToRows(rows)
+			defer func() { _ = rows.Close() }()
+			return p.GormPlugin.ConvertRawToRows(rows) //nolint:rowserrcheck
 		}
 
 		// Save column names and original types before closing first result set
 		columns, err := rows.Columns()
 		if err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
 		origTypes := make([]string, len(columnTypes))
 		for i, ct := range columnTypes {
 			origTypes[i] = ct.DatabaseTypeName()
 		}
-		rows.Close()
+		_ = rows.Close()
 
 		// Re-execute with CAST(col AS TEXT) for datetime columns to bypass
 		// go-sqlite3's datetime parsing. CAST expressions have no declared type
@@ -597,7 +610,7 @@ func (p *Sqlite3Plugin) executeRawSQL(config *engine.PluginConfig, query string,
 		}
 		castQuery := fmt.Sprintf("SELECT %s FROM (%s)", strings.Join(selects, ", "), trimRawSQLiteSubquery(query))
 
-		castRows, err := db.Raw(castQuery, params...).Rows()
+		castRows, err := db.Raw(castQuery, params...).Rows() //nolint:rowserrcheck
 		if err != nil {
 			return nil, err
 		}
@@ -639,7 +652,7 @@ func (p *Sqlite3Plugin) StreamRawExecute(config *engine.PluginConfig, query stri
 
 		columnTypes, err := rows.ColumnTypes()
 		if err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return false, err
 		}
 
@@ -652,7 +665,7 @@ func (p *Sqlite3Plugin) StreamRawExecute(config *engine.PluginConfig, query stri
 		}
 
 		if len(datetimeIndexes) == 0 {
-			defer rows.Close()
+			defer func() { _ = rows.Close() }()
 			if err := p.streamSQLiteRows(rows, writer); err != nil {
 				return false, err
 			}
@@ -661,14 +674,14 @@ func (p *Sqlite3Plugin) StreamRawExecute(config *engine.PluginConfig, query stri
 
 		columns, err := rows.Columns()
 		if err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return false, err
 		}
 		origTypes := make([]string, len(columnTypes))
 		for i, ct := range columnTypes {
 			origTypes[i] = ct.DatabaseTypeName()
 		}
-		rows.Close()
+		_ = rows.Close()
 
 		builder := gorm_plugin.NewSQLBuilder(db, p)
 		dtSet := make(map[int]bool, len(datetimeIndexes))
@@ -972,7 +985,7 @@ func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, 
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		relationships := make(map[string]*engine.ForeignKeyRelationship)
 		for rows.Next() {
@@ -987,6 +1000,9 @@ func (p *Sqlite3Plugin) GetForeignKeyRelationships(config *engine.PluginConfig, 
 				ReferencedTable:  table,
 				ReferencedColumn: to,
 			}
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
 		}
 
 		return relationships, nil

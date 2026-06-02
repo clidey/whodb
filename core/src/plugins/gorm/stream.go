@@ -38,7 +38,7 @@ func (p *GormPlugin) StreamRawExecute(config *engine.PluginConfig, query string,
 		if err != nil {
 			return false, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		columns, typeMap, resultColumns, err := p.describeRawColumns(rows)
 		if err != nil {

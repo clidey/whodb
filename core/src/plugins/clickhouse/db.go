@@ -17,6 +17,7 @@
 package clickhouse
 
 import (
+	"log/slog"
 	"net"
 	"strconv"
 	"time"
@@ -64,7 +65,7 @@ func (p *ClickHousePlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	}
 
 	if connectionInput.Debug != "disable" {
-		options.Debug = true
+		options.Logger = slog.Default()
 	}
 
 	switch connectionInput.ReadOnly {

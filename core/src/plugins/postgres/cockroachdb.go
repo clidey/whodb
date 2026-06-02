@@ -328,7 +328,7 @@ func (p *CockroachDBPlugin) GetSSLStatus(config *engine.PluginConfig) (*engine.S
 			}, nil
 		}
 
-		sslConfig := ssl.ParseSSLConfig(engine.DatabaseType(p.Type), config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
+		sslConfig := ssl.ParseSSLConfig(p.Type, config.Credentials.Advanced, config.Credentials.Hostname, config.Credentials.IsProfile)
 		mode := "enabled"
 		if sslConfig != nil {
 			mode = string(sslConfig.Mode)

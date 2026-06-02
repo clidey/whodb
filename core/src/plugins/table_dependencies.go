@@ -29,7 +29,7 @@ import (
 func FindChildTables(graph []engine.GraphUnit, targetTable string) []string {
 	for _, unit := range graph {
 		if unit.Unit.Name == targetTable {
-			var children []string
+			children := make([]string, 0, len(unit.Relations))
 			for _, rel := range unit.Relations {
 				children = append(children, rel.Name)
 			}

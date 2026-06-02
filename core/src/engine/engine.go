@@ -108,7 +108,7 @@ func (e *Engine) RegisterProfileRetriever(retriever LoginProfileRetriever) {
 
 // GetStorageUnitModel converts an engine StorageUnit to a GraphQL source object.
 func GetStorageUnitModel(unit StorageUnit) *model.SourceObject {
-	var attributes []*model.Record
+	attributes := make([]*model.Record, 0, len(unit.Attributes))
 	for _, attribute := range unit.Attributes {
 		attributes = append(attributes, &model.Record{
 			Key:   attribute.Key,
