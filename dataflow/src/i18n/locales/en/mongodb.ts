@@ -25,6 +25,8 @@ export const enMongodbMessages = {
     'Are you sure you want to delete this document? This action cannot be undone.',
   'mongodb.view.table': 'Table View',
   'mongodb.view.json': 'JSON View',
+  'mongodb.view.switchToTable': 'Switch to Table View',
+  'mongodb.view.switchToJson': 'Switch to JSON View',
   'mongodb.document.add': 'Add Document',
   'mongodb.document.addTitle': 'Add New Document',
   'mongodb.document.addDescription': 'Enter the document content in JSON format:',

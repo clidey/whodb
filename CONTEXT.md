@@ -33,7 +33,7 @@ A top-level document field whose value can be edited directly in a **Collection 
 _Avoid_: editable nested field
 
 **Complex Document Field**:
-A top-level document field whose value is an object or array and should be edited through the full document editor.
+A top-level document field whose value is an object or array and should not be edited inline in a **Collection Table View** cell.
 _Avoid_: inline JSON cell
 
 **Field JSON Editor**:
@@ -66,23 +66,23 @@ _Avoid_: document table mode, field-level editor
 
 ## Flagged Ambiguities
 
+### Terminology
+
 - "table view" in MongoDB means **Collection Table View**, not a relational database table.
-- MongoDB inline editing is limited to **Editable Scalar Fields**; object and array cells in the **Collection Table View** open a **Field JSON Editor**.
-- A **Complex Document Field** cell opens the **Field JSON Editor** by double-clicking the cell, without an extra edit icon.
-- A **Field JSON Editor** is shown as a dialog, not as an expanded table cell.
-- A **Field JSON Editor** validates JSON syntax only. It does not force the edited value to remain an object or array.
-- Saving a **Field JSON Editor** writes to pending document changes, not directly to the database.
-- Empty **Field JSON Editor** content is invalid JSON and does not delete the field. Field deletion must be a distinct action.
 - The document editor should be a **Document JSON Editor**, not a table view, field list, or field-level editor.
 - The **Collection Table View** is the default MongoDB collection view.
 - The **Collection Table View** should build its first column set from a limited default sample, not by scanning the full collection.
-- The **Collection Table View** keeps `_id` as the first column and orders other discovered fields alphabetically.
 - The **Collection Table View** supports sorting and filtering on top-level document fields.
-- Column filtering in the **Collection Table View** reuses the MongoDB filter builder, with column headers preselecting the target field.
+
+### MongoDB Table Editing
+
+- MongoDB inline editing is limited to **Editable Scalar Fields**; object and array cells in the **Collection Table View** open a **Field JSON Editor**.
+- A **Field JSON Editor** validates JSON syntax only. It does not force the edited value to remain an object or array.
+- Empty input or clearing an existing field is not field deletion; field deletion must be a distinct action.
+- Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the input is a complete, valid, unquoted JSON object or array.
+- Typing a complete, valid, unquoted JSON object or array into any **Editable Scalar Field** changes that field into a **Complex Document Field**.
+
+### MongoDB View State
+
 - Switching between **Collection Table View** and **JSON View** preserves pending document changes.
 - Pending changes from **Collection Table View** and **JSON View** share the same document-level preview and submission flow.
-- Clearing an existing field in the **Collection Table View** should not delete the field; field deletion should be a distinct action.
-- Editing a `null` or **Unset Field** in the **Collection Table View** creates a string value unless the input is a complete, valid, unquoted JSON object or array.
-- Typing a complete, valid, unquoted JSON object or array into any **Editable Scalar Field** changes that field into a **Complex Document Field**, including existing string, number, boolean, `null`, and **Unset Field** values; when normal scalar rules allow a string value, typing a quoted JSON string that contains an object or array literal, such as `"{}"` or `"[]"`, saves the literal text instead.
-- Input that is not a complete, valid, unquoted JSON object or array continues through the normal **Editable Scalar Field** type rules.
-- Leading and trailing whitespace is ignored when detecting a complete, valid, unquoted JSON object or array, but scalar string input keeps its whitespace when no object or array is detected.

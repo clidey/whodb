@@ -17,6 +17,8 @@ export const zhMongodbMessages = {
   'mongodb.collection.deleteDocumentMessage': '确定要删除此文档吗？此操作无法撤销。',
   'mongodb.view.table': '表格视图',
   'mongodb.view.json': 'JSON 视图',
+  'mongodb.view.switchToTable': '切换到表格视图',
+  'mongodb.view.switchToJson': '切换到 JSON 视图',
   'mongodb.document.add': '新增文档',
   'mongodb.document.addTitle': '新增文档',
   'mongodb.document.addDescription': '请输入 JSON 格式的文档内容：',
