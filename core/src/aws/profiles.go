@@ -116,7 +116,7 @@ func getAWSConfigDir() string {
 }
 
 func parseINIFile(path, source string, isConfigFile bool) (map[string]*LocalProfile, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}

@@ -245,14 +245,14 @@ func firstGraphQLArgumentValue(value any, wanted string) string {
 			}
 		}
 	case reflect.Slice, reflect.Array:
-		for index := 0; index < reflected.Len(); index++ {
+		for index := range reflected.Len() {
 			if nested := firstGraphQLArgumentValue(reflected.Index(index).Interface(), wanted); nested != "" {
 				return nested
 			}
 		}
 	case reflect.Struct:
 		reflectedType := reflected.Type()
-		for index := 0; index < reflected.NumField(); index++ {
+		for index := range reflected.NumField() {
 			field := reflectedType.Field(index)
 			if !field.IsExported() {
 				continue
@@ -435,7 +435,7 @@ func wrapWithBasePath(h http.Handler, basePath string) *chi.Mux {
 		if r.URL.RawQuery != "" {
 			target += "?" + r.URL.RawQuery
 		}
-		http.Redirect(w, r, target, http.StatusMovedPermanently)
+		http.Redirect(w, r, target, http.StatusMovedPermanently) //nolint:gosec
 	}
 
 	router.Get(basePath, redirectToBasePath)

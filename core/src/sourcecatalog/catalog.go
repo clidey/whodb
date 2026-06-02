@@ -683,7 +683,7 @@ func metadataObjectType(kind source.ObjectKind, singular string, plural string, 
 	}
 }
 
-func tabularObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType {
+func tabularObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType { //nolint:unparam
 	return source.ObjectType{
 		Kind:      kind,
 		DataShape: source.DataShapeTabular,
@@ -702,7 +702,7 @@ func tabularObjectType(kind source.ObjectKind, singular string, plural string) s
 	}
 }
 
-func tabularReadOnlyObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType {
+func tabularReadOnlyObjectType(kind source.ObjectKind, singular string, plural string) source.ObjectType { //nolint:unparam
 	return source.ObjectType{
 		Kind:      kind,
 		DataShape: source.DataShapeTabular,
@@ -1003,7 +1003,7 @@ func withHiddenObjectRules(
 	return traits
 }
 
-func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatement bool) source.TypeTraits {
+func withExecutionTraits(traits source.TypeTraits, streaming bool, multiStatement bool) source.TypeTraits { //nolint:unparam
 	traits.Query.SupportsScripts = true
 	traits.Query.SupportsStreaming = streaming
 	traits.Query.SupportsMultiStatement = multiStatement

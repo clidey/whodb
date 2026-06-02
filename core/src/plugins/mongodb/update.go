@@ -78,10 +78,7 @@ func (p *MongoDBPlugin) UpdateStorageUnit(config *engine.PluginConfig, database 
 		return false, errors.New("missing '_id' field in the document")
 	}
 
-	objectID, err := normalizeMongoID(id)
-	if err != nil {
-		return false, fmt.Errorf("invalid '_id' value: %w", err)
-	}
+	objectID := normalizeMongoID(id)
 
 	delete(jsonValues, "_id")
 

@@ -963,7 +963,7 @@ func TestGenPointFormat(t *testing.T) {
 }
 
 func TestGenGeometryFormats(t *testing.T) {
-	faker := gofakeit.New(1)
+	_ = gofakeit.New(1)
 
 	tests := []struct {
 		typeName string
@@ -979,7 +979,7 @@ func TestGenGeometryFormats(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.typeName, func(t *testing.T) {
-			val := genGeometry(tt.typeName, faker)
+			val := genGeometry(tt.typeName)
 			str, ok := val.(string)
 			if !ok {
 				t.Fatalf("expected string, got %T", val)
@@ -992,7 +992,7 @@ func TestGenGeometryFormats(t *testing.T) {
 }
 
 func TestGenSpatialFormats(t *testing.T) {
-	faker := gofakeit.New(1)
+	_ = gofakeit.New(1)
 
 	tests := []struct {
 		typeName string
@@ -1009,7 +1009,7 @@ func TestGenSpatialFormats(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.typeName, func(t *testing.T) {
-			val := genSpatial(tt.typeName, faker)
+			val := genSpatial(tt.typeName)
 			str, ok := val.(string)
 			if !ok {
 				t.Fatalf("expected string, got %T", val)

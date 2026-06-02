@@ -42,7 +42,7 @@ func GenerateCloudSQLIAMAuthToken(ctx context.Context, serviceAccountKeyPath, us
 	var err error
 
 	if serviceAccountKeyPath != "" {
-		data, readErr := os.ReadFile(serviceAccountKeyPath)
+		data, readErr := os.ReadFile(serviceAccountKeyPath) //nolint:gosec
 		if readErr != nil {
 			return "", fmt.Errorf("failed to read service account key file: %w", readErr)
 		}

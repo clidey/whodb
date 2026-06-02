@@ -437,13 +437,13 @@ func (p *ClickHousePlugin) GetColumnCodec(typeName string) gorm_plugin.ColumnCod
 					// using reflection so the display matches ClickHouse literal syntax
 					rv := reflect.ValueOf(actualValue)
 					if rv.Kind() == reflect.Map {
-						return formatReflectMap(rv, upperType), nil
+						return formatReflectMap(rv), nil
 					}
 					if rv.Kind() == reflect.Slice {
 						if strings.HasPrefix(upperType, "TUPLE") {
 							return formatReflectTuple(rv), nil
 						}
-						return formatReflectSlice(rv, upperType), nil
+						return formatReflectSlice(rv), nil
 					}
 					if stringer, ok := actualValue.(fmt.Stringer); ok {
 						return stringer.String(), nil

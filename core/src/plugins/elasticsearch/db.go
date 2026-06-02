@@ -87,7 +87,7 @@ func DB(config *engine.PluginConfig) (*elasticsearch.Client, error) {
 			log.Debug("[ES DB] Insecure mode: skipping certificate verification")
 			cfg.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
+					InsecureSkipVerify: true, //nolint:gosec
 				},
 			}
 		} else {

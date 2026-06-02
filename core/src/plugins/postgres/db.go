@@ -54,7 +54,7 @@ func (p *PostgresPlugin) openDB(config *engine.PluginConfig, multiStatement bool
 	}
 
 	pgxConfig.Host = connectionInput.Hostname
-	pgxConfig.Port = uint16(connectionInput.Port)
+	pgxConfig.Port = uint16(connectionInput.Port) //nolint:gosec
 	pgxConfig.User = connectionInput.Username
 	pgxConfig.Password = connectionInput.Password
 	pgxConfig.Database = connectionInput.Database

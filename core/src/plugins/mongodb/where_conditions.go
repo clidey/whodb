@@ -168,11 +168,7 @@ func convertWhereConditionToMongoDB(where *query.WhereCondition) (bson.M, error)
 // Used for query building where type hints are not available.
 func convertMongoValue(key string, raw string) any {
 	if key == "_id" {
-		id, err := normalizeMongoID(raw)
-		if err == nil {
-			return id
-		}
-		return raw
+		return normalizeMongoID(raw)
 	}
 	return coerceMongoValue(key, raw, "") // No type hint for queries
 }

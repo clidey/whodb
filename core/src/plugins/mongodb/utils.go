@@ -24,19 +24,17 @@ import (
 
 // normalizeMongoID converts supported ID formats to a MongoDB-friendly value.
 // Returns the original value if no conversion is possible.
-func normalizeMongoID(value any) (any, error) {
+func normalizeMongoID(value any) any {
 	switch v := value.(type) {
 	case bson.ObjectID:
-		return v, nil
+		return v
 	case string:
-		oid, err := bson.ObjectIDFromHex(v)
-		if err != nil {
-			// Not an ObjectID, use the raw string as-is
-			return v, nil //nolint:nilerr
+		if oid, err := bson.ObjectIDFromHex(v); err == nil {
+			return oid
 		}
-		return oid, nil
+		return v
 	default:
-		return value, nil
+		return value
 	}
 }
 
@@ -45,10 +43,7 @@ func normalizeMongoID(value any) (any, error) {
 // The typeHint (from schema validation) is used to select the correct type.
 func coerceMongoValue(key string, raw string, typeHint string) any {
 	if key == "_id" {
-		id, err := normalizeMongoID(raw)
-		if err == nil {
-			return id
-		}
+		return normalizeMongoID(raw)
 	}
 
 	// If we have a type hint, use it to coerce to the correct type

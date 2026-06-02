@@ -52,7 +52,7 @@ func SaveCredentials(id string, creds *source.Credentials) error {
 	if id == "" || creds == nil {
 		return nil
 	}
-	data, err := json.Marshal(creds)
+	data, err := json.Marshal(creds) //nolint:gosec
 	if err != nil {
 		return err
 	}

@@ -218,7 +218,7 @@ func ReadFile(path string, maxBytes int64) ([]byte, error) {
 		maxBytes = MaxFileSizeBytes
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(path) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}

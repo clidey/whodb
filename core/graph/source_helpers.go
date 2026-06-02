@@ -595,7 +595,7 @@ func appendGraphPath(parent *source.ObjectRef, name string) []string {
 	return path
 }
 
-func namespaceAndObjectNameForRef(spec source.TypeSpec, ref source.ObjectRef) (string, string) {
+func namespaceAndObjectNameForRef(spec source.TypeSpec, ref source.ObjectRef) (string, string) { //nolint:unparam
 	defaultIndex := slices.Index(spec.Contract.BrowsePath, spec.Contract.DefaultObjectKind)
 	namespace := ""
 	if defaultIndex > 0 && defaultIndex-1 < len(ref.Path) {

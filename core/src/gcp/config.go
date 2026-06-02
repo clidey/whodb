@@ -45,7 +45,7 @@ func LoadGCPConfig(ctx context.Context, creds *engine.Credentials) (*GCPConfig, 
 	return loadConfigFromGCPCredentials(ctx, gcpCreds)
 }
 
-func loadConfigFromGCPCredentials(ctx context.Context, gcpCreds *GCPCredentialConfig) (*GCPConfig, error) {
+func loadConfigFromGCPCredentials(_ context.Context, gcpCreds *GCPCredentialConfig) (*GCPConfig, error) {
 	var opts []option.ClientOption
 
 	if gcpCreds.IsServiceAccountKeyAuth() && gcpCreds.ServiceAccountKeyPath != "" {

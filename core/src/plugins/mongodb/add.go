@@ -90,9 +90,7 @@ func (p *MongoDBPlugin) AddRow(config *engine.PluginConfig, schema string, stora
 
 	// If _id provided as hex string, convert to ObjectID for proper identity handling
 	if rawID, exists := document["_id"]; exists {
-		if id, err := normalizeMongoID(rawID); err == nil {
-			document["_id"] = id
-		}
+		document["_id"] = normalizeMongoID(rawID)
 	}
 
 	_, err = collection.InsertOne(context.Background(), document)
@@ -166,9 +164,7 @@ func recordsToMongoDoc(row []engine.Record) map[string]any {
 		document[value.Key] = coerceMongoValue(value.Key, value.Value, typeHint)
 	}
 	if rawID, exists := document["_id"]; exists {
-		if id, err := normalizeMongoID(rawID); err == nil {
-			document["_id"] = id
-		}
+		document["_id"] = normalizeMongoID(rawID)
 	}
 	return document
 }

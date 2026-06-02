@@ -201,7 +201,7 @@ func (p *Provider) Name() string {
 	return p.config.Name
 }
 
-func (p *Provider) initialize(ctx context.Context) error {
+func (p *Provider) initialize(_ context.Context) error {
 	p.initMu.Lock()
 	defer p.initMu.Unlock()
 
