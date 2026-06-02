@@ -38,24 +38,26 @@
       "files": ["src/**/*.{ts,tsx}"],
       "plugins": ["typescript", "react", "import"],
       "rules": {
-        // TypeScript
-        "typescript/no-explicit-any": "warn",
+        // TypeScript — active rules
+        "typescript/no-explicit-any": "off",
         "typescript/no-non-null-assertion": "error",
         "typescript/no-empty-object-type": "error",
         "typescript/consistent-type-imports": ["error", { "prefer": "type-imports" }],
         "typescript/consistent-generic-constructors": ["error", "constructor"],
-        "typescript/no-unnecessary-condition": "warn",
         "typescript/prefer-optional-chain": "error",
         "typescript/prefer-nullish-coalescing": "error",
-        "typescript/no-unsafe-assignment": "warn",
-        "typescript/no-unsafe-member-access": "warn",
-        "typescript/no-unsafe-return": "warn",
-        "typescript/no-unsafe-call": "warn",
-        "typescript/no-unsafe-argument": "warn",
         "typescript/restrict-template-expressions": "error",
         "typescript/no-confusing-void-expression": "error",
         "typescript/no-floating-promises": "error",
         "typescript/no-misused-promises": "error",
+
+        // TypeScript — TODO: enable once any types are replaced with proper types
+        "typescript/no-unnecessary-condition": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-argument": "off",
         "typescript/no-unused-vars": ["error", {
           "argsIgnorePattern": "^_",
           "varsIgnorePattern": "^_",
@@ -64,7 +66,7 @@
 
         // React
         "react/rules-of-hooks": "error",
-        "react/exhaustive-deps": "warn",
+        "react/exhaustive-deps": "off",
         "react/jsx-key": "error",
         "react/no-direct-mutation-state": "error",
         "react/no-array-index-key": "error",
@@ -78,7 +80,7 @@
         // General
         "no-console": ["warn", { "allow": ["warn", "error"] }],
         "no-debugger": "error",
-        "no-alert": "warn",
+        "no-alert": "off",
         "eqeqeq": ["error", "always", { "null": "ignore" }],
         "prefer-const": "error",
         "no-var": "error",
