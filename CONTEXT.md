@@ -44,6 +44,18 @@ _Avoid_: document table mode
 The editor for changing an entire **MongoDB Document** as JSON.
 _Avoid_: document table mode, field-level editor
 
+**Workspace Tab**:
+A database exploration surface tied to a query or a storage unit.
+_Avoid_: browser tab, panel
+
+**Sidebar Focus**:
+The sidebar tree item that represents the active **Workspace Tab**'s closest database context.
+_Avoid_: hover state, keyboard focus
+
+**Sidebar Reveal**:
+The behavior that makes the **Sidebar Focus** visible in the sidebar tree.
+_Avoid_: expand all, jump to item
+
 ## Relationships
 
 - A **MongoDB Collection** contains zero or more **MongoDB Documents**.
@@ -58,11 +70,21 @@ _Avoid_: document table mode, field-level editor
 - A **Field JSON Editor** accepts any valid JSON value, even when that changes an object or array field into a scalar or `null`.
 - A **MongoDB Document** is edited through a **Document JSON Editor**.
 - A **Complex Document Field** is not edited through a separate field-level interaction inside the **Document JSON Editor**.
+- A **Workspace Tab** has zero or one **Sidebar Focus**.
+- A storage-unit **Workspace Tab** focuses its table, view, collection, or Redis key.
+- A query **Workspace Tab** focuses the schema, database, or connection, whichever is most specific.
+- A **Sidebar Reveal** expands collapsed ancestors of the **Sidebar Focus** and scrolls the focus into view.
 
 ## Example Dialogue
 
 > **Dev:** "Should MongoDB open in the table by default?"
 > **Domain expert:** "Yes. Open MongoDB collections in the **Collection Table View** by default because users expect a grid for browsing. Keep the **JSON View** available as a switchable document-focused view."
+>
+> **Dev:** "When users switch between **Workspace Tabs**, should the sidebar keep the last clicked tree item?"
+> **Domain expert:** "No. The sidebar should show the **Sidebar Focus** for the active **Workspace Tab**."
+>
+> **Dev:** "If that focus is hidden under a collapsed folder or outside the visible sidebar area, should we leave the tree as-is?"
+> **Domain expert:** "No. Use **Sidebar Reveal** so the focused item is visible without expanding unrelated branches."
 
 ## Flagged Ambiguities
 
@@ -70,6 +92,8 @@ _Avoid_: document table mode, field-level editor
 
 - "table view" in MongoDB means **Collection Table View**, not a relational database table.
 - The document editor should be a **Document JSON Editor**, not a table view, field list, or field-level editor.
+- "focus" in the sidebar means **Sidebar Focus**, not hover state or keyboard focus.
+- "auto expand" in the sidebar means **Sidebar Reveal**, not expanding every folder in the tree.
 - The **Collection Table View** is the default MongoDB collection view.
 - The **Collection Table View** should build its first column set from a limited default sample, not by scanning the full collection.
 - The **Collection Table View** supports sorting and filtering on top-level document fields.

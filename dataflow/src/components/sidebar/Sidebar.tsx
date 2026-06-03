@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useReducer } from "react";
+import React, { useState, useCallback, useEffect, useReducer } from "react";
 
 import { useConnectionStore } from "@/stores/useConnectionStore";
 import { useTabStore } from "@/stores/useTabStore";
@@ -22,6 +22,7 @@ import {
 } from "./contextMenuItems";
 import { SidebarModals } from "./SidebarModals";
 import { useI18n } from "@/i18n/useI18n";
+import { getSidebarSelectionForTab } from "./sidebar-selection";
 
 // ── Modal reducer (inlined from former useSidebarModals) ────────────
 
@@ -58,12 +59,12 @@ function modalReducer(_state: ModalState | null, action: Action): ModalState | n
 
 function SidebarInner() {
   const { connections, selectedItem, selectItem, systemSchemas, showSystemObjectsFor, toggleSystemObjects, triggerCollectionRefresh } = useConnectionStore();
-  const { openTab } = useTabStore();
+  const { tabs, activeTabId, openTab } = useTabStore();
   const { t } = useI18n();
 
   const {
     expandedItems, treeData, isLoading,
-    toggleItem, fetchNodeChildren, refreshNode,
+    toggleItem, fetchNodeChildren, refreshNode, revealNode,
   } = useSidebarTree();
 
   // Modal state (inlined from former useSidebarModals)
@@ -91,6 +92,15 @@ function SidebarInner() {
     y: number;
     node: TreeNodeData;
   } | null>(null);
+
+  useEffect(() => {
+    const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? null;
+    const selection = getSidebarSelectionForTab(activeTab, connections);
+    selectItem(selection);
+    if (selection) {
+      revealNode(selection);
+    }
+  }, [activeTabId, connections, revealNode, selectItem, tabs]);
 
   const handleItemClick = useCallback(
     async (node: TreeNodeData) => {
@@ -121,6 +131,7 @@ function SidebarInner() {
           databaseName: node.metadata.database,
           schemaName: node.metadata.schema,
           tableName: node.name,
+          storageUnitType: node.type,
         });
       } else if (node.type === "collection") {
         const collectionTitle = node.metadata.database

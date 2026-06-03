@@ -11,6 +11,7 @@ export interface Tab {
   schemaName?: string;
   sqlContent?: string;
   tableName?: string;
+  storageUnitType?: 'table' | 'view';
   collectionName?: string;
   isDirty?: boolean;
 }
