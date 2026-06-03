@@ -43,30 +43,6 @@ type Client struct {
 	httpClient  *http.Client
 }
 
-// User is the platform identity returned by WhoDB.
-type User struct {
-	ID          string `json:"id"`
-	Email       string `json:"email"`
-	DisplayName string `json:"displayName"`
-	OrgID       string `json:"orgId"`
-}
-
-// Organization is a WhoDB platform organization visible to the user.
-type Organization struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Slug string `json:"slug"`
-}
-
-// Project is a WhoDB platform project visible to the user.
-type Project struct {
-	ID          string `json:"id"`
-	OrgID       string `json:"orgId"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Description string `json:"description"`
-}
-
 // AuthConfig is the public auth configuration advertised by a WhoDB platform host.
 type AuthConfig struct {
 	MothergateURL string `json:"mothergateUrl"`
@@ -175,7 +151,7 @@ func (c *Client) Me(ctx context.Context) (*User, error) {
 	var resp struct {
 		Me *User `json:"Me"`
 	}
-	if err := c.graphQL(ctx, "query CLIPlatformMe { Me { id email displayName orgId } }", nil, &resp); err != nil {
+	if err := c.graphQL(ctx, operationMe, nil, &resp); err != nil {
 		return nil, err
 	}
 	if resp.Me == nil {
@@ -189,7 +165,7 @@ func (c *Client) Organizations(ctx context.Context) ([]Organization, error) {
 	var resp struct {
 		MyOrganizations []Organization `json:"MyOrganizations"`
 	}
-	err := c.graphQL(ctx, "query CLIPlatformOrganizations { MyOrganizations { id name slug } }", nil, &resp)
+	err := c.graphQL(ctx, operationOrganizations, nil, &resp)
 	return resp.MyOrganizations, err
 }
 
@@ -199,7 +175,7 @@ func (c *Client) Projects(ctx context.Context, orgID string) ([]Project, error) 
 		Projects []Project `json:"Projects"`
 	}
 	variables := map[string]any{"orgId": orgID}
-	err := c.graphQL(ctx, "query CLIPlatformProjects($orgId: ID!) { Projects(orgId: $orgId) { id orgId name slug description } }", variables, &resp)
+	err := c.graphQL(ctx, operationProjects, variables, &resp)
 	return resp.Projects, err
 }
 
@@ -209,13 +185,55 @@ func (c *Client) SwitchOrganization(ctx context.Context, orgID string) (*Organiz
 		SwitchOrganization *Organization `json:"SwitchOrganization"`
 	}
 	variables := map[string]any{"orgId": orgID}
-	if err := c.graphQL(ctx, "mutation CLIPlatformSwitchOrganization($orgId: ID!) { SwitchOrganization(orgId: $orgId) { id name slug } }", variables, &resp); err != nil {
+	if err := c.graphQL(ctx, operationSwitchOrganization, variables, &resp); err != nil {
 		return nil, err
 	}
 	if resp.SwitchOrganization == nil {
 		return nil, fmt.Errorf("platform returned no organization")
 	}
 	return resp.SwitchOrganization, nil
+}
+
+// ProjectSources returns sources visible to the user in one project.
+func (c *Client) ProjectSources(ctx context.Context, projectID string) ([]Source, error) {
+	var resp struct {
+		ProjectSources []Source `json:"ProjectSources"`
+	}
+	variables := map[string]any{"projectId": projectID}
+	err := c.graphQL(ctx, operationProjectSources, variables, &resp)
+	return resp.ProjectSources, err
+}
+
+// CreateSource creates a hosted source in one project.
+func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*Source, error) {
+	var resp struct {
+		CreateSource *Source `json:"CreateSource"`
+	}
+	variables := map[string]any{"input": input.graphQLInput()}
+	if err := c.graphQL(ctx, operationCreateSource, variables, &resp); err != nil {
+		return nil, err
+	}
+	if resp.CreateSource == nil {
+		return nil, fmt.Errorf("platform returned no source")
+	}
+	return resp.CreateSource, nil
+}
+
+// DeleteSource deletes a hosted source from one project.
+func (c *Client) DeleteSource(ctx context.Context, projectID, sourceID string) error {
+	var resp struct {
+		DeleteSource *struct {
+			Status bool `json:"Status"`
+		} `json:"DeleteSource"`
+	}
+	variables := map[string]any{"projectId": projectID, "id": sourceID}
+	if err := c.graphQL(ctx, operationDeleteSource, variables, &resp); err != nil {
+		return err
+	}
+	if resp.DeleteSource == nil || !resp.DeleteSource.Status {
+		return fmt.Errorf("platform did not confirm source deletion")
+	}
+	return nil
 }
 
 func (c *Client) graphQL(ctx context.Context, query string, variables any, target any) error {

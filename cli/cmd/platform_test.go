@@ -17,10 +17,13 @@
 package cmd
 
 import (
+	"bytes"
 	"io"
 	"testing"
 
 	"github.com/clidey/whodb/cli/internal/config"
+	"github.com/clidey/whodb/cli/internal/platform"
+	"github.com/spf13/cobra"
 )
 
 func TestPlatformHostsWithLogin(t *testing.T) {
@@ -75,5 +78,55 @@ func TestIsAffirmativeConfirmation(t *testing.T) {
 				t.Fatalf("isAffirmativeConfirmation(%q) = %v, want %v", tt.answer, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestParseSourceAdvanced(t *testing.T) {
+	advanced, err := parseSourceAdvanced([]string{"sslmode=require", " application_name = whodb "})
+	if err != nil {
+		t.Fatalf("parseSourceAdvanced() error = %v", err)
+	}
+	if advanced["sslmode"] != "require" {
+		t.Fatalf("sslmode = %q, want require", advanced["sslmode"])
+	}
+	if advanced["application_name"] != "whodb" {
+		t.Fatalf("application_name = %q, want whodb", advanced["application_name"])
+	}
+}
+
+func TestParseSourceAdvancedRejectsMissingKey(t *testing.T) {
+	if _, err := parseSourceAdvanced([]string{"=require"}); err == nil {
+		t.Fatal("parseSourceAdvanced() error = nil, want error")
+	}
+}
+
+func TestReadSourcePasswordFromStdin(t *testing.T) {
+	oldPasswordIn := sourcePasswordIn
+	oldPasswordEnv := sourcePasswordEnv
+	t.Cleanup(func() {
+		sourcePasswordIn = oldPasswordIn
+		sourcePasswordEnv = oldPasswordEnv
+	})
+	sourcePasswordIn = true
+	sourcePasswordEnv = ""
+
+	cmd := &cobra.Command{}
+	cmd.SetIn(bytes.NewBufferString("secret\n"))
+	password, err := readSourcePassword(cmd)
+	if err != nil {
+		t.Fatalf("readSourcePassword() error = %v", err)
+	}
+	if password != "secret" {
+		t.Fatalf("password = %q, want secret", password)
+	}
+}
+
+func TestConfirmSourceDeleteSkipsPromptWhenApprovedByFlag(t *testing.T) {
+	approved, err := confirmSourceDelete(io.Discard, &platform.Source{ID: "src-1", Name: "Warehouse"}, true)
+	if err != nil {
+		t.Fatalf("confirmSourceDelete() error = %v", err)
+	}
+	if !approved {
+		t.Fatal("confirmSourceDelete() approved = false, want true")
 	}
 }

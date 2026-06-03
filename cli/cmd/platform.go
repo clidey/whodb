@@ -28,6 +28,7 @@ import (
 	"github.com/clidey/whodb/cli/internal/platform"
 	"github.com/clidey/whodb/cli/pkg/output"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var (
@@ -39,6 +40,18 @@ var (
 	useOrg            string
 	useProject        string
 	projectsOrg       string
+	sourcesOrg        string
+	sourcesProject    string
+	sourceName        string
+	sourceType        string
+	sourceHostname    string
+	sourcePort        string
+	sourceUsername    string
+	sourceDatabase    string
+	sourceAdvanced    []string
+	sourcePasswordEnv string
+	sourcePasswordIn  bool
+	sourceDeleteYes   bool
 )
 
 type platformSession struct {
@@ -362,6 +375,214 @@ var projectsListCmd = &cobra.Command{
 	},
 }
 
+var sourcesCmd = &cobra.Command{
+	Use:   "sources",
+	Short: "Manage hosted WhoDB project sources",
+}
+
+var sourcesListCmd = &cobra.Command{
+	Use:           "list",
+	Short:         "List hosted WhoDB project sources",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		if err != nil {
+			return err
+		}
+		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		if err != nil {
+			return err
+		}
+		out := newCommandOutput(cmd, format, platformQuiet)
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, sources)
+		}
+		if len(sources) == 0 {
+			out.Info("No sources found in project %q.", project.Name)
+		}
+		rows := make([][]any, len(sources))
+		for i, source := range sources {
+			rows[i] = []any{source.ID, source.Name, source.DatabaseType, project.Name, source.CreatedBy, source.CreatedAt}
+		}
+		return out.WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "id", Type: "string"},
+				{Name: "name", Type: "string"},
+				{Name: "type", Type: "string"},
+				{Name: "project", Type: "string"},
+				{Name: "created_by", Type: "string"},
+				{Name: "created_at", Type: "string"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
+var sourcesGetCmd = &cobra.Command{
+	Use:           "get <source>",
+	Short:         "Show hosted WhoDB source metadata",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		if err != nil {
+			return err
+		}
+		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		if err != nil {
+			return err
+		}
+		source, err := resolveSource(sources, args[0])
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, source)
+		}
+		rows := [][]any{
+			{"id", source.ID},
+			{"name", source.Name},
+			{"type", source.DatabaseType},
+			{"project", project.Name},
+			{"project_id", source.ProjectID},
+			{"created_by", source.CreatedBy},
+			{"created_at", source.CreatedAt},
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{{Name: "field", Type: "string"}, {Name: "value", Type: "string"}},
+			Rows:    rows,
+		})
+	},
+}
+
+var sourcesCreateCmd = &cobra.Command{
+	Use:           "create",
+	Short:         "Create a hosted WhoDB project source",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		quiet := platformQuiet || format == output.FormatJSON
+		out := newCommandOutput(cmd, format, quiet)
+		if strings.TrimSpace(sourceName) == "" {
+			return fmt.Errorf("--name is required")
+		}
+		if strings.TrimSpace(sourceType) == "" {
+			return fmt.Errorf("--type is required")
+		}
+		if strings.TrimSpace(sourceHostname) == "" {
+			return fmt.Errorf("--hostname is required")
+		}
+		advanced, err := parseSourceAdvanced(sourceAdvanced)
+		if err != nil {
+			return err
+		}
+		password, err := readSourcePassword(cmd)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		if err != nil {
+			return err
+		}
+		created, err := session.Client.CreateSource(ctx, platform.CreateSourceInput{
+			ProjectID:    project.ID,
+			Name:         strings.TrimSpace(sourceName),
+			DatabaseType: strings.TrimSpace(sourceType),
+			Hostname:     strings.TrimSpace(sourceHostname),
+			Port:         strings.TrimSpace(sourcePort),
+			Username:     strings.TrimSpace(sourceUsername),
+			Password:     password,
+			Database:     strings.TrimSpace(sourceDatabase),
+			Advanced:     advanced,
+		})
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "sources.create", created)
+		}
+		out.Success("Created source %s in project %s", created.Name, project.Name)
+		return nil
+	},
+}
+
+var sourcesDeleteCmd = &cobra.Command{
+	Use:           "delete <source>",
+	Short:         "Delete a hosted WhoDB project source",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		quiet := platformQuiet || format == output.FormatJSON
+		out := newCommandOutput(cmd, format, quiet)
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
+		if err != nil {
+			return err
+		}
+		sources, err := session.Client.ProjectSources(ctx, project.ID)
+		if err != nil {
+			return err
+		}
+		source, err := resolveSource(sources, args[0])
+		if err != nil {
+			return err
+		}
+		approved, err := confirmSourceDelete(cmd.ErrOrStderr(), source, sourceDeleteYes)
+		if err != nil {
+			return err
+		}
+		if !approved {
+			return fmt.Errorf("delete cancelled")
+		}
+		if err := session.Client.DeleteSource(ctx, project.ID, source.ID); err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeAutomationEnvelope(cmd, "sources.delete", map[string]string{"id": source.ID, "projectId": project.ID})
+		}
+		out.Success("Deleted source %s from project %s", source.Name, project.Name)
+		return nil
+	},
+}
+
 var useCmd = &cobra.Command{
 	Use:           "use",
 	Short:         "Select the default hosted WhoDB organization and project",
@@ -427,9 +648,10 @@ func init() {
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(orgsCmd)
 	rootCmd.AddCommand(projectsCmd)
+	rootCmd.AddCommand(sourcesCmd)
 	rootCmd.AddCommand(useCmd)
 
-	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, orgsCmd, projectsCmd, useCmd} {
+	for _, command := range []*cobra.Command{loginCmd, logoutCmd, whoamiCmd, orgsCmd, projectsCmd, sourcesCmd, useCmd} {
 		command.PersistentFlags().StringVar(&platformHost, "host", "", "hosted WhoDB URL (default app.whodb.com)")
 		command.PersistentFlags().StringVarP(&platformFormat, "format", "f", "auto", "output format: auto, table, plain, json, ndjson, csv")
 		command.PersistentFlags().BoolVarP(&platformQuiet, "quiet", "q", false, "suppress informational messages")
@@ -441,6 +663,22 @@ func init() {
 	orgsCmd.AddCommand(orgsListCmd)
 	projectsCmd.AddCommand(projectsListCmd)
 	projectsListCmd.Flags().StringVar(&projectsOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
+	sourcesCmd.AddCommand(sourcesListCmd)
+	sourcesCmd.AddCommand(sourcesGetCmd)
+	sourcesCmd.AddCommand(sourcesCreateCmd)
+	sourcesCmd.AddCommand(sourcesDeleteCmd)
+	sourcesCmd.PersistentFlags().StringVar(&sourcesOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
+	sourcesCmd.PersistentFlags().StringVar(&sourcesProject, "project", "", "project id, slug, or name (defaults to selected project)")
+	sourcesCreateCmd.Flags().StringVar(&sourceName, "name", "", "source display name")
+	sourcesCreateCmd.Flags().StringVar(&sourceType, "type", "", "source type, for example Postgres")
+	sourcesCreateCmd.Flags().StringVar(&sourceHostname, "hostname", "", "source hostname")
+	sourcesCreateCmd.Flags().StringVar(&sourcePort, "port", "", "source port")
+	sourcesCreateCmd.Flags().StringVar(&sourceUsername, "username", "", "source username")
+	sourcesCreateCmd.Flags().StringVar(&sourceDatabase, "database", "", "source database")
+	sourcesCreateCmd.Flags().StringArrayVar(&sourceAdvanced, "advanced", nil, "advanced connection option as key=value; repeatable")
+	sourcesCreateCmd.Flags().StringVar(&sourcePasswordEnv, "password-env", "", "environment variable containing the source password")
+	sourcesCreateCmd.Flags().BoolVar(&sourcePasswordIn, "password-stdin", false, "read the source password from stdin")
+	sourcesDeleteCmd.Flags().BoolVarP(&sourceDeleteYes, "yes", "y", false, "delete the source without prompting")
 	useCmd.Flags().StringVar(&useOrg, "org", "", "organization id, slug, or name")
 	useCmd.Flags().StringVar(&useProject, "project", "", "project id, slug, or name")
 }
@@ -596,6 +834,95 @@ func clearPlatformLogin(cfg *config.Config, host, accountID string) error {
 	}
 	cfg.RemovePlatformHost(host)
 	return cfg.Save()
+}
+
+func resolvePlatformProject(ctx context.Context, session *platformSession, orgValue, projectValue string) (*platform.Project, error) {
+	org, err := resolveOrganization(ctx, session.Client, session.Host, orgValue)
+	if err != nil {
+		return nil, err
+	}
+	projects, err := session.Client.Projects(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+	needle := strings.TrimSpace(projectValue)
+	if needle == "" {
+		needle = session.Host.DefaultProjectID
+	}
+	if needle == "" {
+		return nil, fmt.Errorf("no project selected; run use --org <org> --project <project> or pass --project")
+	}
+	return resolveProject(projects, needle, org.Name)
+}
+
+func resolveSource(sources []platform.Source, value string) (*platform.Source, error) {
+	needle := strings.TrimSpace(value)
+	if needle == "" {
+		return nil, fmt.Errorf("source is required")
+	}
+	for _, source := range sources {
+		if matchesPlatformIdentifier(needle, source.ID, "", source.Name) {
+			return &source, nil
+		}
+	}
+	return nil, fmt.Errorf("source %q not found", needle)
+}
+
+func parseSourceAdvanced(values []string) (map[string]string, error) {
+	advanced := make(map[string]string, len(values))
+	for _, value := range values {
+		key, raw, ok := strings.Cut(value, "=")
+		key = strings.TrimSpace(key)
+		if !ok || key == "" {
+			return nil, fmt.Errorf("advanced option %q must use key=value", value)
+		}
+		advanced[key] = strings.TrimSpace(raw)
+	}
+	return advanced, nil
+}
+
+func readSourcePassword(cmd *cobra.Command) (string, error) {
+	if strings.TrimSpace(sourcePasswordEnv) != "" {
+		value, ok := os.LookupEnv(strings.TrimSpace(sourcePasswordEnv))
+		if !ok {
+			return "", fmt.Errorf("environment variable %s is not set", sourcePasswordEnv)
+		}
+		return value, nil
+	}
+	if sourcePasswordIn {
+		raw, err := io.ReadAll(io.LimitReader(cmd.InOrStdin(), 1<<20))
+		if err != nil {
+			return "", fmt.Errorf("reading password from stdin: %w", err)
+		}
+		return strings.TrimRight(string(raw), "\r\n"), nil
+	}
+	if !isInteractiveInput() {
+		return "", fmt.Errorf("source password requires --password-stdin or --password-env when stdin is not interactive")
+	}
+	fmt.Fprint(cmd.ErrOrStderr(), "Password: ")
+	password, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Fprintln(cmd.ErrOrStderr())
+	if err != nil {
+		return "", fmt.Errorf("reading password: %w", err)
+	}
+	return string(password), nil
+}
+
+func confirmSourceDelete(out io.Writer, source *platform.Source, skipPrompt bool) (bool, error) {
+	if skipPrompt {
+		return true, nil
+	}
+	if !isInteractiveInput() {
+		return false, fmt.Errorf("sources delete requires --yes when stdin is not interactive")
+	}
+	fmt.Fprintf(out, "Delete source %s (%s)? [y/N]: ", source.Name, source.ID)
+
+	reader := bufio.NewReader(os.Stdin)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return false, fmt.Errorf("reading confirmation: %w", err)
+	}
+	return isAffirmativeConfirmation(response), nil
 }
 
 func resolveOrganization(ctx context.Context, client *platform.Client, host config.PlatformHost, value string) (*platform.Organization, error) {
