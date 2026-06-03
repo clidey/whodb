@@ -441,15 +441,6 @@ func HandleSuggestions(ctx context.Context, req *mcp.CallToolRequest, input Sugg
 	return nil, SuggestionsOutput{Suggestions: suggestions, RequestID: requestID}, nil
 }
 
-func newConnectedManager(connection string) (*dbmgr.Manager, *dbmgr.Connection, error) {
-	resolver, err := newConnectionResolver(true)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot initialize connection resolver: %w", err)
-	}
-
-	return newConnectedManagerFromResolver(resolver, connection)
-}
-
 func newConnectedManagerFromResolver(resolver *connectionResolver, connection string) (*dbmgr.Manager, *dbmgr.Connection, error) {
 	conn, err := resolver.ResolveOrDefault(connection)
 	if err != nil {

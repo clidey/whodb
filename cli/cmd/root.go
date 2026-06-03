@@ -233,7 +233,8 @@ func isTrivialInvocation(args []string) bool {
 }
 
 func firstNonFlagArg(args []string) string {
-	for i, arg := range args {
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
 		if arg == "--" {
 			if i+1 < len(args) {
 				return args[i+1]

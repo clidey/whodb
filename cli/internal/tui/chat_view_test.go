@@ -232,19 +232,13 @@ func TestChatView_ProviderSelection_LeftRight(t *testing.T) {
 		t.Skip("Need at least 2 providers to test navigation")
 	}
 
-	initialProvider := v.selectedProvider
-
 	// Right changes provider
 	msg := tea.KeyMsg{Type: tea.KeyRight}
 	v, _ = v.Update(msg)
 
-	if v.selectedProvider == initialProvider {
-		// It should have changed unless at end and wrapped
-	}
-
 	// Left changes provider back
 	msg = tea.KeyMsg{Type: tea.KeyLeft}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// Just ensure no panic
 }

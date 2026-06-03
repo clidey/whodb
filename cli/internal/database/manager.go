@@ -594,13 +594,6 @@ func formatSSLStatusSummary(status *engine.SSLStatus) string {
 	return fmt.Sprintf("SSL/TLS: %s", mode)
 }
 
-func (m *Manager) loadSavedConnections() []Connection {
-	if m.config == nil {
-		return nil
-	}
-	return m.config.Connections
-}
-
 func (m *Manager) getEnvConnections() []Connection {
 	return connresolver.EnvConnections()
 }

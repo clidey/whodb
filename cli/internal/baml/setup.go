@@ -115,7 +115,7 @@ func Setup() error {
 	// Check if library already exists
 	if _, err := os.Stat(libPath); err == nil {
 		// Library exists, set the path
-		os.Setenv("BAML_LIBRARY_PATH", libPath)
+		_ = os.Setenv("BAML_LIBRARY_PATH", libPath)
 		return nil
 	}
 
@@ -130,7 +130,7 @@ func Setup() error {
 	fmt.Fprintf(os.Stderr, "done\n")
 
 	// Set the environment variable
-	os.Setenv("BAML_LIBRARY_PATH", libPath)
+	_ = os.Setenv("BAML_LIBRARY_PATH", libPath)
 
 	return nil
 }
@@ -163,27 +163,27 @@ func downloadLibrary(url, destPath string) error {
 	// Clean up temp file on error
 	defer func() {
 		if tmpPath != "" {
-			os.Remove(tmpPath)
+			_ = os.Remove(tmpPath)
 		}
 	}()
 
 	// Download the file
 	resp, err := http.Get(url)
 	if err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return fmt.Errorf("failed to download: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return fmt.Errorf("download failed with status: %s", resp.Status)
 	}
 
 	// Copy to temp file
 	_, err = io.Copy(tmpFile, resp.Body)
 	if err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 

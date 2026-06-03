@@ -155,7 +155,7 @@ Checks performed:
 		if spinner != nil {
 			spinner.Stop()
 		}
-		defer mgr.Disconnect()
+		defer mgr.Disconnect() //nolint:errcheck
 
 		// Resolve schema
 		schema := auditSchema

@@ -25,10 +25,6 @@ func lookupDatabaseType(input string) (source.TypeSpec, bool) {
 	return sourcetypes.Find(input)
 }
 
-func normalizeDBType(dbType string) string {
-	return sourcetypes.Normalize(dbType)
-}
-
 func getDefaultPort(dbType string) int {
 	port, ok := sourcetypes.DefaultPort(dbType)
 	if !ok {

@@ -136,8 +136,8 @@ func TestGetAll(t *testing.T) {
 		t.Errorf("Expected 0 entries initially, got %d", len(entries))
 	}
 
-	mgr.Add("SELECT 1", true, "testdb")
-	mgr.Add("SELECT 2", true, "testdb")
+	_ = mgr.Add("SELECT 1", true, "testdb")
+	_ = mgr.Add("SELECT 2", true, "testdb")
 
 	entries = mgr.GetAll()
 	if len(entries) != 2 {
@@ -153,8 +153,8 @@ func TestClear(t *testing.T) {
 		t.Fatalf("NewManager failed: %v", err)
 	}
 
-	mgr.Add("SELECT 1", true, "testdb")
-	mgr.Add("SELECT 2", true, "testdb")
+	_ = mgr.Add("SELECT 1", true, "testdb")
+	_ = mgr.Add("SELECT 2", true, "testdb")
 
 	entries := mgr.GetAll()
 	if len(entries) != 2 {

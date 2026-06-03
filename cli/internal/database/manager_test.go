@@ -877,7 +877,7 @@ func TestMetadataCache_Tables(t *testing.T) {
 	}
 
 	// Should still miss for different schema
-	tables, ok = cache.GetTables("private")
+	_, ok = cache.GetTables("private")
 	if ok {
 		t.Error("Expected cache miss for different schema")
 	}
@@ -912,7 +912,7 @@ func TestMetadataCache_Columns(t *testing.T) {
 	}
 
 	// Should miss for different table
-	columns, ok = cache.GetColumns("public", "orders")
+	_, ok = cache.GetColumns("public", "orders")
 	if ok {
 		t.Error("Expected cache miss for different table")
 	}

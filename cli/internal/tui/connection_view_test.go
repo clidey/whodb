@@ -209,7 +209,7 @@ func TestConnectionView_ListMode_Navigation_Tab(t *testing.T) {
 
 	// Tab moves down
 	msg := tea.KeyMsg{Type: tea.KeyTab}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// Just ensure no panic - list handles internal state
 }
@@ -226,7 +226,7 @@ func TestConnectionView_ListMode_Navigation_ShiftTab(t *testing.T) {
 
 	// Shift+Tab moves up
 	msg := tea.KeyMsg{Type: tea.KeyShiftTab}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// Just ensure no panic
 }

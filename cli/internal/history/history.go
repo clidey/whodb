@@ -187,7 +187,7 @@ func (m *Manager) rewrite() error {
 	if err != nil {
 		return fmt.Errorf("error opening history file: %w", err)
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	encoder := json.NewEncoder(file)
 	for _, entry := range m.entries {
@@ -215,7 +215,7 @@ func (m *Manager) appendEntry(entry Entry) error {
 	if err != nil {
 		return fmt.Errorf("error opening history file: %w", err)
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	if err := json.NewEncoder(file).Encode(entry); err != nil {
 		return fmt.Errorf("error appending history entry: %w", err)

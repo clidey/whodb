@@ -571,7 +571,7 @@ func (v *ChatView) View() string {
 		b.WriteString("\n\n")
 	}
 
-	providerLabel := "Provider:"
+	var providerLabel string
 	if v.focusField == focusFieldProvider {
 		providerLabel = styles.RenderKey("▶ Provider:")
 	} else {
@@ -591,7 +591,7 @@ func (v *ChatView) View() string {
 	}
 	b.WriteString("\n")
 
-	modelLabel := "Model:"
+	var modelLabel string
 	if v.focusField == focusFieldModel {
 		modelLabel = styles.RenderKey("▶ Model:")
 	} else {

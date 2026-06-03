@@ -1675,9 +1675,7 @@ func (v *ConnectionView) connect() tea.Cmd {
 		conn.SSHUser = v.inputs[fieldSSHUser].Value()
 		conn.SSHKeyFile = v.inputs[fieldSSHKeyFile].Value()
 		conn.SSHPassword = v.inputs[fieldSSHPassword].Value()
-		if portStr := v.inputs[fieldPort].Value(); portStr != "" {
-			// SSHPort defaults to 22 in the tunnel; leave 0 here to use that default
-		}
+		// SSHPort defaults to 22 in the tunnel; fieldPort value is unused here.
 	}
 
 	dbManager := v.parent.dbManager

@@ -382,7 +382,7 @@ func (v *BrowserView) View() string {
 
 	// Show schema selector
 	if len(v.schemas) > 0 {
-		schemaLabel := "Schema: "
+		var schemaLabel string
 		if v.schemaSelecting {
 			schemaLabel = styles.RenderKey("▶ Schema: ")
 		} else {
@@ -414,7 +414,7 @@ func (v *BrowserView) View() string {
 
 	// Show filter input if filtering or if there's a filter applied
 	if v.filtering || v.filterInput.Value() != "" {
-		filterLabel := "Filter: "
+		var filterLabel string
 		if v.filtering {
 			filterLabel = styles.RenderKey("Filter: ")
 		} else {
