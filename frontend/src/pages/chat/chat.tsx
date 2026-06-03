@@ -70,6 +70,7 @@ import {Loading} from "../../components/loading";
 import {InternalPage} from "../../components/page";
 import {StorageUnitTable} from "../../components/table";
 import {copyToClipboard} from "../../services/clipboard";
+import {MessageCopyAction} from "../../components/message-copy-action";
 import {extensions, featureFlags} from "../../config/features";
 import {InternalRoutes} from "../../config/routes";
 import {reduxStorePersistor} from "../../store";
@@ -958,7 +959,7 @@ export const ChatPage: FC = () => {
                                     {
                                         chats.map((chat, i) => {
                                             if (chat.Type === "message" || chat.Type === "text") {
-                                                return <div key={`chat-${chat.id}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative", {
+                                                return <div key={`chat-${chat.id}`} className={classNames("flex gap-lg overflow-hidden break-words leading-6 shrink-0 relative group/msg", {
                                                     "self-end ml-3": chat.isUserInput,
                                                     "self-start": !chat.isUserInput,
                                                 })} data-testid={chat.isUserInput ? "user-message" : "system-message"}>
@@ -966,20 +967,26 @@ export const ChatPage: FC = () => {
                                                         ? extensions.MetaIcon ?? <img src={logoImage} alt="clidey logo" className="w-auto h-8" />
                                                         : <div className="pl-4" />}
                                                     {chat.isUserInput ? (
-                                                        <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
-                                                            "animate-fade-in": chat.isStreaming,
-                                                        })} data-input-message="user">
-                                                            {chat.Text}
-                                                            {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
-                                                        </p>
-                                                    ) : (
-                                                        <div className={classNames("py-2 rounded-xl markdown-content", {
-                                                            "animate-fade-in": chat.isStreaming,
-                                                        })} data-input-message="system">
-                                                            <ReactMarkdown components={markdownComponents}>
+                                                        <div className="flex flex-col items-end">
+                                                            <p className={classNames("py-2 rounded-xl whitespace-pre-wrap bg-neutral-600/5 dark:bg-[#2C2F33] px-4", {
+                                                                "animate-fade-in": chat.isStreaming,
+                                                            })} data-input-message="user">
                                                                 {chat.Text}
-                                                            </ReactMarkdown>
-                                                            {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                                {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                            </p>
+                                                            <MessageCopyAction text={chat.Text} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col">
+                                                            <div className={classNames("py-2 rounded-xl markdown-content", {
+                                                                "animate-fade-in": chat.isStreaming,
+                                                            })} data-input-message="system">
+                                                                <ReactMarkdown components={markdownComponents}>
+                                                                    {chat.Text}
+                                                                </ReactMarkdown>
+                                                                {chat.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />}
+                                                            </div>
+                                                            {!chat.isStreaming && <MessageCopyAction text={chat.Text} />}
                                                         </div>
                                                     )}
                                                 </div>
