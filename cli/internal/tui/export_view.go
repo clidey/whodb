@@ -199,7 +199,8 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 			expIdx := v.exportButtonIndex()
 			cancelIdx := v.cancelButtonIndex()
 			owIdx := v.overwriteIndex()
-			if v.focusIndex == expIdx {
+			switch v.focusIndex {
+			case expIdx:
 				// Resolve and check overwrite
 				input := v.filenameInput.Value()
 				format := exportFormats[v.selectedFormat]
@@ -215,13 +216,13 @@ func (v *ExportView) Update(msg tea.Msg) (*ExportView, tea.Cmd) {
 					return v, nil
 				}
 				return v, v.performExport()
-			} else if v.focusIndex == cancelIdx {
+			case cancelIdx:
 				// Cancel button
 				if !v.parent.PopView() {
 					v.parent.mode = ViewResults
 				}
 				return v, nil
-			} else if v.focusIndex == owIdx {
+			case owIdx:
 				v.overwrite = !v.overwrite
 				return v, nil
 			}

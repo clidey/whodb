@@ -60,11 +60,12 @@ func (i connectionItem) Description() string {
 	}
 
 	desc := fmt.Sprintf("%s@%s", i.conn.Type, i.conn.Host)
-	if i.source == dbmgr.ConnectionSourceEnv {
+	switch i.source {
+	case dbmgr.ConnectionSourceEnv:
 		desc += " (env)"
-	} else if i.source == ConnectionSourceDocker {
+	case ConnectionSourceDocker:
 		desc += " (docker)"
-	} else if i.source == ConnectionSourceCloud {
+	case ConnectionSourceCloud:
 		desc += " (cloud)"
 	}
 	return desc
@@ -565,13 +566,14 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			return v, nil
 
 		case "left":
-			if v.focusIndex == focusDBType {
+			switch v.focusIndex {
+			case focusDBType:
 				v.dbTypeIndex--
 				if v.dbTypeIndex < 0 {
 					v.dbTypeIndex = len(v.dbTypes) - 1
 				}
 				v.onDbTypeChanged()
-			} else if v.focusIndex == focusSSLMode {
+			case focusSSLMode:
 				sslModes := v.sslModes()
 				if len(sslModes) > 0 {
 					v.sslModeIndex--
@@ -583,13 +585,14 @@ func (v *ConnectionView) updateForm(msg tea.Msg) (*ConnectionView, tea.Cmd) {
 			return v, nil
 
 		case "right":
-			if v.focusIndex == focusDBType {
+			switch v.focusIndex {
+			case focusDBType:
 				v.dbTypeIndex++
 				if v.dbTypeIndex >= len(v.dbTypes) {
 					v.dbTypeIndex = 0
 				}
 				v.onDbTypeChanged()
-			} else if v.focusIndex == focusSSLMode {
+			case focusSSLMode:
 				sslModes := v.sslModes()
 				if len(sslModes) > 0 {
 					v.sslModeIndex++
