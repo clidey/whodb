@@ -1066,26 +1066,25 @@ func (r *queryResolver) Health(ctx context.Context) (*model.HealthStatus, error)
 				healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 				defer cancel()
 
-				done := make(chan bool, 1)
+				result := make(chan string, 1)
 
 				go func() {
 					defer func() {
 						if r := recover(); r != nil {
 							log.Errorf("Panic during health check for source: %v", r)
-							status.Database = "error"
+							result <- "error"
 						}
-						done <- true
 					}()
 
 					if availability.IsAvailable(healthCtx) {
-						status.Database = "healthy"
+						result <- "healthy"
 					} else {
-						status.Database = "error"
+						result <- "error"
 					}
 				}()
 
 				select {
-				case <-done:
+				case status.Database = <-result:
 				case <-healthCtx.Done():
 					status.Database = "error"
 				}
