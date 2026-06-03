@@ -101,7 +101,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 			if conn != nil {
 				dbName = conn.Database
 			}
-			v.parent.histMgr.Add(msg.Query, false, dbName)
+			_ = v.parent.histMgr.Add(msg.Query, false, dbName)
 			v.resetGhostText()
 			return v, nil
 		}
@@ -110,7 +110,7 @@ func (v *EditorView) Update(msg tea.Msg) (*EditorView, tea.Cmd) {
 		if conn != nil {
 			dbName = conn.Database
 		}
-		v.parent.histMgr.Add(msg.Query, true, dbName)
+		_ = v.parent.histMgr.Add(msg.Query, true, dbName)
 		v.resetGhostText()
 		v.parent.resultsView.SetResults(msg.Result, msg.Query)
 		v.parent.PushView(ViewResults)
@@ -746,13 +746,13 @@ func (v *EditorView) openExternalEditor() tea.Cmd {
 
 	content := v.textarea.Value()
 	if _, err := tmpFile.WriteString(content); err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		os.Remove(tmpFile.Name())
 		return func() tea.Msg {
 			return externalEditorResultMsg{err: fmt.Errorf("failed to write temp file: %w", err)}
 		}
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 	tmpPath := tmpFile.Name()
 
 	c := exec.Command(editor, tmpPath)

@@ -228,7 +228,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		if v.selectedModel < len(v.models) {
 			v.parent.config.SetLastAIModel(v.models[v.selectedModel])
 		}
-		v.parent.config.Save()
+		_ = v.parent.config.Save()
 
 		// Auto-scroll to show latest messages
 		if len(v.messages) > maxVisibleMessages {
@@ -310,7 +310,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 		if v.selectedModel < len(v.models) {
 			v.parent.config.SetLastAIModel(v.models[v.selectedModel])
 		}
-		v.parent.config.Save()
+		_ = v.parent.config.Save()
 		if len(v.messages) > maxVisibleMessages {
 			v.scrollOffset = len(v.messages) - maxVisibleMessages
 		}
@@ -351,7 +351,7 @@ func (v *ChatView) Update(msg tea.Msg) (*ChatView, tea.Cmd) {
 					v.err = nil
 					if result.Save {
 						v.parent.config.SetPreferredTimeout(int(result.Timeout.Seconds()))
-						v.parent.config.Save()
+						_ = v.parent.config.Save()
 					}
 					return v, v.sendChatWithTimeout(v.retryPrompt.TimedOutQuery(), result.Timeout)
 				}

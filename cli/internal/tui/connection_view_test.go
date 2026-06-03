@@ -615,7 +615,7 @@ func TestConnectionView_WindowSizeMsg(t *testing.T) {
 	v.mode = "list"
 
 	msg := tea.WindowSizeMsg{Width: 100, Height: 50}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// List size should be updated (height - 8)
 	// Can't easily verify internal list state, but ensure no panic
@@ -637,7 +637,7 @@ func TestConnectionView_MouseScroll_List(t *testing.T) {
 
 	// Mouse wheel up
 	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// Just ensure no panic
 }

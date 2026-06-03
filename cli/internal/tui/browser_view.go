@@ -318,7 +318,7 @@ func (v *BrowserView) Update(msg tea.Msg) (*BrowserView, tea.Cmd) {
 					// Second press — actually disconnect
 					v.escConfirm = false
 					v.parent.mode = ViewConnection
-					v.parent.dbManager.Disconnect()
+					_ = v.parent.dbManager.Disconnect()
 					v.parent.activeLayout = ""
 					v.parent.layoutRoot = nil
 					v.parent.viewHistory = nil

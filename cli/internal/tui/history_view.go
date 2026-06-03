@@ -173,7 +173,7 @@ func (v *HistoryView) Update(msg tea.Msg) (*HistoryView, tea.Cmd) {
 		case msg.String() == "y" || msg.String() == "Y":
 			// Confirm clear if in confirmation mode
 			if v.confirmingClear {
-				v.parent.histMgr.Clear()
+				_ = v.parent.histMgr.Clear()
 				v.refreshList()
 				v.confirmingClear = false
 				return v, nil

@@ -1694,7 +1694,7 @@ func (v *ConnectionView) connect() tea.Cmd {
 		// Save connection if name is provided
 		if name != "" {
 			cfg.AddConnection(conn)
-			cfg.Save()
+			_ = cfg.Save()
 		}
 
 		return connectionResultMsg{

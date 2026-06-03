@@ -776,7 +776,7 @@ func TestResultsView_MouseScroll(t *testing.T) {
 
 	// Mouse wheel up
 	msg = tea.MouseMsg{Type: tea.MouseWheelUp}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// Just ensure no panic - table handles internal cursor state
 }
@@ -786,7 +786,7 @@ func TestResultsView_WindowSizeMsg(t *testing.T) {
 	defer cleanup()
 
 	msg := tea.WindowSizeMsg{Width: 120, Height: 40}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 
 	// Table dimensions should be adjusted (height - 20, width - 8)
 	// We can't easily verify internal table state, but ensure no panic

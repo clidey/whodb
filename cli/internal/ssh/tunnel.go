@@ -104,10 +104,10 @@ func (t *Tunnel) Stop() {
 	t.closeOnce.Do(func() {
 		close(t.done)
 		if t.listener != nil {
-			t.listener.Close()
+			_ = t.listener.Close()
 		}
 		if t.sshClient != nil {
-			t.sshClient.Close()
+			_ = t.sshClient.Close()
 		}
 	})
 }
@@ -141,7 +141,7 @@ func (t *Tunnel) acceptLoop() {
 func (t *Tunnel) forward(localConn net.Conn, remoteAddr string) {
 	remoteConn, err := t.sshClient.Dial("tcp", remoteAddr)
 	if err != nil {
-		localConn.Close()
+		_ = localConn.Close()
 		return
 	}
 
@@ -150,14 +150,14 @@ func (t *Tunnel) forward(localConn net.Conn, remoteAddr string) {
 
 	go func() {
 		defer wg.Done()
-		io.Copy(remoteConn, localConn)
-		remoteConn.Close()
+		_, _ = io.Copy(remoteConn, localConn)
+		_ = remoteConn.Close()
 	}()
 
 	go func() {
 		defer wg.Done()
-		io.Copy(localConn, remoteConn)
-		localConn.Close()
+		_, _ = io.Copy(localConn, remoteConn)
+		_ = localConn.Close()
 	}()
 
 	wg.Wait()

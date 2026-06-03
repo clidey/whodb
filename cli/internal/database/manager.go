@@ -1367,14 +1367,14 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 	// Write headers
 	for i, col := range result.Columns {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		f.SetCellValue(sheetName, cell, col.Name)
+		_ = f.SetCellValue(sheetName, cell, col.Name)
 	}
 
 	// Write rows
 	for rowIdx, row := range result.Rows {
 		for colIdx, value := range row {
 			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
-			f.SetCellValue(sheetName, cell, value)
+			_ = f.SetCellValue(sheetName, cell, value)
 		}
 	}
 
@@ -1387,7 +1387,7 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmp.Name()
-	tmp.Close()
+	_ = tmp.Close()
 	if err := f.SaveAs(tmpPath); err != nil {
 		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to save file: %w", err)
@@ -1493,14 +1493,14 @@ func (m *Manager) ExportResultsToExcel(result *engine.GetRowsResult, filename st
 	// Write headers
 	for i, col := range result.Columns {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		f.SetCellValue(sheetName, cell, col.Name)
+		_ = f.SetCellValue(sheetName, cell, col.Name)
 	}
 
 	// Write rows
 	for rowIdx, row := range result.Rows {
 		for colIdx, value := range row {
 			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
-			f.SetCellValue(sheetName, cell, value)
+			_ = f.SetCellValue(sheetName, cell, value)
 		}
 	}
 
@@ -1512,7 +1512,7 @@ func (m *Manager) ExportResultsToExcel(result *engine.GetRowsResult, filename st
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmp.Name()
-	tmp.Close()
+	_ = tmp.Close()
 	if err := f.SaveAs(tmpPath); err != nil {
 		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to save file: %w", err)

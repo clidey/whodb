@@ -170,7 +170,7 @@ func (v *ProfilesView) applySelected() (*ProfilesView, tea.Cmd) {
 	}
 
 	// Disconnect current database
-	v.parent.dbManager.Disconnect()
+	_ = v.parent.dbManager.Disconnect()
 	v.parent.activeLayout = ""
 	v.parent.layoutRoot = nil
 	v.parent.viewHistory = nil

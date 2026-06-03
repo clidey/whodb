@@ -238,19 +238,13 @@ func TestHistoryView_MouseScroll(t *testing.T) {
 	}
 	v.refreshList()
 
-	initialIndex := v.list.Index()
-
 	// Mouse wheel down
 	msg := tea.MouseMsg{Button: tea.MouseButtonWheelDown}
 	v, _ = v.Update(msg)
 
-	if v.list.Index() <= initialIndex {
-		// This might not change if already at end, but shouldn't error
-	}
-
 	// Mouse wheel up
 	msg = tea.MouseMsg{Button: tea.MouseButtonWheelUp}
-	v, _ = v.Update(msg)
+	_, _ = v.Update(msg)
 	// Just ensure no panic
 }
 
