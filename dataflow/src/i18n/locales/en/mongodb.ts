@@ -23,6 +23,7 @@ export const enMongodbMessages = {
   'mongodb.collection.deleteDocumentTitle': 'Delete Document',
   'mongodb.collection.deleteDocumentMessage':
     'Are you sure you want to delete this document? This action cannot be undone.',
+  'mongodb.view.selectorLabel': 'Collection view mode',
   'mongodb.view.table': 'Table View',
   'mongodb.view.json': 'JSON View',
   'mongodb.view.switchToTable': 'Switch to Table View',

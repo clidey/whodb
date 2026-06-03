@@ -1,0 +1,6 @@
+{
+  "files": ["dataflow/index.html"],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}
