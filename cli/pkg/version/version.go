@@ -56,11 +56,11 @@ func (i Info) String() string {
 	}
 
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("%s %s\n", name, i.Version))
-	b.WriteString(fmt.Sprintf("  Commit:     %s\n", i.Commit))
-	b.WriteString(fmt.Sprintf("  Built:      %s\n", i.BuildDate))
-	b.WriteString(fmt.Sprintf("  Go version: %s\n", i.GoVersion))
-	b.WriteString(fmt.Sprintf("  Platform:   %s", i.Platform))
+	fmt.Fprintf(&b, "%s %s\n", name, i.Version)
+	fmt.Fprintf(&b, "  Commit:     %s\n", i.Commit)
+	fmt.Fprintf(&b, "  Built:      %s\n", i.BuildDate)
+	fmt.Fprintf(&b, "  Go version: %s\n", i.GoVersion)
+	fmt.Fprintf(&b, "  Platform:   %s", i.Platform)
 	return b.String()
 }
 

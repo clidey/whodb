@@ -430,7 +430,7 @@ func (v *ImportView) renderPreviewTable() string {
 			if len(val) > 15 {
 				val = val[:14] + "…"
 			}
-			b.WriteString(fmt.Sprintf("%-15s", val))
+			fmt.Fprintf(&b, "%-15s", val)
 		}
 		b.WriteString("\n")
 	}
