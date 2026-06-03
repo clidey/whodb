@@ -21,6 +21,12 @@
       "sourceType": "github",
       "computedHash": "1f3e1f005fc40fda85d250ae906c8ee4f7e8e833e23adfeca6542c19609fd7cd"
     },
+    "review-new-work": {
+      "source": "aimeritething/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-new-work/SKILL.md",
+      "computedHash": "bbec7c9cf57c988356cfca5c814684be93507e3d2041696a97a7f63334055e23"
+    },
     "sealos-app-builder": {
       "source": "labring/seakills",
       "sourceType": "github",

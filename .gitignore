@@ -63,3 +63,5 @@ dataflow/.env
 .worktrees/
 
 .claude/
+
+.github/skills/
