@@ -68,7 +68,7 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
           <TooltipContent>{t('common.actions.refresh')}</TooltipContent>
         </Tooltip>
 
-        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+        <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -192,15 +192,13 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
           </TooltipTrigger>
           <TooltipContent>{t('analysis.chart.create')}</TooltipContent>
         </Tooltip>
-
-        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
-
+      </div>
+      <div className="flex items-center gap-2">
         <CollectionViewModeSwitch
           currentMode={state.viewMode}
           onSelect={actions.setViewMode}
         />
-      </div>
-      <div className="flex items-center gap-2">
+        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
         <DataView.FilterButton
           onClick={() => actions.setIsFilterModalOpen(true)}
           count={Object.keys(state.activeFilter).length}
@@ -254,7 +252,7 @@ function CollectionViewModeSwitch({ currentMode, onSelect }: CollectionViewModeS
 
   return (
     <div
-      className="relative inline-grid h-9 w-[72px] grid-cols-2 items-center overflow-hidden rounded-md border border-accent bg-background"
+      className="relative inline-grid h-9 w-[74px] grid-cols-2 items-center overflow-hidden rounded-lg border border-accent"
       role="group"
       aria-label={t('mongodb.view.selectorLabel')}
       data-testid="mongodb.collection.view-mode-buttons"
@@ -266,8 +264,7 @@ function CollectionViewModeSwitch({ currentMode, onSelect }: CollectionViewModeS
         aria-hidden="true"
         style={{ transform: currentMode === 'json' ? 'translateX(36px)' : 'translateX(0)' }}
         className={cn(
-          'pointer-events-none absolute -left-px -top-px h-[calc(100%+2px)] w-[37px] rounded-l-[inherit] bg-accent transition-[transform,border-radius] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
-          currentMode === 'json' && 'rounded-l-none rounded-r-[inherit]',
+          'pointer-events-none absolute left-0 top-0 h-full w-9 rounded-[7px] bg-accent shadow-xs transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
         )}
       />
       <CollectionViewModeButton
@@ -317,8 +314,8 @@ function CollectionViewModeButton({ mode, currentMode, ariaLabel, tooltip, onSel
           data-qa-action={`switch-to-${mode}`}
           data-qa-state={active ? 'active' : 'inactive'}
           className={cn(
-            'relative z-10 size-9 rounded-md text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground',
-            active && 'text-foreground hover:text-foreground',
+            'relative z-10 h-8 w-9 rounded-md text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground',
+            active && 'text-primary hover:text-primary',
           )}
         >
           <Icon className="h-4 w-4" />
