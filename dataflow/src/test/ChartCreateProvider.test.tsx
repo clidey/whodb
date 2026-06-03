@@ -1,10 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { useEffect } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_CHART_CONFIG } from '@/components/analysis/chart-utils'
 import { ChartCreateProvider, useChartCreateCtx } from '@/components/analysis/chart-create/ChartCreateProvider'
 import { useAnalysisDefinitionStore } from '@/stores/analysisDefinitionStore'
+import { renderWithI18n } from '@/test/renderWithI18n'
 
 const addWidget = vi.fn()
 
@@ -61,10 +62,11 @@ describe('ChartCreateProvider', () => {
   it('builds visualization and snapshot payloads on save', async () => {
     const onClose = vi.fn()
 
-    render(
+    renderWithI18n(
       <ChartCreateProvider onClose={onClose}>
         <SaveHarness />
       </ChartCreateProvider>,
+      'en',
     )
 
     fireEvent.click(screen.getByText('save'))

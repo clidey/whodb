@@ -48,6 +48,18 @@ _Avoid_: document table mode, field-level editor
 A database exploration surface tied to a query or a storage unit.
 _Avoid_: browser tab, panel
 
+**Database Workspace**:
+The workbench area where users explore connections, queries, and storage-unit **Workspace Tabs**.
+_Avoid_: connections tab, sidebar mode
+
+**Dashboard Workspace**:
+The dashboard area where users view and edit analysis dashboards.
+_Avoid_: analysis tab, chart sidebar
+
+**Workspace Tab Leave Guard**:
+A confirmation step shown before an action would discard unsaved database edits by closing a **Workspace Tab**, closing or refreshing the browser page, or switching from the database workspace to the dashboard.
+_Avoid_: route guard, ordinary tab switch blocker, dirty tab blocker
+
 **Sidebar Focus**:
 The sidebar tree item that represents the active **Workspace Tab**'s closest database context.
 _Avoid_: hover state, keyboard focus
@@ -70,9 +82,23 @@ _Avoid_: expand all, jump to item
 - A **Field JSON Editor** accepts any valid JSON value, even when that changes an object or array field into a scalar or `null`.
 - A **MongoDB Document** is edited through a **Document JSON Editor**.
 - A **Complex Document Field** is not edited through a separate field-level interaction inside the **Document JSON Editor**.
+- The **Database Workspace** contains zero or more **Workspace Tabs**.
+- The **Dashboard Workspace** is separate from the **Database Workspace**.
 - A **Workspace Tab** has zero or one **Sidebar Focus**.
 - A storage-unit **Workspace Tab** focuses its table, view, collection, or Redis key.
 - A query **Workspace Tab** focuses the schema, database, or connection, whichever is most specific.
+- A **Workspace Tab Leave Guard** protects unsaved edits in SQL table and MongoDB collection **Workspace Tabs**.
+- A **Workspace Tab Leave Guard** does not apply to switching between open **Workspace Tabs**.
+- A **Workspace Tab Leave Guard** applies when a protected **Workspace Tab** would be closed, the browser page would close or refresh, or the **Database Workspace** would be replaced by the **Dashboard Workspace**.
+- A **Workspace Tab Leave Guard** does not submit database edits; users submit edits through the storage unit's normal review and apply flow before leaving.
+- A **Workspace Tab Leave Guard** protects unsaved database edits, not unsaved query text.
+- A **Workspace Tab Leave Guard** protects storage-unit data edits, not SQL table-structure edits made in a modal.
+- A **Workspace Tab Leave Guard** is triggered by unsaved database edits only, even when a **Workspace Tab** also has unsaved query text.
+- A **Workspace Tab** indicates when it has unsaved database edits, even though ordinary switching between open **Workspace Tabs** remains allowed.
+- A protected **Workspace Tab** owns how its unsaved database edits are discarded; the **Workspace Tab Leave Guard** only coordinates the confirmed discard before continuing the leave action.
+- A **Workspace Tab Leave Guard** shows one summary confirmation when one action would close multiple protected **Workspace Tabs** or switch away from the database workspace while multiple protected **Workspace Tabs** have unsaved edits.
+- Confirming a **Workspace Tab Leave Guard** discards the protected **Workspace Tab**'s unsaved database edits before the leave action continues.
+- A **Workspace Tab Leave Guard** does not apply when returning from the **Dashboard Workspace** to the **Database Workspace**.
 - A **Sidebar Reveal** expands collapsed ancestors of the **Sidebar Focus** and scrolls the focus into view.
 
 ## Example Dialogue
@@ -85,6 +111,9 @@ _Avoid_: expand all, jump to item
 >
 > **Dev:** "If that focus is hidden under a collapsed folder or outside the visible sidebar area, should we leave the tree as-is?"
 > **Domain expert:** "No. Use **Sidebar Reveal** so the focused item is visible without expanding unrelated branches."
+>
+> **Dev:** "If a user edits rows in one **Workspace Tab** and clicks another open tab, should we block the switch?"
+> **Domain expert:** "No. Keep the edits in their original **Workspace Tab** and allow ordinary tab switching. Use the **Workspace Tab Leave Guard** only when edits would be discarded by closing the tab, closing or refreshing the browser page, or switching to the dashboard."
 
 ## Flagged Ambiguities
 
@@ -94,6 +123,7 @@ _Avoid_: expand all, jump to item
 - The document editor should be a **Document JSON Editor**, not a table view, field list, or field-level editor.
 - "focus" in the sidebar means **Sidebar Focus**, not hover state or keyboard focus.
 - "auto expand" in the sidebar means **Sidebar Reveal**, not expanding every folder in the tree.
+- "leave protection" means **Workspace Tab Leave Guard**, not only the browser's refresh or close-page warning.
 - The **Collection Table View** is the default MongoDB collection view.
 - The **Collection Table View** should build its first column set from a limited default sample, not by scanning the full collection.
 - The **Collection Table View** supports sorting and filtering on top-level document fields.

@@ -2,11 +2,14 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useLayoutStore } from "@/stores/useLayoutStore";
+import { useTabStore } from "@/stores/useTabStore";
 
 import { ActivityBar } from "./ActivityBar";
 import { AnalysisView } from "../analysis/AnalysisView";
 import { TabBar } from "./TabBar";
 import { TabContent } from "./TabContent";
+import { useWorkspaceTabLeaveGuard } from "./useWorkspaceTabLeaveGuard";
+import type { ActivityTab } from "@/stores/useLayoutStore";
 
 const SIDEBAR_MIN_WIDTH = 180;
 const SIDEBAR_MAX_WIDTH = 480;
@@ -15,6 +18,8 @@ const SIDEBAR_DEFAULT_WIDTH = 256;
 export function MainLayout() {
     const activeTab = useLayoutStore(state => state.activeTab);
     const setActiveTab = useLayoutStore(state => state.setActiveTab);
+    const tabs = useTabStore(state => state.tabs);
+    const { runWithWorkspaceTabLeaveGuard, leaveGuardDialog } = useWorkspaceTabLeaveGuard();
     const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
     const isResizing = useRef(false);
 
@@ -48,6 +53,18 @@ export function MainLayout() {
         };
     }, []);
 
+    const handleActivityTabChange = useCallback((nextTab: ActivityTab) => {
+        if (activeTab === 'connections' && nextTab === 'analysis') {
+            runWithWorkspaceTabLeaveGuard({
+                candidateTabs: tabs,
+                run: () => setActiveTab(nextTab),
+            });
+            return;
+        }
+
+        setActiveTab(nextTab);
+    }, [activeTab, runWithWorkspaceTabLeaveGuard, setActiveTab, tabs]);
+
     return (
         <div
             className="flex h-screen w-full overflow-hidden bg-background"
@@ -56,7 +73,7 @@ export function MainLayout() {
             data-qa-object="app-shell"
             data-qa-state={activeTab}
         >
-            <ActivityBar activeTab={activeTab} onTabChange={setActiveTab} />
+            <ActivityBar activeTab={activeTab} onTabChange={handleActivityTabChange} />
 
             <div
                 className="relative shrink-0"
@@ -94,6 +111,7 @@ export function MainLayout() {
                 ) : null}
 
             </main>
+            {leaveGuardDialog}
         </div>
     );
 }

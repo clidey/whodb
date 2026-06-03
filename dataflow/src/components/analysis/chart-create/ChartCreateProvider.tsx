@@ -4,6 +4,8 @@ import { useAnalysisDefinitionStore, type DashboardDefinition, type ChartWidgetD
 import { useAnalysisRuntimeStore } from '@/stores/analysisRuntimeStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useLayoutStore } from '@/stores/useLayoutStore'
+import { useTabStore } from '@/stores/useTabStore'
+import { useWorkspaceTabLeaveGuard } from '@/components/layout/useWorkspaceTabLeaveGuard'
 import {
     DEFAULT_CHART_CONFIG,
     buildEChartsOption,
@@ -107,6 +109,8 @@ export function ChartCreateProvider({ editComponent, initialQuery, initialData, 
     const initializeFromAPI = useAnalysisDefinitionStore(state => state.initializeFromAPI)
     const openDashboard = useAnalysisDefinitionStore(state => state.openDashboard)
     const { connections } = useConnectionStore()
+    const tabs = useTabStore(state => state.tabs)
+    const { confirmWorkspaceTabLeave, leaveGuardDialog } = useWorkspaceTabLeaveGuard()
 
     useEffect(() => {
         if (!isInitialized) void initializeFromAPI()
@@ -198,6 +202,11 @@ export function ChartCreateProvider({ editComponent, initialQuery, initialData, 
     const handleSave = useCallback(async () => {
         if (!queryData || !title.trim()) return
 
+        if (!editComponent && initialData) {
+            const confirmed = await confirmWorkspaceTabLeave(tabs)
+            if (!confirmed) return
+        }
+
         const { config, data } = toWidgetConfig(chartConfig, queryData)
         const executedAt = new Date().toISOString()
         const payload = {
@@ -254,7 +263,22 @@ export function ChartCreateProvider({ editComponent, initialQuery, initialData, 
             openDashboard(targetId)
             useLayoutStore.getState().setActiveTab('analysis')
         }
-    }, [queryData, title, chartConfig, addWidget, updateWidget, editComponent, effectiveDashboardId, dashboards, onClose, initialData, openDashboard])
+    }, [
+        queryData,
+        title,
+        editComponent,
+        initialData,
+        chartConfig,
+        updateWidget,
+        effectiveDashboardId,
+        confirmWorkspaceTabLeave,
+        tabs,
+        createDashboard,
+        dashboards,
+        addWidget,
+        onClose,
+        openDashboard,
+    ])
 
     return (
         <ChartCreateCtx value={{
@@ -278,6 +302,7 @@ export function ChartCreateProvider({ editComponent, initialQuery, initialData, 
             handleSave,
         }}>
             {children}
+            {leaveGuardDialog}
         </ChartCreateCtx>
     )
 }

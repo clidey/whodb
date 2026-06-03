@@ -17,4 +17,6 @@ export const enLayoutMessages = {
   'layout.tab.closeOthers': 'Close Others',
   'layout.tab.closeAll': 'Close All',
   'layout.tab.newQuery': 'New Query',
+  'layout.leaveGuard.title': 'Discard unsaved database edits?',
+  'layout.leaveGuard.message': '{count} tab(s) have unsaved database edits. Discard them and continue?',
 } satisfies MessageShape<typeof zhLayoutMessages>

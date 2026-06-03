@@ -14,15 +14,25 @@ export interface Tab {
   storageUnitType?: 'table' | 'view';
   collectionName?: string;
   isDirty?: boolean;
+  /** Whether this tab has pending SQL row edits or MongoDB document edits. */
+  hasUnsavedDatabaseEdits?: boolean;
+  /** Number of pending SQL row edits or MongoDB document edits in this tab. */
+  unsavedDatabaseEditCount?: number;
 }
+
+type DatabaseEditDiscarder = () => void;
 
 interface TabState {
   tabs: Tab[];
   activeTabId: string | null;
+  databaseEditDiscarders: Record<string, DatabaseEditDiscarder>;
   openTab: (tab: Omit<Tab, 'id'> & { id?: string }) => string;
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   updateTab: (tabId: string, updates: Partial<Tab>) => void;
+  setTabUnsavedDatabaseEdits: (tabId: string, count: number) => void;
+  registerDatabaseEditDiscarder: (tabId: string, discarder: DatabaseEditDiscarder | null) => void;
+  discardUnsavedDatabaseEdits: (tabIds: string[]) => void;
   findExistingTab: (
     type: TabType,
     connectionId: string,
@@ -41,6 +51,7 @@ function generateTabId(): string {
 export const useTabStore = create<TabState>((set, get) => ({
   tabs: [],
   activeTabId: null,
+  databaseEditDiscarders: {},
 
   findExistingTab: (type, connectionId, identifier, databaseName, storageUnitType) => {
     return get().tabs.find((tab) => {
@@ -86,6 +97,7 @@ export const useTabStore = create<TabState>((set, get) => ({
       const index = state.tabs.findIndex((t) => t.id === tabId);
       const newTabs = state.tabs.filter((t) => t.id !== tabId);
       let newActiveTabId = state.activeTabId;
+      const { [tabId]: _discarder, ...databaseEditDiscarders } = state.databaseEditDiscarders;
 
       if (state.activeTabId === tabId) {
         if (newTabs.length > 0) {
@@ -96,7 +108,7 @@ export const useTabStore = create<TabState>((set, get) => ({
         }
       }
 
-      return { tabs: newTabs, activeTabId: newActiveTabId };
+      return { tabs: newTabs, activeTabId: newActiveTabId, databaseEditDiscarders };
     });
   },
 
@@ -108,13 +120,60 @@ export const useTabStore = create<TabState>((set, get) => ({
     }));
   },
 
+  setTabUnsavedDatabaseEdits: (tabId, count) => {
+    set((state) => ({
+      tabs: state.tabs.map((tab) => {
+        if (tab.id !== tabId) return tab;
+        return {
+          ...tab,
+          hasUnsavedDatabaseEdits: count > 0,
+          unsavedDatabaseEditCount: count > 0 ? count : undefined,
+        };
+      }),
+    }));
+  },
+
+  registerDatabaseEditDiscarder: (tabId, discarder) => {
+    set((state) => {
+      if (!discarder) {
+        const { [tabId]: _discarder, ...databaseEditDiscarders } = state.databaseEditDiscarders;
+        return { databaseEditDiscarders };
+      }
+
+      return {
+        databaseEditDiscarders: {
+          ...state.databaseEditDiscarders,
+          [tabId]: discarder,
+        },
+      };
+    });
+  },
+
+  discardUnsavedDatabaseEdits: (tabIds) => {
+    const { databaseEditDiscarders } = get();
+    tabIds.forEach((tabId) => databaseEditDiscarders[tabId]?.());
+
+    set((state) => ({
+      tabs: state.tabs.map((tab) => (
+        tabIds.includes(tab.id)
+          ? { ...tab, hasUnsavedDatabaseEdits: false, unsavedDatabaseEditCount: undefined }
+          : tab
+      )),
+    }));
+  },
+
   closeOtherTabs: (tabId) => {
     set((state) => {
       const tabToKeep = state.tabs.find((t) => t.id === tabId);
       if (!tabToKeep) return state;
-      return { tabs: [tabToKeep], activeTabId: tabId };
+      const discarder = state.databaseEditDiscarders[tabId];
+      return {
+        tabs: [tabToKeep],
+        activeTabId: tabId,
+        databaseEditDiscarders: discarder ? { [tabId]: discarder } : {},
+      };
     });
   },
 
-  closeAllTabs: () => set({ tabs: [], activeTabId: null }),
+  closeAllTabs: () => set({ tabs: [], activeTabId: null, databaseEditDiscarders: {} }),
 }));

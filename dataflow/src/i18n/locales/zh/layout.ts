@@ -11,4 +11,6 @@ export const zhLayoutMessages = {
   'layout.tab.closeOthers': '关闭其他标签页',
   'layout.tab.closeAll': '关闭所有标签页',
   'layout.tab.newQuery': '新建查询',
+  'layout.leaveGuard.title': '丢弃未保存的数据库编辑？',
+  'layout.leaveGuard.message': '{count} 个标签页有未保存的数据库编辑。要丢弃并继续吗？',
 } as const

@@ -1,5 +1,6 @@
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useConnectionStore } from '@/stores/useConnectionStore'
+import { useTabStore } from '@/stores/useTabStore'
 import {
   SortDirection,
   useGetStorageUnitRowsLazyQuery,
@@ -27,6 +28,7 @@ export function useCollectionView(): CollectionViewContextValue {
 }
 
 interface CollectionViewProviderProps {
+  tabId: string
   connectionId: string
   databaseName: string
   collectionName: string
@@ -34,9 +36,11 @@ interface CollectionViewProviderProps {
 }
 
 /** Provider that owns all CollectionDetailView state, GraphQL operations, and handlers. */
-export function CollectionViewProvider({ connectionId, databaseName, collectionName, children }: CollectionViewProviderProps) {
+export function CollectionViewProvider({ tabId, connectionId, databaseName, collectionName, children }: CollectionViewProviderProps) {
   const { t } = useI18n()
   const { connections, collectionRefreshKey } = useConnectionStore()
+  const setTabUnsavedDatabaseEdits = useTabStore((state) => state.setTabUnsavedDatabaseEdits)
+  const registerDatabaseEditDiscarder = useTabStore((state) => state.registerDatabaseEditDiscarder)
 
   // ---- GraphQL hooks ----
   const [getRows] = useGetStorageUnitRowsLazyQuery({ fetchPolicy: 'no-cache' })
@@ -97,6 +101,15 @@ export function CollectionViewProvider({ connectionId, databaseName, collectionN
 
   // ---- Discard guard ----
   const pendingReloadActionRef = useRef<null | (() => void)>(null)
+
+  useEffect(() => {
+    registerDatabaseEditDiscarder(tabId, changesetActions.discardChanges)
+    return () => registerDatabaseEditDiscarder(tabId, null)
+  }, [changesetActions.discardChanges, registerDatabaseEditDiscarder, tabId])
+
+  useEffect(() => {
+    setTabUnsavedDatabaseEdits(tabId, changesetState.pendingChangeCount)
+  }, [changesetState.pendingChangeCount, setTabUnsavedDatabaseEdits, tabId])
 
   const runWithDiscardGuard = useCallback((action: () => void) => {
     if (!changesetState.hasPendingChanges) {

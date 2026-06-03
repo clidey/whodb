@@ -58,6 +58,7 @@ export function TabContent() {
                 return (
                     <TableDetailView
                         key={tab.id}
+                        tabId={tab.id}
                         connectionId={tab.connectionId}
                         databaseName={tab.databaseName}
                         tableName={tab.tableName}
@@ -71,6 +72,7 @@ export function TabContent() {
                 return (
                     <CollectionDetailView
                         key={tab.id}
+                        tabId={tab.id}
                         connectionId={tab.connectionId}
                         databaseName={tab.databaseName}
                         collectionName={tab.collectionName}

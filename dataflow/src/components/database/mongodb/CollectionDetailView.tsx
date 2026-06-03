@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useI18n } from '@/i18n/useI18n'
 
 interface CollectionDetailViewProps {
+  tabId: string
   connectionId: string
   databaseName: string
   collectionName: string

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useI18n } from '@/i18n/useI18n';
+import { useWorkspaceTabLeaveGuard } from './useWorkspaceTabLeaveGuard';
 
 function getTabIcon(type: TabType) {
     switch (type) {
@@ -31,6 +32,8 @@ interface TabItemProps {
 }
 
 function TabItem({ tab, isActive, onActivate, onClose, onContextMenu, closeTitle }: TabItemProps) {
+    const isDirty = tab.isDirty || tab.hasUnsavedDatabaseEdits;
+
     return (
         <div
             onClick={onActivate}
@@ -39,7 +42,7 @@ function TabItem({ tab, isActive, onActivate, onClose, onContextMenu, closeTitle
             data-qa-module="layout"
             data-qa-object="tab"
             data-qa-action="activate"
-            data-qa-state={[isActive ? 'active' : 'inactive', tab.isDirty ? 'dirty' : null].filter(Boolean).join(' ')}
+            data-qa-state={[isActive ? 'active' : 'inactive', isDirty ? 'dirty' : null].filter(Boolean).join(' ')}
             data-qa-resource-type="tab"
             data-qa-resource-id={tab.id}
             data-qa-tab-type={tab.type}
@@ -58,7 +61,7 @@ function TabItem({ tab, isActive, onActivate, onClose, onContextMenu, closeTitle
             </span>
             <span className="truncate text-sm font-normal whitespace-nowrap">
                 {tab.title}
-                {tab.isDirty && <span className="text-primary ml-1">•</span>}
+                {isDirty && <span className="text-primary ml-1">•</span>}
             </span>
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -91,6 +94,7 @@ function TabItem({ tab, isActive, onActivate, onClose, onContextMenu, closeTitle
 export function TabBar() {
     const { tabs, activeTabId, setActiveTab, closeTab, closeOtherTabs, closeAllTabs, openTab } = useTabStore();
     const { t } = useI18n();
+    const { runWithWorkspaceTabLeaveGuard, leaveGuardDialog } = useWorkspaceTabLeaveGuard();
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
 
     if (tabs.length === 0) {
@@ -99,7 +103,13 @@ export function TabBar() {
 
     const handleClose = (e: React.MouseEvent, tabId: string) => {
         e.stopPropagation();
-        closeTab(tabId);
+        const tab = tabs.find((item) => item.id === tabId);
+        if (!tab) return;
+
+        runWithWorkspaceTabLeaveGuard({
+            candidateTabs: [tab],
+            run: () => closeTab(tabId),
+        });
     };
 
     const handleContextMenu = (e: React.MouseEvent, tabId: string) => {
@@ -111,14 +121,28 @@ export function TabBar() {
         if (!contextMenu) return;
 
         switch (action) {
-            case 'close':
-                closeTab(contextMenu.tabId);
+            case 'close': {
+                const tab = tabs.find((item) => item.id === contextMenu.tabId);
+                if (!tab) break;
+                runWithWorkspaceTabLeaveGuard({
+                    candidateTabs: [tab],
+                    run: () => closeTab(contextMenu.tabId),
+                });
                 break;
-            case 'closeOthers':
-                closeOtherTabs(contextMenu.tabId);
+            }
+            case 'closeOthers': {
+                const tabsToClose = tabs.filter((tab) => tab.id !== contextMenu.tabId);
+                runWithWorkspaceTabLeaveGuard({
+                    candidateTabs: tabsToClose,
+                    run: () => closeOtherTabs(contextMenu.tabId),
+                });
                 break;
+            }
             case 'closeAll':
-                closeAllTabs();
+                runWithWorkspaceTabLeaveGuard({
+                    candidateTabs: tabs,
+                    run: closeAllTabs,
+                });
                 break;
         }
         setContextMenu(null);
@@ -203,6 +227,7 @@ export function TabBar() {
                     ]}
                 />
             )}
+            {leaveGuardDialog}
         </ScrollArea>
     );
 }

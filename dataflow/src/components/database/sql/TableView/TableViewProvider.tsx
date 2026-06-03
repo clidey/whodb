@@ -2,6 +2,7 @@ import { createContext, use, useCallback, useEffect, useRef, useState, type Reac
 import { useChangesetManager } from './useChangesetManager'
 import { useDataQuery } from './useDataQuery'
 import { useColumnResize } from '@/components/database/shared/useColumnResize'
+import { useTabStore } from '@/stores/useTabStore'
 import type { TableViewContextValue, TableViewState, TableViewActions, FilterCondition } from './types'
 import type { Alert } from '@/components/database/shared/types'
 
@@ -27,6 +28,7 @@ export function simplifyColumnType(typeStr: string): string {
 }
 
 interface TableViewProviderProps {
+  tabId: string
   connectionId: string
   databaseName: string
   tableName: string
@@ -35,7 +37,10 @@ interface TableViewProviderProps {
 }
 
 /** Provider that owns all TableDetailView state, GraphQL operations, and handlers. */
-export function TableViewProvider({ connectionId, databaseName, tableName, schema, children }: TableViewProviderProps) {
+export function TableViewProvider({ tabId, connectionId, databaseName, tableName, schema, children }: TableViewProviderProps) {
+  const setTabUnsavedDatabaseEdits = useTabStore((state) => state.setTabUnsavedDatabaseEdits)
+  const registerDatabaseEditDiscarder = useTabStore((state) => state.registerDatabaseEditDiscarder)
+
   // ---- UI state ----
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
@@ -106,6 +111,15 @@ export function TableViewProvider({ connectionId, databaseName, tableName, schem
   })
 
   const pendingReloadActionRef = useRef<null | (() => void)>(null)
+
+  useEffect(() => {
+    registerDatabaseEditDiscarder(tabId, changesetActions.discardChanges)
+    return () => registerDatabaseEditDiscarder(tabId, null)
+  }, [changesetActions.discardChanges, registerDatabaseEditDiscarder, tabId])
+
+  useEffect(() => {
+    setTabUnsavedDatabaseEdits(tabId, changesetState.pendingChangeCount)
+  }, [changesetState.pendingChangeCount, setTabUnsavedDatabaseEdits, tabId])
 
   const runWithDiscardGuard = useCallback((action: () => void) => {
     if (!changesetState.hasPendingChanges) {
