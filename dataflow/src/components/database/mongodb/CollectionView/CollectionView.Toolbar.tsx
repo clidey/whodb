@@ -252,7 +252,7 @@ function CollectionViewModeSwitch({ currentMode, onSelect }: CollectionViewModeS
 
   return (
     <div
-      className="relative inline-grid h-9 w-[74px] grid-cols-2 items-center overflow-hidden rounded-lg border border-accent"
+      className="relative inline-grid h-9 w-[74px] grid-cols-2 items-center overflow-hidden rounded-lg border border-accent bg-accent"
       role="group"
       aria-label={t('mongodb.view.selectorLabel')}
       data-testid="mongodb.collection.view-mode-buttons"
@@ -264,7 +264,7 @@ function CollectionViewModeSwitch({ currentMode, onSelect }: CollectionViewModeS
         aria-hidden="true"
         style={{ transform: currentMode === 'json' ? 'translateX(36px)' : 'translateX(0)' }}
         className={cn(
-          'pointer-events-none absolute left-0 top-0 h-full w-9 rounded-[7px] bg-accent shadow-xs transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
+          'pointer-events-none absolute left-0.5 top-0.5 h-[30px] w-8 rounded-md bg-background shadow-[0_1px_2px_oklch(0.145_0_0_/_0.1),0_3px_8px_oklch(0.145_0_0_/_0.05)] ring-1 ring-border/60 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
         )}
       />
       <CollectionViewModeButton
