@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useEffect, useReducer } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useReducer } from "react";
 
 import { useConnectionStore } from "@/stores/useConnectionStore";
-import { useTabStore } from "@/stores/useTabStore";
+import { useTabStore, type Tab } from "@/stores/useTabStore";
 import { ContextMenu } from "../ui/ContextMenu";
 import type { Alert } from "@/components/ui/types";
 
@@ -23,6 +23,21 @@ import {
 import { SidebarModals } from "./SidebarModals";
 import { useI18n } from "@/i18n/useI18n";
 import { getSidebarSelectionForTab } from "./sidebar-selection";
+
+function getSidebarFocusKey(tab: Tab | null): string {
+  if (!tab) return "no-active-tab";
+
+  return JSON.stringify([
+    tab.id,
+    tab.type,
+    tab.connectionId,
+    tab.databaseName ?? null,
+    tab.schemaName ?? null,
+    tab.tableName ?? null,
+    tab.storageUnitType ?? null,
+    tab.collectionName ?? null,
+  ]);
+}
 
 // ── Modal reducer (inlined from former useSidebarModals) ────────────
 
@@ -93,14 +108,22 @@ function SidebarInner() {
     node: TreeNodeData;
   } | null>(null);
 
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? null;
+  const sidebarFocusKey = getSidebarFocusKey(activeTab);
+  const sidebarSelection = useMemo(
+    () => getSidebarSelectionForTab(activeTab, connections),
+    // Ignore title/sqlContent/isDirty changes; they do not affect sidebar focus.
+    [connections, sidebarFocusKey],
+  );
+
   useEffect(() => {
-    const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? null;
-    const selection = getSidebarSelectionForTab(activeTab, connections);
-    selectItem(selection);
-    if (selection) {
-      revealNode(selection);
+    selectItem(sidebarSelection);
+    if (sidebarSelection) {
+      void revealNode(sidebarSelection).catch((error) => {
+        console.error("Failed to reveal sidebar selection:", sidebarSelection.id, error);
+      });
     }
-  }, [activeTabId, connections, revealNode, selectItem, tabs]);
+  }, [revealNode, selectItem, sidebarSelection]);
 
   const handleItemClick = useCallback(
     async (node: TreeNodeData) => {
