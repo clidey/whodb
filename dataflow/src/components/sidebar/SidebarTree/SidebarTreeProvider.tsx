@@ -3,6 +3,7 @@ import { useConnectionStore } from "@/stores/useConnectionStore";
 import { useI18n } from "@/i18n/useI18n";
 import type { TreeNodeData, NodeType } from "./types";
 import { connectionToNode } from "./types";
+import { getSidebarRevealAncestors } from "../sidebar-selection";
 
 const STORAGE_KEY = "sidebar_expanded_items";
 
@@ -14,6 +15,7 @@ interface SidebarTreeContextValue {
   fetchNodeChildren: (node: TreeNodeData) => Promise<TreeNodeData[]>;
   refreshNode: (node: TreeNodeData) => Promise<void>;
   collapseNode: (nodeId: string) => void;
+  revealNode: (node: TreeNodeData) => Promise<void>;
 }
 
 const SidebarTreeContext = createContext<SidebarTreeContextValue | null>(null);
@@ -36,6 +38,11 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [isRestoring, setIsRestoring] = useState(true);
   const hasRestored = useRef(false);
+  const treeDataRef = useRef(treeData);
+
+  useEffect(() => {
+    treeDataRef.current = treeData;
+  }, [treeData]);
 
   // Persist expanded items to localStorage
   useEffect(() => {
@@ -262,6 +269,49 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
     });
   }, []);
 
+  /** Expand the collapsed ancestors needed to render a focused node. */
+  const revealNode = useCallback(
+    async (node: TreeNodeData) => {
+      const ancestors = getSidebarRevealAncestors(node, connections, {
+        redisKeysFolder: t("sidebar.redis.keysFolder"),
+        tablesFolder: t("sidebar.tree.tables"),
+        viewsFolder: t("sidebar.tree.views"),
+      });
+      const fetchedTreeData: Record<string, TreeNodeData[]> = {};
+      const knownTreeData = { ...treeDataRef.current };
+
+      for (const ancestor of ancestors) {
+        const shouldFetch =
+          !knownTreeData[ancestor.id] ||
+          ancestor.type === "database" ||
+          ancestor.type === "redis_keys_folder";
+        if (!shouldFetch) continue;
+
+        setIsLoading((prev) => ({ ...prev, [ancestor.id]: true }));
+        try {
+          const children = await buildChildren(ancestor);
+          fetchedTreeData[ancestor.id] = children;
+          knownTreeData[ancestor.id] = children;
+        } catch (error) {
+          console.error("Failed to reveal node:", node.id, error);
+          throw error;
+        } finally {
+          setIsLoading((prev) => ({ ...prev, [ancestor.id]: false }));
+        }
+      }
+
+      setTreeData((prev) => ({ ...prev, ...fetchedTreeData }));
+      setExpandedItems((prev) => {
+        const next = new Set(prev);
+        for (const ancestor of ancestors) {
+          next.add(ancestor.id);
+        }
+        return next;
+      });
+    },
+    [buildChildren, connections, t],
+  );
+
   // Restore expanded state from localStorage on mount (runs once)
   // Waits for systemSchemas to load first so filtering is applied correctly
   useEffect(() => {
@@ -334,6 +384,7 @@ export function SidebarTreeProvider({ children }: { children: React.ReactNode })
     fetchNodeChildren,
     refreshNode,
     collapseNode,
+    revealNode,
   };
 
   return (

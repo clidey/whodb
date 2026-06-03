@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, Plus, Minus, Undo2, Eye, SendHorizontal, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useCollectionView } from './CollectionViewProvider'
+import type { MongoCollectionViewMode } from './types'
 import { DataView } from '@/components/database/shared/DataView'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -23,8 +24,6 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
   const { state, actions } = useCollectionView()
   const openTab = useTabStore((s) => s.openTab)
   const [isChartModalOpen, setIsChartModalOpen] = useState(false)
-  const nextViewMode = state.viewMode === 'table' ? 'json' : 'table'
-  const ViewSwitchIcon = nextViewMode === 'table' ? Table2 : FileJson
 
   const handleOpenQuery = () => {
     openTab({
@@ -69,29 +68,7 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
           <TooltipContent>{t('common.actions.refresh')}</TooltipContent>
         </Tooltip>
 
-        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => actions.setViewMode(nextViewMode)}
-              data-testid="mongodb.collection.view-toggle-button"
-              data-qa-module="mongodb"
-              data-qa-object="collection-view-mode"
-              data-qa-action={nextViewMode === 'table' ? 'switch-to-table' : 'switch-to-json'}
-              data-qa-state={state.viewMode}
-            >
-              <ViewSwitchIcon className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {nextViewMode === 'table' ? t('mongodb.view.switchToTable') : t('mongodb.view.switchToJson')}
-          </TooltipContent>
-        </Tooltip>
-
-        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+        <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -217,6 +194,11 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
         </Tooltip>
       </div>
       <div className="flex items-center gap-2">
+        <CollectionViewModeSwitch
+          currentMode={state.viewMode}
+          onSelect={actions.setViewMode}
+        />
+        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
         <DataView.FilterButton
           onClick={() => actions.setIsFilterModalOpen(true)}
           count={Object.keys(state.activeFilter).length}
@@ -256,5 +238,90 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
         } : undefined}
       />
     </div>
+  )
+}
+
+interface CollectionViewModeSwitchProps {
+  currentMode: MongoCollectionViewMode
+  onSelect: (mode: MongoCollectionViewMode) => void
+}
+
+/** Two-option MongoDB collection view-mode switch. */
+function CollectionViewModeSwitch({ currentMode, onSelect }: CollectionViewModeSwitchProps) {
+  const { t } = useI18n()
+
+  return (
+    <div
+      className="relative inline-grid h-9 w-[74px] grid-cols-2 items-center overflow-hidden rounded-lg border border-accent bg-accent"
+      role="group"
+      aria-label={t('mongodb.view.selectorLabel')}
+      data-testid="mongodb.collection.view-mode-buttons"
+      data-qa-module="mongodb"
+      data-qa-object="collection-view-mode"
+      data-qa-state={currentMode}
+    >
+      <span
+        aria-hidden="true"
+        style={{ transform: currentMode === 'json' ? 'translateX(36px)' : 'translateX(0)' }}
+        className={cn(
+          'pointer-events-none absolute left-0.5 top-0.5 h-[30px] w-8 rounded-md bg-background shadow-[0_1px_2px_oklch(0.145_0_0_/_0.1),0_3px_8px_oklch(0.145_0_0_/_0.05)] ring-1 ring-border/60 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
+        )}
+      />
+      <CollectionViewModeButton
+        mode="table"
+        currentMode={currentMode}
+        ariaLabel={t('mongodb.view.table')}
+        tooltip={currentMode === 'table' ? t('mongodb.view.table') : t('mongodb.view.switchToTable')}
+        onSelect={onSelect}
+      />
+      <CollectionViewModeButton
+        mode="json"
+        currentMode={currentMode}
+        ariaLabel={t('mongodb.view.json')}
+        tooltip={currentMode === 'json' ? t('mongodb.view.json') : t('mongodb.view.switchToJson')}
+        onSelect={onSelect}
+      />
+    </div>
+  )
+}
+
+interface CollectionViewModeButtonProps {
+  mode: MongoCollectionViewMode
+  currentMode: MongoCollectionViewMode
+  ariaLabel: string
+  tooltip: string
+  onSelect: (mode: MongoCollectionViewMode) => void
+}
+
+/** Single option in the MongoDB collection view-mode control. */
+function CollectionViewModeButton({ mode, currentMode, ariaLabel, tooltip, onSelect }: CollectionViewModeButtonProps) {
+  const active = currentMode === mode
+  const Icon = mode === 'table' ? Table2 : FileJson
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={ariaLabel}
+          aria-pressed={active}
+          onClick={() => onSelect(mode)}
+          data-testid={`mongodb.collection.view-${mode}-button`}
+          data-qa-module="mongodb"
+          data-qa-object="collection-view-mode"
+          data-qa-action={`switch-to-${mode}`}
+          data-qa-state={active ? 'active' : 'inactive'}
+          className={cn(
+            'relative z-10 h-8 w-9 rounded-md text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground',
+            active && 'text-primary hover:text-primary',
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   )
 }

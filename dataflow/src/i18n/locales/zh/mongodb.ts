@@ -15,6 +15,7 @@ export const zhMongodbMessages = {
   'mongodb.collection.addData': '新增文档',
   'mongodb.collection.deleteDocumentTitle': '删除文档',
   'mongodb.collection.deleteDocumentMessage': '确定要删除此文档吗？此操作无法撤销。',
+  'mongodb.view.selectorLabel': '集合视图模式',
   'mongodb.view.table': '表格视图',
   'mongodb.view.json': 'JSON 视图',
   'mongodb.view.switchToTable': '切换到表格视图',

@@ -1,4 +1,4 @@
-import React, { createContext, use } from "react";
+import React, { createContext, use, useEffect, useRef } from "react";
 import {
   ChevronRight, ChevronDown, Loader2,
   Database, ListTree, Table, Files, Eye, Folder,
@@ -55,6 +55,7 @@ interface TreeNodeProps {
 }
 
 export function TreeNode({ node, depth }: TreeNodeProps) {
+  const nodeRef = useRef<HTMLDivElement>(null);
   const { expandedItems, isLoading: loadingItems, treeData } = useSidebarTree();
   const {
     selectedItemId,
@@ -76,9 +77,15 @@ export function TreeNode({ node, depth }: TreeNodeProps) {
     : NODE_ICONS[node.type];
   const brandIcon = isRoot ? DB_ICONS[connectionDbType] : null;
 
+  useEffect(() => {
+    if (!isSelected) return;
+    nodeRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [isSelected]);
+
   return (
     <div>
       <div
+        ref={nodeRef}
         data-testid="database.sidebar.tree-node"
         data-qa-module="database"
         data-qa-object="sidebar-node"

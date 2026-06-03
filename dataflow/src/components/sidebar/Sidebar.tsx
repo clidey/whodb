@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useReducer } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useReducer } from "react";
 
 import { useConnectionStore } from "@/stores/useConnectionStore";
-import { useTabStore } from "@/stores/useTabStore";
+import { useTabStore, type Tab } from "@/stores/useTabStore";
 import { ContextMenu } from "../ui/ContextMenu";
 import type { Alert } from "@/components/ui/types";
 
@@ -22,6 +22,22 @@ import {
 } from "./contextMenuItems";
 import { SidebarModals } from "./SidebarModals";
 import { useI18n } from "@/i18n/useI18n";
+import { getSidebarSelectionForTab } from "./sidebar-selection";
+
+function getSidebarFocusKey(tab: Tab | null): string {
+  if (!tab) return "no-active-tab";
+
+  return JSON.stringify([
+    tab.id,
+    tab.type,
+    tab.connectionId,
+    tab.databaseName ?? null,
+    tab.schemaName ?? null,
+    tab.tableName ?? null,
+    tab.storageUnitType ?? null,
+    tab.collectionName ?? null,
+  ]);
+}
 
 // ── Modal reducer (inlined from former useSidebarModals) ────────────
 
@@ -58,12 +74,12 @@ function modalReducer(_state: ModalState | null, action: Action): ModalState | n
 
 function SidebarInner() {
   const { connections, selectedItem, selectItem, systemSchemas, showSystemObjectsFor, toggleSystemObjects, triggerCollectionRefresh } = useConnectionStore();
-  const { openTab } = useTabStore();
+  const { tabs, activeTabId, openTab } = useTabStore();
   const { t } = useI18n();
 
   const {
     expandedItems, treeData, isLoading,
-    toggleItem, fetchNodeChildren, refreshNode,
+    toggleItem, fetchNodeChildren, refreshNode, revealNode,
   } = useSidebarTree();
 
   // Modal state (inlined from former useSidebarModals)
@@ -91,6 +107,23 @@ function SidebarInner() {
     y: number;
     node: TreeNodeData;
   } | null>(null);
+
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? null;
+  const sidebarFocusKey = getSidebarFocusKey(activeTab);
+  const sidebarSelection = useMemo(
+    () => getSidebarSelectionForTab(activeTab, connections),
+    // Ignore title/sqlContent/isDirty changes; they do not affect sidebar focus.
+    [connections, sidebarFocusKey],
+  );
+
+  useEffect(() => {
+    selectItem(sidebarSelection);
+    if (sidebarSelection) {
+      void revealNode(sidebarSelection).catch((error) => {
+        console.error("Failed to reveal sidebar selection:", sidebarSelection.id, error);
+      });
+    }
+  }, [revealNode, selectItem, sidebarSelection]);
 
   const handleItemClick = useCallback(
     async (node: TreeNodeData) => {
@@ -121,6 +154,7 @@ function SidebarInner() {
           databaseName: node.metadata.database,
           schemaName: node.metadata.schema,
           tableName: node.name,
+          storageUnitType: node.type,
         });
       } else if (node.type === "collection") {
         const collectionTitle = node.metadata.database

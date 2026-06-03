@@ -11,6 +11,7 @@ export interface Tab {
   schemaName?: string;
   sqlContent?: string;
   tableName?: string;
+  storageUnitType?: 'table' | 'view';
   collectionName?: string;
   isDirty?: boolean;
 }
@@ -22,7 +23,13 @@ interface TabState {
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   updateTab: (tabId: string, updates: Partial<Tab>) => void;
-  findExistingTab: (type: TabType, connectionId: string, identifier: string, databaseName?: string) => Tab | undefined;
+  findExistingTab: (
+    type: TabType,
+    connectionId: string,
+    identifier: string,
+    databaseName?: string,
+    storageUnitType?: Tab['storageUnitType'],
+  ) => Tab | undefined;
   closeOtherTabs: (tabId: string) => void;
   closeAllTabs: () => void;
 }
@@ -35,11 +42,13 @@ export const useTabStore = create<TabState>((set, get) => ({
   tabs: [],
   activeTabId: null,
 
-  findExistingTab: (type, connectionId, identifier, databaseName) => {
+  findExistingTab: (type, connectionId, identifier, databaseName, storageUnitType) => {
     return get().tabs.find((tab) => {
       if (tab.type !== type || tab.connectionId !== connectionId) return false;
       if (databaseName && tab.databaseName !== databaseName) return false;
-      if (type === 'table') return tab.tableName === identifier;
+      if (type === 'table') {
+        return tab.tableName === identifier && (tab.storageUnitType ?? 'table') === (storageUnitType ?? 'table');
+      }
       if (type === 'collection') return tab.collectionName === identifier;
       if (type === 'redis_key_detail') return tab.tableName === identifier;
       return false;
@@ -55,6 +64,7 @@ export const useTabStore = create<TabState>((set, get) => ({
             tabData.connectionId,
             tabData.tableName || tabData.collectionName || '',
             tabData.databaseName,
+            tabData.storageUnitType,
           )
         : undefined;
 
