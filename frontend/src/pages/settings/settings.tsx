@@ -18,7 +18,7 @@ import {useQuery} from "@apollo/client/react";
 import type {FC} from "react";
 import { Suspense, useCallback, useEffect, useMemo} from "react";
 import {InternalPage} from "../../components/page";
-import {InternalRoutes} from "../../config/routes";
+import {InternalRoutes, type IInternalRoute} from "../../config/routes";
 import {useAppDispatch, useAppSelector} from "../../store/hooks";
 import {SettingsActions} from "../../store/settings";
 import {getAppName} from "@/config/features";
@@ -129,7 +129,7 @@ export const SettingsPage: FC = () => {
     }, [dispatch]);
 
     return (
-        <InternalPage routes={[InternalRoutes.Settings!]}>
+        <InternalPage routes={[InternalRoutes.Settings as IInternalRoute]}>
             <div className="flex flex-col items-center w-full max-w-2xl mx-auto py-10 gap-8">
                 <div className="w-full flex flex-col gap-0">
                     <div className="flex flex-col gap-2">
