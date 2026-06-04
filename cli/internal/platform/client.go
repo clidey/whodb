@@ -204,6 +204,15 @@ func (c *Client) ProjectSources(ctx context.Context, projectID string) ([]Source
 	return resp.ProjectSources, err
 }
 
+// SourceTypes returns source types available on the hosted platform.
+func (c *Client) SourceTypes(ctx context.Context) ([]SourceType, error) {
+	var resp struct {
+		SourceTypes []SourceType `json:"SourceTypes"`
+	}
+	err := c.graphQL(ctx, operationSourceTypes, nil, &resp)
+	return resp.SourceTypes, err
+}
+
 // CreateSource creates a hosted source in one project.
 func (c *Client) CreateSource(ctx context.Context, input CreateSourceInput) (*Source, error) {
 	var resp struct {

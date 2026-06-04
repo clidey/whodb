@@ -48,6 +48,7 @@ var (
 	sourcePort         string
 	sourceUsername     string
 	sourceDatabase     string
+	sourceFields       []string
 	sourceAdvanced     []string
 	sourcePasswordEnv  string
 	sourcePasswordIn   bool
@@ -388,6 +389,100 @@ var sourcesCmd = &cobra.Command{
 	Short: "Manage hosted WhoDB project sources",
 }
 
+var sourcesTypesCmd = &cobra.Command{
+	Use:           "types",
+	Short:         "List hosted WhoDB source types",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		types, err := session.Client.SourceTypes(ctx)
+		if err != nil {
+			return err
+		}
+		sortSourceTypes(types)
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, types)
+		}
+		rows := make([][]any, len(types))
+		for i, sourceType := range types {
+			rows[i] = []any{sourceType.ID, sourceType.Label, sourceType.Category, sourceType.Connector, len(sourceType.ConnectionFields)}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "id", Type: "string"},
+				{Name: "label", Type: "string"},
+				{Name: "category", Type: "string"},
+				{Name: "connector", Type: "string"},
+				{Name: "fields", Type: "int"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
+var sourcesFieldsCmd = &cobra.Command{
+	Use:           "fields <source-type>",
+	Short:         "Show hosted WhoDB source type fields",
+	Args:          cobra.ExactArgs(1),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		format, err := output.ParseFormat(platformFormat)
+		if err != nil {
+			return err
+		}
+		session, err := loadPlatformSession(ctx, platformHost)
+		if err != nil {
+			return err
+		}
+		types, err := session.Client.SourceTypes(ctx)
+		if err != nil {
+			return err
+		}
+		sourceType, err := resolveSourceType(types, args[0])
+		if err != nil {
+			return err
+		}
+		if format == output.FormatJSON {
+			return writeCommandJSON(cmd, sourceType.ConnectionFields)
+		}
+		rows := make([][]any, len(sourceType.ConnectionFields))
+		for i, field := range sourceType.ConnectionFields {
+			rows[i] = []any{
+				field.Key,
+				field.Kind,
+				field.Section,
+				field.Required,
+				sourceFieldDefault(field),
+				sourceFieldSecret(field),
+				field.SupportsOptions,
+			}
+		}
+		return newCommandOutput(cmd, format, platformQuiet).WriteQueryResult(&output.QueryResult{
+			Columns: []output.Column{
+				{Name: "key", Type: "string"},
+				{Name: "kind", Type: "string"},
+				{Name: "section", Type: "string"},
+				{Name: "required", Type: "bool"},
+				{Name: "default", Type: "string"},
+				{Name: "secret", Type: "bool"},
+				{Name: "supports_options", Type: "bool"},
+			},
+			Rows: rows,
+		})
+	},
+}
+
 var sourcesListCmd = &cobra.Command{
 	Use:           "list",
 	Short:         "List hosted WhoDB project sources",
@@ -484,8 +579,9 @@ var sourcesGetCmd = &cobra.Command{
 }
 
 var sourcesCreateCmd = &cobra.Command{
-	Use:           "create",
+	Use:           "create [source-type]",
 	Short:         "Create a hosted WhoDB project source",
+	Args:          cobra.MaximumNArgs(1),
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -496,20 +592,7 @@ var sourcesCreateCmd = &cobra.Command{
 		}
 		quiet := platformQuiet || format == output.FormatJSON
 		out := newCommandOutput(cmd, format, quiet)
-		if strings.TrimSpace(sourceName) == "" {
-			return fmt.Errorf("--name is required")
-		}
-		if strings.TrimSpace(sourceType) == "" {
-			return fmt.Errorf("--type is required")
-		}
-		if strings.TrimSpace(sourceHostname) == "" {
-			return fmt.Errorf("--hostname is required")
-		}
-		advanced, err := parseSourceAdvanced(sourceAdvanced)
-		if err != nil {
-			return err
-		}
-		password, err := readSourcePassword(cmd)
+		sourceTypeValue, err := sourceTypeFromCreateArgs(args, sourceType)
 		if err != nil {
 			return err
 		}
@@ -517,21 +600,24 @@ var sourcesCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		types, err := session.Client.SourceTypes(ctx)
+		if err != nil {
+			return err
+		}
+		selectedType, err := resolveSourceType(types, sourceTypeValue)
+		if err != nil {
+			return err
+		}
+		input, err := collectSourceCreateInput(cmd, selectedType)
+		if err != nil {
+			return err
+		}
 		project, err := resolvePlatformProject(ctx, session, sourcesOrg, sourcesProject)
 		if err != nil {
 			return err
 		}
-		created, err := session.Client.CreateSource(ctx, platform.CreateSourceInput{
-			ProjectID:    project.ID,
-			Name:         strings.TrimSpace(sourceName),
-			DatabaseType: strings.TrimSpace(sourceType),
-			Hostname:     strings.TrimSpace(sourceHostname),
-			Port:         strings.TrimSpace(sourcePort),
-			Username:     strings.TrimSpace(sourceUsername),
-			Password:     password,
-			Database:     strings.TrimSpace(sourceDatabase),
-			Advanced:     advanced,
-		})
+		input.ProjectID = project.ID
+		created, err := session.Client.CreateSource(ctx, input)
 		if err != nil {
 			return err
 		}
@@ -832,6 +918,8 @@ func init() {
 	orgsCmd.AddCommand(orgsListCmd)
 	projectsCmd.AddCommand(projectsListCmd)
 	projectsListCmd.Flags().StringVar(&projectsOrg, "org", "", "organization id, slug, or name (defaults to selected organization)")
+	sourcesCmd.AddCommand(sourcesTypesCmd)
+	sourcesCmd.AddCommand(sourcesFieldsCmd)
 	sourcesCmd.AddCommand(sourcesListCmd)
 	sourcesCmd.AddCommand(sourcesGetCmd)
 	sourcesCmd.AddCommand(sourcesCreateCmd)
@@ -847,6 +935,7 @@ func init() {
 	sourcesCreateCmd.Flags().StringVar(&sourcePort, "port", "", "source port")
 	sourcesCreateCmd.Flags().StringVar(&sourceUsername, "username", "", "source username")
 	sourcesCreateCmd.Flags().StringVar(&sourceDatabase, "database", "", "source database")
+	sourcesCreateCmd.Flags().StringArrayVar(&sourceFields, "field", nil, "source connection field as key=value; repeatable")
 	sourcesCreateCmd.Flags().StringArrayVar(&sourceAdvanced, "advanced", nil, "advanced connection option as key=value; repeatable")
 	sourcesCreateCmd.Flags().StringVar(&sourcePasswordEnv, "password-env", "", "environment variable containing the source password")
 	sourcesCreateCmd.Flags().BoolVar(&sourcePasswordIn, "password-stdin", false, "read the source password from stdin")

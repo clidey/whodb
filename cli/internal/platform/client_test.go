@@ -121,6 +121,45 @@ func TestProjectSourcesSendsProjectID(t *testing.T) {
 	}
 }
 
+func TestSourceTypesMapsConnectionFields(t *testing.T) {
+	var request struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(request.Query, "SourceTypes") {
+			t.Fatalf("query = %q, want SourceTypes", request.Query)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"SourceTypes":[{"id":"Postgres","label":"Postgres","connector":"Postgres","category":"Database","connectionFields":[{"key":"Hostname","kind":"Text","section":"Primary","required":true,"labelKey":"hostName","placeholderKey":"enterHostName","defaultValue":null,"supportsOptions":false},{"key":"Port","kind":"Text","section":"Primary","required":false,"labelKey":"advancedFields.port","placeholderKey":null,"defaultValue":"5432","supportsOptions":false},{"key":"Password","kind":"Password","section":"Primary","required":true,"labelKey":"password","placeholderKey":"enterPassword","defaultValue":null,"supportsOptions":false}]}]}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	types, err := client.SourceTypes(context.Background())
+	if err != nil {
+		t.Fatalf("SourceTypes() error = %v", err)
+	}
+	if len(types) != 1 || types[0].ID != "Postgres" {
+		t.Fatalf("types = %#v, want Postgres", types)
+	}
+	if len(types[0].ConnectionFields) != 3 {
+		t.Fatalf("connection fields = %#v, want 3 fields", types[0].ConnectionFields)
+	}
+	port := types[0].ConnectionFields[1]
+	if port.DefaultValue == nil || *port.DefaultValue != "5432" {
+		t.Fatalf("port default = %#v, want 5432", port.DefaultValue)
+	}
+	if !types[0].ConnectionFields[2].Required || types[0].ConnectionFields[2].Kind != "Password" {
+		t.Fatalf("password field = %#v, want required password", types[0].ConnectionFields[2])
+	}
+}
+
 func TestCreateSourceMapsAdvancedRecords(t *testing.T) {
 	var request struct {
 		Query     string         `json:"query"`

@@ -72,6 +72,27 @@ query CLIPlatformProjectSources($projectId: ID!) {
 }
 `
 
+const operationSourceTypes = `
+query CLIPlatformSourceTypes {
+  SourceTypes {
+    id: Id
+    label: Label
+    connector: Connector
+    category: Category
+    connectionFields: ConnectionFields {
+      key: Key
+      kind: Kind
+      section: Section
+      required: Required
+      labelKey: LabelKey
+      placeholderKey: PlaceholderKey
+      defaultValue: DefaultValue
+      supportsOptions: SupportsOptions
+    }
+  }
+}
+`
+
 const operationCreateSource = `
 mutation CLIPlatformCreateSource($input: CreateSourceInput!) {
   CreateSource(input: $input) {
@@ -158,6 +179,7 @@ var platformOperations = map[string]string{
 	"projects":            operationProjects,
 	"switch_organization": operationSwitchOrganization,
 	"project_sources":     operationProjectSources,
+	"source_types":        operationSourceTypes,
 	"create_source":       operationCreateSource,
 	"delete_source":       operationDeleteSource,
 	"source_objects":      operationPlatformSourceObjects,
