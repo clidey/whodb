@@ -1,6 +1,6 @@
 ---
 name: add-translation
-description: Add or update translation keys across all languages with proper tooling
+description: Add or update English translation keys with proper localization placement
 ---
 
 # Add Translation Keys
@@ -12,19 +12,18 @@ description: Add or update translation keys across all languages with proper too
 - Component-specific → `frontend/src/locales/components/<name>.yaml` or `pages/<name>.yaml`
 - EE-only → `ee/frontend/src/locales/...`
 
-### 2. Add en_US Entry
+### 2. Add en_US Entry Only
 ```yaml
 en_US:
   newKey: English text here
   parameterized: "Hello {name}, you have {count} items"
 ```
 
-### 3. Generate All Translations
-```bash
-cd dev/translate && bash run.sh
-```
+Do not add or update non-English locale entries unless the user explicitly asks
+for translation. Translation tooling is manual maintenance, not part of the
+default agent workflow.
 
-### 4. Use in Component
+### 3. Use in Component
 ```typescript
 const { t } = useTranslation('components/my-component');
 // or for common keys, just use t('key') — they're auto-available
@@ -53,7 +52,7 @@ t('details', { link: <a href="/docs">{t('docsLink')}</a> })
 
 ## Removing Keys
 1. Remove from YAML file
-2. Run `cd dev/translate && bash run.sh`
+2. Leave other language entries untouched unless the user explicitly requested cleanup
 
 ## Verification
 ```bash

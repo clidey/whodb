@@ -12,14 +12,15 @@ paths:
 2. If shared across 2+ components → add to `common.yaml`
 3. If component-specific → add to that component's YAML file
 4. Always add `en_US` entry first
-5. Run: `cd dev/translate && python3 detect.py && node translate.mjs`
+5. Do not add or update non-English locale entries unless the user explicitly asks
+6. Do not run the translation tooling automatically; it is a manual maintenance step
 
 ## YAML Format
 ```yaml
 en_US:
   keyName: English text
 fr_FR:
-  keyName: Texte en français
+  existingKey: Texte existant
 ```
 
 ## Key Rules

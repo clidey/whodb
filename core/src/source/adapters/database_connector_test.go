@@ -137,6 +137,43 @@ func TestDatabaseSessionListObjectsFiltersInternalObjects(t *testing.T) {
 	}
 }
 
+func TestDatabaseSessionListObjectsFiltersStorageUnitsByActualKind(t *testing.T) {
+	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
+	mock.GetStorageUnitsFunc = func(*engine.PluginConfig, string) ([]engine.StorageUnit, error) {
+		return []engine.StorageUnit{
+			{Name: "users", Attributes: []engine.Record{{Key: "Type", Value: "TABLE"}}},
+			{Name: "user_summary", Attributes: []engine.Record{{Key: "Type", Value: "VIEW"}}},
+		}, nil
+	}
+
+	session := newTestDatabaseSession(testTypeWithObjectActions(
+		"Postgres",
+		[]source.Surface{source.SurfaceBrowser},
+		[]source.Action{source.ActionBrowse},
+		map[source.ObjectKind][]source.Action{
+			source.ObjectKindSchema: {source.ActionBrowse},
+			source.ObjectKindTable:  {source.ActionInspect, source.ActionViewRows},
+			source.ObjectKindView:   {source.ActionInspect, source.ActionViewRows},
+		},
+	), mock)
+
+	tables, err := session.ListObjects(context.Background(), testSchemaRef(), []source.ObjectKind{source.ObjectKindTable})
+	if err != nil {
+		t.Fatalf("expected table listing to succeed, got %v", err)
+	}
+	if len(tables) != 1 || tables[0].Name != "users" || tables[0].Kind != source.ObjectKindTable {
+		t.Fatalf("expected only table objects, got %#v", tables)
+	}
+
+	tabular, err := session.ListObjects(context.Background(), testSchemaRef(), []source.ObjectKind{source.ObjectKindTable, source.ObjectKindView})
+	if err != nil {
+		t.Fatalf("expected tabular listing to succeed, got %v", err)
+	}
+	if len(tabular) != 2 {
+		t.Fatalf("expected table and view objects, got %#v", tabular)
+	}
+}
+
 func TestDatabaseSessionListObjectsRejectsUnsupportedBrowseAction(t *testing.T) {
 	mock := testutil.NewPluginMock(engine.DatabaseType("Postgres"))
 	mock.GetStorageUnitsFunc = func(*engine.PluginConfig, string) ([]engine.StorageUnit, error) {

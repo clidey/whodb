@@ -52,6 +52,62 @@ type Source struct {
 	CreatedAt    string `json:"createdAt"`
 }
 
+// SourceObjectKind identifies a source hierarchy object kind.
+type SourceObjectKind string
+
+// Record is a key-value metadata entry returned by WhoDB.
+type Record struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// SourceObjectRef identifies one object inside a source hierarchy.
+type SourceObjectRef struct {
+	Kind    SourceObjectKind `json:"kind"`
+	Locator string           `json:"locator"`
+	Path    []string         `json:"path"`
+}
+
+// SourceObjectRefInput identifies one source object in GraphQL variables.
+type SourceObjectRefInput struct {
+	Kind    SourceObjectKind
+	Locator string
+	Path    []string
+}
+
+// SourceObject is a browsable object returned by a hosted source.
+type SourceObject struct {
+	Ref         SourceObjectRef  `json:"ref"`
+	Kind        SourceObjectKind `json:"kind"`
+	Name        string           `json:"name"`
+	Path        []string         `json:"path"`
+	HasChildren bool             `json:"hasChildren"`
+	Actions     []string         `json:"actions"`
+	Metadata    []Record         `json:"metadata"`
+}
+
+// Column describes a column returned by a hosted source.
+type Column struct {
+	Type             string `json:"type"`
+	Name             string `json:"name"`
+	MetadataFidelity string `json:"metadataFidelity"`
+	IsPrimary        bool   `json:"isPrimary"`
+	IsForeignKey     bool   `json:"isForeignKey"`
+	ReferencedTable  string `json:"referencedTable,omitempty"`
+	ReferencedColumn string `json:"referencedColumn,omitempty"`
+	Length           *int   `json:"length,omitempty"`
+	Precision        *int   `json:"precision,omitempty"`
+	Scale            *int   `json:"scale,omitempty"`
+}
+
+// RowsResult contains tabular rows returned by a hosted source.
+type RowsResult struct {
+	Columns       []Column   `json:"columns"`
+	Rows          [][]string `json:"rows"`
+	DisableUpdate bool       `json:"disableUpdate"`
+	TotalCount    int        `json:"totalCount"`
+}
+
 // CreateSourceInput describes a hosted WhoDB source to create in one project.
 type CreateSourceInput struct {
 	ProjectID    string
@@ -68,6 +124,14 @@ type CreateSourceInput struct {
 type recordInput struct {
 	Key   string `json:"Key"`
 	Value string `json:"Value"`
+}
+
+func (input SourceObjectRefInput) graphQLInput() map[string]any {
+	return map[string]any{
+		"Kind":    input.Kind,
+		"Locator": input.Locator,
+		"Path":    input.Path,
+	}
 }
 
 func (input CreateSourceInput) graphQLInput() map[string]any {

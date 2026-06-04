@@ -43,6 +43,10 @@ ee/frontend/src/locales/       # EE-only translations (overrides CE)
 
 Languages are defined in `frontend/src/utils/languages.ts`. Each YAML file contains all languages as top-level keys.
 
+Agents should add or update `en_US` entries only unless the user explicitly asks
+for non-English translations. Do not machine-translate other locale entries as
+part of normal feature work.
+
 ## common.yaml — Shared Translations
 
 `frontend/src/locales/common.yaml` contains translation keys shared across multiple components. Every component automatically inherits these keys — no extra import or `useTranslation` call needed.
@@ -282,10 +286,7 @@ The `count` param triggers plural resolution automatically. The base key (withou
    - Component-specific strings → the component's own YAML file (e.g., `components/table.yaml`)
 3. Add the `en_US:` key to the chosen YAML file
 4. Use `t('keyName')` in your component
-5. Run the translation script to generate translations for all languages:
-   ```bash
-   cd dev/translate && python3 detect.py && node translate.mjs
-   ```
+5. Leave other language entries untouched unless the user explicitly requested translation
 
 ## What NOT to Localize
 
@@ -322,6 +323,9 @@ const items = [t('option1'), t('option2'), t('option3')];
 ```
 
 ## Translation Tooling
+
+Translation tooling is manual maintenance, not part of the automatic agent hook
+flow. Run it only when explicitly requested.
 
 ### Full workflow: detect drift, then translate
 
