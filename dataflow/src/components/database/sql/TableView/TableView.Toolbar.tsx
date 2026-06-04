@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Minus, Download, RefreshCw, Undo2, Eye, SendHorizontal, TerminalSquare, BarChart3 } from 'lucide-react'
+import { Plus, Minus, Download, RefreshCw, Undo2, Eye, ArrowBigUp, TerminalSquare, BarChart3 } from 'lucide-react'
 import { useTableView } from './TableViewProvider'
 import { DataView } from '@/components/database/shared/DataView'
 import { Button } from '@/components/ui/Button'
@@ -174,7 +174,7 @@ export function TableViewToolbar({ connectionId, databaseName, tableName, schema
                     data-qa-risk="resource_mutation"
                     data-qa-disabled-reason={!state.hasPendingChanges ? 'no_pending_changes' : undefined}
                   >
-                    <SendHorizontal className="h-4 w-4" />
+                    <ArrowBigUp className="h-4 w-4" />
                   </Button>
                 </span>
               </TooltipTrigger>

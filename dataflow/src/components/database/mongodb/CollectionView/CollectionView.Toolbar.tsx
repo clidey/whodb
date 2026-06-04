@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Plus, Minus, Undo2, Eye, SendHorizontal, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
+import { Download, Plus, Minus, Undo2, Eye, ArrowBigUp, RefreshCw, TerminalSquare, BarChart3, Table2, FileJson } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useCollectionView } from './CollectionViewProvider'
 import type { MongoCollectionViewMode } from './types'
@@ -167,7 +167,7 @@ export function CollectionViewToolbar({ connectionId, databaseName, collectionNa
                 data-qa-risk="resource_mutation"
                 data-qa-disabled-reason={!state.hasPendingChanges ? 'no_pending_changes' : undefined}
               >
-                <SendHorizontal className="h-4 w-4" />
+                <ArrowBigUp className="h-4 w-4" />
               </Button>
             </span>
           </TooltipTrigger>
