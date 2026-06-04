@@ -184,6 +184,9 @@ func (s *DatabaseSession) ListObjects(ctx context.Context, parent *source.Object
 		objects := make([]source.Object, 0, len(units))
 		for _, unit := range units {
 			kind := s.kindForUnit(nextKind, unit)
+			if len(kinds) > 0 && !slices.Contains(kinds, kind) {
+				continue
+			}
 			objectType, _ := s.spec.Contract.ObjectTypeForKind(kind)
 			path := appendPath(parent, unit.Name)
 			objects = append(objects, source.Object{
